@@ -22,10 +22,33 @@ func ExecuteActionWorkflowable(
 ) ([]string, error) {
 	var logs []string
 
+	// Initialize Data Engine client
+	dataEngine := engine.NewClient("en")
+
+	// Initialize a map to store the input objects
+	inputFiles := make(map[string][]byte)
+
+	// Iterate over the inputs and add them to the input files map
+	for _, input := range workflowable.Inputs {
+		// Get the object content from the data engine
+		content, err := dataEngine.GetObjectContent(
+			workflow.Workspace.Slug,
+			input.Repository.Slug,
+			input.Path,
+			input.Ref,
+		)
+		if err != nil {
+			log.Printf("Error getting input object content: %v", err)
+			logs = append(logs, fmt.Sprintf("Error getting input object content: %v", err))
+			continue
+		}
+		inputFiles[input.Path] = content
+	}
+
 	// Run the executable file in the compute sandbox
 	computeResult, err := sandbox.ExecuteEditorItem(
 		ctx,
-		nil,
+		inputFiles,
 		workflow.Owner,
 		workflowable.Executable,
 		workflow.Workspace.Slug,
@@ -41,9 +64,6 @@ func ExecuteActionWorkflowable(
 
 	// Check if the results need to be saved
 	if workflowable.Repository != nil {
-		// Initialize Data Engine client
-		dataEngine := engine.NewClient("en")
-
 		// Loop thorugh the results and save them to the repository
 		for fileName, fileContent := range computeResult.ResultFiles {
 			// Create multipart file from the byte array

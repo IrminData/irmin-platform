@@ -514,7 +514,7 @@ func EditorItemExecute(c fiber.Ctx) error {
 		})
 	}
 
-	// Get the optional input data repositories and paths from form fields
+	// Get the optional input data repositories, refs and paths from form fields
 	inputObjects, err := utils.ParseArrayFormFields(c, "input")
 	if err != nil {
 		log.Printf("Error parsing form fields: %v", err)

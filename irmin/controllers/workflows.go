@@ -104,11 +104,10 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the workflow record.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
-		"name":          fields["name"],
-		"description":   fields["description"],
-		"documentation": fields["documentation"],
-	})
+	workflow.Name = fields["name"]
+	workflow.Description = fields["description"]
+	workflow.Documentation = fields["documentation"]
+	updatedWorkflow, err := db.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -164,7 +163,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 
 	// TOOD: This whole thing needs to be done in a transaction.
 
-	// Procceed based on the workflow type.
+	// Proceed based on the workflow type.
 	switch db.WorkflowableType(fields["type"]) {
 	case db.WorkflowableTypeImport:
 		// Create the import workflowable object.
@@ -282,6 +281,48 @@ func WorkflowsStore(c fiber.Ctx) error {
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
+
+		// Get the optional input data repositories, refs and paths from form fields
+		inputObjects, err := utils.ParseArrayFormFields(c, "input")
+		if err != nil {
+			log.Printf("Error parsing form fields: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{dict.T("error_occurred")},
+			})
+		}
+
+		// Iterate over the input objects and build the input data array.
+		var inputData []db.ActionWorkflowableInput
+		var inputFutures []utils.FutureResult[*db.Repository]
+
+		// Start async repository lookups
+		for _, inputObject := range inputObjects {
+			repository_slug := inputObject["repository"]
+
+			// Create async task for repository lookup
+			future := utils.Async(func() (*db.Repository, error) {
+				return db.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
+			})
+			inputFutures = append(inputFutures, future)
+		}
+
+		// Wait for all repository lookups to complete
+		for i, future := range inputFutures {
+			repository, err := future.Await()
+			if err != nil {
+				log.Printf("Error retrieving repository: %v", err)
+				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+					Errors: []string{dict.T("invalid_request")},
+				})
+			}
+
+			inputData = append(inputData, db.ActionWorkflowableInput{
+				RepositoryID: repository.ID,
+				Ref:          inputObjects[i]["ref"],
+				Path:         inputObjects[i]["path"],
+			})
+		}
+
 		// Find the results repository by slug.
 		var repository *db.Repository
 		if workflowableFields["repository"] != "" {
@@ -304,6 +345,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 				RepositoryID: &repositoryID,
 				Branch:       &branch,
 				Path:         &path,
+				Inputs:       inputData,
 			}
 		} else {
 			workflowable = db.ActionWorkflowable{
@@ -526,7 +568,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	var actionWorkflowable *db.ActionWorkflowable
 	var pipelineWorkflowable *db.PipelineWorkflowable
 
-	// Procceed based on the workflow type.
+	// Proceed based on the workflow type.
 	switch workflow.Type {
 	case db.WorkflowableTypeImport:
 		// Create the import workflowable object.
@@ -644,6 +686,48 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("invalid_request")},
 			})
 		}
+
+		// Get the optional input data repositories, refs and paths from form fields
+		inputObjects, err := utils.ParseArrayFormFields(c, "input")
+		if err != nil {
+			log.Printf("Error parsing form fields: %v", err)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{dict.T("error_occurred")},
+			})
+		}
+
+		// Iterate over the input objects and build the input data array.
+		var inputData []db.ActionWorkflowableInput
+		var inputFutures []utils.FutureResult[*db.Repository]
+
+		// Start async repository lookups
+		for _, inputObject := range inputObjects {
+			repository_slug := inputObject["repository"]
+
+			// Create async task for repository lookup
+			future := utils.Async(func() (*db.Repository, error) {
+				return db.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
+			})
+			inputFutures = append(inputFutures, future)
+		}
+
+		// Wait for all repository lookups to complete
+		for i, future := range inputFutures {
+			repository, err := future.Await()
+			if err != nil {
+				log.Printf("Error retrieving repository: %v", err)
+				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+					Errors: []string{dict.T("invalid_request")},
+				})
+			}
+
+			inputData = append(inputData, db.ActionWorkflowableInput{
+				RepositoryID: repository.ID,
+				Ref:          inputObjects[i]["ref"],
+				Path:         inputObjects[i]["path"],
+			})
+		}
+
 		// Find the results repository by slug.
 		var repository *db.Repository
 		if workflowableFields["repository"] != "" {
@@ -666,6 +750,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				RepositoryID: &repositoryID,
 				Branch:       &branch,
 				Path:         &path,
+				Inputs:       inputData,
 			}
 		} else {
 			workflowable = db.ActionWorkflowable{
@@ -791,21 +876,17 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	var updatedWorkflow *db.Workflow
 	var err error
 	if importWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
-			"import_id": &importWorkflowable.ID,
-		})
+		workflow.ImportID = &importWorkflowable.ID
+		updatedWorkflow, err = db.UpdateWorkflow(workflow)
 	} else if exportWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
-			"export_id": &exportWorkflowable.ID,
-		})
+		workflow.ExportID = &exportWorkflowable.ID
+		updatedWorkflow, err = db.UpdateWorkflow(workflow)
 	} else if actionWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
-			"action_id": &actionWorkflowable.ID,
-		})
+		workflow.ActionID = &actionWorkflowable.ID
+		updatedWorkflow, err = db.UpdateWorkflow(workflow)
 	} else if pipelineWorkflowable != nil {
-		updatedWorkflow, err = db.UpdateWorkflow(workflow.ID, map[string]any{
-			"pipeline_id": &pipelineWorkflowable.ID,
-		})
+		workflow.PipelineID = &pipelineWorkflowable.ID
+		updatedWorkflow, err = db.UpdateWorkflow(workflow)
 	}
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
@@ -870,9 +951,8 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the workflow record with the new schedule object.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
-		"schedule_id": &schedule.ID,
-	})
+	workflow.ScheduleID = &schedule.ID
+	updatedWorkflow, err := db.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -912,30 +992,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 	workspace := c.Locals("workspace").(*db.Workspace)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
-	// Delete the current associated workflowable object.
-	if workflow.Action != nil {
-		// Delete the action workflowable object.
-		db.DeleteActionWorkflowable(workflow.Action.ID)
-	}
-	if workflow.Import != nil {
-		// Delete the import workflowable object.
-		db.DeleteImportWorkflowable(workflow.Import.ID)
-	}
-	if workflow.Export != nil {
-		// Delete the export workflowable object.
-		db.DeleteExportWorkflowable(workflow.Export.ID)
-	}
-	if workflow.Pipeline != nil {
-		// Delete the pipeline workflowable object and its stages.
-		db.DeletePipelineWorkflowable(workflow.Pipeline.ID)
-	}
-
-	// Delete the current associated schedule object and its triggers.
-	if workflow.Schedule != nil {
-		db.DeleteSchedule(workflow.Schedule.ID)
-	}
-
-	// Delete the workflow record.
+	// Delete the workflow and all related records
 	err := db.DeleteWorkflow(workflow.ID)
 	if err != nil {
 		log.Printf("Error deleting workflow: %v", err)
@@ -999,9 +1056,8 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the workflow record.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
-		"owner_id": newOwnerID,
-	})
+	workflow.OwnerID = uint(newOwnerID)
+	updatedWorkflow, err := db.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1042,9 +1098,8 @@ func PauseWorkflow(c fiber.Ctx) error {
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Update the workflow record to pause it.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
-		"paused": true,
-	})
+	workflow.Paused = true
+	updatedWorkflow, err := db.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error pausing workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1091,9 +1146,8 @@ func StartWorkflow(c fiber.Ctx) error {
 	}
 
 	// Update the workflow record to start it.
-	updatedWorkflow, err := db.UpdateWorkflow(workflow.ID, map[string]any{
-		"paused": false,
-	})
+	workflow.Paused = false
+	updatedWorkflow, err := db.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error starting workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

@@ -35,18 +35,21 @@ func ExecutePipelineWorkflowable(
 
 		switch stage.Type {
 		case db.PipelineStageTypeAction:
-			// TODO: If required, pass the previous stage results to the action workflowable on execution when the sandbox supports it
+			// If required, pass the previous stage results to the action workflowable on execution when the sandbox supports it
+			var computeInputFiles map[string][]byte
+			if stage.Write {
+				computeInputFiles = previousStageResults
+			}
 
 			// Run the executable file in the compute sandbox
 			computeResult, err := sandbox.ExecuteEditorItem(
 				ctx,
-				nil,
+				computeInputFiles,
 				workflow.Owner,
 				*stage.Executable,
 				workflow.Workspace.Slug,
 			)
 			if err != nil {
-				log.Println("Failed to execute workflowable:", err)
 				logs = append(logs, "Failed to execute workflowable in compute sandbox.")
 			}
 

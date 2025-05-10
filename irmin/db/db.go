@@ -70,6 +70,9 @@ func Migrate() error {
 	if err := DB.AutoMigrate(&ExportWorkflowable{}); err != nil {
 		return fmt.Errorf("failed to migrate ExportWorkflowable: %w", err)
 	}
+	if err := DB.AutoMigrate(&ActionWorkflowableInput{}); err != nil {
+		return fmt.Errorf("failed to migrate ActionWorkflowableInput: %w", err)
+	}
 	if err := DB.AutoMigrate(&ActionWorkflowable{}); err != nil {
 		return fmt.Errorf("failed to migrate ActionWorkflowable: %w", err)
 	}

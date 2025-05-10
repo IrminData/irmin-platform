@@ -73,6 +73,17 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error)
 			workflowableResponse.Branch = *actionWorkflowable.Branch
 			workflowableResponse.Path = *actionWorkflowable.Path
 		}
+		if actionWorkflowable.Inputs != nil {
+			var inputsResponse []irminmodels.ActionInputData
+			for _, input := range actionWorkflowable.Inputs {
+				inputsResponse = append(inputsResponse, irminmodels.ActionInputData{
+					Repository: input.Repository.Slug,
+					Ref:        input.Ref,
+					Path:       input.Path,
+				})
+			}
+			workflowableResponse.Input = inputsResponse
+		}
 	case db.WorkflowableTypePipeline:
 		pipelineWorkflowable := workflowable.(*db.PipelineWorkflowable)
 		workflowableResponse.Live = pipelineWorkflowable.Live

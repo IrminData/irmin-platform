@@ -71,13 +71,24 @@ type ExportWorkflowable struct {
 	Path           string     `json:"path"`
 }
 
+type ActionWorkflowableInput struct {
+	gorm.Model
+	Repository           Repository          `json:"repository"      gorm:"foreignKey:RepositoryID"`
+	RepositoryID         uint                `json:"repository_id"`
+	Ref                  string              `json:"ref"`
+	Path                 string              `json:"path"`
+	ActionWorkflowable   *ActionWorkflowable `json:"action_workflowable" gorm:"foreignKey:ActionWorkflowableID"`
+	ActionWorkflowableID *uint               `json:"action_workflowable_id"`
+}
+
 type ActionWorkflowable struct {
 	gorm.Model
-	Executable   string      `json:"executable"`
-	Repository   *Repository `json:"repository,omitempty"    gorm:"foreignKey:RepositoryID"`
-	RepositoryID *uint       `json:"repository_id,omitempty"`
-	Branch       *string     `json:"branch,omitempty"`
-	Path         *string     `json:"path,omitempty"`
+	Executable   string                    `json:"executable"`
+	Repository   *Repository               `json:"repository,omitempty"    gorm:"foreignKey:RepositoryID"`
+	RepositoryID *uint                     `json:"repository_id,omitempty"`
+	Branch       *string                   `json:"branch,omitempty"`
+	Path         *string                   `json:"path,omitempty"`
+	Inputs       []ActionWorkflowableInput `json:"inputs" gorm:"foreignKey:ActionWorkflowableID"`
 }
 
 type PipelineWorkflowable struct {
@@ -162,7 +173,7 @@ func GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error) {
 // GetActionWorkflowableByID retrieves an action workflowable by its ID.
 func GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error) {
 	var actionWorkflow ActionWorkflowable
-	result := DB.Preload("Repository").First(&actionWorkflow, id)
+	result := DB.Preload("Repository").Preload("Inputs").Preload("Inputs.Repository").First(&actionWorkflow, id)
 	return &actionWorkflow, result.Error
 }
 
@@ -218,119 +229,191 @@ func CreatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkfl
 }
 
 // UpdateWorkflow updates an existing workflow record in the database.
-func UpdateWorkflow(id uint, updates map[string]any) (*Workflow, error) {
-	var workflow Workflow
-	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&Workflow{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdateWorkflow(workflow *Workflow) (*Workflow, error) {
+	if err := DB.Save(workflow).Error; err != nil {
 		return nil, err
 	}
-	// Retrieve the updated workflow record.
-	if err := DB.Preload("Owner").Preload("Workspace").Preload("Schedule").Preload("Schedule.Triggers").Preload("Schedule.Triggers.Repository").First(&workflow, id).Error; err != nil {
+	// Retrieve the updated workflow record with all relations
+	if err := DB.Preload("Owner").
+		Preload("Workspace").
+		Preload("Schedule").
+		Preload("Schedule.Triggers").
+		Preload("Schedule.Triggers.Repository").
+		First(workflow, workflow.ID).Error; err != nil {
 		return nil, err
 	}
-	return &workflow, nil
+	return workflow, nil
 }
 
 // UpdateImportWorkflowable updates an existing import workflowable record in the database.
-func UpdateImportWorkflowable(id uint, updates map[string]any) (*ImportWorkflowable, error) {
-	var importWorkflow ImportWorkflowable
-	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&ImportWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
+	if err := DB.Save(importWorkflow).Error; err != nil {
 		return nil, err
 	}
-	// Retrieve the updated import workflowable record.
-	if err := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&importWorkflow, id).Error; err != nil {
+	// Retrieve the updated import workflowable record with all relations
+	if err := DB.Preload("Connection").
+		Preload("Connection.Connector").
+		Preload("Repository").
+		First(importWorkflow, importWorkflow.ID).Error; err != nil {
 		return nil, err
 	}
-	return &importWorkflow, nil
+	return importWorkflow, nil
 }
 
 // UpdateExportWorkflowable updates an existing export workflowable record in the database.
-func UpdateExportWorkflowable(id uint, updates map[string]any) (*ExportWorkflowable, error) {
-	var exportWorkflow ExportWorkflowable
-	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&ExportWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
+	if err := DB.Save(exportWorkflow).Error; err != nil {
 		return nil, err
 	}
-	// Retrieve the updated export workflowable record.
-	if err := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&exportWorkflow, id).Error; err != nil {
+	// Retrieve the updated export workflowable record with all relations
+	if err := DB.Preload("Connection").
+		Preload("Connection.Connector").
+		Preload("Repository").
+		First(exportWorkflow, exportWorkflow.ID).Error; err != nil {
 		return nil, err
 	}
-	return &exportWorkflow, nil
+	return exportWorkflow, nil
 }
 
 // UpdateActionWorkflowable updates an existing action workflowable record in the database.
-func UpdateActionWorkflowable(id uint, updates map[string]any) (*ActionWorkflowable, error) {
-	var actionWorkflow ActionWorkflowable
-	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&ActionWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
+	if err := DB.Save(actionWorkflow).Error; err != nil {
 		return nil, err
 	}
-	// Retrieve the updated action workflowable record.
-	if err := DB.Preload("Repository").First(&actionWorkflow, id).Error; err != nil {
+	// Retrieve the updated action workflowable record with all relations
+	if err := DB.Preload("Repository").
+		Preload("Inputs").
+		First(actionWorkflow, actionWorkflow.ID).Error; err != nil {
 		return nil, err
 	}
-	return &actionWorkflow, nil
+	return actionWorkflow, nil
 }
 
 // UpdatePipelineWorkflowable updates an existing pipeline workflowable record in the database.
-func UpdatePipelineWorkflowable(id uint, updates map[string]any) (*PipelineWorkflowable, error) {
-	var pipeline PipelineWorkflowable
-	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&PipelineWorkflowable{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
+	if err := DB.Save(pipeline).Error; err != nil {
 		return nil, err
 	}
-	// Retrieve the updated pipeline workflowable record.
-	if err := DB.Preload("Stages").Preload("Stages.Connection").Preload("Stages.Connection.Connector").Preload("Stages.Repository").First(&pipeline, id).Error; err != nil {
+	// Retrieve the updated pipeline workflowable record with all relations
+	if err := DB.Preload("Stages").
+		Preload("Stages.Connection").
+		Preload("Stages.Connection.Connector").
+		Preload("Stages.Repository").
+		First(pipeline, pipeline.ID).Error; err != nil {
 		return nil, err
 	}
-	return &pipeline, nil
+	return pipeline, nil
 }
 
 // UpdatePipelineStage updates an existing pipeline stage record in the database.
-func UpdatePipelineStage(id uint, updates map[string]any) (*PipelineStage, error) {
-	var pipelineStage PipelineStage
-	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&PipelineStage{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func UpdatePipelineStage(pipelineStage *PipelineStage) (*PipelineStage, error) {
+	if err := DB.Save(pipelineStage).Error; err != nil {
 		return nil, err
 	}
-	// Retrieve the updated pipeline stage record.
-	if err := DB.Preload("Pipeline").First(&pipelineStage, id).Error; err != nil {
+	// Retrieve the updated pipeline stage record with all relations
+	if err := DB.Preload("Pipeline").
+		First(pipelineStage, pipelineStage.ID).Error; err != nil {
 		return nil, err
 	}
-	return &pipelineStage, nil
+	return pipelineStage, nil
 }
 
-// DeleteWorkflow deletes a workflow and the related records.
+// DeleteWorkflow deletes a workflow and all related records.
 func DeleteWorkflow(id uint) error {
-	return DB.Select("Schedule").
-		Select("Schedule.Triggers").
-		Select("Import").
-		Select("Export").
-		Select("Action").
-		Select("Pipeline").
-		Select("Pipeline.Stages").
-		Where("id = ?", id).
-		Delete(&Workflow{}).
-		Error
+	// First get the workflow to ensure it exists and to get related IDs
+	var workflow Workflow
+	if err := DB.First(&workflow, id).Error; err != nil {
+		return err
+	}
+
+	// Delete in a transaction to ensure atomicity
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// Delete workflow runs first
+		if err := tx.Where("workflow_id = ?", id).Delete(&WorkflowRun{}).Error; err != nil {
+			return err
+		}
+
+		// Delete schedule and its triggers if exists
+		if workflow.ScheduleID != nil {
+			if err := tx.Where("schedule_id = ?", *workflow.ScheduleID).Delete(&WorkflowTrigger{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Delete(&Schedule{}, *workflow.ScheduleID).Error; err != nil {
+				return err
+			}
+		}
+
+		// Delete workflowable based on type
+		switch workflow.Type {
+		case WorkflowableTypeImport:
+			if workflow.ImportID != nil {
+				if err := tx.Delete(&ImportWorkflowable{}, *workflow.ImportID).Error; err != nil {
+					return err
+				}
+			}
+		case WorkflowableTypeExport:
+			if workflow.ExportID != nil {
+				if err := tx.Delete(&ExportWorkflowable{}, *workflow.ExportID).Error; err != nil {
+					return err
+				}
+			}
+		case WorkflowableTypeAction:
+			if workflow.ActionID != nil {
+				// Delete action inputs first
+				if err := tx.Where("action_workflowable_id = ?", *workflow.ActionID).Delete(&ActionWorkflowableInput{}).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&ActionWorkflowable{}, *workflow.ActionID).Error; err != nil {
+					return err
+				}
+			}
+		case WorkflowableTypePipeline:
+			if workflow.PipelineID != nil {
+				// Delete pipeline stages first
+				if err := tx.Where("pipeline_id = ?", *workflow.PipelineID).Delete(&PipelineStage{}).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&PipelineWorkflowable{}, *workflow.PipelineID).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		// Finally delete the workflow itself
+		return tx.Delete(&workflow).Error
+	})
 }
 
-// DeleteActionWorkflowable deletes an action workflowable record.
+// DeleteActionWorkflowable deletes an action workflowable and its inputs.
 func DeleteActionWorkflowable(id uint) error {
-	return DB.Where("id = ?", id).Delete(&ActionWorkflowable{}).Error
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// Delete action inputs first
+		if err := tx.Where("action_workflowable_id = ?", id).Delete(&ActionWorkflowableInput{}).Error; err != nil {
+			return err
+		}
+		// Then delete the action workflowable
+		return tx.Delete(&ActionWorkflowable{}, id).Error
+	})
 }
 
-// DeleteImportWorkflowable deletes an import workflowable record.
+// DeleteImportWorkflowable deletes an import workflowable.
 func DeleteImportWorkflowable(id uint) error {
-	return DB.Where("id = ?", id).Delete(&ImportWorkflowable{}).Error
+	return DB.Delete(&ImportWorkflowable{}, id).Error
 }
 
-// DeleteExportWorkflowable deletes an export workflowable record.
+// DeleteExportWorkflowable deletes an export workflowable.
 func DeleteExportWorkflowable(id uint) error {
-	return DB.Where("id = ?", id).Delete(&ExportWorkflowable{}).Error
+	return DB.Delete(&ExportWorkflowable{}, id).Error
 }
 
-// DeletePipelineWorkflowable deletes a pipeline workflowable record and its stages.
+// DeletePipelineWorkflowable deletes a pipeline workflowable and its stages.
 func DeletePipelineWorkflowable(id uint) error {
-	return DB.Select("Stages").Where("id = ?", id).Delete(&PipelineWorkflowable{}).Error
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// Delete pipeline stages first
+		if err := tx.Where("pipeline_id = ?", id).Delete(&PipelineStage{}).Error; err != nil {
+			return err
+		}
+		// Then delete the pipeline workflowable
+		return tx.Delete(&PipelineWorkflowable{}, id).Error
+	})
 }
