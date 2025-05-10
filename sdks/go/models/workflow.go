@@ -47,16 +47,23 @@ type PipelineStage struct {
 	RepositoryPath   *string `json:"path,omitempty"`
 }
 
+type ActionInputData struct {
+	Repository string `json:"repository"`
+	Ref        string `json:"ref"`
+	Path       string `json:"path"`
+}
+
 type Workflowable struct {
-	Type           WorkflowableType `json:"type"`
-	ConnectionID   string           `json:"connection_id,omitempty"`
-	ConnectionPath string           `json:"connection_path,omitempty"`
-	Repository     string           `json:"repository,omitempty"`
-	Branch         string           `json:"branch,omitempty"`
-	Path           string           `json:"path,omitempty"`
-	Executable     string           `json:"executable,omitempty"`
-	Live           bool             `json:"live,omitempty"`
-	Stages         []PipelineStage  `json:"stages,omitempty"`
+	Type           WorkflowableType  `json:"type"`
+	ConnectionID   string            `json:"connection_id,omitempty"`
+	ConnectionPath string            `json:"connection_path,omitempty"`
+	Repository     string            `json:"repository,omitempty"`
+	Branch         string            `json:"branch,omitempty"`
+	Path           string            `json:"path,omitempty"`
+	Executable     string            `json:"executable,omitempty"`
+	Live           bool              `json:"live,omitempty"`
+	Stages         []PipelineStage   `json:"stages,omitempty"`
+	Input          []ActionInputData `json:"input,omitempty"`
 }
 
 type Workflow struct {
