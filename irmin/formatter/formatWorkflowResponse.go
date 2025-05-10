@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"context"
 	"irmin-api/db"
 	"irmin-api/utils"
 	"log"
@@ -10,19 +11,41 @@ import (
 
 // FormatWorkflowResponse creates a workflow response object from a workflow object.
 func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error) {
-	// Find the workflowable
-	var workflowable any
-	var err error
+	ctx := context.Background()
+
+	// Fetch schedule and workflowable concurrently
+	scheduleFuture := utils.AsyncWithContext(ctx, func() (*db.Schedule, error) {
+		return db.GetScheduleByID(*workflow.ScheduleID)
+	})
+
+	var workflowableFuture utils.FutureResult[any]
 	switch workflow.Type {
 	case db.WorkflowableTypeImport:
-		workflowable, err = db.GetImportWorkflowableByID(*workflow.ImportID)
+		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
+			return db.GetImportWorkflowableByID(*workflow.ImportID)
+		})
 	case db.WorkflowableTypeExport:
-		workflowable, err = db.GetExportWorkflowableByID(*workflow.ExportID)
+		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
+			return db.GetExportWorkflowableByID(*workflow.ExportID)
+		})
 	case db.WorkflowableTypeAction:
-		workflowable, err = db.GetActionWorkflowableByID(*workflow.ActionID)
+		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
+			return db.GetActionWorkflowableByID(*workflow.ActionID)
+		})
 	case db.WorkflowableTypePipeline:
-		workflowable, err = db.GetPipelineWorkflowableByID(*workflow.PipelineID)
+		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
+			return db.GetPipelineWorkflowableByID(*workflow.PipelineID)
+		})
 	}
+
+	// Wait for both operations to complete
+	schedule, err := scheduleFuture.Await()
+	if err != nil {
+		log.Printf("Error retrieving schedule: %v", err)
+		return nil, err
+	}
+
+	workflowable, err := workflowableFuture.Await()
 	if err != nil {
 		log.Printf("Error retrieving workflowable: %v", err)
 		return nil, err
@@ -111,9 +134,9 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error)
 
 	// Structure the schedule response
 	var scheduleResponse irminmodels.Schedule
-	if workflow.Schedule != nil && workflow.Schedule.Triggers != nil {
-		var scheduleTriggersResponse []irminmodels.ScheduleTrigger
-		for _, trigger := range workflow.Schedule.Triggers {
+	scheduleTriggersResponse := []irminmodels.ScheduleTrigger{} // Initialize empty array by default
+	if schedule != nil && schedule.Triggers != nil {
+		for _, trigger := range schedule.Triggers {
 			var repositorySlug *string
 			if trigger.Repository != nil {
 				repositorySlug = &trigger.Repository.Slug
@@ -146,12 +169,13 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error)
 				WorkflowRunEvent: &workflowRunEvent,
 			})
 		}
-		scheduleResponse = irminmodels.Schedule{
-			Triggers:    scheduleTriggersResponse,
-			MaxRetries:  workflow.Schedule.MaxRetries,
-			MaxRuntime:  workflow.Schedule.MaxRuntime,
-			MinInterval: workflow.Schedule.MinInterval,
-		}
+	}
+
+	scheduleResponse = irminmodels.Schedule{
+		Triggers:    scheduleTriggersResponse,
+		MaxRetries:  schedule.MaxRetries,
+		MaxRuntime:  schedule.MaxRuntime,
+		MinInterval: schedule.MinInterval,
 	}
 
 	// Find the latest workflow run status.
