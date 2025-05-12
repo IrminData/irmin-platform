@@ -262,6 +262,8 @@ const en = {
       unknownType: 'Unknown type',
       hideSchema: 'Hide schema',
       showSchema: 'Show schema',
+      enterPath: 'Enter repository path (e.g. path/to/file.json)',
+      newObjectWillBeCreated: 'New object will be created',
     },
     settings: {
       deletionNote:

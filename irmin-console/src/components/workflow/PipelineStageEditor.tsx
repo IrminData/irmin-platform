@@ -12,6 +12,7 @@ import {
 import ReactSelect from 'react-select';
 
 import FileSelector from '@/components/editor/FileSelector';
+import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -127,6 +128,8 @@ function PipelineStageEditor({
           const stageType = watch(`stages.${index}.type`);
           const selectedConnection = watch(`stages.${index}.connection`);
           const selectedRepository = watch(`stages.${index}.repository`);
+          const selectedBranch = watch(`stages.${index}.branch`);
+          const selectedPath = watch(`stages.${index}.path`);
           const currentExecutable = watch(`stages.${index}.executable`);
 
           return (
@@ -471,16 +474,35 @@ function PipelineStageEditor({
                       readOnly={readOnly || !selectedRepository}
                     />
                   </div>
-                  <div className='flex flex-col gap-2'>
-                    <Label htmlFor={`path-${index}`}>
-                      {dict.repository.objects.path}
-                    </Label>
-                    <Input
-                      id={`path-${index}`}
-                      {...register(`stages.${index}.path`)}
-                      readOnly={readOnly || !selectedRepository}
-                    />
-                  </div>
+                  {readOnly ? (
+                    <div className='flex flex-col gap-2'>
+                      <Label htmlFor={`path-${index}`}>
+                        {dict.repository.objects.path}
+                      </Label>
+                      <Input
+                        id={`path-${index}`}
+                        {...register(`stages.${index}.path`)}
+                        readOnly={readOnly}
+                      />
+                    </div>
+                  ) : (
+                    selectedRepository &&
+                    selectedBranch && (
+                      <div className='flex flex-col gap-2'>
+                        <Label htmlFor={`path-${index}`}>
+                          {dict.repository.objects.path}
+                        </Label>
+                        <RepositoryPathSelector
+                          repositorySlug={selectedRepository}
+                          ref={selectedBranch}
+                          defaultPath={selectedPath}
+                          onPathChange={(path) =>
+                            setValue(`stages.${index}.path`, path)
+                          }
+                        />
+                      </div>
+                    )
+                  )}
                 </>
               )}
             </div>

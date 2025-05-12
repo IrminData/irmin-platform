@@ -772,14 +772,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.0, @codemirror/view@npm:^6.36.7, @codemirror/view@npm:^6.7.1":
-  version: 6.36.7
-  resolution: "@codemirror/view@npm:6.36.7"
+"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.0, @codemirror/view@npm:^6.36.8, @codemirror/view@npm:^6.7.1":
+  version: 6.36.8
+  resolution: "@codemirror/view@npm:6.36.8"
   dependencies:
     "@codemirror/state": "npm:^6.5.0"
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
-  checksum: 10c0/243d57e591f39a8c5357bd8c74d491d245fd3bac2706da0a444b618a7e1a7728bd9e2c653fefeeb40c0e9a887c5e42566eae8df9c4a9f87ba69aa47ec505d6e8
+  checksum: 10c0/0ec264fb6f3e72b45c5a4f94bc3d6bf4c281e5ff087254afae7213b8c401403bbc73cf56c741ba0ed74e524b915878198d2aaaf4a641e375d458c622738f49d4
   languageName: node
   linkType: hard
 
@@ -2302,24 +2302,24 @@ __metadata:
   linkType: hard
 
 "@lezer/css@npm:^1.1.0, @lezer/css@npm:^1.1.7":
-  version: 1.1.11
-  resolution: "@lezer/css@npm:1.1.11"
+  version: 1.2.0
+  resolution: "@lezer/css@npm:1.2.0"
   dependencies:
     "@lezer/common": "npm:^1.2.0"
     "@lezer/highlight": "npm:^1.0.0"
-    "@lezer/lr": "npm:^1.0.0"
-  checksum: 10c0/88579811f10d73a54e1ef8daa9e3ddd2bbdb4531ae151141a8c1c938659d9c375b5fa46d2a7ab15b2e024f269057d561c57a4f06c758c5aac0918df4482bad7f
+    "@lezer/lr": "npm:^1.3.0"
+  checksum: 10c0/d661ad93419bc7281ae5599dbd7e6a6cbd6f483ecbdb9898b6a11931443a75bdd7d2dc1250d2d4350636137cda9c3a6342535219741f3ac00300d35edcaad415
   languageName: node
   linkType: hard
 
 "@lezer/go@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@lezer/go@npm:1.0.0"
+  version: 1.0.1
+  resolution: "@lezer/go@npm:1.0.1"
   dependencies:
     "@lezer/common": "npm:^1.2.0"
     "@lezer/highlight": "npm:^1.0.0"
-    "@lezer/lr": "npm:^1.0.0"
-  checksum: 10c0/0a28007d04134f923d6a650da73dfca942bbe6b667351b582c5ef9541aacc6ac9fdb318cc57b560f962d49a85c1b1ddc8dd93caec8e21bfa4224ede40fcfc73d
+    "@lezer/lr": "npm:^1.3.0"
+  checksum: 10c0/aa4f593b4b34e2b4b802f1dcd7769ad4e7a4f8a3e4e49418769a465999e34e1a2f62d89151ad4a5d56cd2dfcccf85e047d9ec9ae7cb7207a08d47be03c948607
   languageName: node
   linkType: hard
 
@@ -2572,8 +2572,8 @@ __metadata:
   linkType: hard
 
 "@modelcontextprotocol/sdk@npm:^1.8.0":
-  version: 1.11.1
-  resolution: "@modelcontextprotocol/sdk@npm:1.11.1"
+  version: 1.11.2
+  resolution: "@modelcontextprotocol/sdk@npm:1.11.2"
   dependencies:
     content-type: "npm:^1.0.5"
     cors: "npm:^2.8.5"
@@ -2585,7 +2585,7 @@ __metadata:
     raw-body: "npm:^3.0.0"
     zod: "npm:^3.23.8"
     zod-to-json-schema: "npm:^3.24.1"
-  checksum: 10c0/43ae2c8ebcc55a0f050f94fa325dfcb038325fd3b11d7c0ca2bc005d41a007f0039e90632f12ebf316e17d7a002233bc6e62f4d4626bf84edb24bd580c47671f
+  checksum: 10c0/18e49f42138303075e710b744e8ee958033b29e9a75852def3a320788bfe79128743a439189fad71ed4fd8fcc6c291ae7e38d41a22ed82585569cc6f5965e938
   languageName: node
   linkType: hard
 
@@ -5253,12 +5253,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^19.1.3":
-  version: 19.1.3
-  resolution: "@types/react-dom@npm:19.1.3"
+"@types/react-dom@npm:^19.1.4":
+  version: 19.1.4
+  resolution: "@types/react-dom@npm:19.1.4"
   peerDependencies:
     "@types/react": ^19.0.0
-  checksum: 10c0/bb1e3f7a446958f5aa7e46f74cf8470dab7444ab958a57efacca1abcc9847e4ca71e2df68515176ed8fe3fc89315bd949d60f1f346cbadbdbf302bff59d3961b
+  checksum: 10c0/6ae65e7dce761c06b6cdc38221eb320ecb17b1a346f6055053d549fa07c0ddfdb8274e051e7940b5769f2591c982001ebd5d8dc3e0738418d262021ef15c09fd
   languageName: node
   linkType: hard
 
@@ -5653,23 +5653,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xyflow/react@npm:^12.6.0":
-  version: 12.6.0
-  resolution: "@xyflow/react@npm:12.6.0"
+"@xyflow/react@npm:^12.6.1":
+  version: 12.6.1
+  resolution: "@xyflow/react@npm:12.6.1"
   dependencies:
-    "@xyflow/system": "npm:0.0.57"
+    "@xyflow/system": "npm:0.0.58"
     classcat: "npm:^5.0.3"
     zustand: "npm:^4.4.0"
   peerDependencies:
     react: ">=17"
     react-dom: ">=17"
-  checksum: 10c0/bf45c0536c781b70157e35800438b0176bab81d3bf2315605e2841bb0654694c8ecd3401e0b5806b53e323f40bc4f312f759f3688491ae44c0c8923f42d424cb
+  checksum: 10c0/dfdf1bd51661e3e60b361a196c906ea1dd3f884b43ede5d6ee5a13d91b09b8c5e6dddc6c904b493e151269b759024a2ba6b2713ab97753ef44d4a2c0fcab16a1
   languageName: node
   linkType: hard
 
-"@xyflow/system@npm:0.0.57":
-  version: 0.0.57
-  resolution: "@xyflow/system@npm:0.0.57"
+"@xyflow/system@npm:0.0.58":
+  version: 0.0.58
+  resolution: "@xyflow/system@npm:0.0.58"
   dependencies:
     "@types/d3-drag": "npm:^3.0.7"
     "@types/d3-selection": "npm:^3.0.10"
@@ -5678,7 +5678,7 @@ __metadata:
     d3-drag: "npm:^3.0.0"
     d3-selection: "npm:^3.0.0"
     d3-zoom: "npm:^3.0.0"
-  checksum: 10c0/0c9b05ff8cb87ffa06474990038cbf65704f10347028878f91fa5504c75573a9df38b3aa3490747fb9246ce94983ffcc7997b3cb1c2f55967825ef2963c6d7fe
+  checksum: 10c0/0252e8b9510c1238785c570d9b0edd94cc27d6c63f49b582e20f6662c15ede09fab26a8908c8889d23a6cb26f36a6d048ca30fcab7d127dbbb2da1317a0c9a0d
   languageName: node
   linkType: hard
 
@@ -8754,7 +8754,7 @@ __metadata:
     "@codemirror/lang-markdown": "npm:^6.3.2"
     "@codemirror/lang-python": "npm:^6.2.0"
     "@codemirror/lang-sql": "npm:^6.8.0"
-    "@codemirror/view": "npm:^6.36.7"
+    "@codemirror/view": "npm:^6.36.8"
     "@cyntler/react-doc-viewer": "npm:^1.17.0"
     "@mdxeditor/editor": "npm:^3.32.2"
     "@melloware/react-logviewer": "npm:^6.2.0"
@@ -8779,13 +8779,13 @@ __metadata:
     "@types/node": "npm:^22.15.17"
     "@types/postcss-flexbugs-fixes": "npm:^5.0.3"
     "@types/react": "npm:^19.1.3"
-    "@types/react-dom": "npm:^19.1.3"
+    "@types/react-dom": "npm:^19.1.4"
     "@typescript-eslint/eslint-plugin": "npm:8.32.0"
     "@typescript-eslint/parser": "npm:8.32.0"
     "@uiw/codemirror-theme-vscode": "npm:^4.23.12"
     "@uiw/react-codemirror": "npm:^4.23.12"
     "@vercel/speed-insights": "npm:^1.2.0"
-    "@xyflow/react": "npm:^12.6.0"
+    "@xyflow/react": "npm:^12.6.1"
     autoprefixer: "npm:^10.4.21"
     babel-plugin-react-compiler: "npm:19.1.0-rc.1"
     class-variance-authority: "npm:^0.7.1"
@@ -8817,7 +8817,7 @@ __metadata:
     rrule: "npm:^2.8.1"
     sharp: "npm:^0.34.1"
     styled-components: "npm:^6.1.18"
-    tailwind-merge: "npm:^3.2.0"
+    tailwind-merge: "npm:^3.3.0"
     tailwindcss: "npm:^4.1.6"
     tailwindcss-animate: "npm:^1.0.7"
     typedoc: "npm:^0.28.4"
@@ -12653,18 +12653,18 @@ __metadata:
   linkType: hard
 
 "seroval-plugins@npm:^1.1.0":
-  version: 1.3.0
-  resolution: "seroval-plugins@npm:1.3.0"
+  version: 1.3.1
+  resolution: "seroval-plugins@npm:1.3.1"
   peerDependencies:
     seroval: ^1.0
-  checksum: 10c0/fd627674db29d7944d12231249e4d14f4974a620365b5b3905d325ff281b05c09b2e8a250428bd0c4b0fb7bf9c34a5ca4c017dc6674ce1dd07c30a332d0863f3
+  checksum: 10c0/9f8de5f531799ec2d8981db7aa649ce70190696dc243c42c3e66b2677cd6141e1d7e50d465c5de0fad4a9ee41fb5e2aebcb4fd8bbf9a644f66c715dcf9c05b9e
   languageName: node
   linkType: hard
 
 "seroval@npm:^1.1.0":
-  version: 1.3.0
-  resolution: "seroval@npm:1.3.0"
-  checksum: 10c0/78ee897bc5680b3387a0b83e013a6c3dded76cfd1924dda784050d3a12d7eab2c0e26acb5c981c9f76e33b38b85ee23710aa42314e18fad235a6720e2e3ad96d
+  version: 1.3.1
+  resolution: "seroval@npm:1.3.1"
+  checksum: 10c0/c50632f6999ca6bb4206ad7065924228865515cb48711777dbf40a63b373f31908e9f8790f9e1a1a294fd9ecd3a5726c830b78db0f230c40adf84d7af1a9bdd5
   languageName: node
   linkType: hard
 
@@ -13389,10 +13389,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwind-merge@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "tailwind-merge@npm:3.2.0"
-  checksum: 10c0/294f6c2db0df74405bff126107107426c3126a70a1717d78e8d6811db65546c9bb3d61282bdb8d9fbded23f6bc8ec3e8e61031a4f53265f90b7f3dba558f88f4
+"tailwind-merge@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "tailwind-merge@npm:3.3.0"
+  checksum: 10c0/a50cd141100486f98541dfab3705712af5860556689b7496dc6b0284374f02d12d5471f0f40035f6bb8b1c749c422060a1f3e5f8900057d8a7786b111c8472e6
   languageName: node
   linkType: hard
 

@@ -265,6 +265,8 @@ const fi = {
       unknownType: 'Unknown type',
       hideSchema: 'Hide schema',
       showSchema: 'Show schema',
+      enterPath: 'Syötä data-arkiston polku (esim. polku/tiedostoon.json)',
+      newObjectWillBeCreated: 'Uusi objekti luodaan',
     },
     settings: {
       deletionNote:

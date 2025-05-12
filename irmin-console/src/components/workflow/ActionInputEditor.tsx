@@ -5,6 +5,7 @@ import { memo, useCallback, useEffect } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
+import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -67,6 +68,13 @@ function ActionInputEditor({
     control,
     name: 'inputFiles',
   });
+
+  // Watch repository and ref for each input file
+  const watchedInputFiles = inputFileFields.map((field, index) => ({
+    ...field,
+    repository: watch(`inputFiles.${index}.repository`),
+    ref: watch(`inputFiles.${index}.ref`),
+  }));
 
   // Handle form submission
   const onSubmit = useCallback(
@@ -172,12 +180,15 @@ function ActionInputEditor({
               <Label htmlFor={`inputFiles.${index}.path`}>
                 {dict.workflow.scriptInputFiles.path}
               </Label>
-              <Controller
-                control={control}
-                name={`inputFiles.${index}.path`}
-                render={({ field }) => (
-                  <Input id={`inputFiles.${index}.path`} {...field} />
-                )}
+              <RepositoryPathSelector
+                repositorySlug={watchedInputFiles[index].repository}
+                ref={watchedInputFiles[index].ref}
+                defaultPath={inputFileField.path}
+                defaultExpanded={false}
+                nonGroupOnly={true}
+                onPathChange={(path) =>
+                  setValue(`inputFiles.${index}.path`, path)
+                }
               />
             </div>
           </div>
