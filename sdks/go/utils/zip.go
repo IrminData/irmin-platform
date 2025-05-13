@@ -27,14 +27,19 @@ func ZipFiles(files map[string][]byte) ([]byte, error) {
 		entryWriter, err := zw.Create(filePath)
 		if err != nil {
 			// ensure writer is closed on error
-			zw.Close()
+			if closeErr := zw.Close(); closeErr != nil {
+				return nil, closeErr
+			}
 			return nil, err
 		}
 
 		// write the file content into the ZIP entry
-		if _, err := entryWriter.Write(content); err != nil {
-			zw.Close()
-			return nil, err
+		_, writeErr := entryWriter.Write(content)
+		if writeErr != nil {
+			if closeErr := zw.Close(); closeErr != nil {
+				return nil, closeErr
+			}
+			return nil, writeErr
 		}
 	}
 
@@ -78,16 +83,18 @@ func UnzipFiles(zipData []byte) (map[string][]byte, error) {
 		filePath := path.Clean(file.Name)
 
 		// open the file in the archive
-		rc, err := file.Open()
-		if err != nil {
-			return nil, err
+		fileReader, openErr := file.Open()
+		if openErr != nil {
+			return nil, openErr
 		}
 
 		// read the file contents
-		content, err := io.ReadAll(rc)
-		rc.Close() // ensure the file is closed
-		if err != nil {
-			return nil, err
+		content, readErr := io.ReadAll(fileReader)
+		if closeErr := fileReader.Close(); closeErr != nil {
+			return nil, closeErr
+		}
+		if readErr != nil {
+			return nil, readErr
 		}
 
 		// store the file contents in the map with the full path
