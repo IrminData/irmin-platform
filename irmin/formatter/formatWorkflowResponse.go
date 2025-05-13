@@ -112,22 +112,42 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error)
 		workflowableResponse.Live = pipelineWorkflowable.Live
 		var stagesResponse []irminmodels.PipelineStage
 		for _, stage := range pipelineWorkflowable.Stages {
-			connectionSqid, _ := utils.EncodeSqids("connections", uint64(*stage.ConnectionID))
-			repositorySlug := stage.Repository.Slug
-			stageResponse := irminmodels.PipelineStage{
-				Description:         stage.Description,
-				Write:               stage.Write,
-				Read:                stage.Read,
-				Type:                irminmodels.PipelineStageType(stage.Type),
-				Executable:          stage.Executable,
-				ConnectionWritePath: stage.ConnectionWritePath,
-				ConnectionReadPath:  stage.ConnectionReadPath,
-				RepositoryBranch:    stage.RepositoryBranch,
-				RepositoryPath:      stage.RepositoryPath,
-				ConnectionID:        &connectionSqid,
-				Repository:          &repositorySlug,
+			switch stage.Type {
+			case db.PipelineStageTypeAction:
+				stageResponse := irminmodels.PipelineStage{
+					Description: stage.Description,
+					Write:       stage.Write,
+					Read:        stage.Read,
+					Type:        irminmodels.PipelineStageTypeAction,
+					Executable:  stage.Executable,
+				}
+				stagesResponse = append(stagesResponse, stageResponse)
+			case db.PipelineStageTypeConnection:
+				connectionSqid, _ := utils.EncodeSqids("connections", uint64(*stage.ConnectionID))
+				stageResponse := irminmodels.PipelineStage{
+					Description:         stage.Description,
+					Write:               stage.Write,
+					Read:                stage.Read,
+					Type:                irminmodels.PipelineStageTypeConnection,
+					ConnectionWritePath: stage.ConnectionWritePath,
+					ConnectionReadPath:  stage.ConnectionReadPath,
+					ConnectionID:        &connectionSqid,
+				}
+				stagesResponse = append(stagesResponse, stageResponse)
+			case db.PipelineStageTypeRepository:
+				repositorySlug := stage.Repository.Slug
+				stageResponse := irminmodels.PipelineStage{
+					Description:      stage.Description,
+					Write:            stage.Write,
+					Read:             stage.Read,
+					Type:             irminmodels.PipelineStageTypeRepository,
+					RepositoryBranch: stage.RepositoryBranch,
+					RepositoryPath:   stage.RepositoryPath,
+					Repository:       &repositorySlug,
+				}
+				stagesResponse = append(stagesResponse, stageResponse)
 			}
-			stagesResponse = append(stagesResponse, stageResponse)
+
 		}
 		workflowableResponse.Stages = stagesResponse
 	}
