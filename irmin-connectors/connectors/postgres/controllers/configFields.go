@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	postgresclient "irmin-connectors/connectors/postgres/client"
-	"irmin-connectors/connectors/postgres/config"
-	"irmin-connectors/lib"
 	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"strconv"
@@ -15,14 +13,6 @@ import (
 
 // ConfigFields handles the configuration fields endpoint.
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error {
-	// Make sure the request is authorized by validating the system token
-	info := config.GetConnectorInfo()
-	if !lib.ValidateConnectorSystemToken(cs.DB, cs.Logger, c, info.Name) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
-		})
-	}
-
 	// Retrieve the required route variables
 	fieldsKey := c.Params("key")
 

@@ -13,18 +13,22 @@ func SetupRoutes(app *models.ConnectorsApp) {
 	// Create a new group for the PostgreSQL connector routes
 	postgresRoutes := app.App.Group("/postgres")
 
-	// Connector API routes
-	postgresRoutes.Get("/info", controller.Info)
-	postgresRoutes.Post("/configuration/:key/fields", controller.ConfigFields)
-	postgresRoutes.Post("/configuration/validate", controller.ConfigValidate)
-	postgresRoutes.Post("/operation/schema/:operation", controller.OperationSchemaGet)
-	postgresRoutes.Post("/operation/init", controller.OperationInit)
-	postgresRoutes.Post("/operation/push", controller.OperationPush)
-	postgresRoutes.Post("/operation/patch", controller.OperationPatch)
-	postgresRoutes.Post("/operation/pull", controller.OperationPull)
-	postgresRoutes.Post("/operation/subscribe", controller.SubscribeToChanges)
-	postgresRoutes.Post("/operation/cancel", controller.OperationCancel)
-	postgresRoutes.Post("/operation/status", controller.OperationStatus)
+	// Connector API routes (system token required)
+	postgresSystemRoutes := postgresRoutes.Group("/", controller.ValidateSystemTokenMiddleware)
+	postgresSystemRoutes.Get("/info", controller.Info)
+	postgresSystemRoutes.Post("/configuration/:key/fields", controller.ConfigFields)
+	postgresSystemRoutes.Post("/configuration/validate", controller.ConfigValidate)
+	postgresSystemRoutes.Post("/operation/schema/:operation", controller.OperationSchemaGet)
+	postgresSystemRoutes.Post("/operation/init", controller.OperationInit)
+	postgresSystemRoutes.Post("/operation/cancel", controller.OperationCancel)
+	postgresSystemRoutes.Post("/operation/status", controller.OperationStatus)
+
+	// Connector API routes (operation token required)
+	postgresOperationRoutes := postgresRoutes.Group("/", controller.ValidateOperationTokenMiddleware)
+	postgresOperationRoutes.Post("/operation/push", controller.OperationPush)
+	postgresOperationRoutes.Post("/operation/patch", controller.OperationPatch)
+	postgresOperationRoutes.Post("/operation/pull", controller.OperationPull)
+	postgresOperationRoutes.Post("/operation/subscribe", controller.SubscribeToChanges)
 
 	// Public information about the connector
 	postgresRoutes.Get("/details", controller.DetailsPage)

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	postgresclient "irmin-connectors/connectors/postgres/client"
-	"irmin-connectors/connectors/postgres/config"
-	"irmin-connectors/lib"
 	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"strconv"
@@ -15,14 +13,6 @@ import (
 
 // ConfigValidate handles the configuration validation endpoint.
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
-	// Make sure the request is authorized by validating the system token
-	info := config.GetConnectorInfo()
-	if !lib.ValidateConnectorSystemToken(cs.DB, cs.Logger, c, info.Name) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
-		})
-	}
-
 	// Prepare a context for database ops, plus a slice to store errors.
 	ctx := c.Context()
 	var errors []string

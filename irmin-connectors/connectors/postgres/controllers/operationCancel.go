@@ -1,8 +1,7 @@
 package postgrescontrollers
 
 import (
-	"irmin-connectors/connectors/postgres/config"
-	"irmin-connectors/lib"
+	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"strconv"
 
@@ -11,11 +10,12 @@ import (
 
 // OperationCancel handles the cancellation of an operation.
 func (cs *Controllers) OperationCancel(c fiber.Ctx) error {
-	// Make sure the request is authorized by validating the system token
-	info := config.GetConnectorInfo()
-	if !lib.ValidateConnectorSystemToken(cs.DB, cs.Logger, c, info.Name) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
+	// get the connector info from the context
+	infoValue := c.Locals("connectorInfo")
+	info, ok := infoValue.(*models.ConnectorDetails)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Invalid connector info type in context",
 		})
 	}
 
@@ -29,12 +29,7 @@ func (cs *Controllers) OperationCancel(c fiber.Ctx) error {
 
 	// Find the operation
 	operationID, err := strconv.Atoi(fields["operation_id"])
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid operation ID",
-		})
-	}
-	if operationID < 0 {
+	if err != nil || operationID < 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid operation ID",
 		})

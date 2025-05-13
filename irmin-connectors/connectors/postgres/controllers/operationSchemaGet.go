@@ -1,13 +1,11 @@
 package postgrescontrollers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
 	postgresclient "irmin-connectors/connectors/postgres/client"
-	"irmin-connectors/connectors/postgres/config"
-	"irmin-connectors/lib"
+	"irmin-connectors/db"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -19,16 +17,17 @@ import (
 // It expects an operation token in the form, and on success writes
 // a JSON response with Content-Type: application/json.
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	// Make sure the request is authorized by validating the operation token
-	info := config.GetConnectorInfo()
-	valid, _, operation := lib.ValidateOperationToken(cs.DB, cs.Logger, c, info.Name)
-	if !valid {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
+	// get the operation from the context
+	opValue := c.Locals("operation")
+	operation, ok := opValue.(*db.Operation)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Invalid operation type in context",
 		})
 	}
 
-	ctx := context.Background()
+	// get the context
+	ctx := c.Context()
 
 	// initialise Postgres client
 	client, dbName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)

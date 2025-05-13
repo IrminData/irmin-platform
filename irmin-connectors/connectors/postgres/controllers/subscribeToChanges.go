@@ -2,23 +2,31 @@ package postgrescontrollers
 
 import (
 	postgresclient "irmin-connectors/connectors/postgres/client"
-	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/db"
-	"irmin-connectors/lib"
 	"irmin-connectors/utils"
 
 	"github.com/gofiber/fiber/v3"
 )
 
+// SubscribeToChanges subscribes to changes for a given operation.
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
-	// Make sure the request is authorized by validating the operation token
-	info := config.GetConnectorInfo()
-	tokenValid, registration, operation := lib.ValidateOperationToken(cs.DB, cs.Logger, c, info.Name)
-	if !tokenValid {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
+	// get the connector registration and operation from the context
+	regValue := c.Locals("registration")
+	registration, ok := regValue.(*db.ConnectorRegistration)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Invalid registration type in context",
 		})
 	}
+
+	opValue := c.Locals("operation")
+	operation, ok := opValue.(*db.Operation)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Invalid operation type in context",
+		})
+	}
+
 	// Prepare a context for database operations
 	ctx := c.Context()
 

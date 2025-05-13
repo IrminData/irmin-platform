@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"io"
 	postgresclient "irmin-connectors/connectors/postgres/client"
-	"irmin-connectors/connectors/postgres/config"
-	"irmin-connectors/lib"
+	"irmin-connectors/db"
 	"irmin-connectors/utils"
 	"net/http"
 	"strings"
@@ -19,12 +18,12 @@ import (
 
 // OperationPatch handles the "patch" operation.
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
-	// Make sure the request is authorized by validating the operation token
-	info := config.GetConnectorInfo()
-	tokenValid, _, operation := lib.ValidateOperationToken(cs.DB, cs.Logger, c, info.Name)
-	if !tokenValid {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
+	// get the operation from the context
+	opValue := c.Locals("operation")
+	operation, ok := opValue.(*db.Operation)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Invalid operation type in context",
 		})
 	}
 
