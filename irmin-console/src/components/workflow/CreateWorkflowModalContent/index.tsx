@@ -27,53 +27,49 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
  * @param props.setCurrentStep - Function to set the current step
  * @param props.initialWorkflowData - (optional) Initial workflow data
  */
-const CreateWorkflowModalContent = memo(
-  ({
-    editorItems,
-    repositories,
-    connections,
-    workflows,
-    isOpen,
-    closeModal,
-    currentStep,
-    setCurrentStep,
-    initialWorkflowData,
-  }: {
-    editorItems: EditorItem[];
-    repositories: Repository[];
-    connections: Connection[];
-    workflows: Workflow[];
-    isOpen: boolean;
-    closeModal: () => void;
-    currentStep: number;
-    setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-    initialWorkflowData?: WorkflowInput;
-  }) => {
-    if (!isOpen) return null;
+const CreateWorkflowModalContent = ({
+  editorItems,
+  repositories,
+  connections,
+  workflows,
+  isOpen,
+  closeModal,
+  currentStep,
+  setCurrentStep,
+  initialWorkflowData,
+}: {
+  editorItems: EditorItem[];
+  repositories: Repository[];
+  connections: Connection[];
+  workflows: Workflow[];
+  isOpen: boolean;
+  closeModal: () => void;
+  currentStep: number;
+  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+  initialWorkflowData?: WorkflowInput;
+}) => {
+  if (!isOpen) return null;
 
-    return (
-      <CreateWorkflowProvider initialWorkflowData={initialWorkflowData}>
-        {currentStep === 1 && (
-          <ConfigureWorkflowable
-            editorItems={editorItems}
-            repositories={repositories}
-            connections={connections}
-            setCurrentStep={setCurrentStep}
-          />
-        )}
-        {currentStep === 2 && (
-          <ConfigureWorkflow
-            setCurrentStep={setCurrentStep}
-            closeModal={closeModal}
-            workflows={workflows}
-            repositories={repositories}
-          />
-        )}
-      </CreateWorkflowProvider>
-    );
-  }
-);
+  return (
+    <CreateWorkflowProvider initialWorkflowData={initialWorkflowData}>
+      {currentStep === 1 && (
+        <ConfigureWorkflowable
+          editorItems={editorItems}
+          repositories={repositories}
+          connections={connections}
+          setCurrentStep={setCurrentStep}
+        />
+      )}
+      {currentStep === 2 && (
+        <ConfigureWorkflow
+          setCurrentStep={setCurrentStep}
+          closeModal={closeModal}
+          workflows={workflows}
+          repositories={repositories}
+        />
+      )}
+    </CreateWorkflowProvider>
+  );
+};
 
-CreateWorkflowModalContent.displayName = 'CreateWorkflowModalContent';
-
-export default CreateWorkflowModalContent;
+export default memo(CreateWorkflowModalContent);

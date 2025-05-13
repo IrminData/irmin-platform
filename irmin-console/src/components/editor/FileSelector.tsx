@@ -173,7 +173,7 @@ const FileSelector = ({
         <ButtonWithTooltip
           href={`${workspaceUrl}/editor?path=${currentSelectedFile}`}
           target='_blank'
-          variant='gray'
+          variant='secondary'
           tooltip={currentSelectedFile}
           className='w-full'
         >

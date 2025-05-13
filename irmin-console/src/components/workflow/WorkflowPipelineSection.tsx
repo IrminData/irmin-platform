@@ -73,6 +73,7 @@ const WorkflowPipelineSection = ({
         connections={connections}
         readOnly={true}
         hideSaveButton={true}
+        defaultCollapsed={true}
       />
     </div>
   );

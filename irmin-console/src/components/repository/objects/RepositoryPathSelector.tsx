@@ -7,11 +7,11 @@ import { FiFile, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight, TbChevronUp } from 'react-icons/tb';
 
 import IrminCore from '@/lib/core';
-import { getToken } from '@/lib/getToken';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -154,6 +154,7 @@ const RepositoryPathSelector = ({
   existingOnly = false,
   loading: loadingProp = false,
 }: RepositoryPathSelectorProps) => {
+  const { getToken } = useIAM();
   const { workspaceSlug } = useWorkspace();
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
@@ -209,6 +210,7 @@ const RepositoryPathSelector = ({
     locale,
     workspaceSlug,
     irminAlert,
+    getToken,
   ]);
 
   // Keep input in sync with selected path

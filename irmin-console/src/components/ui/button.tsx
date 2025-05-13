@@ -117,12 +117,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (href) {
       return (
-        <Link
-          href={href}
-          target={target}
-          className='contents'
-          prefetch={prefetch}
-        >
+        <Link href={href} target={target} prefetch={prefetch}>
           <Comp {...buttonProps}>{content}</Comp>
         </Link>
       );

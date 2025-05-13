@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -16,9 +16,29 @@ import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { PipelineWorkflow, Workflow } from '@/types/core/Workflow';
+import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import PipelineWorkflowList from './PipelineWorkflowList';
+
+const initialWorkflowData: WorkflowInput = {
+  // Workflow properties
+  name: '',
+  description: '',
+  documentation: '',
+  schedule: {
+    triggers: [],
+    max_retries: 3,
+    max_runtime: 15,
+    min_interval: 120,
+  },
+  // Workflowable properties
+  workflowable: {
+    type: 'pipeline',
+    live: false,
+    stages: [],
+  },
+};
 
 /**
  * UI component to list and manage Pipeline Workflows in the workspace
@@ -33,7 +53,7 @@ import PipelineWorkflowList from './PipelineWorkflowList';
  * @param props0.workflows - List of workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
-export default function PipelineWorkflowsSection({
+function PipelineWorkflowsSection({
   editorItems,
   connections,
   repositories,
@@ -122,24 +142,7 @@ export default function PipelineWorkflowsSection({
           closeModal={closeModal}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-          initialWorkflowData={{
-            // Workflow properties
-            name: '',
-            description: '',
-            documentation: '',
-            schedule: {
-              triggers: [],
-              max_retries: 3,
-              max_runtime: 15,
-              min_interval: 120,
-            },
-            // Workflowable properties
-            workflowable: {
-              type: 'pipeline',
-              live: false,
-              stages: [],
-            },
-          }}
+          initialWorkflowData={initialWorkflowData}
         />
       </SideModal>
       <div className='py-4'>
@@ -161,3 +164,5 @@ export default function PipelineWorkflowsSection({
     </div>
   );
 }
+
+export default memo(PipelineWorkflowsSection);

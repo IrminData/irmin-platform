@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import IrminCore from '@/lib/core';
-import { getToken } from '@/lib/getToken';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -64,6 +64,7 @@ export const useLogEvents = (
 ): UseLogEventsResult => {
   const { perPage = 100, logsForType = 'workspace', logsFor = '' } = options;
 
+  const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspace();
   const { irminAlert } = usePopup();
@@ -159,6 +160,7 @@ export const useLogEvents = (
       perPage,
       currentPage,
       irminAlert,
+      getToken,
     ]
   );
 

@@ -28,13 +28,14 @@ export default async function PipelineWorkflowsPage(props: {
   const params = await props.params;
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;
+  const workspace = params.workspace;
   const token = await getToken();
   const [editorItems, workflows, connections, repositories] = await Promise.all(
     [
-      getEditorItems({ workspace: params.workspace, path: '', token }),
-      getWorkflows({ workspace: params.workspace, token }),
-      getConnections({ workspace: params.workspace, token }),
-      getRepositories({ workspace: params.workspace, token }),
+      getEditorItems({ workspace, path: '', token }),
+      getWorkflows({ workspace, token }),
+      getConnections({ workspace, token }),
+      getRepositories({ workspace, token }),
     ]
   );
   return (

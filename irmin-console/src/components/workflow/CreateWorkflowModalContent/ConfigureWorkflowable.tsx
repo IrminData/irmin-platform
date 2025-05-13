@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import ReactSelect from 'react-select';
 
@@ -27,6 +27,7 @@ import {
   ActionWorkflowableInput,
   ExportWorkflowableInput,
   ImportWorkflowableInput,
+  PipelineStageInput,
   PipelineWorkflowableInput,
 } from '@/types/internal/WorkflowInput';
 
@@ -53,7 +54,7 @@ function ConfigureWorkflowable({
   const { workflowData, setWorkflowData } = useCreateWorkflow();
   const { dict } = useLocale();
 
-  const workflowable = workflowData.workflowable;
+  const workflowable = useMemo(() => workflowData.workflowable, [workflowData]);
 
   const handleInputFilesChange = useCallback(
     (inputFiles: ActionInputData[]) => {
@@ -66,6 +67,19 @@ function ConfigureWorkflowable({
       }));
     },
     [setWorkflowData]
+  );
+
+  const handlePipelineStagesSubmit = useCallback(
+    (stages: PipelineStageInput[]) => {
+      setWorkflowData({
+        ...workflowData,
+        workflowable: {
+          ...(workflowable as PipelineWorkflowableInput),
+          stages,
+        },
+      });
+    },
+    [setWorkflowData, workflowData, workflowable]
   );
 
   const handleNextStep = useCallback(() => {
@@ -492,21 +506,14 @@ function ConfigureWorkflowable({
         {workflowable.type === 'pipeline' && (
           <>
             <PipelineStageEditor
-              initialStages={workflowable.stages}
+              initialStages={[]}
               editorItems={editorItems}
               repositories={repositories}
               connections={connections}
-              onSubmit={(data) =>
-                setWorkflowData({
-                  ...workflowData,
-                  workflowable: {
-                    ...(workflowable as PipelineWorkflowableInput),
-                    stages: data.stages,
-                  },
-                })
-              }
+              onSubmit={handlePipelineStagesSubmit}
               readOnly={false}
               hideSaveButton={true}
+              defaultCollapsed={false}
             />
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.pipeline.livePipeline}</Label>
