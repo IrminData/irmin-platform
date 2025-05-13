@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/helmet"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 )
 
@@ -52,7 +53,7 @@ func main() {
 	// Initialize a new Fiber app
 	app := fiber.New(fiber.Config{
 		AppName:   "Irmin API",
-		BodyLimit: 100 * 1024 * 1024, // 100 MB
+		BodyLimit: 1024 * 1024 * 1024 * 5, // 5 GB
 	})
 
 	// Return request ID in the response headers
@@ -95,6 +96,11 @@ func main() {
 			},
 		},
 	))
+
+	// Enable helmet
+	if env.HelmetEnabled {
+		app.Use(helmet.New())
+	}
 
 	// Enable CORS if configured
 	if env.CorsEnabled {

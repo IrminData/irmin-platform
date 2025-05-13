@@ -15,6 +15,7 @@ type CoreAPIEnv struct {
 	URL                      string // URL of the Core API server
 	SystemToken              string // Token to authenticate system requests to the API
 	CorsEnabled              bool   // Flag to enable CORS
+	HelmetEnabled            bool   // Flag to enable helmet
 	CorsOrigins              string // Allowed origins for CORS
 	SqidAlphabet             string // Alphabet to use for SQIDs
 	DatabaseConnectionString string // Postgres DB connection string
@@ -100,6 +101,14 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	helmetEnabledStr, err := getEnv("HELMET_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	helmetEnabled, err := strconv.ParseBool(helmetEnabledStr)
+	if err != nil {
+		return nil, err
+	}
 	corsEnabledStr, err := getEnv("CORS_ENABLED", false, "false")
 	if err != nil {
 		return nil, err
@@ -239,6 +248,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		URL:                      url,
 		SystemToken:              token,
 		CorsEnabled:              corsEnabled,
+		HelmetEnabled:            helmetEnabled,
 		CorsOrigins:              corsOrigins,
 		SqidAlphabet:             sqidAlphabet,
 		DatabaseConnectionString: databaseConnectionString,

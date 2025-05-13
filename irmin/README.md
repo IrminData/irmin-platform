@@ -64,6 +64,7 @@ PORT=8082
 URL=http://localhost:8082
 TOKEN=...
 
+HELMET_ENABLED=true
 CORS_ENABLED=true
 CORS_ORIGINS=https://console.irmin.dev,https://connectors.irmin.dev
 

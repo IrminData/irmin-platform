@@ -12,6 +12,7 @@ import (
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -319,7 +320,7 @@ func ObjectsDownload(c fiber.Ctx) error {
 	}
 
 	// create a zip from our map of files
-	zipContent, err := utils.ZipFiles(files)
+	zipContent, err := irminutils.ZipFiles(files)
 	if err != nil {
 		log.Printf("Error creating zip file: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
