@@ -11,11 +11,16 @@ import { ObjectSchema } from '@/types/core/ObjectSchema';
  *
  * @param props - The props for the component
  * @param props.pullSchema - (optional) The schema for the pull operation
+ * @param props.focusedPath - (optional) The path to focus on
+ * @param props.operationMethod - (optional) The operation method the schema is for
  */
 const ConnectionSchemaSection = ({
   pullSchema,
+  focusedPath,
 }: {
   pullSchema?: ObjectSchema;
+  focusedPath?: string;
+  operationMethod?: string;
 }) => {
   const { dict } = useLocale();
   if (!pullSchema) {
@@ -27,11 +32,14 @@ const ConnectionSchemaSection = ({
       </div>
     );
   }
-
   return (
     <div className='relative container mx-auto max-w-7xl px-4'>
       <div className='bg-background min-h-96 w-full overflow-y-scroll rounded'>
-        <SchemaViewer schema={pullSchema} isExpanded={true} />
+        <SchemaViewer
+          schema={pullSchema}
+          isExpanded={true}
+          focusedPath={focusedPath}
+        />
       </div>
     </div>
   );

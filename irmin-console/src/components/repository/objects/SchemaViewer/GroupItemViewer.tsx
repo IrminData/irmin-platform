@@ -19,6 +19,8 @@ export function GroupItemViewer({
   item,
   depth = 0,
   isExpanded = false,
+  focusedPath,
+  isFocused = false,
 }: {
   /** The group item plus metadata */
   item: ObjectSchema;
@@ -26,6 +28,10 @@ export function GroupItemViewer({
   depth?: number;
   /** Whether to start expanded */
   isExpanded?: boolean;
+  /** The path to focus on */
+  focusedPath?: string;
+  /** Whether this item is focused */
+  isFocused?: boolean;
 }) {
   const { dict, locale } = useLocale();
   const [expanded, setExpanded] = useState(isExpanded && depth < 1);
@@ -33,7 +39,9 @@ export function GroupItemViewer({
   if (item.type !== 'group') return <></>;
 
   return (
-    <div className='bg-popover/10 rounded-md border p-2 dark:border-gray-800'>
+    <div
+      className={`bg-popover/10 rounded-md border p-2 dark:border-gray-800 ${isFocused ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}
+    >
       <div className='flex items-start gap-3'>
         <MdFolder className='mt-1 h-6 w-6 flex-shrink-0 text-yellow-500 dark:text-yellow-300' />
         <div className='min-w-0 flex-grow'>
@@ -82,6 +90,7 @@ export function GroupItemViewer({
                   schema={child}
                   depth={depth + 1}
                   isExpanded={isExpanded}
+                  focusedPath={focusedPath}
                 />
               ))}
             </div>

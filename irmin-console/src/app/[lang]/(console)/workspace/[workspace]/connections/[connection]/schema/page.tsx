@@ -14,6 +14,7 @@ import { SingleConnectionLayoutParams } from '../layout';
  */
 export default async function ConnectionSchemaPage(props: {
   params: Promise<SingleConnectionLayoutParams>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
   const currentWorkspace = params.workspace;
@@ -21,12 +22,19 @@ export default async function ConnectionSchemaPage(props: {
   const connectionID = params.connection;
   if (isInvalidRouteProp(connectionID)) return notFound();
 
-  const token = await getToken();
+  // Get path and operation method from query params
+  const searchParams = await props.searchParams;
+  const path =
+    typeof searchParams.path === 'string' ? searchParams.path : undefined;
+  const operationMethod =
+    typeof searchParams.method === 'string' ? searchParams.method : 'pull';
 
+  // Get the schema
+  const token = await getToken();
   const pullSchema = await getConnectionSchema({
     workspace: currentWorkspace,
     connectionID,
-    operation_method: 'pull',
+    operationMethod,
     token,
   });
 
@@ -34,5 +42,11 @@ export default async function ConnectionSchemaPage(props: {
     notFound();
   }
 
-  return <ConnectionSchemaSection pullSchema={pullSchema.data} />;
+  return (
+    <ConnectionSchemaSection
+      pullSchema={pullSchema.data}
+      focusedPath={path}
+      operationMethod={operationMethod}
+    />
+  );
 }

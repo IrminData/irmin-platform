@@ -57,19 +57,19 @@ export async function getConnection({
  * @param props - The properties for the function.
  * @param props.workspace - The workspace slug.
  * @param props.connectionID - The connection's identifier.
- * @param props.operation_method - The operation method for the connection.
+ * @param props.operationMethod - The operation method for the connection.
  * @param props.token - Optional token for authentication.
  * @returns The schema data.
  */
 export async function getConnectionSchema({
   workspace,
   connectionID,
-  operation_method,
+  operationMethod,
   token,
 }: {
   workspace: string;
   connectionID: string;
-  operation_method: string;
+  operationMethod: string;
   token?: string;
 }) {
   const irminCore = await initCore(token);
@@ -78,7 +78,7 @@ export async function getConnectionSchema({
     await irminCore.connectionService.fetchConnectionSchema({
       workspace,
       connectionID,
-      operation_method,
+      operationMethod,
     });
   return connectionSchemaResponse;
 }

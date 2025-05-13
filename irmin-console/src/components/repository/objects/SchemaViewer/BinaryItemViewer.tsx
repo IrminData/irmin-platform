@@ -11,7 +11,13 @@ import type { ObjectSchema } from '@/types/core/ObjectSchema';
 /**
  * Component to visualise a binary schema object
  */
-export function BinaryItemViewer({ item }: { item: ObjectSchema }) {
+export function BinaryItemViewer({
+  item,
+  isFocused = false,
+}: {
+  item: ObjectSchema;
+  isFocused?: boolean;
+}) {
   const { dict, locale } = useLocale();
 
   if (item.type !== 'binary') return <></>;
@@ -27,7 +33,9 @@ export function BinaryItemViewer({ item }: { item: ObjectSchema }) {
   };
 
   return (
-    <div className='bg-popover/10 rounded-md border p-2 dark:border-gray-800'>
+    <div
+      className={`bg-popover/10 rounded-md border p-2 dark:border-gray-800 ${isFocused ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}
+    >
       <div className='flex items-start gap-3'>
         {getIcon()}
         <div className='min-w-0 flex-grow'>

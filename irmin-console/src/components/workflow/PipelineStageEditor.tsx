@@ -11,6 +11,7 @@ import {
 } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
+import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import FileSelector from '@/components/editor/FileSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import { Button } from '@/components/ui/button';
@@ -127,6 +128,12 @@ function PipelineStageEditor({
         {fields.map((field, index) => {
           const stageType = watch(`stages.${index}.type`);
           const selectedConnection = watch(`stages.${index}.connection`);
+          const selectedConnectionWritePath = watch(
+            `stages.${index}.connection_write_path`
+          );
+          const selectedConnectionReadPath = watch(
+            `stages.${index}.connection_read_path`
+          );
           const selectedRepository = watch(`stages.${index}.repository`);
           const selectedBranch = watch(`stages.${index}.branch`);
           const selectedPath = watch(`stages.${index}.path`);
@@ -364,32 +371,65 @@ function PipelineStageEditor({
                       </Button>
                     )}
                   </div>
-                  <div className='flex flex-col gap-2'>
-                    <Label htmlFor={`connection_write_path-${index}`}>
-                      {dict.workflow.pipeline.connectionWritePath}
-                    </Label>
-                    <Input
-                      id={`connection_write_path-${index}`}
-                      placeholder={
-                        dict.workflow.pipeline.connectionWritePathDescription
-                      }
-                      {...register(`stages.${index}.connection_write_path`)}
-                      readOnly={readOnly || !selectedConnection}
-                    />
-                  </div>
-                  <div className='flex flex-col gap-2'>
-                    <Label htmlFor={`connection_read_path-${index}`}>
-                      {dict.workflow.pipeline.connectionReadPath}
-                    </Label>
-                    <Input
-                      id={`connection_read_path-${index}`}
-                      placeholder={
-                        dict.workflow.pipeline.connectionReadPathDescription
-                      }
-                      {...register(`stages.${index}.connection_read_path`)}
-                      readOnly={readOnly || !selectedConnection}
-                    />
-                  </div>
+                  {selectedConnection && (
+                    <div className='flex flex-col gap-2'>
+                      <Label htmlFor={`connection_write_path-${index}`}>
+                        {dict.workflow.pipeline.connectionWritePath}
+                      </Label>
+                      {!readOnly ? (
+                        <ConnectionPathSelector
+                          connectionId={selectedConnection}
+                          defaultPath={selectedConnectionWritePath ?? ''}
+                          operationMethod={'pull'}
+                          onPathChange={(path) =>
+                            setValue(
+                              `stages.${index}.connection_write_path`,
+                              path
+                            )
+                          }
+                        />
+                      ) : (
+                        <Input
+                          id={`connection_write_path-${index}`}
+                          placeholder={
+                            dict.workflow.pipeline
+                              .connectionWritePathDescription
+                          }
+                          {...register(`stages.${index}.connection_write_path`)}
+                          readOnly={readOnly || !selectedConnection}
+                        />
+                      )}
+                    </div>
+                  )}
+                  {selectedConnection && (
+                    <div className='flex flex-col gap-2'>
+                      <Label htmlFor={`connection_read_path-${index}`}>
+                        {dict.workflow.pipeline.connectionReadPath}
+                      </Label>
+                      {!readOnly ? (
+                        <ConnectionPathSelector
+                          connectionId={selectedConnection}
+                          defaultPath={selectedConnectionReadPath ?? ''}
+                          operationMethod={'pull'}
+                          onPathChange={(path) =>
+                            setValue(
+                              `stages.${index}.connection_read_path`,
+                              path
+                            )
+                          }
+                        />
+                      ) : (
+                        <Input
+                          id={`connection_read_path-${index}`}
+                          placeholder={
+                            dict.workflow.pipeline.connectionReadPathDescription
+                          }
+                          {...register(`stages.${index}.connection_read_path`)}
+                          readOnly={readOnly || !selectedConnection}
+                        />
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 

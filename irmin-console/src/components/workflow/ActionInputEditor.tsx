@@ -1,8 +1,7 @@
 'use client';
 
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import ReactSelect from 'react-select';
 
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
@@ -15,10 +14,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { Repository } from '@/types/core/Repository';
 import { ActionInputData } from '@/types/core/Workflow';
 
-interface ActionInputEditorFormData {
-  inputFiles: ActionInputData[];
-}
-
 interface ActionInputEditorProps {
   repositories: Repository[];
   initialData?: ActionInputData[];
@@ -27,7 +22,7 @@ interface ActionInputEditorProps {
 }
 
 /**
- * Form to configure script input files using react-hook-form
+ * Form to configure script input files
  *
  * @param props - Component properties
  * @param props.repositories - List of repositories
@@ -42,68 +37,75 @@ function ActionInputEditor({
   disableSaveButton = false,
 }: ActionInputEditorProps) {
   const { dict } = useLocale();
+  const [inputFiles, setInputFiles] = useState<ActionInputData[]>(initialData);
 
-  // Initialize react-hook-form
-  const { control, handleSubmit, watch, setValue } =
-    useForm<ActionInputEditorFormData>({
-      defaultValues: {
-        inputFiles: initialData.length > 0 ? initialData : [],
-      },
-    });
-
-  // Watch for changes when save button is disabled
-  const inputFiles = watch('inputFiles');
+  // Notify parent of changes when save button is disabled
   useEffect(() => {
     if (disableSaveButton) {
       onChange(inputFiles);
     }
   }, [inputFiles, disableSaveButton, onChange]);
 
-  // Manage the input files array using useFieldArray
-  const {
-    fields: inputFileFields,
-    append,
-    remove,
-  } = useFieldArray({
-    control,
-    name: 'inputFiles',
-  });
-
-  // Watch repository and ref for each input file
-  const watchedInputFiles = inputFileFields.map((field, index) => ({
-    ...field,
-    repository: watch(`inputFiles.${index}.repository`),
-    ref: watch(`inputFiles.${index}.ref`),
-  }));
-
-  // Handle form submission
-  const onSubmit = useCallback(
-    (data: ActionInputEditorFormData) => {
-      onChange(data.inputFiles);
-    },
-    [onChange]
-  );
-
   // Add a new input file
   const addInputFile = useCallback(() => {
-    append({
-      repository: '',
-      ref: '',
-      path: '/',
-    });
-  }, [append]);
+    setInputFiles((prev) => [...prev, { repository: '', ref: '', path: '' }]);
+  }, []);
+
+  // Remove an input file
+  const removeInputFile = useCallback((index: number) => {
+    setInputFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Update a specific field of an input file
+  const updateInputFile = useCallback(
+    (index: number, field: keyof ActionInputData, value: string) => {
+      setInputFiles((prev) =>
+        prev.map((file, i) =>
+          i === index ? { ...file, [field]: value } : file
+        )
+      );
+    },
+    []
+  );
+
+  // Handle repository selection
+  const handleRepositoryChange = useCallback(
+    (index: number, repositorySlug: string | undefined) => {
+      if (!repositorySlug) {
+        updateInputFile(index, 'repository', '');
+        updateInputFile(index, 'ref', '');
+        return;
+      }
+
+      const repo = repositories.find((r) => r.slug === repositorySlug);
+      if (repo) {
+        updateInputFile(index, 'repository', repositorySlug);
+        updateInputFile(index, 'ref', repo.default_branch);
+      }
+    },
+    [repositories, updateInputFile]
+  );
+
+  // Handle form submission
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      onChange(inputFiles);
+    },
+    [inputFiles, onChange]
+  );
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit}
       className='flex flex-col gap-4'
       id='action-input-editor-form'
     >
       <Label>{dict.workflow.scriptInputFiles.title}</Label>
       {/* Input Files Array */}
-      {inputFileFields.map((inputFileField, index) => (
+      {inputFiles.map((inputFile, index) => (
         <div
-          key={inputFileField.id}
+          key={index}
           className='border-foreground/10 flex flex-col border-t py-4'
         >
           <div className='mb-4 flex items-center justify-between'>
@@ -113,7 +115,7 @@ function ActionInputEditor({
             <Button
               variant='destructive'
               size='sm'
-              onClick={() => remove(index)}
+              onClick={() => removeInputFile(index)}
             >
               {dict.common.remove}
             </Button>
@@ -125,39 +127,24 @@ function ActionInputEditor({
               <Label htmlFor={`inputFiles.${index}.repository`}>
                 {dict.repository.repository}
               </Label>
-              <Controller
-                control={control}
-                name={`inputFiles.${index}.repository`}
-                render={({ field }) => (
-                  <ReactSelect
-                    id={`inputFiles.${index}.repository`}
-                    value={{
-                      value: field.value,
-                      label:
-                        repositories.find((repo) => field.value === repo.slug)
-                          ?.name ?? field.value,
-                    }}
-                    onChange={(selectedOption) => {
-                      field.onChange(selectedOption?.value);
-                      const repo = repositories.find(
-                        (repo) => selectedOption?.value === repo.slug
-                      );
-                      if (repo) {
-                        // Set default branch when repository is selected
-                        setValue(
-                          `inputFiles.${index}.ref`,
-                          repo.default_branch
-                        );
-                      }
-                    }}
-                    options={repositories.map((repo) => ({
-                      value: repo.slug,
-                      label: repo.name,
-                    }))}
-                    className='react-select-container'
-                    classNamePrefix='react-select'
-                  />
-                )}
+              <ReactSelect
+                id={`inputFiles.${index}.repository`}
+                value={{
+                  value: inputFile.repository,
+                  label:
+                    repositories.find(
+                      (repo) => inputFile.repository === repo.slug
+                    )?.name ?? inputFile.repository,
+                }}
+                onChange={(selectedOption) =>
+                  handleRepositoryChange(index, selectedOption?.value)
+                }
+                options={repositories.map((repo) => ({
+                  value: repo.slug,
+                  label: repo.name,
+                }))}
+                className='react-select-container'
+                classNamePrefix='react-select'
               />
             </div>
 
@@ -166,31 +153,29 @@ function ActionInputEditor({
               <Label htmlFor={`inputFiles.${index}.ref`}>
                 {dict.repository.branches.ref}
               </Label>
-              <Controller
-                control={control}
-                name={`inputFiles.${index}.ref`}
-                render={({ field }) => (
-                  <Input id={`inputFiles.${index}.ref`} {...field} />
-                )}
+              <Input
+                id={`inputFiles.${index}.ref`}
+                value={inputFile.ref}
+                onChange={(e) => updateInputFile(index, 'ref', e.target.value)}
               />
             </div>
 
             {/* Path Input */}
-            <div className='space-y-2'>
-              <Label htmlFor={`inputFiles.${index}.path`}>
-                {dict.workflow.scriptInputFiles.path}
-              </Label>
-              <RepositoryPathSelector
-                repositorySlug={watchedInputFiles[index].repository}
-                ref={watchedInputFiles[index].ref}
-                defaultPath={inputFileField.path}
-                defaultExpanded={false}
-                nonGroupOnly={true}
-                onPathChange={(path) =>
-                  setValue(`inputFiles.${index}.path`, path)
-                }
-              />
-            </div>
+            {inputFile.repository && inputFile.ref && (
+              <div className='space-y-2'>
+                <Label htmlFor={`inputFiles.${index}.path`}>
+                  {dict.workflow.scriptInputFiles.path}
+                </Label>
+                <RepositoryPathSelector
+                  repositorySlug={inputFile.repository}
+                  ref={inputFile.ref}
+                  defaultPath={inputFile.path}
+                  defaultExpanded={false}
+                  nonGroupOnly={true}
+                  onPathChange={(path) => updateInputFile(index, 'path', path)}
+                />
+              </div>
+            )}
           </div>
         </div>
       ))}

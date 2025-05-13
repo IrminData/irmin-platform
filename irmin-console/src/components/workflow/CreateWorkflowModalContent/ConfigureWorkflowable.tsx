@@ -4,6 +4,7 @@ import { memo, useCallback } from 'react';
 
 import ReactSelect from 'react-select';
 
+import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import FileSelector from '@/components/editor/FileSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import Button from '@/components/ui/button';
@@ -235,23 +236,25 @@ function ConfigureWorkflowable({
                 {dict.consoleNavigation.staticSearchItems.createConnection}
               </Button>
             </div>
-            <div className='flex flex-col gap-2'>
-              <Label>{dict.workflow.importSourceConnectionPath}</Label>
-              <Input
-                required
-                type='text'
-                defaultValue={workflowable.connection_path ?? '/'}
-                onChange={(e) =>
-                  setWorkflowData({
-                    ...workflowData,
-                    workflowable: {
-                      ...(workflowable as ImportWorkflowableInput),
-                      connection_path: e.target.value,
-                    },
-                  })
-                }
-              />
-            </div>
+            {workflowable.connection && (
+              <div className='flex flex-col gap-2'>
+                <Label>{dict.workflow.importSourceConnectionPath}</Label>
+                <ConnectionPathSelector
+                  connectionId={workflowable.connection}
+                  defaultPath={workflowable.connection_path ?? ''}
+                  operationMethod={'pull'}
+                  onPathChange={(path) =>
+                    setWorkflowData({
+                      ...workflowData,
+                      workflowable: {
+                        ...(workflowable as ImportWorkflowableInput),
+                        connection_path: path,
+                      },
+                    })
+                  }
+                />
+              </div>
+            )}
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationRepository}</Label>
               <ReactSelect
@@ -381,23 +384,25 @@ function ConfigureWorkflowable({
                 {dict.consoleNavigation.staticSearchItems.createConnection}
               </Button>
             </div>
-            <div className='flex flex-col gap-2'>
-              <Label>{dict.workflow.exportDestinationConnectionPath}</Label>
-              <Input
-                required
-                type='text'
-                defaultValue={workflowable.connection_path ?? '/'}
-                onChange={(e) =>
-                  setWorkflowData({
-                    ...workflowData,
-                    workflowable: {
-                      ...(workflowable as ExportWorkflowableInput),
-                      connection_path: e.target.value,
-                    },
-                  })
-                }
-              />
-            </div>
+            {workflowable.connection && (
+              <div className='flex flex-col gap-2'>
+                <Label>{dict.workflow.exportDestinationConnectionPath}</Label>
+                <ConnectionPathSelector
+                  connectionId={workflowable.connection}
+                  defaultPath={workflowable.connection_path ?? ''}
+                  operationMethod={'push'}
+                  onPathChange={(path) =>
+                    setWorkflowData({
+                      ...workflowData,
+                      workflowable: {
+                        ...(workflowable as ExportWorkflowableInput),
+                        connection_path: path,
+                      },
+                    })
+                  }
+                />
+              </div>
+            )}
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportSourceRepository}</Label>
               <ReactSelect

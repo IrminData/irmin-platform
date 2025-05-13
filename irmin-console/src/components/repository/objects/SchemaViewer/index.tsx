@@ -19,6 +19,7 @@ function ObjectSchemaViewer({
   schema,
   depth = 0,
   isExpanded = false,
+  focusedPath,
 }: {
   /** The schema object plus metadata */
   schema: ObjectSchema;
@@ -26,16 +27,35 @@ function ObjectSchemaViewer({
   depth?: number;
   /** Whether to start expanded */
   isExpanded?: boolean;
+  /** The path to focus on */
+  focusedPath?: string;
 }) {
   const { dict } = useLocale();
+
+  // Check if this item or any of its children should be focused
+  const shouldFocus = focusedPath ? schema.path === focusedPath : false;
+  const shouldExpand = isExpanded || shouldFocus;
+
   switch (schema.type) {
     case 'structured':
-      return <StructuredItemViewer item={schema} isExpanded={isExpanded} />;
+      return (
+        <StructuredItemViewer
+          item={schema}
+          isExpanded={shouldExpand}
+          isFocused={shouldFocus}
+        />
+      );
     case 'binary':
-      return <BinaryItemViewer item={schema} />;
+      return <BinaryItemViewer item={schema} isFocused={shouldFocus} />;
     case 'group':
       return (
-        <GroupItemViewer item={schema} depth={depth} isExpanded={isExpanded} />
+        <GroupItemViewer
+          item={schema}
+          depth={depth}
+          isExpanded={shouldExpand}
+          focusedPath={focusedPath}
+          isFocused={shouldFocus}
+        />
       );
     default:
       return (

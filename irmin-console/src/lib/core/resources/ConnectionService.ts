@@ -272,21 +272,21 @@ class ConnectionService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.connectionID - The connection's identifier.
-   * @param props.operation_method - The operation method (e.g., 'pull', 'push').
+   * @param props.operationMethod - The operation method (e.g., 'pull', 'push').
    * @returns IrminAPIResponse containing the schema.
    */
   async fetchConnectionSchema({
     workspace,
     connectionID,
-    operation_method,
+    operationMethod,
   }: {
     workspace: string;
     connectionID: string;
-    operation_method: string;
+    operationMethod: string;
   }): Promise<IrminAPIResponse<ObjectSchema>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/connections/${connectionID}/schema?operation_method=${operation_method}`,
+        `/v1/workspaces/${workspace}/connections/${connectionID}/schema?operation_method=${operationMethod}`,
         { method: 'GET' }
       )) as IrminAPIResponse<ObjectSchema>;
       return response;

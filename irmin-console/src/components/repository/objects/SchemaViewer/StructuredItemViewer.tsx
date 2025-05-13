@@ -20,9 +20,11 @@ import { JSONSchemaViewer } from './JSONSchemaViewer';
 export function StructuredItemViewer({
   item,
   isExpanded = false,
+  isFocused = false,
 }: {
   item: ObjectSchema;
   isExpanded?: boolean;
+  isFocused?: boolean;
 }) {
   const { dict, locale } = useLocale();
   const [expanded, setExpanded] = useState(isExpanded);
@@ -30,7 +32,9 @@ export function StructuredItemViewer({
   if (item.type !== 'structured') return <></>;
 
   return (
-    <div className='bg-popover/10 rounded-md border p-2 dark:border-gray-800'>
+    <div
+      className={`bg-popover/10 rounded-md border p-2 dark:border-gray-800 ${isFocused ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}
+    >
       <div className='flex items-start gap-3'>
         <MdDescription className='mt-1 h-6 w-6 flex-shrink-0 text-blue-500 dark:text-blue-300' />
         <div className='min-w-0 flex-grow'>
