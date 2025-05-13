@@ -3,9 +3,9 @@ package postgrescontrollers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mime/multipart"
-	"net/http"
 	"net/textproto"
 	"time"
 
@@ -13,6 +13,9 @@ import (
 	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/jackc/pgx/v5"
 )
 
 // OperationPull fetches data from Postgres based on the request path.
@@ -20,29 +23,32 @@ import (
 // - all tables as a multipart/mixed response,
 // - a single table as a JSON attachment,
 // - a single row (by "id") as a JSON attachment.
-func (c *Controller) OperationPull(w http.ResponseWriter, r *http.Request) {
+func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	// Make sure the request is authorized by validating the operation token
 	info := config.GetConnectorInfo()
-	tokenValid, _, operation := lib.ValidateOperationToken(c.DB, c.Logger, info.Name, w, r)
+	tokenValid, _, operation := lib.ValidateOperationToken(cs.DB, cs.Logger, c, info.Name)
 	if !tokenValid {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
 	// prepare context and initialise client
-	ctx := context.Background()
-	client, _, err := postgresclient.InitPostgresClient(ctx, c.Logger, operation)
+	ctx := c.Context()
+	client, _, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
 	if err != nil {
-		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to initialise Postgres client: " + err.Error(),
+		})
 	}
 	defer client.Close()
 
 	// parse "path" field from form
-	fields, err := utils.ParseFormFields(r, []string{"path"}, nil)
+	fields, err := utils.ParseFormFields(c, []string{"path"}, nil)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 	path := fields["path"]
 
@@ -50,133 +56,146 @@ func (c *Controller) OperationPull(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case path == "" || path == "/":
 		// return every table
-		returnAllTablesMultipart(ctx, w, client)
+		return fetchAllTablesMultipart(c, client)
 	case func() bool {
 		_, table, rowID, _ := utils.ExtractPathComponents(path)
 		return table != "" && rowID != ""
 	}():
 		_, table, rowID, _ := utils.ExtractPathComponents(path)
-		fetchRowByID(ctx, w, client, table, rowID)
+		return fetchRowByID(c, client, table, rowID)
 	case func() bool {
 		_, table, _, _ := utils.ExtractPathComponents(path)
 		return table != ""
 	}():
 		_, table, _, _ := utils.ExtractPathComponents(path)
-		fetchFullTable(ctx, w, client, table)
+		return fetchFullTable(c, client, table)
 	default:
 		// invalid path
-		http.Error(w, "Invalid path: "+path, http.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid path: " + path,
+		})
 	}
 }
 
-// returnAllTablesMultipart writes every table in "public" as JSON parts
+// fetchAllTablesMultipart writes every table in "public" as JSON parts
 // in a multipart/mixed response.
-func returnAllTablesMultipart(
-	ctx context.Context,
-	w http.ResponseWriter,
+func fetchAllTablesMultipart(
+	c fiber.Ctx,
 	client *postgresclient.PostgresClient,
-) {
-	// list tables
+) error {
+	ctx := c.Context()
+
+	// Get list of tables
 	tables, err := client.GetTables(ctx)
 	if err != nil {
-		http.Error(w, "Failed to fetch table list: "+err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to get tables: %w", err)
 	}
 
-	// prepare multipart writer
+	// Setup multipart writer
 	boundary := fmt.Sprintf("MULTIPART-%d", time.Now().UnixNano())
-	w.Header().Set("Content-Type", "multipart/mixed; boundary="+boundary)
+	c.Set("Content-Type", "multipart/mixed; boundary="+boundary)
 
-	mw := multipart.NewWriter(w)
+	mw := multipart.NewWriter(c)
 	if boundaryErr := mw.SetBoundary(boundary); boundaryErr != nil {
-		http.Error(w, "Failed to set multipart boundary: "+boundaryErr.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to set boundary: %w", boundaryErr)
 	}
 	defer mw.Close()
 
-	// write each table as JSON attachment
-	for _, tbl := range tables {
-		if err = writeTablePart(ctx, mw, client, tbl); err != nil {
-			http.Error(w, fmt.Sprintf("Failed to process table %s: %v", tbl, err), http.StatusInternalServerError)
-			return
+	// Process each table
+	for _, table := range tables {
+		if tableErr := writeTableAsPart(ctx, mw, client, table); tableErr != nil {
+			return fmt.Errorf("failed to process table %s: %w", table, tableErr)
 		}
 	}
+
+	return nil
 }
 
-// writeTablePart queries a table and writes its rows as JSON to one part.
-func writeTablePart(
+// writeTableAsPart writes a single table as a multipart part.
+func writeTableAsPart(
 	ctx context.Context,
 	mw *multipart.Writer,
 	client *postgresclient.PostgresClient,
 	table string,
 ) error {
-	// prepare MIME headers
+	// Create part with headers
 	h := textproto.MIMEHeader{}
 	h.Set("Content-Type", "application/octet-stream")
 	h.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
 
 	part, err := mw.CreatePart(h)
 	if err != nil {
-		return fmt.Errorf("create part for %s failed: %w", table, err)
+		return fmt.Errorf("create part failed: %w", err)
 	}
 
-	// fetch rows
+	// Query table data
 	query := fmt.Sprintf(`SELECT * FROM "%s"`, table)
 	rows, err := client.Query(ctx, query)
 	if err != nil {
-		return fmt.Errorf("query %s failed: %w", table, err)
+		return fmt.Errorf("query failed: %w", err)
 	}
 	defer rows.Close()
 
-	// extract column names
+	// Get column names
 	descs := rows.FieldDescriptions()
 	cols := make([]string, len(descs))
 	for i, fd := range descs {
 		cols[i] = fd.Name
 	}
 
-	// build record slice
-	var recs []map[string]any
-	for rows.Next() {
-		var values []any
-		values, err = rows.Values()
-		if err != nil {
-			return fmt.Errorf("scan values for %s failed: %w", table, err)
-		}
-		row := make(map[string]any, len(cols))
-		for i, col := range cols {
-			row[col] = values[i]
-		}
-		recs = append(recs, row)
-	}
-	if err = rows.Err(); err != nil {
-		return fmt.Errorf("iterate %s failed: %w", table, err)
+	// Build records
+	recs, err := buildRecordsFromRows(rows, cols)
+	if err != nil {
+		return fmt.Errorf("build records failed: %w", err)
 	}
 
-	// marshal and write JSON
+	// Marshal and write JSON
 	data, err := json.MarshalIndent(recs, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal %s failed: %w", table, err)
+		return fmt.Errorf("marshal failed: %w", err)
 	}
-	if _, err = part.Write(data); err != nil {
-		return fmt.Errorf("write JSON for %s failed: %w", table, err)
+
+	if _, writeErr := part.Write(data); writeErr != nil {
+		return fmt.Errorf("write JSON failed: %w", writeErr)
 	}
 
 	return nil
 }
 
+// buildRecordsFromRows converts rows into a slice of maps.
+func buildRecordsFromRows(rows pgx.Rows, cols []string) ([]map[string]any, error) {
+	var recs []map[string]any
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			return nil, fmt.Errorf("scan values failed: %w", err)
+		}
+
+		row := make(map[string]any, len(cols))
+		for i, col := range cols {
+			row[col] = values[i]
+		}
+		recs = append(recs, row)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate failed: %w", err)
+	}
+
+	return recs, nil
+}
+
 // fetchFullTable queries an entire table and returns it as a JSON download.
 func fetchFullTable(
-	ctx context.Context,
-	w http.ResponseWriter,
+	c fiber.Ctx,
 	client *postgresclient.PostgresClient,
 	table string,
-) {
+) error {
+	ctx := c.Context()
 	query := fmt.Sprintf(`SELECT * FROM "%s"`, table)
 	rows, err := client.Query(ctx, query)
 	if err != nil {
-		http.Error(w, "Failed to fetch table "+table+": "+err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to fetch table %s: %w", table, err)
 	}
 	defer rows.Close()
 
@@ -193,8 +212,7 @@ func fetchFullTable(
 		var values []any
 		values, err = rows.Values()
 		if err != nil {
-			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
-			return
+			return fmt.Errorf("failed to retrieve values: %w", err)
 		}
 		row := make(map[string]any, len(cols))
 		for i, col := range cols {
@@ -203,38 +221,26 @@ func fetchFullTable(
 		recs = append(recs, row)
 	}
 	if err = rows.Err(); err != nil {
-		http.Error(w, "Failed to iterate rows: "+err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to iterate rows: %w", err)
 	}
 
-	// marshal JSON
-	data, err := json.MarshalIndent(recs, "", "  ")
-	if err != nil {
-		http.Error(w, "Failed to marshal data: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// send as attachment
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
-	if _, writeErr := w.Write(data); writeErr != nil {
-		http.Error(w, "Failed to write response: "+writeErr.Error(), http.StatusInternalServerError)
-		return
-	}
+	// Send the JSON response
+	c.Set("Content-Type", "application/octet-stream")
+	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
+	return c.JSON(recs)
 }
 
 // fetchRowByID queries one row by "id" and returns it as a JSON download.
 func fetchRowByID(
-	ctx context.Context,
-	w http.ResponseWriter,
+	c fiber.Ctx,
 	client *postgresclient.PostgresClient,
 	table, id string,
-) {
+) error {
+	ctx := c.Context()
 	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE "id" = $1`, table)
 	rows, err := client.Query(ctx, query, id)
 	if err != nil {
-		http.Error(w, "Failed to fetch row: "+err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to fetch row: %w", err)
 	}
 	defer rows.Close()
 
@@ -251,8 +257,7 @@ func fetchRowByID(
 		var values []any
 		values, err = rows.Values()
 		if err != nil {
-			http.Error(w, "Failed to retrieve values: "+err.Error(), http.StatusInternalServerError)
-			return
+			return fmt.Errorf("failed to retrieve values: %w", err)
 		}
 		row := make(map[string]any, len(cols))
 		for i, col := range cols {
@@ -261,27 +266,15 @@ func fetchRowByID(
 		recs = append(recs, row)
 	}
 	if err = rows.Err(); err != nil {
-		http.Error(w, "Failed to iterate rows: "+err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to iterate rows: %w", err)
 	}
 	if len(recs) == 0 {
-		http.Error(w, "No row found", http.StatusNotFound)
-		return
-	}
-
-	// marshal JSON
-	data, err := json.MarshalIndent(recs[0], "", "  ")
-	if err != nil {
-		http.Error(w, "Failed to marshal data: "+err.Error(), http.StatusInternalServerError)
-		return
+		return errors.New("no row found")
 	}
 
 	// send as attachment
 	filename := fmt.Sprintf(`%s_row_%s.json`, table, id)
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
-	if _, writeErr := w.Write(data); writeErr != nil {
-		http.Error(w, "Failed to write response: "+writeErr.Error(), http.StatusInternalServerError)
-		return
-	}
+	c.Set("Content-Type", "application/octet-stream")
+	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	return c.JSON(recs[0])
 }

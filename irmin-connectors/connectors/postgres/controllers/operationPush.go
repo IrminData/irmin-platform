@@ -12,68 +12,108 @@ import (
 	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
-	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
 
-	"irmin-connectors/db"
-
+	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// validateAndParseRequest validates the request and parses the form data.
-func validateAndParseRequest(
-	w http.ResponseWriter,
-	r *http.Request,
-	d *db.Database,
-	logger *slog.Logger,
-) (string, []map[string]any, interface{}, error) {
+func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	// Make sure the request is authorized by validating the operation token
 	info := config.GetConnectorInfo()
-	tokenValid, _, operation := lib.ValidateOperationToken(d, logger, info.Name, w, r)
+	tokenValid, _, operation := lib.ValidateOperationToken(cs.DB, cs.Logger, c, info.Name)
 	if !tokenValid {
-		return "", nil, nil, errors.New("unauthorized")
-	}
-
-	// parse multipart form (up to 32 MB)
-	if err := r.ParseMultipartForm(utils.DefaultMultipartFormMemory); err != nil {
-		return "", nil, nil, fmt.Errorf("invalid form data: %w", err)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
 	// get target table name from path field
-	fields, err := utils.ParseFormFields(r, []string{"path"}, nil)
+	fields, err := utils.ParseFormFields(c, []string{"path"}, nil)
 	if err != nil {
-		return "", nil, nil, err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid form data: " + err.Error(),
+		})
 	}
 	_, tableName, _, _ := utils.ExtractPathComponents(fields["path"])
 	if tableName == "" {
-		return "", nil, nil, errors.New("no table name specified in path")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "no table name specified in path",
+		})
 	}
 
 	// read uploaded JSON file
-	file, _, err := r.FormFile("file")
+	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) {
-			return "", nil, nil, fmt.Errorf("failed to retrieve form file: %w", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "failed to retrieve form file: " + err.Error(),
+			})
 		}
-		return "", nil, nil, fmt.Errorf("failed to retrieve form file: %w", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to retrieve form file: " + err.Error(),
+		})
+	}
+	file, err := fileHeader.Open()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to open form file: " + err.Error(),
+		})
 	}
 	defer file.Close()
 
 	bytesData, err := io.ReadAll(file)
 	if err != nil {
-		return "", nil, nil, fmt.Errorf("failed to read uploaded file: %w", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to read uploaded file: " + err.Error(),
+		})
 	}
 
 	// unmarshal into slice of records
 	var records []map[string]any
 	if err = json.Unmarshal(bytesData, &records); err != nil {
-		return "", nil, nil, fmt.Errorf("failed to parse JSON data: %w", err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "failed to parse JSON data: " + err.Error(),
+		})
 	}
 
-	return tableName, records, operation, nil
+	// initialise Postgres client
+	ctx := c.Context()
+	client, _, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to initialise Postgres client: " + err.Error(),
+		})
+	}
+	defer client.Close()
+
+	// determine and sort column names
+	var columns []string
+	if len(records) > 0 {
+		for col := range records[0] {
+			columns = append(columns, col)
+		}
+		sort.Strings(columns)
+	}
+
+	// build INSERT statement
+	insertSQL := buildInsertStatement(tableName, columns)
+
+	// execute transaction
+	err = executeTransaction(ctx, client, tableName, records, columns, insertSQL)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to execute transaction: " + err.Error(),
+		})
+	}
+
+	// success
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": fmt.Sprintf("Replaced %d rows in '%s'.", len(records), tableName),
+	})
 }
 
 // buildInsertStatement builds the INSERT statement with placeholders.
@@ -184,7 +224,8 @@ func executeTransaction(
 		}
 
 		lastErr = err
-		if isDeadlock(err) && attempt < utils.MaxRetries {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "40P01" && attempt < utils.MaxRetries {
 			backoff()
 			continue
 		}
@@ -192,60 +233,6 @@ func executeTransaction(
 	}
 
 	return fmt.Errorf("operation failed after retries due to deadlocks: %w", lastErr)
-}
-
-func (c *Controller) OperationPush(w http.ResponseWriter, r *http.Request) {
-	// validate request and parse data
-	tableName, records, operation, err := validateAndParseRequest(w, r, c.DB, c.Logger)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// initialise Postgres client
-	ctx := context.Background()
-	op, ok := operation.(*db.Operation)
-	if !ok {
-		http.Error(w, "Invalid operation type", http.StatusInternalServerError)
-		return
-	}
-	client, _, err := postgresclient.InitPostgresClient(ctx, c.Logger, op)
-	if err != nil {
-		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer client.Close()
-
-	// determine and sort column names
-	var columns []string
-	if len(records) > 0 {
-		for col := range records[0] {
-			columns = append(columns, col)
-		}
-		sort.Strings(columns)
-	}
-
-	// build INSERT statement
-	insertSQL := buildInsertStatement(tableName, columns)
-
-	// execute transaction
-	err = executeTransaction(ctx, client, tableName, records, columns, insertSQL)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// success
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Replaced %d rows in '%s'.", len(records), tableName)
-}
-
-// isDeadlock checks if the error is a Postgres deadlock (SQLSTATE 40P01).
-//
-// Returns true if err is a *pgconn.PgError with Code == "40P01".
-func isDeadlock(err error) bool {
-	var pgErr *pgconn.PgError
-	return errors.As(err, &pgErr) && pgErr.Code == "40P01"
 }
 
 // backoff sleeps for a short, randomised duration before retrying.

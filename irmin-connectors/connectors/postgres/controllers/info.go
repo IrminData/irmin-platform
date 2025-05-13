@@ -1,17 +1,16 @@
 package postgrescontrollers
 
 import (
-	"encoding/json"
 	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
-	"net/http"
-	"os"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 // Info handles the /info endpoint for the PostgreSQL connector.
-func (c *Controller) Info(w http.ResponseWriter, r *http.Request) {
+func (cs *Controllers) Info(c fiber.Ctx) error {
 	// Retrieve the base URL from the environment
-	baseURL := os.Getenv("URL")
+	baseURL := cs.App.Env.URL
 
 	// Get the connector info from config
 	info := config.GetConnectorInfo()
@@ -20,15 +19,12 @@ func (c *Controller) Info(w http.ResponseWriter, r *http.Request) {
 	info.ReadMoreURL = baseURL + info.ReadMoreURL
 
 	// Make sure the request is authorized by validating the system token
-	if !lib.ValidateConnectorSystemToken(c.DB, c.Logger, info.Name, w, r) {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+	if !lib.ValidateConnectorSystemToken(cs.DB, cs.Logger, c, info.Name) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
 	// Send the connector details
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(info); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
+	return c.Status(fiber.StatusOK).JSON(info)
 }

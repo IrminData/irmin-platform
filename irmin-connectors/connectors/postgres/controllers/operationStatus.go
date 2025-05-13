@@ -9,39 +9,20 @@ import (
 	"time"
 
 	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
+	"github.com/gofiber/fiber/v3"
 
 	"net/http"
 	"strconv"
 )
 
-// validateOperationRequest validates the operation request and returns the operation ID.
-func (c *Controller) validateOperationRequest(w http.ResponseWriter, r *http.Request) (uint, error) {
-	info := config.GetConnectorInfo()
-	if !lib.ValidateConnectorSystemToken(c.DB, c.Logger, info.Name, w, r) {
-		return 0, http.ErrNotSupported
-	}
-
-	fields, err := utils.ParseFormFields(r, []string{"operation_id"}, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	operationID, err := strconv.Atoi(fields["operation_id"])
-	if err != nil || operationID < 0 {
-		return 0, http.ErrNotSupported
-	}
-
-	return uint(operationID), nil
-}
-
 // getOperationAndValidate retrieves and validates the operation.
-func (c *Controller) getOperationAndValidate(operationID uint) (*db.Operation, error) {
-	operation, err := c.DB.GetOperationByID(operationID)
+func (cs *Controllers) getOperationAndValidate(operationID uint) (*db.Operation, error) {
+	operation, err := cs.DB.GetOperationByID(operationID)
 	if err != nil || operation == nil {
 		return nil, http.ErrNotSupported
 	}
 
-	connectorRegistration, err := c.DB.GetConnectorRegistrationByID(operation.ConnectorRegistrationID)
+	connectorRegistration, err := cs.DB.GetConnectorRegistrationByID(operation.ConnectorRegistrationID)
 	if err != nil || connectorRegistration == nil ||
 		connectorRegistration.ConnectorName != config.GetConnectorInfo().Name {
 		return nil, http.ErrNotSupported
@@ -51,8 +32,8 @@ func (c *Controller) getOperationAndValidate(operationID uint) (*db.Operation, e
 }
 
 // getOperationSubscriptions retrieves subscriptions for the operation.
-func (c *Controller) getOperationSubscriptions(operationID uint) ([]db.Subscription, error) {
-	subscriptions, err := c.DB.GetAllSubscriptions()
+func (cs *Controllers) getOperationSubscriptions(operationID uint) ([]db.Subscription, error) {
+	subscriptions, err := cs.DB.GetAllSubscriptions()
 	if err != nil {
 		return nil, err
 	}
@@ -99,29 +80,48 @@ func convertToClientSubscriptions(subs []db.Subscription) []irminconnectorclient
 }
 
 // OperationStatus handles the status check of an operation.
-func (c *Controller) OperationStatus(w http.ResponseWriter, r *http.Request) {
-	operationID, err := c.validateOperationRequest(w, r)
-	if err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
+func (cs *Controllers) OperationStatus(c fiber.Ctx) error {
+	info := config.GetConnectorInfo()
+	if !lib.ValidateConnectorSystemToken(cs.DB, cs.Logger, c, info.Name) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
-	operation, err := c.getOperationAndValidate(operationID)
+	fields, err := utils.ParseFormFields(c, []string{"operation_id"}, nil)
 	if err != nil {
-		http.Error(w, "Operation not found", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	operationSubscriptions, err := c.getOperationSubscriptions(operation.ID)
+	operationIDInt, err := strconv.Atoi(fields["operation_id"])
+	if err != nil || operationIDInt < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid operation ID",
+		})
+	}
+	operationID := uint(operationIDInt)
+
+	operation, err := cs.getOperationAndValidate(operationID)
 	if err != nil {
-		http.Error(w, "Failed to get subscriptions", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Operation not found",
+		})
+	}
+
+	operationSubscriptions, err := cs.getOperationSubscriptions(operation.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to get subscriptions",
+		})
 	}
 
 	detailsMap, settingsMap, err := parseOperationData(operation)
 	if err != nil {
-		http.Error(w, "Failed to parse operation data", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to parse operation data",
+		})
 	}
 
 	response := irminconnectorclient.OperationStatus{
@@ -131,9 +131,5 @@ func (c *Controller) OperationStatus(w http.ResponseWriter, r *http.Request) {
 		Subscriptions: convertToClientSubscriptions(operationSubscriptions),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
+	return c.Status(fiber.StatusOK).JSON(response)
 }

@@ -5,18 +5,15 @@ import (
 	"encoding/json"
 	postgresconnector "irmin-connectors/connectors/postgres"
 	"irmin-connectors/db"
+	"irmin-connectors/models"
 	"log/slog"
-
-	"github.com/gorilla/mux"
 )
 
 // SetupConnectorRoutes sets up the routes for all connectors.
-func SetupConnectorRoutes(r *mux.Router, d *db.Database) *mux.Router {
+func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	// Setup routes for each connector
-	r = postgresconnector.SetupRoutes(r, d)
+	postgresconnector.SetupRoutes(app)
 	// ... Add new connectors here ...
-
-	return r
 }
 
 // StartConnectorSubscriptionListener starts a listener for a subscription with the correct connector.

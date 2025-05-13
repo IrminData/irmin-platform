@@ -1,11 +1,11 @@
 package postgrescontrollers
 
 import (
-	"net/http"
+	"github.com/gofiber/fiber/v3"
 )
 
 // DetailsPage serves static HTML content with additional information about the PostgreSQL connector.
-func (c *Controller) DetailsPage(w http.ResponseWriter, _ *http.Request) {
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	htmlContent := `
 		<html>
 			<head>
@@ -34,9 +34,6 @@ func (c *Controller) DetailsPage(w http.ResponseWriter, _ *http.Request) {
 			</body>
 		</html>
 	`
-	w.Header().Set("Content-Type", "text/html")
-	if _, err := w.Write([]byte(htmlContent)); err != nil {
-		http.Error(w, "Failed to write response", http.StatusInternalServerError)
-		return
-	}
+	c.Set("Content-Type", "text/html")
+	return c.Status(fiber.StatusOK).SendString(htmlContent)
 }

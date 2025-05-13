@@ -6,23 +6,24 @@ import (
 	"irmin-connectors/db"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
-	"net/http"
 
+	"github.com/gofiber/fiber/v3"
 	"gorm.io/datatypes"
 )
 
 // OperationInit handles the initialization of a new operation.
-func (c *Controller) OperationInit(w http.ResponseWriter, r *http.Request) {
+func (cs *Controllers) OperationInit(c fiber.Ctx) error {
 	// Make sure the request is authorized by validating the system token
 	info := config.GetConnectorInfo()
-	if !lib.ValidateConnectorSystemToken(c.DB, c.Logger, info.Name, w, r) {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+	if !lib.ValidateConnectorSystemToken(cs.DB, cs.Logger, c, info.Name) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
 	// Get the form values from the request
 	fields, err := utils.ParseFormFields(
-		r,
+		c,
 		nil,
 		[]string{
 			"details[host]",
@@ -35,27 +36,31 @@ func (c *Controller) OperationInit(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	// Find relevant connector registration
-	connectorRegistrations, err := c.DB.GetConnectorRegistrationByConnectorName(info.Name)
+	connectorRegistrations, err := cs.DB.GetConnectorRegistrationByConnectorName(info.Name)
 	if err != nil {
-		http.Error(w, "Failed to find connector registration", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to find connector registration",
+		})
 	}
 	if len(connectorRegistrations) == 0 {
-		http.Error(w, "Connector registration not found", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Connector registration not found",
+		})
 	}
 	connectorRegistration := connectorRegistrations[0]
 
 	// Create a new operation token
 	operationToken, err := utils.GenerateToken(utils.DefaultTokenLength)
 	if err != nil {
-		http.Error(w, "Failed to generate operation token", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to generate operation token",
+		})
 	}
 
 	// Construct the details JSON
@@ -68,8 +73,9 @@ func (c *Controller) OperationInit(w http.ResponseWriter, r *http.Request) {
 		"ssl_mode":   fields["details[ssl_mode]"],
 	})
 	if err != nil {
-		http.Error(w, "Failed to marshal details", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to marshal details",
+		})
 	}
 
 	// Construct the settings JSON
@@ -77,8 +83,9 @@ func (c *Controller) OperationInit(w http.ResponseWriter, r *http.Request) {
 		"database": fields["settings[database]"],
 	})
 	if err != nil {
-		http.Error(w, "Failed to marshal settings", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to marshal settings",
+		})
 	}
 
 	// Create a new operation
@@ -90,16 +97,13 @@ func (c *Controller) OperationInit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save the operation to the database
-	operation, err = c.DB.CreateOperation(operation)
+	operation, err = cs.DB.CreateOperation(operation)
 	if err != nil {
-		http.Error(w, "Failed to create operation", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create operation",
+		})
 	}
 
 	// Send the response
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(operation); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
+	return c.Status(fiber.StatusOK).JSON(operation)
 }

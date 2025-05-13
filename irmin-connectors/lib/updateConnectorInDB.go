@@ -69,7 +69,7 @@ func UpdateConnectorInDB(
 		return err
 	}
 
-	logger.Info("Connector registered successfully",
+	logger.Info("Connector registration completed",
 		"connector_name", connectorName,
 		"registration_id", registration.ID)
 

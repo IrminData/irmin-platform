@@ -3,19 +3,19 @@ package lib
 import (
 	"irmin-connectors/db"
 	"log/slog"
-	"net/http"
 	"strings"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 func ValidateOperationToken(
 	d *db.Database,
 	logger *slog.Logger,
+	c fiber.Ctx,
 	connectorName string,
-	w http.ResponseWriter,
-	r *http.Request,
 ) (bool, *db.ConnectorRegistration, *db.Operation) {
 	// Get authentication bearer token from the request headers
-	token := r.Header.Get("Authorization")
+	token := c.Get("Authorization")
 	token = strings.TrimPrefix(token, "Bearer ")
 
 	// Fetch matching registerations by connector name
@@ -24,13 +24,11 @@ func ValidateOperationToken(
 		logger.Error("Error fetching connectors from the database",
 			"error", err,
 			"connector_name", connectorName)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return false, nil, nil
 	}
 	if len(registrations) == 0 {
 		logger.Warn("No connector registration found",
 			"connector_name", connectorName)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return false, nil, nil
 	}
 	registration := registrations[0]
@@ -41,7 +39,6 @@ func ValidateOperationToken(
 		logger.Error("Error fetching operations from the database",
 			"error", err,
 			"registration_id", registration.ID)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return false, nil, nil
 	}
 
@@ -58,7 +55,6 @@ func ValidateOperationToken(
 	if !validToken {
 		logger.Warn("Invalid token provided",
 			"connector_name", connectorName)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return false, &registration, nil
 	}
 	return true, &registration, &matchedOperation

@@ -4,72 +4,86 @@ import (
 	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
-	"net/http"
 	"strconv"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 // OperationCancel handles the cancellation of an operation.
-func (c *Controller) OperationCancel(w http.ResponseWriter, r *http.Request) {
+func (cs *Controllers) OperationCancel(c fiber.Ctx) error {
 	// Make sure the request is authorized by validating the system token
 	info := config.GetConnectorInfo()
-	if !lib.ValidateConnectorSystemToken(c.DB, c.Logger, info.Name, w, r) {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+	if !lib.ValidateConnectorSystemToken(cs.DB, cs.Logger, c, info.Name) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
 	// Get the form values from the request
-	fields, err := utils.ParseFormFields(r, []string{"operation_id"}, nil)
+	fields, err := utils.ParseFormFields(c, []string{"operation_id"}, nil)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	// Find the operation
 	operationID, err := strconv.Atoi(fields["operation_id"])
 	if err != nil {
-		http.Error(w, "Invalid operation ID", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid operation ID",
+		})
 	}
 	if operationID < 0 {
-		http.Error(w, "Invalid operation ID", http.StatusBadRequest)
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid operation ID",
+		})
 	}
-	operation, err := c.DB.GetOperationByID(uint(operationID))
+	operation, err := cs.DB.GetOperationByID(uint(operationID))
 	if err != nil {
-		http.Error(w, "Failed to find operation", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to find operation",
+		})
 	}
 	if operation == nil {
-		http.Error(w, "Operation not found", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Operation not found",
+		})
 	}
 
 	// Make sure the operation is for the correct connector
-	connectorRegistration, err := c.DB.GetConnectorRegistrationByID(operation.ConnectorRegistrationID)
+	connectorRegistration, err := cs.DB.GetConnectorRegistrationByID(operation.ConnectorRegistrationID)
 	if err != nil {
-		http.Error(w, "Failed to find connector registration", http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to find connector registration",
+		})
 	}
 	if connectorRegistration == nil {
-		http.Error(w, "Connector registration not found", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Connector registration not found",
+		})
 	}
 	if connectorRegistration.ConnectorName != info.Name {
-		http.Error(w, "Operation not found", http.StatusNotFound)
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Operation not found",
+		})
 	}
 
 	// Delete subscriptions associated with the operation
-	if err = c.DB.DeleteSubscriptionsByOperationID(operation.ID); err != nil {
-		http.Error(w, "Failed to delete subscriptions", http.StatusInternalServerError)
-		return
+	if err = cs.DB.DeleteSubscriptionsByOperationID(operation.ID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete subscriptions",
+		})
 	}
 
 	// Cancel the operation
-	if err = c.DB.DeleteOperation(operation.ID); err != nil {
-		http.Error(w, "Failed to cancel operation", http.StatusInternalServerError)
-		return
+	if err = cs.DB.DeleteOperation(operation.ID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to cancel operation",
+		})
 	}
 
-	w.WriteHeader(http.StatusOK)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Operation cancelled",
+	})
 }

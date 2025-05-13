@@ -63,6 +63,10 @@ Create a `.env` file in the root directory of the project and add the following 
 PORT=8080
 URL=http://localhost:8080
 
+HELMET_ENABLED=true
+CORS_ENABLED=true
+CORS_ORIGINS=https://api.irmin.dev
+
 IRMIN_API_BASE_URL=https://api.irmin.dev
 IRMIN_API_TOKEN=...
 

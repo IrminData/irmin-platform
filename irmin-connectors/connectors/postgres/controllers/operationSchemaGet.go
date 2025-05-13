@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/lib"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/gofiber/fiber/v3"
 )
 
 // OperationSchemaGet retrieves the database schema and returns
@@ -18,30 +18,33 @@ import (
 //
 // It expects an operation token in the form, and on success writes
 // a JSON response with Content-Type: application/json.
-func (c *Controller) OperationSchemaGet(w http.ResponseWriter, r *http.Request) {
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	// Make sure the request is authorized by validating the operation token
 	info := config.GetConnectorInfo()
-	valid, _, operation := lib.ValidateOperationToken(c.DB, c.Logger, info.Name, w, r)
+	valid, _, operation := lib.ValidateOperationToken(cs.DB, cs.Logger, c, info.Name)
 	if !valid {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
 	ctx := context.Background()
 
 	// initialise Postgres client
-	client, dbName, err := postgresclient.InitPostgresClient(ctx, c.Logger, operation)
+	client, dbName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
 	if err != nil || client == nil || dbName == nil {
-		http.Error(w, "Failed to initialise Postgres client: "+err.Error(), http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to initialise Postgres client: " + err.Error(),
+		})
 	}
 	defer client.Close()
 
 	// list tables
 	tables, err := client.GetTables(ctx)
 	if err != nil {
-		http.Error(w, "Failed to fetch tables: "+err.Error(), http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch tables: " + err.Error(),
+		})
 	}
 
 	// build a child ObjectSchema for each table
@@ -50,11 +53,9 @@ func (c *Controller) OperationSchemaGet(w http.ResponseWriter, r *http.Request) 
 		var cols []postgresclient.ColumnInfo
 		cols, err = client.GetTableStructure(ctx, tbl)
 		if err != nil {
-			http.Error(w,
-				fmt.Sprintf("Failed to fetch structure for table '%s': %v", tbl, err),
-				http.StatusInternalServerError,
-			)
-			return
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": fmt.Sprintf("Failed to fetch structure for table '%s': %v", tbl, err),
+			})
 		}
 
 		// map each column to a JSONSchema property
@@ -104,8 +105,11 @@ func (c *Controller) OperationSchemaGet(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// write JSON response
-	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(group); err != nil {
-		http.Error(w, "Failed to encode schema: "+err.Error(), http.StatusInternalServerError)
+	c.Set("Content-Type", "application/json")
+	if err = json.NewEncoder(c.Response().BodyWriter()).Encode(group); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to encode schema: " + err.Error(),
+		})
 	}
+	return nil
 }

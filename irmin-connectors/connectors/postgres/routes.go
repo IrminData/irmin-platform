@@ -2,33 +2,30 @@ package postgresconnector
 
 import (
 	postgrescontrollers "irmin-connectors/connectors/postgres/controllers"
-	"irmin-connectors/db"
-
-	"github.com/gorilla/mux"
+	"irmin-connectors/models"
 )
 
 // SetupRoutes sets up the routes for the PostgreSQL connector.
-func SetupRoutes(r *mux.Router, d *db.Database) *mux.Router {
-	s := r.PathPrefix("/postgres").Subrouter()
-
+func SetupRoutes(app *models.ConnectorsApp) {
 	// Create a new controller instance with the database dependency
-	controller := postgrescontrollers.NewControllers(d)
+	controller := postgrescontrollers.NewControllers(app)
+
+	// Create a new group for the PostgreSQL connector routes
+	postgresRoutes := app.App.Group("/postgres")
 
 	// Connector API routes
-	s.HandleFunc("/info", controller.Info).Methods("GET")
-	s.HandleFunc("/configuration/{key}/fields", controller.ConfigFields).Methods("POST")
-	s.HandleFunc("/configuration/validate", controller.ConfigValidate).Methods("POST")
-	s.HandleFunc("/operation/schema/{operation}", controller.OperationSchemaGet).Methods("POST")
-	s.HandleFunc("/operation/init", controller.OperationInit).Methods("POST")
-	s.HandleFunc("/operation/push", controller.OperationPush).Methods("POST")
-	s.HandleFunc("/operation/patch", controller.OperationPatch).Methods("POST")
-	s.HandleFunc("/operation/pull", controller.OperationPull).Methods("POST")
-	s.HandleFunc("/operation/subscribe", controller.SubscribeToChanges).Methods("POST")
-	s.HandleFunc("/operation/cancel", controller.OperationCancel).Methods("POST")
-	s.HandleFunc("/operation/status", controller.OperationStatus).Methods("POST")
+	postgresRoutes.Get("/info", controller.Info)
+	postgresRoutes.Post("/configuration/:key/fields", controller.ConfigFields)
+	postgresRoutes.Post("/configuration/validate", controller.ConfigValidate)
+	postgresRoutes.Post("/operation/schema/:operation", controller.OperationSchemaGet)
+	postgresRoutes.Post("/operation/init", controller.OperationInit)
+	postgresRoutes.Post("/operation/push", controller.OperationPush)
+	postgresRoutes.Post("/operation/patch", controller.OperationPatch)
+	postgresRoutes.Post("/operation/pull", controller.OperationPull)
+	postgresRoutes.Post("/operation/subscribe", controller.SubscribeToChanges)
+	postgresRoutes.Post("/operation/cancel", controller.OperationCancel)
+	postgresRoutes.Post("/operation/status", controller.OperationStatus)
 
 	// Public information about the connector
-	s.HandleFunc("/details", controller.DetailsPage).Methods("GET")
-
-	return r
+	postgresRoutes.Get("/details", controller.DetailsPage)
 }

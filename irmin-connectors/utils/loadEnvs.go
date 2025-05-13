@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -12,6 +13,9 @@ import (
 type ConnectorsEnv struct {
 	Port                     string // Port to run the connectors server on
 	URL                      string // URL of the connectors server
+	HelmetEnabled            bool   // Whether helmet is enabled
+	CorsEnabled              bool   // Whether CORS is enabled
+	CorsOrigins              string // Origins allowed to access the connectors server
 	APIBaseURL               string // Base URL of the Irmin Core API
 	APIToken                 string // Token to authenticate system requests to the Irmin Core API
 	DatabaseConnectionString string // Connection string for the database
@@ -72,6 +76,27 @@ func LoadEnv() (*ConnectorsEnv, error) {
 		return nil, err
 	}
 
+	helmetEnabledStr, err := getEnv("HELMET_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	helmetEnabled, err := strconv.ParseBool(helmetEnabledStr)
+	if err != nil {
+		return nil, err
+	}
+	corsEnabledStr, err := getEnv("CORS_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	corsEnabled, err := strconv.ParseBool(corsEnabledStr)
+	if err != nil {
+		return nil, err
+	}
+	corsOrigins, err := getEnv("CORS_ORIGINS", false, "")
+	if err != nil {
+		return nil, err
+	}
+
 	apiBaseURL, err := getEnv("IRMIN_API_BASE_URL", true, "")
 	if err != nil {
 		return nil, err
@@ -89,6 +114,9 @@ func LoadEnv() (*ConnectorsEnv, error) {
 	return &ConnectorsEnv{
 		Port:                     port,
 		URL:                      url,
+		HelmetEnabled:            helmetEnabled,
+		CorsEnabled:              corsEnabled,
+		CorsOrigins:              corsOrigins,
 		APIBaseURL:               apiBaseURL,
 		APIToken:                 apiToken,
 		DatabaseConnectionString: dbConnStr,

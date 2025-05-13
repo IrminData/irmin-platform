@@ -8,65 +8,128 @@ import (
 	"io"
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/connectors/postgres/config"
-	"irmin-connectors/db"
 	"irmin-connectors/lib"
 	"irmin-connectors/utils"
-	"log/slog"
 	"net/http"
 	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/gofiber/fiber/v3"
 )
 
-// validateAndParsePatchRequest validates the request and parses the form data.
-func validateAndParsePatchRequest(
-	w http.ResponseWriter,
-	r *http.Request,
-	d *db.Database,
-	logger *slog.Logger,
-) ([]irminmodels.PatchOperation, *postgresclient.PostgresClient, error) {
+// OperationPatch handles the "patch" operation.
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 	// Make sure the request is authorized by validating the operation token
 	info := config.GetConnectorInfo()
-	tokenValid, _, operation := lib.ValidateOperationToken(d, logger, info.Name, w, r)
+	tokenValid, _, operation := lib.ValidateOperationToken(cs.DB, cs.Logger, c, info.Name)
 	if !tokenValid {
-		return nil, nil, errors.New("unauthorized")
-	}
-
-	// Parse the form data (including file uploads)
-	if err := r.ParseMultipartForm(utils.DefaultMultipartFormMemory); err != nil {
-		return nil, nil, fmt.Errorf("invalid form data: %w", err)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
 	}
 
 	// Initialise the Postgres client
-	ctx := context.Background()
-	dbClient, database, err := postgresclient.InitPostgresClient(ctx, logger, operation)
+	ctx := c.Context()
+	dbClient, database, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
 	if err != nil || database == nil || dbClient == nil {
-		return nil, nil, fmt.Errorf("failed to initialise Postgres client: %w", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to initialise Postgres client: " + err.Error(),
+		})
 	}
+	defer dbClient.Close()
 
 	// Retrieve the patch file from the form
-	file, _, err := r.FormFile("patches")
+	fileHeader, err := c.FormFile("patches")
 	if errors.Is(err, http.ErrMissingFile) {
-		return nil, nil, errors.New("no JSON patch file uploaded with form field 'patches'")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "No JSON patch file uploaded with form field 'patches'",
+		})
 	}
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to retrieve form file: %w", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve form file: " + err.Error(),
+		})
+	}
+	file, err := fileHeader.Open()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to open form file: " + err.Error(),
+		})
 	}
 	defer file.Close()
 
 	// Read the entire file into memory
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read uploaded file: %w", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to read uploaded file: " + err.Error(),
+		})
 	}
 
 	// Unmarshal the JSON into a slice of maps
 	var operations []irminmodels.PatchOperation
 	if err = json.Unmarshal(fileBytes, &operations); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse JSON data: %w", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to parse JSON data: " + err.Error(),
+		})
 	}
 
-	return operations, dbClient, nil
+	// Apply each patch operation to the database
+	for _, op := range operations {
+		// Extract details from the operation path
+		_, tableName, rowIdentifier, columnName := utils.ExtractPathComponents(op.Path)
+
+		// Start a transaction to ensure that each operation is atomic
+		tx, txErr := dbClient.BeginTransaction(ctx)
+		if txErr != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to begin transaction: " + txErr.Error(),
+			})
+		}
+		defer func() {
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				// Log the error but don't return it since we're in a defer
+				// The transaction might have already been committed
+				_ = rollbackErr
+			}
+		}()
+
+		// Handle the operation based on its type
+		switch op.Op {
+		case "add":
+			err = handleAddOperation(ctx, tx, tableName, op.Value)
+		case "remove":
+			err = handleRemoveOperation(ctx, tx, tableName, rowIdentifier)
+		case "replace":
+			err = handleReplaceOperation(ctx, tx, tableName, rowIdentifier, columnName, op.Value)
+		case "move":
+			err = handleMoveOperation(ctx, tx, op, tableName, rowIdentifier, columnName)
+		case "copy":
+			err = handleCopyOperation(ctx, tx, op, tableName, rowIdentifier, columnName)
+		default:
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid operation type: " + op.Op,
+			})
+		}
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// Commit the transaction if everything succeeded
+		if err = tx.Commit(ctx); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to commit transaction: " + err.Error(),
+			})
+		}
+	}
+
+	// Send a success response
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Patch operations applied successfully",
+	})
 }
 
 // handleAddOperation handles the "add" patch operation.
@@ -448,72 +511,4 @@ func handleRowToRowCopy(
 	}
 
 	return nil
-}
-
-// OperationPatch handles the "patch" operation.
-func (c *Controller) OperationPatch(w http.ResponseWriter, r *http.Request) {
-	// Validate request and get operations
-	operations, dbClient, err := validateAndParsePatchRequest(w, r, c.DB, c.Logger)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer dbClient.Close()
-
-	ctx := context.Background()
-
-	// Apply each patch operation to the database
-	for _, op := range operations {
-		// Extract details from the operation path
-		_, tableName, rowIdentifier, columnName := utils.ExtractPathComponents(op.Path)
-
-		// Start a transaction to ensure that each operation is atomic
-		tx, txErr := dbClient.BeginTransaction(ctx)
-		if txErr != nil {
-			http.Error(w, "Failed to begin transaction: "+txErr.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer func() {
-			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
-				// Log the error but don't return it since we're in a defer
-				// The transaction might have already been committed
-				_ = rollbackErr
-			}
-		}()
-
-		// Handle the operation based on its type
-		switch op.Op {
-		case "add":
-			err = handleAddOperation(ctx, tx, tableName, op.Value)
-		case "remove":
-			err = handleRemoveOperation(ctx, tx, tableName, rowIdentifier)
-		case "replace":
-			err = handleReplaceOperation(ctx, tx, tableName, rowIdentifier, columnName, op.Value)
-		case "move":
-			err = handleMoveOperation(ctx, tx, op, tableName, rowIdentifier, columnName)
-		case "copy":
-			err = handleCopyOperation(ctx, tx, op, tableName, rowIdentifier, columnName)
-		default:
-			http.Error(w, "Invalid operation type: "+op.Op, http.StatusBadRequest)
-			return
-		}
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Commit the transaction if everything succeeded
-		if err = tx.Commit(ctx); err != nil {
-			http.Error(w, "Failed to commit transaction: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// Send a success response
-	w.WriteHeader(http.StatusOK)
-	if _, writeErr := w.Write([]byte("Patch operations applied successfully")); writeErr != nil {
-		http.Error(w, "Failed to write response", http.StatusInternalServerError)
-		return
-	}
 }
