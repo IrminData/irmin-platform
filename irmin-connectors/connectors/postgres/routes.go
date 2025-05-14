@@ -14,21 +14,27 @@ func SetupRoutes(app *models.ConnectorsApp) {
 	postgresRoutes := app.App.Group("/postgres")
 
 	// Connector API routes (system token required)
-	postgresSystemRoutes := postgresRoutes.Group("/", controller.ValidateSystemTokenMiddleware)
-	postgresSystemRoutes.Get("/info", controller.Info)
-	postgresSystemRoutes.Post("/configuration/:key/fields", controller.ConfigFields)
-	postgresSystemRoutes.Post("/configuration/validate", controller.ConfigValidate)
-	postgresSystemRoutes.Post("/operation/schema/:operation", controller.OperationSchemaGet)
-	postgresSystemRoutes.Post("/operation/init", controller.OperationInit)
-	postgresSystemRoutes.Post("/operation/cancel", controller.OperationCancel)
-	postgresSystemRoutes.Post("/operation/status", controller.OperationStatus)
+	postgresRoutes.Get("/info", controller.Info, controller.ValidateSystemTokenMiddleware)
+	postgresRoutes.Post("/configuration/:key/fields", controller.ConfigFields, controller.ValidateSystemTokenMiddleware)
+	postgresRoutes.Post("/configuration/validate", controller.ConfigValidate, controller.ValidateSystemTokenMiddleware)
+	postgresRoutes.Post("/operation/init", controller.OperationInit, controller.ValidateSystemTokenMiddleware)
+	postgresRoutes.Post("/operation/cancel", controller.OperationCancel, controller.ValidateSystemTokenMiddleware)
+	postgresRoutes.Post("/operation/status", controller.OperationStatus, controller.ValidateSystemTokenMiddleware)
 
 	// Connector API routes (operation token required)
-	postgresOperationRoutes := postgresRoutes.Group("/", controller.ValidateOperationTokenMiddleware)
-	postgresOperationRoutes.Post("/operation/push", controller.OperationPush)
-	postgresOperationRoutes.Post("/operation/patch", controller.OperationPatch)
-	postgresOperationRoutes.Post("/operation/pull", controller.OperationPull)
-	postgresOperationRoutes.Post("/operation/subscribe", controller.SubscribeToChanges)
+	postgresRoutes.Post(
+		"/operation/schema/:operation",
+		controller.OperationSchemaGet,
+		controller.ValidateOperationTokenMiddleware,
+	)
+	postgresRoutes.Post("/operation/push", controller.OperationPush, controller.ValidateOperationTokenMiddleware)
+	postgresRoutes.Post("/operation/patch", controller.OperationPatch, controller.ValidateOperationTokenMiddleware)
+	postgresRoutes.Post("/operation/pull", controller.OperationPull, controller.ValidateOperationTokenMiddleware)
+	postgresRoutes.Post(
+		"/operation/subscribe",
+		controller.SubscribeToChanges,
+		controller.ValidateOperationTokenMiddleware,
+	)
 
 	// Public information about the connector
 	postgresRoutes.Get("/details", controller.DetailsPage)

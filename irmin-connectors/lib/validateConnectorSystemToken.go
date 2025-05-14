@@ -43,7 +43,7 @@ func ValidateConnectorSystemToken(
 		}
 	}
 	if !validToken {
-		logger.Warn("Invalid token provided",
+		logger.Warn("Invalid connector system token provided",
 			"connector_name", connectorName)
 		return false, nil
 	}

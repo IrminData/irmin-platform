@@ -1,18 +1,17 @@
 package postgrescontrollers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"mime/multipart"
-	"net/textproto"
-	"time"
+	"strings"
 
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
 
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
 )
@@ -34,7 +33,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 
 	// prepare context and initialise client
 	ctx := c.Context()
-	client, _, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
+	client, databaseName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialise Postgres client: " + err.Error(),
@@ -43,95 +42,104 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	defer client.Close()
 
 	// parse "path" field from form
-	fields, err := utils.ParseFormFields(c, []string{"path"}, nil)
+	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
-	path := fields["path"]
+	path := strings.TrimSuffix(fields["path"], ".json")
+	path = strings.Trim(path, "/")
+	path = strings.TrimPrefix(path, *databaseName)
+	path = strings.Trim(path, "/")
+
+	// prepare the object to store the result files
+	resultFiles := make(map[string][]byte)
 
 	// determine mode by path
-	switch {
-	case path == "" || path == "/":
+	if path == "" {
 		// return every table
-		return fetchAllTablesMultipart(c, client)
-	case func() bool {
-		_, table, rowID, _ := utils.ExtractPathComponents(path)
-		return table != "" && rowID != ""
-	}():
-		_, table, rowID, _ := utils.ExtractPathComponents(path)
-		return fetchRowByID(c, client, table, rowID)
-	case func() bool {
-		_, table, _, _ := utils.ExtractPathComponents(path)
-		return table != ""
-	}():
-		_, table, _, _ := utils.ExtractPathComponents(path)
-		return fetchFullTable(c, client, table)
-	default:
-		// invalid path
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid path: " + path,
+		resultPaths, resultContents, getErr := getAllTablesAsFiles(ctx, client)
+		if getErr != nil {
+			cs.Logger.Error("failed to get all tables", "error", getErr)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to get all tables: " + fields["path"],
+			})
+		}
+		for i, resultPath := range resultPaths {
+			resultFiles[resultPath] = resultContents[i]
+		}
+	} else {
+		// return a single table
+		resultPath, resultContent, getErr := getTableAsFile(ctx, client, path)
+		if getErr != nil {
+			cs.Logger.Error("failed to get table", "error", getErr)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to get table: " + path,
+			})
+		}
+		resultFiles[resultPath] = resultContent
+	}
+
+	// Create a zip archive of the result files
+	zipBytes, err := irminutils.ZipFiles(resultFiles)
+	if err != nil {
+		cs.Logger.Error("failed to create zip archive", "error", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create zip archive",
 		})
 	}
+
+	// return the result files as a zip archive stream
+	c.Response().Header.Set("Content-Type", "application/zip")
+	c.Response().Header.Set("Content-Disposition", "attachment; filename=result.zip")
+	return c.Status(fiber.StatusOK).SendStream(bytes.NewReader(zipBytes))
 }
 
-// fetchAllTablesMultipart writes every table in "public" as JSON parts
-// in a multipart/mixed response.
-func fetchAllTablesMultipart(
-	c fiber.Ctx,
+// getAllTablesAsFiles writes every table in "public" as JSON files.
+// It returns a list of file paths, the file contents, and an error if one occurs.
+func getAllTablesAsFiles(
+	ctx context.Context,
 	client *postgresclient.PostgresClient,
-) error {
-	ctx := c.Context()
-
+) ([]string, [][]byte, error) {
 	// Get list of tables
 	tables, err := client.GetTables(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get tables: %w", err)
+		return nil, nil, fmt.Errorf("failed to get tables: %w", err)
 	}
 
-	// Setup multipart writer
-	boundary := fmt.Sprintf("MULTIPART-%d", time.Now().UnixNano())
-	c.Set("Content-Type", "multipart/mixed; boundary="+boundary)
-
-	mw := multipart.NewWriter(c)
-	if boundaryErr := mw.SetBoundary(boundary); boundaryErr != nil {
-		return fmt.Errorf("failed to set boundary: %w", boundaryErr)
-	}
-	defer mw.Close()
+	// initialise lists
+	filenames := make([]string, len(tables))
+	contents := make([][]byte, len(tables))
 
 	// Process each table
-	for _, table := range tables {
-		if tableErr := writeTableAsPart(ctx, mw, client, table); tableErr != nil {
-			return fmt.Errorf("failed to process table %s: %w", table, tableErr)
+	for i, table := range tables {
+		resultPath, resultContent, getErr := getTableAsFile(ctx, client, table)
+		if getErr != nil {
+			return nil, nil, fmt.Errorf("failed to process table %s: %w", table, getErr)
 		}
+		filenames[i] = resultPath
+		contents[i] = resultContent
 	}
 
-	return nil
+	return filenames, contents, nil
 }
 
-// writeTableAsPart writes a single table as a multipart part.
-func writeTableAsPart(
+// getTableAsFile creates a JSON file for a given table.
+// It returns the file path, the file content, and an error if one occurs.
+func getTableAsFile(
 	ctx context.Context,
-	mw *multipart.Writer,
 	client *postgresclient.PostgresClient,
 	table string,
-) error {
-	// Create part with headers
-	h := textproto.MIMEHeader{}
-	h.Set("Content-Type", "application/octet-stream")
-	h.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
-
-	part, err := mw.CreatePart(h)
-	if err != nil {
-		return fmt.Errorf("create part failed: %w", err)
-	}
+) (string, []byte, error) {
+	// create file name
+	fileName := fmt.Sprintf("%s.json", table)
 
 	// Query table data
 	query := fmt.Sprintf(`SELECT * FROM "%s"`, table)
 	rows, err := client.Query(ctx, query)
 	if err != nil {
-		return fmt.Errorf("query failed: %w", err)
+		return fileName, nil, fmt.Errorf("query failed: %w", err)
 	}
 	defer rows.Close()
 
@@ -145,20 +153,16 @@ func writeTableAsPart(
 	// Build records
 	recs, err := buildRecordsFromRows(rows, cols)
 	if err != nil {
-		return fmt.Errorf("build records failed: %w", err)
+		return fileName, nil, fmt.Errorf("build records failed: %w", err)
 	}
 
 	// Marshal and write JSON
 	data, err := json.MarshalIndent(recs, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal failed: %w", err)
+		return fileName, nil, fmt.Errorf("marshal failed: %w", err)
 	}
 
-	if _, writeErr := part.Write(data); writeErr != nil {
-		return fmt.Errorf("write JSON failed: %w", writeErr)
-	}
-
-	return nil
+	return fileName, data, nil
 }
 
 // buildRecordsFromRows converts rows into a slice of maps.
@@ -182,98 +186,4 @@ func buildRecordsFromRows(rows pgx.Rows, cols []string) ([]map[string]any, error
 	}
 
 	return recs, nil
-}
-
-// fetchFullTable queries an entire table and returns it as a JSON download.
-func fetchFullTable(
-	c fiber.Ctx,
-	client *postgresclient.PostgresClient,
-	table string,
-) error {
-	ctx := c.Context()
-	query := fmt.Sprintf(`SELECT * FROM "%s"`, table)
-	rows, err := client.Query(ctx, query)
-	if err != nil {
-		return fmt.Errorf("failed to fetch table %s: %w", table, err)
-	}
-	defer rows.Close()
-
-	// extract column names
-	descs := rows.FieldDescriptions()
-	cols := make([]string, len(descs))
-	for i, fd := range descs {
-		cols[i] = fd.Name
-	}
-
-	// build record slice
-	var recs []map[string]any
-	for rows.Next() {
-		var values []any
-		values, err = rows.Values()
-		if err != nil {
-			return fmt.Errorf("failed to retrieve values: %w", err)
-		}
-		row := make(map[string]any, len(cols))
-		for i, col := range cols {
-			row[col] = values[i]
-		}
-		recs = append(recs, row)
-	}
-	if err = rows.Err(); err != nil {
-		return fmt.Errorf("failed to iterate rows: %w", err)
-	}
-
-	// Send the JSON response
-	c.Set("Content-Type", "application/octet-stream")
-	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, table))
-	return c.JSON(recs)
-}
-
-// fetchRowByID queries one row by "id" and returns it as a JSON download.
-func fetchRowByID(
-	c fiber.Ctx,
-	client *postgresclient.PostgresClient,
-	table, id string,
-) error {
-	ctx := c.Context()
-	query := fmt.Sprintf(`SELECT * FROM "%s" WHERE "id" = $1`, table)
-	rows, err := client.Query(ctx, query, id)
-	if err != nil {
-		return fmt.Errorf("failed to fetch row: %w", err)
-	}
-	defer rows.Close()
-
-	// extract column names
-	descs := rows.FieldDescriptions()
-	cols := make([]string, len(descs))
-	for i, fd := range descs {
-		cols[i] = fd.Name
-	}
-
-	// build record slice (expecting at most one)
-	var recs []map[string]any
-	for rows.Next() {
-		var values []any
-		values, err = rows.Values()
-		if err != nil {
-			return fmt.Errorf("failed to retrieve values: %w", err)
-		}
-		row := make(map[string]any, len(cols))
-		for i, col := range cols {
-			row[col] = values[i]
-		}
-		recs = append(recs, row)
-	}
-	if err = rows.Err(); err != nil {
-		return fmt.Errorf("failed to iterate rows: %w", err)
-	}
-	if len(recs) == 0 {
-		return errors.New("no row found")
-	}
-
-	// send as attachment
-	filename := fmt.Sprintf(`%s_row_%s.json`, table, id)
-	c.Set("Content-Type", "application/octet-stream")
-	c.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
-	return c.JSON(recs[0])
 }

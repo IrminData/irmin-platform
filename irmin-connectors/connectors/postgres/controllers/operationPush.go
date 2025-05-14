@@ -11,15 +11,19 @@ import (
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
-	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+// OperationPush handles the push operation for Postgres.
+// It reads a zip file from the request, unzips it, and then reads each JSON file within it.
+// It then executes a transaction to delete existing rows and insert the new records.
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	// get the operation from the context
 	opValue := c.Locals("operation")
@@ -30,58 +34,9 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 		})
 	}
 
-	// get target table name from path field
-	fields, err := utils.ParseFormFields(c, []string{"path"}, nil)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid form data: " + err.Error(),
-		})
-	}
-	_, tableName, _, _ := utils.ExtractPathComponents(fields["path"])
-	if tableName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "no table name specified in path",
-		})
-	}
-
-	// read uploaded JSON file
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		if errors.Is(err, http.ErrMissingFile) {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "failed to retrieve form file: " + err.Error(),
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to retrieve form file: " + err.Error(),
-		})
-	}
-	file, err := fileHeader.Open()
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to open form file: " + err.Error(),
-		})
-	}
-	defer file.Close()
-
-	bytesData, err := io.ReadAll(file)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to read uploaded file: " + err.Error(),
-		})
-	}
-
-	// unmarshal into slice of records
-	var records []map[string]any
-	if err = json.Unmarshal(bytesData, &records); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "failed to parse JSON data: " + err.Error(),
-		})
-	}
-
 	// initialise Postgres client
 	ctx := c.Context()
-	client, _, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
+	client, databaseName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to initialise Postgres client: " + err.Error(),
@@ -89,30 +44,144 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	}
 	defer client.Close()
 
-	// determine and sort column names
-	var columns []string
-	if len(records) > 0 {
-		for col := range records[0] {
-			columns = append(columns, col)
-		}
-		sort.Strings(columns)
-	}
-
-	// build INSERT statement
-	insertSQL := buildInsertStatement(tableName, columns)
-
-	// execute transaction
-	err = executeTransaction(ctx, client, tableName, records, columns, insertSQL)
+	// process path
+	path, err := processPath(c, databaseName)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to execute transaction: " + err.Error(),
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
 		})
 	}
 
-	// success
+	// get available tables
+	tables, err := client.GetTables(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch tables: " + err.Error(),
+		})
+	}
+
+	// handle uploaded file
+	files, err := handleUploadedFile(c)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// process each file
+	keys := make([]string, 0, len(files))
+	for k := range files {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, filePath := range keys {
+		tableName := processTableName(filePath, databaseName)
+
+		// skip if we're targeting a specific path and this isn't it
+		if path != "" && tableName != path {
+			continue
+		}
+
+		err = cs.processTableData(ctx, client, tableName, files[filePath], tables)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to process table data: " + err.Error(),
+			})
+		}
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": fmt.Sprintf("Replaced %d rows in '%s'.", len(records), tableName),
+		"message": "Successfully pushed data",
 	})
+}
+
+// processPath processes the path field from the form data and returns the target table path.
+func processPath(c fiber.Ctx, databaseName *string) (string, error) {
+	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
+	if err != nil {
+		return "", fmt.Errorf("invalid form data: %w", err)
+	}
+
+	path := strings.TrimSuffix(fields["path"], ".json")
+	path = strings.Trim(path, "/")
+	path = strings.TrimPrefix(path, *databaseName)
+	path = strings.Trim(path, "/")
+
+	return path, nil
+}
+
+// handleUploadedFile processes the uploaded file and returns the unzipped files.
+func handleUploadedFile(c fiber.Ctx) (map[string][]byte, error) {
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve form file: %w", err)
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open form file: %w", err)
+	}
+	defer file.Close()
+
+	bytesData, err := io.ReadAll(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read uploaded file: %w", err)
+	}
+
+	files, err := irminutils.UnzipFiles(bytesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unzip file: %w", err)
+	}
+
+	return files, nil
+}
+
+// processTableData processes a single table's data and executes the database operations.
+func (cs *Controllers) processTableData(
+	ctx context.Context,
+	client *postgresclient.PostgresClient,
+	tableName string,
+	fileData []byte,
+	tables []string,
+) error {
+	if !slices.Contains(tables, tableName) {
+		cs.Logger.InfoContext(ctx, "Table does not exist", "table", tableName)
+		return nil
+	}
+
+	var records []map[string]any
+	if err := json.Unmarshal(fileData, &records); err != nil {
+		return fmt.Errorf("failed to parse JSON data: %w", err)
+	}
+
+	if len(records) == 0 {
+		return nil
+	}
+
+	columns := getSortedColumns(records[0])
+	insertSQL := buildInsertStatement(tableName, columns)
+
+	return executeTransaction(ctx, client, tableName, records, columns, insertSQL)
+}
+
+// getSortedColumns returns a sorted slice of column names from a record.
+func getSortedColumns(record map[string]any) []string {
+	columns := make([]string, 0, len(record))
+	for col := range record {
+		columns = append(columns, col)
+	}
+	sort.Strings(columns)
+	return columns
+}
+
+// processTableName extracts the table name from a file path.
+func processTableName(filePath string, databaseName *string) string {
+	tableName := strings.TrimSuffix(filePath, ".json")
+	tableName = strings.Trim(tableName, "/")
+	tableName = strings.TrimPrefix(tableName, *databaseName)
+	tableName = strings.Trim(tableName, "/")
+	return tableName
 }
 
 // buildInsertStatement builds the INSERT statement with placeholders.
@@ -129,10 +198,14 @@ func buildInsertStatement(tableName string, columns []string) string {
 	)
 }
 
-// executeDelete executes the DELETE operation within a transaction.
+// executeDelete executes the DELETE and TRUNCATE operations within a transaction.
 func executeDelete(ctx context.Context, tx *postgresclient.Tx, tableName string) error {
-	if _, err := tx.Exec(ctx, fmt.Sprintf(`DELETE FROM "%s"`, tableName)); err != nil {
-		return fmt.Errorf("failed to delete rows: %w", err)
+	// First try TRUNCATE
+	if _, truncateErr := tx.Exec(ctx, fmt.Sprintf(`TRUNCATE TABLE "%s" CASCADE`, tableName)); truncateErr != nil {
+		// If TRUNCATE fails, fall back to DELETE
+		if _, deleteErr := tx.Exec(ctx, fmt.Sprintf(`DELETE FROM "%s"`, tableName)); deleteErr != nil {
+			return fmt.Errorf("failed to delete/truncate rows: %w", deleteErr)
+		}
 	}
 	return nil
 }

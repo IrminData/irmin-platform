@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// ValidateOperationToken validates the provided token against the operation token of the connector registration instance.
 func ValidateOperationToken(
 	d *db.Database,
 	logger *slog.Logger,
@@ -44,18 +45,18 @@ func ValidateOperationToken(
 
 	// Validate the provided token against the active operations
 	var validToken = false
-	var matchedOperation db.Operation
+	var matchedOperation *db.Operation
 	for _, operation := range operations {
 		if token == operation.Token {
 			validToken = true
-			matchedOperation = operation
+			matchedOperation = &operation
 			break
 		}
 	}
 	if !validToken {
-		logger.Warn("Invalid token provided",
+		logger.Warn("Invalid operation token provided",
 			"connector_name", connectorName)
 		return false, &registration, nil
 	}
-	return true, &registration, &matchedOperation
+	return true, &registration, matchedOperation
 }

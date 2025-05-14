@@ -19,7 +19,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error {
 	}
 
 	// Set the request-specific data in the context
-	c.Locals("connectorInfo", info)
+	c.Locals("connectorInfo", &info)
 	c.Locals("registration", registration)
 
 	return c.Next()
@@ -37,7 +37,7 @@ func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error {
 	}
 
 	// Set the request-specific data in the context
-	c.Locals("connectorInfo", info)
+	c.Locals("connectorInfo", &info)
 	c.Locals("registration", registration)
 	c.Locals("operation", operation)
 
