@@ -107,12 +107,13 @@ const (
 
 type PipelineStage struct {
 	gorm.Model
-	Description string                `json:"description"`
-	Write       bool                  `json:"write"`
-	Read        bool                  `json:"read"`
-	Pipeline    *PipelineWorkflowable `json:"pipeline"                        gorm:"foreignKey:PipelineID"`
-	PipelineID  *uint                 `json:"pipeline_id"`
-	Type        PipelineStageType     `json:"type"`
+	OrderSequence int                   `json:"order_sequence"`
+	Description   string                `json:"description"`
+	Write         bool                  `json:"write"`
+	Read          bool                  `json:"read"`
+	Pipeline      *PipelineWorkflowable `json:"pipeline"                        gorm:"foreignKey:PipelineID"`
+	PipelineID    *uint                 `json:"pipeline_id"`
+	Type          PipelineStageType     `json:"type"`
 	// Action
 	Executable *string `json:"executable,omitempty"`
 	// Connection

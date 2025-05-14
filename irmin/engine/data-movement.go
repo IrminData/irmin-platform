@@ -2,7 +2,6 @@ package engine
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -16,10 +15,10 @@ import (
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
-// initializeConnectorOperation sets up a connector operation and returns an operation client,
+// InitializeConnectorOperation sets up a connector operation and returns an operation client,
 // along with a cancel function to clean up when done.
 // It returns an error if initialization fails.
-func (c *Client) initializeConnectorOperation(connection *db.Connection) (*irminconnectorclient.Client, func(), error) {
+func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*irminconnectorclient.Client, func(), error) {
 	// Create base connector client.
 	baseClient := irminconnectorclient.NewClient(
 		connection.Connector.APIBaseURL,
@@ -51,22 +50,9 @@ func (c *Client) initializeConnectorOperation(connection *db.Connection) (*irmin
 }
 
 // DataMovementSchema retrieves the schema for a specific method from the connector.
-//
-// Parameters:
-//
-//	ctx - context for request cancellation and deadlines.
-//	connection - database connection details for connector.
-//	method - the operation method to retrieve schema for (e.g. "pull").
-//
-// Returns:
-//
-//	ObjectSchema pointer for the requested method, or an error if retrieval fails.
-func (c *Client) DataMovementSchema(
-	ctx context.Context,
-	connection *db.Connection,
-	method string,
-) (*irminmodels.ObjectSchema, error) {
-	opClient, cancel, err := c.initializeConnectorOperation(connection)
+// It returns the schema and an error if any occurred.
+func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*irminmodels.ObjectSchema, error) {
+	opClient, cancel, err := c.InitializeConnectorOperation(connection)
 	if err != nil {
 		return nil, err
 	}
@@ -83,22 +69,8 @@ func (c *Client) DataMovementSchema(
 }
 
 // DataImport imports data from an external source into a lakeFS repository.
-//
-// Parameters:
-//
-//	ctx - context for request cancellation and deadlines.
-//	connection - database connection with connector info.
-//	connectionPath - path in external source to pull data from.
-//	workspace - lakeFS workspace name.
-//	repository - lakeFS repository name.
-//	branch - branch in repository to import to.
-//	repositoryPath - path in repository to upload files under.
-//
-// Returns:
-//
-//	slice of successfully imported paths, slice of errors encountered.
+// It returns the paths of the files that were pulled and an error if any occurred.
 func (c *Client) DataImport(
-	ctx context.Context,
 	connection *db.Connection,
 	connectionPath,
 	workspace,
@@ -111,35 +83,10 @@ func (c *Client) DataImport(
 		success []string
 	)
 
-	// Initialize connector operation.
-	opClient, cancel, err := c.initializeConnectorOperation(connection)
+	// Pull the files from the connector.
+	allFiles, err := c.PullFilesFromConnector(connection, connectionPath)
 	if err != nil {
-		errs = append(errs, err)
-		return success, errs
-	}
-	defer cancel()
-
-	// Pull the matching files from the connector.
-	pulled, err := opClient.OperationPull(repositoryPath)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("failed to pull files: %w", err))
-		return success, errs
-	}
-
-	// Loop through the pulled files to unzip them and construct a list of all files.
-	allFiles := make(map[string][]byte)
-	for _, file := range pulled {
-		// Unzip the file
-		unzipped, err := irminutils.UnzipFiles(file.Content)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to unzip file: %w", err))
-			return success, errs
-		}
-
-		// Add the unzipped files to the list of all files.
-		for filePath, fileContent := range unzipped {
-			allFiles[filePath] = fileContent
-		}
+		return nil, []error{err}
 	}
 
 	// Prepare upload to lakeFS.
@@ -187,23 +134,43 @@ func (c *Client) DataImport(
 	return success, errs
 }
 
+// PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents.
+// It returns a map of file paths to file contents and an error if any occurred.
+func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPath string) (map[string][]byte, error) {
+	// Initialize connector operation.
+	opClient, cancel, err := c.InitializeConnectorOperation(connection)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize connector operation: %w", err)
+	}
+	defer cancel()
+
+	// Pull the matching files from the connector.
+	pulled, err := opClient.OperationPull(connectionPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pull files: %w", err)
+	}
+
+	// Loop through the pulled files to unzip them and construct a list of all files.
+	allFiles := make(map[string][]byte)
+	for _, file := range pulled {
+		// Unzip the file
+		unzipped, err := irminutils.UnzipFiles(file.Content)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unzip file: %w", err)
+		}
+
+		// Add the unzipped files to the list of all files.
+		for filePath, fileContent := range unzipped {
+			allFiles[filePath] = fileContent
+		}
+	}
+
+	return allFiles, nil
+}
+
 // DataExport exports data from a lakeFS repository to an external connector.
-//
-// Parameters:
-//
-//	ctx - context for request cancellation and deadlines.
-//	connection - database connection with connector info.
-//	connectionPath - target path in connector to upload data to.
-//	workspace - lakeFS workspace name.
-//	repository - lakeFS repository name.
-//	branch - branch in repository to export from.
-//	pathPrefix - path in repository to source files from.
-//
-// Returns:
-//
-//	slice of successfully exported paths, slice of errors encountered.
+// It returns the paths of the files that were pushed and an error if any occurred.
 func (c *Client) DataExport(
-	ctx context.Context,
 	connection *db.Connection,
 	connectionPath,
 	workspace,
@@ -273,18 +240,35 @@ func (c *Client) DataExport(
 		repositoryPaths = append(repositoryPaths, obj.Path)
 	}
 
-	// Zip the files.
-	zip, err := irminutils.ZipFiles(files)
+	// Push the files to the connector.
+	_, err = c.PushFilesToConnector(connection, connectionPath, obj, files)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("failed to zip files: %w", err))
+		errs = append(errs, err)
 		return nil, errs
 	}
 
+	// Return the repository paths and errors.
+	return repositoryPaths, errs
+}
+
+// PushFilesToConnector pushes files to a connector.
+// It returns the paths of the files that were pushed and an error if any occurred.
+func (c *Client) PushFilesToConnector(
+	connection *db.Connection,
+	connectionPath string,
+	obj *irminmodels.Object,
+	files map[string][]byte,
+) ([]string, error) {
+	// Zip the files.
+	zip, err := irminutils.ZipFiles(files)
+	if err != nil {
+		return nil, fmt.Errorf("failed to zip files: %w", err)
+	}
+
 	// Initialize connector operation.
-	opClient, cancel, initErr := c.initializeConnectorOperation(connection)
+	opClient, cancel, initErr := c.InitializeConnectorOperation(connection)
 	if initErr != nil {
-		errs = append(errs, initErr)
-		return nil, errs
+		return nil, fmt.Errorf("failed to initialize connector operation: %w", initErr)
 	}
 	defer cancel()
 
@@ -293,7 +277,9 @@ func (c *Client) DataExport(
 	if strings.HasSuffix(connectionPath, "/") || connectionPath == "" || len(files) > 1 {
 		// If connection path is a directory (ends with "/" or is empty),
 		// or there is more than one file, append the pulled file name to the path.
-		connPath = path.Join(connPath, obj.Name)
+		if obj != nil {
+			connPath = path.Join(connPath, obj.Name)
+		}
 	}
 
 	// Push the zip to the correct path in the connector.
@@ -302,9 +288,13 @@ func (c *Client) DataExport(
 		irminconnectorclient.FormFile{Reader: bytes.NewBuffer(zip)},
 	)
 	if pushErr != nil {
-		errs = append(errs, fmt.Errorf("failed to push files: %w", pushErr))
-		return nil, errs
+		return nil, fmt.Errorf("failed to push files: %w", pushErr)
 	}
 
-	return repositoryPaths, errs
+	// Return the files that were pushed.
+	pushedPaths := make([]string, 0, len(files))
+	for pushedPath := range files {
+		pushedPaths = append(pushedPaths, pushedPath)
+	}
+	return pushedPaths, nil
 }

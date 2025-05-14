@@ -399,11 +399,12 @@ func WorkflowsStore(c fiber.Ctx) error {
 		}
 		// Build the pipeline stage objects.
 		var stages []db.PipelineStage
-		for _, stage := range requestStages {
+		for orderSequence, stage := range requestStages {
 			newStage := db.PipelineStage{
-				Description: stage["description"],
-				Write:       stage["write"] == "true",
-				Read:        stage["read"] == "true",
+				OrderSequence: orderSequence,
+				Description:   stage["description"],
+				Write:         stage["write"] == "true",
+				Read:          stage["read"] == "true",
 			}
 			switch stage["type"] {
 			case "action":
@@ -820,11 +821,12 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		}
 		// Build the pipeline stage objects.
 		var stages []db.PipelineStage
-		for _, stage := range requestStages {
+		for orderSequence, stage := range requestStages {
 			newStage := db.PipelineStage{
-				Description: stage["description"],
-				Write:       stage["write"] == "true",
-				Read:        stage["read"] == "true",
+				OrderSequence: orderSequence,
+				Description:   stage["description"],
+				Write:         stage["write"] == "true",
+				Read:          stage["read"] == "true",
 			}
 			switch stage["type"] {
 			case "action":

@@ -48,7 +48,7 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 	for i, connection := range connections {
 		conn := connection // Create a new variable to avoid closure issues
 		connectionSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
-			return lib.GetConnectionSchema(c.Context(), &conn, "read", locale)
+			return lib.GetConnectionSchema(&conn, "pull", locale)
 		})
 	}
 
@@ -58,7 +58,6 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 		repo := repository // Create a new variable to avoid closure issues
 		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
 			return lib.GetObjectSchema(
-				c.Context(),
 				workspace,
 				&repo,
 				&irminmodels.Object{

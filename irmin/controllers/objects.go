@@ -371,7 +371,7 @@ func ObjectsSchema(c fiber.Ctx) error {
 	object_ref := c.Locals("object_ref").(string)
 
 	// Get the schema of the object in the repository at ref
-	schema, err := lib.GetObjectSchema(c.Context(), workspace, repository, object, object_ref, locale)
+	schema, err := lib.GetObjectSchema(workspace, repository, object, object_ref, locale)
 	if err != nil {
 		log.Printf("Error retrieving object schema: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

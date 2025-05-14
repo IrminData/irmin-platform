@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
@@ -19,7 +18,6 @@ var connectionSchemaCacheUpdateMutex sync.Map
 // Otherwise, it fetches the schema from the Data Engine and caches it.
 // The cache is updated in a goroutine to avoid blocking the main thread.
 func GetConnectionSchema(
-	c context.Context,
 	connection *db.Connection,
 	operationMethod, locale string,
 ) (*irminmodels.ObjectSchema, error) {
@@ -43,7 +41,7 @@ func GetConnectionSchema(
 	dataEngine := engine.NewClient(locale)
 
 	// Get the schema of the connection
-	schema, err := dataEngine.DataMovementSchema(c, connection, operationMethod)
+	schema, err := dataEngine.DataMovementSchema(connection, operationMethod)
 	if err != nil {
 		log.Printf("Error getting connection schema: %v", err)
 		return nil, err

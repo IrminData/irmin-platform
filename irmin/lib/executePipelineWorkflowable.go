@@ -8,9 +8,9 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 	"log"
+	"slices"
 	"strings"
 
-	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
@@ -28,6 +28,11 @@ func ExecutePipelineWorkflowable(
 	// Store the results of the previously executed stage
 	// This is a byte array map where the key is the result file name and the value is the file content
 	previousStageResults := make(map[string][]byte)
+
+	// Sort the stages by order sequence
+	slices.SortFunc(workflowable.Stages, func(a, b db.PipelineStage) int {
+		return a.OrderSequence - b.OrderSequence
+	})
 
 	// Execute each stage in the pipeline
 	for key, stage := range workflowable.Stages {
@@ -74,74 +79,39 @@ func ExecutePipelineWorkflowable(
 				continue
 			}
 
-			// Create connector client instance.
-			connectorClient := irminconnectorclient.NewClient(
-				connection.Connector.APIBaseURL,
-				connection.Connector.SystemToken,
-				"en",
-			)
-
-			// Initialize operation with the connector
-			op, err := connectorClient.InitOperation(connection.Details, connection.Settings)
-			if err != nil {
-				log.Printf("Error initializing operation: %v", err)
-				logs = append(logs, fmt.Sprintf("Error initializing operation: %v", err))
-				continue
-			}
-
-			// Create connector operation client
-			connectorOpClient := irminconnectorclient.NewClient(connection.Connector.APIBaseURL, op.Token, "en")
-
 			if stage.Write {
 				// Upload the previous stage results to the connection
-
-				// Loop through the results and save them to the connection
-				for fileName, fileContent := range previousStageResults {
-					// Construct the path to save the file to
-					filePath := strings.Trim(*stage.ConnectionWritePath, "/")
-					filePath = strings.Trim(filePath, fileName)
-					filePath = fmt.Sprintf("%s/%s", filePath, fileName)
-					// Push the file to the connector
-					_, err := connectorOpClient.OperationPush(filePath, irminconnectorclient.FormFile{
-						Reader: bytes.NewBuffer(fileContent),
-					})
-					if err != nil {
-						log.Printf("Error pushing file to connector: %v", err)
-						logs = append(logs, fmt.Sprintf("Error pushing file to connector: %v", err))
-						continue
-					}
-					logs = append(logs, fmt.Sprintf("Result object ('%s') saved to connection.", fileName))
+				connectionPath := strings.TrimLeft(*stage.ConnectionWritePath, "/")
+				pushedPaths, pushErr := dataEngine.PushFilesToConnector(connection, connectionPath, nil, previousStageResults)
+				if pushErr != nil {
+					log.Printf("Error pushing files to connector: %v", pushErr)
+					logs = append(logs, fmt.Sprintf("Error pushing files to connector: %v", pushErr))
+					continue
+				}
+				for _, pushedPath := range pushedPaths {
+					logs = append(logs, fmt.Sprintf("Object ('%s') pushed to connector.", pushedPath))
 				}
 			}
 
 			if stage.Read {
-				// Read the files from the connection and set them to the previous stage results
-
 				// Pull the files from the connector
-				connectionFiles, err := connectorOpClient.OperationPull(*stage.ConnectionReadPath)
-				if err != nil {
-					log.Printf("Error pulling object from connector: %v", err)
-					logs = append(logs, fmt.Sprintf("Error pulling object from connector: %v", err))
+				connectionPath := strings.TrimLeft(*stage.ConnectionReadPath, "/")
+				pulledPaths, pullErr := dataEngine.PullFilesFromConnector(connection, connectionPath)
+				if pullErr != nil {
+					log.Printf("Error pulling files from connector: %v", pullErr)
+					logs = append(logs, fmt.Sprintf("Error pulling files from connector: %v", pullErr))
 					continue
 				}
 
 				// Loop through the files and set them to the previous stage results
-				for _, file := range connectionFiles {
+				for fileName, fileContent := range pulledPaths {
 					// Append the content to the previous stage results
-					previousStageResults[file.Filename] = file.Content
+					previousStageResults[fileName] = fileContent
 					logs = append(
 						logs,
-						fmt.Sprintf("Object's ('%s') content retrieved from connection.", file.Filename),
+						fmt.Sprintf("Object ('%s') retrieved from connection.", fileName),
 					)
 				}
-			}
-
-			// Close the operation
-			err = connectorClient.CancelOperation(int(op.ID))
-			if err != nil {
-				log.Printf("Error closing operation: %v", err)
-				logs = append(logs, fmt.Sprintf("Error closing connector operation: %v", err))
-				continue
 			}
 
 		case db.PipelineStageTypeRepository:

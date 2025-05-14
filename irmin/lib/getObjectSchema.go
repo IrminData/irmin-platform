@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -21,7 +20,6 @@ var objectSchemaCacheUpdateMutex sync.Map
 // Otherwise, it fetches the schema from the Data Engine and caches it.
 // The cache is updated in a goroutine to avoid blocking the main thread.
 func GetObjectSchema(
-	c context.Context,
 	workspace *db.Workspace,
 	repository *db.Repository,
 	object *irminmodels.Object,

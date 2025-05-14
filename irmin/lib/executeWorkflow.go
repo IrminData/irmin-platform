@@ -62,7 +62,7 @@ func ExecuteWorkflow(
 			hasError = true
 		} else {
 			// Execute the export workflowable.
-			executionLogs, err := ExecuteExportWorkflowable(ctx, &workflow, exportWorkflowable, run)
+			executionLogs, err := ExecuteExportWorkflowable(&workflow, exportWorkflowable, run)
 			if err != nil {
 				log.Printf("Failed to execute export workflowable: %v", err)
 				hasError = true
@@ -77,7 +77,7 @@ func ExecuteWorkflow(
 			hasError = true
 		} else {
 			// Execute the import workflowable.
-			executionLogs, err := ExecuteImportWorkflowable(ctx, &workflow, importWorkflowable, run)
+			executionLogs, err := ExecuteImportWorkflowable(&workflow, importWorkflowable, run)
 			if err != nil {
 				log.Printf("Failed to execute import workflowable: %v", err)
 				hasError = true

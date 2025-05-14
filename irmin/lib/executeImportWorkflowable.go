@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
@@ -13,7 +12,6 @@ import (
 // It retrieves the connector information and uses the Data Engine to import data from the connector to the requested repository.
 // It returns a slice of logs and an error if any occurred during the process.
 func ExecuteImportWorkflowable(
-	ctx context.Context,
 	workflow *db.Workflow,
 	workflowable *db.ImportWorkflowable,
 	run *db.WorkflowRun,
@@ -37,7 +35,6 @@ func ExecuteImportWorkflowable(
 
 	// Import data from the connector to the requested repository
 	paths, errors := dataEngine.DataImport(
-		ctx,
 		connection,
 		connectionPath,
 		workflow.Workspace.Slug,

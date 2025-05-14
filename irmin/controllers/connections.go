@@ -338,7 +338,7 @@ func ConnectionSchema(c fiber.Ctx) error {
 	}
 
 	// Get the schema of the connection
-	schema, err := lib.GetConnectionSchema(c.Context(), connection, operationMethod, locale)
+	schema, err := lib.GetConnectionSchema(connection, operationMethod, locale)
 	if err != nil {
 		log.Printf("Error getting connection schema: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

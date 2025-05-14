@@ -5,6 +5,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 	"log"
+	"slices"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -110,6 +111,11 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error)
 	case db.WorkflowableTypePipeline:
 		pipelineWorkflowable := workflowable.(*db.PipelineWorkflowable)
 		workflowableResponse.Live = pipelineWorkflowable.Live
+		// Sort the stages by order sequence
+		slices.SortFunc(pipelineWorkflowable.Stages, func(a, b db.PipelineStage) int {
+			return a.OrderSequence - b.OrderSequence
+		})
+		// Format the stages
 		var stagesResponse []irminmodels.PipelineStage
 		for _, stage := range pipelineWorkflowable.Stages {
 			switch stage.Type {
