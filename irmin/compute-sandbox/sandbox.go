@@ -43,6 +43,7 @@ func installGoSDK(destDir string, projectName string) error {
 // executes the code using Docker, and returns the execution result.
 func ExecuteEditorItem(
 	ctx context.Context,
+	d *db.Database,
 	inputFiles map[string][]byte, // key is the file path, value is the file content
 	responsibleUser db.User,
 	executablePath, workspaceSlug string,
@@ -145,7 +146,7 @@ func ExecuteEditorItem(
 	}
 
 	// Create a temporary token for the user
-	apiToken, err := db.CreateAPIToken(&db.APIToken{
+	apiToken, err := d.CreateAPIToken(&db.APIToken{
 		Name:      tempDirName,
 		Token:     fmt.Sprintf("cred_%s", token),
 		ExpiresAt: time.Now().Add(60 * time.Minute).UTC(), // 1 hour expiry
@@ -158,7 +159,7 @@ func ExecuteEditorItem(
 
 	// Revoke the token after the execution
 	defer func() {
-		err := db.DeleteAPIToken(apiToken.ID)
+		err := d.DeleteAPIToken(apiToken.ID)
 		if err != nil {
 			log.Printf("error revoking token after sandbox execution: %v\n", err)
 		}

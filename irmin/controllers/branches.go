@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func BranchesIndex(c fiber.Ctx) error {
+func (api *APIControllers) BranchesIndex(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -36,7 +36,7 @@ func BranchesIndex(c fiber.Ctx) error {
 	})
 }
 
-func BranchesStore(c fiber.Ctx) error {
+func (api *APIControllers) BranchesStore(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -71,7 +71,7 @@ func BranchesStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Branch %s created", branch.Name),
 		UserID:       &user.ID,
@@ -86,7 +86,7 @@ func BranchesStore(c fiber.Ctx) error {
 	})
 }
 
-func BranchesShow(c fiber.Ctx) error {
+func (api *APIControllers) BranchesShow(c fiber.Ctx) error {
 	branch := c.Locals("branch").(*irminmodels.Branch)
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -94,7 +94,7 @@ func BranchesShow(c fiber.Ctx) error {
 	})
 }
 
-func BranchesUpdate(c fiber.Ctx) error {
+func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -143,7 +143,7 @@ func BranchesUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Branch %s updated", branch.Name),
 		UserID:       &user.ID,
@@ -158,7 +158,7 @@ func BranchesUpdate(c fiber.Ctx) error {
 	})
 }
 
-func BranchesDestroy(c fiber.Ctx) error {
+func (api *APIControllers) BranchesDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -179,7 +179,7 @@ func BranchesDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeDelete,
 		Description:  fmt.Sprintf("Branch %s deleted", branch.Name),
 		UserID:       &user.ID,
@@ -193,7 +193,7 @@ func BranchesDestroy(c fiber.Ctx) error {
 	})
 }
 
-func GetUncommittedChanges(c fiber.Ctx) error {
+func (api *APIControllers) GetUncommittedChanges(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)

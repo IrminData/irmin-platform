@@ -11,6 +11,8 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// TODO: Make sure we hide lakefs actions
+
 // getObject fetches the object from a workspace repository at a specific ref and path
 // and returns it as an Irmin formatted object.
 func getObject(

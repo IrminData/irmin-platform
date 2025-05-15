@@ -26,7 +26,7 @@ func FormatRepositoryResponse(
 	}
 
 	// Format the repository owner
-	owner, err := FormatUserResponse(repository.Owner)
+	owner, err := FormatUserResponse(&repository.Owner)
 	if err != nil {
 		return nil, fmt.Errorf("error formatting repository owner: %w", err)
 	}

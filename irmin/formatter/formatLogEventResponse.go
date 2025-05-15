@@ -7,7 +7,7 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatLogEventResponse(logEvent db.LogEvent) (*irminmodels.LogEvent, error) {
+func FormatLogEventResponse(d *db.Database, logEvent db.LogEvent) (*irminmodels.LogEvent, error) {
 	eventSqid, err := utils.EncodeSqids("logs", uint64(logEvent.ID))
 	if err != nil {
 		return nil, err
@@ -15,7 +15,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminmodels.LogEvent, error)
 
 	var user *irminmodels.User
 	if logEvent.User != nil {
-		user, err = FormatUserResponse(*logEvent.User)
+		user, err = FormatUserResponse(logEvent.User)
 		if err != nil {
 			return nil, err
 		}
@@ -23,7 +23,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminmodels.LogEvent, error)
 
 	var workspace *irminmodels.Workspace
 	if logEvent.Workspace != nil {
-		workspace, err = FormatWorkspaceResponse(*logEvent.Workspace)
+		workspace, err = FormatWorkspaceResponse(logEvent.Workspace)
 		if err != nil {
 			return nil, err
 		}
@@ -31,7 +31,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminmodels.LogEvent, error)
 
 	var connection *irminmodels.Connection
 	if logEvent.Connection != nil {
-		connection, err = FormatConnectionResponse(*logEvent.Connection)
+		connection, err = FormatConnectionResponse(logEvent.Connection)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +47,7 @@ func FormatLogEventResponse(logEvent db.LogEvent) (*irminmodels.LogEvent, error)
 
 	var workflow *irminmodels.Workflow
 	if logEvent.Workflow != nil {
-		workflow, err = FormatWorkflowResponse(*logEvent.Workflow)
+		workflow, err = FormatWorkflowResponse(d, logEvent.Workflow)
 		if err != nil {
 			return nil, err
 		}

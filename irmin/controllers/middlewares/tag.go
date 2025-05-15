@@ -12,7 +12,7 @@ import (
 )
 
 // TagMiddleware parses the tag name from the request URL and sets the tag in the context.
-func TagMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) TagMiddleware(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)

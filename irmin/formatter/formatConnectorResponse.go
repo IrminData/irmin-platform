@@ -8,7 +8,7 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatConnectorResponse(connector db.Connector) (*irminmodels.Connector, error) {
+func FormatConnectorResponse(connector *db.Connector) (*irminmodels.Connector, error) {
 	connectorSqid, err := utils.EncodeSqids("connectors", uint64(connector.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding connector sqid: %w", err)

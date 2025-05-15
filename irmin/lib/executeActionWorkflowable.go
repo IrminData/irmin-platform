@@ -16,11 +16,17 @@ import (
 // It returns the logs generated during the execution and any error encountered.
 func ExecuteActionWorkflowable(
 	ctx context.Context,
+	d *db.Database,
 	workflow *db.Workflow,
 	workflowable *db.ActionWorkflowable,
-	run *db.WorkflowRun,
 ) ([]string, error) {
 	var logs []string
+
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		logs = append(logs, fmt.Sprintf("Workflow execution cancelled before starting: %v", ctx.Err()))
+		return logs, ctx.Err()
+	}
 
 	// Initialize Data Engine client
 	dataEngine := engine.NewClient("en")
@@ -30,6 +36,12 @@ func ExecuteActionWorkflowable(
 
 	// Iterate over the inputs and add them to the input files map
 	for _, input := range workflowable.Inputs {
+		// Check for context cancellation during input processing
+		if ctx.Err() != nil {
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during input processing: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
+
 		// Trim slashes from the path
 		inputPath := strings.TrimLeft(input.Path, "/")
 		// Get the object content from the data engine
@@ -47,15 +59,28 @@ func ExecuteActionWorkflowable(
 		inputFiles[inputPath] = content
 	}
 
+	// Check for context cancellation before compute execution
+	if ctx.Err() != nil {
+		logs = append(logs, fmt.Sprintf("Workflow execution cancelled before compute execution: %v", ctx.Err()))
+		return logs, ctx.Err()
+	}
+
 	// Run the executable file in the compute sandbox
 	computeResult, err := sandbox.ExecuteEditorItem(
 		ctx,
+		d,
 		inputFiles,
 		workflow.Owner,
 		workflowable.Executable,
 		workflow.Workspace.Slug,
 	)
 	if err != nil {
+		if ctx.Err() != nil {
+			// If cancelled, append cancellation message but keep all logs
+			logs = append(logs, computeResult.Logs)
+			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during compute execution: %v", ctx.Err()))
+			return logs, ctx.Err()
+		}
 		log.Println("Failed to execute workflowable:", err)
 		logs = append(logs, "Failed to execute workflowable in compute sandbox.")
 		return logs, err
@@ -64,10 +89,22 @@ func ExecuteActionWorkflowable(
 	// Append the logs from the compute result to the workflow run logs
 	logs = append(logs, computeResult.Logs)
 
+	// Check for context cancellation before saving results
+	if ctx.Err() != nil {
+		logs = append(logs, fmt.Sprintf("Workflow execution cancelled before saving results: %v", ctx.Err()))
+		return logs, ctx.Err()
+	}
+
 	// Check if the results need to be saved
 	if workflowable.Repository != nil {
-		// Loop thorugh the results and save them to the repository
+		// Loop through the results and save them to the repository
 		for fileName, fileContent := range computeResult.ResultFiles {
+			// Check for context cancellation during result saving
+			if ctx.Err() != nil {
+				logs = append(logs, fmt.Sprintf("Workflow execution cancelled during result saving: %v", ctx.Err()))
+				return logs, ctx.Err()
+			}
+
 			// Create multipart file from the byte array
 			file := bytes.NewReader(fileContent)
 			// Construct the path to save the file

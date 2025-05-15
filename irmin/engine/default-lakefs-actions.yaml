@@ -1,0 +1,24 @@
+name: Notify webhook on repository event
+description: send webhook notifications to the Irmin services in order to trigger workflow runs and more
+on:
+  pre-commit:
+  post-commit:
+  pre-merge:
+  post-merge:
+  pre-create-branch:
+  post-create-branch:
+  pre-delete-branch:
+  post-delete-branch:
+  pre-create-tag:
+  post-create-tag:
+  pre-delete-tag:
+  post-delete-tag:
+hooks:
+  - id: api_notification
+    type: webhook
+    description: notifying Irmin of the new event
+    properties:
+      url: '{webhook_url}'
+      duration: 15s
+      headers:
+        Authorization: 'Bearer {{ ENV.IRMIN_API_TOKEN }}'

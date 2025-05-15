@@ -7,7 +7,7 @@ import (
 )
 
 // LocaleMiddleware sets the dictionary and locale for the request.
-func LocaleMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) LocaleMiddleware(c fiber.Ctx) error {
 	// Get the dictionary for the request's language.
 	dict, locale := locales.GetDictionary(c)
 

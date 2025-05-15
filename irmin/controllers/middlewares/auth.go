@@ -15,7 +15,7 @@ import (
 )
 
 // AuthMiddleware handles the user authentication for the API, tokens and user details syncing with Clerk.
-func AuthMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 	ctx := c.Context()
 
 	// Load environment variables.
@@ -50,7 +50,7 @@ func AuthMiddleware(c fiber.Ctx) error {
 	// If the token has a "cred_" prefix, it is an API token.
 	if strings.HasPrefix(token, "cred_") {
 		// Find the API token in our database.
-		apiToken, err := db.GetAPITokenByToken(token)
+		apiToken, err := api.DB.GetAPITokenByToken(token)
 		if err != nil {
 			log.Printf("Error retrieving API token: %v", err)
 			return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
@@ -81,7 +81,7 @@ func AuthMiddleware(c fiber.Ctx) error {
 		}
 
 		// Try to find the user in our database.
-		irminUser, _ = db.GetUserByClerkID(clerkID)
+		irminUser, _ = api.DB.GetUserByClerkID(clerkID)
 	}
 
 	// If the user is not found or the last update was more than 5 minutes ago, fetch the user from Clerk.
@@ -127,7 +127,7 @@ func AuthMiddleware(c fiber.Ctx) error {
 
 		if irminUser == nil {
 			// If the user does not exist in the database, create it synchronously.
-			irminUser, err = db.CreateUser(&db.User{
+			irminUser, err = api.DB.CreateUser(&db.User{
 				ClerkID:        clerkID,
 				FirstName:      *clerkUser.FirstName,
 				LastName:       *clerkUser.LastName,
@@ -142,7 +142,7 @@ func AuthMiddleware(c fiber.Ctx) error {
 		} else {
 			// If the user exists, update the stored user details asynchronously.
 			utils.Async(func() (*db.User, error) {
-				updatedUser, err := db.UpdateUser(irminUser.ID, map[string]any{
+				updatedUser, err := api.DB.UpdateUser(irminUser.ID, map[string]any{
 					"clerk_id":        clerkUser.ID,
 					"first_name":      *clerkUser.FirstName,
 					"last_name":       *clerkUser.LastName,

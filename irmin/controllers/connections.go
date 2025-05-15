@@ -13,12 +13,12 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func ConnectionsIndex(c fiber.Ctx) error {
+func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get all connections in the workspace.
-	connections, err := db.GetConnectionsByWorkspaceID(workspace.ID)
+	connections, err := api.DB.GetConnectionsByWorkspaceID(workspace.ID)
 	if err != nil {
 		log.Printf("Error fetching connections: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -30,7 +30,8 @@ func ConnectionsIndex(c fiber.Ctx) error {
 	var connectionsResponse []irminmodels.Connection
 	for _, connection := range connections {
 		// Format the connection response
-		connectionResponse, err := formatter.FormatConnectionResponse(connection)
+		conn := connection
+		connectionResponse, err := formatter.FormatConnectionResponse(&conn)
 		if err != nil {
 			log.Printf("Error fetching connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -46,7 +47,7 @@ func ConnectionsIndex(c fiber.Ctx) error {
 	})
 }
 
-func ConnectionsStore(c fiber.Ctx) error {
+func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -74,7 +75,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	}
 
 	// Create the connection
-	connection, err := db.CreateConnection(&db.Connection{
+	connection, err := api.DB.CreateConnection(&db.Connection{
 		Name:          fields["name"],
 		Description:   fields["description"],
 		Documentation: fields["documentation"],
@@ -92,7 +93,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	}
 
 	// Fetch the newly created connection
-	connection, err = db.GetConnectionByID(connection.ID)
+	connection, err = api.DB.GetConnectionByID(connection.ID)
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -101,7 +102,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	}
 
 	// Format the connection response
-	connectionResponse, err := formatter.FormatConnectionResponse(*connection)
+	connectionResponse, err := formatter.FormatConnectionResponse(connection)
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -110,7 +111,7 @@ func ConnectionsStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("Connection %s created", connection.Name),
 		UserID:      &user.ID,
@@ -124,12 +125,12 @@ func ConnectionsStore(c fiber.Ctx) error {
 	})
 }
 
-func ConnectionsShow(c fiber.Ctx) error {
+func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	connection := c.Locals("connection").(*db.Connection)
 
 	// Format the connection response
-	connectionResponse, err := formatter.FormatConnectionResponse(*connection)
+	connectionResponse, err := formatter.FormatConnectionResponse(connection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -143,7 +144,7 @@ func ConnectionsShow(c fiber.Ctx) error {
 	})
 }
 
-func ConnectionsUpdate(c fiber.Ctx) error {
+func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	connection := c.Locals("connection").(*db.Connection)
@@ -184,7 +185,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the connection
-	updatedConnection, err := db.UpdateConnection(connection)
+	updatedConnection, err := api.DB.UpdateConnection(connection)
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -193,7 +194,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	}
 
 	// Format the connection response
-	connectionResponse, err := formatter.FormatConnectionResponse(*updatedConnection)
+	connectionResponse, err := formatter.FormatConnectionResponse(updatedConnection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -202,7 +203,7 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Connection %s updated", updatedConnection.Name),
 		UserID:      &user.ID,
@@ -216,13 +217,13 @@ func ConnectionsUpdate(c fiber.Ctx) error {
 	})
 }
 
-func ConnectionsDestroy(c fiber.Ctx) error {
+func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	connection := c.Locals("connection").(*db.Connection)
 
 	// Delete the connection
-	if err := db.DeleteConnection(connection.ID); err != nil {
+	if err := api.DB.DeleteConnection(connection.ID); err != nil {
 		log.Printf("Error deleting connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -230,7 +231,7 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("Connection %s deleted", connection.Name),
 		UserID:      &user.ID,
@@ -243,7 +244,7 @@ func ConnectionsDestroy(c fiber.Ctx) error {
 	})
 }
 
-func TransferConnectionOwnership(c fiber.Ctx) error {
+func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -268,7 +269,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	inWorkspace, err := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -283,7 +284,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 
 	// Update the connection
 	connection.OwnerID = uint(newOwnerID)
-	updatedConnection, err := db.UpdateConnection(connection)
+	updatedConnection, err := api.DB.UpdateConnection(connection)
 	if err != nil {
 		log.Printf("Error updating connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -292,7 +293,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	}
 
 	// Format the connection response
-	connectionResponse, err := formatter.FormatConnectionResponse(*updatedConnection)
+	connectionResponse, err := formatter.FormatConnectionResponse(updatedConnection)
 	if err != nil {
 		log.Printf("Error formatting connection response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -301,7 +302,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type: db.LogEventTypeUpdate,
 		Description: fmt.Sprintf(
 			"Connection %s ownership transferred to %s",
@@ -319,7 +320,7 @@ func TransferConnectionOwnership(c fiber.Ctx) error {
 	})
 }
 
-func ConnectionSchema(c fiber.Ctx) error {
+func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	connection := c.Locals("connection").(*db.Connection)
@@ -338,7 +339,7 @@ func ConnectionSchema(c fiber.Ctx) error {
 	}
 
 	// Get the schema of the connection
-	schema, err := lib.GetConnectionSchema(connection, operationMethod, locale)
+	schema, err := lib.GetConnectionSchema(api.DB, connection, operationMethod, locale)
 	if err != nil {
 		log.Printf("Error getting connection schema: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

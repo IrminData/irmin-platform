@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"irmin-api/db"
+	"irmin-api/orchestrator"
 	"irmin-api/routes"
 	"irmin-api/utils"
 	"log"
+	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
@@ -32,20 +35,21 @@ func main() {
 	}
 
 	// Initialize the database
-	if err := db.InitialiseDB(); err != nil {
+	database, err := db.InitialiseDB()
+	if err != nil {
 		log.Fatalf("failed to initialise the database: %v", err)
 	}
 
 	// Reset the database
 	if *reset {
-		if err := db.Reset(); err != nil {
+		if err := database.Reset(); err != nil {
 			log.Fatalf("failed to run migrations: %v", err)
 		}
 	}
 
 	// Run migrations
 	if *migrate {
-		if err := db.Migrate(); err != nil {
+		if err := database.Migrate(); err != nil {
 			log.Fatalf("failed to run migrations: %v", err)
 		}
 	}
@@ -119,9 +123,22 @@ func main() {
 		}))
 	}
 
-	// Register the API routes
-	routes.RegisterAPIRoutes(app)
+	// Start the orchestrator
+	orchestrator := orchestrator.NewOrchestrator(database, slog.Default(), env)
+	if env.OrchestratorEnabled {
+		go orchestrator.StartOrchestrator(context.Background())
+	}
 
-	// Start the server
-	log.Fatal(app.Listen(":" + env.Port))
+	// Register the Core API routes
+	routes.RegisterAPIRoutes(app, database, slog.Default(), env, orchestrator)
+
+	// Start the server in a goroutine
+	go func() {
+		if err := app.Listen(":" + env.Port); err != nil {
+			log.Printf("Server error: %v", err)
+		}
+	}()
+
+	// Keep the main process running
+	select {}
 }

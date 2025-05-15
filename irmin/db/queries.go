@@ -15,45 +15,45 @@ type StoredQuery struct {
 	WorkspaceID uint      `json:"workspace_id"`
 }
 
-func GetStoredQueryByID(id uint) (*StoredQuery, error) {
+func (d *Database) GetStoredQueryByID(id uint) (*StoredQuery, error) {
 	var query StoredQuery
-	if err := DB.Preload("Owner").Preload("Workspace").First(&query, id).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Workspace").First(&query, id).Error; err != nil {
 		return nil, err
 	}
 	return &query, nil
 }
 
-func GetStoredQueriesByWorkspaceID(workspaceID uint) ([]StoredQuery, error) {
+func (d *Database) GetStoredQueriesByWorkspaceID(workspaceID uint) ([]StoredQuery, error) {
 	var queries []StoredQuery
-	if err := DB.Preload("Owner").Preload("Workspace").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&queries).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Workspace").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&queries).Error; err != nil {
 		return nil, err
 	}
 	return queries, nil
 }
 
-func CreateStoredQuery(query *StoredQuery) (*StoredQuery, error) {
-	if err := DB.Create(query).Error; err != nil {
+func (d *Database) CreateStoredQuery(query *StoredQuery) (*StoredQuery, error) {
+	if err := d.Create(query).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Preload("Owner").Preload("Workspace").First(&query, query.ID).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Workspace").First(&query, query.ID).Error; err != nil {
 		return nil, err
 	}
 	return query, nil
 }
 
-func UpdateStoredQuery(id uint, updates map[string]any) (*StoredQuery, error) {
+func (d *Database) UpdateStoredQuery(id uint, updates map[string]any) (*StoredQuery, error) {
 	var query StoredQuery
-	if err := DB.Model(&StoredQuery{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+	if err := d.Model(&StoredQuery{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Preload("Owner").Preload("Workspace").First(&query, id).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Workspace").First(&query, id).Error; err != nil {
 		return nil, err
 	}
 	return &query, nil
 }
 
-func DeleteStoredQuery(id uint) error {
-	if err := DB.Delete(&StoredQuery{}, id).Error; err != nil {
+func (d *Database) DeleteStoredQuery(id uint) error {
+	if err := d.Delete(&StoredQuery{}, id).Error; err != nil {
 		return err
 	}
 	return nil

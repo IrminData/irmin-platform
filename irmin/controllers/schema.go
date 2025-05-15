@@ -12,18 +12,18 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func WorkspaceSchemaIndex(c fiber.Ctx) error {
+func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Fetch connections and repositories concurrently
 	connectionsFuture := utils.AsyncWithContext(c.Context(), func() ([]db.Connection, error) {
-		return db.GetConnectionsByWorkspaceID(workspace.ID)
+		return api.DB.GetConnectionsByWorkspaceID(workspace.ID)
 	})
 
 	repositoriesFuture := utils.AsyncWithContext(c.Context(), func() ([]db.Repository, error) {
-		return db.GetRepositoriesInWorkspace(workspace.ID)
+		return api.DB.GetRepositoriesInWorkspace(workspace.ID)
 	})
 
 	// Await both results
@@ -48,7 +48,7 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 	for i, connection := range connections {
 		conn := connection // Create a new variable to avoid closure issues
 		connectionSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
-			return lib.GetConnectionSchema(&conn, "pull", locale)
+			return lib.GetConnectionSchema(api.DB, &conn, "pull", locale)
 		})
 	}
 
@@ -58,6 +58,7 @@ func WorkspaceSchemaIndex(c fiber.Ctx) error {
 		repo := repository // Create a new variable to avoid closure issues
 		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
 			return lib.GetObjectSchema(
+				api.DB,
 				workspace,
 				&repo,
 				&irminmodels.Object{

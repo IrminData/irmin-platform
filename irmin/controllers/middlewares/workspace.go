@@ -11,7 +11,7 @@ import (
 )
 
 // WorkspaceMiddleware verifies that the user has access to the workspace they are trying to access.
-func WorkspaceMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) WorkspaceMiddleware(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -26,7 +26,7 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the workspace by its slug.
-	workspace, err := db.GetWorkspaceBySlug(workspaceSlug)
+	workspace, err := api.DB.GetWorkspaceBySlug(workspaceSlug)
 	if err != nil {
 		log.Printf("Error retrieving workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -35,7 +35,7 @@ func WorkspaceMiddleware(c fiber.Ctx) error {
 	}
 
 	// Check if the user is a member of the workspace.
-	isMember, err := db.IsUserInWorkspace(user.ID, workspace.ID)
+	isMember, err := api.DB.IsUserInWorkspace(user.ID, workspace.ID)
 	if err != nil {
 		log.Printf("Error checking user membership: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

@@ -11,7 +11,7 @@ import (
 )
 
 // InviteMiddleware parses the invite SQID from the request URL and sets the invite in the context.
-func InviteMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 
@@ -34,7 +34,7 @@ func InviteMiddleware(c fiber.Ctx) error {
 	}
 
 	// Find the invite by its ID.
-	invite, err := db.GetInviteByID(uint(inviteID))
+	invite, err := api.DB.GetInviteByID(uint(inviteID))
 	if err != nil {
 		log.Printf("Error retrieving invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

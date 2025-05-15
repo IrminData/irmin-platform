@@ -10,7 +10,7 @@ import (
 )
 
 // FormatConnectionResponse creates a connection response object from a connection object.
-func FormatConnectionResponse(connection db.Connection) (*irminmodels.Connection, error) {
+func FormatConnectionResponse(connection *db.Connection) (*irminmodels.Connection, error) {
 	// Format the owner
 	ownerSqid, err := utils.EncodeSqids("users", uint64(connection.OwnerID))
 	if err != nil {
@@ -27,7 +27,7 @@ func FormatConnectionResponse(connection db.Connection) (*irminmodels.Connection
 		ProfilePicture: connection.Owner.ProfilePicture,
 	}
 	// Format the connector
-	connectorResponse, err := FormatConnectorResponse(connection.Connector)
+	connectorResponse, err := FormatConnectorResponse(&connection.Connector)
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return nil, fmt.Errorf("error formatting connector response: %w", err)

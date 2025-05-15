@@ -12,7 +12,7 @@ import (
 )
 
 // ObjectMiddleware parses the query parameters and sets the object in the context.
-func ObjectMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) ObjectMiddleware(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)

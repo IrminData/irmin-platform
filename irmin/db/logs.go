@@ -49,12 +49,16 @@ type LogEvent struct {
 // limit: maximum number of events to return
 // offset: number of events to skip
 // returns: slice of LogEvent, total count of matching events, and error if any
-func GetLogEventsForWorkspace(workspaceID uint, searchTerm string, limit, offset int) ([]LogEvent, int64, error) {
+func (d *Database) GetLogEventsForWorkspace(
+	workspaceID uint,
+	searchTerm string,
+	limit, offset int,
+) ([]LogEvent, int64, error) {
 	var events []LogEvent
 	var total int64
 
 	// base model for counting
-	countQuery := DB.Model(&LogEvent{}).
+	countQuery := d.Model(&LogEvent{}).
 		Where("workspace_id = ?", workspaceID)
 
 	// apply description filter if present
@@ -69,7 +73,7 @@ func GetLogEventsForWorkspace(workspaceID uint, searchTerm string, limit, offset
 	}
 
 	// base fetch query with associations
-	query := DB.Preload("User").
+	query := d.Preload("User").
 		Preload("Workspace").
 		Preload("Repository").
 		Preload("Workflow").
@@ -106,7 +110,7 @@ func GetLogEventsForWorkspace(workspaceID uint, searchTerm string, limit, offset
 // limit: maximum number of events to return
 // offset: number of events to skip
 // returns: slice of LogEvent, total count of matching events, and error if any
-func GetLogEventsByWorkspaceAndAsset(
+func (d *Database) GetLogEventsByWorkspaceAndAsset(
 	workspaceID uint,
 	assetType string,
 	assetID uint,
@@ -117,7 +121,7 @@ func GetLogEventsByWorkspaceAndAsset(
 	var total int64
 
 	// base for counting with workspace filter
-	countQuery := DB.Model(&LogEvent{}).
+	countQuery := d.Model(&LogEvent{}).
 		Where("workspace_id = ?", workspaceID)
 
 	// asset-specific filter for counting
@@ -144,7 +148,7 @@ func GetLogEventsByWorkspaceAndAsset(
 	}
 
 	// base fetch query with preloads
-	query := DB.Preload("User").
+	query := d.Preload("User").
 		Preload("Workspace").
 		Preload("Repository").
 		Preload("Workflow").
@@ -186,8 +190,8 @@ func GetLogEventsByWorkspaceAndAsset(
 //
 // event: pointer to LogEvent to be created
 // returns: created LogEvent and error if any
-func CreateLogEvent(event *LogEvent) (*LogEvent, error) {
-	if err := DB.Create(event).Error; err != nil {
+func (d *Database) CreateLogEvent(event *LogEvent) (*LogEvent, error) {
+	if err := d.Create(event).Error; err != nil {
 		return nil, err
 	}
 	return event, nil

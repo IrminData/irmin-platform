@@ -15,12 +15,12 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func RepositoriesIndex(c fiber.Ctx) error {
+func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get all repositories in the workspace.
-	repositories, err := db.GetRepositoriesInWorkspace(workspace.ID)
+	repositories, err := api.DB.GetRepositoriesInWorkspace(workspace.ID)
 	if err != nil {
 		log.Printf("Error fetching repositories: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -49,7 +49,7 @@ func RepositoriesIndex(c fiber.Ctx) error {
 	})
 }
 
-func RepositoriesStore(c fiber.Ctx) error {
+func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -79,7 +79,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	repositorySlug := utils.Slugify(fields["name"])
 
 	// Make sure such repository does not exist
-	if db.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
+	if api.DB.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("repository_already_exists")},
 		})
@@ -119,7 +119,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	}
 
 	// Create the repository in the database
-	repository, err := db.CreateRepository(&db.Repository{
+	repository, err := api.DB.CreateRepository(&db.Repository{
 		Name:          fields["name"],
 		Slug:          repositorySlug,
 		Description:   fields["description"],
@@ -155,6 +155,16 @@ func RepositoriesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Update the repository in the database asynchronously
+	go func() {
+		updatedRepository := repository
+		updatedRepository.LakeFSRepoID = dataEngineRepository.ID
+		_, err := api.DB.UpdateRepository(updatedRepository)
+		if err != nil {
+			log.Printf("Error updating LakeFS repository ID: %v", err)
+		}
+	}()
+
 	// Format the repository response
 	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
 	if err != nil {
@@ -165,7 +175,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Repository %s created", repository.Slug),
 		UserID:       &user.ID,
@@ -180,7 +190,7 @@ func RepositoriesStore(c fiber.Ctx) error {
 	})
 }
 
-func RepositoriesShow(c fiber.Ctx) error {
+func (api *APIControllers) RepositoriesShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
 	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
@@ -200,7 +210,7 @@ func RepositoriesShow(c fiber.Ctx) error {
 	})
 }
 
-func RepositoriesDestroy(c fiber.Ctx) error {
+func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -208,7 +218,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	repository := c.Locals("repository").(*db.Repository)
 
 	// Delete the repository from the database
-	if err := db.DeleteRepository(repository.ID); err != nil {
+	if err := api.DB.DeleteRepository(repository.ID); err != nil {
 		log.Printf("Error deleting repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -227,7 +237,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeDelete,
 		Description:  fmt.Sprintf("Repository %s deleted", repository.Slug),
 		UserID:       &user.ID,
@@ -241,7 +251,7 @@ func RepositoriesDestroy(c fiber.Ctx) error {
 	})
 }
 
-func RepositoriesUpdate(c fiber.Ctx) error {
+func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -278,12 +288,11 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the repository in the database
-	repository, err = db.UpdateRepository(repository.ID, map[string]any{
-		"name":          fields["name"],
-		"description":   fields["description"],
-		"documentation": fields["documentation"],
-		"is_immutable":  isImmutable,
-	})
+	repository.Name = fields["name"]
+	repository.Description = fields["description"]
+	repository.Documentation = fields["documentation"]
+	repository.IsImmutable = isImmutable
+	repository, err = api.DB.UpdateRepository(repository)
 	if err != nil {
 		log.Printf("Error updating repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -348,7 +357,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Repository %s settings updated", repository.Slug),
 		WorkspaceID:  &workspace.ID,
@@ -363,7 +372,7 @@ func RepositoriesUpdate(c fiber.Ctx) error {
 	})
 }
 
-func TransferRepositoryOwnership(c fiber.Ctx) error {
+func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -390,7 +399,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	inWorkspace, err := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -404,9 +413,8 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the repository in the database
-	repository, err = db.UpdateRepository(repository.ID, map[string]any{
-		"owner_id": newOwnerID,
-	})
+	repository.OwnerID = uint(newOwnerID)
+	repository, err = api.DB.UpdateRepository(repository)
 	if err != nil {
 		log.Printf("Error updating repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -424,7 +432,7 @@ func TransferRepositoryOwnership(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Repository %s ownership transferred to %s", repository.Slug, repository.Owner.Email),
 		WorkspaceID:  &workspace.ID,

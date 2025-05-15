@@ -22,9 +22,9 @@ type Invite struct {
 	WorkspaceID uint              `json:"workspace_id"`
 }
 
-func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
+func (d *Database) GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 	var invites []Invite
-	result := DB.Preload("InvitedBy").
+	result := d.Preload("InvitedBy").
 		Preload("Workspace").
 		Where("workspace_id = ?", workspaceID).
 		Order("created_at desc").
@@ -35,9 +35,9 @@ func GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 	return invites, nil
 }
 
-func GetInvitesByEmail(email string) ([]Invite, error) {
+func (d *Database) GetInvitesByEmail(email string) ([]Invite, error) {
 	var invites []Invite
-	result := DB.Preload("InvitedBy").
+	result := d.Preload("InvitedBy").
 		Preload("Workspace").
 		Where("email = ?", email).
 		Order("created_at desc").
@@ -48,35 +48,35 @@ func GetInvitesByEmail(email string) ([]Invite, error) {
 	return invites, nil
 }
 
-func GetInviteByID(id uint) (*Invite, error) {
+func (d *Database) GetInviteByID(id uint) (*Invite, error) {
 	var invite Invite
-	result := DB.Preload("InvitedBy").Preload("Workspace").First(&invite, id)
+	result := d.Preload("InvitedBy").Preload("Workspace").First(&invite, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &invite, nil
 }
 
-func CreateInvite(invite *Invite) (*Invite, error) {
-	if err := DB.Create(invite).Error; err != nil {
+func (d *Database) CreateInvite(invite *Invite) (*Invite, error) {
+	if err := d.Create(invite).Error; err != nil {
 		return nil, err
 	}
 	return invite, nil
 }
 
-func UpdateInvite(id uint, updates map[string]any) (*Invite, error) {
+func (d *Database) UpdateInvite(id uint, updates map[string]any) (*Invite, error) {
 	var invite Invite
-	if err := DB.Model(&Invite{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+	if err := d.Model(&Invite{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Preload("InvitedBy").Preload("Workspace").First(&invite, id).Error; err != nil {
+	if err := d.Preload("InvitedBy").Preload("Workspace").First(&invite, id).Error; err != nil {
 		return nil, err
 	}
 	return &invite, nil
 }
 
-func DeleteInvite(id uint) error {
-	if err := DB.Delete(&Invite{}, id).Error; err != nil {
+func (d *Database) DeleteInvite(id uint) error {
+	if err := d.Delete(&Invite{}, id).Error; err != nil {
 		return err
 	}
 	return nil

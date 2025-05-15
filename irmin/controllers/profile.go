@@ -14,7 +14,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func ProfileShow(c fiber.Ctx) error {
+func (api *APIControllers) ProfileShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 
@@ -44,7 +44,7 @@ func ProfileShow(c fiber.Ctx) error {
 	})
 }
 
-func ProfileUpdate(c fiber.Ctx) error {
+func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 	ctx := c.Context()
 
 	// Get the dictionary and user from the request context.
@@ -73,7 +73,7 @@ func ProfileUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the user details in our database.
-	updatedUser, err := db.UpdateUser(irminUser.ID, map[string]any{
+	updatedUser, err := api.DB.UpdateUser(irminUser.ID, map[string]any{
 		"first_name": fields["first_name"],
 		"last_name":  fields["last_name"],
 		"email":      fields["email"],

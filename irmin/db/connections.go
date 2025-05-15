@@ -34,62 +34,62 @@ type Connection struct {
 }
 
 // GetConnectionByID finds a connection by its ID.
-func GetConnectionByID(id uint) (*Connection, error) {
+func (d *Database) GetConnectionByID(id uint) (*Connection, error) {
 	var connection Connection
-	if err := DB.Preload("Owner").Preload("Connector").First(&connection, id).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Connector").First(&connection, id).Error; err != nil {
 		return nil, err
 	}
 	return &connection, nil
 }
 
 // GetConnectionsByWorkspaceID finds all connections in a workspace.
-func GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
+func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
 	var connections []Connection
-	if err := DB.Preload("Owner").Preload("Connector").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&connections).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Connector").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&connections).Error; err != nil {
 		return nil, err
 	}
 	return connections, nil
 }
 
 // CreateConnection creates a new connection.
-func CreateConnection(connection *Connection) (*Connection, error) {
-	if err := DB.Create(connection).Error; err != nil {
+func (d *Database) CreateConnection(connection *Connection) (*Connection, error) {
+	if err := d.Create(connection).Error; err != nil {
 		return nil, err
 	}
 	return connection, nil
 }
 
 // UpdateConnection updates an existing connection record in the database.
-func UpdateConnection(connection *Connection) (*Connection, error) {
-	if err := DB.Save(&connection).Error; err != nil {
+func (d *Database) UpdateConnection(connection *Connection) (*Connection, error) {
+	if err := d.Save(&connection).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Preload("Owner").Preload("Connector").First(&connection, connection.ID).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Connector").First(&connection, connection.ID).Error; err != nil {
 		return nil, err
 	}
 	return connection, nil
 }
 
 // DeleteConnection deletes a connection from the database.
-func DeleteConnection(id uint) error {
-	if err := DB.Delete(&Connection{}, id).Error; err != nil {
+func (d *Database) DeleteConnection(id uint) error {
+	if err := d.Delete(&Connection{}, id).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 // FindConnectionSchemaCache finds a connection schema cache by connection ID and op method.
-func FindConnectionSchemaCache(connectionID uint, opMethod string) (*ConnectionSchemaCache, error) {
+func (d *Database) FindConnectionSchemaCache(connectionID uint, opMethod string) (*ConnectionSchemaCache, error) {
 	var schemaCache ConnectionSchemaCache
-	if err := DB.Where("connection_id = ? AND op_method = ?", connectionID, opMethod).First(&schemaCache).Error; err != nil {
+	if err := d.Where("connection_id = ? AND op_method = ?", connectionID, opMethod).First(&schemaCache).Error; err != nil {
 		return nil, err
 	}
 	return &schemaCache, nil
 }
 
 // SaveConnectionSchemaCache updates or creates a connection schema cache.
-func SaveConnectionSchemaCache(schemaCache *ConnectionSchemaCache) (*ConnectionSchemaCache, error) {
-	if err := DB.Save(schemaCache).Error; err != nil {
+func (d *Database) SaveConnectionSchemaCache(schemaCache *ConnectionSchemaCache) (*ConnectionSchemaCache, error) {
+	if err := d.Save(schemaCache).Error; err != nil {
 		return nil, err
 	}
 	return schemaCache, nil

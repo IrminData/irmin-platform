@@ -19,6 +19,7 @@ type Repository struct {
 	gorm.Model
 
 	Name          string                  `json:"name"`
+	LakeFSRepoID  string                  `json:"lakefs_repo_id"`
 	Slug          string                  `json:"slug"                   gorm:"uniqueIndex"`
 	Description   string                  `json:"description"`
 	Documentation string                  `json:"documentation"`
@@ -31,67 +32,66 @@ type Repository struct {
 	SchemaCache   []RepositorySchemaCache `json:"schema_cache,omitempty" gorm:"foreignKey:RepositoryID"`
 }
 
-func GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {
+func (d *Database) GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {
 	var repository Repository
-	err := DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository).Error
+	err := d.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository).Error
 	return &repository, err
 }
 
-func CheckIfRepositoryExists(slug string, workspaceID uint) bool {
+func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool {
 	var repository Repository
-	DB.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository)
+	d.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository)
 	return repository.ID != 0
 }
 
-func GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
+func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
 	var repositories []Repository
-	err := DB.Where("workspace_id = ?", workspaceID).Preload("Owner").Order("created_at desc").Find(&repositories).Error
+	err := d.Where("workspace_id = ?", workspaceID).Preload("Owner").Order("created_at desc").Find(&repositories).Error
 	return repositories, err
 }
 
-func CreateRepository(repository *Repository) (*Repository, error) {
-	if err := DB.Create(repository).Error; err != nil {
+func (d *Database) CreateRepository(repository *Repository) (*Repository, error) {
+	if err := d.Create(repository).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.Preload("Owner").First(&repository, repository.ID).Error; err != nil {
+	if err := d.Preload("Owner").First(&repository, repository.ID).Error; err != nil {
 		return nil, err
 	}
 	return repository, nil
 }
 
-func UpdateRepository(id uint, updates map[string]any) (*Repository, error) {
-	var repository Repository
-	if err := DB.Model(&Repository{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+func (d *Database) UpdateRepository(repository *Repository) (*Repository, error) {
+	if err := d.Save(repository).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.First(&repository, id).Error; err != nil {
+	if err := d.Preload("Owner").First(&repository, repository.ID).Error; err != nil {
 		return nil, err
 	}
-	return &repository, nil
+	return repository, nil
 }
 
-func DeleteRepository(id uint) error {
-	if err := DB.Delete(&Repository{}, id).Error; err != nil {
+func (d *Database) DeleteRepository(id uint) error {
+	if err := d.Delete(&Repository{}, id).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 // FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref.
-func FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error) {
+func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error) {
 	var schemaCache RepositorySchemaCache
-	if err := DB.Where("repository_id = ? AND path = ? AND ref = ?", repositoryID, path, ref).First(&schemaCache).Error; err != nil {
+	if err := d.Where("repository_id = ? AND path = ? AND ref = ?", repositoryID, path, ref).First(&schemaCache).Error; err != nil {
 		return nil, err
 	}
 	return &schemaCache, nil
 }
 
 // SaveRepositorySchemaCache updates or creates a repository schema cache.
-func SaveRepositorySchemaCache(schemaCache *RepositorySchemaCache) (*RepositorySchemaCache, error) {
-	if err := DB.Save(schemaCache).Error; err != nil {
+func (d *Database) SaveRepositorySchemaCache(schemaCache *RepositorySchemaCache) (*RepositorySchemaCache, error) {
+	if err := d.Save(schemaCache).Error; err != nil {
 		return nil, err
 	}
-	if err := DB.First(&schemaCache, schemaCache.ID).Error; err != nil {
+	if err := d.First(&schemaCache, schemaCache.ID).Error; err != nil {
 		return nil, err
 	}
 	return schemaCache, nil

@@ -11,6 +11,7 @@ import (
 // ParseStructuredFile parses structured files (e.g., JSON, CSV, Parquet) from the provided results map.
 // It returns a map where the keys are file names and the values are slices of maps representing the parsed data.
 // Each map in the slice corresponds to a row in the structured file, with keys representing column names and values representing cell values.
+// TODO: We need to move this to use DuckDB, like the schema generator does.
 func ParseStructuredFile(files map[string][]byte) (map[string][]map[string]any, error) {
 	// Create a map to hold the parsed results.
 	parsedResults := make(map[string][]map[string]any)

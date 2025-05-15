@@ -11,7 +11,7 @@ import (
 )
 
 // ConnectionMiddleware verifies that the user has access to the connection they are trying to access.
-func ConnectionMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) ConnectionMiddleware(c fiber.Ctx) error {
 	// Get the dictionary and workspace from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -35,7 +35,7 @@ func ConnectionMiddleware(c fiber.Ctx) error {
 	}
 
 	// Find the connection by its ID.
-	connection, err := db.GetConnectionByID(uint(connectionID))
+	connection, err := api.DB.GetConnectionByID(uint(connectionID))
 	if err != nil {
 		log.Printf("Error fetching connection: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

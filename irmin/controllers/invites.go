@@ -16,12 +16,12 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func WorkspaceInvitesIndex(c fiber.Ctx) error {
+func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Fetch invites
-	invites, err := db.GetInvitesByWorkspace(workspace.ID)
+	invites, err := api.DB.GetInvitesByWorkspace(workspace.ID)
 	if err != nil {
 		log.Printf("Error fetching invites: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -50,7 +50,7 @@ func WorkspaceInvitesIndex(c fiber.Ctx) error {
 	})
 }
 
-func SendInvite(c fiber.Ctx) error {
+func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	locale := c.Locals("locale").(string)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -101,7 +101,7 @@ func SendInvite(c fiber.Ctx) error {
 	}
 
 	// Make sure the user is not already in the workspace
-	alreadyInWorkspace, err := db.IsUserInWorkspaceByEmail(fields["email"], workspace.ID)
+	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(fields["email"], workspace.ID)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -114,7 +114,7 @@ func SendInvite(c fiber.Ctx) error {
 	}
 
 	// Make sure the user is not already invited to the workspace
-	existingInvites, err := db.GetInvitesByEmail(fields["email"])
+	existingInvites, err := api.DB.GetInvitesByEmail(fields["email"])
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -142,7 +142,7 @@ func SendInvite(c fiber.Ctx) error {
 
 	// Create the invite in the database
 	expiresAt := time.Now().Add(time.Duration(env.InviteExpiresInDays) * 24 * time.Hour)
-	newInvite, err := db.CreateInvite(&db.Invite{
+	newInvite, err := api.DB.CreateInvite(&db.Invite{
 		Email:       fields["email"],
 		ExpiresAt:   expiresAt,
 		Role:        db.UserWorkspaceRole(fields["role"]),
@@ -186,7 +186,7 @@ func SendInvite(c fiber.Ctx) error {
 	}
 
 	// Update the invite with the Clerk ID
-	newInvite, err = db.UpdateInvite(newInvite.ID, map[string]any{
+	newInvite, err = api.DB.UpdateInvite(newInvite.ID, map[string]any{
 		"clerk_id": clerkInvite.ID,
 	})
 	if err != nil {
@@ -197,7 +197,7 @@ func SendInvite(c fiber.Ctx) error {
 	}
 
 	// Fetch the newly created invite
-	newInvite, err = db.GetInviteByID(newInvite.ID)
+	newInvite, err = api.DB.GetInviteByID(newInvite.ID)
 	if err != nil {
 		log.Printf("Error fetching newly created invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -215,7 +215,7 @@ func SendInvite(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("Invite sent to %s, role: %s", newInvite.Email, newInvite.Role),
 		UserID:      &user.ID,
@@ -229,7 +229,7 @@ func SendInvite(c fiber.Ctx) error {
 	})
 }
 
-func InvitesShow(c fiber.Ctx) error {
+func (api *APIControllers) InvitesShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	invite := c.Locals("invite").(*db.Invite)
 
@@ -248,7 +248,7 @@ func InvitesShow(c fiber.Ctx) error {
 	})
 }
 
-func InvitesUpdate(c fiber.Ctx) error {
+func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	invite := c.Locals("invite").(*db.Invite)
 	user := c.Locals("user").(*db.User)
@@ -289,7 +289,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the invite
-	updatedInvite, err := db.UpdateInvite(invite.ID, map[string]any{
+	updatedInvite, err := api.DB.UpdateInvite(invite.ID, map[string]any{
 		"role": fields["role"],
 	})
 	if err != nil {
@@ -309,7 +309,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Invite for %s updated, role: %s", updatedInvite.Email, updatedInvite.Role),
 		UserID:      &user.ID,
@@ -323,7 +323,7 @@ func InvitesUpdate(c fiber.Ctx) error {
 	})
 }
 
-func InvitesDestroy(c fiber.Ctx) error {
+func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	invite := c.Locals("invite").(*db.Invite)
 	user := c.Locals("user").(*db.User)
@@ -359,7 +359,7 @@ func InvitesDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the invite
-	err = db.DeleteInvite(invite.ID)
+	err = api.DB.DeleteInvite(invite.ID)
 	if err != nil {
 		log.Printf("Error deleting invite: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -368,7 +368,7 @@ func InvitesDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("Invite for %s deleted", invite.Email),
 		UserID:      &user.ID,
@@ -381,7 +381,7 @@ func InvitesDestroy(c fiber.Ctx) error {
 	})
 }
 
-func ResendInvite(c fiber.Ctx) error {
+func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	invite := c.Locals("invite").(*db.Invite)
@@ -460,7 +460,7 @@ func ResendInvite(c fiber.Ctx) error {
 
 	// Update the invite with the Clerk ID and the new expiration date
 	expiresAt := time.Now().Add(time.Duration(env.InviteExpiresInDays) * 24 * time.Hour)
-	updatedInvite, err := db.UpdateInvite(invite.ID, map[string]any{
+	updatedInvite, err := api.DB.UpdateInvite(invite.ID, map[string]any{
 		"clerk_id":   clerkInvite.ID,
 		"expires_at": expiresAt,
 	})
@@ -481,7 +481,7 @@ func ResendInvite(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Invite for %s resent", updatedInvite.Email),
 		UserID:      &user.ID,
@@ -495,12 +495,12 @@ func ResendInvite(c fiber.Ctx) error {
 	})
 }
 
-func IndexMyInvites(c fiber.Ctx) error {
+func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 
 	// Fetch invites by user's email
-	invites, err := db.GetInvitesByEmail(user.Email)
+	invites, err := api.DB.GetInvitesByEmail(user.Email)
 	if err != nil {
 		log.Printf("Error fetching invites: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -529,7 +529,7 @@ func IndexMyInvites(c fiber.Ctx) error {
 	})
 }
 
-func AcceptInvite(c fiber.Ctx) error {
+func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	invite := c.Locals("invite").(*db.Invite)
 	user := c.Locals("user").(*db.User)
@@ -543,7 +543,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	}
 
 	// Update the invite
-	_, err := db.UpdateInvite(invite.ID, map[string]any{
+	_, err := api.DB.UpdateInvite(invite.ID, map[string]any{
 		"accepted_at": time.Now(),
 	})
 	if err != nil {
@@ -554,7 +554,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	}
 
 	// Add the user to the workspace
-	_, err = db.AddUserToWorkspace(user.ID, invite.WorkspaceID, []db.UserWorkspaceRole{invite.Role})
+	_, err = api.DB.AddUserToWorkspace(user.ID, invite.WorkspaceID, []db.UserWorkspaceRole{invite.Role})
 	if err != nil {
 		log.Printf("Error adding user to workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -563,7 +563,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type: db.LogEventTypeCreate,
 		Description: fmt.Sprintf(
 			"User %s added to workspace %s with role %s",
@@ -581,7 +581,7 @@ func AcceptInvite(c fiber.Ctx) error {
 	})
 }
 
-func DeclineInvite(c fiber.Ctx) error {
+func (api *APIControllers) DeclineInvite(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	invite := c.Locals("invite").(*db.Invite)
 	user := c.Locals("user").(*db.User)
@@ -595,7 +595,7 @@ func DeclineInvite(c fiber.Ctx) error {
 	}
 
 	// Update the invite
-	_, err := db.UpdateInvite(invite.ID, map[string]any{
+	_, err := api.DB.UpdateInvite(invite.ID, map[string]any{
 		"declined_at": time.Now(),
 	})
 	if err != nil {
@@ -606,7 +606,7 @@ func DeclineInvite(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("User %s declined invite to workspace %s", user.Email, invite.Workspace.Name),
 		UserID:      &user.ID,

@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func CompareRefs(c fiber.Ctx) error {
+func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -49,7 +49,7 @@ func CompareRefs(c fiber.Ctx) error {
 	})
 }
 
-func MergeRefs(c fiber.Ctx) error {
+func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -108,7 +108,7 @@ func MergeRefs(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Merged %s into %s", compareRef, baseRef),
 		UserID:       &user.ID,

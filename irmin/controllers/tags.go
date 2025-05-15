@@ -14,7 +14,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func TagsIndex(c fiber.Ctx) error {
+func (api *APIControllers) TagsIndex(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -37,7 +37,7 @@ func TagsIndex(c fiber.Ctx) error {
 	})
 }
 
-func TagsStore(c fiber.Ctx) error {
+func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -66,7 +66,7 @@ func TagsStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Tag %s created to track %s", tag.Name, tag.Ref),
 		WorkspaceID:  &workspace.ID,
@@ -80,7 +80,7 @@ func TagsStore(c fiber.Ctx) error {
 	})
 }
 
-func TagsShow(c fiber.Ctx) error {
+func (api *APIControllers) TagsShow(c fiber.Ctx) error {
 	tag := c.Locals("tag").(*irminmodels.Tag)
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -88,7 +88,7 @@ func TagsShow(c fiber.Ctx) error {
 	})
 }
 
-func TagsDestroy(c fiber.Ctx) error {
+func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -108,7 +108,7 @@ func TagsDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeDelete,
 		Description:  fmt.Sprintf("Tag %s deleted", tag.Name),
 		WorkspaceID:  &workspace.ID,

@@ -215,7 +215,7 @@ func (c *Client) doMultipartRequest(
 }
 
 // CreateClient creates a new LakeFS client and logs in with the provided credentials from the environment.
-func CreateClient() (*Client, error) {
+func CreateClient() (*Client, *utils.CoreAPIEnv, error) {
 	// Load environment variables
 	env, err := utils.LoadEnv()
 	if err != nil {
@@ -226,14 +226,14 @@ func CreateClient() (*Client, error) {
 	client, err := NewClient(fmt.Sprintf("%s/api/v1", env.LakeFSURL))
 	if err != nil {
 		log.Printf("Error creating LakeFS client: %v", err)
-		return nil, err
+		return nil, env, err
 	}
 
 	// Log in (credentials can also be obtained from env or configuration).
 	if err := client.Login(env.LakeFSAccessKey, env.LakeFSSecretKey); err != nil {
 		log.Printf("LakeFS login error: %v", err)
-		return nil, err
+		return nil, env, err
 	}
 
-	return client, nil
+	return client, env, nil
 }

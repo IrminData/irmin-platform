@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
@@ -12,18 +13,31 @@ import (
 // It retrieves the connector information and uses the Data Engine to export data from the connector to the requested repository.
 // It returns a slice of logs and an error if any occurred during the process.
 func ExecuteExportWorkflowable(
+	ctx context.Context,
+	d *db.Database,
 	workflow *db.Workflow,
 	workflowable *db.ExportWorkflowable,
-	run *db.WorkflowRun,
 ) ([]string, error) {
 	var logs []string
 
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		logs = append(logs, fmt.Sprintf("Workflow execution cancelled before starting: %v", ctx.Err()))
+		return logs, ctx.Err()
+	}
+
 	// Fetch the connection and it's connector information
-	connection, err := db.GetConnectionByID(workflowable.ConnectionID)
+	connection, err := d.GetConnectionByID(workflowable.ConnectionID)
 	if err != nil {
 		log.Printf("Error getting connection: %v", err)
 		logs = append(logs, fmt.Sprintf("Error getting connection: %v", err))
 		return logs, err
+	}
+
+	// Check for context cancellation before data export
+	if ctx.Err() != nil {
+		logs = append(logs, fmt.Sprintf("Workflow execution cancelled before data export: %v", ctx.Err()))
+		return logs, ctx.Err()
 	}
 
 	// Initialise the Data Engine
@@ -42,13 +56,31 @@ func ExecuteExportWorkflowable(
 		workflowable.Branch,
 		path,
 	)
+
+	// Check for context cancellation after data export
+	if ctx.Err() != nil {
+		// Even if cancelled, collect any logs from the export operation
+		if len(errors) > 0 {
+			for _, err := range errors {
+				log.Printf("Error exporting data: %v", err)
+				logs = append(logs, fmt.Sprintf("Error exporting data: %v", err))
+			}
+		}
+		for _, path := range paths {
+			log.Printf("Exported data path: %s", path)
+			logs = append(logs, fmt.Sprintf("Exported data path: %s", path))
+		}
+		logs = append(logs, fmt.Sprintf("Workflow execution cancelled after data export: %v", ctx.Err()))
+		return logs, ctx.Err()
+	}
+
 	if len(errors) > 0 {
 		for _, err := range errors {
 			log.Printf("Error exporting data: %v", err)
 			logs = append(logs, fmt.Sprintf("Error exporting data: %v", err))
 		}
 	} else {
-		// Log the successful import
+		// Log the successful export
 		logs = append(logs, "Data exported successfully from the connector")
 	}
 

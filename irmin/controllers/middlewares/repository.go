@@ -12,7 +12,7 @@ import (
 )
 
 // RepositoryMiddleware parses the repository slug from the request URL and sets the repository in the context.
-func RepositoryMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) RepositoryMiddleware(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -27,7 +27,7 @@ func RepositoryMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the repository by its slug and workspace ID.
-	repository, err := db.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+	repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
 	if err != nil {
 		log.Printf("Error retrieving repository: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

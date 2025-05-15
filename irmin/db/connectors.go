@@ -38,57 +38,57 @@ type Connector struct {
 }
 
 // GetAllConnectors retrieves all connectors from the database.
-func GetAllConnectors() ([]Connector, error) {
+func (d *Database) GetAllConnectors() ([]Connector, error) {
 	var connectors []Connector
-	if err := DB.Order("created_at desc").Find(&connectors).Error; err != nil {
+	if err := d.Order("created_at desc").Find(&connectors).Error; err != nil {
 		return nil, err
 	}
 	return connectors, nil
 }
 
 // GetConnector retrieves a connector from the database by its ID.
-func GetConnector(id uint) (*Connector, error) {
+func (d *Database) GetConnector(id uint) (*Connector, error) {
 	var connector Connector
-	if err := DB.First(&connector, id).Error; err != nil {
+	if err := d.First(&connector, id).Error; err != nil {
 		return nil, err
 	}
 	return &connector, nil
 }
 
 // GetConnectorByAPIBaseURL retrieves a connector from the database by its API base URL.
-func GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, error) {
+func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, error) {
 	var connector Connector
-	if err := DB.Where("api_base_url = ?", apiBaseURL).First(&connector).Error; err != nil {
+	if err := d.Where("api_base_url = ?", apiBaseURL).First(&connector).Error; err != nil {
 		return nil, err
 	}
 	return &connector, nil
 }
 
 // CreateConnector creates a new connector record in the database.
-func CreateConnector(connector *Connector) (*Connector, error) {
-	if err := DB.Create(&connector).Error; err != nil {
+func (d *Database) CreateConnector(connector *Connector) (*Connector, error) {
+	if err := d.Create(&connector).Error; err != nil {
 		return nil, err
 	}
 	return connector, nil
 }
 
 // UpdateConnector updates an existing connector record in the database.
-func UpdateConnector(id uint, updates map[string]any) (*Connector, error) {
+func (d *Database) UpdateConnector(id uint, updates map[string]any) (*Connector, error) {
 	var connector Connector
 	// Update only the provided fields for the connector with the specified ID.
-	if err := DB.Model(&Connector{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+	if err := d.Model(&Connector{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated connector record.
-	if err := DB.First(&connector, id).Error; err != nil {
+	if err := d.First(&connector, id).Error; err != nil {
 		return nil, err
 	}
 	return &connector, nil
 }
 
 // DeleteConnector deletes a connector record from the database by its ID.
-func DeleteConnector(id uint) error {
-	if err := DB.Delete(&Connector{}, id).Error; err != nil {
+func (d *Database) DeleteConnector(id uint) error {
+	if err := d.Delete(&Connector{}, id).Error; err != nil {
 		return err
 	}
 	return nil

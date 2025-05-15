@@ -8,12 +8,12 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatWorkspaceResponse(workspace db.Workspace) (*irminmodels.Workspace, error) {
+func FormatWorkspaceResponse(workspace *db.Workspace) (*irminmodels.Workspace, error) {
 	sqid, _ := utils.EncodeSqids("workspaces", uint64(workspace.ID))
 	ownerSqid, _ := utils.EncodeSqids("users", uint64(workspace.Owner.ID))
 	var workspaceUsers []irminmodels.User
 	for _, userWorkspace := range workspace.Users {
-		userResponse, err := FormatWorkspaceUserResponse(userWorkspace)
+		userResponse, err := FormatWorkspaceUserResponse(&userWorkspace)
 		if err != nil {
 			return nil, fmt.Errorf("error formatting user response: %w", err)
 		}

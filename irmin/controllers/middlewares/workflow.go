@@ -11,7 +11,7 @@ import (
 )
 
 // WorkflowMiddleware verifies that the user has access to the workflow they are trying to access.
-func WorkflowMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) WorkflowMiddleware(c fiber.Ctx) error {
 	// Get the dictionary and workspace from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -35,7 +35,7 @@ func WorkflowMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the workflow by its ID.
-	workflow, err := db.GetWorkflowByID(uint(workflowID))
+	workflow, err := api.DB.GetWorkflowByID(uint(workflowID))
 	if err != nil {
 		log.Printf("Error retrieving workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

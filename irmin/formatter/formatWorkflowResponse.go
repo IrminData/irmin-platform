@@ -11,31 +11,31 @@ import (
 )
 
 // FormatWorkflowResponse creates a workflow response object from a workflow object.
-func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error) {
+func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels.Workflow, error) {
 	ctx := context.Background()
 
 	// Fetch schedule and workflowable concurrently
 	scheduleFuture := utils.AsyncWithContext(ctx, func() (*db.Schedule, error) {
-		return db.GetScheduleByID(*workflow.ScheduleID)
+		return d.GetScheduleByID(*workflow.ScheduleID)
 	})
 
 	var workflowableFuture utils.FutureResult[any]
 	switch workflow.Type {
 	case db.WorkflowableTypeImport:
 		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
-			return db.GetImportWorkflowableByID(*workflow.ImportID)
+			return d.GetImportWorkflowableByID(*workflow.ImportID)
 		})
 	case db.WorkflowableTypeExport:
 		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
-			return db.GetExportWorkflowableByID(*workflow.ExportID)
+			return d.GetExportWorkflowableByID(*workflow.ExportID)
 		})
 	case db.WorkflowableTypeAction:
 		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
-			return db.GetActionWorkflowableByID(*workflow.ActionID)
+			return d.GetActionWorkflowableByID(*workflow.ActionID)
 		})
 	case db.WorkflowableTypePipeline:
 		workflowableFuture = utils.AsyncWithContext(ctx, func() (any, error) {
-			return db.GetPipelineWorkflowableByID(*workflow.PipelineID)
+			return d.GetPipelineWorkflowableByID(*workflow.PipelineID)
 		})
 	}
 
@@ -153,7 +153,6 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error)
 				}
 				stagesResponse = append(stagesResponse, stageResponse)
 			}
-
 		}
 		workflowableResponse.Stages = stagesResponse
 	}
@@ -209,7 +208,7 @@ func FormatWorkflowResponse(workflow db.Workflow) (*irminmodels.Workflow, error)
 	if workflow.Paused {
 		latestStatus = irminmodels.WorkflowStatusPaused
 	} else {
-		latestWorkflowRun, _ := db.GetLatestWorkflowRunByWorkflowID(workflow.ID)
+		latestWorkflowRun, _ := d.GetLatestWorkflowRunByWorkflowID(workflow.ID)
 		if latestWorkflowRun != nil {
 			latestStatus = irminmodels.WorkflowStatus(latestWorkflowRun.Status)
 		}

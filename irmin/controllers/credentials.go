@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -13,13 +14,13 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func CredentialsIndex(c fiber.Ctx) error {
+func (api *APIControllers) CredentialsIndex(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 
 	// Get the API tokens for the user.
-	tokens, err := db.GetAPITokensByUserID(user.ID)
+	tokens, err := api.DB.GetAPITokensByUserID(user.ID)
 	if err != nil {
 		log.Printf("Error retrieving API tokens: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -51,7 +52,7 @@ func CredentialsIndex(c fiber.Ctx) error {
 	})
 }
 
-func CredentialsStore(c fiber.Ctx) error {
+func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -87,7 +88,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	expiresAt := time.Now().Add(time.Duration(expiryMs) * time.Second).UTC()
 
 	// Create the API token.
-	apiToken, err := db.CreateAPIToken(&db.APIToken{
+	apiToken, err := api.DB.CreateAPIToken(&db.APIToken{
 		Name:      fields["name"],
 		Token:     fmt.Sprintf("cred_%s", token),
 		ExpiresAt: expiresAt,
@@ -113,7 +114,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	}
 
 	// Log the event.
-	db.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("API token %s created for the user", apiToken.Name),
 		UserID:      &user.ID,
@@ -126,7 +127,7 @@ func CredentialsStore(c fiber.Ctx) error {
 	})
 }
 
-func CredentialsDestroy(c fiber.Ctx) error {
+func (api *APIControllers) CredentialsDestroy(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -150,7 +151,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	}
 
 	// Get the API token to ensure it exists and belongs to the user.
-	apiToken, err := db.GetAPIToken(uint(id))
+	apiToken, err := api.DB.GetAPIToken(uint(id))
 	if err != nil {
 		log.Printf("Error retrieving API token: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -171,7 +172,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the API token.
-	if err := db.DeleteAPIToken(uint(id)); err != nil {
+	if err := api.DB.DeleteAPIToken(uint(id)); err != nil {
 		log.Printf("Error deleting API token: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -179,7 +180,7 @@ func CredentialsDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event.
-	db.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("API token %s deleted", apiToken.Name),
 		UserID:      &user.ID,

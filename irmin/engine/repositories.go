@@ -1,12 +1,14 @@
 package engine
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"irmin-api/bucket"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
+	"os"
 	"strings"
 	"time"
 
@@ -17,8 +19,6 @@ import (
 type Repository struct {
 	// Repository ID
 	ID string `json:"id"`
-	// Name of the Repository
-	Name string `json:"name"`
 	// Workspace the Repository belongs to
 	Workspace string `json:"workspace"`
 	// Storage path of the Repository
@@ -48,7 +48,6 @@ func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
 	for i, lakefsRepository := range lakefsRepositories {
 		irminRepositories[i] = Repository{
 			ID:                     lakefsRepository.ID,
-			Name:                   strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
 			Workspace:              workspace,
 			StorageNamespace:       lakefsRepository.StorageNamespace,
 			IsImmutable:            lakefsRepository.ReadOnly,
@@ -85,13 +84,9 @@ func (c *Client) GetRepository(ctx context.Context, workspace, repository string
 		return nil, fmt.Errorf("failed to get repository garbage collection rules: %w", err)
 	}
 
-	// Construct repository prefix.
-	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
-
 	// Convert LakeFS repository to Irmin repository.
 	irminRepository := Repository{
 		ID:               lakefsRepository.ID,
-		Name:             strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
 		Workspace:        workspace,
 		StorageNamespace: lakefsRepository.StorageNamespace,
 		IsImmutable:      lakefsRepository.ReadOnly,
@@ -143,6 +138,12 @@ func (c *Client) CreateRepository(
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
+	// Create the default lakefs actions
+	_, err = c.ConfigureRepositoryWebhookNotifications(lakefsRepository)
+	if err != nil {
+		return nil, fmt.Errorf("failed to configure repository webhook notifications: %w", err)
+	}
+
 	// Create garbage collection rules.
 	garbageCollectionRules := lakefs.GarbageCollectionRules{}
 	if *gcDefaultRetentionDays > 0 {
@@ -163,13 +164,9 @@ func (c *Client) CreateRepository(
 		}
 	}
 
-	// Construct repository prefix.
-	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
-
 	// Convert LakeFS repository to Irmin repository.
 	irminRepository := Repository{
 		ID:               lakefsRepository.ID,
-		Name:             strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
 		Workspace:        workspace,
 		StorageNamespace: lakefsRepository.StorageNamespace,
 		IsImmutable:      lakefsRepository.ReadOnly,
@@ -191,6 +188,52 @@ func (c *Client) CreateRepository(
 	}
 
 	return &irminRepository, nil
+}
+
+// ConfigureRepositoryWebhookNotifications configures the webhook notifications for
+// the main branch of a repository. This should be called once, right after the repository is created.
+func (c *Client) ConfigureRepositoryWebhookNotifications(
+	lakefsRepository *lakefs.Repository,
+) (*lakefs.ObjectMetadata, error) {
+	// Read the default lakefs actions file
+	defaultActionsBytes, err := os.ReadFile("engine/default-lakefs-actions.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read default lakefs actions file: %w", err)
+	}
+	defaultActions := string(defaultActionsBytes)
+
+	// Find replace the webhook_url in the default actions
+	lakefsWebhookURL := fmt.Sprintf("%s/api/v1/system/webhook?type=lakefs", c.Env.URL)
+	defaultActions = strings.ReplaceAll(defaultActions, "{webhook_url}", lakefsWebhookURL)
+
+	// Upload the action file to the repository
+	actionFile, err := c.LakeFSClient.UploadObject(
+		lakefsRepository.ID,
+		lakefsRepository.DefaultBranch,
+		"_lakefs_actions/system-webhook.yaml",
+		bytes.NewReader([]byte(defaultActions)),
+		false,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload default lakefs actions file: %w", err)
+	}
+
+	// Commit the action file
+	_, err = c.LakeFSClient.CreateCommit(
+		lakefsRepository.ID,
+		lakefsRepository.DefaultBranch,
+		"",
+		lakefs.CommitCreateRequest{
+			Message:    "Configure repository webhook notifications",
+			Date:       time.Now().Unix(),
+			AllowEmpty: false,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create commit: %w", err)
+	}
+
+	return actionFile, nil
 }
 
 func (c *Client) UpdateRepository(
@@ -233,13 +276,9 @@ func (c *Client) UpdateRepository(
 		}
 	}
 
-	// Construct repository prefix.
-	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
-
 	// Convert LakeFS repository to Irmin repository.
 	irminRepository := Repository{
 		ID:               lakefsRepository.ID,
-		Name:             strings.ReplaceAll(lakefsRepository.ID, lakeFSRepositoryPrefix, ""),
 		Workspace:        workspace,
 		StorageNamespace: lakefsRepository.StorageNamespace,
 		IsImmutable:      lakefsRepository.ReadOnly,

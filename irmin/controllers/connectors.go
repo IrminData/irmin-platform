@@ -13,11 +13,11 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func ConnectorsIndex(c fiber.Ctx) error {
+func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 
 	// Get all connectors from the database
-	connectors, err := db.GetAllConnectors()
+	connectors, err := api.DB.GetAllConnectors()
 	if err != nil {
 		log.Printf("Error retrieving connectors: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -29,7 +29,8 @@ func ConnectorsIndex(c fiber.Ctx) error {
 	var connectorsResponse []irminmodels.Connector
 	for _, connector := range connectors {
 		// Create the response
-		connectorResponse, err := formatter.FormatConnectorResponse(connector)
+		conn := connector
+		connectorResponse, err := formatter.FormatConnectorResponse(&conn)
 		if err != nil {
 			log.Printf("Error formatting connector response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -46,12 +47,12 @@ func ConnectorsIndex(c fiber.Ctx) error {
 	})
 }
 
-func ConnectorsShow(c fiber.Ctx) error {
+func (api *APIControllers) ConnectorsShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	connector := c.Locals("connector").(*db.Connector)
 
 	// Create the response
-	connectorResponse, err := formatter.FormatConnectorResponse(*connector)
+	connectorResponse, err := formatter.FormatConnectorResponse(connector)
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -65,7 +66,7 @@ func ConnectorsShow(c fiber.Ctx) error {
 	})
 }
 
-func ConnectorsStore(c fiber.Ctx) error {
+func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 	isSystem := c.Locals("is_system").(bool)
 	if !isSystem {
 		// Only system requests can create connectors
@@ -98,10 +99,10 @@ func ConnectorsStore(c fiber.Ctx) error {
 	}
 
 	// Check if the connector is already registered
-	connector, err := db.GetConnectorByAPIBaseURL(connectorInfo.APIBaseURL)
+	connector, err := api.DB.GetConnectorByAPIBaseURL(connectorInfo.APIBaseURL)
 	if err != nil {
 		// If the connector is not found, create a new connector
-		connector, err = db.CreateConnector(&db.Connector{
+		connector, err = api.DB.CreateConnector(&db.Connector{
 			APIBaseURL:       connectorInfo.APIBaseURL,
 			SystemToken:      fields["system_token"],
 			Name:             connectorInfo.Name,
@@ -148,7 +149,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 			})
 		}
 		// Update the connector
-		connector, err = db.UpdateConnector(connector.ID, map[string]any{
+		connector, err = api.DB.UpdateConnector(connector.ID, map[string]any{
 			"system_token":      fields["system_token"],
 			"name":              connectorInfo.Name,
 			"description":       connectorInfo.Description,
@@ -172,7 +173,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 	}
 
 	// Create the response
-	connectorResponse, err := formatter.FormatConnectorResponse(*connector)
+	connectorResponse, err := formatter.FormatConnectorResponse(connector)
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -187,7 +188,7 @@ func ConnectorsStore(c fiber.Ctx) error {
 	})
 }
 
-func ConnectorsUpdate(c fiber.Ctx) error {
+func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	isSystem := c.Locals("is_system").(bool)
 	if !isSystem {
 		// Only system requests can create connectors
@@ -244,7 +245,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the connector
-	connector, err = db.UpdateConnector(connector.ID, map[string]any{
+	connector, err = api.DB.UpdateConnector(connector.ID, map[string]any{
 		"api_base_url":      fields["url"],
 		"system_token":      fields["system_token"],
 		"name":              connectorInfo.Name,
@@ -268,7 +269,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Create the response
-	connectorResponse, err := formatter.FormatConnectorResponse(*connector)
+	connectorResponse, err := formatter.FormatConnectorResponse(connector)
 	if err != nil {
 		log.Printf("Error formatting connector response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -283,7 +284,7 @@ func ConnectorsUpdate(c fiber.Ctx) error {
 	})
 }
 
-func ConnectorsDestroy(c fiber.Ctx) error {
+func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 	isSystem := c.Locals("is_system").(bool)
 	if !isSystem {
 		// Only system requests can create connectors
@@ -295,7 +296,7 @@ func ConnectorsDestroy(c fiber.Ctx) error {
 	connector := c.Locals("connector").(*db.Connector)
 
 	// Delete the connector from the database
-	err := db.DeleteConnector(connector.ID)
+	err := api.DB.DeleteConnector(connector.ID)
 	if err != nil {
 		log.Printf("Error deleting connector: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -309,7 +310,7 @@ func ConnectorsDestroy(c fiber.Ctx) error {
 	})
 }
 
-func ShowConnectorConfigurationFields(c fiber.Ctx) error {
+func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	connector := c.Locals("connector").(*db.Connector)
@@ -345,7 +346,7 @@ func ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	})
 }
 
-func ValidateConnectorConfiguration(c fiber.Ctx) error {
+func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	connector := c.Locals("connector").(*db.Connector)

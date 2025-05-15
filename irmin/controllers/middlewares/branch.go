@@ -12,7 +12,7 @@ import (
 )
 
 // BranchMiddleware parses the branch name from the request URL and sets the branch in the context.
-func BranchMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) BranchMiddleware(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)

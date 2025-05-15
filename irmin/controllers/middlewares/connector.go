@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"log"
@@ -11,7 +10,7 @@ import (
 )
 
 // ConnectorMiddleware parses the connector SQID from the request URL and sets the connector in the context.
-func ConnectorMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) ConnectorMiddleware(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 
 	// Parse the connector SQID from the request URL.
@@ -33,7 +32,7 @@ func ConnectorMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the connector from the database
-	connector, err := db.GetConnector(uint(connectorID))
+	connector, err := api.DB.GetConnector(uint(connectorID))
 	if err != nil {
 		log.Printf("Error retrieving connector: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

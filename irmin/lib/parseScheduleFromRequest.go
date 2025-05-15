@@ -2,6 +2,7 @@ package lib
 
 import (
 	"irmin-api/db"
+	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"log"
 	"strconv"
@@ -10,7 +11,7 @@ import (
 )
 
 // ParseScheduleFromRequest creates a schedule object from the request body.
-func ParseScheduleFromRequest(c fiber.Ctx, workspace db.Workspace) (*db.Schedule, error) {
+func ParseScheduleFromRequest(c fiber.Ctx, d *db.Database, workspace db.Workspace) (*db.Schedule, error) {
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, nil, []string{"max_retries", "max_runtime", "min_interval"})
 	if err != nil {
@@ -60,12 +61,12 @@ func ParseScheduleFromRequest(c fiber.Ctx, workspace db.Workspace) (*db.Schedule
 			})
 		case "repository-event":
 			repositorySlug := trigger["repository"]
-			repository, err := db.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+			repository, err := d.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
 			if err != nil {
 				log.Printf("Error retrieving repository: %v", err)
 				continue
 			}
-			event := db.RepositoryEvent(trigger["event"])
+			event := lakefs.WebhookEventType(trigger["event"])
 			ref := trigger["ref"]
 			schedule.Triggers = append(schedule.Triggers, db.WorkflowTrigger{
 				Type:            db.RepositoryTriggerType,
@@ -80,12 +81,12 @@ func ParseScheduleFromRequest(c fiber.Ctx, workspace db.Workspace) (*db.Schedule
 				log.Printf("Error decoding workflow sqid: %v", err)
 				continue
 			}
-			workflow, err := db.GetWorkflowByID(uint(workflowID))
+			workflow, err := d.GetWorkflowByID(uint(workflowID))
 			if err != nil {
 				log.Printf("Error retrieving workflow: %v", err)
 				continue
 			}
-			event := db.WorkflowRunEvent(trigger["event"])
+			event := db.WorkflowRunEventType(trigger["event"])
 			schedule.Triggers = append(schedule.Triggers, db.WorkflowTrigger{
 				Type:             db.WorkflowRunTriggerType,
 				WorkflowRunEvent: &event,

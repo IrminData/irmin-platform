@@ -16,7 +16,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func ObjectsIndex(c fiber.Ctx) error {
+func (api *APIControllers) ObjectsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	object := c.Locals("object").(*irminmodels.Object)
 
@@ -32,7 +32,7 @@ func ObjectsIndex(c fiber.Ctx) error {
 	})
 }
 
-func UploadObject(c fiber.Ctx) error {
+func (api *APIControllers) UploadObject(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -77,7 +77,7 @@ func UploadObject(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Object %s uploaded to branch %s", newObject.Path, object_ref),
 		UserID:       &user.ID,
@@ -91,7 +91,7 @@ func UploadObject(c fiber.Ctx) error {
 	})
 }
 
-func MoveObject(c fiber.Ctx) error {
+func (api *APIControllers) MoveObject(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -128,7 +128,7 @@ func MoveObject(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Object %s moved to %s on branch %s", object.Path, newObject.Path, object_ref),
 		UserID:       &user.ID,
@@ -142,7 +142,7 @@ func MoveObject(c fiber.Ctx) error {
 	})
 }
 
-func CopyObject(c fiber.Ctx) error {
+func (api *APIControllers) CopyObject(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -179,7 +179,7 @@ func CopyObject(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Object %s copied to %s on branch %s", object.Path, newObject.Path, object_ref),
 		UserID:       &user.ID,
@@ -193,7 +193,7 @@ func CopyObject(c fiber.Ctx) error {
 	})
 }
 
-func ObjectsDestroy(c fiber.Ctx) error {
+func (api *APIControllers) ObjectsDestroy(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -215,7 +215,7 @@ func ObjectsDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeDelete,
 		Description:  fmt.Sprintf("Object %s deleted from branch %s", object.Path, object_ref),
 		UserID:       &user.ID,
@@ -228,7 +228,7 @@ func ObjectsDestroy(c fiber.Ctx) error {
 	})
 }
 
-func ObjectsContent(c fiber.Ctx) error {
+func (api *APIControllers) ObjectsContent(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
@@ -253,7 +253,7 @@ func ObjectsContent(c fiber.Ctx) error {
 }
 
 // ObjectsDownload handles downloading either a single object or all descendants of a group, zipping them, and sending as a download.
-func ObjectsDownload(c fiber.Ctx) error {
+func (api *APIControllers) ObjectsDownload(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
@@ -337,7 +337,7 @@ func ObjectsDownload(c fiber.Ctx) error {
 	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
 }
 
-func ObjectsHistory(c fiber.Ctx) error {
+func (api *APIControllers) ObjectsHistory(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
@@ -362,7 +362,7 @@ func ObjectsHistory(c fiber.Ctx) error {
 	})
 }
 
-func ObjectsSchema(c fiber.Ctx) error {
+func (api *APIControllers) ObjectsSchema(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	repository := c.Locals("repository").(*db.Repository)
@@ -371,7 +371,7 @@ func ObjectsSchema(c fiber.Ctx) error {
 	object_ref := c.Locals("object_ref").(string)
 
 	// Get the schema of the object in the repository at ref
-	schema, err := lib.GetObjectSchema(workspace, repository, object, object_ref, locale)
+	schema, err := lib.GetObjectSchema(api.DB, workspace, repository, object, object_ref, locale)
 	if err != nil {
 		log.Printf("Error retrieving object schema: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

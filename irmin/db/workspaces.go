@@ -16,39 +16,39 @@ type Workspace struct {
 }
 
 // GetWorkspaceBySlug retrieves a workspace by its slug.
-func GetWorkspaceBySlug(slug string) (*Workspace, error) {
+func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error) {
 	var w Workspace
-	if err := DB.Preload("Owner").Preload("Users.User").Where("slug = ?", slug).First(&w).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Users.User").Where("slug = ?", slug).First(&w).Error; err != nil {
 		return nil, err
 	}
 	return &w, nil
 }
 
 // CreateWorkspace creates a new workspace.
-func CreateWorkspace(workspace *Workspace) (*Workspace, error) {
-	if err := DB.Create(&workspace).Error; err != nil {
+func (d *Database) CreateWorkspace(workspace *Workspace) (*Workspace, error) {
+	if err := d.Create(&workspace).Error; err != nil {
 		return nil, err
 	}
 	return workspace, nil
 }
 
 // UpdateWorkspace updates an existing workspace record in the database.
-func UpdateWorkspace(id uint, updates map[string]any) (*Workspace, error) {
+func (d *Database) UpdateWorkspace(id uint, updates map[string]any) (*Workspace, error) {
 	var workspace Workspace
 	// Update only the provided fields for the user with the specified ID.
-	if err := DB.Model(&Workspace{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+	if err := d.Model(&Workspace{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated workspace record.
-	if err := DB.Preload("Owner").First(&workspace, id).Error; err != nil {
+	if err := d.Preload("Owner").First(&workspace, id).Error; err != nil {
 		return nil, err
 	}
 	return &workspace, nil
 }
 
 // DeleteWorkspace deletes a workspace and the related records.
-func DeleteWorkspace(id uint) error {
-	return DB.Transaction(func(tx *gorm.DB) error {
+func (d *Database) DeleteWorkspace(id uint) error {
+	return d.Transaction(func(tx *gorm.DB) error {
 		// Delete the workspace.
 		if err := tx.Delete(&Workspace{}, id).Error; err != nil {
 			return err

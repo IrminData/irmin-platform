@@ -11,7 +11,7 @@ import (
 )
 
 // QueryMiddleware parses the stored query SQID from the request URL and sets the stored query in the context.
-func QueryMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) QueryMiddleware(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
@@ -34,7 +34,7 @@ func QueryMiddleware(c fiber.Ctx) error {
 	}
 
 	// Find the stored query by its ID.
-	storedQuery, err := db.GetStoredQueryByID(uint(queryID))
+	storedQuery, err := api.DB.GetStoredQueryByID(uint(queryID))
 	if err != nil {
 		log.Printf("Error retrieving stored query: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

@@ -16,7 +16,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func CommitsIndex(c fiber.Ctx) error {
+func (api *APIControllers) CommitsIndex(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -87,7 +87,7 @@ func CommitsIndex(c fiber.Ctx) error {
 	}
 }
 
-func CommitsStore(c fiber.Ctx) error {
+func (api *APIControllers) CommitsStore(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -123,7 +123,7 @@ func CommitsStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Commit %s created on branch %s", commit.Hash, fields["branch"]),
 		UserID:       &user.ID,
@@ -138,7 +138,7 @@ func CommitsStore(c fiber.Ctx) error {
 	})
 }
 
-func CommitsShow(c fiber.Ctx) error {
+func (api *APIControllers) CommitsShow(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -171,7 +171,7 @@ func CommitsShow(c fiber.Ctx) error {
 	})
 }
 
-func RevertUncommittedChanges(c fiber.Ctx) error {
+func (api *APIControllers) RevertUncommittedChanges(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -206,7 +206,7 @@ func RevertUncommittedChanges(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:         db.LogEventTypeInfo,
 		Description:  fmt.Sprintf("Uncommitted changes reverted on branch %s", fields["branch"]),
 		UserID:       &user.ID,

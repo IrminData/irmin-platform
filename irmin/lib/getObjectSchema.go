@@ -20,6 +20,7 @@ var objectSchemaCacheUpdateMutex sync.Map
 // Otherwise, it fetches the schema from the Data Engine and caches it.
 // The cache is updated in a goroutine to avoid blocking the main thread.
 func GetObjectSchema(
+	d *db.Database,
 	workspace *db.Workspace,
 	repository *db.Repository,
 	object *irminmodels.Object,
@@ -29,7 +30,7 @@ func GetObjectSchema(
 	dataEngine := engine.NewClient(locale)
 
 	// Find a relevant repository object schema cache
-	schemaCache, err := db.FindRepositorySchemaCache(repository.ID, object.Path, ref)
+	schemaCache, err := d.FindRepositorySchemaCache(repository.ID, object.Path, ref)
 	if err != nil {
 		log.Printf("Warning: Error finding schema cache: %v", err)
 		// Continue with fetching fresh schema
@@ -63,9 +64,9 @@ func GetObjectSchema(
 			var err error
 			if schemaCache != nil {
 				schemaCache.Schema = schema
-				schemaCache, err = db.SaveRepositorySchemaCache(schemaCache)
+				schemaCache, err = d.SaveRepositorySchemaCache(schemaCache)
 			} else {
-				schemaCache, err = db.SaveRepositorySchemaCache(&db.RepositorySchemaCache{
+				schemaCache, err = d.SaveRepositorySchemaCache(&db.RepositorySchemaCache{
 					Path:         object.Path,
 					Ref:          ref,
 					Schema:       schema,

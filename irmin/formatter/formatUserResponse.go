@@ -9,7 +9,7 @@ import (
 )
 
 // FormatWorkspaceUserResponse creates a user response object from a workspace user object.
-func FormatWorkspaceUserResponse(workspaceUser db.WorkspaceUser) (*irminmodels.User, error) {
+func FormatWorkspaceUserResponse(workspaceUser *db.WorkspaceUser) (*irminmodels.User, error) {
 	// Construct the user sqid
 	userSqid, err := utils.EncodeSqids("users", uint64(workspaceUser.UserID))
 	if err != nil {
@@ -35,7 +35,7 @@ func FormatWorkspaceUserResponse(workspaceUser db.WorkspaceUser) (*irminmodels.U
 }
 
 // FormatUserResponse creates a role response object from a workspace role object.
-func FormatUserResponse(user db.User) (*irminmodels.User, error) {
+func FormatUserResponse(user *db.User) (*irminmodels.User, error) {
 	// Construct the user sqid
 	userSqid, err := utils.EncodeSqids("users", uint64(user.ID))
 	if err != nil {

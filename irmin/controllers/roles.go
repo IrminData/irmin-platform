@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func RolesIndex(c fiber.Ctx) error {
+func (api *APIControllers) RolesIndex(c fiber.Ctx) error {
 	// Define the roles.
 	rolesResponse := []irminmodels.Role{
 		{

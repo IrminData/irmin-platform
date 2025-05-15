@@ -14,7 +14,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func WorkflowsIndex(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	// Get the dictionary and workspace from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -31,7 +31,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 	var workflows []db.Workflow
 	if query["type"] != "" {
 		// Get the workflows for the workspace filtered by type.
-		workflows, err = db.GetWorkflowsOfTypeByWorkspaceID(workspace.ID, db.WorkflowableType(query["type"]))
+		workflows, err = api.DB.GetWorkflowsOfTypeByWorkspaceID(workspace.ID, db.WorkflowableType(query["type"]))
 		if err != nil {
 			log.Printf("Error retrieving workflows: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -40,7 +40,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 		}
 	} else {
 		// Get the workflows for the workspace.
-		workflows, err = db.GetWorkflowsByWorkspaceID(workspace.ID)
+		workflows, err = api.DB.GetWorkflowsByWorkspaceID(workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving workflows: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -52,7 +52,7 @@ func WorkflowsIndex(c fiber.Ctx) error {
 	// Structure the response.
 	var workflowsResponse []irminmodels.Workflow
 	for _, workflow := range workflows {
-		workflowResponse, err := formatter.FormatWorkflowResponse(workflow)
+		workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, &workflow)
 		if err != nil {
 			log.Printf("Error getting workflow response: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -68,13 +68,13 @@ func WorkflowsIndex(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowsShow(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*workflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -88,7 +88,7 @@ func WorkflowsShow(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowsUpdate(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -108,7 +108,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	workflow.Name = fields["name"]
 	workflow.Description = fields["description"]
 	workflow.Documentation = fields["documentation"]
-	updatedWorkflow, err := db.UpdateWorkflow(workflow)
+	updatedWorkflow, err := api.DB.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -117,7 +117,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -126,7 +126,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: "Workflow settings updated",
 		UserID:      &user.ID,
@@ -141,7 +141,7 @@ func WorkflowsUpdate(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowsStore(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -181,7 +181,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			})
 		}
 		// Find the repository by slug.
-		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -196,7 +196,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		connection, err := db.GetConnectionByID(uint(connectionID))
+		connection, err := api.DB.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -209,7 +209,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
 
 		// Create the workflowable in the database.
-		importWorkflowable, err = db.CreateImportWorkflowable(&db.ImportWorkflowable{
+		importWorkflowable, err = api.DB.CreateImportWorkflowable(&db.ImportWorkflowable{
 			ConnectionID:   connection.ID,
 			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
@@ -237,7 +237,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			})
 		}
 		// Find the repository by slug.
-		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -252,7 +252,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		connection, err := db.GetConnectionByID(uint(connectionID))
+		connection, err := api.DB.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -265,7 +265,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
 
 		// Create the workflowable in the database.
-		exportWorkflowable, err = db.CreateExportWorkflowable(&db.ExportWorkflowable{
+		exportWorkflowable, err = api.DB.CreateExportWorkflowable(&db.ExportWorkflowable{
 			ConnectionID:   connection.ID,
 			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
@@ -312,7 +312,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 
 			// Create async task for repository lookup
 			future := utils.Async(func() (*db.Repository, error) {
-				return db.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
+				return api.DB.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
 			})
 			inputFutures = append(inputFutures, future)
 		}
@@ -341,7 +341,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		// Find the results repository by slug.
 		var repository *db.Repository
 		if workflowableFields["repository"] != "" {
-			repository, err = db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+			repository, err = api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 			if err != nil {
 				log.Printf("Error retrieving repository: %v", err)
 				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -372,7 +372,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			}
 		}
 		// Create the workflowable in the database.
-		actionWorkflowable, err = db.CreateActionWorkflowable(&workflowable)
+		actionWorkflowable, err = api.DB.CreateActionWorkflowable(&workflowable)
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -418,7 +418,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 					log.Printf("Error decoding connection sqid: %v", err)
 					continue
 				}
-				connection, err := db.GetConnectionByID(uint(parsedConnID))
+				connection, err := api.DB.GetConnectionByID(uint(parsedConnID))
 				if err != nil {
 					log.Printf("Error retrieving connection: %v", err)
 					continue
@@ -431,7 +431,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			case "repository":
 				newStage.Type = db.PipelineStageTypeRepository
 				repositorySlug := stage["repository"]
-				repository, err := db.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+				repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
 				if err != nil {
 					log.Printf("Error retrieving repository: %v", err)
 					continue
@@ -452,7 +452,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 		if workflowableFields["live"] == "true" {
 			live = true
 		}
-		pipelineWorkflowable, err = db.CreatePipelineWorkflowable(&db.PipelineWorkflowable{
+		pipelineWorkflowable, err = api.DB.CreatePipelineWorkflowable(&db.PipelineWorkflowable{
 			Live:   live,
 			Stages: stages,
 		})
@@ -470,7 +470,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Parse the schedule object from the request body.
-	schedule, err := lib.ParseScheduleFromRequest(c, *workspace)
+	schedule, err := lib.ParseScheduleFromRequest(c, api.DB, *workspace)
 	if err != nil {
 		log.Printf("Error creating schedule object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -479,7 +479,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Create the schedule in the database.
-	schedule, err = db.CreateSchedule(schedule)
+	schedule, err = api.DB.CreateSchedule(schedule)
 	if err != nil {
 		log.Printf("Error creating schedule: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -490,7 +490,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	// Create the workflow in the database.
 	var workflow *db.Workflow
 	if importWorkflowable != nil {
-		workflow, err = db.CreateWorkflow(&db.Workflow{
+		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
 			Name:          fields["name"],
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
@@ -501,7 +501,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			ImportID:      &importWorkflowable.ID,
 		})
 	} else if exportWorkflowable != nil {
-		workflow, err = db.CreateWorkflow(&db.Workflow{
+		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
 			Name:          fields["name"],
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
@@ -512,7 +512,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			ExportID:      &exportWorkflowable.ID,
 		})
 	} else if actionWorkflowable != nil {
-		workflow, err = db.CreateWorkflow(&db.Workflow{
+		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
 			Name:          fields["name"],
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
@@ -523,7 +523,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 			ActionID:      &actionWorkflowable.ID,
 		})
 	} else if pipelineWorkflowable != nil {
-		workflow, err = db.CreateWorkflow(&db.Workflow{
+		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
 			Name:          fields["name"],
 			Description:   fields["description"],
 			Documentation: fields["documentation"],
@@ -542,7 +542,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Fetch the full workflow object.
-	workflow, err = db.GetWorkflowByID(workflow.ID)
+	workflow, err = api.DB.GetWorkflowByID(workflow.ID)
 	if err != nil {
 		log.Printf("Error retrieving workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -551,7 +551,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*workflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -560,7 +560,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: "Workflow created",
 		UserID:      &user.ID,
@@ -575,7 +575,7 @@ func WorkflowsStore(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowableUpdate(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -605,7 +605,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 			})
 		}
 		// Find the repository by slug.
-		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -620,7 +620,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		connection, err := db.GetConnectionByID(uint(connectionID))
+		connection, err := api.DB.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -633,7 +633,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
 
 		// Create the workflowable in the database.
-		importWorkflowable, err = db.CreateImportWorkflowable(&db.ImportWorkflowable{
+		importWorkflowable, err = api.DB.CreateImportWorkflowable(&db.ImportWorkflowable{
 			ConnectionID:   connection.ID,
 			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
@@ -661,7 +661,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 			})
 		}
 		// Find the repository by slug.
-		repository, err := db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error retrieving repository: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -676,7 +676,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		connection, err := db.GetConnectionByID(uint(connectionID))
+		connection, err := api.DB.GetConnectionByID(uint(connectionID))
 		if err != nil {
 			log.Printf("Error retrieving connection: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -688,7 +688,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
 
 		// Create the workflowable in the database.
-		exportWorkflowable, err = db.CreateExportWorkflowable(&db.ExportWorkflowable{
+		exportWorkflowable, err = api.DB.CreateExportWorkflowable(&db.ExportWorkflowable{
 			ConnectionID:   connection.ID,
 			ConnectionPath: connectionPath,
 			RepositoryID:   repository.ID,
@@ -735,7 +735,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 
 			// Create async task for repository lookup
 			future := utils.Async(func() (*db.Repository, error) {
-				return db.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
+				return api.DB.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
 			})
 			inputFutures = append(inputFutures, future)
 		}
@@ -764,7 +764,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		// Find the results repository by slug.
 		var repository *db.Repository
 		if workflowableFields["repository"] != "" {
-			repository, err = db.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+			repository, err = api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
 			if err != nil {
 				log.Printf("Error retrieving repository: %v", err)
 				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -794,7 +794,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 			}
 		}
 		// Create the workflowable in the database.
-		actionWorkflowable, err = db.CreateActionWorkflowable(&workflowable)
+		actionWorkflowable, err = api.DB.CreateActionWorkflowable(&workflowable)
 		if err != nil {
 			log.Printf("Error creating workflowable: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -840,7 +840,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 					log.Printf("Error decoding connection sqid: %v", err)
 					continue
 				}
-				connection, err := db.GetConnectionByID(uint(parsedConnID))
+				connection, err := api.DB.GetConnectionByID(uint(parsedConnID))
 				if err != nil {
 					log.Printf("Error retrieving connection: %v", err)
 					continue
@@ -853,7 +853,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 			case "repository":
 				newStage.Type = db.PipelineStageTypeRepository
 				repositorySlug := stage["repository"]
-				repository, err := db.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+				repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
 				if err != nil {
 					log.Printf("Error retrieving repository: %v", err)
 					continue
@@ -874,7 +874,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 		if workflowableFields["live"] == "true" {
 			live = true
 		}
-		pipelineWorkflowable, err = db.CreatePipelineWorkflowable(&db.PipelineWorkflowable{
+		pipelineWorkflowable, err = api.DB.CreatePipelineWorkflowable(&db.PipelineWorkflowable{
 			Live:   live,
 			Stages: stages,
 		})
@@ -894,19 +894,19 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	// Delete the current associated workflowable object.
 	if workflow.Action != nil {
 		// Delete the action workflowable object.
-		db.DeleteActionWorkflowable(workflow.Action.ID)
+		api.DB.DeleteActionWorkflowable(workflow.Action.ID)
 	}
 	if workflow.Import != nil {
 		// Delete the import workflowable object.
-		db.DeleteImportWorkflowable(workflow.Import.ID)
+		api.DB.DeleteImportWorkflowable(workflow.Import.ID)
 	}
 	if workflow.Export != nil {
 		// Delete the export workflowable object.
-		db.DeleteExportWorkflowable(workflow.Export.ID)
+		api.DB.DeleteExportWorkflowable(workflow.Export.ID)
 	}
 	if workflow.Pipeline != nil {
 		// Delete the pipeline workflowable object and its stages.
-		db.DeletePipelineWorkflowable(workflow.Pipeline.ID)
+		api.DB.DeletePipelineWorkflowable(workflow.Pipeline.ID)
 	}
 
 	// Update the workflow record with the new workflowable object.
@@ -914,16 +914,16 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	var err error
 	if importWorkflowable != nil {
 		workflow.ImportID = &importWorkflowable.ID
-		updatedWorkflow, err = db.UpdateWorkflow(workflow)
+		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
 	} else if exportWorkflowable != nil {
 		workflow.ExportID = &exportWorkflowable.ID
-		updatedWorkflow, err = db.UpdateWorkflow(workflow)
+		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
 	} else if actionWorkflowable != nil {
 		workflow.ActionID = &actionWorkflowable.ID
-		updatedWorkflow, err = db.UpdateWorkflow(workflow)
+		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
 	} else if pipelineWorkflowable != nil {
 		workflow.PipelineID = &pipelineWorkflowable.ID
-		updatedWorkflow, err = db.UpdateWorkflow(workflow)
+		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
 	}
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
@@ -933,7 +933,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -942,7 +942,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: "Workflow workflowable configuration updated",
 		UserID:      &user.ID,
@@ -957,7 +957,7 @@ func WorkflowableUpdate(c fiber.Ctx) error {
 	})
 }
 
-func ScheduleUpdate(c fiber.Ctx) error {
+func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -965,7 +965,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Parse the schedule object from the request body.
-	schedule, err := lib.ParseScheduleFromRequest(c, *workspace)
+	schedule, err := lib.ParseScheduleFromRequest(c, api.DB, *workspace)
 	if err != nil {
 		log.Printf("Error creating schedule object: %v", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -974,7 +974,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Create the schedule in the database.
-	schedule, err = db.CreateSchedule(schedule)
+	schedule, err = api.DB.CreateSchedule(schedule)
 	if err != nil {
 		log.Printf("Error creating schedule: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -984,12 +984,12 @@ func ScheduleUpdate(c fiber.Ctx) error {
 
 	// Delete the current associated schedule object and its triggers.
 	if workflow.Schedule != nil {
-		db.DeleteSchedule(workflow.Schedule.ID)
+		api.DB.DeleteSchedule(workflow.Schedule.ID)
 	}
 
 	// Update the workflow record with the new schedule object.
 	workflow.ScheduleID = &schedule.ID
-	updatedWorkflow, err := db.UpdateWorkflow(workflow)
+	updatedWorkflow, err := api.DB.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -998,7 +998,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1007,7 +1007,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: "Workflow schedule updated",
 		UserID:      &user.ID,
@@ -1022,7 +1022,7 @@ func ScheduleUpdate(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowsDestroy(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -1030,7 +1030,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 	workflow := c.Locals("workflow").(*db.Workflow)
 
 	// Delete the workflow and all related records
-	err := db.DeleteWorkflow(workflow.ID)
+	err := api.DB.DeleteWorkflow(workflow.ID)
 	if err != nil {
 		log.Printf("Error deleting workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1039,7 +1039,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: "Workflow deleted",
 		UserID:      &user.ID,
@@ -1053,7 +1053,7 @@ func WorkflowsDestroy(c fiber.Ctx) error {
 	})
 }
 
-func TransferWorkflowOwnership(c fiber.Ctx) error {
+func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -1079,7 +1079,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	inWorkspace, err := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1094,7 +1094,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 
 	// Update the workflow record.
 	workflow.OwnerID = uint(newOwnerID)
-	updatedWorkflow, err := db.UpdateWorkflow(workflow)
+	updatedWorkflow, err := api.DB.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1103,7 +1103,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1112,7 +1112,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Workflow ownership transferred to %s", updatedWorkflow.Owner.Email),
 		UserID:      &user.ID,
@@ -1127,7 +1127,7 @@ func TransferWorkflowOwnership(c fiber.Ctx) error {
 	})
 }
 
-func PauseWorkflow(c fiber.Ctx) error {
+func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -1136,7 +1136,7 @@ func PauseWorkflow(c fiber.Ctx) error {
 
 	// Update the workflow record to pause it.
 	workflow.Paused = true
-	updatedWorkflow, err := db.UpdateWorkflow(workflow)
+	updatedWorkflow, err := api.DB.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error pausing workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1145,7 +1145,7 @@ func PauseWorkflow(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1154,7 +1154,7 @@ func PauseWorkflow(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: "Workflow paused",
 		UserID:      &user.ID,
@@ -1168,7 +1168,7 @@ func PauseWorkflow(c fiber.Ctx) error {
 	})
 }
 
-func StartWorkflow(c fiber.Ctx) error {
+func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -1184,7 +1184,7 @@ func StartWorkflow(c fiber.Ctx) error {
 
 	// Update the workflow record to start it.
 	workflow.Paused = false
-	updatedWorkflow, err := db.UpdateWorkflow(workflow)
+	updatedWorkflow, err := api.DB.UpdateWorkflow(workflow)
 	if err != nil {
 		log.Printf("Error starting workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1192,10 +1192,8 @@ func StartWorkflow(c fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Start the workflow execution.
-
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(*updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -1204,7 +1202,7 @@ func StartWorkflow(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: "Workflow started",
 		UserID:      &user.ID,

@@ -14,12 +14,12 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func UsersIndex(c fiber.Ctx) error {
+func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get all users in the workspace.
-	workspaceUsers, err := db.GetUsersInWorkspace(workspace.ID)
+	workspaceUsers, err := api.DB.GetUsersInWorkspace(workspace.ID)
 	if err != nil {
 		log.Printf("Error fetching users: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -31,7 +31,7 @@ func UsersIndex(c fiber.Ctx) error {
 	var usersResponse []irminmodels.User
 	for _, workspaceUser := range workspaceUsers {
 		// Format the user response
-		userResponse, err := formatter.FormatWorkspaceUserResponse(workspaceUser)
+		userResponse, err := formatter.FormatWorkspaceUserResponse(&workspaceUser)
 		if err != nil {
 			log.Printf("Error formatting user: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -48,12 +48,12 @@ func UsersIndex(c fiber.Ctx) error {
 	})
 }
 
-func UsersShow(c fiber.Ctx) error {
+func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspaceUser := c.Locals("workspace_user").(*db.WorkspaceUser)
 
 	// Format the user response
-	userResponse, err := formatter.FormatWorkspaceUserResponse(*workspaceUser)
+	userResponse, err := formatter.FormatWorkspaceUserResponse(workspaceUser)
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -67,7 +67,7 @@ func UsersShow(c fiber.Ctx) error {
 	})
 }
 
-func UsersDestroy(c fiber.Ctx) error {
+func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -106,7 +106,7 @@ func UsersDestroy(c fiber.Ctx) error {
 	}
 
 	// Remove the user from the workspace
-	if err := db.RemoveUserFromWorkspace(workspaceUser.UserID, workspace.ID); err != nil {
+	if err := api.DB.RemoveUserFromWorkspace(workspaceUser.UserID, workspace.ID); err != nil {
 		log.Printf("Error removing user from workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -114,7 +114,7 @@ func UsersDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("User %s removed from workspace", workspaceUser.User.Email),
 		UserID:      &user.ID,
@@ -127,7 +127,7 @@ func UsersDestroy(c fiber.Ctx) error {
 	})
 }
 
-func UsersUpdate(c fiber.Ctx) error {
+func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -193,7 +193,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the user roles in the workspace
-	workspaceUser, err = db.UpdateWorkspaceUserRoles(workspaceUser.UserID, workspace.ID, newRoles)
+	workspaceUser, err = api.DB.UpdateWorkspaceUserRoles(workspaceUser.UserID, workspace.ID, newRoles)
 	if err != nil {
 		log.Printf("Error updating workspace user roles: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -202,7 +202,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Refetch the workspace user
-	workspaceUser, err = db.GetWorkspaceUser(workspace.ID, workspaceUser.UserID)
+	workspaceUser, err = api.DB.GetWorkspaceUser(workspace.ID, workspaceUser.UserID)
 	if err != nil {
 		log.Printf("Error fetching workspace user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -211,7 +211,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Format the updated user response
-	userResponse, err := formatter.FormatWorkspaceUserResponse(*workspaceUser)
+	userResponse, err := formatter.FormatWorkspaceUserResponse(workspaceUser)
 	if err != nil {
 		log.Printf("Error formatting user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -220,7 +220,7 @@ func UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type: db.LogEventTypeUpdate,
 		Description: fmt.Sprintf(
 			"User %s roles updated to %s",

@@ -17,7 +17,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func EditorIndex(c fiber.Ctx) error {
+func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
@@ -173,7 +173,7 @@ func EditorIndex(c fiber.Ctx) error {
 	})
 }
 
-func EditorItemStore(c fiber.Ctx) error {
+func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -229,7 +229,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Editor item %s saved", path),
 		UserID:      &user.ID,
@@ -242,7 +242,7 @@ func EditorItemStore(c fiber.Ctx) error {
 	})
 }
 
-func EditorItemDestroy(c fiber.Ctx) error {
+func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -285,7 +285,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("Editor item %s deleted", path),
 		UserID:      &user.ID,
@@ -298,7 +298,7 @@ func EditorItemDestroy(c fiber.Ctx) error {
 	})
 }
 
-func MoveEditorItem(c fiber.Ctx) error {
+func (api *APIControllers) MoveEditorItem(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -359,7 +359,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Editor item %s moved to %s", path, destination_path),
 		UserID:      &user.ID,
@@ -372,7 +372,7 @@ func MoveEditorItem(c fiber.Ctx) error {
 	})
 }
 
-func CopyEditorItem(c fiber.Ctx) error {
+func (api *APIControllers) CopyEditorItem(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -433,7 +433,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("Editor item %s copied to %s", path, destination_path),
 		UserID:      &user.ID,
@@ -446,7 +446,7 @@ func CopyEditorItem(c fiber.Ctx) error {
 	})
 }
 
-func EditorItemContent(c fiber.Ctx) error {
+func (api *APIControllers) EditorItemContent(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
@@ -493,7 +493,7 @@ func EditorItemContent(c fiber.Ctx) error {
 	})
 }
 
-func EditorItemExecute(c fiber.Ctx) error {
+func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -562,7 +562,7 @@ func EditorItemExecute(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("Editor item '%s' executed", path),
 		UserID:      &user.ID,
@@ -571,7 +571,7 @@ func EditorItemExecute(c fiber.Ctx) error {
 
 	// Execute the file in the compute sandbox
 	ctx := c.Context()
-	computeResult, err := sandbox.ExecuteEditorItem(ctx, inputFiles, *user, path, workspace.Slug)
+	computeResult, err := sandbox.ExecuteEditorItem(ctx, api.DB, inputFiles, *user, path, workspace.Slug)
 	if err != nil {
 		log.Printf("Error executing editor item in the compute sandbox: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

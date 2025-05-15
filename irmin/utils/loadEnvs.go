@@ -17,6 +17,7 @@ type CoreAPIEnv struct {
 	CorsEnabled              bool   // Flag to enable CORS
 	HelmetEnabled            bool   // Flag to enable helmet
 	CorsOrigins              string // Allowed origins for CORS
+	OrchestratorEnabled      bool   // Flag to enable the orchestrator
 	SqidAlphabet             string // Alphabet to use for SQIDs
 	DatabaseConnectionString string // Postgres DB connection string
 	ResendAPIKey             string // Resend API Key for emails
@@ -118,6 +119,15 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 	corsOrigins, err := getEnv("CORS_ORIGINS", false, "https://localhost:3000")
+	if err != nil {
+		return nil, err
+	}
+
+	orchestratorEnabledStr, err := getEnv("ORCHESTRATOR_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	orchestratorEnabled, err := strconv.ParseBool(orchestratorEnabledStr)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +260,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		CorsEnabled:              corsEnabled,
 		HelmetEnabled:            helmetEnabled,
 		CorsOrigins:              corsOrigins,
+		OrchestratorEnabled:      orchestratorEnabled,
 		SqidAlphabet:             sqidAlphabet,
 		DatabaseConnectionString: databaseConnectionString,
 		ResendAPIKey:             resendAPIKey,

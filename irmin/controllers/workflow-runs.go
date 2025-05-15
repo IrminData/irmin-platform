@@ -10,13 +10,13 @@ import (
 	"log"
 	"math"
 	"strconv"
-	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
-func TriggerWorkflowRun(c fiber.Ctx) error {
+func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 	// Get the dictionary, workflow and the user from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workflow := c.Locals("workflow").(*db.Workflow)
@@ -26,14 +26,24 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	// Get the request context.
 	ctx := c.Context()
 
-	// Execute the workflow.
-	run, err := lib.ExecuteWorkflow(ctx, *workflow, user, nil)
+	// Create a new workflow run.
+	var run *db.WorkflowRun
+	err := api.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var err error
+		run, err = lib.CreateWorkflowRun(tx, workflow, user, nil)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		log.Printf("error executing workflow: %v", err)
+		log.Printf("error creating workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
+
+	// We don't need to actually execute the workflow here, as the orchestrator will do that.
 
 	// Format the workflow run for the response.
 	formattedRun, err := formatter.FormatWorkflowRunResponse(run)
@@ -45,7 +55,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("Workflow run %s created", formattedRun.ID),
 		UserID:      &user.ID,
@@ -59,7 +69,7 @@ func TriggerWorkflowRun(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowRunsIndex(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 	// Get the dictionary and workflow from the request context.
 	dict := c.Locals("dict").(locales.Dictionary)
 	workflow := c.Locals("workflow").(*db.Workflow)
@@ -94,7 +104,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	offset := (page - 1) * per_page
 
 	// Get the workflow runs for the workflow.
-	runs, count, err := db.GetWorkflowRunsByWorkflowID(workflow.ID, per_page, offset)
+	runs, count, err := api.DB.GetWorkflowRunsByWorkflowID(workflow.ID, per_page, offset)
 	if err != nil {
 		log.Printf("error getting workflow runs: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -136,7 +146,7 @@ func WorkflowRunsIndex(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowRunsShow(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workflow := c.Locals("workflow").(*db.Workflow)
 
@@ -159,7 +169,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	}
 
 	// Find the workflow run by its ID.
-	workflowRun, err := db.GetWorkflowRunByID(uint(workflowRunID))
+	workflowRun, err := api.DB.GetWorkflowRunByID(uint(workflowRunID))
 	if err != nil {
 		log.Printf("Error retrieving workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -190,7 +200,7 @@ func WorkflowRunsShow(c fiber.Ctx) error {
 	})
 }
 
-func WorkflowRunsDestroy(c fiber.Ctx) error {
+func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -215,7 +225,7 @@ func WorkflowRunsDestroy(c fiber.Ctx) error {
 	}
 
 	// Find the workflow run by its ID.
-	workflowRun, err := db.GetWorkflowRunByID(uint(workflowRunID))
+	workflowRun, err := api.DB.GetWorkflowRunByID(uint(workflowRunID))
 	if err != nil {
 		log.Printf("Error retrieving workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -231,21 +241,17 @@ func WorkflowRunsDestroy(c fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Cancel the workflow run and stop all running tasks.
-
 	// Change the workflow run status to cancelled.
 	workflowRun.Status = db.WorkflowStatusCancelled
-	finishedAt := time.Now()
-	workflowRun.FinishedAt = &finishedAt
-	workflowRun.Logs = append(workflowRun.Logs, "Workflow run cancelled")
-	workflowRun.Status = db.WorkflowStatusCancelled
-	workflowRun, err = db.UpdateWorkflowRun(workflowRun)
+	workflowRun, err = api.DB.UpdateWorkflowRun(workflowRun)
 	if err != nil {
 		log.Printf("Error cancelling workflow run: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Message: dict.T("error_occurred"),
 		})
 	}
+
+	// The orchestrator will notice the cancelled status and stop the workflow execution.
 
 	// Format the workflow run for the response.
 	formattedRun, err := formatter.FormatWorkflowRunResponse(workflowRun)
@@ -257,7 +263,7 @@ func WorkflowRunsDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
 		Type:        db.LogEventTypeWarning,
 		Description: fmt.Sprintf("Workflow run %s cancelled", formattedRun.ID),
 		UserID:      &user.ID,

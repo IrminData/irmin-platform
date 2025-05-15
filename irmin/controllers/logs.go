@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func LogsIndex(c fiber.Ctx) error {
+func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
@@ -61,7 +61,7 @@ func LogsIndex(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(
+		logEvents, count, err = api.DB.GetLogEventsByWorkspaceAndAsset(
 			workspace.ID,
 			"connection",
 			uint(connectionId),
@@ -76,14 +76,21 @@ func LogsIndex(c fiber.Ctx) error {
 			})
 		}
 	} else if params["repository"] != "" {
-		repository, err := db.GetRepositoryBySlugAndWorkspaceID(params["repository"], workspace.ID)
+		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(params["repository"], workspace.ID)
 		if err != nil {
 			log.Printf("Error fetching repository by slug: %v", err)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(workspace.ID, "repository", repository.ID, params["search"], per_page, offset)
+		logEvents, count, err = api.DB.GetLogEventsByWorkspaceAndAsset(
+			workspace.ID,
+			"repository",
+			repository.ID,
+			params["search"],
+			per_page,
+			offset,
+		)
 		if err != nil {
 			log.Printf("Error fetching log events for repository ID: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -98,7 +105,14 @@ func LogsIndex(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(workspace.ID, "workflow", uint(workflowId), params["search"], per_page, offset)
+		logEvents, count, err = api.DB.GetLogEventsByWorkspaceAndAsset(
+			workspace.ID,
+			"workflow",
+			uint(workflowId),
+			params["search"],
+			per_page,
+			offset,
+		)
 		if err != nil {
 			log.Printf("Error fetching log events for workflow ID: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -113,7 +127,14 @@ func LogsIndex(c fiber.Ctx) error {
 				Errors: []string{dict.T("error_occurred")},
 			})
 		}
-		logEvents, count, err = db.GetLogEventsByWorkspaceAndAsset(workspace.ID, "user", uint(userId), params["search"], per_page, offset)
+		logEvents, count, err = api.DB.GetLogEventsByWorkspaceAndAsset(
+			workspace.ID,
+			"user",
+			uint(userId),
+			params["search"],
+			per_page,
+			offset,
+		)
 		if err != nil {
 			log.Printf("Error fetching log events for user ID: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -122,7 +143,7 @@ func LogsIndex(c fiber.Ctx) error {
 		}
 	} else {
 		// Return all log events for the workspace if no specific asset is provided
-		logEvents, count, err = db.GetLogEventsForWorkspace(workspace.ID, params["search"], per_page, offset)
+		logEvents, count, err = api.DB.GetLogEventsForWorkspace(workspace.ID, params["search"], per_page, offset)
 		if err != nil {
 			log.Printf("Error fetching log events for workspace ID: %v", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -134,7 +155,7 @@ func LogsIndex(c fiber.Ctx) error {
 	// Format the log events for the response
 	var response []irminmodels.LogEvent
 	for _, event := range logEvents {
-		formattedEvent, err := formatter.FormatLogEventResponse(event)
+		formattedEvent, err := formatter.FormatLogEventResponse(api.DB, event)
 		if err != nil {
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 				Errors: []string{dict.T("error_occurred")},

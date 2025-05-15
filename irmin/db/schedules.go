@@ -1,29 +1,17 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"irmin-api/lakefs"
+	"time"
 
-type RepositoryEvent string
-
-const (
-	PreCommit        RepositoryEvent = "pre-commit"
-	PostCommit       RepositoryEvent = "post-commit"
-	PreMerge         RepositoryEvent = "pre-merge"
-	PostMerge        RepositoryEvent = "post-merge"
-	PreCreateBranch  RepositoryEvent = "pre-create-branch"
-	PostCreateBranch RepositoryEvent = "post-create-branch"
-	PreDeleteBranch  RepositoryEvent = "pre-delete-branch"
-	PostDeleteBranch RepositoryEvent = "post-delete-branch"
-	PreCreateTag     RepositoryEvent = "pre-create-tag"
-	PostCreateTag    RepositoryEvent = "post-create-tag"
-	PreDeleteTag     RepositoryEvent = "pre-delete-tag"
-	PostDeleteTag    RepositoryEvent = "post-delete-tag"
+	"gorm.io/gorm"
 )
 
-type WorkflowRunEvent string
+type WorkflowRunEventType string
 
 const (
-	PreWorkflowRun  WorkflowRunEvent = "pre-workflow-run"
-	PostWorkflowRun WorkflowRunEvent = "post-workflow-run"
+	PreWorkflowRun  WorkflowRunEventType = "pre-workflow-run"
+	PostWorkflowRun WorkflowRunEventType = "post-workflow-run"
 )
 
 type WorkflowTriggerType string
@@ -42,58 +30,64 @@ type WorkflowTrigger struct {
 	ScheduleID *uint               `json:"schedule_id,omitempty"`
 
 	// Time trigger
-	RRule *string `json:"rrule,omitempty"`
-	Cron  *string `json:"cron,omitempty"`
+	RRule   *string    `json:"rrule,omitempty"`
+	Cron    *string    `json:"cron,omitempty"`
+	LastRun *time.Time `json:"last_run,omitempty"`
+	NextRun *time.Time `json:"next_run,omitempty"`
 
 	// Repository event trigger
-	RepositoryEvent *RepositoryEvent `json:"repository_event,omitempty"`
-	Repository      *Repository      `json:"repository,omitempty"       gorm:"foreignKey:RepositoryID"`
-	RepositoryID    *uint            `json:"repository_id,omitempty"`
-	RepositoryRef   *string          `json:"repository_ref,omitempty"`
+	RepositoryEvent *lakefs.WebhookEventType `json:"repository_event,omitempty"`
+	Repository      *Repository              `json:"repository,omitempty"       gorm:"foreignKey:RepositoryID"`
+	RepositoryID    *uint                    `json:"repository_id,omitempty"`
+	RepositoryRef   *string                  `json:"repository_ref,omitempty"`
 
 	// Workflow run event trigger
-	WorkflowRunEvent *WorkflowRunEvent `json:"workflow_run_event,omitempty"`
-	Workflow         *Workflow         `json:"workflow,omitempty"           gorm:"foreignKey:WorkflowID"`
-	WorkflowID       *uint             `json:"workflow_id,omitempty"`
+	WorkflowRunEvent *WorkflowRunEventType `json:"workflow_run_event,omitempty"`
+	Workflow         *Workflow             `json:"workflow,omitempty"           gorm:"foreignKey:WorkflowID"`
+	WorkflowID       *uint                 `json:"workflow_id,omitempty"`
 }
 
 type Schedule struct {
 	gorm.Model
 
 	Triggers    []WorkflowTrigger `json:"triggers"`
-	MaxRetries  int               `json:"max_retries,omitempty"`
-	MaxRuntime  int               `json:"max_runtime,omitempty"`
-	MinInterval int               `json:"min_interval,omitempty"`
+	PreviousRun *time.Time        `json:"previous_run,omitempty"`
+	// MaxRetries is the maximum number of retries for a single workflow run.
+	MaxRetries int `json:"max_retries,omitempty"`
+	// MaxRuntime is the maximum runtime in seconds for a single workflow run.
+	MaxRuntime int `json:"max_runtime,omitempty"`
+	// MinInterval is the minimum interval in seconds between workflow runs.
+	MinInterval int `json:"min_interval,omitempty"`
 }
 
 // GetScheduleByID retrieves a schedule record from the database by its ID.
-func GetScheduleByID(id uint) (*Schedule, error) {
+func (d *Database) GetScheduleByID(id uint) (*Schedule, error) {
 	var schedule Schedule
-	if err := DB.Preload("Triggers").Preload("Triggers.Repository").Preload("Triggers.Workflow").First(&schedule, id).Error; err != nil {
+	if err := d.Preload("Triggers").Preload("Triggers.Repository").Preload("Triggers.Workflow").First(&schedule, id).Error; err != nil {
 		return nil, err
 	}
 	return &schedule, nil
 }
 
 // CreateSchedule creates a new schedule record in the database.
-func CreateSchedule(schedule *Schedule) (*Schedule, error) {
-	if err := DB.Create(schedule).Error; err != nil {
+func (d *Database) CreateSchedule(schedule *Schedule) (*Schedule, error) {
+	if err := d.Create(schedule).Error; err != nil {
 		return nil, err
 	}
 	return schedule, nil
 }
 
 // DeleteSchedule deletes a schedule record and associated triggers from the database by its ID.
-func DeleteSchedule(id uint) error {
-	if err := DB.Select("Triggers").Where("id = ?", id).Delete(&Schedule{}).Error; err != nil {
+func (d *Database) DeleteSchedule(id uint) error {
+	if err := d.Select("Triggers").Where("id = ?", id).Delete(&Schedule{}).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 // UpdateSchedule updates a schedule record in the database.
-func UpdateSchedule(schedule *Schedule) (*Schedule, error) {
-	if err := DB.Save(schedule).Error; err != nil {
+func (d *Database) UpdateSchedule(schedule *Schedule) (*Schedule, error) {
+	if err := d.Save(schedule).Error; err != nil {
 		return nil, err
 	}
 	return schedule, nil

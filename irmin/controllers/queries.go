@@ -15,12 +15,12 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func QueriesIndex(c fiber.Ctx) error {
+func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
 	// Get all stored queries for the workspace
-	queries, err := db.GetStoredQueriesByWorkspaceID(workspace.ID)
+	queries, err := api.DB.GetStoredQueriesByWorkspaceID(workspace.ID)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("invalid_request")},
@@ -46,7 +46,7 @@ func QueriesIndex(c fiber.Ctx) error {
 	})
 }
 
-func QueriesStore(c fiber.Ctx) error {
+func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 	user := c.Locals("user").(*db.User)
@@ -74,7 +74,7 @@ func QueriesStore(c fiber.Ctx) error {
 		OwnerID:     user.ID,
 		WorkspaceID: workspace.ID,
 	}
-	storedQuery, err := db.CreateStoredQuery(query)
+	storedQuery, err := api.DB.CreateStoredQuery(query)
 	if err != nil {
 		log.Printf("Error creating stored query: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -92,7 +92,7 @@ func QueriesStore(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	api.DB.CreateLogEvent(&db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("Query %s created", storedQuery.Name),
 		UserID:      &user.ID,
@@ -105,7 +105,7 @@ func QueriesStore(c fiber.Ctx) error {
 	})
 }
 
-func QueriesShow(c fiber.Ctx) error {
+func (api *APIControllers) QueriesShow(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
@@ -124,7 +124,7 @@ func QueriesShow(c fiber.Ctx) error {
 	})
 }
 
-func QueriesUpdate(c fiber.Ctx) error {
+func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	query := c.Locals("stored_query").(*db.StoredQuery)
@@ -151,7 +151,7 @@ func QueriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the stored query in the database
-	updatedQuery, err := db.UpdateStoredQuery(query.ID, updates)
+	updatedQuery, err := api.DB.UpdateStoredQuery(query.ID, updates)
 	if err != nil {
 		log.Printf("Error updating stored query: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -169,7 +169,7 @@ func QueriesUpdate(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	api.DB.CreateLogEvent(&db.LogEvent{
 		Type:        db.LogEventTypeInfo,
 		Description: fmt.Sprintf("Query %s updated", updatedQuery.Name),
 		UserID:      &user.ID,
@@ -183,12 +183,12 @@ func QueriesUpdate(c fiber.Ctx) error {
 	})
 }
 
-func QueriesDestroy(c fiber.Ctx) error {
+func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	query := c.Locals("stored_query").(*db.StoredQuery)
 
 	// Delete the stored query from the database
-	if err := db.DeleteStoredQuery(query.ID); err != nil {
+	if err := api.DB.DeleteStoredQuery(query.ID); err != nil {
 		log.Printf("Error deleting stored query: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
@@ -196,7 +196,7 @@ func QueriesDestroy(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	api.DB.CreateLogEvent(&db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("Query %s deleted", query.Name),
 		UserID:      &query.OwnerID,
@@ -209,7 +209,7 @@ func QueriesDestroy(c fiber.Ctx) error {
 	})
 }
 
-func TransferQueryOwnership(c fiber.Ctx) error {
+func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
 	workspace := c.Locals("workspace").(*db.Workspace)
@@ -234,7 +234,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, err := db.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	inWorkspace, err := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
 	if err != nil {
 		log.Printf("Error checking if user is in workspace: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -248,7 +248,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	}
 
 	// Update the stored query in the database
-	updatedQuery, err := db.UpdateStoredQuery(query.ID, map[string]any{
+	updatedQuery, err := api.DB.UpdateStoredQuery(query.ID, map[string]any{
 		"owner_id": newOwnerID,
 	})
 	if err != nil {
@@ -268,7 +268,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	}
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	api.DB.CreateLogEvent(&db.LogEvent{
 		Type:        db.LogEventTypeInfo,
 		Description: fmt.Sprintf("Query %s ownership transferred to %s", updatedQuery.Name, updatedQuery.Owner.Email),
 		UserID:      &user.ID,
@@ -282,7 +282,7 @@ func TransferQueryOwnership(c fiber.Ctx) error {
 	})
 }
 
-func ExecuteSQL(c fiber.Ctx) error {
+func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -301,7 +301,7 @@ func ExecuteSQL(c fiber.Ctx) error {
 	dataEngine := engine.NewClient(locale)
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	api.DB.CreateLogEvent(&db.LogEvent{
 		Type:        db.LogEventTypeInfo,
 		Description: "SQL query execution started",
 		UserID:      &user.ID,
@@ -313,7 +313,7 @@ func ExecuteSQL(c fiber.Ctx) error {
 	// Check for errors
 	if result.HasErrors {
 		log.Printf("Error executing SQL query: %v", result.Logs)
-		db.CreateLogEvent(&db.LogEvent{
+		api.DB.CreateLogEvent(&db.LogEvent{
 			Type:        db.LogEventTypeError,
 			Description: "SQL query execution failed",
 			UserID:      &user.ID,
@@ -321,7 +321,7 @@ func ExecuteSQL(c fiber.Ctx) error {
 		})
 	} else {
 		// Log the event
-		db.CreateLogEvent(&db.LogEvent{
+		api.DB.CreateLogEvent(&db.LogEvent{
 			Type:        db.LogEventTypeInfo,
 			Description: "SQL query execution completed",
 			UserID:      &user.ID,
@@ -336,7 +336,7 @@ func ExecuteSQL(c fiber.Ctx) error {
 	})
 }
 
-func ExecuteQuery(c fiber.Ctx) error {
+func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 	locale := c.Locals("locale").(string)
 	dict := c.Locals("dict").(locales.Dictionary)
 	user := c.Locals("user").(*db.User)
@@ -347,7 +347,7 @@ func ExecuteQuery(c fiber.Ctx) error {
 	dataEngine := engine.NewClient(locale)
 
 	// Log the event
-	db.CreateLogEvent(&db.LogEvent{
+	api.DB.CreateLogEvent(&db.LogEvent{
 		Type:        db.LogEventTypeInfo,
 		Description: fmt.Sprintf("Query %s execution started", query.Name),
 		UserID:      &user.ID,
@@ -360,7 +360,7 @@ func ExecuteQuery(c fiber.Ctx) error {
 	// Check for errors
 	if result.HasErrors {
 		log.Printf("Error executing SQL query: %v", result.Logs)
-		db.CreateLogEvent(&db.LogEvent{
+		api.DB.CreateLogEvent(&db.LogEvent{
 			Type:        db.LogEventTypeError,
 			Description: "SQL query execution failed",
 			UserID:      &user.ID,
@@ -368,7 +368,7 @@ func ExecuteQuery(c fiber.Ctx) error {
 		})
 	} else {
 		// Log the event
-		db.CreateLogEvent(&db.LogEvent{
+		api.DB.CreateLogEvent(&db.LogEvent{
 			Type:        db.LogEventTypeInfo,
 			Description: "SQL query execution completed",
 			UserID:      &user.ID,

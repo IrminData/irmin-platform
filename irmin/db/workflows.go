@@ -73,11 +73,11 @@ type ExportWorkflowable struct {
 
 type ActionWorkflowableInput struct {
 	gorm.Model
-	Repository           Repository          `json:"repository"      gorm:"foreignKey:RepositoryID"`
+	Repository           Repository          `json:"repository"             gorm:"foreignKey:RepositoryID"`
 	RepositoryID         uint                `json:"repository_id"`
 	Ref                  string              `json:"ref"`
 	Path                 string              `json:"path"`
-	ActionWorkflowable   *ActionWorkflowable `json:"action_workflowable" gorm:"foreignKey:ActionWorkflowableID"`
+	ActionWorkflowable   *ActionWorkflowable `json:"action_workflowable"    gorm:"foreignKey:ActionWorkflowableID"`
 	ActionWorkflowableID *uint               `json:"action_workflowable_id"`
 }
 
@@ -88,7 +88,7 @@ type ActionWorkflowable struct {
 	RepositoryID *uint                     `json:"repository_id,omitempty"`
 	Branch       *string                   `json:"branch,omitempty"`
 	Path         *string                   `json:"path,omitempty"`
-	Inputs       []ActionWorkflowableInput `json:"inputs" gorm:"foreignKey:ActionWorkflowableID"`
+	Inputs       []ActionWorkflowableInput `json:"inputs"                  gorm:"foreignKey:ActionWorkflowableID"`
 }
 
 type PipelineWorkflowable struct {
@@ -129,16 +129,19 @@ type PipelineStage struct {
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
-func GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
+func (d *Database) GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
 	var workflows []Workflow
-	result := DB.Preload("Owner").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&workflows)
+	result := d.Preload("Owner").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&workflows)
 	return workflows, result.Error
 }
 
 // GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace.
-func GetWorkflowsOfTypeByWorkspaceID(workspaceID uint, workflowType WorkflowableType) ([]Workflow, error) {
+func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
+	workspaceID uint,
+	workflowType WorkflowableType,
+) ([]Workflow, error) {
 	var workflows []Workflow
-	result := DB.Preload("Owner").
+	result := d.Preload("Owner").
 		Where("workspace_id = ? AND type = ?", workspaceID, workflowType).
 		Order("created_at desc").
 		Find(&workflows)
@@ -146,9 +149,9 @@ func GetWorkflowsOfTypeByWorkspaceID(workspaceID uint, workflowType Workflowable
 }
 
 // GetWorkflowByID retrieves a workflow by its ID.
-func GetWorkflowByID(id uint) (*Workflow, error) {
+func (d *Database) GetWorkflowByID(id uint) (*Workflow, error) {
 	var workflow Workflow
-	result := DB.Preload("Owner").
+	result := d.Preload("Owner").
 		Preload("Workspace").
 		Preload("Schedule").
 		Preload("Schedule.Triggers").
@@ -158,30 +161,30 @@ func GetWorkflowByID(id uint) (*Workflow, error) {
 }
 
 // GetImportWorkflowableByID retrieves an import workflowable by its ID.
-func GetImportWorkflowableByID(id uint) (*ImportWorkflowable, error) {
+func (d *Database) GetImportWorkflowableByID(id uint) (*ImportWorkflowable, error) {
 	var importWorkflow ImportWorkflowable
-	result := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&importWorkflow, id)
+	result := d.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&importWorkflow, id)
 	return &importWorkflow, result.Error
 }
 
 // GetExportWorkflowableByID retrieves an export workflowable by its ID.
-func GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error) {
+func (d *Database) GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error) {
 	var exportWorkflow ExportWorkflowable
-	result := DB.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&exportWorkflow, id)
+	result := d.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&exportWorkflow, id)
 	return &exportWorkflow, result.Error
 }
 
 // GetActionWorkflowableByID retrieves an action workflowable by its ID.
-func GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error) {
+func (d *Database) GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error) {
 	var actionWorkflow ActionWorkflowable
-	result := DB.Preload("Repository").Preload("Inputs").Preload("Inputs.Repository").First(&actionWorkflow, id)
+	result := d.Preload("Repository").Preload("Inputs").Preload("Inputs.Repository").First(&actionWorkflow, id)
 	return &actionWorkflow, result.Error
 }
 
 // GetPipelineWorkflowableByID retrieves a pipeline workflowable by its ID.
-func GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, error) {
+func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, error) {
 	var pipeline PipelineWorkflowable
-	result := DB.Preload("Stages").
+	result := d.Preload("Stages").
 		Preload("Stages.Connection").
 		Preload("Stages.Connection.Connector").
 		Preload("Stages.Repository").
@@ -190,52 +193,52 @@ func GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, error) {
 }
 
 // CreateWorkflow creates a new workflow record in the database.
-func CreateWorkflow(workflow *Workflow) (*Workflow, error) {
-	if err := DB.Create(workflow).Error; err != nil {
+func (d *Database) CreateWorkflow(workflow *Workflow) (*Workflow, error) {
+	if err := d.Create(workflow).Error; err != nil {
 		return nil, err
 	}
 	return workflow, nil
 }
 
 // CreateImportWorkflowable creates a new import workflowable record in the database.
-func CreateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
-	if err := DB.Create(&importWorkflow).Error; err != nil {
+func (d *Database) CreateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
+	if err := d.Create(&importWorkflow).Error; err != nil {
 		return nil, err
 	}
 	return importWorkflow, nil
 }
 
 // CreateExportWorkflowable creates a new export workflowable record in the database.
-func CreateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
-	if err := DB.Create(&exportWorkflow).Error; err != nil {
+func (d *Database) CreateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
+	if err := d.Create(&exportWorkflow).Error; err != nil {
 		return nil, err
 	}
 	return exportWorkflow, nil
 }
 
 // CreateActionWorkflowable creates a new action workflowable record in the database.
-func CreateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
-	if err := DB.Create(&actionWorkflow).Error; err != nil {
+func (d *Database) CreateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
+	if err := d.Create(&actionWorkflow).Error; err != nil {
 		return nil, err
 	}
 	return actionWorkflow, nil
 }
 
 // CreatePipelineWorkflowable creates a new pipeline workflowable record in the database.
-func CreatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
-	if err := DB.Create(&pipeline).Error; err != nil {
+func (d *Database) CreatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
+	if err := d.Create(&pipeline).Error; err != nil {
 		return nil, err
 	}
 	return pipeline, nil
 }
 
 // UpdateWorkflow updates an existing workflow record in the database.
-func UpdateWorkflow(workflow *Workflow) (*Workflow, error) {
-	if err := DB.Save(workflow).Error; err != nil {
+func (d *Database) UpdateWorkflow(workflow *Workflow) (*Workflow, error) {
+	if err := d.Save(workflow).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated workflow record with all relations
-	if err := DB.Preload("Owner").
+	if err := d.Preload("Owner").
 		Preload("Workspace").
 		Preload("Schedule").
 		Preload("Schedule.Triggers").
@@ -247,12 +250,12 @@ func UpdateWorkflow(workflow *Workflow) (*Workflow, error) {
 }
 
 // UpdateImportWorkflowable updates an existing import workflowable record in the database.
-func UpdateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
-	if err := DB.Save(importWorkflow).Error; err != nil {
+func (d *Database) UpdateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
+	if err := d.Save(importWorkflow).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated import workflowable record with all relations
-	if err := DB.Preload("Connection").
+	if err := d.Preload("Connection").
 		Preload("Connection.Connector").
 		Preload("Repository").
 		First(importWorkflow, importWorkflow.ID).Error; err != nil {
@@ -262,12 +265,12 @@ func UpdateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkfl
 }
 
 // UpdateExportWorkflowable updates an existing export workflowable record in the database.
-func UpdateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
-	if err := DB.Save(exportWorkflow).Error; err != nil {
+func (d *Database) UpdateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
+	if err := d.Save(exportWorkflow).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated export workflowable record with all relations
-	if err := DB.Preload("Connection").
+	if err := d.Preload("Connection").
 		Preload("Connection.Connector").
 		Preload("Repository").
 		First(exportWorkflow, exportWorkflow.ID).Error; err != nil {
@@ -277,12 +280,12 @@ func UpdateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkfl
 }
 
 // UpdateActionWorkflowable updates an existing action workflowable record in the database.
-func UpdateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
-	if err := DB.Save(actionWorkflow).Error; err != nil {
+func (d *Database) UpdateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
+	if err := d.Save(actionWorkflow).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated action workflowable record with all relations
-	if err := DB.Preload("Repository").
+	if err := d.Preload("Repository").
 		Preload("Inputs").
 		First(actionWorkflow, actionWorkflow.ID).Error; err != nil {
 		return nil, err
@@ -291,12 +294,12 @@ func UpdateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkfl
 }
 
 // UpdatePipelineWorkflowable updates an existing pipeline workflowable record in the database.
-func UpdatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
-	if err := DB.Save(pipeline).Error; err != nil {
+func (d *Database) UpdatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
+	if err := d.Save(pipeline).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated pipeline workflowable record with all relations
-	if err := DB.Preload("Stages").
+	if err := d.Preload("Stages").
 		Preload("Stages.Connection").
 		Preload("Stages.Connection.Connector").
 		Preload("Stages.Repository").
@@ -307,12 +310,12 @@ func UpdatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkfl
 }
 
 // UpdatePipelineStage updates an existing pipeline stage record in the database.
-func UpdatePipelineStage(pipelineStage *PipelineStage) (*PipelineStage, error) {
-	if err := DB.Save(pipelineStage).Error; err != nil {
+func (d *Database) UpdatePipelineStage(pipelineStage *PipelineStage) (*PipelineStage, error) {
+	if err := d.Save(pipelineStage).Error; err != nil {
 		return nil, err
 	}
 	// Retrieve the updated pipeline stage record with all relations
-	if err := DB.Preload("Pipeline").
+	if err := d.Preload("Pipeline").
 		First(pipelineStage, pipelineStage.ID).Error; err != nil {
 		return nil, err
 	}
@@ -320,15 +323,15 @@ func UpdatePipelineStage(pipelineStage *PipelineStage) (*PipelineStage, error) {
 }
 
 // DeleteWorkflow deletes a workflow and all related records.
-func DeleteWorkflow(id uint) error {
+func (d *Database) DeleteWorkflow(id uint) error {
 	// First get the workflow to ensure it exists and to get related IDs
 	var workflow Workflow
-	if err := DB.First(&workflow, id).Error; err != nil {
+	if err := d.First(&workflow, id).Error; err != nil {
 		return err
 	}
 
 	// Delete in a transaction to ensure atomicity
-	return DB.Transaction(func(tx *gorm.DB) error {
+	return d.Transaction(func(tx *gorm.DB) error {
 		// Delete workflow runs first
 		if err := tx.Where("workflow_id = ?", id).Delete(&WorkflowRun{}).Error; err != nil {
 			return err
@@ -386,8 +389,8 @@ func DeleteWorkflow(id uint) error {
 }
 
 // DeleteActionWorkflowable deletes an action workflowable and its inputs.
-func DeleteActionWorkflowable(id uint) error {
-	return DB.Transaction(func(tx *gorm.DB) error {
+func (d *Database) DeleteActionWorkflowable(id uint) error {
+	return d.Transaction(func(tx *gorm.DB) error {
 		// Delete action inputs first
 		if err := tx.Where("action_workflowable_id = ?", id).Delete(&ActionWorkflowableInput{}).Error; err != nil {
 			return err
@@ -398,18 +401,18 @@ func DeleteActionWorkflowable(id uint) error {
 }
 
 // DeleteImportWorkflowable deletes an import workflowable.
-func DeleteImportWorkflowable(id uint) error {
-	return DB.Delete(&ImportWorkflowable{}, id).Error
+func (d *Database) DeleteImportWorkflowable(id uint) error {
+	return d.Delete(&ImportWorkflowable{}, id).Error
 }
 
 // DeleteExportWorkflowable deletes an export workflowable.
-func DeleteExportWorkflowable(id uint) error {
-	return DB.Delete(&ExportWorkflowable{}, id).Error
+func (d *Database) DeleteExportWorkflowable(id uint) error {
+	return d.Delete(&ExportWorkflowable{}, id).Error
 }
 
 // DeletePipelineWorkflowable deletes a pipeline workflowable and its stages.
-func DeletePipelineWorkflowable(id uint) error {
-	return DB.Transaction(func(tx *gorm.DB) error {
+func (d *Database) DeletePipelineWorkflowable(id uint) error {
+	return d.Transaction(func(tx *gorm.DB) error {
 		// Delete pipeline stages first
 		if err := tx.Where("pipeline_id = ?", id).Delete(&PipelineStage{}).Error; err != nil {
 			return err

@@ -5,16 +5,18 @@ go 1.24
 toolchain go1.24.1
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250513202123-520a8d409d7f
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250514194922-36cb1175a19d
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/gofiber/storage/s3/v2 v2.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/jackc/pgx/v5 v5.7.4
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.8.5
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/sqids/sqids-go v0.4.1
-	github.com/stretchr/testify v1.10.0
+	github.com/teambition/rrule-go v1.8.2
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.26.1
 )
@@ -42,7 +44,6 @@ require (
 	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
@@ -54,7 +55,6 @@ require (
 	github.com/invopop/jsonschema v0.13.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.7.4 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -65,7 +65,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

@@ -18,11 +18,12 @@ var connectionSchemaCacheUpdateMutex sync.Map
 // Otherwise, it fetches the schema from the Data Engine and caches it.
 // The cache is updated in a goroutine to avoid blocking the main thread.
 func GetConnectionSchema(
+	d *db.Database,
 	connection *db.Connection,
 	operationMethod, locale string,
 ) (*irminmodels.ObjectSchema, error) {
 	// Find a relevant connection schema cache
-	schemaCache, err := db.FindConnectionSchemaCache(connection.ID, operationMethod)
+	schemaCache, err := d.FindConnectionSchemaCache(connection.ID, operationMethod)
 	if err != nil {
 		log.Printf("Warning: Error finding schema cache: %v", err)
 		// Continue with fetching fresh schema
@@ -59,9 +60,9 @@ func GetConnectionSchema(
 			var err error
 			if schemaCache != nil {
 				schemaCache.Schema = schema
-				schemaCache, err = db.SaveConnectionSchemaCache(schemaCache)
+				schemaCache, err = d.SaveConnectionSchemaCache(schemaCache)
 			} else {
-				schemaCache, err = db.SaveConnectionSchemaCache(&db.ConnectionSchemaCache{
+				schemaCache, err = d.SaveConnectionSchemaCache(&db.ConnectionSchemaCache{
 					Schema:       schema,
 					OpMethod:     &operationMethod,
 					ConnectionID: connection.ID,

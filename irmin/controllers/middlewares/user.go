@@ -11,7 +11,7 @@ import (
 )
 
 // UserMiddleware parses the user SQID from the request URL and sets the user in the context.
-func UserMiddleware(c fiber.Ctx) error {
+func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error {
 	dict := c.Locals("dict").(locales.Dictionary)
 	workspace := c.Locals("workspace").(*db.Workspace)
 
@@ -34,7 +34,7 @@ func UserMiddleware(c fiber.Ctx) error {
 	}
 
 	// Find the workspace user by their ID and the workspace ID.
-	workspaceUser, err := db.GetWorkspaceUser(workspace.ID, uint(userID))
+	workspaceUser, err := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
 	if err != nil {
 		log.Printf("Error retrieving user: %v", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
