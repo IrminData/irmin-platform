@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import ReactSelect from 'react-select';
 import { Frequency, RRule, rrulestr, Weekday } from 'rrule';
 
@@ -41,35 +41,43 @@ import { cn } from '@/utils/tw';
 const PRESETS = [
   {
     label: 'Every minute',
-    value: 'FREQ=MINUTELY;INTERVAL=1',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=MINUTELY;INTERVAL=1`,
   },
   {
     label: 'Every hour',
-    value: 'FREQ=HOURLY;INTERVAL=1',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=HOURLY;INTERVAL=1`,
   },
   {
     label: 'Every day at midnight',
-    value: 'FREQ=DAILY;BYHOUR=0;BYMINUTE=0',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'000000'Z'")}\nFREQ=DAILY;BYHOUR=0;BYMINUTE=0`,
   },
   {
     label: 'Every day at noon',
-    value: 'FREQ=DAILY;BYHOUR=12;BYMINUTE=0',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'120000'Z'")}\nFREQ=DAILY;BYHOUR=12;BYMINUTE=0`,
   },
   {
     label: 'Every Monday',
-    value: 'FREQ=WEEKLY;BYDAY=MO',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=WEEKLY;BYDAY=MO`,
   },
   {
     label: 'Every weekday',
-    value: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR`,
   },
   {
     label: 'Every weekend',
-    value: 'FREQ=WEEKLY;BYDAY=SA,SU',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=WEEKLY;BYDAY=SA,SU`,
   },
   {
     label: 'Every month on the 1st',
-    value: 'FREQ=MONTHLY;BYMONTHDAY=1',
+    value: (startDate: Date) =>
+      `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=MONTHLY;BYMONTHDAY=1`,
   },
 ];
 
@@ -127,6 +135,7 @@ export default function RRuleGenerator({
   const [frequency, setFrequency] = useState<Frequency>(Frequency.DAILY);
   const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
   const [interval, setInterval] = useState<number>(1);
+  const [startDate, setStartDate] = useState<Date>(new Date());
   const [generatedRule, setGeneratedRule] = useState<string>(rule || '');
   const [nextDates, setNextDates] = useState<Date[]>([]);
   const [copied, setCopied] = useState(false);
@@ -145,6 +154,18 @@ export default function RRuleGenerator({
       setFrequency(rrule.options.freq);
       setInterval(rrule.options.interval || 1);
       setSelectedWeekdays(rrule.options.byweekday.map((d) => new Weekday(d)));
+
+      // Extract DTSTART if present
+      const dtstartMatch = rule.match(/DTSTART:(\d{8}T\d{6}Z)/);
+      if (dtstartMatch) {
+        const dtstart = parseISO(
+          dtstartMatch[1].replace(
+            /(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,
+            '$1-$2-$3T$4:$5:$6Z'
+          )
+        );
+        setStartDate(dtstart);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -159,14 +180,15 @@ export default function RRuleGenerator({
       freq: frequency,
       interval: interval,
       byweekday: selectedWeekdays,
+      dtstart: startDate,
     });
-    const ruleStr = rrule.toString();
+    const ruleStr = `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\n${rrule.toString()}`;
     setGeneratedRule(ruleStr);
 
     if (ruleStr === previousRule.current) return;
     previousRule.current = ruleStr;
     onGenerate(ruleStr);
-  }, [frequency, interval, selectedWeekdays, onGenerate]);
+  }, [frequency, interval, selectedWeekdays, startDate, onGenerate]);
 
   // Calculate next execution dates when rule changes
   useEffect(() => {
@@ -175,25 +197,34 @@ export default function RRuleGenerator({
   }, [generatedRule]);
 
   // Handle preset selection
-  const handlePresetChange = (value: string) => {
-    setGeneratedRule(value);
-    onGenerate(value);
-    try {
-      const rrule = rrulestr(value);
-      setFrequency(rrule.options.freq);
-      setInterval(rrule.options.interval || 1);
-      setSelectedWeekdays(rrule.options.byweekday.map((d) => new Weekday(d)));
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const handlePresetChange = useCallback(
+    (preset: (typeof PRESETS)[0]) => {
+      const ruleStr = preset.value(startDate);
+      setGeneratedRule(ruleStr);
+      onGenerate(ruleStr);
+      try {
+        const rrule = rrulestr(ruleStr);
+        setFrequency(rrule.options.freq);
+        setInterval(rrule.options.interval || 1);
+        setStartDate(rrule.options.dtstart || new Date());
+        if (rrule.options.byweekday) {
+          setSelectedWeekdays(
+            rrule.options.byweekday.map((d) => new Weekday(d))
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [onGenerate, startDate]
+  );
 
   // Handle copy to clipboard
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(generatedRule);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [generatedRule]);
 
   // Handle weekday selection
   const handleWeekdayChange = useCallback((weekday: Weekday) => {
@@ -227,7 +258,10 @@ export default function RRuleGenerator({
               {dict.workflow.schedule.rrule.selectPreset}
             </Label>
             <Select
-              onValueChange={handlePresetChange}
+              onValueChange={(value) => {
+                const preset = PRESETS.find((p) => p.label === value);
+                if (preset) handlePresetChange(preset);
+              }}
               defaultValue={rule}
               disabled={isDisabled}
             >
@@ -238,7 +272,7 @@ export default function RRuleGenerator({
               </SelectTrigger>
               <SelectContent>
                 {PRESETS.map((preset) => (
-                  <SelectItem key={preset.value} value={preset.value}>
+                  <SelectItem key={preset.label} value={preset.label}>
                     {preset.label}
                   </SelectItem>
                 ))}
@@ -251,6 +285,18 @@ export default function RRuleGenerator({
           value='custom'
           className='mt-4 flex flex-wrap space-y-4 space-x-4'
         >
+          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+            <div className='flex items-center justify-between'>
+              <Label>{dict.workflow.schedule.rrule.startDate}</Label>
+            </div>
+            <Input
+              type='datetime-local'
+              value={format(startDate, "yyyy-MM-dd'T'HH:mm")}
+              onChange={(e) => setStartDate(new Date(e.target.value))}
+              disabled={isDisabled}
+            />
+          </div>
+
           <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
             <div className='flex items-center justify-between'>
               <Label>{dict.workflow.schedule.rrule.frequency}</Label>

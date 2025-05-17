@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { format } from 'date-fns';
 
@@ -313,43 +313,52 @@ const CronGenerator = ({
   }, [cronExpression]);
 
   // Handle preset selection
-  const handlePresetChange = (value: string) => {
-    setCronExpression(value);
-    onSave(value);
-  };
+  const handlePresetChange = useCallback(
+    (value: string) => {
+      setCronExpression(value);
+      onSave(value);
+    },
+    [onSave]
+  );
 
   // Handle manual cron expression change
-  const handleCronExpressionChange = (newExpression: string) => {
-    setCronExpression(newExpression);
-    if (isValidCron(newExpression)) {
-      onSave(newExpression);
-    }
-  };
+  const handleCronExpressionChange = useCallback(
+    (newExpression: string) => {
+      setCronExpression(newExpression);
+      if (isValidCron(newExpression)) {
+        onSave(newExpression);
+      }
+    },
+    [onSave]
+  );
 
   // Handle copy to clipboard
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(cronExpression);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [cronExpression]);
 
   // Update field based on type and value
-  const updateField = (
-    field: { type: string; value: string },
-    setField: React.Dispatch<
-      React.SetStateAction<{ type: string; value: string }>
-    >,
-    type: string,
-    value?: string
-  ) => {
-    if (type === 'every') {
-      setField({ type, value: '*' });
-    } else if (type === 'specific' && value) {
-      setField({ type, value });
-    } else {
-      setField({ ...field, type });
-    }
-  };
+  const updateField = useCallback(
+    (
+      field: { type: string; value: string },
+      setField: React.Dispatch<
+        React.SetStateAction<{ type: string; value: string }>
+      >,
+      type: string,
+      value?: string
+    ) => {
+      if (type === 'every') {
+        setField({ type, value: '*' });
+      } else if (type === 'specific' && value) {
+        setField({ type, value });
+      } else {
+        setField({ ...field, type });
+      }
+    },
+    []
+  );
 
   return (
     <div className='flex flex-col space-y-4'>

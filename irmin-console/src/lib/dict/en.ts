@@ -483,6 +483,7 @@ const en = {
         frequency: 'Frequency',
         interval: 'Interval',
         weekdays: 'Weekdays',
+        startDate: 'Start Date',
         none: 'None',
         everyDay: 'Every day',
         selected: 'selected',
