@@ -71,10 +71,17 @@ func (d *Database) UpdateRepository(repository *Repository) (*Repository, error)
 }
 
 func (d *Database) DeleteRepository(id uint) error {
-	if err := d.Delete(&Repository{}, id).Error; err != nil {
-		return err
-	}
-	return nil
+	return d.Transaction(func(tx *gorm.DB) error {
+		// Delete associated schema cache first
+		if err := tx.Where("repository_id = ?", id).Delete(&RepositorySchemaCache{}).Error; err != nil {
+			return err
+		}
+		// Then delete the repository
+		if err := tx.Delete(&Repository{}, id).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref.

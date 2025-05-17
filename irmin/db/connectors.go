@@ -86,10 +86,17 @@ func (d *Database) UpdateConnector(id uint, updates map[string]any) (*Connector,
 	return &connector, nil
 }
 
-// DeleteConnector deletes a connector record from the database by its ID.
+// DeleteConnector deletes a connector record and its associated connections from the database by its ID.
 func (d *Database) DeleteConnector(id uint) error {
-	if err := d.Delete(&Connector{}, id).Error; err != nil {
-		return err
-	}
-	return nil
+	return d.Transaction(func(tx *gorm.DB) error {
+		// Delete associated connections first
+		if err := tx.Where("connector_id = ?", id).Delete(&Connection{}).Error; err != nil {
+			return err
+		}
+		// Then delete the connector
+		if err := tx.Delete(&Connector{}, id).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }

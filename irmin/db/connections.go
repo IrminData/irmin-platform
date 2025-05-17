@@ -70,12 +70,19 @@ func (d *Database) UpdateConnection(connection *Connection) (*Connection, error)
 	return connection, nil
 }
 
-// DeleteConnection deletes a connection from the database.
+// DeleteConnection deletes a connection and its associated schema cache from the database.
 func (d *Database) DeleteConnection(id uint) error {
-	if err := d.Delete(&Connection{}, id).Error; err != nil {
-		return err
-	}
-	return nil
+	return d.Transaction(func(tx *gorm.DB) error {
+		// Delete associated schema cache first
+		if err := tx.Where("connection_id = ?", id).Delete(&ConnectionSchemaCache{}).Error; err != nil {
+			return err
+		}
+		// Then delete the connection
+		if err := tx.Delete(&Connection{}, id).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // FindConnectionSchemaCache finds a connection schema cache by connection ID and op method.
