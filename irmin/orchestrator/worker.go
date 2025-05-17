@@ -23,6 +23,8 @@ type WorkerEvent struct {
 
 // ExecuteDispatchedEvent executes a dispatched event.
 func (o *Orchestrator) ExecuteDispatchedEvent(ctx context.Context, event *DispatchEvent) error {
+	o.logger.InfoContext(ctx, "executing dispatched event", "event", event)
+
 	switch event.EventType {
 	case DispatchEventTypeWorkflowRun:
 		// Get the workflow run from the database

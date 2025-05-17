@@ -8,6 +8,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/utils"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -58,6 +59,8 @@ func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent) {
 // It will also start the dispatcher in a new goroutine.
 // The dispatcher will check for pending workflow runs and dispatch them to be executed.
 func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
+	o.logger.InfoContext(ctx, "starting orchestrator")
+
 	// Start the dispatcher
 	go o.StartDispatcher(ctx)
 
@@ -69,7 +72,6 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			o.logger.InfoContext(ctx, "orchestrator shutting down")
-			// TODO: We need to figure out how not to lose lakefs events when the orchestrator shuts down
 			return ctx.Err()
 
 		case event := <-o.dispatchedEventQueue:
@@ -120,21 +122,26 @@ func (o *Orchestrator) processTimeTriggers(ctx context.Context) error {
 			return err
 		}
 
+		// If there are no triggers to process, log and return
 		if len(triggers) == 0 {
-			o.logger.InfoContext(ctx, "no triggers to process")
+			o.logger.InfoContext(ctx, "no time triggers to process")
 			return nil
 		}
-		o.logger.InfoContext(ctx, "found triggers", "triggers", triggers)
 
+		// Go through the triggers and process them one by one
 		for _, t := range triggers {
+			o.logger.InfoContext(ctx, "processing time trigger", "trigger_id", t.ID)
+
 			// Calculate next run time if not set
 			if t.NextRun == nil {
-				nextRun, err := o.calculateNextRunTime(t)
+				nextRun, ruleStr, cronStr, err := o.calculateNextRunTime(t)
 				if err != nil {
 					o.logger.ErrorContext(ctx, "failed to calculate next run time", "error", err, "trigger_id", t.ID)
 					continue
 				}
 				t.NextRun = nextRun
+				t.RRule = ruleStr
+				t.Cron = cronStr
 			}
 
 			// Create workflow run if trigger is due
@@ -156,12 +163,14 @@ func (o *Orchestrator) processTimeTriggers(ctx context.Context) error {
 
 				// Update trigger for next run
 				t.LastRun = t.NextRun
-				nextRun, err := o.calculateNextRunTime(t)
+				nextRun, ruleStr, cronStr, err := o.calculateNextRunTime(t)
 				if err != nil {
 					o.logger.ErrorContext(ctx, "failed to calculate next run time", "error", err, "trigger_id", t.ID)
 					continue
 				}
 				t.NextRun = nextRun
+				t.RRule = ruleStr
+				t.Cron = cronStr
 			}
 
 			if err := tx.Save(&t).Error; err != nil {
@@ -175,19 +184,37 @@ func (o *Orchestrator) processTimeTriggers(ctx context.Context) error {
 
 // calculateNextRunTime calculates the next run time for a time trigger
 // based on the RRule or Cron expression.
-func (o *Orchestrator) calculateNextRunTime(t db.WorkflowTrigger) (*time.Time, error) {
+// It returns the next run time, the RRule string, the Cron string, and an error.
+func (o *Orchestrator) calculateNextRunTime(t db.WorkflowTrigger) (*time.Time, *string, *string, error) {
 	if t.Type != db.TimeTriggerType {
-		return nil, errors.New("trigger type is not time")
+		return nil, nil, nil, errors.New("trigger type is not time")
 	}
 
 	var nextRun time.Time
+	var ruleStr string
+	var cronStr string
 	now := time.Now()
 
-	if t.RRule != nil {
+	if t.RRule != nil && *t.RRule != "" {
+		// Prepare the RRule string
+		ruleStr = *t.RRule
+		ruleStr = strings.TrimPrefix(ruleStr, "RRULE:")
+		ruleStr = strings.TrimSpace(ruleStr)
+		ruleStr = strings.TrimSuffix(ruleStr, ";")
+
+		// If the RRule string doesn't contain DTSTART, add it
+		if !strings.Contains(ruleStr, "DTSTART") {
+			// Format with newlines between components
+			ruleStr = "DTSTART:" + now.UTC().Format("20060102T150405Z") + "\n" + ruleStr
+		} else {
+			// Replace semicolons with newlines for existing DTSTART
+			ruleStr = strings.ReplaceAll(ruleStr, ";", "\n")
+		}
+
 		// Parse the RRule string
-		rule, err := rrule.StrToRRule(*t.RRule)
+		rule, err := rrule.StrToRRule(ruleStr)
 		if err != nil {
-			return nil, errors.New("invalid RRule format: " + err.Error())
+			return nil, &ruleStr, t.Cron, errors.New("invalid RRule format, rrule: " + ruleStr + " error: " + err.Error())
 		}
 
 		// If we have a last run time, use it as the start time
@@ -200,14 +227,19 @@ func (o *Orchestrator) calculateNextRunTime(t db.WorkflowTrigger) (*time.Time, e
 		// Get the next occurrence after the start time
 		next := rule.After(startTime, false)
 		if next.IsZero() {
-			return nil, errors.New("no future occurrences found in RRule")
+			return nil, &ruleStr, t.Cron, errors.New("no future occurrences found in RRule")
 		}
 		nextRun = next
-	} else if t.Cron != nil {
+	} else if t.Cron != nil && *t.Cron != "" {
+		// Prepare the cron expression
+		cronStr = *t.Cron
+		cronStr = strings.TrimPrefix(cronStr, "CRON:")
+		cronStr = strings.TrimSpace(cronStr)
+
 		// Parse the cron expression
-		schedule, err := cron.ParseStandard(*t.Cron)
+		schedule, err := cron.ParseStandard(cronStr)
 		if err != nil {
-			return nil, errors.New("invalid cron expression: " + err.Error())
+			return nil, t.RRule, &cronStr, errors.New("invalid cron expression, cron: " + cronStr + " error: " + err.Error())
 		}
 
 		// If we have a last run time, use it as the start time
@@ -220,14 +252,14 @@ func (o *Orchestrator) calculateNextRunTime(t db.WorkflowTrigger) (*time.Time, e
 		// Get the next occurrence after the start time
 		next := schedule.Next(startTime)
 		if next.IsZero() {
-			return nil, errors.New("no future occurrences found in cron expression")
+			return nil, t.RRule, &cronStr, errors.New("no future occurrences found in cron expression")
 		}
 		nextRun = next
 	} else {
-		return nil, errors.New("time trigger has neither RRule nor Cron")
+		return nil, nil, nil, errors.New("time trigger has neither RRule nor Cron")
 	}
 
-	return &nextRun, nil
+	return &nextRun, &ruleStr, &cronStr, nil
 }
 
 // processRepositoryEvent processes the repository event.
