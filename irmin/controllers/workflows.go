@@ -12,6 +12,7 @@ import (
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
@@ -161,379 +162,298 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 	var exportWorkflowable *db.ExportWorkflowable
 	var actionWorkflowable *db.ActionWorkflowable
 	var pipelineWorkflowable *db.PipelineWorkflowable
+	var workflow db.Workflow
 
-	// TOOD: This whole thing needs to be done in a transaction.
-
-	// Proceed based on the workflow type.
-	switch db.WorkflowableType(fields["type"]) {
-	case db.WorkflowableTypeImport:
-		// Create the import workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(
-			c,
-			[]string{"connection", "repository", "branch"},
-			[]string{"connection_path", "path"},
-		)
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the repository by slug.
-		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
-		if err != nil {
-			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the connection by ID.
-		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
-		if err != nil {
-			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		connection, err := api.DB.GetConnectionByID(uint(connectionID))
-		if err != nil {
-			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-
-		// Trim only leading slash from the path and the connection path.
-		path := strings.TrimLeft(workflowableFields["path"], "/")
-		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
-
-		// Create the workflowable in the database.
-		importWorkflowable, err = api.DB.CreateImportWorkflowable(&db.ImportWorkflowable{
-			ConnectionID:   connection.ID,
-			ConnectionPath: connectionPath,
-			RepositoryID:   repository.ID,
-			Branch:         workflowableFields["branch"],
-			Path:           path,
-		})
-		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	case db.WorkflowableTypeExport:
-		// Create the export workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(
-			c,
-			[]string{"connection", "repository", "branch"},
-			[]string{"connection_path", "path"},
-		)
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the repository by slug.
-		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
-		if err != nil {
-			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the connection by ID.
-		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
-		if err != nil {
-			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		connection, err := api.DB.GetConnectionByID(uint(connectionID))
-		if err != nil {
-			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-
-		// Trim only leading slash from the path and the connection path.
-		path := strings.TrimLeft(workflowableFields["path"], "/")
-		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
-
-		// Create the workflowable in the database.
-		exportWorkflowable, err = api.DB.CreateExportWorkflowable(&db.ExportWorkflowable{
-			ConnectionID:   connection.ID,
-			ConnectionPath: connectionPath,
-			RepositoryID:   repository.ID,
-			Branch:         workflowableFields["branch"],
-			Path:           path,
-		})
-		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	case db.WorkflowableTypeAction:
-		// Create the action workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(
-			c,
-			[]string{"executable"},
-			[]string{"repository", "branch", "path"},
-		)
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-
-		// Get the optional input data repositories, refs and paths from form fields
-		inputObjects, err := utils.ParseArrayFormFields(c, "input")
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-
-		// Iterate over the input objects and build the input data array.
-		var inputData []db.ActionWorkflowableInput
-		var inputFutures []utils.FutureResult[*db.Repository]
-
-		// Start async repository lookups
-		for _, inputObject := range inputObjects {
-			repository_slug := inputObject["repository"]
-
-			// Create async task for repository lookup
-			future := utils.Async(func() (*db.Repository, error) {
-				return api.DB.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
-			})
-			inputFutures = append(inputFutures, future)
-		}
-
-		// Wait for all repository lookups to complete
-		for i, future := range inputFutures {
-			repository, err := future.Await()
+	// Start a transaction for all database operations
+	err = api.DB.Transaction(func(tx *gorm.DB) error {
+		// Proceed based on the workflow type.
+		switch db.WorkflowableType(fields["type"]) {
+		case db.WorkflowableTypeImport:
+			// Create the import workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(
+				c,
+				[]string{"connection", "repository", "branch"},
+				[]string{"connection_path", "path"},
+			)
 			if err != nil {
-				log.Printf("Error retrieving repository: %v", err)
-				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-					Errors: []string{dict.T("invalid_request")},
+				return err
+			}
+			// Find the repository by slug.
+			repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+			if err != nil {
+				return err
+			}
+			// Find the connection by ID.
+			connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
+			if err != nil {
+				return err
+			}
+			connection, err := api.DB.GetConnectionByID(uint(connectionID))
+			if err != nil {
+				return err
+			}
+
+			// Trim only leading slash from the path and the connection path.
+			path := strings.TrimLeft(workflowableFields["path"], "/")
+			connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
+			// Create the workflowable in the database.
+			importWorkflowable = &db.ImportWorkflowable{
+				ConnectionID:   connection.ID,
+				ConnectionPath: connectionPath,
+				RepositoryID:   repository.ID,
+				Branch:         workflowableFields["branch"],
+				Path:           path,
+			}
+			if err := tx.Create(importWorkflowable).Error; err != nil {
+				return err
+			}
+		case db.WorkflowableTypeExport:
+			// Create the export workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(
+				c,
+				[]string{"connection", "repository", "branch"},
+				[]string{"connection_path", "path"},
+			)
+			if err != nil {
+				return err
+			}
+			repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+			if err != nil {
+				return err
+			}
+			connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
+			if err != nil {
+				return err
+			}
+			connection, err := api.DB.GetConnectionByID(uint(connectionID))
+			if err != nil {
+				return err
+			}
+
+			path := strings.TrimLeft(workflowableFields["path"], "/")
+			connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
+			exportWorkflowable = &db.ExportWorkflowable{
+				ConnectionID:   connection.ID,
+				ConnectionPath: connectionPath,
+				RepositoryID:   repository.ID,
+				Branch:         workflowableFields["branch"],
+				Path:           path,
+			}
+			if err := tx.Create(exportWorkflowable).Error; err != nil {
+				return err
+			}
+		case db.WorkflowableTypeAction:
+			// Create the action workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(
+				c,
+				[]string{"executable"},
+				[]string{"repository", "branch", "path"},
+			)
+			if err != nil {
+				return err
+			}
+
+			inputObjects, err := utils.ParseArrayFormFields(c, "input")
+			if err != nil {
+				return err
+			}
+
+			var inputData []db.ActionWorkflowableInput
+			for _, inputObject := range inputObjects {
+				repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(inputObject["repository"], workspace.ID)
+				if err != nil {
+					return err
+				}
+
+				path := strings.Trim(inputObject["path"], "/")
+				inputData = append(inputData, db.ActionWorkflowableInput{
+					RepositoryID: repository.ID,
+					Ref:          inputObject["ref"],
+					Path:         path,
 				})
 			}
 
-			// Trim leading and trailing slashes from the path.
-			path := strings.Trim(inputObjects[i]["path"], "/")
+			var repository *db.Repository
+			if workflowableFields["repository"] != "" {
+				repository, err = api.DB.GetRepositoryBySlugAndWorkspaceID(
+					workflowableFields["repository"],
+					workspace.ID,
+				)
+				if err != nil {
+					return err
+				}
+			}
 
-			// Append the input data to the input data array.
-			inputData = append(inputData, db.ActionWorkflowableInput{
-				RepositoryID: repository.ID,
-				Ref:          inputObjects[i]["ref"],
-				Path:         path,
-			})
-		}
+			var workflowable db.ActionWorkflowable
+			if repository != nil {
+				repositoryID := repository.ID
+				branch := workflowableFields["branch"]
+				path := strings.Trim(workflowableFields["path"], "/") + "/"
 
-		// Find the results repository by slug.
-		var repository *db.Repository
-		if workflowableFields["repository"] != "" {
-			repository, err = api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+				workflowable = db.ActionWorkflowable{
+					Executable:   workflowableFields["executable"],
+					RepositoryID: &repositoryID,
+					Branch:       &branch,
+					Path:         &path,
+					Inputs:       inputData,
+				}
+			} else {
+				workflowable = db.ActionWorkflowable{
+					Executable: workflowableFields["executable"],
+				}
+			}
+			if err := tx.Create(&workflowable).Error; err != nil {
+				return err
+			}
+			actionWorkflowable = &workflowable
+		case db.WorkflowableTypePipeline:
+			// Create the pipeline workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
 			if err != nil {
-				log.Printf("Error retrieving repository: %v", err)
-				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-					Errors: []string{dict.T("invalid_request")},
-				})
+				return err
 			}
-		}
+			requestStages, err := utils.ParseArrayFormFields(c, "stage")
+			if err != nil {
+				return err
+			}
 
-		// Create the workflowable object.
-		var workflowable db.ActionWorkflowable
-		if repository != nil {
-			repositoryID := repository.ID
-			branch := workflowableFields["branch"]
-
-			// Trim leading and trailing slashes from the path, then add a trailing slash.
-			path := strings.Trim(workflowableFields["path"], "/") + "/"
-
-			workflowable = db.ActionWorkflowable{
-				Executable:   workflowableFields["executable"],
-				RepositoryID: &repositoryID,
-				Branch:       &branch,
-				Path:         &path,
-				Inputs:       inputData,
-			}
-		} else {
-			workflowable = db.ActionWorkflowable{
-				Executable: workflowableFields["executable"],
-			}
-		}
-		// Create the workflowable in the database.
-		actionWorkflowable, err = api.DB.CreateActionWorkflowable(&workflowable)
-		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	case db.WorkflowableTypePipeline:
-		// Create the pipeline workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Parse stages from the request body.
-		requestStages, err := utils.ParseArrayFormFields(c, "stage")
-		if err != nil {
-			log.Printf("Error parsing array form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Build the pipeline stage objects.
-		var stages []db.PipelineStage
-		for orderSequence, stage := range requestStages {
-			newStage := db.PipelineStage{
-				OrderSequence: orderSequence,
-				Description:   stage["description"],
-				Write:         stage["write"] == "true",
-				Read:          stage["read"] == "true",
-			}
-			switch stage["type"] {
-			case "action":
-				newStage.Type = db.PipelineStageTypeAction
-				executable := strings.Trim(stage["executable"], "/")
-				newStage.Executable = &executable
-			case "connection":
-				newStage.Type = db.PipelineStageTypeConnection
-				parsedConnID, err := utils.DecodeSqids("connections", stage["connection"])
-				if err != nil {
-					log.Printf("Error decoding connection sqid: %v", err)
-					continue
+			var stages []db.PipelineStage
+			for orderSequence, stage := range requestStages {
+				newStage := db.PipelineStage{
+					OrderSequence: orderSequence,
+					Description:   stage["description"],
+					Write:         stage["write"] == "true",
+					Read:          stage["read"] == "true",
 				}
-				connection, err := api.DB.GetConnectionByID(uint(parsedConnID))
-				if err != nil {
-					log.Printf("Error retrieving connection: %v", err)
-					continue
+				switch stage["type"] {
+				case "action":
+					newStage.Type = db.PipelineStageTypeAction
+					executable := strings.Trim(stage["executable"], "/")
+					newStage.Executable = &executable
+				case "connection":
+					newStage.Type = db.PipelineStageTypeConnection
+					parsedConnID, err := utils.DecodeSqids("connections", stage["connection"])
+					if err != nil {
+						return err
+					}
+					connection, err := api.DB.GetConnectionByID(uint(parsedConnID))
+					if err != nil {
+						return err
+					}
+					writePath := strings.TrimLeft(stage["connection_write_path"], "/")
+					readPath := strings.TrimLeft(stage["connection_read_path"], "/")
+					newStage.ConnectionID = &connection.ID
+					newStage.ConnectionWritePath = &writePath
+					newStage.ConnectionReadPath = &readPath
+				case "repository":
+					newStage.Type = db.PipelineStageTypeRepository
+					repositorySlug := stage["repository"]
+					repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+					if err != nil {
+						return err
+					}
+					branch := stage["branch"]
+					path := strings.TrimLeft(stage["path"], "/")
+					newStage.RepositoryID = &repository.ID
+					newStage.RepositoryBranch = &branch
+					newStage.RepositoryPath = &path
+				default:
+					return fmt.Errorf("invalid stage type: %s", stage["type"])
 				}
-				writePath := strings.TrimLeft(stage["connection_write_path"], "/")
-				readPath := strings.TrimLeft(stage["connection_read_path"], "/")
-				newStage.ConnectionID = &connection.ID
-				newStage.ConnectionWritePath = &writePath
-				newStage.ConnectionReadPath = &readPath
-			case "repository":
-				newStage.Type = db.PipelineStageTypeRepository
-				repositorySlug := stage["repository"]
-				repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
-				if err != nil {
-					log.Printf("Error retrieving repository: %v", err)
-					continue
-				}
-				branch := stage["branch"]
-				path := strings.TrimLeft(stage["path"], "/")
-				newStage.RepositoryID = &repository.ID
-				newStage.RepositoryBranch = &branch
-				newStage.RepositoryPath = &path
-			default:
-				log.Printf("Invalid stage type: %s", stage["type"])
+				stages = append(stages, newStage)
 			}
-			stages = append(stages, newStage)
+
+			live := false
+			if workflowableFields["live"] == "true" {
+				live = true
+			}
+			pipelineWorkflowable = &db.PipelineWorkflowable{
+				Live:   live,
+				Stages: stages,
+			}
+			if err := tx.Create(pipelineWorkflowable).Error; err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("invalid workflow type: %s", fields["type"])
 		}
 
-		// Create the pipeline workflowable object.
-		live := false
-		if workflowableFields["live"] == "true" {
-			live = true
-		}
-		pipelineWorkflowable, err = api.DB.CreatePipelineWorkflowable(&db.PipelineWorkflowable{
-			Live:   live,
-			Stages: stages,
-		})
+		// Parse the schedule object from the request body.
+		schedule, err := lib.ParseScheduleFromRequest(c, api.DB, *workspace)
 		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
+			return err
 		}
-	default:
-		log.Printf("Invalid workflow type: %s", fields["type"])
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
-		})
-	}
 
-	// Parse the schedule object from the request body.
-	schedule, err := lib.ParseScheduleFromRequest(c, api.DB, *workspace)
-	if err != nil {
-		log.Printf("Error creating schedule object: %v", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
-		})
-	}
+		// Create the schedule in the database.
+		if err := tx.Create(schedule).Error; err != nil {
+			return err
+		}
 
-	// Create the schedule in the database.
-	schedule, err = api.DB.CreateSchedule(schedule)
-	if err != nil {
-		log.Printf("Error creating schedule: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
-	}
+		// Create the workflow in the database.
+		if importWorkflowable != nil {
+			workflow = db.Workflow{
+				Name:          fields["name"],
+				Description:   fields["description"],
+				Documentation: fields["documentation"],
+				Type:          db.WorkflowableTypeImport,
+				OwnerID:       user.ID,
+				WorkspaceID:   workspace.ID,
+				ScheduleID:    &schedule.ID,
+				ImportID:      &importWorkflowable.ID,
+			}
+		} else if exportWorkflowable != nil {
+			workflow = db.Workflow{
+				Name:          fields["name"],
+				Description:   fields["description"],
+				Documentation: fields["documentation"],
+				Type:          db.WorkflowableTypeExport,
+				OwnerID:       user.ID,
+				WorkspaceID:   workspace.ID,
+				ScheduleID:    &schedule.ID,
+				ExportID:      &exportWorkflowable.ID,
+			}
+		} else if actionWorkflowable != nil {
+			workflow = db.Workflow{
+				Name:          fields["name"],
+				Description:   fields["description"],
+				Documentation: fields["documentation"],
+				Type:          db.WorkflowableTypeAction,
+				OwnerID:       user.ID,
+				WorkspaceID:   workspace.ID,
+				ScheduleID:    &schedule.ID,
+				ActionID:      &actionWorkflowable.ID,
+			}
+		} else if pipelineWorkflowable != nil {
+			workflow = db.Workflow{
+				Name:          fields["name"],
+				Description:   fields["description"],
+				Documentation: fields["documentation"],
+				Type:          db.WorkflowableTypePipeline,
+				OwnerID:       user.ID,
+				WorkspaceID:   workspace.ID,
+				ScheduleID:    &schedule.ID,
+				PipelineID:    &pipelineWorkflowable.ID,
+			}
+		}
 
-	// Create the workflow in the database.
-	var workflow *db.Workflow
-	if importWorkflowable != nil {
-		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["description"],
-			Documentation: fields["documentation"],
-			Type:          db.WorkflowableTypeImport,
-			OwnerID:       user.ID,
-			WorkspaceID:   workspace.ID,
-			ScheduleID:    &schedule.ID,
-			ImportID:      &importWorkflowable.ID,
-		})
-	} else if exportWorkflowable != nil {
-		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["description"],
-			Documentation: fields["documentation"],
-			Type:          db.WorkflowableTypeExport,
-			OwnerID:       user.ID,
-			WorkspaceID:   workspace.ID,
-			ScheduleID:    &schedule.ID,
-			ExportID:      &exportWorkflowable.ID,
-		})
-	} else if actionWorkflowable != nil {
-		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["description"],
-			Documentation: fields["documentation"],
-			Type:          db.WorkflowableTypeAction,
-			OwnerID:       user.ID,
-			WorkspaceID:   workspace.ID,
-			ScheduleID:    &schedule.ID,
-			ActionID:      &actionWorkflowable.ID,
-		})
-	} else if pipelineWorkflowable != nil {
-		workflow, err = api.DB.CreateWorkflow(&db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["description"],
-			Documentation: fields["documentation"],
-			Type:          db.WorkflowableTypePipeline,
-			OwnerID:       user.ID,
-			WorkspaceID:   workspace.ID,
-			ScheduleID:    &schedule.ID,
-			PipelineID:    &pipelineWorkflowable.ID,
-		})
-	}
+		if err := tx.Create(&workflow).Error; err != nil {
+			return err
+		}
+
+		// Fetch the full workflow object with all relations
+		if err := tx.Preload("Owner").Preload("Schedule").Preload("Import").Preload("Export").Preload("Action").Preload("Pipeline").First(&workflow, workflow.ID).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		log.Printf("Error creating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -541,17 +461,8 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Fetch the full workflow object.
-	workflow, err = api.DB.GetWorkflowByID(workflow.ID)
-	if err != nil {
-		log.Printf("Error retrieving workflow: %v", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
-	}
-
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, &workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -588,343 +499,275 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	var actionWorkflowable *db.ActionWorkflowable
 	var pipelineWorkflowable *db.PipelineWorkflowable
 
-	// Proceed based on the workflow type.
-	switch workflow.Type {
-	case db.WorkflowableTypeImport:
-		// Create the import workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(
-			c,
-			[]string{"connection", "connection_path", "repository", "branch", "path"},
-			nil,
-		)
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the repository by slug.
-		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
-		if err != nil {
-			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the connection by ID.
-		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
-		if err != nil {
-			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		connection, err := api.DB.GetConnectionByID(uint(connectionID))
-		if err != nil {
-			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-
-		// Trim only leading slash from the path and the connection path.
-		path := strings.TrimLeft(workflowableFields["path"], "/")
-		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
-
-		// Create the workflowable in the database.
-		importWorkflowable, err = api.DB.CreateImportWorkflowable(&db.ImportWorkflowable{
-			ConnectionID:   connection.ID,
-			ConnectionPath: connectionPath,
-			RepositoryID:   repository.ID,
-			Branch:         workflowableFields["branch"],
-			Path:           path,
-		})
-		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	case db.WorkflowableTypeExport:
-		// Create the export workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(
-			c,
-			[]string{"connection", "connection_path", "repository", "branch", "path"},
-			nil,
-		)
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the repository by slug.
-		repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
-		if err != nil {
-			log.Printf("Error retrieving repository: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Find the connection by ID.
-		connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
-		if err != nil {
-			log.Printf("Error decoding connection sqid: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		connection, err := api.DB.GetConnectionByID(uint(connectionID))
-		if err != nil {
-			log.Printf("Error retrieving connection: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Trim only leading slash from the path and the connection path.
-		path := strings.TrimLeft(workflowableFields["path"], "/")
-		connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
-
-		// Create the workflowable in the database.
-		exportWorkflowable, err = api.DB.CreateExportWorkflowable(&db.ExportWorkflowable{
-			ConnectionID:   connection.ID,
-			ConnectionPath: connectionPath,
-			RepositoryID:   repository.ID,
-			Branch:         workflowableFields["branch"],
-			Path:           path,
-		})
-		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	case db.WorkflowableTypeAction:
-		// Create the action workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(
-			c,
-			[]string{"executable"},
-			[]string{"repository", "branch", "path"},
-		)
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-
-		// Get the optional input data repositories, refs and paths from form fields
-		inputObjects, err := utils.ParseArrayFormFields(c, "input")
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-
-		// Iterate over the input objects and build the input data array.
-		var inputData []db.ActionWorkflowableInput
-		var inputFutures []utils.FutureResult[*db.Repository]
-
-		// Start async repository lookups
-		for _, inputObject := range inputObjects {
-			repository_slug := inputObject["repository"]
-
-			// Create async task for repository lookup
-			future := utils.Async(func() (*db.Repository, error) {
-				return api.DB.GetRepositoryBySlugAndWorkspaceID(repository_slug, workspace.ID)
-			})
-			inputFutures = append(inputFutures, future)
-		}
-
-		// Wait for all repository lookups to complete
-		for i, future := range inputFutures {
-			repository, err := future.Await()
+	// Start a transaction for all database operations
+	err := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Proceed based on the workflow type.
+		switch workflow.Type {
+		case db.WorkflowableTypeImport:
+			// Create the import workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(
+				c,
+				[]string{"connection", "connection_path", "repository", "branch", "path"},
+				nil,
+			)
 			if err != nil {
-				log.Printf("Error retrieving repository: %v", err)
-				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-					Errors: []string{dict.T("invalid_request")},
+				return err
+			}
+			// Find the repository by slug.
+			repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+			if err != nil {
+				return err
+			}
+			// Find the connection by ID.
+			connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
+			if err != nil {
+				return err
+			}
+			connection, err := api.DB.GetConnectionByID(uint(connectionID))
+			if err != nil {
+				return err
+			}
+
+			// Trim only leading slash from the path and the connection path.
+			path := strings.TrimLeft(workflowableFields["path"], "/")
+			connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
+			// Create the workflowable in the database.
+			importWorkflowable = &db.ImportWorkflowable{
+				ConnectionID:   connection.ID,
+				ConnectionPath: connectionPath,
+				RepositoryID:   repository.ID,
+				Branch:         workflowableFields["branch"],
+				Path:           path,
+			}
+			if err := tx.Create(importWorkflowable).Error; err != nil {
+				return err
+			}
+		case db.WorkflowableTypeExport:
+			// Create the export workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(
+				c,
+				[]string{"connection", "connection_path", "repository", "branch", "path"},
+				nil,
+			)
+			if err != nil {
+				return err
+			}
+			repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+			if err != nil {
+				return err
+			}
+			connectionID, err := utils.DecodeSqids("connections", workflowableFields["connection"])
+			if err != nil {
+				return err
+			}
+			connection, err := api.DB.GetConnectionByID(uint(connectionID))
+			if err != nil {
+				return err
+			}
+
+			path := strings.TrimLeft(workflowableFields["path"], "/")
+			connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+
+			exportWorkflowable = &db.ExportWorkflowable{
+				ConnectionID:   connection.ID,
+				ConnectionPath: connectionPath,
+				RepositoryID:   repository.ID,
+				Branch:         workflowableFields["branch"],
+				Path:           path,
+			}
+			if err := tx.Create(exportWorkflowable).Error; err != nil {
+				return err
+			}
+		case db.WorkflowableTypeAction:
+			// Create the action workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(
+				c,
+				[]string{"executable"},
+				[]string{"repository", "branch", "path"},
+			)
+			if err != nil {
+				return err
+			}
+
+			inputObjects, err := utils.ParseArrayFormFields(c, "input")
+			if err != nil {
+				return err
+			}
+
+			var inputData []db.ActionWorkflowableInput
+			for _, inputObject := range inputObjects {
+				repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(inputObject["repository"], workspace.ID)
+				if err != nil {
+					return err
+				}
+
+				path := strings.Trim(inputObject["path"], "/")
+				inputData = append(inputData, db.ActionWorkflowableInput{
+					RepositoryID: repository.ID,
+					Ref:          inputObject["ref"],
+					Path:         path,
 				})
 			}
 
-			// Trim leading and trailing slashes from the path.
-			path := strings.Trim(inputObjects[i]["path"], "/")
+			var repository *db.Repository
+			if workflowableFields["repository"] != "" {
+				repository, err = api.DB.GetRepositoryBySlugAndWorkspaceID(
+					workflowableFields["repository"],
+					workspace.ID,
+				)
+				if err != nil {
+					return err
+				}
+			}
 
-			// Append the input data to the input data array.
-			inputData = append(inputData, db.ActionWorkflowableInput{
-				RepositoryID: repository.ID,
-				Ref:          inputObjects[i]["ref"],
-				Path:         path,
-			})
-		}
+			var workflowable db.ActionWorkflowable
+			if repository != nil {
+				repositoryID := repository.ID
+				branch := workflowableFields["branch"]
+				path := strings.Trim(workflowableFields["path"], "/") + "/"
 
-		// Find the results repository by slug.
-		var repository *db.Repository
-		if workflowableFields["repository"] != "" {
-			repository, err = api.DB.GetRepositoryBySlugAndWorkspaceID(workflowableFields["repository"], workspace.ID)
+				workflowable = db.ActionWorkflowable{
+					Executable:   workflowableFields["executable"],
+					RepositoryID: &repositoryID,
+					Branch:       &branch,
+					Path:         &path,
+					Inputs:       inputData,
+				}
+			} else {
+				workflowable = db.ActionWorkflowable{
+					Executable: workflowableFields["executable"],
+				}
+			}
+			if err := tx.Create(&workflowable).Error; err != nil {
+				return err
+			}
+			actionWorkflowable = &workflowable
+		case db.WorkflowableTypePipeline:
+			// Create the pipeline workflowable object.
+			// Parse additional request body fields
+			workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
 			if err != nil {
-				log.Printf("Error retrieving repository: %v", err)
-				return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-					Errors: []string{dict.T("invalid_request")},
-				})
+				return err
 			}
-		}
-		// Create the workflowable object.
-		var workflowable db.ActionWorkflowable
-		if repository != nil {
-			repositoryID := repository.ID
-			branch := workflowableFields["branch"]
+			requestStages, err := utils.ParseArrayFormFields(c, "stage")
+			if err != nil {
+				return err
+			}
 
-			// Trim leading and trailing slashes from the path, then add a trailing slash.
-			path := strings.Trim(workflowableFields["path"], "/") + "/"
-
-			workflowable = db.ActionWorkflowable{
-				Executable:   workflowableFields["executable"],
-				RepositoryID: &repositoryID,
-				Branch:       &branch,
-				Path:         &path,
-				Inputs:       inputData,
-			}
-		} else {
-			workflowable = db.ActionWorkflowable{
-				Executable: workflowableFields["executable"],
-			}
-		}
-		// Create the workflowable in the database.
-		actionWorkflowable, err = api.DB.CreateActionWorkflowable(&workflowable)
-		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	case db.WorkflowableTypePipeline:
-		// Create the pipeline workflowable object.
-		// Parse additional request body fields
-		workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
-		if err != nil {
-			log.Printf("Error parsing form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Parse stages from the request body.
-		requestStages, err := utils.ParseArrayFormFields(c, "stage")
-		if err != nil {
-			log.Printf("Error parsing array form fields: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
-		// Build the pipeline stage objects.
-		var stages []db.PipelineStage
-		for orderSequence, stage := range requestStages {
-			newStage := db.PipelineStage{
-				OrderSequence: orderSequence,
-				Description:   stage["description"],
-				Write:         stage["write"] == "true",
-				Read:          stage["read"] == "true",
-			}
-			switch stage["type"] {
-			case "action":
-				newStage.Type = db.PipelineStageTypeAction
-				executable := strings.Trim(stage["executable"], "/")
-				newStage.Executable = &executable
-			case "connection":
-				newStage.Type = db.PipelineStageTypeConnection
-				parsedConnID, err := utils.DecodeSqids("connections", stage["connection"])
-				if err != nil {
-					log.Printf("Error decoding connection sqid: %v", err)
-					continue
+			var stages []db.PipelineStage
+			for orderSequence, stage := range requestStages {
+				newStage := db.PipelineStage{
+					OrderSequence: orderSequence,
+					Description:   stage["description"],
+					Write:         stage["write"] == "true",
+					Read:          stage["read"] == "true",
 				}
-				connection, err := api.DB.GetConnectionByID(uint(parsedConnID))
-				if err != nil {
-					log.Printf("Error retrieving connection: %v", err)
-					continue
+				switch stage["type"] {
+				case "action":
+					newStage.Type = db.PipelineStageTypeAction
+					executable := strings.Trim(stage["executable"], "/")
+					newStage.Executable = &executable
+				case "connection":
+					newStage.Type = db.PipelineStageTypeConnection
+					parsedConnID, err := utils.DecodeSqids("connections", stage["connection"])
+					if err != nil {
+						return err
+					}
+					connection, err := api.DB.GetConnectionByID(uint(parsedConnID))
+					if err != nil {
+						return err
+					}
+					writePath := strings.TrimLeft(stage["connection_write_path"], "/")
+					readPath := strings.TrimLeft(stage["connection_read_path"], "/")
+					newStage.ConnectionID = &connection.ID
+					newStage.ConnectionWritePath = &writePath
+					newStage.ConnectionReadPath = &readPath
+				case "repository":
+					newStage.Type = db.PipelineStageTypeRepository
+					repositorySlug := stage["repository"]
+					repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+					if err != nil {
+						return err
+					}
+					branch := stage["branch"]
+					path := strings.TrimLeft(stage["path"], "/")
+					newStage.RepositoryID = &repository.ID
+					newStage.RepositoryBranch = &branch
+					newStage.RepositoryPath = &path
+				default:
+					return fmt.Errorf("invalid stage type: %s", stage["type"])
 				}
-				writePath := strings.TrimLeft(stage["connection_write_path"], "/")
-				readPath := strings.TrimLeft(stage["connection_read_path"], "/")
-				newStage.ConnectionID = &connection.ID
-				newStage.ConnectionWritePath = &writePath
-				newStage.ConnectionReadPath = &readPath
-			case "repository":
-				newStage.Type = db.PipelineStageTypeRepository
-				repositorySlug := stage["repository"]
-				repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
-				if err != nil {
-					log.Printf("Error retrieving repository: %v", err)
-					continue
-				}
-				branch := stage["branch"]
-				path := strings.TrimLeft(stage["path"], "/")
-				newStage.RepositoryID = &repository.ID
-				newStage.RepositoryBranch = &branch
-				newStage.RepositoryPath = &path
-			default:
-				log.Printf("Invalid stage type: %s", stage["type"])
+				stages = append(stages, newStage)
 			}
-			stages = append(stages, newStage)
+
+			live := false
+			if workflowableFields["live"] == "true" {
+				live = true
+			}
+			pipelineWorkflowable = &db.PipelineWorkflowable{
+				Live:   live,
+				Stages: stages,
+			}
+			if err := tx.Create(pipelineWorkflowable).Error; err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("invalid workflow type: %s", workflow.Type)
 		}
 
-		// Create the pipeline workflowable object.
-		live := false
-		if workflowableFields["live"] == "true" {
-			live = true
+		// Delete the current associated workflowable object.
+		if workflow.Action != nil {
+			// Delete the action workflowable object.
+			if err := tx.Delete(&db.ActionWorkflowable{}, workflow.Action.ID).Error; err != nil {
+				return err
+			}
 		}
-		pipelineWorkflowable, err = api.DB.CreatePipelineWorkflowable(&db.PipelineWorkflowable{
-			Live:   live,
-			Stages: stages,
-		})
-		if err != nil {
-			log.Printf("Error creating workflowable: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
+		if workflow.Import != nil {
+			// Delete the import workflowable object.
+			if err := tx.Delete(&db.ImportWorkflowable{}, workflow.Import.ID).Error; err != nil {
+				return err
+			}
 		}
-	default:
-		log.Printf("Invalid workflow type: %s", workflow.Type)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
-		})
-	}
+		if workflow.Export != nil {
+			// Delete the export workflowable object.
+			if err := tx.Delete(&db.ExportWorkflowable{}, workflow.Export.ID).Error; err != nil {
+				return err
+			}
+		}
+		if workflow.Pipeline != nil {
+			// Delete the pipeline workflowable object and its stages.
+			if err := tx.Delete(&db.PipelineWorkflowable{}, workflow.Pipeline.ID).Error; err != nil {
+				return err
+			}
+		}
 
-	// Delete the current associated workflowable object.
-	if workflow.Action != nil {
-		// Delete the action workflowable object.
-		api.DB.DeleteActionWorkflowable(workflow.Action.ID)
-	}
-	if workflow.Import != nil {
-		// Delete the import workflowable object.
-		api.DB.DeleteImportWorkflowable(workflow.Import.ID)
-	}
-	if workflow.Export != nil {
-		// Delete the export workflowable object.
-		api.DB.DeleteExportWorkflowable(workflow.Export.ID)
-	}
-	if workflow.Pipeline != nil {
-		// Delete the pipeline workflowable object and its stages.
-		api.DB.DeletePipelineWorkflowable(workflow.Pipeline.ID)
-	}
+		// Update the workflow record with the new workflowable object.
+		if importWorkflowable != nil {
+			workflow.ImportID = &importWorkflowable.ID
+		} else if exportWorkflowable != nil {
+			workflow.ExportID = &exportWorkflowable.ID
+		} else if actionWorkflowable != nil {
+			workflow.ActionID = &actionWorkflowable.ID
+		} else if pipelineWorkflowable != nil {
+			workflow.PipelineID = &pipelineWorkflowable.ID
+		}
 
-	// Update the workflow record with the new workflowable object.
-	var updatedWorkflow *db.Workflow
-	var err error
-	if importWorkflowable != nil {
-		workflow.ImportID = &importWorkflowable.ID
-		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
-	} else if exportWorkflowable != nil {
-		workflow.ExportID = &exportWorkflowable.ID
-		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
-	} else if actionWorkflowable != nil {
-		workflow.ActionID = &actionWorkflowable.ID
-		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
-	} else if pipelineWorkflowable != nil {
-		workflow.PipelineID = &pipelineWorkflowable.ID
-		updatedWorkflow, err = api.DB.UpdateWorkflow(workflow)
-	}
+		if err := tx.Save(workflow).Error; err != nil {
+			return err
+		}
+
+		// Fetch the full workflow object with all relations
+		if err := tx.Preload("Owner").Preload("Schedule").Preload("Import").Preload("Export").Preload("Action").Preload("Pipeline").First(workflow, workflow.ID).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		log.Printf("Error updating workflow: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -933,7 +776,7 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -973,35 +816,50 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Create the schedule in the database.
-	schedule, err = api.DB.CreateSchedule(schedule)
-	if err != nil {
-		log.Printf("Error creating schedule: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
-	}
-
-	// Delete the current associated schedule object and its triggers.
-	if workflow.ScheduleID != nil {
-		err := api.DB.DeleteSchedule(*workflow.ScheduleID)
+	// Start a transaction.
+	err = api.DB.Transaction(func(tx *gorm.DB) error {
+		newSchedule := schedule
+		// Create the schedule in the database.
+		err = tx.Create(&newSchedule).Error
 		if err != nil {
-			log.Printf("Error deleting schedule: %v", err)
+			log.Printf("Error creating schedule: %v", err)
+			return err
 		}
-	}
 
-	// Update the workflow record with the new schedule object.
-	workflow.ScheduleID = &schedule.ID
-	updatedWorkflow, err := api.DB.UpdateWorkflow(workflow)
+		// Delete the current associated schedule object and its triggers.
+		if workflow.ScheduleID != nil {
+			err := tx.Where("schedule_id = ?", workflow.ScheduleID).Delete(&db.WorkflowTrigger{}).Error
+			if err != nil {
+				log.Printf("Error deleting schedule triggers: %v", err)
+				return err
+			}
+			err = tx.Delete(&db.Schedule{}, workflow.ScheduleID).Error
+			if err != nil {
+				log.Printf("Error deleting schedule: %v", err)
+				return err
+			}
+		}
+
+		// Update the workflow record with the new schedule object.
+		workflow.ScheduleID = &newSchedule.ID
+		workflow.Schedule = newSchedule
+		err = tx.Save(workflow).Error
+		if err != nil {
+			log.Printf("Error updating workflow: %v", err)
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		log.Printf("Error updating workflow: %v", err)
+		log.Printf("Error updating workflow schedule: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{dict.T("error_occurred")},
 		})
 	}
 
 	// Get the workflow response.
-	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, updatedWorkflow)
+	workflowResponse, err := formatter.FormatWorkflowResponse(api.DB, workflow)
 	if err != nil {
 		log.Printf("Error getting workflow response: %v", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

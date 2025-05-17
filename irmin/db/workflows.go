@@ -192,46 +192,6 @@ func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, 
 	return &pipeline, result.Error
 }
 
-// CreateWorkflow creates a new workflow record in the database.
-func (d *Database) CreateWorkflow(workflow *Workflow) (*Workflow, error) {
-	if err := d.Create(workflow).Error; err != nil {
-		return nil, err
-	}
-	return workflow, nil
-}
-
-// CreateImportWorkflowable creates a new import workflowable record in the database.
-func (d *Database) CreateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
-	if err := d.Create(&importWorkflow).Error; err != nil {
-		return nil, err
-	}
-	return importWorkflow, nil
-}
-
-// CreateExportWorkflowable creates a new export workflowable record in the database.
-func (d *Database) CreateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
-	if err := d.Create(&exportWorkflow).Error; err != nil {
-		return nil, err
-	}
-	return exportWorkflow, nil
-}
-
-// CreateActionWorkflowable creates a new action workflowable record in the database.
-func (d *Database) CreateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
-	if err := d.Create(&actionWorkflow).Error; err != nil {
-		return nil, err
-	}
-	return actionWorkflow, nil
-}
-
-// CreatePipelineWorkflowable creates a new pipeline workflowable record in the database.
-func (d *Database) CreatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
-	if err := d.Create(&pipeline).Error; err != nil {
-		return nil, err
-	}
-	return pipeline, nil
-}
-
 // UpdateWorkflow updates an existing workflow record in the database.
 func (d *Database) UpdateWorkflow(workflow *Workflow) (*Workflow, error) {
 	if err := d.Save(workflow).Error; err != nil {
@@ -247,79 +207,6 @@ func (d *Database) UpdateWorkflow(workflow *Workflow) (*Workflow, error) {
 		return nil, err
 	}
 	return workflow, nil
-}
-
-// UpdateImportWorkflowable updates an existing import workflowable record in the database.
-func (d *Database) UpdateImportWorkflowable(importWorkflow *ImportWorkflowable) (*ImportWorkflowable, error) {
-	if err := d.Save(importWorkflow).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated import workflowable record with all relations
-	if err := d.Preload("Connection").
-		Preload("Connection.Connector").
-		Preload("Repository").
-		First(importWorkflow, importWorkflow.ID).Error; err != nil {
-		return nil, err
-	}
-	return importWorkflow, nil
-}
-
-// UpdateExportWorkflowable updates an existing export workflowable record in the database.
-func (d *Database) UpdateExportWorkflowable(exportWorkflow *ExportWorkflowable) (*ExportWorkflowable, error) {
-	if err := d.Save(exportWorkflow).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated export workflowable record with all relations
-	if err := d.Preload("Connection").
-		Preload("Connection.Connector").
-		Preload("Repository").
-		First(exportWorkflow, exportWorkflow.ID).Error; err != nil {
-		return nil, err
-	}
-	return exportWorkflow, nil
-}
-
-// UpdateActionWorkflowable updates an existing action workflowable record in the database.
-func (d *Database) UpdateActionWorkflowable(actionWorkflow *ActionWorkflowable) (*ActionWorkflowable, error) {
-	if err := d.Save(actionWorkflow).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated action workflowable record with all relations
-	if err := d.Preload("Repository").
-		Preload("Inputs").
-		First(actionWorkflow, actionWorkflow.ID).Error; err != nil {
-		return nil, err
-	}
-	return actionWorkflow, nil
-}
-
-// UpdatePipelineWorkflowable updates an existing pipeline workflowable record in the database.
-func (d *Database) UpdatePipelineWorkflowable(pipeline *PipelineWorkflowable) (*PipelineWorkflowable, error) {
-	if err := d.Save(pipeline).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated pipeline workflowable record with all relations
-	if err := d.Preload("Stages").
-		Preload("Stages.Connection").
-		Preload("Stages.Connection.Connector").
-		Preload("Stages.Repository").
-		First(pipeline, pipeline.ID).Error; err != nil {
-		return nil, err
-	}
-	return pipeline, nil
-}
-
-// UpdatePipelineStage updates an existing pipeline stage record in the database.
-func (d *Database) UpdatePipelineStage(pipelineStage *PipelineStage) (*PipelineStage, error) {
-	if err := d.Save(pipelineStage).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated pipeline stage record with all relations
-	if err := d.Preload("Pipeline").
-		First(pipelineStage, pipelineStage.ID).Error; err != nil {
-		return nil, err
-	}
-	return pipelineStage, nil
 }
 
 // DeleteWorkflow deletes a workflow and all related records.
@@ -385,39 +272,5 @@ func (d *Database) DeleteWorkflow(id uint) error {
 
 		// Finally delete the workflow itself
 		return tx.Delete(&workflow).Error
-	})
-}
-
-// DeleteActionWorkflowable deletes an action workflowable and its inputs.
-func (d *Database) DeleteActionWorkflowable(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete action inputs first
-		if err := tx.Where("action_workflowable_id = ?", id).Delete(&ActionWorkflowableInput{}).Error; err != nil {
-			return err
-		}
-		// Then delete the action workflowable
-		return tx.Delete(&ActionWorkflowable{}, id).Error
-	})
-}
-
-// DeleteImportWorkflowable deletes an import workflowable.
-func (d *Database) DeleteImportWorkflowable(id uint) error {
-	return d.Delete(&ImportWorkflowable{}, id).Error
-}
-
-// DeleteExportWorkflowable deletes an export workflowable.
-func (d *Database) DeleteExportWorkflowable(id uint) error {
-	return d.Delete(&ExportWorkflowable{}, id).Error
-}
-
-// DeletePipelineWorkflowable deletes a pipeline workflowable and its stages.
-func (d *Database) DeletePipelineWorkflowable(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete pipeline stages first
-		if err := tx.Where("pipeline_id = ?", id).Delete(&PipelineStage{}).Error; err != nil {
-			return err
-		}
-		// Then delete the pipeline workflowable
-		return tx.Delete(&PipelineWorkflowable{}, id).Error
 	})
 }

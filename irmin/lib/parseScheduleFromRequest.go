@@ -10,7 +10,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// ParseScheduleFromRequest creates a schedule object from the request body.
+// ParseScheduleFromRequest creates a schedule object from the request body, while validating the requested
+// schedule is valid and setting default values for optional fields that are not provided.
 func ParseScheduleFromRequest(c fiber.Ctx, d *db.Database, workspace db.Workspace) (*db.Schedule, error) {
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, nil, []string{"max_retries", "max_runtime", "min_interval"})

@@ -68,36 +68,3 @@ func (d *Database) GetScheduleByID(id uint) (*Schedule, error) {
 	}
 	return &schedule, nil
 }
-
-// CreateSchedule creates a new schedule record in the database.
-func (d *Database) CreateSchedule(schedule *Schedule) (*Schedule, error) {
-	if err := d.Create(schedule).Error; err != nil {
-		return nil, err
-	}
-	return schedule, nil
-}
-
-// DeleteSchedule deletes a schedule record and associated triggers from the database by its ID.
-func (d *Database) DeleteSchedule(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// First delete all associated triggers
-		if err := tx.Where("schedule_id = ?", id).Delete(&WorkflowTrigger{}).Error; err != nil {
-			return err
-		}
-
-		// Then delete the schedule itself
-		if err := tx.Delete(&Schedule{}, id).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-// UpdateSchedule updates a schedule record in the database.
-func (d *Database) UpdateSchedule(schedule *Schedule) (*Schedule, error) {
-	if err := d.Save(schedule).Error; err != nil {
-		return nil, err
-	}
-	return schedule, nil
-}
