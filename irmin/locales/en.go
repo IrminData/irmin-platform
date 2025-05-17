@@ -24,6 +24,7 @@ var English = Dictionary{
 	"workflow_started":                    "Workflow started",
 	"workflow_stopped":                    "Workflow stopped",
 	"workflow_already_running":            "Workflow already running",
+	"schedule_updated":                    "Schedule updated",
 	"connection_created":                  "Connection created",
 	"connection_deleted":                  "Connection deleted",
 	"connection_updated":                  "Connection updated",

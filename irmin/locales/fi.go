@@ -24,6 +24,7 @@ var Finnish = Dictionary{
 	"workflow_started":                    "Prosessi käynnistetty",
 	"workflow_stopped":                    "Prosessi pysäytetty",
 	"workflow_already_running":            "Prosessi on jo käynnissä",
+	"schedule_updated":                    "Aikataulu päivitetty",
 	"connection_created":                  "Yhteys luotu",
 	"connection_deleted":                  "Yhteys poistettu",
 	"connection_updated":                  "Yhteys päivitetty",

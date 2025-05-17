@@ -43,7 +43,6 @@ func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels
 	schedule, err := scheduleFuture.Await()
 	if err != nil {
 		log.Printf("Error retrieving schedule: %v", err)
-		return nil, err
 	}
 
 	workflowable, err := workflowableFuture.Await()
@@ -195,12 +194,13 @@ func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels
 			})
 		}
 	}
-
-	scheduleResponse = irminmodels.Schedule{
-		Triggers:    scheduleTriggersResponse,
-		MaxRetries:  schedule.MaxRetries,
-		MaxRuntime:  schedule.MaxRuntime,
-		MinInterval: schedule.MinInterval,
+	if schedule != nil {
+		scheduleResponse = irminmodels.Schedule{
+			Triggers:    scheduleTriggersResponse,
+			MaxRetries:  schedule.MaxRetries,
+			MaxRuntime:  schedule.MaxRuntime,
+			MinInterval: schedule.MinInterval,
+		}
 	}
 
 	// Find the latest workflow run status.

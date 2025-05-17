@@ -27,25 +27,40 @@ func ParseScheduleFromRequest(c fiber.Ctx, d *db.Database, workspace db.Workspac
 	}
 
 	// Create the schedule object.
-	maxRetries, err := strconv.Atoi(fields["max_retries"])
-	if err != nil {
-		log.Printf("Error parsing max_retries: %v", err)
-		return nil, err
+	schedule := db.Schedule{}
+
+	// Parse optional fields if they exist
+	if maxRetriesStr, ok := fields["max_retries"]; ok && maxRetriesStr != "" {
+		maxRetries, err := strconv.Atoi(maxRetriesStr)
+		if err != nil {
+			log.Printf("Error parsing max_retries: %v", err)
+			return nil, err
+		}
+		schedule.MaxRetries = maxRetries
+	} else {
+		schedule.MaxRetries = 3
 	}
-	maxRuntime, err := strconv.Atoi(fields["max_runtime"])
-	if err != nil {
-		log.Printf("Error parsing max_runtime: %v", err)
-		return nil, err
+
+	if maxRuntimeStr, ok := fields["max_runtime"]; ok && maxRuntimeStr != "" {
+		maxRuntime, err := strconv.Atoi(maxRuntimeStr)
+		if err != nil {
+			log.Printf("Error parsing max_runtime: %v", err)
+			return nil, err
+		}
+		schedule.MaxRuntime = maxRuntime
+	} else {
+		schedule.MaxRuntime = 120
 	}
-	minInterval, err := strconv.Atoi(fields["min_interval"])
-	if err != nil {
-		log.Printf("Error parsing min_interval: %v", err)
-		return nil, err
-	}
-	schedule := db.Schedule{
-		MaxRetries:  maxRetries,
-		MaxRuntime:  maxRuntime,
-		MinInterval: minInterval,
+
+	if minIntervalStr, ok := fields["min_interval"]; ok && minIntervalStr != "" {
+		minInterval, err := strconv.Atoi(minIntervalStr)
+		if err != nil {
+			log.Printf("Error parsing min_interval: %v", err)
+			return nil, err
+		}
+		schedule.MinInterval = minInterval
+	} else {
+		schedule.MinInterval = 120
 	}
 
 	// Parse triggers

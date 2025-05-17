@@ -983,8 +983,11 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 	}
 
 	// Delete the current associated schedule object and its triggers.
-	if workflow.Schedule != nil {
-		api.DB.DeleteSchedule(workflow.Schedule.ID)
+	if workflow.ScheduleID != nil {
+		err := api.DB.DeleteSchedule(*workflow.ScheduleID)
+		if err != nil {
+			log.Printf("Error deleting schedule: %v", err)
+		}
 	}
 
 	// Update the workflow record with the new schedule object.
