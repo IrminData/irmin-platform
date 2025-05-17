@@ -9,20 +9,10 @@ import (
 )
 
 func FormatStoredQueryResponse(query *db.StoredQuery) (*irminmodels.StoredQuery, error) {
-	// Construct the owner sqid
-	ownerSqid, err := utils.EncodeSqids("users", uint64(query.OwnerID))
+	// Structure the owner response.
+	ownerResponse, err := FormatUserResponse(&query.Owner)
 	if err != nil {
-		return nil, fmt.Errorf("error encoding user sqid: %w", err)
-	}
-	// Construct the owner object
-	ownerResponse := irminmodels.User{
-		ID:             ownerSqid,
-		FirstName:      query.Owner.FirstName,
-		LastName:       query.Owner.LastName,
-		Email:          query.Owner.Email,
-		Phone:          query.Owner.Phone,
-		Company:        query.Owner.Company,
-		ProfilePicture: query.Owner.ProfilePicture,
+		return nil, err
 	}
 	// Construct the sqid of the query
 	querySqid, err := utils.EncodeSqids("queries", uint64(query.ID))
@@ -35,7 +25,7 @@ func FormatStoredQueryResponse(query *db.StoredQuery) (*irminmodels.StoredQuery,
 		Name:        query.Name,
 		Description: query.Description,
 		SQL:         query.SQL,
-		Owner:       ownerResponse,
+		Owner:       *ownerResponse,
 		CreatedAt:   query.CreatedAt,
 		UpdatedAt:   query.UpdatedAt,
 	}
