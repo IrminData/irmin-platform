@@ -90,7 +90,7 @@ function ConfigureWorkflow({
             repositories={repositories}
             initialData={initialWorkflowSchedule.current}
             disableSaveButton={true}
-            updateSchedule={(newSchedule) => {
+            updateSchedule={async (newSchedule) => {
               setWorkflowData({
                 ...workflowData,
                 schedule: newSchedule,

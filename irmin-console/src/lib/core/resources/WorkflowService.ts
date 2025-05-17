@@ -277,7 +277,6 @@ class WorkflowService {
         `/v1/workspaces/${workspace}/workflows/${workflowID}/schedule`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: scheduleFormData,
         }
       );

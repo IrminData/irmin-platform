@@ -1,5 +1,3 @@
-import { WorkflowSchedule } from '@/types/core/Schedule';
-
 /**
  * Object containing the properties that can be updated for an item.
  * Could be used for connections, repositories, etc.
@@ -11,6 +9,4 @@ export type ItemUpdateProps = {
   description?: string;
   /** The documentation for the item */
   documentation?: string;
-  /** The schedule for the workflow */
-  schedule?: WorkflowSchedule;
 };

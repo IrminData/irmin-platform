@@ -28,16 +28,14 @@ const WorkflowScheduleSection = ({
   repositories: Repository[];
 }) => {
   const { dict } = useLocale();
-  const { workflow, updateWorkflow, resumeWorkflow, pauseWorkflow } =
+  const { workflow, updateWorkflowSchedule, resumeWorkflow, pauseWorkflow } =
     useWorkflow();
 
   const handleUpdateWorkflowSchedule = useCallback(
     async (schedule: WorkflowSchedule) => {
-      await updateWorkflow({
-        schedule,
-      });
+      await updateWorkflowSchedule(schedule);
     },
-    [updateWorkflow]
+    [updateWorkflowSchedule]
   );
 
   const handlePauseOrResume = useCallback(async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import ReactSelect from 'react-select';
@@ -28,7 +28,9 @@ import { Workflow } from '@/types/core/Workflow';
 interface FormTrigger {
   id: string;
   type: 'time' | 'repository-event' | 'workflow-run-event';
+  timeFormat?: 'rrule' | 'cron';
   rrule?: string;
+  cron?: string;
   event?: RepositoryEvent | WorkflowRunEvent;
   repository?: string;
   ref?: string;
@@ -62,7 +64,7 @@ function WorkflowScheduleForm({
   initialData?: WorkflowSchedule;
   workflows: Workflow[];
   repositories: Repository[];
-  updateSchedule: (schedule: WorkflowSchedule) => void;
+  updateSchedule: (schedule: WorkflowSchedule) => Promise<void>;
   disableSaveButton?: boolean;
 }) {
   const { dict } = useLocale();
@@ -118,7 +120,11 @@ function WorkflowScheduleForm({
         formData.triggers?.map((trigger) => {
           const { type } = trigger;
           if (type === 'time') {
-            return { type, rrule: trigger.rrule! } as TimeTrigger;
+            if (trigger.timeFormat === 'cron') {
+              return { type, cron: trigger.cron! } as TimeTrigger;
+            } else {
+              return { type, rrule: trigger.rrule! } as TimeTrigger;
+            }
           } else if (type === 'repository-event') {
             return {
               type,
@@ -140,23 +146,39 @@ function WorkflowScheduleForm({
     [formData]
   );
 
+  // Handle schedule update logic with a loading state
+  const [isUpdatingSchedule, setIsUpdatingSchedule] = useState(false);
+  const handleUpdateSchedule = useCallback(
+    async (formdata: WorkflowSchedule) => {
+      try {
+        setIsUpdatingSchedule(true);
+        await updateSchedule(formdata);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsUpdatingSchedule(false);
+      }
+    },
+    [updateSchedule]
+  );
+
   // Handle form submission
   const onSubmit = useCallback(() => {
-    updateSchedule(formDataAsSchedule);
-  }, [updateSchedule, formDataAsSchedule]);
+    handleUpdateSchedule(formDataAsSchedule);
+  }, [handleUpdateSchedule, formDataAsSchedule]);
 
   // Ref to store the previous sent schedule data
   const previousScheduleRef = useRef(formDataAsSchedule);
 
-  // Call updateSchedule whenever form data changes if save button is disabled
+  // Call handleUpdateSchedule whenever form data changes if save button is disabled
   useEffect(() => {
     if (disableSaveButton) {
       if (!deepEqual(previousScheduleRef.current, formDataAsSchedule)) {
-        updateSchedule(formDataAsSchedule);
+        handleUpdateSchedule(formDataAsSchedule);
         previousScheduleRef.current = formDataAsSchedule;
       }
     }
-  }, [disableSaveButton, formDataAsSchedule, updateSchedule]);
+  }, [disableSaveButton, formDataAsSchedule, handleUpdateSchedule]);
 
   // Add a new trigger
   const addTrigger = useCallback(() => {
@@ -171,7 +193,9 @@ function WorkflowScheduleForm({
         type: newType,
       };
       if (newType === 'time') {
+        updatedTrigger.timeFormat = 'rrule';
         updatedTrigger.rrule = '';
+        updatedTrigger.cron = '';
       } else if (newType === 'repository-event') {
         updatedTrigger.event = RepositoryEvent.PostCommit;
         updatedTrigger.repository = '';
@@ -202,6 +226,7 @@ function WorkflowScheduleForm({
           id='max-retries'
           type='number'
           {...register('max_retries', { valueAsNumber: true })}
+          disabled={isUpdatingSchedule}
         />
       </div>
 
@@ -212,6 +237,7 @@ function WorkflowScheduleForm({
           id='max-runtime'
           type='number'
           {...register('max_runtime', { valueAsNumber: true })}
+          disabled={isUpdatingSchedule}
         />
       </div>
 
@@ -224,6 +250,7 @@ function WorkflowScheduleForm({
           id='min-interval'
           type='number'
           {...register('min_interval', { valueAsNumber: true })}
+          disabled={isUpdatingSchedule}
         />
       </div>
 
@@ -244,6 +271,7 @@ function WorkflowScheduleForm({
               <Button
                 variant='destructive'
                 size='sm'
+                disabled={isUpdatingSchedule}
                 onClick={() => remove(index)}
               >
                 {dict.common.remove}
@@ -270,6 +298,7 @@ function WorkflowScheduleForm({
                       options={triggerTypeOptions}
                       className='react-select-container'
                       classNamePrefix='react-select'
+                      isDisabled={isUpdatingSchedule}
                     />
                   )}
                 />
@@ -277,20 +306,76 @@ function WorkflowScheduleForm({
 
               {/* Conditional Fields Based on Trigger Type */}
               {trigger.type === 'time' && (
-                <div className='space-y-2'>
-                  <Label>{dict.workflow.schedule.recurrenceRule}</Label>
-                  <Controller
-                    control={control}
-                    name={`triggers.${index}.rrule`}
-                    render={({ field }) => (
-                      <RRuleGenerator
-                        rule={field.value}
-                        onGenerate={(rrule: string) => {
-                          field.onChange(rrule);
-                        }}
+                <div className='space-y-4'>
+                  <div className='space-y-2'>
+                    <Label>{dict.workflow.schedule.timeFormat}</Label>
+                    <Controller
+                      control={control}
+                      name={`triggers.${index}.timeFormat`}
+                      render={({ field }) => (
+                        <ReactSelect
+                          value={{
+                            value: field.value || 'rrule',
+                            label:
+                              field.value === 'cron'
+                                ? 'Cron Expression'
+                                : 'Recurrence Rule (RRule)',
+                          }}
+                          onChange={(selectedOption) => {
+                            field.onChange(selectedOption?.value);
+                          }}
+                          options={[
+                            {
+                              value: 'rrule',
+                              label: 'Recurrence Rule (RRule)',
+                            },
+                            { value: 'cron', label: 'Cron Expression' },
+                          ]}
+                          className='react-select-container'
+                          classNamePrefix='react-select'
+                          isDisabled={isUpdatingSchedule}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {trigger.timeFormat === 'cron' ? (
+                    <div className='space-y-2'>
+                      <Label>{dict.workflow.schedule.cronExpression}</Label>
+                      <Controller
+                        control={control}
+                        name={`triggers.${index}.cron`}
+                        render={({ field }) => (
+                          <Input
+                            placeholder='* * * * *'
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            disabled={isUpdatingSchedule}
+                          />
+                        )}
                       />
-                    )}
-                  />
+                      <p className='text-muted-foreground text-sm'>
+                        Format: minute hour day-of-month month day-of-week
+                      </p>
+                    </div>
+                  ) : (
+                    <div className='space-y-2'>
+                      <Label>{dict.workflow.schedule.recurrenceRule}</Label>
+                      <Controller
+                        control={control}
+                        name={`triggers.${index}.rrule`}
+                        render={({ field }) => (
+                          <RRuleGenerator
+                            isDisabled={isUpdatingSchedule}
+                            rule={field.value}
+                            onGenerate={(rrule: string) => {
+                              field.onChange(rrule);
+                            }}
+                          />
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -305,6 +390,7 @@ function WorkflowScheduleForm({
                       name={`triggers.${index}.event`}
                       render={({ field }) => (
                         <ReactSelect
+                          isDisabled={isUpdatingSchedule}
                           value={{
                             value: field.value,
                             label: field.value,
@@ -334,6 +420,7 @@ function WorkflowScheduleForm({
                       render={({ field }) => (
                         <ReactSelect
                           id={`triggers.${index}.repository`}
+                          isDisabled={isUpdatingSchedule}
                           defaultValue={{
                             value: field.value,
                             label:
@@ -371,6 +458,7 @@ function WorkflowScheduleForm({
                     <Input
                       id={`triggers.${index}.ref`}
                       {...register(`triggers.${index}.ref`)}
+                      disabled={isUpdatingSchedule}
                     />
                   </div>
                 </>
@@ -387,6 +475,7 @@ function WorkflowScheduleForm({
                       name={`triggers.${index}.event`}
                       render={({ field }) => (
                         <ReactSelect
+                          isDisabled={isUpdatingSchedule}
                           value={{
                             value: field.value,
                             label: field.value,
@@ -416,6 +505,7 @@ function WorkflowScheduleForm({
                       render={({ field }) => (
                         <ReactSelect
                           id={`triggers.${index}.workflow`}
+                          isDisabled={isUpdatingSchedule}
                           defaultValue={{
                             value: field.value,
                             label: (() => {
@@ -452,13 +542,20 @@ function WorkflowScheduleForm({
           variant={'secondary'}
           className='w-full'
           size='sm'
+          disabled={isUpdatingSchedule}
         >
           {dict.workflow.schedule.addTrigger}
         </Button>
 
         {/* Submit Button */}
         {!disableSaveButton && (
-          <Button type='submit' className='w-full' variant={'gray'} size={'sm'}>
+          <Button
+            type='submit'
+            className='w-full'
+            variant={'gray'}
+            size={'sm'}
+            loading={isUpdatingSchedule}
+          >
             {dict.workflow.schedule.saveSchedule}
           </Button>
         )}

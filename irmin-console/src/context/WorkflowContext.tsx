@@ -20,8 +20,10 @@ import useWorkflowRuns from '@/hooks/useWorkflowRuns';
 
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
+import { WorkflowSchedule } from '@/types/core/Schedule';
 import { Workflow } from '@/types/core/Workflow';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
+import { WorkflowableInput } from '@/types/internal/WorkflowInput';
 
 /**
  * Workflow context properties
@@ -32,6 +34,8 @@ interface WorkflowContextProps {
   repositories: Repository[];
   fetchWorkflow: () => Promise<void>;
   updateWorkflow: (data: ItemUpdateProps) => Promise<void>;
+  updateWorkflowSchedule: (schedule: WorkflowSchedule) => Promise<void>;
+  updateWorkflowable: (data: WorkflowableInput) => Promise<void>;
   transferWorkflow: (ownerID: string) => Promise<void>;
   deleteWorkflow: () => Promise<void>;
   pauseWorkflow: () => Promise<void>;
@@ -145,13 +149,62 @@ export const WorkflowProvider = ({
           description: data.description,
           documentation: data.documentation,
         });
-        if (data.schedule) {
-          await irminCore.workflowService.updateWorkflowSchedule({
-            workspace: workspaceSlug,
-            workflowID,
-            schedule: data.schedule,
-          });
-        }
+        await fetchWorkflow();
+        irminAlert('success', res.message ?? 'Workflow updated successfully');
+      } catch (error) {
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Error updating the workflow'
+        );
+      } finally {
+        updating.current = false;
+      }
+    },
+    [workflowID, workspaceSlug, fetchWorkflow, irminAlert, getToken, locale]
+  );
+
+  const handleUpdateWorkflowSchedule = useCallback(
+    async (schedule: WorkflowSchedule) => {
+      if (updating.current) return;
+      try {
+        updating.current = true;
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.workflowService.updateWorkflowSchedule({
+          workspace: workspaceSlug,
+          workflowID,
+          schedule,
+        });
+        await fetchWorkflow();
+        irminAlert(
+          'success',
+          res.message ?? 'Workflow schedule updated successfully'
+        );
+      } catch (error) {
+        console.error(error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Error updating the workflow schedule'
+        );
+      } finally {
+        updating.current = false;
+      }
+    },
+    [workflowID, workspaceSlug, fetchWorkflow, irminAlert, getToken, locale]
+  );
+
+  const handleUpdateWorkflowable = useCallback(
+    async (data: WorkflowableInput) => {
+      if (updating.current) return;
+      try {
+        updating.current = true;
+        const token = await getToken();
+        const irminCore = new IrminCore(locale, token);
+        const res = await irminCore.workflowService.updateWorkflowWorkflowable({
+          workspace: workspaceSlug,
+          workflowID,
+          workflowable: data,
+        });
         await fetchWorkflow();
         irminAlert('success', res.message ?? 'Workflow updated successfully');
       } catch (error) {
@@ -287,6 +340,8 @@ export const WorkflowProvider = ({
         fetchWorkflow,
         deleteWorkflow: handleDeleteWorkflow,
         updateWorkflow: handleUpdateWorkflow,
+        updateWorkflowSchedule: handleUpdateWorkflowSchedule,
+        updateWorkflowable: handleUpdateWorkflowable,
         transferWorkflow: handleTransferOwnershipWorkflow,
         pauseWorkflow: handlePauseWorkflow,
         resumeWorkflow: handleResumeWorkflow,

@@ -37,13 +37,16 @@ const weekdays = [
  * @param props - Component props
  * @param props.rule - Initial RRule string
  * @param props.onGenerate - Callback function to handle the generated RRule string
+ * @param props.isDisabled - Whether the component is disabled
  */
 export default function RRuleGenerator({
   rule,
   onGenerate,
+  isDisabled = false,
 }: {
   rule?: string;
   onGenerate: (rule: string) => void;
+  isDisabled?: boolean;
 }) {
   const { dict } = useLocale();
 
@@ -114,6 +117,7 @@ export default function RRuleGenerator({
           onChange={(option) => setFrequency(option?.value || Frequency.DAILY)}
           className='react-select-container'
           classNamePrefix='react-select'
+          isDisabled={isDisabled}
         />
       </div>
 
@@ -125,6 +129,7 @@ export default function RRuleGenerator({
           min='1'
           value={interval}
           onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
+          disabled={isDisabled}
         />
       </div>
 
@@ -137,6 +142,7 @@ export default function RRuleGenerator({
                 id={day.label}
                 checked={selectedWeekdays.includes(day.value)}
                 onCheckedChange={() => handleWeekdayChange(day.value)}
+                disabled={isDisabled}
               />
               <Label htmlFor={day.label}>{day.label}</Label>
             </div>
