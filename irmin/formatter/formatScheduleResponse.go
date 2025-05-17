@@ -1,7 +1,6 @@
 package formatter
 
 import (
-	"fmt"
 	"irmin-api/db"
 	"irmin-api/utils"
 	"log"
@@ -11,12 +10,6 @@ import (
 
 // FormatWorkflowResponse creates a workflow response object from a workflow object.
 func FormatScheduleResponse(d *db.Database, schedule *db.Schedule) (*irminmodels.Schedule, error) {
-	// Fetch the schedule
-	schedule, err := d.GetScheduleByID(schedule.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving schedule: %w", err)
-	}
-
 	// Format the response
 	var scheduleResponse irminmodels.Schedule
 	scheduleTriggersResponse := []irminmodels.ScheduleTrigger{} // Initialize empty array by default

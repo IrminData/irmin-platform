@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/utils"
 	"log"
@@ -32,8 +33,23 @@ func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels
 	}()
 
 	go func() {
-		schedule, err := FormatScheduleResponse(d, workflow.Schedule)
-		ch <- formatResult{schedule: schedule, err: err}
+		if workflow.ScheduleID == nil {
+			ch <- formatResult{schedule: &irminmodels.Schedule{}, err: nil}
+			return
+		}
+		if workflow.Schedule != nil {
+			scheduleResponse, err := FormatScheduleResponse(d, workflow.Schedule)
+			ch <- formatResult{schedule: scheduleResponse, err: err}
+			return
+		}
+		// Fetch the schedule only if not already defined
+		schedule, err := d.GetScheduleByID(*workflow.ScheduleID)
+		if err != nil {
+			ch <- formatResult{err: fmt.Errorf("error retrieving schedule: %w", err)}
+			return
+		}
+		scheduleResponse, err := FormatScheduleResponse(d, schedule)
+		ch <- formatResult{schedule: scheduleResponse, err: err}
 	}()
 
 	// Collect results
