@@ -48,7 +48,7 @@ const WorkflowScheduleSection = ({
 
   return (
     <ContentWrapper>
-      <div className='float-right mb-4'>
+      <div className='flex justify-end'>
         {workflow.status === 'paused' ? (
           <Button
             size='sm'
@@ -74,6 +74,7 @@ const WorkflowScheduleSection = ({
         updateSchedule={handleUpdateWorkflowSchedule}
         workflows={workflows}
         repositories={repositories}
+        hideTitle={true}
       />
     </ContentWrapper>
   );

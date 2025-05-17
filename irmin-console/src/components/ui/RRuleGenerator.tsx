@@ -2,14 +2,76 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { format } from 'date-fns';
 import ReactSelect from 'react-select';
 import { Frequency, RRule, rrulestr, Weekday } from 'rrule';
 
+import { TbCopy, TbInfoCircle } from 'react-icons/tb';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { cn } from '@/utils/tw';
+
+// Common RRule presets
+const PRESETS = [
+  {
+    label: 'Every minute',
+    value: 'FREQ=MINUTELY;INTERVAL=1',
+  },
+  {
+    label: 'Every hour',
+    value: 'FREQ=HOURLY;INTERVAL=1',
+  },
+  {
+    label: 'Every day at midnight',
+    value: 'FREQ=DAILY;BYHOUR=0;BYMINUTE=0',
+  },
+  {
+    label: 'Every day at noon',
+    value: 'FREQ=DAILY;BYHOUR=12;BYMINUTE=0',
+  },
+  {
+    label: 'Every Monday',
+    value: 'FREQ=WEEKLY;BYDAY=MO',
+  },
+  {
+    label: 'Every weekday',
+    value: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR',
+  },
+  {
+    label: 'Every weekend',
+    value: 'FREQ=WEEKLY;BYDAY=SA,SU',
+  },
+  {
+    label: 'Every month on the 1st',
+    value: 'FREQ=MONTHLY;BYMONTHDAY=1',
+  },
+];
 
 const frequencies = [
   { value: Frequency.SECONDLY, label: 'Secondly' },
@@ -31,6 +93,17 @@ const weekdays = [
   { value: RRule.SU, label: 'Sunday' },
 ];
 
+// Calculate next execution dates for an RRule string
+const getNextExecutionDates = (rruleString: string, count = 5): Date[] => {
+  try {
+    const rrule = rrulestr(rruleString);
+    return rrule.all((_, len) => len < count);
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
+
 /**
  * Component to generate RRule strings
  *
@@ -50,11 +123,13 @@ export default function RRuleGenerator({
 }) {
   const { dict } = useLocale();
 
+  const [activeTab, setActiveTab] = useState('presets');
   const [frequency, setFrequency] = useState<Frequency>(Frequency.DAILY);
   const [selectedWeekdays, setSelectedWeekdays] = useState<Weekday[]>([]);
   const [interval, setInterval] = useState<number>(1);
-  const [generatedRuleForHumans, setGeneratedRuleForHumans] =
-    useState<string>('');
+  const [generatedRule, setGeneratedRule] = useState<string>(rule || '');
+  const [nextDates, setNextDates] = useState<Date[]>([]);
+  const [copied, setCopied] = useState(false);
 
   const initialised = useRef(false);
   const previousRule = useRef(rule);
@@ -66,11 +141,10 @@ export default function RRuleGenerator({
       if (!rule || rule.length === 0) return;
 
       const rrule = rrulestr(rule);
-
+      setGeneratedRule(rule);
       setFrequency(rrule.options.freq);
       setInterval(rrule.options.interval || 1);
       setSelectedWeekdays(rrule.options.byweekday.map((d) => new Weekday(d)));
-      setGeneratedRuleForHumans(rrule.toText());
     } catch (error) {
       console.error(error);
     } finally {
@@ -87,13 +161,39 @@ export default function RRuleGenerator({
       byweekday: selectedWeekdays,
     });
     const ruleStr = rrule.toString();
-    const humanText = rrule.toText();
-    setGeneratedRuleForHumans(humanText);
+    setGeneratedRule(ruleStr);
 
     if (ruleStr === previousRule.current) return;
     previousRule.current = ruleStr;
     onGenerate(ruleStr);
   }, [frequency, interval, selectedWeekdays, onGenerate]);
+
+  // Calculate next execution dates when rule changes
+  useEffect(() => {
+    const dates = getNextExecutionDates(generatedRule);
+    setNextDates(dates);
+  }, [generatedRule]);
+
+  // Handle preset selection
+  const handlePresetChange = (value: string) => {
+    setGeneratedRule(value);
+    onGenerate(value);
+    try {
+      const rrule = rrulestr(value);
+      setFrequency(rrule.options.freq);
+      setInterval(rrule.options.interval || 1);
+      setSelectedWeekdays(rrule.options.byweekday.map((d) => new Weekday(d)));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Handle copy to clipboard
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generatedRule);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Handle weekday selection
   const handleWeekdayChange = useCallback((weekday: Weekday) => {
@@ -105,49 +205,208 @@ export default function RRuleGenerator({
   }, []);
 
   return (
-    <div className='space-y-6'>
-      <p className='pl-1 text-sm font-semibold'>{generatedRuleForHumans}</p>
+    <div className='flex flex-col space-y-4'>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
+        <TabsList className='grid w-full grid-cols-2'>
+          <TabsTrigger value='presets' disabled={isDisabled}>
+            {dict.workflow.schedule.presets}
+          </TabsTrigger>
+          <TabsTrigger value='custom' disabled={isDisabled}>
+            {dict.workflow.schedule.custom}
+          </TabsTrigger>
+        </TabsList>
 
-      <div className='space-y-2'>
-        <Label htmlFor='frequency'>{dict.workflow.schedule.frequency}</Label>
-        <ReactSelect
-          id='frequency'
-          options={frequencies}
-          value={frequencies.find((f) => f.value === frequency)}
-          onChange={(option) => setFrequency(option?.value || Frequency.DAILY)}
-          className='react-select-container'
-          classNamePrefix='react-select'
-          isDisabled={isDisabled}
-        />
-      </div>
+        <TabsContent value='presets' className='mt-4'>
+          <div
+            className={cn(
+              'flex flex-col space-y-2',
+              isDisabled && 'pointer-events-none opacity-50'
+            )}
+          >
+            <Label htmlFor='preset-select'>
+              {dict.workflow.schedule.rrule.selectPreset}
+            </Label>
+            <Select
+              onValueChange={handlePresetChange}
+              defaultValue={rule}
+              disabled={isDisabled}
+            >
+              <SelectTrigger id='preset-select' className='w-full'>
+                <SelectValue
+                  placeholder={dict.workflow.schedule.rrule.selectPreset}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {PRESETS.map((preset) => (
+                  <SelectItem key={preset.value} value={preset.value}>
+                    {preset.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </TabsContent>
 
-      <div className='space-y-2'>
-        <Label htmlFor='interval'>{dict.workflow.schedule.interval}</Label>
-        <Input
-          id='interval'
-          type='number'
-          min='1'
-          value={interval}
-          onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
-          disabled={isDisabled}
-        />
-      </div>
-
-      <div className='max-w-sm space-y-2'>
-        <Label>{dict.workflow.schedule.weekdays}</Label>
-        <div className='flex flex-wrap gap-3 pl-2'>
-          {weekdays.map((day) => (
-            <div key={day.label} className='flex items-center space-x-1'>
-              <Checkbox
-                id={day.label}
-                checked={selectedWeekdays.includes(day.value)}
-                onCheckedChange={() => handleWeekdayChange(day.value)}
-                disabled={isDisabled}
-              />
-              <Label htmlFor={day.label}>{day.label}</Label>
+        <TabsContent
+          value='custom'
+          className='mt-4 flex flex-wrap space-y-4 space-x-4'
+        >
+          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+            <div className='flex items-center justify-between'>
+              <Label>{dict.workflow.schedule.rrule.frequency}</Label>
+              <Badge variant='secondary'>
+                {frequencies.find((f) => f.value === frequency)?.label}
+              </Badge>
             </div>
-          ))}
+            <ReactSelect
+              options={frequencies}
+              value={frequencies.find((f) => f.value === frequency)}
+              onChange={(option) =>
+                setFrequency(option?.value || Frequency.DAILY)
+              }
+              className='react-select-container'
+              classNamePrefix='react-select'
+              isDisabled={isDisabled}
+            />
+          </div>
+
+          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+            <div className='flex items-center justify-between'>
+              <Label>{dict.workflow.schedule.rrule.interval}</Label>
+              <Badge variant='secondary'>{interval}</Badge>
+            </div>
+            <Input
+              type='number'
+              min='1'
+              value={interval}
+              onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
+              disabled={isDisabled}
+            />
+          </div>
+
+          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+            <div className='flex items-center justify-between'>
+              <Label>{dict.workflow.schedule.rrule.weekdays}</Label>
+              <Badge variant='secondary'>
+                {selectedWeekdays.length === 0
+                  ? dict.workflow.schedule.rrule.none
+                  : selectedWeekdays.length === 7
+                    ? dict.workflow.schedule.rrule.everyDay
+                    : `${selectedWeekdays.length} ${dict.workflow.schedule.rrule.selected}`}
+              </Badge>
+            </div>
+            <div className='flex flex-wrap gap-3 pl-2'>
+              {weekdays.map((day) => (
+                <div key={day.label} className='flex items-center space-x-1'>
+                  <Checkbox
+                    id={day.label}
+                    checked={selectedWeekdays.includes(day.value)}
+                    onCheckedChange={() => handleWeekdayChange(day.value)}
+                    disabled={isDisabled}
+                  />
+                  <Label htmlFor={day.label}>{day.label}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <div className='flex flex-col space-y-2'>
+        <div className='flex flex-row items-center justify-between'>
+          <Label>{dict.workflow.schedule.rrule.generatedRRule}</Label>
+          <div className='flex flex-row items-center gap-2'>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    onClick={handleCopy}
+                    disabled={isDisabled}
+                  >
+                    <TbCopy
+                      className={cn('h-4 w-4', copied ? 'text-accent' : '')}
+                    />
+                    <span className='sr-only'>
+                      {dict.workflow.schedule.rrule.copyRRule}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {copied
+                      ? dict.workflow.schedule.rrule.copied
+                      : dict.workflow.schedule.rrule.copyToClipboard}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant='ghost' size='icon' className='h-6 w-6'>
+                  <TbInfoCircle className='h-4 w-4' />
+                  <span className='sr-only'>
+                    {dict.workflow.schedule.rrule.rruleSyntaxHelp}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-80'>
+                <div className='space-y-2'>
+                  <h4 className='font-medium'>
+                    {dict.workflow.schedule.rrule.rruleSyntax}
+                  </h4>
+                  <p className='text-muted-foreground text-sm'>
+                    {dict.workflow.schedule.rrule.rruleSyntaxDescription}
+                  </p>
+                  <ul className='text-muted-foreground list-disc pl-4 text-sm'>
+                    <li>
+                      {dict.workflow.schedule.rrule.rruleSyntaxOptions.freq}
+                    </li>
+                    <li>
+                      {dict.workflow.schedule.rrule.rruleSyntaxOptions.interval}
+                    </li>
+                    <li>
+                      {dict.workflow.schedule.rrule.rruleSyntaxOptions.byday}
+                    </li>
+                    <li>
+                      {dict.workflow.schedule.rrule.rruleSyntaxOptions.byhour}
+                    </li>
+                    <li>
+                      {dict.workflow.schedule.rrule.rruleSyntaxOptions.byminute}
+                    </li>
+                  </ul>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
+
+        <div className='relative flex-col items-center gap-2'>
+          <Input
+            value={generatedRule}
+            readOnly
+            className='border-accent focus-visible:ring-accent pr-10 font-mono'
+            disabled={isDisabled}
+          />
+        </div>
+      </div>
+
+      <div className='mt-6 flex flex-col space-y-2'>
+        <Label>{dict.workflow.schedule.rrule.nextExecutionTimes}</Label>
+        {nextDates.length > 0 ? (
+          <ul className='space-y-2'>
+            {nextDates.map((date, index) => (
+              <li key={index} className='bg-muted rounded-md p-2 text-sm'>
+                {format(date, 'PPpp')}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className='text-muted-foreground pl-1 text-sm'>
+            {dict.workflow.schedule.rrule.invalidRRule}
+          </p>
+        )}
       </div>
     </div>
   );
