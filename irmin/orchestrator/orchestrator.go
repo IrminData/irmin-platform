@@ -150,6 +150,10 @@ func (o *Orchestrator) processTimeTriggers(ctx context.Context) error {
 				var workflow db.Workflow
 				if err := tx.Where("schedule_id = ?", t.ScheduleID).First(&workflow).Error; err != nil {
 					o.logger.ErrorContext(ctx, "failed to get workflow for trigger", "error", err, "trigger_id", t.ID)
+					// Delete the trigger if we can't find the workflow
+					if err := tx.Delete(&t).Error; err != nil {
+						o.logger.ErrorContext(ctx, "failed to delete trigger", "error", err, "trigger_id", t.ID)
+					}
 					continue
 				}
 
@@ -214,7 +218,9 @@ func (o *Orchestrator) calculateNextRunTime(t db.WorkflowTrigger) (*time.Time, *
 		// Parse the RRule string
 		rule, err := rrule.StrToRRule(ruleStr)
 		if err != nil {
-			return nil, &ruleStr, t.Cron, errors.New("invalid RRule format, rrule: " + ruleStr + " error: " + err.Error())
+			return nil, &ruleStr, t.Cron, errors.New(
+				"invalid RRule format, rrule: " + ruleStr + " error: " + err.Error(),
+			)
 		}
 
 		// If we have a last run time, use it as the start time
@@ -311,6 +317,10 @@ func (o *Orchestrator) processRepositoryEvent(ctx context.Context, event *lakefs
 			var workflow db.Workflow
 			if err := tx.Where("schedule_id = ?", t.ScheduleID).First(&workflow).Error; err != nil {
 				o.logger.ErrorContext(ctx, "failed to get workflow for trigger", "error", err, "trigger_id", t.ID)
+				// Delete the trigger if we can't find the workflow
+				if err := tx.Delete(&t).Error; err != nil {
+					o.logger.ErrorContext(ctx, "failed to delete trigger", "error", err, "trigger_id", t.ID)
+				}
 				continue
 			}
 
@@ -357,6 +367,10 @@ func (o *Orchestrator) processWorkerEvent(ctx context.Context, event *WorkerEven
 				var workflow db.Workflow
 				if err := tx.Where("schedule_id = ?", t.ScheduleID).First(&workflow).Error; err != nil {
 					o.logger.ErrorContext(ctx, "failed to get workflow for trigger", "error", err, "trigger_id", t.ID)
+					// Delete the trigger if we can't find the workflow
+					if err := tx.Delete(&t).Error; err != nil {
+						o.logger.ErrorContext(ctx, "failed to delete trigger", "error", err, "trigger_id", t.ID)
+					}
 					continue
 				}
 

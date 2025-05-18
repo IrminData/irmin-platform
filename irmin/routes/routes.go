@@ -42,7 +42,7 @@ func RegisterAPIRoutes(
 	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)
 
 	// System routes
-	system := app.Group("/system")
+	system := v1.Group("/system")
 	system.Post("/webhook", apiControllers.SystemWebhook)
 
 	// Profile routes

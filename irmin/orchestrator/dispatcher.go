@@ -141,7 +141,12 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 		}
 
 		// Update status to 'initiating' with a timestamp and claim info
-		return o.updateWorkflowRunStatus(tx, &run)
+		run.Status = db.WorkflowStatusInitiating
+		if err := tx.Save(&run).Error; err != nil {
+			return fmt.Errorf("failed to update run status: %w", err)
+		}
+
+		return nil
 	})
 
 	if err != nil {
@@ -152,9 +157,11 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 	if run.ID != 0 {
 		if err := o.dispatchRun(ctx, &run); err != nil {
 			// If dispatch fails, we should mark the run as failed
-			if updateErr := o.markWorkflowRunFailed(ctx, &run, err); updateErr != nil {
+			run.Status = db.WorkflowStatusError
+			run.UpdatedAt = time.Now()
+			if err := o.db.WithContext(ctx).Save(&run).Error; err != nil {
 				o.logger.ErrorContext(ctx, "failed to update run status after dispatch error",
-					"error", updateErr,
+					"error", err,
 					"run_id", run.ID)
 			}
 			return fmt.Errorf("failed to dispatch run: %w", err)
@@ -188,40 +195,10 @@ func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, runID 
 	return nil
 }
 
-// updateWorkflowRunStatus updates the status of a workflow run.
-func (o *Orchestrator) updateWorkflowRunStatus(tx *gorm.DB, run *db.WorkflowRun) error {
-	now := time.Now()
-	if err := tx.Model(run).
-		Updates(map[string]any{
-			"status":     db.WorkflowStatusInitiating,
-			"updated_at": now,
-			"claimed_at": now,
-			"claimed_by": o.env.URL, // Use the instance URL as a unique identifier
-		}).Error; err != nil {
-		return fmt.Errorf("failed to update run status: %w", err)
-	}
-	return nil
-}
-
-// markWorkflowRunFailed marks a workflow run as failed.
-func (o *Orchestrator) markWorkflowRunFailed(ctx context.Context, run *db.WorkflowRun, err error) error {
-	if updateErr := o.db.WithContext(ctx).Model(run).
-		Updates(map[string]any{
-			"status":     db.WorkflowStatusError,
-			"updated_at": time.Now(),
-			"error":      err.Error(),
-		}).Error; updateErr != nil {
-		o.logger.ErrorContext(ctx, "failed to update run status after dispatch error",
-			"error", updateErr,
-			"run_id", run.ID)
-	}
-	return err
-}
-
 // dispatchRun dispatches a run to the /dispatch endpoint of the API.
 func (o *Orchestrator) dispatchRun(ctx context.Context, run *db.WorkflowRun) error {
 	// Initialise the Irmin client with the system API key.
-	client := irmincore.NewClient(o.env.URL, o.env.SystemToken, "en")
+	client := irmincore.NewClient(fmt.Sprintf("%s/api", o.env.URL), o.env.SystemToken, "en")
 
 	// Build the dispatch event.
 	dispatchEvent := DispatchEvent{
