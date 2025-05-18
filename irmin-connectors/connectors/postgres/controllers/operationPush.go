@@ -25,16 +25,15 @@ import (
 // It reads a zip file from the request, unzips it, and then reads each JSON file within it.
 // It then executes a transaction to delete existing rows and insert the new records.
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	// get the operation from the context
-	opValue := c.Locals("operation")
-	operation, ok := opValue.(*db.Operation)
+	// Get the operation from the context
+	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Invalid operation type in context",
 		})
 	}
 
-	// initialise Postgres client
+	// Initialise Postgres client
 	ctx := c.Context()
 	client, databaseName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
 	if err != nil {
@@ -44,7 +43,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	}
 	defer client.Close()
 
-	// process path
+	// Process path
 	path, err := processPath(c, databaseName)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -52,7 +51,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 		})
 	}
 
-	// get available tables
+	// Get available tables
 	tables, err := client.GetTables(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -60,7 +59,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 		})
 	}
 
-	// handle uploaded file
+	// Handle uploaded file
 	files, err := handleUploadedFile(c)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -68,7 +67,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 		})
 	}
 
-	// process each file
+	// Process each file
 	keys := make([]string, 0, len(files))
 	for k := range files {
 		keys = append(keys, k)
@@ -78,7 +77,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	for _, filePath := range keys {
 		tableName := processTableName(filePath, databaseName)
 
-		// skip if we're targeting a specific path and this isn't it
+		// Skip if we're targeting a specific path and this isn't it
 		if path != "" && tableName != path {
 			continue
 		}

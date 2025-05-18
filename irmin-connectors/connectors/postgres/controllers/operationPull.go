@@ -22,9 +22,8 @@ import (
 // - a single table as a JSON attachment,
 // - a single row (by "id") as a JSON attachment.
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	// get the operation from the context
-	opValue := c.Locals("operation")
-	operation, ok := opValue.(*db.Operation)
+	// Get the operation from the context
+	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Invalid operation type in context",

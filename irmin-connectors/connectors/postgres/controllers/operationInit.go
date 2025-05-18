@@ -12,9 +12,8 @@ import (
 
 // OperationInit handles the initialization of a new operation.
 func (cs *Controllers) OperationInit(c fiber.Ctx) error {
-	// get the connector info from the context
-	infoValue := c.Locals("connectorInfo")
-	info, ok := infoValue.(*models.ConnectorDetails)
+	// Get the connector info from the context
+	info, ok := c.Locals("connectorInfo").(*models.ConnectorDetails)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Invalid connector info type in context",

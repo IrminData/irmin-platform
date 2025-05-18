@@ -18,9 +18,8 @@ import (
 
 // OperationPatch handles the "patch" operation.
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
-	// get the operation from the context
-	opValue := c.Locals("operation")
-	operation, ok := opValue.(*db.Operation)
+	// Get the operation from the context
+	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Invalid operation type in context",

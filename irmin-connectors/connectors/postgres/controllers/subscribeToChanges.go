@@ -10,20 +10,12 @@ import (
 
 // SubscribeToChanges subscribes to changes for a given operation.
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
-	// get the connector registration and operation from the context
-	regValue := c.Locals("registration")
-	registration, ok := regValue.(*db.ConnectorRegistration)
-	if !ok {
+	// Get the connector registration and operation from the context
+	registration, registrationOk := c.Locals("registration").(*db.ConnectorRegistration)
+	operation, operationOk := c.Locals("operation").(*db.Operation)
+	if !registrationOk || !operationOk {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid registration type in context",
-		})
-	}
-
-	opValue := c.Locals("operation")
-	operation, ok := opValue.(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
+			"error": "Invalid registration or operation type in context",
 		})
 	}
 

@@ -17,19 +17,18 @@ import (
 // It expects an operation token in the form, and on success writes
 // a JSON response with Content-Type: application/json.
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	// get the operation from the context
-	opValue := c.Locals("operation")
-	operation, ok := opValue.(*db.Operation)
+	// Get the operation from the context
+	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Invalid operation type in context",
 		})
 	}
 
-	// get the context
+	// Get the context
 	ctx := c.Context()
 
-	// initialise Postgres client
+	// Initialise Postgres client
 	client, dbName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
 	if err != nil || client == nil || dbName == nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -38,7 +37,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	}
 	defer client.Close()
 
-	// list tables
+	// List tables
 	tables, err := client.GetTables(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -46,7 +45,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		})
 	}
 
-	// build a child ObjectSchema for each table
+	// Build a child ObjectSchema for each table
 	children := make([]irminmodels.ObjectSchema, 0, len(tables))
 	for _, tbl := range tables {
 		var cols []postgresclient.ColumnInfo
@@ -57,7 +56,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 			})
 		}
 
-		// map each column to a JSONSchema property
+		// Map each column to a JSONSchema property
 		props := make(map[string]irminmodels.JSONSchema, len(cols))
 		required := []string{}
 		for _, col := range cols {
@@ -69,14 +68,14 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 			}
 		}
 
-		// row object schema
+		// Row object schema
 		rowSchema := irminmodels.JSONSchema{
 			Type:       "object",
 			Properties: props,
 			Required:   required,
 		}
 
-		// table array schema
+		// Table array schema
 		arraySchema := irminmodels.JSONSchema{
 			Type:  "array",
 			Items: &rowSchema,
@@ -92,7 +91,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		})
 	}
 
-	// assemble group schema
+	// Assemble group schema
 	group := irminmodels.ObjectSchema{
 		Type: irminmodels.ObjectTypeGroup,
 		Name: *dbName,
@@ -103,7 +102,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		Children: children,
 	}
 
-	// write JSON response
+	// Write JSON response
 	c.Set("Content-Type", "application/json")
 	if err = json.NewEncoder(c.Response().BodyWriter()).Encode(group); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

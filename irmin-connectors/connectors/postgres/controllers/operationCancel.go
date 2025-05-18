@@ -10,9 +10,8 @@ import (
 
 // OperationCancel handles the cancellation of an operation.
 func (cs *Controllers) OperationCancel(c fiber.Ctx) error {
-	// get the connector info from the context
-	infoValue := c.Locals("connectorInfo")
-	info, ok := infoValue.(*models.ConnectorDetails)
+	// Get the connector info from the context
+	info, ok := c.Locals("connectorInfo").(*models.ConnectorDetails)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Invalid connector info type in context",

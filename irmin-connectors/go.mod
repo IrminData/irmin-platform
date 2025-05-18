@@ -3,9 +3,9 @@ module irmin-connectors
 go 1.23.1
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250513202123-520a8d409d7f
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250514194922-36cb1175a19d
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	gorm.io/datatypes v1.2.5
 	gorm.io/driver/postgres v1.5.11
@@ -19,7 +19,7 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
-	github.com/gofiber/schema v1.3.0 // indirect
+	github.com/gofiber/schema v1.4.0 // indirect
 	github.com/gofiber/utils/v2 v2.0.0-beta.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
