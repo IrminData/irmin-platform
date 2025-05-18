@@ -15,6 +15,7 @@ type CoreAPIEnv struct {
 	URL                      string // URL of the Core API server
 	SystemToken              string // Token to authenticate system requests to the API
 	CorsEnabled              bool   // Flag to enable CORS
+	PreforkEnabled           bool   // Flag to enable prefork
 	HelmetEnabled            bool   // Flag to enable helmet
 	CorsOrigins              string // Allowed origins for CORS
 	OrchestratorEnabled      bool   // Flag to enable the orchestrator
@@ -102,6 +103,14 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	preforkEnabledStr, err := getEnv("PREFORK_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	preforkEnabled, err := strconv.ParseBool(preforkEnabledStr)
+	if err != nil {
+		return nil, err
+	}
 	helmetEnabledStr, err := getEnv("HELMET_ENABLED", false, "false")
 	if err != nil {
 		return nil, err
@@ -258,6 +267,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		URL:                      url,
 		SystemToken:              token,
 		CorsEnabled:              corsEnabled,
+		PreforkEnabled:           preforkEnabled,
 		HelmetEnabled:            helmetEnabled,
 		CorsOrigins:              corsOrigins,
 		OrchestratorEnabled:      orchestratorEnabled,

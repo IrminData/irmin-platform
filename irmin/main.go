@@ -134,7 +134,9 @@ func main() {
 
 	// Start the server in a goroutine
 	go func() {
-		if err := app.Listen(":" + env.Port); err != nil {
+		if err := app.Listen(":"+env.Port, fiber.ListenConfig{
+			EnablePrefork: env.PreforkEnabled,
+		}); err != nil {
 			log.Printf("Server error: %v", err)
 		}
 	}()

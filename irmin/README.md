@@ -64,6 +64,7 @@ PORT=8082 # Port to run the API server on
 URL=http://localhost:8082 # URL of the API server
 TOKEN=... # Token to authenticate system requests to the API
 
+PREFORK_ENABLED=true # Enable prefork
 HELMET_ENABLED=true # Enable helmet
 CORS_ENABLED=true # Enable CORS
 CORS_ORIGINS=https://console.irmin.dev,https://connectors.irmin.dev # Allowed origins for CORS
