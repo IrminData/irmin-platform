@@ -13,6 +13,7 @@ import (
 type ConnectorsEnv struct {
 	Port                     string // Port to run the connectors server on
 	URL                      string // URL of the connectors server
+	PreforkEnabled           bool   // Whether prefork is enabled
 	HelmetEnabled            bool   // Whether helmet is enabled
 	CorsEnabled              bool   // Whether CORS is enabled
 	CorsOrigins              string // Origins allowed to access the connectors server
@@ -76,6 +77,14 @@ func LoadEnv() (*ConnectorsEnv, error) {
 		return nil, err
 	}
 
+	preforkEnabledStr, err := getEnv("PREFORK_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	preforkEnabled, err := strconv.ParseBool(preforkEnabledStr)
+	if err != nil {
+		return nil, err
+	}
 	helmetEnabledStr, err := getEnv("HELMET_ENABLED", false, "false")
 	if err != nil {
 		return nil, err
@@ -114,6 +123,7 @@ func LoadEnv() (*ConnectorsEnv, error) {
 	return &ConnectorsEnv{
 		Port:                     port,
 		URL:                      url,
+		PreforkEnabled:           preforkEnabled,
 		HelmetEnabled:            helmetEnabled,
 		CorsEnabled:              corsEnabled,
 		CorsOrigins:              corsOrigins,

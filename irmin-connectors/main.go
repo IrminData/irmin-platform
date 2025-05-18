@@ -183,7 +183,9 @@ func main() {
 	// Start the server
 	go func() {
 		log.Printf("Server starting on port %s...", app.Env.Port)
-		log.Fatal(app.App.Listen(":" + app.Env.Port))
+		log.Fatal(app.App.Listen(":"+app.Env.Port, fiber.ListenConfig{
+			EnablePrefork: app.Env.PreforkEnabled,
+		}))
 	}()
 
 	if initConnErr := initializeConnectors(app, *skipRegistrations); initConnErr != nil {
