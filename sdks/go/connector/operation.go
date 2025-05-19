@@ -74,10 +74,10 @@ func (c *Client) InitOperation(details map[string]string, settings map[string]st
 //
 // Returns:
 // - An error if the operation cannot be cancelled.
-func (c *Client) CancelOperation(operationID int) error {
+func (c *Client) CancelOperation(operationID uint) error {
 	// Prepare form fields by formatting keys with the appropriate prefixes.
 	formFields := map[string]string{
-		"operation_id": strconv.FormatInt(int64(operationID), 10),
+		"operation_id": strconv.FormatUint(uint64(operationID), 10),
 	}
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
@@ -104,9 +104,9 @@ func (c *Client) CancelOperation(operationID int) error {
 // Returns:
 // - The status of the operation if the request is successful.
 // - An error if the operation cannot be retrieved.
-func (c *Client) GetOperationStatus(operationID int) (*OperationStatus, error) {
+func (c *Client) GetOperationStatus(operationID uint) (*OperationStatus, error) {
 	formFields := map[string]string{
-		"operation_id": strconv.FormatInt(int64(operationID), 10),
+		"operation_id": strconv.FormatUint(uint64(operationID), 10),
 	}
 
 	var operationStatus OperationStatus
