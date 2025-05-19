@@ -108,28 +108,44 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 		case event := <-o.dispatchedEventQueue:
 			o.logger.InfoContext(ctx, "received dispatched event", "event", event)
 
-			if err := o.ExecuteDispatchedEvent(ctx, event); err != nil {
+			// Create a new context for the dispatched event
+			dispatchedCtx := context.Background()
+
+			// Execute the dispatched event
+			if err := o.ExecuteDispatchedEvent(dispatchedCtx, event); err != nil {
 				o.logger.ErrorContext(ctx, "error executing dispatched event", "error", err)
 			}
 
 		case event := <-o.lakefsEventQueue:
 			o.logger.InfoContext(ctx, "received lakefs event", "event", event)
 
-			if err := o.processRepositoryEvent(ctx, event); err != nil {
+			// Create a new context for the lakefs event
+			lakefsCtx := context.Background()
+
+			// Process the lakefs event
+			if err := o.processRepositoryEvent(lakefsCtx, event); err != nil {
 				o.logger.ErrorContext(ctx, "error processing repository event", "error", err)
 			}
 
 		case event := <-o.workerEventQueue:
 			o.logger.InfoContext(ctx, "received worker event", "event", event)
 
-			if err := o.processWorkerEvent(ctx, event); err != nil {
+			// Create a new context for the worker event
+			workerCtx := context.Background()
+
+			// Process the worker event
+			if err := o.processWorkerEvent(workerCtx, event); err != nil {
 				o.logger.ErrorContext(ctx, "error processing worker event", "error", err)
 			}
 
 		case <-ticker.C:
 			o.logger.InfoContext(ctx, "running trigger scan")
 
-			if err := o.processTimeTriggers(ctx); err != nil {
+			// Create a new context for the trigger scan
+			triggerScanCtx := context.Background()
+
+			// Process the time triggers
+			if err := o.processTimeTriggers(triggerScanCtx); err != nil {
 				o.logger.ErrorContext(ctx, "error processing time triggers", "error", err)
 			}
 		}
@@ -154,7 +170,8 @@ func (o *Orchestrator) processTimeTrigger(ctx context.Context, tx *gorm.DB, t *d
 	}
 
 	// Create workflow run if trigger is due
-	if t.NextRun.Before(time.Now()) || t.NextRun.Equal(time.Now()) {
+	now := time.Now()
+	if t.NextRun.Before(now) || t.NextRun.Equal(now) {
 		if err := o.createWorkflowRunForTimeTrigger(ctx, tx, t); err != nil {
 			o.logger.ErrorContext(
 				ctx,
@@ -314,7 +331,8 @@ func (o *Orchestrator) createWorkflowRunForTimeTrigger(ctx context.Context, tx *
 	o.logger.InfoContext(ctx, "created workflow run", "run_id", run.ID)
 
 	// Update trigger for next run
-	t.LastRun = t.NextRun
+	now := time.Now()
+	t.LastRun = &now
 	nextRun, ruleStr, cronStr, calculateNextRunTimeErr := o.calculateNextRunTime(*t)
 	if calculateNextRunTimeErr != nil {
 		o.logger.ErrorContext(

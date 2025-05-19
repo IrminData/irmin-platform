@@ -32,7 +32,7 @@ func (o *Orchestrator) ExecuteDispatchedEvent(ctx context.Context, event *Dispat
 		}
 
 		// Get the workflow from the database
-		workflow, err := o.db.GetWorkflowByID(workflowRun.WorkflowID)
+		workflow, err := o.db.GetWorkflowByID(*event.WorkflowID)
 		if err != nil {
 			return err
 		}
@@ -48,6 +48,7 @@ func (o *Orchestrator) ExecuteDispatchedEvent(ctx context.Context, event *Dispat
 		// Execute the workflow
 		_, err = o.ExecuteWorkflow(ctx, workflow, workflowRun)
 		if err != nil {
+			o.logger.ErrorContext(ctx, "error executing workflow", "error", err)
 			return err
 		}
 

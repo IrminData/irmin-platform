@@ -21,20 +21,20 @@ func (o *Orchestrator) ExecuteWorkflow(
 		return nil, errors.New("workflow or run is nil")
 	}
 
-	workflowCtx, cancelWorkflow := context.WithCancel(ctx)
-	defer cancelWorkflow()
-
+	// Listen for status changes
 	statusChan := make(chan string, 1)
 	go func() {
-		if err := o.listenForStatusChanges(workflowCtx, o.db, run.ID, statusChan); err != nil {
+		if err := o.listenForStatusChanges(ctx, o.db, run.ID, statusChan); err != nil {
 			o.logger.Error("failed to listen for status changes", "error", err)
 		}
 	}()
 
+	// Set a timeout for the workflow
 	maxRuntime := o.getMaxRuntime(workflow)
-	timeoutCtx, cancelTimeout := context.WithTimeout(workflowCtx, time.Duration(maxRuntime)*time.Second)
+	timeoutCtx, cancelTimeout := context.WithTimeout(ctx, time.Duration(maxRuntime)*time.Second)
 	defer cancelTimeout()
 
+	// Execute the workflow
 	resultChan := make(chan *db.WorkflowRun)
 	errChan := make(chan error)
 

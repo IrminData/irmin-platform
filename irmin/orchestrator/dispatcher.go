@@ -24,6 +24,7 @@ const (
 type DispatchEvent struct {
 	Timestamp     time.Time         `json:"timestamp"`
 	EventType     DispatchEventType `json:"event_type"`
+	WorkflowID    *uint             `json:"workflow_id,omitempty"`
 	WorkflowRunID *uint             `json:"workflow_run_id,omitempty"`
 }
 
@@ -61,9 +62,7 @@ func (o *Orchestrator) startNotificationListener(ctx context.Context, notificati
 	go func() {
 		for {
 			// Wait for notification with timeout
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, NotificationTimeout)
-			notification, waitForNotificationErr := o.db.WaitForNotification(ctxWithTimeout, "workflow_run_status")
-			cancel()
+			notification, waitForNotificationErr := o.db.WaitForNotification(ctx, "workflow_run_status")
 
 			if waitForNotificationErr != nil {
 				if errors.Is(waitForNotificationErr, context.DeadlineExceeded) {
@@ -154,6 +153,9 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 	})
 
 	if processWorkflowRunErr != nil {
+		o.logger.ErrorContext(ctx, "failed to process workflow run",
+			"error", processWorkflowRunErr,
+			"run_id", notification.ID)
 		return fmt.Errorf("failed to process workflow run: %w", processWorkflowRunErr)
 	}
 
@@ -176,24 +178,19 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 }
 
 // claimWorkflowRun attempts to claim a workflow run using proper locking.
-func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, runID uint, run *db.WorkflowRun) error {
+func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, id uint, run *db.WorkflowRun) error {
 	if claimWorkflowRunErr := tx.Clauses(clause.Locking{
 		Strength: "UPDATE",
 		Options:  "SKIP LOCKED",
-	}).Where("id = ? AND status = ? AND deleted_at IS NULL", runID, db.WorkflowStatusPending).
-		First(run).Error; claimWorkflowRunErr != nil {
+	}).Where("id = ? AND status = ? AND deleted_at IS NULL", id, db.WorkflowStatusPending).
+		First(&run).Error; claimWorkflowRunErr != nil {
 		if errors.Is(claimWorkflowRunErr, gorm.ErrRecordNotFound) {
 			// Job was already claimed by another dispatcher
 			o.logger.DebugContext(ctx, "job already claimed by another dispatcher",
-				"run_id", runID)
+				"run_id", id)
 			return nil
 		}
 		return fmt.Errorf("failed to claim job: %w", claimWorkflowRunErr)
-	}
-
-	// Double-check the status hasn't changed
-	if run.Status != db.WorkflowStatusPending {
-		return nil
 	}
 
 	return nil
@@ -201,6 +198,13 @@ func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, runID 
 
 // dispatchRun dispatches a run to the /dispatch endpoint of the API.
 func (o *Orchestrator) dispatchRun(ctx context.Context, run *db.WorkflowRun) error {
+	if run == nil {
+		return errors.New("run is nil")
+	}
+	if run.ID == 0 {
+		return errors.New("run id is 0")
+	}
+
 	// Initialise the Irmin client with the system API key.
 	client := irmincore.NewClient(fmt.Sprintf("%s/api", o.env.URL), o.env.SystemToken, "en")
 
@@ -209,6 +213,7 @@ func (o *Orchestrator) dispatchRun(ctx context.Context, run *db.WorkflowRun) err
 		Timestamp:     time.Now(),
 		EventType:     DispatchEventTypeWorkflowRun,
 		WorkflowRunID: &run.ID,
+		WorkflowID:    &run.WorkflowID,
 	}
 
 	// Dispatch the event.

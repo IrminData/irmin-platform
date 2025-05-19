@@ -78,6 +78,7 @@ type UnderlyingStorageProperties struct {
 func (c *Client) GetObjectContent(repositoryID, ref, objectPath string) (*ObjectContentResponse, error) {
 	// Build the endpoint with query parameter.
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects?path=%s", repositoryID, ref, url.QueryEscape(objectPath))
+	//nolint:bodyclose // we close the body in the caller
 	resp, err := c.doStreamRequest(
 		"GET",
 		endpoint,
@@ -88,7 +89,6 @@ func (c *Client) GetObjectContent(repositoryID, ref, objectPath string) (*Object
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	// Do not close resp.Body here as the caller is responsible for it.
 	return &ObjectContentResponse{
