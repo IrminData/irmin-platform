@@ -27,16 +27,16 @@ type LogEvent struct {
 	Description string       `json:"description"`
 
 	User          *User        `json:"user"            gorm:"foreignKey:UserID"`
-	UserID        *uint        `json:"user_id"`
+	UserID        *uint        `json:"user_id"         gorm:"index"`
 	Workspace     *Workspace   `json:"workspace"       gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID   *uint        `json:"workspace_id"`
+	WorkspaceID   *uint        `json:"workspace_id"    gorm:"index"`
 	Repository    *Repository  `json:"repository"      gorm:"foreignKey:RepositoryID"`
-	RepositoryID  *uint        `json:"repository_id"`
+	RepositoryID  *uint        `json:"repository_id"   gorm:"index"`
 	Workflow      *Workflow    `json:"workflow"        gorm:"foreignKey:WorkflowID"`
-	WorkflowID    *uint        `json:"workflow_id"`
+	WorkflowID    *uint        `json:"workflow_id"     gorm:"index"`
 	WorkflowRun   *WorkflowRun `json:"workflow_run"    gorm:"foreignKey:WorkflowRunID"`
-	WorkflowRunID *uint        `json:"workflow_run_id"`
-	ConnectionID  *uint        `json:"connection_id"`
+	WorkflowRunID *uint        `json:"workflow_run_id" gorm:"index"`
+	ConnectionID  *uint        `json:"connection_id"   gorm:"index"`
 	Connection    *Connection  `json:"connection"      gorm:"foreignKey:ConnectionID"`
 }
 

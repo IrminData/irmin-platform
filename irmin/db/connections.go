@@ -12,8 +12,8 @@ type ConnectionSchemaCache struct {
 
 	Schema       *irminmodels.ObjectSchema `json:"schema,omitempty"        gorm:"type:jsonb;serializer:json"`
 	OpMethod     *string                   `json:"op_method,omitempty"`
-	ConnectionID uint                      `json:"connection_id,omitempty"`
-	Connection   Connection                `json:"connection,omitempty"    gorm:"foreignKey:ConnectionID"`
+	ConnectionID uint                      `json:"connection_id,omitempty" gorm:"index"`
+	Connection   Connection                `json:"connection"              gorm:"foreignKey:ConnectionID"`
 }
 
 type Connection struct {
@@ -25,11 +25,11 @@ type Connection struct {
 	Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:json"`
 	Settings      CustomFieldValues       `json:"settings,omitempty"      gorm:"type:jsonb;serializer:json"`
 	OwnerID       uint                    `json:"owner_id,omitempty"`
-	Owner         User                    `json:"owner,omitempty"         gorm:"foreignKey:OwnerID"`
-	WorkspaceID   uint                    `json:"workspace_id,omitempty"`
-	Workspace     Workspace               `json:"workspace,omitempty"     gorm:"foreignKey:WorkspaceID"`
+	Owner         User                    `json:"owner"                   gorm:"foreignKey:OwnerID"`
+	WorkspaceID   uint                    `json:"workspace_id,omitempty"  gorm:"index"`
+	Workspace     Workspace               `json:"workspace"               gorm:"foreignKey:WorkspaceID"`
 	ConnectorID   uint                    `json:"connector_id,omitempty"`
-	Connector     Connector               `json:"connector,omitempty"     gorm:"foreignKey:ConnectorID"`
+	Connector     Connector               `json:"connector"               gorm:"foreignKey:ConnectorID"`
 	SchemaCache   []ConnectionSchemaCache `json:"schema_cache,omitempty"  gorm:"foreignKey:ConnectionID"`
 }
 

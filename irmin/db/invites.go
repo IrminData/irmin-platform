@@ -9,7 +9,7 @@ import (
 type Invite struct {
 	gorm.Model
 
-	Email       string            `json:"email"`
+	Email       string            `json:"email"         gorm:"index"`
 	ClerkID     string            `json:"clerk_id"`
 	AcceptedAt  *time.Time        `json:"accepted_at"`
 	DeclinedAt  *time.Time        `json:"declined_at"`
@@ -18,7 +18,7 @@ type Invite struct {
 	InvitedBy   User              `json:"invited_by"    gorm:"foreignKey:InvitedByID"`
 	InvitedByID uint              `json:"invited_by_id"`
 	Workspace   Workspace         `json:"workspace"     gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID uint              `json:"workspace_id"`
+	WorkspaceID uint              `json:"workspace_id"  gorm:"index"`
 }
 
 func (d *Database) GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {

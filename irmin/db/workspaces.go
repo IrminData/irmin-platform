@@ -11,7 +11,7 @@ type Workspace struct {
 	Slug        string          `json:"slug"        gorm:"uniqueIndex"`
 	Description string          `json:"description"`
 	Owner       User            `json:"owner"       gorm:"foreignKey:OwnerID"`
-	OwnerID     uint            `json:"owner_id"`
+	OwnerID     uint            `json:"owner_id"    gorm:"index"`
 	Users       []WorkspaceUser `json:"users"       gorm:"foreignKey:WorkspaceID"`
 }
 

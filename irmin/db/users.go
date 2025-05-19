@@ -28,9 +28,9 @@ type User struct {
 
 type WorkspaceUser struct {
 	gorm.Model
-	UserID      uint                `json:"user_id"`
+	UserID      uint                `json:"user_id"      gorm:"index"`
 	User        User                `json:"user"         gorm:"foreignKey:UserID"`
-	WorkspaceID uint                `json:"workspace_id"`
+	WorkspaceID uint                `json:"workspace_id" gorm:"index"`
 	Workspace   Workspace           `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
 	Roles       []UserWorkspaceRole `json:"roles"        gorm:"type:jsonb;serializer:json"`
 }

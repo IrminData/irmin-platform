@@ -8,7 +8,7 @@ type Connector struct {
 	gorm.Model
 
 	// Base URL for the connector's REST API
-	APIBaseURL string `json:"api_base_url"`
+	APIBaseURL string `json:"api_base_url"               gorm:"index"`
 	// Token to authenticate system requests to the Connector's API
 	SystemToken string `json:"system_token"`
 	// Name of the connector

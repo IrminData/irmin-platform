@@ -136,35 +136,17 @@ func (d *Database) migrateModels(models ...any) error {
 // Migrate runs the auto migration calls in the correct order.
 // It separates the migrations into groups based on model dependencies.
 func (d *Database) Migrate() error {
-	// Core models (no dependencies)
-	coreModels := []any{
-		&Workspace{},
-		&User{},
+	models := []any{
 		&Connector{},
+		&Workspace{},
 		&WorkspaceUser{},
+		&User{},
 		&APIToken{},
 		&Connection{},
-		&ConnectionSchemaCache{},
 		&Invite{},
-	}
-	if err := d.migrateModels(coreModels...); err != nil {
-		return err
-	}
-
-	// Repository related models
-	repoModels := []any{
 		&Repository{},
-		&RepositorySchemaCache{},
-	}
-	if err := d.migrateModels(repoModels...); err != nil {
-		return err
-	}
-
-	// Workflow related models
-	workflowModels := []any{
 		&ImportWorkflowable{},
 		&ExportWorkflowable{},
-		&ActionWorkflowableInput{},
 		&ActionWorkflowable{},
 		&PipelineStage{},
 		&PipelineWorkflowable{},
@@ -172,17 +154,16 @@ func (d *Database) Migrate() error {
 		&Schedule{},
 		&WorkflowTrigger{},
 		&WorkflowRun{},
+		&StoredQuery{},
+		&LogEvent{},
+		&ConnectionSchemaCache{},
+		&RepositorySchemaCache{},
 	}
-	if err := d.migrateModels(workflowModels...); err != nil {
+	if err := d.migrateModels(models...); err != nil {
 		return err
 	}
 
-	// Additional models
-	additionalModels := []any{
-		&StoredQuery{},
-		&LogEvent{},
-	}
-	return d.migrateModels(additionalModels...)
+	return nil
 }
 
 // Reset drops all tables to start fresh.
@@ -208,6 +189,8 @@ func (d *Database) Reset() error {
 		&WorkflowRun{},
 		&StoredQuery{},
 		&LogEvent{},
+		&ConnectionSchemaCache{},
+		&RepositorySchemaCache{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
 	}

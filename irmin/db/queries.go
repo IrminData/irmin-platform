@@ -12,7 +12,7 @@ type StoredQuery struct {
 	Owner       User      `json:"owner"        gorm:"foreignKey:OwnerID"`
 	OwnerID     uint      `json:"owner_id"`
 	Workspace   Workspace `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID uint      `json:"workspace_id"`
+	WorkspaceID uint      `json:"workspace_id" gorm:"index"`
 }
 
 func (d *Database) GetStoredQueryByID(id uint) (*StoredQuery, error) {

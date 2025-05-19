@@ -32,30 +32,30 @@ type Workflow struct {
 	Description   string                `json:"description"`
 	Documentation string                `json:"documentation"`
 	Paused        bool                  `json:"paused"`
-	Type          WorkflowableType      `json:"type"`
+	Type          WorkflowableType      `json:"type"                  gorm:"index"`
 	Workspace     Workspace             `json:"workspace"             gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID   uint                  `json:"workspace_id"`
+	WorkspaceID   uint                  `json:"workspace_id"          gorm:"index"`
 	Owner         User                  `json:"owner"                 gorm:"foreignKey:OwnerID"`
 	OwnerID       uint                  `json:"owner_id"`
 	Schedule      *Schedule             `json:"schedule,omitempty"    gorm:"foreignKey:ScheduleID"`
-	ScheduleID    *uint                 `json:"schedule_id,omitempty"`
+	ScheduleID    *uint                 `json:"schedule_id,omitempty" gorm:"index"`
 	Import        *ImportWorkflowable   `json:"import,omitempty"      gorm:"foreignKey:ImportID"`
-	ImportID      *uint                 `json:"import_id,omitempty"`
+	ImportID      *uint                 `json:"import_id,omitempty"   gorm:"index"`
 	Export        *ExportWorkflowable   `json:"export,omitempty"      gorm:"foreignKey:ExportID"`
-	ExportID      *uint                 `json:"export_id,omitempty"`
+	ExportID      *uint                 `json:"export_id,omitempty"   gorm:"index"`
 	Action        *ActionWorkflowable   `json:"action,omitempty"      gorm:"foreignKey:ActionID"`
-	ActionID      *uint                 `json:"action_id,omitempty"`
+	ActionID      *uint                 `json:"action_id,omitempty"   gorm:"index"`
 	Pipeline      *PipelineWorkflowable `json:"pipeline,omitempty"    gorm:"foreignKey:PipelineID"`
-	PipelineID    *uint                 `json:"pipeline_id,omitempty"`
+	PipelineID    *uint                 `json:"pipeline_id,omitempty" gorm:"index"`
 }
 
 type ImportWorkflowable struct {
 	gorm.Model
 	Connection     Connection `json:"connection"      gorm:"foreignKey:ConnectionID"`
-	ConnectionID   uint       `json:"connection_id"`
+	ConnectionID   uint       `json:"connection_id"   gorm:"index"`
 	ConnectionPath string     `json:"connection_path"`
 	Repository     Repository `json:"repository"      gorm:"foreignKey:RepositoryID"`
-	RepositoryID   uint       `json:"repository_id"`
+	RepositoryID   uint       `json:"repository_id"   gorm:"index"`
 	Branch         string     `json:"branch"`
 	Path           string     `json:"path"`
 }
@@ -63,10 +63,10 @@ type ImportWorkflowable struct {
 type ExportWorkflowable struct {
 	gorm.Model
 	Connection     Connection `json:"connection"      gorm:"foreignKey:ConnectionID"`
-	ConnectionID   uint       `json:"connection_id"`
+	ConnectionID   uint       `json:"connection_id"   gorm:"index"`
 	ConnectionPath string     `json:"connection_path"`
 	Repository     Repository `json:"repository"      gorm:"foreignKey:RepositoryID"`
-	RepositoryID   uint       `json:"repository_id"`
+	RepositoryID   uint       `json:"repository_id"   gorm:"index"`
 	Branch         string     `json:"branch"`
 	Path           string     `json:"path"`
 }
@@ -74,7 +74,7 @@ type ExportWorkflowable struct {
 type ActionWorkflowableInput struct {
 	gorm.Model
 	Repository           Repository          `json:"repository"             gorm:"foreignKey:RepositoryID"`
-	RepositoryID         uint                `json:"repository_id"`
+	RepositoryID         uint                `json:"repository_id"          gorm:"index"`
 	Ref                  string              `json:"ref"`
 	Path                 string              `json:"path"`
 	ActionWorkflowable   *ActionWorkflowable `json:"action_workflowable"    gorm:"foreignKey:ActionWorkflowableID"`
@@ -85,7 +85,7 @@ type ActionWorkflowable struct {
 	gorm.Model
 	Executable   string                    `json:"executable"`
 	Repository   *Repository               `json:"repository,omitempty"    gorm:"foreignKey:RepositoryID"`
-	RepositoryID *uint                     `json:"repository_id,omitempty"`
+	RepositoryID *uint                     `json:"repository_id,omitempty" gorm:"index"`
 	Branch       *string                   `json:"branch,omitempty"`
 	Path         *string                   `json:"path,omitempty"`
 	Inputs       []ActionWorkflowableInput `json:"inputs"                  gorm:"foreignKey:ActionWorkflowableID"`
@@ -112,7 +112,7 @@ type PipelineStage struct {
 	Write         bool                  `json:"write"`
 	Read          bool                  `json:"read"`
 	Pipeline      *PipelineWorkflowable `json:"pipeline"                        gorm:"foreignKey:PipelineID"`
-	PipelineID    *uint                 `json:"pipeline_id"`
+	PipelineID    *uint                 `json:"pipeline_id"                     gorm:"index"`
 	Type          PipelineStageType     `json:"type"`
 	// Action
 	Executable *string `json:"executable,omitempty"`

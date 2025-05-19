@@ -11,22 +11,22 @@ type RepositorySchemaCache struct {
 	Path         string                    `json:"path,omitempty"`
 	Ref          string                    `json:"ref,omitempty"`
 	Schema       *irminmodels.ObjectSchema `json:"schema,omitempty"        gorm:"type:jsonb;serializer:json"`
-	RepositoryID uint                      `json:"repository_id,omitempty"`
-	Repository   Repository                `json:"repository,omitempty"    gorm:"foreignKey:RepositoryID"`
+	RepositoryID uint                      `json:"repository_id,omitempty" gorm:"index"`
+	Repository   Repository                `json:"repository"              gorm:"foreignKey:RepositoryID"`
 }
 
 type Repository struct {
 	gorm.Model
 
 	Name          string                  `json:"name"`
-	LakeFSRepoID  string                  `json:"lakefs_repo_id"`
+	LakeFSRepoID  string                  `json:"lakefs_repo_id"         gorm:"index"`
 	Slug          string                  `json:"slug"                   gorm:"uniqueIndex"`
 	Description   string                  `json:"description"`
 	Documentation string                  `json:"documentation"`
 	IsImmutable   bool                    `json:"is_immutable"`
 	DefaultBranch string                  `json:"default_branch"`
 	Workspace     Workspace               `json:"workspace"              gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID   uint                    `json:"workspace_id"`
+	WorkspaceID   uint                    `json:"workspace_id"           gorm:"index"`
 	Owner         User                    `json:"owner"                  gorm:"foreignKey:OwnerID"`
 	OwnerID       uint                    `json:"owner_id"`
 	SchemaCache   []RepositorySchemaCache `json:"schema_cache,omitempty" gorm:"foreignKey:RepositoryID"`
