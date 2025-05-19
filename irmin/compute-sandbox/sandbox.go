@@ -6,170 +6,158 @@ import (
 	"irmin-api/bucket"
 	"irmin-api/db"
 	"irmin-api/utils"
-	"log"
+	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 )
 
-// installGoSDK retrieves the Go SDK by running "go get" in the destination directory.
-// Returns an error if the installation fails.
-func installGoSDK(destDir string, projectName string) error {
-	// Prepare the module initialization command.
-	cmd := exec.Command("go", "mod", "init", projectName)
-	cmd.Dir = destDir // Set the working directory to the destination directory.
-	cmd.Run()
-	// Prepare the SDK installation command.
-	cmd = exec.Command(
-		"go",
-		"get",
-		"github.com/IrminData/irmin-sdk-go",
-		"github.com/IrminData/irmin-sdk-go/core-api",
-		"github.com/IrminData/irmin-sdk-go/utils",
-	)
-	cmd.Dir = destDir // Set the working directory to the destination directory.
-	// Run the command and capture combined output.
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to get go sdk: %w, output: %s", err, output)
+// ComputeSandbox is a struct that contains the environment, database, and logger for the compute sandbox.
+type ComputeSandbox struct {
+	// env is the environment for the compute sandbox.
+	env *utils.CoreAPIEnv
+	// d is the database for the compute sandbox.
+	d *db.Database
+	// logger is the logger for the compute sandbox.
+	logger *slog.Logger
+}
+
+// NewComputeSandbox creates a new ComputeSandbox.
+func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logger) *ComputeSandbox {
+	return &ComputeSandbox{
+		env:    env,
+		d:      d,
+		logger: logger,
 	}
-	log.Printf("Go SDK installed successfully in %s\n", destDir)
-	return nil
 }
 
 // ExecuteEditorItem executes the provided executable code in a sandbox environment.
 // It downloads the workspace files from the S3 bucket to a temporary directory,
 // executes the code using Docker, and returns the execution result.
-func ExecuteEditorItem(
+func (s *ComputeSandbox) ExecuteEditorItem(
 	ctx context.Context,
-	d *db.Database,
-	inputFiles map[string][]byte, // key is the file path, value is the file content
+	inputFiles map[string][]byte,
 	responsibleUser db.User,
 	executablePath, workspaceSlug string,
 ) (ExecutionResult, error) {
 	var result ExecutionResult
 
-	// Get the API URL from the environment variable.
-	env, err := utils.LoadEnv()
-	if err != nil {
-		return result, err
-	}
-	apiBaseURL := fmt.Sprintf("%s/api", env.URL)
-
-	// Initialize the bucket client
-	bucket, err := bucket.CreateBucketClient()
+	// Initialize bucket client
+	bucket, err := bucket.CreateClient(s.env)
 	if err != nil {
 		return result, err
 	}
 	defer bucket.Close()
 
-	// Generate a random temporary folder name (assuming GenerateRandomString exists)
-	tempDirName, err := utils.GenerateRandomString()
+	// Setup workspace files
+	workspaceTempDir, err := s.setupWorkspaceFiles(ctx, workspaceSlug, inputFiles)
 	if err != nil {
 		return result, err
 	}
 
-	// Use the system's temporary directory instead of /sandbox.
-	workspaceTempDir := filepath.Join(os.TempDir(), "irmin-compute-sandbox", workspaceSlug, tempDirName)
-
-	// Create the directory and any necessary parents.
-	err = os.MkdirAll(workspaceTempDir, 0755) // use 0755 for directory permissions
-	if err != nil {
-		return result, err
-	}
-	log.Printf("Temporary directory created: %s\n", workspaceTempDir)
-
-	// Create _input directory for input files
-	inputDir := filepath.Join(workspaceTempDir, "_input")
-	err = os.MkdirAll(inputDir, 0755)
-	if err != nil {
-		return result, fmt.Errorf("failed to create _input directory: %w", err)
-	}
-
-	// Write input files to the _input directory
-	for filePath, content := range inputFiles {
-		fullPath := filepath.Join(inputDir, filePath)
-
-		// Create parent directories if they don't exist
-		err := os.MkdirAll(filepath.Dir(fullPath), 0755)
-		if err != nil {
-			return result, fmt.Errorf("failed to create directory for input file %s: %w", filePath, err)
-		}
-
-		// Write the file content
-		err = os.WriteFile(fullPath, content, 0644)
-		if err != nil {
-			return result, fmt.Errorf("failed to write input file %s: %w", filePath, err)
-		}
-		log.Printf("Input file written: _input/%s\n", filePath)
-	}
-
-	// Download the workspace files into the writable directory.
-	err = bucket.DownloadFolder(ctx, fmt.Sprintf("editor/%s/", workspaceSlug), workspaceTempDir)
-	if err != nil {
-		return result, err
-	}
-
-	// Delete the workspace files after execution
+	// Cleanup workspace files after execution
 	defer func() {
-		err := os.RemoveAll(workspaceTempDir)
-		if err != nil {
-			log.Printf("error removing temporary directory: %v\n", err)
+		if removeAllErr := os.RemoveAll(workspaceTempDir); removeAllErr != nil {
+			s.logger.ErrorContext(ctx, "error removing temporary directory", "error", removeAllErr)
 		}
-		log.Printf("Temporary directory removed: %s\n", workspaceTempDir)
+		s.logger.InfoContext(ctx, "Temporary directory removed", "workspaceTempDir", workspaceTempDir)
 	}()
 
-	// Determine the type of executable based on the file extension
+	// Download workspace files
+	if downloadFolderErr := bucket.DownloadFolder(ctx, fmt.Sprintf("editor/%s/", workspaceSlug), workspaceTempDir); downloadFolderErr != nil {
+		return result, downloadFolderErr
+	}
+
+	// Determine executable type and setup SDK
 	executableLanguage := utils.ParseEditorItemLanguageFromPath(executablePath)
 	executableType := ""
 	switch *executableLanguage {
 	case "js":
 		executableType = "node"
-		// TODO: Install the JavaScript SDK in the temp directory, when such SDK exists.
 	case "go":
 		executableType = "go"
-		// Install the Go SDK in the temp directory.
-		err := installGoSDK(workspaceTempDir, tempDirName)
-		if err != nil {
-			return result, err
+		if installGoSDKErr := s.installGoSDK(ctx, workspaceTempDir, filepath.Base(workspaceTempDir)); installGoSDKErr != nil {
+			return result, installGoSDKErr
 		}
 	case "py":
 		executableType = "python"
-		// TODO: Install the Python SDK in the temp directory, when such SDK exists.
 	}
 
-	// Generate a random 64-character token.
-	token, err := utils.GenerateRandomString()
+	// Create temporary token
+	apiToken, err := s.createTemporaryToken(filepath.Base(workspaceTempDir), responsibleUser)
 	if err != nil {
 		return result, err
 	}
-
-	// Create a temporary token for the user
-	apiToken, err := d.CreateAPIToken(&db.APIToken{
-		Name:      tempDirName,
-		Token:     fmt.Sprintf("cred_%s", token),
-		ExpiresAt: time.Now().Add(60 * time.Minute).UTC(), // 1 hour expiry
-		UserID:    responsibleUser.ID,
-		Hidden:    true,
-	})
-	if err != nil {
-		return result, err
-	}
-
-	// Revoke the token after the execution
 	defer func() {
-		err := d.DeleteAPIToken(apiToken.ID)
-		if err != nil {
-			log.Printf("error revoking token after sandbox execution: %v\n", err)
+		if deleteAPITokenErr := s.d.DeleteAPIToken(apiToken.ID); deleteAPITokenErr != nil {
+			s.logger.ErrorContext(ctx, "error revoking token after sandbox execution", "error", deleteAPITokenErr)
 		}
 	}()
 
-	// Execute the code in the sandbox
-	result, err = runInDocker(executablePath, workspaceTempDir, executableType, apiToken.Token, apiBaseURL)
+	// Execute in Docker
+	return s.runInDocker(
+		executablePath,
+		workspaceTempDir,
+		executableType,
+		apiToken.Token,
+		fmt.Sprintf("%s/api", s.env.URL),
+	)
+}
+
+// setupWorkspaceFiles handles the creation of temporary directory and writing input files.
+func (s *ComputeSandbox) setupWorkspaceFiles(
+	ctx context.Context,
+	workspaceSlug string,
+	inputFiles map[string][]byte,
+) (string, error) {
+	tempDirName, err := utils.GenerateRandomString()
 	if err != nil {
-		return result, err
+		return "", err
 	}
 
-	return result, nil
+	workspaceTempDir := filepath.Join(os.TempDir(), "irmin-compute-sandbox", workspaceSlug, tempDirName)
+	if mkdirAllErr := os.MkdirAll(workspaceTempDir, 0750); mkdirAllErr != nil {
+		return "", mkdirAllErr
+	}
+	s.logger.InfoContext(ctx, "Temporary directory created", "workspaceTempDir", workspaceTempDir)
+
+	// Create and populate _input directory
+	inputDir := filepath.Join(workspaceTempDir, "_input")
+	if mkdirAllErr := os.MkdirAll(inputDir, 0750); mkdirAllErr != nil {
+		return "", fmt.Errorf("failed to create _input directory: %w", mkdirAllErr)
+	}
+
+	for filePath, content := range inputFiles {
+		fullPath := filepath.Join(inputDir, filePath)
+		if mkdirAllErr := os.MkdirAll(filepath.Dir(fullPath), 0750); mkdirAllErr != nil {
+			return "", fmt.Errorf("failed to create directory for input file %s: %w", filePath, mkdirAllErr)
+		}
+		if writeFileErr := os.WriteFile(fullPath, content, 0600); writeFileErr != nil {
+			return "", fmt.Errorf("failed to write input file %s: %w", filePath, writeFileErr)
+		}
+		s.logger.InfoContext(ctx, "Input file written", "filePath", filePath)
+	}
+
+	return workspaceTempDir, nil
+}
+
+// createTemporaryToken creates a temporary API token for sandbox execution.
+func (s *ComputeSandbox) createTemporaryToken(tempDirName string, user db.User) (*db.APIToken, error) {
+	token, err := utils.GenerateRandomString()
+	if err != nil {
+		return nil, err
+	}
+
+	apiToken := &db.APIToken{
+		Name:      tempDirName,
+		Token:     fmt.Sprintf("cred_%s", token),
+		ExpiresAt: time.Now().Add(tokenExpiryDuration).UTC(),
+		UserID:    user.ID,
+		Hidden:    true,
+	}
+	if createAPITokenErr := s.d.Create(&apiToken).Error; createAPITokenErr != nil {
+		return nil, createAPITokenErr
+	}
+
+	return apiToken, nil
 }

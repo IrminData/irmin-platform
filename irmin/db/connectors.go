@@ -64,28 +64,6 @@ func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, erro
 	return &connector, nil
 }
 
-// CreateConnector creates a new connector record in the database.
-func (d *Database) CreateConnector(connector *Connector) (*Connector, error) {
-	if err := d.Create(&connector).Error; err != nil {
-		return nil, err
-	}
-	return connector, nil
-}
-
-// UpdateConnector updates an existing connector record in the database.
-func (d *Database) UpdateConnector(id uint, updates map[string]any) (*Connector, error) {
-	var connector Connector
-	// Update only the provided fields for the connector with the specified ID.
-	if err := d.Model(&Connector{}).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated connector record.
-	if err := d.First(&connector, id).Error; err != nil {
-		return nil, err
-	}
-	return &connector, nil
-}
-
 // DeleteConnector deletes a connector record and its associated connections from the database by its ID.
 func (d *Database) DeleteConnector(id uint) error {
 	return d.Transaction(func(tx *gorm.DB) error {

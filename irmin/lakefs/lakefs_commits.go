@@ -55,7 +55,7 @@ func (c *Client) GetCommit(repositoryID, commitID string) (*Commit, error) {
 
 // ListCommits retrieves a single page of commits for a given ref.
 func (c *Client) ListCommits(
-	repositoryID, ref, after, since, stop_at string,
+	repositoryID, ref, after, since, stopAt string,
 	amount int,
 	objects, prefixes []string,
 ) (*CommitList, error) {
@@ -66,7 +66,7 @@ func (c *Client) ListCommits(
 		ref,
 		after,
 		since,
-		stop_at,
+		stopAt,
 		amount,
 	)
 	if len(objects) > 0 {
@@ -87,12 +87,21 @@ func (c *Client) ListCommits(
 
 // ListAllCommits handles pagination automatically and returns all commits for a ref.
 func (c *Client) ListAllCommits(
-	repositoryID, ref, after, since, stop_at string,
+	repositoryID, ref, after, since, stopAt string,
 	objects, prefixes []string,
 ) ([]Commit, error) {
 	var allCommits []Commit
 	for {
-		commits, err := c.ListCommits(repositoryID, ref, after, since, stop_at, 100, objects, prefixes)
+		commits, err := c.ListCommits(
+			repositoryID,
+			ref,
+			after,
+			since,
+			stopAt,
+			DefaultListAmountLimit,
+			objects,
+			prefixes,
+		)
 		if err != nil {
 			return nil, err
 		}

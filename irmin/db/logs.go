@@ -185,14 +185,3 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 
 	return events, total, nil
 }
-
-// CreateLogEvent inserts a new log event into the database.
-//
-// event: pointer to LogEvent to be created
-// returns: created LogEvent and error if any
-func (d *Database) CreateLogEvent(event *LogEvent) (*LogEvent, error) {
-	if err := d.Create(event).Error; err != nil {
-		return nil, err
-	}
-	return event, nil
-}

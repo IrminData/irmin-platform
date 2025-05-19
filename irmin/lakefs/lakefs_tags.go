@@ -51,7 +51,7 @@ func (c *Client) ListAllTags(repositoryID, prefix string) ([]Tag, error) {
 	var allTags []Tag
 	after := ""
 	for {
-		tags, err := c.ListTags(repositoryID, prefix, after, 100)
+		tags, err := c.ListTags(repositoryID, prefix, after, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

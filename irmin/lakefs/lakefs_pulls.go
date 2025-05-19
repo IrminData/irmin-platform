@@ -86,7 +86,7 @@ func (c *Client) ListAllPullRequests(repositoryID, prefix, status string) ([]Pul
 	var allPRs []PullRequest
 	after := ""
 	for {
-		prs, err := c.ListPullRequests(repositoryID, prefix, after, status, 100)
+		prs, err := c.ListPullRequests(repositoryID, prefix, after, status, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

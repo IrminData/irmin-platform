@@ -49,7 +49,7 @@ func (c *Client) ListAllPolicies(prefix string) ([]Policy, error) {
 	var allPolicies []Policy
 	after := ""
 	for {
-		listResp, err := c.ListPolicies(prefix, after, 100)
+		listResp, err := c.ListPolicies(prefix, after, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

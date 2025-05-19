@@ -8,23 +8,25 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
-	"strconv"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
 func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Get all repositories in the workspace.
-	repositories, err := api.DB.GetRepositoriesInWorkspace(workspace.ID)
-	if err != nil {
-		log.Printf("Error fetching repositories: %v", err)
+	repositories, getRepositoriesErr := api.DB.GetRepositoriesInWorkspace(workspace.ID)
+	if getRepositoriesErr != nil {
+		api.Logger.Error("Error fetching repositories", "error", getRepositoriesErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -32,11 +34,15 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	var repositoriesResponse []irminmodels.Repository
 	for _, repository := range repositories {
 		// Format the repository response
-		repositoryResponse, err := formatter.FormatRepositoryResponse(&repository, &engine.Repository{})
-		if err != nil {
-			log.Printf("Error formatting repository: %v", err)
+		repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
+			&repository,
+			&engine.Repository{},
+			api.SQIDManager,
+		)
+		if formatRepositoryResponseErr != nil {
+			api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
+				Errors: []string{api.lm.T(dict, "error_occurred")},
 			})
 		}
 		// Append the repository to the response
@@ -50,13 +56,17 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	user := c.Locals("user").(*db.User)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	user, userOk := c.Locals("user").(*db.User)
+
+	if !localeOk || !dictOk || !workspaceOk || !userOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(
+	fields, parseFormFieldsErr := utils.ParseFormFields(
 		c,
 		[]string{"name"},
 		[]string{
@@ -68,10 +78,10 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 			"garbage_default_branch_retention_days",
 		},
 	)
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
@@ -81,7 +91,7 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	// Make sure such repository does not exist
 	if api.DB.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("repository_already_exists")},
+			Errors: []string{api.lm.T(dict, "repository_already_exists")},
 		})
 	}
 
@@ -92,34 +102,26 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	}
 
 	// Determine if the repository should be immutable
-	isImmutable := fields["is_immutable"] == "true"
+	isImmutable := fields["is_immutable"] == trueString
 
-	// Determine the garbage collection default retention days
-	var gcDefaultRetentionDays int
-	if fields["garbage_default_retention_days"] != "" {
-		gcDefaultRetentionDays, err = strconv.Atoi(fields["garbage_default_retention_days"])
-		if err != nil {
-			log.Printf("Error parsing garbage_default_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
+	// Parse garbage collection settings
+	gcSettings, gcParseErr := utils.ParseGarbageCollectionSettings(fields)
+	if gcParseErr != nil {
+		api.Logger.Error("Error parsing garbage collection settings", "error", gcParseErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
 	}
 
-	// Determine the garbage collection default branch retention days
-	var gcDefaultBranchRetentionDays int
-	if fields["garbage_default_branch_retention_days"] != "" {
-		gcDefaultBranchRetentionDays, err = strconv.Atoi(fields["garbage_default_branch_retention_days"])
-		if err != nil {
-			log.Printf("Error parsing garbage_default_branch_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
+	if gcValidateErr := utils.ValidateGarbageCollectionSettings(gcSettings); gcValidateErr != nil {
+		api.Logger.Error("Invalid garbage collection settings", "error", gcValidateErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
 	}
 
 	// Create the repository in the database
-	repository, err := api.DB.CreateRepository(&db.Repository{
+	repository := &db.Repository{
 		Name:          fields["name"],
 		Slug:          repositorySlug,
 		Description:   fields["description"],
@@ -128,30 +130,36 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		IsImmutable:   isImmutable,
 		WorkspaceID:   workspace.ID,
 		OwnerID:       user.ID,
-	})
-	if err != nil {
-		log.Printf("Error creating repository: %v", err)
+	}
+	if createRepositoryErr := api.DB.Create(&repository).Error; createRepositoryErr != nil {
+		api.Logger.Error("Error creating repository", "error", createRepositoryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Create the repository in the Data Engine
-	dataEngineRepository, err := dataEngine.CreateRepository(
+	dataEngineRepository, createRepositoryInDataEngineErr := dataEngine.CreateRepository(
 		workspace.Slug,
 		repositorySlug,
 		defaultBranch,
 		isImmutable,
-		&gcDefaultRetentionDays,
-		&gcDefaultBranchRetentionDays,
+		&gcSettings.DefaultRetentionDays,
+		&gcSettings.DefaultBranchRetentionDays,
 	)
-	if err != nil {
-		log.Printf("Error creating repository in Data Engine: %v", err)
+	if createRepositoryInDataEngineErr != nil {
+		api.Logger.Error("Error creating repository in Data Engine", "error", createRepositoryInDataEngineErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -159,23 +167,26 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	go func() {
 		updatedRepository := repository
 		updatedRepository.LakeFSRepoID = dataEngineRepository.ID
-		_, err := api.DB.UpdateRepository(updatedRepository)
-		if err != nil {
-			log.Printf("Error updating LakeFS repository ID: %v", err)
+		if updateRepositoryErr := api.DB.Save(&updatedRepository).Error; updateRepositoryErr != nil {
+			api.Logger.Error("Error updating LakeFS repository ID", "error", updateRepositoryErr)
 		}
 	}()
 
 	// Format the repository response
-	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
-	if err != nil {
-		log.Printf("Error formatting repository: %v", err)
+	repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
+		repository,
+		dataEngineRepository,
+		api.SQIDManager,
+	)
+	if formatRepositoryResponseErr != nil {
+		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Repository %s created", repository.Slug),
 		UserID:       &user.ID,
@@ -185,22 +196,30 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
-		Message: dict.T("repository_created"),
+		Message: api.lm.T(dict, "repository_created"),
 		Data:    *repositoryResponse,
 	})
 }
 
 func (api *APIControllers) RepositoriesShow(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	repository := c.Locals("repository").(*db.Repository)
-	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	dataEngineRepository, dataEngineRepositoryOk := c.Locals("data_engine_repository").(*engine.Repository)
+
+	if !dictOk || !repositoryOk || !dataEngineRepositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Format the repository response
-	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
-	if err != nil {
-		log.Printf("Error formatting repository: %v", err)
+	repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
+		repository,
+		dataEngineRepository,
+		api.SQIDManager,
+	)
+	if formatRepositoryResponseErr != nil {
+		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -211,33 +230,43 @@ func (api *APIControllers) RepositoriesShow(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Delete the repository from the database
 	if err := api.DB.DeleteRepository(repository.ID); err != nil {
-		log.Printf("Error deleting repository: %v", err)
+		api.Logger.Error("Error deleting repository", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Delete the repository from the Data Engine
 	if err := dataEngine.DeleteRepository(c.Context(), workspace.Slug, repository.Slug, false); err != nil {
-		log.Printf("Error deleting repository in Data Engine: %v", err)
+		api.Logger.Error("Error deleting repository in Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeDelete,
 		Description:  fmt.Sprintf("Repository %s deleted", repository.Slug),
 		UserID:       &user.ID,
@@ -247,20 +276,24 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("repository_deleted"),
+		Message: api.lm.T(dict, "repository_deleted"),
 	})
 }
 
 func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	repository := c.Locals("repository").(*db.Repository)
-	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	dataEngineRepository, dataEngineRepositoryOk := c.Locals("data_engine_repository").(*engine.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !localeOk || !dictOk || !userOk || !repositoryOk || !dataEngineRepositoryOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(
+	fields, parseFormFieldsErr := utils.ParseFormFields(
 		c,
 		[]string{"name"},
 		[]string{
@@ -271,19 +304,19 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 			"garbage_default_branch_retention_days",
 		},
 	)
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Determine if the repository should be immutable
 	isImmutable := repository.IsImmutable
 	switch fields["is_immutable"] {
-	case "true":
+	case trueString:
 		isImmutable = true
-	case "false":
+	case falseString:
 		isImmutable = false
 	}
 
@@ -292,72 +325,75 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	repository.Description = fields["description"]
 	repository.Documentation = fields["documentation"]
 	repository.IsImmutable = isImmutable
-	repository, err = api.DB.UpdateRepository(repository)
-	if err != nil {
-		log.Printf("Error updating repository: %v", err)
+	if updateRepositoryErr := api.DB.Save(&repository).Error; updateRepositoryErr != nil {
+		api.Logger.Error("Error updating repository", "error", updateRepositoryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
-
-	// Determine the garbage collection default retention days
-	gcDefaultRetentionDays := dataEngineRepository.GarbageCollectionRules.DefaultRetentionDays
-	if fields["garbage_default_retention_days"] != "" {
-		gcDefaultRetentionDays, err = strconv.Atoi(fields["garbage_default_retention_days"])
-		if err != nil {
-			log.Printf("Error parsing garbage_default_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
 	}
 
-	// Determine the garbage collection default branch retention days
-	var gcDefaultBranchRetentionDays int
-	for _, branchGCRules := range dataEngineRepository.GarbageCollectionRules.Branches {
-		if branchGCRules.BranchID == repository.DefaultBranch {
-			gcDefaultBranchRetentionDays = branchGCRules.RetentionDays
-			break
-		}
+	// Parse garbage collection settings
+	gcSettings, gcParseErr := utils.ParseGarbageCollectionSettings(fields)
+	if gcParseErr != nil {
+		api.Logger.Error("Error parsing garbage collection settings", "error", gcParseErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
 	}
-	if fields["garbage_default_branch_retention_days"] != "" {
-		gcDefaultBranchRetentionDays, err = strconv.Atoi(fields["garbage_default_branch_retention_days"])
-		if err != nil {
-			log.Printf("Error parsing garbage_default_branch_retention_days: %v", err)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("invalid_request")},
-			})
-		}
+
+	// If no new default branch retention days provided, use existing value
+	if gcSettings.DefaultBranchRetentionDays == 0 {
+		gcSettings.DefaultBranchRetentionDays = utils.GetDefaultBranchRetentionDays(
+			dataEngineRepository.GarbageCollectionRules.Branches,
+			repository.DefaultBranch,
+		)
+	}
+
+	if gcValidateErr := utils.ValidateGarbageCollectionSettings(gcSettings); gcValidateErr != nil {
+		api.Logger.Error("Invalid garbage collection settings", "error", gcValidateErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
 	}
 
 	// Update the repository in the Data Engine
-	dataEngineRepository, err = dataEngine.UpdateRepository(
+	dataEngineRepository, updateRepositoryInDataEngineErr := dataEngine.UpdateRepository(
 		workspace.Slug,
 		repository.Slug,
-		&gcDefaultRetentionDays,
-		&gcDefaultBranchRetentionDays,
+		&gcSettings.DefaultRetentionDays,
+		&gcSettings.DefaultBranchRetentionDays,
 	)
-	if err != nil {
-		log.Printf("Error updating repository in Data Engine: %v", err)
+	if updateRepositoryInDataEngineErr != nil {
+		api.Logger.Error("Error updating repository in Data Engine", "error", updateRepositoryInDataEngineErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the repository response
-	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
-	if err != nil {
-		log.Printf("Error formatting repository: %v", err)
+	repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
+		repository,
+		dataEngineRepository,
+		api.SQIDManager,
+	)
+	if formatRepositoryResponseErr != nil {
+		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Repository %s settings updated", repository.Slug),
 		WorkspaceID:  &workspace.ID,
@@ -367,72 +403,78 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("repository_updated"),
+		Message: api.lm.T(dict, "repository_updated"),
 		Data:    *repositoryResponse,
 	})
 }
 
 func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
-	dataEngineRepository := c.Locals("data_engine_repository").(*engine.Repository)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	dataEngineRepository, dataEngineRepositoryOk := c.Locals("data_engine_repository").(*engine.Repository)
+
+	if !dictOk || !userOk || !workspaceOk || !repositoryOk || !dataEngineRepositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Parse the ID of the new owner from the sqid
-	newOwnerSqid := fields["new_owner_id"]
-	newOwnerID, err := utils.DecodeSqids("users", newOwnerSqid)
-	if err != nil {
-		log.Printf("Error decoding new owner sqid: %v", err)
+	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", fields["new_owner_id"])
+	if decodeSqidsErr != nil {
+		api.Logger.Error("Error decoding new owner sqid", "error", decodeSqidsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, err := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
-	if err != nil {
-		log.Printf("Error checking if user is in workspace: %v", err)
+	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if isUserInWorkspaceErr != nil {
+		api.Logger.Error("Error checking if user is in workspace", "error", isUserInWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("new_owner_invalid")},
+			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("new_owner_invalid")},
+			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
 		})
 	}
 
 	// Update the repository in the database
 	repository.OwnerID = uint(newOwnerID)
-	repository, err = api.DB.UpdateRepository(repository)
-	if err != nil {
-		log.Printf("Error updating repository: %v", err)
+	if updateRepositoryErr := api.DB.Save(&repository).Error; updateRepositoryErr != nil {
+		api.Logger.Error("Error updating repository", "error", updateRepositoryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the repository response
-	repositoryResponse, err := formatter.FormatRepositoryResponse(repository, dataEngineRepository)
-	if err != nil {
-		log.Printf("Error formatting repository: %v", err)
+	repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
+		repository,
+		dataEngineRepository,
+		api.SQIDManager,
+	)
+	if formatRepositoryResponseErr != nil {
+		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Repository %s ownership transferred to %s", repository.Slug, repository.Owner.Email),
 		WorkspaceID:  &workspace.ID,
@@ -442,7 +484,7 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("repository_ownership_transferred"),
+		Message: api.lm.T(dict, "repository_ownership_transferred"),
 		Data:    *repositoryResponse,
 	})
 }

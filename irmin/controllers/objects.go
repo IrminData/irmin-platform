@@ -8,7 +8,6 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -16,14 +15,18 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// ObjectsIndex handles retrieving an object from a repository.
 func (api *APIControllers) ObjectsIndex(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	object := c.Locals("object").(*irminmodels.Object)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	if !dictOk || !objectOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	if object == nil {
-		log.Printf("Error retrieving object from Data Engine")
+		api.Logger.Error("Error retrieving object from Data Engine")
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -32,219 +35,284 @@ func (api *APIControllers) ObjectsIndex(c fiber.Ctx) error {
 	})
 }
 
+// validateObjectParams validates the common parameters needed for object operations.
+// Returns locale, dict, user, repository, workspace, object, objectRef, and an error.
+func (api *APIControllers) validateObjectParams(c fiber.Ctx) (
+	string,
+	locales.Dictionary,
+	*db.User,
+	*db.Repository,
+	*db.Workspace,
+	*irminmodels.Object,
+	string,
+	error,
+) {
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	objectRef, objectRefOk := c.Locals("object_ref").(string)
+
+	if !localeOk || !dictOk || !userOk || !repositoryOk || !workspaceOk || !objectOk || !objectRefOk {
+		return "", nil, nil, nil, nil, nil, "", errors.New("invalid parameters")
+	}
+
+	return locale, dict, user, repository, workspace, object, objectRef, nil
+}
+
+// UploadObject handles uploading an object to a repository.
 func (api *APIControllers) UploadObject(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, dict, user, repository, workspace, object, objectRef, err := api.validateObjectParams(c)
+	if err != nil {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the file from the form data
-	form, err := c.MultipartForm()
-	if err != nil {
-		log.Printf("Error parsing form data: %v", err)
+	form, parseFormErr := c.MultipartForm()
+	if parseFormErr != nil {
+		api.Logger.Error("Error parsing form data", "error", parseFormErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 	if len(form.File) == 0 || len(form.File["file"]) == 0 {
-		log.Printf("No file found in form data")
+		api.Logger.Error("No file found in form data")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
-	file, err := form.File["file"][0].Open()
-	if err != nil {
-		log.Printf("Error opening file: %v", err)
+	file, openFileErr := form.File["file"][0].Open()
+	if openFileErr != nil {
+		api.Logger.Error("Error opening file", "error", openFileErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 	defer file.Close()
 
-	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Upload the object to the path in the repository at ref
-	newObject, err := dataEngine.UploadObject(workspace.Slug, repository.Slug, object.Path, object_ref, file)
-	if err != nil {
-		log.Printf("Error uploading object to Data Engine: %v", err)
+	newObject, uploadObjectErr := dataEngine.UploadObject(workspace.Slug, repository.Slug, object.Path, objectRef, file)
+	if uploadObjectErr != nil {
+		api.Logger.Error("Error uploading object to Data Engine", "error", uploadObjectErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
-		Description:  fmt.Sprintf("Object %s uploaded to branch %s", newObject.Path, object_ref),
+		Description:  fmt.Sprintf("Object %s uploaded to branch %s", newObject.Path, objectRef),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("object_uploaded"),
+		Message: api.lm.T(dict, "object_uploaded"),
 		Data:    newObject,
 	})
 }
 
+// MoveObject handles moving an object to a new path in a repository.
 func (api *APIControllers) MoveObject(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, dict, user, repository, workspace, object, objectRef, err := api.validateObjectParams(c)
+	if err != nil {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the new path from the form data
-	fields, err := utils.ParseFormFields(c, []string{"new_path"}, nil)
-	if err != nil {
-		log.Printf("Error parsing form data: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_path"}, nil)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form data", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Move the object to the new path in the repository at ref
-	newObject, err := dataEngine.MoveObject(
+	newObject, moveObjectErr := dataEngine.MoveObject(
 		workspace.Slug,
 		repository.Slug,
 		object.Path,
-		object_ref,
+		objectRef,
 		fields["new_path"],
 	)
-	if err != nil {
-		log.Printf("Error moving object in Data Engine: %v", err)
+	if moveObjectErr != nil {
+		api.Logger.Error("Error moving object in Data Engine", "error", moveObjectErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
-		Description:  fmt.Sprintf("Object %s moved to %s on branch %s", object.Path, newObject.Path, object_ref),
+		Description:  fmt.Sprintf("Object %s moved to %s on branch %s", object.Path, newObject.Path, objectRef),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("object_moved"),
+		Message: api.lm.T(dict, "object_moved"),
 		Data:    newObject,
 	})
 }
+
+// CopyObject handles copying an object to a new path in a repository.
+//
 
 func (api *APIControllers) CopyObject(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	objectRef, objectRefOk := c.Locals("object_ref").(string)
+
+	if !localeOk || !dictOk || !userOk || !repositoryOk || !workspaceOk || !objectOk || !objectRefOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the new path from the form data
-	fields, err := utils.ParseFormFields(c, []string{"new_path"}, nil)
-	if err != nil {
-		log.Printf("Error parsing form data: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_path"}, nil)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form data", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Move the object to the new path in the repository at ref
-	newObject, err := dataEngine.CopyObject(
+	newObject, copyObjectErr := dataEngine.CopyObject(
 		workspace.Slug,
 		repository.Slug,
 		object.Path,
-		object_ref,
+		objectRef,
 		fields["new_path"],
 	)
-	if err != nil {
-		log.Printf("Error copying object in Data Engine: %v", err)
+	if copyObjectErr != nil {
+		api.Logger.Error("Error copying object in Data Engine", "error", copyObjectErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
-		Description:  fmt.Sprintf("Object %s copied to %s on branch %s", object.Path, newObject.Path, object_ref),
+		Description:  fmt.Sprintf("Object %s copied to %s on branch %s", object.Path, newObject.Path, objectRef),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("object_copied"),
+		Message: api.lm.T(dict, "object_copied"),
 		Data:    newObject,
 	})
 }
 
+// ObjectsDestroy handles deleting an object from a repository.
 func (api *APIControllers) ObjectsDestroy(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	objectRef, objectRefOk := c.Locals("object_ref").(string)
+
+	if !localeOk || !dictOk || !userOk || !repositoryOk || !workspaceOk || !objectOk || !objectRefOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Delete the object from the repository at ref
-	err := dataEngine.DeleteObject(workspace.Slug, repository.Slug, object.Path, object_ref)
-	if err != nil {
-		log.Printf("Error deleting object from Data Engine: %v", err)
+	deleteObjectErr := dataEngine.DeleteObject(workspace.Slug, repository.Slug, object.Path, objectRef)
+	if deleteObjectErr != nil {
+		api.Logger.Error("Error deleting object from Data Engine", "error", deleteObjectErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
-		Type:         db.LogEventTypeDelete,
-		Description:  fmt.Sprintf("Object %s deleted from branch %s", object.Path, object_ref),
-		UserID:       &user.ID,
-		WorkspaceID:  &workspace.ID,
-		RepositoryID: &repository.ID,
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+		Type:        db.LogEventTypeDelete,
+		Description: fmt.Sprintf("Object %s deleted from branch %s", object.Path, objectRef),
+		UserID:      &user.ID,
+		WorkspaceID: &workspace.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("object_deleted"),
+		Message: api.lm.T(dict, "object_deleted"),
 	})
 }
 
+// ObjectsContent handles retrieving the content of an object.
 func (api *APIControllers) ObjectsContent(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	objectRef, objectRefOk := c.Locals("object_ref").(string)
+
+	if !localeOk || !dictOk || !repositoryOk || !workspaceOk || !objectOk || !objectRefOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Get the content of the object in the repository at ref
-	content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, object_ref)
-	if err != nil {
-		log.Printf("Error retrieving object content from Data Engine: %v", err)
+	content, getObjectContentErr := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, objectRef)
+	if getObjectContentErr != nil {
+		api.Logger.Error("Error retrieving object content from Data Engine", "error", getObjectContentErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -254,106 +322,84 @@ func (api *APIControllers) ObjectsContent(c fiber.Ctx) error {
 
 // ObjectsDownload handles downloading either a single object or all descendants of a group, zipping them, and sending as a download.
 func (api *APIControllers) ObjectsDownload(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	objectRef, objectRefOk := c.Locals("object_ref").(string)
 
-	// Initialise Data Engine client
-	dataEngine := engine.NewClient(locale)
-
-	// Initialise a map to store the files we fetch
-	files := make(map[string][]byte)
-
-	// Declare processGroup so it’s in scope for recursion
-	var processGroup func(group *irminmodels.Object) error
-
-	// Assign the recursive closure
-	processGroup = func(group *irminmodels.Object) error {
-		if group == nil {
-			return errors.New("group object is nil")
-		}
-		if group.Type != irminmodels.ObjectTypeGroup {
-			return fmt.Errorf("object %q is not a group", group.Name)
-		}
-
-		for i := range group.Children {
-			child := &group.Children[i]
-			if child.Type == irminmodels.ObjectTypeGroup {
-				// recurse into nested groups
-				if err := processGroup(child); err != nil {
-					return err
-				}
-			} else {
-				// fetch each non-group object’s content
-				content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, child.Path, object_ref)
-				if err != nil {
-					log.Printf("Error retrieving object content: %v", err)
-					return err
-				}
-				files[child.Path] = content
-			}
-		}
-		return nil
+	if !localeOk || !dictOk || !repositoryOk || !workspaceOk || !objectOk || !objectRefOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	if object.Type != irminmodels.ObjectTypeGroup {
-		// single object: just fetch its content
-		content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, object_ref)
-		if err != nil {
-			log.Printf("Error retrieving object content: %v", err)
-			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		files[object.Path] = content
-	} else {
-		// group object: recurse into all descendants
-		if err := processGroup(object); err != nil {
-			log.Printf("Error processing group object: %v", err)
-			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	}
-
-	// create a zip from our map of files
-	zipContent, err := irminutils.ZipFiles(files)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
 	if err != nil {
-		log.Printf("Error creating zip file: %v", err)
+		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// send it down as a downloadable file
+	files := make(map[string][]byte)
+
+	var processErr error
+	if object.Type == irminmodels.ObjectTypeGroup {
+		processErr = api.processGroupObjectDownload(object, workspace, repository, objectRef, dataEngine, files)
+	} else {
+		processErr = api.processSingleObjectDownload(object, workspace, repository, objectRef, dataEngine, files)
+	}
+
+	if processErr != nil {
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	zipContent, err := irminutils.ZipFiles(files)
+	if err != nil {
+		api.Logger.Error("Error creating zip file", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	timestamp := time.Now().UnixMilli()
 	zipName := fmt.Sprintf(
 		"%s-%s-%s-%s-%d.zip",
-		workspace.Slug, repository.Slug, object.Name, object_ref, timestamp,
+		workspace.Slug, repository.Slug, object.Name, objectRef, timestamp,
 	)
 	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
 }
 
+// ObjectsHistory handles retrieving the commit history of an object.
 func (api *APIControllers) ObjectsHistory(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	objectRef, objectRefOk := c.Locals("object_ref").(string)
+
+	if !localeOk || !dictOk || !repositoryOk || !workspaceOk || !objectOk || !objectRefOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Get the commit history of the object in the repository at ref
-	commits, err := dataEngine.GetObjectChanges(workspace.Slug, repository.Slug, object.Path, object_ref)
-	if err != nil {
-		log.Printf("Error retrieving object history from Data Engine: %v", err)
+	commits, getObjectChangesErr := dataEngine.GetObjectChanges(workspace.Slug, repository.Slug, object.Path, objectRef)
+	if getObjectChangesErr != nil {
+		api.Logger.Error("Error retrieving object history from Data Engine", "error", getObjectChangesErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -362,24 +408,86 @@ func (api *APIControllers) ObjectsHistory(c fiber.Ctx) error {
 	})
 }
 
+// ObjectsSchema handles retrieving the schema of an object.
 func (api *APIControllers) ObjectsSchema(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	repository := c.Locals("repository").(*db.Repository)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	object := c.Locals("object").(*irminmodels.Object)
-	object_ref := c.Locals("object_ref").(string)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	object, objectOk := c.Locals("object").(*irminmodels.Object)
+	objectRef, objectRefOk := c.Locals("object_ref").(string)
+
+	if !localeOk || !dictOk || !repositoryOk || !workspaceOk || !objectOk || !objectRefOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Get the schema of the object in the repository at ref
-	schema, err := lib.GetObjectSchema(api.DB, workspace, repository, object, object_ref, locale)
-	if err != nil {
-		log.Printf("Error retrieving object schema: %v", err)
+	scm := lib.NewSchemaCacheManager(api.Env, api.Logger, api.DB)
+	schema, getObjectSchemaErr := scm.GetObjectSchema(
+		c.Context(),
+		workspace,
+		repository,
+		object,
+		objectRef,
+		locale,
+	)
+	if getObjectSchemaErr != nil {
+		api.Logger.Error("Error retrieving object schema", "error", getObjectSchemaErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: schema,
 	})
+}
+
+// processGroupObject recursively processes a group object and its children, storing file contents in the provided map.
+func (api *APIControllers) processGroupObjectDownload(
+	group *irminmodels.Object,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	objectRef string,
+	dataEngine *engine.Client,
+	files map[string][]byte,
+) error {
+	if group == nil {
+		return errors.New("group object is nil")
+	}
+	if group.Type != irminmodels.ObjectTypeGroup {
+		return fmt.Errorf("object %q is not a group", group.Name)
+	}
+
+	for i := range group.Children {
+		child := &group.Children[i]
+		if child.Type == irminmodels.ObjectTypeGroup {
+			if err := api.processGroupObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
+				return err
+			}
+		} else {
+			if err := api.processSingleObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// processSingleObject fetches and stores the content of a single object.
+func (api *APIControllers) processSingleObjectDownload(
+	object *irminmodels.Object,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	objectRef string,
+	dataEngine *engine.Client,
+	files map[string][]byte,
+) error {
+	content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, objectRef)
+	if err != nil {
+		api.Logger.Error("Error retrieving object content", "error", err)
+		return err
+	}
+	files[object.Path] = content
+	return nil
 }

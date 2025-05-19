@@ -27,20 +27,20 @@ type Database struct {
 // NewDatabase creates a new database instance.
 func NewDatabase(db *gorm.DB, connectionString string) (*Database, error) {
 	// Create a pgx connection pool
-	poolConfig, err := pgxpool.ParseConfig(connectionString)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse pgx connection string: %w", err)
+	poolConfig, parseConfigErr := pgxpool.ParseConfig(connectionString)
+	if parseConfigErr != nil {
+		return nil, fmt.Errorf("failed to parse pgx connection string: %w", parseConfigErr)
 	}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create pgx connection pool: %w", err)
+	pool, newPoolErr := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	if newPoolErr != nil {
+		return nil, fmt.Errorf("failed to create pgx connection pool: %w", newPoolErr)
 	}
 
 	// Test the connection
-	if err := pool.Ping(context.Background()); err != nil {
+	if pingErr := pool.Ping(context.Background()); pingErr != nil {
 		pool.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
 	}
 
 	return &Database{
@@ -65,15 +65,15 @@ func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error) {
 // ListenForNotifications starts listening for notifications on a specific channel.
 // It returns a function that can be called to stop listening.
 func (d *Database) ListenForNotifications(ctx context.Context, channel string) (func() error, error) {
-	conn, err := d.GetPgxConn(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get connection for notifications: %w", err)
+	conn, getConnErr := d.GetPgxConn(ctx)
+	if getConnErr != nil {
+		return nil, fmt.Errorf("failed to get connection for notifications: %w", getConnErr)
 	}
 
 	// Start listening
-	if _, err := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", channel)); err != nil {
+	if _, execErr := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", channel)); execErr != nil {
 		conn.Release()
-		return nil, fmt.Errorf("failed to start listening on channel %s: %w", channel, err)
+		return nil, fmt.Errorf("failed to start listening on channel %s: %w", channel, execErr)
 	}
 
 	// Return a cleanup function
@@ -86,16 +86,16 @@ func (d *Database) ListenForNotifications(ctx context.Context, channel string) (
 // WaitForNotification waits for a notification on the given channel.
 // It uses the connection pool to get a connection and waits for notifications.
 func (d *Database) WaitForNotification(ctx context.Context, channel string) (*pgconn.Notification, error) {
-	conn, err := d.GetPgxConn(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get connection for notification: %w", err)
+	conn, getConnErr := d.GetPgxConn(ctx)
+	if getConnErr != nil {
+		return nil, fmt.Errorf("failed to get connection for notification: %w", getConnErr)
 	}
 	defer conn.Release()
 
 	// Wait for notification
-	notification, err := conn.Conn().WaitForNotification(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to wait for notification on channel %s: %w", channel, err)
+	notification, waitForNotificationErr := conn.Conn().WaitForNotification(ctx)
+	if waitForNotificationErr != nil {
+		return nil, fmt.Errorf("failed to wait for notification on channel %s: %w", channel, waitForNotificationErr)
 	}
 
 	return notification, nil
@@ -103,103 +103,86 @@ func (d *Database) WaitForNotification(ctx context.Context, channel string) (*pg
 
 // InitialiseDB establishes a Postgres database connection, performs any necessary migrations,
 // and returns an error if something goes wrong.
-func InitialiseDB() (*Database, error) {
-	// Load environment variables.
-	env, err := utils.LoadEnv()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load environment variables: %w", err)
+func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error) {
+	db, openErr := gorm.Open(postgres.Open(env.DatabaseConnectionString), &gorm.Config{})
+	if openErr != nil {
+		return nil, fmt.Errorf("failed to open database: %w", openErr)
 	}
 
-	db, err := gorm.Open(postgres.Open(env.DatabaseConnectionString), &gorm.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-
-	database, err := NewDatabase(db, env.DatabaseConnectionString)
-	if err != nil {
-		return nil, err
+	database, newDatabaseErr := NewDatabase(db, env.DatabaseConnectionString)
+	if newDatabaseErr != nil {
+		return nil, newDatabaseErr
 	}
 
 	// Ensure notification trigger exists
-	if err := database.EnsureNotificationTrigger(context.Background()); err != nil {
+	if ensureNotificationTriggerErr := database.EnsureNotificationTrigger(context.Background()); ensureNotificationTriggerErr != nil {
 		database.Close()
-		return nil, fmt.Errorf("failed to ensure notification trigger: %w", err)
+		return nil, fmt.Errorf("failed to ensure notification trigger: %w", ensureNotificationTriggerErr)
 	}
 
 	return database, nil
 }
 
+// migrateModels performs auto-migration for a slice of models and returns the first error encountered.
+func (d *Database) migrateModels(models ...any) error {
+	for _, model := range models {
+		if err := d.AutoMigrate(model); err != nil {
+			return fmt.Errorf("failed to migrate %T: %w", model, err)
+		}
+	}
+	return nil
+}
+
 // Migrate runs the auto migration calls in the correct order.
 // It separates the migrations into groups based on model dependencies.
 func (d *Database) Migrate() error {
-	if err := d.AutoMigrate(&Workspace{}); err != nil {
-		return fmt.Errorf("failed to migrate Workspace: %w", err)
+	// Core models (no dependencies)
+	coreModels := []any{
+		&Workspace{},
+		&User{},
+		&Connector{},
+		&WorkspaceUser{},
+		&APIToken{},
+		&Connection{},
+		&ConnectionSchemaCache{},
+		&Invite{},
 	}
-	if err := d.AutoMigrate(&User{}); err != nil {
-		return fmt.Errorf("failed to migrate User: %w", err)
-	}
-	if err := d.AutoMigrate(&Connector{}); err != nil {
-		return fmt.Errorf("failed to migrate Connector: %w", err)
-	}
-	if err := d.AutoMigrate(&WorkspaceUser{}); err != nil {
-		return fmt.Errorf("failed to migrate WorkspaceUser: %w", err)
-	}
-	if err := d.AutoMigrate(&APIToken{}); err != nil {
-		return fmt.Errorf("failed to migrate APIToken: %w", err)
-	}
-	if err := d.AutoMigrate(&Connection{}); err != nil {
-		return fmt.Errorf("failed to migrate Connection: %w", err)
-	}
-	if err := d.AutoMigrate(&ConnectionSchemaCache{}); err != nil {
-		return fmt.Errorf("failed to migrate ConnectionSchemaCache: %w", err)
-	}
-	if err := d.AutoMigrate(&Invite{}); err != nil {
-		return fmt.Errorf("failed to migrate Invite: %w", err)
-	}
-	if err := d.AutoMigrate(&Repository{}); err != nil {
-		return fmt.Errorf("failed to migrate Repository: %w", err)
-	}
-	if err := d.AutoMigrate(&RepositorySchemaCache{}); err != nil {
-		return fmt.Errorf("failed to migrate RepositorySchemaCache: %w", err)
-	}
-	if err := d.AutoMigrate(&ImportWorkflowable{}); err != nil {
-		return fmt.Errorf("failed to migrate ImportWorkflowable: %w", err)
-	}
-	if err := d.AutoMigrate(&ExportWorkflowable{}); err != nil {
-		return fmt.Errorf("failed to migrate ExportWorkflowable: %w", err)
-	}
-	if err := d.AutoMigrate(&ActionWorkflowableInput{}); err != nil {
-		return fmt.Errorf("failed to migrate ActionWorkflowableInput: %w", err)
-	}
-	if err := d.AutoMigrate(&ActionWorkflowable{}); err != nil {
-		return fmt.Errorf("failed to migrate ActionWorkflowable: %w", err)
-	}
-	if err := d.AutoMigrate(&PipelineStage{}); err != nil {
-		return fmt.Errorf("failed to migrate PipelineStage: %w", err)
-	}
-	if err := d.AutoMigrate(&PipelineWorkflowable{}); err != nil {
-		return fmt.Errorf("failed to migrate PipelineWorkflowable: %w", err)
-	}
-	if err := d.AutoMigrate(&Workflow{}); err != nil {
-		return fmt.Errorf("failed to migrate Workflow: %w", err)
-	}
-	if err := d.AutoMigrate(&Schedule{}); err != nil {
-		return fmt.Errorf("failed to migrate Schedule: %w", err)
-	}
-	if err := d.AutoMigrate(&WorkflowTrigger{}); err != nil {
-		return fmt.Errorf("failed to migrate WorkflowTrigger: %w", err)
-	}
-	if err := d.AutoMigrate(&WorkflowRun{}); err != nil {
-		return fmt.Errorf("failed to migrate WorkflowRun: %w", err)
-	}
-	if err := d.AutoMigrate(&StoredQuery{}); err != nil {
-		return fmt.Errorf("failed to migrate StoredQuery: %w", err)
-	}
-	if err := d.AutoMigrate(&LogEvent{}); err != nil {
-		return fmt.Errorf("failed to migrate LogEvent: %w", err)
+	if err := d.migrateModels(coreModels...); err != nil {
+		return err
 	}
 
-	return nil
+	// Repository related models
+	repoModels := []any{
+		&Repository{},
+		&RepositorySchemaCache{},
+	}
+	if err := d.migrateModels(repoModels...); err != nil {
+		return err
+	}
+
+	// Workflow related models
+	workflowModels := []any{
+		&ImportWorkflowable{},
+		&ExportWorkflowable{},
+		&ActionWorkflowableInput{},
+		&ActionWorkflowable{},
+		&PipelineStage{},
+		&PipelineWorkflowable{},
+		&Workflow{},
+		&Schedule{},
+		&WorkflowTrigger{},
+		&WorkflowRun{},
+	}
+	if err := d.migrateModels(workflowModels...); err != nil {
+		return err
+	}
+
+	// Additional models
+	additionalModels := []any{
+		&StoredQuery{},
+		&LogEvent{},
+	}
+	return d.migrateModels(additionalModels...)
 }
 
 // Reset drops all tables to start fresh.
@@ -243,14 +226,14 @@ func (d *Database) RunRawQuery(sqlQuery string, args ...any) error {
 func (d *Database) EnsureNotificationTrigger(ctx context.Context) error {
 	// Check if the trigger already exists
 	var exists bool
-	err := d.WithContext(ctx).Raw(`
-		SELECT EXISTS (
+	scanErr := d.WithContext(ctx).Raw(`
+			SELECT EXISTS (
 			SELECT 1 FROM pg_trigger 
 			WHERE tgname = 'workflow_run_notify'
 		)
-	`).Scan(&exists).Error
-	if err != nil {
-		return err
+		`).Scan(&exists).Error
+	if scanErr != nil {
+		return scanErr
 	}
 
 	if exists {
@@ -260,7 +243,7 @@ func (d *Database) EnsureNotificationTrigger(ctx context.Context) error {
 	// Apply the trigger if it doesn't exist
 	return d.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Create the notification function
-		if err := tx.Exec(`
+		if createFunctionErr := tx.Exec(`
 			CREATE OR REPLACE FUNCTION notify_workflow_run_status()
 			RETURNS trigger AS $$
 			BEGIN
@@ -276,18 +259,18 @@ func (d *Database) EnsureNotificationTrigger(ctx context.Context) error {
 				RETURN NEW;
 			END;
 			$$ LANGUAGE plpgsql;
-		`).Error; err != nil {
-			return err
+		`).Error; createFunctionErr != nil {
+			return createFunctionErr
 		}
 
 		// Create the trigger
-		if err := tx.Exec(`
+		if createTriggerErr := tx.Exec(`
 			CREATE TRIGGER workflow_run_notify
 				AFTER INSERT OR UPDATE OF status ON workflow_runs
 				FOR EACH ROW
 				EXECUTE FUNCTION notify_workflow_run_status();
-		`).Error; err != nil {
-			return err
+		`).Error; createTriggerErr != nil {
+			return createTriggerErr
 		}
 
 		return nil

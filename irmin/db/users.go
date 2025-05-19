@@ -62,28 +62,6 @@ func (d *Database) GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, e
 	return &workspaceUser, nil
 }
 
-// CreateUser creates a new user record in the database.
-func (d *Database) CreateUser(user *User) (*User, error) {
-	if err := d.Create(&user).Error; err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-// UpdateUser updates an existing user record in the database.
-func (d *Database) UpdateUser(id uint, updates map[string]any) (*User, error) {
-	var user User
-	// Update only the provided fields for the user with the specified ID.
-	if err := d.Model(&User{}).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated user record.
-	if err := d.First(&user, id).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
 // GetUserWorkspaces retrieves all workspace associations (WorkspaceUser)
 // for a given user ID. It preloads the related Workspace.
 func (d *Database) GetUserWorkspaces(userID uint) ([]WorkspaceUser, error) {

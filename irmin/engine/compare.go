@@ -104,7 +104,6 @@ func (c *Client) CompareRefs(
 }
 
 func (c *Client) GetUncommittedChanges(
-	ctx context.Context,
 	workspace, repository, branch string,
 ) (*irminmodels.Diff, error) {
 	// Construct repository name.

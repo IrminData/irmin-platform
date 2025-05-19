@@ -50,26 +50,6 @@ func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, e
 	return repositories, err
 }
 
-func (d *Database) CreateRepository(repository *Repository) (*Repository, error) {
-	if err := d.Create(repository).Error; err != nil {
-		return nil, err
-	}
-	if err := d.Preload("Owner").First(&repository, repository.ID).Error; err != nil {
-		return nil, err
-	}
-	return repository, nil
-}
-
-func (d *Database) UpdateRepository(repository *Repository) (*Repository, error) {
-	if err := d.Save(repository).Error; err != nil {
-		return nil, err
-	}
-	if err := d.Preload("Owner").First(&repository, repository.ID).Error; err != nil {
-		return nil, err
-	}
-	return repository, nil
-}
-
 func (d *Database) DeleteRepository(id uint) error {
 	return d.Transaction(func(tx *gorm.DB) error {
 		// Delete associated schema cache first
@@ -91,15 +71,4 @@ func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string
 		return nil, err
 	}
 	return &schemaCache, nil
-}
-
-// SaveRepositorySchemaCache updates or creates a repository schema cache.
-func (d *Database) SaveRepositorySchemaCache(schemaCache *RepositorySchemaCache) (*RepositorySchemaCache, error) {
-	if err := d.Save(schemaCache).Error; err != nil {
-		return nil, err
-	}
-	if err := d.First(&schemaCache, schemaCache.ID).Error; err != nil {
-		return nil, err
-	}
-	return schemaCache, nil
 }

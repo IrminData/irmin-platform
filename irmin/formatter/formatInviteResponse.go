@@ -9,40 +9,40 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatInviteResponse(invite *db.Invite) (*irminmodels.Invite, error) {
+func FormatInviteResponse(invite *db.Invite, sqidManager *utils.SQIDManager) (*irminmodels.Invite, error) {
 	// Get the sqid of the invite
-	inviteSqid, err := utils.EncodeSqids("invites", uint64(invite.ID))
+	inviteSqid, err := sqidManager.Encode("invites", uint64(invite.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding invite sqid: %w", err)
 	}
 
 	// Get the sqid of the user who invited the invitee
-	invitedBySqid, err := utils.EncodeSqids("users", uint64(invite.InvitedByID))
+	invitedBySqid, err := sqidManager.Encode("users", uint64(invite.InvitedByID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding invited by sqid: %w", err)
 	}
 
 	// Get the sqid of the workspace the invite is for
-	workspaceSqid, err := utils.EncodeSqids("workspaces", uint64(invite.WorkspaceID))
+	workspaceSqid, err := sqidManager.Encode("workspaces", uint64(invite.WorkspaceID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding workspace sqid: %w", err)
 	}
 
 	// Format the invite response
-	var acceptedAt time.Time
-	if invite.AcceptedAt.Valid {
-		acceptedAt = invite.AcceptedAt.Time
+	var acceptedAt *time.Time
+	if invite.AcceptedAt != nil {
+		acceptedAt = invite.AcceptedAt
 	}
-	var declinedAt time.Time
-	if invite.DeclinedAt.Valid {
-		declinedAt = invite.DeclinedAt.Time
+	var declinedAt *time.Time
+	if invite.DeclinedAt != nil {
+		declinedAt = invite.DeclinedAt
 	}
 	inviteResponse := irminmodels.Invite{
 		ID:         inviteSqid,
 		Email:      invite.Email,
 		Role:       irminmodels.IrminRole(invite.Role),
-		AcceptedAt: &acceptedAt,
-		DeclinedAt: &declinedAt,
+		AcceptedAt: acceptedAt,
+		DeclinedAt: declinedAt,
 		ExpiresAt:  invite.ExpiresAt,
 		InvitedBy: irminmodels.User{
 			ID:             invitedBySqid,

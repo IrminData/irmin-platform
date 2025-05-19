@@ -6,16 +6,19 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
 func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !localeOk || !dictOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Fetch connections and repositories concurrently
 	connectionsFuture := utils.AsyncWithContext(c.Context(), func() ([]db.Connection, error) {
@@ -27,28 +30,31 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	})
 
 	// Await both results
-	connections, err := connectionsFuture.Await()
-	if err != nil {
-		log.Printf("Error fetching connections: %v", err)
+	connections, connectionsAwaitErr := connectionsFuture.Await()
+	if connectionsAwaitErr != nil {
+		api.Logger.Error("Error fetching connections", "error", connectionsAwaitErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	repositories, err := repositoriesFuture.Await()
-	if err != nil {
-		log.Printf("Error fetching repositories: %v", err)
+	repositories, repositoriesAwaitErr := repositoriesFuture.Await()
+	if repositoriesAwaitErr != nil {
+		api.Logger.Error("Error fetching repositories", "error", repositoriesAwaitErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
+
+	// Create a new schema cache manager
+	scm := lib.NewSchemaCacheManager(api.Env, api.Logger, api.DB)
 
 	// Fetch connection schemas concurrently
 	connectionSchemaFutures := make([]utils.FutureResult[*irminmodels.ObjectSchema], len(connections))
 	for i, connection := range connections {
 		conn := connection // Create a new variable to avoid closure issues
 		connectionSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
-			return lib.GetConnectionSchema(api.DB, &conn, "pull", locale)
+			return scm.GetConnectionSchema(c.Context(), &conn, "pull", locale)
 		})
 	}
 
@@ -57,8 +63,8 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	for i, repository := range repositories {
 		repo := repository // Create a new variable to avoid closure issues
 		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
-			return lib.GetObjectSchema(
-				api.DB,
+			return scm.GetObjectSchema(
+				c.Context(),
 				workspace,
 				&repo,
 				&irminmodels.Object{
@@ -75,11 +81,11 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	// Collect all connection schemas
 	connectionSchemas := make([]irminmodels.ObjectSchema, len(connections))
 	for i, future := range connectionSchemaFutures {
-		schema, err := future.Await()
-		if err != nil {
-			log.Printf("Error fetching connection schema: %v", err)
+		schema, connectionSchemaAwaitErr := future.Await()
+		if connectionSchemaAwaitErr != nil {
+			api.Logger.Error("Error fetching connection schema", "error", connectionSchemaAwaitErr)
 			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
+				Errors: []string{api.lm.T(dict, "error_occurred")},
 			})
 		}
 		schema.Name = connections[i].Name
@@ -90,11 +96,11 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	// Collect all root group schemas
 	rootGroupSchemas := make([]irminmodels.ObjectSchema, len(repositories))
 	for i, future := range rootGroupSchemaFutures {
-		schema, err := future.Await()
-		if err != nil {
-			log.Printf("Error fetching root group schema: %v", err)
+		schema, rootGroupSchemaAwaitErr := future.Await()
+		if rootGroupSchemaAwaitErr != nil {
+			api.Logger.Error("Error fetching root group schema", "error", rootGroupSchemaAwaitErr)
 			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
+				Errors: []string{api.lm.T(dict, "error_occurred")},
 			})
 		}
 		schema.Name = repositories[i].Slug

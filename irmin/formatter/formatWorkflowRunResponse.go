@@ -8,54 +8,31 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminmodels.WorkflowRun, error) {
+func FormatWorkflowRunResponse(
+	workflowRun *db.WorkflowRun,
+	sqidManager *utils.SQIDManager,
+) (*irminmodels.WorkflowRun, error) {
 	// Get the sqid of the workflow run
-	workflowRunSqid, err := utils.EncodeSqids("workflow-runs", uint64(workflowRun.ID))
-	if err != nil {
-		return nil, fmt.Errorf("error encoding workflow run sqid: %w", err)
+	workflowRunSqid, encodeWorkflowRunSqidErr := sqidManager.Encode("workflow-runs", uint64(workflowRun.ID))
+	if encodeWorkflowRunSqidErr != nil {
+		return nil, fmt.Errorf("error encoding workflow run sqid: %w", encodeWorkflowRunSqidErr)
 	}
 
 	// Format the workflow trigger response
-	var triggeredByResponse *irminmodels.ScheduleTrigger
-	if workflowRun.TriggeredBy != nil {
-		var repositorySlug *string
-		if workflowRun.TriggeredBy.Repository != nil {
-			repositorySlug = &workflowRun.TriggeredBy.Repository.Slug
-		}
-		var workflowSqid *string
-		if workflowRun.TriggeredBy.Workflow != nil {
-			sqid, err := utils.EncodeSqids("workflows", uint64(*workflowRun.TriggeredBy.WorkflowID))
-			if err != nil {
-				return nil, fmt.Errorf("error encoding workflow sqid: %w", err)
-			}
-			workflowSqid = &sqid
-		}
-		var repositoryEvent irminmodels.RepositoryEvent
-		if workflowRun.TriggeredBy.RepositoryEvent != nil {
-			repositoryEvent = irminmodels.RepositoryEvent(*workflowRun.TriggeredBy.RepositoryEvent)
-		}
-		var workflowRunEvent irminmodels.WorkflowRunEvent
-		if workflowRun.TriggeredBy.WorkflowRunEvent != nil {
-			workflowRunEvent = irminmodels.WorkflowRunEvent(*workflowRun.TriggeredBy.WorkflowRunEvent)
-		}
-		triggeredByResponse = &irminmodels.ScheduleTrigger{
-			Type:             irminmodels.WorkflowTriggerType(workflowRun.TriggeredBy.Type),
-			RRule:            workflowRun.TriggeredBy.RRule,
-			Cron:             workflowRun.TriggeredBy.Cron,
-			RepositoryEvent:  &repositoryEvent,
-			Repository:       repositorySlug,
-			RepositoryRef:    workflowRun.TriggeredBy.RepositoryRef,
-			WorkflowID:       workflowSqid,
-			WorkflowRunEvent: &workflowRunEvent,
-		}
+	triggeredByResponse, formatScheduleTriggerResponseErr := FormatScheduleTriggerResponse(
+		workflowRun.TriggeredBy,
+		sqidManager,
+	)
+	if formatScheduleTriggerResponseErr != nil {
+		return nil, fmt.Errorf("error formatting schedule trigger response: %w", formatScheduleTriggerResponseErr)
 	}
 
 	// Format the user response
 	var triggeredByUserResponse *irminmodels.User
 	if workflowRun.TriggeredByUser != nil {
-		userSqid, err := utils.EncodeSqids("users", uint64(workflowRun.TriggeredByUser.ID))
-		if err != nil {
-			return nil, fmt.Errorf("error encoding user sqid: %w", err)
+		userSqid, encodeUserSqidErr := sqidManager.Encode("users", uint64(workflowRun.TriggeredByUser.ID))
+		if encodeUserSqidErr != nil {
+			return nil, fmt.Errorf("error encoding user sqid: %w", encodeUserSqidErr)
 		}
 		triggeredByUserResponse = &irminmodels.User{
 			ID:             userSqid,
@@ -69,9 +46,9 @@ func FormatWorkflowRunResponse(workflowRun *db.WorkflowRun) (*irminmodels.Workfl
 	}
 
 	// Get the sqid of the workflow
-	workflowSqid, err := utils.EncodeSqids("workflows", uint64(workflowRun.WorkflowID))
-	if err != nil {
-		return nil, fmt.Errorf("error encoding workflow sqid: %w", err)
+	workflowSqid, encodeWorkflowSqidErr := sqidManager.Encode("workflows", uint64(workflowRun.WorkflowID))
+	if encodeWorkflowSqidErr != nil {
+		return nil, fmt.Errorf("error encoding workflow sqid: %w", encodeWorkflowSqidErr)
 	}
 
 	// Return the formatted workflow run response

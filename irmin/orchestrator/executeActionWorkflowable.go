@@ -1,22 +1,18 @@
-package lib
+package orchestrator
 
 import (
 	"bytes"
 	"context"
 	"fmt"
-	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
-	"irmin-api/engine"
-	"log"
 	"strings"
 )
 
-// ExecuteActionWorkflowable executes an action workflowable in the compute sandbox.
+// executeActionWorkflowable executes an action workflowable in the compute sandbox.
 // It runs the executable file in the compute sandbox and saves the results to the repository if specified.
 // It returns the logs generated during the execution and any error encountered.
-func ExecuteActionWorkflowable(
+func (o *Orchestrator) executeActionWorkflowable(
 	ctx context.Context,
-	d *db.Database,
 	workflow *db.Workflow,
 	workflowable *db.ActionWorkflowable,
 ) ([]string, error) {
@@ -27,9 +23,6 @@ func ExecuteActionWorkflowable(
 		logs = append(logs, fmt.Sprintf("Workflow execution cancelled before starting: %v", ctx.Err()))
 		return logs, ctx.Err()
 	}
-
-	// Initialize Data Engine client
-	dataEngine := engine.NewClient("en")
 
 	// Initialize a map to store the input objects
 	inputFiles := make(map[string][]byte)
@@ -45,15 +38,15 @@ func ExecuteActionWorkflowable(
 		// Trim slashes from the path
 		inputPath := strings.TrimLeft(input.Path, "/")
 		// Get the object content from the data engine
-		content, err := dataEngine.GetObjectContent(
+		content, getObjectContentErr := o.dataEngine.GetObjectContent(
 			workflow.Workspace.Slug,
 			input.Repository.Slug,
 			inputPath,
 			input.Ref,
 		)
-		if err != nil {
-			log.Printf("Error getting input object content: %v", err)
-			logs = append(logs, fmt.Sprintf("Error getting input object content: %v", err))
+		if getObjectContentErr != nil {
+			o.logger.ErrorContext(ctx, "Error getting input object content", "error", getObjectContentErr)
+			logs = append(logs, fmt.Sprintf("Error getting input object content: %v", getObjectContentErr))
 			continue
 		}
 		inputFiles[inputPath] = content
@@ -66,9 +59,8 @@ func ExecuteActionWorkflowable(
 	}
 
 	// Run the executable file in the compute sandbox
-	computeResult, err := sandbox.ExecuteEditorItem(
+	computeResult, err := o.computeSandbox.ExecuteEditorItem(
 		ctx,
-		d,
 		inputFiles,
 		workflow.Owner,
 		workflowable.Executable,
@@ -81,7 +73,7 @@ func ExecuteActionWorkflowable(
 			logs = append(logs, fmt.Sprintf("Workflow execution cancelled during compute execution: %v", ctx.Err()))
 			return logs, ctx.Err()
 		}
-		log.Println("Failed to execute workflowable:", err)
+		o.logger.ErrorContext(ctx, "Failed to execute workflowable", "error", err)
 		logs = append(logs, "Failed to execute workflowable in compute sandbox.")
 		return logs, err
 	}
@@ -110,15 +102,15 @@ func ExecuteActionWorkflowable(
 			// Construct the path to save the file
 			uploadObjectToPath := strings.Trim(*workflowable.Path, "/") + "/" + fileName
 			// Upload the object to the path in the repository at ref
-			_, err := dataEngine.UploadObject(
+			_, uploadObjectErr := o.dataEngine.UploadObject(
 				workflow.Workspace.Slug,
 				workflowable.Repository.Slug,
 				uploadObjectToPath,
 				*workflowable.Branch,
 				file,
 			)
-			if err != nil {
-				log.Printf("Error uploading object to Data Engine: %v", err)
+			if uploadObjectErr != nil {
+				o.logger.ErrorContext(ctx, "Error uploading object to Data Engine", "error", uploadObjectErr)
 				logs = append(
 					logs,
 					fmt.Sprintf(

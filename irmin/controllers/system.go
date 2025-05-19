@@ -13,14 +13,19 @@ import (
 // SystemWebhook handles the webhook events from internal services, like LakeFS.
 func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
 	// Make sure the request is authenticated with a system token
-	isSystem := c.Locals("is_system").(bool)
+	isSystem, isSystemOk := c.Locals("is_system").(bool)
+	if !isSystemOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
 	if !isSystem {
 		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
 	}
 
 	// Get the query params
-	query, err := utils.ParseQueryParams(c, nil, []string{"type"})
-	if err != nil {
+	query, parseQueryParamsErr := utils.ParseQueryParams(c, nil, []string{"type"})
+	if parseQueryParamsErr != nil {
+		api.Logger.Error("Error parsing query params", "error", parseQueryParamsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{})
 	}
 
@@ -31,7 +36,8 @@ func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
 
 		// Parse the LakeFS webhook event
 		var webhookEvent lakefs.WebhookEvent
-		if err := json.Unmarshal(c.Body(), &webhookEvent); err != nil {
+		if unmarshalErr := json.Unmarshal(c.Body(), &webhookEvent); unmarshalErr != nil {
+			api.Logger.Error("Error unmarshalling LakeFS webhook event", "error", unmarshalErr)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{})
 		}
 
@@ -44,7 +50,8 @@ func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
 
 		// Parse the dispatch event
 		var dispatchEvent orchestrator.DispatchEvent
-		if err := json.Unmarshal(c.Body(), &dispatchEvent); err != nil {
+		if unmarshalErr := json.Unmarshal(c.Body(), &dispatchEvent); unmarshalErr != nil {
+			api.Logger.Error("Error unmarshalling dispatch event", "error", unmarshalErr)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{})
 		}
 

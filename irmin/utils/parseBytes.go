@@ -5,6 +5,27 @@ import (
 	"strings"
 )
 
+const (
+	// Binary units.
+
+	KiB = 1 << 10 // 1024
+	MiB = 1 << 20 // 1048576
+	GiB = 1 << 30 // 1073741824
+
+	// Decimal units.
+
+	KB = 1000    // 10^3
+	MB = 1000000 // 10^6
+)
+
+// parseNumberWithUnit parses a number string with an optional unit suffix.
+func parseNumberWithUnit(s string) (float64, error) {
+	if s == "" {
+		return 1, nil // Handle case of just "B"
+	}
+	return strconv.ParseFloat(s, 64)
+}
+
 // ParseBytes converts a string with a unit (e.g. "9.602MiB", "1.05k", "53m", "1.05kb") to bytes.
 // It supports both binary (e.g. KiB, MiB, GiB) and decimal units (e.g. k, m, gb).
 //
@@ -17,67 +38,31 @@ import (
 func ParseBytes(s string) (float64, error) {
 	s = strings.TrimSpace(s)
 	lower := strings.ToLower(s)
-	switch {
-	case strings.HasSuffix(lower, "gib"):
-		numberStr := strings.TrimSuffix(lower, "gib")
-		val, err := strconv.ParseFloat(numberStr, 64) // Parse the numeric part.
-		if err != nil {
-			return 0, err
-		}
-		return val * 1073741824, nil // Multiply by 2^30.
-	case strings.HasSuffix(lower, "mib"):
-		numberStr := strings.TrimSuffix(lower, "mib")
-		val, err := strconv.ParseFloat(numberStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return val * 1048576, nil // Multiply by 2^20.
-	case strings.HasSuffix(lower, "kib"):
-		numberStr := strings.TrimSuffix(lower, "kib")
-		val, err := strconv.ParseFloat(numberStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return val * 1024, nil // Multiply by 2^10.
-	case strings.HasSuffix(lower, "kb"):
-		numberStr := strings.TrimSuffix(lower, "kb")
-		val, err := strconv.ParseFloat(numberStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return val * 1000, nil // Decimal multiplier.
-	case strings.HasSuffix(lower, "k"):
-		numberStr := strings.TrimSuffix(lower, "k")
-		val, err := strconv.ParseFloat(numberStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return val * 1000, nil
-	// New case for megabytes (decimal)
-	case strings.HasSuffix(lower, "mb"):
-		numberStr := strings.TrimSuffix(lower, "mb")
-		val, err := strconv.ParseFloat(numberStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return val * 1000000, nil // Decimal multiplier for megabytes.
-	// New case for "m" suffix, also treated as megabytes.
-	case strings.HasSuffix(lower, "m"):
-		numberStr := strings.TrimSuffix(lower, "m")
-		val, err := strconv.ParseFloat(numberStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return val * 1000000, nil
-	case strings.HasSuffix(lower, "b"):
-		numberStr := strings.TrimSuffix(lower, "b")
-		// If empty, assume it's "1B"
-		if numberStr == "" {
-			return 1, nil
-		}
-		return strconv.ParseFloat(numberStr, 64)
-	default:
-		// No recognised unit, assume the number is already in bytes.
-		return strconv.ParseFloat(s, 64)
+
+	// unitMap maps unit suffixes to their byte multipliers.
+	var unitMap = map[string]float64{
+		"gib": GiB,
+		"mib": MiB,
+		"kib": KiB,
+		"kb":  KB,
+		"k":   KB,
+		"mb":  MB,
+		"m":   MB,
+		"b":   1,
 	}
+
+	// Check for known units
+	for suffix, multiplier := range unitMap {
+		if strings.HasSuffix(lower, suffix) {
+			numberStr := strings.TrimSuffix(lower, suffix)
+			val, err := parseNumberWithUnit(numberStr)
+			if err != nil {
+				return 0, err
+			}
+			return val * multiplier, nil
+		}
+	}
+
+	// No recognised unit, assume the number is already in bytes
+	return strconv.ParseFloat(s, 64)
 }

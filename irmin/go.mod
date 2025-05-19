@@ -5,13 +5,13 @@ go 1.24
 toolchain go1.24.1
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250514194922-36cb1175a19d
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250519151923-0064f4b442cb
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/gofiber/storage/s3/v2 v2.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.8.5
 	github.com/robfig/cron/v3 v3.0.1
@@ -48,7 +48,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
-	github.com/gofiber/schema v1.3.0 // indirect
+	github.com/gofiber/schema v1.4.0 // indirect
 	github.com/gofiber/utils/v2 v2.0.0-beta.8 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect

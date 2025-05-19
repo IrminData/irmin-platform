@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/utils"
-	"log"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // FormatWorkflowResponse creates a workflow response object from a workflow object.
-func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels.Workflow, error) {
+func FormatWorkflowResponse(
+	d *db.Database,
+	workflow *db.Workflow,
+	sqidManager *utils.SQIDManager,
+) (*irminmodels.Workflow, error) {
 	// Run all formatting operations concurrently
 	type formatResult struct {
 		owner        *irminmodels.User
@@ -23,12 +26,12 @@ func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels
 
 	// Launch goroutines for each formatting operation
 	go func() {
-		owner, err := FormatUserResponse(&workflow.Owner)
+		owner, err := FormatUserResponse(&workflow.Owner, sqidManager)
 		ch <- formatResult{owner: owner, err: err}
 	}()
 
 	go func() {
-		workflowable, err := FormatWorkflowableResponse(d, workflow)
+		workflowable, err := FormatWorkflowableResponse(d, workflow, sqidManager)
 		ch <- formatResult{workflowable: workflowable, err: err}
 	}()
 
@@ -38,7 +41,7 @@ func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels
 			return
 		}
 		if workflow.Schedule != nil {
-			scheduleResponse, err := FormatScheduleResponse(d, workflow.Schedule)
+			scheduleResponse, err := FormatScheduleResponse(workflow.Schedule, sqidManager)
 			ch <- formatResult{schedule: scheduleResponse, err: err}
 			return
 		}
@@ -48,7 +51,7 @@ func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels
 			ch <- formatResult{err: fmt.Errorf("error retrieving schedule: %w", err)}
 			return
 		}
-		scheduleResponse, err := FormatScheduleResponse(d, schedule)
+		scheduleResponse, err := FormatScheduleResponse(schedule, sqidManager)
 		ch <- formatResult{schedule: scheduleResponse, err: err}
 	}()
 
@@ -85,9 +88,8 @@ func FormatWorkflowResponse(d *db.Database, workflow *db.Workflow) (*irminmodels
 	}
 
 	// Structure the workflow response.
-	workflowSqid, err := utils.EncodeSqids("workflows", uint64(workflow.ID))
+	workflowSqid, err := sqidManager.Encode("workflows", uint64(workflow.ID))
 	if err != nil {
-		log.Printf("Error encoding workflow sqid: %v", err)
 		return nil, err
 	}
 	workflowResponse := irminmodels.Workflow{

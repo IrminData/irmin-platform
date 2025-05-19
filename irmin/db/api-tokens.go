@@ -44,14 +44,6 @@ func (d *Database) GetAPITokensByUserID(userID uint) ([]APIToken, error) {
 	return tokens, nil
 }
 
-// CreateAPIToken creates a new API token.
-func (d *Database) CreateAPIToken(token *APIToken) (*APIToken, error) {
-	if err := d.Create(&token).Error; err != nil {
-		return nil, err
-	}
-	return token, nil
-}
-
 // DeleteAPIToken deletes an API token by its ID.
 func (d *Database) DeleteAPIToken(id uint) error {
 	return d.Where("id = ?", id).Delete(&APIToken{}).Error

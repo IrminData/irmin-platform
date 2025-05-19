@@ -3,73 +3,114 @@ package utils
 import (
 	"errors"
 	"hash/fnv"
+	"sync"
 
 	"github.com/sqids/sqids-go"
 )
 
-// Sqids is a global handle to the SQID generator.
-var Sqids *sqids.Sqids
+const (
+	// MinSQIDLength defines the minimum length for generated SQIDs.
+	MinSQIDLength = 16
+	// RequiredSQIDComponents defines the number of components required in a valid SQID
+	// (type code + actual ID).
+	RequiredSQIDComponents = 2
+)
 
-// NewSQIDGenerator creates and returns a new SQID generator with custom options.
-func NewSQIDGenerator() (*sqids.Sqids, error) {
-	// Get the custom alphabet from the environment.
-	env, err := LoadEnv() // LoadEnv should load your configuration from the environment.
-	if err != nil {
-		return nil, err
+// SQIDManager handles the creation and management of SQID generators.
+type SQIDManager struct {
+	mu       sync.RWMutex
+	instance *sqids.Sqids
+	errInit  error
+	env      *CoreAPIEnv
+}
+
+// NewSQIDManager creates a new SQID manager instance.
+func NewSQIDManager(env *CoreAPIEnv) *SQIDManager {
+	m := &SQIDManager{
+		env: env,
+	}
+	return m
+}
+
+// getGenerator returns the singleton instance of the SQID generator,
+// creating it if necessary.
+func (m *SQIDManager) getGenerator() (*sqids.Sqids, error) {
+	m.mu.RLock()
+	if m.instance != nil {
+		defer m.mu.RUnlock()
+		return m.instance, nil
+	}
+	if m.errInit != nil {
+		defer m.mu.RUnlock()
+		return nil, m.errInit
+	}
+	m.mu.RUnlock()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Double-check after acquiring write lock
+	if m.instance != nil {
+		return m.instance, nil
+	}
+	if m.errInit != nil {
+		return nil, m.errInit
 	}
 
 	// Create a new SQID generator with a minimum length of 16 and the custom alphabet.
 	s, err := sqids.New(sqids.Options{
-		MinLength: 16,
-		Alphabet:  env.SqidAlphabet,
+		MinLength: MinSQIDLength,
+		Alphabet:  m.env.SqidAlphabet,
 	})
 	if err != nil {
+		m.errInit = err
 		return nil, err
 	}
 
-	// Store the instance globally.
-	Sqids = s
-
+	m.instance = s
 	return s, nil
 }
 
 // hashStringToUint64 converts a string to a uint64 using the FNV-1a algorithm.
 func hashStringToUint64(s string) uint64 {
 	h := fnv.New64a()
-	h.Write([]byte(s))
+	_, writeErr := h.Write([]byte(s))
+	if writeErr != nil {
+		return 0
+	}
 	return h.Sum64()
 }
 
-// EncodeSqids encodes the given ID with a content type identifier.
+// Encode encodes the given ID with a content type identifier.
 // The content type string is hashed to create a type code.
 // - contentType: a string representing the type (e.g. "workspace")
 // - id: the actual numeric ID to encode
 // Returns the SQID string or an error if something goes wrong.
-func EncodeSqids(contentType string, id uint64) (string, error) {
-	// Create a new SQID generator if one doesn't exist.
-	if Sqids == nil {
-		NewSQIDGenerator()
+func (m *SQIDManager) Encode(contentType string, id uint64) (string, error) {
+	s, err := m.getGenerator()
+	if err != nil {
+		return "", err
 	}
 	// Create a type code from the content type.
 	typeCode := hashStringToUint64(contentType)
 	// Encode both the type code and the actual ID.
-	return Sqids.Encode([]uint64{typeCode, id})
+	return s.Encode([]uint64{typeCode, id})
 }
 
-// DecodeSqids decodes the given SQID and verifies it matches the expected content type.
+// Decode decodes the given SQID and verifies it matches the expected content type.
 // - contentType: a string representing the expected content type (e.g. "workspace")
 // - sqid: the encoded SQID string
 // Returns the original ID if the type code matches, or an error.
-func DecodeSqids(contentType string, sqid string) (uint64, error) {
-	// Create a new SQID generator if one doesn't exist.
-	if Sqids == nil {
-		NewSQIDGenerator()
+func (m *SQIDManager) Decode(contentType string, sqid string) (uint64, error) {
+	s, err := m.getGenerator()
+	if err != nil {
+		return 0, err
 	}
 	// Create a type code from the content type.
 	expectedTypeCode := hashStringToUint64(contentType)
 	// Decode the SQID and verify the type code.
-	ids := Sqids.Decode(sqid)
-	if len(ids) < 2 {
+	ids := s.Decode(sqid)
+	if len(ids) < RequiredSQIDComponents {
 		return 0, errors.New("invalid SQID")
 	}
 	if ids[0] != expectedTypeCode {

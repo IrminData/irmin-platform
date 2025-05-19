@@ -9,20 +9,23 @@ import (
 )
 
 // FormatConnectionResponse creates a connection response object from a connection object.
-func FormatConnectionResponse(connection *db.Connection) (*irminmodels.Connection, error) {
+func FormatConnectionResponse(
+	connection *db.Connection,
+	sqidManager *utils.SQIDManager,
+) (*irminmodels.Connection, error) {
 	// Structure the owner response.
-	ownerResponse, err := FormatUserResponse(&connection.Owner)
+	ownerResponse, err := FormatUserResponse(&connection.Owner, sqidManager)
 	if err != nil {
 		return nil, fmt.Errorf("error formatting owner: %w", err)
 	}
 	// Format the connector
-	connectorResponse, err := FormatConnectorResponse(&connection.Connector)
+	connectorResponse, err := FormatConnectorResponse(&connection.Connector, sqidManager)
 	if err != nil {
 		return nil, fmt.Errorf("error formatting connector response: %w", err)
 	}
 
 	// Construct the connection response.
-	connectionSqid, err := utils.EncodeSqids("connections", uint64(connection.ID))
+	connectionSqid, err := sqidManager.Encode("connections", uint64(connection.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding connection sqid: %w", err)
 	}

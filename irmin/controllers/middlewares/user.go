@@ -4,7 +4,6 @@ import (
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -12,33 +11,36 @@ import (
 
 // UserMiddleware parses the user SQID from the request URL and sets the user in the context.
 func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	if !dictOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the user sqid from the request URL.
 	userSqid := c.Params("user")
 	if userSqid == "" {
-		log.Printf("No user selected")
+		api.Logger.Error("No user selected")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Decode the user ID.
-	userID, err := utils.DecodeSqids("users", userSqid)
+	userID, err := api.SQIDManager.Decode("users", userSqid)
 	if err != nil {
-		log.Printf("Error decoding user sqid: %v", err)
+		api.Logger.Error("Error decoding user sqid", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Find the workspace user by their ID and the workspace ID.
 	workspaceUser, err := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
 	if err != nil {
-		log.Printf("Error retrieving user: %v", err)
+		api.Logger.Error("Error retrieving user", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 

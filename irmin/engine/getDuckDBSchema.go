@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"irmin-api/duckdb"
+	"irmin-api/utils"
 	"strings"
 )
 
@@ -17,6 +18,10 @@ type SchemaField struct {
 	Required bool          `json:"required"`
 	Children []SchemaField `json:"children,omitempty"`
 }
+
+// minFieldParts is the minimum number of parts required for a valid field definition
+// (name and type).
+const minFieldParts = 2
 
 // splitTopLevelComma splits a STRUCT(...) definition by commas at top-level only,
 // ignoring commas inside nested parentheses.
@@ -59,7 +64,7 @@ func parseField(name, typ string, required bool) SchemaField {
 		children := make([]SchemaField, 0, len(fields))
 		for _, f := range fields {
 			parts := strings.Fields(strings.TrimSpace(f))
-			if len(parts) < 2 {
+			if len(parts) < minFieldParts {
 				continue
 			}
 			childName := parts[0]
@@ -75,7 +80,7 @@ func parseField(name, typ string, required bool) SchemaField {
 		children := make([]SchemaField, 0, len(fields))
 		for _, f := range fields {
 			parts := strings.Fields(strings.TrimSpace(f))
-			if len(parts) < 2 {
+			if len(parts) < minFieldParts {
 				continue
 			}
 			childName := parts[0]
@@ -96,19 +101,20 @@ func parseField(name, typ string, required bool) SchemaField {
 //     and recursively parse STRUCT fields.
 func getDuckDBSchema(
 	c *Client,
+	env *utils.CoreAPIEnv,
 	userWorkspace, repository, path, ref string,
 ) ([]SchemaField, error) {
-	qc, err := duckdb.NewQueryClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DuckDB client: %w", err)
+	qc, newQueryClientErr := duckdb.NewQueryClient(env)
+	if newQueryClientErr != nil {
+		return nil, fmt.Errorf("failed to create DuckDB client: %w", newQueryClientErr)
 	}
 	defer qc.Close()
 
 	// build and parse placeholder SELECT
 	simple := fmt.Sprintf(`SELECT * FROM $["%s;%s@%s"];`, repository, path, ref)
-	parsed, err := parseIrminQuery(c, userWorkspace, simple)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse query: %w", err)
+	parsed, parseIrminQueryErr := parseIrminQuery(c, userWorkspace, simple)
+	if parseIrminQueryErr != nil {
+		return nil, fmt.Errorf("failed to parse query: %w", parseIrminQueryErr)
 	}
 	selector := parsed.Placeholders[0].Replacer
 
@@ -117,26 +123,29 @@ func getDuckDBSchema(
 		"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s;",
 		selector,
 	)
-	if _, err := qc.ExecuteNonQuery(viewSQL); err != nil {
-		return nil, fmt.Errorf("failed to create view: %w", err)
+	if _, executeNonQueryErr := qc.ExecuteNonQuery(viewSQL); executeNonQueryErr != nil {
+		return nil, fmt.Errorf("failed to create view: %w", executeNonQueryErr)
 	}
 
 	// fetch schema with nullability
-	rows, err := qc.ExecuteQuery(`
+	rows, executeQueryErr := qc.ExecuteQuery(`
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_schema='main' AND table_name='table_view'
 `)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch schema: %w", err)
+	if executeQueryErr != nil {
+		return nil, fmt.Errorf("failed to fetch schema: %w", executeQueryErr)
+	}
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("failed to fetch schema: %w", rows.Err())
 	}
 	defer rows.Close()
 
 	var result []SchemaField
 	for rows.Next() {
 		var name, typ, nullable string
-		if err := rows.Scan(&name, &typ, &nullable); err != nil {
-			return nil, fmt.Errorf("failed to scan schema row: %w", err)
+		if scanErr := rows.Scan(&name, &typ, &nullable); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan schema row: %w", scanErr)
 		}
 		required := strings.EqualFold(nullable, "NO")
 		result = append(result, parseField(name, typ, required))

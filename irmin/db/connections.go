@@ -51,25 +51,6 @@ func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, 
 	return connections, nil
 }
 
-// CreateConnection creates a new connection.
-func (d *Database) CreateConnection(connection *Connection) (*Connection, error) {
-	if err := d.Create(connection).Error; err != nil {
-		return nil, err
-	}
-	return connection, nil
-}
-
-// UpdateConnection updates an existing connection record in the database.
-func (d *Database) UpdateConnection(connection *Connection) (*Connection, error) {
-	if err := d.Save(&connection).Error; err != nil {
-		return nil, err
-	}
-	if err := d.Preload("Owner").Preload("Connector").First(&connection, connection.ID).Error; err != nil {
-		return nil, err
-	}
-	return connection, nil
-}
-
 // DeleteConnection deletes a connection and its associated schema cache from the database.
 func (d *Database) DeleteConnection(id uint) error {
 	return d.Transaction(func(tx *gorm.DB) error {
@@ -92,12 +73,4 @@ func (d *Database) FindConnectionSchemaCache(connectionID uint, opMethod string)
 		return nil, err
 	}
 	return &schemaCache, nil
-}
-
-// SaveConnectionSchemaCache updates or creates a connection schema cache.
-func (d *Database) SaveConnectionSchemaCache(schemaCache *ConnectionSchemaCache) (*ConnectionSchemaCache, error) {
-	if err := d.Save(schemaCache).Error; err != nil {
-		return nil, err
-	}
-	return schemaCache, nil
 }

@@ -10,19 +10,19 @@ import (
 func FormatRoleResponse(role db.UserWorkspaceRole) (*irminmodels.Role, error) {
 	var roleResponse irminmodels.Role
 	switch role {
-	case "admin":
+	case db.RoleAdmin:
 		roleResponse = irminmodels.Role{
 			Description: "Can perform all actions on the workspace",
 			Label:       "Admin",
 			Name:        "admin",
 		}
-	case "editor":
+	case db.RoleEditor:
 		roleResponse = irminmodels.Role{
 			Description: "Can perform all actions except managing access",
 			Label:       "Editor",
 			Name:        "editor",
 		}
-	case "viewer":
+	case db.RoleViewer:
 		roleResponse = irminmodels.Role{
 			Description: "Can view all data but cannot make changes",
 			Label:       "Viewer",

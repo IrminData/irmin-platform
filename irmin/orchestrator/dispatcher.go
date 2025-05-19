@@ -33,7 +33,7 @@ func (o *Orchestrator) StartDispatcher(ctx context.Context) error {
 	o.logger.InfoContext(ctx, "starting dispatcher")
 
 	// Create a channel to receive notifications
-	notificationChan := make(chan string, 100)
+	notificationChan := make(chan string, DefaultChannelBufferSize)
 	defer close(notificationChan)
 
 	// Start the notification listener
@@ -51,24 +51,28 @@ func (o *Orchestrator) startNotificationListener(ctx context.Context, notificati
 		o.logger.ErrorContext(ctx, "failed to start listening for notifications", "error", err)
 		return
 	}
-	defer cleanup()
+	defer func() {
+		if cleanupErr := cleanup(); cleanupErr != nil {
+			o.logger.ErrorContext(ctx, "failed to cleanup notification listener", "error", cleanupErr)
+		}
+	}()
 
 	// Background goroutine to handle notifications
 	go func() {
 		for {
 			// Wait for notification with timeout
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, 90*time.Second)
-			notification, err := o.db.WaitForNotification(ctxWithTimeout, "workflow_run_status")
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, NotificationTimeout)
+			notification, waitForNotificationErr := o.db.WaitForNotification(ctxWithTimeout, "workflow_run_status")
 			cancel()
 
-			if err != nil {
-				if errors.Is(err, context.DeadlineExceeded) {
+			if waitForNotificationErr != nil {
+				if errors.Is(waitForNotificationErr, context.DeadlineExceeded) {
 					continue
 				}
-				if errors.Is(err, context.Canceled) {
+				if errors.Is(waitForNotificationErr, context.Canceled) {
 					return
 				}
-				o.logger.ErrorContext(ctx, "error waiting for notification", "error", err)
+				o.logger.ErrorContext(ctx, "error waiting for notification", "error", waitForNotificationErr)
 				return
 			}
 
@@ -108,9 +112,9 @@ func (o *Orchestrator) processNotifications(ctx context.Context, notificationCha
 				continue
 			}
 
-			if err := o.processWorkflowRun(ctx, notification); err != nil {
+			if processWorkflowRunErr := o.processWorkflowRun(ctx, notification); processWorkflowRunErr != nil {
 				o.logger.ErrorContext(ctx, "failed to process workflow run",
-					"error", err,
+					"error", processWorkflowRunErr,
 					"run_id", notification.ID)
 			}
 		}
@@ -130,9 +134,9 @@ func (o *Orchestrator) parseNotification(payload string) (*db.RunStatusNotificat
 func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.RunStatusNotificationPayload) error {
 	// Use a transaction with proper locking to claim the job
 	var run db.WorkflowRun
-	err := o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := o.claimWorkflowRun(ctx, tx, notification.ID, &run); err != nil {
-			return err
+	processWorkflowRunErr := o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if claimWorkflowRunErr := o.claimWorkflowRun(ctx, tx, notification.ID, &run); claimWorkflowRunErr != nil {
+			return claimWorkflowRunErr
 		}
 
 		// If no run was claimed, it was already claimed by another dispatcher
@@ -142,29 +146,29 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 
 		// Update status to 'initiating' with a timestamp and claim info
 		run.Status = db.WorkflowStatusInitiating
-		if err := tx.Save(&run).Error; err != nil {
-			return fmt.Errorf("failed to update run status: %w", err)
+		if updateRunStatusErr := tx.Save(&run).Error; updateRunStatusErr != nil {
+			return fmt.Errorf("failed to update run status: %w", updateRunStatusErr)
 		}
 
 		return nil
 	})
 
-	if err != nil {
-		return fmt.Errorf("failed to process workflow run: %w", err)
+	if processWorkflowRunErr != nil {
+		return fmt.Errorf("failed to process workflow run: %w", processWorkflowRunErr)
 	}
 
 	// If we got a run, dispatch it
 	if run.ID != 0 {
-		if err := o.dispatchRun(ctx, &run); err != nil {
+		if dispatchRunErr := o.dispatchRun(ctx, &run); dispatchRunErr != nil {
 			// If dispatch fails, we should mark the run as failed
 			run.Status = db.WorkflowStatusError
 			run.UpdatedAt = time.Now()
 			if err := o.db.WithContext(ctx).Save(&run).Error; err != nil {
 				o.logger.ErrorContext(ctx, "failed to update run status after dispatch error",
-					"error", err,
+					"error", dispatchRunErr,
 					"run_id", run.ID)
 			}
-			return fmt.Errorf("failed to dispatch run: %w", err)
+			return fmt.Errorf("failed to dispatch run: %w", dispatchRunErr)
 		}
 	}
 
@@ -173,18 +177,18 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 
 // claimWorkflowRun attempts to claim a workflow run using proper locking.
 func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, runID uint, run *db.WorkflowRun) error {
-	if err := tx.Clauses(clause.Locking{
+	if claimWorkflowRunErr := tx.Clauses(clause.Locking{
 		Strength: "UPDATE",
 		Options:  "SKIP LOCKED",
 	}).Where("id = ? AND status = ? AND deleted_at IS NULL", runID, db.WorkflowStatusPending).
-		First(run).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		First(run).Error; claimWorkflowRunErr != nil {
+		if errors.Is(claimWorkflowRunErr, gorm.ErrRecordNotFound) {
 			// Job was already claimed by another dispatcher
 			o.logger.DebugContext(ctx, "job already claimed by another dispatcher",
 				"run_id", runID)
 			return nil
 		}
-		return fmt.Errorf("failed to claim job: %w", err)
+		return fmt.Errorf("failed to claim job: %w", claimWorkflowRunErr)
 	}
 
 	// Double-check the status hasn't changed
@@ -208,10 +212,10 @@ func (o *Orchestrator) dispatchRun(ctx context.Context, run *db.WorkflowRun) err
 	}
 
 	// Dispatch the event.
-	_, err := client.CallSystemWebhook("dispatch", nil, &dispatchEvent)
-	if err != nil {
-		o.logger.ErrorContext(ctx, "failed to dispatch run", "error", err, "run_id", run.ID)
-		return err
+	_, dispatchRunErr := client.CallSystemWebhook("dispatch", nil, &dispatchEvent)
+	if dispatchRunErr != nil {
+		o.logger.ErrorContext(ctx, "failed to dispatch run", "error", dispatchRunErr, "run_id", run.ID)
+		return dispatchRunErr
 	}
 	o.logger.InfoContext(ctx, "dispatched run", "run_id", run.ID)
 

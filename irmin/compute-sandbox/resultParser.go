@@ -8,7 +8,7 @@ import (
 )
 
 // Helper function to parse result file names from logs.
-func parseResultFiles(logs string) []string {
+func (s *ComputeSandbox) parseResultFiles(logs string) []string {
 	var resultFiles []string
 
 	// Find all result file markers
@@ -55,30 +55,30 @@ func parseResultFiles(logs string) []string {
 // Returns:
 // - A byte slice containing the file's content if successful.
 // - An error if the file cannot be read.
-func readResultFileFromContainer(containerID, filePath string) ([]byte, error) {
+func (s *ComputeSandbox) readResultFileFromContainer(containerID, filePath string) ([]byte, error) {
 	// Create a temporary file to copy the container file into.
-	tmpFile, err := os.CreateTemp("", "docker-file-*")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temporary file: %w", err)
+	tmpFile, createTempFileErr := os.CreateTemp("", "docker-file-*")
+	if createTempFileErr != nil {
+		return nil, fmt.Errorf("failed to create temporary file: %w", createTempFileErr)
 	}
 	// Ensure the temporary file is removed afterwards.
 	defer os.Remove(tmpFile.Name())
 	// Close the file as docker cp will write to it.
-	tmpFile.Close()
+	defer tmpFile.Close()
 
 	// Construct the source identifier for docker cp in the format "containerID:filePath".
 	source := fmt.Sprintf("%s:%s", containerID, filePath)
 
 	// Execute the docker cp command to copy the file from the container to the temporary file.
 	cpCmd := exec.Command("docker", "cp", source, tmpFile.Name())
-	if err := cpCmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to copy file from container: %w", err)
+	if runCpCmdErr := cpCmd.Run(); runCpCmdErr != nil {
+		return nil, fmt.Errorf("failed to copy file from container: %w", runCpCmdErr)
 	}
 
 	// Read the content of the temporary file.
-	data, err := os.ReadFile(tmpFile.Name())
-	if err != nil {
-		return nil, fmt.Errorf("failed to read temporary file: %w", err)
+	data, readFileErr := os.ReadFile(tmpFile.Name())
+	if readFileErr != nil {
+		return nil, fmt.Errorf("failed to read temporary file: %w", readFileErr)
 	}
 
 	return data, nil

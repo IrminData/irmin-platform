@@ -7,27 +7,35 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
 func (api *APIControllers) BranchesIndex(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Get the branch from the data engine.
 	branches, err := dataEngine.ListBranches(c.Context(), workspace.Slug, repository.Slug)
 	if err != nil {
-		log.Printf("Error retrieving branches from Data Engine: %v", err)
+		api.Logger.Error("Error retrieving branches from Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -37,41 +45,50 @@ func (api *APIControllers) BranchesIndex(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) BranchesStore(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, []string{"name", "from"}, []string{"is_immutable"})
 	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+		api.Logger.Error("Error parsing form fields", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Determine if the branch should be immutable
 	isImmutable := false
 	if fields["is_immutable"] != "" {
-		isImmutable = fields["is_immutable"] == "true"
+		isImmutable = fields["is_immutable"] == trueString
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Create the branch in the data engine.
 	branch, err := dataEngine.CreateBranch(workspace.Slug, repository.Slug, fields["name"], fields["from"], isImmutable)
 	if err != nil {
-		log.Printf("Error creating branch in Data Engine: %v", err)
+		api.Logger.Error("Error creating branch in Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Branch %s created", branch.Name),
 		UserID:       &user.ID,
@@ -81,13 +98,16 @@ func (api *APIControllers) BranchesStore(c fiber.Ctx) error {
 
 	// Return the created branch
 	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
-		Message: dict.T("branch_created"),
+		Message: api.lm.T(dict, "branch_created"),
 		Data:    branch,
 	})
 }
 
 func (api *APIControllers) BranchesShow(c fiber.Ctx) error {
-	branch := c.Locals("branch").(*irminmodels.Branch)
+	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
+	if !branchOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: branch,
@@ -95,26 +115,29 @@ func (api *APIControllers) BranchesShow(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
-	branch := c.Locals("branch").(*irminmodels.Branch)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !branchOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
 	fields, err := utils.ParseFormFields(c, nil, []string{"name", "is_immutable"})
 	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+		api.Logger.Error("Error parsing form fields", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Determine if the branch should be immutable
 	isImmutable := branch.IsImmutable
 	if fields["is_immutable"] != "" {
-		isImmutable = fields["is_immutable"] == "true"
+		isImmutable = fields["is_immutable"] == trueString
 	}
 
 	// Determine what the new branch name should be
@@ -124,7 +147,13 @@ func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Update the branch in the data engine.
 	branch, err = dataEngine.UpdateBranch(
@@ -136,14 +165,14 @@ func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
 		isImmutable,
 	)
 	if err != nil {
-		log.Printf("Error updating branch in Data Engine: %v", err)
+		api.Logger.Error("Error updating branch in Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Branch %s updated", branch.Name),
 		UserID:       &user.ID,
@@ -153,33 +182,42 @@ func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
 
 	// Return the updated branch
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("branch_updated"),
+		Message: api.lm.T(dict, "branch_updated"),
 		Data:    branch,
 	})
 }
 
 func (api *APIControllers) BranchesDestroy(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
-	branch := c.Locals("branch").(*irminmodels.Branch)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !branchOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Delete the branch in the data engine.
-	err := dataEngine.DeleteBranch(workspace.Slug, repository.Slug, branch.Name)
+	err = dataEngine.DeleteBranch(workspace.Slug, repository.Slug, branch.Name)
 	if err != nil {
-		log.Printf("Error deleting branch in Data Engine: %v", err)
+		api.Logger.Error("Error deleting branch in Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeDelete,
 		Description:  fmt.Sprintf("Branch %s deleted", branch.Name),
 		UserID:       &user.ID,
@@ -189,26 +227,35 @@ func (api *APIControllers) BranchesDestroy(c fiber.Ctx) error {
 
 	// Return a success message
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("branch_deleted"),
+		Message: api.lm.T(dict, "branch_deleted"),
 	})
 }
 
 func (api *APIControllers) GetUncommittedChanges(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
-	branch := c.Locals("branch").(*irminmodels.Branch)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
+	if !localeOk || !dictOk || !workspaceOk || !repositoryOk || !branchOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Compare the refs
-	diff, err := dataEngine.GetUncommittedChanges(c.Context(), workspace.Slug, repository.Slug, branch.Name)
+	diff, err := dataEngine.GetUncommittedChanges(workspace.Slug, repository.Slug, branch.Name)
 	if err != nil {
-		log.Printf("Error getting uncommitted changes: %v", err)
+		api.Logger.Error("Error getting uncommitted changes", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 

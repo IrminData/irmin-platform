@@ -88,6 +88,7 @@ func (c *Client) GetObjectContent(repositoryID, ref, objectPath string) (*Object
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	// Do not close resp.Body here as the caller is responsible for it.
 	return &ObjectContentResponse{
@@ -105,9 +106,9 @@ func (c *Client) GetObjectContentWithRange(
 	repositoryID, ref, path, rangeHeader string,
 ) (*ObjectContentResponse, error) {
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects?path=%s", repositoryID, ref, url.QueryEscape(path))
-	req, err := http.NewRequest(http.MethodGet, c.baseURL+endpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	req, newRequestErr := http.NewRequestWithContext(c.ctx, http.MethodGet, c.baseURL+endpoint, nil)
+	if newRequestErr != nil {
+		return nil, fmt.Errorf("failed to create request: %w", newRequestErr)
 	}
 
 	req.Header.Set("Accept", "application/octet-stream")
@@ -118,19 +119,24 @@ func (c *Client) GetObjectContentWithRange(
 
 	// Use a temporary client that does not follow redirects.
 	tempClient := *c.client
-	tempClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	tempClient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
 
-	resp, err := tempClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
+	resp, doRequestErr := tempClient.Do(req)
+	if doRequestErr != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", doRequestErr)
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent &&
 		resp.StatusCode != http.StatusFound {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		bodyBytes, readAllErr := io.ReadAll(resp.Body)
+		if readAllErr != nil {
+			return nil, fmt.Errorf("failed to read response body: %w", readAllErr)
+		}
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			return nil, fmt.Errorf("failed to close response body: %w", closeErr)
+		}
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
@@ -144,53 +150,107 @@ func (c *Client) GetObjectContentWithRange(
 	}, nil
 }
 
+// handleRedirectResponse handles a redirect response by following the redirect URL and returning the content.
+func (c *Client) handleRedirectResponse(redirectURL, rangeHeader string) ([]byte, error) {
+	req, newRequestErr := http.NewRequestWithContext(c.ctx, http.MethodGet, redirectURL, nil)
+	if newRequestErr != nil {
+		return nil, fmt.Errorf("failed to create request for redirect: %w", newRequestErr)
+	}
+
+	redirectResp, getRedirectErr := c.client.Do(req)
+	if getRedirectErr != nil {
+		return nil, fmt.Errorf("failed to follow redirect for range %s: %w", rangeHeader, getRedirectErr)
+	}
+	defer redirectResp.Body.Close()
+
+	if redirectResp.StatusCode != http.StatusOK && redirectResp.StatusCode != http.StatusPartialContent {
+		bodyBytes, readAllErr := io.ReadAll(redirectResp.Body)
+		if readAllErr != nil {
+			return nil, fmt.Errorf("failed to read response body: %w", readAllErr)
+		}
+		return nil, fmt.Errorf(
+			"failed to download object from redirect URL %s, status: %d, message: %s",
+			redirectURL,
+			redirectResp.StatusCode,
+			string(bodyBytes),
+		)
+	}
+
+	return io.ReadAll(redirectResp.Body)
+}
+
+// handleRangeRequest handles a single range request and returns the data and next start position.
+func (c *Client) handleRangeRequest(repositoryID, ref, objectPath, rangeHeader string) ([]byte, int64, error) {
+	partResp, getObjectContentWithRangeErr := c.GetObjectContentWithRange(repositoryID, ref, objectPath, rangeHeader)
+	if getObjectContentWithRangeErr != nil {
+		return nil, 0, fmt.Errorf(
+			"failed to get object content with range %s: %w",
+			rangeHeader,
+			getObjectContentWithRangeErr,
+		)
+	}
+	defer partResp.Body.Close()
+
+	var partData []byte
+	var nextStart int64
+
+	if redirectURL := partResp.RedirectLocation; redirectURL != "" {
+		var handleRedirectResponseErr error
+		partData, handleRedirectResponseErr = c.handleRedirectResponse(redirectURL, rangeHeader)
+		if handleRedirectResponseErr != nil {
+			return nil, 0, fmt.Errorf("failed to handle redirect response: %w", handleRedirectResponseErr)
+		}
+	} else {
+		var readAllErr error
+		partData, readAllErr = io.ReadAll(partResp.Body)
+		if readAllErr != nil {
+			return nil, 0, fmt.Errorf("failed to read partial object: %w", readAllErr)
+		}
+	}
+
+	// Update next start position based on Content-Range header
+	if cr := partResp.ContentRange; cr != "" {
+		_, newEnd, _, parseContentRangeErr := utils.ParseContentRange(cr)
+		if parseContentRangeErr != nil {
+			return nil, 0, fmt.Errorf("failed to parse Content-Range: %w", parseContentRangeErr)
+		}
+		nextStart = newEnd + 1
+	}
+
+	return partData, nextStart, nil
+}
+
 // GetFullObjectContent retrieves the full content of an object by handling partial responses and redirects.
 // If the initial response is partial this function will iteratively request the remaining ranges and combine them into a single byte slice.
 // If a redirect is provided, the function will follow it and return the content from the redirect URL.
 func (c *Client) GetFullObjectContent(repositoryID, ref, objectPath string) ([]byte, error) {
 	// Initial request without a Range header.
-	objResp, err := c.GetObjectContent(repositoryID, ref, objectPath)
-	if err != nil {
-		return nil, err
+	objResp, getObjectContentErr := c.GetObjectContent(repositoryID, ref, objectPath)
+	if getObjectContentErr != nil {
+		return nil, fmt.Errorf("failed to get object content: %w", getObjectContentErr)
 	}
+	defer objResp.Body.Close()
+
 	// Handle redirect if provided.
 	if redirectURL := objResp.RedirectLocation; redirectURL != "" {
-		objResp.Body.Close()
-		redirectResp, err := http.Get(redirectURL)
-		if err != nil {
-			return nil, fmt.Errorf("failed to follow redirect to %s: %w", redirectURL, err)
-		}
-		defer redirectResp.Body.Close()
-		if redirectResp.StatusCode != http.StatusOK && redirectResp.StatusCode != http.StatusPartialContent {
-			bodyBytes, _ := io.ReadAll(redirectResp.Body)
-			return nil, fmt.Errorf(
-				"failed to download object from redirect URL %s, status: %d, message: %s",
-				redirectURL,
-				redirectResp.StatusCode,
-				string(bodyBytes),
-			)
-		}
-		return io.ReadAll(redirectResp.Body)
+		return c.handleRedirectResponse(redirectURL, "")
 	}
 
 	// If no Content-Range header is provided, assume full content.
 	if objResp.ContentRange == "" {
-		defer objResp.Body.Close()
 		return io.ReadAll(objResp.Body)
 	}
 
 	// Parse the Content-Range header.
-	_, end, total, err := utils.ParseContentRange(objResp.ContentRange)
-	if err != nil {
-		objResp.Body.Close()
-		return nil, fmt.Errorf("failed to parse Content-Range header: %w", err)
+	_, end, total, parseContentRangeErr := utils.ParseContentRange(objResp.ContentRange)
+	if parseContentRangeErr != nil {
+		return nil, fmt.Errorf("failed to parse Content-Range header: %w", parseContentRangeErr)
 	}
 
 	// Read the initial partial content.
-	data, err := io.ReadAll(objResp.Body)
-	objResp.Body.Close()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read initial partial object: %w", err)
+	data, readAllErr := io.ReadAll(objResp.Body)
+	if readAllErr != nil {
+		return nil, fmt.Errorf("failed to read initial partial object: %w", readAllErr)
 	}
 
 	// If the initial chunk covers the full object, return it.
@@ -202,62 +262,12 @@ func (c *Client) GetFullObjectContent(repositoryID, ref, objectPath string) ([]b
 	currentStart := end + 1
 	for currentStart < total {
 		rangeHeader := fmt.Sprintf("bytes=%d-%d", currentStart, total-1)
-		partResp, err := c.GetObjectContentWithRange(repositoryID, ref, objectPath, rangeHeader)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get object content with range %s: %w", rangeHeader, err)
+		partData, nextStart, handleRangeRequestErr := c.handleRangeRequest(repositoryID, ref, objectPath, rangeHeader)
+		if handleRangeRequestErr != nil {
+			return nil, fmt.Errorf("failed to handle range request: %w", handleRangeRequestErr)
 		}
-
-		// Handle redirect in the range request if needed.
-		if redirectURL := partResp.RedirectLocation; redirectURL != "" {
-			partResp.Body.Close()
-			redirectResp, err := http.Get(redirectURL)
-			if err != nil {
-				return nil, fmt.Errorf("failed to follow redirect for range %s: %w", rangeHeader, err)
-			}
-			defer redirectResp.Body.Close()
-			if redirectResp.StatusCode != http.StatusOK && redirectResp.StatusCode != http.StatusPartialContent {
-				bodyBytes, _ := io.ReadAll(redirectResp.Body)
-				return nil, fmt.Errorf(
-					"failed to download partial object from redirect URL %s, status: %d, message: %s",
-					redirectURL,
-					redirectResp.StatusCode,
-					string(bodyBytes),
-				)
-			}
-			partData, err := io.ReadAll(redirectResp.Body)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read partial object from redirect: %w", err)
-			}
-			data = append(data, partData...)
-			// Update currentStart based on the Content-Range header of the redirect response.
-			cr := redirectResp.Header.Get("Content-Range")
-			if cr != "" {
-				_, newEnd, _, err := utils.ParseContentRange(cr)
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse Content-Range from redirect response: %w", err)
-				}
-				currentStart = newEnd + 1
-			} else {
-				currentStart = total
-			}
-		} else {
-			partData, err := io.ReadAll(partResp.Body)
-			partResp.Body.Close()
-			if err != nil {
-				return nil, fmt.Errorf("failed to read partial object: %w", err)
-			}
-			data = append(data, partData...)
-			cr := partResp.ContentRange
-			if cr != "" {
-				_, newEnd, _, err := utils.ParseContentRange(cr)
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse Content-Range from partial response: %w", err)
-				}
-				currentStart = newEnd + 1
-			} else {
-				currentStart = total
-			}
-		}
+		data = append(data, partData...)
+		currentStart = nextStart
 	}
 
 	return data, nil
@@ -266,8 +276,8 @@ func (c *Client) GetFullObjectContent(repositoryID, ref, objectPath string) ([]b
 // CheckObjectExists checks if an object exists in the specified repository and ref.
 func (c *Client) CheckObjectExists(repositoryID, ref, objectPath string) error {
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects?path=%s", repositoryID, ref, url.QueryEscape(objectPath))
-	if err := c.doRequest("HEAD", endpoint, nil, []int{http.StatusOK, http.StatusPartialContent}, nil); err != nil {
-		return err
+	if doRequestErr := c.doRequest("HEAD", endpoint, nil, []int{http.StatusOK, http.StatusPartialContent}, nil); doRequestErr != nil {
+		return fmt.Errorf("failed to check object exists: %w", doRequestErr)
 	}
 	return nil
 }
@@ -286,18 +296,18 @@ func (c *Client) UploadObject(
 	endpoint = endpoint + "?" + q.Encode()
 
 	// Build the multipart payload using the helper.
-	payload, contentType, err := utils.CreateMultipartPayload(
+	payload, contentType, createMultipartPayloadErr := utils.CreateMultipartPayload(
 		map[string]utils.FilePayload{"content": {FileName: "content", Reader: content}},
 		nil,
 	)
-	if err != nil {
-		return nil, err
+	if createMultipartPayloadErr != nil {
+		return nil, fmt.Errorf("failed to create multipart payload: %w", createMultipartPayloadErr)
 	}
 
 	// Use the doMultipartRequest helper to execute the request.
 	var metadata ObjectMetadata
-	if err := c.doMultipartRequest("POST", endpoint, payload, contentType, []int{http.StatusCreated}, &metadata); err != nil {
-		return nil, err
+	if doMultipartRequestErr := c.doMultipartRequest("POST", endpoint, payload, contentType, []int{http.StatusCreated}, &metadata); doMultipartRequestErr != nil {
+		return nil, fmt.Errorf("failed to upload object: %w", doMultipartRequestErr)
 	}
 	return &metadata, nil
 }
@@ -334,8 +344,8 @@ func (c *Client) CopyObject(
 		destinationPath,
 	)
 	var metadata ObjectMetadata
-	if err := c.doRequest("POST", endpoint, reqData, []int{http.StatusCreated}, &metadata); err != nil {
-		return nil, err
+	if doRequestErr := c.doRequest("POST", endpoint, reqData, []int{http.StatusCreated}, &metadata); doRequestErr != nil {
+		return nil, fmt.Errorf("failed to copy object: %w", doRequestErr)
 	}
 	return &metadata, nil
 }
@@ -353,8 +363,8 @@ func (c *Client) GetObjectMetadata(
 	endpoint = endpoint + "?" + q.Encode()
 
 	var metadata ObjectMetadata
-	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &metadata); err != nil {
-		return nil, err
+	if doRequestErr := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &metadata); doRequestErr != nil {
+		return nil, fmt.Errorf("failed to get object metadata: %w", doRequestErr)
 	}
 	return &metadata, nil
 }
@@ -367,7 +377,10 @@ func (c *Client) RewriteObjectMetadata(repositoryID, branch, objectPath string, 
 		branch,
 		url.QueryEscape(objectPath),
 	)
-	return c.doRequest("PUT", endpoint, reqData, []int{http.StatusOK, http.StatusCreated}, nil)
+	if doRequestErr := c.doRequest("PUT", endpoint, reqData, []int{http.StatusOK, http.StatusCreated}, nil); doRequestErr != nil {
+		return fmt.Errorf("failed to rewrite object metadata: %w", doRequestErr)
+	}
+	return nil
 }
 
 // GetObjectUnderlyingStorageProperties fetches the underlying storage properties of an object.
@@ -381,8 +394,8 @@ func (c *Client) GetObjectUnderlyingStorageProperties(
 		url.QueryEscape(objectPath),
 	)
 	var storageProperties UnderlyingStorageProperties
-	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &storageProperties); err != nil {
-		return nil, err
+	if doRequestErr := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &storageProperties); doRequestErr != nil {
+		return nil, fmt.Errorf("failed to get object underlying storage properties: %w", doRequestErr)
 	}
 	return &storageProperties, nil
 }
@@ -390,7 +403,7 @@ func (c *Client) GetObjectUnderlyingStorageProperties(
 // ListObjects retrieves a list of object from the specified repository, ref and prefix. Similar to `ls` command.
 func (c *Client) ListObjects(
 	repositoryID, ref, prefix, after, delimiter string,
-	user_metadata, presign bool,
+	userMetadata, presign bool,
 	amount int,
 ) (*ObjectList, error) {
 	endpoint := fmt.Sprintf("/repositories/%s/refs/%s/objects/ls", repositoryID, ref)
@@ -404,7 +417,7 @@ func (c *Client) ListObjects(
 	if delimiter != "" {
 		q.Set("delimiter", delimiter)
 	}
-	q.Set("user_metadata", strconv.FormatBool(user_metadata))
+	q.Set("user_metadata", strconv.FormatBool(userMetadata))
 	q.Set("presign", strconv.FormatBool(presign))
 	if amount > 0 {
 		q.Set("amount", strconv.Itoa(amount))
@@ -412,8 +425,8 @@ func (c *Client) ListObjects(
 	endpoint = endpoint + "?" + q.Encode()
 
 	var listResp ObjectList
-	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &listResp); err != nil {
-		return nil, err
+	if doRequestErr := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &listResp); doRequestErr != nil {
+		return nil, fmt.Errorf("failed to list objects: %w", doRequestErr)
 	}
 	return &listResp, nil
 }
@@ -421,13 +434,22 @@ func (c *Client) ListObjects(
 // ListAllObjects retrieves all objects from the specified repository and prefix.
 func (c *Client) ListAllObjects(
 	repositoryID, ref, prefix, after, delimiter string,
-	user_metadata, presign bool,
+	userMetadata, presign bool,
 ) ([]ObjectMetadata, error) {
 	var allObjects []ObjectMetadata
 	for {
-		objects, err := c.ListObjects(repositoryID, ref, prefix, after, delimiter, user_metadata, presign, 100)
+		objects, err := c.ListObjects(
+			repositoryID,
+			ref,
+			prefix,
+			after,
+			delimiter,
+			userMetadata,
+			presign,
+			DefaultListAmountLimit,
+		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list objects: %w", err)
 		}
 		allObjects = append(allObjects, objects.Results...)
 		if !objects.Pagination.HasMore {

@@ -2,15 +2,21 @@ package lakefs
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"irmin-api/utils"
-	"log"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strings"
+)
+
+const (
+	// DefaultListAmountLimit is the default amount limit for list operations.
+	DefaultListAmountLimit = 100
 )
 
 // Pagination contains information about the list results.
@@ -24,18 +30,22 @@ type Pagination struct {
 // Client is a client for interacting with the LakeFS API.
 // It encapsulates the base URL (read from the environment) and the auth token.
 type Client struct {
+	ctx     context.Context
+	logger  *slog.Logger
 	baseURL string
 	token   string
 	client  *http.Client
 }
 
 // NewClient creates a new LakeFS Client.
-func NewClient(baseURL string) (*Client, error) {
+func NewClient(ctx context.Context, baseURL string, logger *slog.Logger) (*Client, error) {
 	if baseURL == "" {
 		return nil, errors.New("base URL is required")
 	}
 
 	return &Client{
+		ctx:     ctx,
+		logger:  logger,
 		baseURL: strings.TrimRight(baseURL, "/"),
 		client:  &http.Client{},
 	}, nil
@@ -57,9 +67,9 @@ func (c *Client) doRequest(method, endpoint string, payload any, allowedStatus [
 	// Build the full URL.
 	url := c.baseURL + endpoint
 
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+	req, newRequestErr := http.NewRequestWithContext(c.ctx, method, url, body)
+	if newRequestErr != nil {
+		return fmt.Errorf("failed to create request: %w", newRequestErr)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -67,9 +77,9 @@ func (c *Client) doRequest(method, endpoint string, payload any, allowedStatus [
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to execute request: %w", err)
+	resp, doRequestErr := c.client.Do(req)
+	if doRequestErr != nil {
+		return fmt.Errorf("failed to execute request: %w", doRequestErr)
 	}
 	defer resp.Body.Close()
 
@@ -78,16 +88,16 @@ func (c *Client) doRequest(method, endpoint string, payload any, allowedStatus [
 
 	if !allowed {
 		// Read the entire response body.
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read error response: %w", err)
+		bodyBytes, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return fmt.Errorf("failed to read error response: %w", readErr)
 		}
 
 		// Attempt to unmarshal the JSON error message.
 		var errResp struct {
 			Message string `json:"message"`
 		}
-		if err := json.Unmarshal(bodyBytes, &errResp); err == nil && errResp.Message != "" {
+		if unmarshalErr := json.Unmarshal(bodyBytes, &errResp); unmarshalErr == nil && errResp.Message != "" {
 			return fmt.Errorf("request to %s failed with status %d: %s", endpoint, resp.StatusCode, errResp.Message)
 		}
 
@@ -97,8 +107,8 @@ func (c *Client) doRequest(method, endpoint string, payload any, allowedStatus [
 
 	// Decode the response if a result interface is provided.
 	if result != nil {
-		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
-			return fmt.Errorf("failed to decode response: %w", err)
+		if decodeErr := json.NewDecoder(resp.Body).Decode(result); decodeErr != nil {
+			return fmt.Errorf("failed to decode response: %w", decodeErr)
 		}
 	}
 
@@ -127,9 +137,9 @@ func (c *Client) doStreamRequest(
 	// Build the full URL.
 	fullURL := c.baseURL + endpoint
 
-	req, err := http.NewRequest(method, fullURL, body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	req, newRequestErr := http.NewRequestWithContext(c.ctx, method, fullURL, body)
+	if newRequestErr != nil {
+		return nil, fmt.Errorf("failed to create request: %w", newRequestErr)
 	}
 
 	if payload != nil {
@@ -143,20 +153,22 @@ func (c *Client) doStreamRequest(
 
 	// Use a temporary client that does not follow redirects.
 	tempClient := *c.client
-	tempClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	tempClient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
 
-	resp, err := tempClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
+	resp, doRequestErr := tempClient.Do(req)
+	if doRequestErr != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", doRequestErr)
 	}
 
 	// Verify that the response status code is acceptable.
 	allowed := slices.Contains(allowedStatus, resp.StatusCode)
 	if !allowed {
 		bodyBytes, readErr := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			return nil, fmt.Errorf("failed to close response body: %w", closeErr)
+		}
 		if readErr != nil {
 			return nil, fmt.Errorf("failed to read error response: %w", readErr)
 		}
@@ -178,9 +190,9 @@ func (c *Client) doMultipartRequest(
 	result any,
 ) error {
 	fullURL := c.baseURL + endpoint
-	req, err := http.NewRequest(method, fullURL, body)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+	req, newRequestErr := http.NewRequestWithContext(c.ctx, method, fullURL, body)
+	if newRequestErr != nil {
+		return fmt.Errorf("failed to create request: %w", newRequestErr)
 	}
 
 	req.Header.Set("Content-Type", contentType)
@@ -188,52 +200,51 @@ func (c *Client) doMultipartRequest(
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to execute request: %w", err)
+	resp, doRequestErr := c.client.Do(req)
+	if doRequestErr != nil {
+		return fmt.Errorf("failed to execute request: %w", doRequestErr)
 	}
 	defer resp.Body.Close()
 
-	allowed := false
-	for _, status := range allowedStatus {
-		if resp.StatusCode == status {
-			allowed = true
-			break
-		}
-	}
+	allowed := slices.Contains(allowedStatus, resp.StatusCode)
 	if !allowed {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("request to %s failed with status %d: %s", endpoint, resp.StatusCode, string(bodyBytes))
+		bodyBytes, readErr := io.ReadAll(resp.Body)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			return fmt.Errorf("failed to close response body: %w", closeErr)
+		}
+		if readErr != nil {
+			return fmt.Errorf("failed to read error response: %w", readErr)
+		}
+		return fmt.Errorf(
+			"request to %s failed with status %d: %s",
+			endpoint,
+			resp.StatusCode,
+			string(bodyBytes),
+		)
 	}
 
 	if result != nil {
-		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
-			return fmt.Errorf("failed to decode response: %w", err)
+		if decodeErr := json.NewDecoder(resp.Body).Decode(result); decodeErr != nil {
+			return fmt.Errorf("failed to decode response: %w", decodeErr)
 		}
 	}
 	return nil
 }
 
 // CreateClient creates a new LakeFS client and logs in with the provided credentials from the environment.
-func CreateClient() (*Client, *utils.CoreAPIEnv, error) {
-	// Load environment variables
-	env, err := utils.LoadEnv()
-	if err != nil {
-		log.Fatalf("Failed to load environment variables: %v", err)
-	}
-
+func CreateClient(ctx context.Context, logger *slog.Logger, env *utils.CoreAPIEnv) (*Client, error) {
 	// Create the client.
-	client, err := NewClient(fmt.Sprintf("%s/api/v1", env.LakeFSURL))
-	if err != nil {
-		log.Printf("Error creating LakeFS client: %v", err)
-		return nil, env, err
+	client, clientErr := NewClient(ctx, fmt.Sprintf("%s/api/v1", env.LakeFSURL), logger)
+	if clientErr != nil {
+		logger.ErrorContext(ctx, "error creating LakeFS client", "error", clientErr)
+		return nil, clientErr
 	}
 
 	// Log in (credentials can also be obtained from env or configuration).
-	if err := client.Login(env.LakeFSAccessKey, env.LakeFSSecretKey); err != nil {
-		log.Printf("LakeFS login error: %v", err)
-		return nil, env, err
+	if loginErr := client.Login(env.LakeFSAccessKey, env.LakeFSSecretKey); loginErr != nil {
+		logger.ErrorContext(ctx, "lakefs login error", "error", loginErr)
+		return nil, loginErr
 	}
 
-	return client, env, nil
+	return client, nil
 }

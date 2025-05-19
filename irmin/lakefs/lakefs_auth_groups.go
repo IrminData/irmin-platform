@@ -40,7 +40,7 @@ func (c *Client) ListAllGroups(prefix string) ([]Group, error) {
 	var allGroups []Group
 	after := ""
 	for {
-		listResp, err := c.ListGroups(prefix, after, 100)
+		listResp, err := c.ListGroups(prefix, after, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +93,7 @@ func (c *Client) ListAllGroupMembers(groupID string) ([]User, error) {
 	var allMembers []User
 	after := ""
 	for {
-		listResp, err := c.ListGroupMembers(groupID, after, 100)
+		listResp, err := c.ListGroupMembers(groupID, after, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func (c *Client) ListAllGroupPolicies(groupID string) ([]Policy, error) {
 	var allPolicies []Policy
 	after := ""
 	for {
-		listResp, err := c.ListGroupPolicies(groupID, after, 100)
+		listResp, err := c.ListGroupPolicies(groupID, after, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

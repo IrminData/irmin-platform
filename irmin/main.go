@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"irmin-api/db"
+	"irmin-api/engine"
+	"irmin-api/locales"
 	"irmin-api/orchestrator"
 	"irmin-api/routes"
 	"irmin-api/utils"
@@ -22,117 +24,142 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 )
 
-func main() {
-	// Define flags.
+const (
+	// MaxRequestBodySize is the maximum size of request body in bytes (5 GB).
+	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
+	// CacheExpirationDuration is the duration for which responses are cached.
+	CacheExpirationDuration = 10 * time.Second
+)
+
+// setupDatabase initializes and configures the database based on command line flags.
+func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
+	database, err := db.InitialiseDB(env)
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle command line flags
 	reset := flag.Bool("reset", false, "Reset the database")
 	migrate := flag.Bool("migrate", false, "Run database migrations")
 	flag.Parse()
 
-	// Load environment variables
-	env, err := utils.LoadEnv()
-	if err != nil {
-		log.Fatalf("failed to load environment variables: %v", err)
-	}
-
-	// Initialize the database
-	database, err := db.InitialiseDB()
-	if err != nil {
-		log.Fatalf("failed to initialise the database: %v", err)
-	}
-
-	// Reset the database
 	if *reset {
-		if err := database.Reset(); err != nil {
-			log.Fatalf("failed to run migrations: %v", err)
+		if dbResetErr := database.Reset(); dbResetErr != nil {
+			return nil, dbResetErr
 		}
 	}
 
-	// Run migrations
 	if *migrate {
-		if err := database.Migrate(); err != nil {
-			log.Fatalf("failed to run migrations: %v", err)
+		if dbMigrateErr := database.Migrate(); dbMigrateErr != nil {
+			return nil, dbMigrateErr
 		}
 	}
 
-	// Initialize a new Fiber app
+	return database, nil
+}
+
+// setupFiberApp creates and configures a new Fiber application.
+func setupFiberApp(env *utils.CoreAPIEnv) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:   "Irmin API",
-		BodyLimit: 1024 * 1024 * 1024 * 5, // 5 GB
+		BodyLimit: MaxRequestBodySize,
 	})
 
-	// Return request ID in the response headers
+	// Add middleware
 	app.Use(requestid.New())
+	app.Use(compress.New(compress.Config{Level: compress.LevelBestSpeed}))
+	app.Use(setupCache())
 
-	// Compress responses
-	app.Use(compress.New(
-		compress.Config{
-			Level: compress.LevelBestSpeed,
-		},
-	))
-
-	// Cache responses for 10 seconds for GET, HEAD, and OPTIONS methods.
-	// Cache key is generated based on the request path, query parameters, and authorization header.
-	app.Use(cache.New(
-		cache.Config{
-			Expiration: 10 * time.Second,
-			Methods: []string{
-				http.MethodGet,
-				http.MethodHead,
-				http.MethodOptions,
-			},
-			KeyGenerator: func(c fiber.Ctx) string {
-				queriesMap := c.Queries()
-				var keys []string
-				for key := range queriesMap {
-					keys = append(keys, key)
-				}
-				sort.Strings(keys)
-				queries := ""
-				for _, key := range keys {
-					value := queriesMap[key]
-					if queries == "" {
-						queries = key + "=" + value
-					} else {
-						queries += "&" + key + "=" + value
-					}
-				}
-				return c.Path() + queries + c.Get("authorization")
-			},
-		},
-	))
-
-	// Enable helmet
 	if env.HelmetEnabled {
 		app.Use(helmet.New())
 	}
 
-	// Enable CORS if configured
 	if env.CorsEnabled {
-		log.Println("CORS is enabled")
-		// Split the allowed origins into a slice
-		allowedOrigins := strings.Split(env.CorsOrigins, ",")
-		// Trim whitespace from each origin
-		for i, origin := range allowedOrigins {
-			allowedOrigins[i] = strings.TrimSpace(origin)
-		}
-		log.Println("Allowed origins:", allowedOrigins)
-		// Enable CORS with default settings
-		app.Use(cors.New(cors.Config{
-			AllowOrigins:     allowedOrigins,
-			AllowCredentials: true,
-		}))
+		app.Use(setupCORS(env))
 	}
 
-	// Start the orchestrator
-	orchestrator := orchestrator.NewOrchestrator(database, slog.Default(), env)
+	return app
+}
+
+// setupCache configures and returns the cache middleware.
+func setupCache() fiber.Handler {
+	return cache.New(cache.Config{
+		Expiration: CacheExpirationDuration,
+		Methods: []string{
+			http.MethodGet,
+			http.MethodHead,
+			http.MethodOptions,
+		},
+		KeyGenerator: func(c fiber.Ctx) string {
+			queriesMap := c.Queries()
+			var keys []string
+			for key := range queriesMap {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			queries := ""
+			for _, key := range keys {
+				value := queriesMap[key]
+				if queries == "" {
+					queries = key + "=" + value
+				} else {
+					queries += "&" + key + "=" + value
+				}
+			}
+			return c.Path() + queries + c.Get("authorization")
+		},
+	})
+}
+
+// setupCORS configures and returns the CORS middleware.
+func setupCORS(env *utils.CoreAPIEnv) fiber.Handler {
+	allowedOrigins := strings.Split(env.CorsOrigins, ",")
+	for i, origin := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(origin)
+	}
+	log.Println("Allowed origins:", allowedOrigins)
+
+	return cors.New(cors.Config{
+		AllowOrigins:     allowedOrigins,
+		AllowCredentials: true,
+	})
+}
+
+// setupServices initializes all required services.
+func setupServices(
+	env *utils.CoreAPIEnv,
+	database *db.Database,
+) (*orchestrator.Orchestrator, *utils.SQIDManager, *locales.LocaleManager, error) {
+	// Initialize data engine
+	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Initialize orchestrator
+	orchestrator := orchestrator.NewOrchestrator(database, slog.Default(), env, dataEngine)
 	if env.OrchestratorEnabled {
-		go orchestrator.StartOrchestrator(context.Background())
+		go func() {
+			if orchestratorStartErr := orchestrator.StartOrchestrator(context.Background()); orchestratorStartErr != nil {
+				log.Printf("Orchestrator error: %v", err)
+			}
+		}()
 	}
 
-	// Register the Core API routes
-	routes.RegisterAPIRoutes(app, database, slog.Default(), env, orchestrator)
+	// Initialize SQID manager
+	sqidManager := utils.NewSQIDManager(env)
 
-	// Start the server in a goroutine
+	// Initialize locale manager
+	localeManager, err := locales.New()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return orchestrator, sqidManager, localeManager, nil
+}
+
+// startServer starts the Fiber server in a goroutine.
+func startServer(app *fiber.App, env *utils.CoreAPIEnv) {
 	go func() {
 		if err := app.Listen(":"+env.Port, fiber.ListenConfig{
 			EnablePrefork: env.PreforkEnabled,
@@ -140,6 +167,35 @@ func main() {
 			log.Printf("Server error: %v", err)
 		}
 	}()
+}
+
+func main() {
+	// Load environment variables
+	env, err := utils.LoadEnv()
+	if err != nil {
+		log.Fatalf("failed to load environment variables: %v", err)
+	}
+
+	// Setup database
+	database, err := setupDatabase(env)
+	if err != nil {
+		log.Fatalf("failed to setup database: %v", err)
+	}
+
+	// Setup Fiber app
+	app := setupFiberApp(env)
+
+	// Setup services
+	orchestrator, sqidManager, localeManager, err := setupServices(env, database)
+	if err != nil {
+		log.Fatalf("failed to setup services: %v", err)
+	}
+
+	// Register routes
+	routes.RegisterAPIRoutes(app, database, slog.Default(), env, orchestrator, sqidManager, localeManager)
+
+	// Start server
+	startServer(app, env)
 
 	// Keep the main process running
 	select {}

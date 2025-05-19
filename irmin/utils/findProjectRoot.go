@@ -11,8 +11,8 @@ import (
 // If a ".env" file is found in the current working directory, it returns that directory.
 func FindProjectRoot() (string, error) {
 	// First, check if the current working directory has a .env file.
-	if cwd, err := os.Getwd(); err == nil {
-		if _, err := os.Stat(filepath.Join(cwd, ".env")); err == nil {
+	if cwd, getwdErr := os.Getwd(); getwdErr == nil {
+		if _, statErr := os.Stat(filepath.Join(cwd, ".env")); statErr == nil {
 			return cwd, nil
 		}
 	}

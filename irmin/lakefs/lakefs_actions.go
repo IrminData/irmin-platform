@@ -62,7 +62,7 @@ func (c *Client) ListActionRuns(repositoryID, after, branch, commit string, amou
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &listResp); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return &listResp, nil
 }
 
 // ListAllActionRuns handles pagination automatically and returns all action runs.
@@ -70,7 +70,7 @@ func (c *Client) ListAllActionRuns(repositoryID, branch, commit string) ([]Actio
 	var allActionRuns []ActionRun
 	after := ""
 	for {
-		listResp, err := c.ListActionRuns(repositoryID, after, branch, commit, 100)
+		listResp, err := c.ListActionRuns(repositoryID, after, branch, commit, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +114,7 @@ func (c *Client) ListAllRunHooks(repositoryID, runID string) ([]RunHook, error) 
 	var allHookRuns []RunHook
 	after := ""
 	for {
-		listResp, err := c.ListRunHooks(repositoryID, runID, after, 100)
+		listResp, err := c.ListRunHooks(repositoryID, runID, after, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

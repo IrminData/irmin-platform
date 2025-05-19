@@ -13,6 +13,7 @@ import (
 func FormatRepositoryResponse(
 	repository *db.Repository,
 	dataEngineRepository *engine.Repository,
+	sqidManager *utils.SQIDManager,
 ) (*irminmodels.Repository, error) {
 	// Check if the repository is a nil pointer
 	if repository == nil {
@@ -20,13 +21,13 @@ func FormatRepositoryResponse(
 	}
 
 	// Get the sqid of the repository
-	repositorySqid, err := utils.EncodeSqids("repositories", uint64(repository.ID))
+	repositorySqid, err := sqidManager.Encode("repositories", uint64(repository.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding repository sqid: %w", err)
 	}
 
 	// Format the repository owner
-	owner, err := FormatUserResponse(&repository.Owner)
+	owner, err := FormatUserResponse(&repository.Owner, sqidManager)
 	if err != nil {
 		return nil, fmt.Errorf("error formatting repository owner: %w", err)
 	}

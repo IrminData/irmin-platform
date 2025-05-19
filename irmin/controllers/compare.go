@@ -7,24 +7,26 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
 func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the query parameters
 	params, err := utils.ParseQueryParams(c, []string{"base_ref", "compare_ref"}, nil)
 	if err != nil {
-		log.Printf("Error parsing query parameters: %v", err)
+		api.Logger.Error("Error parsing query parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
@@ -33,14 +35,20 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	compareRef := params["compare_ref"]
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Compare the refs
 	diff, err := dataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
 	if err != nil {
-		log.Printf("Error comparing refs: %v", err)
+		api.Logger.Error("Error comparing refs", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -50,11 +58,14 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the form fields
 	fields, err := utils.ParseFormFields(
@@ -63,9 +74,9 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 		[]string{"description", "strategy", "squash", "allow_empty"},
 	)
 	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+		api.Logger.Error("Error parsing form fields", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
@@ -81,11 +92,17 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 	}
 
 	// Determine if squash and allow_empty are true
-	squash := fields["squash"] == "true"
-	allowEmpty := fields["allow_empty"] == "true"
+	squash := fields["squash"] == trueString
+	allowEmpty := fields["allow_empty"] == trueString
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Merge the refs
 	mergeCommit, err := dataEngine.MergeRefs(
@@ -101,14 +118,14 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 	)
 
 	if err != nil {
-		log.Printf("Error merging refs: %v", err)
+		api.Logger.Error("Error merging refs", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,
 		Description:  fmt.Sprintf("Merged %s into %s", compareRef, baseRef),
 		UserID:       &user.ID,
@@ -117,7 +134,7 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("merge_commit_created"),
+		Message: api.lm.T(dict, "merge_commit_created"),
 		Data:    mergeCommit,
 	})
 }

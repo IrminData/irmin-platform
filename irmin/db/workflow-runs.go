@@ -63,23 +63,3 @@ func (d *Database) GetWorkflowRunByID(id uint) (*WorkflowRun, error) {
 	result := d.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&workflowRun, id)
 	return &workflowRun, result.Error
 }
-
-func (d *Database) CreateWorkflowRun(run *WorkflowRun) (*WorkflowRun, error) {
-	if err := d.Create(&run).Error; err != nil {
-		return nil, err
-	}
-	if err := d.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&run, run.ID).Error; err != nil {
-		return nil, err
-	}
-	return run, nil
-}
-
-func (d *Database) UpdateWorkflowRun(run *WorkflowRun) (*WorkflowRun, error) {
-	if err := d.Save(&run).Error; err != nil {
-		return nil, err
-	}
-	if err := d.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&run, run.ID).Error; err != nil {
-		return nil, err
-	}
-	return run, nil
-}

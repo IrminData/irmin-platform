@@ -5,9 +5,9 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/formatter"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 	"strconv"
 	"time"
 
@@ -15,48 +15,58 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Get all stored queries for the workspace
-	queries, err := api.DB.GetStoredQueriesByWorkspaceID(workspace.ID)
-	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+	queries, getStoredQueriesByWorkspaceIDErr := api.DB.GetStoredQueriesByWorkspaceID(workspace.ID)
+	if getStoredQueriesByWorkspaceIDErr != nil {
+		api.Logger.Error("Error fetching stored queries", "error", getStoredQueriesByWorkspaceIDErr)
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the stored queries
-	var formattedQueries []irminmodels.StoredQuery
-	for _, query := range queries {
-		formattedQuery, err := formatter.FormatStoredQueryResponse(&query)
-		if err != nil {
-			log.Printf("Error formatting stored query: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		formattedQueries = append(formattedQueries, *formattedQuery)
+	formattedIndex, formatIndexErr := formatter.FormatIndexResponse(
+		queries,
+		formatter.FormatStoredQueryResponse,
+		api.SQIDManager,
+	)
+	if formatIndexErr != nil {
+		api.Logger.Error("Error formatting stored queries", "error", formatIndexErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
 	}
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: formattedQueries,
+		Data: formattedIndex,
 	})
 }
 
 func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	user := c.Locals("user").(*db.User)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	user, userOk := c.Locals("user").(*db.User)
+
+	if !dictOk || !workspaceOk || !userOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
@@ -74,27 +84,26 @@ func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 		OwnerID:     user.ID,
 		WorkspaceID: workspace.ID,
 	}
-	storedQuery, err := api.DB.CreateStoredQuery(query)
-	if err != nil {
-		log.Printf("Error creating stored query: %v", err)
+	if saveErr := api.DB.Save(&query).Error; saveErr != nil {
+		api.Logger.Error("Error creating stored query", "error", saveErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the stored query
-	formattedQuery, err := formatter.FormatStoredQueryResponse(storedQuery)
-	if err != nil {
-		log.Printf("Error formatting stored query: %v", err)
+	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
+	if formatStoredQueryResponseErr != nil {
+		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	api.DB.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("Query %s created", storedQuery.Name),
+		Description: fmt.Sprintf("Query %s created", query.Name),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
@@ -106,15 +115,19 @@ func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) QueriesShow(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	query := c.Locals("stored_query").(*db.StoredQuery)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
+
+	if !dictOk || !queryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Format the stored query
-	formattedQuery, err := formatter.FormatStoredQueryResponse(query)
-	if err != nil {
-		log.Printf("Error formatting stored query: %v", err)
+	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
+	if formatStoredQueryResponseErr != nil {
+		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -125,78 +138,89 @@ func (api *APIControllers) QueriesShow(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	query := c.Locals("stored_query").(*db.StoredQuery)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
+
+	if !dictOk || !userOk || !queryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, nil, []string{"name", "description", "sql"})
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Construct the updates map
-	updates := map[string]any{}
-	if fields["name"] != "" {
-		updates["name"] = fields["name"]
-	}
-	if fields["description"] != "" {
-		updates["description"] = fields["description"]
-	}
-	if fields["sql"] != "" {
-		updates["sql"] = fields["sql"]
+	// Check if the query exists
+	if query == nil {
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "query_not_found")},
+		})
 	}
 
 	// Update the stored query in the database
-	updatedQuery, err := api.DB.UpdateStoredQuery(query.ID, updates)
-	if err != nil {
-		log.Printf("Error updating stored query: %v", err)
+	if fields["name"] != "" {
+		query.Name = fields["name"]
+	}
+	if fields["description"] != "" {
+		query.Description = fields["description"]
+	}
+	if fields["sql"] != "" {
+		query.SQL = fields["sql"]
+	}
+	if saveErr := api.DB.Save(&query).Error; saveErr != nil {
+		api.Logger.Error("Error updating stored query", "error", saveErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the stored query
-	formattedQuery, err := formatter.FormatStoredQueryResponse(updatedQuery)
-	if err != nil {
-		log.Printf("Error formatting stored query: %v", err)
+	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
+	if formatStoredQueryResponseErr != nil {
+		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	api.DB.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeInfo,
-		Description: fmt.Sprintf("Query %s updated", updatedQuery.Name),
+		Description: fmt.Sprintf("Query %s updated", query.Name),
 		UserID:      &user.ID,
-		WorkspaceID: &updatedQuery.WorkspaceID,
+		WorkspaceID: &query.WorkspaceID,
 	})
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("query_updated"),
+		Message: api.lm.T(dict, "query_updated"),
 		Data:    formattedQuery,
 	})
 }
 
 func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	query := c.Locals("stored_query").(*db.StoredQuery)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
+
+	if !dictOk || !queryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Delete the stored query from the database
-	if err := api.DB.DeleteStoredQuery(query.ID); err != nil {
-		log.Printf("Error deleting stored query: %v", err)
+	if deleteStoredQueryErr := api.DB.DeleteStoredQuery(query.ID); deleteStoredQueryErr != nil {
+		api.Logger.Error("Error deleting stored query", "error", deleteStoredQueryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	api.DB.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("Query %s deleted", query.Name),
 		UserID:      &query.OwnerID,
@@ -205,103 +229,116 @@ func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("query_deleted"),
+		Message: api.lm.T(dict, "query_deleted"),
 	})
 }
 
+//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other ownership transfer controllers
 func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	query := c.Locals("stored_query").(*db.StoredQuery)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
+
+	if !dictOk || !userOk || !workspaceOk || !queryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Parse the new owner ID from the sqid
-	newOwnerID, err := utils.DecodeSqids("users", fields["new_owner_id"])
-	if err != nil {
-		log.Printf("Error decoding sqid: %v", err)
+	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", fields["new_owner_id"])
+	if decodeSqidsErr != nil {
+		api.Logger.Error("Error decoding sqid", "error", decodeSqidsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, err := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
-	if err != nil {
-		log.Printf("Error checking if user is in workspace: %v", err)
+	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if isUserInWorkspaceErr != nil {
+		api.Logger.Error("Error checking if user is in workspace", "error", isUserInWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("new_owner_invalid")},
+			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("new_owner_invalid")},
+			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
 		})
 	}
 
 	// Update the stored query in the database
-	updatedQuery, err := api.DB.UpdateStoredQuery(query.ID, map[string]any{
-		"owner_id": newOwnerID,
-	})
-	if err != nil {
-		log.Printf("Error updating stored query: %v", err)
+	query.OwnerID = uint(newOwnerID)
+	if saveErr := api.DB.Save(&query).Error; saveErr != nil {
+		api.Logger.Error("Error updating stored query", "error", saveErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the stored query
-	formattedQuery, err := formatter.FormatStoredQueryResponse(updatedQuery)
-	if err != nil {
-		log.Printf("Error formatting stored query: %v", err)
+	formattedQuery, formatStoredQueryResponseErr := formatter.FormatStoredQueryResponse(query, api.SQIDManager)
+	if formatStoredQueryResponseErr != nil {
+		api.Logger.Error("Error formatting stored query", "error", formatStoredQueryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	api.DB.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeInfo,
-		Description: fmt.Sprintf("Query %s ownership transferred to %s", updatedQuery.Name, updatedQuery.Owner.Email),
+		Description: fmt.Sprintf("Query %s ownership transferred to %s", query.Name, query.Owner.Email),
 		UserID:      &user.ID,
-		WorkspaceID: &updatedQuery.WorkspaceID,
+		WorkspaceID: &query.WorkspaceID,
 	})
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("query_ownership_transferred"),
+		Message: api.lm.T(dict, "query_ownership_transferred"),
 		Data:    formattedQuery,
 	})
 }
 
 func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !localeOk || !dictOk || !userOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(c, nil, []string{"sql"})
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, nil, []string{"sql"})
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Log the event
-	api.DB.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeInfo,
 		Description: "SQL query execution started",
 		UserID:      &user.ID,
@@ -312,16 +349,15 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 	result := dataEngine.ExecuteQuery(workspace.Slug, fields["sql"])
 	// Check for errors
 	if result.HasErrors {
-		log.Printf("Error executing SQL query: %v", result.Logs)
-		api.DB.CreateLogEvent(&db.LogEvent{
+		api.Logger.Error("Error executing SQL query", "error", result.Logs)
+		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 			Type:        db.LogEventTypeError,
 			Description: "SQL query execution failed",
 			UserID:      &user.ID,
 			WorkspaceID: &workspace.ID,
 		})
 	} else {
-		// Log the event
-		api.DB.CreateLogEvent(&db.LogEvent{
+		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 			Type:        db.LogEventTypeInfo,
 			Description: "SQL query execution completed",
 			UserID:      &user.ID,
@@ -331,23 +367,33 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("query_executed"),
+		Message: api.lm.T(dict, "query_executed"),
 		Data:    result,
 	})
 }
 
 func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	query := c.Locals("stored_query").(*db.StoredQuery)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	query, queryOk := c.Locals("stored_query").(*db.StoredQuery)
+
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !queryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Log the event
-	api.DB.CreateLogEvent(&db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeInfo,
 		Description: fmt.Sprintf("Query %s execution started", query.Name),
 		UserID:      &user.ID,
@@ -359,16 +405,15 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 
 	// Check for errors
 	if result.HasErrors {
-		log.Printf("Error executing SQL query: %v", result.Logs)
-		api.DB.CreateLogEvent(&db.LogEvent{
+		api.Logger.Error("Error executing SQL query", "error", result.Logs)
+		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 			Type:        db.LogEventTypeError,
 			Description: "SQL query execution failed",
 			UserID:      &user.ID,
 			WorkspaceID: &workspace.ID,
 		})
 	} else {
-		// Log the event
-		api.DB.CreateLogEvent(&db.LogEvent{
+		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 			Type:        db.LogEventTypeInfo,
 			Description: "SQL query execution completed",
 			UserID:      &user.ID,
@@ -378,7 +423,7 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("query_executed"),
+		Message: api.lm.T(dict, "query_executed"),
 		Data:    result,
 	})
 }

@@ -34,8 +34,8 @@ func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*irmin
 
 	// Define cancel function with error logging.
 	cancel := func() {
-		if cancelErr := baseClient.CancelOperation(int(op.ID)); cancelErr != nil {
-			fmt.Printf("failed to cancel operation %d: %v", op.ID, cancelErr)
+		if cancelErr := baseClient.CancelOperation(op.ID); cancelErr != nil {
+			c.Logger.Error("failed to cancel operation", "error", cancelErr)
 		}
 	}
 
@@ -145,18 +145,18 @@ func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPat
 	defer cancel()
 
 	// Pull the matching files from the connector.
-	pulled, err := opClient.OperationPull(connectionPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pull files: %w", err)
+	pulled, pullErr := opClient.OperationPull(connectionPath)
+	if pullErr != nil {
+		return nil, fmt.Errorf("failed to pull files: %w", pullErr)
 	}
 
 	// Loop through the pulled files to unzip them and construct a list of all files.
 	allFiles := make(map[string][]byte)
 	for _, file := range pulled {
 		// Unzip the file
-		unzipped, err := irminutils.UnzipFiles(file.Content)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unzip file: %w", err)
+		unzipped, unzipFilesErr := irminutils.UnzipFiles(file.Content)
+		if unzipFilesErr != nil {
+			return nil, fmt.Errorf("failed to unzip file: %w", unzipFilesErr)
 		}
 
 		// Add the unzipped files to the list of all files.
@@ -186,9 +186,9 @@ func (c *Client) DataExport(
 	repoName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Fetch object metadata (file or directory).
-	obj, err := getObject(repositoryPath, repoName, branch, *c.LakeFSClient)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("failed to get object %q: %w", repositoryPath, err))
+	obj, getObjectErr := getObject(repositoryPath, repoName, branch, *c.LakeFSClient)
+	if getObjectErr != nil {
+		errs = append(errs, fmt.Errorf("failed to get object %q: %w", repositoryPath, getObjectErr))
 		return nil, errs
 	}
 
@@ -204,13 +204,13 @@ func (c *Client) DataExport(
 
 		for _, child := range obj.Children {
 			go func() {
-				data, getErr := c.LakeFSClient.GetFullObjectContent(
+				data, getFullObjectContentErr := c.LakeFSClient.GetFullObjectContent(
 					repoName,
 					branch,
 					child.Path,
 				)
-				if getErr != nil {
-					errCh <- fmt.Errorf("failed to fetch child %q: %w", child.Path, getErr)
+				if getFullObjectContentErr != nil {
+					errCh <- fmt.Errorf("failed to fetch child %q: %w", child.Path, getFullObjectContentErr)
 					return
 				}
 				ch <- struct {
@@ -231,9 +231,9 @@ func (c *Client) DataExport(
 		}
 	} else {
 		// Single file: fetch content.
-		data, getErr := c.LakeFSClient.GetFullObjectContent(repoName, branch, obj.Path)
-		if getErr != nil {
-			errs = append(errs, fmt.Errorf("failed to fetch object %q: %w", obj.Path, getErr))
+		data, getFullObjectContentErr := c.LakeFSClient.GetFullObjectContent(repoName, branch, obj.Path)
+		if getFullObjectContentErr != nil {
+			errs = append(errs, fmt.Errorf("failed to fetch object %q: %w", obj.Path, getFullObjectContentErr))
 			return nil, errs
 		}
 		files[obj.Name] = data
@@ -241,9 +241,9 @@ func (c *Client) DataExport(
 	}
 
 	// Push the files to the connector.
-	_, err = c.PushFilesToConnector(connection, connectionPath, obj, files)
-	if err != nil {
-		errs = append(errs, err)
+	_, pushFilesToConnectorErr := c.PushFilesToConnector(connection, connectionPath, obj, files)
+	if pushFilesToConnectorErr != nil {
+		errs = append(errs, pushFilesToConnectorErr)
 		return nil, errs
 	}
 
@@ -260,15 +260,15 @@ func (c *Client) PushFilesToConnector(
 	files map[string][]byte,
 ) ([]string, error) {
 	// Zip the files.
-	zip, err := irminutils.ZipFiles(files)
-	if err != nil {
-		return nil, fmt.Errorf("failed to zip files: %w", err)
+	zip, zipFilesErr := irminutils.ZipFiles(files)
+	if zipFilesErr != nil {
+		return nil, fmt.Errorf("failed to zip files: %w", zipFilesErr)
 	}
 
 	// Initialize connector operation.
-	opClient, cancel, initErr := c.InitializeConnectorOperation(connection)
-	if initErr != nil {
-		return nil, fmt.Errorf("failed to initialize connector operation: %w", initErr)
+	opClient, cancel, initializeConnectorOperationErr := c.InitializeConnectorOperation(connection)
+	if initializeConnectorOperationErr != nil {
+		return nil, fmt.Errorf("failed to initialize connector operation: %w", initializeConnectorOperationErr)
 	}
 	defer cancel()
 
@@ -283,12 +283,12 @@ func (c *Client) PushFilesToConnector(
 	}
 
 	// Push the zip to the correct path in the connector.
-	_, pushErr := opClient.OperationPush(
+	_, pushFilesErr := opClient.OperationPush(
 		connPath,
 		irminconnectorclient.FormFile{Reader: bytes.NewBuffer(zip)},
 	)
-	if pushErr != nil {
-		return nil, fmt.Errorf("failed to push files: %w", pushErr)
+	if pushFilesErr != nil {
+		return nil, fmt.Errorf("failed to push files: %w", pushFilesErr)
 	}
 
 	// Return the files that were pushed.

@@ -9,9 +9,12 @@ import (
 )
 
 // FormatWorkspaceUserResponse creates a user response object from a workspace user object.
-func FormatWorkspaceUserResponse(workspaceUser *db.WorkspaceUser) (*irminmodels.User, error) {
+func FormatWorkspaceUserResponse(
+	workspaceUser *db.WorkspaceUser,
+	sqidManager *utils.SQIDManager,
+) (*irminmodels.User, error) {
 	// Construct the user sqid
-	userSqid, err := utils.EncodeSqids("users", uint64(workspaceUser.UserID))
+	userSqid, err := sqidManager.Encode("users", uint64(workspaceUser.UserID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding user sqid: %w", err)
 	}
@@ -35,9 +38,9 @@ func FormatWorkspaceUserResponse(workspaceUser *db.WorkspaceUser) (*irminmodels.
 }
 
 // FormatUserResponse creates a role response object from a workspace role object.
-func FormatUserResponse(user *db.User) (*irminmodels.User, error) {
+func FormatUserResponse(user *db.User, sqidManager *utils.SQIDManager) (*irminmodels.User, error) {
 	// Construct the user sqid
-	userSqid, err := utils.EncodeSqids("users", uint64(user.ID))
+	userSqid, err := sqidManager.Encode("users", uint64(user.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding user sqid: %w", err)
 	}

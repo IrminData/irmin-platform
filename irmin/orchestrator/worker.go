@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"context"
 	"irmin-api/db"
-	"irmin-api/lib"
 )
 
 type WorkerEventTopic string
@@ -25,8 +24,7 @@ type WorkerEvent struct {
 func (o *Orchestrator) ExecuteDispatchedEvent(ctx context.Context, event *DispatchEvent) error {
 	o.logger.InfoContext(ctx, "executing dispatched event", "event", event)
 
-	switch event.EventType {
-	case DispatchEventTypeWorkflowRun:
+	if event.EventType == DispatchEventTypeWorkflowRun {
 		// Get the workflow run from the database
 		workflowRun, err := o.db.GetWorkflowRunByID(*event.WorkflowRunID)
 		if err != nil {
@@ -48,7 +46,7 @@ func (o *Orchestrator) ExecuteDispatchedEvent(ctx context.Context, event *Dispat
 		})
 
 		// Execute the workflow
-		_, err = lib.ExecuteWorkflow(ctx, o.db, workflow, workflowRun)
+		_, err = o.ExecuteWorkflow(ctx, workflow, workflowRun)
 		if err != nil {
 			return err
 		}

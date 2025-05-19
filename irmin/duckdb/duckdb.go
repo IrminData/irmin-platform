@@ -6,10 +6,13 @@ import (
 	"irmin-api/utils"
 	"strings"
 
+	// Import DuckDB driver to register it with database/sql package.
+	// The blank import is necessary as the driver needs to register itself
+	// but we don't directly use any of its exported symbols.
 	_ "github.com/marcboeker/go-duckdb"
 )
 
-// Client is a client for interacting with DuckDB for querying data.
+// QueryClient is a client for interacting with DuckDB for querying data.
 type QueryClient struct {
 	db *sql.DB
 }
@@ -17,13 +20,7 @@ type QueryClient struct {
 // NewQueryClient creates a new client for querying data from LakeFS.
 // It configures the DuckDB connection with the required S3 / LakeFS settings.
 // Returns the client and an error if encountered.
-func NewQueryClient() (*QueryClient, error) {
-	// Load environment variables.
-	env, err := utils.LoadEnv()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load environment variables: %w", err)
-	}
-
+func NewQueryClient(env *utils.CoreAPIEnv) (*QueryClient, error) {
 	// Open a connection to DuckDB (empty string uses an in-memory database).
 	db, err := sql.Open("duckdb", "")
 	if err != nil {

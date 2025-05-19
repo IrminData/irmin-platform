@@ -101,7 +101,7 @@ func generateStructuredObjectSchema(
 	}
 
 	// Query the object using DuckDB to get the data types.
-	duckDBSchema, err := getDuckDBSchema(c, workspace, repository, object.Path, ref)
+	duckDBSchema, err := getDuckDBSchema(c, c.Env, workspace, repository, object.Path, ref)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DuckDB schema: %w", err)
 	}

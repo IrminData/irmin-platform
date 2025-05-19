@@ -24,28 +24,6 @@ func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error) {
 	return &w, nil
 }
 
-// CreateWorkspace creates a new workspace.
-func (d *Database) CreateWorkspace(workspace *Workspace) (*Workspace, error) {
-	if err := d.Create(&workspace).Error; err != nil {
-		return nil, err
-	}
-	return workspace, nil
-}
-
-// UpdateWorkspace updates an existing workspace record in the database.
-func (d *Database) UpdateWorkspace(id uint, updates map[string]any) (*Workspace, error) {
-	var workspace Workspace
-	// Update only the provided fields for the user with the specified ID.
-	if err := d.Model(&Workspace{}).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return nil, err
-	}
-	// Retrieve the updated workspace record.
-	if err := d.Preload("Owner").First(&workspace, id).Error; err != nil {
-		return nil, err
-	}
-	return &workspace, nil
-}
-
 // DeleteWorkspace deletes a workspace and the related records.
 func (d *Database) DeleteWorkspace(id uint) error {
 	return d.Transaction(func(tx *gorm.DB) error {

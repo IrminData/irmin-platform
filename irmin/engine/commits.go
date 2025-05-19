@@ -19,9 +19,9 @@ func (c *Client) ListCommits(
 
 	// If the "ref" query param is not provided, get the repository's default branch.
 	if ref == "" {
-		repository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get repository: %w", err)
+		repository, getRepositoryErr := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
+		if getRepositoryErr != nil {
+			return nil, nil, fmt.Errorf("failed to get repository: %w", getRepositoryErr)
 		}
 		ref = repository.DefaultBranch
 	}
@@ -29,19 +29,28 @@ func (c *Client) ListCommits(
 	// Fetch commits
 	var lakefsCommits []lakefs.Commit
 	var pagination *lakefs.Pagination
-	var err error
+	var listAllCommitsErr error
 	if after != nil && limit != nil {
-		lakefsCommitList, err := c.LakeFSClient.ListCommits(lakeFSRepositoryName, ref, *after, "", "", *limit, nil, nil)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to list commits: %w", err)
+		lakefsCommitList, listCommitsErr := c.LakeFSClient.ListCommits(
+			lakeFSRepositoryName,
+			ref,
+			*after,
+			"",
+			"",
+			*limit,
+			nil,
+			nil,
+		)
+		if listCommitsErr != nil {
+			return nil, nil, fmt.Errorf("failed to list commits: %w", listCommitsErr)
 		}
 		lakefsCommits = lakefsCommitList.Results
 		pagination = &lakefsCommitList.Pagination
 	} else {
-		lakefsCommits, err = c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, nil)
+		lakefsCommits, listAllCommitsErr = c.LakeFSClient.ListAllCommits(lakeFSRepositoryName, ref, "", "", "", nil, nil)
 	}
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list commits: %w", err)
+	if listAllCommitsErr != nil {
+		return nil, nil, fmt.Errorf("failed to list commits: %w", listAllCommitsErr)
 	}
 
 	// Convert LakeFS commits to Irmin commits.
@@ -72,9 +81,9 @@ func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Com
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Get commit details.
-	lakeFSCommit, err := c.LakeFSClient.GetCommit(lakeFSRepositoryName, hash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get commit: %w", err)
+	lakeFSCommit, getCommitErr := c.LakeFSClient.GetCommit(lakeFSRepositoryName, hash)
+	if getCommitErr != nil {
+		return nil, fmt.Errorf("failed to get commit: %w", getCommitErr)
 	}
 
 	// Convert LakeFS commit to Irmin commit.
@@ -99,22 +108,27 @@ func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Com
 
 func (c *Client) CommitChanges(
 	workspace, repository, branch, message, author string,
-	allow_empty bool,
+	allowEmpty bool,
 ) (*irminmodels.Commit, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Commit changes in the repository.
-	lakeFSCommit, err := c.LakeFSClient.CreateCommit(lakeFSRepositoryName, branch, "", lakefs.CommitCreateRequest{
-		Message: message,
-		Metadata: map[string]string{
-			"author": author,
+	lakeFSCommit, createCommitErr := c.LakeFSClient.CreateCommit(
+		lakeFSRepositoryName,
+		branch,
+		"",
+		lakefs.CommitCreateRequest{
+			Message: message,
+			Metadata: map[string]string{
+				"author": author,
+			},
+			Date:       time.Now().Unix(),
+			AllowEmpty: allowEmpty,
 		},
-		Date:       time.Now().Unix(),
-		AllowEmpty: allow_empty,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create commit: %w", err)
+	)
+	if createCommitErr != nil {
+		return nil, fmt.Errorf("failed to create commit: %w", createCommitErr)
 	}
 
 	// Convert LakeFS commit to Irmin commit.
@@ -150,12 +164,12 @@ func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pa
 	if resetPath == "" {
 		resetPath = "/"
 	}
-	err := c.LakeFSClient.ResetBranch(lakeFSRepositoryName, branch, lakefs.BranchResetRequest{
+	resetBranchErr := c.LakeFSClient.ResetBranch(lakeFSRepositoryName, branch, lakefs.BranchResetRequest{
 		Type: resetType,
 		Path: resetPath,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to reset branch: %w", err)
+	if resetBranchErr != nil {
+		return fmt.Errorf("failed to reset branch: %w", resetBranchErr)
 	}
 
 	return nil

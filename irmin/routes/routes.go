@@ -4,6 +4,7 @@ import (
 	"irmin-api/controllers"
 	"irmin-api/controllers/middlewares"
 	"irmin-api/db"
+	"irmin-api/locales"
 	"irmin-api/orchestrator"
 	"irmin-api/utils"
 	"log/slog"
@@ -12,12 +13,16 @@ import (
 )
 
 // RegisterAPIRoutes registers all API routes for the application.
+//
+//nolint:funlen // This is a long function, but it's not complex. We just have a lot of routes.
 func RegisterAPIRoutes(
 	app *fiber.App,
 	db *db.Database,
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	orchestrator *orchestrator.Orchestrator,
+	sqidManager *utils.SQIDManager,
+	localeManager *locales.LocaleManager,
 ) {
 	// Initialize controllers
 	apiControllers := controllers.NewAPIControllers(
@@ -25,6 +30,8 @@ func RegisterAPIRoutes(
 		logger,
 		env,
 		orchestrator,
+		sqidManager,
+		localeManager,
 	)
 
 	// Initialize middlewares
@@ -33,6 +40,8 @@ func RegisterAPIRoutes(
 		logger,
 		env,
 		orchestrator,
+		sqidManager,
+		localeManager,
 	)
 
 	// Public routes
@@ -88,7 +97,7 @@ func RegisterAPIRoutes(
 	queries := workspace.Group("/queries")
 	queries.Get("/", apiControllers.QueriesIndex)
 	queries.Post("/", apiControllers.QueriesStore)
-	query := queries.Group("/:query", apiMiddlewares.QueryMiddleware)
+	query := queries.Group("/:stored_query", apiMiddlewares.QueryMiddleware)
 	query.Get("/", apiControllers.QueriesShow)
 	query.Patch("/", apiControllers.QueriesUpdate)
 	query.Delete("/", apiControllers.QueriesDestroy)

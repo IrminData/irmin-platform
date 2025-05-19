@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"context"
 	"irmin-api/db"
+	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
+
+	"mime/multipart"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/clerk/clerk-sdk-go/v2"
@@ -15,197 +18,217 @@ import (
 )
 
 func (api *APIControllers) ProfileShow(c fiber.Ctx) error {
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
 
-	// Create SQID of the user ID
-	sqid, err := utils.EncodeSqids("users", uint64(user.ID))
-	if err != nil {
-		log.Printf("Error creating user SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
+	if !dictOk || !userOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Create the user response
-	response := irminmodels.User{
-		ID:             sqid,
-		FirstName:      user.FirstName,
-		LastName:       user.LastName,
-		Email:          user.Email,
-		Phone:          user.Phone,
-		Company:        user.Company,
-		ProfilePicture: user.ProfilePicture,
+	// Format the user response
+	userResponse, formatUserResponseErr := formatter.FormatUserResponse(user, api.SQIDManager)
+	if formatUserResponseErr != nil {
+		api.Logger.Error("Error formatting user response", "error", formatUserResponseErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
 	}
 
 	// Send the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: response,
+		Data: userResponse,
 	})
 }
 
 func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 	ctx := c.Context()
 
-	// Get the dictionary and user from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	irminUser := c.Locals("user").(*db.User)
+	// Get the dictionary and user from the request context
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	irminUser, irminUserOk := c.Locals("user").(*db.User)
 
-	// Load environment variables.
-	env, err := utils.LoadEnv()
-	if err != nil {
-		log.Printf("Error loading environment variables: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
+	if !dictOk || !irminUserOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Retrieve the file from the multipart form with the key "file"
-	newProfilePicture, _ := c.FormFile("profile_picture")
-
-	// Parse the request body.
-	fields, err := utils.ParseFormFields(c, []string{"first_name", "last_name", "email", "phone"}, []string{"company"})
+	// Parse form fields
+	fields, err := utils.ParseFormFields(
+		c,
+		[]string{"first_name", "last_name", "email", "phone"},
+		[]string{"company"},
+	)
 	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+		api.Logger.Error("Error parsing form fields", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Update the user details in our database.
-	updatedUser, err := api.DB.UpdateUser(irminUser.ID, map[string]any{
-		"first_name": fields["first_name"],
-		"last_name":  fields["last_name"],
-		"email":      fields["email"],
-		"phone":      fields["phone"],
-		"company":    fields["company"],
-	})
-	if err != nil {
-		log.Printf("Error updating user: %v", err)
+	// Update user in database
+	irminUser.FirstName = fields["first_name"]
+	irminUser.LastName = fields["last_name"]
+	irminUser.Email = fields["email"]
+	irminUser.Phone = fields["phone"]
+	irminUser.Company = fields["company"]
+	if saveErr := api.DB.Save(&irminUser).Error; saveErr != nil {
+		api.Logger.Error("Error updating user in database", "error", saveErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// Set the clerk key
-	clerk.SetKey(env.ClerkSecretKey)
+	// Set up Clerk client
+	clerk.SetKey(api.Env.ClerkSecretKey)
 
-	// Get the user details from Clerk.
-	clerkUser, err := user.Get(ctx, irminUser.ClerkID)
-	if err != nil {
-		log.Printf("Error getting user details from Clerk: %v", err)
+	// Get user from Clerk
+	clerkUser, getUserErr := user.Get(ctx, irminUser.ClerkID)
+	if getUserErr != nil {
+		api.Logger.Error("Error getting user details from Clerk", "error", getUserErr)
 		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
-	// Get the users existing email addresses
+	// Update email and phone in Clerk
+	primaryEmailID, updateEmailErr := api.updateClerkEmail(ctx, clerkUser, irminUser)
+	if updateEmailErr != nil {
+		api.Logger.Error("Error updating email", "error", updateEmailErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	primaryPhoneID, updatePhoneErr := api.updateClerkPhone(ctx, clerkUser, irminUser)
+	if updatePhoneErr != nil {
+		api.Logger.Error("Error updating phone", "error", updatePhoneErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Update profile in Clerk
+	if updateProfileErr := api.updateClerkProfile(ctx, irminUser, primaryEmailID, primaryPhoneID); updateProfileErr != nil {
+		api.Logger.Error("Error updating user profile", "error", updateProfileErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Handle profile picture update if provided
+	if newProfilePicture, _ := c.FormFile("profile_picture"); newProfilePicture != nil {
+		if updateProfilePictureErr := api.updateProfilePicture(ctx, irminUser, newProfilePicture); updateProfilePictureErr != nil {
+			api.Logger.Error("Error updating profile picture", "error", updateProfilePictureErr)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "error_occurred")},
+			})
+		}
+	}
+
+	// Format and return response
+	userResponse, formatUserResponseErr := formatter.FormatUserResponse(irminUser, api.SQIDManager)
+	if formatUserResponseErr != nil {
+		api.Logger.Error("Error formatting user response", "error", formatUserResponseErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(dict, "profile_updated"),
+		Data:    userResponse,
+	})
+}
+
+// updateClerkEmail handles updating or creating a user's email in Clerk.
+func (api *APIControllers) updateClerkEmail(
+	ctx context.Context,
+	clerkUser *clerk.User,
+	irminUser *db.User,
+) (string, error) {
 	var primaryEmailID string
 	for _, email := range clerkUser.EmailAddresses {
-		if email.EmailAddress == updatedUser.Email {
+		if email.EmailAddress == irminUser.Email {
 			primaryEmailID = email.ID
 			break
 		}
 	}
 	if primaryEmailID == "" {
-		// If the user's email address was not found, create a new one.
 		verified := true // In the future, we need to actually verify the email.
 		newClerkEmail, err := emailaddress.Create(ctx, &emailaddress.CreateParams{
 			UserID:       &irminUser.ClerkID,
-			EmailAddress: &updatedUser.Email,
+			EmailAddress: &irminUser.Email,
 			Verified:     &verified,
 		})
 		if err != nil {
-			log.Printf("Error creating email address: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
+			return "", err
 		}
 		primaryEmailID = newClerkEmail.ID
 	}
+	return primaryEmailID, nil
+}
 
-	// Get the users existing phone numbers
+// updateClerkPhone handles updating or creating a user's phone in Clerk.
+func (api *APIControllers) updateClerkPhone(
+	ctx context.Context,
+	clerkUser *clerk.User,
+	irminUser *db.User,
+) (string, error) {
 	var primaryPhoneID string
 	for _, phone := range clerkUser.PhoneNumbers {
-		if phone.PhoneNumber == updatedUser.Phone {
+		if phone.PhoneNumber == irminUser.Phone {
 			primaryPhoneID = phone.ID
 			break
 		}
 	}
 	if primaryPhoneID == "" {
-		// If the user's phone number was not found, create a new one.
 		verified := true // In the future, we need to actually verify the phone number.
 		newClerkPhone, err := phonenumber.Create(ctx, &phonenumber.CreateParams{
 			UserID:      &irminUser.ClerkID,
-			PhoneNumber: &updatedUser.Phone,
+			PhoneNumber: &irminUser.Phone,
 			Verified:    &verified,
 		})
 		if err != nil {
-			log.Printf("Error creating phone number: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
+			return "", err
 		}
 		primaryPhoneID = newClerkPhone.ID
 	}
+	return primaryPhoneID, nil
+}
 
-	// Update the user's profile information in Clerk.
-	clerkUser, err = user.Update(ctx, irminUser.ClerkID, &user.UpdateParams{
-		FirstName:             &updatedUser.FirstName,
-		LastName:              &updatedUser.LastName,
+// updateClerkProfile handles updating the user's profile information in Clerk.
+func (api *APIControllers) updateClerkProfile(
+	ctx context.Context,
+	irminUser *db.User,
+	primaryEmailID, primaryPhoneID string,
+) error {
+	_, err := user.Update(ctx, irminUser.ClerkID, &user.UpdateParams{
+		FirstName:             &irminUser.FirstName,
+		LastName:              &irminUser.LastName,
 		PrimaryEmailAddressID: &primaryEmailID,
 		PrimaryPhoneNumberID:  &primaryPhoneID,
 	})
+	return err
+}
+
+// updateProfilePicture handles updating the user's profile picture in both Clerk and database.
+func (api *APIControllers) updateProfilePicture(
+	ctx context.Context,
+	irminUser *db.User,
+	newProfilePicture *multipart.FileHeader,
+) error {
+	newProfilePictureSrc, err := newProfilePicture.Open()
 	if err != nil {
-		log.Printf("Error updating user: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
+		return err
 	}
+	defer newProfilePictureSrc.Close()
 
-	// Update the user's profile picture if a new one was provided.
-	if newProfilePicture != nil {
-		newProfilePictureSrc, err := newProfilePicture.Open()
-		if err != nil {
-			log.Printf("Error opening profile picture: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-		clerkUser, err = user.UpdateProfileImage(ctx, irminUser.ClerkID, &user.UpdateProfileImageParams{
-			File: newProfilePictureSrc,
-		})
-		if err != nil {
-			log.Printf("Error updating profile picture: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{dict.T("error_occurred")},
-			})
-		}
-	}
-
-	// Create user ID SQID
-	sqid, err := utils.EncodeSqids("users", uint64(updatedUser.ID))
-	if err != nil {
-		log.Printf("Error creating user SQID: %v", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
-		})
-	}
-
-	// Structure the user response
-	userResponse := irminmodels.User{
-		ID:             sqid,
-		FirstName:      updatedUser.FirstName,
-		LastName:       updatedUser.LastName,
-		Email:          updatedUser.Email,
-		Phone:          updatedUser.Phone,
-		Company:        updatedUser.Company,
-		ProfilePicture: *clerkUser.ImageURL,
-	}
-
-	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("profile_updated"),
-		Data:    userResponse,
+	clerkUser, err := user.UpdateProfileImage(ctx, irminUser.ClerkID, &user.UpdateProfileImageParams{
+		File: newProfilePictureSrc,
 	})
+	if err != nil {
+		return err
+	}
+
+	irminUser.ProfilePicture = *clerkUser.ImageURL
+	return api.DB.Save(&irminUser).Error
 }

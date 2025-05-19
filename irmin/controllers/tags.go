@@ -7,7 +7,6 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 
@@ -15,20 +14,30 @@ import (
 )
 
 func (api *APIControllers) TagsIndex(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+
+	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Get the tag from the data engine.
-	tags, err := dataEngine.ListTags(workspace.Slug, repository.Slug)
-	if err != nil {
-		log.Printf("Error retrieving tags from Data Engine: %v", err)
+	tags, listTagsErr := dataEngine.ListTags(workspace.Slug, repository.Slug)
+	if listTagsErr != nil {
+		api.Logger.Error("Error retrieving tags from Data Engine", "error", listTagsErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -38,35 +47,45 @@ func (api *APIControllers) TagsIndex(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) TagsStore(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body
-	fields, err := utils.ParseFormFields(c, []string{"name", "ref"}, nil)
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"name", "ref"}, nil)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Create the tag in the data engine.
-	tag, err := dataEngine.CreateTag(workspace.Slug, repository.Slug, fields["name"], fields["ref"])
-	if err != nil {
-		log.Printf("Error creating tag in Data Engine: %v", err)
+	tag, createTagErr := dataEngine.CreateTag(workspace.Slug, repository.Slug, fields["name"], fields["ref"])
+	if createTagErr != nil {
+		api.Logger.Error("Error creating tag in Data Engine", "error", createTagErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Tag %s created to track %s", tag.Name, tag.Ref),
 		WorkspaceID:  &workspace.ID,
@@ -81,7 +100,10 @@ func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) TagsShow(c fiber.Ctx) error {
-	tag := c.Locals("tag").(*irminmodels.Tag)
+	tag, tagOk := c.Locals("tag").(*irminmodels.Tag)
+	if !tagOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: tag,
@@ -89,26 +111,36 @@ func (api *APIControllers) TagsShow(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
-	locale := c.Locals("locale").(string)
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
-	repository := c.Locals("repository").(*db.Repository)
-	tag := c.Locals("tag").(*irminmodels.Tag)
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	repository, repositoryOk := c.Locals("repository").(*db.Repository)
+	tag, tagOk := c.Locals("tag").(*irminmodels.Tag)
+
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !tagOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Initialize Data Engine client
-	dataEngine := engine.NewClient(locale)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 
 	// Delete the tag from the data engine.
-	if err := dataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); err != nil {
-		log.Printf("Error deleting tag in Data Engine: %v", err)
+	if deleteTagErr := dataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); deleteTagErr != nil {
+		api.Logger.Error("Error deleting tag in Data Engine", "error", deleteTagErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeDelete,
 		Description:  fmt.Sprintf("Tag %s deleted", tag.Name),
 		WorkspaceID:  &workspace.ID,
@@ -118,6 +150,6 @@ func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
 
 	// Return a success message
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("tag_deleted"),
+		Message: api.lm.T(dict, "tag_deleted"),
 	})
 }

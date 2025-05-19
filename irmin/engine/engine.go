@@ -1,31 +1,37 @@
 package engine
 
 import (
-	"fmt"
+	"context"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
+	"log/slog"
 )
 
 // Client represents the Irmin Data Engine API client.
 type Client struct {
+	ctx          context.Context
 	Locale       string
 	LakeFSClient *lakefs.Client
+	Logger       *slog.Logger
 	Env          *utils.CoreAPIEnv
 }
 
 // NewClient creates a new Irmin Data Engine API client with default settings.
-func NewClient(locale string) *Client {
+func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *utils.CoreAPIEnv) (*Client, error) {
 	// Create LakeFS client.
-	lakefsClient, env, err := lakefs.CreateClient()
+	lakefsClient, err := lakefs.CreateClient(ctx, logger, env)
 	if err != nil {
-		fmt.Printf("failed to create LakeFS client: %v\n", err)
-		return nil
+		logger.ErrorContext(ctx, "failed to create LakeFS client", "error", err)
+		return nil, err
 	}
 
 	// Construct the Client
-	return &Client{
+	client := &Client{
+		ctx:          ctx,
 		Locale:       locale,
 		LakeFSClient: lakefsClient,
 		Env:          env,
+		Logger:       logger,
 	}
+	return client, nil
 }

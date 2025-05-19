@@ -15,11 +15,11 @@ type CommitList struct {
 type MergeStrategy string
 
 const (
-	// In case no selection is made, the merge process will fail in case of a conflict.
+	// MergeStrategyNone is used when no selection is made, causing the merge process to fail in case of a conflict.
 	MergeStrategyNone MergeStrategy = ""
-	// Favor changes from the destination ref.
+	// MergeStrategyDestWins favors changes from the destination ref.
 	MergeStrategyDestWins MergeStrategy = "dest-wins"
-	// Favor changes from the source ref.
+	// MergeStrategySourceWins favors changes from the source ref.
 	MergeStrategySourceWins MergeStrategy = "source-wins"
 )
 
@@ -129,7 +129,7 @@ func (c *Client) ListAllRefDiffs(repositoryID, leftRef, rightRef, prefix, delimi
 	var allDiffs []Diff
 	after := ""
 	for {
-		diffs, err := c.ListRefDiffs(repositoryID, leftRef, rightRef, after, prefix, delimiter, 100)
+		diffs, err := c.ListRefDiffs(repositoryID, leftRef, rightRef, after, prefix, delimiter, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

@@ -9,6 +9,14 @@ import (
 	"github.com/gofiber/fiber/v3" // import the Fiber framework
 )
 
+// Constants for regex match counts.
+const (
+	// ArrayFieldMatchCount represents the expected number of matches for array fields (full match + 2 capture groups).
+	ArrayFieldMatchCount = 3
+	// ObjectFieldMatchCount represents the expected number of matches for object fields (full match + 1 capture group).
+	ObjectFieldMatchCount = 2
+)
+
 // ParseFormFields parses the form data from a Fiber context and checks for required and optional fields.
 //
 // Params:
@@ -60,7 +68,7 @@ func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]strin
 //
 // Returns:
 //   - A map where each key is the array index and each value is a map of field names to values.
-//   - An error if there’s an issue parsing the form data.
+//   - An error if there's an issue parsing the form data.
 func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string, error) {
 	// prepare the regex to match e.g. "trigger[0].type"
 	pattern := fmt.Sprintf(`^%s\[(\d+)\]\.(\w+)$`, regexp.QuoteMeta(prefix))
@@ -86,9 +94,9 @@ func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string
 
 	case strings.HasPrefix(contentType, fiber.MIMEMultipartForm):
 		// multipart/form-data
-		form, err := c.MultipartForm()
-		if err != nil {
-			return nil, err
+		form, multipartFormErr := c.MultipartForm()
+		if multipartFormErr != nil {
+			return nil, multipartFormErr
 		}
 		values = form.Value
 
@@ -100,9 +108,9 @@ func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string
 	// now apply the same grouping logic
 	results := make(map[int]map[string]string)
 	for key, vals := range values {
-		if matches := re.FindStringSubmatch(key); len(matches) == 3 {
-			idx, err := strconv.Atoi(matches[1])
-			if err != nil {
+		if matches := re.FindStringSubmatch(key); len(matches) == ArrayFieldMatchCount {
+			idx, atoiErr := strconv.Atoi(matches[1])
+			if atoiErr != nil {
 				continue // skip bad indices
 			}
 			// If not already present, initialise the map for this index.
@@ -146,7 +154,7 @@ func ParseObjectFormFields(c fiber.Ctx, prefix string) map[string]string {
 	// Iterate over all form values.
 	for key, values := range form.Value {
 		matches := re.FindStringSubmatch(key)
-		if len(matches) == 2 {
+		if len(matches) == ObjectFieldMatchCount {
 			results[matches[1]] = values[0]
 		}
 	}

@@ -32,25 +32,25 @@ func CreateMultipartPayload(
 
 	// Add text fields first.
 	for field, value := range textFields {
-		if err := writer.WriteField(field, value); err != nil {
-			return nil, "", fmt.Errorf("failed to write field %q: %w", field, err)
+		if writeFieldErr := writer.WriteField(field, value); writeFieldErr != nil {
+			return nil, "", fmt.Errorf("failed to write field %q: %w", field, writeFieldErr)
 		}
 	}
 
 	// Add file fields.
 	for field, payload := range fileFields {
-		part, err := writer.CreateFormFile(field, payload.FileName)
-		if err != nil {
-			return nil, "", fmt.Errorf("failed to create form file for field %q: %w", field, err)
+		part, createFormFileErr := writer.CreateFormFile(field, payload.FileName)
+		if createFormFileErr != nil {
+			return nil, "", fmt.Errorf("failed to create form file for field %q: %w", field, createFormFileErr)
 		}
-		if _, err := io.Copy(part, payload.Reader); err != nil {
-			return nil, "", fmt.Errorf("failed to copy content for field %q: %w", field, err)
+		if _, copyErr := io.Copy(part, payload.Reader); copyErr != nil {
+			return nil, "", fmt.Errorf("failed to copy content for field %q: %w", field, copyErr)
 		}
 	}
 
 	// Close the writer to finalise the multipart content.
-	if err := writer.Close(); err != nil {
-		return nil, "", fmt.Errorf("failed to close multipart writer: %w", err)
+	if closeErr := writer.Close(); closeErr != nil {
+		return nil, "", fmt.Errorf("failed to close multipart writer: %w", closeErr)
 	}
 
 	return &buf, writer.FormDataContentType(), nil

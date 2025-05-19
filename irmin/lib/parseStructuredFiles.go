@@ -19,58 +19,79 @@ func ParseStructuredFile(files map[string][]byte) (map[string][]map[string]any, 
 	// Loop through the results and parse each result file.
 	for fileName, result := range files {
 		// Handle JSON files.
-		if strings.HasSuffix(fileName, ".json") {
-			// Parse the JSON file.
-			var jsonData []map[string]any
-			if err := json.Unmarshal(result, &jsonData); err != nil {
-				return nil, fmt.Errorf("failed to parse JSON file %s: %w", fileName, err)
-			}
-			// Store the parsed JSON data in the map.
-			parsedResults[fileName] = jsonData
-			continue
+		jsonFileName, jsonData, err := parseJSONFile(fileName, result)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse JSON file %s: %w", fileName, err)
+		}
+		if jsonFileName != nil {
+			parsedResults[*jsonFileName] = jsonData
 		}
 
 		// Handle CSV files.
-		if strings.HasSuffix(fileName, ".csv") {
-			// Create a CSV reader reading from the byte slice.
-			reader := csv.NewReader(bytes.NewReader(result))
-
-			// Read all records from the CSV.
-			records, err := reader.ReadAll()
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse CSV file %s: %w", fileName, err)
-			}
-
-			// Skip empty CSV.
-			if len(records) < 1 {
-				parsedResults[fileName] = []map[string]any{}
-				continue
-			}
-
-			// First row is the header.
-			headers := records[0]
-
-			// Parse each subsequent row into a map.
-			var csvData []map[string]any
-			for _, row := range records[1:] {
-				rowMap := make(map[string]any)
-				for i, header := range headers {
-					if i < len(row) {
-						rowMap[header] = row[i]
-					} else {
-						rowMap[header] = ""
-					}
-				}
-				csvData = append(csvData, rowMap)
-			}
-
-			// Store the parsed CSV data in the map.
-			parsedResults[fileName] = csvData
-			continue
+		csvFileName, csvData, err := parseCSVFile(fileName, result)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse CSV file %s: %w", fileName, err)
+		}
+		if csvFileName != nil {
+			parsedResults[*csvFileName] = csvData
 		}
 
 		// TODO: Implement Parquet parsing.
 	}
 
 	return parsedResults, nil
+}
+
+// parseJSONFile parses a JSON file and returns the file name and the parsed data.
+func parseJSONFile(fileName string, result []byte) (*string, []map[string]any, error) {
+	// Handle JSON files.
+	if strings.HasSuffix(fileName, ".json") {
+		// Unmarshal the JSON file into a slice of maps.
+		var jsonData []map[string]any
+		if err := json.Unmarshal(result, &jsonData); err != nil {
+			return nil, nil, fmt.Errorf("failed to parse JSON file %s: %w", fileName, err)
+		}
+
+		return &fileName, jsonData, nil
+	}
+	return nil, nil, nil
+}
+
+// parseCSVFile parses a CSV file and returns the file name and the parsed data.
+func parseCSVFile(fileName string, result []byte) (*string, []map[string]any, error) {
+	if strings.HasSuffix(fileName, ".csv") {
+		// Create a CSV reader reading from the byte slice.
+		reader := csv.NewReader(bytes.NewReader(result))
+
+		// Read all records from the CSV.
+		records, err := reader.ReadAll()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse CSV file %s: %w", fileName, err)
+		}
+
+		// Skip empty CSV.
+		if len(records) < 1 {
+			return &fileName, []map[string]any{}, nil
+		}
+
+		// First row is the header.
+		headers := records[0]
+
+		// Parse each subsequent row into a map.
+		var csvData []map[string]any
+		for _, row := range records[1:] {
+			rowMap := make(map[string]any)
+			for i, header := range headers {
+				if i < len(row) {
+					rowMap[header] = row[i]
+				} else {
+					rowMap[header] = ""
+				}
+			}
+			csvData = append(csvData, rowMap)
+		}
+
+		return &fileName, csvData, nil
+	}
+	return nil, nil, nil
 }

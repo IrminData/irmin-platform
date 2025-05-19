@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"time"
 
 	"gorm.io/gorm"
@@ -12,8 +11,8 @@ type Invite struct {
 
 	Email       string            `json:"email"`
 	ClerkID     string            `json:"clerk_id"`
-	AcceptedAt  sql.NullTime      `json:"accepted_at"`
-	DeclinedAt  sql.NullTime      `json:"declined_at"`
+	AcceptedAt  *time.Time        `json:"accepted_at"`
+	DeclinedAt  *time.Time        `json:"declined_at"`
 	ExpiresAt   time.Time         `json:"expires_at"`
 	Role        UserWorkspaceRole `json:"role"`
 	InvitedBy   User              `json:"invited_by"    gorm:"foreignKey:InvitedByID"`
@@ -53,24 +52,6 @@ func (d *Database) GetInviteByID(id uint) (*Invite, error) {
 	result := d.Preload("InvitedBy").Preload("Workspace").First(&invite, id)
 	if result.Error != nil {
 		return nil, result.Error
-	}
-	return &invite, nil
-}
-
-func (d *Database) CreateInvite(invite *Invite) (*Invite, error) {
-	if err := d.Create(invite).Error; err != nil {
-		return nil, err
-	}
-	return invite, nil
-}
-
-func (d *Database) UpdateInvite(id uint, updates map[string]any) (*Invite, error) {
-	var invite Invite
-	if err := d.Model(&Invite{}).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return nil, err
-	}
-	if err := d.Preload("InvitedBy").Preload("Workspace").First(&invite, id).Error; err != nil {
-		return nil, err
 	}
 	return &invite, nil
 }

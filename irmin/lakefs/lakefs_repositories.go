@@ -68,7 +68,7 @@ func (c *Client) ListAllRepositories(prefix, search string) ([]Repository, error
 	var allRepos []Repository
 	after := ""
 	for {
-		listResp, err := c.ListRepositories(prefix, after, search, 100)
+		listResp, err := c.ListRepositories(prefix, after, search, DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

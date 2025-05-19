@@ -78,10 +78,7 @@ func schemaForField(f SchemaField) irminmodels.JSONSchema {
 
 	// 3) primitive or JSON
 	schema := primitiveSchema(f.Type)
-	if f.Required {
-		// for primitives we leave Required on parent object only
-		// individual primitive schemas don't carry Required
-	}
+
 	return schema
 }
 

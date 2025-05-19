@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"irmin-api/duckdb"
@@ -65,94 +66,82 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 	})
 }
 
-// ExecuteQuery executes a query in the specified workspace and returns the results.
-func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryResult {
-	// Collect errors and logs encountered during query execution.
-	var errors []error
-	var logs []string
-	// Parse the query provided by the user.
-	parsedQuery, err := parseIrminQuery(c, userWorkspace, query)
-	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to parse query: %w", err))
-	}
-
-	// Create a new query client.
-	queryClient, err := duckdb.NewQueryClient()
-	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to create query client: %w", err))
-	}
-	defer queryClient.Close()
-
-	// Prepare a slice to hold the resulting rows.
+// processQueryRows processes the rows from a query execution and returns the data and any errors encountered.
+func processQueryRows(rows *sql.Rows) ([]map[string]any, []string, []error) {
 	var data []map[string]any
+	var logs []string
+	var errors []error
 
-	// Execute the query.
-	startedAt := time.Now()
-	rows, err := queryClient.ExecuteQuery(parsedQuery.FormattedQuery)
-	if err != nil {
-		errors = append(errors, fmt.Errorf("failed to execute query: %w", err))
+	columns, columnsErr := rows.Columns()
+	if columnsErr != nil {
+		errors = append(errors, fmt.Errorf("failed to retrieve column names: %w", columnsErr))
+		return data, logs, errors
 	}
+
+	for rows.Next() {
+		rowMap, scanErr := scanRow(rows, columns)
+		if scanErr != nil {
+			errors = append(errors, scanErr)
+			continue
+		}
+		data = append(data, rowMap)
+	}
+
+	if iterErr := rows.Err(); iterErr != nil {
+		errors = append(errors, fmt.Errorf("error encountered during row iteration: %w", iterErr))
+	}
+
+	for _, e := range errors {
+		logs = append(logs, e.Error())
+	}
+
+	return data, logs, errors
+}
+
+// scanRow scans a single row from the query results into a map.
+func scanRow(rows *sql.Rows, columns []string) (map[string]any, error) {
+	values := make([]any, len(columns))
+	valuePtrs := make([]any, len(columns))
+	for i := range values {
+		valuePtrs[i] = &values[i]
+	}
+
+	if err := rows.Scan(valuePtrs...); err != nil {
+		return nil, fmt.Errorf("failed to scan row: %w", err)
+	}
+
+	rowMap := make(map[string]any)
+	for i, colName := range columns {
+		v := values[i]
+		if b, ok := v.([]byte); ok {
+			v = string(b)
+		}
+		rowMap[colName] = v
+	}
+
+	return rowMap, nil
+}
+
+// executeQueryWithClient executes a query using the provided query client and returns the results.
+func executeQueryWithClient(
+	queryClient *duckdb.QueryClient,
+	parsedQuery utils.ParsedIrminQuery,
+) (*irminmodels.QueryResult, error) {
+	startedAt := time.Now()
+	rows, executeQueryErr := queryClient.ExecuteQuery(parsedQuery.FormattedQuery)
+	if executeQueryErr != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", executeQueryErr)
+	}
+	defer rows.Close()
+
+	data, logs, errors := processQueryRows(rows)
 	finishedAt := time.Now()
 
-	var columns []string
-
-	// Make sure that the rows are not nil before processing.
-	// This is important to avoid nil pointer dereference errors.
-	if rows != nil {
-		// Close the rows after processing.
-		defer rows.Close()
-
-		// Retrieve column names.
-		columns, err := rows.Columns()
-		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to retrieve column names: %w", err))
-		}
-
-		// Iterate through the rows.
-		for rows.Next() {
-			// Create a slice of any's to represent each column, and a second slice to hold pointers to each item.
-			values := make([]any, len(columns))
-			valuePtrs := make([]any, len(columns))
-			for i := range values {
-				valuePtrs[i] = &values[i]
-			}
-
-			// Scan the row into the value pointers.
-			if err := rows.Scan(valuePtrs...); err != nil {
-				errors = append(errors, fmt.Errorf("failed to scan row: %w", err))
-				continue
-			}
-
-			// Create a map to store the column name to value mapping.
-			rowMap := make(map[string]any)
-			for i, colName := range columns {
-				var v any
-				v = values[i]
-				// Convert []byte to string for readability.
-				if b, ok := v.([]byte); ok {
-					v = string(b)
-				}
-				rowMap[colName] = v
-			}
-
-			data = append(data, rowMap)
-		}
-
-		// Check for any errors encountered during iteration.
-		if err := rows.Err(); err != nil {
-			errors = append(errors, fmt.Errorf("error encountered during row iteration: %w", err))
-		}
+	columns, columnsErr := rows.Columns() // We already handled the error in processQueryRows
+	if columnsErr != nil {
+		return nil, fmt.Errorf("failed to retrieve column names: %w", columnsErr)
 	}
-
-	// If there are any errors, log them.
-	if len(errors) > 0 {
-		for _, err := range errors {
-			logs = append(logs, err.Error())
-		}
-	}
-
-	// Create a QueryResult object to hold the results.
-	queryResult := &irminmodels.QueryResult{
+	return &irminmodels.QueryResult{
 		Columns:    columns,
 		Data:       data,
 		HasErrors:  len(errors) > 0,
@@ -160,7 +149,35 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryRes
 		StartedAt:  startedAt,
 		FinishedAt: finishedAt,
 		Logs:       logs,
+	}, nil
+}
+
+// ExecuteQuery executes a query in the specified workspace and returns the results.
+func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryResult {
+	parsedQuery, err := parseIrminQuery(c, userWorkspace, query)
+	if err != nil {
+		return &irminmodels.QueryResult{
+			HasErrors: true,
+			Logs:      []string{fmt.Sprintf("failed to parse query: %v", err)},
+		}
 	}
 
-	return queryResult
+	queryClient, err := duckdb.NewQueryClient(c.Env)
+	if err != nil {
+		return &irminmodels.QueryResult{
+			HasErrors: true,
+			Logs:      []string{fmt.Sprintf("failed to create query client: %v", err)},
+		}
+	}
+	defer queryClient.Close()
+
+	result, err := executeQueryWithClient(queryClient, parsedQuery)
+	if err != nil {
+		return &irminmodels.QueryResult{
+			HasErrors: true,
+			Logs:      []string{err.Error()},
+		}
+	}
+
+	return result
 }

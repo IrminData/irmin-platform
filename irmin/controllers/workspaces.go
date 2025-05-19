@@ -7,7 +7,6 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"log"
 
 	"irmin-api/db"
 
@@ -17,30 +16,39 @@ import (
 
 func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+
+	if !dictOk || !userOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Get the workspaces for the user.
 	userWorkspaces, err := api.DB.GetUserWorkspaces(user.ID)
 	if err != nil {
-		log.Printf("Error retrieving workspaces: %v", err)
+		api.Logger.Error("Error retrieving workspaces", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// Map workspaces to workspace response.
-	var workspacesResponse []irminmodels.Workspace
-	for _, userWorkspace := range userWorkspaces {
-		workspace := userWorkspace.Workspace
-		workspaceResponse, err := formatter.FormatWorkspaceResponse(&workspace)
-		if err != nil {
-			log.Printf("Error formatting workspace response: %v", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{"error_occurred"},
-			})
-		}
-		workspacesResponse = append(workspacesResponse, *workspaceResponse)
+	// Get a list of workspaces.
+	workspaces := make([]db.Workspace, len(userWorkspaces))
+	for i, userWorkspace := range userWorkspaces {
+		workspaces[i] = userWorkspace.Workspace
+	}
+
+	// Format the workspaces.
+	workspacesResponse, formatErr := formatter.FormatIndexResponse(
+		workspaces,
+		formatter.FormatWorkspaceResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		api.Logger.Error("Error formatting workspaces", "error", formatErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
 	}
 
 	// Return the workspaces.
@@ -51,70 +59,77 @@ func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 
 func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+
+	if !dictOk || !userOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body.
-	fields, err := utils.ParseFormFields(c, []string{"name"}, []string{"description"})
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"name"}, []string{"description"})
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Create the workspace.
-	newWorkspace, err := api.DB.CreateWorkspace(&db.Workspace{
+	newWorkspace := db.Workspace{
 		Name:        fields["name"],
 		Slug:        utils.Slugify(fields["name"]),
 		Description: fields["description"],
 		OwnerID:     user.ID,
-	})
-	if err != nil {
-		log.Printf("Error creating workspace: %v", err)
+	}
+	if createWorkspaceErr := api.DB.Create(&newWorkspace).Error; createWorkspaceErr != nil {
+		api.Logger.Error("Error creating workspace", "error", createWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Add the user to the workspace.
-	_, err = api.DB.AddUserToWorkspace(user.ID, newWorkspace.ID, []db.UserWorkspaceRole{db.RoleAdmin})
-	if err != nil {
-		log.Printf("Error adding user to workspace: %v", err)
+	_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(
+		user.ID,
+		newWorkspace.ID,
+		[]db.UserWorkspaceRole{db.RoleAdmin},
+	)
+	if addUserToWorkspaceErr != nil {
+		api.Logger.Error("Error adding user to workspace", "error", addUserToWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Create a bucket folder for the editor files of the workspace.
-	bucket, err := bucket.CreateBucketClient()
-	if err != nil {
-		log.Printf("failed to create bucket client: %v", err)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
+	if createBucketClientErr != nil {
+		api.Logger.Error("failed to create bucket client", "error", createBucketClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 	defer bucket.Close()
 	key := "editor/" + newWorkspace.Slug + "/"
-	err = bucket.WritePath(c.Context(), key, "")
-	if err != nil {
-		log.Printf("Error creating workspace editor items folder object: %v", err)
+	if writePathErr := bucket.WritePath(c.Context(), key, ""); writePathErr != nil {
+		api.Logger.Error("Error creating workspace editor items folder object", "error", writePathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the response.
-	workspaceResponse, err := formatter.FormatWorkspaceResponse(newWorkspace)
-	if err != nil {
-		log.Printf("Error formatting workspace response: %v", err)
+	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(&newWorkspace, api.SQIDManager)
+	if formatWorkspaceResponseErr != nil {
+		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
 		Description: fmt.Sprintf("Workspace %s created", newWorkspace.Slug),
 		UserID:      &user.ID,
@@ -123,19 +138,23 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 
 	// Return the new workspace.
 	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
-		Message: dict.T("workspace_created"),
+		Message: api.lm.T(dict, "workspace_created"),
 		Data:    workspaceResponse,
 	})
 }
 
 func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 	// Get the workspace from the request context.
-	workspace := c.Locals("workspace").(*db.Workspace)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Create the workspace response.
-	workspaceResponse, err := formatter.FormatWorkspaceResponse(workspace)
-	if err != nil {
-		log.Printf("Error formatting workspace response: %v", err)
+	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(workspace, api.SQIDManager)
+	if formatWorkspaceResponseErr != nil {
+		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
@@ -149,42 +168,48 @@ func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 
 func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 	// Get the dictionary and workspace from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !userOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Parse the request body.
-	fields, err := utils.ParseFormFields(c, []string{"name", "description"}, nil)
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"name", "description"}, nil)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Update the workspace.
-	updatedWorkspace, err := api.DB.UpdateWorkspace(workspace.ID, map[string]any{
-		"name":        fields["name"],
-		"description": fields["description"],
-	})
-	if err != nil {
-		log.Printf("Error updating workspace: %v", err)
+	workspace.Name = fields["name"]
+	workspace.Slug = utils.Slugify(fields["name"])
+	workspace.Description = fields["description"]
+	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
+		api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Create the workspace response.
-	workspaceResponse, err := formatter.FormatWorkspaceResponse(updatedWorkspace)
-	if err != nil {
-		log.Printf("Error formatting workspace response: %v", err)
+	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(
+		workspace,
+		api.SQIDManager,
+	)
+	if formatWorkspaceResponseErr != nil {
+		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Workspace %s updated", workspace.Slug),
 		UserID:      &user.ID,
@@ -193,58 +218,62 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 
 	// Return the updated workspace.
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("workspace_updated"),
+		Message: api.lm.T(dict, "workspace_updated"),
 		Data:    workspaceResponse,
 	})
 }
 
 func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	// Get the dictionary, workspace, and user from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !userOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Check if the workspace owner is deleting the workspace.
 	if workspace.OwnerID != user.ID {
-		log.Printf("User is not the owner of the workspace")
+		api.Logger.Error("User is not the owner of the workspace")
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
 	// Delete the workspace.
-	err := api.DB.DeleteWorkspace(workspace.ID)
-	if err != nil {
-		log.Printf("Error deleting workspace: %v", err)
+	deleteWorkspaceErr := api.DB.DeleteWorkspace(workspace.ID)
+	if deleteWorkspaceErr != nil {
+		api.Logger.Error("Error deleting workspace", "error", deleteWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Create bucket client
-	bucket, err := bucket.CreateBucketClient()
-	if err != nil {
-		log.Printf("failed to create bucket client: %v", err)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
+	if createBucketClientErr != nil {
+		api.Logger.Error("failed to create bucket client", "error", createBucketClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 	defer bucket.Close()
 
 	// Delete the workspace editor items folder.
 	key := "editor/" + workspace.Slug + "/"
-	err = bucket.DeletePath(c.Context(), key)
-	if err != nil {
-		log.Printf("Error deleting workspace editor items folder: %v", err)
+	deletePathErr := bucket.DeletePath(c.Context(), key)
+	if deletePathErr != nil {
+		api.Logger.Error("Error deleting workspace editor items folder", "error", deletePathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// TODO: Delete all related data (repositories, etc.)
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("Workspace %s deleted", workspace.Slug),
 		UserID:      &user.ID,
@@ -253,83 +282,88 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 
 	// Return a success message.
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("workspace_deleted"),
+		Message: api.lm.T(dict, "workspace_deleted"),
 	})
 }
 
 func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 	// Get the dictionary, workspace, and user from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !userOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Check if the workspace owner is deleting the workspace.
 	if workspace.OwnerID != user.ID {
-		log.Printf("User is not the owner of the workspace")
+		api.Logger.Error("User is not the owner of the workspace")
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("access_denied")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
 	// Parse the request body.
-	fields, err := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
-	if err != nil {
-		log.Printf("Error parsing form fields: %v", err)
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
+	if parseFormFieldsErr != nil {
+		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Get the ID of the new owner.
-	newOwnerID, err := utils.DecodeSqids("users", fields["new_owner_id"])
-	if err != nil {
-		log.Printf("Error decoding SQID: %v", err)
+	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", fields["new_owner_id"])
+	if decodeSqidsErr != nil {
+		api.Logger.Error("Error decoding SQID", "error", decodeSqidsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, err := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
-	if err != nil {
-		log.Printf("Error checking if user is in workspace: %v", err)
+	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
+	if isUserInWorkspaceErr != nil {
+		api.Logger.Error("Error checking if user is in workspace", "error", isUserInWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("new_owner_invalid")},
+			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
 		})
 	}
 	if !inWorkspace {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("new_owner_invalid")},
+			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
 		})
 	}
 
 	// Update the workspace owner ID.
-	updatedWorkspace, err := api.DB.UpdateWorkspace(workspace.ID, map[string]any{
-		"owner_id": newOwnerID,
-	})
-	if err != nil {
-		log.Printf("Error updating workspace: %v", err)
+	workspace.OwnerID = uint(newOwnerID)
+	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
+		api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Create the workspace response.
-	workspaceResponse, err := formatter.FormatWorkspaceResponse(updatedWorkspace)
-	if err != nil {
-		log.Printf("Error formatting workspace response: %v", err)
+	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(
+		workspace,
+		api.SQIDManager,
+	)
+	if formatWorkspaceResponseErr != nil {
+		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{"error_occurred"},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type: db.LogEventTypeUpdate,
 		Description: fmt.Sprintf(
 			"Workspace %s ownership transferred to %s",
 			workspace.Slug,
-			updatedWorkspace.Owner.Email,
+			workspace.Owner.Email,
 		),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
@@ -337,44 +371,48 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 
 	// Return the updated workspace.
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("workspace_ownership_transferred"),
+		Message: api.lm.T(dict, "workspace_ownership_transferred"),
 		Data:    workspaceResponse,
 	})
 }
 
 func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error {
 	// Get the dictionary, workspace, and user from the request context.
-	dict := c.Locals("dict").(locales.Dictionary)
-	user := c.Locals("user").(*db.User)
-	workspace := c.Locals("workspace").(*db.Workspace)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !userOk || !workspaceOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
 	// Make sure that the user is not the last user in the workspace.
 	if len(workspace.Users) == 1 {
-		log.Printf("User is the last user in the workspace")
+		api.Logger.Error("User is the last user in the workspace")
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("workspace_cannot_leave_last")},
+			Errors: []string{api.lm.T(dict, "workspace_cannot_leave_last")},
 		})
 	}
 
 	// Make sure the user is not the owner of the workspace.
 	if workspace.OwnerID == user.ID {
-		log.Printf("User is the owner of the workspace")
+		api.Logger.Error("User is the owner of the workspace")
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("workspace_cannot_leave_last")},
+			Errors: []string{api.lm.T(dict, "workspace_cannot_leave_last")},
 		})
 	}
 
 	// Leave the workspace.
-	err := api.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
-	if err != nil {
-		log.Printf("Error leaving workspace: %v", err)
+	removeUserFromWorkspaceErr := api.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
+	if removeUserFromWorkspaceErr != nil {
+		api.Logger.Error("Error leaving workspace", "error", removeUserFromWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{dict.T("error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, &db.LogEvent{
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeInfo,
 		Description: fmt.Sprintf("User %s left workspace %s", user.Email, workspace.Slug),
 		UserID:      &user.ID,
@@ -383,6 +421,6 @@ func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error {
 
 	// Return a success message.
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Message: dict.T("workspace_left"),
+		Message: api.lm.T(dict, "workspace_left"),
 	})
 }

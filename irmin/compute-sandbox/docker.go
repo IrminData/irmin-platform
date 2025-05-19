@@ -18,7 +18,7 @@ type ExecutionResult struct {
 	ResultFiles          map[string][]byte    `json:"result_files"`           // Map of result files and their contents
 }
 
-// RunInDocker executes the provided executable code using a Docker container,
+// runInDocker executes the provided executable code using a Docker container,
 // continuously collects resource usage statistics (every 10 milliseconds) while the container is running,
 // and then returns the container logs along with arrays of raw metric samples.
 // Memory usage is collected in bytes, not as a percentage.
@@ -26,7 +26,9 @@ type ExecutionResult struct {
 // The tmpDir parameter is the path to the temporary directory where the executable code is located.
 // The executable parameter is the name of the executable file to run inside the container.
 // The function returns an ExecutionResult struct containing the container logs and resource usage metrics.
-func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (ExecutionResult, error) {
+func (s *ComputeSandbox) runInDocker(
+	executable, tmpDir, executableType, apiKey, apiURL string,
+) (ExecutionResult, error) {
 	var result ExecutionResult
 
 	// Record the start time.
@@ -50,37 +52,38 @@ func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (Exe
 
 	// run the docker command and capture both stdout and stderr
 	cmd := exec.Command("docker", args...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
+	output, runCmdCombinedOutputErr := cmd.CombinedOutput()
+	if runCmdCombinedOutputErr != nil {
 		// include the raw Docker output to aid troubleshooting
-		return result, fmt.Errorf(
-			"docker run failed (exit code %d): %s",
-			cmd.ProcessState.ExitCode(),
-			string(output),
-		)
+		return result, fmt.Errorf("docker run failed: %w, %s", runCmdCombinedOutputErr, string(output))
 	}
 
 	containerID := strings.TrimSpace(string(output))
 	result.ContainerID = containerID
-	defer exec.Command("docker", "rm", containerID).Run()
+	defer func() {
+		rmCmd := exec.Command("docker", "rm", containerID)
+		if rmCmdErr := rmCmd.Run(); rmCmdErr != nil {
+			s.logger.Error("Error removing container", "error", rmCmdErr)
+		}
+	}()
 
 	// Collect resource usage metrics while the container is running.
-	result.ResourceUsageMetrics = CollectMetricsFromContainer(containerID)
+	result.ResourceUsageMetrics = s.CollectMetricsFromContainer(containerID)
 
 	// Record the end time.
 	result.EndTime = time.Now()
 
 	// Retrieve the container logs.
 	logsCmd := exec.Command("docker", "logs", containerID)
-	logsOutput, err := logsCmd.CombinedOutput()
-	if err != nil {
+	logsOutput, logsCmdErr := logsCmd.CombinedOutput()
+	if logsCmdErr != nil {
 		result.Logs = string(logsOutput)
-		return result, err
+		return result, logsCmdErr
 	}
 	result.Logs = string(logsOutput)
 
 	// Parse all result files from logs.
-	resultFiles := parseResultFiles(string(logsOutput))
+	resultFiles := s.parseResultFiles(string(logsOutput))
 
 	// Create a map to store multiple result files.
 	resultFileData := make(map[string][]byte)
@@ -90,8 +93,8 @@ func runInDocker(executable, tmpDir, executableType, apiKey, apiURL string) (Exe
 	for _, fileName := range resultFiles {
 		// Construct the container's path to the file, using the working directory from the docker run command.
 		containerFilePath := filepath.Join("/usr/src/app", fileName)
-		data, err := readResultFileFromContainer(containerID, containerFilePath)
-		if err == nil {
+		data, readResultFileFromContainerErr := s.readResultFileFromContainer(containerID, containerFilePath)
+		if readResultFileFromContainerErr == nil {
 			resultFileData[fileName] = data
 		}
 	}

@@ -71,14 +71,14 @@ func (c *Client) GetBranch(repositoryID, branchID string) (*Branch, error) {
 }
 
 // ListBranches retrieves a single page of branches for a given repository.
-func (c *Client) ListBranches(repositoryID, prefix, after string, amount int, show_hidden bool) (*BranchList, error) {
+func (c *Client) ListBranches(repositoryID, prefix, after string, amount int, showHidden bool) (*BranchList, error) {
 	endpoint := fmt.Sprintf(
 		"/repositories/%s/branches?prefix=%s&after=%s&amount=%d&show_hidden=%t",
 		repositoryID,
 		prefix,
 		after,
 		amount,
-		show_hidden,
+		showHidden,
 	)
 	var listResp BranchList
 	if err := c.doRequest("GET", endpoint, nil, []int{http.StatusOK}, &listResp); err != nil {
@@ -88,11 +88,11 @@ func (c *Client) ListBranches(repositoryID, prefix, after string, amount int, sh
 }
 
 // ListAllBranches handles pagination automatically and returns all branches for a repository.
-func (c *Client) ListAllBranches(repositoryID, prefix string, show_hidden bool) ([]Branch, error) {
+func (c *Client) ListAllBranches(repositoryID, prefix string, showHidden bool) ([]Branch, error) {
 	var allBranches []Branch
 	after := ""
 	for {
-		branches, err := c.ListBranches(repositoryID, prefix, after, 100, show_hidden)
+		branches, err := c.ListBranches(repositoryID, prefix, after, DefaultListAmountLimit, showHidden)
 		if err != nil {
 			return nil, err
 		}
@@ -193,7 +193,7 @@ func (c *Client) ListAllBranchDiffs(repositoryID, branchID string) ([]Diff, erro
 	var allDiffs []Diff
 	after := ""
 	for {
-		diffs, err := c.GetBranchDiffs(repositoryID, branchID, after, "", "", 100)
+		diffs, err := c.GetBranchDiffs(repositoryID, branchID, after, "", "", DefaultListAmountLimit)
 		if err != nil {
 			return nil, err
 		}

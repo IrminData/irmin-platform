@@ -7,6 +7,15 @@ import (
 	"strings"
 )
 
+const (
+	// MaxSubParts represents the maximum allowed number of parts when splitting by '@'.
+	MaxSubParts = 2
+	// MinPartsWithWorkspace represents the number of parts when workspace is included.
+	MinPartsWithWorkspace = 3
+	// MinPartsWithoutWorkspace represents the number of parts when workspace is omitted.
+	MinPartsWithoutWorkspace = 2
+)
+
 // ParsedQueryPlaceholder represents a parsed placeholder in an Irmin query.
 type ParsedQueryPlaceholder struct {
 	Workspace   string `json:"workspace"`   // The workspace (e.g. "acme-corp")
@@ -96,34 +105,41 @@ func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error
 		parts := strings.Split(content, ";")
 		var workspace, repo, object, ref string
 
-		if len(parts) == 3 {
+		switch {
+		case len(parts) == MinPartsWithWorkspace:
 			// Full syntax: workspace;repository;object[@ref]
 			workspace = parts[0]
 			repo = parts[1]
 			subParts := strings.Split(parts[2], "@")
-			if len(subParts) > 2 {
+			if len(subParts) > MaxSubParts {
 				return ParsedIrminQuery{}, fmt.Errorf(
 					"invalid query format in placeholder: %s; too many '@' symbols",
 					content,
 				)
 			}
 			object = subParts[0]
-			if len(subParts) == 2 {
+			if len(subParts) == MaxSubParts {
 				ref = subParts[1]
 			}
-		} else if len(parts) == 2 {
+		case len(parts) == MinPartsWithoutWorkspace:
 			// Simplified syntax: repository;object[@ref] (workspace omitted)
 			repo = parts[0]
 			subParts := strings.Split(parts[1], "@")
-			if len(subParts) > 2 {
-				return ParsedIrminQuery{}, fmt.Errorf("invalid query format in placeholder: %s; too many '@' symbols", content)
+			if len(subParts) > MaxSubParts {
+				return ParsedIrminQuery{}, fmt.Errorf(
+					"invalid query format in placeholder: %s; too many '@' symbols",
+					content,
+				)
 			}
 			object = subParts[0]
-			if len(subParts) == 2 {
+			if len(subParts) == MaxSubParts {
 				ref = subParts[1]
 			}
-		} else {
-			return ParsedIrminQuery{}, fmt.Errorf("invalid query format in placeholder: %s; expected 2 or 3 parts separated by ';'", content)
+		default:
+			return ParsedIrminQuery{}, fmt.Errorf(
+				"invalid query format in placeholder: %s; expected 2 or 3 parts separated by ';'",
+				content,
+			)
 		}
 
 		// Create the parsed placeholder instance.

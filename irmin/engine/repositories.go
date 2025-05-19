@@ -73,15 +73,15 @@ func (c *Client) GetRepository(ctx context.Context, workspace, repository string
 	})
 
 	// Get repository details.
-	lakefsRepository, err := repoFuture.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get repository details: %w", err)
+	lakefsRepository, getRepositoryErr := repoFuture.Await()
+	if getRepositoryErr != nil {
+		return nil, fmt.Errorf("failed to get repository details: %w", getRepositoryErr)
 	}
 
 	// Get repository garbage collection rules.
-	lakefsGarbageCollectionRules, err := gcRulesFuture.Await()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get repository garbage collection rules: %w", err)
+	lakefsGarbageCollectionRules, getGarbageCollectionRulesErr := gcRulesFuture.Await()
+	if getGarbageCollectionRulesErr != nil {
+		return nil, fmt.Errorf("failed to get repository garbage collection rules: %w", getGarbageCollectionRulesErr)
 	}
 
 	// Convert LakeFS repository to Irmin repository.
@@ -133,15 +133,18 @@ func (c *Client) CreateRepository(
 		DefaultBranch:    defaultBranch,
 		ReadOnly:         isImmutable,
 	}
-	lakefsRepository, err := c.LakeFSClient.CreateRepository(false, repositoryCreateRequest)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create repository: %w", err)
+	lakefsRepository, createRepositoryErr := c.LakeFSClient.CreateRepository(false, repositoryCreateRequest)
+	if createRepositoryErr != nil {
+		return nil, fmt.Errorf("failed to create repository: %w", createRepositoryErr)
 	}
 
 	// Create the default lakefs actions
-	_, err = c.ConfigureRepositoryWebhookNotifications(lakefsRepository)
-	if err != nil {
-		return nil, fmt.Errorf("failed to configure repository webhook notifications: %w", err)
+	_, configureRepositoryWebhookNotificationsErr := c.ConfigureRepositoryWebhookNotifications(lakefsRepository)
+	if configureRepositoryWebhookNotificationsErr != nil {
+		return nil, fmt.Errorf(
+			"failed to configure repository webhook notifications: %w",
+			configureRepositoryWebhookNotificationsErr,
+		)
 	}
 
 	// Create garbage collection rules.
@@ -158,9 +161,12 @@ func (c *Client) CreateRepository(
 		}
 	}
 	if *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
-		err = c.LakeFSClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set garbage collection rules: %w", err)
+		setGarbageCollectionRulesErr := c.LakeFSClient.SetGarbageCollectionRules(
+			lakeFSRepositoryName,
+			garbageCollectionRules,
+		)
+		if setGarbageCollectionRulesErr != nil {
+			return nil, fmt.Errorf("failed to set garbage collection rules: %w", setGarbageCollectionRulesErr)
 		}
 	}
 
@@ -207,15 +213,15 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
 	defaultActions = strings.ReplaceAll(defaultActions, "{webhook_url}", lakefsWebhookURL)
 
 	// Upload the action file to the repository
-	actionFile, err := c.LakeFSClient.UploadObject(
+	actionFile, uploadObjectErr := c.LakeFSClient.UploadObject(
 		lakefsRepository.ID,
 		lakefsRepository.DefaultBranch,
 		"_lakefs_actions/system-webhook.yaml",
 		bytes.NewReader([]byte(defaultActions)),
 		false,
 	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload default lakefs actions file: %w", err)
+	if uploadObjectErr != nil {
+		return nil, fmt.Errorf("failed to upload default lakefs actions file: %w", uploadObjectErr)
 	}
 
 	// Commit the action file
@@ -307,41 +313,36 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
 	// Get repository details and check if it exists.
-	lakefsRepository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
-	if err != nil {
-		return fmt.Errorf("failed to get repository details: %w", err)
+	lakefsRepository, getRepositoryErr := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
+	if getRepositoryErr != nil {
+		return fmt.Errorf("failed to get repository details: %w", getRepositoryErr)
 	}
 	if lakefsRepository == nil {
 		return errors.New("repository not found")
 	}
 
 	// Delete repository.
-	err = c.LakeFSClient.DeleteRepository(lakeFSRepositoryName)
-	if err != nil {
-		return fmt.Errorf("failed to delete repository: %w", err)
+	deleteRepositoryErr := c.LakeFSClient.DeleteRepository(lakeFSRepositoryName)
+	if deleteRepositoryErr != nil {
+		return fmt.Errorf("failed to delete repository: %w", deleteRepositoryErr)
 	}
 
 	// Delete repository storage namespace if keepObjects is false
 	if !keepObjects {
-		// Load environment variables
-		env, err := utils.LoadEnv()
-		if err != nil {
-			return fmt.Errorf("failed to load environment variables: %w", err)
-		}
 		// Create bucket client
-		bucket, err := bucket.CreateBucketClient()
-		if err != nil {
-			return fmt.Errorf("failed to create bucket client: %w", err)
+		bucket, createBucketErr := bucket.CreateClient(c.Env)
+		if createBucketErr != nil {
+			return fmt.Errorf("failed to create bucket client: %w", createBucketErr)
 		}
 		defer bucket.Close()
 		// Construct the repository storage namespace
 		folderPath := strings.TrimSuffix(lakefsRepository.StorageNamespace, "/")
 		folderPath = strings.TrimPrefix(folderPath, "s3://")
-		folderPath = fmt.Sprintf("%s/%s", env.S3Folder, folderPath)
+		folderPath = fmt.Sprintf("%s/%s", c.Env.S3Folder, folderPath)
 		// Delete repository storage namespace
-		err = bucket.DeletePath(ctx, folderPath)
-		if err != nil {
-			return fmt.Errorf("failed to delete repository storage namespace: %w", err)
+		deletePathErr := bucket.DeletePath(ctx, folderPath)
+		if deletePathErr != nil {
+			return fmt.Errorf("failed to delete repository storage namespace: %w", deletePathErr)
 		}
 	}
 
