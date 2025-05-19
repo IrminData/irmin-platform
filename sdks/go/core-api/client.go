@@ -13,6 +13,8 @@ import (
 	"slices"
 	"time"
 
+	"maps"
+
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
@@ -203,9 +205,7 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 
 	// Add any extra headers from options
 	if opts.Headers != nil {
-		for k, v := range opts.Headers {
-			headers[k] = v
-		}
+		maps.Copy(headers, opts.Headers)
 	}
 
 	// Build the HTTP request

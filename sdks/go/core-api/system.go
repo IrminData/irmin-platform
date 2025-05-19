@@ -22,13 +22,14 @@ func (c *Client) CallSystemWebhook(
 	queryParamsString.Add("type", webhookType)
 
 	// Call the endpoint
+	var result any
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/system/webhook?%s", queryParamsString.Encode()),
 		ContentType: "application/json",
 		Body:        body,
 		Headers:     headers,
-	}, nil)
+	}, &result)
 	if err != nil {
 		return nil, fmt.Errorf("call system webhook error: %w", err)
 	}
