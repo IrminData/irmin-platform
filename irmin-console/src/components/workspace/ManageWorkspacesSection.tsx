@@ -1,23 +1,18 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-
-import { useRouter } from 'next/navigation';
+import { useCallback } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
-
-import IrminCore from '@/lib/core';
 
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
-import { useCreateWorkspace } from '@/hooks/useCreateWorkspace';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 import { Workspace } from '@/types/core/Workspace';
 
@@ -36,22 +31,10 @@ interface CreateWorkspaceFormValues {
  *
  * This component is used to manage workspaces in the console.
  * Here, users can create new workspaces and navigate to existing ones.
- *
- * @param props - The component props
- * @param props.initialWorkspaces - The initial workspaces to display
  */
-const ManageWorkspacesSection = ({
-  initialWorkspaces,
-}: {
-  initialWorkspaces: Workspace[];
-}) => {
-  const { getToken } = useIAM();
-  const { irminAlert } = usePopup();
-  const { dict, locale } = useLocale();
-  const router = useRouter();
-
-  const [processing, setProcessing] = useState(false);
-  const [workspaces, setWorkspaces] = useState(initialWorkspaces);
+const ManageWorkspacesSection = () => {
+  const { dict } = useLocale();
+  const { workspacesQuery, createMutation, switchWorkspace } = useWorkspace();
 
   // Set up react-hook-form
   const { control, handleSubmit, reset } = useForm<CreateWorkspaceFormValues>({
@@ -61,40 +44,54 @@ const ManageWorkspacesSection = ({
     },
   });
 
-  const { handleCreate, successMessage, errorMessage } = useCreateWorkspace({
-    reset,
-  });
-
   const handleCreateWorkspace = useCallback(
     async (data: CreateWorkspaceFormValues) => {
-      setProcessing(true);
-      // Create the workspace
-      await handleCreate(data.newWorkspaceName, data.newWorkspaceDescription);
-      // Refetch the workspaces
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const newWorkspaces = await irminCore.workspaceService.fetchWorkspaces();
-      // Update the workspaces state
-      setWorkspaces(newWorkspaces.data ?? []);
-      setProcessing(false);
+      createMutation.mutate(
+        {
+          name: data.newWorkspaceName,
+          description: data.newWorkspaceDescription,
+        },
+        {
+          onSuccess: () => {
+            reset();
+          },
+        }
+      );
     },
-    [handleCreate, getToken, locale]
+    [createMutation, reset]
   );
 
-  const handleSwitchWorkspace = useCallback(
-    async (slug: string) => {
-      try {
-        router.push(`/${locale}/workspace/${slug}`);
-      } catch (error) {
-        console.error('Failed to switch workspace: ', error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to switch workspace'
-        );
-      }
-    },
-    [router, irminAlert, locale]
-  );
+  if (workspacesQuery.error) {
+    return (
+      <div className='pattern-bg h-full'>
+        <div className='relative container mx-auto max-w-7xl'>
+          <div className='flex flex-col'>
+            <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
+            <div className='flex flex-col gap-4 px-4 pb-28'>
+              <div className='bg-card border-destructive w-full rounded-lg border px-4 py-8'>
+                <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
+                  {dict.common.ohNo}
+                </p>
+                <p className='text-card-foreground/80 mx-auto max-w-lg text-center text-sm'>
+                  {(workspacesQuery.error as Error).message}
+                </p>
+                <div className='mt-4 flex justify-center'>
+                  <Button
+                    variant='default'
+                    onClick={() => window.location.reload()}
+                  >
+                    {dict.common.tryAgain}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const workspaceList = workspacesQuery.data?.data ?? [];
 
   return (
     <div className='pattern-bg h-full'>
@@ -107,7 +104,7 @@ const ManageWorkspacesSection = ({
               <div className='bg-background text-foreground rounded-xl p-2 text-xs shadow-xs sm:p-4 lg:p-4 lg:text-base'>
                 <form
                   onSubmit={handleSubmit(handleCreateWorkspace)}
-                  className={`${processing && 'blur-xs'}`}
+                  className={`${createMutation.isPending && 'blur-xs'}`}
                 >
                   <Controller
                     name='newWorkspaceName'
@@ -119,7 +116,7 @@ const ManageWorkspacesSection = ({
                         placeholder={dict.workspace.workspaceName}
                         required
                         className='mb-2 md:mb-4'
-                        disabled={processing}
+                        disabled={createMutation.isPending}
                         {...field}
                       />
                     )}
@@ -142,24 +139,22 @@ const ManageWorkspacesSection = ({
                           rows: 3,
                         }}
                         className='mb-2 md:mb-4'
-                        disabled={processing}
+                        disabled={createMutation.isPending}
                         {...field}
                       />
                     )}
                   />
-                  {errorMessage && (
-                    <p className='text-destructive mb-2'>{errorMessage}</p>
-                  )}
-                  {successMessage && (
-                    <p className='text-irmin_green mb-2'>{successMessage}</p>
+                  {createMutation.error && (
+                    <p className='text-destructive mb-2'>
+                      {(createMutation.error as Error).message}
+                    </p>
                   )}
                   <Button
                     variant='gradient'
                     size='sm'
                     className='mb-0 h-11 w-full'
                     type='submit'
-                    disabled={processing}
-                    loading={processing}
+                    loading={createMutation.isPending}
                   >
                     {dict.workspaceSwitcher.createNewWorkspace}
                   </Button>
@@ -167,23 +162,29 @@ const ManageWorkspacesSection = ({
               </div>
             </div>
             {/* Display existing workspaces */}
-            {workspaces.length > 0 && (
+            {!workspacesQuery.isLoading ? (
               <div className='ml-auto grow'>
                 <div
-                  className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${processing && 'blur-xs'} -mx-2`}
+                  className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${
+                    createMutation.isPending && 'blur-xs'
+                  } -mx-2`}
                 >
-                  {workspaces.map((workspace, idx) => (
+                  {workspaceList.map((workspace: Workspace, idx: number) => (
                     <div
                       className='w-full min-w-1/2 p-2 lg:max-w-60'
                       key={`select-workspace-card-${idx}`}
                     >
                       <WorkspaceCard
                         workspace={workspace}
-                        handleClick={handleSwitchWorkspace}
+                        handleClick={switchWorkspace}
                       />
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : (
+              <div className='ml-auto grow'>
+                <LoadingSkeleton className='h-80 w-full' />
               </div>
             )}
           </div>

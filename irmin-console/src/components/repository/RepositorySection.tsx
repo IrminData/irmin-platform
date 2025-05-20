@@ -70,7 +70,7 @@ export default function RepositorySection({
 
   const [currentDirectoryPath, setCurrentDirectoryPath] = useState<string>('');
 
-  const query = useQuery();
+  const { executeSql, loading: queryLoading, result: queryResult } = useQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
 
   const [selectedObject, setSelectedObject] = useState<Object | undefined>(
@@ -135,9 +135,9 @@ export default function RepositorySection({
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
-    query.executeSql(queryField);
+    executeSql(queryField);
     setQueryResultsOpen(true);
-  }, [queryField, query]);
+  }, [queryField, executeSql]);
 
   /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
@@ -157,11 +157,11 @@ export default function RepositorySection({
 
   const updateQuery = useCallback(
     (value: string) => {
-      if (query.loading) return;
+      if (queryLoading) return;
       setQueryChanged(true);
       setQueryField(value);
     },
-    [query.loading]
+    [queryLoading]
   );
 
   const [downloading, setDownloading] = useState(false);
@@ -189,7 +189,7 @@ export default function RepositorySection({
               className='float-end m-2 shadow-none'
               size='sm'
               icon={<AiOutlinePlayCircle />}
-              loading={query.loading}
+              loading={queryLoading}
               onClick={runCurrentQuery}
             >
               {dict.repository.runQuery}
@@ -288,12 +288,12 @@ export default function RepositorySection({
           </div>
         )}
       </div>
-      {query.result && queryResultsOpen && (
+      {queryResult && queryResultsOpen && (
         <div className='flex h-[calc(100vh-400px)] min-h-96'>
           <QueryResults
             title={dict.query.queryResults}
-            result={query.result}
-            loading={query.loading}
+            result={queryResult}
+            loading={queryLoading}
           />
         </div>
       )}

@@ -54,7 +54,12 @@ export default function QueriesSection({
   const { workspaceSlug } = useWorkspace();
   const workspaceSchema = useWorkspaceSchema();
   const [queries, setQueries] = useState<StoredQuery[]>(initialQueries);
-  const query = useQuery();
+  const {
+    executeSql,
+    cleanup,
+    loading: queryLoading,
+    result: queryResult,
+  } = useQuery();
 
   const [selectedQuery, setSelectedQuery] = useState<StoredQuery | null>(null);
   const [editorContent, setEditorContent] = useState<string>('');
@@ -69,8 +74,8 @@ export default function QueriesSection({
     queryContentId.current = selectedQuery.id;
     setEditorContent(selectedQuery.sql);
     setEdited(false);
-    query.cleanup();
-  }, [selectedQuery, query]);
+    cleanup();
+  }, [selectedQuery, cleanup]);
 
   /**
    * Hook to create a new query by showing a modal to input the query name and description
@@ -162,9 +167,9 @@ export default function QueriesSection({
   const handleRunQuery = useMemo(
     () => async () => {
       setQueryResultsOpen(true);
-      await query.executeSql(editorContent);
+      await executeSql(editorContent);
     },
-    [query, editorContent]
+    [executeSql, editorContent]
   );
 
   /**
@@ -351,7 +356,7 @@ export default function QueriesSection({
               className='w-full'
               icon={<MdPlayArrow />}
               onClick={handleRunQuery}
-              disabled={query.loading}
+              disabled={queryLoading}
             >
               {dict.query.run}
             </Button>
@@ -411,9 +416,9 @@ export default function QueriesSection({
           <div className='flex h-[calc(100vh-400px)] min-h-96'>
             <QueryResults
               title={`${dict.query.results} ${selectedQuery ? `(${selectedQuery.name})` : ''}`}
-              result={query.result}
+              result={queryResult}
               onRun={handleRunQuery}
-              loading={query.loading}
+              loading={queryLoading}
             />
           </div>
         </div>

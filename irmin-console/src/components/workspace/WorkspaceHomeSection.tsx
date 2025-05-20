@@ -6,16 +6,17 @@ import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 import LinkCard from '@/components/ui/LinkCard';
 
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
-
-import { Workspace } from '@/types/core/Workspace';
 
 /**
  * Home page section for the workspace.
  */
-const WorkspaceHomeSection = ({ workspace }: { workspace: Workspace }) => {
+const WorkspaceHomeSection = () => {
   const { dict } = useLocale();
+  const { workspace } = useWorkspace();
+
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',

@@ -12,6 +12,7 @@ import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
 import { PopupProvider } from '@/context/PopupContext';
 import { PostHogProvider } from '@/context/PostHogProvider';
+import ReactQueryProvider from '@/context/ReactQueryProvider';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -52,14 +53,16 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
             <LocaleProvider>
               <PopupProvider>
                 <IAMProvider>
-                  <ThemeProvider
-                    attribute='class'
-                    defaultTheme='system'
-                    enableSystem
-                    disableTransitionOnChange
-                  >
-                    {children}
-                  </ThemeProvider>
+                  <ReactQueryProvider>
+                    <ThemeProvider
+                      attribute='class'
+                      defaultTheme='system'
+                      enableSystem
+                      disableTransitionOnChange
+                    >
+                      {children}
+                    </ThemeProvider>
+                  </ReactQueryProvider>
                 </IAMProvider>
               </PopupProvider>
             </LocaleProvider>

@@ -1,8 +1,5 @@
 import { Metadata } from 'next';
 
-import { getWorkspaces } from '@/lib/actions/workspaces';
-import { getToken } from '@/lib/getToken';
-
 import ManageWorkspacesSection from '@/components/workspace/ManageWorkspacesSection';
 
 /**
@@ -20,9 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * It uses the {@link ManageWorkspacesSection} component to display the workspace management UI.
  */
 const ManageWorkspacesPage = async () => {
-  const token = await getToken();
-  const workspaces = await getWorkspaces({ token });
-  return <ManageWorkspacesSection initialWorkspaces={workspaces.data ?? []} />;
+  return <ManageWorkspacesSection />;
 };
 
 export default ManageWorkspacesPage;
