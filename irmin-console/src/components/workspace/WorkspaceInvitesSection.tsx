@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback } from 'react';
+
 import ReactSelect from 'react-select';
 
 import { IoExit, IoMailOpenOutline } from 'react-icons/io5';
@@ -16,7 +18,12 @@ import {
 } from '@/components/ui/table';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useUsers } from '@/context/UsersContext';
+import { usePopup } from '@/context/PopupContext';
+
+import { useInvites } from '@/hooks/useInvites';
+import { useRoles } from '@/hooks/useRoles';
+
+import WorkspaceSendInviteModalContent from './WorkspaceSendInviteModalContent';
 
 /**
  * Workspace Invites section
@@ -28,20 +35,34 @@ import { useUsers } from '@/context/UsersContext';
  */
 const WorkspaceInvitesSection = () => {
   const { dict } = useLocale();
+  const { rolesQuery } = useRoles();
+  const { irminModal } = usePopup();
   const {
-    invites,
-    roles,
-    resendInvite,
-    sendInvite,
-    changeInviteRole,
-    deleteInvite,
-  } = useUsers();
+    invitesQuery,
+    resendInviteMutation,
+    sendInviteMutation,
+    changeInviteRoleMutation,
+    deleteInviteMutation,
+  } = useInvites();
+
+  const handleSendInvite = useCallback(async () => {
+    irminModal.show(
+      dict.users.inviteUser,
+      <WorkspaceSendInviteModalContent
+        roles={rolesQuery.data?.data ?? []}
+        handleInvite={sendInviteMutation.mutate}
+        onClose={() => {
+          irminModal.close();
+        }}
+      />
+    );
+  }, [dict, irminModal, rolesQuery.data?.data, sendInviteMutation]);
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       {/* Row containing the invite button */}
       <div className='flex flex-row items-center justify-end px-2'>
-        <Button size='sm' variant='default' onClick={() => sendInvite()}>
+        <Button size='sm' variant='default' onClick={handleSendInvite}>
           {dict.users.inviteUser}
         </Button>
       </div>
@@ -60,7 +81,7 @@ const WorkspaceInvitesSection = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invites.map((invite, idx) => (
+          {invitesQuery.data?.data?.map((invite, idx) => (
             <TableRow
               key={`workspace-invite-${invite.id}-${idx}`}
               className='h-14 border-b dark:border-gray-800'
@@ -72,17 +93,22 @@ const WorkspaceInvitesSection = () => {
                 <ReactSelect
                   // Set the current role for the invited user
                   value={{
-                    value: roles.find((role) => role.name === invite.role)
-                      ?.name,
-                    label: roles.find((role) => role.name === invite.role)
-                      ?.label,
+                    value: rolesQuery.data?.data?.find(
+                      (role) => role.name === invite.role
+                    )?.name,
+                    label: rolesQuery.data?.data?.find(
+                      (role) => role.name === invite.role
+                    )?.label,
                   }}
                   onChange={(val) => {
                     if (!val || !val.value) return;
                     // Change role of an invited user
-                    changeInviteRole(invite.id, val.value);
+                    changeInviteRoleMutation.mutate({
+                      id: invite.id,
+                      role: val.value,
+                    });
                   }}
-                  options={roles.map((role) => ({
+                  options={rolesQuery.data?.data?.map((role) => ({
                     value: role.name,
                     label: role.label,
                   }))}
@@ -99,7 +125,7 @@ const WorkspaceInvitesSection = () => {
                     variant='secondary'
                     aria-label='Resend invite'
                     icon={<IoMailOpenOutline size={14} />}
-                    onClick={() => resendInvite(invite.id)}
+                    onClick={() => resendInviteMutation.mutate(invite.id)}
                     tooltip={dict.users.resendInvite}
                   />
                   <ButtonWithTooltip
@@ -107,7 +133,7 @@ const WorkspaceInvitesSection = () => {
                     variant='secondary'
                     aria-label='Cancel invite'
                     icon={<IoExit size={14} />}
-                    onClick={() => deleteInvite(invite.id)}
+                    onClick={() => deleteInviteMutation.mutate(invite.id)}
                     tooltip={dict.users.cancelInvite}
                   />
                 </div>

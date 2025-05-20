@@ -2,14 +2,10 @@
 
 import type { Metadata } from 'next';
 
-import { getWorkspaceInvites } from '@/lib/actions/invites';
-import { getRoles } from '@/lib/actions/roles';
 import { generateSearchItems } from '@/lib/actions/searchItems';
-import { getUsers } from '@/lib/actions/users';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 
-import { UsersProvider } from '@/context/UsersContext';
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
 export type WorkspaceLayoutParams = {
@@ -32,7 +28,7 @@ export async function generateMetadata(props: {
 
 /**
  * Console workspace layout
- * Provides the {@link UsersProvider} and {@link WorkspaceProvider} contexts for the workspace pages.
+ * Provides the {@link WorkspaceProvider} context for the workspace pages.
  */
 export default async function ConsoleWorkspaceLayout(props: {
   children: React.ReactNode;
@@ -47,23 +43,14 @@ export default async function ConsoleWorkspaceLayout(props: {
   const token = await getToken();
 
   // Fetch the workspace, roles, users, and invites
-  const [roles, users, invites, searchItems] = await Promise.all([
-    getRoles({ token }),
-    getUsers({ workspace: workspaceSlug, token }),
-    getWorkspaceInvites({ workspace: workspaceSlug, token }),
-    generateSearchItems({ workspace: workspaceSlug, token }),
-  ]);
+  const searchItems = await generateSearchItems({
+    workspace: workspaceSlug,
+    token,
+  });
 
   return (
     <WorkspaceProvider workspaceSlug={workspaceSlug} searchItems={searchItems}>
-      <UsersProvider
-        currentWorkspace={workspaceSlug}
-        roles={roles.data ?? []}
-        currentUsers={users.data ?? []}
-        currentInvites={invites.data ?? []}
-      >
-        {children}
-      </UsersProvider>
+      {children}
     </WorkspaceProvider>
   );
 }

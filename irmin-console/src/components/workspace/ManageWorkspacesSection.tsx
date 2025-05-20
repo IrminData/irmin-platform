@@ -12,7 +12,7 @@ import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkspace } from '@/hooks/useWorkspace';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
 
 import { Workspace } from '@/types/core/Workspace';
 
@@ -34,7 +34,7 @@ interface CreateWorkspaceFormValues {
  */
 const ManageWorkspacesSection = () => {
   const { dict } = useLocale();
-  const { workspacesQuery, createMutation, switchWorkspace } = useWorkspace();
+  const { workspacesQuery, createMutation, switchWorkspace } = useWorkspaces();
 
   // Set up react-hook-form
   const { control, handleSubmit, reset } = useForm<CreateWorkspaceFormValues>({

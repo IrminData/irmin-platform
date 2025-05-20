@@ -6,7 +6,8 @@ import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useConnection } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useUsers } from '@/context/UsersContext';
+
+import { useUsers } from '@/hooks/useUsers';
 
 interface ConnectionFormValues {
   name: string;
@@ -22,7 +23,7 @@ interface ConnectionFormValues {
  */
 const ConnectionSettingsSection = () => {
   const { dict } = useLocale();
-  const { users } = useUsers();
+  const { usersQuery } = useUsers();
   const { connection, transferConnection, updateConnection, deleteConnection } =
     useConnection();
 
@@ -66,7 +67,7 @@ const ConnectionSettingsSection = () => {
       label: dict.list.owner,
       type: 'select',
       options:
-        users.map((user) => ({
+        usersQuery.data?.data?.map((user) => ({
           value: user.id,
           label: user.email,
         })) ?? [],

@@ -10,8 +10,6 @@ import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useWorkspace } from '@/hooks/useWorkspace';
-
 /**
  * General Workspace settings section
  *
@@ -20,7 +18,6 @@ import { useWorkspace } from '@/hooks/useWorkspace';
  */
 const WorkspaceSettingsSection = () => {
   const { dict } = useLocale();
-  const { workspaceSlug } = useWorkspaceContext();
   const {
     workspaceQuery,
     updateMutation,
@@ -28,7 +25,7 @@ const WorkspaceSettingsSection = () => {
     confirmLeaveWorkspace,
     deleteMutation,
     leaveMutation,
-  } = useWorkspace(workspaceSlug);
+  } = useWorkspaceContext();
 
   const loading =
     workspaceQuery?.isLoading ||

@@ -17,8 +17,10 @@ import {
 } from '@/components/ui/table';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useUsers } from '@/context/UsersContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
+
+import { useRoles } from '@/hooks/useRoles';
+import { useUsers } from '@/hooks/useUsers';
 
 import { IrminRole } from '@/types/core/IrminRole';
 
@@ -27,12 +29,11 @@ import { IrminRole } from '@/types/core/IrminRole';
  *
  * This component is used to display the list of users and their permissions in the workspace.
  * It allows one to manage the users and their roles in the workspace.
- *
- * @returns {JSX.Element} The workspace users section component.
  */
 const WorkspaceUsersSection = () => {
   const { dict, locale } = useLocale();
-  const { users, roles, changeUserRole, deleteUser } = useUsers();
+  const { rolesQuery } = useRoles();
+  const { usersQuery, deleteUserMutation, changeUserRoleMutation } = useUsers();
   const { workspaceSlug, workspaceQuery, confirmTransferWorkspace } =
     useWorkspaceContext();
 
@@ -62,7 +63,7 @@ const WorkspaceUsersSection = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user, idx) => (
+          {usersQuery.data?.data?.map((user, idx) => (
             <TableRow
               key={`workspace-user-${user.id}-${idx}`}
               className='h-14 border-b dark:border-gray-800'
@@ -104,12 +105,12 @@ const WorkspaceUsersSection = () => {
                       // For multi-select, ensure an array is provided
                       if (!val || !Array.isArray(val) || !val.length) return;
                       // Change roles of a user
-                      changeUserRole(
-                        user.id,
-                        val.map((v) => v.value as IrminRole)
-                      );
+                      changeUserRoleMutation.mutate({
+                        id: user.id,
+                        roles: val.map((v) => v.value as IrminRole),
+                      });
                     }}
-                    options={roles.map((role) => ({
+                    options={rolesQuery.data?.data?.map((role) => ({
                       value: role.name,
                       label: role.label,
                     }))}
@@ -148,7 +149,7 @@ const WorkspaceUsersSection = () => {
                         size='icon'
                         variant='secondary'
                         aria-label='Remove user from workspace'
-                        onClick={() => deleteUser(user.id)}
+                        onClick={() => deleteUserMutation.mutate(user.id)}
                         icon={<IoExit size={14} />}
                         tooltip={dict.users.removeFromWorkspace}
                       />

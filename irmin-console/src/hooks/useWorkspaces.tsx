@@ -21,7 +21,7 @@ export const workspaceQueryKey = (slug: string) => ['workspace', slug] as const;
 type UpdateWorkspaceInput = Pick<Workspace, 'name' | 'description'>;
 type CreateWorkspaceInput = Pick<Workspace, 'name' | 'description'>;
 
-export function useWorkspace(slug?: string) {
+export function useWorkspaces(slug?: string) {
   const { getToken } = useIAM();
   const { locale, dict } = useLocale();
   const { irminAlert, irminModal, irminConfirm } = usePopup();

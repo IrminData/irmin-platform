@@ -16,7 +16,7 @@ import ThemeSwitch from '@/components/ui/ThemeSwitch';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useBreakpoint } from '@/hooks/useBreakpoint';
-import { useWorkspace } from '@/hooks/useWorkspace';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
 
 import ConsoleNavigationLink from './ConsoleNavigationLink';
 import ConsoleNavigationProfile from './ConsoleNavigationProfile';
@@ -49,7 +49,7 @@ export default function ConsoleWrapper({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
 
-  const { workspacesQuery } = useWorkspace();
+  const { workspacesQuery } = useWorkspaces();
 
   const workspaces = useMemo(
     () => workspacesQuery.data?.data ?? [],

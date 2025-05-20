@@ -5,8 +5,9 @@ import { useCallback, useState } from 'react';
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useUsers } from '@/context/UsersContext';
 import { useWorkflow } from '@/context/WorkflowContext';
+
+import { useUsers } from '@/hooks/useUsers';
 
 interface WorkflowFormValues {
   name: string;
@@ -23,7 +24,7 @@ interface WorkflowFormValues {
  */
 const WorkflowSettingsSection = () => {
   const { dict } = useLocale();
-  const { users } = useUsers();
+  const { usersQuery } = useUsers();
   const { workflow, updateWorkflow, transferWorkflow, deleteWorkflow } =
     useWorkflow();
 
@@ -67,7 +68,7 @@ const WorkflowSettingsSection = () => {
       label: dict.list.owner,
       type: 'select',
       options:
-        users?.map((user) => ({
+        usersQuery.data?.data?.map((user) => ({
           value: user.id,
           label: user.email,
         })) ?? [],

@@ -1,78 +1,64 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
-import { User } from '@clerk/nextjs/server';
 
 import { TbCheck, TbX } from 'react-icons/tb';
 
-import IrminCore from '@/lib/core';
-
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { Separator } from '@/components/ui/separator';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
-import { Invite } from '@/types/core/Invite';
+import { useInvites } from '@/hooks/useInvites';
 
 const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 
 export default function AcceptInviteSection({
-  invite,
+  inviteID,
 }: {
-  invite: Invite;
-  user: User;
+  inviteID: string;
 }) {
-  const router = useRouter();
-  const { getToken } = useIAM();
-  const { irminAlert } = usePopup();
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
+  const { inviteQuery, acceptInviteMutation, declineInviteMutation } =
+    useInvites(inviteID);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  if (inviteQuery.isLoading) {
+    return (
+      <div className='container mx-auto my-8 max-w-3xl'>
+        <div className='flex items-center justify-center'>
+          <LoadingSkeleton className='h-80 w-full' />
+        </div>
+      </div>
+    );
+  }
 
-  const handleAccept = useCallback(async () => {
-    try {
-      setError('');
-      setIsLoading(true);
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const res = await irminCore.inviteService.acceptInvite({
-        inviteID: invite.id,
-      });
-      irminAlert('success', res.message ?? 'Invite accepted successfully');
-      router.push(`/workspace/${invite.workspace.slug}`);
-    } catch (error) {
-      setError((error as Error).message ?? 'Failed to accept invite');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [invite, irminAlert, router, getToken, locale]);
+  if (inviteQuery.isError || !inviteQuery.data?.data) {
+    return (
+      <div className='container mx-auto my-8 max-w-3xl'>
+        <div
+          className='rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700'
+          role='alert'
+        >
+          <div className='flex gap-4'>
+            <TbX className='h-6 w-6 text-red-400' />
+            <div>
+              <p className='font-bold'>Invalid Invitation</p>
+              <p className='text-sm'>
+                The invitation link appears to be invalid or expired. Please
+                contact support for assistance.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleDecline = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const res = await irminCore.inviteService.declineInvite({
-        inviteID: invite.id,
-      });
-      irminAlert('success', res.message ?? 'Invite declined successfully');
-      router.push(`/`);
-    } catch (error) {
-      setError((error as Error).message ?? 'Failed to decline invite');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [invite, irminAlert, router, getToken, locale]);
+  const invite = inviteQuery.data.data;
 
   return (
     <div
@@ -136,29 +122,41 @@ export default function AcceptInviteSection({
         <div className='flex w-full flex-col gap-2'>
           <Button
             variant='outline'
-            onClick={handleDecline}
-            disabled={isLoading}
+            onClick={() => declineInviteMutation.mutate(invite.id)}
+            disabled={declineInviteMutation.isPending}
             className='w-full'
           >
             <TbX className='mr-2 h-4 w-4' /> {dict.invite.declineInvitation}
           </Button>
           <Button
-            onClick={handleAccept}
-            disabled={isLoading}
+            onClick={() => acceptInviteMutation.mutate(invite.id)}
+            disabled={acceptInviteMutation.isPending}
             className='w-full'
           >
             <TbCheck className='mr-2 h-4 w-4' /> {dict.invite.acceptInvitation}
           </Button>
         </div>
 
-        {error && (
+        {acceptInviteMutation.error && (
           <div className='rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700'>
             <div className='flex gap-4'>
               <TbX className='h-6 w-6 text-red-400' />
               <div>
                 <p className='font-bold'>{dict.common.ohNo}:</p>
-                <p className='text-sm'>{error}</p>
+                <p className='text-sm'>{acceptInviteMutation.error.message}</p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {declineInviteMutation.error && (
+          <div className='rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700'>
+            <div className='flex gap-4'>
+              <TbX className='h-6 w-6 text-red-400' />
+            </div>
+            <div>
+              <p className='font-bold'>{dict.common.ohNo}:</p>
+              <p className='text-sm'>{declineInviteMutation.error.message}</p>
             </div>
           </div>
         )}
