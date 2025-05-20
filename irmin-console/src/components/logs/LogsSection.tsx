@@ -12,7 +12,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useLogEvents } from '@/hooks/useLogEvents';
-import { useUsers } from '@/hooks/useUsers';
+import { useUser } from '@/hooks/useUser';
 
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
@@ -65,7 +65,7 @@ export default function LogsSection({
     logsFor,
   });
 
-  const { userQuery } = useUsers(userID);
+  const { userQuery } = useUser(userID ?? '');
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({

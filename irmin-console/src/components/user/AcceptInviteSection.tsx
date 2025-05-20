@@ -13,7 +13,7 @@ import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useInvites } from '@/hooks/useInvites';
+import { useInvite } from '@/hooks/useInvite';
 
 const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 
@@ -24,7 +24,7 @@ export default function AcceptInviteSection({
 }) {
   const { dict } = useLocale();
   const { inviteQuery, acceptInviteMutation, declineInviteMutation } =
-    useInvites(inviteID);
+    useInvite(inviteID);
 
   if (inviteQuery.isLoading) {
     return (

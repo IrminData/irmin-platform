@@ -13,14 +13,12 @@ import { User } from '@/types/core/User';
 
 export const usersQueryKey = (workspaceSlug: string) =>
   ['users', workspaceSlug] as const;
-export const userQueryKey = (id: string, workspaceSlug: string) =>
-  ['user', id, workspaceSlug] as const;
 type ChangeUserRoleInput = {
   id: string;
   roles: IrminRole[];
 };
 
-export function useUsers(userID?: string) {
+export function useUsers() {
   const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
   const { locale } = useLocale();
@@ -37,21 +35,6 @@ export function useUsers(userID?: string) {
         workspace: workspaceSlug,
       });
       return users;
-    },
-  });
-
-  // Query for fetching a single user by ID
-  const userQuery = useQuery<IrminAPIResponse<User>>({
-    queryKey: userQueryKey(userID!, workspaceSlug),
-    queryFn: async () => {
-      if (!userID) throw new Error('User ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
-      const user = await core.userService.fetchUser({
-        workspace: workspaceSlug,
-        user: userID,
-      });
-      return user;
     },
   });
 
@@ -109,7 +92,6 @@ export function useUsers(userID?: string) {
   return {
     // Queries
     usersQuery,
-    userQuery,
     // Mutations
     deleteUserMutation,
     changeUserRoleMutation,

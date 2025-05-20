@@ -4,14 +4,14 @@ import { createContext, useContext, useEffect } from 'react';
 
 import { useConsoleSearchContext } from '@/context/ConsoleSearchContext';
 
-import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 import { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
 
 /**
  * Workspace context properties
  */
-interface WorkspaceContextProps extends ReturnType<typeof useWorkspaces> {
+interface WorkspaceContextProps extends ReturnType<typeof useWorkspace> {
   workspaceSlug: string;
 }
 
@@ -31,7 +31,7 @@ export const WorkspaceProvider = ({
   workspaceSlug: string;
   searchItems: ConsoleSearchItem[];
 }) => {
-  const workspaces = useWorkspaces(workspaceSlug);
+  const workspace = useWorkspace(workspaceSlug);
   const { setSearchItems } = useConsoleSearchContext();
 
   // Update the search items in the context when the workspace changes
@@ -43,7 +43,7 @@ export const WorkspaceProvider = ({
     <WorkspaceContext.Provider
       value={{
         workspaceSlug,
-        ...workspaces,
+        ...workspace,
       }}
     >
       {children}

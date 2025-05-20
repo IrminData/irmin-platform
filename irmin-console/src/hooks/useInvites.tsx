@@ -1,5 +1,3 @@
-import { useRouter } from 'next/navigation';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
@@ -16,8 +14,6 @@ import { IrminRole } from '@/types/core/IrminRole';
 export const inviteInboxQueryKey = ['invite-inbox'] as const;
 export const invitesQueryKey = (workspaceSlug: string) =>
   ['invites', workspaceSlug] as const;
-export const inviteQueryKey = (inviteID: string) =>
-  ['invite', inviteID] as const;
 
 type ChangeInviteRoleInput = {
   id: string;
@@ -25,8 +21,7 @@ type ChangeInviteRoleInput = {
 };
 type InviteWorkspaceUserInput = Pick<Invite, 'email' | 'role'>;
 
-export function useInvites(inviteID?: string) {
-  const router = useRouter();
+export function useInvites() {
   const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
   const { locale } = useLocale();
@@ -54,18 +49,6 @@ export function useInvites(inviteID?: string) {
         workspace: workspaceSlug,
       });
       return invites;
-    },
-  });
-
-  // Query for fetching a single invite by ID
-  const inviteQuery = useQuery<IrminAPIResponse<Invite>>({
-    queryKey: inviteQueryKey(inviteID!),
-    queryFn: async () => {
-      if (!inviteID) throw new Error('Invite ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
-      const invite = await core.inviteService.fetchInvite({ inviteID });
-      return invite;
     },
   });
 
@@ -172,58 +155,15 @@ export function useInvites(inviteID?: string) {
     },
   });
 
-  // Mutation to accept an invite
-  const acceptInviteMutation = useMutation({
-    mutationFn: async (inviteID: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
-      const res = await core.inviteService.acceptInvite({ inviteID });
-      return res;
-    },
-    onSuccess: (res) => {
-      irminAlert('success', res.message ?? 'Invite accepted successfully');
-      router.push(`/${locale}/workspace/${res.data?.workspace?.slug}`);
-    },
-    onError: (error) => {
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Error accepting the invite'
-      );
-    },
-  });
-
-  // Mutation to decline an invite
-  const declineInviteMutation = useMutation({
-    mutationFn: async (inviteID: string) => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
-      const res = await core.inviteService.declineInvite({ inviteID });
-      return res;
-    },
-    onSuccess: (res) => {
-      irminAlert('success', res.message ?? 'Invite declined successfully');
-      router.push(`/${locale}/workspace`);
-    },
-    onError: (error) => {
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Error declining the invite'
-      );
-    },
-  });
-
   return {
     // Queries
     inviteInboxQuery,
     invitesQuery,
-    inviteQuery,
 
     // Mutations
     deleteInviteMutation,
     changeInviteRoleMutation,
     resendInviteMutation,
     sendInviteMutation,
-    acceptInviteMutation,
-    declineInviteMutation,
   };
 }
