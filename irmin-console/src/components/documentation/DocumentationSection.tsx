@@ -15,7 +15,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
@@ -35,11 +35,11 @@ export default function DocumentationSection({
   workflows: Workflow[];
   repositories: Repository[];
 }) {
+  const { workspaceSlug, workspaceQuery } = useWorkspaceContext();
   const { profile } = useIAM();
-  const { workspace } = useWorkspace();
   const { dict, locale } = useLocale();
   const { toPDF, targetRef } = usePDF({
-    filename: `${workspace?.slug}-documentation-${new Date().toISOString()}.pdf`,
+    filename: `${workspaceSlug}-documentation-${new Date().toISOString()}.pdf`,
   });
 
   const pdfHeaderRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +49,9 @@ export default function DocumentationSection({
     toPDF();
     pdfHeaderRef.current?.classList.add('hidden');
   }, [toPDF]);
+
+  if (!workspaceQuery?.data) return null;
+  const workspace = workspaceQuery.data.data;
 
   return (
     <div className='bg-background'>

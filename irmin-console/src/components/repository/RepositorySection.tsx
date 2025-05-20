@@ -24,7 +24,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 import { useRepository } from '@/context/RepositoryContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -54,8 +54,7 @@ export default function RepositorySection({
   const { irminModal } = usePopup();
   const { dict } = useLocale();
   const searchParams = useSearchParams();
-
-  const { workspace: currentWorkspace } = useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
 
   const {
     immutable,
@@ -209,7 +208,7 @@ export default function RepositorySection({
                   className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
                   href={`${workspaceUrl}/repositories`}
                 >
-                  {currentWorkspace?.slug}
+                  {workspaceSlug}
                 </Link>
                 {' / '}
                 <Link

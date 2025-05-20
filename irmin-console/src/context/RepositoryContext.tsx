@@ -32,7 +32,7 @@ import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 import { useIAM } from './IAMContext';
 import { useLocale } from './LocaleContext';
-import { useWorkspace } from './WorkspaceContext';
+import { useWorkspaceContext } from './WorkspaceContext';
 
 /**
  * Repository context props
@@ -147,7 +147,7 @@ export const RepositoryProvider = ({
   const searchParams = useSearchParams();
 
   const { irminAlert, irminConfirm } = usePopup();
-  const { workspaceSlug } = useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
 
   // Active Repository for the context
   const [currentRepository, setRepository] = useState(initialRepository);

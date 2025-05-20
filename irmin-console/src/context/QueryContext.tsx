@@ -11,7 +11,7 @@ import {
 import IrminCore from '@/lib/core';
 
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { QueryResult } from '@/types/core/StoredQuery';
 
@@ -42,7 +42,7 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
   const { getToken } = useIAM();
   const { irminAlert } = usePopup();
   const { dict, locale } = useLocale();
-  const { workspaceSlug } = useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
 
   // Query state
   const [loading, setLoading] = useState<boolean>(false);

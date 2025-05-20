@@ -16,7 +16,7 @@ import SaveEditorAsFileModal from '@/components/editor/modals/SaveEditorAsFileMo
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import {
   getItemByPath,
@@ -79,7 +79,7 @@ export const EditorProvider = ({
 }) => {
   const { getToken } = useIAM();
   const { dict, locale } = useLocale();
-  const { workspaceSlug } = useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();

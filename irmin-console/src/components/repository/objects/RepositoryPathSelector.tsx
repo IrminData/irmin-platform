@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -155,7 +155,7 @@ const RepositoryPathSelector = ({
   loading: loadingProp = false,
 }: RepositoryPathSelectorProps) => {
   const { getToken } = useIAM();
-  const { workspaceSlug } = useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
 

@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
@@ -30,7 +30,7 @@ export default function DocumentationSchemaSection({
   workflows: Workflow[];
   repositories: Repository[];
 }) {
-  const { workspace } = useWorkspace();
+  const { workspaceQuery } = useWorkspaceContext();
   const [tree, setTree] = useState<TreeNode>({
     id: 'workspace',
     label: 'Workspace',
@@ -38,6 +38,9 @@ export default function DocumentationSchemaSection({
   });
 
   useEffect(() => {
+    if (!workspaceQuery?.data) return;
+    const workspace = workspaceQuery.data.data;
+
     // Build the tree from the workspace's data.
     const newTree: TreeNode = {
       id: `workspace-${workspace?.slug}`,
@@ -144,7 +147,7 @@ export default function DocumentationSchemaSection({
     newTree.children?.push(workflowsNode);
 
     setTree(newTree);
-  }, [workspace, connections, workflows, repositories]);
+  }, [workspaceQuery, connections, workflows, repositories]);
 
   return <TreeChart tree={tree} />;
 }

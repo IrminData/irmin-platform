@@ -26,7 +26,7 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useWorkspaceSchema } from '@/hooks/useWorkspaceSchema';
 
@@ -50,8 +50,8 @@ export default function QueriesSection({
 }) {
   const { getToken } = useIAM();
   const { dict, locale } = useLocale();
+  const { workspaceSlug } = useWorkspaceContext();
   const { irminModal, irminAlert, irminConfirm } = usePopup();
-  const { workspaceSlug } = useWorkspace();
   const workspaceSchema = useWorkspaceSchema();
   const [queries, setQueries] = useState<StoredQuery[]>(initialQueries);
   const {
@@ -114,8 +114,8 @@ export default function QueriesSection({
     },
     [
       irminModal,
-      dict,
       workspaceSlug,
+      dict,
       irminAlert,
       editorContent,
       getToken,

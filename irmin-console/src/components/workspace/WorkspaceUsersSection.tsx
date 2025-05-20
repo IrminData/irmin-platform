@@ -18,7 +18,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 import { useUsers } from '@/context/UsersContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { IrminRole } from '@/types/core/IrminRole';
 
@@ -33,7 +33,8 @@ import { IrminRole } from '@/types/core/IrminRole';
 const WorkspaceUsersSection = () => {
   const { dict, locale } = useLocale();
   const { users, roles, changeUserRole, deleteUser } = useUsers();
-  const { workspace, transferWorkspace } = useWorkspace();
+  const { workspaceSlug, workspaceQuery, confirmTransferWorkspace } =
+    useWorkspaceContext();
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
@@ -83,7 +84,7 @@ const WorkspaceUsersSection = () => {
                 {user.company}
               </TableCell>
               <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
-                {workspace?.owner?.id === user.id ? (
+                {workspaceQuery?.data?.data?.owner?.id === user.id ? (
                   dict.list.owner
                 ) : (
                   <ReactSelect
@@ -126,15 +127,20 @@ const WorkspaceUsersSection = () => {
                     size='icon'
                     variant='secondary'
                     icon={<TbBook size={14} />}
-                    href={`/${locale}/workspace/${workspace?.slug}/logs/user/${user.id}`}
+                    href={`/${locale}/workspace/${workspaceSlug}/logs/user/${user.id}`}
                     tooltip={dict.common.logs}
                   />
-                  {workspace?.owner?.id !== user.id && (
+                  {workspaceQuery?.data?.data?.owner?.id !== user.id && (
                     <div className='contents'>
                       <ButtonWithTooltip
                         size='icon'
                         variant='secondary'
-                        onClick={() => transferWorkspace(user.id)}
+                        onClick={() =>
+                          confirmTransferWorkspace(
+                            user.id,
+                            workspaceQuery?.data?.data?.name ?? ''
+                          )
+                        }
                         icon={<IoKey size={14} />}
                         tooltip={dict.users.transferOwnership}
                       />

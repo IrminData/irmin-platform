@@ -6,7 +6,7 @@ import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useRepository } from '@/context/RepositoryContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import ImmutableWarning from './ImmutableWarning';
 
@@ -15,10 +15,12 @@ import ImmutableWarning from './ImmutableWarning';
  *
  * Handles repository settings updates, transferment, and deletion.
  * Uses {@link SettingsForm} to show and edit the repository settings.
+ *
+ * @returns The repository settings section component
  */
 const RepositorySettingsSection = () => {
   const { dict } = useLocale();
-  const { workspace } = useWorkspace();
+  const { workspaceQuery } = useWorkspaceContext();
   const {
     currentRepository,
     transferRepository,
@@ -70,7 +72,7 @@ const RepositorySettingsSection = () => {
       label: dict.list.owner,
       type: 'select',
       options:
-        workspace?.users?.map((user) => ({
+        workspaceQuery?.data?.data?.users?.map((user) => ({
           value: user.id,
           label: user.email,
         })) ?? [],

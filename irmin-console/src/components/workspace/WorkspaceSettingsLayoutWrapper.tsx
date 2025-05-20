@@ -10,7 +10,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -28,7 +28,7 @@ export default function WorkspaceSettingsLayoutWrapper({
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
-  const { workspace } = useWorkspace();
+  const { workspaceQuery } = useWorkspaceContext();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -68,7 +68,7 @@ export default function WorkspaceSettingsLayoutWrapper({
     [pathname, dict, workspaceUrl]
   );
 
-  if (!workspace) {
+  if (!workspaceQuery?.data) {
     return (
       <div className='relative container mx-auto max-w-7xl py-12'>
         <LoadingSkeleton className='h-96' />
@@ -84,7 +84,7 @@ export default function WorkspaceSettingsLayoutWrapper({
             {dict.consoleNavigation.workspaceSettings}
           </h1>
           <p className='max-w-lg text-base text-gray-400 lg:text-lg'>
-            {workspace.name}
+            {workspaceQuery?.data?.data?.name ?? ''}
           </p>
         </div>
         <TabsWithBackButton

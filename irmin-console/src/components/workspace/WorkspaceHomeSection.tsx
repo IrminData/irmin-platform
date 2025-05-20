@@ -6,7 +6,7 @@ import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 import LinkCard from '@/components/ui/LinkCard';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -15,7 +15,7 @@ import useBaseUrl from '@/hooks/useBaseUrl';
  */
 const WorkspaceHomeSection = () => {
   const { dict } = useLocale();
-  const { workspace } = useWorkspace();
+  const { workspaceQuery } = useWorkspaceContext();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -30,7 +30,7 @@ const WorkspaceHomeSection = () => {
         <div className='flex flex-col gap-8 px-4'>
           <div className='flex w-full flex-col gap-4'>
             <h2 className='font-display text-foreground/90 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
-              {workspace?.name}
+              {workspaceQuery?.data?.data?.name ?? ''}
             </h2>
             <p className='text-center text-sm opacity-80'>
               {dict.consoleHome.welcomeToWorkspace}

@@ -2,13 +2,10 @@
 
 import type { Metadata } from 'next';
 
-import { notFound } from 'next/navigation';
-
 import { getWorkspaceInvites } from '@/lib/actions/invites';
 import { getRoles } from '@/lib/actions/roles';
 import { generateSearchItems } from '@/lib/actions/searchItems';
 import { getUsers } from '@/lib/actions/users';
-import { getWorkspace } from '@/lib/actions/workspaces';
 import { Locale } from '@/lib/dict';
 import { getToken } from '@/lib/getToken';
 
@@ -45,29 +42,22 @@ export default async function ConsoleWorkspaceLayout(props: {
 
   const { children } = props;
 
-  const currentWorkspace = params.workspace;
+  const workspaceSlug = params.workspace;
 
   const token = await getToken();
 
   // Fetch the workspace, roles, users, and invites
-  const [workspace, roles, users, invites, searchItems] = await Promise.all([
-    getWorkspace({ workspaceSlug: currentWorkspace, token }),
+  const [roles, users, invites, searchItems] = await Promise.all([
     getRoles({ token }),
-    getUsers({ workspace: currentWorkspace, token }),
-    getWorkspaceInvites({ workspace: currentWorkspace, token }),
-    generateSearchItems({ workspace: currentWorkspace, token }),
+    getUsers({ workspace: workspaceSlug, token }),
+    getWorkspaceInvites({ workspace: workspaceSlug, token }),
+    generateSearchItems({ workspace: workspaceSlug, token }),
   ]);
 
-  if (!workspace.data) return notFound();
-
   return (
-    <WorkspaceProvider
-      initialWorkspace={workspace.data}
-      workspaceSlug={currentWorkspace}
-      searchItems={searchItems}
-    >
+    <WorkspaceProvider workspaceSlug={workspaceSlug} searchItems={searchItems}>
       <UsersProvider
-        currentWorkspace={currentWorkspace}
+        currentWorkspace={workspaceSlug}
         roles={roles.data ?? []}
         currentUsers={users.data ?? []}
         currentInvites={invites.data ?? []}

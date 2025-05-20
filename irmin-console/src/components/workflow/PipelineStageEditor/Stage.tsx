@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
@@ -79,8 +79,8 @@ function Stage({
   readOnly: boolean;
   defaultCollapsed?: boolean;
 }) {
+  const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
-  const { workspaceSlug } = useWorkspace();
   const { dict, locale } = useLocale();
 
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed ?? false);

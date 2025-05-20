@@ -16,8 +16,7 @@ import ThemeSwitch from '@/components/ui/ThemeSwitch';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useBreakpoint } from '@/hooks/useBreakpoint';
-
-import { Workspace } from '@/types/core/Workspace';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 import ConsoleNavigationLink from './ConsoleNavigationLink';
 import ConsoleNavigationProfile from './ConsoleNavigationProfile';
@@ -39,10 +38,8 @@ import useConsoleNavigationLinks from './useConsoleNavigationLinks';
  * Links are fetched from {@link useConsoleNavigationLinks} context and displayed using {@link ConsoleNavigationLink}.
  */
 export default function ConsoleWrapper({
-  workspaces,
   children,
 }: {
-  workspaces: Workspace[];
   children: React.ReactNode;
 }) {
   const { dict } = useLocale();
@@ -52,8 +49,15 @@ export default function ConsoleWrapper({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
 
+  const { workspacesQuery } = useWorkspace();
+
+  const workspaces = useMemo(
+    () => workspacesQuery.data?.data ?? [],
+    [workspacesQuery.data]
+  );
+
   const currentWorkspace = useMemo(
-    () => workspaces.find((workspace) => workspace.slug === params.workspace),
+    () => workspaces?.find((workspace) => workspace.slug === params.workspace),
     [params.workspace, workspaces]
   );
 

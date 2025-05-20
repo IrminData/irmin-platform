@@ -5,7 +5,7 @@ import IrminCore from '@/lib/core';
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { LogEvent } from '@/types/core/Log';
 
@@ -66,7 +66,7 @@ export const useLogEvents = (
 
   const { getToken } = useIAM();
   const { locale } = useLocale();
-  const { workspaceSlug } = useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert } = usePopup();
 
   const [logEvents, setLogEvents] = useState<LogEvent[]>([]);

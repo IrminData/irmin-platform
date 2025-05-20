@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import { TbLogout } from 'react-icons/tb';
 
+import Button from '@/components/ui/button';
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import Button from '../ui/button';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 /**
  * General Workspace settings section
@@ -19,34 +20,31 @@ import Button from '../ui/button';
  */
 const WorkspaceSettingsSection = () => {
   const { dict } = useLocale();
-  const { workspace, updateWorkspace, deleteWorkspace, leaveWorkspace } =
-    useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
+  const {
+    workspaceQuery,
+    updateMutation,
+    confirmDeleteWorkspace,
+    confirmLeaveWorkspace,
+    deleteMutation,
+    leaveMutation,
+  } = useWorkspace(workspaceSlug);
 
-  const [submitting, setSubmitting] = useState(false);
+  const loading =
+    workspaceQuery?.isLoading ||
+    updateMutation?.isPending ||
+    deleteMutation?.isPending ||
+    leaveMutation?.isPending;
+
   const handleUpdateWorkspace = useCallback(
     async (data: { name: string; description: string }) => {
-      try {
-        setSubmitting(true);
-        await updateWorkspace({
-          name: data.name,
-          description: data.description,
-        });
-      } catch (error) {
-        console.error('Error updating workspace:', error);
-      } finally {
-        setSubmitting(false);
-      }
+      await updateMutation?.mutateAsync({
+        name: data.name,
+        description: data.description,
+      });
     },
-    [updateWorkspace]
+    [updateMutation]
   );
-
-  const handleDeleteWorkspace = useCallback(async () => {
-    await deleteWorkspace();
-  }, [deleteWorkspace]);
-
-  const handleLeaveWorkspace = useCallback(async () => {
-    await leaveWorkspace();
-  }, [leaveWorkspace]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<{
@@ -67,18 +65,18 @@ const WorkspaceSettingsSection = () => {
     },
   ];
 
-  if (!workspace) return <></>;
+  if (!workspaceQuery?.data) return <></>;
 
   return (
     <SettingsForm
       initialValues={{
-        name: workspace.name,
-        description: workspace.description ?? '',
+        name: workspaceQuery?.data?.data?.name ?? '',
+        description: workspaceQuery?.data?.data?.description ?? '',
       }}
       onSubmit={handleUpdateWorkspace}
-      submitting={submitting}
+      submitting={loading}
       fieldConfiguration={fieldConfiguration}
-      deleteItem={handleDeleteWorkspace}
+      deleteItem={confirmDeleteWorkspace}
       itemName={dict.consoleNavigation.workspace}
       submitButtonLabel={dict.workspace.saveChanges}
       deleteButtonLabel={dict.workspace.deleteWorkspace}
@@ -86,7 +84,9 @@ const WorkspaceSettingsSection = () => {
       additionalDangerContent={
         <>
           <Button
-            onClick={handleLeaveWorkspace}
+            onClick={() =>
+              confirmLeaveWorkspace(workspaceQuery?.data?.data?.name ?? '')
+            }
             className='mt-4'
             variant='secondary'
             size={'sm'}

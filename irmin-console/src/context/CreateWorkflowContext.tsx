@@ -8,7 +8,7 @@ import IrminCore from '@/lib/core';
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
@@ -56,7 +56,7 @@ export const CreateWorkflowProvider: React.FC<{
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
-  const { workspaceSlug } = useWorkspace();
+  const { workspaceSlug } = useWorkspaceContext();
 
   const [workflowData, setWorkflowData] = useState<WorkflowInput>({
     ...emptyWorkflowSetupData,

@@ -126,7 +126,7 @@ class WorkspaceService {
       const res = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}`,
         {
-          method: 'PUT',
+          method: 'PATCH',
           body: formData,
         }
       )) as IrminAPIResponse<Workspace>;
