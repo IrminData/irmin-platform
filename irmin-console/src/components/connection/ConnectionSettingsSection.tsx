@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
-import { useConnection } from '@/context/ConnectionContext';
+import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useUsers } from '@/hooks/useUsers';
+
+import LoadingSkeleton from '../ui/loading/LoadingSkeleton';
 
 interface ConnectionFormValues {
   name: string;
@@ -24,28 +26,33 @@ interface ConnectionFormValues {
 const ConnectionSettingsSection = () => {
   const { dict } = useLocale();
   const { usersQuery } = useUsers();
-  const { connection, transferConnection, updateConnection, deleteConnection } =
-    useConnection();
+  const {
+    connectionQuery,
+    transferConnectionMutation,
+    updateConnectionMutation,
+    deleteConnectionMutation,
+  } = useConnectionContext();
 
-  const [submitting, setSubmitting] = useState(false);
   const handleUpdateConnection = useCallback(
     async (data: ConnectionFormValues) => {
       try {
-        setSubmitting(true);
-        if (data.owner !== connection.owner.id) {
-          await transferConnection(data.owner);
+        if (data.owner !== connectionQuery.data?.data?.owner.id) {
+          await transferConnectionMutation.mutateAsync(data.owner);
         }
-        await updateConnection({
+        await updateConnectionMutation.mutateAsync({
           name: data.name,
           description: data.description,
+          documentation: connectionQuery.data?.data?.documentation ?? '',
         });
       } catch (error) {
         console.error('Error updating connection:', error);
-      } finally {
-        setSubmitting(false);
       }
     },
-    [connection, updateConnection, transferConnection]
+    [
+      connectionQuery.data?.data,
+      transferConnectionMutation,
+      updateConnectionMutation,
+    ]
   );
 
   // Define field configurations
@@ -74,6 +81,20 @@ const ConnectionSettingsSection = () => {
     },
   ];
 
+  if (connectionQuery.isLoading) {
+    return <LoadingSkeleton className='h-80 w-full' />;
+  }
+
+  if (connectionQuery.isError) {
+    return connectionQuery.error.message;
+  }
+
+  if (!connectionQuery.data?.data) {
+    return <div>{dict.common.error}</div>;
+  }
+
+  const connection = connectionQuery.data.data;
+
   return (
     <div id='connection-settings-section'>
       <SettingsForm<ConnectionFormValues>
@@ -83,9 +104,12 @@ const ConnectionSettingsSection = () => {
           owner: connection.owner.id,
         }}
         onSubmit={handleUpdateConnection}
-        submitting={submitting}
+        submitting={
+          updateConnectionMutation.isPending ||
+          transferConnectionMutation.isPending
+        }
         fieldConfiguration={fieldConfiguration}
-        deleteItem={deleteConnection}
+        deleteItem={deleteConnectionMutation.mutate}
         itemName='Connection'
         submitButtonLabel={dict.connections.settings.saveChanges}
         deleteButtonLabel={dict.connections.settings.delete}

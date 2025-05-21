@@ -6,8 +6,9 @@ import { TbChevronLeft } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-import { Connector } from '@/types/core/Connector';
+import { useConnector } from '@/hooks/useConnector';
 
 import { ConnectorInfo } from './ConnectorInfo';
 
@@ -15,10 +16,11 @@ import { ConnectorInfo } from './ConnectorInfo';
  * Connector information section
  *
  * @param props - The props for the component
- * @param props.connector - The connector object
+ * @param props.connectorID - The connector's identifier
  */
-const ConnectorSection = ({ connector }: { connector: Connector }) => {
+const ConnectorSection = ({ connectorID }: { connectorID: string }) => {
   const router = useRouter();
+  const { connectorQuery } = useConnector(connectorID);
 
   return (
     <div className='relative container mx-auto max-w-7xl'>
@@ -31,7 +33,12 @@ const ConnectorSection = ({ connector }: { connector: Connector }) => {
           onClick={() => router.back()}
         />
         <ContentWrapper>
-          <ConnectorInfo connector={connector} />
+          {connectorQuery.isLoading && (
+            <LoadingSkeleton className='h-80 w-full' />
+          )}
+          {connectorQuery.data?.data && (
+            <ConnectorInfo connector={connectorQuery.data.data} />
+          )}
         </ContentWrapper>
       </div>
     </div>

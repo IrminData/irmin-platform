@@ -30,6 +30,7 @@ export function useUser(userID: string) {
       });
       return user;
     },
+    enabled: !!userID,
   });
 
   return {

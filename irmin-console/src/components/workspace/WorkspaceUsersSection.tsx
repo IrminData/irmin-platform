@@ -136,12 +136,7 @@ const WorkspaceUsersSection = () => {
                       <ButtonWithTooltip
                         size='icon'
                         variant='secondary'
-                        onClick={() =>
-                          confirmTransferWorkspace(
-                            user.id,
-                            workspaceQuery?.data?.data?.name ?? ''
-                          )
-                        }
+                        onClick={() => confirmTransferWorkspace(user.id)}
                         icon={<IoKey size={14} />}
                         tooltip={dict.users.transferOwnership}
                       />

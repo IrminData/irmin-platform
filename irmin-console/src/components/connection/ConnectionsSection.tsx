@@ -10,10 +10,10 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useConnections } from '@/hooks/useConnections';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 
 import { Connection } from '@/types/core/Connection';
-import { Connector } from '@/types/core/Connector';
 
 import ConnectionList from './ConnectionList';
 import CreateConnectionModalContent from './CreateConnectionModalContent';
@@ -25,35 +25,30 @@ import CreateConnectionModalContent from './CreateConnectionModalContent';
  * Uses {@link SideModal} and {@link CreateConnectionModalContent} to provide UI for new Connection creation
  *
  * @param props0 - The props
- * @param props0.connections - The list of Connections
- * @param props0.connectors - List of available connectors
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ConnectionsSection({
-  connections,
-  connectors,
   sideModalOpen = false,
 }: {
-  connections: Connection[];
-  connectors: Connector[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
+  const { connectionsQuery } = useConnections();
 
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(connections);
+  const [filteredItems, setFilteredItems] = useState<Connection[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (connections) {
+      if (connectionsQuery.data?.data) {
         setFilteredItems(
-          connections.filter((item) =>
+          connectionsQuery.data.data.filter((item) =>
             item.name
               .trim()
               .replace(/\s+/g, '')
@@ -66,7 +61,7 @@ export default function ConnectionsSection({
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, connections]);
+  }, [searchQuery, connectionsQuery.data?.data]);
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -106,7 +101,6 @@ export default function ConnectionsSection({
         title={dict.connections.create.createNewConnection}
       >
         <CreateConnectionModalContent
-          connectors={connectors}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

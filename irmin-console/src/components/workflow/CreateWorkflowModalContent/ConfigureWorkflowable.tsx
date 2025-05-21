@@ -18,8 +18,8 @@ import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useConnections } from '@/hooks/useConnections';
 
-import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { ActionInputData } from '@/types/core/Workflow';
@@ -36,21 +36,19 @@ import {
  *
  * @param props - Component properties
  * @param props.editorItems - List of editor items
- * @param props.connections - List of connections
  * @param props.repositories - List of repositories
  * @param props.setCurrentStep - Function to set the current step
  */
 function ConfigureWorkflowable({
   editorItems,
-  connections,
   repositories,
   setCurrentStep,
 }: {
   editorItems: EditorItem[];
-  connections: Connection[];
   repositories: Repository[];
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const { connectionsQuery } = useConnections();
   const { workflowData, setWorkflowData } = useCreateWorkflow();
   const { dict } = useLocale();
 
@@ -222,7 +220,7 @@ function ConfigureWorkflowable({
                     },
                   });
                 }}
-                options={connections.map((conn) => ({
+                options={connectionsQuery.data?.data?.map((conn) => ({
                   value: conn.id,
                   label: conn.name,
                 }))}
@@ -370,7 +368,7 @@ function ConfigureWorkflowable({
                     },
                   });
                 }}
-                options={connections.map((conn) => ({
+                options={connectionsQuery.data?.data?.map((conn) => ({
                   value: conn.id,
                   label: conn.name,
                 }))}
@@ -509,7 +507,6 @@ function ConfigureWorkflowable({
               initialStages={[]}
               editorItems={editorItems}
               repositories={repositories}
-              connections={connections}
               onSubmit={handlePipelineStagesSubmit}
               readOnly={false}
               hideSaveButton={true}

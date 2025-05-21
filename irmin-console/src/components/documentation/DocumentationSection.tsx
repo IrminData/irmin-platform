@@ -17,7 +17,8 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { Connection } from '@/types/core/Connection';
+import { useConnections } from '@/hooks/useConnections';
+
 import { Repository } from '@/types/core/Repository';
 import { Workflow } from '@/types/core/Workflow';
 
@@ -27,14 +28,13 @@ import MDXViewer from './MDXViewer';
  * Page UI to show the full documentation for the workspace
  */
 export default function DocumentationSection({
-  connections,
   workflows,
   repositories,
 }: {
-  connections: Connection[];
   workflows: Workflow[];
   repositories: Repository[];
 }) {
+  const { connectionsQuery } = useConnections();
   const { workspaceSlug, workspaceQuery } = useWorkspaceContext();
   const { profile } = useIAM();
   const { dict, locale } = useLocale();
@@ -149,49 +149,51 @@ export default function DocumentationSection({
                 </div>
               </div>
             )}
-            {connections.length > 0 && (
-              <div className='flex flex-col py-6'>
-                <h2 className='font-display text-2xl font-bold lg:text-4xl'>
-                  {dict.connections.connections}
-                </h2>
-                <div className='w-full'>
-                  {connections.map((item, i) => (
-                    <div
-                      key={`connection-${i}`}
-                      className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
-                    >
-                      <h3 className='text-foreground text-xl font-semibold'>
-                        {item.name}
-                      </h3>
-                      <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
-                        {item.description}
-                      </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        {dict.list.owner}:{' '}
-                        <span className='text-gray-800 dark:text-gray-200'>
-                          {`${item.owner.first_name} ${item.owner.last_name}`}
-                          {item.owner.company
-                            ? ` (${item.owner.company})`
-                            : ''}{' '}
-                          - {item.owner.email}
-                        </span>
-                      </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        {dict.connectors.connector}:{' '}
-                        <span className='text-gray-800 dark:text-gray-200'>
-                          {item.connector.name}
-                        </span>
-                      </p>
-                      {item.documentation && item.documentation.length > 0 && (
-                        <div className='bg-card rounded-md px-2 pt-8 pb-6'>
-                          <MDXViewer content={item.documentation} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+            {connectionsQuery.data?.data &&
+              connectionsQuery.data.data.length > 0 && (
+                <div className='flex flex-col py-6'>
+                  <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                    {dict.connections.connections}
+                  </h2>
+                  <div className='w-full'>
+                    {connectionsQuery.data?.data?.map((item, i) => (
+                      <div
+                        key={`connection-${i}`}
+                        className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                      >
+                        <h3 className='text-foreground text-xl font-semibold'>
+                          {item.name}
+                        </h3>
+                        <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                          {item.description}
+                        </p>
+                        <p className='text-sm text-gray-600 dark:text-gray-400'>
+                          {dict.list.owner}:{' '}
+                          <span className='text-gray-800 dark:text-gray-200'>
+                            {`${item.owner.first_name} ${item.owner.last_name}`}
+                            {item.owner.company
+                              ? ` (${item.owner.company})`
+                              : ''}{' '}
+                            - {item.owner.email}
+                          </span>
+                        </p>
+                        <p className='text-sm text-gray-600 dark:text-gray-400'>
+                          {dict.connectors.connector}:{' '}
+                          <span className='text-gray-800 dark:text-gray-200'>
+                            {item.connector.name}
+                          </span>
+                        </p>
+                        {item.documentation &&
+                          item.documentation.length > 0 && (
+                            <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                              <MDXViewer content={item.documentation} />
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             {workflows.filter((item) => item.type === 'import').length > 0 && (
               <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
                 <h2 className='font-display text-2xl font-bold lg:text-4xl'>

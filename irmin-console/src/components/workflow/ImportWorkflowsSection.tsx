@@ -12,7 +12,6 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 
-import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { ImportWorkflow, Workflow } from '@/types/core/Workflow';
@@ -28,20 +27,17 @@ import ImportWorkflowList from './ImportWorkflowList';
  *
  * @param props0 - The props
  * @param props0.editorItems - The list of editor items
- * @param props0.connections - List of connections
  * @param props0.repositories - List of repositories
  * @param props0.workflows - List of workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ImportWorkflowsSection({
   editorItems,
-  connections,
   repositories,
   workflows,
   sideModalOpen = false,
 }: {
   editorItems: EditorItem[];
-  connections: Connection[];
   repositories: Repository[];
   workflows: Workflow[];
   sideModalOpen?: boolean;
@@ -115,7 +111,6 @@ export default function ImportWorkflowsSection({
       >
         <CreateWorkflowModalContent
           editorItems={editorItems}
-          connections={connections}
           repositories={repositories}
           workflows={workflows}
           isOpen={isOpen}

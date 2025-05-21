@@ -4,10 +4,6 @@ import {
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
-export interface SelectConnectorFormValues {
-  connector: Connector | null;
-}
-
 /**
  * Connection setup object
  */

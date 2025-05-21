@@ -4,7 +4,6 @@ import { memo } from 'react';
 
 import { CreateWorkflowProvider } from '@/context/CreateWorkflowContext';
 
-import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { Workflow } from '@/types/core/Workflow';
@@ -19,7 +18,6 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
  * @param props - Component properties
  * @param props.editorItems - List of editor items
  * @param props.repositories - List of repositories
- * @param props.connections - List of connections
  * @param props.workflows - List of existing workflows
  * @param props.isOpen - If the modal is open
  * @param props.closeModal - Function to close the modal
@@ -30,7 +28,6 @@ import ConfigureWorkflowable from './ConfigureWorkflowable';
 const CreateWorkflowModalContent = ({
   editorItems,
   repositories,
-  connections,
   workflows,
   isOpen,
   closeModal,
@@ -40,7 +37,6 @@ const CreateWorkflowModalContent = ({
 }: {
   editorItems: EditorItem[];
   repositories: Repository[];
-  connections: Connection[];
   workflows: Workflow[];
   isOpen: boolean;
   closeModal: () => void;
@@ -56,7 +52,6 @@ const CreateWorkflowModalContent = ({
         <ConfigureWorkflowable
           editorItems={editorItems}
           repositories={repositories}
-          connections={connections}
           setCurrentStep={setCurrentStep}
         />
       )}

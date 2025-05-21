@@ -1,7 +1,3 @@
-import { getConnections } from '@/lib/actions/connections';
-import { getConnectors } from '@/lib/actions/connectors';
-import { getToken } from '@/lib/getToken';
-
 import ConnectionsSection from '@/components/connection/ConnectionsSection';
 
 import { WorkspaceLayoutParams } from '../layout';
@@ -21,20 +17,7 @@ export default async function ConnectionsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await props.params;
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;
-  const currentWorkspace = params.workspace;
-  const token = await getToken();
-  const [connectors, connections] = await Promise.all([
-    getConnectors({ token }),
-    getConnections({ workspace: currentWorkspace, token }),
-  ]);
-  return (
-    <ConnectionsSection
-      connections={connections.data ?? []}
-      connectors={connectors.data ?? []}
-      sideModalOpen={openSideModal}
-    />
-  );
+  return <ConnectionsSection sideModalOpen={openSideModal} />;
 }

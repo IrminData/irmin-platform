@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 
 import { useWorkflow } from '@/context/WorkflowContext';
 
-import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import { PipelineStageInput } from '@/types/internal/WorkflowInput';
 
@@ -15,10 +14,8 @@ import PipelineStageEditor from './PipelineStageEditor';
  */
 const WorkflowPipelineSection = ({
   repositories,
-  connections,
 }: {
   repositories: Repository[];
-  connections: Connection[];
 }) => {
   const { workflow } = useWorkflow();
 
@@ -70,7 +67,6 @@ const WorkflowPipelineSection = ({
       <PipelineStageEditor
         initialStages={stages}
         repositories={repositories}
-        connections={connections}
         readOnly={true}
         hideSaveButton={true}
         defaultCollapsed={true}

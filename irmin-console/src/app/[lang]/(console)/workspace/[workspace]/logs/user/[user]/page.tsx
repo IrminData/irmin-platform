@@ -1,24 +1,28 @@
-import { initDict } from '@/lib/initDict';
+'use client';
+
+import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
 
-import { UserLogsLayoutParams } from './layout';
+import { useLocale } from '@/context/LocaleContext';
+
+import { useUser } from '@/hooks/useUser';
 
 /**
  * User Audit Logs page
  */
-export default async function UserLogsPage(props: {
-  params: Promise<UserLogsLayoutParams>;
-}) {
-  const params = await props.params;
-  const userID = params.user;
-  const { dict } = await initDict();
+export default function UserLogsPage() {
+  const { dict } = useLocale();
+  const params = useParams();
 
+  const { userQuery } = useUser(params.user as string);
+
+  if (!userQuery.data?.data) return <></>;
   return (
     <LogsSection
-      userID={userID}
+      user={userQuery.data.data}
       logsForType='user'
-      logsFor={userID}
+      logsFor={userQuery.data.data.id}
       title={dict.logs.userAuditLogs}
     />
   );

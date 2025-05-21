@@ -12,10 +12,10 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useLogEvents } from '@/hooks/useLogEvents';
-import { useUser } from '@/hooks/useUser';
 
 import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
+import { User } from '@/types/core/User';
 import { Workflow } from '@/types/core/Workflow';
 
 import LogEventFeed from './LogEventFeed';
@@ -30,7 +30,7 @@ import LogEventFeed from './LogEventFeed';
  * @param props.workflow - Optional. The workflow to show logs for
  * @param props.repository - Optional. The repository to show logs for
  * @param props.connection - Optional. The connection to show logs for
- * @param props.userID - Optional. The user ID to show logs for
+ * @param props.user - Optional. The user to show logs for
  */
 export default function LogsSection({
   title,
@@ -39,7 +39,7 @@ export default function LogsSection({
   workflow,
   repository,
   connection,
-  userID,
+  user,
 }: {
   title: string;
   logsForType?: 'workspace' | 'workflow' | 'repository' | 'connection' | 'user';
@@ -47,7 +47,7 @@ export default function LogsSection({
   workflow?: Workflow;
   repository?: Repository;
   connection?: Connection;
-  userID?: string;
+  user?: User;
 }) {
   const router = useRouter();
   const { dict } = useLocale();
@@ -65,8 +65,6 @@ export default function LogsSection({
     logsFor,
   });
 
-  const { userQuery } = useUser(userID ?? '');
-
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
     pathname: '',
@@ -79,7 +77,7 @@ export default function LogsSection({
     <div className='relative container mx-auto max-w-7xl'>
       <div className='flex flex-col gap-8 px-2 py-12 md:px-4'>
         <div className='flex items-center gap-8'>
-          {(workflow || repository || connection || userID) && (
+          {(workflow || repository || connection || user) && (
             <Button
               size='icon'
               variant='gray'
@@ -122,10 +120,9 @@ export default function LogsSection({
                 </Link>
               </h3>
             )}
-            {userQuery?.data?.data && (
+            {user && (
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
-                {userQuery.data.data.first_name} {userQuery.data.data.last_name}{' '}
-                - {userQuery.data.data.email}
+                {user.first_name} {user.last_name} - {user.email}
               </h3>
             )}
           </div>

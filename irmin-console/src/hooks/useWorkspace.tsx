@@ -140,11 +140,11 @@ export function useWorkspace(slug: string) {
     isSuccess: isTransferSuccess,
   } = transferMutation;
   const confirmTransferWorkspace = useCallback(
-    async (newOwnerID: string, workspaceName: string) => {
+    async (newOwnerID: string) => {
       if (isTransferPending || isTransferSuccess) return;
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.common.areYouSureYouWantToTransferOwnership} (${workspaceName})`
+        `${dict.common.areYouSureYouWantToTransferOwnership} (${workspaceQuery.data?.data?.name})`
       );
       if (confirmed) {
         transferWorkspace(newOwnerID);
@@ -156,6 +156,7 @@ export function useWorkspace(slug: string) {
       isTransferPending,
       isTransferSuccess,
       transferWorkspace,
+      workspaceQuery.data?.data?.name,
     ]
   );
 
@@ -185,19 +186,23 @@ export function useWorkspace(slug: string) {
     isPending: isLeavePending,
     isSuccess: isLeaveSuccess,
   } = leaveMutation;
-  const confirmLeaveWorkspace = useCallback(
-    async (workspaceName: string) => {
-      if (isLeavePending || isLeaveSuccess) return;
-      const confirmed = await irminConfirm(
-        'warning',
-        `${dict.workspaceSwitcher.leaveWorkspaceConfirm} (${workspaceName})`
-      );
-      if (confirmed) {
-        leaveWorkspace();
-      }
-    },
-    [dict, irminConfirm, isLeavePending, isLeaveSuccess, leaveWorkspace]
-  );
+  const confirmLeaveWorkspace = useCallback(async () => {
+    if (isLeavePending || isLeaveSuccess) return;
+    const confirmed = await irminConfirm(
+      'warning',
+      `${dict.workspaceSwitcher.leaveWorkspaceConfirm} (${workspaceQuery.data?.data?.name})`
+    );
+    if (confirmed) {
+      leaveWorkspace();
+    }
+  }, [
+    dict,
+    irminConfirm,
+    isLeavePending,
+    isLeaveSuccess,
+    leaveWorkspace,
+    workspaceQuery.data?.data?.name,
+  ]);
 
   return {
     // Queries

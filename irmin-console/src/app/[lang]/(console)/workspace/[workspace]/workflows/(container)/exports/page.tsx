@@ -1,4 +1,3 @@
-import { getConnections } from '@/lib/actions/connections';
 import { getEditorItems } from '@/lib/actions/editor-items';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getWorkflows } from '@/lib/actions/workflows';
@@ -29,19 +28,15 @@ export default async function ExportWorkflowsPage(props: {
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;
   const token = await getToken();
-  const [editorItems, workflows, connections, repositories] = await Promise.all(
-    [
-      getEditorItems({ workspace: params.workspace, path: '', token }),
-      getWorkflows({ workspace: params.workspace, token }),
-      getConnections({ workspace: params.workspace, token }),
-      getRepositories({ workspace: params.workspace, token }),
-    ]
-  );
+  const [editorItems, workflows, repositories] = await Promise.all([
+    getEditorItems({ workspace: params.workspace, path: '', token }),
+    getWorkflows({ workspace: params.workspace, token }),
+    getRepositories({ workspace: params.workspace, token }),
+  ]);
   return (
     <ExportWorkflowsSection
       editorItems={editorItems.data ?? []}
       workflows={(workflows.data as ExportWorkflow[]) ?? []}
-      connections={connections.data ?? []}
       repositories={repositories.data ?? []}
       sideModalOpen={openSideModal}
     />

@@ -1,39 +1,33 @@
-import { notFound } from 'next/navigation';
+'use client';
 
-import { getConnection } from '@/lib/actions/connections';
-import { getToken } from '@/lib/getToken';
-import { initDict } from '@/lib/initDict';
+import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { ConnectionLogsLayoutParams } from './layout';
+import { useLocale } from '@/context/LocaleContext';
+
+import { useConnection } from '@/hooks/useConnection';
 
 /**
  * Connection Audit Logs page
  */
-export default async function ConnectionLogsPage(props: {
-  params: Promise<ConnectionLogsLayoutParams>;
-}) {
-  const params = await props.params;
-  const currentWorkspace = params.workspace;
-  const connectionID = params.connection;
+export default function ConnectionLogsPage() {
+  const { dict } = useLocale();
+  const params = useParams();
 
-  const token = await getToken();
-  const [connection, { dict }] = await Promise.all([
-    getConnection({
-      workspace: currentWorkspace,
-      connectionID,
-      token,
-    }),
-    initDict(),
-  ]);
+  const { connectionQuery } = useConnection(params.connection as string);
 
-  if (!connection.data) return notFound();
+  if (connectionQuery.isLoading) return <LoadingSpinner />;
+  if (connectionQuery.isError)
+    return <div>{connectionQuery.error.message}</div>;
+  if (!connectionQuery.data?.data) return <div>{dict.common.error}</div>;
+
   return (
     <LogsSection
-      connection={connection.data}
+      connection={connectionQuery.data.data}
       logsForType='connection'
-      logsFor={connectionID}
+      logsFor={connectionQuery.data.data.id}
       title={dict.logs.connectionLogs}
     />
   );

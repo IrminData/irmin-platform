@@ -1,13 +1,10 @@
 'use client';
 
-import { useCallback } from 'react';
-
 import Button from '@/components/ui/button';
-import DocumentationForm, {
-  DocumentationFormValues,
-} from '@/components/ui/form/DocumentationForm';
+import DocumentationForm from '@/components/ui/form/DocumentationForm';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-import { useConnection } from '@/context/ConnectionContext';
+import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
 /**
@@ -15,21 +12,28 @@ import { useLocale } from '@/context/LocaleContext';
  */
 const ConnectionDocumentationSection = () => {
   const { dict } = useLocale();
-  const { connection, updateConnection } = useConnection();
+  const { connectionQuery, updateConnectionMutation } = useConnectionContext();
 
-  const handleSaveDocumentation = useCallback(
-    async (data: DocumentationFormValues) => {
-      await updateConnection({
-        documentation: data.documentation,
-      });
-    },
-    [updateConnection]
-  );
+  if (connectionQuery.isLoading) {
+    return <LoadingSkeleton className='h-80 w-full' />;
+  }
+
+  if (!connectionQuery.data?.data) {
+    return <h1>{dict.common.error}</h1>;
+  }
+
+  const connection = connectionQuery.data?.data;
 
   return (
     <DocumentationForm
       initialDocumentation={connection.documentation ?? ''}
-      onSubmit={handleSaveDocumentation}
+      onSubmit={(data) => {
+        updateConnectionMutation.mutate({
+          name: connection.name,
+          description: connection.description,
+          documentation: data.documentation,
+        });
+      }}
     >
       <Button size='sm' variant='default' type='submit'>
         {dict.common.save}

@@ -1,36 +1,28 @@
-import { notFound } from 'next/navigation';
+'use client';
 
-import { getConnection } from '@/lib/actions/connections';
-import { getToken } from '@/lib/getToken';
+import { useParams } from 'next/navigation';
 
 import ConnectorSection from '@/components/connector/ConnectorSection';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
+import { useLocale } from '@/context/LocaleContext';
 
-import { SingleConnectionLayoutParams } from '../layout';
+import { useConnection } from '@/hooks/useConnection';
 
 /**
  * Page for the Connection Connector
  */
-export default async function ConnectionConnectorPage(props: {
-  params: Promise<SingleConnectionLayoutParams>;
-}) {
-  const params = await props.params;
-  const currentWorkspace = params.workspace;
+export default function ConnectionConnectorPage() {
+  const params = useParams();
+  const { dict } = useLocale();
 
-  const connectionID = params.connection;
-  if (isInvalidRouteProp(connectionID)) return notFound();
+  const { connectionQuery } = useConnection(params.connection as string);
+  if (connectionQuery.isLoading) return <LoadingSpinner />;
+  if (connectionQuery.isError)
+    return <div>{connectionQuery.error.message}</div>;
+  if (!connectionQuery.data?.data) return <div>{dict.common.error}</div>;
 
-  const token = await getToken();
-  const connection = await getConnection({
-    workspace: currentWorkspace,
-    connectionID,
-    token,
-  });
-
-  if (!connection.data) return notFound();
-
-  const connector = connection.data.connector;
-
-  return <ConnectorSection connector={connector} />;
+  return (
+    <ConnectorSection connectorID={connectionQuery.data.data.connector.id} />
+  );
 }

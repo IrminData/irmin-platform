@@ -2,9 +2,7 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getConnection } from '@/lib/actions/connections';
 import { Locale } from '@/lib/dict';
-import { getToken } from '@/lib/getToken';
 
 import ConnectionLayoutWrapper from '@/components/connection/ConnectionLayoutWrapper';
 
@@ -48,28 +46,14 @@ export default async function ConnectionPagesLayout(props: {
   const params = await props.params;
 
   const { children } = props;
-  const currentWorkspace = params.workspace;
 
   const connectionID = params.connection;
   if (isInvalidRouteProp(connectionID)) {
     notFound();
   }
 
-  const token = await getToken();
-  const connection = await getConnection({
-    workspace: currentWorkspace,
-    connectionID,
-    token,
-  });
-
-  if (!connection.data) return notFound();
-
   return (
-    <ConnectionProvider
-      workspaceSlug={currentWorkspace}
-      defaultConnection={connection.data}
-      connectionID={connectionID}
-    >
+    <ConnectionProvider connectionID={connectionID}>
       <ConnectionLayoutWrapper>{children}</ConnectionLayoutWrapper>
     </ConnectionProvider>
   );

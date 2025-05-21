@@ -1,4 +1,3 @@
-import { getConnections } from '@/lib/actions/connections';
 import { getEditorItems } from '@/lib/actions/editor-items';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getWorkflows } from '@/lib/actions/workflows';
@@ -30,19 +29,15 @@ export default async function PipelineWorkflowsPage(props: {
   const openSideModal = searchParams.create !== undefined;
   const workspace = params.workspace;
   const token = await getToken();
-  const [editorItems, workflows, connections, repositories] = await Promise.all(
-    [
-      getEditorItems({ workspace, path: '', token }),
-      getWorkflows({ workspace, token }),
-      getConnections({ workspace, token }),
-      getRepositories({ workspace, token }),
-    ]
-  );
+  const [editorItems, workflows, repositories] = await Promise.all([
+    getEditorItems({ workspace, path: '', token }),
+    getWorkflows({ workspace, token }),
+    getRepositories({ workspace, token }),
+  ]);
   return (
     <PipelineWorkflowsSection
       editorItems={editorItems.data ?? []}
       workflows={(workflows.data as PipelineWorkflow[]) ?? []}
-      connections={connections.data ?? []}
       repositories={repositories.data ?? []}
       sideModalOpen={openSideModal}
     />

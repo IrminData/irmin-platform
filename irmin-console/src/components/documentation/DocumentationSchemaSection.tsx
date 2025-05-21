@@ -8,7 +8,8 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { Connection } from '@/types/core/Connection';
+import { useConnections } from '@/hooks/useConnections';
+
 import { Repository } from '@/types/core/Repository';
 import { Workflow } from '@/types/core/Workflow';
 
@@ -22,14 +23,13 @@ const TreeChart = dynamic(() => import('./TreeChart'), {
  * Page UI to show the schema for the workspace as a tree chart.
  */
 export default function DocumentationSchemaSection({
-  connections,
   workflows,
   repositories,
 }: {
-  connections: Connection[];
   workflows: Workflow[];
   repositories: Repository[];
 }) {
+  const { connectionsQuery } = useConnections();
   const { workspaceQuery } = useWorkspaceContext();
   const [tree, setTree] = useState<TreeNode>({
     id: 'workspace',
@@ -54,11 +54,13 @@ export default function DocumentationSchemaSection({
       label: 'Connections',
       children: [],
     };
-    if (connections) {
-      connectionsNode.children = connections.map((connection) => ({
-        id: `connection-${connection.id}`,
-        label: connection.name,
-      }));
+    if (connectionsQuery.data?.data) {
+      connectionsNode.children = connectionsQuery.data.data.map(
+        (connection) => ({
+          id: `connection-${connection.id}`,
+          label: connection.name,
+        })
+      );
     }
     newTree.children?.push(connectionsNode);
 
@@ -147,7 +149,7 @@ export default function DocumentationSchemaSection({
     newTree.children?.push(workflowsNode);
 
     setTree(newTree);
-  }, [workspaceQuery, connections, workflows, repositories]);
+  }, [workspaceQuery, connectionsQuery.data?.data, workflows, repositories]);
 
   return <TreeChart tree={tree} />;
 }

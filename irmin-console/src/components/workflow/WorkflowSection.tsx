@@ -17,6 +17,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkflow } from '@/context/WorkflowContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useConnections } from '@/hooks/useConnections';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
@@ -29,7 +30,8 @@ import { GridRow } from '@/types/internal/ListProps';
 const WorkflowSection = () => {
   const { dict, locale } = useLocale();
 
-  const { workflow, repositories, connections, workflowRuns } = useWorkflow();
+  const { workflow, repositories, workflowRuns } = useWorkflow();
+  const { connectionsQuery } = useConnections();
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -238,7 +240,7 @@ const WorkflowSection = () => {
                 href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
               >
                 <p className='text-base'>
-                  {connections.find(
+                  {connectionsQuery.data?.data?.find(
                     (conn) => conn.id === workflow.workflowable.connection_id
                   )?.name ?? '-'}
                 </p>
@@ -298,7 +300,7 @@ const WorkflowSection = () => {
                 href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
               >
                 <p className='text-base'>
-                  {connections.find(
+                  {connectionsQuery.data?.data?.find(
                     (conn) => conn.id === workflow.workflowable.connection_id
                   )?.name ?? '-'}
                 </p>

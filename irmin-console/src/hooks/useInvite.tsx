@@ -30,11 +30,13 @@ export function useInvite(inviteID: string) {
       const invite = await core.inviteService.fetchInvite({ inviteID });
       return invite;
     },
+    enabled: !!inviteID,
   });
 
   // Mutation to accept an invite
   const acceptInviteMutation = useMutation({
     mutationFn: async (inviteID: string) => {
+      if (!inviteID) throw new Error('Invite ID is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
       const res = await core.inviteService.acceptInvite({ inviteID });
@@ -55,6 +57,7 @@ export function useInvite(inviteID: string) {
   // Mutation to decline an invite
   const declineInviteMutation = useMutation({
     mutationFn: async (inviteID: string) => {
+      if (!inviteID) throw new Error('Invite ID is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
       const res = await core.inviteService.declineInvite({ inviteID });

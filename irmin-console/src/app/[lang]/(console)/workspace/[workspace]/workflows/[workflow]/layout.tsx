@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { getConnections } from '@/lib/actions/connections';
 import { getRepositories } from '@/lib/actions/repositories';
 import { getWorkflow } from '@/lib/actions/workflows';
 import { Locale } from '@/lib/dict';
@@ -72,14 +71,10 @@ export default async function WorkflowLayout(
     return notFound();
 
   const token = await getToken();
-  const [workflow, connections, repositories] = await Promise.all([
+  const [workflow, repositories] = await Promise.all([
     getWorkflow({
       workspace,
       workflowID,
-      token,
-    }),
-    getConnections({
-      workspace,
       token,
     }),
     getRepositories({
@@ -93,7 +88,6 @@ export default async function WorkflowLayout(
   return (
     <WorkflowProvider
       initialWorkflow={workflow.data}
-      connections={connections.data ?? []}
       repositories={repositories.data ?? []}
     >
       <WorkflowLayoutWrapper>{children}</WorkflowLayoutWrapper>

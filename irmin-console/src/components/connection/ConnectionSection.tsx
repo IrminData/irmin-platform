@@ -3,9 +3,11 @@
 import { useMemo } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import WorkflowList from '@/components/workflow/WorkflowList';
 
-import { useConnection } from '@/context/ConnectionContext';
+import { useConnectionContext } from '@/context/ConnectionContext';
+import { useLocale } from '@/context/LocaleContext';
 
 import { Workflow } from '@/types/core/Workflow';
 
@@ -13,25 +15,36 @@ import { Workflow } from '@/types/core/Workflow';
  * Connection Settings section component
  */
 const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
-  const { connection } = useConnection();
+  const { dict } = useLocale();
+  const { connectionID, connectionQuery } = useConnectionContext();
 
   const relatedWorkflows = useMemo(
     () =>
       workflows.filter((item) => {
         if (item.type === 'import' || item.type === 'export') {
-          return item.workflowable.connection_id === connection.id;
+          return item.workflowable.connection_id === connectionID;
         }
         if (item.type === 'pipeline') {
           return item.workflowable.stages.some((stage) => {
             return (
               stage.type === 'connection' &&
-              stage.connection_id === connection.id
+              stage.connection_id === connectionID
             );
           });
         }
       }),
-    [workflows, connection.id]
+    [workflows, connectionID]
   );
+
+  if (connectionQuery.isLoading) {
+    return <LoadingSkeleton className='h-80 w-full' />;
+  }
+
+  if (!connectionQuery.data?.data) {
+    return <h1>{dict.common.error}</h1>;
+  }
+
+  const connection = connectionQuery.data?.data;
 
   return (
     <div className='relative container mx-auto max-w-7xl'>

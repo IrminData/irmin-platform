@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { getConnector } from '@/lib/actions/connectors';
 import { Locale } from '@/lib/dict';
-import { getToken } from '@/lib/getToken';
 
 import ConnectorSection from '@/components/connector/ConnectorSection';
 
@@ -32,14 +30,9 @@ export default async function ConnectorPage(props: {
   const connectorId = params.connector;
   if (isInvalidRouteProp(connectorId)) return notFound();
 
-  const token = await getToken();
-  const connector = await getConnector({ connectorId, token });
-
-  if (!connector.data) return notFound();
-
   return (
     <div className='relative container mx-auto max-w-7xl py-8'>
-      <ConnectorSection connector={connector.data} />
+      <ConnectorSection connectorID={connectorId} />
     </div>
   );
 }

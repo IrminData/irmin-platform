@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
 import { PipelineStageInput } from '@/types/internal/WorkflowInput';
@@ -16,7 +15,6 @@ import Stage from './Stage';
 type PipelineStageEditorProps = {
   editorItems?: EditorItem[];
   repositories?: Repository[];
-  connections?: Connection[];
   initialStages?: PipelineStageInput[];
   onSubmit?: (stages: PipelineStageInput[]) => void;
   readOnly?: boolean;
@@ -31,7 +29,6 @@ type PipelineStageEditorProps = {
  * @param props.initialStages - The initial stages to display.
  * @param props.editorItems - The editor items to display.
  * @param props.repositories - List of available repositories.
- * @param props.connections - List of available connections.
  * @param props.onSubmit - The function to call when the form is submitted.
  * @param props.readOnly - Whether the form is read-only.
  * @param props.hideSaveButton - Whether to hide the save button.
@@ -42,7 +39,6 @@ function PipelineStageEditor({
   initialStages = [],
   editorItems = [],
   repositories = [],
-  connections = [],
   onSubmit,
   readOnly = false,
   hideSaveButton = false,
@@ -143,7 +139,6 @@ function PipelineStageEditor({
               }
               removeStage={() => removeStage(index)}
               editorItems={editorItems}
-              connections={connections}
               repositories={repositories}
               initialStage={stage}
               readOnly={readOnly}

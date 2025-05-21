@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
-import { useConnection } from '@/context/ConnectionContext';
+import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
@@ -32,7 +32,7 @@ export default function ConnectionLayoutWrapper({
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
-  const { connection } = useConnection();
+  const { connectionID, connectionQuery } = useConnectionContext();
 
   // The base URL for the connection, eg. /en/workspace/workspace-slug/connections/connection-id
   const baseUrl = useBaseUrl({
@@ -82,7 +82,7 @@ export default function ConnectionLayoutWrapper({
       },
       {
         name: dict.common.logs,
-        link: `${workspaceUrl}/logs/connection/${connection?.id}`,
+        link: `${workspaceUrl}/logs/connection/${connectionID}`,
         active: false,
         icon: <TbBook size={14} />,
       },
@@ -94,15 +94,24 @@ export default function ConnectionLayoutWrapper({
         hidden: false,
       },
     ],
-    [pathname, dict, baseUrl, workspaceUrl, connection]
+    [pathname, dict, baseUrl, workspaceUrl, connectionID]
   );
 
-  if (!connection)
+  if (connectionQuery.isLoading)
     return (
       <div className='relative container mx-auto max-w-7xl py-12'>
         <LoadingSkeleton className='h-96' />
       </div>
     );
+
+  if (!connectionQuery.data?.data)
+    return (
+      <div className='relative container mx-auto max-w-7xl py-12'>
+        <h1>{dict.common.error}</h1>
+      </div>
+    );
+
+  const connection = connectionQuery.data?.data;
 
   return (
     <>

@@ -81,9 +81,7 @@ const WorkspaceSettingsSection = () => {
       additionalDangerContent={
         <>
           <Button
-            onClick={() =>
-              confirmLeaveWorkspace(workspaceQuery?.data?.data?.name ?? '')
-            }
+            onClick={confirmLeaveWorkspace}
             className='mt-4'
             variant='secondary'
             size={'sm'}

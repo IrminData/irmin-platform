@@ -22,8 +22,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useConnections } from '@/hooks/useConnections';
 
-import { Connection } from '@/types/core/Connection';
 import { EditorItem } from '@/types/core/EditorItems';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { Repository } from '@/types/core/Repository';
@@ -43,7 +43,6 @@ const defaultStage: PipelineStageInput = {
  * @param props - The component props.
  * @param props.index - The index of the stage in the pipeline.
  * @param props.editorItems - The editor items to display.
- * @param props.connections - The connections to display.
  * @param props.repositories - The repositories to display.
  * @param props.initialStage - The initial stage to display.
  * @param props.updateStage - The function to call when the stage is updated.
@@ -57,7 +56,6 @@ const defaultStage: PipelineStageInput = {
 function Stage({
   index,
   editorItems = [],
-  connections = [],
   repositories = [],
   initialStage,
   updateStage,
@@ -69,7 +67,6 @@ function Stage({
 }: {
   index: number;
   editorItems?: EditorItem[];
-  connections?: Connection[];
   repositories?: Repository[];
   initialStage?: PipelineStageInput;
   updateStage: (stage: PipelineStageInput) => void;
@@ -79,6 +76,7 @@ function Stage({
   readOnly: boolean;
   defaultCollapsed?: boolean;
 }) {
+  const { connectionsQuery } = useConnections();
   const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
   const { dict, locale } = useLocale();
@@ -410,10 +408,10 @@ function Stage({
                   classNamePrefix='react-select'
                   isSearchable
                   isDisabled={readOnly}
-                  defaultValue={connections.find(
+                  defaultValue={connectionsQuery.data?.data?.find(
                     (c) => c.id === stage.connection
                   )}
-                  options={connections}
+                  options={connectionsQuery.data?.data ?? []}
                   getOptionLabel={(option) => option.name}
                   onChange={(option) => {
                     if (!option) return;

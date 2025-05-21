@@ -18,7 +18,6 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useWorkflowRuns from '@/hooks/useWorkflowRuns';
 
-import { Connection } from '@/types/core/Connection';
 import { Repository } from '@/types/core/Repository';
 import { WorkflowSchedule } from '@/types/core/Schedule';
 import { Workflow } from '@/types/core/Workflow';
@@ -30,7 +29,6 @@ import { WorkflowableInput } from '@/types/internal/WorkflowInput';
  */
 interface WorkflowContextProps {
   workflow: Workflow;
-  connections: Connection[];
   repositories: Repository[];
   fetchWorkflow: () => Promise<void>;
   updateWorkflow: (data: ItemUpdateProps) => Promise<void>;
@@ -55,18 +53,15 @@ const WorkflowContext = createContext<WorkflowContextProps | undefined>(
  * @param props - The properties of the workflow provider
  * @param props.children - The children components
  * @param props.initialWorkflow - The initial workflow to set
- * @param props.connections - The connections of the workflow
  * @param props.repositories - The repositories of the workflow
  */
 export const WorkflowProvider = ({
   children,
   initialWorkflow,
-  connections,
   repositories,
 }: {
   children: React.ReactNode;
   initialWorkflow: Workflow;
-  connections: Connection[];
   repositories: Repository[];
 }) => {
   const { getToken } = useIAM();
@@ -335,7 +330,6 @@ export const WorkflowProvider = ({
     <WorkflowContext.Provider
       value={{
         workflow,
-        connections,
         repositories,
         fetchWorkflow,
         deleteWorkflow: handleDeleteWorkflow,

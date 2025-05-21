@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
-
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
-
 import {
-  CreateConnectionProvider,
-  useCreateConnection,
-} from '@/context/CreateConnectionContext';
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import { Connector } from '@/types/core/Connector';
+import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 import ConfigureConnection from './ConfigureConnection';
 import DefineDetails from './DefineDetails';
@@ -17,32 +17,16 @@ import DefineSettings from './DefineSettings';
 import SelectConnector from './SelectConnector';
 
 /**
- * Inner component that consumes the connection creation context.
- *
- * It renders the appropriate step of the connection creation process,
- * and resets the state when the modal is opened.
+ * Initial connection data state.
  */
-const CreateConnectionModalContentInner = ({ isOpen }: { isOpen: boolean }) => {
-  const { currentStep, filteredConnectors, resetCreateConnection } =
-    useCreateConnection();
-
-  // Reset connection data and step when the modal is opened or closed.
-  useEffect(() => {
-    resetCreateConnection();
-  }, [isOpen, resetCreateConnection]);
-
-  if (filteredConnectors.length === 0) {
-    return <LoadingSpinner />;
-  }
-
-  return (
-    <>
-      {currentStep === 1 && <SelectConnector />}
-      {currentStep === 2 && <DefineDetails />}
-      {currentStep === 3 && <DefineSettings />}
-      {currentStep === 4 && <ConfigureConnection />}
-    </>
-  );
+export const initialConnectionData: ConnectionSetup = {
+  name: '',
+  description: '',
+  connector: undefined,
+  connectionDetailsFields: undefined,
+  connectionSettingsFields: undefined,
+  connectionDetails: undefined,
+  connectionSettings: undefined,
 };
 
 /**
@@ -51,27 +35,77 @@ const CreateConnectionModalContentInner = ({ isOpen }: { isOpen: boolean }) => {
  * This component provides the create connection context to its children.
  */
 const CreateConnectionModalContent = ({
-  connectors,
   isOpen,
   closeModal,
   currentStep,
   setCurrentStep,
 }: {
-  connectors: Connector[];
   isOpen: boolean;
   closeModal: () => void;
   currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+  setCurrentStep: Dispatch<SetStateAction<number>>;
 }) => {
+  // State to hold connection data
+  const [connectionData, setConnectionData] = useState<ConnectionSetup>(
+    initialConnectionData
+  );
+
+  // Reset the connection data when the modal is closed
+  const prevOpen = useRef(isOpen);
+  useEffect(() => {
+    if (prevOpen.current && !isOpen) {
+      setConnectionData(initialConnectionData);
+    }
+    prevOpen.current = isOpen;
+  }, [isOpen]);
+
+  // Function to go to the next step
+  const goNext = useCallback(() => {
+    if (currentStep < 4) {
+      setCurrentStep((prev) => prev + 1);
+    }
+  }, [currentStep, setCurrentStep]);
+
+  // Function to go back to the previous step
+  const goBack = useCallback(() => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  }, [currentStep, setCurrentStep]);
+
   return (
-    <CreateConnectionProvider
-      connectors={connectors}
-      closeModal={closeModal}
-      currentStep={currentStep}
-      setCurrentStep={setCurrentStep}
-    >
-      <CreateConnectionModalContentInner isOpen={isOpen} />
-    </CreateConnectionProvider>
+    <>
+      {currentStep === 1 && (
+        <SelectConnector
+          setConnectionData={setConnectionData}
+          goNext={goNext}
+        />
+      )}
+      {currentStep === 2 && (
+        <DefineDetails
+          connectionData={connectionData}
+          setConnectionData={setConnectionData}
+          goBack={goBack}
+          goNext={goNext}
+        />
+      )}
+      {currentStep === 3 && (
+        <DefineSettings
+          connectionData={connectionData}
+          setConnectionData={setConnectionData}
+          goBack={goBack}
+          goNext={goNext}
+        />
+      )}
+      {currentStep === 4 && (
+        <ConfigureConnection
+          connectionData={connectionData}
+          setConnectionData={setConnectionData}
+          goBack={goBack}
+          closeModal={closeModal}
+        />
+      )}
+    </>
   );
 };
 
