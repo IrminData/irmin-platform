@@ -13,7 +13,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
-import { EditorItem } from '@/types/core/EditorItems';
 import { ExportWorkflow } from '@/types/core/Workflow';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
@@ -26,14 +25,11 @@ import ExportWorkflowList from './ExportWorkflowList';
  * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Export Workflow creation
  *
  * @param props0 - The props
- * @param props0.editorItems - The list of editor items
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ExportWorkflowsSection({
-  editorItems,
   sideModalOpen = false,
 }: {
-  editorItems: EditorItem[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -104,7 +100,6 @@ export default function ExportWorkflowsSection({
         title={dict.workflow.create.createNewExportWorkflow}
       >
         <CreateWorkflowModalContent
-          editorItems={editorItems}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

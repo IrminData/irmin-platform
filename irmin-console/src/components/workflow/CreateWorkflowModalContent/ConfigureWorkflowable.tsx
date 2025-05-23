@@ -21,7 +21,6 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnections } from '@/hooks/useConnections';
 import { useRepositories } from '@/hooks/useRepositories';
 
-import { EditorItem } from '@/types/core/EditorItems';
 import { ActionInputData } from '@/types/core/Workflow';
 import {
   ActionWorkflowableInput,
@@ -35,14 +34,11 @@ import {
  * Configure workflow type specific properties
  *
  * @param props - Component properties
- * @param props.editorItems - List of editor items
  * @param props.setCurrentStep - Function to set the current step
  */
 function ConfigureWorkflowable({
-  editorItems,
   setCurrentStep,
 }: {
-  editorItems: EditorItem[];
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { connectionsQuery } = useConnections();
@@ -98,7 +94,6 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.executableScriptFile}</Label>
               <FileSelector
-                editorItems={editorItems}
                 currentSelectedFile={workflowable.executable ?? null}
                 onSelectFile={(filePath) =>
                   setWorkflowData({
@@ -506,7 +501,6 @@ function ConfigureWorkflowable({
           <>
             <PipelineStageEditor
               initialStages={[]}
-              editorItems={editorItems}
               onSubmit={handlePipelineStagesSubmit}
               readOnly={false}
               hideSaveButton={true}

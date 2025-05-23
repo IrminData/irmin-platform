@@ -1,8 +1,6 @@
 import { Metadata } from 'next';
 
-import { getEditorItems } from '@/lib/actions/editor-items';
 import { Locale } from '@/lib/dict';
-import { getToken } from '@/lib/getToken';
 
 import EditorLayoutWrapper from '@/components/editor/EditorLayoutWrapper';
 
@@ -38,20 +36,12 @@ export async function generateMetadata(props: {
  */
 export default async function EditorLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
   params: Promise<EditorLayoutParams>;
 }) {
-  const { workspace } = await params;
-  const token = await getToken();
-  const editorItems = await getEditorItems({
-    workspace: workspace,
-    path: '',
-    token,
-  });
   return (
-    <EditorProvider editorItems={editorItems.data ?? []}>
+    <EditorProvider>
       <EditorLayoutWrapper>{children}</EditorLayoutWrapper>
     </EditorProvider>
   );

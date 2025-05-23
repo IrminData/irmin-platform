@@ -13,7 +13,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
-import { EditorItem } from '@/types/core/EditorItems';
 import { PipelineWorkflow } from '@/types/core/Workflow';
 import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
@@ -46,14 +45,11 @@ const initialWorkflowData: WorkflowInput = {
  * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Pipeline Workflow creation
  *
  * @param props0 - The props
- * @param props0.editorItems - The list of editor items
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 function PipelineWorkflowsSection({
-  editorItems,
   sideModalOpen = false,
 }: {
-  editorItems: EditorItem[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -124,7 +120,6 @@ function PipelineWorkflowsSection({
         title={dict.workflow.create.createNewPipelineWorkflow}
       >
         <CreateWorkflowModalContent
-          editorItems={editorItems}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

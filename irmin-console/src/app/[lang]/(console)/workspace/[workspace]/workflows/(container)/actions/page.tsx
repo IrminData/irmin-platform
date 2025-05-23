@@ -1,6 +1,3 @@
-import { getEditorItems } from '@/lib/actions/editor-items';
-import { getToken } from '@/lib/getToken';
-
 import ActionWorkflowsSection from '@/components/workflow/ActionWorkflowsSection';
 
 import { WorkspaceLayoutParams } from '../../../layout';
@@ -20,19 +17,7 @@ export default async function ActionWorkflowsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const params = await props.params;
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;
-  const token = await getToken();
-  const editorItems = await getEditorItems({
-    workspace: params.workspace,
-    path: '',
-    token,
-  });
-  return (
-    <ActionWorkflowsSection
-      editorItems={editorItems.data ?? []}
-      sideModalOpen={openSideModal}
-    />
-  );
+  return <ActionWorkflowsSection sideModalOpen={openSideModal} />;
 }

@@ -13,7 +13,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
-import { EditorItem } from '@/types/core/EditorItems';
 import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ActionWorkflowList from './ActionWorkflowList';
@@ -25,15 +24,12 @@ import CreateWorkflowModalContent from './CreateWorkflowModalContent';
  * Uses {@link ActionWorkflowList} to display the list of Action Workflows
  * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Action Workflow creation
  *
- * @param props0 - The props
- * @param props0.editorItems - The list of editor items
- * @param props0.sideModalOpen - Whether the side modal is open by default or not
+ * @param props - The props
+ * @param props.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ActionWorkflowsSection({
-  editorItems,
   sideModalOpen = false,
 }: {
-  editorItems: EditorItem[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -106,7 +102,6 @@ export default function ActionWorkflowsSection({
         title={dict.workflow.create.createNewActionWorkflow}
       >
         <CreateWorkflowModalContent
-          editorItems={editorItems}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

@@ -23,10 +23,9 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnections } from '@/hooks/useConnections';
+import { useRepositories } from '@/hooks/useRepositories';
 
-import { EditorItem } from '@/types/core/EditorItems';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
-import { Repository } from '@/types/core/Repository';
 import { PipelineStageInput } from '@/types/internal/WorkflowInput';
 
 const defaultStage: PipelineStageInput = {
@@ -42,8 +41,6 @@ const defaultStage: PipelineStageInput = {
  *
  * @param props - The component props.
  * @param props.index - The index of the stage in the pipeline.
- * @param props.editorItems - The editor items to display.
- * @param props.repositories - The repositories to display.
  * @param props.initialStage - The initial stage to display.
  * @param props.updateStage - The function to call when the stage is updated.
  * @param props.moveStageUp - The function to call when the stage is moved up.
@@ -55,8 +52,6 @@ const defaultStage: PipelineStageInput = {
  */
 function Stage({
   index,
-  editorItems = [],
-  repositories = [],
   initialStage,
   updateStage,
   moveStageUp,
@@ -66,8 +61,6 @@ function Stage({
   defaultCollapsed = false,
 }: {
   index: number;
-  editorItems?: EditorItem[];
-  repositories?: Repository[];
   initialStage?: PipelineStageInput;
   updateStage: (stage: PipelineStageInput) => void;
   moveStageUp?: () => void;
@@ -77,6 +70,7 @@ function Stage({
   defaultCollapsed?: boolean;
 }) {
   const { connectionsQuery } = useConnections();
+  const { repositoriesQuery } = useRepositories();
   const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
   const { dict, locale } = useLocale();
@@ -357,9 +351,8 @@ function Stage({
               <Label htmlFor={`executable-${index}`}>
                 {dict.workflow.pipeline.executablePath}
               </Label>
-              {!readOnly && editorItems ? (
+              {!readOnly ? (
                 <FileSelector
-                  editorItems={editorItems}
                   currentSelectedFile={stage.executable ?? null}
                   onSelectFile={(filePath) =>
                     setStage((prevStage) => ({
@@ -531,10 +524,11 @@ function Stage({
                   classNamePrefix='react-select'
                   isSearchable
                   isDisabled={readOnly}
-                  defaultValue={repositories.find(
+                  isLoading={repositoriesQuery.isLoading}
+                  defaultValue={repositoriesQuery.data?.data?.find(
                     (r) => r.slug === stage.repository
                   )}
-                  options={repositories}
+                  options={repositoriesQuery.data?.data ?? []}
                   getOptionLabel={(option) => option.name}
                   onChange={(option) => {
                     if (!option) return;

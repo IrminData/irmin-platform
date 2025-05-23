@@ -6,15 +6,11 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { EditorItem } from '@/types/core/EditorItems';
-import { Repository } from '@/types/core/Repository';
 import { PipelineStageInput } from '@/types/internal/WorkflowInput';
 
 import Stage from './Stage';
 
 type PipelineStageEditorProps = {
-  editorItems?: EditorItem[];
-  repositories?: Repository[];
   initialStages?: PipelineStageInput[];
   onSubmit?: (stages: PipelineStageInput[]) => void;
   readOnly?: boolean;
@@ -27,8 +23,6 @@ type PipelineStageEditorProps = {
  *
  * @param props - The component props.
  * @param props.initialStages - The initial stages to display.
- * @param props.editorItems - The editor items to display.
- * @param props.repositories - List of available repositories.
  * @param props.onSubmit - The function to call when the form is submitted.
  * @param props.readOnly - Whether the form is read-only.
  * @param props.hideSaveButton - Whether to hide the save button.
@@ -37,8 +31,6 @@ type PipelineStageEditorProps = {
  */
 function PipelineStageEditor({
   initialStages = [],
-  editorItems = [],
-  repositories = [],
   onSubmit,
   readOnly = false,
   hideSaveButton = false,
@@ -138,8 +130,6 @@ function PipelineStageEditor({
                   : undefined
               }
               removeStage={() => removeStage(index)}
-              editorItems={editorItems}
-              repositories={repositories}
               initialStage={stage}
               readOnly={readOnly}
               defaultCollapsed={defaultCollapsed}

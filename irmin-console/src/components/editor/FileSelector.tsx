@@ -7,10 +7,12 @@ import { FiFile, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useEditorItems } from '@/hooks/useEditorItems';
 
 import { EditorItem } from '@/types/core/EditorItems';
 
@@ -25,20 +27,19 @@ import { EditorItem } from '@/types/core/EditorItems';
  * Clicking a file selects that file.
  *
  * @param fileSelectorProps - The props for the file selector
- * @param fileSelectorProps.editorItems - The editorItems, providing the list of files and folders to show
  * @param fileSelectorProps.currentSelectedFile - The currently selected file path, if any
  * @param fileSelectorProps.onSelectFile - Function to call when a file is selected
  */
 const FileSelector = ({
-  editorItems,
   currentSelectedFile,
   onSelectFile,
 }: {
-  editorItems: EditorItem[];
   currentSelectedFile: string | null;
   onSelectFile: (filePath: string) => void;
 }) => {
   const { dict } = useLocale();
+
+  const { editorItemsQuery } = useEditorItems();
 
   // State for the open folders in the file navigator
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
@@ -190,7 +191,8 @@ const FileSelector = ({
             {dict.fileNavigator.rootDirectory}
           </span>
         </div>
-        {renderItems(editorItems)}
+        {editorItemsQuery.isLoading && <LoadingSpinner />}
+        {renderItems(editorItemsQuery.data?.data ?? [])}
       </div>
     </div>
   );
