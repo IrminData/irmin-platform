@@ -1,5 +1,4 @@
 import { getEditorItems } from '@/lib/actions/editor-items';
-import { getRepositories } from '@/lib/actions/repositories';
 import { getToken } from '@/lib/getToken';
 
 import ActionWorkflowsSection from '@/components/workflow/ActionWorkflowsSection';
@@ -25,14 +24,14 @@ export default async function ActionWorkflowsPage(props: {
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;
   const token = await getToken();
-  const [editorItems, repositories] = await Promise.all([
-    getEditorItems({ workspace: params.workspace, path: '', token }),
-    getRepositories({ workspace: params.workspace, token }),
-  ]);
+  const editorItems = await getEditorItems({
+    workspace: params.workspace,
+    path: '',
+    token,
+  });
   return (
     <ActionWorkflowsSection
       editorItems={editorItems.data ?? []}
-      repositories={repositories.data ?? []}
       sideModalOpen={openSideModal}
     />
   );

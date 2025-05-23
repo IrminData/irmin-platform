@@ -10,6 +10,7 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useRepositories } from '@/hooks/useRepositories';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 
 import { Repository } from '@/types/core/Repository';
@@ -27,10 +28,8 @@ import RepositoryList from './RepositoryList';
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function RepositoriesSection({
-  repositories,
   sideModalOpen = false,
 }: {
-  repositories: Repository[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -38,15 +37,17 @@ export default function RepositoriesSection({
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
 
-  const [filteredItems, setFilteredItems] = useState(repositories);
+  const { repositoriesQuery } = useRepositories();
+
+  const [filteredItems, setFilteredItems] = useState<Repository[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (repositories) {
+      if (repositoriesQuery.data?.data) {
         setFilteredItems(
-          repositories.filter((item) =>
+          repositoriesQuery.data.data.filter((item) =>
             item.name
               .trim()
               .replace(/\s+/g, '')
@@ -59,7 +60,7 @@ export default function RepositoriesSection({
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, repositories]);
+  }, [searchQuery, repositoriesQuery.data]);
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -104,7 +105,10 @@ export default function RepositoriesSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <RepositoryList loading={false} repositories={filteredItems} />
+        <RepositoryList
+          loading={repositoriesQuery.isLoading}
+          repositories={filteredItems}
+        />
       </div>
     </div>
   );

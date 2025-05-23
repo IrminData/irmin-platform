@@ -8,27 +8,30 @@ import DocumentationForm, {
 } from '@/components/ui/form/DocumentationForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
+
+import { useRepository } from '@/hooks/useRepository';
 
 /**
  * Repository Documentation section component for displaying and updating the documentation.
  */
 const RepositoryDocumentationSection = () => {
   const { dict } = useLocale();
-  const { currentRepository, updateRepository } = useRepository();
+  const { repository } = useRepositoryContext();
+  const { updateRepositoryMutation } = useRepository(repository.slug);
 
   const handleSaveDocumentation = useCallback(
     async (data: DocumentationFormValues) => {
-      await updateRepository({
+      await updateRepositoryMutation.mutateAsync({
         documentation: data.documentation,
       });
     },
-    [updateRepository]
+    [updateRepositoryMutation]
   );
 
   return (
     <DocumentationForm
-      initialDocumentation={currentRepository.documentation ?? ''}
+      initialDocumentation={repository.documentation ?? ''}
       onSubmit={handleSaveDocumentation}
     >
       <Button size='default' variant='default' type='submit'>

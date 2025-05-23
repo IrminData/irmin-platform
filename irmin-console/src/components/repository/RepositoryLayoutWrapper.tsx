@@ -1,16 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
-
-import { useSearchParams } from 'next/navigation';
-
 import { RepositoryProvider } from '@/context/RepositoryContext';
 
-import { Branch } from '@/types/core/Branch';
-import { Commit } from '@/types/core/Commit';
-import { Repository } from '@/types/core/Repository';
-import { Tag } from '@/types/core/Tag';
+import { useRepository } from '@/hooks/useRepository';
 
+import LoadingSkeleton from '../ui/loading/LoadingSkeleton';
 import RepositoryHeader from './RepositoryHeader';
 
 /**
@@ -20,39 +14,27 @@ import RepositoryHeader from './RepositoryHeader';
  *
  * @param props - The component properties
  * @param props.children - The children to render
+ * @param props.repositorySlug - The slug of the repository to display
  */
 export default function RepositoryLayoutWrapper({
   children,
   repositorySlug,
-  initialRepository,
-  initialBranches,
-  initialTags,
-  initialCommits,
 }: {
   children: React.ReactNode;
   repositorySlug: string;
-  initialRepository: Repository;
-  initialBranches: Branch[];
-  initialTags: Tag[];
-  initialCommits: Commit[];
 }) {
-  const searchParams = useSearchParams();
-  const refSearchParam = searchParams.get('ref');
+  const { repositoryQuery } = useRepository(repositorySlug);
 
-  const initialRef = useMemo(
-    () => refSearchParam || initialRepository.default_branch,
-    [refSearchParam, initialRepository]
-  );
+  if (repositoryQuery.isLoading) {
+    return <LoadingSkeleton className='h-80 w-full' />;
+  }
+
+  if (!repositoryQuery.data?.data) {
+    return <div>Repository not found</div>;
+  }
 
   return (
-    <RepositoryProvider
-      repositorySlug={repositorySlug}
-      initialRef={initialRef}
-      initialRepository={initialRepository}
-      initialBranches={initialBranches}
-      initialTags={initialTags}
-      initialCommits={initialCommits}
-    >
+    <RepositoryProvider repository={repositoryQuery.data?.data}>
       <RepositoryHeader />
       <div>{children}</div>
     </RepositoryProvider>

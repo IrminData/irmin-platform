@@ -6,7 +6,6 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useWorkflow } from '@/hooks/useWorkflow';
 
-import { Repository } from '@/types/core/Repository';
 import { PipelineStageInput } from '@/types/internal/WorkflowInput';
 
 import PipelineStageEditor from './PipelineStageEditor';
@@ -14,13 +13,7 @@ import PipelineStageEditor from './PipelineStageEditor';
 /**
  * Workflow Pipeline section component
  */
-const WorkflowPipelineSection = ({
-  workflowID,
-  repositories,
-}: {
-  workflowID: string;
-  repositories: Repository[];
-}) => {
+const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
   const { workflowQuery } = useWorkflow(workflowID);
 
   const stages: PipelineStageInput[] = useMemo(() => {
@@ -86,7 +79,6 @@ const WorkflowPipelineSection = ({
     >
       <PipelineStageEditor
         initialStages={stages}
-        repositories={repositories}
         readOnly={true}
         hideSaveButton={true}
         defaultCollapsed={true}

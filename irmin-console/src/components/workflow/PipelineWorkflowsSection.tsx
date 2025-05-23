@@ -14,7 +14,6 @@ import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { EditorItem } from '@/types/core/EditorItems';
-import { Repository } from '@/types/core/Repository';
 import { PipelineWorkflow } from '@/types/core/Workflow';
 import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
@@ -48,16 +47,13 @@ const initialWorkflowData: WorkflowInput = {
  *
  * @param props0 - The props
  * @param props0.editorItems - The list of editor items
- * @param props0.repositories - List of repositories
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 function PipelineWorkflowsSection({
   editorItems,
-  repositories,
   sideModalOpen = false,
 }: {
   editorItems: EditorItem[];
-  repositories: Repository[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -129,7 +125,6 @@ function PipelineWorkflowsSection({
       >
         <CreateWorkflowModalContent
           editorItems={editorItems}
-          repositories={repositories}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

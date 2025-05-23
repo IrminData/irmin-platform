@@ -1,11 +1,13 @@
 'use client';
 
 import Button from '@/components/ui/button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import LoadingSkeleton from '../ui/loading/LoadingSkeleton';
+import { useRepositoryCommits } from '@/hooks/useRepositoryCommits';
+
 import CommitList from './commits/CommitList';
 
 /**
@@ -13,29 +15,32 @@ import CommitList from './commits/CommitList';
  */
 export default function RepositoryCommitsSection() {
   const { dict } = useLocale();
-  const { commits, loadingCommits, hasMoreCommits, loadMoreCommits } =
-    useRepository();
+  const { repository, currentRef } = useRepositoryContext();
+  const { commitsQuery, commits, hasMore, loadMoreCommits } =
+    useRepositoryCommits(repository.slug, currentRef);
 
   return (
     <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
       <div className='flex w-full flex-col gap-4'>
         <CommitList
-          commits={commits ?? []}
-          loading={loadingCommits && (commits?.length === 0 || !commits)}
+          commits={commits}
+          loading={
+            commitsQuery.isLoading && (commits?.length === 0 || !commits)
+          }
         />
         <Button
           className='w-full'
           variant='gray'
           size='default'
-          disabled={!hasMoreCommits}
+          disabled={!hasMore}
           onClick={loadMoreCommits}
-          loading={loadingCommits}
+          loading={commitsQuery.isLoading}
         >
           {dict.common.loadMore}
         </Button>
-        {commits && commits.length > 0 && loadingCommits && (
-          <LoadingSkeleton className='h-96' />
-        )}
+        {commitsQuery.data?.data &&
+          commitsQuery.data?.data.length > 0 &&
+          commitsQuery.isLoading && <LoadingSkeleton className='h-96' />}
       </div>
     </div>
   );

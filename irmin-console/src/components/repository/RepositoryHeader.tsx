@@ -19,9 +19,10 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
 
 import BranchSelector from './branches/BranchSelector';
 
@@ -34,13 +35,10 @@ export default function RepositoryHeader() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const {
-    currentRepository,
-    immutable,
-    currentRef,
-    branches,
-    updateCurrentRef,
-  } = useRepository();
+  const { repository, immutable, currentRef, updateCurrentRef } =
+    useRepositoryContext();
+
+  const { repositoryBranchesQuery } = useRepositoryBranches(repository.slug);
 
   /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
@@ -104,7 +102,7 @@ export default function RepositoryHeader() {
       },
       {
         name: dict.common.logs,
-        link: `${workspaceUrl}/logs/repository/${currentRepository?.slug}`,
+        link: `${workspaceUrl}/logs/repository/${repository?.slug}`,
         active: false,
         icon: <TbBook size={14} />,
       },
@@ -116,15 +114,7 @@ export default function RepositoryHeader() {
         hidden: immutable,
       },
     ],
-    [
-      pathname,
-      searchParams,
-      baseUrl,
-      dict,
-      immutable,
-      currentRepository,
-      workspaceUrl,
-    ]
+    [pathname, searchParams, baseUrl, dict, immutable, repository, workspaceUrl]
   );
 
   return (
@@ -145,21 +135,21 @@ export default function RepositoryHeader() {
             </div>
             <span className='px-2 text-sm text-gray-400'>
               {dict.list.owner}:{' '}
-              {`${currentRepository.owner.first_name} ${currentRepository.owner.last_name}`}
-              {currentRepository.owner.company
-                ? ` (${currentRepository.owner.company})`
+              {`${repository.owner.first_name} ${repository.owner.last_name}`}
+              {repository.owner.company
+                ? ` (${repository.owner.company})`
                 : ''}{' '}
-              - {currentRepository.owner.email}
+              - {repository.owner.email}
             </span>
           </div>
           <div className='flex flex-wrap items-center gap-2'>
             <h1 className='text-foreground text-lg font-normal md:text-2xl'>
-              {currentRepository.name}
+              {repository.name}
             </h1>
             <StatusBadge status={'private'} label={'Private'} />
           </div>
           <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
-            {currentRepository.description}
+            {repository.description}
           </p>
         </div>
         <div className='flex min-w-60 flex-col gap-2'>
@@ -169,7 +159,8 @@ export default function RepositoryHeader() {
               <>
                 {/** Select branch to view repository in */}
                 <BranchSelector
-                  branches={branches ?? []}
+                  loading={repositoryBranchesQuery.isLoading}
+                  branches={repositoryBranchesQuery.data?.data ?? []}
                   currentRef={currentRef}
                   onSelect={(branch) => {
                     updateCurrentRef(branch.value);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -23,12 +23,13 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useRepositoryObject } from '@/hooks/useRepositoryObject';
+import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
 
-import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 import { Object } from '@/types/core/Object';
 
 import ObjectDetails from './objects/ObjectDetails';
@@ -56,16 +57,7 @@ export default function RepositorySection({
   const searchParams = useSearchParams();
   const { workspaceSlug } = useWorkspaceContext();
 
-  const {
-    immutable,
-    currentRef,
-    currentRepository,
-    uploadObject,
-    loadingObjects,
-    fetchObject,
-    getObjectContent,
-    downloadObjectAsZip,
-  } = useRepository();
+  const { immutable, currentRef, repository } = useRepositoryContext();
 
   const [currentDirectoryPath, setCurrentDirectoryPath] = useState<string>('');
 
@@ -75,35 +67,23 @@ export default function RepositorySection({
   const [selectedObject, setSelectedObject] = useState<Object | undefined>(
     initialSelectedObject
   );
+
+  const { repositoryObjectQuery, uploadObjectMutation } = useRepositoryObject(
+    repository.slug,
+    currentRef,
+    selectedObject?.path
+  );
+
+  const { repositoryObjectContentQuery, downloadObjectAsZipMutation } =
+    useRepositoryObjectContent(
+      repository.slug,
+      currentRef,
+      selectedObject?.path
+    );
+
   const [objectContentViewerOpen, setObjectContentViewerOpen] = useState(
     initialObjectContentViewerOpen
   );
-  const [objectContent, setObjectContent] = useState<
-    IrminAPIBinaryResponse | null | undefined
-  >(undefined);
-  const objectContentFor = useRef('');
-
-  /**
-   * Hook to fetch the content for the object being viewed
-   */
-  useEffect(() => {
-    if (!objectContentViewerOpen) return; // Only fetch content when the viewer is open
-    if (!selectedObject) return; // No selected object
-    if (objectContentFor.current === selectedObject.path) return; // Already fetched
-    objectContentFor.current = selectedObject.path;
-
-    // Empty the content before fetching
-    setObjectContent(undefined);
-
-    // Fetch the content for the selected object and update the state
-    getObjectContent(selectedObject.path)
-      .then((fetchedContent) => {
-        setObjectContent(fetchedContent);
-      })
-      .catch((error) => {
-        console.error('Failed to fetch object content', error);
-      });
-  }, [getObjectContent, selectedObject, objectContentViewerOpen]);
 
   const [queryField, setQueryField] = useState<string>('');
   const [queryChanged, setQueryChanged] = useState(false);
@@ -117,20 +97,26 @@ export default function RepositorySection({
     if (queryChanged) return;
     if (selectedObject.type != 'structured') return;
     setQueryField(
-      `SELECT * FROM $["${currentRepository.slug};${selectedObject.path}${currentRef ? `@${currentRef}` : ''}"] LIMIT 10`
+      `SELECT * FROM $["${repository.slug};${selectedObject.path}${currentRef ? `@${currentRef}` : ''}"] LIMIT 10`
     );
-  }, [currentRepository, selectedObject, queryChanged, currentRef]);
+  }, [repository, selectedObject, queryChanged, currentRef]);
 
   const handleUpload = useCallback(() => {
     irminModal.show(
       dict.repository.objects.uploadObject,
       <UploadObjectModal
-        currentRepository={currentRepository.slug}
+        currentRepository={repository.slug}
         currentRef={currentRef ?? 'main'}
-        uploadObject={uploadObject}
+        uploadObject={async (path: string, ref: string, files: FileList) => {
+          uploadObjectMutation.mutate({
+            path,
+            ref,
+            files,
+          });
+        }}
       />
     );
-  }, [dict, irminModal, currentRepository, currentRef, uploadObject]);
+  }, [dict, irminModal, repository, currentRef, uploadObjectMutation]);
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
@@ -162,18 +148,6 @@ export default function RepositorySection({
     },
     [queryLoading]
   );
-
-  const [downloading, setDownloading] = useState(false);
-  const handleDownload = useCallback(async () => {
-    setDownloading(true);
-    try {
-      await downloadObjectAsZip(currentDirectoryPath);
-    } catch (error) {
-      console.error('Error downloading repository:', error);
-    } finally {
-      setDownloading(false);
-    }
-  }, [currentDirectoryPath, downloadObjectAsZip]);
 
   return (
     <>
@@ -213,9 +187,9 @@ export default function RepositorySection({
                 {' / '}
                 <Link
                   className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
-                  href={`${workspaceUrl}/repositories/${currentRepository.slug}`}
+                  href={`${workspaceUrl}/repositories/${repository.slug}`}
                 >
-                  {currentRepository.slug}
+                  {repository.slug}
                 </Link>
                 {currentRef && ` @ ${currentRef}`}
               </div>
@@ -225,8 +199,8 @@ export default function RepositorySection({
                   size='icon'
                   icon={<TbRefresh />}
                   tooltip={dict.common.refresh}
-                  disabled={loadingObjects}
-                  onClick={() => fetchObject()}
+                  disabled={repositoryObjectQuery.isLoading}
+                  onClick={() => repositoryObjectQuery.refetch()}
                 />
                 {!immutable && (
                   <Button
@@ -242,8 +216,13 @@ export default function RepositorySection({
                   variant='secondary'
                   size='sm'
                   icon={<TbDownload />}
-                  onClick={handleDownload}
-                  loading={downloading}
+                  onClick={() => {
+                    downloadObjectAsZipMutation.mutate({
+                      path: currentDirectoryPath,
+                      ref: currentRef ?? '',
+                    });
+                  }}
+                  loading={downloadObjectAsZipMutation.isPending}
                 >
                   {dict.common.actions.download}
                 </Button>
@@ -316,11 +295,11 @@ export default function RepositorySection({
                 />
               </div>
               <div className='relative max-h-[calc(100vh-200px)] overflow-scroll px-0 pt-0'>
-                {objectContent ? (
+                {repositoryObjectContentQuery.data ? (
                   <div className='bg-background w-full rounded'>
                     <ObjectViewer
                       object={selectedObject}
-                      objectContent={objectContent}
+                      objectContent={repositoryObjectContentQuery.data}
                     />
                   </div>
                 ) : (

@@ -13,6 +13,7 @@ import { Branch } from '@/types/core/Branch';
  *
  * @param props0 - BranchSelector props
  * @param props0.branches - List of branches to display
+ * @param props0.loading - (optional) Whether the branches are loading
  * @param props0.label - (optional) Label for the branch selector
  * @param props0.currentRef - (optional) The currently selected ref (eg. branch)
  * @param props0.onSelect - (optional) Callback when branch is changed
@@ -21,11 +22,13 @@ import { Branch } from '@/types/core/Branch';
  */
 export default function BranchSelector({
   branches,
+  loading,
   label,
   currentRef,
   onSelect,
 }: {
   branches: Branch[]; // List of branches to display
+  loading?: boolean; // Whether the branches are loading
   label?: string; // Label for the branch selector
   currentRef?: string; // The currently selected branch
   onSelect?: (branch: { label: string; value: string }) => void; // Callback when branch is changed
@@ -57,6 +60,7 @@ export default function BranchSelector({
         {label ?? dict.repository.branches.branch}
       </span>
       <ReactSelect
+        isLoading={loading}
         value={selectedBranch}
         onChange={(selectedOption) => {
           if (selectedOption && onSelect) {

@@ -1,39 +1,33 @@
-import { notFound } from 'next/navigation';
+'use client';
 
-import { getRepository } from '@/lib/actions/repositories';
-import { getToken } from '@/lib/getToken';
-import { initDict } from '@/lib/initDict';
+import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { RepositoryLogsLayoutParams } from './layout';
+import { useLocale } from '@/context/LocaleContext';
+
+import { useRepository } from '@/hooks/useRepository';
 
 /**
  * Repository Audit Logs page
  */
-export default async function RepositoryLogsPage(props: {
-  params: Promise<RepositoryLogsLayoutParams>;
-}) {
-  const params = await props.params;
-  const currentWorkspace = params.workspace;
-  const repositorySlug = params.repository;
+export default function RepositoryLogsPage() {
+  const { dict } = useLocale();
+  const params = useParams();
 
-  const token = await getToken();
-  const [repository, { dict }] = await Promise.all([
-    getRepository({
-      workspace: currentWorkspace,
-      repositorySlug,
-      token,
-    }),
-    initDict(),
-  ]);
+  const { repositoryQuery } = useRepository(params.repository as string);
 
-  if (!repository.data) return notFound();
+  if (repositoryQuery.isLoading) return <LoadingSpinner />;
+  if (repositoryQuery.isError)
+    return <div>{repositoryQuery.error.message}</div>;
+  if (!repositoryQuery.data?.data) return <div>{dict.common.error}</div>;
+
   return (
     <LogsSection
-      repository={repository.data}
+      repository={repositoryQuery.data.data}
       logsForType='repository'
-      logsFor={repositorySlug}
+      logsFor={repositoryQuery.data.data.id}
       title={dict.logs.repositoryLogs}
     />
   );

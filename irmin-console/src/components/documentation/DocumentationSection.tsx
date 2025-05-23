@@ -18,22 +18,18 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useConnections } from '@/hooks/useConnections';
+import { useRepositories } from '@/hooks/useRepositories';
 import { useWorkflows } from '@/hooks/useWorkflows';
-
-import { Repository } from '@/types/core/Repository';
 
 import MDXViewer from './MDXViewer';
 
 /**
  * Page UI to show the full documentation for the workspace
  */
-export default function DocumentationSection({
-  repositories,
-}: {
-  repositories: Repository[];
-}) {
+export default function DocumentationSection() {
   const { connectionsQuery } = useConnections();
   const { workflowsQuery } = useWorkflows();
+  const { repositoriesQuery } = useRepositories();
   const { workspaceSlug, workspaceQuery } = useWorkspaceContext();
   const { profile } = useIAM();
   const { dict, locale } = useLocale();
@@ -110,46 +106,48 @@ export default function DocumentationSection({
               />
               <p className='m-0 p-0 text-sm'>{workspace?.description ?? ''}</p>
             </div>
-            {repositories.length > 0 && (
-              <div className='flex flex-col py-6'>
-                <h2 className='font-display text-2xl font-bold lg:text-4xl'>
-                  {dict.repository.repositories}
-                </h2>
-                <div className='w-full'>
-                  {repositories.map((item, i) => (
-                    <div
-                      key={`repository-${i}`}
-                      className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
-                    >
-                      <div className='flex flex-row justify-between gap-2'>
-                        <h3 className='text-foreground text-xl font-semibold'>
-                          {item.name}
-                        </h3>
-                        <StatusBadge status={'private'} label={'private'} />
-                      </div>
-                      <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
-                        {item.description}
-                      </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        {dict.list.owner}:{' '}
-                        <span className='text-gray-800 dark:text-gray-200'>
-                          {`${item.owner.first_name} ${item.owner.last_name}`}
-                          {item.owner.company
-                            ? ` (${item.owner.company})`
-                            : ''}{' '}
-                          - {item.owner.email}
-                        </span>
-                      </p>
-                      {item.documentation && item.documentation.length > 0 && (
-                        <div className='bg-card rounded-md px-2 pt-8 pb-6'>
-                          <MDXViewer content={item.documentation} />
+            {repositoriesQuery.data?.data?.length &&
+              repositoriesQuery.data?.data?.length > 0 && (
+                <div className='flex flex-col py-6'>
+                  <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                    {dict.repository.repositories}
+                  </h2>
+                  <div className='w-full'>
+                    {repositoriesQuery.data?.data?.map((item, i) => (
+                      <div
+                        key={`repository-${i}`}
+                        className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                      >
+                        <div className='flex flex-row justify-between gap-2'>
+                          <h3 className='text-foreground text-xl font-semibold'>
+                            {item.name}
+                          </h3>
+                          <StatusBadge status={'private'} label={'private'} />
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                          {item.description}
+                        </p>
+                        <p className='text-sm text-gray-600 dark:text-gray-400'>
+                          {dict.list.owner}:{' '}
+                          <span className='text-gray-800 dark:text-gray-200'>
+                            {`${item.owner.first_name} ${item.owner.last_name}`}
+                            {item.owner.company
+                              ? ` (${item.owner.company})`
+                              : ''}{' '}
+                            - {item.owner.email}
+                          </span>
+                        </p>
+                        {item.documentation &&
+                          item.documentation.length > 0 && (
+                            <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                              <MDXViewer content={item.documentation} />
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             {connectionsQuery.data?.data &&
               connectionsQuery.data.data.length > 0 && (
                 <div className='flex flex-col py-6'>

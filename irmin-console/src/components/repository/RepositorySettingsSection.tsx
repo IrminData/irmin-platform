@@ -5,8 +5,11 @@ import { useCallback, useState } from 'react';
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { usePopup } from '@/context/PopupContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
+
+import { useRepository } from '@/hooks/useRepository';
 
 import ImmutableWarning from './ImmutableWarning';
 
@@ -20,23 +23,30 @@ import ImmutableWarning from './ImmutableWarning';
  */
 const RepositorySettingsSection = () => {
   const { dict } = useLocale();
+  const { irminConfirm } = usePopup();
   const { workspaceQuery } = useWorkspaceContext();
+  const { repository } = useRepositoryContext();
   const {
-    currentRepository,
-    transferRepository,
-    updateRepository,
-    deleteRepository,
-  } = useRepository();
+    deleteRepositoryMutation,
+    transferRepositoryMutation,
+    updateRepositoryMutation,
+  } = useRepository(repository.slug);
 
   const [submitting, setSubmitting] = useState(false);
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
       try {
         setSubmitting(true);
-        if (data.owner !== currentRepository.owner.id) {
-          await transferRepository(data.owner);
+        if (data.owner !== repository.owner.id) {
+          const confirmed = await irminConfirm(
+            'warning',
+            `${dict.common.areYouSureYouWantToTransferOwnership} (${repository.name})`
+          );
+          if (confirmed) {
+            await transferRepositoryMutation.mutateAsync(data.owner);
+          }
         }
-        await updateRepository({
+        await updateRepositoryMutation.mutateAsync({
           name: data.name,
           description: data.description,
         });
@@ -46,8 +56,24 @@ const RepositorySettingsSection = () => {
         setSubmitting(false);
       }
     },
-    [currentRepository, updateRepository, transferRepository]
+    [
+      repository,
+      updateRepositoryMutation,
+      transferRepositoryMutation,
+      irminConfirm,
+      dict,
+    ]
   );
+
+  const handleDeleteRepository = useCallback(async () => {
+    const confirmed = await irminConfirm(
+      'warning',
+      `${dict.common.areYouSureYouWantToDelete} (${repository.name})`
+    );
+    if (confirmed) {
+      await deleteRepositoryMutation.mutateAsync();
+    }
+  }, [repository, deleteRepositoryMutation, irminConfirm, dict]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<{
@@ -79,7 +105,7 @@ const RepositorySettingsSection = () => {
     },
   ];
 
-  if (currentRepository?.is_immutable) {
+  if (repository?.is_immutable) {
     return <ImmutableWarning />;
   }
 
@@ -90,14 +116,14 @@ const RepositorySettingsSection = () => {
     >
       <SettingsForm
         initialValues={{
-          name: currentRepository?.name ?? '',
-          description: currentRepository?.description ?? '',
-          owner: currentRepository?.owner.id ?? '',
+          name: repository?.name ?? '',
+          description: repository?.description ?? '',
+          owner: repository?.owner.id ?? '',
         }}
         onSubmit={handleUpdateRepository}
         submitting={submitting}
         fieldConfiguration={fieldConfiguration}
-        deleteItem={deleteRepository}
+        deleteItem={handleDeleteRepository}
         itemName='Repository'
         submitButtonLabel={dict.common.save}
         deleteButtonLabel={dict.repository.settings.deleteRepository}

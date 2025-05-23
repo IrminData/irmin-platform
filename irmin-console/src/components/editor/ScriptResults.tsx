@@ -21,7 +21,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
 import { ScriptResult } from '@/types/core/EditorItems';
-import { Repository } from '@/types/core/Repository';
 import { ActionInputData } from '@/types/core/Workflow';
 
 /**
@@ -34,7 +33,6 @@ import { ActionInputData } from '@/types/core/Workflow';
  * @param props.loading - Whether to show a loading skeleton
  * @param props.onSave - Function to save the data
  * @param props.onRun - Function to run the data
- * @param props.repositories - The repositories to pass to the action input editor
  * @param props.inputFiles - The input files to display
  * @param props.setInputFiles - Function to set the input files
  */
@@ -43,7 +41,6 @@ const ScriptResults = ({
   loading,
   onSave,
   onRun,
-  repositories = [],
   inputFiles = [],
   setInputFiles,
 }: {
@@ -51,7 +48,6 @@ const ScriptResults = ({
   loading?: boolean;
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;
-  repositories?: Repository[];
   inputFiles?: ActionInputData[];
   setInputFiles?: (files: ActionInputData[]) => void;
 }) => {
@@ -221,7 +217,6 @@ const ScriptResults = ({
       {activeTab === 'inputs' && setInputFiles && (
         <div className='w-full overflow-y-auto px-4 py-12'>
           <ActionInputEditor
-            repositories={repositories}
             initialData={inputFiles}
             onChange={setInputFiles}
             disableSaveButton={true}

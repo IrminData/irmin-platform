@@ -10,31 +10,23 @@ import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkflows } from '@/hooks/useWorkflows';
-
-import { Repository } from '@/types/core/Repository';
-
 /**
  * Configure general workflow properties,
  * like name, description and sync interval
  * and confirm the creation of the workflow
  *
  * @param props - Component properties
- * @param props.repositories - List of repositories
  * @param props.setCurrentStep - Function to set the current step
  * @param props.closeModal - Function to close the modal
  */
 function ConfigureWorkflow({
-  repositories,
   setCurrentStep,
   closeModal,
 }: {
-  repositories: Repository[];
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   closeModal: () => void;
 }) {
   const { dict } = useLocale();
-  const { workflowsQuery } = useWorkflows();
   const { workflowData, setWorkflowData, createWorkflow, processingCreation } =
     useCreateWorkflow();
 
@@ -85,8 +77,6 @@ function ConfigureWorkflow({
         </div>
         <div className='border-foreground/20 rounded-md border px-2 py-4'>
           <WorkflowScheduleForm
-            workflows={workflowsQuery.data?.data ?? []}
-            repositories={repositories}
             initialData={initialWorkflowSchedule.current}
             disableSaveButton={true}
             updateSchedule={async (newSchedule) => {

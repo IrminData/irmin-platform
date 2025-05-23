@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useCallback, useRef, useState } from 'react';
+import { type JSX, useCallback, useState } from 'react';
 
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
@@ -8,20 +8,19 @@ import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
+
+import { useRepositoryDiffContent } from '@/hooks/useRepositoryDiffContent';
 
 import { Diff } from '@/types/core/Diff';
-import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
 import CommitList from '../commits/CommitList';
 import ContentDiff from './ContentDiff';
 import NoDiffWarning from './NoDiffWarning';
 
-type OpenDiffContentItem = {
-  loading: boolean;
-  base: IrminAPIBinaryResponse;
-  compare: IrminAPIBinaryResponse;
-  diffItem: number;
+type OpenDiffItem = {
+  path: string;
+  index: number;
 };
 
 /**
@@ -51,66 +50,24 @@ const DiffView = ({
   compareRef?: string;
 }) => {
   const { dict } = useLocale();
-  const { fetchDiffContent } = useRepository();
-
-  const [openItem, setOpenItem] = useState<OpenDiffContentItem | undefined>(
-    undefined
+  const { repository } = useRepositoryContext();
+  const [openItem, setOpenItem] = useState<OpenDiffItem | null>(null);
+  const { diffContentQuery } = useRepositoryDiffContent(
+    repository.slug,
+    baseRef,
+    compareRef,
+    openItem?.path
   );
 
-  const fetchingDiffContent = useRef(false);
-
-  /**
-   * Toggle the visibility of the diff content for a specific item
-   *
-   * @param index - The index of the item to toggle
-   */
   const toggleItem = useCallback(
-    async (index: number) => {
-      if (openItem && openItem.diffItem === index) {
-        setOpenItem(undefined);
+    async (item: OpenDiffItem) => {
+      if (openItem?.path === item.path) {
+        setOpenItem(null);
         return;
       }
-      if (fetchingDiffContent.current) return;
-
-      try {
-        const item = diff.items[index];
-        if (!item.object) return;
-
-        fetchingDiffContent.current = true;
-        setOpenItem({
-          loading: true,
-          diffItem: index,
-          base: null,
-          compare: null,
-        });
-
-        const content = await fetchDiffContent(
-          item.object.path,
-          diff.base_ref,
-          diff.compare_ref
-        );
-
-        console.log(content);
-
-        setOpenItem({
-          loading: false,
-          base: content?.base ?? null,
-          compare: content?.compare ?? null,
-          diffItem: index,
-        });
-      } catch (error) {
-        console.error('Error fetching diff content:', error);
-        setOpenItem({
-          loading: false,
-          base: null,
-          compare: null,
-          diffItem: index,
-        });
-      } finally {
-        fetchingDiffContent.current = false;
-      }
+      setOpenItem(item);
     },
-    [diff, fetchDiffContent, openItem]
+    [openItem]
   );
 
   return (
@@ -186,36 +143,39 @@ const DiffView = ({
                 <Button
                   variant='link'
                   size='sm'
-                  onClick={() => toggleItem(index)}
+                  onClick={() => toggleItem({ path: item.object.path, index })}
                   icon={
-                    openItem?.diffItem === index ? (
+                    openItem?.path === item.object.path ? (
                       <TbChevronUp size={16} />
                     ) : (
                       <TbChevronDown size={16} />
                     )
                   }
                 >
-                  {openItem?.diffItem === index
+                  {openItem?.path === item.object.path
                     ? dict.repository.compare.hideChanges
                     : dict.repository.compare.fetchChanges}
                 </Button>
               </div>
 
               {/* Expanded changes section, showing the difference in the content */}
-              {openItem?.diffItem === index && !openItem.loading && (
-                <div className='border-t dark:border-gray-800'>
-                  <ContentDiff
-                    item={item}
-                    baseContent={openItem.base}
-                    compareContent={openItem.compare}
-                  />
-                </div>
-              )}
-              {openItem?.diffItem === index && openItem.loading && (
-                <div className='border-t dark:border-gray-800'>
-                  <LoadingSkeleton className='h-96' />
-                </div>
-              )}
+              {openItem?.path === item.object.path &&
+                !diffContentQuery.isLoading &&
+                diffContentQuery.data && (
+                  <div className='border-t dark:border-gray-800'>
+                    <ContentDiff
+                      item={item}
+                      baseContent={diffContentQuery.data?.base}
+                      compareContent={diffContentQuery.data?.compare}
+                    />
+                  </div>
+                )}
+              {openItem?.path === item.object.path &&
+                diffContentQuery.isLoading && (
+                  <div className='border-t dark:border-gray-800'>
+                    <LoadingSkeleton className='h-96' />
+                  </div>
+                )}
             </div>
           );
         })}

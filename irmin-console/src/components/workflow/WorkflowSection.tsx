@@ -18,28 +18,22 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnections } from '@/hooks/useConnections';
+import { useRepositories } from '@/hooks/useRepositories';
 import { useWorkflow } from '@/hooks/useWorkflow';
 import useWorkflowRuns from '@/hooks/useWorkflowRuns';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
-import { Repository } from '@/types/core/Repository';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**
  * Workflow section component to show basic information about a workflow
  * and a list of runs for the workflow
  */
-const WorkflowSection = ({
-  workflowID,
-  repositories,
-}: {
-  workflowID: string;
-  repositories: Repository[];
-}) => {
+const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
   const { dict, locale } = useLocale();
   const { workflowQuery } = useWorkflow(workflowID);
-
+  const { repositoriesQuery } = useRepositories();
   const { currentPage, totalPages, goToPage, workflowRunsQuery } =
     useWorkflowRuns(workflowID);
   const { connectionsQuery } = useConnections();
@@ -220,7 +214,7 @@ const WorkflowSection = ({
                   href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
                 >
                   <p className='text-base'>
-                    {repositories.find(
+                    {repositoriesQuery.data?.data?.find(
                       (repo) => repo.slug === workflow.workflowable.repository
                     )?.name ?? '-'}
                   </p>
@@ -303,7 +297,7 @@ const WorkflowSection = ({
                   href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
                 >
                   <p className='text-base'>
-                    {repositories.find(
+                    {repositoriesQuery.data?.data?.find(
                       (repo) => repo.slug === workflow.workflowable.repository
                     )?.name ?? '-'}
                   </p>
@@ -363,7 +357,7 @@ const WorkflowSection = ({
                   href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
                 >
                   <p className='text-base'>
-                    {repositories.find(
+                    {repositoriesQuery.data?.data?.find(
                       (repo) => repo.slug === workflow.workflowable.repository
                     )?.name ?? '-'}
                   </p>

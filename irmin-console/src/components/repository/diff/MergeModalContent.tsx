@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { MergeRefsInput } from '@/hooks/useRepositoryDiff';
+
 import { MergeStrategy } from '@/types/core/Diff';
 
 /**
@@ -31,13 +33,7 @@ export default function MergeModalContent({
 }: {
   baseRef: string;
   compareRef: string;
-  mergeRefs: (
-    baseRef: string,
-    compareRef: string,
-    description: string,
-    mergeStrategy: MergeStrategy,
-    squash: boolean
-  ) => Promise<boolean>;
+  mergeRefs: (i: MergeRefsInput) => Promise<boolean>;
   closeModal: () => void;
 }) {
   const { dict } = useLocale();
@@ -79,13 +75,13 @@ export default function MergeModalContent({
     }) => {
       try {
         setLoading(true);
-        const successful = await mergeRefs(
-          baseRef,
-          compareRef,
-          data.description,
-          data.mergeStrategy as MergeStrategy,
-          data.squashCommits
-        );
+        const successful = await mergeRefs({
+          base: baseRef,
+          compare: compareRef,
+          description: data.description,
+          strategy: data.mergeStrategy as MergeStrategy,
+          squash: data.squashCommits,
+        });
         if (successful) {
           closeModal();
         }

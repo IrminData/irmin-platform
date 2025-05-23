@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { GoGitMerge } from 'react-icons/go';
 import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
@@ -10,9 +10,10 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { Diff } from '@/types/core/Diff';
+import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
+import { useRepositoryDiff } from '@/hooks/useRepositoryDiff';
 
 import BranchSelector from './branches/BranchSelector';
 import DiffView from './diff/DiffVIew';
@@ -26,89 +27,53 @@ import ImmutableWarning from './ImmutableWarning';
 export default function RepositoryCompareSection() {
   const { dict } = useLocale();
   const { irminModal } = usePopup();
-  const {
-    branches,
-    loadingBranches,
-    currentRef,
-    defaultRef,
-    fetchDiff,
-    mergeRefs,
-    currentRepository,
-    fetchCommits,
-  } = useRepository();
+  const { repository, currentRef, defaultRef } = useRepositoryContext();
+  const { repositoryBranchesQuery } = useRepositoryBranches(repository.slug);
 
   const [baseRef, setBaseRef] = useState<string | undefined>(defaultRef);
   const [compareRef, setCompareRef] = useState<string | undefined>(currentRef);
-  const [compareCommit, setCompareCommit] = useState<string | undefined>(
-    currentRef
+
+  const { diffQuery, mergeRefsMutation } = useRepositoryDiff(
+    repository.slug,
+    baseRef,
+    compareRef
   );
-
-  const [diff, setDiff] = useState<Diff | null>(null);
-  const [loadingDiff, setLoadingDiff] = useState<boolean>(false);
-
-  const diffFetchedBase = useRef<string | null>(null);
-  const diffFetchedCompare = useRef<string | null>(null);
-
-  /**
-   * Fetch the diff between the base and compare branches.
-   *
-   * Use the latest commit on the compare branch if it is a branch.
-   */
-  const handleFetchDiff = useCallback(async () => {
-    if (!baseRef || !compareRef) {
-      setDiff(null);
-      return;
-    }
-    setLoadingDiff(true);
-    // Find the commit to compare to
-    let compareCommit = compareRef;
-    const compareBranch = branches?.find((b) => b.name === compareRef);
-    if (compareBranch) {
-      // Compare is a branch, so find the latest commit on the branch
-      const compareCommits = await fetchCommits(compareRef);
-      if (compareCommits && compareCommits.length > 0) {
-        // The first commit is the latest
-        compareCommit = compareCommits[0].hash;
-      }
-    }
-    // Update the compare commit state
-    setCompareCommit(compareCommit);
-    // Fetch the diff between the base and compare commit
-    const res = await fetchDiff(baseRef, compareCommit);
-    if (res) setDiff(res);
-    setLoadingDiff(false);
-  }, [baseRef, compareRef, branches, fetchDiff, fetchCommits]);
 
   /**
    * Check if the refs are valid for merging.
    */
   const canMerge = useMemo(() => {
-    // Can't merge if loading
-    if (loadingBranches) return false;
     // Can't merge if base or compare ref is not set
     if (!baseRef || !compareRef) return false;
     // Can't merge if base and compare refs are the same
     if (baseRef === compareRef) return false;
     // Otherwise, can merge
     return true;
-  }, [loadingBranches, baseRef, compareRef]);
+  }, [baseRef, compareRef]);
 
   /**
    * Check if refs can be modified.
    */
   const notImmutable = useMemo(() => {
     // Can't merge if loading
-    if (loadingBranches) return false;
+    if (repositoryBranchesQuery.isLoading) return false;
     // Can't merge if the current repository is immutable
-    if (currentRepository.is_immutable) return false;
+    if (repository.is_immutable) return false;
     // Can't merge if base ref is not a branch
-    const baseBranch = branches?.find((b) => b.name === baseRef);
+    const baseBranch = repositoryBranchesQuery.data?.data?.find(
+      (b) => b.name === baseRef
+    );
     if (!baseBranch) return false;
     // Can't merge if base branch is immutable
     if (baseBranch.is_immutable) return false;
     // Otherwise, can merge
     return true;
-  }, [loadingBranches, baseRef, branches, currentRepository]);
+  }, [
+    repositoryBranchesQuery.isLoading,
+    baseRef,
+    repository,
+    repositoryBranchesQuery.data?.data,
+  ]);
 
   /**
    * Merge the comparison in to the base.
@@ -125,45 +90,24 @@ export default function RepositoryCompareSection() {
       `${dict.repository.compare.merge} ${compareRef} ${dict.repository.compare.into} ${baseRef}`,
       <MergeModalContent
         baseRef={baseRef}
-        compareRef={compareCommit ?? compareRef}
-        mergeRefs={mergeRefs}
+        compareRef={compareRef}
+        mergeRefs={async (data) => {
+          try {
+            await mergeRefsMutation.mutateAsync(data);
+            return true;
+          } catch (error) {
+            console.error(error);
+            return false;
+          }
+        }}
         closeModal={() => {
           // Refetch the diff when modal is closed
-          handleFetchDiff();
+          diffQuery.refetch();
           irminModal.close();
         }}
       />
     );
-  }, [
-    baseRef,
-    compareRef,
-    compareCommit,
-    irminModal,
-    dict,
-    handleFetchDiff,
-    mergeRefs,
-  ]);
-
-  /**
-   * Fetch the diff when the base or compare branches change.
-   */
-  useEffect(() => {
-    if (
-      baseRef === diffFetchedBase.current &&
-      compareRef === diffFetchedCompare.current
-    )
-      return;
-    diffFetchedBase.current = baseRef ?? null;
-    diffFetchedCompare.current = compareRef ?? null;
-    handleFetchDiff();
-  }, [handleFetchDiff, baseRef, compareRef]);
-
-  if (loadingBranches)
-    return (
-      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
-        <LoadingSkeleton className='h-96' />
-      </div>
-    );
+  }, [baseRef, compareRef, irminModal, dict, mergeRefsMutation, diffQuery]);
 
   return (
     <div className='relative container mx-auto flex max-w-7xl flex-col gap-4 px-2 pt-4 pb-12 md:px-4'>
@@ -172,7 +116,8 @@ export default function RepositoryCompareSection() {
         <div className='flex w-max flex-wrap items-center justify-start gap-4 lg:flex-row lg:gap-2'>
           <div className='min-w-60'>
             <BranchSelector
-              branches={branches ?? []}
+              branches={repositoryBranchesQuery.data?.data ?? []}
+              loading={repositoryBranchesQuery.isLoading}
               label={dict.repository.compare.baseBranch}
               currentRef={baseRef}
               onSelect={(branch) => {
@@ -192,7 +137,8 @@ export default function RepositoryCompareSection() {
           />
           <div className='min-w-60'>
             <BranchSelector
-              branches={branches ?? []}
+              branches={repositoryBranchesQuery.data?.data ?? []}
+              loading={repositoryBranchesQuery.isLoading}
               label={dict.repository.compare.compareBranch}
               currentRef={compareRef}
               onSelect={(branch) => {
@@ -207,9 +153,11 @@ export default function RepositoryCompareSection() {
             size='icon'
             variant='secondary'
             icon={<TbRefresh size={18} />}
-            onClick={handleFetchDiff}
+            onClick={() => {
+              diffQuery.refetch();
+            }}
             tooltip={dict.common.refresh}
-            disabled={loadingDiff}
+            disabled={diffQuery.isLoading}
           />
           <Button
             className='w-full max-w-28'
@@ -225,12 +173,19 @@ export default function RepositoryCompareSection() {
           </Button>
         </div>
       </div>
-      {loadingDiff && <LoadingSkeleton className='h-96' />}
-      {!loadingDiff && !notImmutable && <ImmutableWarning />}
-      {!loadingDiff && !canMerge && <NoDiffWarning />}
-      {!loadingDiff && canMerge && notImmutable && diff && (
-        <DiffView diff={diff} baseRef={baseRef} compareRef={compareRef} />
-      )}
+      {diffQuery.isLoading && <LoadingSkeleton className='h-96' />}
+      {!diffQuery.isLoading && !notImmutable && <ImmutableWarning />}
+      {!diffQuery.isLoading && !canMerge && <NoDiffWarning />}
+      {!diffQuery.isLoading &&
+        canMerge &&
+        notImmutable &&
+        diffQuery.data?.data && (
+          <DiffView
+            diff={diffQuery.data.data}
+            baseRef={baseRef}
+            compareRef={compareRef}
+          />
+        )}
     </div>
   );
 }

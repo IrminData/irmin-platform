@@ -1,6 +1,3 @@
-import { getRepositories } from '@/lib/actions/repositories';
-import { getToken } from '@/lib/getToken';
-
 import WorkflowSection from '@/components/workflow/WorkflowSection';
 
 import { SingleWorkflowLayoutParams } from './layout';
@@ -15,18 +12,7 @@ export default async function WorkflowPage(
   }>
 ) {
   const params = await props.params;
-  const { workflow, workspace } = params;
+  const { workflow } = params;
 
-  const token = await getToken();
-  const repositories = await getRepositories({
-    workspace,
-    token,
-  });
-
-  return (
-    <WorkflowSection
-      workflowID={workflow}
-      repositories={repositories.data ?? []}
-    />
-  );
+  return <WorkflowSection workflowID={workflow} />;
 }

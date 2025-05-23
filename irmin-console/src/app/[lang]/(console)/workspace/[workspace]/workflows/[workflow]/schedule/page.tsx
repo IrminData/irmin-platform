@@ -1,6 +1,3 @@
-import { getRepositories } from '@/lib/actions/repositories';
-import { getToken } from '@/lib/getToken';
-
 import WorkflowScheduleSection from '@/components/workflow/WorkflowScheduleSection';
 
 import { SingleWorkflowLayoutParams } from '../layout';
@@ -13,16 +10,6 @@ export default async function WorkflowSchedulePage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
-  const token = await getToken();
-  const repositories = await getRepositories({
-    workspace: params.workspace,
-    token,
-  });
 
-  return (
-    <WorkflowScheduleSection
-      workflowID={params.workflow}
-      repositories={repositories.data ?? []}
-    />
-  );
+  return <WorkflowScheduleSection workflowID={params.workflow} />;
 }

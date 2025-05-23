@@ -8,7 +8,9 @@ import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
+
+import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
 
 import BranchList from './branches/BranchList';
 import CreateBranchModalContent from './branches/CreateBranchModalContent';
@@ -19,32 +21,40 @@ import CreateBranchModalContent from './branches/CreateBranchModalContent';
 export default function RepositoryBranchesSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
+  const { repository, currentRef, viewRef } = useRepositoryContext();
+
   const {
-    branches,
-    loadingBranches,
-    currentRef,
-    createBranch,
-    deleteBranch,
-    viewRef,
-    currentRepository,
-  } = useRepository();
+    repositoryBranchesQuery,
+    createBranchMutation,
+    deleteBranchMutation,
+  } = useRepositoryBranches(repository.slug);
 
   /**
    * Show the create branch modal.
    */
   const showCreateBranchModal = useCallback(() => {
-    if (!branches) return;
+    if (!repositoryBranchesQuery.data?.data) return;
     irminModal.show(
       dict.repository.branches.createBranch,
       <CreateBranchModalContent
-        branches={branches.map((branch) => branch.name) ?? []}
+        branches={
+          repositoryBranchesQuery.data.data.map((branch) => branch.name) ?? []
+        }
         createBranch={async (branchName: string, fromBranch: string) => {
-          await createBranch(branchName, fromBranch);
+          await createBranchMutation.mutateAsync({
+            name: branchName,
+            from: fromBranch,
+          });
           irminModal.close();
         }}
       />
     );
-  }, [branches, irminModal, dict, createBranch]);
+  }, [
+    repositoryBranchesQuery.data?.data,
+    irminModal,
+    dict,
+    createBranchMutation,
+  ]);
 
   /**
    * Confirm the deletion of a branch and delete it.
@@ -58,10 +68,9 @@ export default function RepositoryBranchesSection() {
         dict.repository.branches.confirmDeleteBranch
       );
       if (!confirmed) return;
-      // Delete the branch
-      await deleteBranch(branch);
+      await deleteBranchMutation.mutateAsync(branch);
     },
-    [irminConfirm, dict, deleteBranch]
+    [irminConfirm, dict, deleteBranchMutation]
   );
 
   return (
@@ -80,11 +89,11 @@ export default function RepositoryBranchesSection() {
       </div>
       <BranchList
         currentRef={currentRef}
-        branches={branches ?? []}
+        branches={repositoryBranchesQuery.data?.data ?? []}
         handleViewBranch={(branch) => viewRef(branch)}
         handleDeleteBranch={handleDeleteBranch}
-        loading={loadingBranches}
-        immutable={currentRepository.is_immutable}
+        loading={repositoryBranchesQuery.isLoading}
+        immutable={repository.is_immutable}
       />
     </div>
   );

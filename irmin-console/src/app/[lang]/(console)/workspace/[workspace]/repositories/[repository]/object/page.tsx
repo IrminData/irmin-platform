@@ -1,47 +1,45 @@
-import { notFound } from 'next/navigation';
+'use client';
 
-import { getObject } from '@/lib/actions/repositories';
-import { getToken } from '@/lib/getToken';
+import { notFound } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import RepositorySection from '@/components/repository/RepositorySection';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+
+import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 
 import { RepositoryRouteParams } from '../layout';
 
 /**
  * Page to view a repository object from a specific path at a specific ref
  */
-export default async function RepositoryObjectPage(props: {
-  params: Promise<RepositoryRouteParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+export default function RepositoryObjectPage({
+  params,
+}: {
+  params: RepositoryRouteParams;
 }) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
+  const searchParams = useSearchParams();
+  const ref = searchParams.get('ref');
+  const path = searchParams.get('path');
 
-  const ref =
-    typeof searchParams.ref === 'string' && searchParams.ref.length > 0
-      ? searchParams.ref
-      : undefined;
-  const path =
-    typeof searchParams.path === 'string' ? searchParams.path : undefined;
+  const { repositoryObjectQuery } = useRepositoryObject(
+    params.repository,
+    ref ? ref : undefined,
+    path ? path : undefined
+  );
 
-  if (!path) return notFound();
+  if (repositoryObjectQuery.isError) {
+    console.error(repositoryObjectQuery.error);
+    return notFound();
+  }
 
-  const token = await getToken();
-  const object = await getObject({
-    workspace: params.workspace,
-    repository: params.repository,
-    path,
-    ref,
-    token,
-  });
-
-  if (!object.data) {
-    notFound();
+  if (repositoryObjectQuery.isLoading || !repositoryObjectQuery.data?.data) {
+    return <LoadingSkeleton className='h-80 w-full' />;
   }
 
   return (
     <RepositorySection
-      initialSelectedObject={object.data}
+      initialSelectedObject={repositoryObjectQuery.data.data}
       initialObjectContentViewerOpen={true}
     />
   );

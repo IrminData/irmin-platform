@@ -14,7 +14,6 @@ import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { EditorItem } from '@/types/core/EditorItems';
-import { Repository } from '@/types/core/Repository';
 import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ActionWorkflowList from './ActionWorkflowList';
@@ -28,16 +27,13 @@ import CreateWorkflowModalContent from './CreateWorkflowModalContent';
  *
  * @param props0 - The props
  * @param props0.editorItems - The list of editor items
- * @param props0.repositories - List of repositories
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ActionWorkflowsSection({
   editorItems,
-  repositories,
   sideModalOpen = false,
 }: {
   editorItems: EditorItem[];
-  repositories: Repository[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -111,7 +107,6 @@ export default function ActionWorkflowsSection({
       >
         <CreateWorkflowModalContent
           editorItems={editorItems}
-          repositories={repositories}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}

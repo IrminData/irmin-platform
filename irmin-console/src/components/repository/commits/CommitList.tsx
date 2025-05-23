@@ -6,7 +6,7 @@ import NormalList from '@/components/ui/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
 
 import { Commit } from '@/types/core/Commit';
 import { GridRow } from '@/types/internal/ListProps';
@@ -28,7 +28,7 @@ export default function CommitList({
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
 
-  const { viewRef } = useRepository();
+  const { viewRef } = useRepositoryContext();
 
   const rows: GridRow[] = useMemo(
     () =>

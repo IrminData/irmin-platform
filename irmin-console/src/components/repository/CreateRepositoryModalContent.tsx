@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback } from 'react';
+
 import { Controller, useForm } from 'react-hook-form';
 
 import Button from '@/components/ui/button';
@@ -8,7 +10,7 @@ import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useCreateRepository } from '@/hooks/useCreateRepository';
+import { useRepositories } from '@/hooks/useRepositories';
 
 /**
  * Modal content to create a new repository.
@@ -36,10 +38,30 @@ export default function CreateRepositoryModalContent({
     },
   });
 
-  const { handleCreate, processing } = useCreateRepository({
-    reset,
-    closeModal,
-  });
+  const { createRepositoryMutation } = useRepositories();
+
+  const handleCreate = useCallback(
+    async (data: {
+      name: string;
+      description: string;
+      default_branch: string;
+    }) => {
+      try {
+        await createRepositoryMutation.mutateAsync({
+          name: data.name,
+          description: data.description,
+          documentation: '',
+          default_branch: data.default_branch,
+          isImmutable: false,
+        });
+        closeModal();
+        reset();
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [closeModal, reset, createRepositoryMutation]
+  );
 
   return (
     <form
@@ -106,7 +128,12 @@ export default function CreateRepositoryModalContent({
           )}
         />
       </div>
-      <Button type='submit' size='lg' variant='gradient' loading={processing}>
+      <Button
+        type='submit'
+        size='lg'
+        variant='gradient'
+        loading={createRepositoryMutation.isPending}
+      >
         {dict.repository.createNewRepository}
       </Button>
     </form>

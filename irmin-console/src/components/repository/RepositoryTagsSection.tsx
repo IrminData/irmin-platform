@@ -8,7 +8,11 @@ import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
+
+import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
+import { useRepositoryCommits } from '@/hooks/useRepositoryCommits';
+import { useRepositoryTags } from '@/hooks/useRepositoryTags';
 
 import CreateTagModalContent from './tags/CreateTagModalContent';
 import TagList from './tags/TagList';
@@ -19,27 +23,31 @@ import TagList from './tags/TagList';
 export default function RepositoryTagsSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
-  const {
-    tags,
-    loadingTags,
-    currentRef,
-    commits,
-    branches,
-    createTag,
-    deleteTag,
-    viewRef,
-  } = useRepository();
+  const { repository, currentRef, viewRef } = useRepositoryContext();
+  const { repositoryBranchesQuery } = useRepositoryBranches(repository.slug);
+  const { commitsQuery } = useRepositoryCommits(repository.slug);
+  const { repositoryTagsQuery, createTagMutation, deleteTagMutation } =
+    useRepositoryTags(repository.slug);
 
   /**
    * Show the create tag modal.
    */
   const showCreateTagModal = useCallback(() => {
-    if (!currentRef || !branches || !commits) return;
+    if (
+      !currentRef ||
+      !repositoryBranchesQuery.data?.data ||
+      !commitsQuery.data?.data
+    )
+      return;
     let createForRef = currentRef;
     // Check if the current ref is a branch
-    if (branches?.find((branch) => branch.name === currentRef)) {
+    if (
+      repositoryBranchesQuery.data?.data.find(
+        (branch) => branch.name === currentRef
+      )
+    ) {
       // Get the current HEAD commit of the branch
-      createForRef = commits[0]?.hash;
+      createForRef = commitsQuery.data?.data[0]?.hash;
     }
     // Show the create tag modal
     irminModal.show(
@@ -47,12 +55,22 @@ export default function RepositoryTagsSection() {
       <CreateTagModalContent
         currentRef={createForRef}
         createTag={async (tagName: string, ref: string) => {
-          await createTag(tagName, ref);
+          await createTagMutation.mutateAsync({
+            name: tagName,
+            ref,
+          });
           irminModal.close();
         }}
       />
     );
-  }, [currentRef, branches, commits, irminModal, dict, createTag]);
+  }, [
+    currentRef,
+    repositoryBranchesQuery,
+    commitsQuery,
+    irminModal,
+    dict,
+    createTagMutation,
+  ]);
 
   /**
    * Confirm the deletion of a tag and delete it.
@@ -66,9 +84,9 @@ export default function RepositoryTagsSection() {
       );
       if (!confirmed) return;
       // Delete the tag
-      await deleteTag(tag);
+      await deleteTagMutation.mutateAsync(tag);
     },
-    [irminConfirm, dict, deleteTag]
+    [irminConfirm, dict, deleteTagMutation]
   );
 
   return (
@@ -87,10 +105,10 @@ export default function RepositoryTagsSection() {
       </div>
       <TagList
         currentRef={currentRef}
-        tags={tags ?? []}
+        tags={repositoryTagsQuery.data?.data ?? []}
         handleViewRef={(ref: string) => viewRef(ref)}
         handleDeleteTag={handleDeleteTag}
-        loading={loadingTags}
+        loading={repositoryTagsQuery.isLoading}
       />
     </div>
   );

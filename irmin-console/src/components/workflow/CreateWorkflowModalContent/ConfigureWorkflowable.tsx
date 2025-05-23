@@ -19,9 +19,9 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnections } from '@/hooks/useConnections';
+import { useRepositories } from '@/hooks/useRepositories';
 
 import { EditorItem } from '@/types/core/EditorItems';
-import { Repository } from '@/types/core/Repository';
 import { ActionInputData } from '@/types/core/Workflow';
 import {
   ActionWorkflowableInput,
@@ -36,19 +36,17 @@ import {
  *
  * @param props - Component properties
  * @param props.editorItems - List of editor items
- * @param props.repositories - List of repositories
  * @param props.setCurrentStep - Function to set the current step
  */
 function ConfigureWorkflowable({
   editorItems,
-  repositories,
   setCurrentStep,
 }: {
   editorItems: EditorItem[];
-  repositories: Repository[];
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { connectionsQuery } = useConnections();
+  const { repositoriesQuery } = useRepositories();
   const { workflowData, setWorkflowData } = useCreateWorkflow();
   const { dict } = useLocale();
 
@@ -124,7 +122,7 @@ function ConfigureWorkflowable({
                       ...(workflowable as ActionWorkflowableInput),
                       repository: newValue.value,
                       branch:
-                        repositories.find(
+                        repositoriesQuery.data?.data?.find(
                           (repo) => repo.slug === newValue.value
                         )?.default_branch ??
                         workflowable.branch ??
@@ -132,7 +130,7 @@ function ConfigureWorkflowable({
                     },
                   });
                 }}
-                options={repositories.map((repo) => ({
+                options={repositoriesQuery.data?.data?.map((repo) => ({
                   value: repo.slug,
                   label: repo.name,
                 }))}
@@ -197,7 +195,6 @@ function ConfigureWorkflowable({
             )}
             <div className='flex flex-col gap-2'>
               <ActionInputEditor
-                repositories={repositories}
                 initialData={workflowable.input}
                 onChange={handleInputFilesChange}
                 disableSaveButton={true}
@@ -210,6 +207,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importSourceConnection}</Label>
               <ReactSelect
+                isLoading={connectionsQuery.isLoading}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
@@ -270,6 +268,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationRepository}</Label>
               <ReactSelect
+                isLoading={repositoriesQuery.isLoading}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
@@ -278,7 +277,7 @@ function ConfigureWorkflowable({
                       ...(workflowable as ImportWorkflowableInput),
                       repository: newValue.value,
                       branch:
-                        repositories.find(
+                        repositoriesQuery.data?.data?.find(
                           (repo) => repo.slug === newValue.value
                         )?.default_branch ??
                         workflowable.branch ??
@@ -286,7 +285,7 @@ function ConfigureWorkflowable({
                     },
                   });
                 }}
-                options={repositories.map((repo) => ({
+                options={repositoriesQuery.data?.data?.map((repo) => ({
                   value: repo.slug,
                   label: repo.name,
                 }))}
@@ -358,6 +357,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportDestinationConnection}</Label>
               <ReactSelect
+                isLoading={repositoriesQuery.isLoading}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
@@ -418,6 +418,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportSourceRepository}</Label>
               <ReactSelect
+                isLoading={repositoriesQuery.isLoading}
                 onChange={(newValue) => {
                   if (!newValue) return;
                   setWorkflowData({
@@ -426,7 +427,7 @@ function ConfigureWorkflowable({
                       ...(workflowable as ExportWorkflowableInput),
                       repository: newValue.value,
                       branch:
-                        repositories.find(
+                        repositoriesQuery.data?.data?.find(
                           (repo) => repo.slug === newValue.value
                         )?.default_branch ??
                         workflowable.branch ??
@@ -434,7 +435,7 @@ function ConfigureWorkflowable({
                     },
                   });
                 }}
-                options={repositories.map((repo) => ({
+                options={repositoriesQuery.data?.data?.map((repo) => ({
                   value: repo.slug,
                   label: repo.name,
                 }))}
@@ -506,7 +507,6 @@ function ConfigureWorkflowable({
             <PipelineStageEditor
               initialStages={[]}
               editorItems={editorItems}
-              repositories={repositories}
               onSubmit={handlePipelineStagesSubmit}
               readOnly={false}
               hideSaveButton={true}

@@ -22,7 +22,9 @@ import {
 } from '@/components/ui/table';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
+
+import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 
 import { Object } from '@/types/core/Object';
 
@@ -67,7 +69,12 @@ export default function ObjectList({
   setCurrentPath: (path: string) => void;
 }) {
   const { locale, dict } = useLocale();
-  const { loadingObjects, rootObject } = useRepository();
+  const { repository, currentRef } = useRepositoryContext();
+  const { repositoryObjectQuery } = useRepositoryObject(
+    repository.slug,
+    currentRef,
+    currentPath
+  );
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{
@@ -76,7 +83,9 @@ export default function ObjectList({
   }>({ key: 'name', direction: 'ascending' });
 
   const filteredObjects = useMemo(() => {
-    if (!rootObject) return [];
+    if (!repositoryObjectQuery.data?.data) return [];
+
+    const rootObject = repositoryObjectQuery.data?.data;
 
     // strip any trailing slash off the folder we’re in
     const normCurrent = normalizePath(currentPath);
@@ -114,7 +123,7 @@ export default function ObjectList({
 
     // finally apply search filtering
     return itemsInFolder.filter(matchesSearch);
-  }, [rootObject, currentPath, searchTerm]);
+  }, [repositoryObjectQuery.data?.data, currentPath, searchTerm]);
 
   const sortedObjects = useMemo(() => {
     const sortableObjects = [...filteredObjects];
@@ -165,7 +174,7 @@ export default function ObjectList({
         setCurrentPath={setCurrentPath}
       />
       <div className='bg-background max-h-[400px] w-full overflow-scroll'>
-        {loadingObjects ? (
+        {repositoryObjectQuery.isLoading ? (
           <TableSkeleton />
         ) : (
           <>
@@ -241,7 +250,7 @@ export default function ObjectList({
               </TableBody>
             </Table>
 
-            {!rootObject?.children && (
+            {!repositoryObjectQuery.data?.data?.children && (
               <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
                 <LuSearchX className='h-12 w-12 text-gray-400' />
                 <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>

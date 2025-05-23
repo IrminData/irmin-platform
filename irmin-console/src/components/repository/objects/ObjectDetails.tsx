@@ -19,9 +19,11 @@ import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useRepositoryObject } from '@/hooks/useRepositoryObject';
+import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
 
 import { Object } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
@@ -59,17 +61,17 @@ export default function ObjectDetails({
   hideSchemaButton?: boolean;
 }) {
   const router = useRouter();
-  const {
-    immutable,
-    currentRepository,
-    currentRef,
-    deleteObject,
-    moveObject,
-    uploadObject,
-    downloadObjectAsZip,
-  } = useRepository();
+  const { immutable, currentRef, repository } = useRepositoryContext();
+  const { deleteObjectMutation, moveObjectMutation, uploadObjectMutation } =
+    useRepositoryObject(repository.slug, currentRef, selectedObject?.path);
   const { irminModal, irminConfirm } = usePopup();
   const { dict } = useLocale();
+
+  const { downloadObjectAsZipMutation } = useRepositoryObjectContent(
+    repository.slug,
+    currentRef,
+    selectedObject?.path
+  );
 
   /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
   const baseUrl = useBaseUrl({
@@ -84,9 +86,15 @@ export default function ObjectDetails({
     irminModal.show(
       dict.repository.objects.uploadObject,
       <UploadObjectModal
-        currentRepository={currentRepository.slug}
+        currentRepository={repository.slug}
         currentRef={currentRef ?? 'main'}
-        uploadObject={uploadObject}
+        uploadObject={async (path: string, ref: string, files: FileList) => {
+          uploadObjectMutation.mutate({
+            path,
+            ref,
+            files,
+          });
+        }}
         prefilledName={selectedObject?.name}
       />
     );
@@ -95,9 +103,9 @@ export default function ObjectDetails({
     immutable,
     selectedObject,
     irminModal,
-    currentRepository,
     currentRef,
-    uploadObject,
+    uploadObjectMutation,
+    repository.slug,
   ]);
 
   const handleMoveOrRename = useCallback(() => {
@@ -105,11 +113,24 @@ export default function ObjectDetails({
     irminModal.show(
       `${dict.repository.objects.moveOrRename}: ${selectedObject.name} @ ${currentRef}`,
       <MoveRenameObjectModal
-        moveObject={moveObject}
+        moveObject={async (oldPath: string, newPath: string) => {
+          await moveObjectMutation.mutateAsync({
+            oldPath,
+            newPath,
+            ref: currentRef ?? '',
+          });
+        }}
         selectedObject={selectedObject}
       />
     );
-  }, [dict, immutable, selectedObject, currentRef, moveObject, irminModal]);
+  }, [
+    dict,
+    immutable,
+    selectedObject,
+    currentRef,
+    moveObjectMutation,
+    irminModal,
+  ]);
 
   const handleDelete = useCallback(async () => {
     if (!selectedObject || immutable) return;
@@ -118,7 +139,10 @@ export default function ObjectDetails({
       `${dict.fileNavigator.deleteConfirmation} object: ${selectedObject.path}?`
     );
     if (!confirmed) return;
-    await deleteObject(selectedObject.name);
+    await deleteObjectMutation.mutateAsync({
+      path: selectedObject.path,
+      ref: currentRef ?? '',
+    });
     if (closeDetails) {
       closeDetails();
     }
@@ -128,7 +152,8 @@ export default function ObjectDetails({
     selectedObject,
     closeDetails,
     irminConfirm,
-    deleteObject,
+    deleteObjectMutation,
+    currentRef,
   ]);
 
   const handleView = useCallback(() => {
@@ -146,13 +171,16 @@ export default function ObjectDetails({
     if (!selectedObject) return;
     setDownloading(true);
     try {
-      await downloadObjectAsZip(selectedObject.path);
+      await downloadObjectAsZipMutation.mutateAsync({
+        path: selectedObject.path,
+        ref: currentRef ?? '',
+      });
     } catch (error) {
       console.error('Error downloading object:', error);
     } finally {
       setDownloading(false);
     }
-  }, [selectedObject, downloadObjectAsZip]);
+  }, [selectedObject, downloadObjectAsZipMutation, currentRef]);
 
   if (!selectedObject) return <></>;
 

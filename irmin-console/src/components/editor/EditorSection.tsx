@@ -4,23 +4,14 @@ import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { Repository } from '@/types/core/Repository';
-
 import EditorWithTabs from './ide/EditorWithTabs';
 import ScriptResults from './ScriptResults';
 
 /**
  * Editor Section, provides UI for the Editor Page.
  * Used to edit files in the Workspace's EditorItems
- *
- * @param props - The props to pass to the component
- * @param props.repositories - The repositories to pass to the component
  */
-export default function EditorSection({
-  repositories,
-}: {
-  repositories: Repository[];
-}) {
+export default function EditorSection() {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
   const {
@@ -41,7 +32,6 @@ export default function EditorSection({
         <ScriptResults
           result={scriptExecutionResult}
           loading={scriptExecutionInProgress}
-          repositories={repositories}
           inputFiles={scriptInputFiles}
           setInputFiles={setScriptInputFiles}
           onRun={async () => {

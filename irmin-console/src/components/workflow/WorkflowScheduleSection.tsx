@@ -11,9 +11,7 @@ import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkflow } from '@/hooks/useWorkflow';
-import { useWorkflows } from '@/hooks/useWorkflows';
 
-import { Repository } from '@/types/core/Repository';
 import { WorkflowSchedule } from '@/types/core/Schedule';
 
 /**
@@ -21,13 +19,7 @@ import { WorkflowSchedule } from '@/types/core/Schedule';
  *
  * Handles workflow schedule viewing and updates.
  */
-const WorkflowScheduleSection = ({
-  workflowID,
-  repositories,
-}: {
-  workflowID: string;
-  repositories: Repository[];
-}) => {
+const WorkflowScheduleSection = ({ workflowID }: { workflowID: string }) => {
   const { dict } = useLocale();
   const {
     workflowQuery,
@@ -35,8 +27,6 @@ const WorkflowScheduleSection = ({
     resumeWorkflowMutation,
     pauseWorkflowMutation,
   } = useWorkflow(workflowID);
-
-  const { workflowsQuery } = useWorkflows();
 
   const handleUpdateWorkflowSchedule = useCallback(
     async (schedule: WorkflowSchedule) => {
@@ -83,8 +73,6 @@ const WorkflowScheduleSection = ({
       <WorkflowScheduleForm
         initialData={workflowQuery.data?.data?.schedule}
         updateSchedule={handleUpdateWorkflowSchedule}
-        workflows={workflowsQuery.data?.data ?? []}
-        repositories={repositories}
         hideTitle={true}
       />
     </ContentWrapper>

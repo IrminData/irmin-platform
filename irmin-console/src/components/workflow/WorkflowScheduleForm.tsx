@@ -12,9 +12,11 @@ import RRuleGenerator from '@/components/ui/RRuleGenerator';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useRepositories } from '@/hooks/useRepositories';
+import { useWorkflows } from '@/hooks/useWorkflows';
+
 import deepEqual from '@/utils/deepEqual';
 
-import { Repository } from '@/types/core/Repository';
 import {
   RepositoryEvent,
   RepositoryTrigger,
@@ -24,7 +26,6 @@ import {
   WorkflowRunTrigger,
   WorkflowSchedule,
 } from '@/types/core/Schedule';
-import { Workflow } from '@/types/core/Workflow';
 
 interface FormTrigger {
   id: string;
@@ -43,28 +44,24 @@ interface FormTrigger {
  *
  * @param props - Component properties
  * @param props.initialData - Initial schedule data
- * @param props.workflows - List of workflows
- * @param props.repositories - List of repositories
  * @param props.updateSchedule - Callback to call in order to update the schedule
  * @param props.disableSaveButton - Disable the save button and auto-update schedule on change
  * @param props.hideTitle - Hide the title of the form
  */
 function WorkflowScheduleForm({
   initialData,
-  workflows,
-  repositories,
   updateSchedule,
   disableSaveButton,
   hideTitle = false,
 }: {
   initialData?: WorkflowSchedule;
-  workflows: Workflow[];
-  repositories: Repository[];
   updateSchedule: (schedule: WorkflowSchedule) => Promise<void>;
   disableSaveButton?: boolean;
   hideTitle?: boolean;
 }) {
   const { dict } = useLocale();
+  const { workflowsQuery } = useWorkflows();
+  const { repositoriesQuery } = useRepositories();
 
   // Form state
   const [triggers, setTriggers] = useState<FormTrigger[]>(() => {
@@ -431,10 +428,11 @@ function WorkflowScheduleForm({
                   <ReactSelect
                     id={`triggers.${index}.repository`}
                     isDisabled={isUpdatingSchedule}
+                    isLoading={repositoriesQuery.isLoading}
                     value={{
                       value: trigger.repository,
                       label:
-                        repositories.find(
+                        repositoriesQuery.data?.data?.find(
                           (repo) => trigger.repository === repo.slug
                         )?.name ?? trigger.repository,
                     }}
@@ -444,14 +442,14 @@ function WorkflowScheduleForm({
                         'repository',
                         selectedOption?.value
                       );
-                      const repo = repositories.find(
+                      const repo = repositoriesQuery.data?.data?.find(
                         (repo) => selectedOption?.value === repo.slug
                       );
                       if (repo) {
                         updateTriggerField(index, 'ref', repo.default_branch);
                       }
                     }}
-                    options={repositories.map((repo) => ({
+                    options={repositoriesQuery.data?.data?.map((repo) => ({
                       value: repo.slug,
                       label: repo.name,
                     }))}
@@ -504,10 +502,11 @@ function WorkflowScheduleForm({
                   <ReactSelect
                     id={`triggers.${index}.workflow`}
                     isDisabled={isUpdatingSchedule}
+                    isLoading={workflowsQuery.isLoading}
                     value={{
                       value: trigger.workflow,
                       label: (() => {
-                        const workflow = workflows.find(
+                        const workflow = workflowsQuery.data?.data?.find(
                           (w) => trigger.workflow === w.id
                         );
                         return `${workflow?.name} (${workflow?.type})`;
@@ -520,7 +519,7 @@ function WorkflowScheduleForm({
                         selectedOption?.value
                       );
                     }}
-                    options={workflows.map((workflow) => ({
+                    options={workflowsQuery.data?.data?.map((workflow) => ({
                       value: workflow.id,
                       label: `${workflow.name} (${workflow.type})`,
                     }))}

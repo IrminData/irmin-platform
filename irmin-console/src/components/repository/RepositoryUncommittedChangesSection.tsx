@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GoGitCommit } from 'react-icons/go';
 import { GrRevert } from 'react-icons/gr';
@@ -11,7 +11,9 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
-import { useRepository } from '@/context/RepositoryContext';
+import { useRepositoryContext } from '@/context/RepositoryContext';
+
+import { useRepositoryUncommittedChanges } from '@/hooks/useRepositoryUncommittedChanges';
 
 import CommitChangesModalContent from './commits/CommitChangesModalContent';
 import NoUncommittedChangesWarning from './commits/NoUncommittedChangesWarning';
@@ -24,34 +26,12 @@ import ImmutableWarning from './ImmutableWarning';
 export default function RepositoryUncommittedChangesSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
+  const { repository, currentRef } = useRepositoryContext();
   const {
-    commits,
-    currentRef,
-    diff,
-    loadingDiff,
-    fetchUncommittedChanges,
-    commitChanges,
-    revertChanges,
-    immutable,
-  } = useRepository();
-
-  const diffFetchedBase = useRef<string | null>(null);
-  const diffFetchedCompare = useRef<string | null>(null);
-
-  // Commits are sorted in the context, so the first commit is the latest
-  const latestCommit = useMemo(() => commits?.[0], [commits]);
-
-  /**
-   * Fetch the unocmmitted changes diff.
-   */
-  const handleFetchDiff = useCallback(async () => {
-    try {
-      if (!latestCommit || !currentRef) return;
-      await fetchUncommittedChanges();
-    } catch (error) {
-      console.error('Failed to fetch the uncommitted changes diff', error);
-    }
-  }, [latestCommit, currentRef, fetchUncommittedChanges]);
+    uncommittedChangesQuery,
+    commitChangesMutation,
+    revertChangesMutation,
+  } = useRepositoryUncommittedChanges(repository.slug, currentRef ?? '');
 
   /**
    * Show the commit changes modal {@link CommitChangesModalContent}
@@ -61,15 +41,21 @@ export default function RepositoryUncommittedChangesSection() {
     irminModal.show(
       `${dict.repository.commit.commitNewChangesTo} ${currentRef}`,
       <CommitChangesModalContent
-        commitChanges={commitChanges}
-        closeModal={() => {
-          // Refetch the diff when modal is closed
-          handleFetchDiff();
-          irminModal.close();
+        commitChanges={async (message: string) => {
+          try {
+            await commitChangesMutation.mutateAsync({
+              message,
+            });
+            return true;
+          } catch (error) {
+            console.error('Failed to commit changes', error);
+            return false;
+          }
         }}
+        closeModal={irminModal.close}
       />
     );
-  }, [irminModal, dict, currentRef, handleFetchDiff, commitChanges]);
+  }, [irminModal, dict, currentRef, commitChangesMutation]);
 
   /**
    * Revert the changes in the working branch.
@@ -81,34 +67,20 @@ export default function RepositoryUncommittedChangesSection() {
     );
     if (!confirmed) return;
     // Revert the changes, then refetch the diff
-    const done = await revertChanges();
-    if (done) handleFetchDiff();
-  }, [irminConfirm, dict, handleFetchDiff, revertChanges]);
-
-  /**
-   * Fetch the diff when the base or compare branches change.
-   */
-  useEffect(() => {
-    if (!latestCommit || !currentRef) return;
-    if (
-      latestCommit.hash === diffFetchedBase.current &&
-      currentRef === diffFetchedCompare.current
-    )
-      return;
-    diffFetchedBase.current = latestCommit?.hash;
-    diffFetchedCompare.current = currentRef;
-    handleFetchDiff();
-  }, [handleFetchDiff, latestCommit, currentRef]);
+    await revertChangesMutation.mutateAsync();
+  }, [irminConfirm, dict, revertChangesMutation]);
 
   /**
    * Make sure there are changes to commit.
    */
   const canCommit = useMemo(
-    () => diff?.items && diff?.items.length > 0,
-    [diff]
+    () =>
+      uncommittedChangesQuery.data?.data?.items &&
+      uncommittedChangesQuery.data?.data?.items.length > 0,
+    [uncommittedChangesQuery.data?.data?.items]
   );
 
-  if (immutable)
+  if (repository.is_immutable)
     return (
       <div className='relative container mx-auto max-w-7xl px-2 py-12 pt-4 md:px-4'>
         <ImmutableWarning />
@@ -130,15 +102,15 @@ export default function RepositoryUncommittedChangesSection() {
           <ButtonWithTooltip
             size='icon'
             icon={<TbRefresh size={18} />}
-            onClick={handleFetchDiff}
+            onClick={() => uncommittedChangesQuery.refetch()}
             tooltip={dict.common.refresh}
-            disabled={loadingDiff}
+            disabled={uncommittedChangesQuery.isLoading}
           />
           <ButtonWithTooltip
             size='icon'
             icon={<GrRevert size={18} />}
             onClick={handleRevertChanges}
-            disabled={loadingDiff}
+            disabled={uncommittedChangesQuery.isLoading}
             tooltip={dict.repository.commit.revertChanges}
           />
           <Button
@@ -152,13 +124,13 @@ export default function RepositoryUncommittedChangesSection() {
           </Button>
         </div>
       </div>
-      {loadingDiff ? (
+      {uncommittedChangesQuery.isLoading ? (
         <LoadingSkeleton className='h-96' />
       ) : (
         <>
-          {canCommit && diff ? (
+          {canCommit && uncommittedChangesQuery.data?.data?.items ? (
             <DiffView
-              diff={diff}
+              diff={uncommittedChangesQuery.data?.data}
               hideHeader={true}
               hideCommits={true}
               noDiffWarning={<NoUncommittedChangesWarning />}

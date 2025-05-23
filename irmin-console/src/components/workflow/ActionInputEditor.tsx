@@ -11,11 +11,11 @@ import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Repository } from '@/types/core/Repository';
+import { useRepositories } from '@/hooks/useRepositories';
+
 import { ActionInputData } from '@/types/core/Workflow';
 
 interface ActionInputEditorProps {
-  repositories: Repository[];
   initialData?: ActionInputData[];
   onChange: (inputFiles: ActionInputData[]) => void;
   disableSaveButton?: boolean;
@@ -25,18 +25,17 @@ interface ActionInputEditorProps {
  * Form to configure script input files
  *
  * @param props - Component properties
- * @param props.repositories - List of repositories
  * @param props.initialData - Initial input files data
  * @param props.onChange - Callback to call when input files change
  * @param props.disableSaveButton - Disable the save button and auto-update on change
  */
 function ActionInputEditor({
-  repositories,
   initialData = [],
   onChange,
   disableSaveButton = false,
 }: ActionInputEditorProps) {
   const { dict } = useLocale();
+  const { repositoriesQuery } = useRepositories();
   const [inputFiles, setInputFiles] = useState<ActionInputData[]>(initialData);
 
   // Notify parent of changes when save button is disabled
@@ -77,13 +76,15 @@ function ActionInputEditor({
         return;
       }
 
-      const repo = repositories.find((r) => r.slug === repositorySlug);
+      const repo = repositoriesQuery.data?.data?.find(
+        (r) => r.slug === repositorySlug
+      );
       if (repo) {
         updateInputFile(index, 'repository', repositorySlug);
         updateInputFile(index, 'ref', repo.default_branch);
       }
     },
-    [repositories, updateInputFile]
+    [repositoriesQuery.data?.data, updateInputFile]
   );
 
   // Handle form submission
@@ -129,17 +130,18 @@ function ActionInputEditor({
               </Label>
               <ReactSelect
                 id={`inputFiles.${index}.repository`}
+                isLoading={repositoriesQuery.isLoading}
                 value={{
                   value: inputFile.repository,
                   label:
-                    repositories.find(
+                    repositoriesQuery.data?.data?.find(
                       (repo) => inputFile.repository === repo.slug
                     )?.name ?? inputFile.repository,
                 }}
                 onChange={(selectedOption) =>
                   handleRepositoryChange(index, selectedOption?.value)
                 }
-                options={repositories.map((repo) => ({
+                options={repositoriesQuery.data?.data?.map((repo) => ({
                   value: repo.slug,
                   label: repo.name,
                 }))}
