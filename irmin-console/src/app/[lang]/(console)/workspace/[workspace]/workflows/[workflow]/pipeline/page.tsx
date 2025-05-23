@@ -3,13 +3,13 @@ import { getToken } from '@/lib/getToken';
 
 import WorkflowPipelineSection from '@/components/workflow/WorkflowPipelineSection';
 
-import { WorkspaceLayoutParams } from '../../../layout';
+import { SingleWorkflowLayoutParams } from '../layout';
 
 /**
  * Single workflow pipeline page
  */
 export default async function WorkflowPipelinePage(props: {
-  params: Promise<WorkspaceLayoutParams>;
+  params: Promise<SingleWorkflowLayoutParams>;
 }) {
   const params = await props.params;
   const token = await getToken();
@@ -17,5 +17,10 @@ export default async function WorkflowPipelinePage(props: {
     workspace: params.workspace,
     token,
   });
-  return <WorkflowPipelineSection repositories={repositories.data ?? []} />;
+  return (
+    <WorkflowPipelineSection
+      workflowID={params.workflow}
+      repositories={repositories.data ?? []}
+    />
+  );
 }

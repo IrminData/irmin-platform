@@ -9,18 +9,19 @@ import WorkflowList from '@/components/workflow/WorkflowList';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { Workflow } from '@/types/core/Workflow';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 /**
  * Connection Settings section component
  */
-const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
+const ConnectionSection = () => {
   const { dict } = useLocale();
   const { connectionID, connectionQuery } = useConnectionContext();
+  const { workflowsQuery } = useWorkflows();
 
   const relatedWorkflows = useMemo(
     () =>
-      workflows.filter((item) => {
+      workflowsQuery.data?.data?.filter((item) => {
         if (item.type === 'import' || item.type === 'export') {
           return item.workflowable.connection_id === connectionID;
         }
@@ -33,7 +34,7 @@ const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
           });
         }
       }),
-    [workflows, connectionID]
+    [workflowsQuery.data?.data, connectionID]
   );
 
   if (connectionQuery.isLoading) {
@@ -65,7 +66,10 @@ const ConnectionSection = ({ workflows }: { workflows: Workflow[] }) => {
             </div>
           ))}
         </div>
-        <WorkflowList workflows={relatedWorkflows} loading={false} />
+        <WorkflowList
+          workflows={relatedWorkflows ?? []}
+          loading={workflowsQuery.isLoading}
+        />
       </div>
     </div>
   );

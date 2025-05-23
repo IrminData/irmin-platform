@@ -11,10 +11,11 @@ import SideModal from '@/components/ui/popup/SideModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { ImportWorkflow, Workflow } from '@/types/core/Workflow';
+import { ImportWorkflow } from '@/types/core/Workflow';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import ImportWorkflowList from './ImportWorkflowList';
@@ -28,18 +29,15 @@ import ImportWorkflowList from './ImportWorkflowList';
  * @param props0 - The props
  * @param props0.editorItems - The list of editor items
  * @param props0.repositories - List of repositories
- * @param props0.workflows - List of workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ImportWorkflowsSection({
   editorItems,
   repositories,
-  workflows,
   sideModalOpen = false,
 }: {
   editorItems: EditorItem[];
   repositories: Repository[];
-  workflows: Workflow[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -48,16 +46,16 @@ export default function ImportWorkflowsSection({
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(
-    workflows.filter((w) => w.type === 'import')
-  );
+  const { workflowsQuery } = useWorkflows('import');
+
+  const [filteredItems, setFilteredItems] = useState<ImportWorkflow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilteredItems(
-        workflows.filter(
+        workflowsQuery.data?.data?.filter(
           (item) =>
             item.type === 'import' &&
             item.name
@@ -71,7 +69,7 @@ export default function ImportWorkflowsSection({
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, workflows]);
+  }, [searchQuery, workflowsQuery.data?.data]);
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -112,7 +110,6 @@ export default function ImportWorkflowsSection({
         <CreateWorkflowModalContent
           editorItems={editorItems}
           repositories={repositories}
-          workflows={workflows}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}
@@ -151,7 +148,10 @@ export default function ImportWorkflowsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <ImportWorkflowList loading={false} importWorkflows={filteredItems} />
+        <ImportWorkflowList
+          loading={workflowsQuery.isLoading}
+          importWorkflows={filteredItems}
+        />
       </div>
     </div>
   );

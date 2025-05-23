@@ -6,25 +6,47 @@ import Button from '@/components/ui/button';
 import DocumentationForm, {
   DocumentationFormValues,
 } from '@/components/ui/form/DocumentationForm';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkflow } from '@/context/WorkflowContext';
+
+import { useWorkflow } from '@/hooks/useWorkflow';
 
 /**
  * Workflow Documentation section component for displaying and updating the documentation.
  */
-const WorkflowDocumentationSection = () => {
+const WorkflowDocumentationSection = ({
+  workflowID,
+}: {
+  workflowID: string;
+}) => {
   const { dict } = useLocale();
-  const { workflow, updateWorkflow } = useWorkflow();
+  const { workflowQuery, updateWorkflowMutation } = useWorkflow(workflowID);
 
   const handleSaveDocumentation = useCallback(
     async (data: DocumentationFormValues) => {
-      await updateWorkflow({
+      await updateWorkflowMutation.mutateAsync({
+        name: workflowQuery.data?.data?.name ?? '',
+        description: workflowQuery.data?.data?.description ?? '',
         documentation: data.documentation,
       });
     },
-    [updateWorkflow]
+    [workflowQuery, updateWorkflowMutation]
   );
+
+  if (workflowQuery.isLoading) {
+    return <LoadingSkeleton className='h-80 w-full' />;
+  }
+
+  if (workflowQuery.isError) {
+    return <div>Error: {workflowQuery.error.message}</div>;
+  }
+
+  if (!workflowQuery.data?.data) {
+    return <div>No data</div>;
+  }
+
+  const workflow = workflowQuery.data.data;
 
   return (
     <DocumentationForm

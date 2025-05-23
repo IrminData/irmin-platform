@@ -11,6 +11,7 @@ import SideModal from '@/components/ui/popup/SideModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { Workflow } from '@/types/core/Workflow';
 
@@ -25,15 +26,12 @@ import WorkflowList from './WorkflowList';
  * selection. After selecting the workflow type, the user is redirected to the appropriate workflow
  * creation modal.
  *
- * @param props0 - The props
- * @param props0.workflows - The list of workflows to display
- * @param props0.sideModalOpen - Whether the side modal is open by default or not
+ * @param props - The props
+ * @param props.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function WorkflowsSection({
-  workflows,
   sideModalOpen = false,
 }: {
-  workflows: Workflow[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -41,15 +39,17 @@ export default function WorkflowsSection({
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
 
-  const [filteredItems, setFilteredItems] = useState(workflows);
+  const { workflowsQuery } = useWorkflows();
+
+  const [filteredItems, setFilteredItems] = useState<Workflow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (workflows) {
+      if (workflowsQuery.data?.data) {
         setFilteredItems(
-          workflows.filter((item) =>
+          workflowsQuery.data.data.filter((item) =>
             item.name
               .trim()
               .replace(/\s+/g, '')
@@ -62,7 +62,7 @@ export default function WorkflowsSection({
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, workflows]);
+  }, [searchQuery, workflowsQuery.data?.data]);
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -107,7 +107,10 @@ export default function WorkflowsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <WorkflowList loading={false} workflows={filteredItems} />
+        <WorkflowList
+          loading={workflowsQuery.isLoading}
+          workflows={filteredItems}
+        />
       </div>
     </div>
   );

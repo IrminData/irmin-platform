@@ -1,39 +1,32 @@
-import { notFound } from 'next/navigation';
+'use client';
 
-import { getWorkflow } from '@/lib/actions/workflows';
-import { getToken } from '@/lib/getToken';
-import { initDict } from '@/lib/initDict';
+import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
-import { WorkflowLogsLayoutParams } from './layout';
+import { useLocale } from '@/context/LocaleContext';
+
+import { useWorkflow } from '@/hooks/useWorkflow';
 
 /**
  * Workflow Audit Logs page
  */
-export default async function WorkflowLogsPage(props: {
-  params: Promise<WorkflowLogsLayoutParams>;
-}) {
-  const params = await props.params;
-  const currentWorkspace = params.workspace;
-  const workflowID = params.workflow;
+export default function WorkflowLogsPage() {
+  const { dict } = useLocale();
+  const params = useParams();
 
-  const token = await getToken();
-  const [workflow, { dict }] = await Promise.all([
-    getWorkflow({
-      workspace: currentWorkspace,
-      workflowID,
-      token,
-    }),
-    initDict(),
-  ]);
+  const { workflowQuery } = useWorkflow(params.workflow as string);
 
-  if (!workflow.data) return notFound();
+  if (workflowQuery.isLoading) return <LoadingSpinner />;
+  if (workflowQuery.isError) return <div>{workflowQuery.error.message}</div>;
+  if (!workflowQuery.data?.data) return <div>{dict.common.error}</div>;
+
   return (
     <LogsSection
-      workflow={workflow.data}
+      workflow={workflowQuery.data.data}
       logsForType='workflow'
-      logsFor={workflowID}
+      logsFor={workflowQuery.data.data.id}
       title={dict.logs.workflowLogs}
     />
   );

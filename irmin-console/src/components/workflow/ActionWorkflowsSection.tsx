@@ -11,10 +11,11 @@ import SideModal from '@/components/ui/popup/SideModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { ActionWorkflow, Workflow } from '@/types/core/Workflow';
+import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ActionWorkflowList from './ActionWorkflowList';
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
@@ -28,18 +29,15 @@ import CreateWorkflowModalContent from './CreateWorkflowModalContent';
  * @param props0 - The props
  * @param props0.editorItems - The list of editor items
  * @param props0.repositories - List of repositories
- * @param props0.workflows - List of workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 export default function ActionWorkflowsSection({
   editorItems,
   repositories,
-  workflows,
   sideModalOpen = false,
 }: {
   editorItems: EditorItem[];
   repositories: Repository[];
-  workflows: Workflow[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -48,17 +46,17 @@ export default function ActionWorkflowsSection({
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(
-    workflows.filter((w) => w.type === 'action')
-  );
+  const { workflowsQuery } = useWorkflows('action');
+
+  const [filteredItems, setFilteredItems] = useState<ActionWorkflow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (workflows) {
+      if (workflowsQuery.data?.data) {
         setFilteredItems(
-          workflows.filter(
+          workflowsQuery.data.data.filter(
             (item) =>
               item.type === 'action' &&
               item.name
@@ -73,7 +71,7 @@ export default function ActionWorkflowsSection({
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, workflows]);
+  }, [searchQuery, workflowsQuery.data?.data]);
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -114,7 +112,6 @@ export default function ActionWorkflowsSection({
         <CreateWorkflowModalContent
           editorItems={editorItems}
           repositories={repositories}
-          workflows={workflows}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}
@@ -149,7 +146,10 @@ export default function ActionWorkflowsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <ActionWorkflowList loading={false} actionWorkflows={filteredItems} />
+        <ActionWorkflowList
+          loading={workflowsQuery.isLoading}
+          actionWorkflows={filteredItems}
+        />
       </div>
     </div>
   );

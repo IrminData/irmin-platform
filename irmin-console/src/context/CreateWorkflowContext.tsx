@@ -1,14 +1,9 @@
-import React, { createContext, useCallback, useContext, useRef } from 'react';
+import React, { createContext, useCallback, useContext } from 'react';
 import { useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import IrminCore from '@/lib/core';
-
-import { useIAM } from '@/context/IAMContext';
-import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspaceContext } from '@/context/WorkspaceContext';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
@@ -53,10 +48,7 @@ export const CreateWorkflowProvider: React.FC<{
   initialWorkflowData: WorkflowInput | undefined;
   children: React.ReactNode;
 }> = ({ initialWorkflowData, children }) => {
-  const { getToken } = useIAM();
-  const { locale } = useLocale();
-  const { irminAlert } = usePopup();
-  const { workspaceSlug } = useWorkspaceContext();
+  const { createWorkflowMutation } = useWorkflows();
 
   const [workflowData, setWorkflowData] = useState<WorkflowInput>({
     ...emptyWorkflowSetupData,
@@ -87,49 +79,27 @@ export const CreateWorkflowProvider: React.FC<{
     setWorkflowData(newWorkflowInputData);
   }, [initialWorkflowData, executable]);
 
-  const [processingCreation, setProcessingCreation] = useState(false);
-  const creatingWorkflow = useRef(false);
-
   /**
    * Create the workflow with the provided data using the Irmin API
    *
    * @returns {Promise<boolean>} - Returns true if the workflow was created successfully, false otherwise
    */
   const handleCreateWorkflow = useCallback(async () => {
-    // Prevent multiple requests
-    if (creatingWorkflow.current) return false;
     try {
-      creatingWorkflow.current = true;
-      setProcessingCreation(true);
-      // Create the workflow
-      const token = await getToken();
-      const irminCore = new IrminCore(locale, token);
-      const res = await irminCore.workflowService.createWorkflow({
-        workspace: workspaceSlug,
-        ...workflowData,
-      });
-      // Show the result to the user
-      irminAlert('success', res?.message ?? 'Workflow created successfully');
+      await createWorkflowMutation.mutateAsync(workflowData);
       return true;
     } catch (error) {
       console.error('Failed to create workflow', error);
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Failed to create the workflow'
-      );
-    } finally {
-      setProcessingCreation(false);
-      creatingWorkflow.current = false;
+      return false;
     }
-    return false;
-  }, [irminAlert, workspaceSlug, workflowData, getToken, locale]);
+  }, [createWorkflowMutation, workflowData]);
 
   return (
     <CreateWorkflowContext.Provider
       value={{
         workflowData,
         setWorkflowData,
-        processingCreation,
+        processingCreation: createWorkflowMutation.isPending,
         createWorkflow: handleCreateWorkflow,
       }}
     >

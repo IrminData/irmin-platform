@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
 
@@ -7,34 +9,22 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import {
+  IrminAPIPaginationMetadata,
+  IrminAPIResponse,
+} from '@/types/core/IrminAPIResponse';
 import { WorkflowRun } from '@/types/core/WorkflowRun';
 
-/**
- * State and actions for workflow runs, including pagination
- */
-interface WorkflowRunsState {
-  runs: WorkflowRun[];
-  loading: boolean;
-  currentPage: number;
-  totalPages: number;
+interface WorkflowRunsResponse
+  extends Omit<IrminAPIResponse<WorkflowRun[]>, 'pagination'> {
+  pagination?: IrminAPIPaginationMetadata;
 }
 
-interface UseWorkflowRunsResult extends WorkflowRunsState {
-  /**
-   * Change to a specific page of workflow runs
-   *
-   * @param page - page number to fetch
-   */
-  goToPage: (page: number) => void;
-  /**
-   * Trigger a manual refresh of the current page
-   */
-  refresh: () => void;
-  /**
-   * Reset to the first page and fetch workflow runs
-   */
-  resetAndFetch: () => void;
-}
+export const workflowRunsQueryKey = (
+  workspaceSlug: string,
+  workflowID: string,
+  page: number
+) => ['workflow-runs', workspaceSlug, workflowID, page] as const;
 
 /**
  * Custom hook to manage fetching and pagination of workflow runs
@@ -42,87 +32,81 @@ interface UseWorkflowRunsResult extends WorkflowRunsState {
  * @param workflowID - unique identifier of the workflow
  * @returns pagination state and control functions
  */
-const useWorkflowRuns = (workflowID: string): UseWorkflowRunsResult => {
+const useWorkflowRuns = (workflowID: string) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
+  const queryClient = useQueryClient();
 
-  const [state, setState] = useState<WorkflowRunsState>({
-    runs: [],
-    loading: true,
-    currentPage: 1,
-    totalPages: 1,
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const workflowRunsQuery = useQuery<WorkflowRunsResponse, Error>({
+    queryKey: workflowRunsQueryKey(workspaceSlug, workflowID, currentPage),
+    queryFn: async () => {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      return irminCore.workflowRunService.fetchWorkflowRuns({
+        workspace: workspaceSlug,
+        workflowID,
+        perPage: 10,
+        page: currentPage,
+      });
+    },
   });
 
-  const fetchRuns = useCallback(
-    async (page: number) => {
-      setState((prev) => ({ ...prev, loading: true }));
-      try {
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const result = await irminCore.workflowRunService.fetchWorkflowRuns({
-          workspace: workspaceSlug,
-          workflowID,
-          perPage: 10,
-          page,
-        });
-
-        setState({
-          runs: result.data ?? [],
-          loading: false,
-          currentPage: page,
-          totalPages: result.pagination?.total_pages ?? 1,
-        });
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch workflow runs'
-        );
-        setState((prev) => ({ ...prev, loading: false }));
-      }
+  const createWorkflowRunMutation = useMutation<
+    IrminAPIResponse<WorkflowRun>,
+    Error,
+    void
+  >({
+    mutationFn: async () => {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      const res = await irminCore.workflowRunService.triggerWorkflowRun({
+        workspace: workspaceSlug,
+        workflowID,
+      });
+      return res;
     },
-    [getToken, irminAlert, locale, workspaceSlug, workflowID]
-  );
+    onSuccess: (res) => {
+      irminAlert('success', res.message ?? 'Workflow run created successfully');
+      setCurrentPage(1);
+      queryClient.invalidateQueries({
+        queryKey: workflowRunsQueryKey(workspaceSlug, workflowID, 1),
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to create workflow run', error);
+      irminAlert('error', error.message ?? 'Failed to create workflow run');
+    },
+  });
 
-  // Initial fetch
-  const initialFetchDoneFor = useRef('');
-  useEffect(() => {
-    if (initialFetchDoneFor.current === workflowID) return;
-    initialFetchDoneFor.current = workflowID;
-    fetchRuns(state.currentPage);
-  }, [fetchRuns, workflowID, state.currentPage]);
-
-  /**
-   * go to specific page, with validation
-   */
   const goToPage = useCallback(
     (page: number) => {
-      if (page < 1 || page > state.totalPages) {
+      if (
+        page < 1 ||
+        page > (workflowRunsQuery.data?.pagination?.total_pages ?? 1)
+      ) {
         console.error('Invalid page number', page);
         return;
       }
-      fetchRuns(page);
+      setCurrentPage(page);
     },
-    [fetchRuns, state.totalPages]
+    [workflowRunsQuery.data?.pagination?.total_pages]
   );
 
-  /**
-   * reset and refetch runs
-   */
-  const resetAndFetch = useCallback(() => {
-    setState((prev) => ({ ...prev, currentPage: 1 }));
-    fetchRuns(1);
-  }, [fetchRuns]);
-
   return {
-    runs: state.runs,
-    loading: state.loading,
-    currentPage: state.currentPage,
-    totalPages: state.totalPages,
+    // Pagination state
+    currentPage,
+    totalPages: workflowRunsQuery.data?.pagination?.total_pages ?? 1,
     goToPage,
-    refresh: () => fetchRuns(state.currentPage),
-    resetAndFetch,
+
+    // Query
+    workflowRunsQuery,
+
+    // Mutations
+    createWorkflowRunMutation,
   };
 };
 

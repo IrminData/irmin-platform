@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkflow } from '@/context/WorkflowContext';
+import { usePopup } from '@/context/PopupContext';
 
 import { useUsers } from '@/hooks/useUsers';
+import { useWorkflow } from '@/hooks/useWorkflow';
 
 interface WorkflowFormValues {
   name: string;
@@ -22,31 +24,45 @@ interface WorkflowFormValues {
  * Handles workflow settings updates, transferment, deletion, and pausing/resuming.
  * Uses {@link SettingsForm} to show and edit the workflow settings.
  */
-const WorkflowSettingsSection = () => {
+const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
   const { dict } = useLocale();
+  const { irminConfirm } = usePopup();
   const { usersQuery } = useUsers();
-  const { workflow, updateWorkflow, transferWorkflow, deleteWorkflow } =
-    useWorkflow();
+  const {
+    workflowQuery,
+    updateWorkflowMutation,
+    transferWorkflowMutation,
+    deleteWorkflowMutation,
+  } = useWorkflow(workflowID);
 
-  const [submitting, setSubmitting] = useState(false);
   const handleUpdateWorkflow = useCallback(
     async (data: WorkflowFormValues) => {
       try {
-        setSubmitting(true);
-        if (data.owner !== workflow.owner.id) {
-          await transferWorkflow(data.owner);
+        if (data.owner !== workflowQuery.data?.data?.owner.id) {
+          const confirmed = await irminConfirm(
+            'warning',
+            `${dict.common.areYouSureYouWantToTransferOwnership} (${workflowQuery.data?.data?.name})`
+          );
+          if (confirmed) {
+            await transferWorkflowMutation.mutateAsync(data.owner);
+          }
         }
-        await updateWorkflow({
+        await updateWorkflowMutation.mutateAsync({
           name: data.name,
           description: data.description,
+          documentation: workflowQuery.data?.data?.documentation ?? '',
         });
       } catch (error) {
         console.error('Error updating workflow:', error);
-      } finally {
-        setSubmitting(false);
       }
     },
-    [workflow, updateWorkflow, transferWorkflow]
+    [
+      workflowQuery,
+      updateWorkflowMutation,
+      transferWorkflowMutation,
+      irminConfirm,
+      dict,
+    ]
   );
 
   // Define field configurations
@@ -75,6 +91,20 @@ const WorkflowSettingsSection = () => {
     },
   ];
 
+  if (workflowQuery.isLoading) {
+    return <LoadingSkeleton className='h-80 w-full' />;
+  }
+
+  if (workflowQuery.isError) {
+    return <div>Error: {workflowQuery.error.message}</div>;
+  }
+
+  if (!workflowQuery.data?.data) {
+    return <div>No data</div>;
+  }
+
+  const workflow = workflowQuery.data.data;
+
   return (
     <div id='workflow-settings-section'>
       <SettingsForm<WorkflowFormValues>
@@ -84,9 +114,13 @@ const WorkflowSettingsSection = () => {
           owner: workflow.owner.id,
         }}
         onSubmit={handleUpdateWorkflow}
-        submitting={submitting}
+        submitting={
+          deleteWorkflowMutation.isPending ||
+          updateWorkflowMutation.isPending ||
+          transferWorkflowMutation.isPending
+        }
         fieldConfiguration={fieldConfiguration}
-        deleteItem={deleteWorkflow}
+        deleteItem={deleteWorkflowMutation.mutateAsync}
         itemName='Workflow'
         submitButtonLabel={dict.workflow.settings.saveChanges}
         deleteButtonLabel={dict.workflow.settings.delete}

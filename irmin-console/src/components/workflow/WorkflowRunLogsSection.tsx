@@ -5,26 +5,45 @@ import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
 import LogFeed from '@/components/logs/LogFeed';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { formatDurationForUI } from '@/utils/formatDurationForUI';
+import useWorkflowRun from '@/hooks/useWorkflowRun';
 
-import { WorkflowRun } from '@/types/core/WorkflowRun';
+import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
 /**
  * Workflow Run Logs section - showing logs for a specific workflow run.
  *
  * @param props - The component properties
- * @param props.workflowRun - The workflow run to display logs for
+ * @param props.workflowID - The ID of the workflow
+ * @param props.runID - The ID of the workflow run
  */
 export default function WorkflowRunLogsSection({
-  workflowRun,
+  workflowID,
+  runID,
 }: {
-  workflowRun: WorkflowRun;
+  workflowID: string;
+  runID: string;
 }) {
   const { dict, locale } = useLocale();
+  const { workflowRunQuery } = useWorkflowRun(workflowID, runID);
+
+  if (workflowRunQuery.isLoading) {
+    return <LoadingSkeleton className='h-80 w-full' />;
+  }
+
+  if (workflowRunQuery.error) {
+    return <div>Error: {workflowRunQuery.error.message}</div>;
+  }
+
+  if (!workflowRunQuery.data?.data) {
+    return <div>No data</div>;
+  }
+
+  const workflowRun = workflowRunQuery.data.data;
 
   return (
     <div className='flex flex-col gap-8 px-2 md:px-4'>

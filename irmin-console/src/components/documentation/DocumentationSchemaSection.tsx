@@ -9,9 +9,9 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useConnections } from '@/hooks/useConnections';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { Repository } from '@/types/core/Repository';
-import { Workflow } from '@/types/core/Workflow';
 
 import { TreeNode } from './TreeChart';
 
@@ -23,12 +23,11 @@ const TreeChart = dynamic(() => import('./TreeChart'), {
  * Page UI to show the schema for the workspace as a tree chart.
  */
 export default function DocumentationSchemaSection({
-  workflows,
   repositories,
 }: {
-  workflows: Workflow[];
   repositories: Repository[];
 }) {
+  const { workflowsQuery } = useWorkflows();
   const { connectionsQuery } = useConnections();
   const { workspaceQuery } = useWorkspaceContext();
   const [tree, setTree] = useState<TreeNode>({
@@ -39,6 +38,7 @@ export default function DocumentationSchemaSection({
 
   useEffect(() => {
     if (!workspaceQuery?.data) return;
+    const workflows = workflowsQuery.data?.data ?? [];
     const workspace = workspaceQuery.data.data;
 
     // Build the tree from the workspace's data.
@@ -86,7 +86,10 @@ export default function DocumentationSchemaSection({
     };
 
     // Add import workflows.
-    if (workflows.filter((item) => item.type === 'import').length > 0) {
+    if (
+      workflows.filter((item) => item.type === 'import').length > 0 &&
+      !workflowsQuery.isLoading
+    ) {
       const importsNode: TreeNode = {
         id: `import-workflows`,
         label: 'Imports',
@@ -101,7 +104,10 @@ export default function DocumentationSchemaSection({
     }
 
     // Add export workflows.
-    if (workflows.filter((item) => item.type === 'export').length > 0) {
+    if (
+      workflows.filter((item) => item.type === 'export').length > 0 &&
+      !workflowsQuery.isLoading
+    ) {
       const exportsNode = {
         id: 'export-workflows',
         label: 'Exports',
@@ -116,7 +122,10 @@ export default function DocumentationSchemaSection({
     }
 
     // Add action workflows.
-    if (workflows.filter((item) => item.type === 'action').length > 0) {
+    if (
+      workflows.filter((item) => item.type === 'action').length > 0 &&
+      !workflowsQuery.isLoading
+    ) {
       const actionsNode = {
         id: 'action-workflows',
         label: 'Actions',
@@ -131,7 +140,10 @@ export default function DocumentationSchemaSection({
     }
 
     // Add pipeline workflows.
-    if (workflows.filter((item) => item.type === 'action').length > 0) {
+    if (
+      workflows.filter((item) => item.type === 'action').length > 0 &&
+      !workflowsQuery.isLoading
+    ) {
       const pipeliensNode = {
         id: 'pipeline-workflows',
         label: 'Pipelines',
@@ -149,7 +161,13 @@ export default function DocumentationSchemaSection({
     newTree.children?.push(workflowsNode);
 
     setTree(newTree);
-  }, [workspaceQuery, connectionsQuery.data?.data, workflows, repositories]);
+  }, [
+    workspaceQuery,
+    connectionsQuery.data?.data,
+    repositories,
+    workflowsQuery.data?.data,
+    workflowsQuery.isLoading,
+  ]);
 
   return <TreeChart tree={tree} />;
 }

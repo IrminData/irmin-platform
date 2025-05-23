@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import { usePathname } from 'next/navigation';
 
 import { RiFlowChart } from 'react-icons/ri';
@@ -17,13 +15,15 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkflow } from '@/context/WorkflowContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useWorkflow } from '@/hooks/useWorkflow';
+import useWorkflowRuns from '@/hooks/useWorkflowRuns';
 
 /**
  * Component to wrap the single Workflow pages in.
@@ -35,12 +35,15 @@ import useBaseUrl from '@/hooks/useBaseUrl';
  */
 export default function WorkflowLayoutWrapper({
   children,
+  workflowID,
 }: {
   children: React.ReactNode;
+  workflowID: string;
 }) {
   const pathname = usePathname();
   const { dict } = useLocale();
-  const { workflow, triggerWorkflowRun, runningWorkflow } = useWorkflow();
+  const { createWorkflowRunMutation } = useWorkflowRuns(workflowID);
+  const { workflowQuery } = useWorkflow(workflowID);
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -58,82 +61,75 @@ export default function WorkflowLayoutWrapper({
     segmentsAfter: 1,
   });
 
-  const repositorySlug = useMemo(
-    () =>
-      workflow?.type === 'import' || workflow?.type === 'export'
-        ? workflow?.workflowable?.repository
-        : null,
-    [workflow]
-  );
-  const repositoryBranch = useMemo(
-    () =>
-      workflow?.type === 'import' || workflow?.type === 'export'
-        ? workflow?.workflowable?.branch
-        : null,
-    [workflow]
-  );
+  if (workflowQuery.isLoading)
+    return <LoadingSkeleton className='h-80 w-full' />;
 
-  const tabs = useMemo(
-    () => [
-      {
-        name: dict.common.overview,
-        link: `${baseUrl}`,
-        active: pathname === `${baseUrl}`,
-        icon: <TbRun size={14} />,
-        hidden: false,
-      },
-      {
-        name: dict.workflow.pipeline.pipeline,
-        link: `${baseUrl}/pipeline`,
-        active: pathname === `${baseUrl}/pipeline`,
-        icon: <RiFlowChart size={14} />,
-        hidden: workflow.type !== 'pipeline',
-      },
-      {
-        name: dict.workflow.tabs.schedule,
-        link: `${baseUrl}/schedule`,
-        active: pathname === `${baseUrl}/schedule`,
-        icon: <TbClockCog size={14} />,
-        hidden: false,
-      },
-      {
-        name: dict.documentation.documentation,
-        link: `${baseUrl}/documentation`,
-        active: pathname === `${baseUrl}/documentation`,
-        icon: <TbFileText size={14} />,
-        hidden: false,
-      },
-      {
-        name: dict.workflow.tabs.data,
-        link: `${workspaceUrl}/repositories/${repositorySlug}?ref=${repositoryBranch}`,
-        active: false,
-        icon: <TbDatabase size={14} />,
-        hidden: !repositorySlug,
-      },
-      {
-        name: dict.common.logs,
-        link: `${workspaceUrl}/logs/workflow/${workflow?.id}`,
-        active: false,
-        icon: <TbBook size={14} />,
-      },
-      {
-        name: dict.consoleNavigation.settings,
-        link: `${baseUrl}/settings`,
-        active: pathname === `${baseUrl}/settings`,
-        icon: <TbSettings size={14} />,
-        hidden: false,
-      },
-    ],
-    [
-      workflow,
-      pathname,
-      dict,
-      repositoryBranch,
-      repositorySlug,
-      baseUrl,
-      workspaceUrl,
-    ]
-  );
+  if (workflowQuery.isError) return <></>;
+
+  const workflow = workflowQuery.data?.data;
+
+  if (!workflow) return <></>;
+
+  const repositorySlug =
+    workflow?.type === 'import' || workflow?.type === 'export'
+      ? workflow?.workflowable?.repository
+      : null;
+
+  const repositoryBranch =
+    workflow?.type === 'import' || workflow?.type === 'export'
+      ? workflow?.workflowable?.branch
+      : null;
+
+  const tabs = [
+    {
+      name: dict.common.overview,
+      link: `${baseUrl}`,
+      active: pathname === `${baseUrl}`,
+      icon: <TbRun size={14} />,
+      hidden: false,
+    },
+    {
+      name: dict.workflow.pipeline.pipeline,
+      link: `${baseUrl}/pipeline`,
+      active: pathname === `${baseUrl}/pipeline`,
+      icon: <RiFlowChart size={14} />,
+      hidden: workflow.type !== 'pipeline',
+    },
+    {
+      name: dict.workflow.tabs.schedule,
+      link: `${baseUrl}/schedule`,
+      active: pathname === `${baseUrl}/schedule`,
+      icon: <TbClockCog size={14} />,
+      hidden: false,
+    },
+    {
+      name: dict.documentation.documentation,
+      link: `${baseUrl}/documentation`,
+      active: pathname === `${baseUrl}/documentation`,
+      icon: <TbFileText size={14} />,
+      hidden: false,
+    },
+    {
+      name: dict.workflow.tabs.data,
+      link: `${workspaceUrl}/repositories/${repositorySlug}?ref=${repositoryBranch}`,
+      active: false,
+      icon: <TbDatabase size={14} />,
+      hidden: !repositorySlug,
+    },
+    {
+      name: dict.common.logs,
+      link: `${workspaceUrl}/logs/workflow/${workflow?.id}`,
+      active: false,
+      icon: <TbBook size={14} />,
+    },
+    {
+      name: dict.consoleNavigation.settings,
+      link: `${baseUrl}/settings`,
+      active: pathname === `${baseUrl}/settings`,
+      icon: <TbSettings size={14} />,
+      hidden: false,
+    },
+  ];
 
   return (
     <>
@@ -180,12 +176,12 @@ export default function WorkflowLayoutWrapper({
           </div>
           <div className='flex min-w-60 flex-col gap-2'>
             <Button
-              onClick={triggerWorkflowRun}
+              onClick={() => createWorkflowRunMutation.mutate()}
               className='w-full'
               variant='default'
               size='lg'
               icon={<TbPlayerPlay size={14} />}
-              loading={runningWorkflow}
+              loading={createWorkflowRunMutation.isPending}
             >
               {dict.workflow.triggerRun}
             </Button>

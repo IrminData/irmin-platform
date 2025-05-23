@@ -11,10 +11,11 @@ import SideModal from '@/components/ui/popup/SideModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { EditorItem } from '@/types/core/EditorItems';
 import { Repository } from '@/types/core/Repository';
-import { PipelineWorkflow, Workflow } from '@/types/core/Workflow';
+import { PipelineWorkflow } from '@/types/core/Workflow';
 import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
@@ -48,18 +49,15 @@ const initialWorkflowData: WorkflowInput = {
  * @param props0 - The props
  * @param props0.editorItems - The list of editor items
  * @param props0.repositories - List of repositories
- * @param props0.workflows - List of workflows
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
  */
 function PipelineWorkflowsSection({
   editorItems,
   repositories,
-  workflows,
   sideModalOpen = false,
 }: {
   editorItems: EditorItem[];
   repositories: Repository[];
-  workflows: Workflow[];
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
@@ -68,16 +66,16 @@ function PipelineWorkflowsSection({
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const [filteredItems, setFilteredItems] = useState(
-    workflows.filter((w) => w.type === 'pipeline')
-  );
+  const { workflowsQuery } = useWorkflows('pipeline');
+
+  const [filteredItems, setFilteredItems] = useState<PipelineWorkflow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilteredItems(
-        workflows.filter(
+        workflowsQuery.data?.data?.filter(
           (item) =>
             item.type === 'pipeline' &&
             item.name
@@ -91,7 +89,7 @@ function PipelineWorkflowsSection({
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, workflows]);
+  }, [searchQuery, workflowsQuery.data?.data]);
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -132,7 +130,6 @@ function PipelineWorkflowsSection({
         <CreateWorkflowModalContent
           editorItems={editorItems}
           repositories={repositories}
-          workflows={workflows}
           isOpen={isOpen}
           closeModal={closeModal}
           currentStep={currentStep}
@@ -152,7 +149,7 @@ function PipelineWorkflowsSection({
           />
         </div>
         <PipelineWorkflowList
-          loading={false}
+          loading={workflowsQuery.isLoading}
           pipelineWorkflows={filteredItems}
         />
       </div>

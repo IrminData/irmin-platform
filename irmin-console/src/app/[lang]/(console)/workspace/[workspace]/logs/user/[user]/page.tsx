@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
+import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -17,7 +18,10 @@ export default function UserLogsPage() {
 
   const { userQuery } = useUser(params.user as string);
 
-  if (!userQuery.data?.data) return <></>;
+  if (userQuery.isLoading) return <LoadingSpinner />;
+  if (userQuery.isError) return <div>{userQuery.error.message}</div>;
+  if (!userQuery.data?.data) return <div>{dict.common.error}</div>;
+
   return (
     <LogsSection
       user={userQuery.data.data}

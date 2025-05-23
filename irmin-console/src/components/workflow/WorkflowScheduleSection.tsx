@@ -9,11 +9,12 @@ import ContentWrapper from '@/components/ui/ContentWrapper';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useWorkflow } from '@/context/WorkflowContext';
+
+import { useWorkflow } from '@/hooks/useWorkflow';
+import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { Repository } from '@/types/core/Repository';
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import { Workflow } from '@/types/core/Workflow';
 
 /**
  * Workflow Schedule section component
@@ -21,35 +22,45 @@ import { Workflow } from '@/types/core/Workflow';
  * Handles workflow schedule viewing and updates.
  */
 const WorkflowScheduleSection = ({
-  workflows,
+  workflowID,
   repositories,
 }: {
-  workflows: Workflow[];
+  workflowID: string;
   repositories: Repository[];
 }) => {
   const { dict } = useLocale();
-  const { workflow, updateWorkflowSchedule, resumeWorkflow, pauseWorkflow } =
-    useWorkflow();
+  const {
+    workflowQuery,
+    updateWorkflowScheduleMutation,
+    resumeWorkflowMutation,
+    pauseWorkflowMutation,
+  } = useWorkflow(workflowID);
+
+  const { workflowsQuery } = useWorkflows();
 
   const handleUpdateWorkflowSchedule = useCallback(
     async (schedule: WorkflowSchedule) => {
-      await updateWorkflowSchedule(schedule);
+      await updateWorkflowScheduleMutation.mutateAsync(schedule);
     },
-    [updateWorkflowSchedule]
+    [updateWorkflowScheduleMutation]
   );
 
   const handlePauseOrResume = useCallback(async () => {
-    if (workflow.status === 'paused') {
-      await resumeWorkflow();
+    if (workflowQuery.data?.data?.status === 'paused') {
+      await resumeWorkflowMutation.mutateAsync();
     } else {
-      await pauseWorkflow();
+      await pauseWorkflowMutation.mutateAsync();
     }
-  }, [workflow, pauseWorkflow, resumeWorkflow]);
+  }, [
+    workflowQuery.data?.data?.status,
+    resumeWorkflowMutation,
+    pauseWorkflowMutation,
+  ]);
 
   return (
     <ContentWrapper>
       <div className='flex justify-end'>
-        {workflow.status === 'paused' ? (
+        {workflowQuery.data?.data?.status === 'paused' ? (
           <Button
             size='sm'
             variant='secondary'
@@ -70,9 +81,9 @@ const WorkflowScheduleSection = ({
         )}
       </div>
       <WorkflowScheduleForm
-        initialData={workflow.schedule}
+        initialData={workflowQuery.data?.data?.schedule}
         updateSchedule={handleUpdateWorkflowSchedule}
-        workflows={workflows}
+        workflows={workflowsQuery.data?.data ?? []}
         repositories={repositories}
         hideTitle={true}
       />
