@@ -13,8 +13,6 @@ import {
   TbX,
 } from 'react-icons/tb';
 
-import IrminCore from '@/lib/core';
-
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import SchemaViewer from '@/components/repository/objects/SchemaViewer';
@@ -22,12 +20,11 @@ import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
-import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { useStoredQueries } from '@/hooks/useStoredQueries';
 import { useWorkspaceSchema } from '@/hooks/useWorkspaceSchema';
 
 import { StoredQuery } from '@/types/core/StoredQuery';
@@ -39,21 +36,17 @@ import UpdateQueryModal from './UpdateQueryModal';
  * Queries section
  *
  * Provides a section to edit queries and view query results
- *
- * @param props - The component props
- * @param props.initialQueries - The saved queries of the workspace
  */
-export default function QueriesSection({
-  initialQueries,
-}: {
-  initialQueries: StoredQuery[];
-}) {
-  const { getToken } = useIAM();
-  const { dict, locale } = useLocale();
-  const { workspaceSlug } = useWorkspaceContext();
-  const { irminModal, irminAlert, irminConfirm } = usePopup();
+export default function QueriesSection() {
+  const { dict } = useLocale();
+  const { irminModal, irminConfirm } = usePopup();
   const workspaceSchema = useWorkspaceSchema();
-  const [queries, setQueries] = useState<StoredQuery[]>(initialQueries);
+  const {
+    storedQueriesQuery,
+    createStoredQueryMutation,
+    updateStoredQueryMutation,
+    deleteStoredQueryMutation,
+  } = useStoredQueries();
   const {
     executeSql,
     cleanup,
@@ -87,24 +80,13 @@ export default function QueriesSection({
         dict.query.newQuery,
         <CreateSavedQueryModal
           createQuery={async (queryName: string, queryDescription: string) => {
-            const token = await getToken();
-            const irminCore = new IrminCore(locale, token);
-            const res = await irminCore.queryService.createStoredQuery({
-              workspace: workspaceSlug,
+            const res = await createStoredQueryMutation.mutateAsync({
               name: queryName,
               description: queryDescription,
               sql: editorContent,
             });
-            if (!res.data) {
-              irminAlert('error', res.message ?? 'Failed to create query');
-              return;
-            }
-            irminAlert('success', res.message ?? 'Query created successfully');
+            if (!res.data) return;
             irminModal.close();
-            setQueries((prev) => {
-              if (!res.data) return prev;
-              return [...prev, res.data];
-            });
             setSelectedQuery(res.data);
             setEdited(false);
           }}
@@ -112,15 +94,7 @@ export default function QueriesSection({
         () => irminModal.close()
       );
     },
-    [
-      irminModal,
-      workspaceSlug,
-      dict,
-      irminAlert,
-      editorContent,
-      getToken,
-      locale,
-    ]
+    [irminModal, dict, editorContent, createStoredQueryMutation]
   );
 
   /**
@@ -128,36 +102,17 @@ export default function QueriesSection({
    */
   const handleSaveQuery = useMemo(
     () => async () => {
-      try {
-        if (!selectedQuery) throw new Error('No query selected');
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const res = await irminCore.queryService.updateStoredQuery({
-          workspace: workspaceSlug,
-          queryID: selectedQuery.id,
-          name: selectedQuery.name,
-          description: selectedQuery.description,
-          sql: editorContent,
-        });
-        if (!res.data) throw new Error(res.message ?? 'Query not found');
-        setQueries((prev) => {
-          if (!res.data) return prev;
-          const idx = prev.findIndex((q) => q.id === selectedQuery?.id);
-          if (idx === -1) return prev;
-          prev[idx] = res.data;
-          return [...prev];
-        });
-        setEdited(false);
-        irminAlert('success', res.message ?? 'Query updated successfully');
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error).message ?? 'Failed to update query'
-        );
-        console.error(error);
-      }
+      if (!selectedQuery) return;
+      const res = await updateStoredQueryMutation.mutateAsync({
+        id: selectedQuery.id,
+        name: selectedQuery.name,
+        description: selectedQuery.description,
+        sql: editorContent,
+      });
+      if (!res.data) return;
+      setEdited(false);
     },
-    [selectedQuery, workspaceSlug, editorContent, irminAlert, getToken, locale]
+    [selectedQuery, editorContent, updateStoredQueryMutation]
   );
 
   /**
@@ -185,53 +140,21 @@ export default function QueriesSection({
           currentName={selectedQuery.name}
           currentDescription={selectedQuery.description}
           updateQuery={async (queryName: string, queryDescription: string) => {
-            try {
-              const token = await getToken();
-              const irminCore = new IrminCore(locale, token);
-              const res = await irminCore.queryService.updateStoredQuery({
-                workspace: workspaceSlug,
-                queryID: selectedQuery.id,
-                name: queryName,
-                description: queryDescription,
-                sql: editorContent,
-              });
-              if (!res.data) throw new Error(res.message ?? 'Query not found');
-              setQueries((prev) => {
-                if (!res.data) return prev;
-                const idx = prev.findIndex((q) => q.id === selectedQuery?.id);
-                if (idx === -1) return prev;
-                prev[idx] = res.data;
-                return [...prev];
-              });
-              setEdited(false);
-              irminAlert(
-                'success',
-                res.message ?? 'Query updated successfully'
-              );
-              irminModal.close();
-            } catch (error) {
-              irminAlert(
-                'error',
-                (error as Error).message ?? 'Failed to update query'
-              );
-              console.error(error);
-              irminModal.close();
-            }
+            const res = await updateStoredQueryMutation.mutateAsync({
+              id: selectedQuery.id,
+              name: queryName,
+              description: queryDescription,
+              sql: editorContent,
+            });
+            if (!res.data) return;
+            setEdited(false);
+            irminModal.close();
           }}
         />,
         () => irminModal.close()
       );
     },
-    [
-      irminModal,
-      dict,
-      workspaceSlug,
-      irminAlert,
-      selectedQuery,
-      editorContent,
-      getToken,
-      locale,
-    ]
+    [irminModal, dict, selectedQuery, editorContent, updateStoredQueryMutation]
   );
 
   /**
@@ -245,34 +168,12 @@ export default function QueriesSection({
         `${dict.common.areYouSureYouWantToDelete}: ${selectedQuery.name}`
       );
       if (!confirmed) return;
-      try {
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const res = await irminCore.queryService.deleteStoredQuery({
-          workspace: workspaceSlug,
-          queryID: selectedQuery.id,
-        });
-        setQueries((prev) => prev.filter((q) => q.id !== selectedQuery.id));
-        setSelectedQuery(null);
-        setEdited(false);
-        irminAlert('success', res.message ?? 'Query deleted successfully');
-      } catch (error) {
-        irminAlert(
-          'error',
-          (error as Error).message ?? 'Failed to delete query'
-        );
-        console.error(error);
-      }
+      const res = await deleteStoredQueryMutation.mutateAsync(selectedQuery.id);
+      if (!res.data) return;
+      setSelectedQuery(null);
+      setEdited(false);
     },
-    [
-      selectedQuery,
-      dict,
-      workspaceSlug,
-      irminAlert,
-      irminConfirm,
-      getToken,
-      locale,
-    ]
+    [selectedQuery, deleteStoredQueryMutation, dict, irminConfirm]
   );
 
   /**
@@ -301,7 +202,10 @@ export default function QueriesSection({
               {dict.query.newQuery}
             </Button>
           </div>
-          {queries.map((query, idx) => (
+          {storedQueriesQuery.isLoading && (
+            <LoadingSkeleton className='h-80 w-full' />
+          )}
+          {storedQueriesQuery.data?.data?.map((query, idx) => (
             <div
               className={`border-border hover:bg-card flex cursor-pointer flex-row items-center justify-between gap-2 border-b p-4 transition-all ${selectedQuery?.id === query.id ? 'bg-card' : ''} `}
               key={`query-${idx}`}

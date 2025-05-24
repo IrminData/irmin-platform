@@ -1,21 +1,13 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from 'react';
-
-import IrminCore from '@/lib/core';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 import { usePopup } from '@/context/PopupContext';
-import { useWorkspaceContext } from '@/context/WorkspaceContext';
+
+import { useIrminSQL } from '@/hooks/useIrminSQL';
 
 import { QueryResult } from '@/types/core/StoredQuery';
 
-import { useIAM } from './IAMContext';
 import { useLocale } from './LocaleContext';
 
 /**
@@ -39,17 +31,11 @@ const QueryContext = createContext<QueryContextProps | undefined>(undefined);
  * @returns Query context provider
  */
 export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
-  const { getToken } = useIAM();
   const { irminAlert } = usePopup();
-  const { dict, locale } = useLocale();
-  const { workspaceSlug } = useWorkspaceContext();
+  const { dict } = useLocale();
 
-  // Query state
-  const [loading, setLoading] = useState<boolean>(false);
+  const { executeSQLMutation } = useIrminSQL();
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
-
-  // Flag to prevent multiple script executions at the same time
-  const executing = useRef(false);
 
   /**
    * Execute a script
@@ -58,17 +44,9 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const handleExecuteSql = useCallback(
     async (content: string) => {
-      if (executing.current) return;
-      executing.current = true;
-      setLoading(true);
       try {
         irminAlert('info', dict.query.queryExecutionStarted);
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const res = await irminCore.queryService.executeSQL({
-          workspace: workspaceSlug,
-          sql: content,
-        });
+        const res = await executeSQLMutation.mutateAsync(content);
         if (res.message) irminAlert('info', res.message);
         setQueryResult(res.data ?? null);
       } catch (error) {
@@ -78,25 +56,21 @@ export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
           (error as Error)?.message ?? 'Failed to execute SQL query'
         );
       }
-      setLoading(false);
-      executing.current = false;
     },
-    [irminAlert, dict, workspaceSlug, getToken, locale]
+    [irminAlert, dict, executeSQLMutation]
   );
 
   /**
    * Cleanup function to reset the query state
    */
   const cleanup = useCallback(() => {
-    setLoading(false);
     setQueryResult(null);
-    executing.current = false;
   }, []);
 
   return (
     <QueryContext.Provider
       value={{
-        loading,
+        loading: executeSQLMutation.isPending,
         result: queryResult,
         executeSql: handleExecuteSql,
         cleanup,
