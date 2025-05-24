@@ -1,8 +1,5 @@
 import { Metadata } from 'next';
 
-import { getSystemTokens } from '@/lib/actions/credentials';
-import { getToken } from '@/lib/getToken';
-
 import TokensSection from '@/components/user/TokensSection';
 
 /**
@@ -17,7 +14,5 @@ export const metadata: Metadata = {
  * User tokens page
  */
 export default async function TokensPage() {
-  const token = await getToken();
-  const initialTokens = await getSystemTokens({ token });
-  return <TokensSection initialTokens={initialTokens.data ?? []} />;
+  return <TokensSection />;
 }

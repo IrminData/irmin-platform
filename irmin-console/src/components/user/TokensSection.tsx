@@ -18,9 +18,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { useSystemTokens } from '@/hooks/useSystemTokens';
-
-import { APIToken } from '@/types/core/APIToken';
+import { useCredentials } from '@/hooks/useCredentials';
 
 import APITokenDisplay from './APITokenDisplay';
 import CreateTokenModalContent from './CreateTokenModalContent';
@@ -29,21 +27,15 @@ import CreateTokenModalContent from './CreateTokenModalContent';
  * User tokens section
  *
  * Displays the user's API tokens, allows one to create new ones and revoke existing ones.
- *
- * @param props - The component props.
- * @param props.initialTokens - The initial tokens to display.
- * @returns {JSX.Element} The tokens section component.
  */
-export default function TokensSection({
-  initialTokens,
-}: {
-  initialTokens: APIToken[];
-}) {
+export default function TokensSection() {
   const { dict, locale } = useLocale();
   const { irminModal } = usePopup();
-  const { tokens, createdToken, createToken, revokeToken } = useSystemTokens({
-    initialTokens,
-  });
+  const {
+    credentialsQuery,
+    createCredentialMutation,
+    revokeCredentialMutation,
+  } = useCredentials();
 
   /**
    * Handle the creation of a new API token.
@@ -53,7 +45,10 @@ export default function TokensSection({
       dict.tokens.createAPIToken,
       <CreateTokenModalContent
         onCreate={async (validFor, name) => {
-          await createToken(validFor, name);
+          await createCredentialMutation.mutateAsync({
+            name,
+            expiry: validFor,
+          });
           irminModal.close();
         }}
         onClose={() => {
@@ -61,7 +56,7 @@ export default function TokensSection({
         }}
       />
     );
-  }, [irminModal, dict, createToken]);
+  }, [irminModal, dict, createCredentialMutation]);
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
@@ -71,12 +66,13 @@ export default function TokensSection({
           {dict.tokens.createAPIToken}
         </Button>
       </div>
-      {createdToken && createToken.length > 0 && (
-        <div className='pt-4 pb-8'>
-          <APITokenDisplay token={createdToken} />
-        </div>
-      )}
-      {tokens.length === 0 ? (
+      {createCredentialMutation.isSuccess &&
+        createCredentialMutation.data?.data?.token && (
+          <div className='pt-4 pb-8'>
+            <APITokenDisplay token={createCredentialMutation.data.data.token} />
+          </div>
+        )}
+      {credentialsQuery.data?.data?.length === 0 ? (
         <div className='py-12 text-center text-lg text-gray-500 lg:text-2xl dark:text-gray-400'>
           {dict.tokens.noTokens}
         </div>
@@ -96,7 +92,7 @@ export default function TokensSection({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tokens.map((token, idx) => (
+            {credentialsQuery.data?.data?.map((token, idx) => (
               <TableRow
                 key={`user-api-token-${token.id}-${idx}`}
                 className='h-14 border-b dark:border-gray-800'
@@ -115,7 +111,9 @@ export default function TokensSection({
                       aria-label='Revoke token'
                       icon={<TbTrash size={14} />}
                       tooltip={dict.tokens.revokeToken}
-                      onClick={() => revokeToken(token)}
+                      onClick={() =>
+                        revokeCredentialMutation.mutateAsync(token.id)
+                      }
                     />
                   </div>
                 </TableCell>
