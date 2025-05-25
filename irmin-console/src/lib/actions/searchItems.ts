@@ -1,11 +1,7 @@
 'use server';
 
-import { getConnections } from '@/lib/actions/connections';
-import { getRepositories } from '@/lib/actions/repositories';
-import { getUsers } from '@/lib/actions/users';
-import { getWorkflows } from '@/lib/actions/workflows';
-import { getWorkspaces } from '@/lib/actions/workspaces';
 import { getToken } from '@/lib/getToken';
+import { initCore } from '@/lib/initCore';
 import { initDict } from '@/lib/initDict';
 
 import {
@@ -26,13 +22,13 @@ export async function generateSearchItems({
       token = await getToken();
     }
 
+    const irminCore = await initCore(token);
+
     const newItems: ConsoleSearchItem[] = [];
 
     // Add workspaces
-    const { data: workspaces } = await getWorkspaces({ token }).catch(() => ({
-      data: [],
-    }));
-    workspaces?.forEach((ws) => {
+    const workspaces = await irminCore.workspaceService.fetchWorkspaces();
+    workspaces.data?.forEach((ws) => {
       newItems.push({
         title: ws.name,
         description: ws.description ?? '-',
@@ -104,10 +100,10 @@ export async function generateSearchItems({
     if (workspace) {
       // Fetch workspace-dependent items
       const [connections, users, workflows, repositories] = await Promise.all([
-        getConnections({ workspace, token }).catch(() => ({ data: [] })),
-        getUsers({ workspace, token }).catch(() => ({ data: [] })),
-        getWorkflows({ workspace, token }).catch(() => ({ data: [] })),
-        getRepositories({ workspace, token }).catch(() => ({ data: [] })),
+        irminCore.connectionService.fetchConnections({ workspace }),
+        irminCore.userService.fetchWorkspaceUsers({ workspace }),
+        irminCore.workflowService.fetchWorkflows({ workspace }),
+        irminCore.repositoryService.fetchRepositories({ workspace }),
       ]);
 
       // Add workspace-dependent static Irmin items
