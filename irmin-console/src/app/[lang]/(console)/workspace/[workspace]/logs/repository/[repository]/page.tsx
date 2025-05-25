@@ -27,7 +27,7 @@ export default function RepositoryLogsPage() {
     <LogsSection
       repository={repositoryQuery.data.data}
       logsForType='repository'
-      logsFor={repositoryQuery.data.data.id}
+      logsFor={repositoryQuery.data.data.slug}
       title={dict.logs.repositoryLogs}
     />
   );

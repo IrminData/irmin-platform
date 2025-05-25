@@ -2648,12 +2648,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/eslint-plugin-next@npm:15.3.2":
-  version: 15.3.2
-  resolution: "@next/eslint-plugin-next@npm:15.3.2"
+"@next/eslint-plugin-next@npm:15.4.0-canary.51":
+  version: 15.4.0-canary.51
+  resolution: "@next/eslint-plugin-next@npm:15.4.0-canary.51"
   dependencies:
     fast-glob: "npm:3.3.1"
-  checksum: 10c0/b03e512c275d33f4159522a66d4aa56f60dbf8f2dbfca6db9dcb5ce4c51ab701d8b28d719499d5728913b1ed71f76a93d770797670d04ca525ea318a32aa8fab
+  checksum: 10c0/15657d9b2d7a91bd88d7640cfa84ffcae8d5644db2e82e5948efe973dbfd5ee802a2f9a1e912099d4b327736e516187da1ba3cda863a04d305417ebc424a4d41
   languageName: node
   linkType: hard
 
@@ -7467,11 +7467,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:15.3.2":
-  version: 15.3.2
-  resolution: "eslint-config-next@npm:15.3.2"
+"eslint-config-next@npm:15.4.0-canary.51":
+  version: 15.4.0-canary.51
+  resolution: "eslint-config-next@npm:15.4.0-canary.51"
   dependencies:
-    "@next/eslint-plugin-next": "npm:15.3.2"
+    "@next/eslint-plugin-next": "npm:15.4.0-canary.51"
     "@rushstack/eslint-patch": "npm:^1.10.3"
     "@typescript-eslint/eslint-plugin": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
     "@typescript-eslint/parser": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
@@ -7487,7 +7487,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/91cd6ba638d46c494f5cddc592c5705e342d5c459bc754b50bbf6d2047dc50e57fb7c907f3865fa92312d2df682900c102105b82a90d04cbd2519eb67d9ed172
+  checksum: 10c0/c8b44f557a105a71441f94497016e5942dafcf5bacdc75f430b25970b95b6d2b873a6960ce9b3b0fae5190ddaf7f5d5654a7ebd0f6d67531ad6bd23b6d9b648a
   languageName: node
   linkType: hard
 
@@ -8630,7 +8630,7 @@ __metadata:
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.27.0"
-    eslint-config-next: "npm:15.3.2"
+    eslint-config-next: "npm:15.4.0-canary.51"
     eslint-config-prettier: "npm:^10.1.5"
     eslint-plugin-react-compiler: "npm:19.1.0-rc.2"
     markdown-to-jsx: "npm:^7.7.6"
