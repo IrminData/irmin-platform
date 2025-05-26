@@ -2648,12 +2648,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/eslint-plugin-next@npm:15.4.0-canary.51":
-  version: 15.4.0-canary.51
-  resolution: "@next/eslint-plugin-next@npm:15.4.0-canary.51"
+"@next/eslint-plugin-next@npm:15.4.0-canary.52":
+  version: 15.4.0-canary.52
+  resolution: "@next/eslint-plugin-next@npm:15.4.0-canary.52"
   dependencies:
     fast-glob: "npm:3.3.1"
-  checksum: 10c0/15657d9b2d7a91bd88d7640cfa84ffcae8d5644db2e82e5948efe973dbfd5ee802a2f9a1e912099d4b327736e516187da1ba3cda863a04d305417ebc424a4d41
+  checksum: 10c0/e7bdb288212d52e6ccc4a5bd779c33a6f88be30a1c80a1bef0d1bb1f67d2de2edcebee3d3e48def36003b422f808c32b6b40a489714f3df8ef47d943934b1c81
   languageName: node
   linkType: hard
 
@@ -4951,21 +4951,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/eslint-plugin-query@npm:^5.74.7":
-  version: 5.74.7
-  resolution: "@tanstack/eslint-plugin-query@npm:5.74.7"
+"@tanstack/eslint-plugin-query@npm:^5.78.0":
+  version: 5.78.0
+  resolution: "@tanstack/eslint-plugin-query@npm:5.78.0"
   dependencies:
     "@typescript-eslint/utils": "npm:^8.18.1"
   peerDependencies:
     eslint: ^8.57.0 || ^9.0.0
-  checksum: 10c0/7f026af15918e0f77e1032c0e53d70fd952d32735b0987a84d0df2b1c6b47ac01773da3812d579c999c398dd677d45400e133a1b3c2979e3f125028743451850
+  checksum: 10c0/b3276f5f365e61866f8e00b19cc096c285760ab25fbbed1663940484eddaf2810f7ce1a1d93f35dffe0e9d9ca40a52ad23322241530b68dd8b32b98dbcd9a4bf
   languageName: node
   linkType: hard
 
-"@tanstack/query-core@npm:5.77.0":
-  version: 5.77.0
-  resolution: "@tanstack/query-core@npm:5.77.0"
-  checksum: 10c0/87827a9d06ca577191ac34eed624bd62634623d08abd65359ba2390394b88b8e0faa332b193f5e9a36de3adb92ef87be3149e9b74ceb407b396c05b84b64939b
+"@tanstack/query-core@npm:5.77.2":
+  version: 5.77.2
+  resolution: "@tanstack/query-core@npm:5.77.2"
+  checksum: 10c0/2c83a23f61443de054250f35f596345d0ed4731b2bf4218f2acbef224255d0d9a1e41547e56ec58db4da5a97942cdd829c5d7c3906fc4a23857dd16f4d4608de
   languageName: node
   linkType: hard
 
@@ -4976,26 +4976,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-query-devtools@npm:^5.77.0":
-  version: 5.77.0
-  resolution: "@tanstack/react-query-devtools@npm:5.77.0"
+"@tanstack/react-query-devtools@npm:^5.77.2":
+  version: 5.77.2
+  resolution: "@tanstack/react-query-devtools@npm:5.77.2"
   dependencies:
     "@tanstack/query-devtools": "npm:5.76.0"
   peerDependencies:
-    "@tanstack/react-query": ^5.77.0
+    "@tanstack/react-query": ^5.77.2
     react: ^18 || ^19
-  checksum: 10c0/43839e0fdd9c6664dbd5b883e04ccb181c2b7019279d2245fd0e4fff5b09e1739d91676b661481fb6f5cf0a8dc768388701dfd7df91489897d53390400bd6d83
+  checksum: 10c0/2a3b3dd55c5dc2fbe631acd79c86e152c7cec202dcd3d2f9a870febd156d1e652c2f824677b5a15d544eba6ec1c95e4b61e3744f4dbd7b6bf6b9810b5e0a05ab
   languageName: node
   linkType: hard
 
-"@tanstack/react-query@npm:^5.77.0":
-  version: 5.77.0
-  resolution: "@tanstack/react-query@npm:5.77.0"
+"@tanstack/react-query@npm:^5.77.2":
+  version: 5.77.2
+  resolution: "@tanstack/react-query@npm:5.77.2"
   dependencies:
-    "@tanstack/query-core": "npm:5.77.0"
+    "@tanstack/query-core": "npm:5.77.2"
   peerDependencies:
     react: ^18 || ^19
-  checksum: 10c0/b59aa3217f95d6d5c731ee4aba6528eca6320aa8bc69ea046f91bdb3feaa1605ae4f707445c09dc8914ce923c4deb6a4cbd8250e30f6b0a109eb09820aebd7a7
+  checksum: 10c0/949d866ca8e1264ab506c7ac5ae11a596103a2f0c5cbf46022a22d256951791e330a8f126011cc6a73831514f889b87de11063d04f14014038375ae5a7ad3556
   languageName: node
   linkType: hard
 
@@ -7467,11 +7467,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:15.4.0-canary.51":
-  version: 15.4.0-canary.51
-  resolution: "eslint-config-next@npm:15.4.0-canary.51"
+"eslint-config-next@npm:15.4.0-canary.52":
+  version: 15.4.0-canary.52
+  resolution: "eslint-config-next@npm:15.4.0-canary.52"
   dependencies:
-    "@next/eslint-plugin-next": "npm:15.4.0-canary.51"
+    "@next/eslint-plugin-next": "npm:15.4.0-canary.52"
     "@rushstack/eslint-patch": "npm:^1.10.3"
     "@typescript-eslint/eslint-plugin": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
     "@typescript-eslint/parser": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
@@ -7487,7 +7487,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/c8b44f557a105a71441f94497016e5942dafcf5bacdc75f430b25970b95b6d2b873a6960ce9b3b0fae5190ddaf7f5d5654a7ebd0f6d67531ad6bd23b6d9b648a
+  checksum: 10c0/37232a7bfa118d2ab113cca8c468f53c1bf65d75a00993adf3df77e9412437ea6aed439e852529b3f93bad886ace3776d46b80adcb0abf61b26163b5f475d999
   languageName: node
   linkType: hard
 
@@ -8609,9 +8609,9 @@ __metadata:
     "@sentry/nextjs": "npm:^9.22.0"
     "@sentry/types": "npm:^9.22.0"
     "@tailwindcss/postcss": "npm:^4.1.7"
-    "@tanstack/eslint-plugin-query": "npm:^5.74.7"
-    "@tanstack/react-query": "npm:^5.77.0"
-    "@tanstack/react-query-devtools": "npm:^5.77.0"
+    "@tanstack/eslint-plugin-query": "npm:^5.78.0"
+    "@tanstack/react-query": "npm:^5.77.2"
+    "@tanstack/react-query-devtools": "npm:^5.77.2"
     "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
     "@types/eslint": "npm:9.6.1"
     "@types/node": "npm:^22.15.21"
@@ -8630,7 +8630,7 @@ __metadata:
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.27.0"
-    eslint-config-next: "npm:15.4.0-canary.51"
+    eslint-config-next: "npm:15.4.0-canary.52"
     eslint-config-prettier: "npm:^10.1.5"
     eslint-plugin-react-compiler: "npm:19.1.0-rc.2"
     markdown-to-jsx: "npm:^7.7.6"
