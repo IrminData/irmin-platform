@@ -2,11 +2,14 @@
 
 import { useCallback } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useUsers } from '@/hooks/useUsers';
 import { useWorkflow } from '@/hooks/useWorkflow';
@@ -34,6 +37,8 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
     transferWorkflowMutation,
     deleteWorkflowMutation,
   } = useWorkflow(workflowID);
+  const router = useRouter();
+  const { workspaceSlug } = useWorkspaceContext();
 
   const handleUpdateWorkflow = useCallback(
     async (data: WorkflowFormValues) => {
@@ -64,6 +69,23 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
       dict,
     ]
   );
+
+  const handleDeleteWorkflow = useCallback(async () => {
+    const confirmed = await irminConfirm(
+      'warning',
+      `${dict.common.areYouSureYouWantToDelete} (${workflowQuery.data?.data?.name})`
+    );
+    if (!confirmed) return;
+    await deleteWorkflowMutation.mutateAsync();
+    router.push(`/workspace/${workspaceSlug}/workflows`);
+  }, [
+    deleteWorkflowMutation,
+    irminConfirm,
+    workflowQuery.data?.data?.name,
+    dict,
+    router,
+    workspaceSlug,
+  ]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<WorkflowFormValues>[] = [
@@ -120,7 +142,8 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
           transferWorkflowMutation.isPending
         }
         fieldConfiguration={fieldConfiguration}
-        deleteItem={deleteWorkflowMutation.mutateAsync}
+        deleteItem={handleDeleteWorkflow}
+        deleteItemLoading={deleteWorkflowMutation.isPending}
         itemName='Workflow'
         submitButtonLabel={dict.workflow.settings.saveChanges}
         deleteButtonLabel={dict.workflow.settings.delete}

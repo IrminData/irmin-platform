@@ -46,6 +46,8 @@ interface SettingsFormProps<T extends FieldValues> {
   fieldConfiguration: FieldConfig<T>[];
   /** The function to call when the delete button is clicked */
   deleteItem?: () => void;
+  /** Whether the delete item is loading */
+  deleteItemLoading?: boolean;
   /** The name of the item being edited */
   itemName?: string;
   /** The message to display in the danger zone */
@@ -67,6 +69,7 @@ export default function SettingsForm<T extends FieldValues>({
   submitting,
   fieldConfiguration,
   deleteItem,
+  deleteItemLoading,
   itemName = 'Item',
   dangerZoneMessage = 'This action cannot be undone. Deleting this item will remove it permanently.',
   submitButtonLabel,
@@ -164,6 +167,7 @@ export default function SettingsForm<T extends FieldValues>({
               size='sm'
               variant='secondary'
               onClick={deleteItem}
+              loading={deleteItemLoading}
             >
               {deleteButtonLabel ?? `Delete ${itemName}`}
             </Button>

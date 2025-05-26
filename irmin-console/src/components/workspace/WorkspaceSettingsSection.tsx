@@ -74,6 +74,7 @@ const WorkspaceSettingsSection = () => {
       submitting={loading}
       fieldConfiguration={fieldConfiguration}
       deleteItem={confirmDeleteWorkspace}
+      deleteItemLoading={deleteMutation?.isPending}
       itemName={dict.consoleNavigation.workspace}
       submitButtonLabel={dict.workspace.saveChanges}
       deleteButtonLabel={dict.workspace.deleteWorkspace}

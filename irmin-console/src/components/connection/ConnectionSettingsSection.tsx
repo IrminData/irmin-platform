@@ -2,10 +2,14 @@
 
 import { useCallback } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useUsers } from '@/hooks/useUsers';
 
@@ -26,12 +30,15 @@ interface ConnectionFormValues {
 const ConnectionSettingsSection = () => {
   const { dict } = useLocale();
   const { usersQuery } = useUsers();
+  const { irminConfirm } = usePopup();
+  const router = useRouter();
   const {
     connectionQuery,
     transferConnectionMutation,
     updateConnectionMutation,
     deleteConnectionMutation,
   } = useConnectionContext();
+  const { workspaceSlug } = useWorkspaceContext();
 
   const handleUpdateConnection = useCallback(
     async (data: ConnectionFormValues) => {
@@ -54,6 +61,23 @@ const ConnectionSettingsSection = () => {
       updateConnectionMutation,
     ]
   );
+
+  const handleDeleteConnection = useCallback(async () => {
+    const confirmed = await irminConfirm(
+      'warning',
+      `${dict.common.areYouSureYouWantToDelete} (${connectionQuery.data?.data?.name})`
+    );
+    if (!confirmed) return;
+    await deleteConnectionMutation.mutateAsync();
+    router.push(`/workspace/${workspaceSlug}/connections`);
+  }, [
+    deleteConnectionMutation,
+    irminConfirm,
+    connectionQuery.data?.data?.name,
+    dict,
+    router,
+    workspaceSlug,
+  ]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<ConnectionFormValues>[] = [
@@ -109,7 +133,8 @@ const ConnectionSettingsSection = () => {
           transferConnectionMutation.isPending
         }
         fieldConfiguration={fieldConfiguration}
-        deleteItem={deleteConnectionMutation.mutate}
+        deleteItem={handleDeleteConnection}
+        deleteItemLoading={deleteConnectionMutation.isPending}
         itemName='Connection'
         submitButtonLabel={dict.connections.settings.saveChanges}
         deleteButtonLabel={dict.connections.settings.delete}

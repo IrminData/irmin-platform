@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -24,8 +26,9 @@ import ImmutableWarning from './ImmutableWarning';
 const RepositorySettingsSection = () => {
   const { dict } = useLocale();
   const { irminConfirm } = usePopup();
-  const { workspaceQuery } = useWorkspaceContext();
+  const { workspaceQuery, workspaceSlug } = useWorkspaceContext();
   const { repository } = useRepositoryContext();
+  const router = useRouter();
   const {
     deleteRepositoryMutation,
     transferRepositoryMutation,
@@ -70,10 +73,17 @@ const RepositorySettingsSection = () => {
       'warning',
       `${dict.common.areYouSureYouWantToDelete} (${repository.name})`
     );
-    if (confirmed) {
-      await deleteRepositoryMutation.mutateAsync();
-    }
-  }, [repository, deleteRepositoryMutation, irminConfirm, dict]);
+    if (!confirmed) return;
+    await deleteRepositoryMutation.mutateAsync();
+    router.push(`/workspace/${workspaceSlug}/repositories`);
+  }, [
+    repository,
+    deleteRepositoryMutation,
+    irminConfirm,
+    dict,
+    router,
+    workspaceSlug,
+  ]);
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<{
@@ -124,6 +134,7 @@ const RepositorySettingsSection = () => {
         submitting={submitting}
         fieldConfiguration={fieldConfiguration}
         deleteItem={handleDeleteRepository}
+        deleteItemLoading={deleteRepositoryMutation.isPending}
         itemName='Repository'
         submitButtonLabel={dict.common.save}
         deleteButtonLabel={dict.repository.settings.deleteRepository}
