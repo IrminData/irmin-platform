@@ -151,7 +151,7 @@ func (s *ComputeSandbox) createTemporaryToken(tempDirName string, user db.User) 
 	apiToken := &db.APIToken{
 		Name:      tempDirName,
 		Token:     fmt.Sprintf("cred_%s", token),
-		ExpiresAt: time.Now().Add(tokenExpiryDuration).UTC(),
+		ExpiresAt: time.Now().Add(TokenExpiryDuration).UTC(),
 		UserID:    user.ID,
 		Hidden:    true,
 	}

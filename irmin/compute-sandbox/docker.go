@@ -1,9 +1,10 @@
 package sandbox
 
 import (
-	"fmt" // Make sure utils.ParseBytes converts e.g. "9.602MiB" to bytes.
+	"fmt"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,6 +19,118 @@ type ExecutionResult struct {
 	ResultFiles          map[string][]byte    `json:"result_files"`           // Map of result files and their contents
 }
 
+// buildDockerRunCommand constructs the docker run command arguments based on the executable type.
+func (s *ComputeSandbox) buildDockerRunCommand(tmpDir, executable, executableType, apiKey, apiURL string) []string {
+	args := []string{"run", "-d",
+		"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
+		"-w", "/usr/src/app",
+	}
+
+	switch executableType {
+	case "python":
+		args = append(args,
+			fmt.Sprintf("python:%s", LatestPythonVersion),
+			"python",
+			executable,
+			"--api-key", apiKey,
+			"--api-url", apiURL,
+		)
+	case "go":
+		args = append(args,
+			fmt.Sprintf("golang:%s", LatestGoVersion),
+			"go", "run",
+			executable,
+			"--api-key", apiKey,
+			"--api-url", apiURL,
+		)
+	case "node":
+		args = append(args,
+			fmt.Sprintf("node:%s", LatestNodeVersion),
+			"node",
+			executable,
+			"--api-key", apiKey,
+			"--api-url", apiURL,
+		)
+	}
+	return args
+}
+
+// collectContainerMetrics starts a container and collects its metrics.
+func (s *ComputeSandbox) collectContainerMetrics(
+	tmpDir, executable, executableType, apiKey, apiURL string,
+) (string, ResourceUsageMetrics) {
+	containerIDChan := make(chan string, 1)
+	doneChan := make(chan struct{})
+
+	go func() {
+		args := s.buildDockerRunCommand(tmpDir, executable, executableType, apiKey, apiURL)
+		if len(args) == 0 {
+			close(doneChan)
+			return
+		}
+
+		cmd := exec.Command("docker", args...)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			s.logger.Error("docker run failed", "error", err, "output", string(output))
+			close(doneChan)
+			return
+		}
+
+		containerID := strings.TrimSpace(string(output))
+		containerIDChan <- containerID
+	}()
+
+	select {
+	case containerID := <-containerIDChan:
+		if containerID == "" {
+			return "", ResourceUsageMetrics{}
+		}
+		metrics := s.CollectMetricsFromContainer(containerID)
+		return containerID, metrics
+	case <-doneChan:
+		return "", ResourceUsageMetrics{}
+	}
+}
+
+// cleanupContainer removes the container and logs any errors.
+func (s *ComputeSandbox) cleanupContainer(containerID string) {
+	if containerID == "" {
+		return
+	}
+
+	rmCmd := exec.Command("docker", "rm", containerID)
+	if err := rmCmd.Run(); err != nil {
+		s.logger.Error("Error removing container", "error", err)
+	}
+}
+
+// getContainerLogs retrieves logs and exit code from the container.
+func (s *ComputeSandbox) getContainerLogs(containerID string) (string, error) {
+	if containerID == "" {
+		return "", nil
+	}
+
+	logsCmd := exec.Command("docker", "logs", containerID)
+	logsOutput, err := logsCmd.CombinedOutput()
+	if err != nil {
+		return string(logsOutput), err
+	}
+
+	// Log the exit code for debugging
+
+	waitCmd := exec.Command("docker", "wait", containerID)
+	if waitOutput, waitErr := waitCmd.CombinedOutput(); waitErr == nil {
+		if exitCode, atoiErr := strconv.Atoi(strings.TrimSpace(string(waitOutput))); atoiErr == nil && exitCode != 0 {
+			s.logger.Info("Container completed with non-zero exit code",
+				"container", containerID,
+				"exit_code", exitCode)
+		}
+	}
+
+	return string(logsOutput), nil
+}
+
 // runInDocker executes the provided executable code using a Docker container,
 // continuously collects resource usage statistics (every 10 milliseconds) while the container is running,
 // and then returns the container logs along with arrays of raw metric samples.
@@ -30,79 +143,43 @@ func (s *ComputeSandbox) runInDocker(
 	executable, tmpDir, executableType, apiKey, apiURL string,
 ) (ExecutionResult, error) {
 	var result ExecutionResult
-
-	// Record the start time.
 	result.StartTime = time.Now()
 
-	// build the docker run command
-	args := []string{"run", "-d",
-		"-v", fmt.Sprintf("%s:/usr/src/app", tmpDir),
-		"-w", "/usr/src/app",
-	}
-	switch executableType {
-	case "python":
-		args = append(args, "python:latest", "python", executable, "--api-key", apiKey, "--api-url", apiURL)
-	case "go":
-		args = append(args, "golang:latest", "go", "run", executable, "--api-key", apiKey, "--api-url", apiURL)
-	case "node":
-		args = append(args, "node:latest", "node", executable, "--api-key", apiKey, "--api-url", apiURL)
-	default:
-		return result, fmt.Errorf("unsupported executable type: %s", executableType)
-	}
-
-	// run the docker command and capture both stdout and stderr
-	cmd := exec.Command("docker", args...)
-	output, runCmdCombinedOutputErr := cmd.CombinedOutput()
-	if runCmdCombinedOutputErr != nil {
-		// include the raw Docker output to aid troubleshooting
-		return result, fmt.Errorf("docker run failed: %w, %s", runCmdCombinedOutputErr, string(output))
-	}
-
-	containerID := strings.TrimSpace(string(output))
+	// Start container and collect metrics
+	containerID, metrics := s.collectContainerMetrics(tmpDir, executable, executableType, apiKey, apiURL)
 	result.ContainerID = containerID
-	defer func() {
-		rmCmd := exec.Command("docker", "rm", containerID)
-		if rmCmdErr := rmCmd.Run(); rmCmdErr != nil {
-			s.logger.Error("Error removing container", "error", rmCmdErr)
+	result.ResourceUsageMetrics = metrics
+
+	// Ensure container cleanup
+	if containerID != "" {
+		defer s.cleanupContainer(containerID)
+	}
+
+	// Get container logs
+	logs, err := s.getContainerLogs(containerID)
+	if err != nil {
+		result.Logs = logs
+		return result, err
+	}
+	result.Logs = logs
+
+	// Process result files if logs exist
+	if logs != "" {
+		resultFiles := s.parseResultFiles(logs)
+		resultFileData := make(map[string][]byte)
+
+		for _, fileName := range resultFiles {
+			containerFilePath := filepath.Join("/usr/src/app", fileName)
+			if data, readResultErr := s.readResultFileFromContainer(containerID, containerFilePath); readResultErr == nil {
+				resultFileData[fileName] = data
+			}
 		}
-	}()
 
-	// Collect resource usage metrics while the container is running.
-	result.ResourceUsageMetrics = s.CollectMetricsFromContainer(containerID)
+		if len(resultFileData) > 0 {
+			result.ResultFiles = resultFileData
+		}
+	}
 
-	// Record the end time.
 	result.EndTime = time.Now()
-
-	// Retrieve the container logs.
-	logsCmd := exec.Command("docker", "logs", containerID)
-	logsOutput, logsCmdErr := logsCmd.CombinedOutput()
-	if logsCmdErr != nil {
-		result.Logs = string(logsOutput)
-		return result, logsCmdErr
-	}
-	result.Logs = string(logsOutput)
-
-	// Parse all result files from logs.
-	resultFiles := s.parseResultFiles(string(logsOutput))
-
-	// Create a map to store multiple result files.
-	resultFileData := make(map[string][]byte)
-
-	// Process each result file.
-	// The file is read from the container's file system rather than the local file system.
-	for _, fileName := range resultFiles {
-		// Construct the container's path to the file, using the working directory from the docker run command.
-		containerFilePath := filepath.Join("/usr/src/app", fileName)
-		data, readResultFileFromContainerErr := s.readResultFileFromContainer(containerID, containerFilePath)
-		if readResultFileFromContainerErr == nil {
-			resultFileData[fileName] = data
-		}
-	}
-
-	// Only set ResultFiles if we have results.
-	if len(resultFileData) > 0 {
-		result.ResultFiles = resultFileData
-	}
-
 	return result, nil
 }

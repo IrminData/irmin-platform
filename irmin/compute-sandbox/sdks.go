@@ -15,6 +15,14 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, destDir string, proje
 	if cmdRunErr := cmd.Run(); cmdRunErr != nil {
 		return fmt.Errorf("failed to initialize go module: %w", cmdRunErr)
 	}
+
+	// Set the Go version in go.mod
+	cmd = exec.Command("go", "mod", "edit", "-go="+LatestGoVersion)
+	cmd.Dir = destDir
+	if cmdRunErr := cmd.Run(); cmdRunErr != nil {
+		return fmt.Errorf("failed to set go version: %w", cmdRunErr)
+	}
+
 	// Prepare the SDK installation command.
 	cmd = exec.Command(
 		"go",

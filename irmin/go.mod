@@ -2,7 +2,7 @@ module irmin-api
 
 go 1.24
 
-toolchain go1.24.1
+toolchain go1.24.3
 
 require (
 	github.com/IrminData/irmin-sdk-go v0.0.0-20250519163544-d6e0fbe484c7
