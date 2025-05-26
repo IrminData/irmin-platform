@@ -133,18 +133,15 @@ func (c *Client) CreateRepository(
 		DefaultBranch:    defaultBranch,
 		ReadOnly:         isImmutable,
 	}
-	lakefsRepository, createRepositoryErr := c.LakeFSClient.CreateRepository(false, repositoryCreateRequest)
-	if createRepositoryErr != nil {
-		return nil, fmt.Errorf("failed to create repository: %w", createRepositoryErr)
+	lakefsRepository, err := c.LakeFSClient.CreateRepository(false, repositoryCreateRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
 
 	// Create the default lakefs actions
-	_, configureRepositoryWebhookNotificationsErr := c.ConfigureRepositoryWebhookNotifications(lakefsRepository)
-	if configureRepositoryWebhookNotificationsErr != nil {
-		return nil, fmt.Errorf(
-			"failed to configure repository webhook notifications: %w",
-			configureRepositoryWebhookNotificationsErr,
-		)
+	_, err = c.ConfigureRepositoryWebhookNotifications(lakefsRepository)
+	if err != nil {
+		c.Logger.Warn("failed to configure repository webhook notifications", "error", err)
 	}
 
 	// Create garbage collection rules.
@@ -161,12 +158,12 @@ func (c *Client) CreateRepository(
 		}
 	}
 	if *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
-		setGarbageCollectionRulesErr := c.LakeFSClient.SetGarbageCollectionRules(
+		setGCRulesErr := c.LakeFSClient.SetGarbageCollectionRules(
 			lakeFSRepositoryName,
 			garbageCollectionRules,
 		)
-		if setGarbageCollectionRulesErr != nil {
-			return nil, fmt.Errorf("failed to set garbage collection rules: %w", setGarbageCollectionRulesErr)
+		if setGCRulesErr != nil {
+			return nil, fmt.Errorf("failed to set garbage collection rules: %w", setGCRulesErr)
 		}
 	}
 
@@ -218,7 +215,7 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
 		lakefsRepository.DefaultBranch,
 		"_lakefs_actions/system-webhook.yaml",
 		bytes.NewReader([]byte(defaultActions)),
-		false,
+		true,
 	)
 	if uploadObjectErr != nil {
 		return nil, fmt.Errorf("failed to upload default lakefs actions file: %w", uploadObjectErr)
@@ -230,7 +227,10 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
 		lakefsRepository.DefaultBranch,
 		"",
 		lakefs.CommitCreateRequest{
-			Message:    "Configure repository webhook notifications",
+			Message: "Configure repository webhook notifications",
+			Metadata: map[string]string{
+				"author": "system",
+			},
 			Date:       time.Now().Unix(),
 			AllowEmpty: false,
 		},

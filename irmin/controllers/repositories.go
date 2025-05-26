@@ -292,11 +292,12 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
+	// Parse the request body - all fields are optional during update
 	fields, parseFormFieldsErr := utils.ParseFormFields(
 		c,
-		[]string{"name"},
+		nil,
 		[]string{
+			"name",
 			"description",
 			"documentation",
 			"is_immutable",
@@ -311,20 +312,26 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Determine if the repository should be immutable
-	isImmutable := repository.IsImmutable
+	// Only update fields that were provided
+	if fields["name"] != "" {
+		repository.Name = fields["name"]
+	}
+	if fields["description"] != "" {
+		repository.Description = fields["description"]
+	}
+	if fields["documentation"] != "" {
+		repository.Documentation = fields["documentation"]
+	}
+
+	// Handle is_immutable separately since it's a boolean
 	switch fields["is_immutable"] {
 	case trueString:
-		isImmutable = true
+		repository.IsImmutable = true
 	case falseString:
-		isImmutable = false
+		repository.IsImmutable = false
 	}
 
 	// Update the repository in the database
-	repository.Name = fields["name"]
-	repository.Description = fields["description"]
-	repository.Documentation = fields["documentation"]
-	repository.IsImmutable = isImmutable
 	if updateRepositoryErr := api.DB.Save(&repository).Error; updateRepositoryErr != nil {
 		api.Logger.Error("Error updating repository", "error", updateRepositoryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

@@ -176,8 +176,8 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body.
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"name", "description"}, nil)
+	// Parse the request body - all fields are optional during update
+	fields, parseFormFieldsErr := utils.ParseFormFields(c, nil, []string{"name", "description"})
 	if parseFormFieldsErr != nil {
 		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -185,10 +185,14 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Update the workspace.
-	workspace.Name = fields["name"]
-	workspace.Slug = utils.Slugify(fields["name"])
-	workspace.Description = fields["description"]
+	// Only update fields that were provided
+	if fields["name"] != "" {
+		workspace.Name = fields["name"]
+		workspace.Slug = utils.Slugify(fields["name"])
+	}
+	if fields["description"] != "" {
+		workspace.Description = fields["description"]
+	}
 	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
 		api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

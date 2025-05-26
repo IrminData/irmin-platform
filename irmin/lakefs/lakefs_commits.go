@@ -21,7 +21,7 @@ type Commit struct {
 // CommitCreateRequest represents the request payload to create a commit.
 type CommitCreateRequest struct {
 	Message    string            `json:"message"`
-	Metadata   map[string]string `json:"metadata"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
 	Date       int64             `json:"date,omitempty"`        // Set date to override creation date in the commit (Unix Epoch in seconds)
 	AllowEmpty bool              `json:"allow_empty,omitempty"` // Sets whether a commit can contain no changes
 	Force      bool              `json:"force,omitempty"`       // Sets whether to force the commit

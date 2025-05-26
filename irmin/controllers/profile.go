@@ -51,11 +51,11 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse form fields
+	// Parse form fields - all fields are optional during update
 	fields, err := utils.ParseFormFields(
 		c,
-		[]string{"first_name", "last_name", "email", "phone"},
-		[]string{"company"},
+		nil,
+		[]string{"first_name", "last_name", "email", "phone", "company"},
 	)
 	if err != nil {
 		api.Logger.Error("Error parsing form fields", "error", err)
@@ -64,12 +64,24 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Only update fields that were provided
+	if fields["first_name"] != "" {
+		irminUser.FirstName = fields["first_name"]
+	}
+	if fields["last_name"] != "" {
+		irminUser.LastName = fields["last_name"]
+	}
+	if fields["email"] != "" {
+		irminUser.Email = fields["email"]
+	}
+	if fields["phone"] != "" {
+		irminUser.Phone = fields["phone"]
+	}
+	if fields["company"] != "" {
+		irminUser.Company = fields["company"]
+	}
+
 	// Update user in database
-	irminUser.FirstName = fields["first_name"]
-	irminUser.LastName = fields["last_name"]
-	irminUser.Email = fields["email"]
-	irminUser.Phone = fields["phone"]
-	irminUser.Company = fields["company"]
 	if saveErr := api.DB.Save(&irminUser).Error; saveErr != nil {
 		api.Logger.Error("Error updating user in database", "error", saveErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

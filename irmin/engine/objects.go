@@ -11,14 +11,6 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-const (
-	// pathSplitLimit is the number of parts to split a path into when separating
-	// the immediate component from the rest of the path.
-	pathSplitLimit = 2
-)
-
-// TODO: Make sure we hide lakefs actions
-
 // processChildren processes immediate children of a group object and returns them as Irmin objects.
 func processChildren(
 	path string,
@@ -57,6 +49,12 @@ func mapImmediateChildren(
 		}
 		parts := strings.SplitN(rel, "/", pathSplitLimit)
 		name := parts[0]
+
+		// Skip system paths
+		if IsSystemPath(name) {
+			continue
+		}
+
 		if len(parts) > 1 {
 			dirs[name] = struct{}{}
 		} else {
@@ -140,6 +138,11 @@ func getObject(
 	path, lakeFSRepositoryName, ref string,
 	lakefsClient lakefs.Client,
 ) (*irminmodels.Object, error) {
+	// Check if the object is a system path
+	if IsSystemPath(path) {
+		return nil, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
 	// Trim leading and trailing slashes from the path
 	path = strings.Trim(path, "/")
 
@@ -188,6 +191,12 @@ func getObject(
 }
 
 func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.Object, error) {
+	// Check if the object is a system path
+	objectName := utils.ParseObjectDetailsFromPath(path).Name
+	if IsSystemPath(objectName) {
+		return nil, fmt.Errorf("access to system path %s is not allowed", objectName)
+	}
+
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -210,6 +219,11 @@ func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.
 }
 
 func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
+	// Check if the object is a system path
+	if IsSystemPath(path) {
+		return nil, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -232,6 +246,11 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 }
 
 func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminmodels.Object, error) {
+	// Check if the object is a system path
+	if IsSystemPath(path) {
+		return nil, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -274,6 +293,11 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 }
 
 func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
+	// Check if the object is a system path
+	if IsSystemPath(path) {
+		return fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -299,6 +323,11 @@ func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
 }
 
 func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error) {
+	// Check if the object is a system path
+	if IsSystemPath(path) {
+		return nil, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -356,6 +385,11 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 }
 
 func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error) {
+	// Check if the object is a system path
+	if IsSystemPath(path) {
+		return nil, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 
@@ -407,6 +441,11 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 }
 
 func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]irminmodels.Commit, error) {
+	// Check if the object is a system path
+	if IsSystemPath(path) {
+		return nil, fmt.Errorf("access to system path %s is not allowed", path)
+	}
+
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
 

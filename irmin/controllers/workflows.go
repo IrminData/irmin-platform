@@ -116,8 +116,8 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, err := utils.ParseFormFields(c, []string{"name", "description", "documentation"}, nil)
+	// Parse the request body - all fields are optional during update
+	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "documentation"})
 	if err != nil {
 		api.Logger.Error("Error parsing form fields", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -125,10 +125,16 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Update the workflow record.
-	workflow.Name = fields["name"]
-	workflow.Description = fields["description"]
-	workflow.Documentation = fields["documentation"]
+	// Only update fields that were provided
+	if fields["name"] != "" {
+		workflow.Name = fields["name"]
+	}
+	if fields["description"] != "" {
+		workflow.Description = fields["description"]
+	}
+	if fields["documentation"] != "" {
+		workflow.Documentation = fields["documentation"]
+	}
 	if updateWorkflowErr := api.DB.Save(&workflow).Error; updateWorkflowErr != nil {
 		api.Logger.Error("Error updating workflow", "error", updateWorkflowErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

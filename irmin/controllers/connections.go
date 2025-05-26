@@ -163,11 +163,11 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
+	// Parse the request body - all fields are optional during update
 	fields, parseFormFieldsErr := utils.ParseFormFields(
 		c,
+		nil, // No required fields for update
 		[]string{"name", "description", "documentation", "connector"},
-		nil,
 	)
 	if parseFormFieldsErr != nil {
 		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
@@ -180,10 +180,16 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 	details := utils.ParseObjectFormFields(c, "details")
 	settings := utils.ParseObjectFormFields(c, "settings")
 
-	// Update the fields of the connection
-	connection.Name = fields["name"]
-	connection.Description = fields["description"]
-	connection.Documentation = fields["documentation"]
+	// Only update fields that were provided
+	if fields["name"] != "" {
+		connection.Name = fields["name"]
+	}
+	if fields["description"] != "" {
+		connection.Description = fields["description"]
+	}
+	if fields["documentation"] != "" {
+		connection.Documentation = fields["documentation"]
+	}
 	if len(details) > 0 {
 		connection.Details = details
 	}

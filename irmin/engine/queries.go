@@ -66,16 +66,17 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 	})
 }
 
-// processQueryRows processes the rows from a query execution and returns the data and any errors encountered.
-func processQueryRows(rows *sql.Rows) ([]map[string]any, []string, []error) {
+// processQueryRows processes the rows from a query execution and returns the data, logs, columns and any errors encountered.
+func processQueryRows(rows *sql.Rows) ([]map[string]any, []string, []string, []error) {
 	var data []map[string]any
 	var logs []string
+	var columns []string
 	var errors []error
 
 	columns, columnsErr := rows.Columns()
 	if columnsErr != nil {
 		errors = append(errors, fmt.Errorf("failed to retrieve column names: %w", columnsErr))
-		return data, logs, errors
+		return data, logs, columns, errors
 	}
 
 	for rows.Next() {
@@ -95,7 +96,7 @@ func processQueryRows(rows *sql.Rows) ([]map[string]any, []string, []error) {
 		logs = append(logs, e.Error())
 	}
 
-	return data, logs, errors
+	return data, logs, columns, errors
 }
 
 // scanRow scans a single row from the query results into a map.
@@ -134,13 +135,9 @@ func executeQueryWithClient(
 	}
 	defer rows.Close()
 
-	data, logs, errors := processQueryRows(rows)
+	data, logs, columns, errors := processQueryRows(rows)
 	finishedAt := time.Now()
 
-	columns, columnsErr := rows.Columns() // We already handled the error in processQueryRows
-	if columnsErr != nil {
-		return nil, fmt.Errorf("failed to retrieve column names: %w", columnsErr)
-	}
 	return &irminmodels.QueryResult{
 		Columns:    columns,
 		Data:       data,
