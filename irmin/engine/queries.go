@@ -16,7 +16,7 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 	return utils.ParseIrminQuery(query, func(pl *utils.ParsedQueryPlaceholder) (string, error) {
 		workspace := pl.Workspace
 		repository := pl.Repository
-		object := strings.Trim(pl.Object, "/")
+		object := strings.TrimPrefix(pl.Object, "/")
 		ref := pl.Ref
 
 		// If the workspace is not provided in the query, get the workspace from the route.

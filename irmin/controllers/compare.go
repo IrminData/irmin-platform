@@ -124,6 +124,14 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 		})
 	}
 
+	// Delete the cached objects for the target branch in a go routine
+	go func() {
+		dbDeleteErr := api.DB.DeleteObjects(nil, &repository.ID, &baseRef)
+		if dbDeleteErr != nil {
+			api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
+		}
+	}()
+
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeUpdate,

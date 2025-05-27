@@ -902,7 +902,7 @@ func (api *APIControllers) createActionWorkflowable(
 			return nil, getRepoErr
 		}
 
-		path := strings.Trim(inputObject["path"], "/")
+		path := strings.TrimPrefix(inputObject["path"], "/")
 		inputData = append(inputData, db.ActionWorkflowableInput{
 			RepositoryID: repository.ID,
 			Ref:          inputObject["ref"],
@@ -928,7 +928,7 @@ func (api *APIControllers) createActionWorkflowable(
 	if repository != nil {
 		repositoryID := repository.ID
 		branch := workflowableFields["branch"]
-		path := strings.Trim(workflowableFields["path"], "/") + "/"
+		path := strings.TrimPrefix(workflowableFields["path"], "/")
 
 		workflowable = db.ActionWorkflowable{
 			Executable:   workflowableFields["executable"],
@@ -980,7 +980,7 @@ func (api *APIControllers) createPipelineWorkflowable(
 		switch stage["type"] {
 		case "action":
 			newStage.Type = db.PipelineStageTypeAction
-			executable := strings.Trim(stage["executable"], "/")
+			executable := strings.TrimPrefix(stage["executable"], "/")
 			newStage.Executable = &executable
 		case "connection":
 			newStage.Type = db.PipelineStageTypeConnection
@@ -992,8 +992,8 @@ func (api *APIControllers) createPipelineWorkflowable(
 			if getConnectionByIDErr != nil {
 				return nil, getConnectionByIDErr
 			}
-			writePath := strings.TrimLeft(stage["connection_write_path"], "/")
-			readPath := strings.TrimLeft(stage["connection_read_path"], "/")
+			writePath := strings.TrimPrefix(stage["connection_write_path"], "/")
+			readPath := strings.TrimPrefix(stage["connection_read_path"], "/")
 			newStage.ConnectionID = &connection.ID
 			newStage.ConnectionWritePath = &writePath
 			newStage.ConnectionReadPath = &readPath

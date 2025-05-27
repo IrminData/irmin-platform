@@ -19,12 +19,16 @@ func FormatWorkflowRunResponse(
 	}
 
 	// Format the workflow trigger response
-	triggeredByResponse, formatScheduleTriggerResponseErr := FormatScheduleTriggerResponse(
-		workflowRun.TriggeredBy,
-		sqidManager,
-	)
-	if formatScheduleTriggerResponseErr != nil {
-		return nil, fmt.Errorf("error formatting schedule trigger response: %w", formatScheduleTriggerResponseErr)
+	var triggeredByResponse *irminmodels.ScheduleTrigger
+	if workflowRun.TriggeredBy != nil {
+		var formatScheduleTriggerResponseErr error
+		triggeredByResponse, formatScheduleTriggerResponseErr = FormatScheduleTriggerResponse(
+			workflowRun.TriggeredBy,
+			sqidManager,
+		)
+		if formatScheduleTriggerResponseErr != nil {
+			return nil, fmt.Errorf("error formatting schedule trigger response: %w", formatScheduleTriggerResponseErr)
+		}
 	}
 
 	// Format the user response

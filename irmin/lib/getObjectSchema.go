@@ -77,7 +77,7 @@ func (scm *SchemaCacheManager) GetObjectSchema(
 	ctx context.Context,
 	workspace *db.Workspace,
 	repository *db.Repository,
-	object *irminmodels.Object,
+	object *db.RepositoryObject,
 	ref, locale string,
 ) (*irminmodels.ObjectSchema, error) {
 	// Check cache first

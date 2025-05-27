@@ -19,7 +19,8 @@ func (o *Orchestrator) executeImportWorkflowable(
 		workflowable.ConnectionID,
 		workflowable.ConnectionPath,
 		workflowable.Path,
-		workflowable.Repository.Slug,
+		&workflow.Workspace,
+		&workflowable.Repository,
 		workflowable.Branch,
 		operationImport,
 	)

@@ -64,10 +64,10 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 	}
 
 	// Clean the path: remove extra slashes.
-	cleanPath := strings.Trim(inputPath, "/")
+	cleanPath := strings.TrimPrefix(inputPath, "/")
 
 	// Handle empty path (or root path) explicitly.
-	if cleanPath == "" {
+	if cleanPath == "" || strings.HasSuffix(cleanPath, "/") {
 		return ObjectDetails{
 			Name:        "",
 			FullPath:    "",

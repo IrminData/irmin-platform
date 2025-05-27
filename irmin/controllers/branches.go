@@ -146,6 +146,14 @@ func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
 		newBranchName = fields["name"]
 	}
 
+	// Delete the cached objects for the branch in a go routine
+	go func() {
+		dbDeleteErr := api.DB.DeleteObjects(nil, &repository.ID, &branch.Name)
+		if dbDeleteErr != nil {
+			api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
+		}
+	}()
+
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
 	if err != nil {
@@ -197,6 +205,14 @@ func (api *APIControllers) BranchesDestroy(c fiber.Ctx) error {
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !branchOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
+
+	// Delete the cached objects for the branch in a go routine
+	go func() {
+		dbDeleteErr := api.DB.DeleteObjects(nil, &repository.ID, &branch.Name)
+		if dbDeleteErr != nil {
+			api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
+		}
+	}()
 
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)

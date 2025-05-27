@@ -69,7 +69,7 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	}
 
 	// Determine executable type and setup SDK
-	executableLanguage := utils.ParseEditorItemLanguageFromPath(executablePath)
+	executableLanguage := utils.DetermineEditorItemLanguageFromPath(executablePath)
 	executableType := ""
 	switch *executableLanguage {
 	case "js":

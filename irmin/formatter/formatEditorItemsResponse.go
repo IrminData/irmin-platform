@@ -41,7 +41,7 @@ func FormatEditorItemsResponse(
 		}
 
 		// Determine the language for file items
-		language := utils.ParseEditorItemLanguageFromPath(relativePath)
+		language := utils.DetermineEditorItemLanguageFromPath(relativePath)
 
 		// 'current' points to the slice where the next item should be inserted.
 		current := &editorItems

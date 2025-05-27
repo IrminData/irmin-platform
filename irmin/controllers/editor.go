@@ -35,7 +35,7 @@ func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	path := strings.Trim(params["path"], "/")
+	path := strings.TrimPrefix(params["path"], "/")
 
 	// Initialize the bucket client
 	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
@@ -92,7 +92,7 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	path := strings.Trim(params["path"], "/")
+	path := strings.TrimPrefix(params["path"], "/")
 	if path == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"path is required"},
@@ -164,7 +164,7 @@ func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	path := strings.Trim(params["path"], "/")
+	path := strings.TrimPrefix(params["path"], "/")
 	if path == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"path is required"},
@@ -224,7 +224,7 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	path := strings.Trim(params["path"], "/")
+	path := strings.TrimPrefix(params["path"], "/")
 	if path == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"path is required"},
@@ -239,7 +239,7 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	destinationPath := strings.Trim(fields["destination_path"], "/")
+	destinationPath := strings.TrimPrefix(fields["destination_path"], "/")
 	if destinationPath == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"destination_path is required"},
@@ -318,7 +318,7 @@ func (api *APIControllers) EditorItemContent(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	path := strings.Trim(params["path"], "/")
+	path := strings.TrimPrefix(params["path"], "/")
 	if path == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"path is required"},
@@ -370,7 +370,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	path := strings.Trim(params["path"], "/")
+	path := strings.TrimPrefix(params["path"], "/")
 	if path == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"path is required"},
@@ -406,7 +406,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 		// Launch concurrent fetches for each input object
 		for _, input := range inputObjects {
 			inputRepository := input["repository"]
-			inputPath := strings.Trim(input["path"], "/")
+			inputPath := strings.TrimPrefix(input["path"], "/")
 			inputRef := input["ref"]
 
 			// Create an async operation for fetching the object

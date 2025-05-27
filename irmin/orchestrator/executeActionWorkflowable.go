@@ -5,12 +5,15 @@ import (
 	"context"
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"strings"
 )
 
 // executeActionWorkflowable executes an action workflowable in the compute sandbox.
 // It runs the executable file in the compute sandbox and saves the results to the repository if specified.
 // It returns the logs generated during the execution and any error encountered.
+//
+//nolint:gocognit // This function is simple to read and understand as is, and it's not worth refactoring.
 func (o *Orchestrator) executeActionWorkflowable(
 	ctx context.Context,
 	workflow *db.Workflow,
@@ -102,7 +105,7 @@ func (o *Orchestrator) executeActionWorkflowable(
 			// Construct the path to save the file
 			uploadObjectToPath := strings.Trim(*workflowable.Path, "/") + "/" + fileName
 			// Upload the object to the path in the repository at ref
-			_, uploadObjectErr := o.dataEngine.UploadObject(
+			newObject, uploadObjectErr := o.dataEngine.UploadObject(
 				workflow.Workspace.Slug,
 				workflowable.Repository.Slug,
 				uploadObjectToPath,
@@ -123,6 +126,14 @@ func (o *Orchestrator) executeActionWorkflowable(
 				)
 				continue
 			}
+			// Save the object to the database in a go routine
+			go func() {
+				_, saveObjectErr := lib.SaveObject(o.db, newObject, *workflowable.Branch, *workflowable.RepositoryID)
+				if saveObjectErr != nil {
+					o.logger.ErrorContext(ctx, "Error saving object to database", "error", saveObjectErr)
+				}
+			}()
+
 			logs = append(logs, fmt.Sprintf("Result object ('%s') saved to repository.", fileName))
 		}
 	}

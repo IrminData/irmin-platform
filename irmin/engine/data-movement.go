@@ -69,7 +69,7 @@ func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*
 }
 
 // DataImport imports data from an external source into a lakeFS repository.
-// It returns the paths of the files that were pulled and an error if any occurred.
+// It returns the metadata of the uploaded objects and any errors that occurred.
 func (c *Client) DataImport(
 	connection *db.Connection,
 	connectionPath,
@@ -77,10 +77,10 @@ func (c *Client) DataImport(
 	repository,
 	branch,
 	repositoryPath string,
-) ([]string, []error) {
+) ([]lakefs.ObjectMetadata, []error) {
 	var (
 		errs    []error
-		success []string
+		success []lakefs.ObjectMetadata
 	)
 
 	// Pull the files from the connector.
@@ -98,7 +98,7 @@ func (c *Client) DataImport(
 	for filePath, fileContent := range allFiles {
 		go func() {
 			// Build the full path to the file.
-			uploadPath := strings.Trim(repositoryPath, "/")
+			uploadPath := strings.TrimPrefix(repositoryPath, "/")
 			if strings.HasSuffix(repositoryPath, "/") || repositoryPath == "" || len(allFiles) > 1 {
 				// If repository path is a directory (ends with "/" or is empty), or there is more than one file,
 				// append the pulled file name to the path.
@@ -125,7 +125,9 @@ func (c *Client) DataImport(
 	for range allFiles {
 		select {
 		case meta := <-uploadCh:
-			success = append(success, meta.Path)
+			if meta != nil {
+				success = append(success, *meta)
+			}
 		case e := <-upErrCh:
 			errs = append(errs, e)
 		}
@@ -273,7 +275,7 @@ func (c *Client) PushFilesToConnector(
 	defer cancel()
 
 	// Build the connection path to push the zip to.
-	connPath := strings.Trim(connectionPath, "/")
+	connPath := strings.TrimPrefix(connectionPath, "/")
 	if strings.HasSuffix(connectionPath, "/") || connectionPath == "" || len(files) > 1 {
 		// If connection path is a directory (ends with "/" or is empty),
 		// or there is more than one file, append the pulled file name to the path.

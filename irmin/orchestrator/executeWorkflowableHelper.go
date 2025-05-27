@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/lakefs"
+	"irmin-api/lib"
 	"strings"
 )
 
@@ -15,6 +17,32 @@ const (
 	operationExport workflowOperation = "export"
 )
 
+// saveDirectoryObjectToDB saves the directory object of the import target repository to the database.
+// It is called asynchronously after a successful import operation.
+func (o *Orchestrator) saveDirectoryObjectToDB(
+	ctx context.Context,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	path, branch string,
+	importedObjects []lakefs.ObjectMetadata,
+) {
+	// Check if anything was imported
+	if len(importedObjects) == 0 {
+		return
+	}
+	// Get the directory object of the import target repository
+	engineObject, getErr := o.dataEngine.GetPath(workspace.Slug, repository.Slug, path, branch)
+	if getErr != nil {
+		o.logger.ErrorContext(ctx, "Error getting root object from data engine", "error", getErr)
+		return
+	}
+	// Save the directory object to the database
+	_, saveObjectErr := lib.SaveObject(o.db, engineObject, branch, repository.ID)
+	if saveObjectErr != nil {
+		o.logger.ErrorContext(ctx, "Error saving root object to database", "error", saveObjectErr)
+	}
+}
+
 // executeWorkflowableCommon handles the common execution logic for both import and export workflowables.
 // It takes an operation type to determine whether to perform import or export.
 func (o *Orchestrator) executeWorkflowableCommon(
@@ -23,7 +51,8 @@ func (o *Orchestrator) executeWorkflowableCommon(
 	connectionID uint,
 	connectionPath string,
 	path string,
-	repoSlug string,
+	workspace *db.Workspace,
+	repository *db.Repository,
 	branch string,
 	operation workflowOperation,
 ) ([]string, error) {
@@ -53,26 +82,27 @@ func (o *Orchestrator) executeWorkflowableCommon(
 	connectionPath = strings.TrimLeft(connectionPath, "/")
 	path = strings.TrimLeft(path, "/")
 
-	var paths []string
+	var importedObjects []lakefs.ObjectMetadata
+	var exportedPaths []string
 	var errors []error
 
 	// Perform the appropriate operation based on the type
 	switch operation {
 	case operationImport:
-		paths, errors = o.dataEngine.DataImport(
+		importedObjects, errors = o.dataEngine.DataImport(
 			connection,
 			connectionPath,
 			workflow.Workspace.Slug,
-			repoSlug,
+			repository.Slug,
 			branch,
 			path,
 		)
 	case operationExport:
-		paths, errors = o.dataEngine.DataExport(
+		exportedPaths, errors = o.dataEngine.DataExport(
 			connection,
 			connectionPath,
 			workflow.Workspace.Slug,
-			repoSlug,
+			repository.Slug,
 			branch,
 			path,
 		)
@@ -87,9 +117,11 @@ func (o *Orchestrator) executeWorkflowableCommon(
 				logs = append(logs, fmt.Sprintf("Error during data %s: %v", operation, err))
 			}
 		}
-		for _, path := range paths {
-			o.logger.InfoContext(ctx, fmt.Sprintf("%sed data path", operation), "path", path)
-			logs = append(logs, fmt.Sprintf("%sed data path: %s", operation, path))
+		for _, object := range importedObjects {
+			logs = append(logs, fmt.Sprintf("Imported object: %s", object.Path))
+		}
+		for _, path := range exportedPaths {
+			logs = append(logs, fmt.Sprintf("Exported data path: %s", path))
 		}
 		logs = append(logs, fmt.Sprintf("Workflow execution cancelled after data %s: %v", operation, ctx.Err()))
 		return logs, ctx.Err()
@@ -106,10 +138,17 @@ func (o *Orchestrator) executeWorkflowableCommon(
 	}
 
 	// Log the paths of the processed data
-	for _, path := range paths {
-		o.logger.InfoContext(ctx, fmt.Sprintf("%sed data path", operation), "path", path)
-		logs = append(logs, fmt.Sprintf("%sed data path: %s", operation, path))
+	for _, object := range importedObjects {
+		o.logger.InfoContext(ctx, fmt.Sprintf("Imported object: %s", object.Path), "path", object.Path)
+		logs = append(logs, fmt.Sprintf("Imported object: %s", object.Path))
 	}
+	for _, path := range exportedPaths {
+		o.logger.InfoContext(ctx, fmt.Sprintf("Exported data path: %s", path), "path", path)
+		logs = append(logs, fmt.Sprintf("Exported data path: %s", path))
+	}
+
+	// Save the root object of the import target repository to the database in a go routine
+	go o.saveDirectoryObjectToDB(ctx, workspace, repository, path, branch, importedObjects)
 
 	return logs, nil
 }

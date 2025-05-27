@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"irmin-api/db"
-	"irmin-api/engine"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -32,29 +32,33 @@ func (api *APIMiddlewares) ObjectMiddleware(c fiber.Ctx) error {
 	if params["ref"] != "" {
 		ref = params["ref"]
 	}
-	path := "/"
+	path := ""
 	if params["path"] != "" {
 		path = params["path"]
 	}
 
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	// Get the requested object.
+	repositoryObjectDB, err := lib.GetObject(
+		c.Context(),
+		locale,
+		api.DB,
+		api.Logger,
+		api.Env,
+		workspace,
+		repository,
+		path,
+		ref,
+		false,
+	)
 	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
+		api.Logger.Error("Error getting object", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// Get the object from the data engine.
-	repositoryObject, err := dataEngine.GetPath(workspace.Slug, repository.Slug, path, ref)
-	if err != nil {
-		api.Logger.Error("Error getting object from data engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{})
-	}
-
 	// Set the object in the context for subsequent handlers.
-	c.Locals("object", repositoryObject)
+	c.Locals("object", repositoryObjectDB)
 	c.Locals("object_ref", ref)
 
 	return c.Next()

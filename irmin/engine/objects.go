@@ -143,8 +143,8 @@ func getObject(
 		return nil, fmt.Errorf("access to system path %s is not allowed", path)
 	}
 
-	// Trim leading and trailing slashes from the path
-	path = strings.Trim(path, "/")
+	// Trim leading slash from the path.
+	path = strings.TrimPrefix(path, "/")
 
 	// Parse object details
 	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
@@ -264,7 +264,7 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 	}
 
 	// Format the object path.
-	path = strings.Trim(path, "/")
+	path = strings.TrimPrefix(path, "/")
 
 	// Upload the object to the repository using received file.
 	objectMetadata, uploadObjectErr := c.LakeFSClient.UploadObject(lakeFSRepositoryName, ref, path, file, false)
@@ -311,7 +311,7 @@ func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
 	}
 
 	// Format the object path.
-	path = strings.Trim(path, "/")
+	path = strings.TrimPrefix(path, "/")
 
 	// Delete the object from the repository.
 	deleteObjectErr := c.LakeFSClient.DeleteObject(lakeFSRepositoryName, ref, path, false)
@@ -341,8 +341,8 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	}
 
 	// Format the object paths.
-	path = strings.Trim(path, "/")
-	newPath = strings.Trim(newPath, "/")
+	path = strings.TrimPrefix(path, "/")
+	newPath = strings.TrimPrefix(newPath, "/")
 
 	// Copy the object in the repository to the new path.
 	objectMetadata, copyObjectErr := c.LakeFSClient.CopyObject(
@@ -403,8 +403,8 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 	}
 
 	// Format the object paths.
-	path = strings.Trim(path, "/")
-	newPath = strings.Trim(newPath, "/")
+	path = strings.TrimPrefix(path, "/")
+	newPath = strings.TrimPrefix(newPath, "/")
 
 	// Copy the object in the repository to the new path.
 	objectMetadata, copyObjectErr := c.LakeFSClient.CopyObject(

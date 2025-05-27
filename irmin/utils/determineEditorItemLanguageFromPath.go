@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-// ParseEditorItemLanguageFromPath parses the language of an editor item from its path.
+// DetermineEditorItemLanguageFromPath parses the language of an editor item from its path.
 // Path examples: "/path/to/script.js", "/script.js", "path/to/script.go", "script.py", "path/to/group", "".
 // Returns the language of the editor item (if any), like "js", "py", "go", etc.
-func ParseEditorItemLanguageFromPath(inputPath string) *string {
+func DetermineEditorItemLanguageFromPath(inputPath string) *string {
 	// Clean the path: remove extra slashes.
 	cleanPath := strings.Trim(inputPath, "/")
 

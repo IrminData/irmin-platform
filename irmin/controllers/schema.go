@@ -67,7 +67,7 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 				c.Context(),
 				workspace,
 				&repo,
-				&irminmodels.Object{
+				&db.RepositoryObject{
 					Path: "",
 					Name: "",
 					Type: irminmodels.ObjectTypeGroup,

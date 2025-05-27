@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"slices"
 	"strings"
 
@@ -270,7 +271,7 @@ func (o *Orchestrator) handleRepositoryStage(
 			// Construct the path to save the file
 			uploadObjectToPath := strings.Trim(*stage.RepositoryPath, "/") + "/" + fileName
 			// Upload the object to the path in the repository at ref
-			_, err := o.dataEngine.UploadObject(
+			newObject, err := o.dataEngine.UploadObject(
 				workflow.Workspace.Slug,
 				stage.Repository.Slug,
 				uploadObjectToPath,
@@ -298,6 +299,13 @@ func (o *Orchestrator) handleRepositoryStage(
 				)
 				continue
 			}
+			// Save the object to the database in a go routine
+			go func() {
+				_, saveObjectErr := lib.SaveObject(o.db, newObject, *stage.RepositoryBranch, *stage.RepositoryID)
+				if saveObjectErr != nil {
+					o.logger.ErrorContext(ctx, "Error saving object to database", "error", saveObjectErr)
+				}
+			}()
 			logs = append(logs, fmt.Sprintf("Result object ('%s') saved to repository.", fileName))
 		}
 	}

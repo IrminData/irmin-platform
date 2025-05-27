@@ -159,6 +159,7 @@ func (d *Database) Migrate() error {
 		&LogEvent{},
 		&ConnectionSchemaCache{},
 		&RepositorySchemaCache{},
+		&RepositoryObject{},
 	}
 	if err := d.migrateModels(models...); err != nil {
 		return err
