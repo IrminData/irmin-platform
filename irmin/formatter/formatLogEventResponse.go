@@ -59,7 +59,7 @@ func FormatLogEventResponse(
 
 	var repository *irminmodels.Repository
 	if logEvent.Repository != nil {
-		repository, err = FormatRepositoryResponse(logEvent.Repository, nil, sqidManager)
+		repository, err = FormatRepositoryResponse(logEvent.Repository, sqidManager)
 		if err != nil {
 			return nil, err
 		}

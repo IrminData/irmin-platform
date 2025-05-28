@@ -18,18 +18,20 @@ type RepositorySchemaCache struct {
 type Repository struct {
 	gorm.Model
 
-	Name          string                  `json:"name"`
-	LakeFSRepoID  string                  `json:"lakefs_repo_id"         gorm:"index"`
-	Slug          string                  `json:"slug"                   gorm:"uniqueIndex"`
-	Description   string                  `json:"description"`
-	Documentation string                  `json:"documentation"`
-	IsImmutable   bool                    `json:"is_immutable"`
-	DefaultBranch string                  `json:"default_branch"`
-	Workspace     Workspace               `json:"workspace"              gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID   uint                    `json:"workspace_id"           gorm:"index"`
-	Owner         User                    `json:"owner"                  gorm:"foreignKey:OwnerID"`
-	OwnerID       uint                    `json:"owner_id"`
-	SchemaCache   []RepositorySchemaCache `json:"schema_cache,omitempty" gorm:"foreignKey:RepositoryID"`
+	Name                   string                              `json:"name"`
+	LakeFSRepoID           string                              `json:"lakefs_repo_id"                     gorm:"index"`
+	Slug                   string                              `json:"slug"                               gorm:"uniqueIndex"`
+	Description            string                              `json:"description"`
+	Documentation          string                              `json:"documentation"`
+	StorageNamespace       string                              `json:"storage_namespace"`
+	IsImmutable            bool                                `json:"is_immutable"`
+	DefaultBranch          string                              `json:"default_branch"`
+	GarbageCollectionRules *irminmodels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty" gorm:"type:jsonb;serializer:json"`
+	Workspace              Workspace                           `json:"workspace"                          gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID            uint                                `json:"workspace_id"                       gorm:"index"`
+	Owner                  User                                `json:"owner"                              gorm:"foreignKey:OwnerID"`
+	OwnerID                uint                                `json:"owner_id"`
+	SchemaCache            []RepositorySchemaCache             `json:"schema_cache,omitempty"             gorm:"foreignKey:RepositoryID"`
 }
 
 func (d *Database) GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {

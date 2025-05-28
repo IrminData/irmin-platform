@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"irmin-api/db"
-	"irmin-api/engine"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -29,7 +29,16 @@ func (api *APIMiddlewares) RepositoryMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the repository by its slug and workspace ID.
-	repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+	repository, err := lib.GetRepository(
+		c.Context(),
+		locale,
+		api.DB,
+		api.Logger,
+		api.Env,
+		workspace,
+		repositorySlug,
+		false,
+	)
 	if err != nil {
 		api.Logger.Error("Error retrieving repository", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -37,25 +46,8 @@ func (api *APIMiddlewares) RepositoryMiddleware(c fiber.Ctx) error {
 		})
 	}
 
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Get the repository from the data engine.
-	dataEngineRepository, err := dataEngine.GetRepository(c.Context(), workspace.Slug, repositorySlug)
-	if err != nil {
-		api.Logger.Error("Error retrieving repository from Data Engine", "error", err)
-		dataEngineRepository = &engine.Repository{}
-	}
-
 	// Set the repository in the context for subsequent handlers.
 	c.Locals("repository", repository)
-	c.Locals("data_engine_repository", dataEngineRepository)
 
 	return c.Next()
 }

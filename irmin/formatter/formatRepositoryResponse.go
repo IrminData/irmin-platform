@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/engine"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -12,7 +11,6 @@ import (
 
 func FormatRepositoryResponse(
 	repository *db.Repository,
-	dataEngineRepository *engine.Repository,
 	sqidManager *utils.SQIDManager,
 ) (*irminmodels.Repository, error) {
 	// Check if the repository is a nil pointer
@@ -35,16 +33,12 @@ func FormatRepositoryResponse(
 	// Determine if the repository is immutable
 	isImmutable := repository.IsImmutable
 
-	if dataEngineRepository != nil && dataEngineRepository.IsImmutable {
-		isImmutable = true
-	}
-
 	// Determine the garbage collection rules
 	var gcRules *irminmodels.GarbageCollectionRules
-	if dataEngineRepository != nil && dataEngineRepository.GarbageCollectionRules != nil {
+	if repository.GarbageCollectionRules != nil {
 		gcRules = &irminmodels.GarbageCollectionRules{
-			DefaultRetentionDays: dataEngineRepository.GarbageCollectionRules.DefaultRetentionDays,
-			Branches:             dataEngineRepository.GarbageCollectionRules.Branches,
+			DefaultRetentionDays: repository.GarbageCollectionRules.DefaultRetentionDays,
+			Branches:             repository.GarbageCollectionRules.Branches,
 		}
 	} else {
 		gcRules = &irminmodels.GarbageCollectionRules{
