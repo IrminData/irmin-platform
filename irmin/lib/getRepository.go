@@ -15,40 +15,15 @@ const (
 	repositoryCacheMaxAge = 24 * time.Hour
 )
 
-// refreshRepositoryFromDataEngine attempts to refresh the repository data from the data engine
-// and updates the cache if successful.
+// refreshRepositoryFromDataEngine attempts to refresh the repository data from the data engine.
 func refreshRepositoryFromDataEngine(
 	ctx context.Context,
+	dataEngineRepository *engine.Repository,
 	repository *db.Repository,
-	workspace *db.Workspace,
-	repositorySlug string,
-	locale string,
-	logger *slog.Logger,
-	env *utils.CoreAPIEnv,
 	d *db.Database,
-) error {
-	logger.InfoContext(
-		ctx,
-		"Repository not found in cache, refreshing from the data engine",
-		"repository",
-		repositorySlug,
-	)
-
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(ctx, locale, logger, env)
-	if err != nil {
-		logger.ErrorContext(ctx, "error creating data engine client", "error", err)
-		return fmt.Errorf("error creating data engine client: %w", err)
-	}
-
-	// Get the repository from the data engine.
-	dataEngineRepository, err := dataEngine.GetRepository(ctx, workspace.Slug, repositorySlug)
-	if err != nil {
-		logger.ErrorContext(ctx, "Error retrieving repository from Data Engine", "error", err)
-		return err
-	}
-
-	// Update the repository in the cache if it was found in the data engine.
+	logger *slog.Logger,
+) {
+	// Update the repository in the database if it was found in the data engine.
 	if dataEngineRepository != nil {
 		repository.LakeFSRepoID = dataEngineRepository.ID
 		repository.GarbageCollectionRules = dataEngineRepository.GarbageCollectionRules
@@ -60,12 +35,10 @@ func refreshRepositoryFromDataEngine(
 		go func() {
 			saveErr := d.Save(&repository).Error
 			if saveErr != nil {
-				logger.ErrorContext(ctx, "Error saving repository to database", "error", err)
+				logger.ErrorContext(ctx, "Error saving repository to database", "error", saveErr)
 			}
 		}()
 	}
-
-	return nil
 }
 
 func GetRepository(
@@ -93,10 +66,29 @@ func GetRepository(
 	// If the repository is not found in the cache, or the cache is stale, get it from the data engine.
 	repositoryCacheLastModified := time.Now().Add(-repositoryCacheMaxAge)
 	if repository.UpdatedAt.Before(repositoryCacheLastModified) || ignoreCache {
-		if refreshRepositoryErr := refreshRepositoryFromDataEngine(ctx, repository, workspace, repositorySlug, locale, logger, env, d); refreshRepositoryErr != nil {
-			// Log the error but continue with the cached repository
-			logger.ErrorContext(ctx, "Failed to refresh repository from data engine", "error", refreshRepositoryErr)
+		logger.InfoContext(
+			ctx,
+			"Repository not found in cache, refreshing from the data engine",
+			"repository",
+			repositorySlug,
+		)
+
+		// Initialize Data Engine client
+		dataEngine, createClientErr := engine.NewClient(ctx, locale, logger, env)
+		if createClientErr != nil {
+			logger.ErrorContext(ctx, "error creating data engine client", "error", createClientErr)
+			return nil, fmt.Errorf("error creating data engine client: %w", createClientErr)
 		}
+
+		// Get the repository from the data engine.
+		dataEngineRepository, getRepositoryErr := dataEngine.GetRepository(ctx, workspace.Slug, repositorySlug)
+		if getRepositoryErr != nil {
+			logger.ErrorContext(ctx, "Error retrieving repository from Data Engine", "error", getRepositoryErr)
+			return nil, fmt.Errorf("error retrieving repository from Data Engine: %w", getRepositoryErr)
+		}
+
+		// Refresh the repository in the database
+		refreshRepositoryFromDataEngine(ctx, dataEngineRepository, repository, d, logger)
 	}
 
 	return repository, nil
