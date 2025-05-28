@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -63,11 +63,20 @@ function PipelineWorkflowsSection({
   const [filteredItems, setFilteredItems] = useState<PipelineWorkflow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Set the initial items when the query data is available
+  const initialDataSet = useRef(false);
+  useEffect(() => {
+    if (initialDataSet.current) return;
+    if (!workflowsQuery.data?.data) return;
+    initialDataSet.current = true;
+    setFilteredItems((workflowsQuery.data?.data ?? []) as PipelineWorkflow[]);
+  }, [workflowsQuery.data?.data]);
+
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilteredItems(
-        workflowsQuery.data?.data?.filter(
+        (workflowsQuery.data?.data ?? []).filter(
           (item) =>
             item.type === 'pipeline' &&
             item.name

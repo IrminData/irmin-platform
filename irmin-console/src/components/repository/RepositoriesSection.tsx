@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -42,20 +42,27 @@ export default function RepositoriesSection({
   const [filteredItems, setFilteredItems] = useState<Repository[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Set the initial items when the query data is available
+  const initialDataSet = useRef(false);
+  useEffect(() => {
+    if (initialDataSet.current) return;
+    if (!repositoriesQuery.data?.data) return;
+    initialDataSet.current = true;
+    setFilteredItems(repositoriesQuery.data?.data);
+  }, [repositoriesQuery.data?.data]);
+
   // Filter items based on search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (repositoriesQuery.data?.data) {
-        setFilteredItems(
-          repositoriesQuery.data.data.filter((item) =>
-            item.name
-              .trim()
-              .replace(/\s+/g, '')
-              .toLowerCase()
-              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-          )
-        );
-      }
+      setFilteredItems(
+        (repositoriesQuery.data?.data ?? []).filter((item) =>
+          item.name
+            .trim()
+            .replace(/\s+/g, '')
+            .toLowerCase()
+            .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+        )
+      );
     }, 300);
     return () => {
       clearTimeout(handler);
