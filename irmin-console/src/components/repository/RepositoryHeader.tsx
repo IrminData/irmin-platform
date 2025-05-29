@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
 import {
@@ -34,6 +34,8 @@ export default function RepositoryHeader() {
   const { dict } = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const router = useRouter();
 
   const { repository, immutable, currentRef, updateCurrentRef } =
     useRepositoryContext();
@@ -171,8 +173,10 @@ export default function RepositoryHeader() {
         </div>
       </div>
       <TabsWithBackButton
-        backHref={`${workspaceUrl}/repositories`}
-        backTooltip={dict.repository.repositories}
+        onBackClick={() => {
+          router.back();
+        }}
+        backTooltip={dict.common.back}
         tabs={tabs}
       />
     </div>

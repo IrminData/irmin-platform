@@ -247,6 +247,7 @@ const en = {
       filterObjects: 'Filter objects',
       uploadAndReplace: 'Upload and replace',
       moveOrRename: 'Move or rename',
+      changeHistory: 'Change history',
       targetRepository: 'Target repository',
       targetBranch: 'Target branch',
       objectName: 'Object name',

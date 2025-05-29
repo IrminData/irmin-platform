@@ -10,7 +10,7 @@ export const repositoryObjectHistoryQueryKey = (
   workspaceSlug: string,
   repositorySlug: string,
   branch: string,
-  path: string
+  path?: string
 ) =>
   [
     'repository-object-history',

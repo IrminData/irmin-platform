@@ -10,6 +10,7 @@ import {
   TbEdit,
   TbFile,
   TbFolderOpen,
+  TbHistory,
   TbSchema,
   TbTrash,
   TbUpload,
@@ -166,6 +167,11 @@ export default function ObjectDetails({
     }
   }, [selectedObject, baseUrl, currentRef, viewObject, router]);
 
+  const handleViewChangeHistory = useCallback(() => {
+    if (!selectedObject) return;
+    router.push(`${baseUrl}/object/history?path=${selectedObject.path}`);
+  }, [selectedObject, baseUrl, router]);
+
   const [downloading, setDownloading] = useState(false);
   const handleDownload = useCallback(async () => {
     if (!selectedObject) return;
@@ -297,6 +303,15 @@ export default function ObjectDetails({
               </Button>
             </>
           )}
+          <Button
+            size='sm'
+            variant='secondary'
+            className='w-full'
+            icon={<TbHistory />}
+            onClick={handleViewChangeHistory}
+          >
+            {dict.repository.objects.changeHistory}
+          </Button>
           <Button
             size='sm'
             variant='secondary'

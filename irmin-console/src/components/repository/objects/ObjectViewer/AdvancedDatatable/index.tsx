@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useState } from 'react';
+import { memo, Suspense, useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
@@ -23,6 +23,7 @@ import { TableRow } from '@/types/internal/Datatable';
 
 const DataSheet = dynamic(() => import('./DataSheet'), {
   loading: () => <LoadingSkeleton />,
+  ssr: false,
 });
 
 /**
@@ -33,95 +34,115 @@ const DataSheet = dynamic(() => import('./DataSheet'), {
  */
 function AdvancedDatatable({ items }: { items: TableRow[] }) {
   const { locale } = useLocale();
-
+  const [mounted, setMounted] = useState(false);
   const [renderItems, setRenderItems] = useState<TableRow[]>([]);
-  const [columns, setColumns] = useState<
-    Partial<Column<TableRow>>[] | undefined
-  >(undefined);
+  const [columns, setColumns] = useState<Partial<Column<TableRow>>[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Create columns and render items from the properties
+  // Handle component mounting
   useEffect(() => {
-    // Get all properties from the items to use as columns
-    const allProperties = items
-      .map((item) => Object.keys(item))
-      .flat()
-      .filter((value, index, self) => self.indexOf(value) === index);
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
-    // Store the matched types of the columns
-    const columnsWithTypes: {
-      [key: string]: 'string' | 'float' | 'int' | 'boolean' | 'date';
-    } = {};
+  // Process data only after component is mounted
+  useEffect(() => {
+    if (!mounted) return;
 
-    // Create columns from the properties
-    const newColumns = allProperties.map((key) => {
-      // Get the first value of the key to determine the type
-      const exampleValue = items.find((item) => item[key])?.[key];
+    const processData = async () => {
+      try {
+        setIsLoading(true);
 
-      // Determine the type of the column
-      if (typeof exampleValue === 'number') {
-        if (Number.isInteger(exampleValue)) {
-          columnsWithTypes[key] = 'int';
-          return { ...keyColumn(key, intColumn), title: key };
-        }
-        columnsWithTypes[key] = 'float';
-        return { ...keyColumn(key, floatColumn), title: key };
+        // Get all properties from the items to use as columns
+        const allProperties = items
+          .map((item) => Object.keys(item))
+          .flat()
+          .filter((value, index, self) => self.indexOf(value) === index);
+
+        // Store the matched types of the columns
+        const columnsWithTypes: {
+          [key: string]: 'string' | 'float' | 'int' | 'boolean' | 'date';
+        } = {};
+
+        // Create columns from the properties
+        const newColumns = allProperties.map((key) => {
+          // Get the first value of the key to determine the type
+          const exampleValue = items.find((item) => item[key])?.[key];
+
+          // Determine the type of the column
+          if (typeof exampleValue === 'number') {
+            if (Number.isInteger(exampleValue)) {
+              columnsWithTypes[key] = 'int';
+              return { ...keyColumn(key, intColumn), title: key };
+            }
+            columnsWithTypes[key] = 'float';
+            return { ...keyColumn(key, floatColumn), title: key };
+          }
+          if (typeof exampleValue === 'boolean') {
+            columnsWithTypes[key] = 'boolean';
+            return { ...keyColumn(key, checkboxColumn), title: key };
+          }
+          if (
+            typeof exampleValue === 'string' &&
+            new Date(exampleValue).toString() !== 'Invalid Date'
+          ) {
+            columnsWithTypes[key] = 'date';
+            return { ...keyColumn(key, textColumn), title: key };
+          }
+          // If nothing else matches, use text column
+          columnsWithTypes[key] = 'string';
+          return { ...keyColumn(key, textColumn), title: key };
+        });
+
+        // Make sure values in the data are matching the columns
+        const newItems = items.map((item) => {
+          const newItem: TableRow = { ...item };
+          Object.keys(columnsWithTypes).map((key) => {
+            try {
+              if (!newItem[key]) {
+                newItem[key] = '';
+              }
+              const type = columnsWithTypes[key];
+              if (type === 'int') {
+                newItem[key] = parseInt(newItem[key] as string);
+              }
+              if (type === 'float') {
+                newItem[key] = parseFloat(newItem[key] as string);
+              }
+              if (type === 'boolean' && typeof newItem[key] !== 'boolean') {
+                newItem[key] = newItem[key] === 'true';
+              }
+              if (type === 'date') {
+                newItem[key] = new Date(newItem[key] as string).toLocaleString(
+                  locale
+                );
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          });
+          return newItem;
+        });
+
+        setColumns(newColumns);
+        setRenderItems(newItems);
+      } catch (error) {
+        console.error('Error processing data:', error);
+      } finally {
+        setIsLoading(false);
       }
-      if (typeof exampleValue === 'boolean') {
-        columnsWithTypes[key] = 'boolean';
-        return { ...keyColumn(key, checkboxColumn), title: key };
-      }
-      if (
-        typeof exampleValue === 'string' &&
-        new Date(exampleValue).toString() !== 'Invalid Date'
-      ) {
-        columnsWithTypes[key] = 'date';
-        return { ...keyColumn(key, textColumn), title: key };
-      }
-      // If nothing else matches, use text column
-      columnsWithTypes[key] = 'string';
-      return { ...keyColumn(key, textColumn), title: key };
-    });
+    };
 
-    // Make sure values in the data are matching the columns
-    const newItems = items.map((item) => {
-      const newItem: TableRow = { ...item };
-      Object.keys(columnsWithTypes).map((key) => {
-        try {
-          if (!newItem[key]) {
-            newItem[key] = '';
-          }
-          const type = columnsWithTypes[key];
-          if (type === 'int') {
-            newItem[key] = parseInt(newItem[key] as string);
-          }
-          if (type === 'float') {
-            newItem[key] = parseFloat(newItem[key] as string);
-          }
-          if (type === 'boolean' && typeof newItem[key] !== 'boolean') {
-            newItem[key] = newItem[key] === 'true';
-          }
-          if (type === 'date') {
-            newItem[key] = new Date(newItem[key] as string).toLocaleString(
-              locale
-            );
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      });
-      return newItem;
-    });
+    processData();
+  }, [items, locale, mounted]);
 
-    setColumns(newColumns);
-    setRenderItems(newItems);
-  }, [items, locale]);
-
-  if (!columns || !renderItems)
+  if (!mounted || isLoading || !columns.length || !renderItems.length) {
     return (
       <div className='h-full w-full'>
         <LoadingSkeleton className='h-96' />
       </div>
     );
+  }
 
   return (
     <div
@@ -130,7 +151,9 @@ function AdvancedDatatable({ items }: { items: TableRow[] }) {
     >
       <div className='relative h-full w-full'>
         <div className='absolute h-full w-full'>
-          <DataSheet items={renderItems} columns={columns} />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <DataSheet items={renderItems} columns={columns} />
+          </Suspense>
         </div>
       </div>
     </div>

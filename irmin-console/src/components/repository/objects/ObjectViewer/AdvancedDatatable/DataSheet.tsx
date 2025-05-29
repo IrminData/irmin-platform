@@ -1,4 +1,4 @@
-import { ForwardedRef, forwardRef, memo } from 'react';
+import { ForwardedRef, forwardRef, memo, useEffect, useState } from 'react';
 
 import { Column, DataSheetGrid, DataSheetGridRef } from 'react-datasheet-grid';
 
@@ -21,6 +21,17 @@ const DataSheet = forwardRef(
     },
     ref: ForwardedRef<DataSheetGridRef>
   ) => {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+      setMounted(true);
+      return () => setMounted(false);
+    }, []);
+
+    if (!mounted) {
+      return null;
+    }
+
     return (
       <DataSheetGrid
         ref={ref}

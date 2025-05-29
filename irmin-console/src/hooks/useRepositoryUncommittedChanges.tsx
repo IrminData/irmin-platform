@@ -12,6 +12,7 @@ import { Diff } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 import { repositoryCommitsQueryKey } from './useRepositoryCommits';
+import { repositoryObjectHistoryQueryKey } from './useRepositoryObjectHistory';
 
 export const repositoryUncommittedChangesQueryKey = (
   workspaceSlug: string,
@@ -72,8 +73,21 @@ export function useRepositoryUncommittedChanges(
         queryKey: repositoryCommitsQueryKey(
           workspaceSlug,
           repositorySlug,
-          branch,
-          ''
+          branch
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: repositoryUncommittedChangesQueryKey(
+          workspaceSlug,
+          repositorySlug,
+          branch
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: repositoryObjectHistoryQueryKey(
+          workspaceSlug,
+          repositorySlug,
+          branch
         ),
       });
       irminAlert('success', res.message ?? 'Commit created successfully');

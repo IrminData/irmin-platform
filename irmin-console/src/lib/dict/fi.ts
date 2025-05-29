@@ -250,6 +250,7 @@ const fi = {
       filterObjects: 'Suodata objekteja',
       uploadAndReplace: 'Lataa ja korvaa',
       moveOrRename: 'Siirrä tai nimeä uudelleen',
+      changeHistory: 'Muutoshistoria',
       targetRepository: 'Kohde data-arkisto',
       targetBranch: 'Kohde haara',
       objectName: 'Objektin nimi',

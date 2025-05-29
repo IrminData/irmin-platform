@@ -11,10 +11,12 @@ import { TabsType } from '@/types/internal/Tabs';
  */
 const TabsWithBackButton = ({
   backHref,
+  onBackClick,
   backTooltip,
   tabs,
 }: {
-  backHref: string;
+  backHref?: string;
+  onBackClick?: () => void;
   backTooltip: string;
   tabs: TabsType;
 }) => {
@@ -26,6 +28,7 @@ const TabsWithBackButton = ({
         className='aspect-square overflow-hidden rounded-full'
         icon={<TbChevronLeft size={24} />}
         href={backHref}
+        onClick={onBackClick}
         tooltip={backTooltip}
         aria-label={backTooltip}
       />
