@@ -1,15 +1,8 @@
 package irminmodels
 
-type IrminRole string
-
-const (
-	Admin  IrminRole = "admin"
-	Editor IrminRole = "editor"
-	Viewer IrminRole = "viewer"
-)
-
 type Role struct {
-	Description string    `json:"description"`
-	Label       string    `json:"label"`
-	Name        IrminRole `json:"name"`
+	ID          string `json:"id"`
+	Role        string `json:"role"`
+	Description string `json:"description"`
+	Default     bool   `json:"default"`
 }
