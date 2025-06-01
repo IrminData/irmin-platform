@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -9,8 +8,6 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 	"strings"
-
-	"slices"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -55,14 +52,14 @@ func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 
 func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspaceUser, workspaceUserOk := c.Locals("workspace_user").(*db.WorkspaceUser)
+	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
 
-	if !dictOk || !workspaceUserOk {
+	if !dictOk || !workspaceMemberOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Format the user response
-	userResponse, formatErr := formatter.FormatWorkspaceUserResponse(workspaceUser, api.SQIDManager)
+	userResponse, formatErr := formatter.FormatWorkspaceUserResponse(workspaceMember, api.SQIDManager)
 	if formatErr != nil {
 		api.Logger.Error("Error formatting user", "error", formatErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -80,43 +77,44 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workspaceUser, workspaceUserOk := c.Locals("workspace_user").(*db.WorkspaceUser)
+	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
 
-	if !dictOk || !userOk || !workspaceOk || !workspaceUserOk {
+	if !dictOk || !userOk || !workspaceOk || !workspaceMemberOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Make sure the deleted user is not the user making the request
-	if user.ID == workspaceUser.UserID {
+	if user.ID == workspaceMember.UserID {
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "cannot_remove_self_from_workspace")},
 		})
 	}
 
 	// Make sure the deleted user is not the workspace owner
-	if workspace.OwnerID == workspaceUser.UserID {
+	if workspace.OwnerID == workspaceMember.UserID {
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "cannot_remove_owner_from_workspace")},
 		})
 	}
 
-	// Make sure the person removing the user has the necessary permissions
-	allowed := user.ID == workspace.OwnerID // Owner can modify users in the workspace
-	for _, userWorkspace := range user.Workspaces {
-		if userWorkspace.WorkspaceID == workspace.ID {
-			if slices.Contains(userWorkspace.Roles, db.RoleAdmin) {
-				allowed = true
-			}
-		}
-	}
-	if !allowed {
+	// Check permissions
+	allowed, err := lib.IsAllowed(
+		api.DB,
+		user,
+		workspace,
+		db.PolicyResourceUser,
+		&workspaceMember.UserID,
+		db.PolicyActionDelete,
+	)
+	if err != nil || !allowed {
+		api.Logger.Error("Access denied to perform action", "error", err)
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
 	// Remove the user from the workspace
-	if removeUserFromWorkspaceErr := api.DB.RemoveUserFromWorkspace(workspaceUser.UserID, workspace.ID); removeUserFromWorkspaceErr != nil {
+	if removeUserFromWorkspaceErr := api.DB.RemoveUserFromWorkspace(workspaceMember.UserID, workspace.ID); removeUserFromWorkspaceErr != nil {
 		api.Logger.Error("Error removing user from workspace", "error", removeUserFromWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
@@ -126,7 +124,7 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("User %s removed from workspace", workspaceUser.User.Email),
+		Description: fmt.Sprintf("User %s removed from workspace", workspaceMember.User.Email),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
@@ -141,16 +139,25 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workspaceUser, workspaceUserOk := c.Locals("workspace_user").(*db.WorkspaceUser)
+	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
 
-	if !dictOk || !userOk || !workspaceOk || !workspaceUserOk {
+	if !dictOk || !userOk || !workspaceOk || !workspaceMemberOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Validate permissions
-	if err := api.validateUserUpdatePermissions(user, workspace, workspaceUser); err != nil {
+	// Check permissions
+	allowed, err := lib.IsAllowed(
+		api.DB,
+		user,
+		workspace,
+		db.PolicyResourceUser,
+		&workspaceMember.UserID,
+		db.PolicyActionUpdate,
+	)
+	if err != nil || !allowed {
+		api.Logger.Error("Access denied to perform action", "error", err)
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, err.Error())},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
@@ -164,10 +171,10 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Parse and validate roles
-	newRoles := parseAndValidateRoles(fields["roles"])
+	newRoles := parseAndValidateRoles(api, fields["roles"])
 
 	// Update user roles
-	workspaceUser, err = api.DB.UpdateWorkspaceUserRoles(workspaceUser.UserID, workspace.ID, newRoles)
+	workspaceMember, err = api.DB.UpdateWorkspaceUserRoles(workspaceMember.UserID, workspace.ID, newRoles)
 	if err != nil {
 		api.Logger.Error("Error updating workspace user roles", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -176,7 +183,7 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Refetch updated user
-	workspaceUser, err = api.DB.GetWorkspaceUser(workspace.ID, workspaceUser.UserID)
+	workspaceMember, err = api.DB.GetWorkspaceUser(workspace.ID, workspaceMember.UserID)
 	if err != nil {
 		api.Logger.Error("Error fetching workspace user", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -185,7 +192,7 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	}
 
 	// Format response
-	userResponse, err := formatter.FormatWorkspaceUserResponse(workspaceUser, api.SQIDManager)
+	userResponse, err := formatter.FormatWorkspaceUserResponse(workspaceMember, api.SQIDManager)
 	if err != nil {
 		api.Logger.Error("Error formatting user", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -198,7 +205,7 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		Type: db.LogEventTypeUpdate,
 		Description: fmt.Sprintf(
 			"User %s roles updated to %s",
-			workspaceUser.User.Email,
+			workspaceMember.User.Email,
 			fields["roles"],
 		),
 		UserID:      &user.ID,
@@ -211,51 +218,17 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	})
 }
 
-// validateUserUpdatePermissions checks if the current user has permission to update the target user.
-func (api *APIControllers) validateUserUpdatePermissions(
-	user *db.User,
-	workspace *db.Workspace,
-	targetUser *db.WorkspaceUser,
-) error {
-	// Cannot update self
-	if user.ID == targetUser.UserID {
-		return errors.New("cannot update self")
-	}
-
-	// Cannot update workspace owner
-	if workspace.OwnerID == targetUser.UserID {
-		return errors.New("cannot update workspace owner")
-	}
-
-	// Check if user has admin permissions
-	allowed := user.ID == workspace.OwnerID // Owner can modify users in the workspace
-	for _, userWorkspace := range user.Workspaces {
-		if userWorkspace.WorkspaceID == workspace.ID && slices.Contains(userWorkspace.Roles, db.RoleAdmin) {
-			allowed = true
-			break
-		}
-	}
-
-	if !allowed {
-		return errors.New("insufficient permissions")
-	}
-
-	return nil
-}
-
 // parseAndValidateRoles converts string roles to UserWorkspaceRole slice.
-func parseAndValidateRoles(rolesStr string) []db.UserWorkspaceRole {
+func parseAndValidateRoles(api *APIControllers, rolesStr string) []uint {
 	requestedRoles := strings.Split(rolesStr, ",")
-	var newRoles []db.UserWorkspaceRole
+	var newRoles []uint
 
 	for _, role := range requestedRoles {
-		switch role {
-		case "admin":
-			newRoles = append(newRoles, db.RoleAdmin)
-		case "editor":
-			newRoles = append(newRoles, db.RoleEditor)
-		case "viewer":
-			newRoles = append(newRoles, db.RoleViewer)
+		roleID, err := api.SQIDManager.Decode("roles", role)
+		if err != nil {
+			api.Logger.Error("Error decoding role", "error", err)
+		} else {
+			newRoles = append(newRoles, uint(roleID))
 		}
 	}
 

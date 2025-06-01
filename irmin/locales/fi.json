@@ -65,5 +65,8 @@
   "query_deleted": "Kysely poistettu",
   "query_executed": "Kysely suoritettu",
   "query_ownership_transferred": "Kyselyn omistajuus siirretty",
-  "merge_commit_created": "Yhdistelmätallennus luotu"
+  "merge_commit_created": "Yhdistelmätallennus luotu",
+  "policy_created": "Käyttöoikeus luotu",
+  "policy_updated": "Käyttöoikeus päivitetty",
+  "policy_deleted": "Käyttöoikeus poistettu"
 }

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"irmin-api/formatter"
+	"irmin-api/locales"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -8,24 +10,28 @@ import (
 )
 
 func (api *APIControllers) RolesIndex(c fiber.Ctx) error {
-	// Define the roles.
-	rolesResponse := []irminmodels.Role{
-		{
-			Description: "Can perform all actions on the workspace",
-			Label:       "Admin",
-			Name:        "admin",
-		},
-		{
-			Description: "Can perform all actions except managing access",
-			Label:       "Editor",
-			Name:        "editor",
-		},
-		{
-			Description: "Can view all data but cannot make changes",
-			Label:       "Viewer",
-			Name:        "viewer",
-		},
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	if !dictOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
+
+	// Get the roles
+	roles, err := api.DB.GetRoles()
+	if err != nil {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Format the roles
+	rolesResponse, err := formatter.FormatIndexResponse(roles, formatter.FormatRoleResponse, api.SQIDManager)
+	if err != nil {
+		api.Logger.Error("Error formatting roles response", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Return the roles.
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: rolesResponse,

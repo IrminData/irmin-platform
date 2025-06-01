@@ -19,9 +19,13 @@ func FormatWorkspaceUserResponse(
 		return nil, fmt.Errorf("error encoding user sqid: %w", err)
 	}
 	// Construct the roles
-	var roles []irminmodels.IrminRole
+	var roles []irminmodels.Role
 	for _, role := range workspaceUser.Roles {
-		roles = append(roles, irminmodels.IrminRole(role))
+		formattedRole, formatRoleErr := FormatRoleResponse(&role.Role, sqidManager)
+		if formatRoleErr != nil {
+			return nil, fmt.Errorf("error formatting role: %w", formatRoleErr)
+		}
+		roles = append(roles, *formattedRole)
 	}
 	// Construct the user object
 	userResponse := irminmodels.User{

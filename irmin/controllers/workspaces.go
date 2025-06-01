@@ -89,14 +89,31 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Find the default role for the user
+	ownerRole, err := api.DB.GetOwnerRole()
+	if err != nil {
+		api.Logger.Error("Error getting default role", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Add the user to the workspace.
 	_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(
 		user.ID,
 		newWorkspace.ID,
-		[]db.UserWorkspaceRole{db.RoleAdmin},
+		[]uint{ownerRole.ID},
 	)
 	if addUserToWorkspaceErr != nil {
 		api.Logger.Error("Error adding user to workspace", "error", addUserToWorkspaceErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Set the default policies for the workspace.
+	if setDefaultPoliciesErr := lib.SetDefaultPolicies(api.DB, newWorkspace.ID, false); setDefaultPoliciesErr != nil {
+		api.Logger.Error("Error setting default policies", "error", setDefaultPoliciesErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})

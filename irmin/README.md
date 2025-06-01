@@ -20,6 +20,27 @@ And then run the binary file `./out`
 **Run**
 `go run main.go`
 
+## Command Line Flags
+
+The following command line flags are available when running the application:
+
+- `-reset`: Reset the database (empties all tables)
+- `-migrate`: Run database migrations (creates tables, adds indexes, seeds initial roles, sets default policies)
+- `-override-policies`: When used with `-migrate`, overrides existing policies with default ones
+
+Example usage:
+
+```bash
+# Reset the database
+go run main.go -reset
+
+# Run migrations
+go run main.go -migrate
+
+# Run migrations and override existing policies
+go run main.go -migrate -override-policies
+```
+
 ## Linting
 
 This project uses [golangci-lint](https://golangci-lint.run/) for code quality checks. The configuration is defined in `.golangci.yml`.

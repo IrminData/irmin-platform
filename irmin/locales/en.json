@@ -65,5 +65,8 @@
   "query_deleted": "Query deleted",
   "query_executed": "Query executed",
   "query_ownership_transferred": "Query ownership transferred",
-  "merge_commit_created": "Merge commit created"
+  "merge_commit_created": "Merge commit created",
+  "policy_created": "Policy created",
+  "policy_updated": "Policy updated",
+  "policy_deleted": "Policy deleted"
 }

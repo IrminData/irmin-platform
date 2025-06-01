@@ -86,6 +86,17 @@ func RegisterAPIRoutes(
 	workspace.Post("/transfer-ownership", apiControllers.TransferWorkspaceOwnership)
 	workspace.Post("/leave", apiControllers.LeaveWorkspace)
 
+	// Policy routes
+	workspace.Get("/policies", apiControllers.PoliciesIndex)
+	workspace.Get("/policies/role-summary", apiControllers.PoliciesRoleSummary)
+	workspace.Get("/policies/my", apiControllers.PoliciesMySummary)
+	workspace.Post("/policies", apiControllers.PoliciesStore)
+	workspace.Get("/policies/can", apiControllers.CheckPermission)
+	policy := workspace.Group("/policies/:policy", apiMiddlewares.PolicyMiddleware)
+	policy.Get("/", apiControllers.PoliciesShow)
+	policy.Patch("/", apiControllers.PoliciesUpdate)
+	policy.Delete("/", apiControllers.PoliciesDestroy)
+
 	// Log routes
 	workspace.Get("/logs", apiControllers.LogsIndex)
 

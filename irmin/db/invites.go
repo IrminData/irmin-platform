@@ -9,22 +9,24 @@ import (
 type Invite struct {
 	gorm.Model
 
-	Email       string            `json:"email"         gorm:"index"`
-	ClerkID     string            `json:"clerk_id"`
-	AcceptedAt  *time.Time        `json:"accepted_at"`
-	DeclinedAt  *time.Time        `json:"declined_at"`
-	ExpiresAt   time.Time         `json:"expires_at"`
-	Role        UserWorkspaceRole `json:"role"`
-	InvitedBy   User              `json:"invited_by"    gorm:"foreignKey:InvitedByID"`
-	InvitedByID uint              `json:"invited_by_id"`
-	Workspace   Workspace         `json:"workspace"     gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID uint              `json:"workspace_id"  gorm:"index"`
+	Email       string     `json:"email"         gorm:"index"`
+	ClerkID     string     `json:"clerk_id"`
+	AcceptedAt  *time.Time `json:"accepted_at"`
+	DeclinedAt  *time.Time `json:"declined_at"`
+	ExpiresAt   time.Time  `json:"expires_at"`
+	Role        Role       `json:"role"          gorm:"foreignKey:RoleID"`
+	RoleID      uint       `json:"role_id"       gorm:"index"`
+	InvitedBy   User       `json:"invited_by"    gorm:"foreignKey:InvitedByID"`
+	InvitedByID uint       `json:"invited_by_id"`
+	Workspace   Workspace  `json:"workspace"     gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID uint       `json:"workspace_id"  gorm:"index"`
 }
 
 func (d *Database) GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 	var invites []Invite
 	result := d.Preload("InvitedBy").
 		Preload("Workspace").
+		Preload("Role").
 		Where("workspace_id = ?", workspaceID).
 		Order("created_at desc").
 		Find(&invites)
@@ -38,6 +40,7 @@ func (d *Database) GetInvitesByEmail(email string) ([]Invite, error) {
 	var invites []Invite
 	result := d.Preload("InvitedBy").
 		Preload("Workspace").
+		Preload("Role").
 		Where("email = ?", email).
 		Order("created_at desc").
 		Find(&invites)
@@ -49,7 +52,7 @@ func (d *Database) GetInvitesByEmail(email string) ([]Invite, error) {
 
 func (d *Database) GetInviteByID(id uint) (*Invite, error) {
 	var invite Invite
-	result := d.Preload("InvitedBy").Preload("Workspace").First(&invite, id)
+	result := d.Preload("InvitedBy").Preload("Workspace").Preload("Role").First(&invite, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}

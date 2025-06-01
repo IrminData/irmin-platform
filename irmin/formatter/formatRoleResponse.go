@@ -3,33 +3,24 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func FormatRoleResponse(role db.UserWorkspaceRole) (*irminmodels.Role, error) {
-	var roleResponse irminmodels.Role
-	switch role {
-	case db.RoleAdmin:
-		roleResponse = irminmodels.Role{
-			Description: "Can perform all actions on the workspace",
-			Label:       "Admin",
-			Name:        "admin",
-		}
-	case db.RoleEditor:
-		roleResponse = irminmodels.Role{
-			Description: "Can perform all actions except managing access",
-			Label:       "Editor",
-			Name:        "editor",
-		}
-	case db.RoleViewer:
-		roleResponse = irminmodels.Role{
-			Description: "Can view all data but cannot make changes",
-			Label:       "Viewer",
-			Name:        "viewer",
-		}
-	default:
-		return nil, fmt.Errorf("invalid role: %s", role)
+func FormatRoleResponse(role *db.Role, sqidManager *utils.SQIDManager) (*irminmodels.Role, error) {
+	// Get the sqid of the role
+	roleSqid, err := sqidManager.Encode("roles", uint64(role.ID))
+	if err != nil {
+		return nil, fmt.Errorf("error encoding role sqid: %w", err)
+	}
+
+	roleResponse := irminmodels.Role{
+		ID:          roleSqid,
+		Role:        role.Role,
+		Description: role.Description,
+		IsOwner:     role.IsOwner,
+		IsDefault:   role.IsDefault,
 	}
 
 	return &roleResponse, nil

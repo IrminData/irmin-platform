@@ -36,7 +36,7 @@ func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error {
 	}
 
 	// Find the workspace user by their ID and the workspace ID.
-	workspaceUser, err := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
+	workspaceMember, err := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
 	if err != nil {
 		api.Logger.Error("Error retrieving user", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -44,8 +44,8 @@ func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error {
 		})
 	}
 
-	// Set the workspace user in the context for subsequent handlers.
-	c.Locals("workspace_user", workspaceUser)
+	// Set the workspace member in the context for subsequent handlers.
+	c.Locals("workspace_member", workspaceMember)
 
 	return c.Next()
 }

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -53,59 +52,9 @@ func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	})
 }
 
-// Helper function to check if user has permission to send invites.
-func (api *APIControllers) canSendInvites(user *db.User, workspace *db.Workspace) bool {
-	if user.ID == workspace.OwnerID {
-		return true
-	}
-	for _, userWorkspace := range user.Workspaces {
-		if userWorkspace.WorkspaceID == workspace.ID {
-			for _, role := range userWorkspace.Roles {
-				if role == db.RoleAdmin {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-// Helper function to validate invite request fields.
-func validateInviteFields(fields map[string]string) error {
-	if !utils.ValidateEmail(fields["email"]) {
-		return fmt.Errorf("invalid email: %s", fields["email"])
-	}
-	if fields["role"] != string(db.RoleAdmin) && fields["role"] != string(db.RoleEditor) &&
-		fields["role"] != string(db.RoleViewer) {
-		return fmt.Errorf("invalid role: %s", fields["role"])
-	}
-	return nil
-}
-
-// Helper function to check for existing invites/users.
-func (api *APIControllers) checkExistingInviteOrUser(email string, workspaceID uint) error {
-	// Check if user is already in workspace
-	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(email, workspaceID)
-	if err != nil {
-		return fmt.Errorf("error checking if user in workspace: %w", err)
-	}
-	if alreadyInWorkspace {
-		return errors.New("user already in workspace")
-	}
-
-	// Check if user is already invited
-	existingInvites, err := api.DB.GetInvitesByEmail(email)
-	if err != nil {
-		return fmt.Errorf("error checking existing invites: %w", err)
-	}
-	for _, invite := range existingInvites {
-		if invite.WorkspaceID == workspaceID {
-			return errors.New("user already invited to workspace")
-		}
-	}
-	return nil
-}
-
+// SendInvite sends an invite to a user to join a workspace.
+//
+//nolint:funlen // this function is long, but simple. It creates an invite in the database and Clerk.
 func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	locale, localeOk := c.Locals("locale").(string)
@@ -116,9 +65,18 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	}
 
 	// Check permissions
-	if !api.canSendInvites(user, workspace) {
+	allowed, err := lib.IsAllowed(
+		api.DB,
+		user,
+		workspace,
+		db.PolicyResourceInvite,
+		nil,
+		db.PolicyActionCreate,
+	)
+	if err != nil || !allowed {
+		api.Logger.Error("Error checking if user can send invites", "error", err)
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
@@ -130,30 +88,62 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		})
 	}
 
-	if validateInviteFieldsErr := validateInviteFields(fields); validateInviteFieldsErr != nil {
-		api.Logger.Error("Invalid invite fields", "error", validateInviteFieldsErr)
+	// Validate email
+	if !utils.ValidateEmail(fields["email"]) {
+		api.Logger.Error("Invalid email", "email", fields["email"])
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Check for existing invites/users
-	if checkExistingInviteOrUserErr := api.checkExistingInviteOrUser(fields["email"], workspace.ID); checkExistingInviteOrUserErr != nil {
-		switch checkExistingInviteOrUserErr.Error() {
-		case "user already in workspace":
-			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "already_in_workspace")},
-			})
-		case "user already invited to workspace":
+	// Check if user is already in workspace
+	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(fields["email"], workspace.ID)
+	if err != nil || alreadyInWorkspace {
+		api.Logger.Error("User already in workspace", "email", fields["email"], "error", err)
+		return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "already_in_workspace")},
+		})
+	}
+
+	// Check if user is already invited
+	existingInvites, err := api.DB.GetInvitesByEmail(fields["email"])
+	if err != nil {
+		api.Logger.Error("Error checking existing invites", "email", fields["email"], "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+	for _, invite := range existingInvites {
+		if invite.WorkspaceID == workspace.ID {
+			api.Logger.Error("User already invited to workspace", "email", fields["email"])
 			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
 				Errors: []string{api.lm.T(dict, "already_invited_to_workspace")},
 			})
-		default:
-			api.Logger.Error("Error checking existing invite/user", "error", checkExistingInviteOrUserErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
 		}
+	}
+
+	// Decode the role id
+	roleID, err := api.SQIDManager.Decode("roles", fields["role"])
+	if err != nil {
+		api.Logger.Error("Error decoding role", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Get the role by ID
+	role, err := api.DB.GetRole(uint(roleID))
+	if err != nil {
+		api.Logger.Error("Error getting role", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+	if role == nil {
+		api.Logger.Error("Role not found", "role", fields["role"])
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
 	}
 
 	// Set the API key with your Clerk Secret Key.
@@ -164,7 +154,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	newInvite := db.Invite{
 		Email:       fields["email"],
 		ExpiresAt:   expiresAt,
-		Role:        db.UserWorkspaceRole(fields["role"]),
+		RoleID:      role.ID,
 		InvitedByID: user.ID,
 		WorkspaceID: workspace.ID,
 	}
@@ -227,7 +217,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("Invite sent to %s, role: %s", newInvite.Email, newInvite.Role),
+		Description: fmt.Sprintf("Invite sent to %s, role: %s", newInvite.Email, role.Role),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
@@ -265,25 +255,24 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
-	if !dictOk || !inviteOk || !userOk {
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	if !dictOk || !inviteOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Make sure the user is allowed to send invites
-	allowed := user.ID == invite.Workspace.OwnerID // Owner can modify users in the workspace
-	for _, userWorkspace := range user.Workspaces {
-		if userWorkspace.WorkspaceID == invite.Workspace.ID {
-			for _, role := range userWorkspace.Roles {
-				if role == db.RoleAdmin {
-					allowed = true // Admins can modify users in the workspace
-					break
-				}
-			}
-		}
-	}
-	if !allowed {
+	// Check permissions
+	allowed, err := lib.IsAllowed(
+		api.DB,
+		user,
+		workspace,
+		db.PolicyResourceInvite,
+		&invite.ID,
+		db.PolicyActionUpdate,
+	)
+	if err != nil || !allowed {
+		api.Logger.Error("Access denied to perform action", "error", err)
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
@@ -295,17 +284,32 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Validate fields
-	if fields["role"] != string(db.RoleAdmin) && fields["role"] != string(db.RoleEditor) &&
-		fields["role"] != string(db.RoleViewer) {
-		api.Logger.Error("Invalid role", "role", fields["role"])
+	// Parse the role id
+	roleID, err := api.SQIDManager.Decode("roles", fields["role"])
+	if err != nil {
+		api.Logger.Error("Error decoding role", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Get the role by ID
+	role, err := api.DB.GetRole(uint(roleID))
+	if err != nil {
+		api.Logger.Error("Error getting role", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+	if role == nil {
+		api.Logger.Error("Role not found", "role", fields["role"])
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Update the invite
-	invite.Role = db.UserWorkspaceRole(fields["role"])
+	invite.RoleID = role.ID
 	if updateInviteErr := api.DB.Save(&invite).Error; updateInviteErr != nil {
 		api.Logger.Error("Error updating invite", "error", updateInviteErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -325,7 +329,7 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
-		Description: fmt.Sprintf("Invite for %s updated, role: %s", invite.Email, invite.Role),
+		Description: fmt.Sprintf("Invite for %s updated, role: %s", invite.Email, role.Role),
 		UserID:      &user.ID,
 		WorkspaceID: &invite.WorkspaceID,
 	})
@@ -341,33 +345,32 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
-	if !dictOk || !inviteOk || !userOk {
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	if !dictOk || !inviteOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Create context
 	ctx := c.Context()
 
-	// Make sure the user is allowed to send invites
-	allowed := user.ID == invite.Workspace.OwnerID // Owner can modify users in the workspace
-	for _, userWorkspace := range user.Workspaces {
-		if userWorkspace.WorkspaceID == invite.Workspace.ID {
-			for _, role := range userWorkspace.Roles {
-				if role == db.RoleAdmin {
-					allowed = true // Admins can modify users in the workspace
-					break
-				}
-			}
-		}
-	}
-	if !allowed {
+	// Check permissions
+	allowed, err := lib.IsAllowed(
+		api.DB,
+		user,
+		workspace,
+		db.PolicyResourceInvite,
+		&invite.ID,
+		db.PolicyActionDelete,
+	)
+	if err != nil || !allowed {
+		api.Logger.Error("Access denied to perform action", "error", err)
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
 	// Revoke the invite in Clerk
-	_, err := invitation.Revoke(ctx, invite.ClerkID)
+	_, err = invitation.Revoke(ctx, invite.ClerkID)
 	if err != nil {
 		api.Logger.Error("Error revoking invite in Clerk", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -403,28 +406,27 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
-	if !localeOk || !dictOk || !inviteOk || !userOk {
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	if !localeOk || !dictOk || !inviteOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Create context
 	ctx := c.Context()
 
-	// Make sure the user is allowed to send invites
-	allowed := user.ID == invite.Workspace.OwnerID // Owner can modify users in the workspace
-	for _, userWorkspace := range user.Workspaces {
-		if userWorkspace.WorkspaceID == invite.Workspace.ID {
-			for _, role := range userWorkspace.Roles {
-				if role == db.RoleAdmin {
-					allowed = true // Admins can modify users in the workspace
-					break
-				}
-			}
-		}
-	}
-	if !allowed {
+	// Validate the permissions
+	allowed, err := lib.IsAllowed(
+		api.DB,
+		user,
+		workspace,
+		db.PolicyResourceInvite,
+		&invite.ID,
+		db.PolicyActionUpdate,
+	)
+	if err != nil || !allowed {
+		api.Logger.Error("Access denied to perform action", "error", err)
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
@@ -553,7 +555,7 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 	allowed := user.Email == invite.Email // User can accept the invite if it was sent to them
 	if !allowed {
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 
@@ -571,7 +573,7 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 	_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(
 		user.ID,
 		invite.WorkspaceID,
-		[]db.UserWorkspaceRole{invite.Role},
+		[]uint{invite.RoleID},
 	)
 	if addUserToWorkspaceErr != nil {
 		api.Logger.Error("Error adding user to workspace", "error", addUserToWorkspaceErr)
@@ -587,7 +589,7 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 			"User %s added to workspace %s with role %s",
 			user.Email,
 			invite.Workspace.Name,
-			invite.Role,
+			invite.Role.Role,
 		),
 		UserID:      &user.ID,
 		WorkspaceID: &invite.WorkspaceID,
@@ -611,7 +613,7 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error {
 	allowed := user.Email == invite.Email // User can decline the invite if it was sent to them
 	if !allowed {
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			Errors: []string{api.lm.T(dict, "access_denied")},
 		})
 	}
 

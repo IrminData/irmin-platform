@@ -5,6 +5,7 @@ import (
 	"flag"
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
 	"irmin-api/routes"
@@ -31,9 +32,37 @@ const (
 	CacheExpirationDuration = 10 * time.Second
 )
 
+func setupRolesAndPolicies(d *db.Database, overridePolicies *bool) error {
+	// Seed initial roles
+	if seedRolesErr := lib.SeedRoles(d); seedRolesErr != nil {
+		return seedRolesErr
+	}
+
+	// Fetch all workspaces
+	workspaces, fetchWorkspacesErr := d.GetAllWorkspaces()
+	if fetchWorkspacesErr != nil {
+		return fetchWorkspacesErr
+	}
+
+	// Set default policies for every workspace
+	for _, workspace := range workspaces {
+		setDefaultPoliciesErr := lib.SetDefaultPolicies(d, workspace.ID, *overridePolicies)
+		if setDefaultPoliciesErr != nil {
+			return setDefaultPoliciesErr
+		}
+	}
+
+	// Set default role for every user without a role
+	if assignDefaultRolesErr := lib.AssignDefaultRolesToUsersWithoutRoles(d); assignDefaultRolesErr != nil {
+		return assignDefaultRolesErr
+	}
+
+	return nil
+}
+
 // setupDatabase initializes and configures the database based on command line flags.
 func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
-	database, err := db.InitialiseDB(env)
+	d, err := db.InitialiseDB(env)
 	if err != nil {
 		return nil, err
 	}
@@ -41,21 +70,30 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 	// Handle command line flags
 	reset := flag.Bool("reset", false, "Reset the database")
 	migrate := flag.Bool("migrate", false, "Run database migrations")
+	overridePolicies := flag.Bool("override-policies", false, "Override existing policies")
 	flag.Parse()
 
+	// Empty the database if the reset flag is set
 	if *reset {
-		if dbResetErr := database.Reset(); dbResetErr != nil {
+		if dbResetErr := d.Reset(); dbResetErr != nil {
 			return nil, dbResetErr
 		}
 	}
 
+	// Run database migrations if the migrate flag is set
 	if *migrate {
-		if dbMigrateErr := database.Migrate(); dbMigrateErr != nil {
+		// Create database tables, add indexes, or update existing once
+		if dbMigrateErr := d.Migrate(); dbMigrateErr != nil {
 			return nil, dbMigrateErr
+		}
+
+		// Setup roles and policies
+		if setupRolesAndPoliciesErr := setupRolesAndPolicies(d, overridePolicies); setupRolesAndPoliciesErr != nil {
+			return nil, setupRolesAndPoliciesErr
 		}
 	}
 
-	return database, nil
+	return d, nil
 }
 
 // setupFiberApp creates and configures a new Fiber application.

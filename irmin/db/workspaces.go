@@ -13,6 +13,16 @@ type Workspace struct {
 	Owner       User            `json:"owner"       gorm:"foreignKey:OwnerID"`
 	OwnerID     uint            `json:"owner_id"    gorm:"index"`
 	Users       []WorkspaceUser `json:"users"       gorm:"foreignKey:WorkspaceID"`
+	Policies    []Policy        `json:"policies"    gorm:"foreignKey:WorkspaceID"`
+}
+
+// GetAllWorkspaces retrieves all workspaces from the database.
+func (d *Database) GetAllWorkspaces() ([]Workspace, error) {
+	var workspaces []Workspace
+	if err := d.Find(&workspaces).Error; err != nil {
+		return nil, err
+	}
+	return workspaces, nil
 }
 
 // GetWorkspaceBySlug retrieves a workspace by its slug.

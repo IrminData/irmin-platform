@@ -137,8 +137,48 @@ func (d *Database) migrateModels(models ...any) error {
 // It separates the migrations into groups based on model dependencies.
 func (d *Database) Migrate() error {
 	models := []any{
+		&Role{},
 		&Connector{},
 		&Workspace{},
+		&WorkspaceUser{},
+		&WorkspaceUserRole{},
+		&User{},
+		&APIToken{},
+		&Connection{},
+		&Invite{},
+		&Repository{},
+		&ImportWorkflowable{},
+		&ExportWorkflowable{},
+		&ActionWorkflowableInput{},
+		&ActionWorkflowable{},
+		&PipelineStage{},
+		&PipelineWorkflowable{},
+		&Workflow{},
+		&Schedule{},
+		&WorkflowTrigger{},
+		&WorkflowRun{},
+		&StoredQuery{},
+		&LogEvent{},
+		&ConnectionSchemaCache{},
+		&RepositorySchemaCache{},
+		&RepositoryObject{},
+		&Policy{},
+	}
+	if err := d.migrateModels(models...); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Reset drops all tables to start fresh.
+func (d *Database) Reset() error {
+	// Drop tables in an order that avoids foreign key conflicts.
+	if err := d.Migrator().DropTable(
+		&Role{},
+		&Connector{},
+		&Workspace{},
+		&WorkspaceUserRole{},
 		&WorkspaceUser{},
 		&User{},
 		&APIToken{},
@@ -160,40 +200,7 @@ func (d *Database) Migrate() error {
 		&ConnectionSchemaCache{},
 		&RepositorySchemaCache{},
 		&RepositoryObject{},
-	}
-	if err := d.migrateModels(models...); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Reset drops all tables to start fresh.
-func (d *Database) Reset() error {
-	// Drop tables in an order that avoids foreign key conflicts.
-	if err := d.Migrator().DropTable(
-		&Connector{},
-		&Workspace{},
-		&WorkspaceUser{},
-		&User{},
-		&APIToken{},
-		&Connection{},
-		&Invite{},
-		&Repository{},
-		&ImportWorkflowable{},
-		&ExportWorkflowable{},
-		&ActionWorkflowableInput{},
-		&ActionWorkflowable{},
-		&PipelineStage{},
-		&PipelineWorkflowable{},
-		&Workflow{},
-		&Schedule{},
-		&WorkflowTrigger{},
-		&WorkflowRun{},
-		&StoredQuery{},
-		&LogEvent{},
-		&ConnectionSchemaCache{},
-		&RepositorySchemaCache{},
+		&Policy{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
 	}
