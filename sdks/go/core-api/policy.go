@@ -170,10 +170,32 @@ func (c *Client) GetPolicyUserSummary(
 	var userPolicySummary irminmodels.UserPolicySummary
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies/user-summary", workspace),
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies/my", workspace),
 	}, &userPolicySummary)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch user policies error: %w", err)
 	}
 	return &userPolicySummary, apiResp, nil
+}
+
+// CheckPermission checks if a user has permission to perform an action on a resource.
+func (c *Client) CheckPermission(
+	workspace string,
+	resource irminmodels.PolicyResource,
+	action irminmodels.PolicyAction,
+	resourceID *string,
+) (bool, error) {
+	endpoint := fmt.Sprintf("/v1/workspaces/%s/policies/can?resource=%s&action=%s", workspace, resource, action)
+	if resourceID != nil {
+		endpoint += fmt.Sprintf("&resource_id=%s", *resourceID)
+	}
+
+	_, err := c.FetchAPI(RequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	}, nil)
+	if err != nil {
+		return false, fmt.Errorf("check permission error: %w", err)
+	}
+	return true, nil
 }
