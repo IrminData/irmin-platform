@@ -89,3 +89,19 @@ type Policy struct {
 	// WorkspaceID is used to specify which workspace the policy is applied to
 	WorkspaceID *string `json:"workspace_id,omitempty"`
 }
+
+// RolePolicySummary represents a summary of a role's policies.
+type RolePolicySummary struct {
+	Role     Role     `json:"role"`
+	IsOwner  bool     `json:"is_owner"`
+	Policies []Policy `json:"policies"`
+}
+
+// UserPolicySummary represents a summary of a user's policies.
+type UserPolicySummary struct {
+	UserID   string   `json:"user_id"`
+	Email    string   `json:"email"`
+	IsOwner  bool     `json:"is_owner"`
+	RoleIDs  []string `json:"role_ids"`
+	Policies []Policy `json:"policies"`
+}
