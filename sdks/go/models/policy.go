@@ -44,8 +44,6 @@ const (
 	PolicyResourceRepositoryObject PolicyResource = "repository_object"
 	// PolicyResourceUser represents a user resource.
 	PolicyResourceUser PolicyResource = "user"
-	// PolicyResourceRole represents a role resource.
-	PolicyResourceRole PolicyResource = "role"
 	// PolicyResourcePolicy represents a policy resource.
 	PolicyResourcePolicy PolicyResource = "policy"
 	// PolicyResourceInvite represents an invite resource.
@@ -54,6 +52,8 @@ const (
 	PolicyResourceAuditLog PolicyResource = "audit_log"
 	// PolicyResourceDocumentation represents a documentation resource.
 	PolicyResourceDocumentation PolicyResource = "documentation"
+	// PolicyResourceBilling represents billing and subscription management resource.
+	PolicyResourceBilling PolicyResource = "billing"
 )
 
 // PolicyPrincipal specifies which group of users the policy is applied to.

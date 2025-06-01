@@ -149,7 +149,9 @@ func (c *Client) DeletePolicy(workspace, policyID string) (*irminmodels.IrminAPI
 }
 
 // GetPolicyRoleSummary returns a list of policies that apply to a role.
-func (c *Client) GetPolicyRoleSummary(workspace string) ([]irminmodels.RolePolicySummary, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetPolicyRoleSummary(
+	workspace string,
+) ([]irminmodels.RolePolicySummary, *irminmodels.IrminAPIResponse, error) {
 	var rolePolicySummaries []irminmodels.RolePolicySummary
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
@@ -162,7 +164,9 @@ func (c *Client) GetPolicyRoleSummary(workspace string) ([]irminmodels.RolePolic
 }
 
 // GetPolicyUserSummary returns a list of policies that apply to a user.
-func (c *Client) GetPolicyUserSummary(workspace string) (*irminmodels.UserPolicySummary, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetPolicyUserSummary(
+	workspace string,
+) (*irminmodels.UserPolicySummary, *irminmodels.IrminAPIResponse, error) {
 	var userPolicySummary irminmodels.UserPolicySummary
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
