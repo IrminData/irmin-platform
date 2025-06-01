@@ -34,6 +34,8 @@ const (
 	PolicyResourceWorkspace PolicyResource = "workspace"
 	// PolicyResourceWorkspaceOwnership represents workspace ownership resource.
 	PolicyResourceWorkspaceOwnership PolicyResource = "workspace_ownership"
+	// PolicyResourceEditorScript represents script editor resource.
+	PolicyResourceEditorScript PolicyResource = "editor_script"
 	// PolicyResourceWorkflow represents a workflow resource.
 	PolicyResourceWorkflow PolicyResource = "workflow"
 	// PolicyResourceConnection represents a connection resource.
