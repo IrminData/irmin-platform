@@ -1,7 +1,5 @@
 package irminmodels
 
-import "time"
-
 // PolicyEffect specifies whether the policy is an allow or deny policy.
 type PolicyEffect string
 
@@ -90,8 +88,4 @@ type Policy struct {
 	WorkspaceUserID *string `json:"workspace_user_id,omitempty"`
 	// WorkspaceID is used to specify which workspace the policy is applied to
 	WorkspaceID *string `json:"workspace_id,omitempty"`
-	// CreatedAt is the timestamp when the policy was created
-	CreatedAt time.Time `json:"created_at"`
-	// UpdatedAt is the timestamp when the policy was last updated
-	UpdatedAt time.Time `json:"updated_at"`
 }
