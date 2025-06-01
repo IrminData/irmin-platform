@@ -64,22 +64,6 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourceInvite,
-		nil,
-		db.PolicyActionCreate,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Error checking if user can send invites", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
 	// Parse and validate request fields
 	fields, err := utils.ParseFormFields(c, []string{"email", "role"}, nil)
 	if err != nil {
@@ -255,25 +239,8 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !inviteOk || !userOk || !workspaceOk {
+	if !dictOk || !inviteOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
-	}
-
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourceInvite,
-		&invite.ID,
-		db.PolicyActionUpdate,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
 	}
 
 	// Parse the request
@@ -345,32 +312,15 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !inviteOk || !userOk || !workspaceOk {
+	if !dictOk || !inviteOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Create context
 	ctx := c.Context()
 
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourceInvite,
-		&invite.ID,
-		db.PolicyActionDelete,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
 	// Revoke the invite in Clerk
-	_, err = invitation.Revoke(ctx, invite.ClerkID)
+	_, err := invitation.Revoke(ctx, invite.ClerkID)
 	if err != nil {
 		api.Logger.Error("Error revoking invite in Clerk", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -406,29 +356,12 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
 	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !localeOk || !dictOk || !inviteOk || !userOk || !workspaceOk {
+	if !localeOk || !dictOk || !inviteOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Create context
 	ctx := c.Context()
-
-	// Validate the permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourceInvite,
-		&invite.ID,
-		db.PolicyActionUpdate,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
 
 	// Create sqid for the invite
 	inviteSqid, err := api.SQIDManager.Encode("invites", uint64(invite.ID))

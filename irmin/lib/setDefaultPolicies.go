@@ -57,16 +57,22 @@ func createReadPoliciesForResources(
 func getAllResources() []db.PolicyResource {
 	return []db.PolicyResource{
 		db.PolicyResourceWorkspace,
-		db.PolicyResourceWorkspaceOwnership,
+		db.PolicyResourceEditorScript,
+		db.PolicyResourceQuery,
 		db.PolicyResourceWorkflow,
+		db.PolicyResourceWorkflowRun,
 		db.PolicyResourceConnection,
 		db.PolicyResourceRepository,
+		db.PolicyResourceRepositoryBranch,
+		db.PolicyResourceRepositoryTag,
+		db.PolicyResourceRepositoryCommit,
 		db.PolicyResourceRepositoryObject,
 		db.PolicyResourceUser,
 		db.PolicyResourcePolicy,
 		db.PolicyResourceInvite,
 		db.PolicyResourceAuditLog,
 		db.PolicyResourceDocumentation,
+		db.PolicyResourceBilling,
 	}
 }
 
@@ -137,6 +143,54 @@ func setWorkspaceWidePolicies(d *db.Database, workspaceID uint) error {
 	return d.Create(&p).Error
 }
 
+// setEditorPolicies sets all policies for the editor role.
+func setEditorPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
+	// Editor has full access to workflows and repositories, but limited access to other resources
+	workflowResources := []db.PolicyResource{
+		db.PolicyResourceWorkflow,
+		db.PolicyResourceWorkflowRun,
+		db.PolicyResourceEditorScript,
+		db.PolicyResourceQuery,
+	}
+
+	repositoryResources := []db.PolicyResource{
+		db.PolicyResourceRepository,
+		db.PolicyResourceRepositoryBranch,
+		db.PolicyResourceRepositoryTag,
+		db.PolicyResourceRepositoryCommit,
+		db.PolicyResourceRepositoryObject,
+	}
+
+	// Full access to workflow and repository resources
+	workflowActions := []db.PolicyAction{
+		db.PolicyActionCreate,
+		db.PolicyActionRead,
+		db.PolicyActionUpdate,
+		db.PolicyActionDelete,
+	}
+
+	if err := createPoliciesForResources(d, workflowResources, workflowActions, roleID, workspaceID); err != nil {
+		return err
+	}
+
+	if err := createPoliciesForResources(d, repositoryResources, workflowActions, roleID, workspaceID); err != nil {
+		return err
+	}
+
+	// Read-only access to other resources
+	readOnlyResources := []db.PolicyResource{
+		db.PolicyResourceWorkspace,
+		db.PolicyResourceConnection,
+		db.PolicyResourceUser,
+		db.PolicyResourcePolicy,
+		db.PolicyResourceInvite,
+		db.PolicyResourceAuditLog,
+		db.PolicyResourceDocumentation,
+	}
+
+	return createReadPoliciesForResources(d, readOnlyResources, roleID, workspaceID)
+}
+
 // SetDefaultPolicies creates a set of default policies for a newly created workspace.
 // It will only insert each policy if it does not already exist for the given workspace.
 // If any policies already exist for the workspace, this function will do nothing.
@@ -186,8 +240,7 @@ func SetDefaultPolicies(d *db.Database, workspaceID uint, overridePolicies bool)
 		case "admin":
 			err = setAdminPolicies(d, &role.ID, workspaceID)
 		case "editor":
-			// Editor role is deprecated, treat as viewer
-			err = setViewerPolicies(d, &role.ID, workspaceID)
+			err = setEditorPolicies(d, &role.ID, workspaceID)
 		case "viewer":
 			err = setViewerPolicies(d, &role.ID, workspaceID)
 		case "billing":

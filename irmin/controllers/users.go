@@ -97,22 +97,6 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 		})
 	}
 
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourceUser,
-		&workspaceMember.UserID,
-		db.PolicyActionDelete,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
 	// Remove the user from the workspace
 	if removeUserFromWorkspaceErr := api.DB.RemoveUserFromWorkspace(workspaceMember.UserID, workspace.ID); removeUserFromWorkspaceErr != nil {
 		api.Logger.Error("Error removing user from workspace", "error", removeUserFromWorkspaceErr)
@@ -143,22 +127,6 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 
 	if !dictOk || !userOk || !workspaceOk || !workspaceMemberOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
-	}
-
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourceUser,
-		&workspaceMember.UserID,
-		db.PolicyActionUpdate,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
 	}
 
 	// Parse form fields

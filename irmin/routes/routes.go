@@ -17,7 +17,7 @@ import (
 //nolint:funlen // This is a long function, but it's not complex. We just have a lot of routes.
 func RegisterAPIRoutes(
 	app *fiber.App,
-	db *db.Database,
+	d *db.Database,
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	orchestrator *orchestrator.Orchestrator,
@@ -26,7 +26,7 @@ func RegisterAPIRoutes(
 ) {
 	// Initialize controllers
 	apiControllers := controllers.NewAPIControllers(
-		db,
+		d,
 		logger,
 		env,
 		orchestrator,
@@ -36,7 +36,7 @@ func RegisterAPIRoutes(
 
 	// Initialize middlewares
 	apiMiddlewares := middlewares.NewAPIMiddlewares(
-		db,
+		d,
 		logger,
 		env,
 		orchestrator,
@@ -80,150 +80,356 @@ func RegisterAPIRoutes(
 	v1.Get("/workspaces", apiControllers.WorkspacesIndex)
 	v1.Post("/workspaces", apiControllers.WorkspacesStore)
 	workspace := v1.Group("/workspaces/:workspace", apiMiddlewares.WorkspaceMiddleware)
-	workspace.Get("/", apiControllers.WorkspacesShow)
-	workspace.Patch("/", apiControllers.WorkspacesUpdate)
-	workspace.Delete("/", apiControllers.WorkspacesDestroy)
-	workspace.Post("/transfer-ownership", apiControllers.TransferWorkspaceOwnership)
-	workspace.Post("/leave", apiControllers.LeaveWorkspace)
+	workspace.Get("/", apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionRead), apiControllers.WorkspacesShow)
+	workspace.Patch(
+		"/",
+		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.WorkspacesUpdate,
+	)
+	workspace.Delete(
+		"/",
+		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.WorkspacesDestroy,
+	)
+	workspace.Post(
+		"/transfer-ownership",
+		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TransferWorkspaceOwnership,
+	)
+	workspace.Post(
+		"/leave",
+		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionRead),
+		apiControllers.LeaveWorkspace,
+	)
 
 	// Policy routes
-	workspace.Get("/policies", apiControllers.PoliciesIndex)
-	workspace.Get("/policies/role-summary", apiControllers.PoliciesRoleSummary)
-	workspace.Get("/policies/my", apiControllers.PoliciesMySummary)
-	workspace.Post("/policies", apiControllers.PoliciesStore)
-	workspace.Get("/policies/can", apiControllers.CheckPermission)
+	workspace.Get(
+		"/policies",
+		apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.PoliciesIndex,
+	)
+	workspace.Get(
+		"/policies/role-summary",
+		apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.PoliciesRoleSummary,
+	)
+	workspace.Get(
+		"/policies/my",
+		apiControllers.PoliciesMySummary,
+	)
+	workspace.Post(
+		"/policies",
+		apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.PoliciesStore,
+	)
+	workspace.Get(
+		"/policies/can",
+		apiControllers.CheckPermission,
+	)
 	policy := workspace.Group("/policies/:policy", apiMiddlewares.PolicyMiddleware)
-	policy.Get("/", apiControllers.PoliciesShow)
-	policy.Patch("/", apiControllers.PoliciesUpdate)
-	policy.Delete("/", apiControllers.PoliciesDestroy)
+	policy.Get("/", apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionRead), apiControllers.PoliciesShow)
+	policy.Patch("/", apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionUpdate), apiControllers.PoliciesUpdate)
+	policy.Delete("/", apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionDelete), apiControllers.PoliciesDestroy)
 
 	// Log routes
-	workspace.Get("/logs", apiControllers.LogsIndex)
+	workspace.Get("/logs", apiMiddlewares.AuditLogPermissionMiddleware(), apiControllers.LogsIndex)
 
 	// Schema routes
-	workspace.Get("/schema", apiControllers.WorkspaceSchemaIndex)
+	workspace.Get(
+		"/schema",
+		apiMiddlewares.DocumentationPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.WorkspaceSchemaIndex,
+	)
 
 	// Query routes
-	workspace.Post("/sql", apiControllers.ExecuteSQL)
+	workspace.Post("/sql", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionCreate), apiControllers.ExecuteSQL)
 	queries := workspace.Group("/queries")
-	queries.Get("/", apiControllers.QueriesIndex)
-	queries.Post("/", apiControllers.QueriesStore)
+	queries.Get("/", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionRead), apiControllers.QueriesIndex)
+	queries.Post("/", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionCreate), apiControllers.QueriesStore)
 	query := queries.Group("/:stored_query", apiMiddlewares.QueryMiddleware)
-	query.Get("/", apiControllers.QueriesShow)
-	query.Patch("/", apiControllers.QueriesUpdate)
-	query.Delete("/", apiControllers.QueriesDestroy)
-	query.Post("/execute", apiControllers.ExecuteQuery)
-	query.Post("/transfer-ownership", apiControllers.TransferQueryOwnership)
+	query.Get("/", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionRead), apiControllers.QueriesShow)
+	query.Patch("/", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionUpdate), apiControllers.QueriesUpdate)
+	query.Delete("/", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionDelete), apiControllers.QueriesDestroy)
+	query.Post("/execute", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionRead), apiControllers.ExecuteQuery)
+	query.Post(
+		"/transfer-ownership",
+		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TransferQueryOwnership,
+	)
 
 	// User routes
 	users := workspace.Group("/users")
-	users.Get("/", apiControllers.UsersIndex)
+	users.Get("/", apiMiddlewares.UserPermissionMiddleware(db.PolicyActionRead), apiControllers.UsersIndex)
 	user := workspace.Group("/users/:user", apiMiddlewares.UserMiddleware)
-	user.Get("/", apiControllers.UsersShow)
-	user.Patch("/", apiControllers.UsersUpdate)
-	user.Delete("/", apiControllers.UsersDestroy)
+	user.Get("/", apiMiddlewares.UserPermissionMiddleware(db.PolicyActionRead), apiControllers.UsersShow)
+	user.Patch("/", apiMiddlewares.UserPermissionMiddleware(db.PolicyActionUpdate), apiControllers.UsersUpdate)
+	user.Delete("/", apiMiddlewares.UserPermissionMiddleware(db.PolicyActionDelete), apiControllers.UsersDestroy)
 
 	// Invite routes
-	workspace.Get("/invites", apiControllers.WorkspaceInvitesIndex)
-	workspace.Post("/invites", apiControllers.SendInvite)
+	workspace.Get(
+		"/invites",
+		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionRead),
+		apiControllers.WorkspaceInvitesIndex,
+	)
+	workspace.Post(
+		"/invites",
+		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.SendInvite,
+	)
 	v1.Get("/invites", apiControllers.IndexMyInvites)
 	invite := v1.Group("/invites/:invite", apiMiddlewares.InviteMiddleware)
-	invite.Get("/", apiControllers.InvitesShow)
-	invite.Patch("/", apiControllers.InvitesUpdate)
-	invite.Delete("/", apiControllers.InvitesDestroy)
-	invite.Post("/resend", apiControllers.ResendInvite)
+	invite.Get("/", apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionRead), apiControllers.InvitesShow)
+	invite.Patch("/", apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionUpdate), apiControllers.InvitesUpdate)
+	invite.Delete("/", apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionDelete), apiControllers.InvitesDestroy)
+	invite.Post(
+		"/resend",
+		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ResendInvite,
+	)
 	invite.Post("/accept", apiControllers.AcceptInvite)
 	invite.Post("/decline", apiControllers.DeclineInvite)
 
 	// Connection routes
 	connections := workspace.Group("/connections")
-	connections.Get("/", apiControllers.ConnectionsIndex)
-	connections.Post("/", apiControllers.ConnectionsStore)
+	connections.Get(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ConnectionsIndex,
+	)
+	connections.Post(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.ConnectionsStore,
+	)
 	connection := connections.Group("/:connection", apiMiddlewares.ConnectionMiddleware)
-	connection.Get("/", apiControllers.ConnectionsShow)
-	connection.Patch("/", apiControllers.ConnectionsUpdate)
-	connection.Delete("/", apiControllers.ConnectionsDestroy)
-	connection.Post("/transfer-ownership", apiControllers.TransferConnectionOwnership)
-	connection.Get("/schema", apiControllers.ConnectionSchema)
+	connection.Get(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ConnectionsShow,
+	)
+	connection.Patch(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ConnectionsUpdate,
+	)
+	connection.Delete(
+		"/",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.ConnectionsDestroy,
+	)
+	connection.Post(
+		"/transfer-ownership",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TransferConnectionOwnership,
+	)
+	connection.Get(
+		"/schema",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ConnectionSchema,
+	)
 
 	// Editor routes
 	editor := workspace.Group("/editor")
-	editor.Get("/", apiControllers.EditorIndex)
-	editor.Post("/", apiControllers.EditorItemStore)
-	editor.Delete("/", apiControllers.EditorItemDestroy)
-	editor.Post("/move", apiControllers.MoveEditorItem)
-	editor.Post("/copy", apiControllers.CopyEditorItem)
-	editor.Get("/content", apiControllers.EditorItemContent)
-	editor.Post("/run", apiControllers.EditorItemExecute)
+	editor.Get("/", apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionRead), apiControllers.EditorIndex)
+	editor.Post(
+		"/",
+		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.EditorItemStore,
+	)
+	editor.Delete(
+		"/",
+		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.EditorItemDestroy,
+	)
+	editor.Post(
+		"/move",
+		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.MoveEditorItem,
+	)
+	editor.Post(
+		"/copy",
+		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.CopyEditorItem,
+	)
+	editor.Get(
+		"/content",
+		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.EditorItemContent,
+	)
+	editor.Post(
+		"/run",
+		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.EditorItemExecute,
+	)
 
 	// Workflow routes
 	workflows := workspace.Group("/workflows")
-	workflows.Get("/", apiControllers.WorkflowsIndex)
-	workflows.Post("/", apiControllers.WorkflowsStore)
+	workflows.Get("/", apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionRead), apiControllers.WorkflowsIndex)
+	workflows.Post(
+		"/",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.WorkflowsStore,
+	)
 	workflow := workflows.Group("/:workflow", apiMiddlewares.WorkflowMiddleware)
-	workflow.Get("/", apiControllers.WorkflowsShow)
-	workflow.Patch("/", apiControllers.WorkflowsUpdate)
-	workflow.Patch("/workflowable", apiControllers.WorkflowableUpdate)
-	workflow.Patch("/schedule", apiControllers.ScheduleUpdate)
-	workflow.Delete("/", apiControllers.WorkflowsDestroy)
-	workflow.Post("/transfer-ownership", apiControllers.TransferWorkflowOwnership)
-	workflow.Post("/pause", apiControllers.PauseWorkflow)
-	workflow.Post("/start", apiControllers.StartWorkflow)
+	workflow.Get("/", apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionRead), apiControllers.WorkflowsShow)
+	workflow.Patch(
+		"/",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.WorkflowsUpdate,
+	)
+	workflow.Patch(
+		"/workflowable",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.WorkflowableUpdate,
+	)
+	workflow.Patch(
+		"/schedule",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ScheduleUpdate,
+	)
+	workflow.Delete(
+		"/",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.WorkflowsDestroy,
+	)
+	workflow.Post(
+		"/transfer-ownership",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TransferWorkflowOwnership,
+	)
+	workflow.Post(
+		"/pause",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.PauseWorkflow,
+	)
+	workflow.Post(
+		"/start",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.StartWorkflow,
+	)
 
 	// Workflow run routes
-	workflow.Post("/runs", apiControllers.TriggerWorkflowRun)
-	workflow.Get("/runs", apiControllers.WorkflowRunsIndex)
-	workflow.Get("/runs/:run", apiControllers.WorkflowRunsShow)
-	workflow.Delete("/runs/:run", apiControllers.WorkflowRunsDestroy)
+	workflow.Post(
+		"/runs",
+		apiMiddlewares.WorkflowRunPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.TriggerWorkflowRun,
+	)
+	workflow.Get(
+		"/runs",
+		apiMiddlewares.WorkflowRunPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.WorkflowRunsIndex,
+	)
+	workflow.Get(
+		"/runs/:run",
+		apiMiddlewares.WorkflowRunPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.WorkflowRunsShow,
+	)
+	workflow.Delete(
+		"/runs/:run",
+		apiMiddlewares.WorkflowRunPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.WorkflowRunsDestroy,
+	)
 
 	// Repositories routes
 	repositories := workspace.Group("/repositories")
-	repositories.Get("/", apiControllers.RepositoriesIndex)
-	repositories.Post("/", apiControllers.RepositoriesStore)
+	repositories.Get(
+		"/",
+		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoriesIndex,
+	)
+	repositories.Post(
+		"/",
+		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoriesStore,
+	)
 	repository := repositories.Group("/:repository", apiMiddlewares.RepositoryMiddleware)
-	repository.Get("/", apiControllers.RepositoriesShow)
-	repository.Patch("/", apiControllers.RepositoriesUpdate)
-	repository.Delete("/", apiControllers.RepositoriesDestroy)
-	repository.Post("/transfer-ownership", apiControllers.TransferRepositoryOwnership)
+	repository.Get(
+		"/",
+		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoriesShow,
+	)
+	repository.Patch(
+		"/",
+		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RepositoriesUpdate,
+	)
+	repository.Delete(
+		"/",
+		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.RepositoriesDestroy,
+	)
+	repository.Post(
+		"/transfer-ownership",
+		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TransferRepositoryOwnership,
+	)
 
 	// Merge and compare routes
-	repository.Get("/compare", apiControllers.CompareRefs)
-	repository.Post("/merge", apiControllers.MergeRefs)
+	repository.Get(
+		"/compare",
+		apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.CompareRefs,
+	)
+	repository.Post(
+		"/merge",
+		apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.MergeRefs,
+	)
 
 	// Object routes
 	objects := repository.Group("/objects", apiMiddlewares.ObjectMiddleware)
-	objects.Get("/", apiControllers.ObjectsIndex)
-	objects.Post("/", apiControllers.UploadObject)
-	objects.Delete("/", apiControllers.ObjectsDestroy)
-	objects.Post("/move", apiControllers.MoveObject)
-	objects.Post("/copy", apiControllers.CopyObject)
-	objects.Get("/content", apiControllers.ObjectsContent)
-	objects.Get("/download", apiControllers.ObjectsDownload)
-	objects.Get("/history", apiControllers.ObjectsHistory)
-	objects.Get("/schema", apiControllers.ObjectsSchema)
+	objects.Get("/", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead), apiControllers.ObjectsIndex)
+	objects.Post("/", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionCreate), apiControllers.UploadObject)
+	objects.Delete("/", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionDelete), apiControllers.ObjectsDestroy)
+	objects.Post("/move", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionUpdate), apiControllers.MoveObject)
+	objects.Post("/copy", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionCreate), apiControllers.CopyObject)
+	objects.Get(
+		"/content",
+		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ObjectsContent,
+	)
+	objects.Get(
+		"/download",
+		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ObjectsDownload,
+	)
+	objects.Get(
+		"/history",
+		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ObjectsHistory,
+	)
+	objects.Get("/schema", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead), apiControllers.ObjectsSchema)
 
 	// Branch routes
 	branches := repository.Group("/branches")
-	branches.Get("/", apiControllers.BranchesIndex)
-	branches.Post("/", apiControllers.BranchesStore)
+	branches.Get("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionRead), apiControllers.BranchesIndex)
+	branches.Post("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionCreate), apiControllers.BranchesStore)
 	branch := branches.Group("/:branch", apiMiddlewares.BranchMiddleware)
-	branch.Get("/changes", apiControllers.GetUncommittedChanges)
-	branch.Get("/", apiControllers.BranchesShow)
-	branch.Patch("/", apiControllers.BranchesUpdate)
-	branch.Delete("/", apiControllers.BranchesDestroy)
+	branch.Get(
+		"/changes",
+		apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.GetUncommittedChanges,
+	)
+	branch.Get("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionRead), apiControllers.BranchesShow)
+	branch.Patch("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionUpdate), apiControllers.BranchesUpdate)
+	branch.Delete("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionDelete), apiControllers.BranchesDestroy)
 
 	// Tag routes
 	tags := repository.Group("/tags")
-	tags.Get("/", apiControllers.TagsIndex)
-	tags.Post("/", apiControllers.TagsStore)
+	tags.Get("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionRead), apiControllers.TagsIndex)
+	tags.Post("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionCreate), apiControllers.TagsStore)
 	tag := tags.Group("/:tag", apiMiddlewares.TagMiddleware)
-	tag.Get("/", apiControllers.TagsShow)
-	tag.Delete("/", apiControllers.TagsDestroy)
+	tag.Get("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionRead), apiControllers.TagsShow)
+	tag.Delete("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionDelete), apiControllers.TagsDestroy)
 
 	// Commits routes
 	commits := repository.Group("/commits")
-	commits.Get("/", apiControllers.CommitsIndex)
-	commits.Post("/", apiControllers.CommitsStore)
-	commits.Post("/revert", apiControllers.RevertUncommittedChanges)
-	commits.Get("/:hash", apiControllers.CommitsShow)
+	commits.Get("/", apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionRead), apiControllers.CommitsIndex)
+	commits.Post("/", apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionCreate), apiControllers.CommitsStore)
+	commits.Post(
+		"/revert",
+		apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RevertUncommittedChanges,
+	)
+	commits.Get("/:hash", apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionRead), apiControllers.CommitsShow)
 }

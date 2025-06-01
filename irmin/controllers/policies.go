@@ -20,32 +20,15 @@ import (
 func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
 
-	if !dictOk || !workspaceOk || !userOk {
+	if !dictOk || !workspaceOk {
 		api.Logger.Error("Error validating local parameters in PoliciesIndex")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourcePolicy,
-		nil,
-		db.PolicyActionRead,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
 	// Fetch policies for the workspace
 	var policies []db.Policy
-	err = api.DB.Where("workspace_id = ?", workspace.ID).Find(&policies).Error
+	err := api.DB.Where("workspace_id = ?", workspace.ID).Find(&policies).Error
 	if err != nil {
 		api.Logger.Error("Error fetching policies", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -105,7 +88,7 @@ func (api *APIControllers) validateAndCreatePolicy(
 // handleOptionalPolicyFields processes optional fields for a policy.
 func (api *APIControllers) handleOptionalPolicyFields(policy *db.Policy, fields map[string]string) error {
 	if fields["resource_id"] != "" {
-		resourceID, decodeResourceIDErr := lib.DecodeSqidBasedOnResourceType(
+		resourceID, decodeResourceIDErr := lib.DecodePolicyResourceID(
 			fields["resource_id"],
 			policy.Resource,
 			api.SQIDManager,
@@ -152,22 +135,6 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 	if !dictOk || !workspaceOk || !userOk {
 		api.Logger.Error("Error validating local parameters in PoliciesStore")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
-	}
-
-	// Check permissions
-	allowed, isAllowedErr := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourcePolicy,
-		nil,
-		db.PolicyActionCreate,
-	)
-	if isAllowedErr != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", isAllowedErr)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
 	}
 
 	// Parse and validate request fields
@@ -258,29 +225,11 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 // PoliciesShow returns a single policy.
 func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
 	policy, policyOk := c.Locals("policy").(*db.Policy)
 
-	if !dictOk || !workspaceOk || !userOk || !policyOk {
+	if !dictOk || !policyOk {
 		api.Logger.Error("Error validating local parameters in PoliciesShow")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
-	}
-
-	// Check permissions
-	allowed, isAllowedErr := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourcePolicy,
-		&policy.ID,
-		db.PolicyActionRead,
-	)
-	if isAllowedErr != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", isAllowedErr)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
 	}
 
 	// Format the response
@@ -307,22 +256,6 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 	if !dictOk || !workspaceOk || !userOk || !policyOk {
 		api.Logger.Error("Error validating local parameters in PoliciesUpdate")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
-	}
-
-	// Check permissions
-	allowed, isAllowedErr := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourcePolicy,
-		&policy.ID,
-		db.PolicyActionUpdate,
-	)
-	if isAllowedErr != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", isAllowedErr)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
 	}
 
 	// Parse and validate request fields
@@ -402,24 +335,8 @@ func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourcePolicy,
-		&policy.ID,
-		db.PolicyActionDelete,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
 	// Delete the policy
-	err = api.DB.Delete(policy).Error
+	err := api.DB.Delete(policy).Error
 	if err != nil {
 		api.Logger.Error("Error deleting policy", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -488,27 +405,10 @@ func (api *APIControllers) getApplicablePoliciesForRole(workspace *db.Workspace,
 func (api *APIControllers) PoliciesRoleSummary(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
 
-	if !dictOk || !workspaceOk || !userOk {
+	if !dictOk || !workspaceOk {
 		api.Logger.Error("Error validating local parameters in PoliciesRoleSummary")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
-	}
-
-	// Check permissions
-	allowed, err := lib.IsAllowed(
-		api.DB,
-		user,
-		workspace,
-		db.PolicyResourcePolicy,
-		nil,
-		db.PolicyActionRead,
-	)
-	if err != nil || !allowed {
-		api.Logger.Error("Access denied to perform action", "error", err)
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
 	}
 
 	// Fetch all roles
@@ -660,7 +560,6 @@ func (api *APIControllers) getUserApplicablePolicies(
 		// Add any missing resource/action combinations with allow effect through the owner role
 		for _, resource := range []db.PolicyResource{
 			db.PolicyResourceWorkspace,
-			db.PolicyResourceWorkspaceOwnership,
 			db.PolicyResourceEditorScript,
 			db.PolicyResourceWorkflow,
 			db.PolicyResourceConnection,
@@ -796,7 +695,7 @@ func (api *APIControllers) CheckPermission(c fiber.Ctx) error {
 	var resourceID uint
 	if params["resource_id"] != "" {
 		var decodeResourceIDErr error
-		resourceIDPtr, decodeResourceIDErr := lib.DecodeSqidBasedOnResourceType(
+		resourceIDPtr, decodeResourceIDErr := lib.DecodePolicyResourceID(
 			params["resource_id"],
 			db.PolicyResource(params["resource"]),
 			api.SQIDManager,
