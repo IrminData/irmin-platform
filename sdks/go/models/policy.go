@@ -30,16 +30,24 @@ type PolicyResource string
 const (
 	// PolicyResourceWorkspace represents a workspace resource.
 	PolicyResourceWorkspace PolicyResource = "workspace"
-	// PolicyResourceWorkspaceOwnership represents workspace ownership resource.
-	PolicyResourceWorkspaceOwnership PolicyResource = "workspace_ownership"
 	// PolicyResourceEditorScript represents script editor resource.
 	PolicyResourceEditorScript PolicyResource = "editor_script"
+	// PolicyResourceQuery represents a query resource.
+	PolicyResourceQuery PolicyResource = "query"
 	// PolicyResourceWorkflow represents a workflow resource.
 	PolicyResourceWorkflow PolicyResource = "workflow"
+	// PolicyResourceWorkflowRun represents a workflow run resource.
+	PolicyResourceWorkflowRun PolicyResource = "workflow_run"
 	// PolicyResourceConnection represents a connection resource.
 	PolicyResourceConnection PolicyResource = "connection"
 	// PolicyResourceRepository represents a repository resource.
 	PolicyResourceRepository PolicyResource = "repository"
+	// PolicyResourceRepositoryBranch represents a repository branch resource.
+	PolicyResourceRepositoryBranch PolicyResource = "repository_branch"
+	// PolicyResourceRepositoryTag represents a repository tag resource.
+	PolicyResourceRepositoryTag PolicyResource = "repository_tag"
+	// PolicyResourceRepositoryCommit represents a repository commit resource.
+	PolicyResourceRepositoryCommit PolicyResource = "repository_commit"
 	// PolicyResourceRepositoryObject represents a repository object resource.
 	PolicyResourceRepositoryObject PolicyResource = "repository_object"
 	// PolicyResourceUser represents a user resource.
