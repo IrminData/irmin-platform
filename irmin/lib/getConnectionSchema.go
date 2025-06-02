@@ -65,10 +65,13 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 	ctx context.Context,
 	connection *db.Connection,
 	operationMethod, locale string,
+	ignoreCache bool,
 ) (*irminmodels.ObjectSchema, error) {
 	// Check cache first
-	if cachedSchema := scm.checkConnectionSchemaCache(ctx, connection, operationMethod); cachedSchema != nil {
-		return cachedSchema, nil
+	if !ignoreCache {
+		if cachedSchema := scm.checkConnectionSchemaCache(ctx, connection, operationMethod); cachedSchema != nil {
+			return cachedSchema, nil
+		}
 	}
 
 	// Initialize Data Engine client

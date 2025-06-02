@@ -45,6 +45,15 @@ func (d *Database) GetUser(id uint) (*User, error) {
 	return &user, nil
 }
 
+// GetUserByEmail retrieves a user from the database by their email.
+func (d *Database) GetUserByEmail(email string) (*User, error) {
+	var user User
+	if err := d.Preload("Workspaces").Preload("Workspaces.Roles").Preload("Workspaces.Roles.Role").Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // GetUserByClerkID retrieves a user from the database by their ClerkID.
 func (d *Database) GetUserByClerkID(clerkID string) (*User, error) {
 	var user User

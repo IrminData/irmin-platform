@@ -54,7 +54,7 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	for i, connection := range connections {
 		conn := connection // Create a new variable to avoid closure issues
 		connectionSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
-			return scm.GetConnectionSchema(c.Context(), &conn, "pull", locale)
+			return scm.GetConnectionSchema(c.Context(), &conn, "pull", locale, false)
 		})
 	}
 
@@ -74,6 +74,7 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 				},
 				repo.DefaultBranch,
 				locale,
+				false,
 			)
 		})
 	}

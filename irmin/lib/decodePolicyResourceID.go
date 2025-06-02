@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/utils"
@@ -45,12 +46,19 @@ func DecodePolicyResourceID(
 	case db.PolicyResourceAuditLog:
 		id, err = sqidManager.Decode("logs", sqid)
 	case db.PolicyResourceEditorScript:
+		return nil, errors.New("editor scripts don't have IDs")
 	case db.PolicyResourceDocumentation:
+		return nil, errors.New("documentation doesn't have IDs")
 	case db.PolicyResourceBilling:
+		return nil, errors.New("billing doesn't have IDs")
 	default:
 		return nil, fmt.Errorf("invalid resource type: %s", resource)
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	idUint := uint(id)
-	return &idUint, err
+	return &idUint, nil
 }

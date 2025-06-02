@@ -540,6 +540,7 @@ func (api *APIControllers) ObjectsSchema(c fiber.Ctx) error {
 		objectLocalParams.object,
 		objectLocalParams.objectRef,
 		objectLocalParams.locale,
+		false,
 	)
 	if getObjectSchemaErr != nil {
 		api.Logger.Error("Error retrieving object schema", "error", getObjectSchemaErr)

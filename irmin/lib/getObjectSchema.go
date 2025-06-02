@@ -79,10 +79,13 @@ func (scm *SchemaCacheManager) GetObjectSchema(
 	repository *db.Repository,
 	object *db.RepositoryObject,
 	ref, locale string,
+	ignoreCache bool,
 ) (*irminmodels.ObjectSchema, error) {
 	// Check cache first
-	if cachedSchema := scm.checkObjectSchemaCache(ctx, repository, object.Path, ref); cachedSchema != nil {
-		return cachedSchema, nil
+	if !ignoreCache {
+		if cachedSchema := scm.checkObjectSchemaCache(ctx, repository, object.Path, ref); cachedSchema != nil {
+			return cachedSchema, nil
+		}
 	}
 
 	// Initialize Data Engine client

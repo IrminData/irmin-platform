@@ -131,6 +131,7 @@ TEST_CONNECTOR_BASE_URL=https://connectors.irmin.dev/postgres # Base URL of the 
 TEST_CONNECTOR_TOKEN=... # Connector's operation token for testing
 TEST_CONNECTOR_PATH=/test.json # Path to the test file in the connector
 TEST_OBJECT_NAME=test.json # Name of the test object in the object store, expected to be a structured JSON file
+TEST_USER_EMAIL=test@irmin.dev # Email of the test user
 TEST_WORKSPACE=test-workspace # Workspace to test with
 TEST_REPOSITORY=test-repository # Repository to test with
 TEST_BRANCH=dev # Branch to test with

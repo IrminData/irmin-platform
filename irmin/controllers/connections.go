@@ -383,6 +383,7 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 		connection,
 		operationMethod,
 		locale,
+		false,
 	)
 	if getConnectionSchemaErr != nil {
 		api.Logger.Error("Error getting connection schema", "error", getConnectionSchemaErr)
