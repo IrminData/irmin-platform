@@ -20,6 +20,15 @@ And then run the binary file `./out`
 **Run**
 `go run main.go`
 
+**Run tests**
+`go test ./...`
+
+**Run tests with coverage**
+`go test ./... -coverprofile=coverage.out`
+
+**View coverage**
+`go tool cover -html=coverage.out`
+
 ## Command Line Flags
 
 The following command line flags are available when running the application:

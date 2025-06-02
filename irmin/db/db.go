@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"irmin-api/utils"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,6 +24,13 @@ type Database struct {
 	*gorm.DB
 	pool *pgxpool.Pool
 }
+
+// Connection pool settings.
+const (
+	maxIdleConns    = 10
+	maxOpenConns    = 50
+	connMaxLifetime = time.Hour
+)
 
 // NewDatabase creates a new database instance.
 func NewDatabase(db *gorm.DB, connectionString string) (*Database, error) {
@@ -108,6 +116,15 @@ func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error) {
 	if openErr != nil {
 		return nil, fmt.Errorf("failed to open database: %w", openErr)
 	}
+
+	// Set up connection pool
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sql db: %w", err)
+	}
+	sqlDB.SetMaxIdleConns(maxIdleConns)
+	sqlDB.SetMaxOpenConns(maxOpenConns)
+	sqlDB.SetConnMaxLifetime(connMaxLifetime)
 
 	database, newDatabaseErr := NewDatabase(db, env.DatabaseConnectionString)
 	if newDatabaseErr != nil {

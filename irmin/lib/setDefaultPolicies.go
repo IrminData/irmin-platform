@@ -4,55 +4,6 @@ import (
 	"irmin-api/db"
 )
 
-// createPolicy is a helper function to create a single policy.
-func createPolicy(
-	d *db.Database,
-	effect db.PolicyEffect,
-	action db.PolicyAction,
-	resource db.PolicyResource,
-	roleID *uint,
-	workspaceID uint,
-) error {
-	p := db.Policy{
-		Effect:      effect,
-		Action:      action,
-		Resource:    resource,
-		ResourceID:  nil,
-		Principal:   db.PolicyPrincipalRole,
-		RoleID:      roleID,
-		WorkspaceID: &workspaceID,
-	}
-	return d.Create(&p).Error
-}
-
-// createPoliciesForResources creates policies for a list of resources with specified actions.
-func createPoliciesForResources(
-	d *db.Database,
-	resources []db.PolicyResource,
-	actions []db.PolicyAction,
-	roleID *uint,
-	workspaceID uint,
-) error {
-	for _, res := range resources {
-		for _, act := range actions {
-			if err := createPolicy(d, db.PolicyEffectAllow, act, res, roleID, workspaceID); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// createReadPoliciesForResources creates read-only policies for a list of resources.
-func createReadPoliciesForResources(
-	d *db.Database,
-	resources []db.PolicyResource,
-	roleID *uint,
-	workspaceID uint,
-) error {
-	return createPoliciesForResources(d, resources, []db.PolicyAction{db.PolicyActionRead}, roleID, workspaceID)
-}
-
 // getAllResources returns a list of all available resources except billing.
 func getAllResources() []db.PolicyResource {
 	return []db.PolicyResource{
@@ -76,6 +27,47 @@ func getAllResources() []db.PolicyResource {
 	}
 }
 
+// createPoliciesBatch creates multiple policies in a single database operation.
+func createPoliciesBatch(
+	d *db.Database,
+	policies []db.Policy,
+) error {
+	return d.Create(&policies).Error
+}
+
+// preparePoliciesForResources prepares a batch of policies for a list of resources with specified actions.
+func preparePoliciesForResources(
+	resources []db.PolicyResource,
+	actions []db.PolicyAction,
+	roleID *uint,
+	workspaceID uint,
+) []db.Policy {
+	var policies []db.Policy
+	for _, res := range resources {
+		for _, act := range actions {
+			policies = append(policies, db.Policy{
+				Effect:      db.PolicyEffectAllow,
+				Action:      act,
+				Resource:    res,
+				ResourceID:  nil,
+				Principal:   db.PolicyPrincipalRole,
+				RoleID:      roleID,
+				WorkspaceID: &workspaceID,
+			})
+		}
+	}
+	return policies
+}
+
+// prepareReadPoliciesForResources prepares a batch of read-only policies for a list of resources.
+func prepareReadPoliciesForResources(
+	resources []db.PolicyResource,
+	roleID *uint,
+	workspaceID uint,
+) []db.Policy {
+	return preparePoliciesForResources(resources, []db.PolicyAction{db.PolicyActionRead}, roleID, workspaceID)
+}
+
 // setOwnerPolicies sets all policies for the owner role.
 func setOwnerPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 	resources := getAllResources()
@@ -86,7 +78,8 @@ func setOwnerPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 		db.PolicyActionDelete,
 	}
 
-	return createPoliciesForResources(d, resources, actions, roleID, workspaceID)
+	policies := preparePoliciesForResources(resources, actions, roleID, workspaceID)
+	return createPoliciesBatch(d, policies)
 }
 
 // setAdminPolicies sets all policies for the admin role.
@@ -98,7 +91,8 @@ func setAdminPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 // setViewerPolicies sets all policies for the viewer role.
 func setViewerPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 	// Viewers can read all resources
-	return createReadPoliciesForResources(d, getAllResources(), roleID, workspaceID)
+	policies := prepareReadPoliciesForResources(getAllResources(), roleID, workspaceID)
+	return createPoliciesBatch(d, policies)
 }
 
 // setBillingPolicies sets all policies for the billing role.
@@ -115,9 +109,7 @@ func setBillingPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 		db.PolicyActionDelete,
 	}
 
-	if err := createPoliciesForResources(d, billingResources, actions, roleID, workspaceID); err != nil {
-		return err
-	}
+	billingPolicies := preparePoliciesForResources(billingResources, actions, roleID, workspaceID)
 
 	// Read-only access to workspace and user resources
 	readOnlyResources := []db.PolicyResource{
@@ -125,13 +117,18 @@ func setBillingPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 		db.PolicyResourceUser,
 	}
 
-	return createReadPoliciesForResources(d, readOnlyResources, roleID, workspaceID)
+	readOnlyPolicies := prepareReadPoliciesForResources(readOnlyResources, roleID, workspaceID)
+
+	// Combine all policies into a new slice
+	combinedPolicies := make([]db.Policy, 0, len(billingPolicies)+len(readOnlyPolicies))
+	combinedPolicies = append(combinedPolicies, billingPolicies...)
+	combinedPolicies = append(combinedPolicies, readOnlyPolicies...)
+	return createPoliciesBatch(d, combinedPolicies)
 }
 
 // setWorkspaceWidePolicies sets policies that apply to everyone in the workspace.
 func setWorkspaceWidePolicies(d *db.Database, workspaceID uint) error {
-	// Everyone can read the workspace resource
-	p := db.Policy{
+	policies := []db.Policy{{
 		Effect:      db.PolicyEffectAllow,
 		Action:      db.PolicyActionRead,
 		Resource:    db.PolicyResourceWorkspace,
@@ -139,8 +136,8 @@ func setWorkspaceWidePolicies(d *db.Database, workspaceID uint) error {
 		Principal:   db.PolicyPrincipalEveryone,
 		RoleID:      nil,
 		WorkspaceID: &workspaceID,
-	}
-	return d.Create(&p).Error
+	}}
+	return createPoliciesBatch(d, policies)
 }
 
 // setEditorPolicies sets all policies for the editor role.
@@ -169,13 +166,8 @@ func setEditorPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 		db.PolicyActionDelete,
 	}
 
-	if err := createPoliciesForResources(d, workflowResources, workflowActions, roleID, workspaceID); err != nil {
-		return err
-	}
-
-	if err := createPoliciesForResources(d, repositoryResources, workflowActions, roleID, workspaceID); err != nil {
-		return err
-	}
+	workflowPolicies := preparePoliciesForResources(workflowResources, workflowActions, roleID, workspaceID)
+	repositoryPolicies := preparePoliciesForResources(repositoryResources, workflowActions, roleID, workspaceID)
 
 	// Read-only access to other resources
 	readOnlyResources := []db.PolicyResource{
@@ -188,7 +180,14 @@ func setEditorPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 		db.PolicyResourceDocumentation,
 	}
 
-	return createReadPoliciesForResources(d, readOnlyResources, roleID, workspaceID)
+	readOnlyPolicies := prepareReadPoliciesForResources(readOnlyResources, roleID, workspaceID)
+
+	// Combine all policies into a new slice
+	combinedPolicies := make([]db.Policy, 0, len(workflowPolicies)+len(repositoryPolicies)+len(readOnlyPolicies))
+	combinedPolicies = append(combinedPolicies, workflowPolicies...)
+	combinedPolicies = append(combinedPolicies, repositoryPolicies...)
+	combinedPolicies = append(combinedPolicies, readOnlyPolicies...)
+	return createPoliciesBatch(d, combinedPolicies)
 }
 
 // SetDefaultPolicies creates a set of default policies for a newly created workspace.
