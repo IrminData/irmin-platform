@@ -3,7 +3,6 @@ package middlewares
 import (
 	"errors"
 	"irmin-api/db"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -50,8 +49,8 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 			resourceID = getResourceID(c)
 		}
 
-		// Check if the user has the permission
-		allowed, err := lib.IsAllowed(api.DB, user, workspace, resource, resourceID, action)
+		// Check if the user has the permission using the optimized version
+		allowed, err := api.permissionService.IsAllowed(user, workspace, resource, resourceID, action)
 		if err != nil {
 			api.Logger.Error("Error checking permission", "error", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
@@ -61,7 +60,8 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 				"resource", resource,
 				"action", action,
 				"user_id", user.ID,
-				"workspace_id", workspace.ID)
+				"workspace_id", workspace.ID,
+				"resource_id", resourceID)
 			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{})
 		}
 

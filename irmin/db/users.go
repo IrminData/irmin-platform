@@ -167,8 +167,24 @@ func (d *Database) AddUserToWorkspace(userID, workspaceID uint, roleIDs []uint) 
 
 // RemoveUserFromWorkspace removes a user from a workspace.
 func (d *Database) RemoveUserFromWorkspace(userID, workspaceID uint) error {
-	// Delete the WorkspaceUser record that matches the provided user and workspace IDs.
-	return d.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).Delete(&WorkspaceUser{}).Error
+	return d.Transaction(func(tx *gorm.DB) error {
+		// Get the workspace user
+		workspaceUser := &WorkspaceUser{}
+		if err := tx.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(workspaceUser).Error; err != nil {
+			return err
+		}
+
+		// Delete the WorkspaceUserRole records that match the workspace user ID.
+		if err := tx.Where("workspace_user_id = ?", workspaceUser.ID).Delete(&WorkspaceUserRole{}).Error; err != nil {
+			return err
+		}
+
+		// Delete the WorkspaceUser record.
+		if err := tx.Delete(workspaceUser).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // UpdateWorkspaceUserRoles updates the roles for a user in a workspace.

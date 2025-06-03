@@ -711,8 +711,7 @@ func (api *APIControllers) CheckPermission(c fiber.Ctx) error {
 	}
 
 	// Check permission
-	allowed, err := lib.IsAllowed(
-		api.DB,
+	allowed, err := api.permissionService.IsAllowed(
 		user,
 		workspace,
 		db.PolicyResource(params["resource"]),

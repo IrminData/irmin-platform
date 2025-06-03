@@ -4,6 +4,7 @@ import (
 	"irmin-api/controllers"
 	"irmin-api/controllers/middlewares"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
 	"irmin-api/utils"
@@ -23,6 +24,7 @@ func RegisterAPIRoutes(
 	orchestrator *orchestrator.Orchestrator,
 	sqidManager *utils.SQIDManager,
 	localeManager *locales.LocaleManager,
+	permissionService *lib.PermissionService,
 ) {
 	// Initialize controllers
 	apiControllers := controllers.NewAPIControllers(
@@ -32,6 +34,7 @@ func RegisterAPIRoutes(
 		orchestrator,
 		sqidManager,
 		localeManager,
+		permissionService,
 	)
 
 	// Initialize middlewares
@@ -42,6 +45,7 @@ func RegisterAPIRoutes(
 		orchestrator,
 		sqidManager,
 		localeManager,
+		permissionService,
 	)
 
 	// Public routes

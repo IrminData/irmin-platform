@@ -167,11 +167,11 @@ func setupCORS(env *utils.CoreAPIEnv) fiber.Handler {
 func setupServices(
 	env *utils.CoreAPIEnv,
 	database *db.Database,
-) (*orchestrator.Orchestrator, *utils.SQIDManager, *locales.LocaleManager, error) {
+) (*orchestrator.Orchestrator, *utils.SQIDManager, *locales.LocaleManager, *lib.PermissionService, error) {
 	// Initialize data engine
 	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Initialize orchestrator
@@ -190,10 +190,13 @@ func setupServices(
 	// Initialize locale manager
 	localeManager, err := locales.New()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	return orchestrator, sqidManager, localeManager, nil
+	// Initialize permission service
+	permissionService := lib.NewPermissionService(database, slog.Default())
+
+	return orchestrator, sqidManager, localeManager, permissionService, nil
 }
 
 // startServer starts the Fiber server in a goroutine.
@@ -224,13 +227,22 @@ func main() {
 	app := setupFiberApp(env)
 
 	// Setup services
-	orchestrator, sqidManager, localeManager, err := setupServices(env, database)
+	orchestrator, sqidManager, localeManager, permissionService, err := setupServices(env, database)
 	if err != nil {
 		log.Fatalf("failed to setup services: %v", err)
 	}
 
 	// Register routes
-	routes.RegisterAPIRoutes(app, database, slog.Default(), env, orchestrator, sqidManager, localeManager)
+	routes.RegisterAPIRoutes(
+		app,
+		database,
+		slog.Default(),
+		env,
+		orchestrator,
+		sqidManager,
+		localeManager,
+		permissionService,
+	)
 
 	// Start server
 	startServer(app, env)
