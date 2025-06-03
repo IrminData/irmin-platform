@@ -3,27 +3,22 @@ package lib_test
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"testing"
 
 	"github.com/zeebo/assert"
 )
 
 func TestAssignDefaultRolesToUsers(t *testing.T) {
-	_, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialise test environment: %v", err)
-	}
-
+	ts := lib.GetTestSuite()
 	// Assign the default roles to users without roles
-	err = lib.AssignDefaultRolesToUsersWithoutRoles(d)
+	err := lib.AssignDefaultRolesToUsersWithoutRoles(ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to assign default roles to user: %v", err)
 	}
 
 	// Get list of all workspace users and verify they have roles
 	var workspaceUsers []db.WorkspaceUser
-	if err = d.Preload("Roles").Find(&workspaceUsers).Error; err != nil {
+	if err = ts.DB.Preload("Roles").Find(&workspaceUsers).Error; err != nil {
 		t.Fatalf("Failed to get workspace users: %v", err)
 	}
 

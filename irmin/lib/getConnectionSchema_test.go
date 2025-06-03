@@ -2,7 +2,6 @@ package lib_test
 
 import (
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"log/slog"
 	"os"
 	"testing"
@@ -11,19 +10,15 @@ import (
 )
 
 func TestGetConnectionSchema(t *testing.T) {
-	env, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialise test environment: %v", err)
-	}
-
+	ts := lib.GetTestSuite()
 	// Find the test workspace
-	workspace, err := d.GetWorkspaceBySlug(env.TestWorkspace)
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
 		t.Fatalf("Failed to get test workspace: %v", err)
 	}
 
 	// Find a list of connections
-	connections, err := d.GetConnectionsByWorkspaceID(workspace.ID)
+	connections, err := ts.DB.GetConnectionsByWorkspaceID(workspace.ID)
 	if err != nil {
 		t.Fatalf("Failed to get connections: %v", err)
 	}
@@ -43,7 +38,7 @@ func TestGetConnectionSchema(t *testing.T) {
 	ctx := t.Context()
 
 	// Create a schema cache manager
-	schemaCacheManager := lib.NewSchemaCacheManager(env, logger, d)
+	schemaCacheManager := lib.NewSchemaCacheManager(ts.Env, logger, ts.DB)
 
 	// Get the pull schema
 	schemaPull, pullSchemaErr := schemaCacheManager.GetConnectionSchema(ctx, &connection, "pull", "en", true)

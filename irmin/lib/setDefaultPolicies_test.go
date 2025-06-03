@@ -3,7 +3,6 @@ package lib_test
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"testing"
 
 	"github.com/zeebo/assert"
@@ -14,31 +13,27 @@ const (
 )
 
 func TestSetDefaultPolicies(t *testing.T) {
-	env, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialise test environment: %v", err)
-	}
-
+	ts := lib.GetTestSuite()
 	// Find the test workspace
-	workspace, err := d.GetWorkspaceBySlug(env.TestWorkspace)
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
 		t.Fatalf("Failed to get test workspace: %v", err)
 	}
 
 	// Delete all existing policies for the workspace
-	if err = d.Where("workspace_id = ?", workspace.ID).Delete(&db.Policy{}).Error; err != nil {
+	if err = ts.DB.Where("workspace_id = ?", workspace.ID).Delete(&db.Policy{}).Error; err != nil {
 		t.Fatalf("Failed to delete existing policies: %v", err)
 	}
 
 	// Set the default policies
-	err = lib.SetDefaultPolicies(d, workspace.ID, true)
+	err = lib.SetDefaultPolicies(ts.DB, workspace.ID, true)
 	if err != nil {
 		t.Fatalf("Failed to set default policies: %v", err)
 	}
 
 	// Get all policies for the workspace
 	var policies []db.Policy
-	if err = d.Where("workspace_id = ?", workspace.ID).Find(&policies).Error; err != nil {
+	if err = ts.DB.Where("workspace_id = ?", workspace.ID).Find(&policies).Error; err != nil {
 		t.Fatalf("Failed to get policies: %v", err)
 	}
 

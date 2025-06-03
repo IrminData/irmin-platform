@@ -2,26 +2,22 @@ package lib_test
 
 import (
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"testing"
 
 	"github.com/zeebo/assert"
 )
 
 func TestSeedRoles(t *testing.T) {
-	_, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialise test environment: %v", err)
-	}
+	ts := lib.GetTestSuite()
 
 	// Seed the roles
-	err = lib.SeedRoles(d)
+	err := lib.SeedRoles(ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to seed roles: %v", err)
 	}
 
 	// Make sure the roles are seeded
-	roles, err := d.GetRoles()
+	roles, err := ts.DB.GetRoles()
 	if err != nil {
 		t.Fatalf("Failed to get all roles: %v", err)
 	}
@@ -29,7 +25,7 @@ func TestSeedRoles(t *testing.T) {
 	assert.Equal(t, len(roles), 6)
 
 	// Make sure we have one default role
-	defaultRole, err := d.GetDefaultRole()
+	defaultRole, err := ts.DB.GetDefaultRole()
 	if err != nil {
 		t.Fatalf("Failed to get default role: %v", err)
 	}
@@ -37,7 +33,7 @@ func TestSeedRoles(t *testing.T) {
 	assert.Equal(t, defaultRole.Role, "viewer")
 
 	// Make sure we have one owner role
-	ownerRole, err := d.GetOwnerRole()
+	ownerRole, err := ts.DB.GetOwnerRole()
 	if err != nil {
 		t.Fatalf("Failed to get owner role: %v", err)
 	}

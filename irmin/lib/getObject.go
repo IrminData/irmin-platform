@@ -105,18 +105,6 @@ func GetObject(
 	// If the object is not found in the cache, or the cache is stale, get it from the data engine.
 	objectCacheLastModified := time.Now().Add(-objectCacheMaxAge)
 	if repositoryObjectDB == nil || repositoryObjectDB.UpdatedAt.Before(objectCacheLastModified) || ignoreCache {
-		// Log the object not found in cache.
-		logger.InfoContext(
-			ctx,
-			"Object not found in cache, refreshing from the data engine",
-			"repository",
-			repository.ID,
-			"path",
-			path,
-			"ref",
-			ref,
-		)
-
 		// Get the object from the data engine.
 		engineObject, getErr := dataEngine.GetPath(workspace.Slug, repository.Slug, path, ref)
 		if getErr != nil {

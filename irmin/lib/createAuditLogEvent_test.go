@@ -3,7 +3,6 @@ package lib_test
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"log/slog"
 	"os"
 	"testing"
@@ -17,19 +16,15 @@ const (
 )
 
 func TestCreateAuditLogEvent(t *testing.T) {
-	env, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialise test environment: %v", err)
-	}
-
+	ts := lib.GetTestSuite()
 	// Find the test user
-	user, err := d.GetUserByEmail(env.TestUserEmail)
+	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
 	if err != nil {
 		t.Fatalf("Failed to get test user: %v", err)
 	}
 
 	// Find the test workspace
-	workspace, err := d.GetWorkspaceBySlug(env.TestWorkspace)
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
 		t.Fatalf("Failed to get test workspace: %v", err)
 	}
@@ -46,13 +41,13 @@ func TestCreateAuditLogEvent(t *testing.T) {
 	}
 
 	// Create the log event
-	lib.CreateAuditLogEventAsync(d, logger, &logEvent)
+	lib.CreateAuditLogEventAsync(ts.DB, logger, &logEvent)
 
 	// Wait for the log event to be created
 	time.Sleep(logEventCreationSleepTime)
 
 	// Get the log event
-	if err = d.First(&logEvent, "user_id = ? AND workspace_id = ?", user.ID, workspace.ID).Error; err != nil {
+	if err = ts.DB.First(&logEvent, "user_id = ? AND workspace_id = ?", user.ID, workspace.ID).Error; err != nil {
 		t.Fatalf("Failed to get log event: %v", err)
 	}
 
@@ -63,7 +58,7 @@ func TestCreateAuditLogEvent(t *testing.T) {
 	assert.Equal(t, *logEvent.WorkspaceID, workspace.ID)
 
 	// Delete the log event
-	if err = d.Delete(&logEvent).Error; err != nil {
+	if err = ts.DB.Delete(&logEvent).Error; err != nil {
 		t.Fatalf("Failed to delete log event: %v", err)
 	}
 }

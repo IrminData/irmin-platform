@@ -3,7 +3,6 @@ package lib_test
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"irmin-api/utils"
 	"testing"
 
@@ -11,13 +10,8 @@ import (
 )
 
 func TestDecodePolicyResourceID(t *testing.T) {
-	// Initialise the test environment
-	env, _, initTestEnvErr := tests.InitTestEnv()
-	if initTestEnvErr != nil {
-		t.Fatalf("Failed to initialise test environment: %v", initTestEnvErr)
-	}
-
-	sqidManager := utils.NewSQIDManager(env)
+	ts := lib.GetTestSuite()
+	sqidManager := utils.NewSQIDManager(ts.Env)
 
 	testCases := []struct {
 		name         string

@@ -2,7 +2,6 @@ package lib_test
 
 import (
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"log/slog"
 	"os"
 	"testing"
@@ -11,11 +10,7 @@ import (
 )
 
 func TestGetObject(t *testing.T) {
-	env, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialise test environment: %v", err)
-	}
-
+	ts := lib.GetTestSuite()
 	// Create slog logger for testing
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
@@ -23,13 +18,13 @@ func TestGetObject(t *testing.T) {
 	ctx := t.Context()
 
 	// Find the test workspace
-	workspace, err := d.GetWorkspaceBySlug(env.TestWorkspace)
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
 		t.Fatalf("Failed to get test workspace: %v", err)
 	}
 
 	// Find the test repository
-	repository, err := d.GetRepositoryBySlugAndWorkspaceID(env.TestRepository, workspace.ID)
+	repository, err := ts.DB.GetRepositoryBySlugAndWorkspaceID(ts.Env.TestRepository, workspace.ID)
 	if err != nil {
 		t.Fatalf("Failed to get test repository: %v", err)
 	}
@@ -38,34 +33,34 @@ func TestGetObject(t *testing.T) {
 	object, err := lib.GetObject(
 		ctx,
 		"en",
-		d,
+		ts.DB,
 		logger,
-		env,
+		ts.Env,
 		workspace,
 		repository,
-		env.TestObjectName,
-		env.TestBranch,
+		ts.Env.TestObjectName,
+		ts.Env.TestBranch,
 		true,
 	)
 	if err != nil {
 		t.Fatalf("Failed to get object ignoring cache: %v", err)
 	}
 	assert.NotNil(t, object)
-	assert.Equal(t, object.Name, env.TestObjectName)
-	assert.Equal(t, object.RepositoryRef, env.TestBranch)
+	assert.Equal(t, object.Name, ts.Env.TestObjectName)
+	assert.Equal(t, object.RepositoryRef, ts.Env.TestBranch)
 	assert.Equal(t, object.RepositoryID, repository.ID)
 
 	// Get the object using the cache
 	objectCached, err := lib.GetObject(
 		ctx,
 		"en",
-		d,
+		ts.DB,
 		logger,
-		env,
+		ts.Env,
 		workspace,
 		repository,
-		env.TestObjectName,
-		env.TestBranch,
+		ts.Env.TestObjectName,
+		ts.Env.TestBranch,
 		false,
 	)
 	if err != nil {

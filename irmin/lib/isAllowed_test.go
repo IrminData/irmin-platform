@@ -3,7 +3,6 @@ package lib_test
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/tests"
 	"log/slog"
 	"testing"
 	"time"
@@ -36,35 +35,31 @@ func setUserRole(t *testing.T, d *db.Database, userID, workspaceID uint, role *d
 }
 
 func TestPermissionService_IsAllowed(t *testing.T) {
-	env, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialize test environment: %v", err)
-	}
-
+	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
-	ps := lib.NewPermissionService(d, logger)
+	ps := lib.NewPermissionService(ts.DB, logger)
 
 	// Find the test workspace
-	workspace, err := d.GetWorkspaceBySlug(env.TestWorkspace)
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
 		t.Fatalf("Failed to get test workspace: %v", err)
 	}
 
 	// Find the test user
-	user, err := d.GetUserByEmail(env.TestUserEmail)
+	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
 	if err != nil {
 		t.Fatalf("Failed to get test user: %v", err)
 	}
 
 	// Find the workspace owner user
 	// Please make sure that the workspace owner is not the test user
-	workspaceOwner, err := d.GetUser(workspace.OwnerID)
+	workspaceOwner, err := ts.DB.GetUser(workspace.OwnerID)
 	if err != nil {
 		t.Fatalf("Failed to get workspace owner: %v", err)
 	}
 
 	// Get all roles
-	roles, err := d.GetRoles()
+	roles, err := ts.DB.GetRoles()
 	if err != nil {
 		t.Fatalf("Failed to get all roles: %v", err)
 	}
@@ -72,8 +67,8 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 	// Test cases
 	tests := []struct {
 		name     string
-		setup    func() []uint // Returns role IDs to restore
-		teardown func([]uint)  // Restores roles
+		setup    func() []uint
+		teardown func([]uint) // Restores roles
 		resource db.PolicyResource
 		action   db.PolicyAction
 		want     bool
@@ -82,10 +77,10 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 		{
 			name: "workspace owner has full access",
 			setup: func() []uint {
-				roleIDs := saveUserRoles(t, d, user.ID, workspace.ID)
+				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
 
 				// Set the test user as the workspace owner
-				updateOwnerErr := d.Model(&db.Workspace{}).
+				updateOwnerErr := ts.DB.Model(&db.Workspace{}).
 					Where("id = ?", workspace.ID).
 					Update("owner_id", user.ID).
 					Error
@@ -94,16 +89,16 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 				// Update the test user's roles to include the owner role
 				ownerRole := findRole(roles, "owner")
 				assert.NotNil(t, ownerRole)
-				setUserRole(t, d, user.ID, workspace.ID, ownerRole)
+				setUserRole(t, ts.DB, user.ID, workspace.ID, ownerRole)
 
 				return roleIDs
 			},
 			teardown: func(roleIDs []uint) {
 				// Restore the test user's roles
-				restoreUserRoles(t, d, user.ID, workspace.ID, roleIDs)
+				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
 
 				// Restore the workspace owner
-				updateOwnerErr := d.Model(&db.Workspace{}).
+				updateOwnerErr := ts.DB.Model(&db.Workspace{}).
 					Where("id = ?", workspace.ID).
 					Update("owner_id", workspaceOwner.ID).
 					Error
@@ -117,15 +112,15 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 		{
 			name: "viewer role has read access",
 			setup: func() []uint {
-				roleIDs := saveUserRoles(t, d, user.ID, workspace.ID)
+				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
 
 				viewerRole := findRole(roles, "viewer")
 				assert.NotNil(t, viewerRole)
-				setUserRole(t, d, user.ID, workspace.ID, viewerRole)
+				setUserRole(t, ts.DB, user.ID, workspace.ID, viewerRole)
 				return roleIDs
 			},
 			teardown: func(roleIDs []uint) {
-				restoreUserRoles(t, d, user.ID, workspace.ID, roleIDs)
+				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
 			},
 			resource: db.PolicyResourceConnection,
 			action:   db.PolicyActionRead,
@@ -135,15 +130,15 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 		{
 			name: "viewer role cannot write",
 			setup: func() []uint {
-				roleIDs := saveUserRoles(t, d, user.ID, workspace.ID)
+				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
 
 				viewerRole := findRole(roles, "viewer")
 				assert.NotNil(t, viewerRole)
-				setUserRole(t, d, user.ID, workspace.ID, viewerRole)
+				setUserRole(t, ts.DB, user.ID, workspace.ID, viewerRole)
 				return roleIDs
 			},
 			teardown: func(roleIDs []uint) {
-				restoreUserRoles(t, d, user.ID, workspace.ID, roleIDs)
+				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
 			},
 			resource: db.PolicyResourceRepository,
 			action:   db.PolicyActionUpdate,
@@ -153,15 +148,15 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 		{
 			name: "editor role has full access to workflows",
 			setup: func() []uint {
-				roleIDs := saveUserRoles(t, d, user.ID, workspace.ID)
+				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
 
 				editorRole := findRole(roles, "editor")
 				assert.NotNil(t, editorRole)
-				setUserRole(t, d, user.ID, workspace.ID, editorRole)
+				setUserRole(t, ts.DB, user.ID, workspace.ID, editorRole)
 				return roleIDs
 			},
 			teardown: func(roleIDs []uint) {
-				restoreUserRoles(t, d, user.ID, workspace.ID, roleIDs)
+				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
 			},
 			resource: db.PolicyResourceWorkflow,
 			action:   db.PolicyActionCreate,
@@ -171,17 +166,17 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 		{
 			name: "non-workspace user has no access",
 			setup: func() []uint {
-				roleIDs := saveUserRoles(t, d, user.ID, workspace.ID)
+				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
 
 				// Remove user from workspace
-				removeErr := d.RemoveUserFromWorkspace(user.ID, workspace.ID)
+				removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
 				assert.NoError(t, removeErr)
 
 				return roleIDs
 			},
 			teardown: func(roleIDs []uint) {
 				// Re-add user to workspace with original roles
-				workspaceUser, addErr := d.AddUserToWorkspace(user.ID, workspace.ID, roleIDs)
+				workspaceUser, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, roleIDs)
 				assert.NoError(t, addErr)
 				assert.NotNil(t, workspaceUser)
 			},
@@ -214,29 +209,25 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 }
 
 func TestPermissionCache(t *testing.T) {
-	env, d, err := tests.InitTestEnv()
-	if err != nil {
-		t.Fatalf("Failed to initialize test environment: %v", err)
-	}
-
+	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
-	ps := lib.NewPermissionService(d, logger)
+	ps := lib.NewPermissionService(ts.DB, logger)
 
 	// Find the test workspace
-	workspace, err := d.GetWorkspaceBySlug(env.TestWorkspace)
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
 		t.Fatalf("Failed to get test workspace: %v", err)
 	}
 
 	// Find the test user
-	user, err := d.GetUserByEmail(env.TestUserEmail)
+	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
 	if err != nil {
 		t.Fatalf("Failed to get test user: %v", err)
 	}
 
 	// Save original roles to restore after tests
-	originalRoleIDs := saveUserRoles(t, d, user.ID, workspace.ID)
-	defer restoreUserRoles(t, d, user.ID, workspace.ID, originalRoleIDs)
+	originalRoleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
+	defer restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
 
 	// Test cache hit/miss
 	t.Run("cache operations", func(t *testing.T) {
