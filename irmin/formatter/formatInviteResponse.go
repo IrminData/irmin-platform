@@ -28,10 +28,10 @@ func FormatInviteResponse(invite *db.Invite, sqidManager *utils.SQIDManager) (*i
 		return nil, fmt.Errorf("error encoding workspace sqid: %w", err)
 	}
 
-	// Get the sqid of the role the invite is for
-	roleSqid, err := sqidManager.Encode("roles", uint64(invite.RoleID))
-	if err != nil {
-		return nil, fmt.Errorf("error encoding role sqid: %w", err)
+	// Format the role
+	formattedRole, formatRoleErr := FormatRoleResponse(&invite.Role, sqidManager)
+	if formatRoleErr != nil {
+		return nil, fmt.Errorf("error formatting role: %w", formatRoleErr)
 	}
 
 	// Format the invite response
@@ -46,7 +46,7 @@ func FormatInviteResponse(invite *db.Invite, sqidManager *utils.SQIDManager) (*i
 	inviteResponse := irminmodels.Invite{
 		ID:         inviteSqid,
 		Email:      invite.Email,
-		RoleID:     roleSqid,
+		Role:       *formattedRole,
 		AcceptedAt: acceptedAt,
 		DeclinedAt: declinedAt,
 		ExpiresAt:  invite.ExpiresAt,
