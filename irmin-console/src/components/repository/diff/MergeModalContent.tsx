@@ -3,12 +3,18 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
-import ReactSelect from 'react-select';
 
 import Button from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -125,16 +131,26 @@ export default function MergeModalContent({
             name='mergeStrategy'
             control={control}
             render={({ field }) => (
-              <ReactSelect
-                {...field}
-                options={mergeStrategies}
-                className='react-select-container w-full'
-                classNamePrefix='react-select'
-                value={mergeStrategies.find(
-                  (strategy) => strategy.value === field.value
-                )}
-                onChange={(newValue) => field.onChange(newValue?.value)}
-              />
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className='w-full'>
+                  <SelectValue
+                    placeholder={dict.repository.compare.mergeStrategy}
+                  >
+                    {
+                      mergeStrategies.find(
+                        (strategy) => strategy.value === field.value
+                      )?.label
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {mergeStrategies.map((strategy) => (
+                    <SelectItem key={strategy.value} value={strategy.value}>
+                      {strategy.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           />
         </div>

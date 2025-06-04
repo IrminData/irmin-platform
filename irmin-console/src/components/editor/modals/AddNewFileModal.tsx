@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
-import ReactSelect from 'react-select';
 
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
@@ -11,6 +10,13 @@ import PathSelector from '@/components/editor/PathSelector';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -28,7 +34,7 @@ import {
 } from '@/types/core/EditorItems';
 
 type FormData = {
-  extension: { value: IrminFileLanguage; label: string };
+  extension: IrminFileLanguage;
   name: string;
   path: string;
 };
@@ -70,7 +76,7 @@ export default function AddNewFileModal({
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      extension: irminFileLanguages[0],
+      extension: irminFileLanguages[0].value,
       name: 'example',
       path: '/example.js',
     },
@@ -85,11 +91,10 @@ export default function AddNewFileModal({
    * This ensures that the file name always includes the correct extension and the path is updated accordingly.
    */
   const updatePathAndName = useCallback(() => {
-    const extensionValue = extension;
     const nameWithExtension = getCorrectNameWithExtension(
       name,
       'file',
-      extensionValue.value
+      extension
     );
     const newPath = getCorrectPath(path, nameWithExtension);
 
@@ -119,11 +124,10 @@ export default function AddNewFileModal({
         setError('');
         setLoading(true);
 
-        const extensionValue = data.extension;
         const nameWithExtension = getCorrectNameWithExtension(
           data.name,
           'file',
-          extensionValue.value
+          data.extension
         );
         const newPath = data.path;
 
@@ -144,7 +148,7 @@ export default function AddNewFileModal({
           type: 'file',
           name: nameWithExtension,
           path: newPath,
-          language: extensionValue.value,
+          language: data.extension,
           content: '',
           last_modified: new Date().toISOString(),
         });
@@ -173,16 +177,31 @@ export default function AddNewFileModal({
           name='extension'
           control={control}
           rules={{ required: dict.common.fieldRequired }}
-          render={({ field }) => (
-            <ReactSelect
-              {...field}
-              aria-label='Select the type of the file'
-              isDisabled={loading}
-              options={irminFileLanguages}
-              className='react-select-container'
-              classNamePrefix='react-select'
-            />
-          )}
+          render={({ field }) => {
+            const selectedLanguage = irminFileLanguages.find(
+              (lang) => lang.value === field.value
+            );
+            return (
+              <Select
+                disabled={loading}
+                onValueChange={field.onChange}
+                value={field.value}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue>
+                    {selectedLanguage?.label || 'Select file type'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {irminFileLanguages.map((lang) => (
+                    <SelectItem key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }}
         />
       </div>
       <div className='flex flex-col gap-2'>
@@ -237,7 +256,7 @@ export default function AddNewFileModal({
       {showPathSelector && (
         <PathSelector
           editorItems={editorItems ?? []}
-          itemName={getCorrectNameWithExtension(name, 'file', extension.value)}
+          itemName={getCorrectNameWithExtension(name, 'file', extension)}
           originalItemPath={null}
           currentSelected={path}
           onSelectPath={(selectedPath: string) => {

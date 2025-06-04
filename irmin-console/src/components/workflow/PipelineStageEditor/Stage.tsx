@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import React from 'react';
 
-import ReactSelect from 'react-select';
-
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import IrminCore from '@/lib/core';
@@ -15,6 +13,13 @@ import RepositoryPathSelector from '@/components/repository/objects/RepositoryPa
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
 import { useIAM } from '@/context/IAMContext';
@@ -296,36 +301,16 @@ function Stage({
             <Label htmlFor={`type-select-${index}`}>
               {dict.repository.objects.type}
             </Label>
-            <ReactSelect
-              className='react-select-container'
-              classNamePrefix='react-select'
-              isDisabled={readOnly}
-              options={[
-                { value: 'action', label: dict.workflow.action },
-                { value: 'connection', label: dict.connections.connection },
-                { value: 'repository', label: dict.repository.repository },
-              ]}
-              value={
-                [
-                  { value: 'action', label: dict.workflow.action },
-                  {
-                    value: 'connection',
-                    label: dict.connections.connection,
-                  },
-                  {
-                    value: 'repository',
-                    label: dict.repository.repository,
-                  },
-                ].find((option) => option.value === stage.type) || null
-              }
-              onChange={(option) => {
-                if (option?.value === 'action') {
+            <Select
+              value={stage.type}
+              onValueChange={(value) => {
+                if (value === 'action') {
                   setStage((prevStage) => ({
                     ...prevStage,
                     type: 'action',
                     executable: '',
                   }));
-                } else if (option?.value === 'connection') {
+                } else if (value === 'connection') {
                   setStage((prevStage) => ({
                     ...prevStage,
                     type: 'connection',
@@ -333,7 +318,7 @@ function Stage({
                     connection_write_path: '',
                     connection_read_path: '',
                   }));
-                } else if (option?.value === 'repository') {
+                } else if (value === 'repository') {
                   setStage((prevStage) => ({
                     ...prevStage,
                     type: 'repository',
@@ -343,7 +328,25 @@ function Stage({
                   }));
                 }
               }}
-            />
+              disabled={readOnly}
+            >
+              <SelectTrigger id={`type-select-${index}`} className='w-full'>
+                <SelectValue>
+                  {stage.type === 'action' && dict.workflow.action}
+                  {stage.type === 'connection' && dict.connections.connection}
+                  {stage.type === 'repository' && dict.repository.repository}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='action'>{dict.workflow.action}</SelectItem>
+                <SelectItem value='connection'>
+                  {dict.connections.connection}
+                </SelectItem>
+                <SelectItem value='repository'>
+                  {dict.repository.repository}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {stage.type === 'action' && (
@@ -396,25 +399,36 @@ function Stage({
                 <Label htmlFor={`connection-select-${index}`}>
                   {dict.connections.connection}
                 </Label>
-                <ReactSelect
-                  className='react-select-container'
-                  classNamePrefix='react-select'
-                  isSearchable
-                  isDisabled={readOnly}
-                  defaultValue={connectionsQuery.data?.data?.find(
-                    (c) => c.id === stage.connection
-                  )}
-                  options={connectionsQuery.data?.data ?? []}
-                  getOptionLabel={(option) => option.name}
-                  onChange={(option) => {
-                    if (!option) return;
-                    fetchConnectionSchemas(option.id);
+                <Select
+                  value={stage.connection}
+                  onValueChange={(value) => {
+                    if (!value) return;
+                    fetchConnectionSchemas(value);
                     setStage((prevStage) => ({
                       ...prevStage,
-                      connection: option.id,
+                      connection: value,
                     }));
                   }}
-                />
+                  disabled={readOnly}
+                >
+                  <SelectTrigger
+                    id={`connection-select-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue>
+                      {connectionsQuery.data?.data?.find(
+                        (c) => c.id === stage.connection
+                      )?.name ?? stage.connection}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {connectionsQuery.data?.data?.map((conn) => (
+                      <SelectItem key={conn.id} value={conn.id}>
+                        {conn.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {stage.connection && (
                   <Button
                     href={`${workspaceUrl}/connections/${stage.connection}`}
@@ -519,25 +533,35 @@ function Stage({
                 <Label htmlFor={`repository-select-${index}`}>
                   {dict.repository.repository}
                 </Label>
-                <ReactSelect
-                  className='react-select-container'
-                  classNamePrefix='react-select'
-                  isSearchable
-                  isDisabled={readOnly}
-                  isLoading={repositoriesQuery.isLoading}
-                  defaultValue={repositoriesQuery.data?.data?.find(
-                    (r) => r.slug === stage.repository
-                  )}
-                  options={repositoriesQuery.data?.data ?? []}
-                  getOptionLabel={(option) => option.name}
-                  onChange={(option) => {
-                    if (!option) return;
+                <Select
+                  value={stage.repository}
+                  onValueChange={(value) => {
+                    if (!value) return;
                     setStage((prevStage) => ({
                       ...prevStage,
-                      repository: option.slug,
+                      repository: value,
                     }));
                   }}
-                />
+                  disabled={readOnly || repositoriesQuery.isLoading}
+                >
+                  <SelectTrigger
+                    id={`repository-select-${index}`}
+                    className='w-full'
+                  >
+                    <SelectValue>
+                      {repositoriesQuery.data?.data?.find(
+                        (r) => r.slug === stage.repository
+                      )?.name ?? stage.repository}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {repositoriesQuery.data?.data?.map((repo) => (
+                      <SelectItem key={repo.slug} value={repo.slug}>
+                        {repo.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {stage.repository && (
                   <Button
                     href={`${workspaceUrl}/repositories/${stage.repository}`}

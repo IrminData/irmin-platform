@@ -21,6 +21,7 @@ const fi = {
     success: 'Onnistui',
     info: 'Info',
     noOptionsMessage: 'Ei vaihtoehtoja',
+    selectAll: 'Valitse kaikki',
     yes: 'Kyllä',
     no: 'Ei',
     fieldRequired: 'Kenttä on pakollinen',

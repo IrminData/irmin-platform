@@ -7,12 +7,18 @@ import {
   Path,
   useForm,
 } from 'react-hook-form';
-import ReactSelect from 'react-select';
 
 import Button from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -115,19 +121,28 @@ export default function SettingsForm<T extends FieldValues>({
                       disabled={submitting}
                     />
                   ) : field.type === 'select' && field.options ? (
-                    <ReactSelect
-                      value={field.options.find(
-                        (option) => option.value === formField.value
-                      )}
-                      onChange={(newValue) =>
-                        formField.onChange(newValue?.value)
-                      }
-                      options={field.options}
-                      getOptionLabel={(option) => option.label}
-                      className='react-select-container'
-                      classNamePrefix='react-select'
-                      isDisabled={submitting}
-                    />
+                    <Select
+                      value={formField.value}
+                      onValueChange={formField.onChange}
+                      disabled={submitting}
+                    >
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder={field.placeholder}>
+                          {
+                            field.options.find(
+                              (option) => option.value === formField.value
+                            )?.label
+                          }
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.options.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   ) : null}
                   {errors[field.name] && (
                     <p className='mt-1 text-xs text-red-600'>

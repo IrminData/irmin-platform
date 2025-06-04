@@ -3,11 +3,17 @@
 import { useCallback, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
-import Select from 'react-select';
 
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -90,24 +96,23 @@ export default function CreateBranchModalContent({
           render={({ field }) => (
             <>
               <Select
-                options={branches.map((branch) => ({
-                  label: branch,
-                  value: branch,
-                }))}
-                value={{
-                  label: field.value,
-                  value: field.value,
-                }}
-                onChange={(selectedOption) => {
-                  field.onChange(selectedOption?.value || 'main');
-                }}
-                isSearchable
-                placeholder={dict.repository.branches.branches}
-                noOptionsMessage={() => dict.common.noOptionsMessage}
-                className='react-select-container'
-                classNamePrefix='react-select'
-                isDisabled={loading}
-              />
+                disabled={loading}
+                value={field.value}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder={dict.repository.branches.branches}>
+                    {field.value}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch} value={branch}>
+                      {branch}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.fromBranch && (
                 <p className='mt-1 text-xs text-red-600'>
                   {errors.fromBranch.message}

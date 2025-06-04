@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { format, parseISO } from 'date-fns';
-import ReactSelect from 'react-select';
 import { Frequency, RRule, rrulestr, Weekday } from 'rrule';
 
 import { TbCopy, TbInfoCircle } from 'react-icons/tb';
@@ -304,16 +303,26 @@ export default function RRuleGenerator({
                 {frequencies.find((f) => f.value === frequency)?.label}
               </Badge>
             </div>
-            <ReactSelect
-              options={frequencies}
-              value={frequencies.find((f) => f.value === frequency)}
-              onChange={(option) =>
-                setFrequency(option?.value || Frequency.DAILY)
+            <Select
+              value={frequency.toString()}
+              onValueChange={(value) =>
+                setFrequency(parseInt(value) || Frequency.DAILY)
               }
-              className='react-select-container'
-              classNamePrefix='react-select'
-              isDisabled={isDisabled}
-            />
+              disabled={isDisabled}
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue>
+                  {frequencies.find((f) => f.value === frequency)?.label}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {frequencies.map((freq) => (
+                  <SelectItem key={freq.value} value={freq.value.toString()}>
+                    {freq.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>

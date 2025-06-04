@@ -2,7 +2,13 @@
 
 import { useMemo } from 'react';
 
-import ReactSelect from 'react-select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -59,21 +65,31 @@ export default function BranchSelector({
       <span className='absolute -top-2 z-10 w-full pr-12 pl-2 text-xs text-gray-800 dark:text-gray-400'>
         {label ?? dict.repository.branches.branch}
       </span>
-      <ReactSelect
-        isLoading={loading}
-        value={selectedBranch}
-        onChange={(selectedOption) => {
+      <Select
+        disabled={loading}
+        value={currentRef}
+        onValueChange={(value) => {
+          const selectedOption = options.find(
+            (option) => option.value === value
+          );
           if (selectedOption && onSelect) {
             onSelect(selectedOption);
           }
         }}
-        options={options}
-        isSearchable
-        placeholder={dict.repository.branches.branches}
-        noOptionsMessage={() => dict.common.noOptionsMessage}
-        className='react-select-container'
-        classNamePrefix='react-select'
-      />
+      >
+        <SelectTrigger className='w-full'>
+          <SelectValue placeholder={dict.repository.branches.branches}>
+            {selectedBranch?.label}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

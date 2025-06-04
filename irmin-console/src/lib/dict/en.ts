@@ -21,6 +21,7 @@ const en = {
     success: 'Success',
     info: 'Info',
     noOptionsMessage: 'No options',
+    selectAll: 'Select All',
     yes: 'Yes',
     no: 'No',
     fieldRequired: 'This field is required',

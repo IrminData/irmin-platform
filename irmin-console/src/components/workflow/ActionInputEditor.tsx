@@ -2,12 +2,17 @@
 
 import { memo, useCallback, useEffect, useState } from 'react';
 
-import ReactSelect from 'react-select';
-
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -128,26 +133,29 @@ function ActionInputEditor({
               <Label htmlFor={`inputFiles.${index}.repository`}>
                 {dict.repository.repository}
               </Label>
-              <ReactSelect
-                id={`inputFiles.${index}.repository`}
-                isLoading={repositoriesQuery.isLoading}
-                value={{
-                  value: inputFile.repository,
-                  label:
-                    repositoriesQuery.data?.data?.find(
+              <Select
+                value={inputFile.repository}
+                onValueChange={(value) => handleRepositoryChange(index, value)}
+                disabled={repositoriesQuery.isLoading}
+              >
+                <SelectTrigger
+                  id={`inputFiles.${index}.repository`}
+                  className='w-full'
+                >
+                  <SelectValue>
+                    {repositoriesQuery.data?.data?.find(
                       (repo) => inputFile.repository === repo.slug
-                    )?.name ?? inputFile.repository,
-                }}
-                onChange={(selectedOption) =>
-                  handleRepositoryChange(index, selectedOption?.value)
-                }
-                options={repositoriesQuery.data?.data?.map((repo) => ({
-                  value: repo.slug,
-                  label: repo.name,
-                }))}
-                className='react-select-container'
-                classNamePrefix='react-select'
-              />
+                    )?.name ?? inputFile.repository}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {repositoriesQuery.data?.data?.map((repo) => (
+                    <SelectItem key={repo.slug} value={repo.slug}>
+                      {repo.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Branch Input */}

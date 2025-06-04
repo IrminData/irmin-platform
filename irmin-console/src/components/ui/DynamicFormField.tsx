@@ -2,17 +2,20 @@
 
 import { forwardRef, useCallback, useMemo } from 'react';
 
-import ReactSelect, { MultiValue, SingleValue } from 'react-select';
-
 import { Checkbox } from '@/components/ui/checkbox';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-import { useLocale } from '@/context/LocaleContext';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { DynamicField } from '@/types/internal/DynamicField';
 
-// Define a custom type for ReactSelect options
+// Define a custom type for select options
 type SelectOption = {
   value: string;
   label: string;
@@ -38,8 +41,6 @@ function DynamicFormField(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ref: React.Ref<any>
 ) {
-  const { dict } = useLocale();
-
   const options: SelectOption[] = useMemo(
     () =>
       field.options?.map((option) => ({
@@ -48,19 +49,6 @@ function DynamicFormField(
       })) ?? [],
     [field.options]
   );
-
-  // Map fieldProps.value to the corresponding option(s) for ReactSelect
-  const getSelectedOption = useCallback(() => {
-    if (field.multiple) {
-      return options.filter((option) =>
-        (fieldProps.value ?? []).includes(option.value)
-      );
-    } else {
-      return (
-        options.find((option) => option.value === fieldProps.value) || null
-      );
-    }
-  }, [field.multiple, fieldProps.value, options]);
 
   // Render the appropriate input type based on the field's type
   const renderField = useCallback(() => {
@@ -102,32 +90,51 @@ function DynamicFormField(
           </div>
         );
       case 'select':
+        if (field.multiple) {
+          // For multiple select, we'll need to implement a custom multi-select component
+          // For now, we'll use a simple checkbox list
+          return (
+            <div className='flex flex-col gap-2'>
+              {options.map((option) => (
+                <label key={option.value} className='flex items-center gap-2'>
+                  <Checkbox
+                    checked={(fieldProps.value ?? []).includes(option.value)}
+                    onCheckedChange={(checked) => {
+                      const currentValues = fieldProps.value ?? [];
+                      const newValues = checked
+                        ? [...currentValues, option.value]
+                        : currentValues.filter(
+                            (v: string) => v !== option.value
+                          );
+                      fieldProps?.onChange?.(newValues);
+                    }}
+                    disabled={disabled}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          );
+        }
         return (
-          <ReactSelect
-            {...fieldProps}
-            value={getSelectedOption()}
-            placeholder={field.label}
-            isMulti={field.multiple}
-            isLoading={false}
-            onChange={(
-              selectedOption:
-                | SingleValue<SelectOption>
-                | MultiValue<SelectOption>
-            ) => {
-              const value = field.multiple
-                ? (selectedOption as MultiValue<SelectOption>).map(
-                    (option) => option.value
-                  )
-                : ((selectedOption as SingleValue<SelectOption>)?.value ?? '');
-              fieldProps?.onChange?.(value);
-            }}
-            options={options}
-            noOptionsMessage={() => dict.common.noOptionsMessage}
-            className='react-select-container'
-            classNamePrefix='react-select'
-            ref={ref}
+          <Select
+            value={fieldProps.value}
+            onValueChange={fieldProps?.onChange}
             disabled={disabled}
-          />
+          >
+            <SelectTrigger className='w-full'>
+              <SelectValue placeholder={field.label}>
+                {options.find((opt) => opt.value === fieldProps.value)?.label}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
       case 'radio':
         return (
@@ -197,7 +204,7 @@ function DynamicFormField(
           />
         );
     }
-  }, [field, fieldProps, options, dict, disabled, getSelectedOption, ref]);
+  }, [field, fieldProps, options, disabled, ref]);
 
   return (
     <div id='dynamic-form-field' className='mb-2 flex flex-col gap-1'>

@@ -2,19 +2,18 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import dynamic from 'next/dynamic';
-
-import { SingleValue } from 'react-select';
-
 import { languages, Locale } from '@/lib/dict';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
-
-const ReactSelect = dynamic(() => import('react-select'), {
-  loading: () => <LoadingSkeleton className='h-8' />,
-});
 
 /**
  * Language switcher component
@@ -38,20 +37,10 @@ const LanguageSwitcher = () => {
     () => languages.find((lang) => lang.code === locale),
     [locale]
   );
-  const options = useMemo(
-    () =>
-      languages.map((lang) => ({
-        value: lang.code,
-        label: lang.name,
-      })),
-    []
-  );
+
   const changeHandler = useCallback(
-    (val: unknown) => {
-      const value = val as SingleValue<{ value: Locale; label: string }>;
-      if (value && value.value) {
-        switchLocale(value.value);
-      }
+    (value: string) => {
+      switchLocale(value as Locale);
     },
     [switchLocale]
   );
@@ -60,21 +49,24 @@ const LanguageSwitcher = () => {
     return <LoadingSkeleton className='h-8' />;
 
   return (
-    <ReactSelect
-      value={{
-        value: currentLanguage.code,
-        label: currentLanguage.name,
-      }}
-      onChange={changeHandler}
-      options={options}
-      isSearchable={false}
-      isClearable={false}
-      placeholder={dict.common.selectLanguage}
-      noOptionsMessage={() => dict.common.noOptionsMessage}
-      className='react-select-container'
-      classNamePrefix='react-select'
-      id='language-switcher'
-    />
+    <Select
+      value={currentLanguage.code}
+      onValueChange={changeHandler}
+      disabled={!isMounted}
+    >
+      <SelectTrigger className='w-[140px]'>
+        <SelectValue placeholder={dict.common.selectLanguage}>
+          {currentLanguage.name}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {languages.map((lang) => (
+          <SelectItem key={lang.code} value={lang.code}>
+            {lang.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };
 

@@ -2,14 +2,19 @@
 
 import { memo, useCallback, useMemo } from 'react';
 
-import ReactSelect from 'react-select';
-
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import FileSelector from '@/components/editor/FileSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 import PipelineStageEditor from '@/components/workflow/PipelineStageEditor';
@@ -108,30 +113,41 @@ function ConfigureWorkflowable({
             </div>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
-              <ReactSelect
-                onChange={(newValue) => {
-                  if (!newValue) return;
+              <Select
+                value={workflowable.repository}
+                onValueChange={(value) => {
+                  if (!value) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ActionWorkflowableInput),
-                      repository: newValue.value,
+                      repository: value,
                       branch:
                         repositoriesQuery.data?.data?.find(
-                          (repo) => repo.slug === newValue.value
+                          (repo) => repo.slug === value
                         )?.default_branch ??
                         workflowable.branch ??
                         '',
                     },
                   });
                 }}
-                options={repositoriesQuery.data?.data?.map((repo) => ({
-                  value: repo.slug,
-                  label: repo.name,
-                }))}
-                className='react-select-container w-full'
-                classNamePrefix='react-select'
-              />
+                disabled={repositoriesQuery.isLoading}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue>
+                    {repositoriesQuery.data?.data?.find(
+                      (repo) => workflowable.repository === repo.slug
+                    )?.name ?? workflowable.repository}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {repositoriesQuery.data?.data?.map((repo) => (
+                    <SelectItem key={repo.slug} value={repo.slug}>
+                      {repo.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {workflowable.repository && (
                 <Button
                   href={`${workspaceUrl}/repositories/${workflowable.repository}?ref=${workflowable.branch}`}
@@ -201,25 +217,35 @@ function ConfigureWorkflowable({
           <>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importSourceConnection}</Label>
-              <ReactSelect
-                isLoading={connectionsQuery.isLoading}
-                onChange={(newValue) => {
-                  if (!newValue) return;
+              <Select
+                value={workflowable.connection}
+                onValueChange={(value) => {
+                  if (!value) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ImportWorkflowableInput),
-                      connection: newValue.value,
+                      connection: value,
                     },
                   });
                 }}
-                options={connectionsQuery.data?.data?.map((conn) => ({
-                  value: conn.id,
-                  label: conn.name,
-                }))}
-                className='react-select-container w-full'
-                classNamePrefix='react-select'
-              />
+                disabled={connectionsQuery.isLoading}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue>
+                    {connectionsQuery.data?.data?.find(
+                      (conn) => workflowable.connection === conn.id
+                    )?.name ?? workflowable.connection}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {connectionsQuery.data?.data?.map((conn) => (
+                    <SelectItem key={conn.id} value={conn.id}>
+                      {conn.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {workflowable.connection && (
                 <Button
                   href={`${workspaceUrl}/connections/${workflowable.connection}`}
@@ -262,31 +288,41 @@ function ConfigureWorkflowable({
             )}
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationRepository}</Label>
-              <ReactSelect
-                isLoading={repositoriesQuery.isLoading}
-                onChange={(newValue) => {
-                  if (!newValue) return;
+              <Select
+                value={workflowable.repository}
+                onValueChange={(value) => {
+                  if (!value) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ImportWorkflowableInput),
-                      repository: newValue.value,
+                      repository: value,
                       branch:
                         repositoriesQuery.data?.data?.find(
-                          (repo) => repo.slug === newValue.value
+                          (repo) => repo.slug === value
                         )?.default_branch ??
                         workflowable.branch ??
                         '',
                     },
                   });
                 }}
-                options={repositoriesQuery.data?.data?.map((repo) => ({
-                  value: repo.slug,
-                  label: repo.name,
-                }))}
-                className='react-select-container w-full'
-                classNamePrefix='react-select'
-              />
+                disabled={repositoriesQuery.isLoading}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue>
+                    {repositoriesQuery.data?.data?.find(
+                      (repo) => workflowable.repository === repo.slug
+                    )?.name ?? workflowable.repository}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {repositoriesQuery.data?.data?.map((repo) => (
+                    <SelectItem key={repo.slug} value={repo.slug}>
+                      {repo.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {workflowable.repository && (
                 <Button
                   href={`${workspaceUrl}/repositories/${workflowable.repository}?ref=${workflowable.branch}`}
@@ -351,25 +387,35 @@ function ConfigureWorkflowable({
           <>
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportDestinationConnection}</Label>
-              <ReactSelect
-                isLoading={repositoriesQuery.isLoading}
-                onChange={(newValue) => {
-                  if (!newValue) return;
+              <Select
+                value={workflowable.connection}
+                onValueChange={(value) => {
+                  if (!value) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ExportWorkflowableInput),
-                      connection: newValue.value,
+                      connection: value,
                     },
                   });
                 }}
-                options={connectionsQuery.data?.data?.map((conn) => ({
-                  value: conn.id,
-                  label: conn.name,
-                }))}
-                className='react-select-container w-full'
-                classNamePrefix='react-select'
-              />
+                disabled={connectionsQuery.isLoading}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue>
+                    {connectionsQuery.data?.data?.find(
+                      (conn) => workflowable.connection === conn.id
+                    )?.name ?? workflowable.connection}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {connectionsQuery.data?.data?.map((conn) => (
+                    <SelectItem key={conn.id} value={conn.id}>
+                      {conn.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {workflowable.connection && (
                 <Button
                   href={`${workspaceUrl}/connections/${workflowable.connection}`}
@@ -412,31 +458,41 @@ function ConfigureWorkflowable({
             )}
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportSourceRepository}</Label>
-              <ReactSelect
-                isLoading={repositoriesQuery.isLoading}
-                onChange={(newValue) => {
-                  if (!newValue) return;
+              <Select
+                value={workflowable.repository}
+                onValueChange={(value) => {
+                  if (!value) return;
                   setWorkflowData({
                     ...workflowData,
                     workflowable: {
                       ...(workflowable as ExportWorkflowableInput),
-                      repository: newValue.value,
+                      repository: value,
                       branch:
                         repositoriesQuery.data?.data?.find(
-                          (repo) => repo.slug === newValue.value
+                          (repo) => repo.slug === value
                         )?.default_branch ??
                         workflowable.branch ??
                         '',
                     },
                   });
                 }}
-                options={repositoriesQuery.data?.data?.map((repo) => ({
-                  value: repo.slug,
-                  label: repo.name,
-                }))}
-                className='react-select-container w-full'
-                classNamePrefix='react-select'
-              />
+                disabled={repositoriesQuery.isLoading}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue>
+                    {repositoriesQuery.data?.data?.find(
+                      (repo) => workflowable.repository === repo.slug
+                    )?.name ?? workflowable.repository}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {repositoriesQuery.data?.data?.map((repo) => (
+                    <SelectItem key={repo.slug} value={repo.slug}>
+                      {repo.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {workflowable.repository && (
                 <Button
                   href={`${workspaceUrl}/repositories/${workflowable.repository}?ref=${workflowable.branch}`}

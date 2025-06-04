@@ -1,11 +1,17 @@
 'use client';
 
 import { Controller, useForm } from 'react-hook-form';
-import ReactSelect from 'react-select';
 
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -82,29 +88,25 @@ const WorkspaceSendInviteModalContent = ({
               control={control}
               rules={{ required: dict.common.fieldRequired }}
               render={({ field }) => (
-                <ReactSelect
-                  {...field}
-                  value={
-                    field.value
-                      ? {
-                          value: field.value,
-                          label: roles.find((a) => a.id === field.value)?.role,
-                        }
-                      : {
-                          value: roles[0]?.id,
-                          label: roles[0]?.role,
-                        }
-                  }
-                  onChange={(val) => field.onChange(val?.value)}
-                  options={roles.map((role) => ({
-                    value: role.id,
-                    label: role.role,
-                  }))}
-                  isSearchable={false}
-                  isClearable={false}
-                  className='react-select-container'
-                  classNamePrefix='react-select'
-                />
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={false}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue>
+                      {roles.find((role) => role.id === field.value)?.role ??
+                        roles[0]?.role}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             />
           </div>

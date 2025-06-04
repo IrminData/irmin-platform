@@ -2,11 +2,14 @@
 
 import * as React from 'react';
 
-import { cva, type VariantProps } from 'class-variance-authority';
+import {
+  TbCheck,
+  TbChevronDown,
+  TbLoader2,
+  TbSparkles,
+  TbX,
+} from 'react-icons/tb';
 
-import { TbCheck, TbChevronDown, TbSparkles, TbX } from 'react-icons/tb';
-
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -24,38 +27,15 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 
-import { cn } from '@/utils/tw';
+import { useLocale } from '@/context/LocaleContext';
 
-/**
- * Variants for the multi-select component to handle different styles.
- * Uses class-variance-authority (cva) to define different styles based on "variant" prop.
- */
-const multiSelectVariants = cva(
-  'm-1 transition ease-in-out delay-150 hover:-translate-y-1 hover:scale-110 duration-300',
-  {
-    variants: {
-      variant: {
-        default:
-          'border-foreground/10 text-foreground bg-card hover:bg-card/80',
-        secondary:
-          'border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        inverted: 'inverted',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
+import { cn } from '@/utils/tw';
 
 /**
  * Props for MultiSelect component
  */
 interface MultiSelectProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof multiSelectVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /**
    * An array of option objects to be displayed in the multi-select component.
    * Each option object has a label, value, and an optional icon.
@@ -108,6 +88,12 @@ interface MultiSelectProps
    * Optional, can be used to add custom styles.
    */
   className?: string;
+
+  /**
+   * Whether the component is in a loading state.
+   * When true, shows a loading spinner and disables interaction.
+   */
+  loading?: boolean;
 }
 
 export const MultiSelect = React.forwardRef<
@@ -118,21 +104,23 @@ export const MultiSelect = React.forwardRef<
     {
       options,
       onValueChange,
-      variant,
       defaultValue = [],
-      placeholder = 'Select options',
+      placeholder,
       animation = 0,
       maxCount = 3,
       modalPopover = false,
       className,
+      loading,
       ...props
     },
     ref
   ) => {
+    const { dict } = useLocale();
     const [selectedValues, setSelectedValues] =
       React.useState<string[]>(defaultValue);
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [isAnimating, setIsAnimating] = React.useState(false);
+    const popoverId = React.useId();
 
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>
@@ -182,123 +170,142 @@ export const MultiSelect = React.forwardRef<
 
     return (
       <Popover
-        open={isPopoverOpen}
-        onOpenChange={setIsPopoverOpen}
+        open={isPopoverOpen && !loading}
+        onOpenChange={(open) => !loading && setIsPopoverOpen(open)}
         modal={modalPopover}
       >
         <PopoverTrigger asChild>
-          <Button
+          <button
             ref={ref}
-            {...props}
+            type='button'
+            role='combobox'
+            aria-expanded={isPopoverOpen}
+            aria-controls={popoverId}
             onClick={handleTogglePopover}
+            disabled={loading || props.disabled}
             className={cn(
-              'flex h-auto min-h-10 w-full items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit [&_svg]:pointer-events-auto',
+              "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+              loading && 'cursor-wait',
               className
             )}
+            {...props}
           >
             {selectedValues.length > 0 ? (
-              <div className='flex w-full items-center justify-between'>
-                <div className='flex flex-wrap items-center'>
+              <div className='flex w-full items-center justify-between gap-2'>
+                <div className='flex flex-wrap items-center gap-1'>
                   {selectedValues.slice(0, maxCount).map((value) => {
                     const option = options.find((o) => o.value === value);
                     const IconComponent = option?.icon;
                     return (
-                      <Badge
+                      <span
                         key={value}
                         className={cn(
-                          isAnimating ? 'animate-bounce' : '',
-                          multiSelectVariants({ variant })
+                          'bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded border border-transparent px-1.5 py-0.5 text-xs font-medium',
+                          isAnimating ? 'animate-bounce' : ''
                         )}
                         style={{ animationDuration: `${animation}s` }}
                       >
                         {IconComponent && (
-                          <IconComponent className='mr-2 h-4 w-4' />
+                          <IconComponent className='h-3 w-3 shrink-0' />
                         )}
                         {option?.label}
-                        <TbX
-                          className='ml-2 h-4 w-4 cursor-pointer'
+                        <button
+                          type='button'
+                          className='hover:bg-secondary-foreground/20 ml-1 rounded-sm'
                           onClick={(event) => {
                             event.stopPropagation();
                             toggleOption(value);
                           }}
-                        />
-                      </Badge>
+                        >
+                          <TbX className='h-3 w-3' />
+                        </button>
+                      </span>
                     );
                   })}
                   {selectedValues.length > maxCount && (
-                    <Badge
+                    <span
                       className={cn(
-                        'text-foreground border-foreground/1 bg-transparent hover:bg-transparent',
-                        isAnimating ? 'animate-bounce' : '',
-                        multiSelectVariants({ variant })
+                        'bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded border border-transparent px-1.5 py-0.5 text-xs font-medium',
+                        isAnimating ? 'animate-bounce' : ''
                       )}
                       style={{ animationDuration: `${animation}s` }}
                     >
-                      {`+ ${selectedValues.length - maxCount} more`}
-                      <TbX
-                        className='ml-2 h-4 w-4 cursor-pointer'
+                      +{selectedValues.length - maxCount}
+                      <button
+                        type='button'
+                        className='hover:bg-secondary-foreground/20 ml-1 rounded-sm'
                         onClick={(event) => {
                           event.stopPropagation();
                           clearExtraOptions();
                         }}
-                      />
-                    </Badge>
+                      >
+                        <TbX className='h-3 w-3' />
+                      </button>
+                    </span>
                   )}
                 </div>
-                <div className='flex items-center justify-between'>
-                  <TbX
-                    className='text-muted-foreground mx-2 h-4 cursor-pointer'
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleClear();
-                    }}
-                  />
-                  <Separator
-                    orientation='vertical'
-                    className='flex h-full min-h-6'
-                  />
-                  <TbChevronDown className='text-muted-foreground mx-2 h-4 cursor-pointer' />
+                <div className='flex items-center gap-1'>
+                  {!loading && (
+                    <button
+                      type='button'
+                      className='hover:bg-accent rounded-sm p-1'
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleClear();
+                      }}
+                    >
+                      <TbX className='h-3 w-3' />
+                    </button>
+                  )}
+                  <Separator orientation='vertical' className='h-4' />
+                  {loading ? (
+                    <TbLoader2 className='h-4 w-4 animate-spin opacity-50' />
+                  ) : (
+                    <TbChevronDown className='h-4 w-4 opacity-50' />
+                  )}
                 </div>
               </div>
             ) : (
-              <div className='mx-auto flex w-full items-center justify-between'>
-                <span className='text-muted-foreground mx-3 text-sm'>
-                  {placeholder}
+              <div className='flex w-full items-center justify-between'>
+                <span className='text-muted-foreground'>
+                  {loading
+                    ? 'Loading...'
+                    : placeholder || dict.common.noOptionsMessage}
                 </span>
-                <TbChevronDown className='text-muted-foreground mx-2 h-4 cursor-pointer' />
+                {loading ? (
+                  <TbLoader2 className='h-4 w-4 animate-spin opacity-50' />
+                ) : (
+                  <TbChevronDown className='h-4 w-4 opacity-50' />
+                )}
               </div>
             )}
-          </Button>
+          </button>
         </PopoverTrigger>
         <PopoverContent
-          className='w-auto p-0'
+          id={popoverId}
+          className='w-[var(--radix-select-trigger-width)] p-0'
           align='start'
-          onEscapeKeyDown={() => setIsPopoverOpen(false)}
         >
           <Command>
             <CommandInput
-              placeholder='Search...'
+              placeholder={dict.common.search}
               onKeyDown={handleInputKeyDown}
             />
             <CommandList>
-              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandEmpty>{dict.common.noResults}</CommandEmpty>
               <CommandGroup>
-                <CommandItem
-                  key='all'
-                  onSelect={toggleAll}
-                  className='cursor-pointer'
-                >
+                <CommandItem onSelect={toggleAll} className='cursor-pointer'>
                   <div
                     className={cn(
-                      'border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
+                      'border-border mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
                       selectedValues.length === options.length
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-muted text-muted-foreground'
                         : 'opacity-50 [&_svg]:invisible'
                     )}
                   >
                     <TbCheck className='h-4 w-4' />
                   </div>
-                  <span>(Select All)</span>
+                  {dict.common.selectAll || 'Select All'}
                 </CommandItem>
                 {options.map((option) => {
                   const isSelected = selectedValues.includes(option.value);
@@ -310,9 +317,9 @@ export const MultiSelect = React.forwardRef<
                     >
                       <div
                         className={cn(
-                          'border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
+                          'border-border mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
                           isSelected
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-muted text-muted-foreground'
                             : 'opacity-50 [&_svg]:invisible'
                         )}
                       >
@@ -328,40 +335,41 @@ export const MultiSelect = React.forwardRef<
               </CommandGroup>
               <CommandSeparator />
               <CommandGroup>
-                <div className='flex items-center justify-between'>
+                <div className='flex items-center justify-between gap-2'>
                   {selectedValues.length > 0 && (
-                    <>
-                      <CommandItem
-                        onSelect={handleClear}
-                        className='flex-1 cursor-pointer justify-center'
-                      >
-                        Clear
-                      </CommandItem>
-                      <Separator
-                        orientation='vertical'
-                        className='flex h-full min-h-6'
-                      />
-                    </>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='flex-1 justify-center'
+                      onClick={handleClear}
+                    >
+                      {dict.common.remove}
+                    </Button>
                   )}
-                  <CommandItem
-                    onSelect={() => setIsPopoverOpen(false)}
-                    className='max-w-full flex-1 cursor-pointer justify-center'
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='flex-1 justify-center'
+                    onClick={() => setIsPopoverOpen(false)}
                   >
-                    Close
-                  </CommandItem>
+                    {dict.common.close}
+                  </Button>
                 </div>
               </CommandGroup>
             </CommandList>
           </Command>
         </PopoverContent>
         {animation > 0 && selectedValues.length > 0 && (
-          <TbSparkles
+          <button
+            type='button'
             className={cn(
-              'text-foreground bg-background my-2 h-3 w-3 cursor-pointer',
-              isAnimating ? '' : 'text-muted-foreground'
+              'hover:bg-accent mt-2 rounded-sm p-1 transition-colors',
+              isAnimating ? 'text-primary' : 'text-muted-foreground'
             )}
             onClick={() => setIsAnimating(!isAnimating)}
-          />
+          >
+            <TbSparkles className='h-3 w-3' />
+          </button>
         )}
       </Popover>
     );

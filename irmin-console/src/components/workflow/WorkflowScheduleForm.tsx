@@ -2,13 +2,18 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import ReactSelect from 'react-select';
-
 import { Button } from '@/components/ui/button';
 import CronGenerator from '@/components/ui/CronGenerator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import RRuleGenerator from '@/components/ui/RRuleGenerator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -331,19 +336,30 @@ function WorkflowScheduleForm({
             {/* Trigger Type Select */}
             <div className='flex flex-col space-y-2'>
               <Label>{dict.workflow.schedule.triggerType}</Label>
-              <ReactSelect
-                value={triggerTypeOptions.find(
-                  (option) => option.value === trigger.type
-                )}
-                onChange={(selectedOption) => {
-                  const newType = selectedOption?.value as FormTrigger['type'];
-                  updateTriggerType(index, newType);
-                }}
-                options={triggerTypeOptions}
-                className='react-select-container'
-                classNamePrefix='react-select'
-                isDisabled={isUpdatingSchedule}
-              />
+              <Select
+                value={trigger.type}
+                onValueChange={(value) =>
+                  updateTriggerType(index, value as FormTrigger['type'])
+                }
+                disabled={isUpdatingSchedule}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue>
+                    {
+                      triggerTypeOptions.find(
+                        (option) => option.value === trigger.type
+                      )?.label
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {triggerTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Conditional Fields Based on Trigger Type */}
@@ -351,29 +367,31 @@ function WorkflowScheduleForm({
               <div className='space-y-4'>
                 <div className='flex flex-col space-y-2'>
                   <Label>{dict.workflow.schedule.timeFormat}</Label>
-                  <ReactSelect
-                    value={{
-                      value: trigger.timeFormat || 'cron',
-                      label:
-                        trigger.timeFormat === 'cron'
-                          ? 'Cron Expression'
-                          : 'Recurrence Rule (RRule)',
-                    }}
-                    onChange={(selectedOption) => {
+                  <Select
+                    value={trigger.timeFormat || 'cron'}
+                    onValueChange={(value) =>
                       updateTriggerField(
                         index,
                         'timeFormat',
-                        selectedOption?.value
-                      );
-                    }}
-                    options={[
-                      { value: 'cron', label: 'Cron Expression' },
-                      { value: 'rrule', label: 'Recurrence Rule (RRule)' },
-                    ]}
-                    className='react-select-container'
-                    classNamePrefix='react-select'
-                    isDisabled={isUpdatingSchedule}
-                  />
+                        value as 'rrule' | 'cron'
+                      )
+                    }
+                    disabled={isUpdatingSchedule}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue>
+                        {trigger.timeFormat === 'cron'
+                          ? 'Cron Expression'
+                          : 'Recurrence Rule (RRule)'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='cron'>Cron Expression</SelectItem>
+                      <SelectItem value='rrule'>
+                        Recurrence Rule (RRule)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {trigger.timeFormat === 'cron' ? (
@@ -406,56 +424,65 @@ function WorkflowScheduleForm({
               <>
                 <div className='flex flex-col space-y-2'>
                   <Label>{dict.workflow.schedule.repositoryEventTrigger}</Label>
-                  <ReactSelect
-                    isDisabled={isUpdatingSchedule}
-                    value={{ value: trigger.event, label: trigger.event }}
-                    onChange={(selectedOption) => {
-                      updateTriggerField(index, 'event', selectedOption?.value);
-                    }}
-                    options={Object.values(RepositoryEvent).map((event) => ({
-                      value: event,
-                      label: event,
-                    }))}
-                    className='react-select-container'
-                    classNamePrefix='react-select'
-                  />
+                  <Select
+                    value={trigger.event}
+                    onValueChange={(value) =>
+                      updateTriggerField(
+                        index,
+                        'event',
+                        value as RepositoryEvent
+                      )
+                    }
+                    disabled={isUpdatingSchedule}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue>{trigger.event}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(RepositoryEvent).map((event) => (
+                        <SelectItem key={event} value={event}>
+                          {event}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className='flex flex-col space-y-2'>
                   <Label htmlFor={`triggers.${index}.repository`}>
                     {dict.repository.repository}
                   </Label>
-                  <ReactSelect
-                    id={`triggers.${index}.repository`}
-                    isDisabled={isUpdatingSchedule}
-                    isLoading={repositoriesQuery.isLoading}
-                    value={{
-                      value: trigger.repository,
-                      label:
-                        repositoriesQuery.data?.data?.find(
-                          (repo) => trigger.repository === repo.slug
-                        )?.name ?? trigger.repository,
-                    }}
-                    onChange={(selectedOption) => {
-                      updateTriggerField(
-                        index,
-                        'repository',
-                        selectedOption?.value
-                      );
+                  <Select
+                    value={trigger.repository}
+                    onValueChange={(value) => {
+                      updateTriggerField(index, 'repository', value);
                       const repo = repositoriesQuery.data?.data?.find(
-                        (repo) => selectedOption?.value === repo.slug
+                        (repo) => value === repo.slug
                       );
                       if (repo) {
                         updateTriggerField(index, 'ref', repo.default_branch);
                       }
                     }}
-                    options={repositoriesQuery.data?.data?.map((repo) => ({
-                      value: repo.slug,
-                      label: repo.name,
-                    }))}
-                    className='react-select-container'
-                    classNamePrefix='react-select'
-                  />
+                    disabled={isUpdatingSchedule || repositoriesQuery.isLoading}
+                  >
+                    <SelectTrigger
+                      id={`triggers.${index}.repository`}
+                      className='w-full'
+                    >
+                      <SelectValue>
+                        {repositoriesQuery.data?.data?.find(
+                          (repo) => trigger.repository === repo.slug
+                        )?.name ?? trigger.repository}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {repositoriesQuery.data?.data?.map((repo) => (
+                        <SelectItem key={repo.slug} value={repo.slug}>
+                          {repo.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className='flex flex-col space-y-2'>
@@ -480,52 +507,62 @@ function WorkflowScheduleForm({
                   <Label>
                     {dict.workflow.schedule.workflowRunEventTrigger}
                   </Label>
-                  <ReactSelect
-                    isDisabled={isUpdatingSchedule}
-                    value={{ value: trigger.event, label: trigger.event }}
-                    onChange={(selectedOption) => {
-                      updateTriggerField(index, 'event', selectedOption?.value);
-                    }}
-                    options={Object.values(WorkflowRunEvent).map((event) => ({
-                      value: event,
-                      label: event,
-                    }))}
-                    className='react-select-container'
-                    classNamePrefix='react-select'
-                  />
+                  <Select
+                    value={trigger.event}
+                    onValueChange={(value) =>
+                      updateTriggerField(
+                        index,
+                        'event',
+                        value as WorkflowRunEvent
+                      )
+                    }
+                    disabled={isUpdatingSchedule}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue>{trigger.event}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(WorkflowRunEvent).map((event) => (
+                        <SelectItem key={event} value={event}>
+                          {event}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className='flex flex-col space-y-2'>
                   <Label htmlFor={`triggers.${index}.workflow`}>
                     {dict.workflow.workflow}
                   </Label>
-                  <ReactSelect
-                    id={`triggers.${index}.workflow`}
-                    isDisabled={isUpdatingSchedule}
-                    isLoading={workflowsQuery.isLoading}
-                    value={{
-                      value: trigger.workflow,
-                      label: (() => {
-                        const workflow = workflowsQuery.data?.data?.find(
-                          (w) => trigger.workflow === w.id
-                        );
-                        return `${workflow?.name} (${workflow?.type})`;
-                      })(),
-                    }}
-                    onChange={(selectedOption) => {
-                      updateTriggerField(
-                        index,
-                        'workflow',
-                        selectedOption?.value
-                      );
-                    }}
-                    options={workflowsQuery.data?.data?.map((workflow) => ({
-                      value: workflow.id,
-                      label: `${workflow.name} (${workflow.type})`,
-                    }))}
-                    className='react-select-container'
-                    classNamePrefix='react-select'
-                  />
+                  <Select
+                    value={trigger.workflow}
+                    onValueChange={(value) =>
+                      updateTriggerField(index, 'workflow', value)
+                    }
+                    disabled={isUpdatingSchedule || workflowsQuery.isLoading}
+                  >
+                    <SelectTrigger
+                      id={`triggers.${index}.workflow`}
+                      className='w-full'
+                    >
+                      <SelectValue>
+                        {(() => {
+                          const workflow = workflowsQuery.data?.data?.find(
+                            (w) => trigger.workflow === w.id
+                          );
+                          return `${workflow?.name} (${workflow?.type})`;
+                        })()}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workflowsQuery.data?.data?.map((workflow) => (
+                        <SelectItem key={workflow.id} value={workflow.id}>
+                          {`${workflow.name} (${workflow.type})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}

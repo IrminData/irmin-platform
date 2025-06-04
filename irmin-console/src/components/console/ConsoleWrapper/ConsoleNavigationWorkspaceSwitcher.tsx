@@ -2,21 +2,20 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
-import { SingleValue } from 'react-select';
-
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { Workspace } from '@/types/core/Workspace';
-
-const ReactSelect = dynamic(() => import('react-select'), {
-  loading: () => <LoadingSkeleton className='h-8' />,
-});
 
 /**
  * Workspace switcher UI for the console navigation sidebar
@@ -37,16 +36,10 @@ export default function ConsoleNavigationWorkspaceSwitcher({
   const [processing, setProcessing] = useState(false);
 
   const onChange = useCallback(
-    async (
-      selectedOption: SingleValue<{
-        value: string;
-        label: string;
-      }>
-    ) => {
+    async (value: string) => {
       try {
-        if (!selectedOption || !selectedOption.value) return;
+        if (!value) return;
         setProcessing(true);
-        const value = selectedOption.value;
         if (value === 'create-new' || value === 'select-workspace') {
           router.push(`/${locale}/workspace`);
           setIsMenuOpen(false);
@@ -86,38 +79,35 @@ export default function ConsoleNavigationWorkspaceSwitcher({
   );
 
   const currentValue = useMemo(
-    () =>
-      currentWorkspace
-        ? { value: currentWorkspace.slug, label: currentWorkspace.name }
-        : {
-            value: 'select-workspace',
-            label: dict.workspaceSwitcher.selectWorkspace,
-          },
-    [currentWorkspace, dict]
+    () => (currentWorkspace ? currentWorkspace.slug : 'select-workspace'),
+    [currentWorkspace]
   );
+
+  if (!workspaces || workspaces.length === 0) {
+    return <></>;
+  }
 
   return (
     <div className='mt-2' id='console-nav-workspace-switcher'>
-      {!workspaces || workspaces.length === 0 ? (
-        <></>
-      ) : (
-        <ReactSelect
-          options={options}
-          onChange={(newValue) => {
-            onChange(newValue as SingleValue<{ value: string; label: string }>);
-          }}
-          isLoading={processing}
-          isClearable={false}
-          value={currentValue}
-          defaultValue={{
-            value: 'select-workspace',
-            label: dict.workspaceSwitcher.selectWorkspace,
-          }}
-          noOptionsMessage={() => dict.common.noOptionsMessage}
-          className='react-select-container'
-          classNamePrefix='react-select'
-        />
-      )}
+      <Select
+        value={currentValue}
+        onValueChange={onChange}
+        disabled={processing}
+      >
+        <SelectTrigger className='w-full' loading={processing}>
+          <SelectValue>
+            {options.find((opt) => opt.value === currentValue)?.label ??
+              dict.workspaceSwitcher.selectWorkspace}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
