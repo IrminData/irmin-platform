@@ -9,11 +9,11 @@ import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { IrminRole, Role } from '@/types/core/IrminRole';
+import { Role } from '@/types/core/Role';
 
 interface InviteFormValues {
   email: string;
-  role: IrminRole;
+  roleId: string;
 }
 
 /**
@@ -42,7 +42,7 @@ const WorkspaceSendInviteModalContent = ({
   } = useForm<InviteFormValues>({
     defaultValues: {
       email: '',
-      role: roles[0]?.name,
+      roleId: roles.find((role) => role.isDefault)?.id ?? '',
     },
   });
 
@@ -78,7 +78,7 @@ const WorkspaceSendInviteModalContent = ({
           <Label>{dict.users.role}</Label>
           <div className='mt-2 w-full'>
             <Controller
-              name='role'
+              name='roleId'
               control={control}
               rules={{ required: dict.common.fieldRequired }}
               render={({ field }) => (
@@ -88,18 +88,17 @@ const WorkspaceSendInviteModalContent = ({
                     field.value
                       ? {
                           value: field.value,
-                          label: roles.find((a) => a.name === field.value)
-                            ?.label,
+                          label: roles.find((a) => a.id === field.value)?.role,
                         }
                       : {
-                          value: roles[0]?.name,
-                          label: roles[0]?.label,
+                          value: roles[0]?.id,
+                          label: roles[0]?.role,
                         }
                   }
                   onChange={(val) => field.onChange(val?.value)}
                   options={roles.map((role) => ({
-                    value: role.name,
-                    label: role.label,
+                    value: role.id,
+                    label: role.role,
                   }))}
                   isSearchable={false}
                   isClearable={false}
@@ -109,8 +108,8 @@ const WorkspaceSendInviteModalContent = ({
               )}
             />
           </div>
-          {errors.role && (
-            <p className='text-destructive mt-1'>{errors.role.message}</p>
+          {errors.roleId && (
+            <p className='text-destructive mt-1'>{errors.roleId.message}</p>
           )}
         </div>
         <div className='flex flex-row gap-2'>

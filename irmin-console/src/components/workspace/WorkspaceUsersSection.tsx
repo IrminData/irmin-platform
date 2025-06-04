@@ -1,12 +1,13 @@
 'use client';
 
-import ReactSelect from 'react-select';
+import React from 'react';
 
 import { IoExit, IoKey } from 'react-icons/io5';
 import { TbBook } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import { MultiSelect } from '@/components/ui/multi-select';
 import {
   Table,
   TableBody,
@@ -21,8 +22,6 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useRoles } from '@/hooks/useRoles';
 import { useUsers } from '@/hooks/useUsers';
-
-import { IrminRole } from '@/types/core/IrminRole';
 
 /**
  * Workspace users section
@@ -88,37 +87,24 @@ const WorkspaceUsersSection = () => {
                 {workspaceQuery?.data?.data?.owner?.id === user.id ? (
                   dict.list.owner
                 ) : (
-                  <ReactSelect
-                    // Set the current roles for the user
-                    value={
-                      user.roles && user.roles.length > 0
-                        ? {
-                            value: user.roles[0].name,
-                            label: user.roles[0].label,
-                          }
-                        : {
-                            value: 'no-role',
-                            label: dict.users.noRole,
-                          }
+                  <MultiSelect
+                    options={
+                      rolesQuery.data?.data?.map((role) => ({
+                        value: role.id,
+                        label: role.role,
+                      })) ?? []
                     }
-                    onChange={(val) => {
-                      // For multi-select, ensure an array is provided
-                      if (!val || !Array.isArray(val) || !val.length) return;
+                    defaultValue={user.roles?.map((role) => role.id) ?? []}
+                    onValueChange={(values) => {
+                      if (!values.length) return;
                       // Change roles of a user
                       changeUserRoleMutation.mutate({
                         id: user.id,
-                        roles: val.map((v) => v.value as IrminRole),
+                        roles: values,
                       });
                     }}
-                    options={rolesQuery.data?.data?.map((role) => ({
-                      value: role.name,
-                      label: role.label,
-                    }))}
-                    isMulti={true}
-                    isSearchable={false}
-                    isClearable={false}
-                    className='react-select-container'
-                    classNamePrefix='react-select'
+                    placeholder={dict.users.noRole}
+                    className='w-[200px]'
                   />
                 )}
               </TableCell>

@@ -2,12 +2,17 @@
 
 import { useCallback } from 'react';
 
-import ReactSelect from 'react-select';
-
 import { IoExit, IoMailOpenOutline } from 'react-icons/io5';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -90,33 +95,28 @@ const WorkspaceInvitesSection = () => {
                 {invite.email}
               </TableCell>
               <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
-                <ReactSelect
-                  // Set the current role for the invited user
-                  value={{
-                    value: rolesQuery.data?.data?.find(
-                      (role) => role.name === invite.role
-                    )?.name,
-                    label: rolesQuery.data?.data?.find(
-                      (role) => role.name === invite.role
-                    )?.label,
-                  }}
-                  onChange={(val) => {
-                    if (!val || !val.value) return;
+                <Select
+                  value={invite.role.id}
+                  onValueChange={(value) => {
+                    if (!value) return;
                     // Change role of an invited user
                     changeInviteRoleMutation.mutate({
                       id: invite.id,
-                      role: val.value,
+                      roleId: value,
                     });
                   }}
-                  options={rolesQuery.data?.data?.map((role) => ({
-                    value: role.name,
-                    label: role.label,
-                  }))}
-                  isSearchable={false}
-                  isClearable={false}
-                  className='react-select-container'
-                  classNamePrefix='react-select'
-                />
+                >
+                  <SelectTrigger className='w-[200px]'>
+                    <SelectValue placeholder={invite.role.role} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rolesQuery.data?.data?.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell className='px-4 py-2 text-right'>
                 <div className='flex w-full flex-row justify-end gap-2 align-middle'>

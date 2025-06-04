@@ -9,7 +9,6 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { Invite } from '@/types/core/Invite';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { IrminRole } from '@/types/core/IrminRole';
 
 export const inviteInboxQueryKey = ['invite-inbox'] as const;
 export const invitesQueryKey = (workspaceSlug: string) =>
@@ -17,9 +16,13 @@ export const invitesQueryKey = (workspaceSlug: string) =>
 
 type ChangeInviteRoleInput = {
   id: string;
-  role: IrminRole;
+  roleId: string;
 };
-type InviteWorkspaceUserInput = Pick<Invite, 'email' | 'role'>;
+
+type InviteWorkspaceUserInput = {
+  email: string;
+  roleId: string;
+};
 
 export function useInvites() {
   const { workspaceSlug } = useWorkspaceContext();
@@ -85,7 +88,7 @@ export function useInvites() {
       const core = new IrminCore(locale, token);
       const res = await core.inviteService.updateInvite({
         inviteID: input.id,
-        role: input.role,
+        role: input.roleId,
       });
       return res;
     },
@@ -137,7 +140,7 @@ export function useInvites() {
       const res = await core.inviteService.sendInvite({
         workspace: workspaceSlug,
         email: input.email,
-        role: input.role,
+        role: input.roleId,
       });
       return res;
     },

@@ -2665,12 +2665,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/eslint-plugin-next@npm:15.4.0-canary.62":
-  version: 15.4.0-canary.62
-  resolution: "@next/eslint-plugin-next@npm:15.4.0-canary.62"
+"@next/eslint-plugin-next@npm:15.4.0-canary.63":
+  version: 15.4.0-canary.63
+  resolution: "@next/eslint-plugin-next@npm:15.4.0-canary.63"
   dependencies:
     fast-glob: "npm:3.3.1"
-  checksum: 10c0/a9c9a44f8647a61b2603e977dfc7ad7cd1ea3d1db74f6275b1f6f0353d0021fdbfbe87e061173840cbfcfa300caec7be2cc24d4b5c4f46af5c0a1de648b5d911
+  checksum: 10c0/3caba596e1ee6b7486955546b49206383d4837a5d236274fad723655f58f97413778f1df337e4937a0af326b37bcbb666295d653c9cf382f69993023621eba51
   languageName: node
   linkType: hard
 
@@ -3401,7 +3401,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-compose-refs@npm:1.1.2":
+"@radix-ui/react-compose-refs@npm:1.1.2, @radix-ui/react-compose-refs@npm:^1.1.1":
   version: 1.1.2
   resolution: "@radix-ui/react-compose-refs@npm:1.1.2"
   peerDependencies:
@@ -3427,7 +3427,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-dialog@npm:^1.1.11":
+"@radix-ui/react-dialog@npm:^1.1.11, @radix-ui/react-dialog@npm:^1.1.14, @radix-ui/react-dialog@npm:^1.1.6":
   version: 1.1.14
   resolution: "@radix-ui/react-dialog@npm:1.1.14"
   dependencies:
@@ -3563,7 +3563,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-id@npm:1.1.1":
+"@radix-ui/react-id@npm:1.1.1, @radix-ui/react-id@npm:^1.1.0":
   version: 1.1.1
   resolution: "@radix-ui/react-id@npm:1.1.1"
   dependencies:
@@ -3734,7 +3734,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-primitive@npm:2.1.3":
+"@radix-ui/react-primitive@npm:2.1.3, @radix-ui/react-primitive@npm:^2.0.2":
   version: 2.1.3
   resolution: "@radix-ui/react-primitive@npm:2.1.3"
   dependencies:
@@ -4688,40 +4688,40 @@ __metadata:
   linkType: hard
 
 "@shikijs/engine-oniguruma@npm:^3.4.2":
-  version: 3.4.2
-  resolution: "@shikijs/engine-oniguruma@npm:3.4.2"
+  version: 3.5.0
+  resolution: "@shikijs/engine-oniguruma@npm:3.5.0"
   dependencies:
-    "@shikijs/types": "npm:3.4.2"
+    "@shikijs/types": "npm:3.5.0"
     "@shikijs/vscode-textmate": "npm:^10.0.2"
-  checksum: 10c0/b8a13123b8a41e1016b661c24b349163b5026841772c351aacddcdc724518a926a49065ac77e4a1d4bb94da12c6bf11e6b1c938ef881545064bb3b484223eba0
+  checksum: 10c0/f3578ff44da89dbabdf98309b37a7001937b8b622a703eb20d3c2d85e3a786bb33e78325093169f88587328373f800dd0a9f1d164ec3816f9a68e35474354bff
   languageName: node
   linkType: hard
 
 "@shikijs/langs@npm:^3.4.2":
-  version: 3.4.2
-  resolution: "@shikijs/langs@npm:3.4.2"
+  version: 3.5.0
+  resolution: "@shikijs/langs@npm:3.5.0"
   dependencies:
-    "@shikijs/types": "npm:3.4.2"
-  checksum: 10c0/ca0260b00e32385db8db43d8dd147f480bc2ff699acaf6052ec3e421b1c6d27df6dfb0f69fadb673ef357333ba65fdce2fbcd8c31c7d245439756bfb3530eba4
+    "@shikijs/types": "npm:3.5.0"
+  checksum: 10c0/82561813d90b2055babe15034a018779cdb8f23c6372f970407262f611752a5ba95d8d9a0bab2876e2c36969bdc73736d212e7a121f98ad145d72f441f8ce6fb
   languageName: node
   linkType: hard
 
 "@shikijs/themes@npm:^3.4.2":
-  version: 3.4.2
-  resolution: "@shikijs/themes@npm:3.4.2"
+  version: 3.5.0
+  resolution: "@shikijs/themes@npm:3.5.0"
   dependencies:
-    "@shikijs/types": "npm:3.4.2"
-  checksum: 10c0/d50bca4384ccf88d68f007869e13bc7a9b55b16c40a3269fe120b2e5a2e882f6206ee0325f619bfa31ff00a0341452840d38f4ca2296dd3ba3e200e53445e22b
+    "@shikijs/types": "npm:3.5.0"
+  checksum: 10c0/4436975bd782b7d3fac4b32196adfa439635bea4b370bf2b60169c37ee5d62611f83b1fa8d05e796a8bf94f3d1f73786609c24dffd7fbd74630156782fd812cb
   languageName: node
   linkType: hard
 
-"@shikijs/types@npm:3.4.2, @shikijs/types@npm:^3.4.2":
-  version: 3.4.2
-  resolution: "@shikijs/types@npm:3.4.2"
+"@shikijs/types@npm:3.5.0, @shikijs/types@npm:^3.4.2":
+  version: 3.5.0
+  resolution: "@shikijs/types@npm:3.5.0"
   dependencies:
     "@shikijs/vscode-textmate": "npm:^10.0.2"
     "@types/hast": "npm:^3.0.4"
-  checksum: 10c0/a20d3535cc0d61a55d0c0d4dfcd33a52229ec8a4c650613cb0f424dcb499bcdf0230e007f70a18e12c102a04820557ff120f41f18b15a94f95f9ec343592906b
+  checksum: 10c0/6a7e9c322bef4af1dc3f3d60807bc8521525d4e446a8bfce46328a6495cde6998dae4126f739a5acf9af6c01365c77023fc0249ed49c228a41083f98875cd08b
   languageName: node
   linkType: hard
 
@@ -6358,9 +6358,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001579, caniuse-lite@npm:^1.0.30001702, caniuse-lite@npm:^1.0.30001718":
-  version: 1.0.30001720
-  resolution: "caniuse-lite@npm:1.0.30001720"
-  checksum: 10c0/ba9f963364ec4bfc8359d15d7e2cf365185fa1fddc90b4f534c71befedae9b3dd0cd2583a25ffc168a02d7b61b6c18b59bda0a1828ea2a5250fd3e35c2c049e9
+  version: 1.0.30001721
+  resolution: "caniuse-lite@npm:1.0.30001721"
+  checksum: 10c0/fa3a8926899824b385279f1f886fe34c5efb1321c9ece1b9df25c8d567a2706db8450cc5b4d969e769e641593e08ea644909324aba93636a43e4949a75f81c4c
   languageName: node
   linkType: hard
 
@@ -6539,6 +6539,21 @@ __metadata:
     "@codemirror/view": ^6.0.0
     "@lezer/highlight": ^1.0.0
   checksum: 10c0/a19446382db82c8473985e52e68d4ab29dcba4f853247115c6db5706b70200a7383ad3757408e6a0c00ce1369060b69c556c08b2f8e233f0f6209b1a7ab84965
+  languageName: node
+  linkType: hard
+
+"cmdk@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "cmdk@npm:1.1.1"
+  dependencies:
+    "@radix-ui/react-compose-refs": "npm:^1.1.1"
+    "@radix-ui/react-dialog": "npm:^1.1.6"
+    "@radix-ui/react-id": "npm:^1.1.0"
+    "@radix-ui/react-primitive": "npm:^2.0.2"
+  peerDependencies:
+    react: ^18 || ^19 || ^19.0.0-rc
+    react-dom: ^18 || ^19 || ^19.0.0-rc
+  checksum: 10c0/5605ac4396ec9bc65c82f954da19dd89a0636a54026df72780e2470da1381f9d57434a80a53f2d57eaa4e759660a3ebba9232b74258dc09970576591eae03116
   languageName: node
   linkType: hard
 
@@ -7196,9 +7211,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.160":
-  version: 1.5.162
-  resolution: "electron-to-chromium@npm:1.5.162"
-  checksum: 10c0/66241b7170dd10263a4fbb637ba17566f8bb679676c7bde67df0ffbd2fec0fc00e59bc35cc308b2313a75156629e0d085e64130eec929651dac0c01c48da4b11
+  version: 1.5.163
+  resolution: "electron-to-chromium@npm:1.5.163"
+  checksum: 10c0/85fb2dcfdba3ab64677ae1bdd6f708686925dddae5f062c356415a7734abda5575679d478917ed71921f6ad58f1b90e569ecdfbe5c64477b0c2f0f3dd46a4b80
   languageName: node
   linkType: hard
 
@@ -7513,11 +7528,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:15.4.0-canary.62":
-  version: 15.4.0-canary.62
-  resolution: "eslint-config-next@npm:15.4.0-canary.62"
+"eslint-config-next@npm:15.4.0-canary.63":
+  version: 15.4.0-canary.63
+  resolution: "eslint-config-next@npm:15.4.0-canary.63"
   dependencies:
-    "@next/eslint-plugin-next": "npm:15.4.0-canary.62"
+    "@next/eslint-plugin-next": "npm:15.4.0-canary.63"
     "@rushstack/eslint-patch": "npm:^1.10.3"
     "@typescript-eslint/eslint-plugin": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
     "@typescript-eslint/parser": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
@@ -7533,7 +7548,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/08ce2e43bb0790700319d3f737877e541fd605dbc47161d53da65c627b0b1bec86e7fa2bad5b4895290cef9c53d6f04e7c8206460be8ca88466bc00d3a203a8e
+  checksum: 10c0/c5a04a765dc95e72f1c50b89c65ce21ccdf73897e51f9a2447f9382aca7912cf968daea595429042cef259a96245a4239649034f504325461fd2a420d06221cc
   languageName: node
   linkType: hard
 
@@ -8642,6 +8657,7 @@ __metadata:
     "@radix-ui/react-avatar": "npm:^1.1.10"
     "@radix-ui/react-checkbox": "npm:^1.3.2"
     "@radix-ui/react-collapsible": "npm:^1.1.11"
+    "@radix-ui/react-dialog": "npm:^1.1.14"
     "@radix-ui/react-dropdown-menu": "npm:^2.1.15"
     "@radix-ui/react-label": "npm:^2.1.7"
     "@radix-ui/react-popover": "npm:^1.1.14"
@@ -8674,9 +8690,10 @@ __metadata:
     babel-plugin-react-compiler: "npm:19.1.0-rc.2"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
+    cmdk: "npm:^1.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.28.0"
-    eslint-config-next: "npm:15.4.0-canary.62"
+    eslint-config-next: "npm:15.4.0-canary.63"
     eslint-config-prettier: "npm:^10.1.5"
     eslint-plugin-react-compiler: "npm:19.1.0-rc.2"
     markdown-to-jsx: "npm:^7.7.6"
@@ -13969,9 +13986,9 @@ __metadata:
   linkType: hard
 
 "zod@npm:^3.22.4":
-  version: 3.25.49
-  resolution: "zod@npm:3.25.49"
-  checksum: 10c0/2b70269b18abcd9b8d282ed6361a327a71d9a91433d3add02c4ab69750a271d97675145b393ccc968b5d61360d8d4000180fbc8a347dc186320b9e118c7a1df9
+  version: 3.25.51
+  resolution: "zod@npm:3.25.51"
+  checksum: 10c0/6fc708a45b0d44282c18da4c93f4d42336a884a42487031b40bacb7e8c5a2e539b7993d3ccba75f445df78050f05ff4e34110ffe03d2c3fcbe557c7fe7c1350a
   languageName: node
   linkType: hard
 

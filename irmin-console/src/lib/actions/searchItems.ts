@@ -216,7 +216,7 @@ export async function generateSearchItems({
       // Add users
       users.data?.forEach((user) => {
         const roleString =
-          user.roles?.map((role) => role.label).join(', ') ?? '';
+          user.roles?.map((role) => role.role).join(', ') ?? '';
         newItems.push({
           title: `${user.first_name} ${user.last_name}`,
           description: `${user.email}${

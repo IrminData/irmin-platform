@@ -1,7 +1,6 @@
 import IrminCore from '@/lib/core';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { IrminRole } from '@/types/core/IrminRole';
 import { User } from '@/types/core/User';
 
 /**
@@ -93,7 +92,7 @@ class UserService {
   }: {
     workspace: string;
     user: string;
-    roles: IrminRole[];
+    roles: string[];
   }): Promise<IrminAPIResponse<User>> {
     try {
       const formData = new FormData();

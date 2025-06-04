@@ -113,7 +113,7 @@ export default function AcceptInviteSection({
           </p>
           <p className='flex justify-between'>
             <span className='font-medium'>{dict.invite.role}:</span>{' '}
-            <span className='text-foreground'>{invite.role}</span>
+            <span className='text-foreground'>{invite.role.role}</span>
           </p>
         </div>
 

@@ -6,7 +6,7 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Role } from '@/types/core/IrminRole';
+import { Role } from '@/types/core/Role';
 
 export const rolesQueryKey = ['roles'] as const;
 

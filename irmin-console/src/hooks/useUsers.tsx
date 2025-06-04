@@ -8,14 +8,13 @@ import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { IrminRole } from '@/types/core/IrminRole';
 import { User } from '@/types/core/User';
 
 export const usersQueryKey = (workspaceSlug: string) =>
   ['users', workspaceSlug] as const;
 type ChangeUserRoleInput = {
   id: string;
-  roles: IrminRole[];
+  roles: string[];
 };
 
 export function useUsers() {
