@@ -90,12 +90,10 @@ type Policy struct {
 	Principal PolicyPrincipal `json:"principal"`
 	// ResourceID being nil means the policy is applied to all resources of the given type
 	ResourceID *string `json:"resource_id,omitempty"`
-	// RoleID is used to give a policy to a specific role
-	RoleID *string `json:"role_id,omitempty"`
-	// WorkspaceUserID is used to give a policy to a specific workspace user
-	WorkspaceUserID *string `json:"workspace_user_id,omitempty"`
-	// WorkspaceID is used to specify which workspace the policy is applied to
-	WorkspaceID *string `json:"workspace_id,omitempty"`
+	// Role is used to give a policy to a specific role
+	Role *Role `json:"role,omitempty"`
+	// User is used to give a policy to a specific workspace user
+	User *User `json:"user,omitempty"`
 }
 
 // RolePolicySummary represents a summary of a role's policies.
