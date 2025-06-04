@@ -16,21 +16,21 @@ type PolicyCreateParams struct {
 	Principal irminmodels.PolicyPrincipal `form:"principal"` // The principal type (role/user)
 
 	// Optional fields
-	ResourceID      *string `form:"resource_id,omitempty"`       // ID of the specific resource
-	RoleID          *string `form:"role_id,omitempty"`           // ID of the role if principal is role
-	WorkspaceUserID *string `form:"workspace_user_id,omitempty"` // ID of the user if principal is user
+	ResourceID *string `form:"resource_id,omitempty"` // ID of the specific resource
+	RoleID     *string `form:"role_id,omitempty"`     // ID of the role if principal is role
+	UserID     *string `form:"user_id,omitempty"`     // ID of the user if principal is user
 }
 
 // PolicyUpdateParams represents the parameters that can be updated for a policy.
 type PolicyUpdateParams struct {
 	// All fields are optional for updates
-	Effect          *irminmodels.PolicyEffect    `form:"effect,omitempty"`            // The effect of the policy (allow/deny)
-	Action          *irminmodels.PolicyAction    `form:"action,omitempty"`            // The action being controlled (read/write/etc)
-	Resource        *irminmodels.PolicyResource  `form:"resource,omitempty"`          // The resource type being controlled
-	Principal       *irminmodels.PolicyPrincipal `form:"principal,omitempty"`         // The principal type (role/user)
-	ResourceID      *string                      `form:"resource_id,omitempty"`       // ID of the specific resource
-	RoleID          *string                      `form:"role_id,omitempty"`           // ID of the role if principal is role
-	WorkspaceUserID *string                      `form:"workspace_user_id,omitempty"` // ID of the user if principal is user
+	Effect     *irminmodels.PolicyEffect    `form:"effect,omitempty"`      // The effect of the policy (allow/deny)
+	Action     *irminmodels.PolicyAction    `form:"action,omitempty"`      // The action being controlled (read/write/etc)
+	Resource   *irminmodels.PolicyResource  `form:"resource,omitempty"`    // The resource type being controlled
+	Principal  *irminmodels.PolicyPrincipal `form:"principal,omitempty"`   // The principal type (role/user)
+	ResourceID *string                      `form:"resource_id,omitempty"` // ID of the specific resource
+	RoleID     *string                      `form:"role_id,omitempty"`     // ID of the role if principal is role
+	UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
 }
 
 // ListPolicies returns a list of all policies for a workspace.
@@ -77,8 +77,8 @@ func (c *Client) CreatePolicy(
 	if params.RoleID != nil {
 		fields["role_id"] = *params.RoleID
 	}
-	if params.WorkspaceUserID != nil {
-		fields["workspace_user_id"] = *params.WorkspaceUserID
+	if params.UserID != nil {
+		fields["user_id"] = *params.UserID
 	}
 
 	var policy irminmodels.Policy
@@ -119,8 +119,8 @@ func (c *Client) UpdatePolicy(
 	if params.RoleID != nil {
 		fields["role_id"] = *params.RoleID
 	}
-	if params.WorkspaceUserID != nil {
-		fields["workspace_user_id"] = *params.WorkspaceUserID
+	if params.UserID != nil {
+		fields["user_id"] = *params.UserID
 	}
 
 	var policy irminmodels.Policy
