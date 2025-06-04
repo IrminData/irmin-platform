@@ -37,7 +37,7 @@ func (api *APIMiddlewares) PolicyMiddleware(c fiber.Ctx) error {
 	}
 
 	// Verify the policy belongs to the workspace
-	if policy.WorkspaceID == nil || *policy.WorkspaceID != workspace.ID {
+	if policy.WorkspaceID != workspace.ID {
 		api.Logger.Error("Policy does not belong to workspace")
 		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "access_denied")},

@@ -28,7 +28,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 
 	// Fetch policies for the workspace
 	var policies []db.Policy
-	err := api.DB.Where("workspace_id = ?", workspace.ID).Find(&policies).Error
+	err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Find(&policies).Error
 	if err != nil {
 		api.Logger.Error("Error fetching policies", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -86,7 +86,11 @@ func (api *APIControllers) validateAndCreatePolicy(
 }
 
 // handleOptionalPolicyFields processes optional fields for a policy.
-func (api *APIControllers) handleOptionalPolicyFields(policy *db.Policy, fields map[string]string) error {
+func (api *APIControllers) handleOptionalPolicyFields(
+	workspaceID uint,
+	policy *db.Policy,
+	fields map[string]string,
+) error {
 	if fields["resource_id"] != "" {
 		resourceID, decodeResourceIDErr := lib.DecodePolicyResourceID(
 			fields["resource_id"],
@@ -111,16 +115,19 @@ func (api *APIControllers) handleOptionalPolicyFields(policy *db.Policy, fields 
 		policy.RoleID = &rid
 	}
 
-	if fields["workspace_user_id"] != "" {
+	if fields["user_id"] != "" {
 		if policy.Principal != db.PolicyPrincipalWorkspaceUser {
 			return errors.New("invalid principal for user")
 		}
-		userID, err := api.SQIDManager.Decode("users", fields["workspace_user_id"])
+		userID, err := api.SQIDManager.Decode("users", fields["user_id"])
 		if err != nil {
 			return fmt.Errorf("error decoding user ID: %w", err)
 		}
-		uid := uint(userID)
-		policy.WorkspaceUserID = &uid
+		workspaceUser, err := api.DB.GetWorkspaceUser(workspaceID, uint(userID))
+		if err != nil {
+			return fmt.Errorf("error finding workspace user ID: %w", err)
+		}
+		policy.WorkspaceUserID = &workspaceUser.ID
 	}
 
 	return nil
@@ -141,7 +148,7 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 	fields, parseFormFieldsErr := utils.ParseFormFields(
 		c,
 		[]string{"effect", "action", "resource", "principal"},
-		[]string{"resource_id", "role_id", "workspace_user_id"},
+		[]string{"resource_id", "role_id", "user_id"},
 	)
 	if parseFormFieldsErr != nil {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -159,7 +166,7 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 	}
 
 	// Handle optional fields
-	if handleOptionalPolicyFieldsErr := api.handleOptionalPolicyFields(newPolicy, fields); handleOptionalPolicyFieldsErr != nil {
+	if handleOptionalPolicyFieldsErr := api.handleOptionalPolicyFields(workspace.ID, newPolicy, fields); handleOptionalPolicyFieldsErr != nil {
 		api.Logger.Error("Error handling optional fields", "error", handleOptionalPolicyFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
@@ -262,7 +269,7 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 	fields, err := utils.ParseFormFields(
 		c,
 		nil,
-		[]string{"effect", "action", "resource", "principal", "resource_id", "role_id", "workspace_user_id"},
+		[]string{"effect", "action", "resource", "principal", "resource_id", "role_id", "user_id"},
 	)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -285,7 +292,7 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 	}
 
 	// Handle optional fields
-	if handleOptionalPolicyFieldsErr := api.handleOptionalPolicyFields(policy, fields); handleOptionalPolicyFieldsErr != nil {
+	if handleOptionalPolicyFieldsErr := api.handleOptionalPolicyFields(workspace.ID, policy, fields); handleOptionalPolicyFieldsErr != nil {
 		api.Logger.Error("Error handling optional fields", "error", handleOptionalPolicyFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
@@ -365,7 +372,7 @@ func (api *APIControllers) getApplicablePoliciesForRole(workspace *db.Workspace,
 
 	// For non-owner roles, fetch actual policies
 	var policies []db.Policy
-	err := api.DB.Where("workspace_id = ?", workspace.ID).Find(&policies).Error
+	err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Find(&policies).Error
 	if err != nil {
 		return nil, err
 	}
@@ -532,7 +539,7 @@ func (api *APIControllers) getUserApplicablePolicies(
 ) ([]db.Policy, error) {
 	// Fetch all policies for the workspace
 	var policies []db.Policy
-	if err := api.DB.Where("workspace_id = ?", workspace.ID).Find(&policies).Error; err != nil {
+	if err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Find(&policies).Error; err != nil {
 		return nil, err
 	}
 
@@ -585,7 +592,7 @@ func (api *APIControllers) getUserApplicablePolicies(
 						Action:      action,
 						Resource:    resource,
 						Principal:   db.PolicyPrincipalRole,
-						WorkspaceID: &workspace.ID,
+						WorkspaceID: workspace.ID,
 						RoleID:      &ownerRole.ID,
 					})
 				}

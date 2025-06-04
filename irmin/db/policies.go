@@ -97,8 +97,8 @@ type Policy struct {
 
 	// WorkspaceID is used to specify which workspace the policy is applied to.
 	// This field is required for workspace-scoped policies.
-	WorkspaceID *uint      `gorm:"index:idx_policy_unique,priority:1"`
-	Workspace   *Workspace `gorm:"foreignKey:WorkspaceID"             json:"workspace"`
+	WorkspaceID uint      `gorm:"index:idx_policy_unique,priority:1"`
+	Workspace   Workspace `gorm:"foreignKey:WorkspaceID"             json:"workspace"`
 
 	// Principal specifies which group of users the policy is applied to (workspace_user, role, or everyone)
 	Principal PolicyPrincipal `gorm:"index:idx_policy_unique,priority:6"`
@@ -186,7 +186,7 @@ func (d *Database) GenerateAllPossiblePolicies(
 	basePolicy := Policy{
 		Effect:      options.Effect,
 		Principal:   principal,
-		WorkspaceID: &workspaceID,
+		WorkspaceID: workspaceID,
 	}
 
 	// Set principal-specific ID

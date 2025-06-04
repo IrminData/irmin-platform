@@ -52,7 +52,7 @@ func preparePoliciesForResources(
 				ResourceID:  nil,
 				Principal:   db.PolicyPrincipalRole,
 				RoleID:      roleID,
-				WorkspaceID: &workspaceID,
+				WorkspaceID: workspaceID,
 			})
 		}
 	}
@@ -135,7 +135,7 @@ func setWorkspaceWidePolicies(d *db.Database, workspaceID uint) error {
 		ResourceID:  nil,
 		Principal:   db.PolicyPrincipalEveryone,
 		RoleID:      nil,
-		WorkspaceID: &workspaceID,
+		WorkspaceID: workspaceID,
 	}}
 	return createPoliciesBatch(d, policies)
 }

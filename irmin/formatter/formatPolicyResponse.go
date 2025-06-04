@@ -31,26 +31,19 @@ func FormatPolicyResponse(policy *db.Policy, sqidManager *utils.SQIDManager) (*i
 		}
 		response.ResourceID = &resourceID
 	}
-	if policy.RoleID != nil {
-		roleID, encodeRoleIDErr := sqidManager.Encode("roles", uint64(*policy.RoleID))
-		if encodeRoleIDErr != nil {
-			return nil, encodeRoleIDErr
+	if policy.Role != nil {
+		role, formatRoleErr := FormatRoleResponse(policy.Role, sqidManager)
+		if formatRoleErr != nil {
+			return nil, formatRoleErr
 		}
-		response.RoleID = &roleID
+		response.Role = role
 	}
-	if policy.WorkspaceUserID != nil {
-		userID, encodeUserIDErr := sqidManager.Encode("users", uint64(*policy.WorkspaceUserID))
-		if encodeUserIDErr != nil {
-			return nil, encodeUserIDErr
+	if policy.WorkspaceUser != nil {
+		user, formatUserErr := FormatWorkspaceUserResponse(policy.WorkspaceUser, sqidManager)
+		if formatUserErr != nil {
+			return nil, formatUserErr
 		}
-		response.WorkspaceUserID = &userID
-	}
-	if policy.WorkspaceID != nil {
-		workspaceID, encodeWorkspaceIDErr := sqidManager.Encode("workspaces", uint64(*policy.WorkspaceID))
-		if encodeWorkspaceIDErr != nil {
-			return nil, encodeWorkspaceIDErr
-		}
-		response.WorkspaceID = &workspaceID
+		response.User = user
 	}
 
 	return response, nil

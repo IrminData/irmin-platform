@@ -9,7 +9,7 @@ import (
 
 // FormatAPITokenResponse formats an API token for the response.
 func FormatAPITokenResponse(token *db.APIToken, sqidManager *utils.SQIDManager) (*irminmodels.APIToken, error) {
-	// Conver the API token to an API token response.
+	// Convert the API token to an API token response.
 	sqid, sqidErr := sqidManager.Encode("api_tokens", uint64(token.ID))
 	if sqidErr != nil {
 		return nil, sqidErr
