@@ -357,6 +357,24 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 		})
 	}
 
+	// Get the owner role
+	ownerRole, err := api.DB.GetOwnerRole()
+	if err != nil {
+		api.Logger.Error("Error getting owner role", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Update the new owner's role to owner
+	_, updateOwnerRoleErr := api.DB.UpdateWorkspaceUserRoles(uint(newOwnerID), workspace.ID, []uint{ownerRole.ID})
+	if updateOwnerRoleErr != nil {
+		api.Logger.Error("Error updating owner role", "error", updateOwnerRoleErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Update the workspace owner ID.
 	workspace.OwnerID = uint(newOwnerID)
 	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
