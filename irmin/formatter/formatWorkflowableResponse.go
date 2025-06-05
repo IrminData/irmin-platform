@@ -94,6 +94,9 @@ func formatActionWorkflowable(
 				Path:       input.Path,
 			})
 		}
+		if len(inputsResponse) == 0 {
+			inputsResponse = make([]irminmodels.ActionInputData, 0)
+		}
 		response.Input = inputsResponse
 	}
 
@@ -161,6 +164,9 @@ func formatPipelineWorkflowable(
 	var stagesResponse []irminmodels.PipelineStage
 	for _, stage := range pipelineWorkflowable.Stages {
 		stagesResponse = append(stagesResponse, formatPipelineStage(stage, sqidManager))
+	}
+	if len(stagesResponse) == 0 {
+		stagesResponse = make([]irminmodels.PipelineStage, 0)
 	}
 	response.Stages = stagesResponse
 

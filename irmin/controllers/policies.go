@@ -26,16 +26,83 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Fetch policies for the workspace
+	// Parse query parameters for filtering
+	filters, err := utils.ParseQueryParams(
+		c,
+		nil,
+		[]string{"effect", "resource", "resource_id", "action", "principal", "role_id", "user_id"},
+	)
+	if err != nil {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Build base query
+	query := api.DB.Where("workspace_id = ?", workspace.ID)
+
+	// Apply simple filters directly
+	for _, field := range []string{"effect", "resource", "action", "principal"} {
+		if value := filters[field]; value != "" {
+			query = query.Where(field+" = ?", value)
+		}
+	}
+
+	// Handle complex filters that require decoding
+	if filters["resource_id"] != "" && filters["resource"] != "" {
+		resourceID, decodeResourceIDErr := lib.DecodePolicyResourceID(
+			filters["resource_id"],
+			db.PolicyResource(filters["resource"]),
+			api.SQIDManager,
+		)
+		if decodeResourceIDErr != nil {
+			api.Logger.Error("Error decoding resource ID", "error", decodeResourceIDErr)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invalid_request")},
+			})
+		}
+		query = query.Where("resource_id = ?", resourceID)
+	}
+
+	// Handle role_id filter
+	if filters["role_id"] != "" {
+		roleID, decodeRoleIDErr := api.SQIDManager.Decode("roles", filters["role_id"])
+		if decodeRoleIDErr != nil {
+			api.Logger.Error("Error decoding role ID", "error", decodeRoleIDErr)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invalid_request")},
+			})
+		}
+		query = query.Where("role_id = ?", roleID)
+	}
+
+	// Handle user_id filter
+	if filters["user_id"] != "" {
+		userID, decodeUserIDErr := api.SQIDManager.Decode("users", filters["user_id"])
+		if decodeUserIDErr != nil {
+			api.Logger.Error("Error decoding user ID", "error", decodeUserIDErr)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invalid_request")},
+			})
+		}
+		workspaceUser, findWorkspaceUserErr := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
+		if findWorkspaceUserErr != nil {
+			api.Logger.Error("Error finding workspace user ID", "error", findWorkspaceUserErr)
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invalid_request")},
+			})
+		}
+		query = query.Where("workspace_user_id = ?", workspaceUser.ID)
+	}
+
+	// Fetch and format policies
 	var policies []db.Policy
-	err := api.DB.Where("workspace_id = ?", workspace.ID).
+	if queryErr := query.
 		Preload("Role").
 		Preload("WorkspaceUser").
 		Preload("WorkspaceUser.User").
-		Find(&policies).
-		Error
-	if err != nil {
-		api.Logger.Error("Error fetching policies", "error", err)
+		Find(&policies).Error; queryErr != nil {
+		api.Logger.Error("Error fetching policies", "error", queryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})

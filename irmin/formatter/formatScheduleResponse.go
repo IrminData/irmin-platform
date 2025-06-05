@@ -12,7 +12,7 @@ import (
 func FormatScheduleResponse(schedule *db.Schedule, sqidManager *utils.SQIDManager) (*irminmodels.Schedule, error) {
 	// Format the response
 	var scheduleResponse irminmodels.Schedule
-	scheduleTriggersResponse := []irminmodels.ScheduleTrigger{}
+	var scheduleTriggersResponse []irminmodels.ScheduleTrigger
 	if schedule != nil && schedule.Triggers != nil {
 		for _, trigger := range schedule.Triggers {
 			formattedTrigger, err := FormatScheduleTriggerResponse(&trigger, sqidManager)
@@ -23,6 +23,9 @@ func FormatScheduleResponse(schedule *db.Schedule, sqidManager *utils.SQIDManage
 				scheduleTriggersResponse = append(scheduleTriggersResponse, *formattedTrigger)
 			}
 		}
+	}
+	if len(scheduleTriggersResponse) == 0 {
+		scheduleTriggersResponse = make([]irminmodels.ScheduleTrigger, 0)
 	}
 	if schedule != nil {
 		scheduleResponse = irminmodels.Schedule{

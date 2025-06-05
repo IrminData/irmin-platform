@@ -17,5 +17,8 @@ func FormatIndexResponse[T any, R any](
 		}
 		response = append(response, *formattedItem)
 	}
+	if len(response) == 0 {
+		return make([]R, 0), nil
+	}
 	return response, nil
 }

@@ -1,7 +1,9 @@
 package formatter
 
 import (
+	"fmt"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -25,9 +27,13 @@ func FormatPolicyResponse(policy *db.Policy, sqidManager *utils.SQIDManager) (*i
 	response.ID = id
 
 	if policy.ResourceID != nil {
-		resourceID, encodeResourceIDErr := sqidManager.Encode("resources", uint64(*policy.ResourceID))
+		resourceID, encodeResourceIDErr := lib.EncodePolicyResourceID(
+			*policy.ResourceID,
+			policy.Resource,
+			sqidManager,
+		)
 		if encodeResourceIDErr != nil {
-			return nil, encodeResourceIDErr
+			return nil, fmt.Errorf("error encoding resource ID: %w", encodeResourceIDErr)
 		}
 		response.ResourceID = &resourceID
 	}
