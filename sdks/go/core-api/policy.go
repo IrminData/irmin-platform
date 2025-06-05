@@ -3,6 +3,7 @@ package irmincore
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -33,12 +34,51 @@ type PolicyUpdateParams struct {
 	UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
 }
 
+// ListPoliciesParams represents the parameters for listing policies.
+type ListPoliciesParams struct {
+	Effect     *irminmodels.PolicyEffect    `form:"effect,omitempty"`      // The effect of the policy (allow/deny)
+	Action     *irminmodels.PolicyAction    `form:"action,omitempty"`      // The action being controlled (read/write/etc)
+	Resource   *irminmodels.PolicyResource  `form:"resource,omitempty"`    // The resource type being controlled
+	Principal  *irminmodels.PolicyPrincipal `form:"principal,omitempty"`   // The principal type (role/user)
+	ResourceID *string                      `form:"resource_id,omitempty"` // ID of the specific resource
+	RoleID     *string                      `form:"role_id,omitempty"`     // ID of the role if principal is role
+	UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
+}
+
 // ListPolicies returns a list of all policies for a workspace.
-func (c *Client) ListPolicies(workspace string) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) ListPolicies(
+	workspace string,
+	params ListPoliciesParams,
+) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
+	// Build query parameters
+	queryParams := url.Values{}
+	if params.Effect != nil {
+		queryParams.Add("effect", string(*params.Effect))
+	}
+	if params.Action != nil {
+		queryParams.Add("action", string(*params.Action))
+	}
+	if params.Resource != nil {
+		queryParams.Add("resource", string(*params.Resource))
+	}
+	if params.Principal != nil {
+		queryParams.Add("principal", string(*params.Principal))
+	}
+	if params.ResourceID != nil {
+		queryParams.Add("resource_id", *params.ResourceID)
+	}
+	if params.RoleID != nil {
+		queryParams.Add("role_id", *params.RoleID)
+	}
+	if params.UserID != nil {
+		queryParams.Add("user_id", *params.UserID)
+	}
+
+	// Fetch policies
 	var policies []irminmodels.Policy
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies", workspace),
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies?%s", workspace, queryParams.Encode()),
 	}, &policies)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fetch policies error: %w", err)
