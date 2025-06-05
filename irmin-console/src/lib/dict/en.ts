@@ -55,11 +55,15 @@ const en = {
     previous: 'Previous',
     loadMore: 'Load more',
     logs: 'Logs',
-    actions: {
-      send: 'Send',
-      subscribe: 'Subscribe',
-      download: 'Download',
-    },
+    actions: 'Actions',
+    add: 'Add',
+    edit: 'Edit',
+    delete: 'Delete',
+    view: 'View',
+    create: 'Create',
+    update: 'Update',
+    download: 'Download',
+    upload: 'Upload',
     terms: {
       termsAndConditions: 'Terms and conditions',
       privacyPolicy: 'Privacy policy',
@@ -228,7 +232,7 @@ const en = {
       destWinsStrategy: 'Destination wins',
       sourceWinsStrategy: 'Source wins',
       mergeExplanation:
-        'In case of a merge conflict, this option will force the merge process to automatically favour changes from the base (“Destination wins”) or from the comparison (“Source wins”). In case no selection is made, the merge process will fail in case of a conflict.',
+        'In case of a merge conflict, this option will force the merge process to automatically favour changes from the base ("Destination wins") or from the comparison ("Source wins"). In case no selection is made, the merge process will fail in case of a conflict.',
     },
     objects: {
       objects: 'Objects',
@@ -631,6 +635,7 @@ const en = {
   workspace: {
     general: 'General',
     users: 'Users',
+    policies: 'Policies',
     invites: 'Invites',
     billing: 'Billing',
     deletionWarning:
@@ -670,6 +675,50 @@ const en = {
     revealToken: 'Reveal token',
     copied: 'Copied!',
     copyToken: 'Copy token',
+  },
+  policy: {
+    title: 'Access Policies',
+    description: 'Manage access policies and permissions',
+    addPolicy: 'Add Policy',
+    createPolicy: 'Create New Policy',
+    createPolicyDescription: 'Define a new access policy for your workspace',
+    editPolicy: 'Edit Policy',
+    editPolicyDescription: 'Modify the access policy settings',
+    deletePolicy: 'Delete Policy',
+    deletePolicyDescription:
+      'Are you sure you want to delete this policy? This action cannot be undone.',
+    effect: 'Effect',
+    action: 'Action',
+    resource: 'Resource',
+    principal: 'Principal',
+    resourceId: 'Resource ID (Optional)',
+    resourceIdPlaceholder: 'Leave empty for all resources',
+    loading: 'Loading policies...',
+    error: 'Error loading policies',
+    noPolicies: 'No policies found',
+    creating: 'Creating...',
+    updating: 'Updating...',
+    deleting: 'Deleting...',
+    effectAllow: 'Allow',
+    effectDeny: 'Deny',
+    actionRead: 'Read',
+    actionCreate: 'Create',
+    actionUpdate: 'Update',
+    actionDelete: 'Delete',
+    principalWorkspaceUser: 'User',
+    principalRole: 'Role',
+    principalEveryone: 'Everyone',
+    allResources: 'All',
+    tooltips: {
+      effect: 'Whether the policy explicitly denies or allows the action',
+      action:
+        'What action is being allowed or denied (create, read, update, delete)',
+      resource: 'The type of resource on which the action can be performed',
+      principal:
+        'Who this policy applies to (specific user, role, or everyone)',
+      resourceId:
+        'Optional specific resource ID. Leave empty to apply to all resources of this type',
+    },
   },
 };
 

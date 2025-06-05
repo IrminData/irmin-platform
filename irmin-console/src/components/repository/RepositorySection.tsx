@@ -224,7 +224,7 @@ export default function RepositorySection({
                   }}
                   loading={downloadObjectAsZipMutation.isPending}
                 >
-                  {dict.common.actions.download}
+                  {dict.common.download}
                 </Button>
                 {!immutable && (
                   <Button

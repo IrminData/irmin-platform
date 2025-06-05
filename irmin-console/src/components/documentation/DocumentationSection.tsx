@@ -60,7 +60,7 @@ export default function DocumentationSection() {
             icon={<BsFilePdf size={16} />}
             onClick={downloadPDF}
           >
-            {dict.common.actions.download}
+            {dict.common.download}
           </Button>
           <div className='flex flex-col px-2 py-4 md:px-4' ref={targetRef}>
             <div

@@ -17,6 +17,7 @@ import EditorItemsService from './resources/EditorItemsService';
 import InviteService from './resources/InviteService';
 import LogService from './resources/LogService';
 import ObjectService from './resources/ObjectService';
+import PolicyService from './resources/PolicyService';
 import ProfileService from './resources/ProfileService';
 import QueryService from './resources/QueryService';
 import RepositoryService from './resources/RepositoryService';
@@ -66,6 +67,7 @@ class IrminCore {
   public tagService: TagService;
   public objectService: ObjectService;
   public credentialService: CredentialService;
+  public policyService: PolicyService;
 
   /**
    * Creates an instance of IrminCore.
@@ -99,6 +101,7 @@ class IrminCore {
     this.tagService = new TagService(this);
     this.objectService = new ObjectService(this);
     this.credentialService = new CredentialService(this);
+    this.policyService = new PolicyService(this);
   }
 
   /**

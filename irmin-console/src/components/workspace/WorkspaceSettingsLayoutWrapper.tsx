@@ -4,7 +4,13 @@ import { useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
-import { TbInvoice, TbMail, TbSettings, TbUser } from 'react-icons/tb';
+import {
+  TbInvoice,
+  TbMail,
+  TbSettings,
+  TbShield,
+  TbUser,
+} from 'react-icons/tb';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
@@ -51,6 +57,12 @@ export default function WorkspaceSettingsLayoutWrapper({
         link: `${workspaceUrl}/settings/users`,
         active: pathname === `${workspaceUrl}/settings/users`,
         icon: <TbUser size={14} />,
+      },
+      {
+        name: dict.workspace.policies,
+        link: `${workspaceUrl}/settings/policies`,
+        active: pathname === `${workspaceUrl}/settings/policies`,
+        icon: <TbShield size={14} />,
       },
       {
         name: dict.workspace.invites,

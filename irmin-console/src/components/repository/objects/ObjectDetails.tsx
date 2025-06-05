@@ -320,7 +320,7 @@ export default function ObjectDetails({
             onClick={handleDownload}
             loading={downloading}
           >
-            {dict.common.actions.download}
+            {dict.common.download}
           </Button>
           <Button
             size='sm'

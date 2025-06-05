@@ -1,4 +1,5 @@
 import { Role } from './Role';
+import { User } from './User';
 
 export enum PolicyEffect {
   Allow = 'allow',
@@ -49,14 +50,35 @@ export interface Policy {
   resource: PolicyResource;
   /** Specifies which group of users the policy is applied to */
   principal: PolicyPrincipal;
-  /** Being undefined means the policy is applied to all resources of the given type */
+  /**
+   * Resource ID is used to specify which resource the policy is applied to.
+   * When undefined, the policy is applied to all resources of the given type.
+   *
+   * It is applicable for:
+   * - queries
+   * - workflows
+   * - connections
+   * - repositories
+   * - users
+   *
+   * It is not applicable for:
+   * - workspaces (policies are workspace scoped)
+   * - policies
+   * - invites
+   * - audit logs
+   * - editor scripts
+   * - documentation
+   * - billing
+   *
+   * Note that some resources point to their parent resource's ID:
+   * - repository objects, branches, tags, and commits point to their repository's ID
+   * - workflow runs point to their workflow's ID
+   */
   resourceId?: string;
   /** Used to give a policy to a specific role */
-  roleId?: string;
+  role?: Role;
   /** Used to give a policy to a specific workspace user */
-  workspaceUserId?: string;
-  /** Used to specify which workspace the policy is applied to */
-  workspaceId?: string;
+  user?: User;
 }
 
 export interface RolePolicySummary {
@@ -71,4 +93,17 @@ export interface UserPolicySummary {
   isOwner: boolean;
   roleIds: string[];
   policies: Policy[];
+}
+
+export interface PolicyResourceOption {
+  id: string;
+  label: string;
+}
+
+export interface PolicyResourceOptions {
+  queries: PolicyResourceOption[];
+  workflows: PolicyResourceOption[];
+  connections: PolicyResourceOption[];
+  repositories: PolicyResourceOption[];
+  users: PolicyResourceOption[];
 }

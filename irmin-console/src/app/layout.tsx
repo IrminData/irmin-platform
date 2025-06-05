@@ -50,10 +50,10 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       >
         <PostHogProvider>
           <ClerkProvider dynamic>
-            <LocaleProvider>
-              <PopupProvider>
-                <IAMProvider>
-                  <ReactQueryProvider>
+            <ReactQueryProvider>
+              <LocaleProvider>
+                <PopupProvider>
+                  <IAMProvider>
                     <ThemeProvider
                       attribute='class'
                       defaultTheme='system'
@@ -62,10 +62,10 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
                     >
                       {children}
                     </ThemeProvider>
-                  </ReactQueryProvider>
-                </IAMProvider>
-              </PopupProvider>
-            </LocaleProvider>
+                  </IAMProvider>
+                </PopupProvider>
+              </LocaleProvider>
+            </ReactQueryProvider>
           </ClerkProvider>
         </PostHogProvider>
         <SpeedInsights />

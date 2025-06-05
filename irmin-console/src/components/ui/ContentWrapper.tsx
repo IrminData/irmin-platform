@@ -26,7 +26,7 @@ const ContentWrapper = ({
     >
       <div
         className={cn(
-          'bg-popover/10 w-full max-w-3xl max-w-full rounded-lg border p-2 dark:border-gray-800',
+          'bg-popover/10 w-full max-w-full rounded-lg border p-2 dark:border-gray-800',
           wrapperClassName
         )}
       >
