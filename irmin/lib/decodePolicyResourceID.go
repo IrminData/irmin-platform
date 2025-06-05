@@ -40,17 +40,17 @@ func DecodePolicyResourceID(
 	case db.PolicyResourceUser:
 		id, err = sqidManager.Decode("users", sqid)
 	case db.PolicyResourcePolicy:
-		id, err = sqidManager.Decode("policies", sqid)
+		return nil, errors.New("policies don't need ID specific policies")
 	case db.PolicyResourceInvite:
-		id, err = sqidManager.Decode("invites", sqid)
+		return nil, errors.New("invites don't need ID specific policies")
 	case db.PolicyResourceAuditLog:
-		id, err = sqidManager.Decode("logs", sqid)
+		return nil, errors.New("audit logs don't need ID specific policies")
 	case db.PolicyResourceEditorScript:
-		return nil, errors.New("editor scripts don't have IDs")
+		return nil, errors.New("editor scripts don't need ID specific policies")
 	case db.PolicyResourceDocumentation:
-		return nil, errors.New("documentation doesn't have IDs")
+		return nil, errors.New("documentation doesn't need ID specific policies")
 	case db.PolicyResourceBilling:
-		return nil, errors.New("billing doesn't have IDs")
+		return nil, errors.New("billing doesn't need ID specific policies")
 	default:
 		return nil, fmt.Errorf("invalid resource type: %s", resource)
 	}

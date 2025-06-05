@@ -28,7 +28,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 
 	// Fetch policies for the workspace
 	var policies []db.Policy
-	err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Find(&policies).Error
+	err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Preload("WorkspaceUser.User").Find(&policies).Error
 	if err != nil {
 		api.Logger.Error("Error fetching policies", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -372,7 +372,7 @@ func (api *APIControllers) getApplicablePoliciesForRole(workspace *db.Workspace,
 
 	// For non-owner roles, fetch actual policies
 	var policies []db.Policy
-	err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Find(&policies).Error
+	err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Preload("WorkspaceUser.User").Find(&policies).Error
 	if err != nil {
 		return nil, err
 	}
@@ -539,7 +539,7 @@ func (api *APIControllers) getUserApplicablePolicies(
 ) ([]db.Policy, error) {
 	// Fetch all policies for the workspace
 	var policies []db.Policy
-	if err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Find(&policies).Error; err != nil {
+	if err := api.DB.Where("workspace_id = ?", workspace.ID).Preload("Role").Preload("WorkspaceUser").Preload("WorkspaceUser.User").Find(&policies).Error; err != nil {
 		return nil, err
 	}
 
