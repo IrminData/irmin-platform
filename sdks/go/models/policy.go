@@ -86,10 +86,31 @@ type Policy struct {
 	Action PolicyAction `json:"action"`
 	// Resource specifies the resource type that the policy is applied to
 	Resource PolicyResource `json:"resource"`
+	// ResourceID is used to specify which resource the policy is applied to.
+	// When undefined, the policy is applied to all resources of the given type.
+	//
+	// It is applicable for:
+	// - queries
+	// - workflows
+	// - connections
+	// - repositories
+	// - users
+	//
+	// It is not applicable for:
+	// - workspaces (policies are workspace scoped)
+	// - policies
+	// - invites
+	// - audit logs
+	// - editor scripts
+	// - documentation
+	// - billing
+	//
+	// Note that some resources point to their parent resource's ID:
+	// - repository objects, branches, tags, and commits point to their repository's ID
+	// - workflow runs point to their workflow's ID
+	ResourceID *string `json:"resource_id,omitempty"`
 	// Principal specifies which group of users the policy is applied to
 	Principal PolicyPrincipal `json:"principal"`
-	// ResourceID being nil means the policy is applied to all resources of the given type
-	ResourceID *string `json:"resource_id,omitempty"`
 	// Role is used to give a policy to a specific role
 	Role *Role `json:"role,omitempty"`
 	// User is used to give a policy to a specific workspace user
@@ -110,4 +131,19 @@ type UserPolicySummary struct {
 	IsOwner  bool     `json:"is_owner"`
 	RoleIDs  []string `json:"role_ids"`
 	Policies []Policy `json:"policies"`
+}
+
+// PolicyResourceOption represents a policy resource option.
+type PolicyResourceOption struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+}
+
+// PolicyResourceOptions represents all possible policy resource options for a given workspace.
+type PolicyResourceOptions struct {
+	Queries      []PolicyResourceOption `json:"queries"`
+	Workflows    []PolicyResourceOption `json:"workflows"`
+	Connections  []PolicyResourceOption `json:"connections"`
+	Repositories []PolicyResourceOption `json:"repositories"`
+	Users        []PolicyResourceOption `json:"users"`
 }
