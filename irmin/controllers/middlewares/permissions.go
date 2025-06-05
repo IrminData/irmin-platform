@@ -89,18 +89,7 @@ func (api *APIMiddlewares) PolicyPermissionMiddleware(action db.PolicyAction) fi
 	return api.createPermissionMiddleware(
 		db.PolicyResourcePolicy,
 		action,
-		func(c fiber.Ctx) *uint {
-			policySQID := c.Params("policy")
-			if policySQID == "" {
-				return nil
-			}
-			policyID, err := api.SQIDManager.Decode("policies", policySQID)
-			if err != nil {
-				return nil
-			}
-			policyIDInt := uint(policyID)
-			return &policyIDInt
-		},
+		nil,
 	)
 }
 
@@ -129,18 +118,7 @@ func (api *APIMiddlewares) InvitePermissionMiddleware(action db.PolicyAction) fi
 	return api.createPermissionMiddleware(
 		db.PolicyResourceInvite,
 		action,
-		func(c fiber.Ctx) *uint {
-			inviteSQID := c.Params("invite")
-			if inviteSQID == "" {
-				return nil
-			}
-			inviteID, err := api.SQIDManager.Decode("invites", inviteSQID)
-			if err != nil {
-				return nil
-			}
-			inviteIDInt := uint(inviteID)
-			return &inviteIDInt
-		},
+		nil,
 	)
 }
 

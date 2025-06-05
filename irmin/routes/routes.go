@@ -130,6 +130,11 @@ func RegisterAPIRoutes(
 		"/policies/can",
 		apiControllers.CheckPermission,
 	)
+	workspace.Get(
+		"/policies/resource-options",
+		apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.PoliciesResourceOptions,
+	)
 	policy := workspace.Group("/policies/:policy", apiMiddlewares.PolicyMiddleware)
 	policy.Get("/", apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionRead), apiControllers.PoliciesShow)
 	policy.Patch("/", apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionUpdate), apiControllers.PoliciesUpdate)
