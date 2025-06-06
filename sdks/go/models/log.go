@@ -26,4 +26,7 @@ type LogEvent struct {
 	Workflow    *Workflow    `json:"workflow,omitempty"`
 	Repository  *Repository  `json:"repository,omitempty"`
 	Connection  *Connection  `json:"connection,omitempty"`
+	StoredQuery *StoredQuery `json:"stored_query,omitempty"`
+	Policy      *Policy      `json:"policy,omitempty"`
+	Object      *Object      `json:"object,omitempty"`
 }
