@@ -9,14 +9,16 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useRepository } from '@/hooks/useRepository';
 
+import { RepositoryLogsLayoutParams } from './layout';
+
 /**
  * Repository Audit Logs page
  */
 export default function RepositoryLogsPage() {
   const { dict } = useLocale();
-  const params = useParams();
+  const params = useParams<RepositoryLogsLayoutParams>();
 
-  const { repositoryQuery } = useRepository(params.repository as string);
+  const { repositoryQuery } = useRepository(params.repository);
 
   if (repositoryQuery.isLoading) return <LoadingSpinner />;
   if (repositoryQuery.isError)

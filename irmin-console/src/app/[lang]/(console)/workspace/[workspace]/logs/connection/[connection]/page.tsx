@@ -9,14 +9,16 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useConnection } from '@/hooks/useConnection';
 
+import { ConnectionLogsLayoutParams } from './layout';
+
 /**
  * Connection Audit Logs page
  */
 export default function ConnectionLogsPage() {
   const { dict } = useLocale();
-  const params = useParams();
+  const params = useParams<ConnectionLogsLayoutParams>();
 
-  const { connectionQuery } = useConnection(params.connection as string);
+  const { connectionQuery } = useConnection(params.connection);
 
   if (connectionQuery.isLoading) return <LoadingSpinner />;
   if (connectionQuery.isError)

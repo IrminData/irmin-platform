@@ -1,5 +1,8 @@
 import { Connection } from '@/types/core/Connection';
+import { Object } from '@/types/core/Object';
+import { Policy } from '@/types/core/Policy';
 import { Repository } from '@/types/core/Repository';
+import { StoredQuery } from '@/types/core/StoredQuery';
 import { User } from '@/types/core/User';
 import { Workflow } from '@/types/core/Workflow';
 import { WorkflowRun } from '@/types/core/WorkflowRun';
@@ -42,4 +45,10 @@ export interface LogEvent {
   repository?: Repository;
   /** (optional) Connection associated with the log event */
   connection?: Connection;
+  /** (optional) Stored query associated with the log event */
+  stored_query?: StoredQuery;
+  /** (optional) Policy associated with the log event */
+  policy?: Policy;
+  /** (optional) Repository object associated with the log event */
+  repository_object?: Object;
 }

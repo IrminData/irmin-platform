@@ -11,10 +11,13 @@ import PaginationControls from '@/components/ui/PaginationControls';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
-import { useLogEvents } from '@/hooks/useLogEvents';
+import { LogsForType, useLogEvents } from '@/hooks/useLogEvents';
 
 import { Connection } from '@/types/core/Connection';
+import { Object } from '@/types/core/Object';
+import { Policy } from '@/types/core/Policy';
 import { Repository } from '@/types/core/Repository';
+import { StoredQuery } from '@/types/core/StoredQuery';
 import { User } from '@/types/core/User';
 import { Workflow } from '@/types/core/Workflow';
 
@@ -25,12 +28,15 @@ import LogEventFeed from './LogEventFeed';
  *
  * @param props - The component properties
  * @param props.title - The title of the logs section
- * @param props.logsForType - The type of logs to show (workspace, workflow, repository, connection, user)
+ * @param props.logsForType - The type of logs to show
  * @param props.logsFor - The ID of the specific entity to fetch logs for (e.g., workflow ID, repository slug, etc.)
  * @param props.workflow - Optional. The workflow to show logs for
  * @param props.repository - Optional. The repository to show logs for
  * @param props.connection - Optional. The connection to show logs for
  * @param props.user - Optional. The user to show logs for
+ * @param props.storedQuery - Optional. The stored query to show logs for
+ * @param props.policy - Optional. The policy to show logs for
+ * @param props.repositoryObject - Optional. The repository object to show logs for
  */
 export default function LogsSection({
   title,
@@ -40,13 +46,19 @@ export default function LogsSection({
   repository,
   connection,
   user,
+  storedQuery,
+  policy,
+  repositoryObject,
 }: {
   title: string;
-  logsForType?: 'workspace' | 'workflow' | 'repository' | 'connection' | 'user';
+  logsForType?: LogsForType;
   logsFor?: string;
   workflow?: Workflow;
   repository?: Repository;
   connection?: Connection;
+  storedQuery?: StoredQuery;
+  policy?: Policy;
+  repositoryObject?: Object;
   user?: User;
 }) {
   const router = useRouter();
@@ -100,13 +112,23 @@ export default function LogsSection({
                 </Link>
               </h3>
             )}
-            {repository && (
+            {repository && !repositoryObject && (
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 <Link
                   className='hover:underline'
                   href={`${workspaceUrl}/repositories/${repository.slug}`}
                 >
                   {repository.name}
+                </Link>
+              </h3>
+            )}
+            {repositoryObject && repository && (
+              <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
+                <Link
+                  className='hover:underline'
+                  href={`${workspaceUrl}/repositories/${repository.slug}/object?path=${repositoryObject.path}`}
+                >
+                  {repositoryObject.path} - {repositoryObject.name}
                 </Link>
               </h3>
             )}
@@ -123,6 +145,16 @@ export default function LogsSection({
             {user && (
               <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
                 {user.first_name} {user.last_name} - {user.email}
+              </h3>
+            )}
+            {storedQuery && (
+              <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
+                {storedQuery.name}
+              </h3>
+            )}
+            {policy && (
+              <h3 className='mt-4 text-lg text-gray-600 xl:text-xl dark:text-gray-400'>
+                {policy.id}
               </h3>
             )}
           </div>

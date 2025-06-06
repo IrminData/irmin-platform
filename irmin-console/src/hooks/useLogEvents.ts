@@ -22,12 +22,15 @@ import { LogEvent } from '@/types/core/Log';
 /**
  * Types of entities for which logs can be fetched
  */
-type LogsForType =
+export type LogsForType =
   | 'workspace'
   | 'workflow'
   | 'repository'
   | 'connection'
-  | 'user';
+  | 'user'
+  | 'stored_query'
+  | 'policy'
+  | 'repository_object';
 
 interface LogEventsResponse extends IrminAPIResponse<LogEvent[]> {
   pagination?: IrminAPIPaginationMetadata;
@@ -76,14 +79,14 @@ export const useLogEvents = (
       switch (logsForType) {
         case 'workspace':
           return irminCore.logService.fetchLogEvents({
-            workspace: logsFor || workspaceSlug,
+            workspace: workspaceSlug,
             search,
             perPage,
             page: currentPage,
           });
 
         case 'workflow':
-          return irminCore.logService.fetchWorkflowLogEvents({
+          return irminCore.logService.fetchLogEvents({
             workspace: workspaceSlug,
             workflow_id: logsFor,
             search,
@@ -92,7 +95,7 @@ export const useLogEvents = (
           });
 
         case 'repository':
-          return irminCore.logService.fetchRepositoryLogEvents({
+          return irminCore.logService.fetchLogEvents({
             workspace: workspaceSlug,
             repository: logsFor,
             search,
@@ -101,7 +104,7 @@ export const useLogEvents = (
           });
 
         case 'connection':
-          return irminCore.logService.fetchConnectionLogEvents({
+          return irminCore.logService.fetchLogEvents({
             workspace: workspaceSlug,
             connection_id: logsFor,
             perPage,
@@ -109,9 +112,33 @@ export const useLogEvents = (
           });
 
         case 'user':
-          return irminCore.logService.fetchUserLogEvents({
+          return irminCore.logService.fetchLogEvents({
             workspace: workspaceSlug,
             user_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'stored_query':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            stored_query_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'policy':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            policy_id: logsFor,
+            perPage,
+            page: currentPage,
+          });
+
+        case 'repository_object':
+          return irminCore.logService.fetchLogEvents({
+            workspace: workspaceSlug,
+            repository_object_id: logsFor,
             perPage,
             page: currentPage,
           });

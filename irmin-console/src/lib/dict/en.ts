@@ -660,6 +660,9 @@ const en = {
     noLogsFound: 'No logs found',
     system: 'System',
     foundLogEvents: 'Found log events',
+    storedQueryLogs: 'Query audit logs',
+    policyLogs: 'Policy audit logs',
+    repositoryObjectLogs: 'Repository object audit logs',
   },
   tokens: {
     apiTokens: 'API tokens',

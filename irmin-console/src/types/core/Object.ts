@@ -7,6 +7,8 @@ export type ObjectType = 'group' | 'structured' | 'binary';
  * Represents an object stored in the repository.
  */
 export interface Object {
+  /** Unique identifier of the object */
+  id: string;
   /** Name of the object */
   name: string;
   /** Path of the object */
