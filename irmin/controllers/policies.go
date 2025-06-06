@@ -8,6 +8,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
+	"strconv"
 
 	"slices"
 
@@ -570,7 +571,7 @@ func (api *APIControllers) getApplicablePoliciesForRole(workspace *db.Workspace,
 	for _, everyonePolicy := range everyonePolicies {
 		conflicts := false
 		for _, rolePolicy := range roleSpecificPolicies {
-			if rolePolicy.Resource == everyonePolicy.Resource && rolePolicy.Action == everyonePolicy.Action {
+			if api.policiesConflict(rolePolicy, everyonePolicy) {
 				conflicts = true
 				break
 			}
@@ -580,7 +581,11 @@ func (api *APIControllers) getApplicablePoliciesForRole(workspace *db.Workspace,
 		}
 	}
 
-	return applicablePolicies, nil
+	// Deduplicate policies to ensure only one policy per resource/resourceID/action combination
+	// with deny policies taking priority over allow policies
+	deduplicatedPolicies := api.deduplicatePolicies(applicablePolicies)
+
+	return deduplicatedPolicies, nil
 }
 
 // PoliciesRoleSummary returns a list of policies that apply to each role.
@@ -679,7 +684,7 @@ func (api *APIControllers) combinePolicies(userSpecific, role, everyone []db.Pol
 	for _, rolePolicy := range role {
 		overridden := false
 		for _, userPolicy := range userSpecific {
-			if userPolicy.Resource == rolePolicy.Resource && userPolicy.Action == rolePolicy.Action {
+			if api.policiesConflict(userPolicy, rolePolicy) {
 				overridden = true
 				break
 			}
@@ -693,7 +698,7 @@ func (api *APIControllers) combinePolicies(userSpecific, role, everyone []db.Pol
 	for _, everyonePolicy := range everyone {
 		overridden := false
 		for _, policy := range applicablePolicies {
-			if policy.Resource == everyonePolicy.Resource && policy.Action == everyonePolicy.Action {
+			if api.policiesConflict(policy, everyonePolicy) {
 				overridden = true
 				break
 			}
@@ -704,6 +709,24 @@ func (api *APIControllers) combinePolicies(userSpecific, role, everyone []db.Pol
 	}
 
 	return applicablePolicies
+}
+
+// policiesConflict checks if two policies conflict (same resource, resourceID, and action).
+func (api *APIControllers) policiesConflict(policy1, policy2 db.Policy) bool {
+	// Check if resource and action match
+	if policy1.Resource != policy2.Resource || policy1.Action != policy2.Action {
+		return false
+	}
+
+	// Check if ResourceID matches (both nil, or both non-nil with same value)
+	if policy1.ResourceID == nil && policy2.ResourceID == nil {
+		return true
+	}
+	if policy1.ResourceID != nil && policy2.ResourceID != nil && *policy1.ResourceID == *policy2.ResourceID {
+		return true
+	}
+
+	return false
 }
 
 // getUserApplicablePolicies returns all applicable policies for a given user.
@@ -775,7 +798,47 @@ func (api *APIControllers) getUserApplicablePolicies(
 		}
 	}
 
-	return applicablePolicies, nil
+	// Deduplicate policies to ensure only one policy per resource/resourceID/action combination
+	// with deny policies taking priority over allow policies
+	deduplicatedPolicies := api.deduplicatePolicies(applicablePolicies)
+
+	return deduplicatedPolicies, nil
+}
+
+// deduplicatePolicies removes duplicate policies for the same resource/resourceID/action combination,
+// prioritizing deny policies over allow policies.
+func (api *APIControllers) deduplicatePolicies(policies []db.Policy) []db.Policy {
+	// Create a map to track policies by their unique key (resource, resourceID, action)
+	policyMap := make(map[string]*db.Policy)
+
+	for i := range policies {
+		policy := &policies[i]
+
+		// Create a unique key for this policy combination
+		resourceIDStr := "nil"
+		if policy.ResourceID != nil {
+			resourceIDStr = strconv.FormatUint(uint64(*policy.ResourceID), 10)
+		}
+		key := fmt.Sprintf("%s:%s:%s", policy.Resource, resourceIDStr, policy.Action)
+
+		_, exists := policyMap[key]
+		if !exists {
+			// No existing policy for this combination, add it
+			policyMap[key] = policy
+		} else if policy.Effect == db.PolicyEffectDeny {
+			// Policy already exists for this combination
+			// Prioritize deny policies over allow policies
+			policyMap[key] = policy
+		}
+	}
+
+	// Convert map back to slice
+	result := make([]db.Policy, 0, len(policyMap))
+	for _, policy := range policyMap {
+		result = append(result, *policy)
+	}
+
+	return result
 }
 
 // PoliciesMySummary returns a list of policies that apply to the current user.
@@ -831,7 +894,14 @@ func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 	// Get user roles
 	roles := make([]string, 0, len(workspaceUser.Roles))
 	for _, userRole := range workspaceUser.Roles {
-		roles = append(roles, userRole.Role.Role)
+		roleID, roleSQIDErr := api.SQIDManager.Encode("roles", uint64(userRole.Role.ID))
+		if roleSQIDErr != nil {
+			api.Logger.Error("Error encoding role ID", "error", roleSQIDErr)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "error_occurred")},
+			})
+		}
+		roles = append(roles, roleID)
 	}
 
 	// Encode user ID
