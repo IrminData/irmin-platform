@@ -293,6 +293,7 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 		Description: fmt.Sprintf("Policy created for resource %s", newPolicy.Resource),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
+		PolicyID:    &newPolicy.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
@@ -394,6 +395,7 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 		Description: fmt.Sprintf("Policy updated for resource %s", policy.Resource),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
+		PolicyID:    &policy.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -429,6 +431,7 @@ func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 		Description: fmt.Sprintf("Policy deleted for resource %s", policy.Resource),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
+		PolicyID:    &policy.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

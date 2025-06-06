@@ -89,7 +89,13 @@ func (api *APIControllers) ObjectsIndex(c fiber.Ctx) error {
 	}
 
 	// Format the object for the response.
-	repositoryObject := formatter.FormatRepositoryObjectResponse(objectLocalParams.object)
+	repositoryObject, err := formatter.FormatRepositoryObjectResponse(objectLocalParams.object, api.SQIDManager)
+	if err != nil {
+		api.Logger.Error("Error formatting repository object", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: repositoryObject,
@@ -165,17 +171,27 @@ func (api *APIControllers) UploadObject(c fiber.Ctx) error {
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:         db.LogEventTypeUpdate,
-		Description:  fmt.Sprintf("Object %s uploaded to branch %s", newObject.Path, objectLocalParams.objectRef),
-		UserID:       &objectLocalParams.user.ID,
-		WorkspaceID:  &objectLocalParams.workspace.ID,
-		RepositoryID: &objectLocalParams.repository.ID,
+		Type:               db.LogEventTypeUpdate,
+		Description:        fmt.Sprintf("Object %s uploaded to branch %s", newObject.Path, objectLocalParams.objectRef),
+		UserID:             &objectLocalParams.user.ID,
+		WorkspaceID:        &objectLocalParams.workspace.ID,
+		RepositoryID:       &objectLocalParams.repository.ID,
+		RepositoryObjectID: &repositoryObject.ID,
 	})
+
+	// Format the object for the response.
+	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(repositoryObject, api.SQIDManager)
+	if err != nil {
+		api.Logger.Error("Error formatting repository object", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
 
 	// Return the object from the database.
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(objectLocalParams.dict, "object_uploaded"),
-		Data:    formatter.FormatRepositoryObjectResponse(repositoryObject),
+		Data:    repositoryObjectResponse,
 	})
 }
 
@@ -241,14 +257,24 @@ func (api *APIControllers) MoveObject(c fiber.Ctx) error {
 			newObject.Path,
 			objectLocalParams.objectRef,
 		),
-		UserID:       &objectLocalParams.user.ID,
-		WorkspaceID:  &objectLocalParams.workspace.ID,
-		RepositoryID: &objectLocalParams.repository.ID,
+		UserID:             &objectLocalParams.user.ID,
+		WorkspaceID:        &objectLocalParams.workspace.ID,
+		RepositoryID:       &objectLocalParams.repository.ID,
+		RepositoryObjectID: &repositoryObject.ID,
 	})
+
+	// Format the object for the response.
+	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(repositoryObject, api.SQIDManager)
+	if err != nil {
+		api.Logger.Error("Error formatting repository object", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(objectLocalParams.dict, "object_moved"),
-		Data:    formatter.FormatRepositoryObjectResponse(repositoryObject),
+		Data:    repositoryObjectResponse,
 	})
 }
 
@@ -316,14 +342,24 @@ func (api *APIControllers) CopyObject(c fiber.Ctx) error {
 			newObject.Path,
 			objectLocalParams.objectRef,
 		),
-		UserID:       &objectLocalParams.user.ID,
-		WorkspaceID:  &objectLocalParams.workspace.ID,
-		RepositoryID: &objectLocalParams.repository.ID,
+		UserID:             &objectLocalParams.user.ID,
+		WorkspaceID:        &objectLocalParams.workspace.ID,
+		RepositoryID:       &objectLocalParams.repository.ID,
+		RepositoryObjectID: &repositoryObject.ID,
 	})
+
+	// Format the object for the response.
+	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(repositoryObject, api.SQIDManager)
+	if err != nil {
+		api.Logger.Error("Error formatting repository object", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(objectLocalParams.dict, "object_copied"),
-		Data:    formatter.FormatRepositoryObjectResponse(repositoryObject),
+		Data:    repositoryObjectResponse,
 	})
 }
 
@@ -379,8 +415,10 @@ func (api *APIControllers) ObjectsDestroy(c fiber.Ctx) error {
 			objectLocalParams.object.Path,
 			objectLocalParams.objectRef,
 		),
-		UserID:      &objectLocalParams.user.ID,
-		WorkspaceID: &objectLocalParams.workspace.ID,
+		UserID:             &objectLocalParams.user.ID,
+		WorkspaceID:        &objectLocalParams.workspace.ID,
+		RepositoryID:       &objectLocalParams.repository.ID,
+		RepositoryObjectID: &objectLocalParams.object.ID,
 	})
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

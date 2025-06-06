@@ -273,7 +273,6 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 	})
 }
 
-//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other ownership transfer controllers
 func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)

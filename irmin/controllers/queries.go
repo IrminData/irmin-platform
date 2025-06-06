@@ -102,10 +102,11 @@ func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("Query %s created", query.Name),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
+		Type:          db.LogEventTypeCreate,
+		Description:   fmt.Sprintf("Query %s created", query.Name),
+		UserID:        &user.ID,
+		WorkspaceID:   &workspace.ID,
+		StoredQueryID: &query.ID,
 	})
 
 	// Send the response
@@ -190,10 +191,11 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error {
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeInfo,
-		Description: fmt.Sprintf("Query %s updated", query.Name),
-		UserID:      &user.ID,
-		WorkspaceID: &query.WorkspaceID,
+		Type:          db.LogEventTypeInfo,
+		Description:   fmt.Sprintf("Query %s updated", query.Name),
+		UserID:        &user.ID,
+		WorkspaceID:   &query.WorkspaceID,
+		StoredQueryID: &query.ID,
 	})
 
 	// Send the response
@@ -221,10 +223,11 @@ func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("Query %s deleted", query.Name),
-		UserID:      &query.OwnerID,
-		WorkspaceID: &query.WorkspaceID,
+		Type:          db.LogEventTypeDelete,
+		Description:   fmt.Sprintf("Query %s deleted", query.Name),
+		UserID:        &query.OwnerID,
+		WorkspaceID:   &query.WorkspaceID,
+		StoredQueryID: &query.ID,
 	})
 
 	// Send the response
@@ -233,7 +236,6 @@ func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 	})
 }
 
-//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other ownership transfer controllers
 func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -296,10 +298,11 @@ func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeInfo,
-		Description: fmt.Sprintf("Query %s ownership transferred to %s", query.Name, query.Owner.Email),
-		UserID:      &user.ID,
-		WorkspaceID: &query.WorkspaceID,
+		Type:          db.LogEventTypeInfo,
+		Description:   fmt.Sprintf("Query %s ownership transferred to %s", query.Name, query.Owner.Email),
+		UserID:        &user.ID,
+		WorkspaceID:   &query.WorkspaceID,
+		StoredQueryID: &query.ID,
 	})
 
 	// Send the response
@@ -394,10 +397,11 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeInfo,
-		Description: fmt.Sprintf("Query %s execution started", query.Name),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
+		Type:          db.LogEventTypeInfo,
+		Description:   fmt.Sprintf("Query %s execution started", query.Name),
+		UserID:        &user.ID,
+		WorkspaceID:   &workspace.ID,
+		StoredQueryID: &query.ID,
 	})
 
 	// Execute the SQL
@@ -407,17 +411,19 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 	if result.HasErrors {
 		api.Logger.Error("Error executing SQL query", "error", result.Logs)
 		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-			Type:        db.LogEventTypeError,
-			Description: "SQL query execution failed",
-			UserID:      &user.ID,
-			WorkspaceID: &workspace.ID,
+			Type:          db.LogEventTypeError,
+			Description:   "SQL query execution failed",
+			UserID:        &user.ID,
+			WorkspaceID:   &workspace.ID,
+			StoredQueryID: &query.ID,
 		})
 	} else {
 		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-			Type:        db.LogEventTypeInfo,
-			Description: "SQL query execution completed",
-			UserID:      &user.ID,
-			WorkspaceID: &workspace.ID,
+			Type:          db.LogEventTypeInfo,
+			Description:   "SQL query execution completed",
+			UserID:        &user.ID,
+			WorkspaceID:   &workspace.ID,
+			StoredQueryID: &query.ID,
 		})
 	}
 

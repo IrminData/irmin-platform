@@ -1,21 +1,37 @@
 package formatter
 
 import (
+	"fmt"
 	"irmin-api/db"
+	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // FormatRepositoryObjectResponse formats a repository object to an Irmin object.
-func FormatRepositoryObjectResponse(object *db.RepositoryObject) *irminmodels.Object {
+func FormatRepositoryObjectResponse(
+	object *db.RepositoryObject,
+	sqidManager *utils.SQIDManager,
+) (*irminmodels.Object, error) {
 	// Format the children objects.
 	children := make([]irminmodels.Object, len(object.Children))
 	for i, child := range object.Children {
-		children[i] = *FormatRepositoryObjectResponse(&child)
+		childObject, err := FormatRepositoryObjectResponse(&child, sqidManager)
+		if err != nil {
+			return nil, err
+		}
+		children[i] = *childObject
+	}
+
+	// Construct the sqid of the object
+	objectSqid, err := sqidManager.Encode("repository_objects", uint64(object.ID))
+	if err != nil {
+		return nil, fmt.Errorf("error encoding object sqid: %w", err)
 	}
 
 	// Format the object.
-	return &irminmodels.Object{
+	objectResponse := irminmodels.Object{
+		ID:                    objectSqid,
 		Name:                  object.Name,
 		Path:                  object.Path,
 		Type:                  object.Type,
@@ -27,4 +43,6 @@ func FormatRepositoryObjectResponse(object *db.RepositoryObject) *irminmodels.Ob
 		Metadata:              object.Metadata,
 		Children:              children,
 	}
+
+	return &objectResponse, nil
 }

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-api/db"
@@ -29,6 +30,9 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 		"connection_id",
 		"repository",
 		"workflow_id",
+		"stored_query_id",
+		"policy_id",
+		"repository_object_id",
 		"user_id",
 		"search",
 		"page",
@@ -79,7 +83,7 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 		})
 	}
 
-	formattedEvents, err := api.formatLogEventsResponse(logEvents)
+	formattedEvents, err := api.formatLogEventsResponse(c.Context(), logEvents)
 	if err != nil {
 		api.Logger.Error("Error formatting log events", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -117,6 +121,27 @@ func (api *APIControllers) getAssetParams(params map[string]string, workspace *d
 		}
 		return &assetParams{assetType: "workflow", assetID: uint(workflowID)}, nil
 
+	case params["stored_query_id"] != "":
+		storedQueryID, err := api.SQIDManager.Decode("queries", params["stored_query_id"])
+		if err != nil {
+			return nil, fmt.Errorf("decoding stored query ID: %w", err)
+		}
+		return &assetParams{assetType: "stored_query", assetID: uint(storedQueryID)}, nil
+
+	case params["policy_id"] != "":
+		policyID, err := api.SQIDManager.Decode("policies", params["policy_id"])
+		if err != nil {
+			return nil, fmt.Errorf("decoding policy ID: %w", err)
+		}
+		return &assetParams{assetType: "policy", assetID: uint(policyID)}, nil
+
+	case params["repository_object_id"] != "":
+		repositoryObjectID, err := api.SQIDManager.Decode("objects", params["repository_object_id"])
+		if err != nil {
+			return nil, fmt.Errorf("decoding repository object ID: %w", err)
+		}
+		return &assetParams{assetType: "repository_object", assetID: uint(repositoryObjectID)}, nil
+
 	case params["user_id"] != "":
 		userID, err := api.SQIDManager.Decode("users", params["user_id"])
 		if err != nil {
@@ -150,15 +175,19 @@ func (api *APIControllers) getLogEventsForAsset(
 
 // formatLogEventsResponse formats log events for the response.
 func (api *APIControllers) formatLogEventsResponse(
+	ctx context.Context,
 	events []db.LogEvent,
 ) ([]irminmodels.LogEvent, error) {
 	var response []irminmodels.LogEvent
 	for _, event := range events {
-		formattedEvent, err := formatter.FormatLogEventResponse(api.DB, event, api.SQIDManager)
+		formattedEvent, err := formatter.FormatLogEventResponse(ctx, api.DB, event, api.SQIDManager)
 		if err != nil {
 			return nil, err
 		}
 		response = append(response, *formattedEvent)
+	}
+	if len(response) == 0 {
+		return make([]irminmodels.LogEvent, 0), nil
 	}
 	return response, nil
 }
