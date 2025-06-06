@@ -11,6 +11,7 @@ import {
   TbFileText,
   TbSchema,
   TbSettings,
+  TbShield,
   TbTags,
 } from 'react-icons/tb';
 
@@ -101,6 +102,12 @@ export default function RepositoryHeader() {
         link: `${baseUrl}/documentation?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
+      },
+      {
+        name: dict.workspace.policies,
+        link: `${baseUrl}/policies?${searchParams.toString()}`,
+        active: pathname === `${baseUrl}/policies`,
+        icon: <TbShield size={14} />,
       },
       {
         name: dict.common.logs,

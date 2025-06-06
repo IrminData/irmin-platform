@@ -48,12 +48,36 @@ class PolicyService {
    */
   async listPolicies({
     workspace,
+    effect,
+    action,
+    resource,
+    principal,
+    resourceId,
+    roleId,
+    userId,
   }: {
     workspace: string;
+    effect?: PolicyEffect;
+    action?: PolicyAction;
+    resource?: PolicyResource;
+    principal?: PolicyPrincipal;
+    resourceId?: string;
+    roleId?: string;
+    userId?: string;
   }): Promise<IrminAPIResponse<Policy[]>> {
     try {
+      const params = new URLSearchParams();
+
+      if (effect) params.append('effect', effect);
+      if (action) params.append('action', action);
+      if (resource) params.append('resource', resource);
+      if (principal) params.append('principal', principal);
+      if (resourceId) params.append('resource_id', resourceId);
+      if (roleId) params.append('role_id', roleId);
+      if (userId) params.append('user_id', userId);
+
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/policies`,
+        `/v1/workspaces/${workspace}/policies?${params.toString()}`,
         { method: 'GET' }
       )) as IrminAPIResponse<Policy[]>;
       return response;

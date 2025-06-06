@@ -11,6 +11,7 @@ import {
   TbPlug,
   TbSchema,
   TbSettings,
+  TbShield,
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +79,13 @@ export default function ConnectionLayoutWrapper({
         link: `${baseUrl}/documentation`,
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
+        hidden: false,
+      },
+      {
+        name: dict.workspace.policies,
+        link: `${baseUrl}/policies`,
+        active: pathname === `${baseUrl}/policies`,
+        icon: <TbShield size={14} />,
         hidden: false,
       },
       {

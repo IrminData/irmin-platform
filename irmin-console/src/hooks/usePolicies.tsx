@@ -19,8 +19,27 @@ import {
 
 import { policyQueryKey } from './usePolicy';
 
-export const policiesQueryKey = (workspaceSlug: string) =>
-  ['policies', workspaceSlug] as const;
+export const policiesQueryKey = (
+  workspaceSlug: string,
+  effect?: PolicyEffect,
+  action?: PolicyAction,
+  resource?: PolicyResource,
+  resourceId?: string,
+  principal?: PolicyPrincipal,
+  roleId?: string,
+  userId?: string
+) =>
+  [
+    'policies',
+    workspaceSlug,
+    effect,
+    action,
+    resource,
+    resourceId,
+    principal,
+    roleId,
+    userId,
+  ] as const;
 
 export type PolicyCreateInput = {
   effect: PolicyEffect;
@@ -43,7 +62,23 @@ type PolicyUpdateInput = {
   userId?: string;
 };
 
-export function usePolicies() {
+export function usePolicies({
+  effect,
+  action,
+  resource,
+  resourceId,
+  principal,
+  roleId,
+  userId,
+}: {
+  effect?: PolicyEffect;
+  action?: PolicyAction;
+  resource?: PolicyResource;
+  resourceId?: string;
+  principal?: PolicyPrincipal;
+  roleId?: string;
+  userId?: string;
+}) {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
@@ -51,12 +86,28 @@ export function usePolicies() {
   const queryClient = useQueryClient();
 
   const policiesQuery = useQuery<IrminAPIResponse<Policy[]>, Error>({
-    queryKey: policiesQueryKey(workspaceSlug),
+    queryKey: policiesQueryKey(
+      workspaceSlug,
+      effect,
+      action,
+      resource,
+      resourceId,
+      principal,
+      roleId,
+      userId
+    ),
     queryFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
       return await core.policyService.listPolicies({
         workspace: workspaceSlug,
+        effect,
+        action,
+        resource,
+        principal,
+        resourceId,
+        roleId,
+        userId,
       });
     },
   });

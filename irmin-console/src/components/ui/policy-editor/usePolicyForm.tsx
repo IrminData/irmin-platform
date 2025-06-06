@@ -33,7 +33,7 @@ export function usePolicyForm({
 }: UsePolicyFormProps): UsePolicyFormReturn {
   const { dict } = useLocale();
   const { irminModal } = usePopup();
-  const { createPolicyMutation, updatePolicyMutation } = usePolicies();
+  const { createPolicyMutation, updatePolicyMutation } = usePolicies({});
   const { rolesQuery } = useRoles();
   const { usersQuery } = useUsers();
   const { policyResourceOptionsQuery } = usePolicyResourceOptions();

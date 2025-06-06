@@ -9,6 +9,7 @@ import {
   TbChevronUp,
   TbFile,
   TbPencil,
+  TbShield,
   TbTrash,
   TbX,
 } from 'react-icons/tb';
@@ -17,13 +18,14 @@ import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 import { Badge } from '@/components/ui/badge';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 
+import useBaseUrl from '@/hooks/useBaseUrl';
 import { useStoredQueries } from '@/hooks/useStoredQueries';
 import { useWorkspaceSchema } from '@/hooks/useWorkspaceSchema';
 
@@ -69,6 +71,14 @@ export default function QueriesSection() {
     setEdited(false);
     cleanup();
   }, [selectedQuery, cleanup]);
+
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   /**
    * Hook to create a new query by showing a modal to input the query name and description
@@ -263,6 +273,15 @@ export default function QueriesSection() {
               disabled={queryLoading}
             >
               {dict.query.run}
+            </Button>
+            <Button
+              variant='secondary'
+              size='sm'
+              className='w-full'
+              icon={<TbShield />}
+              href={`${workspaceUrl}/queries/policies?queryID=${selectedQuery.id}`}
+            >
+              {dict.workspace.policies}
             </Button>
             <Button
               variant='secondary'

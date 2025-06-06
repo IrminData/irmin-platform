@@ -13,7 +13,7 @@ import { usePolicies } from '@/hooks/usePolicies';
 
 function PolicyDeleteButton({ policyId }: { policyId: string }) {
   const { dict } = useLocale();
-  const { deletePolicyMutation } = usePolicies();
+  const { deletePolicyMutation } = usePolicies({});
   const { irminConfirm } = usePopup();
 
   const handleDelete = async () => {
