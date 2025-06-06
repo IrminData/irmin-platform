@@ -159,6 +159,7 @@ type PolicyMatch struct {
 	Principal       db.PolicyPrincipal
 	WorkspaceUserID *uint
 	RoleID          *uint
+	ResourceID      *uint
 }
 
 // IsAllowed checks if a user is allowed to perform an action on a resource
@@ -234,7 +235,7 @@ func checkPoliciesOptimized(
 
 	// Build the base query conditions
 	query := d.Model(&db.Policy{}).
-		Select("effect, principal, workspace_user_id, role_id").
+		Select("effect, principal, workspace_user_id, role_id, resource_id").
 		Where("workspace_id = ? AND resource = ? AND action = ?", workspaceID, resource, action)
 
 	// Handle resourceID properly - check for both specific resource and wildcard (resourceID = 0)
@@ -276,100 +277,105 @@ func checkPoliciesOptimized(
 	}
 
 	// Process results according to precedence rules
-	return evaluatePolicies(policies, workspaceUserID, roleIDs), nil
+	return evaluatePolicies(policies, workspaceUserID, roleIDs, resourceID), nil
 }
 
-type categorizedEffects struct {
-	userDeny      bool
-	userAllow     bool
-	roleDeny      bool
-	roleAllow     bool
-	everyoneDeny  bool
-	everyoneAllow bool
-}
-
-func updateUserEffects(policy PolicyMatch, workspaceUserID uint, effects *categorizedEffects) {
-	if policy.WorkspaceUserID != nil && *policy.WorkspaceUserID == workspaceUserID {
-		switch policy.Effect {
-		case db.PolicyEffectDeny:
-			effects.userDeny = true
-		case db.PolicyEffectAllow:
-			effects.userAllow = true
-		}
-	}
-}
-
-func updateRoleEffects(policy PolicyMatch, roleIDMap map[uint]bool, effects *categorizedEffects) {
-	if policy.RoleID != nil && roleIDMap[*policy.RoleID] {
-		switch policy.Effect {
-		case db.PolicyEffectDeny:
-			effects.roleDeny = true
-		case db.PolicyEffectAllow:
-			effects.roleAllow = true
-		}
-	}
-}
-
-func updateEveryoneEffects(policy PolicyMatch, effects *categorizedEffects) {
-	switch policy.Effect {
-	case db.PolicyEffectDeny:
-		effects.everyoneDeny = true
-	case db.PolicyEffectAllow:
-		effects.everyoneAllow = true
-	}
-}
-
-func categorizePolicyEffects(policies []PolicyMatch, workspaceUserID uint, roleIDMap map[uint]bool) categorizedEffects {
-	effects := categorizedEffects{}
-
-	for _, policy := range policies {
-		switch policy.Principal {
-		case db.PolicyPrincipalWorkspaceUser:
-			updateUserEffects(policy, workspaceUserID, &effects)
-		case db.PolicyPrincipalRole:
-			updateRoleEffects(policy, roleIDMap, &effects)
-		case db.PolicyPrincipalEveryone:
-			updateEveryoneEffects(policy, &effects)
-		}
-	}
-	return effects
-}
-
-// evaluatePolicies processes the matched policies according to precedence rules.
-func evaluatePolicies(policies []PolicyMatch, workspaceUserID uint, roleIDs []uint) bool {
+// evaluatePolicies processes the matched policies according to resource specificity precedence rules.
+// Resource specificity takes precedence over principal type:
+// 1. Specific resource ID policies (matching the requested resource ID)
+// 2. Generic policies (resource_id = NULL or 0)
+// Within each category, specific allow policies take precedence over generic deny policies.
+func evaluatePolicies(policies []PolicyMatch, workspaceUserID uint, roleIDs []uint, requestedResourceID *uint) bool {
 	roleIDMap := make(map[uint]bool, len(roleIDs))
 	for _, id := range roleIDs {
 		roleIDMap[id] = true
 	}
 
-	effects := categorizePolicyEffects(policies, workspaceUserID, roleIDMap)
+	// Separate policies into specific and generic based on resource ID
+	var specificPolicies []PolicyMatch
+	var genericPolicies []PolicyMatch
 
-	// Apply precedence rules: deny policies take precedence over allow policies
-	// Order of precedence: user > role > everyone
+	for _, policy := range policies {
+		// Check if policy applies to the user (by principal type)
+		if !policyAppliesForUser(policy, workspaceUserID, roleIDMap) {
+			continue
+		}
 
-	// Check deny policies first (highest precedence)
-	if effects.userDeny {
-		return false
-	}
-	if effects.roleDeny {
-		return false
-	}
-	if effects.everyoneDeny {
-		return false
+		// Categorize by resource specificity
+		if isSpecificResourcePolicy(policy, requestedResourceID) {
+			specificPolicies = append(specificPolicies, policy)
+		} else if isGenericResourcePolicy(policy) {
+			genericPolicies = append(genericPolicies, policy)
+		}
 	}
 
-	// Check allow policies (in order of precedence)
-	if effects.userAllow {
-		return true
+	// Check specific resource policies first (highest precedence)
+	if hasAllowPolicy(specificPolicies) {
+		return true // Specific allow takes precedence over everything
 	}
-	if effects.roleAllow {
-		return true
+	if hasDenyPolicy(specificPolicies) {
+		return false // Specific deny takes precedence over generic policies
 	}
-	if effects.everyoneAllow {
-		return true
+
+	// Fall back to generic policies
+	if hasDenyPolicy(genericPolicies) {
+		return false // Generic deny
+	}
+	if hasAllowPolicy(genericPolicies) {
+		return true // Generic allow
 	}
 
 	// Default deny if no policies match
+	return false
+}
+
+// policyAppliesForUser checks if a policy applies to the current user based on principal type.
+func policyAppliesForUser(policy PolicyMatch, workspaceUserID uint, roleIDMap map[uint]bool) bool {
+	switch policy.Principal {
+	case db.PolicyPrincipalWorkspaceUser:
+		return policy.WorkspaceUserID != nil && *policy.WorkspaceUserID == workspaceUserID
+	case db.PolicyPrincipalRole:
+		return policy.RoleID != nil && roleIDMap[*policy.RoleID]
+	case db.PolicyPrincipalEveryone:
+		return true
+	default:
+		return false
+	}
+}
+
+// isSpecificResourcePolicy checks if a policy is specific to the requested resource ID.
+func isSpecificResourcePolicy(policy PolicyMatch, requestedResourceID *uint) bool {
+	if policy.ResourceID == nil {
+		return false
+	}
+	if requestedResourceID == nil {
+		return false
+	}
+	return *policy.ResourceID == *requestedResourceID
+}
+
+// isGenericResourcePolicy checks if a policy is generic (applies to all resources of this type).
+func isGenericResourcePolicy(policy PolicyMatch) bool {
+	return policy.ResourceID == nil || *policy.ResourceID == 0
+}
+
+// hasAllowPolicy checks if there are any allow policies in the list.
+func hasAllowPolicy(policies []PolicyMatch) bool {
+	for _, policy := range policies {
+		if policy.Effect == db.PolicyEffectAllow {
+			return true
+		}
+	}
+	return false
+}
+
+// hasDenyPolicy checks if there are any deny policies in the list.
+func hasDenyPolicy(policies []PolicyMatch) bool {
+	for _, policy := range policies {
+		if policy.Effect == db.PolicyEffectDeny {
+			return true
+		}
+	}
 	return false
 }
 

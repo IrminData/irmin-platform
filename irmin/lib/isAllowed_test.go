@@ -208,6 +208,94 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 	}
 }
 
+func TestResourceSpecificityPrecedence(t *testing.T) {
+	ts := lib.GetTestSuite()
+	logger := slog.New(slog.NewTextHandler(nil, nil))
+	ps := lib.NewPermissionService(ts.DB, logger)
+
+	// Find the test workspace
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
+	if err != nil {
+		t.Fatalf("Failed to get test workspace: %v", err)
+	}
+
+	// Find the test user
+	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
+	if err != nil {
+		t.Fatalf("Failed to get test user: %v", err)
+	}
+
+	// Save original roles to restore after tests
+	originalRoleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
+	defer restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+
+	// Get a workflow to test with
+	workflows, err := ts.DB.GetWorkflowsByWorkspaceID(workspace.ID)
+	if err != nil {
+		t.Fatalf("Failed to get workflows: %v", err)
+	}
+	if len(workflows) == 0 {
+		t.Skip("No workflows available for testing")
+	}
+	testWorkflow := workflows[0]
+
+	// Create policies for testing resource specificity
+	// 1. Generic deny policy (should apply to all workflows)
+	genericDenyPolicy := &db.Policy{
+		WorkspaceID: workspace.ID,
+		Principal:   db.PolicyPrincipalEveryone,
+		Resource:    db.PolicyResourceWorkflow,
+		Action:      db.PolicyActionRead,
+		Effect:      db.PolicyEffectDeny,
+		ResourceID:  nil, // Generic policy
+	}
+	err = ts.DB.Create(genericDenyPolicy).Error
+	assert.NoError(t, err)
+	defer ts.DB.Delete(genericDenyPolicy)
+
+	// 2. Specific allow policy (should override generic deny for this specific workflow)
+	specificAllowPolicy := &db.Policy{
+		WorkspaceID: workspace.ID,
+		Principal:   db.PolicyPrincipalEveryone,
+		Resource:    db.PolicyResourceWorkflow,
+		Action:      db.PolicyActionRead,
+		Effect:      db.PolicyEffectAllow,
+		ResourceID:  &testWorkflow.ID, // Specific to test workflow
+	}
+	err = ts.DB.Create(specificAllowPolicy).Error
+	assert.NoError(t, err)
+	defer ts.DB.Delete(specificAllowPolicy)
+
+	t.Run("specific allow policy overrides generic deny", func(t *testing.T) {
+		// Should return true because specific allow takes precedence over generic deny
+		allowed, allowedErr := ps.IsAllowed(
+			user,
+			workspace,
+			db.PolicyResourceWorkflow,
+			&testWorkflow.ID,
+			db.PolicyActionRead,
+		)
+		assert.NoError(t, allowedErr)
+		assert.True(t, allowed)
+	})
+
+	t.Run("generic deny policy applies when no specific policy exists", func(t *testing.T) {
+		// Use a non-existent workflow ID to test generic policy application
+		nonExistentWorkflowID := uint(99999)
+
+		// Should return false because only generic deny policy applies
+		allowed, allowedErr := ps.IsAllowed(
+			user,
+			workspace,
+			db.PolicyResourceWorkflow,
+			&nonExistentWorkflowID,
+			db.PolicyActionRead,
+		)
+		assert.NoError(t, allowedErr)
+		assert.False(t, allowed)
+	})
+}
+
 func TestPermissionCache(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
