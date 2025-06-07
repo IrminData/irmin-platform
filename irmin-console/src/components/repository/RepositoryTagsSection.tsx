@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 
@@ -13,6 +13,9 @@ import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
 import { useRepositoryCommits } from '@/hooks/useRepositoryCommits';
 import { useRepositoryTags } from '@/hooks/useRepositoryTags';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import CreateTagModalContent from './tags/CreateTagModalContent';
 import TagList from './tags/TagList';
@@ -24,10 +27,41 @@ export default function RepositoryTagsSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
   const { repository, currentRef, viewRef } = useRepositoryContext();
+  const { isResourceAllowed } = useResourceAllowed();
   const { repositoryBranchesQuery } = useRepositoryBranches(repository.slug);
   const { commitsQuery } = useRepositoryCommits(repository.slug);
   const { repositoryTagsQuery, createTagMutation, deleteTagMutation } =
     useRepositoryTags(repository.slug);
+
+  const canViewTags = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryTag,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
+  const canCreateTag = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryTag,
+        PolicyAction.Update,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
+  const canDeleteTag = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryTag,
+        PolicyAction.Delete,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
 
   /**
    * Show the create tag modal.
@@ -89,6 +123,16 @@ export default function RepositoryTagsSection() {
     [irminConfirm, dict, deleteTagMutation]
   );
 
+  if (!canViewTags) {
+    return (
+      <div className='bg-card w-full rounded-lg border border-gray-200 px-2 py-8 dark:border-gray-800'>
+        <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
+          {dict.common.insufficientPermissions}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
       <div className='mb-4 flex flex-row items-center justify-end gap-4'>
@@ -96,6 +140,7 @@ export default function RepositoryTagsSection() {
           variant='default'
           size='sm'
           icon={<IoAdd size={18} />}
+          disabled={!canCreateTag}
           onClick={() => {
             showCreateTagModal();
           }}
@@ -104,10 +149,11 @@ export default function RepositoryTagsSection() {
         </Button>
       </div>
       <TagList
+        repositoryID={repository.id}
         currentRef={currentRef}
         tags={repositoryTagsQuery.data?.data ?? []}
         handleViewRef={(ref: string) => viewRef(ref)}
-        handleDeleteTag={handleDeleteTag}
+        handleDeleteTag={canDeleteTag ? handleDeleteTag : undefined}
         loading={repositoryTagsQuery.isLoading}
       />
     </div>

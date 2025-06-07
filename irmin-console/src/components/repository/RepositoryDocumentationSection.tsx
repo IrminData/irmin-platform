@@ -11,6 +11,9 @@ import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
 import { useRepository } from '@/hooks/useRepository';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 /**
  * Repository Documentation section component for displaying and updating the documentation.
@@ -19,6 +22,7 @@ const RepositoryDocumentationSection = () => {
   const { dict } = useLocale();
   const { repository } = useRepositoryContext();
   const { updateRepositoryMutation } = useRepository(repository.slug);
+  const { isResourceAllowed } = useResourceAllowed();
 
   const handleSaveDocumentation = useCallback(
     async (data: DocumentationFormValues) => {
@@ -33,8 +37,26 @@ const RepositoryDocumentationSection = () => {
     <DocumentationForm
       initialDocumentation={repository.documentation ?? ''}
       onSubmit={handleSaveDocumentation}
+      disabled={
+        !isResourceAllowed(
+          PolicyResource.Repository,
+          PolicyAction.Update,
+          repository.id
+        )
+      }
     >
-      <Button size='default' variant='default' type='submit'>
+      <Button
+        size='default'
+        variant='default'
+        type='submit'
+        disabled={
+          !isResourceAllowed(
+            PolicyResource.Repository,
+            PolicyAction.Update,
+            repository.id
+          )
+        }
+      >
         {dict.common.save}
       </Button>
     </DocumentationForm>

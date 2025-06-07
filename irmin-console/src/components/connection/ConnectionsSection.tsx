@@ -11,9 +11,11 @@ import SideModal from '@/components/ui/popup/SideModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useConnections } from '@/hooks/useConnections';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 
 import { Connection } from '@/types/core/Connection';
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import ConnectionList from './ConnectionList';
 import CreateConnectionModalContent from './CreateConnectionModalContent';
@@ -33,6 +35,7 @@ export default function ConnectionsSection({
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const { connectionsQuery } = useConnections();
 
   const { setCreateParam } = useToggleCreateParam();
@@ -91,12 +94,18 @@ export default function ConnectionsSection({
           size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
+          disabled={
+            !isResourceAllowed(PolicyResource.Connection, PolicyAction.Create)
+          }
         >
           {dict.connections.create.createNewConnection}
         </Button>
       </div>
       <SideModal
-        isOpen={isOpen}
+        isOpen={
+          isOpen &&
+          isResourceAllowed(PolicyResource.Connection, PolicyAction.Create)
+        }
         closeModal={closeModal}
         currentStep={currentStep}
         steps={[

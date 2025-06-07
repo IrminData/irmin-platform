@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -29,8 +29,10 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
 import { Object } from '@/types/core/Object';
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
@@ -54,6 +56,7 @@ export default function RepositorySection({
 }) {
   const { irminModal } = usePopup();
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const searchParams = useSearchParams();
   const { workspaceSlug } = useWorkspaceContext();
 
@@ -87,6 +90,51 @@ export default function RepositorySection({
 
   const [queryField, setQueryField] = useState<string>('');
   const [queryChanged, setQueryChanged] = useState(false);
+
+  const canViewRepository = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.Repository,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
+  const canUpload = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Create,
+        repository.id
+      ) &&
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Update,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
+  const canDownload = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
+  const canQuery = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
 
   /**
    * Set the initial query when the selected object changes.
@@ -149,31 +197,46 @@ export default function RepositorySection({
     [queryLoading]
   );
 
+  if (!canViewRepository) {
+    return (
+      <div className='relative container mx-auto max-w-7xl'>
+        <div className='my-4 flex flex-col gap-4 p-4'>
+          <p className='text-sm opacity-60'>{dict.common.error}</p>
+          <p className='text-sm opacity-60'>
+            {dict.common.insufficientPermissions}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
-        <div className='bg-background w-full max-w-full overflow-hidden rounded-md border border-gray-100 dark:border-gray-800'>
-          <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
-            <div className='py-2 text-sm font-semibold'>
-              {dict.repository.sqlQuery}
+        {canQuery && (
+          <div className='bg-background w-full max-w-full overflow-hidden rounded-md border border-gray-100 dark:border-gray-800'>
+            <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
+              <div className='py-2 text-sm font-semibold'>
+                {dict.repository.sqlQuery}
+              </div>
+              <Button
+                variant='accent'
+                className='float-end m-2 shadow-none'
+                size='sm'
+                icon={<AiOutlinePlayCircle />}
+                loading={queryLoading}
+                onClick={runCurrentQuery}
+              >
+                {dict.repository.runQuery}
+              </Button>
             </div>
-            <Button
-              variant='accent'
-              className='float-end m-2 shadow-none'
-              size='sm'
-              icon={<AiOutlinePlayCircle />}
-              loading={queryLoading}
-              onClick={runCurrentQuery}
-            >
-              {dict.repository.runQuery}
-            </Button>
+            <CodeMirrorEditor
+              language='sql'
+              content={queryField}
+              updateEditorContent={updateQuery}
+            />
           </div>
-          <CodeMirrorEditor
-            language='sql'
-            content={queryField}
-            updateEditorContent={updateQuery}
-          />
-        </div>
+        )}
         {!queryResultsOpen ? (
           <>
             <div className='my-4 flex w-full flex-wrap items-center justify-between gap-4'>
@@ -212,21 +275,23 @@ export default function RepositorySection({
                     {dict.repository.commit.uncommittedChanges}
                   </Button>
                 )}
-                <Button
-                  variant='secondary'
-                  size='sm'
-                  icon={<TbDownload />}
-                  onClick={() => {
-                    downloadObjectAsZipMutation.mutate({
-                      path: currentDirectoryPath,
-                      ref: currentRef ?? '',
-                    });
-                  }}
-                  loading={downloadObjectAsZipMutation.isPending}
-                >
-                  {dict.common.download}
-                </Button>
-                {!immutable && (
+                {canDownload && (
+                  <Button
+                    variant='secondary'
+                    size='sm'
+                    icon={<TbDownload />}
+                    onClick={() => {
+                      downloadObjectAsZipMutation.mutate({
+                        path: currentDirectoryPath,
+                        ref: currentRef ?? '',
+                      });
+                    }}
+                    loading={downloadObjectAsZipMutation.isPending}
+                  >
+                    {dict.common.download}
+                  </Button>
+                )}
+                {!immutable && canUpload && (
                   <Button
                     variant='default'
                     size='sm'

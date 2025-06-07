@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { TbPlus } from 'react-icons/tb';
 
@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import PolicyTable from './PolicyTable';
 import { PolicyEditorProps } from './types';
@@ -31,6 +35,28 @@ export default function PolicyEditor({
   allowDelete = true,
 }: PolicyEditorProps) {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
+
+  const canCreate = useMemo(
+    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Create),
+    [isResourceAllowed]
+  );
+
+  const canEdit = useMemo(
+    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Update),
+    [isResourceAllowed]
+  );
+
+  const canDelete = useMemo(
+    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Delete),
+    [isResourceAllowed]
+  );
+
+  const canView = useMemo(
+    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
+    [isResourceAllowed]
+  );
+
   const { showCreateForm, showEditForm, isCreating } = usePolicyForm({
     defaultResourceType,
     defaultResourceId,
@@ -38,6 +64,18 @@ export default function PolicyEditor({
     defaultRoleId,
     defaultUserId,
   });
+
+  if (!canView) {
+    return (
+      <div className='flex flex-col gap-4 p-4'>
+        <div className='flex items-center justify-center py-8'>
+          <div className='text-muted-foreground text-lg'>
+            {dict.common.insufficientPermissions}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex flex-col gap-4 p-4'>
@@ -50,7 +88,7 @@ export default function PolicyEditor({
             {description || dict.policy.description}
           </p>
         </div>
-        {allowCreate && (
+        {allowCreate && canCreate && (
           <Button onClick={showCreateForm} loading={isCreating}>
             <TbPlus className='mr-2 h-4 w-4' />
             {dict.policy.addPolicy}
@@ -78,8 +116,8 @@ export default function PolicyEditor({
             policies={policies}
             showResourceColumn={showResourceColumn}
             showResourceIdColumn={showResourceIdColumn}
-            allowEdit={allowEdit}
-            allowDelete={allowDelete}
+            allowEdit={allowEdit && canEdit}
+            allowDelete={allowDelete && canDelete}
             onEditClick={showEditForm}
           />
         )}

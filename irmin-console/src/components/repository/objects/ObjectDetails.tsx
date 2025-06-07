@@ -25,9 +25,11 @@ import { useRepositoryContext } from '@/context/RepositoryContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
 import { Object } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
@@ -81,6 +83,51 @@ export default function ObjectDetails({
     includeSegment: true,
     segmentsAfter: 1,
   });
+
+  const { isResourceAllowed } = useResourceAllowed();
+
+  // Permission checks
+  const canView = isResourceAllowed(
+    PolicyResource.RepositoryObject,
+    PolicyAction.Read,
+    repository.id
+  );
+  const canViewSchema = isResourceAllowed(
+    PolicyResource.RepositoryObject,
+    PolicyAction.Read,
+    repository.id
+  );
+  const canUpload =
+    isResourceAllowed(
+      PolicyResource.RepositoryObject,
+      PolicyAction.Create,
+      repository.id
+    ) &&
+    isResourceAllowed(
+      PolicyResource.RepositoryObject,
+      PolicyAction.Update,
+      repository.id
+    );
+  const canChangeHistory = isResourceAllowed(
+    PolicyResource.RepositoryObject,
+    PolicyAction.Read,
+    repository.id
+  );
+  const canDownload = isResourceAllowed(
+    PolicyResource.RepositoryObject,
+    PolicyAction.Read,
+    repository.id
+  );
+  const canMoveOrRename = isResourceAllowed(
+    PolicyResource.RepositoryObject,
+    PolicyAction.Update,
+    repository.id
+  );
+  const canDelete = isResourceAllowed(
+    PolicyResource.RepositoryObject,
+    PolicyAction.Delete,
+    repository.id
+  );
 
   const handleUploadAndReplace = useCallback(() => {
     if (!selectedObject || immutable) return;
@@ -264,12 +311,13 @@ export default function ObjectDetails({
               className='w-full'
               icon={<TbFolderOpen />}
               onClick={() => setCurrentPath(selectedObject.path)}
+              disabled={!canView}
             >
               {dict.fileNavigator.open}
             </Button>
           ) : (
             <>
-              {!hideViewButton && (
+              {!hideViewButton && canView && (
                 <Button
                   size='sm'
                   variant='accent'
@@ -280,7 +328,7 @@ export default function ObjectDetails({
                   {dict.repository.objects.view}
                 </Button>
               )}
-              {!hideSchemaButton && (
+              {!hideSchemaButton && canViewSchema && (
                 <Button
                   size='sm'
                   variant='secondary'
@@ -291,57 +339,67 @@ export default function ObjectDetails({
                   {dict.repository.objects.viewSchema}
                 </Button>
               )}
-              <Button
-                size='sm'
-                variant='secondary'
-                className='w-full'
-                icon={<TbUpload />}
-                onClick={handleUploadAndReplace}
-                disabled={immutable}
-              >
-                {dict.repository.objects.uploadAndReplace}
-              </Button>
+              {canUpload && (
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  className='w-full'
+                  icon={<TbUpload />}
+                  onClick={handleUploadAndReplace}
+                  disabled={immutable}
+                >
+                  {dict.repository.objects.uploadAndReplace}
+                </Button>
+              )}
             </>
           )}
-          <Button
-            size='sm'
-            variant='secondary'
-            className='w-full'
-            icon={<TbHistory />}
-            onClick={handleViewChangeHistory}
-          >
-            {dict.repository.objects.changeHistory}
-          </Button>
-          <Button
-            size='sm'
-            variant='secondary'
-            className='w-full'
-            icon={<TbDownload />}
-            onClick={handleDownload}
-            loading={downloading}
-          >
-            {dict.common.download}
-          </Button>
-          <Button
-            size='sm'
-            variant='secondary'
-            className='w-full'
-            icon={<TbEdit />}
-            onClick={handleMoveOrRename}
-            disabled={immutable}
-          >
-            {dict.repository.objects.moveOrRename}
-          </Button>
-          <Button
-            size='sm'
-            variant='secondary'
-            className='w-full'
-            icon={<TbTrash />}
-            disabled={immutable}
-            onClick={handleDelete}
-          >
-            {dict.list.delete}
-          </Button>
+          {canChangeHistory && (
+            <Button
+              size='sm'
+              variant='secondary'
+              className='w-full'
+              icon={<TbHistory />}
+              onClick={handleViewChangeHistory}
+            >
+              {dict.repository.objects.changeHistory}
+            </Button>
+          )}
+          {canDownload && (
+            <Button
+              size='sm'
+              variant='secondary'
+              className='w-full'
+              icon={<TbDownload />}
+              onClick={handleDownload}
+              loading={downloading}
+            >
+              {dict.common.download}
+            </Button>
+          )}
+          {canMoveOrRename && (
+            <Button
+              size='sm'
+              variant='secondary'
+              className='w-full'
+              icon={<TbEdit />}
+              onClick={handleMoveOrRename}
+              disabled={immutable}
+            >
+              {dict.repository.objects.moveOrRename}
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              size='sm'
+              variant='secondary'
+              className='w-full'
+              icon={<TbTrash />}
+              disabled={immutable}
+              onClick={handleDelete}
+            >
+              {dict.list.delete}
+            </Button>
+          )}
         </div>
       </div>
     </div>

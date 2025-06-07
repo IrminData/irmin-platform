@@ -45,7 +45,7 @@ const NormalList: React.FC<ListProps> = ({
 
   return (
     <div className='scrollbar-hide h-full w-full overflow-auto' id='list'>
-      <table className='bg-background bg-popover/10 w-full max-w-3xl max-w-full border-collapse rounded-lg border p-2 text-sm shadow-xs transition-all dark:border-gray-800'>
+      <table className='bg-popover/10 w-full max-w-full border-collapse rounded-lg border p-2 text-sm shadow-xs transition-all dark:border-gray-800'>
         {/* Table head */}
         {!hideHeaders && (
           <thead>

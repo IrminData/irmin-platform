@@ -8,7 +8,9 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { ActionWorkflow } from '@/types/core/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
@@ -25,6 +27,7 @@ const ActionWorkflowList = ({
   actionWorkflows: ActionWorkflow[];
 }) => {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -36,68 +39,89 @@ const ActionWorkflowList = ({
 
   const rows: GridRow[] = useMemo(
     () =>
-      items.map((item, i) => {
-        const tableActions = [
-          {
-            label: dict.list.view,
-            primary: true,
-            href: `${workspaceUrl}/workflows/${item.id}`,
-          },
-          {
-            label: dict.list.edit,
-            primary: false,
-            href: `${workspaceUrl}/workflows/${item.id}/settings`,
-          },
-          {
-            label: dict.common.logs,
-            primary: false,
-            href: `${workspaceUrl}/logs/workflow/${item.id}`,
-          },
-        ];
-        return {
-          columns: [
-            <div
-              key={`name-and-owner-${i}`}
-              className='inline-flex flex-col gap-1'
-            >
-              <p className='text-base'>{item.name}</p>
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
-                {dict.list.owner}: {item.owner.email}
-                {item.owner.company ? ` (${item.owner.company})` : ''}
-              </span>
-            </div>,
-            <div
-              key={`status-${i}`}
-              className='inline-flex flex-row items-center gap-2'
-            >
-              <StatusBadge
-                status={item.status}
-                label={item.status ?? dict.workflow.noStatus}
-              />
-              <div className='flex flex-col'>
-                {item.schedule &&
-                item.schedule.triggers &&
-                item.schedule.triggers.length > 0 ? (
-                  <span className='text-xs text-gray-400'>
-                    {dict.workflow.scheduled}
-                  </span>
-                ) : (
-                  <span className='text-xs text-gray-400'>
-                    {dict.workflow.notScheduled}
-                  </span>
-                )}
+      items
+        .map((item, i) => {
+          if (
+            !isResourceAllowed(
+              PolicyResource.Workflow,
+              PolicyAction.Read,
+              item.id
+            )
+          ) {
+            return null;
+          }
+
+          const tableActions = [
+            {
+              label: dict.list.view,
+              primary: true,
+              href: `${workspaceUrl}/workflows/${item.id}`,
+            },
+            {
+              label: dict.list.edit,
+              primary: false,
+              href: `${workspaceUrl}/workflows/${item.id}/settings`,
+              hidden: !isResourceAllowed(
+                PolicyResource.Workflow,
+                PolicyAction.Update,
+                item.id
+              ),
+            },
+            {
+              label: dict.common.logs,
+              primary: false,
+              href: `${workspaceUrl}/logs/workflow/${item.id}`,
+              hidden: !isResourceAllowed(
+                PolicyResource.AuditLog,
+                PolicyAction.Read
+              ),
+            },
+          ];
+          return {
+            columns: [
+              <div
+                key={`name-and-owner-${i}`}
+                className='inline-flex flex-col gap-1'
+              >
+                <p className='text-base'>{item.name}</p>
+                <span className='text-sm text-gray-600 dark:text-gray-400'>
+                  {dict.list.owner}: {item.owner.email}
+                  {item.owner.company ? ` (${item.owner.company})` : ''}
+                </span>
+              </div>,
+              <div
+                key={`status-${i}`}
+                className='inline-flex flex-row items-center gap-2'
+              >
+                <StatusBadge
+                  status={item.status}
+                  label={item.status ?? dict.workflow.noStatus}
+                />
+                <div className='flex flex-col'>
+                  {item.schedule &&
+                  item.schedule.triggers &&
+                  item.schedule.triggers.length > 0 ? (
+                    <span className='text-xs text-gray-400'>
+                      {dict.workflow.scheduled}
+                    </span>
+                  ) : (
+                    <span className='text-xs text-gray-400'>
+                      {dict.workflow.notScheduled}
+                    </span>
+                  )}
+                </div>
+              </div>,
+            ],
+            actions: tableActions.filter((action) => !action.hidden),
+            details: (
+              <div className='flex max-w-sm flex-col text-gray-600 dark:text-gray-400'>
+                <p className='pb-4 text-sm'>{item.description}</p>
               </div>
-            </div>,
-          ],
-          actions: tableActions,
-          details: (
-            <div className='flex max-w-sm flex-col text-gray-600 dark:text-gray-400'>
-              <p className='pb-4 text-sm'>{item.description}</p>
-            </div>
-          ),
-        };
-      }),
-    [items, workspaceUrl, dict]
+            ),
+          };
+        })
+        .filter((row) => row !== null),
+    [items, workspaceUrl, dict, isResourceAllowed]
   );
 
   return (

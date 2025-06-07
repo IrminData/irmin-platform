@@ -12,8 +12,11 @@ import Button from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { QueryResult } from '@/types/core/StoredQuery';
 
 /**
@@ -42,6 +45,7 @@ const QueryResults = ({
   onRun?: () => Promise<void>;
 }) => {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
 
   const [activeTab, setActiveTab] = useState('data');
 
@@ -53,6 +57,16 @@ const QueryResults = ({
     [loading, processingRun]
   );
   const logs = useMemo(() => result?.logs ?? [], [result?.logs]);
+
+  const canSave = useMemo(
+    () => isResourceAllowed(PolicyResource.Query, PolicyAction.Update),
+    [isResourceAllowed]
+  );
+
+  const canRun = useMemo(
+    () => isResourceAllowed(PolicyResource.Query, PolicyAction.Create),
+    [isResourceAllowed]
+  );
 
   return (
     <div
@@ -96,6 +110,7 @@ const QueryResults = ({
               size='sm'
               className='text-xs'
               loading={processingSave}
+              disabled={!canSave}
               onClick={() => {
                 setProcessingSave(true);
                 onSave().finally(() => {
@@ -113,6 +128,7 @@ const QueryResults = ({
               size='sm'
               className='px-4 text-xs'
               loading={processingRun || loading}
+              disabled={!canRun}
               onClick={() => {
                 setProcessingRun(true);
                 onRun().finally(() => {

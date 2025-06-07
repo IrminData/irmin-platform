@@ -11,8 +11,11 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useUsers } from '@/hooks/useUsers';
 import { useWorkflow } from '@/hooks/useWorkflow';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 interface WorkflowFormValues {
   name: string;
@@ -39,7 +42,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
   } = useWorkflow(workflowID);
   const router = useRouter();
   const { workspaceSlug } = useWorkspaceContext();
-
+  const { isResourceAllowed } = useResourceAllowed();
   const handleUpdateWorkflow = useCallback(
     async (data: WorkflowFormValues) => {
       try {
@@ -148,6 +151,20 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
         submitButtonLabel={dict.workflow.settings.saveChanges}
         deleteButtonLabel={dict.workflow.settings.delete}
         dangerZoneMessage={dict.workflow.settings.deletionNote}
+        disabled={
+          !isResourceAllowed(
+            PolicyResource.Workflow,
+            PolicyAction.Update,
+            workflow.id
+          )
+        }
+        deleteButtonDisabled={
+          !isResourceAllowed(
+            PolicyResource.Workflow,
+            PolicyAction.Delete,
+            workflow.id
+          )
+        }
       />
     </div>
   );

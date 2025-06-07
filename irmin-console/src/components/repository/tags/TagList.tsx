@@ -7,8 +7,20 @@ import NormalList from '@/components/ui/list/NormalList';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { Tag } from '@/types/core/Tag';
 import { GridRow } from '@/types/internal/ListProps';
+
+interface TagListProps {
+  repositoryID: string;
+  currentRef: string | undefined;
+  tags: Tag[];
+  handleViewRef: (ref: string) => void;
+  handleDeleteTag?: (tag: string) => void;
+  loading: boolean;
+}
 
 /**
  * Component to display a list of tags
@@ -21,21 +33,16 @@ import { GridRow } from '@/types/internal/ListProps';
  * @param props.loading - Whether the tags are loading
  */
 export default function TagList({
+  repositoryID,
   currentRef,
   tags,
   handleViewRef,
   handleDeleteTag,
   loading,
-}: {
-  currentRef?: string;
-  tags: Tag[];
-  handleViewRef: (ref: string) => void;
-  handleDeleteTag: (tag: string) => void;
-  loading: boolean;
-}) {
+}: TagListProps) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
-
+  const { isResourceAllowed } = useResourceAllowed();
   const rows: GridRow[] = useMemo(
     () =>
       tags.map((tag, i) => ({
@@ -74,13 +81,29 @@ export default function TagList({
           {
             label: dict.list.delete,
             primary: false,
+            hide: !isResourceAllowed(
+              PolicyResource.RepositoryTag,
+              PolicyAction.Delete,
+              repositoryID
+            ),
             onClick: () => {
-              handleDeleteTag(tag.name);
+              if (handleDeleteTag) {
+                handleDeleteTag(tag.name);
+              }
             },
           },
-        ],
+        ].filter((action) => !action.hide),
       })),
-    [tags, currentRef, dict, irminAlert, handleDeleteTag, handleViewRef]
+    [
+      tags,
+      currentRef,
+      dict,
+      irminAlert,
+      handleDeleteTag,
+      handleViewRef,
+      isResourceAllowed,
+      repositoryID,
+    ]
   );
 
   return (

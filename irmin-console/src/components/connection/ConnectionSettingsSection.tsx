@@ -11,7 +11,10 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useUsers } from '@/hooks/useUsers';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import LoadingSkeleton from '../ui/loading/LoadingSkeleton';
 
@@ -39,6 +42,7 @@ const ConnectionSettingsSection = () => {
     deleteConnectionMutation,
   } = useConnectionContext();
   const { workspaceSlug } = useWorkspaceContext();
+  const { isResourceAllowed } = useResourceAllowed();
 
   const handleUpdateConnection = useCallback(
     async (data: ConnectionFormValues) => {
@@ -139,6 +143,20 @@ const ConnectionSettingsSection = () => {
         submitButtonLabel={dict.connections.settings.saveChanges}
         deleteButtonLabel={dict.connections.settings.delete}
         dangerZoneMessage={dict.connections.settings.deletionNote}
+        disabled={
+          !isResourceAllowed(
+            PolicyResource.Connection,
+            PolicyAction.Update,
+            connection.id
+          )
+        }
+        deleteButtonDisabled={
+          !isResourceAllowed(
+            PolicyResource.Connection,
+            PolicyAction.Delete,
+            connection.id
+          )
+        }
       />
     </div>
   );

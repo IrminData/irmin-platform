@@ -8,6 +8,7 @@ const fi = {
     cancel: 'Peruuta',
     confirm: 'Vahvista',
     error: 'Virhe',
+    insufficientPermissions: 'Liian vähän oikeuksia',
     ohNo: 'Voi ei!',
     pageNotFound: 'Sivua ei löytynyt',
     somethingWentWrong: 'Jotain meni pieleen',

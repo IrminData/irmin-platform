@@ -10,9 +10,11 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { PipelineWorkflow } from '@/types/core/Workflow';
 import { WorkflowInput } from '@/types/internal/WorkflowInput';
 
@@ -53,6 +55,7 @@ function PipelineWorkflowsSection({
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
@@ -114,12 +117,18 @@ function PipelineWorkflowsSection({
           size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
+          disabled={
+            !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+          }
         >
           {dict.workflow.create.createNewPipelineWorkflow}
         </Button>
       </div>
       <SideModal
-        isOpen={isOpen}
+        isOpen={
+          isOpen &&
+          isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+        }
         closeModal={closeModal}
         currentStep={currentStep}
         steps={[
@@ -129,7 +138,10 @@ function PipelineWorkflowsSection({
         title={dict.workflow.create.createNewPipelineWorkflow}
       >
         <CreateWorkflowModalContent
-          isOpen={isOpen}
+          isOpen={
+            isOpen &&
+            isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+          }
           closeModal={closeModal}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}

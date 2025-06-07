@@ -12,6 +12,9 @@ import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useRepository } from '@/hooks/useRepository';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import ImmutableWarning from './ImmutableWarning';
 
@@ -34,7 +37,7 @@ const RepositorySettingsSection = () => {
     transferRepositoryMutation,
     updateRepositoryMutation,
   } = useRepository(repository.slug);
-
+  const { isResourceAllowed } = useResourceAllowed();
   const [submitting, setSubmitting] = useState(false);
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
@@ -139,6 +142,20 @@ const RepositorySettingsSection = () => {
         submitButtonLabel={dict.common.save}
         deleteButtonLabel={dict.repository.settings.deleteRepository}
         dangerZoneMessage={dict.repository.settings.deletionNote}
+        disabled={
+          !isResourceAllowed(
+            PolicyResource.Repository,
+            PolicyAction.Update,
+            repository.id
+          )
+        }
+        deleteButtonDisabled={
+          !isResourceAllowed(
+            PolicyResource.Repository,
+            PolicyAction.Delete,
+            repository.id
+          )
+        }
       />
     </div>
   );

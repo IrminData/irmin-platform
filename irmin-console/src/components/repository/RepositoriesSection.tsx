@@ -11,8 +11,10 @@ import SideModal from '@/components/ui/popup/SideModal';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useRepositories } from '@/hooks/useRepositories';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { Repository } from '@/types/core/Repository';
 
 import CreateRepositoryModalContent from './CreateRepositoryModalContent';
@@ -33,6 +35,7 @@ export default function RepositoriesSection({
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
@@ -90,12 +93,18 @@ export default function RepositoriesSection({
           size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
+          disabled={
+            !isResourceAllowed(PolicyResource.Repository, PolicyAction.Create)
+          }
         >
           {dict.repository.createNewRepository}
         </Button>
       </div>
       <SideModal
-        isOpen={isOpen}
+        isOpen={
+          isOpen &&
+          isResourceAllowed(PolicyResource.Repository, PolicyAction.Create)
+        }
         closeModal={closeModal}
         title={dict.repository.createNewRepository}
       >

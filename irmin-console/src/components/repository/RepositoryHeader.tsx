@@ -24,6 +24,9 @@ import { useRepositoryContext } from '@/context/RepositoryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import BranchSelector from './branches/BranchSelector';
 
@@ -35,6 +38,7 @@ export default function RepositoryHeader() {
   const { dict } = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { isResourceAllowed } = useResourceAllowed();
 
   const router = useRouter();
 
@@ -78,24 +82,44 @@ export default function RepositoryHeader() {
         link: `${baseUrl}/commits?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/commits`,
         icon: <GoGitCommit size={14} />,
+        hidden: !isResourceAllowed(
+          PolicyResource.RepositoryCommit,
+          PolicyAction.Read,
+          repository.id
+        ),
       },
       {
         name: dict.repository.tags.tags,
         link: `${baseUrl}/tags?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/tags`,
         icon: <TbTags size={14} />,
+        hidden: !isResourceAllowed(
+          PolicyResource.RepositoryTag,
+          PolicyAction.Read,
+          repository.id
+        ),
       },
       {
         name: dict.repository.branches.branches,
         link: `${baseUrl}/branches?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/branches`,
         icon: <GoGitBranch size={14} />,
+        hidden: !isResourceAllowed(
+          PolicyResource.RepositoryBranch,
+          PolicyAction.Read,
+          repository.id
+        ),
       },
       {
         name: dict.repository.compare.compare,
         link: `${baseUrl}/compare?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/compare`,
         icon: <GoGitCompare size={14} />,
+        hidden: !isResourceAllowed(
+          PolicyResource.RepositoryCommit,
+          PolicyAction.Read,
+          repository.id
+        ),
       },
       {
         name: dict.documentation.documentation,
@@ -108,12 +132,14 @@ export default function RepositoryHeader() {
         link: `${baseUrl}/policies?${searchParams.toString()}`,
         active: pathname === `${baseUrl}/policies`,
         icon: <TbShield size={14} />,
+        hidden: !isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
       },
       {
         name: dict.common.logs,
         link: `${workspaceUrl}/logs/repository/${repository?.slug}`,
         active: false,
         icon: <TbBook size={14} />,
+        hidden: !isResourceAllowed(PolicyResource.AuditLog, PolicyAction.Read),
       },
       {
         name: dict.consoleNavigation.settings,
@@ -123,7 +149,16 @@ export default function RepositoryHeader() {
         hidden: immutable,
       },
     ],
-    [pathname, searchParams, baseUrl, dict, immutable, repository, workspaceUrl]
+    [
+      pathname,
+      searchParams,
+      baseUrl,
+      dict,
+      immutable,
+      repository,
+      workspaceUrl,
+      isResourceAllowed,
+    ]
   );
 
   return (
@@ -164,7 +199,12 @@ export default function RepositoryHeader() {
         <div className='flex min-w-60 flex-col gap-2'>
           {!pathname.includes('/compare') &&
             !pathname.includes('/settings') &&
-            !pathname.includes('/branches') && (
+            !pathname.includes('/branches') &&
+            isResourceAllowed(
+              PolicyResource.RepositoryBranch,
+              PolicyAction.Read,
+              repository.id
+            ) && (
               <>
                 {/** Select branch to view repository in */}
                 <BranchSelector

@@ -10,6 +10,15 @@ import { useLocale } from '@/context/LocaleContext';
 import { Branch } from '@/types/core/Branch';
 import { GridRow } from '@/types/internal/ListProps';
 
+interface BranchListProps {
+  currentRef: string | undefined;
+  branches: Branch[];
+  handleViewBranch: (branch: string) => void;
+  handleDeleteBranch?: (branch: string) => void;
+  loading: boolean;
+  immutable: boolean;
+}
+
 /**
  * Component to display a list of branches
  *
@@ -28,14 +37,7 @@ export default function BranchList({
   handleDeleteBranch,
   loading,
   immutable,
-}: {
-  currentRef?: string;
-  branches: Branch[];
-  handleViewBranch: (branch: string) => void;
-  handleDeleteBranch: (branch: string) => void;
-  loading: boolean;
-  immutable: boolean;
-}) {
+}: BranchListProps) {
   const { dict } = useLocale();
 
   const rows: GridRow[] = useMemo(
@@ -70,7 +72,12 @@ export default function BranchList({
               },
             },
           ];
-          if (!branch.is_immutable && !branch.default && !immutable) {
+          if (
+            !branch.is_immutable &&
+            !branch.default &&
+            !immutable &&
+            handleDeleteBranch
+          ) {
             addActions.push({
               label: dict.list.delete,
               primary: false,

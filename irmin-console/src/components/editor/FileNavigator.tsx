@@ -12,6 +12,9 @@ import Button from '@/components/ui/button';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -37,6 +40,8 @@ const FileNavigator = () => {
     deleteItem,
     openFile,
   } = useEditor();
+
+  const { isResourceAllowed } = useResourceAllowed();
 
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [contextMenu, setContextMenu] = useState<{
@@ -204,7 +209,10 @@ const FileNavigator = () => {
           onClick={addNewFile}
           icon={<FiFileText size={12} />}
           aria-label='Create a new file'
-          disabled={loading}
+          loading={loading}
+          disabled={
+            !isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Create)
+          }
         >
           {dict.fileNavigator.createFile}
         </Button>
@@ -215,7 +223,10 @@ const FileNavigator = () => {
           onClick={addNewFolder}
           icon={<FiFolder size={12} />}
           aria-label='Create a new folder'
-          disabled={loading}
+          loading={loading}
+          disabled={
+            !isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Create)
+          }
         >
           {dict.fileNavigator.createFolder}
         </Button>
@@ -239,48 +250,64 @@ const FileNavigator = () => {
           <li className='border-b p-1 pb-2 text-xs dark:border-gray-800'>
             {contextMenu.item.current?.name ?? contextMenu.item.original?.name}
           </li>
-          {contextMenu.item?.current?.type === 'file' && (
+          {contextMenu.item?.current?.type === 'file' &&
+            isResourceAllowed(
+              PolicyResource.EditorScript,
+              PolicyAction.Read
+            ) && (
+              <>
+                <li
+                  className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
+                  onClick={() => {
+                    if (contextMenu.item.current?.type === 'file') {
+                      closeContextMenu();
+                      openFile(contextMenu.item);
+                    }
+                  }}
+                >
+                  {dict.fileNavigator.open}
+                </li>
+              </>
+            )}
+          {isResourceAllowed(
+            PolicyResource.EditorScript,
+            PolicyAction.Update
+          ) && (
             <>
               <li
                 className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
                 onClick={() => {
-                  if (contextMenu.item.current?.type === 'file') {
-                    closeContextMenu();
-                    openFile(contextMenu.item);
-                  }
+                  closeContextMenu();
+                  renameOrMoveItem(contextMenu.item);
                 }}
               >
-                {dict.fileNavigator.open}
+                {dict.fileNavigator.move}
+              </li>
+              <li
+                className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
+                onClick={() => {
+                  closeContextMenu();
+                  renameOrMoveItem(contextMenu.item);
+                }}
+              >
+                {dict.fileNavigator.rename}
               </li>
             </>
           )}
-          <li
-            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
-            onClick={() => {
-              closeContextMenu();
-              renameOrMoveItem(contextMenu.item);
-            }}
-          >
-            {dict.fileNavigator.move}
-          </li>
-          <li
-            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
-            onClick={() => {
-              closeContextMenu();
-              renameOrMoveItem(contextMenu.item);
-            }}
-          >
-            {dict.fileNavigator.rename}
-          </li>
-          <li
-            className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
-            onClick={() => {
-              closeContextMenu();
-              deleteItem(contextMenu.item);
-            }}
-          >
-            {dict.list.delete}
-          </li>
+          {isResourceAllowed(
+            PolicyResource.EditorScript,
+            PolicyAction.Delete
+          ) && (
+            <li
+              className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
+              onClick={() => {
+                closeContextMenu();
+                deleteItem(contextMenu.item);
+              }}
+            >
+              {dict.list.delete}
+            </li>
+          )}
         </ul>
       )}
     </div>

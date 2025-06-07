@@ -9,7 +9,9 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { Workflow } from '@/types/core/Workflow';
 import { GridRow } from '@/types/internal/ListProps';
 
@@ -26,6 +28,7 @@ const WorkflowList = ({
   workflows: Workflow[];
 }) => {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -37,76 +40,98 @@ const WorkflowList = ({
 
   const rows: GridRow[] = useMemo(
     () =>
-      items.map((item, i) => {
-        const tableActions = [
-          {
-            label: dict.list.view,
-            primary: true,
-            href: `${workspaceUrl}/workflows/${item.id}`,
-          },
-          {
-            label: dict.list.edit,
-            primary: false,
-            href: `${workspaceUrl}/workflows/${item.id}/settings`,
-          },
-          {
-            label: dict.common.logs,
-            primary: false,
-            href: `${workspaceUrl}/logs/workflow/${item.id}`,
-          },
-        ];
-        return {
-          columns: [
-            <div
-              key={`name-and-owner-${i}`}
-              className='inline-flex flex-col gap-1'
-            >
-              <div className='text-base'>
-                {item.name}
-                <Badge className='ml-2'>
-                  {item.type === 'action' && dict.workflow.action}
-                  {item.type === 'import' && dict.workflow.import}
-                  {item.type === 'export' && dict.workflow.export}
-                  {item.type === 'pipeline' && dict.workflow.pipeline.pipeline}
-                </Badge>
+      items
+        .map((item, i) => {
+          if (
+            !isResourceAllowed(
+              PolicyResource.Workflow,
+              PolicyAction.Read,
+              item.id
+            )
+          ) {
+            return null;
+          }
+
+          const tableActions = [
+            {
+              label: dict.list.view,
+              primary: true,
+              href: `${workspaceUrl}/workflows/${item.id}`,
+            },
+            {
+              label: dict.list.edit,
+              primary: false,
+              href: `${workspaceUrl}/workflows/${item.id}/settings`,
+              hidden: !isResourceAllowed(
+                PolicyResource.Workflow,
+                PolicyAction.Update,
+                item.id
+              ),
+            },
+            {
+              label: dict.common.logs,
+              primary: false,
+              href: `${workspaceUrl}/logs/workflow/${item.id}`,
+              hidden: !isResourceAllowed(
+                PolicyResource.AuditLog,
+                PolicyAction.Read
+              ),
+            },
+          ];
+          return {
+            columns: [
+              <div
+                key={`name-and-owner-${i}`}
+                className='inline-flex flex-col gap-1'
+              >
+                <div className='text-base'>
+                  {item.name}
+                  <Badge className='ml-2'>
+                    {item.type === 'action' && dict.workflow.action}
+                    {item.type === 'import' && dict.workflow.import}
+                    {item.type === 'export' && dict.workflow.export}
+                    {item.type === 'pipeline' &&
+                      dict.workflow.pipeline.pipeline}
+                  </Badge>
+                </div>
+                <span className='text-sm text-gray-400'>
+                  {dict.list.owner}: {item.owner.email}
+                  {item.owner.company ? ` (${item.owner.company})` : ''}
+                </span>
+              </div>,
+              <div
+                key={`status-${i}`}
+                className='inline-flex flex-row items-center gap-2'
+              >
+                <StatusBadge
+                  status={item.status}
+                  label={item.status ?? dict.workflow.noStatus}
+                />
+                <div className='flex flex-col'>
+                  {item.schedule &&
+                  item.schedule.triggers &&
+                  item.schedule.triggers.length > 0 ? (
+                    <span className='text-xs text-gray-400'>
+                      {dict.workflow.scheduled}
+                    </span>
+                  ) : (
+                    <span className='text-xs text-gray-400'>
+                      {dict.workflow.notScheduled}
+                    </span>
+                  )}
+                </div>
+              </div>,
+            ],
+            actions: tableActions.filter((action) => !action.hidden),
+            details: (
+              <div className='flex max-w-sm flex-col text-gray-400'>
+                <p className='pb-4 text-sm'>{item.description}</p>
               </div>
-              <span className='text-sm text-gray-400'>
-                {dict.list.owner}: {item.owner.email}
-                {item.owner.company ? ` (${item.owner.company})` : ''}
-              </span>
-            </div>,
-            <div
-              key={`status-${i}`}
-              className='inline-flex flex-row items-center gap-2'
-            >
-              <StatusBadge
-                status={item.status}
-                label={item.status ?? dict.workflow.noStatus}
-              />
-              <div className='flex flex-col'>
-                {item.schedule &&
-                item.schedule.triggers &&
-                item.schedule.triggers.length > 0 ? (
-                  <span className='text-xs text-gray-400'>
-                    {dict.workflow.scheduled}
-                  </span>
-                ) : (
-                  <span className='text-xs text-gray-400'>
-                    {dict.workflow.notScheduled}
-                  </span>
-                )}
-              </div>
-            </div>,
-          ],
-          actions: tableActions,
-          details: (
-            <div className='flex max-w-sm flex-col text-gray-400'>
-              <p className='pb-4 text-sm'>{item.description}</p>
-            </div>
-          ),
-        };
-      }),
-    [items, dict, workspaceUrl]
+            ),
+          };
+        })
+        .filter((row) => row !== null),
+    [items, dict, workspaceUrl, isResourceAllowed]
   );
 
   return (

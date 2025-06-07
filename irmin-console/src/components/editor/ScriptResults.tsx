@@ -18,9 +18,12 @@ import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
 import { ScriptResult } from '@/types/core/EditorItems';
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { ActionInputData } from '@/types/core/Workflow';
 
 /**
@@ -52,6 +55,7 @@ const ScriptResults = ({
   setInputFiles?: (files: ActionInputData[]) => void;
 }) => {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
 
   const [activeTab, setActiveTab] = useState('data');
 
@@ -61,6 +65,16 @@ const ScriptResults = ({
 
   const [processingSave, setProcessingSave] = useState(false);
   const [processingRun, setProcessingRun] = useState(false);
+
+  const canSave = useMemo(
+    () => isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Update),
+    [isResourceAllowed]
+  );
+
+  const canRun = useMemo(
+    () => isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Create),
+    [isResourceAllowed]
+  );
 
   useEffect(() => {
     if (result?.structured_results) {
@@ -155,6 +169,7 @@ const ScriptResults = ({
               size='sm'
               className='text-xs'
               loading={processingSave}
+              disabled={!canSave}
               onClick={() => {
                 setProcessingSave(true);
                 onSave().finally(() => {
@@ -172,6 +187,7 @@ const ScriptResults = ({
               size='sm'
               className='px-4 text-xs'
               loading={processingRun || loading}
+              disabled={!canRun}
               onClick={() => {
                 setProcessingRun(true);
                 onRun().finally(() => {

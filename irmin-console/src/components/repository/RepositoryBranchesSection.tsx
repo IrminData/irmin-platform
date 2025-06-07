@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 
@@ -11,6 +11,9 @@ import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
 import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import BranchList from './branches/BranchList';
 import CreateBranchModalContent from './branches/CreateBranchModalContent';
@@ -22,12 +25,48 @@ export default function RepositoryBranchesSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
   const { repository, currentRef, viewRef } = useRepositoryContext();
+  const { isResourceAllowed } = useResourceAllowed();
 
   const {
     repositoryBranchesQuery,
     createBranchMutation,
     deleteBranchMutation,
   } = useRepositoryBranches(repository.slug);
+
+  const canViewBranches = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryBranch,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
+  const canCreateBranch = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryBranch,
+        PolicyAction.Update,
+        repository.id
+      ) &&
+      isResourceAllowed(
+        PolicyResource.RepositoryBranch,
+        PolicyAction.Create,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
+  const canDeleteBranch = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryBranch,
+        PolicyAction.Delete,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
 
   /**
    * Show the create branch modal.
@@ -73,25 +112,37 @@ export default function RepositoryBranchesSection() {
     [irminConfirm, dict, deleteBranchMutation]
   );
 
+  if (!canViewBranches) {
+    return (
+      <div className='bg-card w-full rounded-lg border border-gray-200 px-2 py-8 dark:border-gray-800'>
+        <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
+          {dict.common.insufficientPermissions}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
-      <div className='mb-4 flex flex-row items-center justify-end gap-4'>
-        <Button
-          variant='default'
-          size='sm'
-          icon={<IoAdd size={18} />}
-          onClick={() => {
-            showCreateBranchModal();
-          }}
-        >
-          {dict.repository.branches.createBranch}
-        </Button>
-      </div>
+      {canCreateBranch && (
+        <div className='mb-4 flex flex-row items-center justify-end gap-4'>
+          <Button
+            variant='default'
+            size='sm'
+            icon={<IoAdd size={18} />}
+            onClick={() => {
+              showCreateBranchModal();
+            }}
+          >
+            {dict.repository.branches.createBranch}
+          </Button>
+        </div>
+      )}
       <BranchList
         currentRef={currentRef}
         branches={repositoryBranchesQuery.data?.data ?? []}
         handleViewBranch={(branch) => viewRef(branch)}
-        handleDeleteBranch={handleDeleteBranch}
+        handleDeleteBranch={canDeleteBranch ? handleDeleteBranch : undefined}
         loading={repositoryBranchesQuery.isLoading}
         immutable={repository.is_immutable}
       />

@@ -8,6 +8,7 @@ const en = {
     cancel: 'Cancel',
     confirm: 'Confirm',
     error: 'Error',
+    insufficientPermissions: 'Insufficient permissions',
     ohNo: 'Oh no!',
     pageNotFound: 'Page not found',
     somethingWentWrong: 'Something went wrong',

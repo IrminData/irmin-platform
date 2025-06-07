@@ -10,9 +10,11 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { ActionWorkflow } from '@/types/core/Workflow';
 
 import ActionWorkflowList from './ActionWorkflowList';
@@ -33,6 +35,7 @@ export default function ActionWorkflowsSection({
   sideModalOpen?: boolean;
 }) {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
@@ -94,12 +97,18 @@ export default function ActionWorkflowsSection({
           size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
+          disabled={
+            !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+          }
         >
           {dict.workflow.create.createNewActionWorkflow}
         </Button>
       </div>
       <SideModal
-        isOpen={isOpen}
+        isOpen={
+          isOpen &&
+          isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+        }
         closeModal={closeModal}
         currentStep={currentStep}
         steps={[
@@ -109,7 +118,10 @@ export default function ActionWorkflowsSection({
         title={dict.workflow.create.createNewActionWorkflow}
       >
         <CreateWorkflowModalContent
-          isOpen={isOpen}
+          isOpen={
+            isOpen &&
+            isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+          }
           closeModal={closeModal}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}

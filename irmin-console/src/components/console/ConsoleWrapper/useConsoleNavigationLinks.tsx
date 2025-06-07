@@ -26,7 +26,9 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
 const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
@@ -50,6 +52,7 @@ const useConsoleNavigationLinks = (): {
 } => {
   const { locale, dict } = useLocale();
   const { signOut } = useIAM();
+  const { isResourceAllowed } = useResourceAllowed();
   const pathname = usePathname();
 
   // Check if the link is active
@@ -66,52 +69,71 @@ const useConsoleNavigationLinks = (): {
     segmentsAfter: 1,
   });
 
-  const workspaceLinks = useMemo(
+  const workspaceLinks: ConsoleNavigationLinkType[] = useMemo(
     () =>
       [
         {
           title: dict.repository.repositories,
           href: `${workspaceUrl}/repositories`,
           icon: <TbDatabase />,
+          hide: !isResourceAllowed(
+            PolicyResource.Repository,
+            PolicyAction.Read
+          ),
         },
         {
           title: dict.connections.connections,
           href: `${workspaceUrl}/connections`,
           icon: <GoWorkflow />,
+          hide: !isResourceAllowed(
+            PolicyResource.Connection,
+            PolicyAction.Read
+          ),
         },
         {
           title: dict.workflow.workflows,
           href: `${workspaceUrl}/workflows`,
           icon: <TbRun />,
+          hide: !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read),
         },
         {
           title: dict.consoleNavigation.editor,
           href: `${workspaceUrl}/editor`,
           icon: <TbFile />,
+          hide: !isResourceAllowed(
+            PolicyResource.EditorScript,
+            PolicyAction.Read
+          ),
         },
         {
           title: dict.consoleNavigation.queries,
           href: `${workspaceUrl}/queries`,
           icon: <TbSql />,
+          hide: !isResourceAllowed(PolicyResource.Query, PolicyAction.Read),
         },
         {
           title: dict.common.logs,
           href: `${workspaceUrl}/logs`,
           icon: <TbLogs />,
+          hide: !isResourceAllowed(PolicyResource.AuditLog, PolicyAction.Read),
         },
         {
           title: dict.documentation.documentation,
           href: `${workspaceUrl}/documentation`,
           icon: <TbSchema />,
+          hide: !isResourceAllowed(
+            PolicyResource.Documentation,
+            PolicyAction.Read
+          ),
         },
       ].map((link) => ({
         ...link,
         active: isActiveLink(link.href),
       })),
-    [workspaceUrl, dict, isActiveLink]
+    [workspaceUrl, dict, isActiveLink, isResourceAllowed]
   );
 
-  const noWorkspaceLinks = useMemo(
+  const noWorkspaceLinks: ConsoleNavigationLinkType[] = useMemo(
     () =>
       [
         {
@@ -131,7 +153,7 @@ const useConsoleNavigationLinks = (): {
     [locale, isActiveLink, dict]
   );
 
-  const settingsLinks = useMemo(
+  const settingsLinks: ConsoleNavigationLinkType[] = useMemo(
     () => [
       {
         title: dict.consoleNavigation.workspaceSettings,
@@ -139,6 +161,7 @@ const useConsoleNavigationLinks = (): {
         icon: <TbSettings />,
         active: isActiveLink(`${workspaceUrl}/settings`),
         workspaceOnly: true,
+        hide: !isResourceAllowed(PolicyResource.Workspace, PolicyAction.Read),
       },
       {
         title: dict.consoleNavigation.myProfile,
@@ -153,10 +176,10 @@ const useConsoleNavigationLinks = (): {
         active: false,
       },
     ],
-    [locale, isActiveLink, signOut, workspaceUrl, dict]
+    [locale, isActiveLink, signOut, workspaceUrl, dict, isResourceAllowed]
   );
 
-  const usefulLinks = useMemo(
+  const usefulLinks: ConsoleNavigationLinkType[] = useMemo(
     () => [
       {
         title: dict.consoleNavigation.guides,
@@ -199,10 +222,10 @@ const useConsoleNavigationLinks = (): {
   );
 
   return {
-    hasWorkspace: workspaceLinks,
-    noWorkspace: noWorkspaceLinks,
-    settings: settingsLinks,
-    useful: usefulLinks,
+    hasWorkspace: workspaceLinks.filter((link) => !link.hide),
+    noWorkspace: noWorkspaceLinks.filter((link) => !link.hide),
+    settings: settingsLinks.filter((link) => !link.hide),
+    useful: usefulLinks.filter((link) => !link.hide),
   };
 };
 

@@ -19,11 +19,13 @@ import { useLocale } from '@/context/LocaleContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnections } from '@/hooks/useConnections';
 import { useRepositories } from '@/hooks/useRepositories';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkflow } from '@/hooks/useWorkflow';
 import useWorkflowRuns from '@/hooks/useWorkflowRuns';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { GridRow } from '@/types/internal/ListProps';
 
 /**
@@ -32,11 +34,28 @@ import { GridRow } from '@/types/internal/ListProps';
  */
 const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
   const { dict, locale } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const { workflowQuery } = useWorkflow(workflowID);
   const { repositoriesQuery } = useRepositories();
   const { currentPage, totalPages, goToPage, workflowRunsQuery } =
     useWorkflowRuns(workflowID);
   const { connectionsQuery } = useConnections();
+
+  const canViewWorkflow = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read, workflowID),
+    [isResourceAllowed, workflowID]
+  );
+
+  const canViewRuns = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.WorkflowRun,
+        PolicyAction.Read,
+        workflowID
+      ),
+    [isResourceAllowed, workflowID]
+  );
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -149,6 +168,19 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
       })) ?? [],
     [dict, locale, baseUrl, workflowRunsQuery.data?.data]
   );
+
+  if (!canViewWorkflow) {
+    return (
+      <div className='relative container mx-auto max-w-7xl'>
+        <div className='my-4 flex flex-col gap-4 p-4'>
+          <p className='text-sm opacity-60'>{dict.common.error}</p>
+          <p className='text-sm opacity-60'>
+            {dict.common.insufficientPermissions}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (workflowQuery.isError)
     return (
@@ -394,26 +426,30 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
             )}
           </div>
         )}
-        <Tooltip.TooltipProvider>
-          <NormalList
-            headers={[
-              dict.workflow.run,
-              dict.workflow.triggeredBy,
-              dict.list.status,
-              dict.list.actions,
-            ]}
-            loading={workflowRunsQuery.isLoading}
-            hideHeaders={false}
-            rows={runRows}
-          />
-        </Tooltip.TooltipProvider>
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={goToPage}
-          previousLabel={dict.common.previous}
-          nextLabel={dict.common.next}
-        />
+        {canViewRuns && (
+          <>
+            <Tooltip.TooltipProvider>
+              <NormalList
+                headers={[
+                  dict.workflow.run,
+                  dict.workflow.triggeredBy,
+                  dict.list.status,
+                  dict.list.actions,
+                ]}
+                loading={workflowRunsQuery.isLoading}
+                hideHeaders={false}
+                rows={runRows}
+              />
+            </Tooltip.TooltipProvider>
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={goToPage}
+              previousLabel={dict.common.previous}
+              nextLabel={dict.common.next}
+            />
+          </>
+        )}
       </div>
     </div>
   );

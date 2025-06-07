@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
 import {
@@ -22,6 +22,9 @@ import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 /**
  * Component to wrap the single Connection pages in.
@@ -32,8 +35,10 @@ export default function ConnectionLayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { dict } = useLocale();
   const { connectionID, connectionQuery } = useConnectionContext();
+  const { isResourceAllowed } = useResourceAllowed();
 
   // The base URL for the connection, eg. /en/workspace/workspace-slug/connections/connection-id
   const baseUrl = useBaseUrl({
@@ -51,6 +56,20 @@ export default function ConnectionLayoutWrapper({
     segmentsAfter: 1,
   });
 
+  // Make sure the user is allowed to access the connection
+  useEffect(() => {
+    if (
+      !isResourceAllowed(
+        PolicyResource.Connection,
+        PolicyAction.Read,
+        connectionID
+      )
+    ) {
+      // Redirect to the workspace connections page if the user is not allowed to access the connection
+      router.push(`${workspaceUrl}/connections`);
+    }
+  }, [isResourceAllowed, connectionID, workspaceUrl, router]);
+
   const tabs = useMemo(
     () => [
       {
@@ -58,51 +77,47 @@ export default function ConnectionLayoutWrapper({
         link: `${baseUrl}`,
         active: pathname === `${baseUrl}`,
         icon: <GoWorkflow size={14} />,
-        hidden: false,
       },
       {
         name: dict.repository.schema.schema,
         link: `${baseUrl}/schema`,
         active: pathname === `${baseUrl}/schema`,
         icon: <TbSchema size={14} />,
-        hidden: false,
       },
       {
         name: dict.connectors.connector,
         link: `${baseUrl}/connector`,
         active: pathname === `${baseUrl}/connector`,
         icon: <TbPlug size={14} />,
-        hidden: false,
       },
       {
         name: dict.documentation.documentation,
         link: `${baseUrl}/documentation`,
         active: pathname === `${baseUrl}/documentation`,
         icon: <TbFileText size={14} />,
-        hidden: false,
       },
       {
         name: dict.workspace.policies,
         link: `${baseUrl}/policies`,
         active: pathname === `${baseUrl}/policies`,
         icon: <TbShield size={14} />,
-        hidden: false,
+        hidden: !isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
       },
       {
         name: dict.common.logs,
         link: `${workspaceUrl}/logs/connection/${connectionID}`,
         active: false,
         icon: <TbBook size={14} />,
+        hidden: !isResourceAllowed(PolicyResource.AuditLog, PolicyAction.Read),
       },
       {
         name: dict.consoleNavigation.settings,
         link: `${baseUrl}/settings`,
         active: pathname === `${baseUrl}/settings`,
         icon: <TbSettings size={14} />,
-        hidden: false,
       },
     ],
-    [pathname, dict, baseUrl, workspaceUrl, connectionID]
+    [pathname, dict, baseUrl, workspaceUrl, connectionID, isResourceAllowed]
   );
 
   if (connectionQuery.isLoading)

@@ -14,6 +14,9 @@ import { useRepositoryContext } from '@/context/RepositoryContext';
 
 import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
 import { useRepositoryDiff } from '@/hooks/useRepositoryDiff';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import BranchSelector from './branches/BranchSelector';
 import DiffView from './diff/DiffVIew';
@@ -28,6 +31,7 @@ export default function RepositoryCompareSection() {
   const { dict } = useLocale();
   const { irminModal } = usePopup();
   const { repository, currentRef, defaultRef } = useRepositoryContext();
+  const { isResourceAllowed } = useResourceAllowed();
   const { repositoryBranchesQuery } = useRepositoryBranches(repository.slug);
 
   const [baseRef, setBaseRef] = useState<string | undefined>(defaultRef);
@@ -39,17 +43,53 @@ export default function RepositoryCompareSection() {
     compareRef
   );
 
-  /**
-   * Check if the refs are valid for merging.
-   */
+  const canViewDiff = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryCommit,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
   const canMerge = useMemo(() => {
     // Can't merge if base or compare ref is not set
     if (!baseRef || !compareRef) return false;
     // Can't merge if base and compare refs are the same
     if (baseRef === compareRef) return false;
+    // Can't merge if user doesn't have permission
+    if (
+      !isResourceAllowed(
+        PolicyResource.RepositoryBranch,
+        PolicyAction.Update,
+        repository.id
+      ) ||
+      !isResourceAllowed(
+        PolicyResource.RepositoryCommit,
+        PolicyAction.Create,
+        repository.id
+      ) ||
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Create,
+        repository.id
+      ) ||
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Update,
+        repository.id
+      ) ||
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Update,
+        repository.id
+      )
+    )
+      return false;
     // Otherwise, can merge
     return true;
-  }, [baseRef, compareRef]);
+  }, [baseRef, compareRef, isResourceAllowed, repository.id]);
 
   /**
    * Check if refs can be modified.
@@ -108,6 +148,16 @@ export default function RepositoryCompareSection() {
       />
     );
   }, [baseRef, compareRef, irminModal, dict, mergeRefsMutation, diffQuery]);
+
+  if (!canViewDiff) {
+    return (
+      <div className='bg-card w-full rounded-lg border border-gray-200 px-2 py-8 dark:border-gray-800'>
+        <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
+          {dict.common.insufficientPermissions}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className='relative container mx-auto flex max-w-7xl flex-col gap-4 px-2 pt-4 pb-12 md:px-4'>

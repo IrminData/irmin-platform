@@ -1,6 +1,8 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+
+import { usePathname, useRouter } from 'next/navigation';
 
 import { RiFlowChart } from 'react-icons/ri';
 import {
@@ -23,8 +25,12 @@ import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkflow } from '@/hooks/useWorkflow';
 import useWorkflowRuns from '@/hooks/useWorkflowRuns';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { TabsType } from '@/types/internal/Tabs';
 
 /**
  * Component to wrap the single Workflow pages in.
@@ -41,10 +47,12 @@ export default function WorkflowLayoutWrapper({
   children: React.ReactNode;
   workflowID: string;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
   const { dict } = useLocale();
   const { createWorkflowRunMutation } = useWorkflowRuns(workflowID);
   const { workflowQuery } = useWorkflow(workflowID);
+  const { isResourceAllowed } = useResourceAllowed();
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -61,6 +69,16 @@ export default function WorkflowLayoutWrapper({
     includeSegment: true,
     segmentsAfter: 1,
   });
+
+  // Make sure the user is allowed to access the workflow
+  useEffect(() => {
+    if (
+      !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read, workflowID)
+    ) {
+      // Redirect to the workspace workflows page if the user is not allowed to access the workflow
+      router.push(`${workspaceUrl}/workflows`);
+    }
+  }, [isResourceAllowed, workflowID, workspaceUrl, router]);
 
   if (workflowQuery.isLoading)
     return <LoadingSkeleton className='h-80 w-full' />;
@@ -81,13 +99,12 @@ export default function WorkflowLayoutWrapper({
       ? workflow?.workflowable?.branch
       : null;
 
-  const tabs = [
+  const tabs: TabsType = [
     {
       name: dict.common.overview,
       link: `${baseUrl}`,
       active: pathname === `${baseUrl}`,
       icon: <TbRun size={14} />,
-      hidden: false,
     },
     {
       name: dict.workflow.pipeline.pipeline,
@@ -101,41 +118,41 @@ export default function WorkflowLayoutWrapper({
       link: `${baseUrl}/schedule`,
       active: pathname === `${baseUrl}/schedule`,
       icon: <TbClockCog size={14} />,
-      hidden: false,
     },
     {
       name: dict.documentation.documentation,
       link: `${baseUrl}/documentation`,
       active: pathname === `${baseUrl}/documentation`,
       icon: <TbFileText size={14} />,
-      hidden: false,
     },
     {
       name: dict.workspace.policies,
       link: `${baseUrl}/policies`,
       active: pathname === `${baseUrl}/policies`,
       icon: <TbShield size={14} />,
-      hidden: false,
+      hidden: !isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
     },
     {
       name: dict.workflow.tabs.data,
       link: `${workspaceUrl}/repositories/${repositorySlug}?ref=${repositoryBranch}`,
       active: false,
       icon: <TbDatabase size={14} />,
-      hidden: !repositorySlug,
+      hidden:
+        !repositorySlug ||
+        !isResourceAllowed(PolicyResource.Repository, PolicyAction.Read),
     },
     {
       name: dict.common.logs,
       link: `${workspaceUrl}/logs/workflow/${workflow?.id}`,
       active: false,
       icon: <TbBook size={14} />,
+      hidden: !isResourceAllowed(PolicyResource.AuditLog, PolicyAction.Read),
     },
     {
       name: dict.consoleNavigation.settings,
       link: `${baseUrl}/settings`,
       active: pathname === `${baseUrl}/settings`,
       icon: <TbSettings size={14} />,
-      hidden: false,
     },
   ];
 
@@ -190,6 +207,13 @@ export default function WorkflowLayoutWrapper({
               size='lg'
               icon={<TbPlayerPlay size={14} />}
               loading={createWorkflowRunMutation.isPending}
+              disabled={
+                !isResourceAllowed(
+                  PolicyResource.WorkflowRun,
+                  PolicyAction.Create,
+                  workflowID
+                )
+              }
             >
               {dict.workflow.triggerRun}
             </Button>

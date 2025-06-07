@@ -64,6 +64,10 @@ interface SettingsFormProps<T extends FieldValues> {
   deleteButtonLabel?: string;
   /** Additional content to display in the danger zone */
   additionalDangerContent?: React.ReactNode;
+  /** Whether the form is disabled */
+  disabled?: boolean;
+  /** Whether the delete button is disabled */
+  deleteButtonDisabled?: boolean;
 }
 
 /**
@@ -81,6 +85,8 @@ export default function SettingsForm<T extends FieldValues>({
   submitButtonLabel,
   deleteButtonLabel,
   additionalDangerContent,
+  disabled,
+  deleteButtonDisabled,
 }: SettingsFormProps<T>) {
   const { dict } = useLocale();
   const {
@@ -118,13 +124,13 @@ export default function SettingsForm<T extends FieldValues>({
                       longtext={
                         field.type === 'textarea' ? { rows: 3 } : undefined
                       }
-                      disabled={submitting}
+                      disabled={submitting || disabled}
                     />
                   ) : field.type === 'select' && field.options ? (
                     <Select
                       value={formField.value}
                       onValueChange={formField.onChange}
-                      disabled={submitting}
+                      disabled={submitting || disabled}
                     >
                       <SelectTrigger className='w-full'>
                         <SelectValue placeholder={field.placeholder}>
@@ -162,7 +168,7 @@ export default function SettingsForm<T extends FieldValues>({
           type='submit'
           size='sm'
           variant='default'
-          disabled={!isDirty}
+          disabled={!isDirty || disabled}
           loading={submitting}
         >
           {submitButtonLabel}
@@ -183,6 +189,7 @@ export default function SettingsForm<T extends FieldValues>({
               variant='secondary'
               onClick={deleteItem}
               loading={deleteItemLoading}
+              disabled={disabled || deleteButtonDisabled}
             >
               {deleteButtonLabel ?? `Delete ${itemName}`}
             </Button>

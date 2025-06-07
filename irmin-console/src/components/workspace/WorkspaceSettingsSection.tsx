@@ -10,6 +10,10 @@ import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+
 /**
  * General Workspace settings section
  *
@@ -26,6 +30,8 @@ const WorkspaceSettingsSection = () => {
     deleteMutation,
     leaveMutation,
   } = useWorkspaceContext();
+
+  const { isResourceAllowed } = useResourceAllowed();
 
   const loading =
     workspaceQuery?.isLoading ||
@@ -91,6 +97,12 @@ const WorkspaceSettingsSection = () => {
             {dict.workspaceSwitcher.leaveWorkspace}
           </Button>
         </>
+      }
+      disabled={
+        !isResourceAllowed(PolicyResource.Workspace, PolicyAction.Update)
+      }
+      deleteButtonDisabled={
+        !isResourceAllowed(PolicyResource.Workspace, PolicyAction.Delete)
       }
     />
   );

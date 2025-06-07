@@ -9,15 +9,34 @@ import WorkflowList from '@/components/workflow/WorkflowList';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkflows } from '@/hooks/useWorkflows';
+
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 /**
  * Connection Settings section component
  */
 const ConnectionSection = () => {
   const { dict } = useLocale();
+  const { isResourceAllowed } = useResourceAllowed();
   const { connectionID, connectionQuery } = useConnectionContext();
   const { workflowsQuery } = useWorkflows();
+
+  const canViewConnection = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.Connection,
+        PolicyAction.Read,
+        connectionID
+      ),
+    [isResourceAllowed, connectionID]
+  );
+
+  const canViewWorkflows = useMemo(
+    () => isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read),
+    [isResourceAllowed]
+  );
 
   const relatedWorkflows = useMemo(
     () =>
@@ -36,6 +55,19 @@ const ConnectionSection = () => {
       }),
     [workflowsQuery.data?.data, connectionID]
   );
+
+  if (!canViewConnection) {
+    return (
+      <div className='relative container mx-auto max-w-7xl'>
+        <div className='my-4 flex flex-col gap-4 p-4'>
+          <p className='text-sm opacity-60'>{dict.common.error}</p>
+          <p className='text-sm opacity-60'>
+            {dict.common.insufficientPermissions}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (connectionQuery.isLoading) {
     return <LoadingSkeleton className='h-80 w-full' />;
@@ -66,10 +98,12 @@ const ConnectionSection = () => {
             </div>
           ))}
         </div>
-        <WorkflowList
-          workflows={relatedWorkflows ?? []}
-          loading={workflowsQuery.isLoading}
-        />
+        {canViewWorkflows && (
+          <WorkflowList
+            workflows={relatedWorkflows ?? []}
+            loading={workflowsQuery.isLoading}
+          />
+        )}
       </div>
     </div>
   );
