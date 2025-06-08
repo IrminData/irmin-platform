@@ -19,36 +19,53 @@ import (
 func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !dictOk || !workspaceOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !dictOk || !workspaceOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Get all stored queries for the workspace
-	queries, getStoredQueriesByWorkspaceIDErr := api.DB.GetStoredQueriesByWorkspaceID(workspace.ID)
-	if getStoredQueriesByWorkspaceIDErr != nil {
-		api.Logger.Error("Error fetching stored queries", "error", getStoredQueriesByWorkspaceIDErr)
+	// Get all queries in the workspace.
+	queries, getQueriesErr := api.DB.GetStoredQueriesByWorkspaceID(workspace.ID)
+	if getQueriesErr != nil {
+		api.Logger.Error("Error fetching queries", "error", getQueriesErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// Format the stored queries
-	formattedIndex, formatIndexErr := formatter.FormatIndexResponse(
+	// Filter queries based on user permissions
+	filteredQueries, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceQuery,
+		db.PolicyActionRead,
 		queries,
-		formatter.FormatStoredQueryResponse,
-		api.SQIDManager,
+		func(q db.StoredQuery) uint { return q.ID },
 	)
-	if formatIndexErr != nil {
-		api.Logger.Error("Error formatting stored queries", "error", formatIndexErr)
+	if err != nil {
+		api.Logger.Error("Error filtering queries by permissions", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// Send the response
+	// Structure the response.
+	queriesResponse, formatErr := formatter.FormatIndexResponse(
+		filteredQueries,
+		formatter.FormatStoredQueryResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		api.Logger.Error("Error formatting queries", "error", formatErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Return the response.
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: formattedIndex,
+		Data: queriesResponse,
 	})
 }
 

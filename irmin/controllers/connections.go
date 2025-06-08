@@ -16,7 +16,8 @@ import (
 func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !workspaceOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !dictOk || !workspaceOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -29,9 +30,26 @@ func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 		})
 	}
 
+	// Filter connections based on user permissions
+	filteredConnections, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceConnection,
+		db.PolicyActionRead,
+		connections,
+		func(c db.Connection) uint { return c.ID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering connections by permissions", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Structure the response.
 	connectionsResponse, formatErr := formatter.FormatIndexResponse(
-		connections,
+		filteredConnections,
 		formatter.FormatConnectionResponse,
 		api.SQIDManager,
 	)

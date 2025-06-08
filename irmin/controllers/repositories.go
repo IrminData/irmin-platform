@@ -59,42 +59,49 @@ func (api *APIControllers) validateRepositoryParams(c fiber.Ctx) (
 }
 
 func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !workspaceOk {
-		api.Logger.Error(
-			"Error validating repository parameters",
-			"error",
-			errors.New("dictionary or workspace not found in context"),
-		)
+	repositoryLocalParams, err := api.validateRepositoryParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating repository parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Get all repositories in the workspace.
-	repositories, getRepositoriesErr := api.DB.GetRepositoriesInWorkspace(workspace.ID)
+	repositories, getRepositoriesErr := api.DB.GetRepositoriesInWorkspace(repositoryLocalParams.workspace.ID)
 	if getRepositoriesErr != nil {
 		api.Logger.Error("Error fetching repositories", "error", getRepositoriesErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
+			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+		})
+	}
+
+	// Filter repositories based on user permissions
+	filteredRepositories, err := lib.IsAllowedFilter(
+		api.permissionService,
+		repositoryLocalParams.user,
+		repositoryLocalParams.workspace,
+		db.PolicyResourceRepository,
+		db.PolicyActionRead,
+		repositories,
+		func(r db.Repository) uint { return r.ID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering repositories by permissions", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
 		})
 	}
 
 	// Structure the response.
-	var repositoriesResponse []irminmodels.Repository
-	for _, repository := range repositories {
-		// Format the repository response
-		repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
-			&repository,
-			api.SQIDManager,
-		)
-		if formatRepositoryResponseErr != nil {
-			api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
-		}
-		// Append the repository to the response
-		repositoriesResponse = append(repositoriesResponse, *repositoryResponse)
+	repositoriesResponse, formatErr := formatter.FormatIndexResponse(
+		filteredRepositories,
+		formatter.FormatRepositoryResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		api.Logger.Error("Error formatting repositories", "error", formatErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+		})
 	}
 
 	// Return the response.

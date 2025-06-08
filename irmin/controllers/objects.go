@@ -75,30 +75,66 @@ func (api *APIControllers) validateObjectParams(c fiber.Ctx) (
 
 // ObjectsIndex handles retrieving an object from a repository.
 func (api *APIControllers) ObjectsIndex(c fiber.Ctx) error {
-	objectLocalParams, err := api.validateObjectParams(c)
+	params, err := api.validateObjectParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating object parameters", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(params.dict, "invalid_request")},
+		})
 	}
 
-	if objectLocalParams.object == nil {
-		api.Logger.Error("Error retrieving object from Data Engine")
+	// Get the object from the data engine
+	object, err := lib.GetObject(
+		c.Context(),
+		params.locale,
+		api.DB,
+		api.Logger,
+		api.Env,
+		params.workspace,
+		params.repository,
+		params.object.Path,
+		params.objectRef,
+		false,
+	)
+	if err != nil {
+		api.Logger.Error("Error getting object", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(params.dict, "error_occurred")},
 		})
 	}
 
-	// Format the object for the response.
-	repositoryObject, err := formatter.FormatRepositoryObjectResponse(objectLocalParams.object, api.SQIDManager)
+	// Filter objects based on user permissions
+	filteredObjects, err := lib.IsAllowedFilter(
+		api.permissionService,
+		params.user,
+		params.workspace,
+		db.PolicyResourceRepositoryObject,
+		db.PolicyActionRead,
+		[]db.RepositoryObject{*object},
+		func(o db.RepositoryObject) uint { return o.RepositoryID },
+	)
 	if err != nil {
-		api.Logger.Error("Error formatting repository object", "error", err)
+		api.Logger.Error("Error filtering objects by permissions", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(params.dict, "error_occurred")},
 		})
 	}
 
+	// Structure the response
+	objectsResponse, formatErr := formatter.FormatIndexResponse(
+		filteredObjects,
+		formatter.FormatRepositoryObjectResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		api.Logger.Error("Error formatting objects", "error", formatErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(params.dict, "error_occurred")},
+		})
+	}
+
+	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: repositoryObject,
+		Data: objectsResponse,
 	})
 }
 

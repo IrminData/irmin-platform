@@ -37,10 +37,12 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 ) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		// Get the local variables
-		_, workspace, user, err := api.permissionsMiddlewareGetLocalVariables(c)
+		dict, workspace, user, err := api.permissionsMiddlewareGetLocalVariables(c)
 		if err != nil {
 			api.Logger.Error("Error getting local variables", "error", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "error_occurred")},
+			})
 		}
 
 		// Get resource ID if needed
@@ -53,7 +55,9 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 		allowed, err := api.permissionService.IsAllowed(user, workspace, resource, resourceID, action)
 		if err != nil {
 			api.Logger.Error("Error checking permission", "error", err)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "error_occurred")},
+			})
 		}
 		if !allowed {
 			api.Logger.Info("User does not have permission",
@@ -62,7 +66,9 @@ func (api *APIMiddlewares) createPermissionMiddleware(
 				"user_id", user.ID,
 				"workspace_id", workspace.ID,
 				"resource_id", resourceID)
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{})
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "insufficient_permissions")},
+			})
 		}
 
 		return c.Next()

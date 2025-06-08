@@ -17,23 +17,40 @@ import (
 func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !dictOk || !workspaceOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !dictOk || !workspaceOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Get all users in the workspace.
-	workspaceUsers, getUsersInWorkspaceErr := api.DB.GetUsersInWorkspace(workspace.ID)
-	if getUsersInWorkspaceErr != nil {
-		api.Logger.Error("Error fetching users", "error", getUsersInWorkspaceErr)
+	workspaceUsers, getUsersErr := api.DB.GetUsersInWorkspace(workspace.ID)
+	if getUsersErr != nil {
+		api.Logger.Error("Error fetching users", "error", getUsersErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Filter users based on user permissions
+	filteredUsers, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceUser,
+		db.PolicyActionRead,
+		workspaceUsers,
+		func(u db.WorkspaceUser) uint { return u.UserID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering users by permissions", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Structure the response.
 	usersResponse, formatErr := formatter.FormatIndexResponse(
-		workspaceUsers,
+		filteredUsers,
 		formatter.FormatWorkspaceUserResponse,
 		api.SQIDManager,
 	)

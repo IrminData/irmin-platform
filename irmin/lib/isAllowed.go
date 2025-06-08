@@ -247,7 +247,7 @@ func checkPoliciesOptimized(
 
 	// Add conditions for different principals
 	var conditions []string
-	var values []interface{}
+	var values []any
 
 	// User-specific policies
 	conditions = append(conditions, "(principal = ? AND workspace_user_id = ?)")

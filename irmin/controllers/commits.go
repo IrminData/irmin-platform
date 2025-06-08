@@ -18,7 +18,8 @@ func (api *APIControllers) CommitsIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !localeOk || !dictOk || !workspaceOk || !repositoryOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -61,6 +62,23 @@ func (api *APIControllers) CommitsIndex(c fiber.Ctx) error {
 		})
 	}
 
+	// Filter commits based on user permissions
+	filteredCommits, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceRepository,
+		db.PolicyActionRead,
+		commits,
+		func(_ irminmodels.Commit) uint { return repository.ID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering commits by permissions", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Return the commits with pagination
 	if lakefsPagination != nil {
 		paginationResponse := buildCursorPaginationResponse(
@@ -71,12 +89,12 @@ func (api *APIControllers) CommitsIndex(c fiber.Ctx) error {
 		)
 		return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 			Pagination: paginationResponse,
-			Data:       commits,
+			Data:       filteredCommits,
 		})
 	}
 
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: commits,
+		Data: filteredCommits,
 	})
 }
 

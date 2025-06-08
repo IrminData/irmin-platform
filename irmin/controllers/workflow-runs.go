@@ -71,11 +71,13 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
+	// Get the dictionary, workflow, user and workspace from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
-	if !dictOk || !workflowOk {
+	if !dictOk || !workflowOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -107,9 +109,26 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 		})
 	}
 
+	// Filter workflow runs based on user permissions
+	filteredRuns, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceWorkflowRun,
+		db.PolicyActionRead,
+		runs,
+		func(r db.WorkflowRun) uint { return r.WorkflowID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering workflow runs by permissions", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Format the workflow runs for the response.
 	formattedRuns, formatErr := formatter.FormatIndexResponse(
-		runs,
+		filteredRuns,
 		formatter.FormatWorkflowRunResponse,
 		api.SQIDManager,
 	)

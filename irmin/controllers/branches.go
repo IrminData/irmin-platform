@@ -17,7 +17,9 @@ func (api *APIControllers) BranchesIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+	user, userOk := c.Locals("user").(*db.User)
+
+	if !localeOk || !dictOk || !workspaceOk || !repositoryOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -39,8 +41,26 @@ func (api *APIControllers) BranchesIndex(c fiber.Ctx) error {
 		})
 	}
 
+	// Filter branches based on user permissions
+
+	filteredBranches, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceRepository,
+		db.PolicyActionRead,
+		branches,
+		func(_ irminmodels.Branch) uint { return repository.ID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering branches by permissions", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: branches,
+		Data: filteredBranches,
 	})
 }
 

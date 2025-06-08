@@ -11,7 +11,7 @@ import (
 )
 
 // getWorkflowable retrieves the appropriate workflowable based on the workflow type.
-func getWorkflowable(d *db.Database, workflow *db.Workflow) (interface{}, error) {
+func getWorkflowable(d *db.Database, workflow *db.Workflow) (any, error) {
 	switch workflow.Type {
 	case db.WorkflowableTypeImport:
 		return d.GetImportWorkflowableByID(*workflow.ImportID)

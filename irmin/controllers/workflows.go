@@ -21,8 +21,9 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	// Get the dictionary and workspace from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	user, userOk := c.Locals("user").(*db.User)
 
-	if !dictOk || !workspaceOk {
+	if !dictOk || !workspaceOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -56,21 +57,39 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 		}
 	}
 
-	// Structure the response.
-	var workflowsResponse []irminmodels.Workflow
-	for _, workflow := range workflows {
-		workflowResponse, formatWorkflowResponseErr := formatter.FormatWorkflowResponse(
-			api.DB,
-			&workflow,
-			api.SQIDManager,
-		)
-		if formatWorkflowResponseErr != nil {
-			api.Logger.Error("Error getting workflow response", "error", formatWorkflowResponseErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
-		}
-		workflowsResponse = append(workflowsResponse, *workflowResponse)
+	// Filter workflows based on user permissions
+	filteredWorkflows, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceWorkflow,
+		db.PolicyActionRead,
+		workflows,
+		func(w db.Workflow) uint { return w.ID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering workflows by permissions", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Create a wrapper function that adapts FormatWorkflowResponse to the expected signature
+	formatWorkflow := func(workflow *db.Workflow, sqidManager *utils.SQIDManager) (*irminmodels.Workflow, error) {
+		return formatter.FormatWorkflowResponse(api.DB, workflow, sqidManager)
+	}
+
+	// Format the response using FormatIndexResponse
+	workflowsResponse, err := formatter.FormatIndexResponse(
+		filteredWorkflows,
+		formatWorkflow,
+		api.SQIDManager,
+	)
+	if err != nil {
+		api.Logger.Error("Error formatting workflow response", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
 	}
 
 	// Return the response.

@@ -19,15 +19,32 @@ import (
 func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !dictOk || !workspaceOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !dictOk || !workspaceOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Fetch invites
-	invites, getInvitesByWorkspaceErr := api.DB.GetInvitesByWorkspace(workspace.ID)
-	if getInvitesByWorkspaceErr != nil {
-		api.Logger.Error("Error fetching invites", "error", getInvitesByWorkspaceErr)
+	// Get all invites in the workspace.
+	invites, getInvitesErr := api.DB.GetInvitesByWorkspace(workspace.ID)
+	if getInvitesErr != nil {
+		api.Logger.Error("Error fetching invites", "error", getInvitesErr)
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Filter invites based on user permissions
+	filteredInvites, err := lib.IsAllowedFilter(
+		api.permissionService,
+		user,
+		workspace,
+		db.PolicyResourceInvite,
+		db.PolicyActionRead,
+		invites,
+		func(i db.Invite) uint { return i.ID },
+	)
+	if err != nil {
+		api.Logger.Error("Error filtering invites by permissions", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -35,7 +52,7 @@ func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 
 	// Structure the response.
 	invitesResponse, formatErr := formatter.FormatIndexResponse(
-		invites,
+		filteredInvites,
 		formatter.FormatInviteResponse,
 		api.SQIDManager,
 	)
