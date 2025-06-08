@@ -8,6 +8,7 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// GetObjectAtPath fetches the object at the given path and ref.
 func (c *Client) GetObjectAtPath(
 	workspace, repository, path, ref string,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
@@ -28,6 +29,7 @@ func (c *Client) GetObjectAtPath(
 	return &objects, apiResp, nil
 }
 
+// GetObjectHistory fetches the history of an object at the given path and ref.
 func (c *Client) GetObjectHistory(
 	workspace, repository, path, ref string,
 ) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
@@ -48,6 +50,7 @@ func (c *Client) GetObjectHistory(
 	return commits, apiResp, nil
 }
 
+// GetObjectSchema fetches the schema of an object at the given path and ref.
 func (c *Client) GetObjectSchema(
 	workspace, repository, path, ref string,
 ) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
@@ -68,6 +71,7 @@ func (c *Client) GetObjectSchema(
 	return &schema, apiResp, nil
 }
 
+// UploadObject uploads a file to the given path and ref.
 func (c *Client) UploadObject(
 	workspace, repository, ref, path string,
 	files map[string][]byte,
@@ -103,6 +107,7 @@ func (c *Client) UploadObject(
 	return &object, apiResp, nil
 }
 
+// GetObjectContent fetches the content of an object at the given path and ref.
 func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
 	apiResp, err := c.FetchBinary(RequestOptions{
 		Method: http.MethodGet,
@@ -118,6 +123,27 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 		return nil, fmt.Errorf("fetch content error: %w", err)
 	}
 	return apiResp, nil
+}
+
+// GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref.
+func (c *Client) GetObjectStructuredContent(
+	workspace, repository, path, ref string,
+) (map[string]any, *irminmodels.IrminAPIResponse, error) {
+	var structuredContent map[string]any
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/content/structured?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+	}, &structuredContent)
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetch structured content error: %w", err)
+	}
+	return structuredContent, apiResp, nil
 }
 
 // DownloadObject creates a zip file of the object at the given path and ref and returns the binary data.
