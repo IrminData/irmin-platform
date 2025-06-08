@@ -503,6 +503,71 @@ func (api *APIControllers) ObjectsContent(c fiber.Ctx) error {
 	)
 }
 
+// ObjectsStructuredContent handles retrieving the structured content of an object.
+func (api *APIControllers) ObjectsStructuredContent(c fiber.Ctx) error {
+	objectLocalParams, err := api.validateObjectParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating object parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Make sure the object is a structured file
+	if objectLocalParams.object.Type != irminmodels.ObjectTypeStructured {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "invalid_request")},
+		})
+	}
+
+	// Initialize Data Engine client
+	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.Error("error creating data engine client", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
+
+	// Get the content of the object in the repository at ref
+	content, getObjectContentErr := dataEngine.GetObjectContent(
+		objectLocalParams.workspace.Slug,
+		objectLocalParams.repository.Slug,
+		objectLocalParams.object.Path,
+		objectLocalParams.objectRef,
+	)
+	if getObjectContentErr != nil {
+		api.Logger.Error("Error retrieving object content from Data Engine", "error", getObjectContentErr)
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
+
+	// Parse the file content
+	parsedResults, parseStructuredFileErr := lib.ParseStructuredFiles(
+		c.Context(),
+		map[string][]byte{objectLocalParams.object.Path: content},
+		api.Env,
+		api.Logger,
+	)
+	if parseStructuredFileErr != nil {
+		api.Logger.Error("Error parsing structured files", "error", parseStructuredFileErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
+
+	// If there are no results, return a 404
+	if len(parsedResults) == 0 {
+		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
+		})
+	}
+
+	// Return the results
+	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Data: parsedResults[objectLocalParams.object.Path],
+	})
+}
+
 // ObjectsDownload handles downloading either a single object or all descendants of a group, zipping them, and sending as a download.
 func (api *APIControllers) ObjectsDownload(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)

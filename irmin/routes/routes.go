@@ -398,6 +398,11 @@ func RegisterAPIRoutes(
 		apiControllers.ObjectsContent,
 	)
 	objects.Get(
+		"/content/structured",
+		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ObjectsStructuredContent,
+	)
+	objects.Get(
 		"/download",
 		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.ObjectsDownload,

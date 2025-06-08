@@ -56,9 +56,11 @@ func TestParseStructuredFiles_ValidJSONFormats(t *testing.T) {
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			results, err := lib.ParseStructuredFiles(tc.files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, tc.files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)
@@ -119,9 +121,11 @@ this is not CSV at all!
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			results, err := lib.ParseStructuredFiles(tc.files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, tc.files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)
@@ -174,9 +178,11 @@ Jane	25`),
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			results, err := lib.ParseStructuredFiles(tc.files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, tc.files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)
@@ -260,9 +266,11 @@ func TestParseStructuredFiles_AdvancedFormats(t *testing.T) {
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			results, err := lib.ParseStructuredFiles(tc.files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, tc.files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)
@@ -312,9 +320,11 @@ age: 30
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			results, err := lib.ParseStructuredFiles(tc.files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, tc.files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)
@@ -337,7 +347,9 @@ func TestParseStructuredFiles_MultipleFiles(t *testing.T) {
 		"test4.jsonl": []byte(`{"name": "John", "age": 30}`),
 	}
 
-	results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+	ctx := t.Context()
+
+	results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 
@@ -376,10 +388,11 @@ func TestParseStructuredFiles_EdgeCases(t *testing.T) {
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			results, err := lib.ParseStructuredFiles(tc.files, ts.Env, ts.Logger)
-
+			results, err := lib.ParseStructuredFiles(ctx, tc.files, ts.Env, ts.Logger)
 			if tc.shouldError {
 				assert.Error(t, err)
 				assert.Nil(t, results)
@@ -402,7 +415,9 @@ func TestParseStructuredFilesEmptyContent(t *testing.T) {
 		"empty.jsonl": []byte(``),
 	}
 
-	results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+	ctx := t.Context()
+
+	results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 
@@ -444,7 +459,9 @@ func TestParseStructuredFilesLargeData(t *testing.T) {
 		"large.tsv":   []byte(largeTSV),
 	}
 
-	results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+	ctx := t.Context()
+
+	results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 

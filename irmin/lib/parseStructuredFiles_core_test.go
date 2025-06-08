@@ -49,13 +49,15 @@ func TestCoreSupportedFormats(t *testing.T) {
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			files := map[string][]byte{
 				tc.fileName: tc.content,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 			assert.NoError(t, err)
 			assert.NotNil(t, results)
 
@@ -94,6 +96,7 @@ func TestCoreSupportedFormats(t *testing.T) {
 // TestErrorHandlingCore tests error handling for core functionality.
 func TestErrorHandlingCore(t *testing.T) {
 	ts := lib.GetTestSuite()
+	ctx := t.Context()
 
 	testCases := []struct {
 		name        string
@@ -133,7 +136,7 @@ func TestErrorHandlingCore(t *testing.T) {
 				tc.fileName: tc.content,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)

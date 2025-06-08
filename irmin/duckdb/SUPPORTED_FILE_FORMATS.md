@@ -88,7 +88,7 @@ files := map[string][]byte{
     "data.parquet":  parquetData,
 }
 
-results, err := lib.ParseStructuredFiles(files, env)
+results, err := lib.ParseStructuredFiles(ctx, files, env, logger)
 ```
 
 ## Extension Requirements

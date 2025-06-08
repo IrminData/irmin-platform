@@ -12,6 +12,7 @@ import (
 // without getting into complex data validation.
 func TestBasicFileFormatRecognition(t *testing.T) {
 	ts := lib.GetTestSuite()
+	ctx := t.Context()
 
 	testCases := []struct {
 		name        string
@@ -77,7 +78,7 @@ func TestBasicFileFormatRecognition(t *testing.T) {
 				tc.fileName: tc.content,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)
@@ -128,13 +129,15 @@ func TestPlatformSpecificFormats(t *testing.T) {
 		},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			files := map[string][]byte{
 				tc.fileName: tc.content,
 			}
 
-			_, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			_, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			// For platform-specific formats, we expect either success (if extension available)
 			// or a descriptive error message (if not supported on platform)

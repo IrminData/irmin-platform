@@ -47,6 +47,8 @@ func TestGetFileExtension(t *testing.T) {
 		{"No extension", "README", ""},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Use reflection or test the actual function if it's exported
@@ -56,7 +58,7 @@ func TestGetFileExtension(t *testing.T) {
 			}
 
 			ts := lib.GetTestSuite()
-			_, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			_, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			// For supported extensions, we shouldn't get "unsupported file type" error
 			if tc.expectedExt != "" {
@@ -71,6 +73,8 @@ func TestGetFileExtension(t *testing.T) {
 
 // TestFileFormatHandling tests how different file formats are processed.
 func TestFileFormatHandling(t *testing.T) {
+	ctx := t.Context()
+
 	ts := lib.GetTestSuite()
 
 	testCases := []struct {
@@ -145,7 +149,7 @@ func TestFileFormatHandling(t *testing.T) {
 				tc.fileName: tc.content,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)
@@ -161,6 +165,8 @@ func TestFileFormatHandling(t *testing.T) {
 
 // TestAdvancedFormatRecognition tests recognition of advanced file formats.
 func TestAdvancedFormatRecognition(t *testing.T) {
+	ctx := t.Context()
+
 	ts := lib.GetTestSuite()
 
 	// These tests focus on format recognition rather than actual parsing
@@ -188,7 +194,7 @@ func TestAdvancedFormatRecognition(t *testing.T) {
 				tc.fileName: tc.content,
 			}
 
-			_, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			_, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			if tc.expectSuccess {
 				// Excel formats fall back to CSV parsing, so they should succeed
@@ -213,6 +219,8 @@ func TestAdvancedFormatRecognition(t *testing.T) {
 
 // TestErrorMessages tests that error messages are informative.
 func TestErrorMessages(t *testing.T) {
+	ctx := t.Context()
+
 	ts := lib.GetTestSuite()
 
 	testCases := []struct {
@@ -247,7 +255,7 @@ func TestErrorMessages(t *testing.T) {
 				tc.fileName: tc.content,
 			}
 
-			_, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			_, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 			assert.Error(t, err)
 
 			// Check that the error message contains at least one of the expected text fragments
@@ -266,6 +274,8 @@ func TestErrorMessages(t *testing.T) {
 
 // TestMultipleFileProcessing tests processing multiple files simultaneously.
 func TestMultipleFileProcessing(t *testing.T) {
+	ctx := t.Context()
+
 	ts := lib.GetTestSuite()
 
 	files := map[string][]byte{
@@ -283,7 +293,7 @@ func TestMultipleFileProcessing(t *testing.T) {
 name: test`),
 	}
 
-	results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+	results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 	assert.Equal(t, len(files), len(results))
@@ -308,6 +318,8 @@ name: test`),
 
 // TestEmptyAndMinimalFiles tests edge cases with empty or minimal files.
 func TestEmptyAndMinimalFiles(t *testing.T) {
+	ctx := t.Context()
+
 	ts := lib.GetTestSuite()
 
 	testCases := []struct {
@@ -354,7 +366,7 @@ func TestEmptyAndMinimalFiles(t *testing.T) {
 				tc.fileName: tc.content,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			if tc.shouldError {
 				assert.Error(t, err)

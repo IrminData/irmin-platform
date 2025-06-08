@@ -125,7 +125,7 @@ func TestCoreFileFormats(t *testing.T) {
 			localTS := lib.GetTestSuite()
 
 			// Use the context for the operation
-			results, err := lib.ParseStructuredFilesWithContext(ctx, files, localTS.Env, localTS.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, localTS.Env, localTS.Logger)
 
 			if tc.shouldError {
 				// For Parquet and ORC, we expect errors due to invalid data
@@ -166,7 +166,7 @@ func runAdvancedAnalyticsTestCase(t *testing.T, tc struct {
 	localTS.Env.SkipOptionalDuckDBExtensions = true
 
 	// Use the context-aware version of ParseStructuredFiles
-	results, err := lib.ParseStructuredFilesWithContext(ctx, files, localTS.Env, localTS.Logger)
+	results, err := lib.ParseStructuredFiles(ctx, files, localTS.Env, localTS.Logger)
 
 	if err != nil {
 		handleAdvancedAnalyticsError(t, tc, err)
@@ -284,6 +284,8 @@ func TestOfficeFormats(t *testing.T) {
 		{"Excel XLSB", "test.xlsb", "excel", true},
 	}
 
+	ctx := t.Context()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			testContent := []byte(`test,data\n1,value`)
@@ -291,7 +293,7 @@ func TestOfficeFormats(t *testing.T) {
 				tc.fileName: testContent,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			if err != nil && tc.skipOnError && strings.Contains(err.Error(), "not supported on this platform") {
 				t.Skipf("Skipping %s - format not supported on this platform: %v", tc.name, err)
@@ -309,6 +311,8 @@ func TestOfficeFormats(t *testing.T) {
 func TestUnsupportedFormats(t *testing.T) {
 	ts := lib.GetTestSuite()
 
+	ctx := t.Context()
+
 	testCases := []struct {
 		name     string
 		fileName string
@@ -325,7 +329,7 @@ func TestUnsupportedFormats(t *testing.T) {
 				tc.fileName: testContent,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 			assert.Error(t, err)
 			assert.Nil(t, results)
 			assert.True(t, strings.Contains(err.Error(), "unsupported file type"))
@@ -336,6 +340,7 @@ func TestUnsupportedFormats(t *testing.T) {
 // TestComplexFileNames tests parsing with complex file names and paths.
 func TestComplexFileNames(t *testing.T) {
 	ts := lib.GetTestSuite()
+	ctx := t.Context()
 
 	testCases := []struct {
 		name        string
@@ -372,7 +377,7 @@ func TestComplexFileNames(t *testing.T) {
 				tc.fileName: tc.content,
 			}
 
-			results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+			results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 
 			if err != nil {
 				if tc.skipOnError {
@@ -399,6 +404,7 @@ func TestComplexFileNames(t *testing.T) {
 // TestLargeFileProcessing tests processing of larger files.
 func TestLargeFileProcessing(t *testing.T) {
 	ts := lib.GetTestSuite()
+	ctx := t.Context()
 
 	// Generate a larger CSV file (1000 rows)
 	var csvBuffer bytes.Buffer
@@ -423,7 +429,7 @@ func TestLargeFileProcessing(t *testing.T) {
 		"large_data.json": jsonBuffer.Bytes(),
 	}
 
-	results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+	results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 
@@ -458,7 +464,7 @@ func runErrorHandlingTestCase(t *testing.T, tc struct {
 	localTS := lib.GetTestSuite()
 	localTS.Env.SkipOptionalDuckDBExtensions = true
 
-	results, err := lib.ParseStructuredFilesWithContext(ctx, tc.files, localTS.Env, localTS.Logger)
+	results, err := lib.ParseStructuredFiles(ctx, tc.files, localTS.Env, localTS.Logger)
 
 	switch {
 	case err != nil && tc.skipOnError:
@@ -527,6 +533,7 @@ func TestErrorHandlingAndRecovery(t *testing.T) {
 // TestLoggerIntegration tests that the logger is properly used.
 func TestLoggerIntegration(t *testing.T) {
 	ts := lib.GetTestSuite()
+	ctx := t.Context()
 
 	// Create a buffer to capture log output
 	var logBuffer bytes.Buffer
@@ -540,7 +547,7 @@ func TestLoggerIntegration(t *testing.T) {
 	}
 
 	// This should try to load the Avro extension and possibly log warnings
-	_, err := lib.ParseStructuredFiles(files, ts.Env, testLogger)
+	_, err := lib.ParseStructuredFiles(ctx, files, ts.Env, testLogger)
 
 	// We expect this to fail due to invalid content, but extensions should have been attempted
 	assert.Error(t, err)
@@ -552,6 +559,8 @@ func TestLoggerIntegration(t *testing.T) {
 
 // TestConcurrentProcessing tests concurrent file processing.
 func TestConcurrentProcessing(t *testing.T) {
+	ctx := t.Context()
+
 	// Create multiple small files for concurrent processing
 	files := map[string][]byte{
 		"file1.csv": []byte(`id,name
@@ -579,7 +588,7 @@ func TestConcurrentProcessing(t *testing.T) {
 			// Create a new test suite for each goroutine to get a fresh environment
 			localTS := lib.GetTestSuite()
 			localTS.Env.SkipOptionalDuckDBExtensions = true
-			_, err := lib.ParseStructuredFiles(files, localTS.Env, localTS.Logger)
+			_, err := lib.ParseStructuredFiles(ctx, files, localTS.Env, localTS.Logger)
 			results <- err
 		}()
 	}
@@ -678,6 +687,7 @@ func verifyDataIntegrity(t *testing.T, expected, actual map[string]any) {
 // TestDataIntegrity tests that data is correctly parsed and preserved.
 func TestDataIntegrity(t *testing.T) {
 	ts := lib.GetTestSuite()
+	ctx := t.Context()
 
 	// Create test data with various data types
 	testData := []map[string]any{
@@ -700,7 +710,7 @@ func TestDataIntegrity(t *testing.T) {
 		"integrity_test.json": jsonBuffer.Bytes(),
 	}
 
-	results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+	results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 
@@ -716,6 +726,7 @@ func TestDataIntegrity(t *testing.T) {
 // TestMemoryUsage tests memory efficiency with multiple files.
 func TestMemoryUsage(t *testing.T) {
 	ts := lib.GetTestSuite()
+	ctx := t.Context()
 
 	// Create multiple medium-sized files
 	files := make(map[string][]byte)
@@ -730,7 +741,7 @@ func TestMemoryUsage(t *testing.T) {
 		files[fmt.Sprintf("dataset_%d.csv", i)] = buffer.Bytes()
 	}
 
-	results, err := lib.ParseStructuredFiles(files, ts.Env, ts.Logger)
+	results, err := lib.ParseStructuredFiles(ctx, files, ts.Env, ts.Logger)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 	assert.Equal(t, 10, len(results))

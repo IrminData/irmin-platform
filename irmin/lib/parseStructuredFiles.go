@@ -289,8 +289,21 @@ func processFile(qc *duckdb.QueryClient, fileName string, content []byte) ([]map
 	return processRows(rows, fileName)
 }
 
-// ParseStructuredFilesWithContext is a context-aware version of ParseStructuredFiles.
-func ParseStructuredFilesWithContext(
+// ParseStructuredFiles parses structured data files into a map of file names to arrays of maps.
+// Supported formats:
+//   - JSON (.json)
+//   - JSONL/NDJSON (.jsonl, .ndjson)
+//   - CSV (.csv)
+//   - TSV/TAB (.tsv, .tab)
+//   - XML (.xml)
+//   - YAML (.yaml, .yml)
+//   - Parquet (.parquet)
+//   - ORC (.orc)
+//   - Excel (.xlsx, .xls, .xlsm, .xlsb)
+//   - Avro (.avro)
+//   - Delta Lake (.delta)
+//   - Iceberg (.iceberg)
+func ParseStructuredFiles(
 	ctx context.Context,
 	files map[string][]byte,
 	env *utils.CoreAPIEnv,
@@ -318,26 +331,4 @@ func ParseStructuredFilesWithContext(
 	}
 
 	return parsedResults, nil
-}
-
-// ParseStructuredFiles parses structured data files into a map of file names to arrays of maps.
-// Supported formats:
-//   - JSON (.json)
-//   - JSONL/NDJSON (.jsonl, .ndjson)
-//   - CSV (.csv)
-//   - TSV/TAB (.tsv, .tab)
-//   - XML (.xml)
-//   - YAML (.yaml, .yml)
-//   - Parquet (.parquet)
-//   - ORC (.orc)
-//   - Excel (.xlsx, .xls, .xlsm, .xlsb)
-//   - Avro (.avro)
-//   - Delta Lake (.delta)
-//   - Iceberg (.iceberg)
-func ParseStructuredFiles(
-	files map[string][]byte,
-	env *utils.CoreAPIEnv,
-	logger *slog.Logger,
-) (map[string][]map[string]any, error) {
-	return ParseStructuredFilesWithContext(context.Background(), files, env, logger)
 }
