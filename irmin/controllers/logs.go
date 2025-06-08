@@ -123,8 +123,8 @@ func (api *APIControllers) buildLogsResponse(
 	events []irminmodels.LogEvent,
 	total int64,
 	queryParams *logsQueryParams,
-) map[string]interface{} {
-	return map[string]interface{}{
+) map[string]any {
+	return map[string]any{
 		"data":        events,
 		"total":       total,
 		"per_page":    queryParams.perPage,

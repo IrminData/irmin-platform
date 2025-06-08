@@ -10,6 +10,74 @@ import (
 	"github.com/zeebo/assert"
 )
 
+// setupTestUser ensures the test user is in the workspace with appropriate roles.
+func setupTestUser(t *testing.T, ts *lib.TestSuite, workspace *db.Workspace, user *db.User) ([]uint, func()) {
+	var originalRoleIDs []uint
+	workspaceUser, err := ts.DB.GetWorkspaceUser(workspace.ID, user.ID)
+	if err != nil {
+		// User is not in workspace, add them with default roles
+		roles, getRolesErr := ts.DB.GetRoles()
+		if getRolesErr != nil {
+			t.Fatalf("Failed to get roles: %v", getRolesErr)
+		}
+
+		viewerRole := findRole(roles, "viewer")
+		if viewerRole == nil {
+			t.Fatalf("Viewer role not found")
+		}
+
+		_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, []uint{viewerRole.ID})
+		if addErr != nil {
+			t.Fatalf("Failed to add user to workspace: %v", addErr)
+		}
+
+		originalRoleIDs = []uint{}
+	} else {
+		originalRoleIDs = make([]uint, len(workspaceUser.Roles))
+		for i, role := range workspaceUser.Roles {
+			originalRoleIDs[i] = role.RoleID
+		}
+	}
+
+	cleanup := func() {
+		if len(originalRoleIDs) == 0 {
+			removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
+			if removeErr != nil {
+				t.Logf("Failed to remove user from workspace during cleanup: %v", removeErr)
+			}
+		} else {
+			restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+		}
+	}
+
+	return originalRoleIDs, cleanup
+}
+
+// createDenyPolicy creates a deny policy for a specific workflow.
+func createDenyPolicy(t *testing.T, ts *lib.TestSuite, workspace *db.Workspace, workflowID uint) func() {
+	denyPolicy := &db.Policy{
+		WorkspaceID: workspace.ID,
+		Principal:   db.PolicyPrincipalEveryone,
+		Resource:    db.PolicyResourceWorkflow,
+		Action:      db.PolicyActionRead,
+		Effect:      db.PolicyEffectDeny,
+		ResourceID:  &workflowID,
+	}
+	createPolicyErr := ts.DB.Create(denyPolicy).Error
+	assert.NoError(t, createPolicyErr)
+
+	return func() {
+		deletePoliciesErr := ts.DB.Where(
+			"workspace_id = ? AND resource = ? AND action = ? AND resource_id = ?",
+			workspace.ID,
+			db.PolicyResourceWorkflow,
+			db.PolicyActionRead,
+			workflowID,
+		).Delete(&db.Policy{}).Error
+		assert.NoError(t, deletePoliciesErr)
+	}
+}
+
 func TestIsAllowedFilter(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
@@ -33,6 +101,10 @@ func TestIsAllowedFilter(t *testing.T) {
 		t.Fatalf("Failed to get workspace owner: %v", err)
 	}
 
+	// Setup test user and ensure cleanup
+	originalRoleIDs, cleanup := setupTestUser(t, ts, workspace, user)
+	defer cleanup()
+
 	// Get some workflows to test with
 	workflows, err := ts.DB.GetWorkflowsByWorkspaceID(workspace.ID)
 	if err != nil {
@@ -51,54 +123,29 @@ func TestIsAllowedFilter(t *testing.T) {
 	// Create test cases
 	tests := []struct {
 		name          string
-		setup         func() []uint
-		teardown      func([]uint)
+		setup         func() ([]uint, func())
 		items         []db.Workflow
 		expectedCount int
 		expectedIDs   []uint
 		resource      db.PolicyResource
 		action        db.PolicyAction
 		shouldError   bool
+		testUser      *db.User
 	}{
 		{
 			name: "filter with viewer role - should only see allowed workflows",
-			setup: func() []uint {
-				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-
-				// Set user as viewer
+			setup: func() ([]uint, func()) {
 				viewerRole := findRole(roles, "viewer")
 				assert.NotNil(t, viewerRole)
 				setUserRole(t, ts.DB, user.ID, workspace.ID, viewerRole)
-
-				// Create a deny policy for the first workflow
-				denyPolicy := &db.Policy{
-					WorkspaceID: workspace.ID,
-					Principal:   db.PolicyPrincipalEveryone,
-					Resource:    db.PolicyResourceWorkflow,
-					Action:      db.PolicyActionRead,
-					Effect:      db.PolicyEffectDeny,
-					ResourceID:  &workflows[0].ID,
+				cleanupPolicy := createDenyPolicy(t, ts, workspace, workflows[0].ID)
+				return originalRoleIDs, func() {
+					cleanupPolicy()
+					restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
 				}
-				createPolicyErr := ts.DB.Create(denyPolicy).Error
-				assert.NoError(t, createPolicyErr)
-
-				return roleIDs
-			},
-			teardown: func(roleIDs []uint) {
-				// Clean up the deny policy
-				deletePoliciesErr := ts.DB.Where(
-					"workspace_id = ? AND resource = ? AND action = ? AND resource_id = ?",
-					workspace.ID,
-					db.PolicyResourceWorkflow,
-					db.PolicyActionRead,
-					workflows[0].ID,
-				).Delete(&db.Policy{}).Error
-				assert.NoError(t, deletePoliciesErr)
-
-				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
 			},
 			items:         workflows,
-			expectedCount: len(workflows) - 1, // All except the denied one
+			expectedCount: len(workflows) - 1,
 			expectedIDs: func() []uint {
 				ids := make([]uint, 0, len(workflows)-1)
 				for _, w := range workflows[1:] {
@@ -109,18 +156,15 @@ func TestIsAllowedFilter(t *testing.T) {
 			resource:    db.PolicyResourceWorkflow,
 			action:      db.PolicyActionRead,
 			shouldError: false,
+			testUser:    user,
 		},
 		{
 			name: "workspace owner sees all workflows",
-			setup: func() []uint {
-				// No need to change owner, just use the real owner
-				return nil
-			},
-			teardown: func(_ []uint) {
-				// No teardown needed
+			setup: func() ([]uint, func()) {
+				return nil, func() {}
 			},
 			items:         workflows,
-			expectedCount: len(workflows), // Owner sees all
+			expectedCount: len(workflows),
 			expectedIDs: func() []uint {
 				ids := make([]uint, len(workflows))
 				for i, w := range workflows {
@@ -131,49 +175,36 @@ func TestIsAllowedFilter(t *testing.T) {
 			resource:    db.PolicyResourceWorkflow,
 			action:      db.PolicyActionRead,
 			shouldError: false,
+			testUser:    workspaceOwner,
 		},
 		{
 			name: "non-workspace user sees no workflows",
-			setup: func() []uint {
-				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-
-				// Remove user from workspace
+			setup: func() ([]uint, func()) {
 				removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
 				assert.NoError(t, removeErr)
-
-				return roleIDs
-			},
-			teardown: func(roleIDs []uint) {
-				// Re-add user to workspace
-				workspaceUser, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, roleIDs)
-				assert.NoError(t, addErr)
-				assert.NotNil(t, workspaceUser)
+				return originalRoleIDs, func() {
+					_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, originalRoleIDs)
+					assert.NoError(t, addErr)
+				}
 			},
 			items:         workflows,
-			expectedCount: 0, // Non-workspace user sees none
+			expectedCount: 0,
 			expectedIDs:   []uint{},
 			resource:      db.PolicyResourceWorkflow,
 			action:        db.PolicyActionRead,
-			shouldError:   true, // Should error because user is not in workspace
+			shouldError:   true,
+			testUser:      user,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup test case
-			roleIDs := tt.setup()
-			defer tt.teardown(roleIDs)
+			_, teardown := tt.setup()
+			defer teardown()
 
-			// Use workspace owner for the owner test case, otherwise use test user
-			testUser := user
-			if tt.name == "workspace owner sees all workflows" {
-				testUser = workspaceOwner
-			}
-
-			// Run the filter
 			filteredItems, isAllowedFilterErr := lib.IsAllowedFilter(
 				ps,
-				testUser,
+				tt.testUser,
 				workspace,
 				tt.resource,
 				tt.action,
@@ -181,22 +212,18 @@ func TestIsAllowedFilter(t *testing.T) {
 				func(w db.Workflow) uint { return w.ID },
 			)
 
-			// Check error condition
 			if tt.shouldError {
 				assert.Error(t, isAllowedFilterErr)
 				return
 			}
 			assert.NoError(t, isAllowedFilterErr)
 
-			// Verify results
 			assert.Equal(t, tt.expectedCount, len(filteredItems))
 
-			// Check that we got the expected workflow IDs
 			gotIDs := make([]uint, len(filteredItems))
 			for i, item := range filteredItems {
 				gotIDs[i] = item.ID
 			}
-			// Sort both slices to ensure consistent comparison
 			slices.Sort(gotIDs)
 			slices.Sort(tt.expectedIDs)
 			assert.Equal(t, tt.expectedIDs, gotIDs)

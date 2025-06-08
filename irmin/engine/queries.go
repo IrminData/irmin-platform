@@ -51,12 +51,56 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 		objectSelector := fmt.Sprintf("'%s'", objectAddress)
 		if pl.Operation == "read" {
 			switch objectPathDetails.ContentType {
+			// JSON formats
 			case "application/json":
 				objectSelector = fmt.Sprintf("read_json_auto('%s')", objectAddress)
+			case "application/jsonl", "application/x-ndjson":
+				objectSelector = fmt.Sprintf("read_json_auto('%s', format = 'newline_delimited')", objectAddress)
+
+			// CSV and TSV formats
 			case "text/csv":
 				objectSelector = fmt.Sprintf("read_csv('%s')", objectAddress)
+			case "text/tab-separated-values":
+				objectSelector = fmt.Sprintf("read_csv('%s', delim = '\t')", objectAddress)
+
+			// Parquet format
 			case "application/vnd.apache.parquet":
 				objectSelector = fmt.Sprintf("read_parquet('%s')", objectAddress)
+
+			// Excel formats
+			case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+				"application/vnd.ms-excel",
+				"application/vnd.ms-excel.sheet.macroEnabled.12",
+				"application/vnd.ms-excel.sheet.binary.macroEnabled.12":
+				// Use spatial extension for Excel files (may require extension to be loaded)
+				objectSelector = fmt.Sprintf("st_read('%s')", objectAddress)
+
+			// Advanced analytics formats
+			case "application/vnd.apache.avro":
+				objectSelector = fmt.Sprintf("read_avro('%s')", objectAddress)
+			case "application/vnd.apache.orc":
+				objectSelector = fmt.Sprintf("read_orc('%s')", objectAddress)
+			case "application/x-delta-lake":
+				objectSelector = fmt.Sprintf("delta_scan('%s')", objectAddress)
+			case "application/x-iceberg":
+				objectSelector = fmt.Sprintf("iceberg_scan('%s')", objectAddress)
+
+			// Compressed formats (DuckDB handles these automatically)
+			case "application/gzip", "application/x-bzip2", "application/x-xz",
+				"application/x-lz4", "application/zstd":
+				// For compressed files, we need to determine the underlying format
+				// This is a simplified approach - in practice, you might want to
+				// parse the filename to determine the underlying format
+				objectSelector = fmt.Sprintf("read_csv_auto('%s')", objectAddress) // Default to CSV auto-detection
+
+			// XML and YAML formats (limited support)
+			case "application/xml":
+				// Limited XML support - treat as text for now
+				objectSelector = fmt.Sprintf("read_csv('%s', delim = '\t', header = false)", objectAddress)
+			case "application/x-yaml":
+				// Limited YAML support - treat as text for now
+				objectSelector = fmt.Sprintf("read_csv('%s', delim = '\t', header = false)", objectAddress)
+
 			default:
 				return "", fmt.Errorf("unsupported object content type: %s", objectPathDetails.ContentType)
 			}
@@ -159,7 +203,7 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryRes
 		}
 	}
 
-	queryClient, err := duckdb.NewQueryClient(c.Env)
+	queryClient, err := duckdb.NewQueryClient(c.Env, c.Logger)
 	if err != nil {
 		return &irminmodels.QueryResult{
 			HasErrors: true,

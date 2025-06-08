@@ -3,14 +3,17 @@ package lib
 import (
 	"irmin-api/db"
 	"irmin-api/utils"
+	"log/slog"
+	"os"
 	"sync"
 	"testing"
 )
 
 // TestSuite holds the test environment and database connection.
 type TestSuite struct {
-	DB  *db.Database
-	Env *utils.CoreAPIEnv
+	DB     *db.Database
+	Env    *utils.CoreAPIEnv
+	Logger *slog.Logger
 }
 
 var (
@@ -52,9 +55,13 @@ func SetupTestSuite(t *testing.T) {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
 
+	// Create logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	globalTestSuite = &TestSuite{
-		DB:  testDB,
-		Env: testEnv,
+		Logger: logger,
+		DB:     testDB,
+		Env:    testEnv,
 	}
 }
 
@@ -74,14 +81,4 @@ func TeardownTestSuite() {
 	}
 
 	globalTestSuite = nil
-}
-
-// WithTestSuite is a helper function that provides access to the test suite.
-// This is maintained for backward compatibility but should be phased out.
-func WithTestSuite(t *testing.T, fn func(ts *TestSuite)) {
-	ts := GetTestSuite()
-	if ts == nil {
-		t.Fatal("Test suite not initialized. Make sure SetupTestSuite is called in TestMain")
-	}
-	fn(ts)
 }

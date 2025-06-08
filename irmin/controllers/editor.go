@@ -457,7 +457,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 	hasErrors := strings.Contains(strings.ToLower(computeResult.Logs), "error")
 
 	// Parse the structured result files if any
-	parsedResults, parseStructuredFileErr := lib.ParseStructuredFile(computeResult.ResultFiles)
+	parsedResults, parseStructuredFileErr := lib.ParseStructuredFiles(computeResult.ResultFiles, api.Env, api.Logger)
 	if parseStructuredFileErr != nil {
 		api.Logger.Error("Error parsing structured files", "error", parseStructuredFileErr)
 	}

@@ -9,54 +9,54 @@ import (
 )
 
 func TestCreateWorkflowRun(t *testing.T) {
-	lib.WithTestSuite(t, func(ts *lib.TestSuite) {
-		// Find the test user
-		user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
-		if err != nil {
-			t.Fatalf("Failed to get test user: %v", err)
-		}
+	ts := lib.GetTestSuite()
 
-		// Find the test workspace
-		workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
-		if err != nil {
-			t.Fatalf("Failed to get test workspace: %v", err)
-		}
+	// Find the test user
+	user, err := ts.DB.GetUserByEmail(ts.Env.TestUserEmail)
+	if err != nil {
+		t.Fatalf("Failed to get test user: %v", err)
+	}
 
-		// Find a first workflow which has a schedule with more than 1 trigger
-		var workflow db.Workflow
-		if findWorkflowErr := ts.DB.
-			Joins("JOIN schedules ON workflows.schedule_id = schedules.id").
-			Joins("JOIN workflow_triggers ON workflow_triggers.schedule_id = schedules.id").
-			Where("workflows.deleted_at IS NULL").
-			Where("workflows.workspace_id = ?", workspace.ID).
-			Where("workflows.schedule_id IS NOT NULL").
-			Where("workflow_triggers.deleted_at IS NULL").
-			First(&workflow).Error; findWorkflowErr != nil {
-			t.Fatalf("Failed to get test workflow: %v", findWorkflowErr)
-		}
+	// Find the test workspace
+	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
+	if err != nil {
+		t.Fatalf("Failed to get test workspace: %v", err)
+	}
 
-		// Find the first trigger for the workflow
-		var trigger db.WorkflowTrigger
-		if findTriggerErr := ts.DB.
-			Where("workflow_triggers.deleted_at IS NULL").
-			Where("workflow_triggers.schedule_id = ?", workflow.ScheduleID).
-			First(&trigger).Error; findTriggerErr != nil {
-			t.Fatalf("Failed to get test trigger: %v", findTriggerErr)
-		}
+	// Find a first workflow which has a schedule with more than 1 trigger
+	var workflow db.Workflow
+	if findWorkflowErr := ts.DB.
+		Joins("JOIN schedules ON workflows.schedule_id = schedules.id").
+		Joins("JOIN workflow_triggers ON workflow_triggers.schedule_id = schedules.id").
+		Where("workflows.deleted_at IS NULL").
+		Where("workflows.workspace_id = ?", workspace.ID).
+		Where("workflows.schedule_id IS NOT NULL").
+		Where("workflow_triggers.deleted_at IS NULL").
+		First(&workflow).Error; findWorkflowErr != nil {
+		t.Fatalf("Failed to get test workflow: %v", findWorkflowErr)
+	}
 
-		// Create a transaction
-		tx := ts.DB.Begin()
-		defer tx.Rollback()
+	// Find the first trigger for the workflow
+	var trigger db.WorkflowTrigger
+	if findTriggerErr := ts.DB.
+		Where("workflow_triggers.deleted_at IS NULL").
+		Where("workflow_triggers.schedule_id = ?", workflow.ScheduleID).
+		First(&trigger).Error; findTriggerErr != nil {
+		t.Fatalf("Failed to get test trigger: %v", findTriggerErr)
+	}
 
-		// Create a workflow run
-		workflowRun, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, user, &trigger)
-		if createWorkflowRunErr != nil {
-			t.Fatalf("Failed to create workflow run: %v", createWorkflowRunErr)
-		}
+	// Create a transaction
+	tx := ts.DB.Begin()
+	defer tx.Rollback()
 
-		// Check the workflow run
-		assert.Equal(t, workflowRun.WorkflowID, workflow.ID)
-		assert.Equal(t, workflowRun.TriggeredByUserID, &user.ID)
-		assert.Equal(t, workflowRun.TriggeredByID, &trigger.ID)
-	})
+	// Create a workflow run
+	workflowRun, createWorkflowRunErr := lib.CreateWorkflowRun(tx, &workflow, user, &trigger)
+	if createWorkflowRunErr != nil {
+		t.Fatalf("Failed to create workflow run: %v", createWorkflowRunErr)
+	}
+
+	// Check the workflow run
+	assert.Equal(t, workflowRun.WorkflowID, workflow.ID)
+	assert.Equal(t, workflowRun.TriggeredByUserID, &user.ID)
+	assert.Equal(t, workflowRun.TriggeredByID, &trigger.ID)
 }

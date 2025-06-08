@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"irmin-api/utils"
+	"log/slog"
 	"strings"
 
 	// Import DuckDB driver to register it with database/sql package.
@@ -20,17 +21,33 @@ type QueryClient struct {
 // NewQueryClient creates a new client for querying data from LakeFS.
 // It configures the DuckDB connection with the required S3 / LakeFS settings.
 // Returns the client and an error if encountered.
-func NewQueryClient(env *utils.CoreAPIEnv) (*QueryClient, error) {
+func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error) {
 	// Open a connection to DuckDB (empty string uses an in-memory database).
 	db, err := sql.Open("duckdb", "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open DuckDB connection: %w", err)
 	}
 
-	// Install and load HTTPFS extension.
+	// Install and load HTTPFS extension (required for S3/LakeFS access).
 	_, err = db.Exec("INSTALL httpfs; LOAD httpfs;")
 	if err != nil {
 		return nil, fmt.Errorf("failed to install and load httpfs extension: %w", err)
+	}
+
+	client := &QueryClient{db: db}
+
+	// Only try to install optional extensions if SkipOptionalExtensions is false
+	if !env.SkipOptionalDuckDBExtensions {
+		optionalExtensions := []string{
+			"spatial",      // Provides Excel file reading capabilities via st_read()
+			"avro",         // Support for Apache Avro files
+			"delta",        // Support for Delta Lake format
+			"iceberg",      // Support for Apache Iceberg format
+			"autocomplete", // Enhanced autocomplete functionality
+		}
+		client.installOptionalExtensions(optionalExtensions, logger)
+	} else {
+		logger.Debug("skipping optional extensions installation")
 	}
 
 	// Configure S3 / LakeFS connection secret.
@@ -53,9 +70,28 @@ func NewQueryClient(env *utils.CoreAPIEnv) (*QueryClient, error) {
 		return nil, fmt.Errorf("failed to create S3 / LakeFS credentials: %w", err)
 	}
 	// Return the client.
-	return &QueryClient{
-		db: db,
-	}, nil
+	return client, nil
+}
+
+// installOptionalExtensions attempts to install and load optional DuckDB extensions.
+// It logs warnings for any failures but doesn't return errors since these are optional.
+func (c *QueryClient) installOptionalExtensions(extensions []string, logger *slog.Logger) {
+	for _, ext := range extensions {
+		installQuery := fmt.Sprintf("INSTALL %s;", ext)
+		loadQuery := fmt.Sprintf("LOAD %s;", ext)
+
+		_, installErr := c.db.Exec(installQuery)
+		if installErr == nil {
+			_, loadErr := c.db.Exec(loadQuery)
+			if loadErr != nil {
+				logger.Warn("failed to load extension", "extension", ext, "error", loadErr)
+			} else {
+				logger.Debug("successfully loaded extension", "extension", ext)
+			}
+		} else {
+			logger.Warn("failed to install extension", "extension", ext, "error", installErr)
+		}
+	}
 }
 
 // ExecuteQuery executes a SQL query using the client's DuckDB connection and returns the resulting rows.

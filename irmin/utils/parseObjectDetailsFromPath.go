@@ -21,13 +21,31 @@ type ObjectDetails struct {
 func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 	// structuredContentTypes maps structured file extensions to their MIME content types.
 	var structuredContentTypes = map[string]string{
+		// Standard formats
 		".json":    "application/json",               // JSON
 		".csv":     "text/csv",                       // CSV
 		".parquet": "application/vnd.apache.parquet", // Parquet
-		".avro":    "application/vnd.apache.avro",    // Avro
-		".orc":     "application/vnd.apache.orc",     // ORC
-		".xml":     "application/xml",                // XML
-		".yaml":    "application/x-yaml",             // YAML
+
+		// Advanced analytics formats
+		".avro":    "application/vnd.apache.avro", // Avro
+		".orc":     "application/vnd.apache.orc",  // ORC
+		".delta":   "application/x-delta-lake",    // Delta Lake
+		".iceberg": "application/x-iceberg",       // Apache Iceberg
+
+		// Excel formats
+		".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // Excel (Office Open XML)
+		".xls":  "application/vnd.ms-excel",                                          // Excel (Legacy)
+		".xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12",                    // Excel with macros
+		".xlsb": "application/vnd.ms-excel.sheet.binary.macroEnabled.12",             // Excel binary
+
+		// Text-based formats
+		".tsv":    "text/tab-separated-values", // Tab-separated values
+		".tab":    "text/tab-separated-values", // Tab-separated values (alternative)
+		".jsonl":  "application/jsonl",         // JSON Lines / Newline-delimited JSON
+		".ndjson": "application/x-ndjson",      // Newline-delimited JSON
+		".xml":    "application/xml",           // XML
+		".yaml":   "application/x-yaml",        // YAML
+		".yml":    "application/x-yaml",        // YAML (alternative extension)
 	}
 
 	// unstructuredContentTypes maps unstructured file extensions to their MIME content types.
@@ -41,7 +59,6 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 		".pdf":  "application/pdf",        // PDF
 		".zip":  "application/zip",        // ZIP
 		".tar":  "application/x-tar",      // TAR
-		".gz":   "application/gzip",       // GZIP
 		".jpg":  "image/jpeg",             // JPEG
 		".jpeg": "image/jpeg",             // JPEG
 		".webp": "image/webp",             // WebP

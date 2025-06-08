@@ -104,7 +104,7 @@ func getDuckDBSchema(
 	env *utils.CoreAPIEnv,
 	userWorkspace, repository, path, ref string,
 ) ([]SchemaField, error) {
-	qc, newQueryClientErr := duckdb.NewQueryClient(env)
+	qc, newQueryClientErr := duckdb.NewQueryClient(env, c.Logger)
 	if newQueryClientErr != nil {
 		return nil, fmt.Errorf("failed to create DuckDB client: %w", newQueryClientErr)
 	}

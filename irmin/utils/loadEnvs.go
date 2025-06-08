@@ -11,41 +11,42 @@ import (
 
 // CoreAPIEnv is a struct that holds the environment variables for the data engine.
 type CoreAPIEnv struct {
-	Port                     string // Port to run the Core API server on
-	URL                      string // URL of the Core API server
-	SystemToken              string // Token to authenticate system requests to the API
-	CorsEnabled              bool   // Flag to enable CORS
-	PreforkEnabled           bool   // Flag to enable prefork
-	HelmetEnabled            bool   // Flag to enable helmet
-	CorsOrigins              string // Allowed origins for CORS
-	OrchestratorEnabled      bool   // Flag to enable the orchestrator
-	SqidAlphabet             string // Alphabet to use for SQIDs
-	DatabaseConnectionString string // Postgres DB connection string
-	ResendAPIKey             string // Resend API Key for emails
-	ConsoleURL               string // URL of the Irmin Console
-	InviteExpiresInDays      int    // Number of days before an invite expires
-	ClerkPublicKey           string // Clerk Public API Key
-	ClerkSecretKey           string // Clerk Secret API Key
-	ClerkSigningKey          string // Clerk Signing Key for JWT
-	ClerkSigningAlgorithm    string // Clerk Signing Algorithm for JWT
-	LakeFSURL                string // URL of the LakeFS instance to connect to
-	LakeFSAccessKey          string // Access key for the LakeFS instance
-	LakeFSSecretKey          string // Secret key for the LakeFS instance
-	S3Endpoint               string // Endpoint of the S3-compatible object store
-	S3Bucket                 string // Bucket name of the S3-compatible object store
-	S3Folder                 string // Base folder name of the S3-compatible object store
-	S3Region                 string // Region of the S3-compatible object store
-	S3AccessKeyID            string // Access key ID for the S3-compatible object store
-	S3AccessSecret           string // Secret access key for the S3-compatible object store
-	TestConnectorBaseURL     string // Base URL of the connector to test with
-	TestConnectorToken       string // Operation token for the connector to test with
-	TestConnectorPath        string // Path to the test file in the connector
-	TestObjectName           string // Name of the test object which is expected to be a structured JSON file
-	TestUserEmail            string // Email of the test user
-	TestWorkspace            string // Workspace to test with
-	TestRepository           string // Repository to test with
-	TestBranch               string // Branch to test with
-	TestTag                  string // Tag to test with
+	Port                         string // Port to run the Core API server on
+	URL                          string // URL of the Core API server
+	SystemToken                  string // Token to authenticate system requests to the API
+	CorsEnabled                  bool   // Flag to enable CORS
+	PreforkEnabled               bool   // Flag to enable prefork
+	HelmetEnabled                bool   // Flag to enable helmet
+	CorsOrigins                  string // Allowed origins for CORS
+	OrchestratorEnabled          bool   // Flag to enable the orchestrator
+	SqidAlphabet                 string // Alphabet to use for SQIDs
+	DatabaseConnectionString     string // Postgres DB connection string
+	ResendAPIKey                 string // Resend API Key for emails
+	ConsoleURL                   string // URL of the Irmin Console
+	InviteExpiresInDays          int    // Number of days before an invite expires
+	ClerkPublicKey               string // Clerk Public API Key
+	ClerkSecretKey               string // Clerk Secret API Key
+	ClerkSigningKey              string // Clerk Signing Key for JWT
+	ClerkSigningAlgorithm        string // Clerk Signing Algorithm for JWT
+	LakeFSURL                    string // URL of the LakeFS instance to connect to
+	LakeFSAccessKey              string // Access key for the LakeFS instance
+	LakeFSSecretKey              string // Secret key for the LakeFS instance
+	S3Endpoint                   string // Endpoint of the S3-compatible object store
+	S3Bucket                     string // Bucket name of the S3-compatible object store
+	S3Folder                     string // Base folder name of the S3-compatible object store
+	S3Region                     string // Region of the S3-compatible object store
+	S3AccessKeyID                string // Access key ID for the S3-compatible object store
+	S3AccessSecret               string // Secret access key for the S3-compatible object store
+	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
+	TestConnectorBaseURL         string // Base URL of the connector to test with
+	TestConnectorToken           string // Operation token for the connector to test with
+	TestConnectorPath            string // Path to the test file in the connector
+	TestObjectName               string // Name of the test object which is expected to be a structured JSON file
+	TestUserEmail                string // Email of the test user
+	TestWorkspace                string // Workspace to test with
+	TestRepository               string // Repository to test with
+	TestBranch                   string // Branch to test with
+	TestTag                      string // Tag to test with
 }
 
 // getEnv retrieves a single environment variable. If required and missing, returns an error.
@@ -271,41 +272,51 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	skipOptionalDuckDBExtensionsStr, err := getEnv("SKIP_OPTIONAL_DUCKDB_EXTENSIONS", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	skipOptionalDuckDBExtensions, err := strconv.ParseBool(skipOptionalDuckDBExtensionsStr)
+	if err != nil {
+		return nil, err
+	}
+
 	return &CoreAPIEnv{
-		Port:                     port,
-		URL:                      url,
-		SystemToken:              token,
-		CorsEnabled:              corsEnabled,
-		PreforkEnabled:           preforkEnabled,
-		HelmetEnabled:            helmetEnabled,
-		CorsOrigins:              corsOrigins,
-		OrchestratorEnabled:      orchestratorEnabled,
-		SqidAlphabet:             sqidAlphabet,
-		DatabaseConnectionString: databaseConnectionString,
-		ResendAPIKey:             resendAPIKey,
-		ConsoleURL:               consoleURL,
-		InviteExpiresInDays:      inviteExpiresInDays,
-		ClerkPublicKey:           clerkPublicKey,
-		ClerkSecretKey:           clerkSecretKey,
-		ClerkSigningKey:          clerkSigningKey,
-		ClerkSigningAlgorithm:    clerkSigningAlgorithm,
-		LakeFSURL:                lakefsURL,
-		LakeFSAccessKey:          lakefsAccessKey,
-		LakeFSSecretKey:          lakefsSecretKey,
-		S3Endpoint:               s3Endpoint,
-		S3Bucket:                 s3Bucket,
-		S3Folder:                 s3Folder,
-		S3Region:                 s3Region,
-		S3AccessKeyID:            s3AccessKeyID,
-		S3AccessSecret:           s3AccessSecret,
-		TestConnectorBaseURL:     testConnectorBaseURL,
-		TestConnectorToken:       testConnectorToken,
-		TestConnectorPath:        testConnectorPath,
-		TestObjectName:           testObjectName,
-		TestUserEmail:            testUserEmail,
-		TestWorkspace:            testWorkspace,
-		TestRepository:           testRepository,
-		TestBranch:               testBranch,
-		TestTag:                  testTag,
+		Port:                         port,
+		URL:                          url,
+		SystemToken:                  token,
+		CorsEnabled:                  corsEnabled,
+		PreforkEnabled:               preforkEnabled,
+		HelmetEnabled:                helmetEnabled,
+		CorsOrigins:                  corsOrigins,
+		OrchestratorEnabled:          orchestratorEnabled,
+		SqidAlphabet:                 sqidAlphabet,
+		DatabaseConnectionString:     databaseConnectionString,
+		ResendAPIKey:                 resendAPIKey,
+		ConsoleURL:                   consoleURL,
+		InviteExpiresInDays:          inviteExpiresInDays,
+		ClerkPublicKey:               clerkPublicKey,
+		ClerkSecretKey:               clerkSecretKey,
+		ClerkSigningKey:              clerkSigningKey,
+		ClerkSigningAlgorithm:        clerkSigningAlgorithm,
+		LakeFSURL:                    lakefsURL,
+		LakeFSAccessKey:              lakefsAccessKey,
+		LakeFSSecretKey:              lakefsSecretKey,
+		S3Endpoint:                   s3Endpoint,
+		S3Bucket:                     s3Bucket,
+		S3Folder:                     s3Folder,
+		S3Region:                     s3Region,
+		S3AccessKeyID:                s3AccessKeyID,
+		S3AccessSecret:               s3AccessSecret,
+		SkipOptionalDuckDBExtensions: skipOptionalDuckDBExtensions,
+		TestConnectorBaseURL:         testConnectorBaseURL,
+		TestConnectorToken:           testConnectorToken,
+		TestConnectorPath:            testConnectorPath,
+		TestObjectName:               testObjectName,
+		TestUserEmail:                testUserEmail,
+		TestWorkspace:                testWorkspace,
+		TestRepository:               testRepository,
+		TestBranch:                   testBranch,
+		TestTag:                      testTag,
 	}, nil
 }

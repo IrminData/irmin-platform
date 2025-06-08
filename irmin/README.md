@@ -21,10 +21,10 @@ And then run the binary file `./out`
 `go run main.go`
 
 **Run tests**
-`go test ./...`
+`go test -timeout 2m ./...`
 
 **Run tests with coverage**
-`go test ./... -coverprofile=coverage.out`
+`go test -timeout 2m ./... -coverprofile=coverage.out`
 
 **View coverage**
 `go tool cover -html=coverage.out`
@@ -126,6 +126,8 @@ S3_FOLDER=... # Base folder name of the S3-compatible object store
 S3_REGION=us-east-1 # Region of the S3-compatible object store
 S3_ACCESS_KEY_ID=... # Access key ID for the S3-compatible object store
 S3_ACCESS_SECRET=... # Secret access key for the S3-compatible object store
+
+SKIP_OPTIONAL_DUCKDB_EXTENSIONS=true # Skip optional extensions (e.g. parquet, orc)
 
 TEST_CONNECTOR_BASE_URL=https://connectors.irmin.dev/postgres # Base URL of the connector to test with
 TEST_CONNECTOR_TOKEN=... # Connector's operation token for testing

@@ -10,18 +10,6 @@ import (
 	"github.com/zeebo/assert"
 )
 
-// saveUserRoles saves the current roles of a user in a workspace.
-func saveUserRoles(t *testing.T, d *db.Database, userID, workspaceID uint) []uint {
-	workspaceUser, err := d.GetWorkspaceUser(workspaceID, userID)
-	assert.NoError(t, err)
-
-	roleIDs := make([]uint, len(workspaceUser.Roles))
-	for i, role := range workspaceUser.Roles {
-		roleIDs[i] = role.RoleID
-	}
-	return roleIDs
-}
-
 // restoreUserRoles restores the roles of a user in a workspace.
 func restoreUserRoles(t *testing.T, d *db.Database, userID, workspaceID uint, roleIDs []uint) {
 	_, err := d.UpdateWorkspaceUserRoles(userID, workspaceID, roleIDs)
@@ -34,11 +22,8 @@ func setUserRole(t *testing.T, d *db.Database, userID, workspaceID uint, role *d
 	assert.NoError(t, err)
 }
 
-func TestPermissionService_IsAllowed(t *testing.T) {
-	ts := lib.GetTestSuite()
-	logger := slog.New(slog.NewTextHandler(nil, nil))
-	ps := lib.NewPermissionService(ts.DB, logger)
-
+// setupTestEnvironment prepares the test environment with necessary users and workspace.
+func setupTestEnvironment(t *testing.T, ts *lib.TestSuite) (*db.Workspace, *db.User, *db.User, []uint, func()) {
 	// Find the test workspace
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {
@@ -52,33 +37,47 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 	}
 
 	// Find the workspace owner user
-	// Please make sure that the workspace owner is not the test user
 	workspaceOwner, err := ts.DB.GetUser(workspace.OwnerID)
 	if err != nil {
 		t.Fatalf("Failed to get workspace owner: %v", err)
 	}
 
-	// Get all roles
-	roles, err := ts.DB.GetRoles()
-	if err != nil {
-		t.Fatalf("Failed to get all roles: %v", err)
-	}
+	// Setup test user and ensure cleanup
+	originalRoleIDs, cleanup := setupTestUser(t, ts, workspace, user)
 
-	// Test cases
-	tests := []struct {
+	return workspace, user, workspaceOwner, originalRoleIDs, cleanup
+}
+
+// createTestCases creates the test cases for permission testing.
+func createTestCases(
+	t *testing.T,
+	ts *lib.TestSuite,
+	workspace *db.Workspace,
+	user *db.User,
+	workspaceOwner *db.User,
+	roles []db.Role,
+	originalRoleIDs []uint,
+) []struct {
+	name     string
+	setup    func() ([]uint, func())
+	resource db.PolicyResource
+	action   db.PolicyAction
+	want     bool
+	wantErr  bool
+	testUser *db.User
+} {
+	return []struct {
 		name     string
-		setup    func() []uint
-		teardown func([]uint) // Restores roles
+		setup    func() ([]uint, func())
 		resource db.PolicyResource
 		action   db.PolicyAction
 		want     bool
 		wantErr  bool
+		testUser *db.User
 	}{
 		{
 			name: "workspace owner has full access",
-			setup: func() []uint {
-				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-
+			setup: func() ([]uint, func()) {
 				// Set the test user as the workspace owner
 				updateOwnerErr := ts.DB.Model(&db.Workspace{}).
 					Where("id = ?", workspace.ID).
@@ -91,113 +90,120 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 				assert.NotNil(t, ownerRole)
 				setUserRole(t, ts.DB, user.ID, workspace.ID, ownerRole)
 
-				return roleIDs
-			},
-			teardown: func(roleIDs []uint) {
-				// Restore the test user's roles
-				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
+				return originalRoleIDs, func() {
+					// Restore the test user's roles
+					restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
 
-				// Restore the workspace owner
-				updateOwnerErr := ts.DB.Model(&db.Workspace{}).
-					Where("id = ?", workspace.ID).
-					Update("owner_id", workspaceOwner.ID).
-					Error
-				assert.NoError(t, updateOwnerErr)
+					// Restore the workspace owner
+					restoreOwnerErr := ts.DB.Model(&db.Workspace{}).
+						Where("id = ?", workspace.ID).
+						Update("owner_id", workspaceOwner.ID).
+						Error
+					assert.NoError(t, restoreOwnerErr)
+				}
 			},
 			resource: db.PolicyResourcePolicy,
 			action:   db.PolicyActionCreate,
 			want:     true,
 			wantErr:  false,
+			testUser: user,
 		},
 		{
 			name: "viewer role has read access",
-			setup: func() []uint {
-				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-
+			setup: func() ([]uint, func()) {
 				viewerRole := findRole(roles, "viewer")
 				assert.NotNil(t, viewerRole)
 				setUserRole(t, ts.DB, user.ID, workspace.ID, viewerRole)
-				return roleIDs
-			},
-			teardown: func(roleIDs []uint) {
-				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
+				return originalRoleIDs, func() {
+					restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+				}
 			},
 			resource: db.PolicyResourceConnection,
 			action:   db.PolicyActionRead,
 			want:     true,
 			wantErr:  false,
+			testUser: user,
 		},
 		{
 			name: "viewer role cannot write",
-			setup: func() []uint {
-				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-
+			setup: func() ([]uint, func()) {
 				viewerRole := findRole(roles, "viewer")
 				assert.NotNil(t, viewerRole)
 				setUserRole(t, ts.DB, user.ID, workspace.ID, viewerRole)
-				return roleIDs
-			},
-			teardown: func(roleIDs []uint) {
-				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
+				return originalRoleIDs, func() {
+					restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+				}
 			},
 			resource: db.PolicyResourceRepository,
 			action:   db.PolicyActionUpdate,
 			want:     false,
 			wantErr:  false,
+			testUser: user,
 		},
 		{
 			name: "editor role has full access to workflows",
-			setup: func() []uint {
-				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-
+			setup: func() ([]uint, func()) {
 				editorRole := findRole(roles, "editor")
 				assert.NotNil(t, editorRole)
 				setUserRole(t, ts.DB, user.ID, workspace.ID, editorRole)
-				return roleIDs
-			},
-			teardown: func(roleIDs []uint) {
-				restoreUserRoles(t, ts.DB, user.ID, workspace.ID, roleIDs)
+				return originalRoleIDs, func() {
+					restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+				}
 			},
 			resource: db.PolicyResourceWorkflow,
 			action:   db.PolicyActionCreate,
 			want:     true,
 			wantErr:  false,
+			testUser: user,
 		},
 		{
 			name: "non-workspace user has no access",
-			setup: func() []uint {
-				roleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-
+			setup: func() ([]uint, func()) {
 				// Remove user from workspace
 				removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
 				assert.NoError(t, removeErr)
 
-				return roleIDs
-			},
-			teardown: func(roleIDs []uint) {
-				// Re-add user to workspace with original roles
-				workspaceUser, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, roleIDs)
-				assert.NoError(t, addErr)
-				assert.NotNil(t, workspaceUser)
+				return originalRoleIDs, func() {
+					// Re-add user to workspace with original roles
+					_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, originalRoleIDs)
+					assert.NoError(t, addErr)
+				}
 			},
 			resource: db.PolicyResourceWorkspace,
 			action:   db.PolicyActionRead,
 			want:     false,
 			wantErr:  true,
+			testUser: user,
 		},
 	}
+}
+
+// TestPermissionService_IsAllowed tests the IsAllowed method of the PermissionService.
+func TestPermissionService_IsAllowed(t *testing.T) {
+	ts := lib.GetTestSuite()
+	logger := slog.New(slog.NewTextHandler(nil, nil))
+	ps := lib.NewPermissionService(ts.DB, logger)
+
+	// Setup test environment
+	workspace, user, workspaceOwner, originalRoleIDs, cleanup := setupTestEnvironment(t, ts)
+	defer cleanup()
+
+	// Get all roles
+	roles, err := ts.DB.GetRoles()
+	if err != nil {
+		t.Fatalf("Failed to get all roles: %v", err)
+	}
+
+	// Create test cases
+	tests := createTestCases(t, ts, workspace, user, workspaceOwner, roles, originalRoleIDs)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup test case and get original roles
-			roleIDs := tt.setup()
-			// Ensure teardown happens even if test fails
-			defer tt.teardown(roleIDs)
+			_, teardown := tt.setup()
+			defer teardown()
 
-			// Run test
-			got, allowedErr := ps.IsAllowed(user, workspace, tt.resource, nil, tt.action)
+			got, allowedErr := ps.IsAllowed(tt.testUser, workspace, tt.resource, nil, tt.action)
 
-			// Verify results
 			assert.Equal(t, tt.want, got)
 			if tt.wantErr {
 				assert.Error(t, allowedErr)
@@ -208,6 +214,7 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 	}
 }
 
+// TestResourceSpecificityPrecedence tests the resource specificity precedence.
 func TestResourceSpecificityPrecedence(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
@@ -225,9 +232,50 @@ func TestResourceSpecificityPrecedence(t *testing.T) {
 		t.Fatalf("Failed to get test user: %v", err)
 	}
 
-	// Save original roles to restore after tests
-	originalRoleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-	defer restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+	// Check if user is already in workspace, if not add them
+	var originalRoleIDs []uint
+	workspaceUser, err := ts.DB.GetWorkspaceUser(workspace.ID, user.ID)
+	if err != nil {
+		// User is not in workspace, add them with default roles
+		roles, getRolesErr := ts.DB.GetRoles()
+		if getRolesErr != nil {
+			t.Fatalf("Failed to get roles: %v", getRolesErr)
+		}
+
+		// Find a default role (like viewer)
+		viewerRole := findRole(roles, "viewer")
+		if viewerRole == nil {
+			t.Fatalf("Viewer role not found")
+		}
+
+		_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, []uint{viewerRole.ID})
+		if addErr != nil {
+			t.Fatalf("Failed to add user to workspace: %v", addErr)
+		}
+
+		// Set original roles to empty since user wasn't in workspace before
+		originalRoleIDs = []uint{}
+	} else {
+		// User is already in workspace, save their current roles
+		originalRoleIDs = make([]uint, len(workspaceUser.Roles))
+		for i, role := range workspaceUser.Roles {
+			originalRoleIDs[i] = role.RoleID
+		}
+	}
+
+	// Ensure cleanup happens
+	defer func() {
+		if len(originalRoleIDs) == 0 {
+			// User wasn't in workspace originally, remove them
+			removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
+			if removeErr != nil {
+				t.Logf("Failed to remove user from workspace during cleanup: %v", removeErr)
+			}
+		} else {
+			// Restore original roles
+			restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+		}
+	}()
 
 	// Get a workflow to test with
 	workflows, err := ts.DB.GetWorkflowsByWorkspaceID(workspace.ID)
@@ -296,6 +344,7 @@ func TestResourceSpecificityPrecedence(t *testing.T) {
 	})
 }
 
+// TestPermissionCache tests the permission cache.
 func TestPermissionCache(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
@@ -313,9 +362,50 @@ func TestPermissionCache(t *testing.T) {
 		t.Fatalf("Failed to get test user: %v", err)
 	}
 
-	// Save original roles to restore after tests
-	originalRoleIDs := saveUserRoles(t, ts.DB, user.ID, workspace.ID)
-	defer restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+	// Check if user is already in workspace, if not add them
+	var originalRoleIDs []uint
+	workspaceUser, err := ts.DB.GetWorkspaceUser(workspace.ID, user.ID)
+	if err != nil {
+		// User is not in workspace, add them with default roles
+		roles, getRolesErr := ts.DB.GetRoles()
+		if getRolesErr != nil {
+			t.Fatalf("Failed to get roles: %v", getRolesErr)
+		}
+
+		// Find a default role (like viewer)
+		viewerRole := findRole(roles, "viewer")
+		if viewerRole == nil {
+			t.Fatalf("Viewer role not found")
+		}
+
+		_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, []uint{viewerRole.ID})
+		if addErr != nil {
+			t.Fatalf("Failed to add user to workspace: %v", addErr)
+		}
+
+		// Set original roles to empty since user wasn't in workspace before
+		originalRoleIDs = []uint{}
+	} else {
+		// User is already in workspace, save their current roles
+		originalRoleIDs = make([]uint, len(workspaceUser.Roles))
+		for i, role := range workspaceUser.Roles {
+			originalRoleIDs[i] = role.RoleID
+		}
+	}
+
+	// Ensure cleanup happens
+	defer func() {
+		if len(originalRoleIDs) == 0 {
+			// User wasn't in workspace originally, remove them
+			removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
+			if removeErr != nil {
+				t.Logf("Failed to remove user from workspace during cleanup: %v", removeErr)
+			}
+		} else {
+			// Restore original roles
+			restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
+		}
+	}()
 
 	// Test cache hit/miss
 	t.Run("cache operations", func(t *testing.T) {
