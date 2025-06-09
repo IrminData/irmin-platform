@@ -128,6 +128,7 @@ export function usePolicyForm({
             connections: [],
             repositories: [],
             users: [],
+            tags: [],
           }
         }
       />
@@ -183,6 +184,7 @@ export function usePolicyForm({
               connections: [],
               repositories: [],
               users: [],
+              tags: [],
             }
           }
         />

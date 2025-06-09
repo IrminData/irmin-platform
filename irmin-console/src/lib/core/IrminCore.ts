@@ -23,6 +23,7 @@ import RepositoryCommitService from './resources/RepositoryCommitService';
 import RepositoryService from './resources/RepositoryService';
 import RepositoryTagService from './resources/RepositoryTagService';
 import RoleService from './resources/RoleService';
+import TagService from './resources/TagService';
 import UserService from './resources/UserService';
 import WorkflowRunService from './resources/WorkflowRunService';
 import WorkflowService from './resources/WorkflowService';
@@ -68,6 +69,7 @@ class IrminCore {
   public objectService: ObjectService;
   public credentialService: CredentialService;
   public policyService: PolicyService;
+  public tagService: TagService;
 
   /**
    * Creates an instance of IrminCore.
@@ -102,6 +104,7 @@ class IrminCore {
     this.objectService = new ObjectService(this);
     this.credentialService = new CredentialService(this);
     this.policyService = new PolicyService(this);
+    this.tagService = new TagService(this);
   }
 
   /**

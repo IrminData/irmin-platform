@@ -25,6 +25,7 @@ export enum PolicyResource {
   RepositoryTag = 'repository_tag',
   RepositoryCommit = 'repository_commit',
   RepositoryObject = 'repository_object',
+  WorkspaceTag = 'workspace_tag',
   User = 'user',
   Policy = 'policy',
   Invite = 'invite',
@@ -59,6 +60,7 @@ export interface Policy {
    * - workflows
    * - connections
    * - repositories
+   * - workspace tags
    * - users
    *
    * It is not applicable for:
@@ -105,5 +107,6 @@ export interface PolicyResourceOptions {
   workflows: PolicyResourceOption[];
   connections: PolicyResourceOption[];
   repositories: PolicyResourceOption[];
+  tags: PolicyResourceOption[];
   users: PolicyResourceOption[];
 }

@@ -211,6 +211,13 @@ export default function PolicyTable({
         )?.label ?? resourceId
       );
     }
+    if (resourceType === PolicyResource.WorkspaceTag) {
+      return (
+        policyResourceOptionsQuery.data?.data?.tags.find(
+          (option) => option.id === resourceId
+        )?.label ?? resourceId
+      );
+    }
     return resourceId;
   };
 
