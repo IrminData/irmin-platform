@@ -8,6 +8,7 @@ type StoredQuery struct {
 	Description string    `json:"description"`
 	SQL         string    `json:"sql"`
 	Owner       User      `json:"owner"`
+	Tags        []Tag     `json:"tags,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

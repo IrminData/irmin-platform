@@ -23,6 +23,7 @@ type Repository struct {
 	IsImmutable            bool                    `json:"is_immutable"`
 	DefaultBranch          string                  `json:"default_branch"`
 	Owner                  User                    `json:"owner"`
+	Tags                   []Tag                   `json:"tags,omitempty"`
 	GarbageCollectionRules *GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
 	CreatedAt              time.Time               `json:"created_at"`
 	UpdatedAt              time.Time               `json:"updated_at"`

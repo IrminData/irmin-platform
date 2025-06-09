@@ -7,8 +7,8 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-func (c *Client) ListTags(workspace, repository string) ([]irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
-	var tags []irminmodels.Tag
+func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, *irminmodels.IrminAPIResponse, error) {
+	var tags []irminmodels.GitTag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags", workspace, repository),
@@ -19,8 +19,8 @@ func (c *Client) ListTags(workspace, repository string) ([]irminmodels.Tag, *irm
 	return tags, apiResp, nil
 }
 
-func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
-	var tagObj irminmodels.Tag
+func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error) {
+	var tagObj irminmodels.GitTag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags/%s", workspace, repository, tag),
@@ -33,8 +33,8 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.Tag, *i
 
 func (c *Client) CreateTag(
 	workspace, repository, tag, ref string,
-) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
-	var tagObj irminmodels.Tag
+) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error) {
+	var tagObj irminmodels.GitTag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags", workspace, repository),

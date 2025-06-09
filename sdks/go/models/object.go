@@ -23,5 +23,6 @@ type Object struct {
 	SizeBytes             int64             `json:"size_bytes,omitempty"`              // The number of bytes in the object.
 	LastModified          string            `json:"last_modified,omitempty"`           // The last modified time of the object in RFC3339 format.
 	Metadata              map[string]string `json:"metadata,omitempty"`                // Key-value pairs of metadata about the object.
+	Tags                  []Tag             `json:"tags,omitempty"`                    // Tags associated with this object.
 	Children              []Object          `json:"children,omitempty"`                // If the object is a group, this will contain the children objects.
 }

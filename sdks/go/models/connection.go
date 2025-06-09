@@ -11,4 +11,5 @@ type Connection struct {
 	Settings      CustomFieldValues `json:"settings"`
 	Owner         User              `json:"owner"`
 	Connector     Connector         `json:"connector"`
+	Tags          []Tag             `json:"tags,omitempty"`
 }

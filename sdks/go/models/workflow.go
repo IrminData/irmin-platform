@@ -74,6 +74,7 @@ type Workflow struct {
 	Status        WorkflowStatus   `json:"status"`
 	Type          WorkflowableType `json:"type"`
 	Owner         User             `json:"owner"`
+	Tags          []Tag            `json:"tags,omitempty"`
 	Schedule      *Schedule        `json:"schedule,omitempty"`
 	Workflowable  *Workflowable    `json:"workflowable,omitempty"`
 }
