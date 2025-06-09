@@ -23,6 +23,7 @@ import RepositoryCommitService from './resources/RepositoryCommitService';
 import RepositoryService from './resources/RepositoryService';
 import RepositoryTagService from './resources/RepositoryTagService';
 import RoleService from './resources/RoleService';
+import SearchService from './resources/SearchService';
 import TagService from './resources/TagService';
 import UserService from './resources/UserService';
 import WorkflowRunService from './resources/WorkflowRunService';
@@ -60,6 +61,7 @@ class IrminCore {
   public profileService: ProfileService;
   public userService: UserService;
   public roleService: RoleService;
+  public searchService: SearchService;
   public workflowService: WorkflowService;
   public workflowRunService: WorkflowRunService;
   public workspaceService: WorkspaceService;
@@ -95,6 +97,7 @@ class IrminCore {
     this.profileService = new ProfileService(this);
     this.userService = new UserService(this);
     this.roleService = new RoleService(this);
+    this.searchService = new SearchService(this);
     this.workflowService = new WorkflowService(this);
     this.workflowRunService = new WorkflowRunService(this);
     this.workspaceService = new WorkspaceService(this);
