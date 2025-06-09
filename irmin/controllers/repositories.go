@@ -58,27 +58,28 @@ func (api *APIControllers) validateRepositoryParams(c fiber.Ctx) (
 	}, nil
 }
 
+//nolint:dupl // This is not a duplicate of anything, it's just similar to other index endpoints
 func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
-	repositoryLocalParams, err := api.validateRepositoryParams(c)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating repository parameters", "error", err)
+		api.Logger.Error("Error validating workspace repository parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Get all repositories in the workspace.
-	repositories, getRepositoriesErr := api.DB.GetRepositoriesInWorkspace(repositoryLocalParams.workspace.ID)
+	repositories, getRepositoriesErr := api.DB.GetRepositoriesInWorkspace(workspace.ID)
 	if getRepositoriesErr != nil {
 		api.Logger.Error("Error fetching repositories", "error", getRepositoriesErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Filter repositories based on user permissions
 	filteredRepositories, err := lib.IsAllowedFilter(
 		api.permissionService,
-		repositoryLocalParams.user,
-		repositoryLocalParams.workspace,
+		user,
+		workspace,
 		db.PolicyResourceRepository,
 		db.PolicyActionRead,
 		repositories,
@@ -87,7 +88,7 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	if err != nil {
 		api.Logger.Error("Error filtering repositories by permissions", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -100,7 +101,7 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	if formatErr != nil {
 		api.Logger.Error("Error formatting repositories", "error", formatErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -111,9 +112,9 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
-	repositoryLocalParams, err := api.validateRepositoryParams(c)
+	locale, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating repository parameters", "error", err)
+		api.Logger.Error("Error validating workspace repository parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -133,7 +134,7 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	if parseFormFieldsErr != nil {
 		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
@@ -141,9 +142,9 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	repositorySlug := utils.Slugify(fields["name"])
 
 	// Make sure such repository does not exist
-	if api.DB.CheckIfRepositoryExists(repositorySlug, repositoryLocalParams.workspace.ID) {
+	if api.DB.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "repository_already_exists")},
+			Errors: []string{api.lm.T(dict, "repository_already_exists")},
 		})
 	}
 
@@ -161,14 +162,14 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	if gcParseErr != nil {
 		api.Logger.Error("Error parsing garbage collection settings", "error", gcParseErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	if gcValidateErr := utils.ValidateGarbageCollectionSettings(gcSettings); gcValidateErr != nil {
 		api.Logger.Error("Invalid garbage collection settings", "error", gcValidateErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
@@ -180,33 +181,33 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		Documentation: fields["documentation"],
 		DefaultBranch: defaultBranch,
 		IsImmutable:   isImmutable,
-		WorkspaceID:   repositoryLocalParams.workspace.ID,
-		OwnerID:       repositoryLocalParams.user.ID,
+		WorkspaceID:   workspace.ID,
+		OwnerID:       user.ID,
 	}
 	if createRepositoryErr := api.DB.Create(&repository).Error; createRepositoryErr != nil {
 		api.Logger.Error("Error creating repository", "error", createRepositoryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(
 		c.Context(),
-		repositoryLocalParams.locale,
+		locale,
 		api.Logger,
 		api.Env,
 	)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Create the repository in the Data Engine
 	dataEngineRepository, createRepositoryInDataEngineErr := dataEngine.CreateRepository(
-		repositoryLocalParams.workspace.Slug,
+		workspace.Slug,
 		repositorySlug,
 		defaultBranch,
 		isImmutable,
@@ -216,7 +217,7 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	if createRepositoryInDataEngineErr != nil {
 		api.Logger.Error("Error creating repository in Data Engine", "error", createRepositoryInDataEngineErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -240,7 +241,7 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	if formatRepositoryResponseErr != nil {
 		api.Logger.Error("Error formatting repository", "error", formatRepositoryResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -248,14 +249,14 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
 		Description:  fmt.Sprintf("Repository %s created", repository.Slug),
-		UserID:       &repositoryLocalParams.user.ID,
-		WorkspaceID:  &repositoryLocalParams.workspace.ID,
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
 	})
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
-		Message: api.lm.T(repositoryLocalParams.dict, "repository_created"),
+		Message: api.lm.T(dict, "repository_created"),
 		Data:    *repositoryResponse,
 	})
 }

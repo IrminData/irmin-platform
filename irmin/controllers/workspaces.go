@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/bucket"
 	"irmin-api/formatter"
@@ -13,6 +14,35 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
+
+// validateWorkspaceParams validates the common parameters needed for workspace-level operations.
+// Returns locale, dict, user, workspace, and an error. Does not require a repository in context.
+func (api *APIControllers) validateWorkspaceParams(c fiber.Ctx) (
+	string,
+	locales.Dictionary,
+	*db.User,
+	*db.Workspace,
+	error,
+) {
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !localeOk {
+		return "", nil, nil, nil, errors.New("locale not found in context")
+	}
+	if !dictOk {
+		return "", nil, nil, nil, errors.New("dictionary not found in context")
+	}
+	if !userOk {
+		return "", nil, nil, nil, errors.New("user not found in context")
+	}
+	if !workspaceOk {
+		return "", nil, nil, nil, errors.New("workspace not found in context")
+	}
+	return locale, dict, user, workspace, nil
+}
 
 func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
@@ -161,10 +191,9 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
-	// Get the workspace from the request context.
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !workspaceOk {
+	_, dict, _, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -173,7 +202,7 @@ func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 	if formatWorkspaceResponseErr != nil {
 		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{"error_occurred"},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -184,12 +213,9 @@ func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
-	// Get the dictionary and workspace from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !dictOk || !userOk || !workspaceOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -245,12 +271,9 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
-	// Get the dictionary, workspace, and user from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !dictOk || !userOk || !workspaceOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -308,12 +331,9 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
-	// Get the dictionary, workspace, and user from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !dictOk || !userOk || !workspaceOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 

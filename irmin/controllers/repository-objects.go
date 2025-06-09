@@ -73,8 +73,8 @@ func (api *APIControllers) validateObjectParams(c fiber.Ctx) (
 	}, nil
 }
 
-// ObjectsIndex handles retrieving an object from a repository.
-func (api *APIControllers) ObjectsIndex(c fiber.Ctx) error {
+// RepositoryObjectsIndex handles retrieving an object from a repository.
+func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 	params, err := api.validateObjectParams(c)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -138,8 +138,8 @@ func (api *APIControllers) ObjectsIndex(c fiber.Ctx) error {
 	})
 }
 
-// UploadObject handles uploading an object to a repository.
-func (api *APIControllers) UploadObject(c fiber.Ctx) error {
+// RepositoryUploadObject handles uploading an object to a repository.
+func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -231,8 +231,8 @@ func (api *APIControllers) UploadObject(c fiber.Ctx) error {
 	})
 }
 
-// MoveObject handles moving an object to a new path in a repository.
-func (api *APIControllers) MoveObject(c fiber.Ctx) error {
+// RepositoryMoveObject handles moving an object to a new path in a repository.
+func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -314,8 +314,8 @@ func (api *APIControllers) MoveObject(c fiber.Ctx) error {
 	})
 }
 
-// CopyObject handles copying an object to a new path in a repository.
-func (api *APIControllers) CopyObject(c fiber.Ctx) error {
+// RepositoryCopyObject handles copying an object to a new path in a repository.
+func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -399,8 +399,8 @@ func (api *APIControllers) CopyObject(c fiber.Ctx) error {
 	})
 }
 
-// ObjectsDestroy handles deleting an object from a repository.
-func (api *APIControllers) ObjectsDestroy(c fiber.Ctx) error {
+// RepositoryObjectsDestroy handles deleting an object from a repository.
+func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -462,8 +462,8 @@ func (api *APIControllers) ObjectsDestroy(c fiber.Ctx) error {
 	})
 }
 
-// ObjectsContent handles retrieving the content of an object.
-func (api *APIControllers) ObjectsContent(c fiber.Ctx) error {
+// RepositoryObjectsContent handles retrieving the content of an object.
+func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -503,8 +503,8 @@ func (api *APIControllers) ObjectsContent(c fiber.Ctx) error {
 	)
 }
 
-// ObjectsStructuredContent handles retrieving the structured content of an object.
-func (api *APIControllers) ObjectsStructuredContent(c fiber.Ctx) error {
+// RepositoryObjectsStructuredContent handles retrieving the structured content of an object.
+func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -568,8 +568,8 @@ func (api *APIControllers) ObjectsStructuredContent(c fiber.Ctx) error {
 	})
 }
 
-// ObjectsDownload handles downloading either a single object or all descendants of a group, zipping them, and sending as a download.
-func (api *APIControllers) ObjectsDownload(c fiber.Ctx) error {
+// RepositoryObjectsDownload handles downloading either a single object or all descendants of a group, zipping them, and sending as a download.
+func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -626,8 +626,8 @@ func (api *APIControllers) ObjectsDownload(c fiber.Ctx) error {
 	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
 }
 
-// ObjectsHistory handles retrieving the commit history of an object.
-func (api *APIControllers) ObjectsHistory(c fiber.Ctx) error {
+// RepositoryObjectsHistory handles retrieving the commit history of an object.
+func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)
@@ -662,8 +662,8 @@ func (api *APIControllers) ObjectsHistory(c fiber.Ctx) error {
 	})
 }
 
-// ObjectsSchema handles retrieving the schema of an object.
-func (api *APIControllers) ObjectsSchema(c fiber.Ctx) error {
+// RepositoryObjectsSchema handles retrieving the schema of an object.
+func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
 		api.Logger.Error("Error validating object parameters", "error", err)

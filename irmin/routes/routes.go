@@ -150,6 +150,40 @@ func RegisterAPIRoutes(
 		apiControllers.WorkspaceSchemaIndex,
 	)
 
+	// Workspace tag routes
+	workspace.Get(
+		"/tags",
+		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.TagsIndex,
+	)
+	workspace.Post(
+		"/tags",
+		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.TagsStore,
+	)
+	workspaceTag := workspace.Group("/tags/:tag", apiMiddlewares.TagMiddleware)
+	workspaceTag.Get("/", apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionRead), apiControllers.TagsShow)
+	workspaceTag.Patch(
+		"/",
+		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TagsUpdate,
+	)
+	workspaceTag.Delete(
+		"/",
+		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.TagsDestroy,
+	)
+	workspaceTag.Post(
+		"/entities/:entity_type/:entity_id",
+		apiMiddlewares.WorkspaceTagEntityPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.AddTagToEntity,
+	)
+	workspaceTag.Delete(
+		"/entities/:entity_type/:entity_id",
+		apiMiddlewares.WorkspaceTagEntityPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RemoveTagFromEntity,
+	)
+
 	// Query routes
 	workspace.Post("/sql", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionCreate), apiControllers.ExecuteSQL)
 	queries := workspace.Group("/queries")
@@ -376,74 +410,146 @@ func RegisterAPIRoutes(
 	// Merge and compare routes
 	repository.Get(
 		"/compare",
-		apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionRead),
+		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.CompareRefs,
 	)
 	repository.Post(
 		"/merge",
-		apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionCreate),
+		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.MergeRefs,
 	)
 
 	// Object routes
-	objects := repository.Group("/objects", apiMiddlewares.ObjectMiddleware)
-	objects.Get("/", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead), apiControllers.ObjectsIndex)
-	objects.Post("/", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionCreate), apiControllers.UploadObject)
-	objects.Delete("/", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionDelete), apiControllers.ObjectsDestroy)
-	objects.Post("/move", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionUpdate), apiControllers.MoveObject)
-	objects.Post("/copy", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionCreate), apiControllers.CopyObject)
+	objects := repository.Group("/objects", apiMiddlewares.RepositoryObjectMiddleware)
+	objects.Get(
+		"/",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsIndex,
+	)
+	objects.Post(
+		"/",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryUploadObject,
+	)
+	objects.Delete(
+		"/",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.RepositoryObjectsDestroy,
+	)
+	objects.Post(
+		"/move",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RepositoryMoveObject,
+	)
+	objects.Post(
+		"/copy",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryCopyObject,
+	)
 	objects.Get(
 		"/content",
-		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.ObjectsContent,
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsContent,
 	)
 	objects.Get(
 		"/content/structured",
-		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.ObjectsStructuredContent,
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsStructuredContent,
 	)
 	objects.Get(
 		"/download",
-		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.ObjectsDownload,
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsDownload,
 	)
 	objects.Get(
 		"/history",
-		apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.ObjectsHistory,
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsHistory,
 	)
-	objects.Get("/schema", apiMiddlewares.ObjectPermissionMiddleware(db.PolicyActionRead), apiControllers.ObjectsSchema)
+	objects.Get(
+		"/schema",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryObjectsSchema,
+	)
 
 	// Branch routes
 	branches := repository.Group("/branches")
-	branches.Get("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionRead), apiControllers.BranchesIndex)
-	branches.Post("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionCreate), apiControllers.BranchesStore)
-	branch := branches.Group("/:branch", apiMiddlewares.BranchMiddleware)
+	branches.Get(
+		"/",
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryBranchesIndex,
+	)
+	branches.Post(
+		"/",
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryBranchesStore,
+	)
+	branch := branches.Group("/:branch", apiMiddlewares.RepositoryBranchMiddleware)
 	branch.Get(
 		"/changes",
-		apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.GetUncommittedChanges,
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryGetUncommittedChanges,
 	)
-	branch.Get("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionRead), apiControllers.BranchesShow)
-	branch.Patch("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionUpdate), apiControllers.BranchesUpdate)
-	branch.Delete("/", apiMiddlewares.BranchPermissionMiddleware(db.PolicyActionDelete), apiControllers.BranchesDestroy)
+	branch.Get(
+		"/",
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryBranchesShow,
+	)
+	branch.Patch(
+		"/",
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RepositoryBranchesUpdate,
+	)
+	branch.Delete(
+		"/",
+		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.RepositoryBranchesDestroy,
+	)
 
 	// Tag routes
 	tags := repository.Group("/tags")
-	tags.Get("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionRead), apiControllers.TagsIndex)
-	tags.Post("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionCreate), apiControllers.TagsStore)
-	tag := tags.Group("/:tag", apiMiddlewares.TagMiddleware)
-	tag.Get("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionRead), apiControllers.TagsShow)
-	tag.Delete("/", apiMiddlewares.TagPermissionMiddleware(db.PolicyActionDelete), apiControllers.TagsDestroy)
+	tags.Get(
+		"/",
+		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryTagsIndex,
+	)
+	tags.Post(
+		"/",
+		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryTagsStore,
+	)
+	tag := tags.Group("/:tag", apiMiddlewares.RepositoryTagMiddleware)
+	tag.Get(
+		"/",
+		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryTagsShow,
+	)
+	tag.Delete(
+		"/",
+		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.RepositoryTagsDestroy,
+	)
 
 	// Commits routes
 	commits := repository.Group("/commits")
-	commits.Get("/", apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionRead), apiControllers.CommitsIndex)
-	commits.Post("/", apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionCreate), apiControllers.CommitsStore)
+	commits.Get(
+		"/",
+		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryCommitsIndex,
+	)
+	commits.Post(
+		"/",
+		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryCommitsStore,
+	)
 	commits.Post(
 		"/revert",
-		apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.RevertUncommittedChanges,
+		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.RepositoryRevertUncommittedChanges,
 	)
-	commits.Get("/:hash", apiMiddlewares.CommitPermissionMiddleware(db.PolicyActionRead), apiControllers.CommitsShow)
+	commits.Get(
+		"/:hash",
+		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.RepositoryCommitsShow,
+	)
 }

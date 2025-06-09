@@ -5,7 +5,6 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
-	"irmin-api/locales"
 	"irmin-api/utils"
 	"strings"
 
@@ -15,10 +14,9 @@ import (
 
 //nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-	if !dictOk || !workspaceOk || !userOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -68,10 +66,15 @@ func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) UsersShow(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
+	_, dict, _, _, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !workspaceMemberOk {
+	// Get the workspace member from locals
+	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
+	if !workspaceMemberOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -91,12 +94,15 @@ func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workspaceMemberOk {
+	// Get the workspace member from locals
+	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
+	if !workspaceMemberOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -137,12 +143,15 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 }
 
 func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workspaceMemberOk {
+	// Get the workspace member from locals
+	workspaceMember, workspaceMemberOk := c.Locals("workspace_member").(*db.WorkspaceUser)
+	if !workspaceMemberOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 

@@ -24,6 +24,12 @@ func FormatConnectionResponse(
 		return nil, fmt.Errorf("error formatting connector response: %w", err)
 	}
 
+	// Format the connection tags
+	tags, err := FormatTagsResponse(connection.Tags, sqidManager)
+	if err != nil {
+		return nil, fmt.Errorf("error formatting connection tags: %w", err)
+	}
+
 	// Construct the connection response.
 	connectionSqid, err := sqidManager.Encode("connections", uint64(connection.ID))
 	if err != nil {
@@ -38,6 +44,7 @@ func FormatConnectionResponse(
 		Settings:      irminmodels.CustomFieldValues(connection.Settings),
 		Owner:         *ownerResponse,
 		Connector:     *connectorResponse,
+		Tags:          tags,
 	}
 
 	return &connectionResponse, nil

@@ -32,11 +32,16 @@ type Repository struct {
 	Owner                  User                                `json:"owner"                              gorm:"foreignKey:OwnerID"`
 	OwnerID                uint                                `json:"owner_id"`
 	SchemaCache            []RepositorySchemaCache             `json:"schema_cache,omitempty"             gorm:"foreignKey:RepositoryID"`
+	Tags                   []Tag                               `json:"tags,omitempty"                     gorm:"many2many:repository_tags;"`
 }
 
 func (d *Database) GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {
 	var repository Repository
-	err := d.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository).Error
+	err := d.Where("slug = ? AND workspace_id = ?", slug, workspaceID).
+		Preload("Owner").
+		Preload("Tags").
+		First(&repository).
+		Error
 	return &repository, err
 }
 
@@ -48,13 +53,22 @@ func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool {
 
 func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
 	var repositories []Repository
-	err := d.Where("workspace_id = ?", workspaceID).Preload("Owner").Order("created_at desc").Find(&repositories).Error
+	err := d.Where("workspace_id = ?", workspaceID).
+		Preload("Owner").
+		Preload("Tags").
+		Order("created_at desc").
+		Find(&repositories).
+		Error
 	return repositories, err
 }
 
 func (d *Database) DeleteRepository(id uint) error {
 	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete associated schema cache first
+		// Remove tag associations first
+		if err := tx.Where("repository_id = ?", id).Delete(&RepositoryTag{}).Error; err != nil {
+			return err
+		}
+		// Delete associated schema cache
 		if err := tx.Where("repository_id = ?", id).Delete(&RepositorySchemaCache{}).Error; err != nil {
 			return err
 		}

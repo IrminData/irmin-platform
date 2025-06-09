@@ -15,7 +15,6 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)

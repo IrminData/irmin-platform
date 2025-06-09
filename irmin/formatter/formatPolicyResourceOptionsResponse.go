@@ -103,11 +103,31 @@ func formatUserResourceOptions(
 	return formattedUsers, nil
 }
 
+// formatTagResourceOptions formats the tags into PolicyResourceOptions.
+func formatTagResourceOptions(
+	tags []db.Tag,
+	sqidManager *utils.SQIDManager,
+) ([]irminmodels.PolicyResourceOption, error) {
+	formattedTags := make([]irminmodels.PolicyResourceOption, len(tags))
+	for i, tag := range tags {
+		sqid, err := sqidManager.Encode("tags", uint64(tag.ID))
+		if err != nil {
+			return nil, fmt.Errorf("error encoding tag sqid: %w", err)
+		}
+		formattedTags[i] = irminmodels.PolicyResourceOption{
+			ID:    sqid,
+			Label: tag.Name,
+		}
+	}
+	return formattedTags, nil
+}
+
 func FormatPolicyResourceOptionsResponse(
 	queries []db.StoredQuery,
 	workflows []db.Workflow,
 	connections []db.Connection,
 	repositories []db.Repository,
+	tags []db.Tag,
 	users []db.WorkspaceUser,
 	sqidManager *utils.SQIDManager,
 ) (*irminmodels.PolicyResourceOptions, error) {
@@ -123,6 +143,9 @@ func FormatPolicyResourceOptionsResponse(
 	})
 	repositoriesFuture := utils.Async(func() ([]irminmodels.PolicyResourceOption, error) {
 		return formatRepositoryResourceOptions(repositories, sqidManager)
+	})
+	tagsFuture := utils.Async(func() ([]irminmodels.PolicyResourceOption, error) {
+		return formatTagResourceOptions(tags, sqidManager)
 	})
 	usersFuture := utils.Async(func() ([]irminmodels.PolicyResourceOption, error) {
 		return formatUserResourceOptions(users, sqidManager)
@@ -149,6 +172,11 @@ func FormatPolicyResourceOptionsResponse(
 		return nil, repositoriesErr
 	}
 
+	formattedTags, tagsErr := tagsFuture.Await()
+	if tagsErr != nil {
+		return nil, tagsErr
+	}
+
 	formattedUsers, usersErr := usersFuture.Await()
 	if usersErr != nil {
 		return nil, usersErr
@@ -160,6 +188,7 @@ func FormatPolicyResourceOptionsResponse(
 		Workflows:    formattedWorkflows,
 		Connections:  formattedConnections,
 		Repositories: formattedRepositories,
+		Tags:         formattedTags,
 		Users:        formattedUsers,
 	}, nil
 }

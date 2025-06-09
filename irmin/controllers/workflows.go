@@ -5,7 +5,6 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
-	"irmin-api/locales"
 	"irmin-api/utils"
 	"strings"
 
@@ -18,12 +17,9 @@ import (
 
 // WorkflowsIndex shows all workflows for a workspace.
 func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
-	// Get the dictionary and workspace from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-
-	if !dictOk || !workspaceOk || !userOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -100,11 +96,15 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 
 // WorkflowsShow shows a workflow.
 func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	_, dict, _, _, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !workflowOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -125,13 +125,15 @@ func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
 
 // WorkflowsUpdate updates a workflow.
 func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workflowOk || !workspaceOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -192,12 +194,9 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 
 // WorkflowsStore creates a new workflow.
 func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
-	// Get the dictionary and user from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-
-	if !dictOk || !workspaceOk || !userOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -296,13 +295,15 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 
 // WorkflowableUpdate updates the workflowable of a workflow.
 func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workflowOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -315,13 +316,13 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	// Start a transaction for all database operations
 	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Create new workflowable based on type
-		if err := api.createWorkflowableByType(c, tx, workspace, string(workflow.Type), &importWorkflowable, &exportWorkflowable, &actionWorkflowable, &pipelineWorkflowable); err != nil {
-			return err
+		if createWorkflowableErr := api.createWorkflowableByType(c, tx, workspace, string(workflow.Type), &importWorkflowable, &exportWorkflowable, &actionWorkflowable, &pipelineWorkflowable); createWorkflowableErr != nil {
+			return createWorkflowableErr
 		}
 
 		// Delete existing workflowable
-		if err := api.deleteExistingWorkflowable(tx, workflow); err != nil {
-			return err
+		if deleteWorkflowableErr := api.deleteExistingWorkflowable(tx, workflow); deleteWorkflowableErr != nil {
+			return deleteWorkflowableErr
 		}
 
 		// Update workflow with new workflowable
@@ -332,8 +333,8 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 			actionWorkflowable,
 			pipelineWorkflowable,
 		)
-		if err := tx.Save(workflow).Error; err != nil {
-			return err
+		if saveWorkflowErr := tx.Save(workflow).Error; saveWorkflowErr != nil {
+			return saveWorkflowErr
 		}
 
 		// Fetch the full workflow object with all relations
@@ -380,13 +381,15 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 
 // ScheduleUpdate updates the schedule of a workflow.
 func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workflowOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -464,13 +467,15 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 
 // WorkflowsDestroy destroys a workflow.
 func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workflowOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -500,13 +505,15 @@ func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 
 // TransferWorkflowOwnership transfers the ownership of a workflow.
 func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workflowOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -582,13 +589,15 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 
 // PauseWorkflow pauses a workflow.
 func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workflowOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -631,13 +640,15 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 
 // StartWorkflow starts a workflow.
 func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
-	// Get the dictionary and workflow from the request context.
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	user, userOk := c.Locals("user").(*db.User)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !userOk || !workspaceOk || !workflowOk {
+	// Get the workflow from locals
+	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	if !workflowOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 

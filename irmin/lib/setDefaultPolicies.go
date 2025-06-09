@@ -18,6 +18,7 @@ func getAllResources() []db.PolicyResource {
 		db.PolicyResourceRepositoryTag,
 		db.PolicyResourceRepositoryCommit,
 		db.PolicyResourceRepositoryObject,
+		db.PolicyResourceWorkspaceTag,
 		db.PolicyResourceUser,
 		db.PolicyResourcePolicy,
 		db.PolicyResourceInvite,
@@ -148,6 +149,7 @@ func setEditorPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 		db.PolicyResourceWorkflowRun,
 		db.PolicyResourceEditorScript,
 		db.PolicyResourceQuery,
+		db.PolicyResourceWorkspaceTag,
 	}
 
 	repositoryResources := []db.PolicyResource{

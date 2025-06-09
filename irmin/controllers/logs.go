@@ -37,11 +37,9 @@ type logsQueryParams struct {
 }
 
 func (api *APIControllers) validateLogsParams(c fiber.Ctx) (*logsLocalParams, error) {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-
-	if !dictOk || !workspaceOk || !userOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return nil, errors.New("missing required context")
 	}
 

@@ -14,66 +14,53 @@ func FormatWorkflowResponse(
 	workflow *db.Workflow,
 	sqidManager *utils.SQIDManager,
 ) (*irminmodels.Workflow, error) {
-	// Run all formatting operations concurrently
-	type formatResult struct {
-		owner        *irminmodels.User
-		workflowable *irminmodels.Workflowable
-		schedule     *irminmodels.Schedule
-		err          error
-	}
+	// Run all formatting operations concurrently using async utilities
+	ownerFuture := utils.Async(func() (*irminmodels.User, error) {
+		return FormatUserResponse(&workflow.Owner, sqidManager)
+	})
 
-	ch := make(chan formatResult)
+	workflowableFuture := utils.Async(func() (*irminmodels.Workflowable, error) {
+		return FormatWorkflowableResponse(d, workflow, sqidManager)
+	})
 
-	// Launch goroutines for each formatting operation
-	go func() {
-		owner, err := FormatUserResponse(&workflow.Owner, sqidManager)
-		ch <- formatResult{owner: owner, err: err}
-	}()
-
-	go func() {
-		workflowable, err := FormatWorkflowableResponse(d, workflow, sqidManager)
-		ch <- formatResult{workflowable: workflowable, err: err}
-	}()
-
-	go func() {
+	scheduleFuture := utils.Async(func() (*irminmodels.Schedule, error) {
 		if workflow.ScheduleID == nil {
-			ch <- formatResult{schedule: &irminmodels.Schedule{}, err: nil}
-			return
+			return &irminmodels.Schedule{}, nil
 		}
 		if workflow.Schedule != nil {
-			scheduleResponse, err := FormatScheduleResponse(workflow.Schedule, sqidManager)
-			ch <- formatResult{schedule: scheduleResponse, err: err}
-			return
+			return FormatScheduleResponse(workflow.Schedule, sqidManager)
 		}
 		// Fetch the schedule only if not already defined
 		schedule, err := d.GetScheduleByID(*workflow.ScheduleID)
 		if err != nil {
-			ch <- formatResult{err: fmt.Errorf("error retrieving schedule: %w", err)}
-			return
+			return nil, fmt.Errorf("error retrieving schedule: %w", err)
 		}
-		scheduleResponse, err := FormatScheduleResponse(schedule, sqidManager)
-		ch <- formatResult{schedule: scheduleResponse, err: err}
-	}()
+		return FormatScheduleResponse(schedule, sqidManager)
+	})
 
-	// Collect results
-	var ownerResponse *irminmodels.User
-	var workflowableResponse *irminmodels.Workflowable
-	var scheduleResponse *irminmodels.Schedule
+	tagsFuture := utils.Async(func() ([]irminmodels.Tag, error) {
+		return FormatTagsResponse(workflow.Tags, sqidManager)
+	})
 
-	for range 3 {
-		result := <-ch
-		if result.err != nil {
-			return nil, result.err
-		}
-		if result.owner != nil {
-			ownerResponse = result.owner
-		}
-		if result.workflowable != nil {
-			workflowableResponse = result.workflowable
-		}
-		if result.schedule != nil {
-			scheduleResponse = result.schedule
-		}
+	// Await all results
+	ownerResponse, err := ownerFuture.Await()
+	if err != nil {
+		return nil, err
+	}
+
+	workflowableResponse, err := workflowableFuture.Await()
+	if err != nil {
+		return nil, err
+	}
+
+	scheduleResponse, err := scheduleFuture.Await()
+	if err != nil {
+		return nil, err
+	}
+
+	tagsResponse, err := tagsFuture.Await()
+	if err != nil {
+		return nil, err
 	}
 
 	// Find the latest workflow run status.
@@ -100,6 +87,7 @@ func FormatWorkflowResponse(
 		Status:        latestStatus,
 		Type:          irminmodels.WorkflowableType(workflow.Type),
 		Owner:         *ownerResponse,
+		Tags:          tagsResponse,
 		Schedule:      scheduleResponse,
 		Workflowable:  workflowableResponse,
 	}

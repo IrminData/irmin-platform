@@ -23,6 +23,12 @@ func FormatRepositoryObjectResponse(
 		children[i] = *childObject
 	}
 
+	// Format the object tags
+	tags, err := FormatTagsResponse(object.Tags, sqidManager)
+	if err != nil {
+		return nil, fmt.Errorf("error formatting object tags: %w", err)
+	}
+
 	// Construct the sqid of the object
 	objectSqid, err := sqidManager.Encode("repository_objects", uint64(object.ID))
 	if err != nil {
@@ -41,6 +47,7 @@ func FormatRepositoryObjectResponse(
 		SizeBytes:             object.SizeBytes,
 		LastModified:          object.LastModified,
 		Metadata:              object.Metadata,
+		Tags:                  tags,
 		Children:              children,
 	}
 

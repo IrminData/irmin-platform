@@ -17,29 +17,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type policyLocalParams struct {
-	dict      locales.Dictionary
-	workspace *db.Workspace
-	user      *db.User
-}
-
-func (api *APIControllers) validatePolicyParams(c fiber.Ctx) (*policyLocalParams, error) {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-
-	if !dictOk || !workspaceOk || !userOk {
-		return nil, errors.New("missing required context")
-	}
-
-	return &policyLocalParams{dict: dict, workspace: workspace, user: user}, nil
-}
-
 // PoliciesIndex returns a list of all policies for a workspace.
 func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
-	policyLocalParams, err := api.validatePolicyParams(c)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
-		api.Logger.Error("Error validating policy parameters", "error", err)
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -51,12 +33,12 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(policyLocalParams.dict, "invalid_request")},
+			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Build base query
-	query := api.DB.Where("workspace_id = ?", policyLocalParams.workspace.ID)
+	query := api.DB.Where("workspace_id = ?", workspace.ID)
 
 	// Apply simple filters directly
 	for _, field := range []string{"effect", "resource", "action", "principal"} {
@@ -75,7 +57,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 		if decodeResourceIDErr != nil {
 			api.Logger.Error("Error decoding resource ID", "error", decodeResourceIDErr)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(policyLocalParams.dict, "invalid_request")},
+				Errors: []string{api.lm.T(dict, "invalid_request")},
 			})
 		}
 		query = query.Where("resource_id = ?", resourceID)
@@ -87,7 +69,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 		if decodeRoleIDErr != nil {
 			api.Logger.Error("Error decoding role ID", "error", decodeRoleIDErr)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(policyLocalParams.dict, "invalid_request")},
+				Errors: []string{api.lm.T(dict, "invalid_request")},
 			})
 		}
 		query = query.Where("role_id = ?", roleID)
@@ -99,14 +81,14 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 		if decodeUserIDErr != nil {
 			api.Logger.Error("Error decoding user ID", "error", decodeUserIDErr)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(policyLocalParams.dict, "invalid_request")},
+				Errors: []string{api.lm.T(dict, "invalid_request")},
 			})
 		}
-		workspaceUser, findWorkspaceUserErr := api.DB.GetWorkspaceUser(policyLocalParams.workspace.ID, uint(userID))
+		workspaceUser, findWorkspaceUserErr := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
 		if findWorkspaceUserErr != nil {
 			api.Logger.Error("Error finding workspace user ID", "error", findWorkspaceUserErr)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(policyLocalParams.dict, "invalid_request")},
+				Errors: []string{api.lm.T(dict, "invalid_request")},
 			})
 		}
 		query = query.Where("workspace_user_id = ?", workspaceUser.ID)
@@ -121,15 +103,15 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 		Find(&policies).Error; queryErr != nil {
 		api.Logger.Error("Error fetching policies", "error", queryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(policyLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Filter policies based on user permissions
 	filteredPolicies, err := lib.IsAllowedFilter(
 		api.permissionService,
-		policyLocalParams.user,
-		policyLocalParams.workspace,
+		user,
+		workspace,
 		db.PolicyResourcePolicy,
 		db.PolicyActionRead,
 		policies,
@@ -138,7 +120,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	if err != nil {
 		api.Logger.Error("Error filtering policies by permissions", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(policyLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -151,7 +133,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	if formatErr != nil {
 		api.Logger.Error("Error formatting policies", "error", formatErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(policyLocalParams.dict, "error_occurred")},
+			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -245,12 +227,9 @@ func (api *APIControllers) handleOptionalPolicyFields(
 
 // PoliciesStore creates a new policy for a workspace.
 func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-
-	if !dictOk || !workspaceOk || !userOk {
-		api.Logger.Error("Error validating local parameters in PoliciesStore")
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -342,11 +321,16 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 
 // PoliciesShow returns a single policy.
 func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	policy, policyOk := c.Locals("policy").(*db.Policy)
+	_, dict, _, _, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !policyOk {
-		api.Logger.Error("Error validating local parameters in PoliciesShow")
+	// Get the policy from the request context.
+	policy, policyOk := c.Locals("policy").(*db.Policy)
+	if !policyOk {
+		api.Logger.Error("Error getting policy from request context", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -366,13 +350,16 @@ func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
 
 // PoliciesUpdate updates an existing policy.
 func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-	policy, policyOk := c.Locals("policy").(*db.Policy)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !workspaceOk || !userOk || !policyOk {
-		api.Logger.Error("Error validating local parameters in PoliciesUpdate")
+	// Get the policy from the request context.
+	policy, policyOk := c.Locals("policy").(*db.Policy)
+	if !policyOk {
+		api.Logger.Error("Error getting policy from request context", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -444,18 +431,21 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 
 // PoliciesDestroy deletes a policy.
 func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-	policy, policyOk := c.Locals("policy").(*db.Policy)
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
 
-	if !dictOk || !workspaceOk || !userOk || !policyOk {
-		api.Logger.Error("Error validating local parameters in PoliciesDestroy")
+	// Get the policy from the request context.
+	policy, policyOk := c.Locals("policy").(*db.Policy)
+	if !policyOk {
+		api.Logger.Error("Error getting policy from request context", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Delete the policy
-	err := api.DB.Delete(policy).Error
+	err = api.DB.Delete(policy).Error
 	if err != nil {
 		api.Logger.Error("Error deleting policy", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -477,30 +467,34 @@ func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 	})
 }
 
-// PoliciesResourceOptions returns all possible policy resource options for a given workspace.
-func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !workspaceOk {
-		api.Logger.Error("Error validating local parameters in PoliciesResourceOptions")
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
-	}
-
+// fetchPolicyResourceData fetches all the data needed for policy resource options.
+func (api *APIControllers) fetchPolicyResourceData(workspaceID uint) (
+	[]db.StoredQuery,
+	[]db.Workflow,
+	[]db.Connection,
+	[]db.Repository,
+	[]db.Tag,
+	[]db.WorkspaceUser,
+	error,
+) {
 	// Create async functions for each database call
 	getQueries := func() ([]db.StoredQuery, error) {
-		return api.DB.GetStoredQueriesByWorkspaceID(workspace.ID)
+		return api.DB.GetStoredQueriesByWorkspaceID(workspaceID)
 	}
 	getWorkflows := func() ([]db.Workflow, error) {
-		return api.DB.GetWorkflowsByWorkspaceID(workspace.ID)
+		return api.DB.GetWorkflowsByWorkspaceID(workspaceID)
 	}
 	getConnections := func() ([]db.Connection, error) {
-		return api.DB.GetConnectionsByWorkspaceID(workspace.ID)
+		return api.DB.GetConnectionsByWorkspaceID(workspaceID)
 	}
 	getRepositories := func() ([]db.Repository, error) {
-		return api.DB.GetRepositoriesInWorkspace(workspace.ID)
+		return api.DB.GetRepositoriesInWorkspace(workspaceID)
+	}
+	getTags := func() ([]db.Tag, error) {
+		return api.DB.GetTagsByWorkspace(workspaceID)
 	}
 	getUsers := func() ([]db.WorkspaceUser, error) {
-		return api.DB.GetUsersInWorkspace(workspace.ID)
+		return api.DB.GetUsersInWorkspace(workspaceID)
 	}
 
 	// Run all database calls concurrently
@@ -508,44 +502,55 @@ func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
 	workflowsFuture := utils.Async(getWorkflows)
 	connectionsFuture := utils.Async(getConnections)
 	repositoriesFuture := utils.Async(getRepositories)
+	tagsFuture := utils.Async(getTags)
 	usersFuture := utils.Async(getUsers)
 
 	// Collect results
 	queries, queriesErr := queriesFuture.Await()
 	if queriesErr != nil {
-		api.Logger.Error("Error fetching queries", "error", queriesErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return nil, nil, nil, nil, nil, nil, queriesErr
 	}
 
 	workflows, workflowsErr := workflowsFuture.Await()
 	if workflowsErr != nil {
-		api.Logger.Error("Error fetching workflows", "error", workflowsErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return nil, nil, nil, nil, nil, nil, workflowsErr
 	}
 
 	connections, connectionsErr := connectionsFuture.Await()
 	if connectionsErr != nil {
-		api.Logger.Error("Error fetching connections", "error", connectionsErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return nil, nil, nil, nil, nil, nil, connectionsErr
 	}
 
 	repositories, repositoriesErr := repositoriesFuture.Await()
 	if repositoriesErr != nil {
-		api.Logger.Error("Error fetching repositories", "error", repositoriesErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		return nil, nil, nil, nil, nil, nil, repositoriesErr
+	}
+
+	tags, tagsErr := tagsFuture.Await()
+	if tagsErr != nil {
+		return nil, nil, nil, nil, nil, nil, tagsErr
 	}
 
 	users, usersErr := usersFuture.Await()
 	if usersErr != nil {
-		api.Logger.Error("Error fetching users", "error", usersErr)
+		return nil, nil, nil, nil, nil, nil, usersErr
+	}
+
+	return queries, workflows, connections, repositories, tags, users, nil
+}
+
+// PoliciesResourceOptions returns all possible policy resource options for a given workspace.
+func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
+	_, dict, _, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Fetch all resource data
+	queries, workflows, connections, repositories, tags, users, err := api.fetchPolicyResourceData(workspace.ID)
+	if err != nil {
+		api.Logger.Error("Error fetching resource data", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -557,6 +562,7 @@ func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
 		workflows,
 		connections,
 		repositories,
+		tags,
 		users,
 		api.SQIDManager,
 	)
@@ -807,6 +813,7 @@ func (api *APIControllers) getUserApplicablePolicies(
 			db.PolicyResourceConnection,
 			db.PolicyResourceRepository,
 			db.PolicyResourceRepositoryObject,
+			db.PolicyResourceWorkspaceTag,
 			db.PolicyResourceUser,
 			db.PolicyResourcePolicy,
 			db.PolicyResourceInvite,

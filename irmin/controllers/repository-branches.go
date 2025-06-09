@@ -12,7 +12,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func (api *APIControllers) BranchesIndex(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
@@ -64,7 +64,7 @@ func (api *APIControllers) BranchesIndex(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) BranchesStore(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -123,7 +123,7 @@ func (api *APIControllers) BranchesStore(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) BranchesShow(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryBranchesShow(c fiber.Ctx) error {
 	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
 	if !branchOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
@@ -134,7 +134,7 @@ func (api *APIControllers) BranchesShow(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -215,7 +215,7 @@ func (api *APIControllers) BranchesUpdate(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) BranchesDestroy(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -267,7 +267,7 @@ func (api *APIControllers) BranchesDestroy(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) GetUncommittedChanges(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryGetUncommittedChanges(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)

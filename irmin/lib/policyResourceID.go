@@ -35,6 +35,8 @@ func DecodePolicyResourceID(
 		id, err = sqidManager.Decode("repositories", sqid) // Branch policies point to a repository
 	case db.PolicyResourceRepositoryTag:
 		id, err = sqidManager.Decode("repositories", sqid) // Tag policies point to a repository
+	case db.PolicyResourceWorkspaceTag:
+		id, err = sqidManager.Decode("tags", sqid)
 	case db.PolicyResourceRepositoryCommit:
 		id, err = sqidManager.Decode("repositories", sqid) // Commit policies point to a repository
 	case db.PolicyResourceUser:
@@ -88,6 +90,8 @@ func EncodePolicyResourceID(
 		return sqidManager.Encode("repositories", uint64(id)) // Branch policies point to a repository
 	case db.PolicyResourceRepositoryTag:
 		return sqidManager.Encode("repositories", uint64(id)) // Tag policies point to a repository
+	case db.PolicyResourceWorkspaceTag:
+		return sqidManager.Encode("tags", uint64(id))
 	case db.PolicyResourceRepositoryCommit:
 		return sqidManager.Encode("repositories", uint64(id)) // Commit policies point to a repository
 	case db.PolicyResourceUser:

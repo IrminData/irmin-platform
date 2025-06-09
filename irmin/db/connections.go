@@ -31,12 +31,13 @@ type Connection struct {
 	ConnectorID   uint                    `json:"connector_id,omitempty"`
 	Connector     Connector               `json:"connector"               gorm:"foreignKey:ConnectorID"`
 	SchemaCache   []ConnectionSchemaCache `json:"schema_cache,omitempty"  gorm:"foreignKey:ConnectionID"`
+	Tags          []Tag                   `json:"tags,omitempty"          gorm:"many2many:connection_tags;"`
 }
 
 // GetConnectionByID finds a connection by its ID.
 func (d *Database) GetConnectionByID(id uint) (*Connection, error) {
 	var connection Connection
-	if err := d.Preload("Owner").Preload("Connector").First(&connection, id).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Connector").Preload("Tags").First(&connection, id).Error; err != nil {
 		return nil, err
 	}
 	return &connection, nil
@@ -45,7 +46,7 @@ func (d *Database) GetConnectionByID(id uint) (*Connection, error) {
 // GetConnectionsByWorkspaceID finds all connections in a workspace.
 func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
 	var connections []Connection
-	if err := d.Preload("Owner").Preload("Connector").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&connections).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Connector").Preload("Tags").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&connections).Error; err != nil {
 		return nil, err
 	}
 	return connections, nil
@@ -54,7 +55,11 @@ func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, 
 // DeleteConnection deletes a connection and its associated schema cache from the database.
 func (d *Database) DeleteConnection(id uint) error {
 	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete associated schema cache first
+		// Remove tag associations first
+		if err := tx.Where("connection_id = ?", id).Delete(&ConnectionTag{}).Error; err != nil {
+			return err
+		}
+		// Delete associated schema cache
 		if err := tx.Where("connection_id = ?", id).Delete(&ConnectionSchemaCache{}).Error; err != nil {
 			return err
 		}

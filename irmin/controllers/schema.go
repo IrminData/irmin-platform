@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/locales"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -12,11 +11,9 @@ import (
 )
 
 func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
-	locale, localeOk := c.Locals("locale").(string)
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
-	if !localeOk || !dictOk || !workspaceOk {
+	locale, dict, _, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 

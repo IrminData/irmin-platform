@@ -27,11 +27,12 @@ type RepositoryObject struct {
 	RepositoryRef string      `json:"repository_ref,omitempty" gorm:"index"`
 	Repository    *Repository `json:"repository,omitempty"     gorm:"foreignKey:RepositoryID;references:ID"`
 	RepositoryID  uint        `json:"repository_id,omitempty"  gorm:"index"`
+	Tags          []Tag       `json:"tags,omitempty"           gorm:"many2many:repository_object_tags;"`
 }
 
 func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*RepositoryObject, error) {
 	var object RepositoryObject
-	query := d.Preload("Repository").Preload("Parent").Preload("Children")
+	query := d.Preload("Repository").Preload("Parent").Preload("Children").Preload("Tags")
 
 	conditions := make([]string, 0)
 	args := make([]any, 0)
@@ -72,49 +73,79 @@ func (d *Database) GetFlatDBObjects(repositoryID uint, ref string) ([]Repository
 
 func (d *Database) DeleteObjects(path *string, repositoryID *uint, ref *string) error {
 	return d.Transaction(func(tx *gorm.DB) error {
-		// Find all matching objects
-		var objects []RepositoryObject
-		conditions := make([]string, 0)
-		args := make([]any, 0)
-
-		if path != nil {
-			conditions = append(conditions, "path = ?")
-			args = append(args, *path)
-		}
-
-		if repositoryID != nil {
-			conditions = append(conditions, "repository_id = ?")
-			args = append(args, *repositoryID)
-		}
-
-		if ref != nil {
-			conditions = append(conditions, "repository_ref = ?")
-			args = append(args, *ref)
-		}
-
-		if len(conditions) == 0 {
-			return nil
-		}
-
-		if err := tx.Where(strings.Join(conditions, " AND "), args...).Find(&objects).Error; err != nil {
+		objects, err := d.findObjectsToDelete(tx, path, repositoryID, ref)
+		if err != nil {
 			return err
 		}
 
-		// For each matching object, delete its children and then the object itself
-		for _, object := range objects {
-			// Recursively delete all children
-			if err := deleteChildrenRecursively(tx, object.ID); err != nil {
-				return err
-			}
-
-			// Delete the object itself
-			if err := tx.Delete(&object).Error; err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return d.deleteObjectsAndChildren(tx, objects)
 	})
+}
+
+// findObjectsToDelete builds the query conditions and finds matching objects.
+func (d *Database) findObjectsToDelete(
+	tx *gorm.DB,
+	path *string,
+	repositoryID *uint,
+	ref *string,
+) ([]RepositoryObject, error) {
+	conditions, args := d.buildDeleteConditions(path, repositoryID, ref)
+	if len(conditions) == 0 {
+		return []RepositoryObject{}, nil
+	}
+
+	var objects []RepositoryObject
+	err := tx.Where(strings.Join(conditions, " AND "), args...).Find(&objects).Error
+	return objects, err
+}
+
+// buildDeleteConditions creates the WHERE clause conditions and arguments.
+func (d *Database) buildDeleteConditions(path *string, repositoryID *uint, ref *string) ([]string, []any) {
+	conditions := make([]string, 0)
+	args := make([]any, 0)
+
+	if path != nil {
+		conditions = append(conditions, "path = ?")
+		args = append(args, *path)
+	}
+
+	if repositoryID != nil {
+		conditions = append(conditions, "repository_id = ?")
+		args = append(args, *repositoryID)
+	}
+
+	if ref != nil {
+		conditions = append(conditions, "repository_ref = ?")
+		args = append(args, *ref)
+	}
+
+	return conditions, args
+}
+
+// deleteObjectsAndChildren handles the deletion of objects and their children.
+func (d *Database) deleteObjectsAndChildren(tx *gorm.DB, objects []RepositoryObject) error {
+	for _, object := range objects {
+		if err := d.deleteSingleObjectAndChildren(tx, object); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// deleteSingleObjectAndChildren deletes a single object and all its children.
+func (d *Database) deleteSingleObjectAndChildren(tx *gorm.DB, object RepositoryObject) error {
+	// Recursively delete all children
+	if err := deleteChildrenRecursively(tx, object.ID); err != nil {
+		return err
+	}
+
+	// Remove tag associations
+	if err := tx.Where("repository_object_id = ?", object.ID).Delete(&RepositoryObjectTag{}).Error; err != nil {
+		return err
+	}
+
+	// Delete the object itself
+	return tx.Delete(&object).Error
 }
 
 // deleteChildrenRecursively deletes all children of an object recursively.
@@ -129,6 +160,11 @@ func deleteChildrenRecursively(tx *gorm.DB, parentID uint) error {
 		if err := deleteChildrenRecursively(tx, child.ID); err != nil {
 			return err
 		}
+	}
+
+	// Remove tag associations for all direct children
+	if err := tx.Where("repository_object_id IN (SELECT id FROM repository_objects WHERE parent_id = ?)", parentID).Delete(&RepositoryObjectTag{}).Error; err != nil {
+		return err
 	}
 
 	// Delete all direct children

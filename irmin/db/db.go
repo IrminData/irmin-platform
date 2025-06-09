@@ -180,6 +180,12 @@ func (d *Database) Migrate() error {
 		&RepositorySchemaCache{},
 		&RepositoryObject{},
 		&Policy{},
+		&Tag{},
+		&QueryTag{},
+		&RepositoryTag{},
+		&WorkflowTag{},
+		&ConnectionTag{},
+		&RepositoryObjectTag{},
 	}
 	if err := d.migrateModels(models...); err != nil {
 		return err
@@ -218,6 +224,12 @@ func (d *Database) Reset() error {
 		&RepositorySchemaCache{},
 		&RepositoryObject{},
 		&Policy{},
+		&QueryTag{},
+		&RepositoryTag{},
+		&WorkflowTag{},
+		&ConnectionTag{},
+		&RepositoryObjectTag{},
+		&Tag{},
 	); err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
 	}

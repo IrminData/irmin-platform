@@ -15,6 +15,9 @@ func (api *APIMiddlewares) WorkspaceMiddleware(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
 	if !dictOk || !userOk {
+		api.Logger.Error("Error getting locals in WorkspaceMiddleware",
+			"dictOk", dictOk,
+			"userOk", userOk)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 

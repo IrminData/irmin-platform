@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func (api *APIControllers) CommitsIndex(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
@@ -98,7 +98,7 @@ func (api *APIControllers) CommitsIndex(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) CommitsStore(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -158,7 +158,7 @@ func (api *APIControllers) CommitsStore(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) CommitsShow(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
@@ -200,7 +200,7 @@ func (api *APIControllers) CommitsShow(c fiber.Ctx) error {
 	})
 }
 
-func (api *APIControllers) RevertUncommittedChanges(c fiber.Ctx) error {
+func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)

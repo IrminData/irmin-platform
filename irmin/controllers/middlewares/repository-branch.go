@@ -10,8 +10,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// BranchMiddleware parses the branch name from the request URL and sets the branch in the context.
-func (api *APIMiddlewares) BranchMiddleware(c fiber.Ctx) error {
+// RepositoryBranchMiddleware parses the branch name from the request URL and sets the branch in the context.
+func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)

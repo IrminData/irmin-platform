@@ -1,6 +1,8 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 // PolicyPrincipal specifies which group of users the policy is applied to, like a workspace user or a role.
 type PolicyPrincipal string
@@ -76,6 +78,8 @@ const (
 	PolicyResourceDocumentation PolicyResource = "documentation"
 	// PolicyResourceBilling represents billing and subscription management resource.
 	PolicyResourceBilling PolicyResource = "billing"
+	// PolicyResourceWorkspaceTag represents a workspace tag resource.
+	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
 )
 
 // Policy is a policy that is applied to a resource.
@@ -162,6 +166,7 @@ func (d *Database) GenerateAllPossiblePolicies(
 			PolicyResourceRepositoryTag,
 			PolicyResourceRepositoryCommit,
 			PolicyResourceRepositoryObject,
+			PolicyResourceWorkspaceTag,
 			PolicyResourceUser,
 			PolicyResourcePolicy,
 			PolicyResourceInvite,

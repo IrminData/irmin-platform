@@ -21,6 +21,10 @@ func resourceMiddleware[T any](
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	if !dictOk || !workspaceOk {
+		api.Logger.Error("Error getting locals in resourceMiddleware",
+			"resourceType", resourceType,
+			"dictOk", dictOk,
+			"workspaceOk", workspaceOk)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -71,6 +75,14 @@ func resourceMiddleware[T any](
 		c.Locals(resourceType, r)
 	case *db.StoredQuery:
 		if r.WorkspaceID != workspace.ID {
+			api.Logger.Error(resourceType + " does not belong to the workspace")
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "access_denied")},
+			})
+		}
+		c.Locals(resourceType, r)
+	case *db.TagWithAssets:
+		if r.Tag.WorkspaceID != workspace.ID {
 			api.Logger.Error(resourceType + " does not belong to the workspace")
 			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 				Errors: []string{api.lm.T(dict, "access_denied")},

@@ -47,6 +47,7 @@ type Workflow struct {
 	ActionID      *uint                 `json:"action_id,omitempty"   gorm:"index"`
 	Pipeline      *PipelineWorkflowable `json:"pipeline,omitempty"    gorm:"foreignKey:PipelineID"`
 	PipelineID    *uint                 `json:"pipeline_id,omitempty" gorm:"index"`
+	Tags          []Tag                 `json:"tags,omitempty"        gorm:"many2many:workflow_tags;"`
 }
 
 type ImportWorkflowable struct {
@@ -131,7 +132,11 @@ type PipelineStage struct {
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
 func (d *Database) GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
 	var workflows []Workflow
-	result := d.Preload("Owner").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&workflows)
+	result := d.Preload("Owner").
+		Preload("Tags").
+		Where("workspace_id = ?", workspaceID).
+		Order("created_at desc").
+		Find(&workflows)
 	return workflows, result.Error
 }
 
@@ -142,6 +147,7 @@ func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
 ) ([]Workflow, error) {
 	var workflows []Workflow
 	result := d.Preload("Owner").
+		Preload("Tags").
 		Where("workspace_id = ? AND type = ?", workspaceID, workflowType).
 		Order("created_at desc").
 		Find(&workflows)
@@ -156,6 +162,7 @@ func (d *Database) GetWorkflowByID(id uint) (*Workflow, error) {
 		Preload("Schedule").
 		Preload("Schedule.Triggers").
 		Preload("Schedule.Triggers.Repository").
+		Preload("Tags").
 		First(&workflow, id)
 	return &workflow, result.Error
 }
@@ -202,7 +209,11 @@ func (d *Database) DeleteWorkflow(id uint) error {
 
 	// Delete in a transaction to ensure atomicity
 	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete workflow runs first
+		// Remove tag associations first
+		if err := tx.Where("workflow_id = ?", id).Delete(&WorkflowTag{}).Error; err != nil {
+			return err
+		}
+		// Delete workflow runs
 		if err := tx.Where("workflow_id = ?", id).Delete(&WorkflowRun{}).Error; err != nil {
 			return err
 		}

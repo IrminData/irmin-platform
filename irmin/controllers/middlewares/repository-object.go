@@ -10,8 +10,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// ObjectMiddleware parses the query parameters and sets the object in the context.
-func (api *APIMiddlewares) ObjectMiddleware(c fiber.Ctx) error {
+// RepositoryObjectMiddleware parses the query parameters and sets the object in the context.
+func (api *APIMiddlewares) RepositoryObjectMiddleware(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)

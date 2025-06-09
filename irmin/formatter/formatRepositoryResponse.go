@@ -30,6 +30,12 @@ func FormatRepositoryResponse(
 		return nil, fmt.Errorf("error formatting repository owner: %w", err)
 	}
 
+	// Format the repository tags
+	tags, err := FormatTagsResponse(repository.Tags, sqidManager)
+	if err != nil {
+		return nil, fmt.Errorf("error formatting repository tags: %w", err)
+	}
+
 	// Determine if the repository is immutable
 	isImmutable := repository.IsImmutable
 
@@ -57,6 +63,7 @@ func FormatRepositoryResponse(
 		IsImmutable:            isImmutable,
 		DefaultBranch:          repository.DefaultBranch,
 		Owner:                  *owner,
+		Tags:                   tags,
 		GarbageCollectionRules: gcRules,
 		CreatedAt:              repository.CreatedAt,
 		UpdatedAt:              repository.UpdatedAt,

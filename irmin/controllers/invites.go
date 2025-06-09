@@ -17,10 +17,9 @@ import (
 
 //nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
-	dict, dictOk := c.Locals("dict").(locales.Dictionary)
-	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-	if !dictOk || !workspaceOk || !userOk {
+	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
+	if err != nil {
+		api.Logger.Error("Error validating workspace parameters", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
