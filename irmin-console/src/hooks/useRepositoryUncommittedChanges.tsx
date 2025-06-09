@@ -45,7 +45,7 @@ export function useRepositoryUncommittedChanges(
     queryFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.branchService.getUncommittedChanges({
+      return await core.repositoryBranchService.getUncommittedChanges({
         workspace: workspaceSlug,
         repository: repositorySlug,
         branch,
@@ -61,7 +61,7 @@ export function useRepositoryUncommittedChanges(
     mutationFn: async (data) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.commitService.createCommit({
+      return await core.repositoryCommitService.createCommit({
         workspace: workspaceSlug,
         repository: repositorySlug,
         branch,
@@ -102,7 +102,7 @@ export function useRepositoryUncommittedChanges(
     mutationFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.commitService.revertUncommittedChanges({
+      return await core.repositoryCommitService.revertUncommittedChanges({
         workspace: workspaceSlug,
         repository: repositorySlug,
         branch,

@@ -28,7 +28,7 @@ export function useRepositoryBranches(repositorySlug: string) {
     queryFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.branchService.fetchBranches({
+      return await core.repositoryBranchService.fetchBranches({
         workspace: workspaceSlug,
         repository: repositorySlug,
       });
@@ -43,7 +43,7 @@ export function useRepositoryBranches(repositorySlug: string) {
     mutationFn: async (data) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.branchService.createBranch({
+      return await core.repositoryBranchService.createBranch({
         workspace: workspaceSlug,
         repository: repositorySlug,
         name: data.name,
@@ -66,7 +66,7 @@ export function useRepositoryBranches(repositorySlug: string) {
     mutationFn: async (branch) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.branchService.deleteBranch({
+      return await core.repositoryBranchService.deleteBranch({
         workspace: workspaceSlug,
         repository: repositorySlug,
         branch,

@@ -93,7 +93,7 @@
     "autoprefixer": "^10.4.21",
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "9.28.0",
-    "eslint-config-next": "15.4.0-canary.68",
+    "eslint-config-next": "15.4.0-canary.71",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "postcss": "^8.5.4",

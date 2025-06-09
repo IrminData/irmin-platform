@@ -8,8 +8,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { GitTag } from '@/types/core/GitTag';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Tag } from '@/types/core/Tag';
 
 export const repositoryTagsQueryKey = (
   workspaceSlug: string,
@@ -23,12 +23,12 @@ export function useRepositoryTags(repositorySlug: string) {
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
-  const repositoryTagsQuery = useQuery<IrminAPIResponse<Tag[]>, Error>({
+  const repositoryTagsQuery = useQuery<IrminAPIResponse<GitTag[]>, Error>({
     queryKey: repositoryTagsQueryKey(workspaceSlug, repositorySlug),
     queryFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.tagService.fetchTags({
+      return await core.repositoryTagService.fetchTags({
         workspace: workspaceSlug,
         repository: repositorySlug,
       });
@@ -43,7 +43,7 @@ export function useRepositoryTags(repositorySlug: string) {
     mutationFn: async (data) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.tagService.createTag({
+      return await core.repositoryTagService.createTag({
         workspace: workspaceSlug,
         repository: repositorySlug,
         name: data.name,
@@ -66,7 +66,7 @@ export function useRepositoryTags(repositorySlug: string) {
     mutationFn: async (tag) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return await core.tagService.deleteTag({
+      return await core.repositoryTagService.deleteTag({
         workspace: workspaceSlug,
         repository: repositorySlug,
         tag,

@@ -1,3 +1,4 @@
+import { Tag } from './Tag';
 import { User } from './User';
 
 /**
@@ -40,6 +41,8 @@ export interface Repository {
   default_branch: string;
   /** Owner of the repository */
   owner: User;
+  /** Tags associated with this repository */
+  tags?: Tag[];
   /** (optional) Garbage collection rules for the repository */
   garbage_collection_rules?: GarbageCollectionRules;
   /** Timestamp when the repository was created */

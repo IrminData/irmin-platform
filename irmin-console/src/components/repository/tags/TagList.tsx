@@ -9,14 +9,14 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
+import { GitTag } from '@/types/core/GitTag';
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { Tag } from '@/types/core/Tag';
 import { GridRow } from '@/types/internal/ListProps';
 
 interface TagListProps {
   repositoryID: string;
   currentRef: string | undefined;
-  tags: Tag[];
+  tags: GitTag[];
   handleViewRef: (ref: string) => void;
   handleDeleteTag?: (tag: string) => void;
   loading: boolean;

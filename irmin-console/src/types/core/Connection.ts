@@ -1,4 +1,5 @@
 import { Connector } from '@/types/core/Connector';
+import { Tag } from '@/types/core/Tag';
 import { User } from '@/types/core/User';
 
 /**
@@ -29,4 +30,6 @@ export interface Connection {
   owner: User;
   /** Connector associated with the connection */
   connector: Connector;
+  /** Tags associated with this connection */
+  tags?: Tag[];
 }

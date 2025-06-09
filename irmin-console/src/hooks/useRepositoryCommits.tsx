@@ -53,7 +53,7 @@ export function useRepositoryCommits(repositorySlug: string, branch?: string) {
     queryFn: async () => {
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
-      const res = await irminCore.commitService.fetchCommits({
+      const res = await irminCore.repositoryCommitService.fetchCommits({
         workspace: workspaceSlug,
         repository: repositorySlug,
         ref: branch,

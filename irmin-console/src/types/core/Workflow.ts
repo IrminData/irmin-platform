@@ -1,3 +1,4 @@
+import { Tag } from '@/types/core/Tag';
 import { User } from '@/types/core/User';
 
 import { WorkflowSchedule } from './Schedule';
@@ -25,6 +26,8 @@ interface WorkflowBase {
   type: WorkflowableType;
   /** The workspace user that owns this workflow and is responsible for it */
   owner: User;
+  /** Tags associated with this workflow */
+  tags?: Tag[];
   /** (optional) Schedule configuration for the workflow (eg. triggers, max retries, max runtime) */
   schedule?: WorkflowSchedule;
   /** Workflow type specific configurations */

@@ -1,18 +1,18 @@
 import IrminCore from '@/lib/core';
 
+import { GitTag } from '@/types/core/GitTag';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Tag } from '@/types/core/Tag';
 
 /**
- * Tag API service
+ * Repository Tag API service
  *
  * Responsible for all repository tag related API calls.
  */
-class TagService {
+class RepositoryTagService {
   private irminCore: IrminCore;
 
   /**
-   * Create a new TagService.
+   * Create a new RepositoryTagService.
    *
    * @param irminCore - The IrminCore instance for API calls.
    */
@@ -39,12 +39,12 @@ class TagService {
   }: {
     workspace: string;
     repository: string;
-  }): Promise<IrminAPIResponse<Tag[]>> {
+  }): Promise<IrminAPIResponse<GitTag[]>> {
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/tags`,
         { method: 'GET' }
-      )) as IrminAPIResponse<Tag[]>;
+      )) as IrminAPIResponse<GitTag[]>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tags error');
@@ -69,12 +69,12 @@ class TagService {
     workspace: string;
     repository: string;
     tag: string;
-  }): Promise<IrminAPIResponse<Tag>> {
+  }): Promise<IrminAPIResponse<GitTag>> {
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/tags/${tag}`,
         { method: 'GET' }
-      )) as IrminAPIResponse<Tag>;
+      )) as IrminAPIResponse<GitTag>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch Tag error');
@@ -102,7 +102,7 @@ class TagService {
     repository: string;
     name: string;
     ref: string;
-  }): Promise<IrminAPIResponse<Tag>> {
+  }): Promise<IrminAPIResponse<GitTag>> {
     try {
       const formData = new FormData();
       formData.append('name', name);
@@ -113,7 +113,7 @@ class TagService {
           method: 'POST',
           body: formData,
         }
-      )) as IrminAPIResponse<Tag>;
+      )) as IrminAPIResponse<GitTag>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Create Tag error');
@@ -156,4 +156,4 @@ class TagService {
   }
 }
 
-export default TagService;
+export default RepositoryTagService;

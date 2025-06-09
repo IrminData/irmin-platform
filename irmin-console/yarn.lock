@@ -1614,15 +1614,15 @@ __metadata:
   linkType: hard
 
 "@gerrit0/mini-shiki@npm:^3.2.2":
-  version: 3.5.0
-  resolution: "@gerrit0/mini-shiki@npm:3.5.0"
+  version: 3.6.0
+  resolution: "@gerrit0/mini-shiki@npm:3.6.0"
   dependencies:
-    "@shikijs/engine-oniguruma": "npm:^3.5.0"
-    "@shikijs/langs": "npm:^3.5.0"
-    "@shikijs/themes": "npm:^3.5.0"
-    "@shikijs/types": "npm:^3.5.0"
+    "@shikijs/engine-oniguruma": "npm:^3.6.0"
+    "@shikijs/langs": "npm:^3.6.0"
+    "@shikijs/themes": "npm:^3.6.0"
+    "@shikijs/types": "npm:^3.6.0"
     "@shikijs/vscode-textmate": "npm:^10.0.2"
-  checksum: 10c0/8c8da5f1bb33a3d431c07a58da42222a0960911298d8957ade5bcdd5a713b8fcedced334d250dc93c1fa8ab93a7edf90c4798369d3e01fd588eccb6a2c209bfa
+  checksum: 10c0/347456c9da8a1fadd3c1f63097da459a5f930ef4bca6431cce913a379012c551e061d0a94ff7a0f307215b87f2418b7c198a55fba888fc97fb02ab36247adf6b
   languageName: node
   linkType: hard
 
@@ -2543,12 +2543,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/eslint-plugin-next@npm:15.4.0-canary.68":
-  version: 15.4.0-canary.68
-  resolution: "@next/eslint-plugin-next@npm:15.4.0-canary.68"
+"@next/eslint-plugin-next@npm:15.4.0-canary.71":
+  version: 15.4.0-canary.71
+  resolution: "@next/eslint-plugin-next@npm:15.4.0-canary.71"
   dependencies:
     fast-glob: "npm:3.3.1"
-  checksum: 10c0/a5b3f0a056b12ef0bff6c8f0f22cab629003e7f8fc6d2f273518eccf52bbcaf94d631f956cfda13e0c93ab1857d15da5fe2b9fd8d412c0f1336c808e99f5d34a
+  checksum: 10c0/9ee7d3e717c766415e04156a3ae94b8c92352edbd74013db74481ea36edf66cc1c512e81aaa455a62c2ad203d315c921de85ebc86522e06e9c991b07b9549fc4
   languageName: node
   linkType: hard
 
@@ -4565,7 +4565,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shikijs/engine-oniguruma@npm:^3.5.0":
+"@shikijs/engine-oniguruma@npm:^3.6.0":
   version: 3.6.0
   resolution: "@shikijs/engine-oniguruma@npm:3.6.0"
   dependencies:
@@ -4575,7 +4575,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shikijs/langs@npm:^3.5.0":
+"@shikijs/langs@npm:^3.6.0":
   version: 3.6.0
   resolution: "@shikijs/langs@npm:3.6.0"
   dependencies:
@@ -4584,7 +4584,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shikijs/themes@npm:^3.5.0":
+"@shikijs/themes@npm:^3.6.0":
   version: 3.6.0
   resolution: "@shikijs/themes@npm:3.6.0"
   dependencies:
@@ -4593,7 +4593,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shikijs/types@npm:3.6.0, @shikijs/types@npm:^3.5.0":
+"@shikijs/types@npm:3.6.0, @shikijs/types@npm:^3.6.0":
   version: 3.6.0
   resolution: "@shikijs/types@npm:3.6.0"
   dependencies:
@@ -7363,11 +7363,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:15.4.0-canary.68":
-  version: 15.4.0-canary.68
-  resolution: "eslint-config-next@npm:15.4.0-canary.68"
+"eslint-config-next@npm:15.4.0-canary.71":
+  version: 15.4.0-canary.71
+  resolution: "eslint-config-next@npm:15.4.0-canary.71"
   dependencies:
-    "@next/eslint-plugin-next": "npm:15.4.0-canary.68"
+    "@next/eslint-plugin-next": "npm:15.4.0-canary.71"
     "@rushstack/eslint-patch": "npm:^1.10.3"
     "@typescript-eslint/eslint-plugin": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
     "@typescript-eslint/parser": "npm:^5.4.2 || ^6.0.0 || ^7.0.0 || ^8.0.0"
@@ -7383,7 +7383,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/c2e19665a7a5db69afc96ff68c536372b8ae8e8401534ac0cfe825ab1bc61b8367049aabc19da32aec9cacf8087e93ab039871c73a146d47b0f8ab1b768a2a3f
+  checksum: 10c0/5126f11bc92d8bbbf5585bb34a258b86905c2152404f58956e4a6605cdfef58faecceafa4643dc53bf6d29e8c18c7440dfb66dfc7f39730d7d9df01179bc248b
   languageName: node
   linkType: hard
 
@@ -8529,7 +8529,7 @@ __metadata:
     cmdk: "npm:^1.1.1"
     date-fns: "npm:^4.1.0"
     eslint: "npm:9.28.0"
-    eslint-config-next: "npm:15.4.0-canary.68"
+    eslint-config-next: "npm:15.4.0-canary.71"
     eslint-config-prettier: "npm:^10.1.5"
     eslint-plugin-react-compiler: "npm:19.1.0-rc.2"
     markdown-to-jsx: "npm:^7.7.6"
@@ -13772,9 +13772,9 @@ __metadata:
   linkType: hard
 
 "zod@npm:^3.22.4":
-  version: 3.25.55
-  resolution: "zod@npm:3.25.55"
-  checksum: 10c0/6c6bed4b233e1bd9074e90a1742e98195f9a1112d2ea5b0b7df7227258f024e35fb142c35c662598a3ab19a20163ad9668ac9dfbec8cfaaa31cddea76b27579e
+  version: 3.25.56
+  resolution: "zod@npm:3.25.56"
+  checksum: 10c0/3800f01d4b1df932b91354eb1e648f69cc7e5561549e6d2bf83827d930a5f33bbf92926099445f6fc1ebb64ca9c6513ef9ae5e5409cfef6325f354bcf6fc9a24
   languageName: node
   linkType: hard
 

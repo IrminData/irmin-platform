@@ -4,15 +4,15 @@ import { Commit, PathType } from '@/types/core/Commit';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
- * Commit API service
+ * Repository Commit API service
  *
  * Provides methods to interact with repository commit endpoints.
  */
-class CommitService {
+class RepositoryCommitService {
   private irminCore: IrminCore;
 
   /**
-   * Create a new CommitService.
+   * Create a new RepositoryCommitService.
    *
    * @param irminCore - The IrminCore instance for API calls.
    */
@@ -177,4 +177,4 @@ class CommitService {
   }
 }
 
-export default CommitService;
+export default RepositoryCommitService;

@@ -5,11 +5,11 @@ import { Diff } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
- * Branch API service
+ * Repository Branch API service
  *
  * Responsible for all repository branch related API calls
  */
-class BranchService {
+class RepositoryBranchService {
   private irminCore: IrminCore;
 
   constructor(irminCore: IrminCore) {
@@ -228,4 +228,4 @@ class BranchService {
   }
 }
 
-export default BranchService;
+export default RepositoryBranchService;

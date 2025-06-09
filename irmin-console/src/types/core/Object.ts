@@ -1,3 +1,5 @@
+import { Tag } from '@/types/core/Tag';
+
 /**
  * Represents the type of the object: "group", "structured", or "binary".
  */
@@ -27,6 +29,8 @@ export interface Object {
   last_modified?: string;
   /** (optional) Key-value pairs of metadata about the object */
   metadata?: { [key: string]: string };
+  /** (optional) Tags associated with this object */
+  tags?: Tag[];
   /** (optional) If the object is a group, this will contain the children objects */
   children?: Object[];
 }

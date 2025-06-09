@@ -7,6 +7,7 @@ import {
 } from '@/types/core/IrminAPIResponse';
 import { Object as RepoObject } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
+import { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Object API service
@@ -27,6 +28,8 @@ class ObjectService {
     this.getObjectAtPath = this.getObjectAtPath.bind(this);
     this.getObjectHistory = this.getObjectHistory.bind(this);
     this.getObjectContent = this.getObjectContent.bind(this);
+    this.getObjectStructuredContent =
+      this.getObjectStructuredContent.bind(this);
     this.downloadObjectZip = this.downloadObjectZip.bind(this);
     this.getObjectSchema = this.getObjectSchema.bind(this);
     this.uploadObject = this.uploadObject.bind(this);
@@ -139,6 +142,45 @@ class ObjectService {
       console.error((error as Error).message, 'Fetch object content error');
     }
     return null;
+  }
+
+  /**
+   * Get the structured content of an object.
+   *
+   * @param props
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.path - The path of the object.
+   * @param props.ref - The ref (branch, tag or commit hash).
+   * @returns IrminAPIResponse containing the structured content.
+   */
+  async getObjectStructuredContent({
+    workspace,
+    repository,
+    path,
+    ref,
+  }: {
+    workspace: string;
+    repository: string;
+    path: string;
+    ref?: string;
+  }): Promise<IrminAPIResponse<JSONValue>> {
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('path', path);
+      if (ref) urlParams.append('ref', ref);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/content/structured?${urlParams.toString()}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'GET',
+      })) as IrminAPIResponse<JSONValue>;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Fetch object structured content error'
+      );
+      throw error;
+    }
   }
 
   /**

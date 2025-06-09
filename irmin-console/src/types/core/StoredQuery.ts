@@ -1,3 +1,4 @@
+import { Tag } from '@/types/core/Tag';
 import { User } from '@/types/core/User';
 import { JSONValue } from '@/types/internal/GenericJSON';
 
@@ -15,6 +16,8 @@ export interface StoredQuery {
   sql: string;
   /** Owner of the stored query */
   owner: User;
+  /** Tags associated with this stored query */
+  tags?: Tag[];
   /** Timestamp when the stored query was created */
   created_at: string;
   /** Timestamp when the stored query was last updated */

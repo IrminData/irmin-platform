@@ -7,8 +7,6 @@ import {
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
 
-import BranchService from './resources/BranchService';
-import CommitService from './resources/CommitService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import CredentialService from './resources/CredentialService';
@@ -20,9 +18,11 @@ import ObjectService from './resources/ObjectService';
 import PolicyService from './resources/PolicyService';
 import ProfileService from './resources/ProfileService';
 import QueryService from './resources/QueryService';
+import RepositoryBranchService from './resources/RepositoryBranchService';
+import RepositoryCommitService from './resources/RepositoryCommitService';
 import RepositoryService from './resources/RepositoryService';
+import RepositoryTagService from './resources/RepositoryTagService';
 import RoleService from './resources/RoleService';
-import TagService from './resources/TagService';
 import UserService from './resources/UserService';
 import WorkflowRunService from './resources/WorkflowRunService';
 import WorkflowService from './resources/WorkflowService';
@@ -52,8 +52,9 @@ class IrminCore {
   public connectionService: ConnectionService;
   public connectorService: ConnectorService;
   public repositoryService: RepositoryService;
-  public branchService: BranchService;
-  public commitService: CommitService;
+  public repositoryBranchService: RepositoryBranchService;
+  public repositoryCommitService: RepositoryCommitService;
+  public repositoryTagService: RepositoryTagService;
   public inviteService: InviteService;
   public profileService: ProfileService;
   public userService: UserService;
@@ -64,7 +65,6 @@ class IrminCore {
   public queryService: QueryService;
   public logService: LogService;
   public diffService: DiffService;
-  public tagService: TagService;
   public objectService: ObjectService;
   public credentialService: CredentialService;
   public policyService: PolicyService;
@@ -86,8 +86,9 @@ class IrminCore {
     this.connectionService = new ConnectionService(this);
     this.connectorService = new ConnectorService(this);
     this.repositoryService = new RepositoryService(this);
-    this.branchService = new BranchService(this);
-    this.commitService = new CommitService(this);
+    this.repositoryBranchService = new RepositoryBranchService(this);
+    this.repositoryCommitService = new RepositoryCommitService(this);
+    this.repositoryTagService = new RepositoryTagService(this);
     this.inviteService = new InviteService(this);
     this.profileService = new ProfileService(this);
     this.userService = new UserService(this);
@@ -98,7 +99,6 @@ class IrminCore {
     this.queryService = new QueryService(this);
     this.logService = new LogService(this);
     this.diffService = new DiffService(this);
-    this.tagService = new TagService(this);
     this.objectService = new ObjectService(this);
     this.credentialService = new CredentialService(this);
     this.policyService = new PolicyService(this);
