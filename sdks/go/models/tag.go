@@ -12,14 +12,14 @@ type Tag struct {
 	Description string `json:"description"`
 }
 
-// TagWithAssets represents a tag along with all its associated assets and counts
+// TagWithAssets represents a tag along with all its associated assets and counts.
 type TagWithAssets struct {
 	Tag    Tag            `json:"tag"`
 	Assets TaggedAssets   `json:"assets"`
 	Counts map[string]int `json:"counts"`
 }
 
-// TaggedAssets represents all assets associated with a specific tag
+// TaggedAssets represents all assets associated with a specific tag.
 type TaggedAssets struct {
 	Queries           []StoredQuery `json:"queries"`
 	Repositories      []Repository  `json:"repositories"`

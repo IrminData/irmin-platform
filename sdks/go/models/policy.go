@@ -148,4 +148,5 @@ type PolicyResourceOptions struct {
 	Connections  []PolicyResourceOption `json:"connections"`
 	Repositories []PolicyResourceOption `json:"repositories"`
 	Users        []PolicyResourceOption `json:"users"`
+	Tags         []PolicyResourceOption `json:"tags"`
 }

@@ -26,7 +26,7 @@ type TagEntityRequest struct {
 	TagID string `json:"tag_id"`
 }
 
-// ListWorkspaceTags retrieves all workspace tags for a workspace
+// ListWorkspaceTags retrieves all workspace tags for a workspace.
 func (c *Client) ListWorkspaceTags(workspace string) ([]irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tags []irminmodels.Tag
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -39,8 +39,10 @@ func (c *Client) ListWorkspaceTags(workspace string) ([]irminmodels.Tag, *irminm
 	return tags, apiResp, nil
 }
 
-// GetWorkspaceTag retrieves a specific workspace tag with all its associated assets
-func (c *Client) GetWorkspaceTag(workspace, tagID string) (*irminmodels.TagWithAssets, *irminmodels.IrminAPIResponse, error) {
+// GetWorkspaceTag retrieves a specific workspace tag with all its associated assets.
+func (c *Client) GetWorkspaceTag(
+	workspace, tagID string,
+) (*irminmodels.TagWithAssets, *irminmodels.IrminAPIResponse, error) {
 	var tagWithAssets irminmodels.TagWithAssets
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodGet,
@@ -52,8 +54,11 @@ func (c *Client) GetWorkspaceTag(workspace, tagID string) (*irminmodels.TagWithA
 	return &tagWithAssets, apiResp, nil
 }
 
-// CreateWorkspaceTag creates a new workspace tag
-func (c *Client) CreateWorkspaceTag(workspace string, request TagCreateRequest) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
+// CreateWorkspaceTag creates a new workspace tag.
+func (c *Client) CreateWorkspaceTag(
+	workspace string,
+	request TagCreateRequest,
+) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tag irminmodels.Tag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
@@ -67,8 +72,11 @@ func (c *Client) CreateWorkspaceTag(workspace string, request TagCreateRequest) 
 	return &tag, apiResp, nil
 }
 
-// UpdateWorkspaceTag updates an existing workspace tag
-func (c *Client) UpdateWorkspaceTag(workspace, tagID string, request TagUpdateRequest) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
+// UpdateWorkspaceTag updates an existing workspace tag.
+func (c *Client) UpdateWorkspaceTag(
+	workspace, tagID string,
+	request TagUpdateRequest,
+) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tag irminmodels.Tag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
@@ -82,7 +90,7 @@ func (c *Client) UpdateWorkspaceTag(workspace, tagID string, request TagUpdateRe
 	return &tag, apiResp, nil
 }
 
-// DeleteWorkspaceTag deletes a workspace tag
+// DeleteWorkspaceTag deletes a workspace tag.
 func (c *Client) DeleteWorkspaceTag(workspace, tagID string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
@@ -94,34 +102,8 @@ func (c *Client) DeleteWorkspaceTag(workspace, tagID string) (*irminmodels.Irmin
 	return apiResp, nil
 }
 
-// AddTagToEntity adds a tag to any entity using the generic entity route
-func (c *Client) AddTagToEntity(workspace, entityType, entityID string, request TagEntityRequest) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/%s/%s/tags", workspace, entityType, entityID),
-		ContentType: "application/json",
-		Body:        request,
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("add tag to %s error: %w", entityType, err)
-	}
-	return apiResp, nil
-}
-
-// RemoveTagFromEntity removes a tag from any entity using the generic entity route
-func (c *Client) RemoveTagFromEntity(workspace, entityType, entityID, tagID string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodDelete,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/%s/%s/tags/%s", workspace, entityType, entityID, tagID),
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("remove tag from %s error: %w", entityType, err)
-	}
-	return apiResp, nil
-}
-
-// AddEntityToTag adds an entity to a tag using the workspace tag route
-func (c *Client) AddEntityToTag(workspace, tagID, entityType, entityID string) (*irminmodels.IrminAPIResponse, error) {
+// AddTagToEntity adds an entity to a tag using the workspace tag route.
+func (c *Client) AddTagToEntity(workspace, tagID, entityType, entityID string) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags/%s/entities/%s/%s", workspace, tagID, entityType, entityID),
@@ -132,8 +114,10 @@ func (c *Client) AddEntityToTag(workspace, tagID, entityType, entityID string) (
 	return apiResp, nil
 }
 
-// RemoveEntityFromTag removes an entity from a tag using the workspace tag route
-func (c *Client) RemoveEntityFromTag(workspace, tagID, entityType, entityID string) (*irminmodels.IrminAPIResponse, error) {
+// RemoveTagFromEntity removes an entity from a tag using the workspace tag route.
+func (c *Client) RemoveTagFromEntity(
+	workspace, tagID, entityType, entityID string,
+) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags/%s/entities/%s/%s", workspace, tagID, entityType, entityID),
