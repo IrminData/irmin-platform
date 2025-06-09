@@ -62,6 +62,8 @@ const (
 	PolicyResourceDocumentation PolicyResource = "documentation"
 	// PolicyResourceBilling represents billing and subscription management resource.
 	PolicyResourceBilling PolicyResource = "billing"
+	// PolicyResourceWorkspaceTag represents a workspace tag resource.
+	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
 )
 
 // PolicyPrincipal specifies which group of users the policy is applied to.

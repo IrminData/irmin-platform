@@ -11,3 +11,19 @@ type Tag struct {
 	// Description is the description of the tag, used for tagging entities
 	Description string `json:"description"`
 }
+
+// TagWithAssets represents a tag along with all its associated assets and counts
+type TagWithAssets struct {
+	Tag    Tag            `json:"tag"`
+	Assets TaggedAssets   `json:"assets"`
+	Counts map[string]int `json:"counts"`
+}
+
+// TaggedAssets represents all assets associated with a specific tag
+type TaggedAssets struct {
+	Queries           []StoredQuery `json:"queries"`
+	Repositories      []Repository  `json:"repositories"`
+	Workflows         []Workflow    `json:"workflows"`
+	Connections       []Connection  `json:"connections"`
+	RepositoryObjects []Object      `json:"repository_objects"`
+}
