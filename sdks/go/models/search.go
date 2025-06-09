@@ -1,9 +1,21 @@
 package irminmodels
 
+type WorkspaceSearchResultType string
+
+const (
+	WorkspaceSearchResultTypeWorkflow         WorkspaceSearchResultType = "workflow"
+	WorkspaceSearchResultTypeRepository       WorkspaceSearchResultType = "repository"
+	WorkspaceSearchResultTypeConnection       WorkspaceSearchResultType = "connection"
+	WorkspaceSearchResultTypeQuery            WorkspaceSearchResultType = "query"
+	WorkspaceSearchResultTypeUser             WorkspaceSearchResultType = "user"
+	WorkspaceSearchResultTypeRepositoryObject WorkspaceSearchResultType = "repository_object"
+	WorkspaceSearchResultTypeInvite           WorkspaceSearchResultType = "invite"
+)
+
 // SearchResult represents a unified search result with typed entity data.
 type SearchResult struct {
-	Type      string  `json:"type"`
-	Relevance float64 `json:"relevance"`
+	Type      WorkspaceSearchResultType `json:"type"`
+	Relevance float64                   `json:"relevance"`
 
 	// Typed entity fields - only one will be populated based on Type
 
