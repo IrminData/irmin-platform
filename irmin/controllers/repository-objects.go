@@ -102,29 +102,51 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 		})
 	}
 
-	// Filter objects based on user permissions
-	filteredObjects, err := lib.IsAllowedFilter(
-		api.permissionService,
-		params.user,
-		params.workspace,
-		db.PolicyResourceRepositoryObject,
-		db.PolicyActionRead,
-		[]db.RepositoryObject{*object},
-		func(o db.RepositoryObject) uint { return o.RepositoryID },
-	)
-	if err != nil {
-		api.Logger.Error("Error filtering objects by permissions", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
+	// Check if object is a group
+	if object.Type == irminmodels.ObjectTypeGroup {
+		// Check that the user has read access to the object
+		allowed, allowedErr := api.permissionService.IsAllowed(
+			params.user,
+			params.workspace,
+			db.PolicyResourceRepositoryObject,
+			&object.RepositoryID,
+			db.PolicyActionRead,
+		)
+		if allowedErr != nil {
+			api.Logger.Error("Error checking if user has read access to object", "error", allowedErr)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(params.dict, "error_occurred")},
+			})
+		}
+		if !allowed {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(params.dict, "not_allowed")},
+			})
+		}
+	} else {
+		// It is a group, so we need to check if the user has read access to the object
+		// Filter objects based on user permissions
+		filteredObjectChildren, filterErr := lib.IsAllowedFilter(
+			api.permissionService,
+			params.user,
+			params.workspace,
+			db.PolicyResourceRepositoryObject,
+			db.PolicyActionRead,
+			object.Children,
+			func(o db.RepositoryObject) uint { return o.RepositoryID },
+		)
+		if filterErr != nil {
+			api.Logger.Error("Error filtering objects by permissions", "error", filterErr)
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(params.dict, "error_occurred")},
+			})
+		}
+
+		object.Children = filteredObjectChildren
 	}
 
 	// Structure the response
-	objectsResponse, formatErr := formatter.FormatIndexResponse(
-		filteredObjects,
-		formatter.FormatRepositoryObjectResponse,
-		api.SQIDManager,
-	)
+	objectResponse, formatErr := formatter.FormatRepositoryObjectResponse(object, api.SQIDManager)
 	if formatErr != nil {
 		api.Logger.Error("Error formatting objects", "error", formatErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -134,7 +156,7 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: objectsResponse,
+		Data: objectResponse,
 	})
 }
 
