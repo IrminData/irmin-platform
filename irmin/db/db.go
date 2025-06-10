@@ -191,6 +191,11 @@ func (d *Database) Migrate() error {
 		return err
 	}
 
+	// Create search indexes for better performance
+	if err := d.CreateSearchIndexes(); err != nil {
+		return fmt.Errorf("failed to create search indexes: %w", err)
+	}
+
 	return nil
 }
 

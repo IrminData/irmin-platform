@@ -143,6 +143,13 @@ func RegisterAPIRoutes(
 	// Log routes
 	workspace.Get("/logs", apiMiddlewares.AuditLogPermissionMiddleware(), apiControllers.LogsIndex)
 
+	// Search routes
+	workspace.Get(
+		"/search",
+		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionRead),
+		apiControllers.WorkspaceSearch,
+	)
+
 	// Schema routes
 	workspace.Get(
 		"/schema",
