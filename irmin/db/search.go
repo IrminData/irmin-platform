@@ -2,6 +2,7 @@ package db
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -73,6 +74,35 @@ func (d *Database) SearchWorkspace(
 	results = d.applyPagination(results, filters.Offset, filters.Limit)
 
 	return results, totalCount, nil
+}
+
+// SearchWorkspaceCount performs a search and returns only the total count of results.
+func (d *Database) SearchWorkspaceCount(
+	workspaceID uint,
+	filters SearchFilters,
+) (int, error) {
+	searchQuery := strings.TrimSpace(filters.Query)
+
+	// Perform all searches concurrently for better performance
+	results, err := d.performAllSearchesConcurrent(workspaceID, searchQuery, filters)
+	if err != nil {
+		return 0, err
+	}
+
+	// Apply relevance boosting for exact matches
+	sorter := &SearchResultSorter{}
+	results = sorter.BoostRelevanceForExactMatches(results, searchQuery)
+
+	// Sort results by relevance
+	results = sorter.SortByRelevance(results)
+
+	// Filter out low-relevance results if query is provided
+	if searchQuery != "" {
+		results = sorter.FilterByMinimumRelevance(results, MinRelevanceThreshold)
+	}
+
+	// Return only the count
+	return len(results), nil
 }
 
 // performAllSearchesConcurrent executes searches for all requested entity types concurrently.
@@ -778,19 +808,19 @@ func (s *SearchResultSorter) MergeAndDeduplicate(resultsList ...[]SearchResult) 
 func (s *SearchResultSorter) generateEntityKey(result SearchResult) string {
 	switch entity := result.Entity.(type) {
 	case *Workflow:
-		return "workflow:" + string(result.Type) + ":" + string(rune(entity.ID))
+		return "workflow:" + string(result.Type) + ":" + strconv.FormatUint(uint64(entity.ID), 10)
 	case *Repository:
-		return "repository:" + string(result.Type) + ":" + string(rune(entity.ID))
+		return "repository:" + string(result.Type) + ":" + strconv.FormatUint(uint64(entity.ID), 10)
 	case *Connection:
-		return "connection:" + string(result.Type) + ":" + string(rune(entity.ID))
+		return "connection:" + string(result.Type) + ":" + strconv.FormatUint(uint64(entity.ID), 10)
 	case *StoredQuery:
-		return "query:" + string(result.Type) + ":" + string(rune(entity.ID))
+		return "query:" + string(result.Type) + ":" + strconv.FormatUint(uint64(entity.ID), 10)
 	case *User:
-		return "user:" + string(result.Type) + ":" + string(rune(entity.ID))
+		return "user:" + string(result.Type) + ":" + strconv.FormatUint(uint64(entity.ID), 10)
 	case *RepositoryObject:
-		return "repo_object:" + string(result.Type) + ":" + string(rune(entity.ID))
+		return "repo_object:" + string(result.Type) + ":" + strconv.FormatUint(uint64(entity.ID), 10)
 	case *Invite:
-		return "invite:" + string(result.Type) + ":" + string(rune(entity.ID))
+		return "invite:" + string(result.Type) + ":" + strconv.FormatUint(uint64(entity.ID), 10)
 	default:
 		return "unknown:" + string(result.Type)
 	}

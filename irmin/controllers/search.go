@@ -39,7 +39,7 @@ func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
 	}
 
 	// Perform the search
-	results, total, err := api.DB.SearchWorkspace(workspace.ID, filters)
+	results, totalCount, err := api.DB.SearchWorkspace(workspace.ID, filters)
 	if err != nil {
 		api.Logger.Error("Failed to search workspace", "error", err, "workspace_id", workspace.ID)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -47,8 +47,20 @@ func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
 		})
 	}
 
-	// Make sure the user has read access to the items being returned
-	filteredResults := api.filterSearchResultsBasedOnPermissions(results, user, workspace)
+	// Filter the results based on permissions
+	var filteredResults []db.SearchResult
+	var accessibleTotalCount int
+	if user.ID == workspace.OwnerID {
+		// If the user is the workspace owner, return all results
+		filteredResults = results
+		accessibleTotalCount = totalCount
+	} else {
+		// If the user is not the workspace owner, filter the results based on permissions
+		filteredResults = api.filterSearchResultsBasedOnPermissions(results, user, workspace)
+
+		// For non-owners, we need to calculate the accessible count efficiently
+		accessibleTotalCount = api.calculateAccessibleSearchResultsCount(workspace.ID, user, workspace, filters, totalCount, len(filteredResults))
+	}
 
 	// Convert database results to API response format
 	searchResults := make([]irminmodels.SearchResult, 0, len(filteredResults))
@@ -63,7 +75,7 @@ func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
 
 	response := irminmodels.SearchResponse{
 		Results: searchResults,
-		Total:   total,
+		Total:   accessibleTotalCount,
 		Query:   filters.Query,
 		Filters: irminmodels.SearchFilters{
 			Query:    filters.Query,
@@ -98,7 +110,7 @@ func (api *APIControllers) filterSearchResultsBasedOnPermissions(
 		// Capture the result value to avoid closure issues
 		capturedResult := result
 		permissionFutures[i] = utils.Async(func() (bool, error) {
-			return api.hasPermissionForResult(capturedResult, user, workspace), nil
+			return api.hasPermissionForSearchResult(capturedResult, user, workspace), nil
 		})
 	}
 
@@ -119,13 +131,13 @@ func (api *APIControllers) filterSearchResultsBasedOnPermissions(
 	return filteredResults
 }
 
-// hasPermissionForResult checks if the user has permission to access the given search result.
-func (api *APIControllers) hasPermissionForResult(
+// hasPermissionForSearchResult checks if the user has permission to access the given search result.
+func (api *APIControllers) hasPermissionForSearchResult(
 	result db.SearchResult,
 	user *db.User,
 	workspace *db.Workspace,
 ) bool {
-	entityID, policyResource := api.getEntityIDAndPolicyResource(result)
+	entityID, policyResource := api.getSearchResultEntityIDAndPolicyResource(result)
 	if entityID == nil || policyResource == "" {
 		return false
 	}
@@ -140,8 +152,8 @@ func (api *APIControllers) hasPermissionForResult(
 	return err == nil && allowed
 }
 
-// getEntityIDAndPolicyResource extracts the entity ID and policy resource from a search result.
-func (api *APIControllers) getEntityIDAndPolicyResource(result db.SearchResult) (*uint, db.PolicyResource) {
+// getSearchResultEntityIDAndPolicyResource extracts the entity ID and policy resource from a search result.
+func (api *APIControllers) getSearchResultEntityIDAndPolicyResource(result db.SearchResult) (*uint, db.PolicyResource) {
 	switch result.Type {
 	case irminmodels.WorkspaceSearchResultTypeRepository:
 		if entity, ok := result.Entity.(*db.Repository); ok {
@@ -503,4 +515,59 @@ func (api *APIControllers) convertOwnerIDToString(ownerID *uint) *string {
 		return nil
 	}
 	return &sqid
+}
+
+// calculateAccessibleSearchResultsCount efficiently calculates the total count of accessible search results.
+func (api *APIControllers) calculateAccessibleSearchResultsCount(
+	workspaceID uint,
+	user *db.User,
+	workspace *db.Workspace,
+	filters db.SearchFilters,
+	totalCount int,
+	currentPageAccessibleCount int,
+) int {
+	// If we have a small result set, we can afford to get all results and filter them
+	if totalCount <= defaultLimit {
+		// Get all results without pagination
+		allFilters := filters
+		allFilters.Limit = totalCount
+		allFilters.Offset = 0
+
+		allResults, _, err := api.DB.SearchWorkspace(workspaceID, allFilters)
+		if err != nil {
+			api.Logger.Error("Failed to get all search results for counting", "error", err, "workspace_id", workspaceID)
+			return currentPageAccessibleCount // Fallback to current page count
+		}
+
+		// Apply permission filtering
+		accessibleResults := api.filterSearchResultsBasedOnPermissions(allResults, user, workspace)
+		return len(accessibleResults)
+	}
+
+	// For larger result sets, use a more efficient approach
+	// Calculate the permission ratio from the current page and apply it to the total
+	if filters.Limit > 0 && currentPageAccessibleCount > 0 {
+		permissionRatio := float64(currentPageAccessibleCount) / float64(filters.Limit)
+		estimatedAccessibleCount := int(float64(totalCount) * permissionRatio)
+
+		// Ensure the estimate is reasonable
+		if estimatedAccessibleCount > totalCount {
+			estimatedAccessibleCount = totalCount
+		}
+		if estimatedAccessibleCount < currentPageAccessibleCount {
+			estimatedAccessibleCount = currentPageAccessibleCount
+		}
+
+		return estimatedAccessibleCount
+	}
+
+	// Fallback: if we can't calculate a ratio, use a conservative estimate
+	// This assumes that if the user has access to some results, they likely have access to a reasonable portion
+	if currentPageAccessibleCount > 0 {
+		// Assume user has access to at least the current page worth of results
+		return currentPageAccessibleCount
+	}
+
+	// If no accessible results on current page, assume no access to any
+	return 0
 }

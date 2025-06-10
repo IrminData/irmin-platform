@@ -21,7 +21,7 @@ const (
 	// Runtime versions.
 
 	LatestGoVersion     = "1.24.3"
-	LatestNodeVersion   = "22.10.0"
+	LatestNodeVersion   = "24.2.0"
 	LatestPythonVersion = "3.11.12"
 
 	// API configuration.
