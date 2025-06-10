@@ -14,6 +14,7 @@ const (
 
 func TestSetDefaultPolicies(t *testing.T) {
 	ts := lib.GetTestSuite()
+
 	// Find the test workspace
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
 	if err != nil {

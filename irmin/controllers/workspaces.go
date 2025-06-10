@@ -149,6 +149,14 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Seed default tags for the workspace.
+	if seedDefaultTagsErr := lib.SeedDefaultTags(api.DB, newWorkspace.ID); seedDefaultTagsErr != nil {
+		api.Logger.Error("Error seeding default tags", "error", seedDefaultTagsErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Create a bucket folder for the editor files of the workspace.
 	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
 	if createBucketClientErr != nil {

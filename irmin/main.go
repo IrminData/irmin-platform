@@ -32,6 +32,25 @@ const (
 	CacheExpirationDuration = 10 * time.Second
 )
 
+// setupDefaultTags seeds default tags for all workspaces.
+func setupDefaultTags(d *db.Database) error {
+	// Fetch all workspaces
+	workspaces, fetchWorkspacesErr := d.GetAllWorkspaces()
+	if fetchWorkspacesErr != nil {
+		return fetchWorkspacesErr
+	}
+
+	// Seed default tags for every workspace
+	for _, workspace := range workspaces {
+		seedDefaultTagsErr := lib.SeedDefaultTags(d, workspace.ID)
+		if seedDefaultTagsErr != nil {
+			return seedDefaultTagsErr
+		}
+	}
+
+	return nil
+}
+
 func setupRolesAndPolicies(d *db.Database, overridePolicies *bool) error {
 	// Seed initial roles
 	if seedRolesErr := lib.SeedRoles(d); seedRolesErr != nil {
@@ -71,6 +90,7 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 	reset := flag.Bool("reset", false, "Reset the database")
 	migrate := flag.Bool("migrate", false, "Run database migrations")
 	overridePolicies := flag.Bool("override-policies", false, "Override existing policies")
+	seedTags := flag.Bool("seed-tags", false, "Seed default tags for all workspaces")
 	flag.Parse()
 
 	// Empty the database if the reset flag is set
@@ -90,6 +110,13 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 		// Setup roles and policies
 		if setupRolesAndPoliciesErr := setupRolesAndPolicies(d, overridePolicies); setupRolesAndPoliciesErr != nil {
 			return nil, setupRolesAndPoliciesErr
+		}
+	}
+
+	// Seed default tags for all workspaces if the seedTags flag is set
+	if *seedTags {
+		if setupDefaultTagsErr := setupDefaultTags(d); setupDefaultTagsErr != nil {
+			return nil, setupDefaultTagsErr
 		}
 	}
 

@@ -36,6 +36,7 @@ The following command line flags are available when running the application:
 - `-reset`: Reset the database (empties all tables)
 - `-migrate`: Run database migrations (creates tables, adds indexes, seeds initial roles, sets default policies)
 - `-override-policies`: When used with `-migrate`, overrides existing policies with default ones
+- `-seed-tags`: Seeds default tags for all workspaces
 
 Example usage:
 
