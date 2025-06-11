@@ -244,7 +244,7 @@ func (api *APIControllers) getAssetParams(params map[string]string, workspace *d
 		return &assetParams{assetType: "policy", assetID: uint(policyID)}, nil
 
 	case params["repository_object_id"] != "":
-		repositoryObjectID, err := api.SQIDManager.Decode("objects", params["repository_object_id"])
+		repositoryObjectID, err := api.SQIDManager.Decode("repository_objects", params["repository_object_id"])
 		if err != nil {
 			return nil, fmt.Errorf("decoding repository object ID: %w", err)
 		}

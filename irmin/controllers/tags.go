@@ -459,39 +459,39 @@ func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
 
 // performEntityOperation handles the actual database operation for a specific entity type.
 func (api *APIControllers) performEntityOperation(
-	entityType string,
+	entityType irminmodels.TagEntityType,
 	entityID uint,
 	tagID uint,
 	operation string,
 ) error {
 	switch entityType {
-	case "repositories":
+	case irminmodels.TagEntityTypeRepository:
 		if operation == operationAdd {
 			return api.DB.AddTagToRepository(entityID, tagID)
 		}
 		return api.DB.RemoveTagFromRepository(entityID, tagID)
-	case "queries":
+	case irminmodels.TagEntityTypeQuery:
 		if operation == operationAdd {
 			return api.DB.AddTagToQuery(entityID, tagID)
 		}
 		return api.DB.RemoveTagFromQuery(entityID, tagID)
-	case "workflows":
+	case irminmodels.TagEntityTypeWorkflow:
 		if operation == operationAdd {
 			return api.DB.AddTagToWorkflow(entityID, tagID)
 		}
 		return api.DB.RemoveTagFromWorkflow(entityID, tagID)
-	case "connections":
+	case irminmodels.TagEntityTypeConnection:
 		if operation == operationAdd {
 			return api.DB.AddTagToConnection(entityID, tagID)
 		}
 		return api.DB.RemoveTagFromConnection(entityID, tagID)
-	case "objects":
+	case irminmodels.TagEntityTypeObject:
 		if operation == operationAdd {
 			return api.DB.AddTagToRepositoryObject(entityID, tagID)
 		}
 		return api.DB.RemoveTagFromRepositoryObject(entityID, tagID)
 	default:
-		return fmt.Errorf("invalid entity type: %s", entityType)
+		return fmt.Errorf("invalid entity type: %s", string(entityType))
 	}
 }
 
@@ -523,8 +523,14 @@ func (api *APIControllers) handleTagEntityOperation(c fiber.Ctx, operation strin
 	entityType := c.Params("entity_type")
 	entityID := c.Params("entity_id")
 
+	// Map entity type for SQID decoding (URL param "objects" maps to SQID key "repository_objects")
+	sqidEntityType := irminmodels.TagEntityType(entityType)
+	if entityType == "objects" {
+		sqidEntityType = irminmodels.TagEntityTypeObject
+	}
+
 	// Decode entity ID
-	entityIDUint, err := api.SQIDManager.Decode(entityType, entityID)
+	entityIDUint, err := api.SQIDManager.Decode(string(sqidEntityType), entityID)
 	if err != nil {
 		api.Logger.Error("Error decoding entity ID", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -533,14 +539,18 @@ func (api *APIControllers) handleTagEntityOperation(c fiber.Ctx, operation strin
 	}
 
 	// Perform operation based on entity type
-	operationErr := api.performEntityOperation(entityType, uint(entityIDUint), tag.Tag.ID, operation)
+	operationErr := api.performEntityOperation(
+		sqidEntityType,
+		uint(entityIDUint),
+		tag.Tag.ID,
+		operation,
+	)
 	if operationErr != nil {
-		if operationErr.Error() == fmt.Sprintf("invalid entity type: %s", entityType) {
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "invalid_entity_type")},
-			})
-		}
-		api.Logger.Error(fmt.Sprintf("Error %sing tag to entity", operation), "error", operationErr)
+		api.Logger.Error(
+			fmt.Sprintf("Error %sing tag to entity", operation),
+			"error",
+			operationErr,
+		)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
