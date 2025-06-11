@@ -103,7 +103,11 @@ func (c *Client) DeleteWorkspaceTag(workspace, tagID string) (*irminmodels.Irmin
 }
 
 // AddTagToEntity adds an entity to a tag using the workspace tag route.
-func (c *Client) AddTagToEntity(workspace, tagID, entityType, entityID string) (*irminmodels.IrminAPIResponse, error) {
+func (c *Client) AddTagToEntity(
+	workspace, tagID string,
+	entityType irminmodels.TagEntityType,
+	entityID string,
+) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags/%s/entities/%s/%s", workspace, tagID, entityType, entityID),
@@ -116,7 +120,7 @@ func (c *Client) AddTagToEntity(workspace, tagID, entityType, entityID string) (
 
 // RemoveTagFromEntity removes an entity from a tag using the workspace tag route.
 func (c *Client) RemoveTagFromEntity(
-	workspace, tagID, entityType, entityID string,
+	workspace, tagID string, entityType irminmodels.TagEntityType, entityID string,
 ) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:   http.MethodDelete,

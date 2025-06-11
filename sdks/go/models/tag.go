@@ -27,3 +27,13 @@ type TaggedAssets struct {
 	Connections       []Connection  `json:"connections"`
 	RepositoryObjects []Object      `json:"repository_objects"`
 }
+
+type TagEntityType string
+
+const (
+	TagEntityTypeRepository TagEntityType = "repositories"
+	TagEntityTypeQuery      TagEntityType = "queries"
+	TagEntityTypeWorkflow   TagEntityType = "workflows"
+	TagEntityTypeConnection TagEntityType = "connections"
+	TagEntityTypeObject     TagEntityType = "objects"
+)
