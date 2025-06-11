@@ -35,5 +35,5 @@ const (
 	TagEntityTypeQuery      TagEntityType = "queries"
 	TagEntityTypeWorkflow   TagEntityType = "workflows"
 	TagEntityTypeConnection TagEntityType = "connections"
-	TagEntityTypeObject     TagEntityType = "objects"
+	TagEntityTypeObject     TagEntityType = "repository_objects"
 )
