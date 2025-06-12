@@ -32,7 +32,11 @@ export default function WorkflowRunLogsSection({
   const { workflowRunQuery } = useWorkflowRun(workflowID, runID);
 
   if (workflowRunQuery.isLoading) {
-    return <LoadingSkeleton className='h-80 w-full' />;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   if (workflowRunQuery.error) {

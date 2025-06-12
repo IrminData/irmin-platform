@@ -59,7 +59,11 @@ export default function RepositoryLayoutWrapper({
   }, [isResourceAllowed, repositoryQuery.data?.data?.id, workspaceUrl, router]);
 
   if (repositoryQuery.isLoading) {
-    return <LoadingSkeleton className='h-80 w-full' />;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   if (!repositoryQuery.data?.data) {

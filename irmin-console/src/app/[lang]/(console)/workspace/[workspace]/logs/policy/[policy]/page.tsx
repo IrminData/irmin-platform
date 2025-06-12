@@ -21,7 +21,12 @@ export default function PolicyLogsPage() {
   const { policyQuery } = usePolicy(params.policy);
 
   if (policyQuery.isLoading) return <LoadingSpinner />;
-  if (policyQuery.isError) return <div>{policyQuery.error.message}</div>;
+  if (policyQuery.isError)
+    return (
+      <div>
+        {dict.common.error}: {policyQuery.error.message}
+      </div>
+    );
   if (!policyQuery.data?.data) return <div>{dict.common.error}</div>;
 
   return (

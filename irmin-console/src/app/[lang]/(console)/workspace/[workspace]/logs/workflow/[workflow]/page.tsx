@@ -21,7 +21,12 @@ export default function WorkflowLogsPage() {
   const { workflowQuery } = useWorkflow(params.workflow);
 
   if (workflowQuery.isLoading) return <LoadingSpinner />;
-  if (workflowQuery.isError) return <div>{workflowQuery.error.message}</div>;
+  if (workflowQuery.isError)
+    return (
+      <div>
+        {dict.common.error}: {workflowQuery.error.message}
+      </div>
+    );
   if (!workflowQuery.data?.data) return <div>{dict.common.error}</div>;
 
   return (

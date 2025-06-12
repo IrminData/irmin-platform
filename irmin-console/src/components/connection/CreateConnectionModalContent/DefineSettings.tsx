@@ -79,7 +79,11 @@ export default function DefineSettings({
   }
 
   if (connectionConfigurationQuery.isError) {
-    return <div>{connectionConfigurationQuery.error.message}</div>;
+    return (
+      <div>
+        {dict.common.error}: {connectionConfigurationQuery.error.message}
+      </div>
+    );
   }
 
   return (

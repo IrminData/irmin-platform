@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import Image from 'next/image';
 
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -79,6 +80,16 @@ const ConnectionList = ({
                 height={32}
               />
               <p className='text-sm'>{item.connector.name}</p>
+              {/* Display tags if they exist */}
+              {item.tags && item.tags.length > 0 && (
+                <div className='mt-1'>
+                  <WorkspaceTagDisplay
+                    tags={item.tags}
+                    maxVisible={3}
+                    size='sm'
+                  />
+                </div>
+              )}
             </div>,
           ],
           actions,

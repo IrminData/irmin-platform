@@ -39,15 +39,23 @@ const WorkflowDocumentationSection = ({
   );
 
   if (workflowQuery.isLoading) {
-    return <LoadingSkeleton className='h-80 w-full' />;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   if (workflowQuery.isError) {
-    return <div>Error: {workflowQuery.error.message}</div>;
+    return (
+      <div>
+        {dict.common.error}: {workflowQuery.error.message}
+      </div>
+    );
   }
 
   if (!workflowQuery.data?.data) {
-    return <div>No data</div>;
+    return <></>;
   }
 
   const workflow = workflowQuery.data.data;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -17,6 +17,7 @@ import {
 } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -26,10 +27,12 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
 import { Object } from '@/types/core/Object';
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { Tag, TagEntityType } from '@/types/core/Tag';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
@@ -87,46 +90,93 @@ export default function ObjectDetails({
   const { isResourceAllowed } = useResourceAllowed();
 
   // Permission checks
-  const canView = isResourceAllowed(
-    PolicyResource.RepositoryObject,
-    PolicyAction.Read,
-    repository.id
+  const canView = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
   );
-  const canViewSchema = isResourceAllowed(
-    PolicyResource.RepositoryObject,
-    PolicyAction.Read,
-    repository.id
+  const canViewSchema = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
   );
-  const canUpload =
-    isResourceAllowed(
-      PolicyResource.RepositoryObject,
-      PolicyAction.Create,
-      repository.id
-    ) &&
-    isResourceAllowed(
-      PolicyResource.RepositoryObject,
-      PolicyAction.Update,
-      repository.id
-    );
-  const canChangeHistory = isResourceAllowed(
-    PolicyResource.RepositoryObject,
-    PolicyAction.Read,
-    repository.id
+  const canUpload = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Create,
+        repository.id
+      ) &&
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Update,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
   );
-  const canDownload = isResourceAllowed(
-    PolicyResource.RepositoryObject,
-    PolicyAction.Read,
-    repository.id
+  const canChangeHistory = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
   );
-  const canMoveOrRename = isResourceAllowed(
-    PolicyResource.RepositoryObject,
-    PolicyAction.Update,
-    repository.id
+  const canDownload = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
   );
-  const canDelete = isResourceAllowed(
-    PolicyResource.RepositoryObject,
-    PolicyAction.Delete,
-    repository.id
+  const canMoveOrRename = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Update,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+  const canDelete = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Delete,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+  const canViewTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+  const canChangeTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
+      isResourceAllowed(
+        PolicyResource.RepositoryObject,
+        PolicyAction.Update,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
   );
 
   const handleUploadAndReplace = useCallback(() => {
@@ -235,6 +285,74 @@ export default function ObjectDetails({
     }
   }, [selectedObject, downloadObjectAsZipMutation, currentRef]);
 
+  const { addTagToEntityMutation, removeTagFromEntityMutation } =
+    useWorkspaceTags();
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(
+    selectedObject?.tags ?? []
+  );
+  const [updatingTags, setUpdatingTags] = useState(false);
+  const previousTags = useRef<string>('');
+
+  // Synchronize selectedTags with selectedObject.tags when selectedObject changes
+  useEffect(() => {
+    setSelectedTags(selectedObject?.tags ?? []);
+    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
+  }, [selectedObject]);
+  const handleUpdateTags = useCallback(
+    async (tags: Tag[]) => {
+      try {
+        if (!selectedObject) return [];
+        if (previousTags.current === JSON.stringify(tags)) {
+          return tags;
+        }
+
+        // Use selectedObject.tags directly instead of selectedTags to avoid race condition
+        const currentTags = selectedObject.tags ?? [];
+        setSelectedTags(tags);
+        setUpdatingTags(true);
+
+        const tagsToAdd = [];
+        const tagsToRemove = [];
+        for (const tag of tags) {
+          if (!currentTags.some((t) => t.id === tag.id)) {
+            tagsToAdd.push(tag);
+          }
+        }
+        for (const tag of currentTags) {
+          if (!tags.some((t) => t.id === tag.id)) {
+            tagsToRemove.push(tag);
+          }
+        }
+        await Promise.all([
+          ...tagsToAdd.map((tag) =>
+            addTagToEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.RepositoryObject,
+              entityId: selectedObject.id,
+            })
+          ),
+          ...tagsToRemove.map((tag) =>
+            removeTagFromEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.RepositoryObject,
+              entityId: selectedObject.id,
+            })
+          ),
+        ]);
+
+        // Only update previousTags after successful API calls
+        previousTags.current = JSON.stringify(tags);
+        return tags;
+      } catch (error) {
+        console.error('Error updating tags:', error);
+        return [];
+      } finally {
+        setUpdatingTags(false);
+      }
+    },
+    [addTagToEntityMutation, removeTagFromEntityMutation, selectedObject]
+  );
+
   if (!selectedObject) return <></>;
 
   return (
@@ -254,6 +372,16 @@ export default function ObjectDetails({
         )}
       </div>
       <div className='flex flex-col gap-2 p-2'>
+        {canViewTags && (
+          <div className='border-b border-gray-200 pb-4 dark:border-gray-800'>
+            <WorkspaceTagSelector
+              selectedTags={selectedTags}
+              onTagsChange={handleUpdateTags}
+              loading={updatingTags}
+              disabled={!canChangeTags}
+            />
+          </div>
+        )}
         {/** Description of the object */}
         {selectedObjectSchema && (
           <div className='flex w-full justify-between gap-1'>

@@ -70,6 +70,7 @@ const fi = {
       termsAndConditions: 'Käyttöehdot',
       privacyPolicy: 'Tietosuojakäytäntö',
     },
+    color: 'Väri',
   },
   theme: {
     toggle: 'Vaihda teemaa',
@@ -643,6 +644,7 @@ const fi = {
     users: 'Käyttäjät',
     policies: 'Oikeudet',
     invites: 'Kutsut',
+    tags: 'Tunnisteet',
     billing: 'Laskutus',
     deletionWarning:
       'Oletko varma, että haluat poistaa tämän työtilan? Tätä toimintoa ei voi peruuttaa ja se poistaa kaiken tähän työtilaan liittyvän datan.',
@@ -656,6 +658,8 @@ const fi = {
     billingSettings: 'Laskutuksen asetukset',
     billingNote:
       'Voit tällä hetkellä hallita laskutusta vain ottamalla yhteyttä tiimiimme.',
+    taggedItems: 'Tunnistetut kohteet',
+    addTags: 'Lisää tunnisteet',
   },
   logs: {
     workspaceLogs: 'Työtilan audit lokit',

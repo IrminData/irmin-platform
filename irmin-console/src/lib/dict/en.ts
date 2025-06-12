@@ -69,6 +69,7 @@ const en = {
       termsAndConditions: 'Terms and conditions',
       privacyPolicy: 'Privacy policy',
     },
+    color: 'Color',
   },
   theme: {
     toggle: 'Toggle theme',
@@ -638,6 +639,7 @@ const en = {
     users: 'Users',
     policies: 'Policies',
     invites: 'Invites',
+    tags: 'Tags',
     billing: 'Billing',
     deletionWarning:
       'Are you sure you want to delete this workspace? This action cannot be undone and will remove all data associated with this workspace.',
@@ -651,6 +653,8 @@ const en = {
     billingSettings: 'Billing Settings',
     billingNote:
       'You can currently only manage billing by contacting our team.',
+    taggedItems: 'Tagged items',
+    addTags: 'Add tags',
   },
   logs: {
     workspaceLogs: 'Workspace audit logs',

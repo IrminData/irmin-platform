@@ -21,7 +21,12 @@ export default function UserLogsPage() {
   const { userQuery } = useUser(params.user);
 
   if (userQuery.isLoading) return <LoadingSpinner />;
-  if (userQuery.isError) return <div>{userQuery.error.message}</div>;
+  if (userQuery.isError)
+    return (
+      <div>
+        {dict.common.error}: {userQuery.error.message}
+      </div>
+    );
   if (!userQuery.data?.data) return <div>{dict.common.error}</div>;
 
   return (

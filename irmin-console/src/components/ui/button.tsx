@@ -94,7 +94,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <>
             <span className='mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-gray-200 border-t-current'></span>
-            <span>{loadingText}</span>
+            {size !== 'icon' && <span>{loadingText}</span>}
           </>
         ) : (
           <>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MdPlayArrow } from 'react-icons/md';
 import {
@@ -20,16 +20,22 @@ import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useStoredQueries } from '@/hooks/useStoredQueries';
 import { useWorkspaceSchema } from '@/hooks/useWorkspaceSchema';
+import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { StoredQuery } from '@/types/core/StoredQuery';
+import { Tag, TagEntityType } from '@/types/core/Tag';
 
 import CreateSavedQueryModal from './CreateQueryModal';
 import UpdateQueryModal from './UpdateQueryModal';
@@ -43,12 +49,14 @@ export default function QueriesSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
   const workspaceSchema = useWorkspaceSchema();
+  const { isResourceAllowed } = useResourceAllowed();
   const {
     storedQueriesQuery,
     createStoredQueryMutation,
     updateStoredQueryMutation,
     deleteStoredQueryMutation,
   } = useStoredQueries();
+
   const {
     executeSql,
     cleanup,
@@ -71,6 +79,100 @@ export default function QueriesSection() {
     setEdited(false);
     cleanup();
   }, [selectedQuery, cleanup]);
+
+  // Tag editing functionality
+  const { addTagToEntityMutation, removeTagFromEntityMutation } =
+    useWorkspaceTags();
+
+  const canViewTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
+      isResourceAllowed(
+        PolicyResource.Query,
+        PolicyAction.Read,
+        selectedQuery?.id
+      ),
+    [isResourceAllowed, selectedQuery?.id]
+  );
+
+  const canChangeTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
+      isResourceAllowed(
+        PolicyResource.Query,
+        PolicyAction.Update,
+        selectedQuery?.id
+      ),
+    [isResourceAllowed, selectedQuery?.id]
+  );
+
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [updatingTags, setUpdatingTags] = useState(false);
+  const previousTags = useRef<string>('');
+
+  // Update selected tags when query changes
+  useEffect(() => {
+    if (selectedQuery) {
+      setSelectedTags(selectedQuery.tags ?? []);
+    } else {
+      setSelectedTags([]);
+    }
+  }, [selectedQuery]);
+
+  const handleUpdateTags = useCallback(
+    async (tags: Tag[]) => {
+      try {
+        if (!selectedQuery) return tags;
+        if (previousTags.current === JSON.stringify(tags)) {
+          return tags;
+        }
+
+        // Use selectedQuery.tags directly instead of selectedTags to avoid race condition
+        const currentTags = selectedQuery.tags ?? [];
+        setSelectedTags(tags);
+        setUpdatingTags(true);
+
+        const tagsToAdd = [];
+        const tagsToRemove = [];
+        for (const tag of tags) {
+          if (!currentTags.some((t) => t.id === tag.id)) {
+            tagsToAdd.push(tag);
+          }
+        }
+        for (const tag of currentTags) {
+          if (!tags.some((t) => t.id === tag.id)) {
+            tagsToRemove.push(tag);
+          }
+        }
+        await Promise.all([
+          ...tagsToAdd.map((tag) =>
+            addTagToEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.Query,
+              entityId: selectedQuery.id,
+            })
+          ),
+          ...tagsToRemove.map((tag) =>
+            removeTagFromEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.Query,
+              entityId: selectedQuery.id,
+            })
+          ),
+        ]);
+
+        // Only update previousTags after successful API calls
+        previousTags.current = JSON.stringify(tags);
+        return tags;
+      } catch (error) {
+        console.error('Error updating tags:', error);
+        return [];
+      } finally {
+        setUpdatingTags(false);
+      }
+    },
+    [addTagToEntityMutation, removeTagFromEntityMutation, selectedQuery]
+  );
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -226,6 +328,16 @@ export default function QueriesSection() {
                 <p className='text-foreground/50 text-xs'>
                   {query.description}
                 </p>
+                {/* Display tags if they exist */}
+                {query.tags && query.tags.length > 0 && (
+                  <div className='mt-1'>
+                    <WorkspaceTagDisplay
+                      tags={query.tags}
+                      maxVisible={3}
+                      size='sm'
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 <TbChevronRight size={22} />
@@ -254,6 +366,19 @@ export default function QueriesSection() {
             <p className='text-foreground/50 mb-2 pb-2 text-xs'>
               {selectedQuery.description}
             </p>
+
+            {/* Tags section */}
+            {canViewTags && (
+              <div className='mb-4 border-b border-gray-200 pb-4 dark:border-gray-800'>
+                <WorkspaceTagSelector
+                  selectedTags={selectedTags}
+                  onTagsChange={handleUpdateTags}
+                  loading={updatingTags}
+                  disabled={!canChangeTags}
+                />
+              </div>
+            )}
+
             <Button
               variant='default'
               size='sm'

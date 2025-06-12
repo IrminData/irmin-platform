@@ -1,25 +1,7 @@
 import IrminCore from '@/lib/core';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Tag, TagWithAssets } from '@/types/core/Tag';
-
-/**
- * Request payload to create a workspace tag
- */
-interface TagCreateRequest {
-  name: string;
-  color: string;
-  description: string;
-}
-
-/**
- * Request payload to update a workspace tag
- */
-interface TagUpdateRequest {
-  name: string;
-  color: string;
-  description: string;
-}
+import { Tag, TagEntityType, TagWithAssets } from '@/types/core/Tag';
 
 /**
  * Workspace Tag API service
@@ -102,21 +84,27 @@ class TagService {
    *
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
-   * @param props.request - The tag creation request.
+   * @param props.name - The tag name.
+   * @param props.color - The tag color.
+   * @param props.description - The tag description.
    * @returns IrminAPIResponse containing the created Tag.
    */
   async createWorkspaceTag({
     workspace,
-    request,
+    name,
+    color,
+    description,
   }: {
     workspace: string;
-    request: TagCreateRequest;
+    name: string;
+    color: string;
+    description: string;
   }): Promise<IrminAPIResponse<Tag>> {
     try {
       const formData = new FormData();
-      formData.append('name', request.name);
-      formData.append('color', request.color);
-      formData.append('description', request.description);
+      formData.append('name', name);
+      formData.append('color', color);
+      formData.append('description', description);
 
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/tags`,
@@ -138,23 +126,29 @@ class TagService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.tagId - The tag ID.
-   * @param props.request - The tag update request.
+   * @param props.name - The tag name.
+   * @param props.color - The tag color.
+   * @param props.description - The tag description.
    * @returns IrminAPIResponse containing the updated Tag.
    */
   async updateWorkspaceTag({
     workspace,
     tagId,
-    request,
+    name,
+    color,
+    description,
   }: {
     workspace: string;
     tagId: string;
-    request: TagUpdateRequest;
+    name: string;
+    color: string;
+    description: string;
   }): Promise<IrminAPIResponse<Tag>> {
     try {
       const formData = new FormData();
-      formData.append('name', request.name);
-      formData.append('color', request.color);
-      formData.append('description', request.description);
+      formData.append('name', name);
+      formData.append('color', color);
+      formData.append('description', description);
 
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/tags/${tagId}`,
@@ -205,7 +199,7 @@ class TagService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.tagId - The tag ID.
-   * @param props.entityType - The entity type.
+   * @param props.entityType - The type of entity to add to the tag.
    * @param props.entityId - The entity ID.
    * @returns IrminAPIResponse containing the result.
    */
@@ -217,7 +211,7 @@ class TagService {
   }: {
     workspace: string;
     tagId: string;
-    entityType: string;
+    entityType: TagEntityType;
     entityId: string;
   }): Promise<IrminAPIResponse> {
     try {
@@ -240,7 +234,7 @@ class TagService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.tagId - The tag ID.
-   * @param props.entityType - The entity type.
+   * @param props.entityType - The type of entity to remove from the tag.
    * @param props.entityId - The entity ID.
    * @returns IrminAPIResponse containing the result.
    */
@@ -252,7 +246,7 @@ class TagService {
   }: {
     workspace: string;
     tagId: string;
-    entityType: string;
+    entityType: TagEntityType;
     entityId: string;
   }): Promise<IrminAPIResponse> {
     try {

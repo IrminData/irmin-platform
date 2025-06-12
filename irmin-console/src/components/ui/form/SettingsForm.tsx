@@ -68,6 +68,8 @@ interface SettingsFormProps<T extends FieldValues> {
   disabled?: boolean;
   /** Whether the delete button is disabled */
   deleteButtonDisabled?: boolean;
+  /** Additional content to display in the form on the right side */
+  additionalContentRight?: React.ReactNode;
 }
 
 /**
@@ -87,6 +89,7 @@ export default function SettingsForm<T extends FieldValues>({
   additionalDangerContent,
   disabled,
   deleteButtonDisabled,
+  additionalContentRight,
 }: SettingsFormProps<T>) {
   const { dict } = useLocale();
   const {
@@ -174,27 +177,32 @@ export default function SettingsForm<T extends FieldValues>({
           {submitButtonLabel}
         </Button>
       </form>
-      {deleteItem && (
-        <div>
-          <p className='text-destructive text-sm font-normal capitalize md:text-xl'>
-            {dict.common.dangerZone}
-          </p>
-          <p className='mt-2 max-w-sm text-xs md:text-sm'>
-            {dangerZoneMessage}
-          </p>
-          <div className='flex gap-2'>
-            <Button
-              className='mt-4'
-              size='sm'
-              variant='secondary'
-              onClick={deleteItem}
-              loading={deleteItemLoading}
-              disabled={disabled || deleteButtonDisabled}
-            >
-              {deleteButtonLabel ?? `Delete ${itemName}`}
-            </Button>
-            {additionalDangerContent}
-          </div>
+      {(additionalContentRight || deleteItem) && (
+        <div className='flex flex-col gap-2'>
+          {additionalContentRight}
+          {deleteItem && (
+            <div>
+              <p className='text-destructive text-sm font-normal capitalize md:text-xl'>
+                {dict.common.dangerZone}
+              </p>
+              <p className='mt-2 max-w-sm text-xs md:text-sm'>
+                {dangerZoneMessage}
+              </p>
+              <div className='flex gap-2'>
+                <Button
+                  className='mt-4'
+                  size='sm'
+                  variant='secondary'
+                  onClick={deleteItem}
+                  loading={deleteItemLoading}
+                  disabled={disabled || deleteButtonDisabled}
+                >
+                  {deleteButtonLabel ?? `Delete ${itemName}`}
+                </Button>
+                {additionalDangerContent}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </ContentWrapper>

@@ -9,6 +9,7 @@ import {
   TbMail,
   TbSettings,
   TbShield,
+  TbTag,
   TbUser,
 } from 'react-icons/tb';
 
@@ -77,6 +78,16 @@ export default function WorkspaceSettingsLayoutWrapper({
         active: pathname === `${workspaceUrl}/settings/invites`,
         icon: <TbMail size={14} />,
         hide: !isResourceAllowed(PolicyResource.Invite, PolicyAction.Read),
+      },
+      {
+        name: dict.workspace.tags,
+        link: `${workspaceUrl}/settings/tags`,
+        active: pathname === `${workspaceUrl}/settings/tags`,
+        icon: <TbTag size={14} />,
+        hide: !isResourceAllowed(
+          PolicyResource.WorkspaceTag,
+          PolicyAction.Read
+        ),
       },
       {
         name: dict.workspace.billing,

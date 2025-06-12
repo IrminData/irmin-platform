@@ -34,7 +34,11 @@ export default function RepositoryObjectPage({
   }
 
   if (repositoryObjectQuery.isLoading || !repositoryObjectQuery.data?.data) {
-    return <LoadingSkeleton className='h-80 w-full' />;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   return (

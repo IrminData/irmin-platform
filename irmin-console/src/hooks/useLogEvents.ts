@@ -10,7 +10,6 @@ import IrminCore from '@/lib/core';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import {
@@ -65,7 +64,6 @@ export const useLogEvents = (
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
-  const { irminAlert } = usePopup();
   const queryClient = useQueryClient();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -171,15 +169,7 @@ export const useLogEvents = (
 
   const logEventsQuery = useQuery<LogEventsResponse, Error>(queryOptions);
 
-  // Handle errors
-  if (logEventsQuery.isError) {
-    console.error('Failed to fetch log events:', logEventsQuery.error);
-    irminAlert(
-      'error',
-      logEventsQuery.error.message || 'Failed to fetch log events'
-    );
-  }
-
+  // All hooks must be called before any conditional logic
   const goToPage = useCallback(
     (page: number) => {
       const totalPages = logEventsQuery.data?.pagination?.total_pages ?? 1;
@@ -213,6 +203,21 @@ export const useLogEvents = (
       }
     }, 400);
   }, []);
+
+  // Handle errors after all hooks are defined
+  if (logEventsQuery.isError) {
+    console.error('Failed to fetch log events:', logEventsQuery.error);
+    return {
+      logEvents: [],
+      loading: false,
+      totalItems: 0,
+      currentPage: 1,
+      totalPages: 1,
+      refresh,
+      goToPage,
+      setSearchQuery: handleSearchQueryChange,
+    };
+  }
 
   return {
     logEvents: logEventsQuery.data?.data ?? [],

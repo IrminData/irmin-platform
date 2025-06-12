@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -13,10 +15,10 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useUsers } from '@/hooks/useUsers';
+import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-
-import LoadingSkeleton from '../ui/loading/LoadingSkeleton';
+import { Tag, TagEntityType } from '@/types/core/Tag';
 
 interface ConnectionFormValues {
   name: string;
@@ -44,9 +46,12 @@ const ConnectionSettingsSection = () => {
   const { workspaceSlug } = useWorkspaceContext();
   const { isResourceAllowed } = useResourceAllowed();
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleUpdateConnection = useCallback(
     async (data: ConnectionFormValues) => {
       try {
+        setSubmitting(true);
         if (data.owner !== connectionQuery.data?.data?.owner.id) {
           await transferConnectionMutation.mutateAsync(data.owner);
         }
@@ -57,6 +62,8 @@ const ConnectionSettingsSection = () => {
         });
       } catch (error) {
         console.error('Error updating connection:', error);
+      } finally {
+        setSubmitting(false);
       }
     },
     [
@@ -82,6 +89,104 @@ const ConnectionSettingsSection = () => {
     router,
     workspaceSlug,
   ]);
+
+  const { addTagToEntityMutation, removeTagFromEntityMutation } =
+    useWorkspaceTags();
+
+  const canViewTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
+      isResourceAllowed(
+        PolicyResource.Connection,
+        PolicyAction.Read,
+        connectionQuery.data?.data?.id
+      ),
+    [isResourceAllowed, connectionQuery.data?.data?.id]
+  );
+
+  const canChangeTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
+      isResourceAllowed(
+        PolicyResource.Connection,
+        PolicyAction.Update,
+        connectionQuery.data?.data?.id
+      ),
+    [isResourceAllowed, connectionQuery.data?.data?.id]
+  );
+
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(
+    connectionQuery.data?.data?.tags ?? []
+  );
+  const [updatingTags, setUpdatingTags] = useState(false);
+  const previousTags = useRef<string>('');
+
+  // Sync selectedTags with connection data changes
+  useEffect(() => {
+    setSelectedTags(connectionQuery.data?.data?.tags ?? []);
+  }, [connectionQuery.data?.data?.tags]);
+
+  const handleUpdateTags = useCallback(
+    async (tags: Tag[]) => {
+      try {
+        if (previousTags.current === JSON.stringify(tags)) {
+          return tags;
+        }
+
+        // Use connectionQuery.data?.data?.tags directly instead of selectedTags to avoid race condition
+        const currentTags = connectionQuery.data?.data?.tags ?? [];
+        setSelectedTags(tags);
+        setUpdatingTags(true);
+
+        const tagsToAdd = [];
+        const tagsToRemove = [];
+        for (const tag of tags) {
+          if (!currentTags.some((t) => t.id === tag.id)) {
+            tagsToAdd.push(tag);
+          }
+        }
+        for (const tag of currentTags) {
+          if (!tags.some((t) => t.id === tag.id)) {
+            tagsToRemove.push(tag);
+          }
+        }
+        const connectionId = connectionQuery.data?.data?.id;
+        if (!connectionId) return tags;
+
+        await Promise.all([
+          ...tagsToAdd.map((tag) =>
+            addTagToEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.Connection,
+              entityId: connectionId,
+            })
+          ),
+          ...tagsToRemove.map((tag) =>
+            removeTagFromEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.Connection,
+              entityId: connectionId,
+            })
+          ),
+        ]);
+
+        // Only update previousTags after successful API calls
+        previousTags.current = JSON.stringify(tags);
+        return tags;
+      } catch (error) {
+        console.error('Error updating tags:', error);
+        return [];
+      } finally {
+        setUpdatingTags(false);
+      }
+    },
+    [
+      addTagToEntityMutation,
+      removeTagFromEntityMutation,
+      connectionQuery.data?.data?.id,
+      connectionQuery.data?.data?.tags,
+    ]
+  );
 
   // Define field configurations
   const fieldConfiguration: FieldConfig<ConnectionFormValues>[] = [
@@ -110,15 +215,23 @@ const ConnectionSettingsSection = () => {
   ];
 
   if (connectionQuery.isLoading) {
-    return <LoadingSkeleton className='h-80 w-full' />;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   if (connectionQuery.isError) {
-    return connectionQuery.error.message;
+    return (
+      <div>
+        {dict.common.error}: {connectionQuery.error.message}
+      </div>
+    );
   }
 
   if (!connectionQuery.data?.data) {
-    return <div>{dict.common.error}</div>;
+    return <></>;
   }
 
   const connection = connectionQuery.data.data;
@@ -133,6 +246,7 @@ const ConnectionSettingsSection = () => {
         }}
         onSubmit={handleUpdateConnection}
         submitting={
+          submitting ||
           updateConnectionMutation.isPending ||
           transferConnectionMutation.isPending
         }
@@ -156,6 +270,20 @@ const ConnectionSettingsSection = () => {
             PolicyAction.Delete,
             connection.id
           )
+        }
+        additionalContentRight={
+          <>
+            {canViewTags && (
+              <div className='border-b border-gray-200 pb-4 dark:border-gray-800'>
+                <WorkspaceTagSelector
+                  selectedTags={selectedTags}
+                  onTagsChange={handleUpdateTags}
+                  loading={updatingTags}
+                  disabled={!canChangeTags}
+                />
+              </div>
+            )}
+          </>
         }
       />
     </div>

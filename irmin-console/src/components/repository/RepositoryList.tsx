@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -74,7 +75,9 @@ const RepositoryList = ({
               key={`status-${i}`}
               className='inline-flex flex-row items-center gap-2'
             >
+              {/* Status */}
               <StatusBadge status={'private'} label={'Private'} />
+              {/* Last updated and created at */}
               <div className='flex flex-col'>
                 <span className='text-xs text-gray-600 dark:text-gray-400'>
                   {dict.list.lastUpdated}
@@ -87,6 +90,16 @@ const RepositoryList = ({
                   {new Date(item.created_at).toLocaleString(locale)}
                 </span>
               </div>
+              {/* Display tags if they exist */}
+              {item.tags && item.tags.length > 0 && (
+                <div className='mt-1'>
+                  <WorkspaceTagDisplay
+                    tags={item.tags}
+                    maxVisible={3}
+                    size='sm'
+                  />
+                </div>
+              )}
             </div>,
           ],
           actions,

@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -113,6 +114,16 @@ const ExportWorkflowList = ({
                     </span>
                   )}
                 </div>
+                {/* Display tags if they exist */}
+                {item.tags && item.tags.length > 0 && (
+                  <div className='mt-1'>
+                    <WorkspaceTagDisplay
+                      tags={item.tags}
+                      maxVisible={3}
+                      size='sm'
+                    />
+                  </div>
+                )}
               </div>,
             ],
             actions: actions.filter((action) => !action.hidden),

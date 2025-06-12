@@ -21,6 +21,7 @@ import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -81,9 +82,18 @@ export default function WorkflowLayoutWrapper({
   }, [isResourceAllowed, workflowID, workspaceUrl, router]);
 
   if (workflowQuery.isLoading)
-    return <LoadingSkeleton className='h-80 w-full' />;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
 
-  if (workflowQuery.isError) return <></>;
+  if (workflowQuery.isError)
+    return (
+      <div>
+        {dict.common.error}: {workflowQuery.error.message}
+      </div>
+    );
 
   const workflow = workflowQuery.data?.data;
 
@@ -193,6 +203,13 @@ export default function WorkflowLayoutWrapper({
                 />
               ) : (
                 <></>
+              )}
+              {workflow.tags && workflow.tags.length > 0 && (
+                <WorkspaceTagDisplay
+                  tags={workflow.tags}
+                  maxVisible={3}
+                  size='sm'
+                />
               )}
             </div>
             <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>

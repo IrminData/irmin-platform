@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -161,6 +162,13 @@ export default function ConnectionLayoutWrapper({
               <h1 className='text-foreground text-lg font-normal md:text-2xl'>
                 {connection.name}
               </h1>
+              {connection.tags && connection.tags.length > 0 && (
+                <WorkspaceTagDisplay
+                  tags={connection.tags}
+                  maxVisible={3}
+                  size='sm'
+                />
+              )}
             </div>
             <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
               {connection.description}

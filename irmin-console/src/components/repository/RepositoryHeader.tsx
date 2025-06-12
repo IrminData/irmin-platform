@@ -18,6 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
@@ -161,6 +162,16 @@ export default function RepositoryHeader() {
     ]
   );
 
+  const canViewBranches = useMemo(
+    () =>
+      isResourceAllowed(
+        PolicyResource.RepositoryBranch,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+
   return (
     <div
       className='relative container mx-auto max-w-7xl'
@@ -191,6 +202,14 @@ export default function RepositoryHeader() {
               {repository.name}
             </h1>
             <StatusBadge status={'private'} label={'Private'} />
+            {/* Display tags if they exist */}
+            {repository.tags && repository.tags.length > 0 && (
+              <WorkspaceTagDisplay
+                tags={repository.tags}
+                maxVisible={3}
+                size='sm'
+              />
+            )}
           </div>
           <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
             {repository.description}
@@ -200,11 +219,7 @@ export default function RepositoryHeader() {
           {!pathname.includes('/compare') &&
             !pathname.includes('/settings') &&
             !pathname.includes('/branches') &&
-            isResourceAllowed(
-              PolicyResource.RepositoryBranch,
-              PolicyAction.Read,
-              repository.id
-            ) && (
+            canViewBranches && (
               <>
                 {/** Select branch to view repository in */}
                 <BranchSelector

@@ -85,7 +85,11 @@ export default function DefineDetails({
   }
 
   if (connectionConfigurationQuery.isError) {
-    return <div>{connectionConfigurationQuery.error.message}</div>;
+    return (
+      <div>
+        {dict.common.error}: {connectionConfigurationQuery.error.message}
+      </div>
+    );
   }
 
   const connectionDetailsFields = connectionConfigurationQuery.data?.data;

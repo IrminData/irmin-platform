@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { useWorkflow } from '@/hooks/useWorkflow';
 
 import { PipelineStageInput } from '@/types/internal/WorkflowInput';
@@ -14,6 +16,7 @@ import PipelineStageEditor from './PipelineStageEditor';
  * Workflow Pipeline section component
  */
 const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
+  const { dict } = useLocale();
   const { workflowQuery } = useWorkflow(workflowID);
 
   const stages: PipelineStageInput[] = useMemo(() => {
@@ -57,15 +60,23 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
   }, [workflowQuery.data?.data?.workflowable, workflowQuery.data?.data?.type]);
 
   if (workflowQuery.isLoading) {
-    return <LoadingSkeleton className='h-80 w-full' />;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   if (workflowQuery.isError) {
-    return <div>Error: {workflowQuery.error.message}</div>;
+    return (
+      <div>
+        {dict.common.error}: {workflowQuery.error.message}
+      </div>
+    );
   }
 
   if (!workflowQuery.data?.data) {
-    return <div>No data</div>;
+    return <></>;
   }
 
   const workflow = workflowQuery.data.data;

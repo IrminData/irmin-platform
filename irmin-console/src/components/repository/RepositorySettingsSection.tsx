@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -13,8 +14,10 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useRepository } from '@/hooks/useRepository';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { Tag, TagEntityType } from '@/types/core/Tag';
 
 import ImmutableWarning from './ImmutableWarning';
 
@@ -88,6 +91,96 @@ const RepositorySettingsSection = () => {
     workspaceSlug,
   ]);
 
+  const { addTagToEntityMutation, removeTagFromEntityMutation } =
+    useWorkspaceTags();
+
+  const canViewTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
+      isResourceAllowed(
+        PolicyResource.Repository,
+        PolicyAction.Read,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+  const canChangeTags = useMemo(
+    () =>
+      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
+      isResourceAllowed(
+        PolicyResource.Repository,
+        PolicyAction.Update,
+        repository.id
+      ),
+    [isResourceAllowed, repository.id]
+  );
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(
+    repository.tags ?? []
+  );
+  const [updatingTags, setUpdatingTags] = useState(false);
+  const previousTags = useRef<string>('');
+
+  // Sync selectedTags with repository data changes
+  useEffect(() => {
+    setSelectedTags(repository.tags ?? []);
+  }, [repository.tags]);
+
+  const handleUpdateTags = useCallback(
+    async (tags: Tag[]) => {
+      try {
+        if (previousTags.current === JSON.stringify(tags)) {
+          return tags;
+        }
+        setSelectedTags(tags);
+        setUpdatingTags(true);
+        const currentTags = repository.tags ?? [];
+        const tagsToAdd = [];
+        const tagsToRemove = [];
+        for (const tag of tags) {
+          if (!currentTags.some((t) => t.id === tag.id)) {
+            tagsToAdd.push(tag);
+          }
+        }
+        for (const tag of currentTags) {
+          if (!tags.some((t) => t.id === tag.id)) {
+            tagsToRemove.push(tag);
+          }
+        }
+        await Promise.all([
+          ...tagsToAdd.map((tag) =>
+            addTagToEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.Repository,
+              entityId: repository.id,
+            })
+          ),
+          ...tagsToRemove.map((tag) =>
+            removeTagFromEntityMutation.mutateAsync({
+              id: tag.id,
+              entityType: TagEntityType.Repository,
+              entityId: repository.id,
+            })
+          ),
+        ]);
+
+        // Only update previousTags after successful API calls
+        previousTags.current = JSON.stringify(tags);
+        return tags;
+      } catch (error) {
+        console.error('Error updating tags:', error);
+        return [];
+      } finally {
+        setUpdatingTags(false);
+      }
+    },
+    [
+      addTagToEntityMutation,
+      removeTagFromEntityMutation,
+      repository.id,
+      repository.tags,
+    ]
+  );
+
   // Define field configurations
   const fieldConfiguration: FieldConfig<{
     name: string;
@@ -155,6 +248,20 @@ const RepositorySettingsSection = () => {
             PolicyAction.Delete,
             repository.id
           )
+        }
+        additionalContentRight={
+          <>
+            {canViewTags && (
+              <div className='border-b border-gray-200 pb-4 dark:border-gray-800'>
+                <WorkspaceTagSelector
+                  selectedTags={selectedTags}
+                  onTagsChange={handleUpdateTags}
+                  loading={updatingTags}
+                  disabled={!canChangeTags}
+                />
+              </div>
+            )}
+          </>
         }
       />
     </div>
