@@ -35,7 +35,7 @@ export function convertSearchResultToConsoleItem(
         );
         return {
           title: result.repository_object.name,
-          description: `${result.repository_object.type} ${dict.repository.objects.object}`,
+          description: `${result.repository_object.type} ${dict.repository.objects.object} • ${result.repository_object.repository_slug}@${result.repository_object.ref}`,
           link: `/${locale}/workspace/${workspaceSlug}/repositories/${result.repository_object.repository_slug}/object?path=${urlEncodedPath}&ref=${result.repository_object.ref}`,
           type:
             result.repository_object.type === 'structured'
