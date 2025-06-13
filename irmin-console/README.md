@@ -11,7 +11,7 @@ This repository contains the code for Irmin Console frontend, built using Next.j
 Ensure you have the following installed:
 
 - Node.js (22.x)
-- Yarn (4.9.1). See [Yarn v2 Migration Guide](#yarn-v2-migration-guide) for migration details.
+- pnpm (10.12.1). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
 
 ## Environment Configuration (.env)
 
@@ -24,6 +24,9 @@ NEXT_PUBLIC_WEBSITE_URL=https://irmin.dev  # Website URL
 NODE_ENV=development  # Environment type. Can be development, staging or production.
 NEXT_PUBLIC_REVALIDATE="60" # Revalidation time in seconds for ISR (Incremental Static Regeneration)
 NEXT_PUBLIC_LOG_NETWORK_REQUESTS="true" # Enable logging of network requests
+
+# Vercel
+ENABLE_EXPERIMENTAL_COREPACK=1
 
 # API settings
 NEXT_PUBLIC_API_URL=https://api.irmin.dev/api  # API endpoint URL
@@ -65,24 +68,24 @@ TEST_USER_REPOSITORY_SLUG="kpi-and-performance-metrics" # Slug of the repository
 Lint and code formatting:
 
 ```
-yarn lint
+pnpm lint
 
-yarn format
+pnpm format
 # or
-yarn format:fix
+pnpm format:fix
 ```
 
 Start the server:
 
 ```
-yarn dev
+pnpm dev
 ```
 
 Build and start the server:
 
 ```
-yarn build
-yarn start
+pnpm build
+pnpm start
 ```
 
 With Docker:
@@ -108,10 +111,10 @@ When documenting code, use TypeDoc comments. TypeDoc comments should be placed a
 To generate the TypeDoc documentation, run:
 
 ```
-yarn docs
+pnpm docs
 ```
 
-Please make sure to document all functions and types you create, especially if they are exported. This will help other developers understand the codebase and use the functions you have created. Make sure that the `yarn docs` command runs without errors or warnings before creating a pull request.
+Please make sure to document all functions and types you create, especially if they are exported. This will help other developers understand the codebase and use the functions you have created. Make sure that the `pnpm docs` command runs without errors or warnings before creating a pull request.
 
 The documentation will be generated in the `public/frontend-docs` directory. The middleware is setup to serve the documentation at `/tsdocs` and to require dev password to access it, see [middleware.ts](src/middleware.ts) for more information.
 
@@ -124,14 +127,14 @@ Playwright is used for end-to-end testing. The tests are located in the `tests` 
 To run the tests, use the following commands:
 
 ```
-yarn e2e # Run the tests
-yarn e2e:ui # Run the tests with UI
-yarn e2e:report # Show the test report
+pnpm e2e # Run the tests
+pnpm e2e:ui # Run the tests with UI
+pnpm e2e:report # Show the test report
 ```
 
 To generate test code, use the following commands:
 
 ```
-yarn e2e:codegen # Generate test code for desktop
-yarn e2e:codegen-mobile # Generate test code for mobile
+pnpm e2e:codegen # Generate test code for desktop
+pnpm e2e:codegen-mobile # Generate test code for mobile
 ```

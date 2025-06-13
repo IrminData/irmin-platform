@@ -11,12 +11,9 @@ ENV GENERATE_SOURCEMAP=false
 ENV NODE_OPTIONS=--max-old-space-size=3000
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock ./
-COPY .yarnrc.yml ./
-COPY .yarn ./.yarn
-RUN echo 'nodeLinker: "node-modules"' > ./.yarnrc.yml
+COPY package.json pnpm-lock.yaml ./
 RUN \
-    if [ -f yarn.lock ]; then yarn install --immutable; \
+    if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
@@ -24,7 +21,7 @@ RUN \
 COPY . .
 
 # Build the application
-RUN yarn build
+RUN pnpm build
 
 # Production image, copy all the files and run next
 FROM base AS runner
