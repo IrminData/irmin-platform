@@ -16,6 +16,8 @@ type Object struct {
 	ID                    string            `json:"id"`
 	Name                  string            `json:"name"`
 	Path                  string            `json:"path"`
+	RepositorySlug        string            `json:"repository_slug"` // The slug of the repository that contains the object.
+	Ref                   string            `json:"ref"`             // The branch or other reference that contains the object.
 	Type                  ObjectType        `json:"type"`
 	ContentType           string            `json:"content_type,omitempty"`            // The MIME type of the object content, like "application/json" or "text/plain".
 	PhysicalAddress       string            `json:"physical_address,omitempty"`        // The location of the object on the underlying object store. Formatted as a native URI with the object store type as scheme ("s3://...", "gs://...", etc.) Or, in the case of presign=true, will be an HTTP URL to be consumed via regular HTTP GET
