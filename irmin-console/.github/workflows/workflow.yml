@@ -15,15 +15,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
       - name: Install Dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
       - name: Prettier
-        run: yarn format:fix
+        run: pnpm format:fix
       - name: ESLint
-        run: yarn lint
+        run: pnpm lint
       - name: Build
         run: |
-          yarn build | tee build-log.txt
+          pnpm build | tee build-log.txt
       - name: Check Build Status
         run: |
           if grep -q "error" build-log.txt; then
