@@ -68,6 +68,7 @@ export default function InitialisedMDXEditor({
                 <CodeToggle />
                 <CreateLink />
                 <InsertTable />
+                {children}
               </div>
             ),
           }),
@@ -76,7 +77,6 @@ export default function InitialisedMDXEditor({
         contentEditableClassName='mdx-editor-prose'
         ref={editorRef}
       />
-      {children && <div className='mt-2'>{children}</div>}
     </div>
   );
 }

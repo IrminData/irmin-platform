@@ -36,6 +36,8 @@ import {
 import { useWorkspaceSearch } from '@/hooks/useWorkspaceSearch';
 import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
+import { convertSearchResultToConsoleItem } from '@/utils/search';
+
 import { SearchFilters, SearchResult } from '@/types/core/Search';
 import { Tag } from '@/types/core/Tag';
 import {
@@ -78,81 +80,6 @@ const SEARCH_TYPES = [
     icon: <TbTools size={16} />,
   },
 ];
-
-/**
- * Convert API SearchResult to ConsoleSearchItem format
- */
-function convertSearchResultToConsoleItem(
-  result: SearchResult,
-  locale: string,
-  workspaceSlug: string
-): ConsoleSearchItem | null {
-  const { type } = result;
-
-  switch (type) {
-    case 'repository':
-      if (result.repository) {
-        return {
-          title: result.repository.name,
-          description: result.repository.description || '-',
-          link: `/${locale}/workspace/${workspaceSlug}/repositories/${result.repository.slug}`,
-          type: ConsoleSearchItemType.Repository,
-        };
-      }
-      break;
-    case 'repository_object':
-      if (result.repository_object) {
-        return {
-          title: result.repository_object.name,
-          description: `${result.repository_object.type} object`,
-          link: `/${locale}/workspace/${workspaceSlug}/repositories/object?path=${result.repository_object.path}`,
-          type:
-            result.repository_object.type === 'structured'
-              ? ConsoleSearchItemType.StructuredObject
-              : result.repository_object.type === 'binary'
-                ? ConsoleSearchItemType.BinaryObject
-                : ConsoleSearchItemType.GroupObject,
-        };
-      }
-      break;
-    case 'workflow':
-      if (result.workflow) {
-        return {
-          title: result.workflow.name,
-          description: result.workflow.description || '-',
-          link: `/${locale}/workspace/${workspaceSlug}/workflows/${result.workflow.id}`,
-          type: ConsoleSearchItemType.Workflow,
-        };
-      }
-      break;
-    case 'connection':
-      if (result.connection) {
-        return {
-          title: result.connection.name,
-          description: result.connection.description || '-',
-          link: `/${locale}/workspace/${workspaceSlug}/connections/${result.connection.id}`,
-          type: ConsoleSearchItemType.Connection,
-        };
-      }
-      break;
-    case 'user':
-      if (result.user) {
-        return {
-          title:
-            `${result.user.first_name} ${result.user.last_name}`.trim() ||
-            result.user.email,
-          description: result.user.email,
-          link: `/${locale}/workspace/${workspaceSlug}/settings/users`,
-          type: ConsoleSearchItemType.User,
-        };
-      }
-      break;
-    default:
-      return null;
-  }
-
-  return null;
-}
 
 export default function SearchPageComponent() {
   const { dict, locale } = useLocale();
@@ -240,7 +167,7 @@ export default function SearchPageComponent() {
     if (workspaceSearchQuery.data?.data?.results) {
       const workspaceResults = workspaceSearchQuery.data.data.results
         .map((result: SearchResult) =>
-          convertSearchResultToConsoleItem(result, locale, workspaceSlug)
+          convertSearchResultToConsoleItem(dict, result, locale, workspaceSlug)
         )
         .filter((item): item is ConsoleSearchItem => item !== null)
         // Apply type filtering to workspace results as well
@@ -273,6 +200,7 @@ export default function SearchPageComponent() {
     filters.query,
     filters.types,
     filters.offset,
+    dict,
   ]);
 
   // Reset accumulated results when search query changes

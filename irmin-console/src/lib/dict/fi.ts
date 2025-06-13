@@ -259,6 +259,7 @@ const fi = {
         'Jos sulauttamisessa esiintyy konflikti, tämä asetus suosii automaattisesti pohjan ("Kohde voittaa") tai vertailun ("Lähde voittaa") muutoksia. Ellei mitään valintaa tehdä, sulautus epäonnistuu konfliktitilanteessa.',
     },
     objects: {
+      object: 'Objekti',
       objects: 'Objektit',
       noObjects: 'Ei objekteja',
       noObjectsMessage:

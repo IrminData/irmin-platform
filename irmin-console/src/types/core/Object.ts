@@ -17,6 +17,10 @@ export interface Object {
   path: string;
   /** Type of the object */
   type: ObjectType;
+  /** Slug of the repository that contains the object */
+  repository_slug: string;
+  /** The branch or other reference that contains the object */
+  ref: string;
   /** (optional) The MIME type of the object content, e.g. "application/json" or "text/plain" */
   content_type?: string;
   /** (optional) The location of the object on the underlying object store, formatted as a native URI (e.g. "s3://...", "gs://...", etc.) or as an HTTP URL when presigned */

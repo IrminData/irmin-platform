@@ -256,6 +256,7 @@ const en = {
         'In case of a merge conflict, this option will force the merge process to automatically favour changes from the base ("Destination wins") or from the comparison ("Source wins"). In case no selection is made, the merge process will fail in case of a conflict.',
     },
     objects: {
+      object: 'Object',
       objects: 'Objects',
       noObjects: 'No objects found',
       noObjectsMessage:
