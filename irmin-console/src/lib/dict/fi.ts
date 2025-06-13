@@ -66,11 +66,30 @@ const fi = {
     update: 'Päivitä',
     download: 'Lataa',
     upload: 'Lataa',
+    filters: 'Suodattimet',
     terms: {
       termsAndConditions: 'Käyttöehdot',
       privacyPolicy: 'Tietosuojakäytäntö',
     },
     color: 'Väri',
+  },
+  search: {
+    advancedSearch: 'Edistynyt haku',
+    searchDescription:
+      'Hae data-arkistoista, prosesseista, yhteyksistä ja muusta',
+    searchPlaceholder: 'Hae mitä tahansa...',
+    contentTypes: 'Sisältötyypit',
+    fromDate: 'Alkaen',
+    toDate: 'Päättyen',
+    resultsPerPage: 'Tuloksia per sivu',
+    noResultsFound: 'Ei tuloksia',
+    tryAdjustingFilters: 'Kokeile muuttaa hakutermejä tai suodattimia',
+    startSearching: 'Aloita hakeminen',
+    startSearchingDescription:
+      'Syötä hakutermi yllä löytääksesi data-arkistoja, prosesseja, yhteyksiä ja muuta',
+    searchingText: 'Haetaan...',
+    resultsFoundFor: 'tulosta löytyi haulle',
+    resultFoundFor: 'tulos löytyi haulle',
   },
   theme: {
     toggle: 'Vaihda teemaa',

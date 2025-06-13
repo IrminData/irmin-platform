@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
 
-import { generateSearchItems } from '@/lib/actions/searchItems';
 import { Locale } from '@/lib/dict';
-import { getToken } from '@/lib/getToken';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
-
-import { ConsoleSearchProvider } from '@/context/ConsoleSearchContext';
 
 /**
  * Default layout level metadata for SEO on the console
@@ -30,13 +26,5 @@ export default async function ConsoleLayout(props: {
 }) {
   const { children } = props;
 
-  const token = await getToken();
-
-  const searchItems = await generateSearchItems({ token });
-
-  return (
-    <ConsoleSearchProvider initialSearchItems={searchItems}>
-      <ConsoleWrapper>{children}</ConsoleWrapper>
-    </ConsoleSearchProvider>
-  );
+  return <ConsoleWrapper>{children}</ConsoleWrapper>;
 }

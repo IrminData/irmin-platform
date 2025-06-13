@@ -65,11 +65,30 @@ const en = {
     update: 'Update',
     download: 'Download',
     upload: 'Upload',
+    filters: 'Filters',
     terms: {
       termsAndConditions: 'Terms and conditions',
       privacyPolicy: 'Privacy policy',
     },
     color: 'Color',
+  },
+  search: {
+    advancedSearch: 'Advanced search',
+    searchDescription:
+      'Search across repositories, workflows, connections, and more',
+    searchPlaceholder: 'Search for anything...',
+    contentTypes: 'Content Types',
+    fromDate: 'From Date',
+    toDate: 'To Date',
+    resultsPerPage: 'Results per page',
+    noResultsFound: 'No results found',
+    tryAdjustingFilters: 'Try adjusting your search terms or filters',
+    startSearching: 'Start searching',
+    startSearchingDescription:
+      'Enter a search term above to find repositories, workflows, connections, and more',
+    searchingText: 'Searching...',
+    resultsFoundFor: 'results found for',
+    resultFoundFor: 'result found for',
   },
   theme: {
     toggle: 'Toggle theme',

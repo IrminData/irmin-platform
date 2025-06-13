@@ -48,33 +48,35 @@ export default function InitialisedMDXEditor({
   editorRef: ForwardedRef<MDXEditorMethods> | null;
 } & MDXEditorProps) {
   return (
-    <MDXEditor
-      plugins={[
-        headingsPlugin(),
-        listsPlugin(),
-        quotePlugin(),
-        thematicBreakPlugin(),
-        markdownShortcutPlugin(),
-        linkPlugin(),
-        tablePlugin(),
-        codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
-        toolbarPlugin({
-          toolbarContents: () => (
-            <div className='flex w-full flex-row justify-end gap-2 px-2'>
-              <BlockTypeSelect />
-              <UndoRedo />
-              <BoldItalicUnderlineToggles />
-              <CodeToggle />
-              <CreateLink />
-              <InsertTable />
-              {children}
-            </div>
-          ),
-        }),
-      ]}
-      {...props}
-      contentEditableClassName='mdx-editor-prose'
-      ref={editorRef}
-    />
+    <div>
+      <MDXEditor
+        plugins={[
+          headingsPlugin(),
+          listsPlugin(),
+          quotePlugin(),
+          thematicBreakPlugin(),
+          markdownShortcutPlugin(),
+          linkPlugin(),
+          tablePlugin(),
+          codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
+          toolbarPlugin({
+            toolbarContents: () => (
+              <div className='flex w-full flex-row justify-end gap-2 px-2'>
+                <BlockTypeSelect />
+                <UndoRedo />
+                <BoldItalicUnderlineToggles />
+                <CodeToggle />
+                <CreateLink />
+                <InsertTable />
+              </div>
+            ),
+          }),
+        ]}
+        {...props}
+        contentEditableClassName='mdx-editor-prose'
+        ref={editorRef}
+      />
+      {children && <div className='mt-2'>{children}</div>}
+    </div>
   );
 }

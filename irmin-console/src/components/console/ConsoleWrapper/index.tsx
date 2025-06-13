@@ -8,7 +8,7 @@ import { useParams } from 'next/navigation';
 
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
-import ConsoleSearch from '@/components/console/ConsoleSearch';
+import ConsoleSearch from '@/components/search/ConsoleSearch';
 import Button from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';

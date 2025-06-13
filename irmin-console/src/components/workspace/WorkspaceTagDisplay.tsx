@@ -21,8 +21,10 @@ interface WorkspaceTagDisplayProps {
   size?: 'sm' | 'md';
   /** Whether tags should be clickable to navigate to tag details */
   clickable?: boolean;
-  /** Additional CSS classes */
+  /** Additional CSS classes for the container */
   className?: string;
+  /** Additional CSS classes for individual tag badges */
+  tagClassName?: string;
 }
 
 /**
@@ -37,6 +39,7 @@ export function WorkspaceTagDisplay({
   size = 'sm',
   clickable = true,
   className = '',
+  tagClassName = '',
 }: WorkspaceTagDisplayProps) {
   const router = useRouter();
 
@@ -85,6 +88,7 @@ export function WorkspaceTagDisplay({
           tag={tag}
           size={size}
           onClick={clickable ? () => handleTagClick(tag) : undefined}
+          className={tagClassName}
         />
       ))}
       {remainingCount > 0 && (

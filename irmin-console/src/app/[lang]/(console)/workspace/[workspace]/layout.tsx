@@ -2,9 +2,7 @@
 
 import type { Metadata } from 'next';
 
-import { generateSearchItems } from '@/lib/actions/searchItems';
 import { Locale } from '@/lib/dict';
-import { getToken } from '@/lib/getToken';
 
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
@@ -40,16 +38,8 @@ export default async function ConsoleWorkspaceLayout(props: {
 
   const workspaceSlug = params.workspace;
 
-  const token = await getToken();
-
-  // Fetch the workspace, roles, users, and invites
-  const searchItems = await generateSearchItems({
-    workspace: workspaceSlug,
-    token,
-  });
-
   return (
-    <WorkspaceProvider workspaceSlug={workspaceSlug} searchItems={searchItems}>
+    <WorkspaceProvider workspaceSlug={workspaceSlug}>
       {children}
     </WorkspaceProvider>
   );

@@ -1,12 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect } from 'react';
-
-import { useConsoleSearchContext } from '@/context/ConsoleSearchContext';
+import { createContext, useContext } from 'react';
 
 import { useWorkspace } from '@/hooks/useWorkspace';
-
-import { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
 
 /**
  * Workspace context properties
@@ -25,19 +21,11 @@ const WorkspaceContext = createContext<WorkspaceContextProps | undefined>(
 export const WorkspaceProvider = ({
   children,
   workspaceSlug,
-  searchItems,
 }: {
   children: React.ReactNode;
   workspaceSlug: string;
-  searchItems: ConsoleSearchItem[];
 }) => {
   const workspace = useWorkspace(workspaceSlug);
-  const { setSearchItems } = useConsoleSearchContext();
-
-  // Update the search items in the context when the workspace changes
-  useEffect(() => {
-    setSearchItems(searchItems);
-  }, [workspaceSlug, searchItems, setSearchItems]);
 
   return (
     <WorkspaceContext.Provider
