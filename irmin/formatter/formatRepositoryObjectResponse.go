@@ -40,6 +40,8 @@ func FormatRepositoryObjectResponse(
 		ID:                    objectSqid,
 		Name:                  object.Name,
 		Path:                  object.Path,
+		RepositorySlug:        object.Repository.Slug,
+		Ref:                   object.RepositoryRef,
 		Type:                  object.Type,
 		ContentType:           object.ContentType,
 		PhysicalAddress:       object.PhysicalAddress,
