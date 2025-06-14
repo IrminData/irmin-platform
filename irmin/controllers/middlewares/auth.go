@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/lib"
 	"irmin-api/utils"
 	"strings"
 	"time"
@@ -19,11 +20,20 @@ import (
 const (
 	// UserDetailsCacheMaxAge is the maximum age of a user details cache entry.
 	UserDetailsCacheMaxAge = 5 * time.Minute
+
+	// NovuSubscriberTimeout is the timeout for ensuring a Novu subscriber.
+	NovuSubscriberTimeout = 30 * time.Second
 )
 
 // AuthMiddleware handles the user authentication for the API, tokens and user details syncing with Clerk.
 func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 	ctx := c.Context()
+
+	// Get the locale from the context
+	locale, localeOk := c.Locals("locale").(string)
+	if !localeOk {
+		locale = "en"
+	}
 
 	// Parse the Authorization header
 	headers, err := utils.ParseHeaders(c, []string{"Authorization"}, nil)
@@ -57,6 +67,21 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 		api.Logger.Error("Error syncing user with Clerk", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
+
+	// Make sure the user is a subscriber in Novu, asynchronously
+	go func() {
+		// Use background context with timeout to avoid request cancellation affecting this operation
+		novuCtx, cancel := context.WithTimeout(context.Background(), NovuSubscriberTimeout)
+		defer cancel()
+
+		subscriber, novuErr := lib.EnsureNovuSubscriber(novuCtx, api.SQIDManager, api.Env, locale, irminUser)
+		if novuErr != nil {
+			api.Logger.Error("Error ensuring Novu subscriber", "error", novuErr)
+		}
+		if subscriber != nil {
+			api.Logger.Info("Novu subscriber", "subscriber.id", subscriber.ID)
+		}
+	}()
 
 	// Set the user in the context for subsequent handlers
 	c.Locals("user", irminUser)

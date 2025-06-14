@@ -28,6 +28,7 @@ type CoreAPIEnv struct {
 	ClerkSecretKey               string // Clerk Secret API Key
 	ClerkSigningKey              string // Clerk Signing Key for JWT
 	ClerkSigningAlgorithm        string // Clerk Signing Algorithm for JWT
+	NovuSecretKey                string // Novu secret key
 	LakeFSURL                    string // URL of the LakeFS instance to connect to
 	LakeFSAccessKey              string // Access key for the LakeFS instance
 	LakeFSSecretKey              string // Secret key for the LakeFS instance
@@ -197,6 +198,11 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 
+	novuSecretKey, err := getEnv("NOVU_SECRET_KEY", true, "")
+	if err != nil {
+		return nil, err
+	}
+
 	lakefsURL, err := getEnv("LAKE_FS_URL", true, "")
 	if err != nil {
 		return nil, err
@@ -299,6 +305,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		ClerkSecretKey:               clerkSecretKey,
 		ClerkSigningKey:              clerkSigningKey,
 		ClerkSigningAlgorithm:        clerkSigningAlgorithm,
+		NovuSecretKey:                novuSecretKey,
 		LakeFSURL:                    lakefsURL,
 		LakeFSAccessKey:              lakefsAccessKey,
 		LakeFSSecretKey:              lakefsSecretKey,

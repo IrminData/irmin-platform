@@ -117,6 +117,8 @@ CLERK_SECRET_KEY=sk_test_... # Clerk Secret API Key
 CLERK_SIGNING_KEY=... # Clerk Signing Key for JWT
 CLERK_SIGNING_ALGORITHM=HS512 # Clerk Signing Algorithm for JWT
 
+NOVU_SECRET_KEY=abc123 # Novu secret key
+
 LAKE_FS_URL=https://lake.irmin.dev # URL of the Lake FS instance for versioning
 LAKE_FS_ACCESS_KEY_ID=... # Access key ID for the Lake FS instance
 LAKE_FS_SECRET_ACCESS_KEY=... # Secret access key for the Lake FS instance

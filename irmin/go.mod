@@ -14,6 +14,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.8.5
+	github.com/novuhq/novu-go v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sqids/sqids-go v0.4.1
 	github.com/teambition/rrule-go v1.8.2
@@ -45,6 +46,7 @@ require (
 	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/ericlagergren/decimal v0.0.0-20221120152707-495c53812d05 // indirect
 	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
