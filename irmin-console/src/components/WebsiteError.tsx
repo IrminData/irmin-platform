@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { Dictionary } from '@/lib/dict';
+import { getDictionary, Locale } from '@/lib/dict';
 
 import Button from '@/components/ui/button';
 
@@ -10,16 +10,17 @@ import Button from '@/components/ui/button';
  * Error UI for the website
  */
 export default function WebsiteError({
-  dict,
+  locale,
   pageNotFound,
   error,
   reset,
 }: {
-  dict: Dictionary;
+  locale: Locale;
   pageNotFound?: boolean;
   error?: Error & { digest?: string };
   reset?: () => void;
 }) {
+  const dict = getDictionary(locale);
   return (
     <div id='website-error-section'>
       <Image
