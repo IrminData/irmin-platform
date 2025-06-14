@@ -87,7 +87,7 @@ func (d *Database) GetLogEventsForWorkspace(
 		Preload("Connection").
 		Preload("Policy").
 		Preload("StoredQuery").
-		Preload("RepositoryObject").
+		Preload("RepositoryObject.Repository").
 		Where("workspace_id = ?", workspaceID)
 
 	// apply description filter if present
@@ -171,7 +171,7 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 		Preload("Connection").
 		Preload("Policy").
 		Preload("StoredQuery").
-		Preload("RepositoryObject").
+		Preload("RepositoryObject.Repository").
 		Where("workspace_id = ?", workspaceID)
 
 	// asset-specific filter for fetching

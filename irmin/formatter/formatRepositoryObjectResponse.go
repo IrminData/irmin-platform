@@ -35,12 +35,18 @@ func FormatRepositoryObjectResponse(
 		return nil, fmt.Errorf("error encoding object sqid: %w", err)
 	}
 
+	// Get repository slug with defensive check
+	repositorySlug := ""
+	if object.Repository != nil {
+		repositorySlug = object.Repository.Slug
+	}
+
 	// Format the object.
 	objectResponse := irminmodels.Object{
 		ID:                    objectSqid,
 		Name:                  object.Name,
 		Path:                  object.Path,
-		RepositorySlug:        object.Repository.Slug,
+		RepositorySlug:        repositorySlug,
 		Ref:                   object.RepositoryRef,
 		Type:                  object.Type,
 		ContentType:           object.ContentType,

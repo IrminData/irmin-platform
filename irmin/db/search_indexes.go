@@ -55,10 +55,20 @@ func (d *Database) CreateSearchIndexes() error {
 		// Workspace user indexes
 		"CREATE INDEX IF NOT EXISTS idx_workspace_users_workspace ON workspace_users (workspace_id)",
 		"CREATE INDEX IF NOT EXISTS idx_workspace_users_user ON workspace_users (user_id)",
+		"CREATE INDEX IF NOT EXISTS idx_workspace_users_workspace_user ON workspace_users (workspace_id, user_id)",
+		"CREATE INDEX IF NOT EXISTS idx_workspace_users_deleted ON workspace_users (deleted_at)",
 
 		// Repository object indexes
 		"CREATE INDEX IF NOT EXISTS idx_repository_objects_repository ON repository_objects (repository_id)",
 		"CREATE INDEX IF NOT EXISTS idx_repository_objects_parent ON repository_objects (parent_id)",
+
+		// Additional performance indexes for search queries
+		"CREATE INDEX IF NOT EXISTS idx_workflows_workspace_deleted ON workflows (workspace_id, deleted_at)",
+		"CREATE INDEX IF NOT EXISTS idx_repositories_workspace_deleted ON repositories (workspace_id, deleted_at)",
+		"CREATE INDEX IF NOT EXISTS idx_connections_workspace_deleted ON connections (workspace_id, deleted_at)",
+		"CREATE INDEX IF NOT EXISTS idx_stored_queries_workspace_deleted ON stored_queries (workspace_id, deleted_at)",
+		"CREATE INDEX IF NOT EXISTS idx_invites_workspace_deleted ON invites (workspace_id, deleted_at)",
+		"CREATE INDEX IF NOT EXISTS idx_repository_objects_repo_deleted ON repository_objects (repository_id, deleted_at)",
 	}
 
 	for _, indexSQL := range indexes {
@@ -110,8 +120,16 @@ func (d *Database) DropSearchIndexes() error {
 		"DROP INDEX IF EXISTS idx_repository_object_tags_tag",
 		"DROP INDEX IF EXISTS idx_workspace_users_workspace",
 		"DROP INDEX IF EXISTS idx_workspace_users_user",
+		"DROP INDEX IF EXISTS idx_workspace_users_workspace_user",
+		"DROP INDEX IF EXISTS idx_workspace_users_deleted",
 		"DROP INDEX IF EXISTS idx_repository_objects_repository",
 		"DROP INDEX IF EXISTS idx_repository_objects_parent",
+		"DROP INDEX IF EXISTS idx_workflows_workspace_deleted",
+		"DROP INDEX IF EXISTS idx_repositories_workspace_deleted",
+		"DROP INDEX IF EXISTS idx_connections_workspace_deleted",
+		"DROP INDEX IF EXISTS idx_stored_queries_workspace_deleted",
+		"DROP INDEX IF EXISTS idx_invites_workspace_deleted",
+		"DROP INDEX IF EXISTS idx_repository_objects_repo_deleted",
 	}
 
 	for _, indexSQL := range indexes {

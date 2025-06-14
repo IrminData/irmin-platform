@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/engine"
@@ -56,8 +57,21 @@ func processEngineObject(
 	}
 
 	// Save the object to the database.
-	if err := d.Save(&repositoryObject).Error; err != nil {
+	// CRITICAL: Must pass pointer to GORM so it can update auto-generated fields like ID
+	if err := d.Save(repositoryObject).Error; err != nil {
 		return nil, fmt.Errorf("error saving object to database: %w", err)
+	}
+
+	// Verify that ID was properly set by GORM (especially important for new objects)
+	if repositoryObject.ID == 0 {
+		return nil, errors.New(
+			"failed to get valid ID after saving object to database - this would break parent-child relationships",
+		)
+	}
+
+	// Load only the Repository relationship without overwriting the object.
+	if err := d.Model(repositoryObject).Association("Repository").Find(&repositoryObject.Repository); err != nil {
+		return nil, fmt.Errorf("error loading repository relationship: %w", err)
 	}
 
 	// Process the children objects.
