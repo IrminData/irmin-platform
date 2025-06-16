@@ -7,6 +7,18 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// ConnectorRequest represents the JSON request body for creating/updating connectors.
+type ConnectorRequest struct {
+	URL         string `json:"url"          validate:"required"`
+	SystemToken string `json:"system_token" validate:"required"`
+}
+
+// ConnectorConfigurationRequest represents the JSON request body for connector configuration operations.
+type ConnectorConfigurationRequest struct {
+	Details  map[string]any `json:"details"`
+	Settings map[string]any `json:"settings"`
+}
+
 func (c *Client) ListConnectors() ([]irminmodels.Connector, *irminmodels.IrminAPIResponse, error) {
 	var connectors []irminmodels.Connector
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -59,23 +71,14 @@ func (c *Client) FetchConnectorConfigurationFields(
 
 func (c *Client) ValidateConnectorConfiguration(
 	connectorID string,
-	details map[string]string,
-	settings map[string]string,
+	req ConnectorConfigurationRequest,
 ) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error) {
-	form := map[string]string{}
-	for key, value := range details {
-		form[fmt.Sprintf("details[%s]", key)] = value
-	}
-	for key, value := range settings {
-		form[fmt.Sprintf("settings[%s]", key)] = value
-	}
-
 	var validationResult irminmodels.ConnectorConfigurationValidationResult
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s/validate", connectorID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  form,
+		ContentType: "application/json",
+		Body:        req,
 	}, &validationResult)
 	if err != nil {
 		return nil, nil, fmt.Errorf("validate connector configuration error: %w", err)
@@ -85,17 +88,14 @@ func (c *Client) ValidateConnectorConfiguration(
 
 // RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
 func (c *Client) RegisterNewConnector(
-	baseURL, systemToken string,
+	req ConnectorRequest,
 ) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error) {
 	var connector irminmodels.Connector
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/connectors",
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"url":          baseURL,
-			"system_token": systemToken,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &connector)
 	if err != nil {
 		return nil, nil, fmt.Errorf("register new connector error: %w", err)
@@ -105,17 +105,15 @@ func (c *Client) RegisterNewConnector(
 
 // UpdateRegisteredConnector updates the details of a registered connector. Requests to this endpoint must be authenticated with a system token.
 func (c *Client) UpdateRegisteredConnector(
-	connectorID, baseURL, systemToken string,
+	connectorID string,
+	req ConnectorRequest,
 ) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error) {
 	var connector irminmodels.Connector
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/connectors/%s", connectorID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"url":          baseURL,
-			"system_token": systemToken,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &connector)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update registered connector error: %w", err)

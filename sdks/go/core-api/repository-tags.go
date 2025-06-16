@@ -7,6 +7,12 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// CreateRepositoryTagRequest represents the JSON request body for creating a repository tag.
+type CreateRepositoryTagRequest struct {
+	Name string `json:"name" validate:"required"`
+	Ref  string `json:"ref"  validate:"required"`
+}
+
 func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, *irminmodels.IrminAPIResponse, error) {
 	var tags []irminmodels.GitTag
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -32,17 +38,15 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag,
 }
 
 func (c *Client) CreateTag(
-	workspace, repository, tag, ref string,
+	workspace, repository string,
+	req CreateRepositoryTagRequest,
 ) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error) {
 	var tagObj irminmodels.GitTag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/tags", workspace, repository),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name": tag,
-			"ref":  ref,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &tagObj)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create tag error: %w", err)

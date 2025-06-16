@@ -7,23 +7,18 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// TagCreateRequest represents the request payload to create a workspace tag.
-type TagCreateRequest struct {
-	Name        string `json:"name"`
-	Color       string `json:"color"`
-	Description string `json:"description"`
+// CreateTagRequest represents the JSON request body for creating a tag.
+type CreateTagRequest struct {
+	Name        string `json:"name"                  validate:"required"`
+	Color       string `json:"color,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
-// TagUpdateRequest represents the request payload to update a workspace tag.
-type TagUpdateRequest struct {
-	Name        string `json:"name"`
-	Color       string `json:"color"`
-	Description string `json:"description"`
-}
-
-// TagEntityRequest represents the request payload to add a tag to an entity.
-type TagEntityRequest struct {
-	TagID string `json:"tag_id"`
+// UpdateTagRequest represents the JSON request body for updating a tag.
+type UpdateTagRequest struct {
+	Name        string `json:"name,omitempty"`
+	Color       string `json:"color,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 // ListWorkspaceTags retrieves all workspace tags for a workspace.
@@ -57,14 +52,14 @@ func (c *Client) GetWorkspaceTag(
 // CreateWorkspaceTag creates a new workspace tag.
 func (c *Client) CreateWorkspaceTag(
 	workspace string,
-	request TagCreateRequest,
+	req CreateTagRequest,
 ) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tag irminmodels.Tag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/tags", workspace),
 		ContentType: "application/json",
-		Body:        request,
+		Body:        req,
 	}, &tag)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create workspace tag error: %w", err)
@@ -75,14 +70,14 @@ func (c *Client) CreateWorkspaceTag(
 // UpdateWorkspaceTag updates an existing workspace tag.
 func (c *Client) UpdateWorkspaceTag(
 	workspace, tagID string,
-	request TagUpdateRequest,
+	req UpdateTagRequest,
 ) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tag irminmodels.Tag
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/tags/%s", workspace, tagID),
 		ContentType: "application/json",
-		Body:        request,
+		Body:        req,
 	}, &tag)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workspace tag error: %w", err)

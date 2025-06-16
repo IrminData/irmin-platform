@@ -1,12 +1,22 @@
 package irmincore
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+// UpdateProfileRequest represents the JSON request body for updating profile.
+type UpdateProfileRequest struct {
+	FirstName string `json:"first_name,omitempty"`
+	LastName  string `json:"last_name,omitempty"`
+	Email     string `json:"email,omitempty"`
+	Phone     string `json:"phone,omitempty"`
+	Company   string `json:"company,omitempty"`
+}
 
 func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
 	var profile irminmodels.User
@@ -24,29 +34,63 @@ func (c *Client) UpdateProfile(
 	firstName, lastName, email, phone, company string,
 	profilePicture *os.File,
 ) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
-	var files []FormFile
-	if profilePicture != nil {
-		files = append(files, FormFile{
-			FieldName: "profile_picture",
-			Reader:    profilePicture,
-			FileName:  profilePicture.Name(),
-		})
+	// Create update request struct with only non-empty fields
+	updateReq := UpdateProfileRequest{}
+	if firstName != "" {
+		updateReq.FirstName = firstName
+	}
+	if lastName != "" {
+		updateReq.LastName = lastName
+	}
+	if email != "" {
+		updateReq.Email = email
+	}
+	if phone != "" {
+		updateReq.Phone = phone
+	}
+	if company != "" {
+		updateReq.Company = company
 	}
 
 	var updatedProfile irminmodels.User
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodPatch,
-		Endpoint:    "/v1/profile",
-		ContentType: "multipart/form-data",
-		FormFields: map[string]string{
-			"first_name": firstName,
-			"last_name":  lastName,
-			"email":      email,
-			"phone":      phone,
-			"company":    company,
-		},
-		Files: files,
-	}, &updatedProfile)
+	var apiResp *irminmodels.IrminAPIResponse
+	var err error
+
+	// If profile picture is provided, use multipart form data
+	if profilePicture != nil {
+		files := []FormFile{
+			{
+				FieldName: "profile_picture",
+				Reader:    profilePicture,
+				FileName:  profilePicture.Name(),
+			},
+		}
+
+		// Convert struct to JSON string for metadata field
+		metadata, marshalErr := json.Marshal(updateReq)
+		if marshalErr != nil {
+			return nil, nil, fmt.Errorf("marshal update request error: %w", marshalErr)
+		}
+
+		apiResp, err = c.FetchAPI(RequestOptions{
+			Method:      http.MethodPatch,
+			Endpoint:    "/v1/profile",
+			ContentType: "multipart/form-data",
+			FormFields: map[string]string{
+				"metadata": string(metadata),
+			},
+			Files: files,
+		}, &updatedProfile)
+	} else {
+		// If no profile picture, use JSON content type
+		apiResp, err = c.FetchAPI(RequestOptions{
+			Method:      http.MethodPatch,
+			Endpoint:    "/v1/profile",
+			ContentType: "application/json",
+			Body:        updateReq,
+		}, &updatedProfile)
+	}
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("update profile error: %w", err)
 	}

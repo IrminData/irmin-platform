@@ -8,32 +8,6 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// PolicyCreateParams represents the parameters required to create a new policy.
-type PolicyCreateParams struct {
-	// Required fields
-	Effect    irminmodels.PolicyEffect    `form:"effect"`    // The effect of the policy (allow/deny)
-	Action    irminmodels.PolicyAction    `form:"action"`    // The action being controlled (read/write/etc)
-	Resource  irminmodels.PolicyResource  `form:"resource"`  // The resource type being controlled
-	Principal irminmodels.PolicyPrincipal `form:"principal"` // The principal type (role/user)
-
-	// Optional fields
-	ResourceID *string `form:"resource_id,omitempty"` // ID of the specific resource
-	RoleID     *string `form:"role_id,omitempty"`     // ID of the role if principal is role
-	UserID     *string `form:"user_id,omitempty"`     // ID of the user if principal is user
-}
-
-// PolicyUpdateParams represents the parameters that can be updated for a policy.
-type PolicyUpdateParams struct {
-	// All fields are optional for updates
-	Effect     *irminmodels.PolicyEffect    `form:"effect,omitempty"`      // The effect of the policy (allow/deny)
-	Action     *irminmodels.PolicyAction    `form:"action,omitempty"`      // The action being controlled (read/write/etc)
-	Resource   *irminmodels.PolicyResource  `form:"resource,omitempty"`    // The resource type being controlled
-	Principal  *irminmodels.PolicyPrincipal `form:"principal,omitempty"`   // The principal type (role/user)
-	ResourceID *string                      `form:"resource_id,omitempty"` // ID of the specific resource
-	RoleID     *string                      `form:"role_id,omitempty"`     // ID of the role if principal is role
-	UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
-}
-
 // ListPoliciesParams represents the parameters for listing policies.
 type ListPoliciesParams struct {
 	Effect     *irminmodels.PolicyEffect    `form:"effect,omitempty"`      // The effect of the policy (allow/deny)
@@ -43,6 +17,28 @@ type ListPoliciesParams struct {
 	ResourceID *string                      `form:"resource_id,omitempty"` // ID of the specific resource
 	RoleID     *string                      `form:"role_id,omitempty"`     // ID of the role if principal is role
 	UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
+}
+
+// CreatePolicyRequest represents the JSON request body for creating a policy.
+type CreatePolicyRequest struct {
+	Effect     irminmodels.PolicyEffect    `json:"effect"                validate:"required"`
+	Action     irminmodels.PolicyAction    `json:"action"                validate:"required"`
+	Resource   irminmodels.PolicyResource  `json:"resource"              validate:"required"`
+	Principal  irminmodels.PolicyPrincipal `json:"principal"             validate:"required"`
+	ResourceID string                      `json:"resource_id,omitempty"`
+	RoleID     string                      `json:"role_id,omitempty"`
+	UserID     string                      `json:"user_id,omitempty"`
+}
+
+// UpdatePolicyRequest represents the JSON request body for updating a policy.
+type UpdatePolicyRequest struct {
+	Effect     irminmodels.PolicyEffect    `json:"effect,omitempty"`
+	Action     irminmodels.PolicyAction    `json:"action,omitempty"`
+	Resource   irminmodels.PolicyResource  `json:"resource,omitempty"`
+	Principal  irminmodels.PolicyPrincipal `json:"principal,omitempty"`
+	ResourceID string                      `json:"resource_id,omitempty"`
+	RoleID     string                      `json:"role_id,omitempty"`
+	UserID     string                      `json:"user_id,omitempty"`
 }
 
 // ListPolicies returns a list of all policies for a workspace.
@@ -102,31 +98,14 @@ func (c *Client) GetPolicy(workspace, policyID string) (*irminmodels.Policy, *ir
 // CreatePolicy creates a new policy for a workspace.
 func (c *Client) CreatePolicy(
 	workspace string,
-	params PolicyCreateParams,
+	req CreatePolicyRequest,
 ) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
-	fields := map[string]string{
-		"effect":    string(params.Effect),
-		"action":    string(params.Action),
-		"resource":  string(params.Resource),
-		"principal": string(params.Principal),
-	}
-
-	if params.ResourceID != nil {
-		fields["resource_id"] = *params.ResourceID
-	}
-	if params.RoleID != nil {
-		fields["role_id"] = *params.RoleID
-	}
-	if params.UserID != nil {
-		fields["user_id"] = *params.UserID
-	}
-
 	var policy irminmodels.Policy
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/policies", workspace),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  fields,
+		ContentType: "application/json",
+		Body:        req,
 	}, &policy)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create policy error: %w", err)
@@ -137,38 +116,14 @@ func (c *Client) CreatePolicy(
 // UpdatePolicy updates an existing policy.
 func (c *Client) UpdatePolicy(
 	workspace, policyID string,
-	params PolicyUpdateParams,
+	req UpdatePolicyRequest,
 ) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
-	fields := make(map[string]string)
-
-	if params.Effect != nil {
-		fields["effect"] = string(*params.Effect)
-	}
-	if params.Action != nil {
-		fields["action"] = string(*params.Action)
-	}
-	if params.Resource != nil {
-		fields["resource"] = string(*params.Resource)
-	}
-	if params.Principal != nil {
-		fields["principal"] = string(*params.Principal)
-	}
-	if params.ResourceID != nil {
-		fields["resource_id"] = *params.ResourceID
-	}
-	if params.RoleID != nil {
-		fields["role_id"] = *params.RoleID
-	}
-	if params.UserID != nil {
-		fields["user_id"] = *params.UserID
-	}
-
 	var policy irminmodels.Policy
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/policies/%s", workspace, policyID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  fields,
+		ContentType: "application/json",
+		Body:        req,
 	}, &policy)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update policy error: %w", err)

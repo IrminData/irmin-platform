@@ -3,10 +3,14 @@ package irmincore
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+// UpdateUserRolesRequest represents the JSON request body for updating user roles.
+type UpdateUserRolesRequest struct {
+	Roles []string `json:"roles" validate:"required"`
+}
 
 func (c *Client) ListUsers(workspace string) ([]irminmodels.User, *irminmodels.IrminAPIResponse, error) {
 	var users []irminmodels.User
@@ -34,17 +38,14 @@ func (c *Client) GetUser(workspace, userID string) (*irminmodels.User, *irminmod
 
 func (c *Client) UpdateUserRoles(
 	workspace, userID string,
-	roles []string,
+	req UpdateUserRolesRequest,
 ) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
-	updatedRoles := strings.Join(roles, ",")
 	var user irminmodels.User
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/users/%s", workspace, userID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"roles": updatedRoles,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &user)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update user roles error: %w", err)

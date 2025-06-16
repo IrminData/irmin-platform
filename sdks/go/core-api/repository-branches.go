@@ -3,10 +3,22 @@ package irmincore
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+// CreateBranchRequest represents the JSON request body for creating a branch.
+type CreateBranchRequest struct {
+	Name        string `json:"name"                   validate:"required"`
+	From        string `json:"from"                   validate:"required"`
+	IsImmutable bool   `json:"is_immutable,omitempty"`
+}
+
+// UpdateBranchRequest represents the JSON request body for updating a branch.
+type UpdateBranchRequest struct {
+	Name        string `json:"name,omitempty"`
+	IsImmutable *bool  `json:"is_immutable,omitempty"`
+}
 
 func (c *Client) ListBranches(
 	workspace, repository string,
@@ -38,19 +50,15 @@ func (c *Client) GetBranch(
 
 // CreateBranch creates a new branch in the repository.
 func (c *Client) CreateBranch(
-	workspace, repository, name, from string,
-	isImmutable bool,
+	workspace, repository string,
+	req CreateBranchRequest,
 ) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error) {
 	var branch irminmodels.Branch
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches", workspace, repository),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":         name,
-			"from":         from,
-			"is_immutable": strconv.FormatBool(isImmutable),
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &branch)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create branch error: %w", err)
@@ -75,17 +83,14 @@ func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminmodel
 
 // UpdateBranch updates a branch name in the repository.
 func (c *Client) UpdateBranch(
-	workspace, repository, oldName, newName string,
-	isImmutable bool,
+	workspace, repository, oldName string,
+	req UpdateBranchRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s", workspace, repository, oldName),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":         newName,
-			"is_immutable": strconv.FormatBool(isImmutable),
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, nil)
 
 	if err != nil {

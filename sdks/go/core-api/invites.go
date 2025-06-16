@@ -7,6 +7,17 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// SendInviteRequest represents the JSON request body for sending an invite.
+type SendInviteRequest struct {
+	Email string `json:"email" validate:"required"`
+	Role  string `json:"role"  validate:"required"`
+}
+
+// UpdateInviteRequest represents the JSON request body for updating an invite.
+type UpdateInviteRequest struct {
+	Role string `json:"role" validate:"required"`
+}
+
 func (c *Client) ListInviteInbox() ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error) {
 	var invites []irminmodels.Invite
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -43,16 +54,16 @@ func (c *Client) ListInvitesToWorkspace(workspace string) ([]irminmodels.Invite,
 	return invites, apiResp, nil
 }
 
-func (c *Client) SendInvite(workspace, email, role string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) SendInvite(
+	workspace string,
+	req SendInviteRequest,
+) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error) {
 	var invite irminmodels.Invite
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/invites", workspace),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"email": email,
-			"role":  role,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &invite)
 	if err != nil {
 		return nil, nil, fmt.Errorf("send invite error: %w", err)
@@ -83,15 +94,16 @@ func (c *Client) DeleteInvite(inviteID string) (*irminmodels.IrminAPIResponse, e
 	return apiResp, nil
 }
 
-func (c *Client) UpdateInvite(inviteID, role string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) UpdateInvite(
+	inviteID string,
+	req UpdateInviteRequest,
+) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error) {
 	var invite irminmodels.Invite
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/invites/%s", inviteID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"role": role,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &invite)
 	if err != nil {
 		return nil, nil, fmt.Errorf("send invite error: %w", err)

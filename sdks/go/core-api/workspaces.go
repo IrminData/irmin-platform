@@ -7,6 +7,23 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// CreateWorkspaceRequest represents the JSON request body for creating a workspace.
+type CreateWorkspaceRequest struct {
+	Name        string `json:"name"                  validate:"required"`
+	Description string `json:"description,omitempty"`
+}
+
+// UpdateWorkspaceRequest represents the JSON request body for updating a workspace.
+type UpdateWorkspaceRequest struct {
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+// TransferOwnershipRequest represents the JSON request body for transferring workspace ownership.
+type TransferOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required"`
+}
+
 func (c *Client) ListWorkspaces() ([]irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspaces []irminmodels.Workspace
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -32,17 +49,14 @@ func (c *Client) GetWorkspace(slug string) (*irminmodels.Workspace, *irminmodels
 }
 
 func (c *Client) CreateWorkspace(
-	name, description string,
+	req CreateWorkspaceRequest,
 ) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workspaces",
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":        name,
-			"description": description,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &workspace)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create workspace error: %w", err)
@@ -51,17 +65,15 @@ func (c *Client) CreateWorkspace(
 }
 
 func (c *Client) UpdateWorkspace(
-	slug, name, description string,
+	workspaceSlug string,
+	req UpdateWorkspaceRequest,
 ) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPut,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":        name,
-			"description": description,
-		},
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", workspaceSlug),
+		ContentType: "application/json",
+		Body:        req,
 	}, &workspace)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workspace error: %w", err)
@@ -81,16 +93,15 @@ func (c *Client) DeleteWorkspace(slug string) (*irminmodels.IrminAPIResponse, er
 }
 
 func (c *Client) TransferWorkspace(
-	slug, newOwnerID string,
+	workspaceSlug string,
+	req TransferOwnershipRequest,
 ) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_owner_id": newOwnerID,
-		},
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", workspaceSlug),
+		ContentType: "application/json",
+		Body:        req,
 	}, &workspace)
 	if err != nil {
 		return nil, nil, fmt.Errorf("transfer workspace error: %w", err)

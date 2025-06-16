@@ -3,10 +3,35 @@ package irmincore
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+// CreateRepositoryRequest represents the JSON request body for creating a repository.
+type CreateRepositoryRequest struct {
+	Name                              string `json:"name"                                            validate:"required"`
+	Description                       string `json:"description,omitempty"`
+	Documentation                     string `json:"documentation,omitempty"`
+	DefaultBranch                     string `json:"default_branch,omitempty"`
+	IsImmutable                       bool   `json:"is_immutable,omitempty"`
+	GarbageDefaultRetentionDays       int    `json:"garbage_default_retention_days,omitempty"`
+	GarbageDefaultBranchRetentionDays int    `json:"garbage_default_branch_retention_days,omitempty"`
+}
+
+// UpdateRepositoryRequest represents the JSON request body for updating a repository.
+type UpdateRepositoryRequest struct {
+	Name                              string `json:"name,omitempty"`
+	Description                       string `json:"description,omitempty"`
+	Documentation                     string `json:"documentation,omitempty"`
+	IsImmutable                       *bool  `json:"is_immutable,omitempty"`
+	GarbageDefaultRetentionDays       int    `json:"garbage_default_retention_days,omitempty"`
+	GarbageDefaultBranchRetentionDays int    `json:"garbage_default_branch_retention_days,omitempty"`
+}
+
+// TransferRepositoryOwnershipRequest represents the JSON request body for transferring repository ownership.
+type TransferRepositoryOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required"`
+}
 
 func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repositories []irminmodels.Repository
@@ -33,24 +58,15 @@ func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository,
 }
 
 func (c *Client) CreateRepository(
-	workspace, name, description, documentation, defaultBranch string,
-	isImmutable bool,
-	garbageDefaultRetentionDays, garbageDefaultBranchRetentionDays int,
+	workspace string,
+	req CreateRepositoryRequest,
 ) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repository irminmodels.Repository
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories", workspace),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":                                  name,
-			"description":                           description,
-			"documentation":                         documentation,
-			"default_branch":                        defaultBranch,
-			"is_immutable":                          strconv.FormatBool(isImmutable),
-			"garbage_default_retention_days":        strconv.Itoa(garbageDefaultRetentionDays),
-			"garbage_default_branch_retention_days": strconv.Itoa(garbageDefaultBranchRetentionDays),
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &repository)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create repository error: %w", err)
@@ -60,24 +76,15 @@ func (c *Client) CreateRepository(
 }
 
 func (c *Client) UpdateRepository(
-	workspace, slug, name, description, documentation, defaultBranch string,
-	isImmutable bool,
-	garbageDefaultRetentionDays, garbageDefaultBranchRetentionDays int,
+	workspace, slug string,
+	req UpdateRepositoryRequest,
 ) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repository irminmodels.Repository
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s", workspace, slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":                                  name,
-			"description":                           description,
-			"documentation":                         documentation,
-			"default_branch":                        defaultBranch,
-			"is_immutable":                          strconv.FormatBool(isImmutable),
-			"garbage_default_retention_days":        strconv.Itoa(garbageDefaultRetentionDays),
-			"garbage_default_branch_retention_days": strconv.Itoa(garbageDefaultBranchRetentionDays),
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &repository)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update repository error: %w", err)
@@ -87,16 +94,15 @@ func (c *Client) UpdateRepository(
 }
 
 func (c *Client) TransferRepository(
-	workspace, slug, newOwnerID string,
+	workspace, slug string,
+	req TransferRepositoryOwnershipRequest,
 ) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repository irminmodels.Repository
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/transfer-ownership", workspace, slug),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_owner_id": newOwnerID,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &repository)
 	if err != nil {
 		return nil, nil, fmt.Errorf("repository ownership transfer error: %w", err)

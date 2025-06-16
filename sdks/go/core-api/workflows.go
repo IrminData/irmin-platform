@@ -4,11 +4,32 @@ import (
 	"fmt"
 	"net/http"
 
-	"maps"
-
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
+
+// UpdateWorkflowRequest represents the JSON request body for updating basic workflow info.
+type UpdateWorkflowRequest struct {
+	Name          string `json:"name,omitempty"`
+	Description   string `json:"description,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
+}
+
+// TransferWorkflowOwnershipRequest represents the JSON request body for transferring workflow ownership.
+type TransferWorkflowOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required"`
+}
+
+// WorkflowRequest represents the JSON request body for creating a workflow.
+type WorkflowRequest struct {
+	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required"`
+	Name          string                       `json:"name"                    validate:"required"`
+	Description   string                       `json:"description,omitempty"`
+	Documentation string                       `json:"documentation,omitempty"`
+	// Workflowable configuration varies by type
+	Workflowable irminmodels.Workflowable `json:"workflowable,omitempty"`
+	// Schedule configuration
+	Schedule irminmodels.Schedule `json:"schedule,omitempty"`
+}
 
 func (c *Client) ListWorkflows(workspace string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error) {
 	var workflows []irminmodels.Workflow
@@ -51,37 +72,15 @@ func (c *Client) GetWorkflow(
 }
 
 func (c *Client) CreateWorkflow(
-	workspace, name, description, documentation string,
-	workflowable irminmodels.Workflowable,
-	schedule irminmodels.Schedule,
+	workspace string,
+	req WorkflowRequest,
 ) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error) {
-	fields := map[string]string{
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-
-	// Add schedule data if provided
-	scheduleFields, err := irminutils.PrepareWorkflowScheduleData(schedule)
-	if err != nil {
-		return nil, nil, fmt.Errorf("prepare schedule data error: %w", err)
-	}
-	maps.Copy(fields, scheduleFields)
-
-	// Add workflowable data
-	worklowableFields, err := irminutils.PrepareWorkflowableData(workflowable)
-	if err != nil {
-		return nil, nil, fmt.Errorf("prepare workflowable data error: %w", err)
-	}
-	maps.Copy(fields, worklowableFields)
-
-	// Create the workflow
 	var workflow irminmodels.Workflow
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows", workspace),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  fields,
+		ContentType: "application/json",
+		Body:        req,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create workflow error: %w", err)
@@ -90,18 +89,15 @@ func (c *Client) CreateWorkflow(
 }
 
 func (c *Client) UpdateWorkflow(
-	workspace, workflowID, name, description, documentation string,
+	workspace, workflowID string,
+	req UpdateWorkflowRequest,
 ) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error) {
 	var workflow irminmodels.Workflow
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s", workspace, workflowID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"name":          name,
-			"description":   description,
-			"documentation": documentation,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workflow error: %w", err)
@@ -113,16 +109,12 @@ func (c *Client) UpdateWorkflowWorkflowable(
 	workspace, workflowID string,
 	workflowable irminmodels.Workflowable,
 ) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error) {
-	workflowableFields, err := irminutils.PrepareWorkflowableData(workflowable)
-	if err != nil {
-		return nil, nil, fmt.Errorf("prepare workflowable data error: %w", err)
-	}
 	var workflow irminmodels.Workflow
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/workflowable", workspace, workflowID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  workflowableFields,
+		ContentType: "application/json",
+		Body:        workflowable,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workflow workflowable error: %w", err)
@@ -134,16 +126,12 @@ func (c *Client) UpdateWorkflowSchedule(
 	workspace, workflowID string,
 	schedule irminmodels.Schedule,
 ) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error) {
-	scheduleFields, err := irminutils.PrepareWorkflowScheduleData(schedule)
-	if err != nil {
-		return nil, nil, fmt.Errorf("prepare workflow schedule data error: %w", err)
-	}
 	var workflow irminmodels.Workflow
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/schedule", workspace, workflowID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  scheduleFields,
+		ContentType: "application/json",
+		Body:        schedule,
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update workflow schedule error: %w", err)
@@ -197,10 +185,8 @@ func (c *Client) TransferWorkflow(
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/workflows/%s/transfer-ownership", workspace, workflowID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_owner_id": newOwnerID,
-		},
+		ContentType: "application/json",
+		Body:        TransferWorkflowOwnershipRequest{NewOwnerID: newOwnerID},
 	}, &workflow)
 	if err != nil {
 		return nil, nil, fmt.Errorf("workflow ownership transfer error: %w", err)

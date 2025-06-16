@@ -7,6 +7,19 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// CreateCommitRequest represents the JSON request body for creating a commit.
+type CreateCommitRequest struct {
+	Branch  string `json:"branch"  validate:"required"`
+	Message string `json:"message" validate:"required"`
+}
+
+// RevertUncommittedChangesRequest represents the JSON request body for reverting uncommitted changes.
+type RevertUncommittedChangesRequest struct {
+	Branch   string `json:"branch"              validate:"required"`
+	Path     string `json:"path,omitempty"`
+	PathType string `json:"path_type,omitempty"`
+}
+
 func (c *Client) ListCommits(
 	workspace, repository, ref, after string,
 	perPage int,
@@ -48,17 +61,15 @@ func (c *Client) GetCommit(
 }
 
 func (c *Client) CreateCommit(
-	workspace, repository, branch, message string,
+	workspace, repository string,
+	req CreateCommitRequest,
 ) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
 	var commit irminmodels.Commit
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits", workspace, repository),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"branch":  branch,
-			"message": message,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &commit)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create commit error: %w", err)
@@ -67,17 +78,14 @@ func (c *Client) CreateCommit(
 }
 
 func (c *Client) RevertChanges(
-	workspace, repository, branch, pathType, path string,
+	workspace, repository string,
+	req RevertUncommittedChangesRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits/revert", workspace, repository),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"branch":    branch,
-			"path":      path,
-			"path_type": pathType,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("revert uncommitted changes error: %w", err)

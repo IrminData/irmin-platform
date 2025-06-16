@@ -3,10 +3,19 @@ package irmincore
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+// MergeRefsRequest represents the JSON request body for merging refs.
+type MergeRefsRequest struct {
+	BaseRef     string `json:"base_ref"              validate:"required"`
+	CompareRef  string `json:"compare_ref"           validate:"required"`
+	Description string `json:"description,omitempty"`
+	Strategy    string `json:"strategy,omitempty"`
+	Squash      bool   `json:"squash,omitempty"`
+	AllowEmpty  bool   `json:"allow_empty,omitempty"`
+}
 
 // CompareRefs compares two refs in a repository and returns the differences.
 func (c *Client) CompareRefs(
@@ -31,22 +40,15 @@ func (c *Client) CompareRefs(
 
 // MergeRefs merges one ref into another.
 func (c *Client) MergeRefs(
-	workspace, repository, baseRef, compareRef, description, strategy string,
-	squash, allowEmpty bool,
+	workspace, repository string,
+	req MergeRefsRequest,
 ) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
 	var mergeCommit irminmodels.Commit
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/merge", workspace, repository),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"base_ref":    baseRef,
-			"compare_ref": compareRef,
-			"description": description,
-			"strategy":    strategy, // The merge strategy (default, source-wins, dest-wins)
-			"squash":      strconv.FormatBool(squash),
-			"allow_empty": strconv.FormatBool(allowEmpty),
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &mergeCommit)
 	if err != nil {
 		return nil, nil, fmt.Errorf("merge refs error: %w", err)

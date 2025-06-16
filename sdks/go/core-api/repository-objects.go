@@ -8,6 +8,11 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// MoveObjectRequest represents the JSON request body for moving/copying repository objects.
+type MoveObjectRequest struct {
+	NewPath string `json:"new_path" validate:"required"`
+}
+
 // GetObjectAtPath fetches the object at the given path and ref.
 func (c *Client) GetObjectAtPath(
 	workspace, repository, path, ref string,
@@ -165,7 +170,8 @@ func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte
 }
 
 func (c *Client) MoveObject(
-	workspace, repository, path, ref, newPath string,
+	workspace, repository, path, ref string,
+	req MoveObjectRequest,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
 	var object irminmodels.Object
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -177,10 +183,8 @@ func (c *Client) MoveObject(
 			ref,
 			path,
 		),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_path": newPath,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &object)
 	if err != nil {
 		return nil, nil, fmt.Errorf("move object error: %w", err)
@@ -189,7 +193,8 @@ func (c *Client) MoveObject(
 }
 
 func (c *Client) CopyObject(
-	workspace, repository, path, ref, newPath string,
+	workspace, repository, path, ref string,
+	req MoveObjectRequest,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
 	var object irminmodels.Object
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -201,10 +206,8 @@ func (c *Client) CopyObject(
 			ref,
 			path,
 		),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_path": newPath,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &object)
 	if err != nil {
 		return nil, nil, fmt.Errorf("copy object error: %w", err)

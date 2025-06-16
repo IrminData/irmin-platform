@@ -7,6 +7,31 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// CreateConnectionRequest represents the JSON request body for creating connections.
+type CreateConnectionRequest struct {
+	Name          string         `json:"name"                    validate:"required"`
+	Connector     string         `json:"connector"               validate:"required"`
+	Description   string         `json:"description,omitempty"`
+	Documentation string         `json:"documentation,omitempty"`
+	Details       map[string]any `json:"details"`
+	Settings      map[string]any `json:"settings"`
+}
+
+// UpdateConnectionRequest represents the JSON request body for updating connections.
+type UpdateConnectionRequest struct {
+	Name          string         `json:"name,omitempty"`
+	Connector     string         `json:"connector,omitempty"`
+	Description   string         `json:"description,omitempty"`
+	Documentation string         `json:"documentation,omitempty"`
+	Details       map[string]any `json:"details,omitempty"`
+	Settings      map[string]any `json:"settings,omitempty"`
+}
+
+// TransferConnectionOwnershipRequest represents the JSON request body for transferring connection ownership.
+type TransferConnectionOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required"`
+}
+
 func (c *Client) ListConnections(workspace string) ([]irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var connections []irminmodels.Connection
 	apiResp, err := c.FetchAPI(RequestOptions{
@@ -34,28 +59,15 @@ func (c *Client) GetConnection(
 }
 
 func (c *Client) CreateConnection(
-	workspace, connectorID, name, description, documentation string,
-	connectionDetails, connectionSettings map[string]string,
+	workspace string,
+	req CreateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
-	fields := map[string]string{
-		"connector":     connectorID,
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-	for key, value := range connectionDetails {
-		fields[fmt.Sprintf("details[%s]", key)] = value
-	}
-	for key, value := range connectionSettings {
-		fields[fmt.Sprintf("settings[%s]", key)] = value
-	}
-
 	var newConnection irminmodels.Connection
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections", workspace),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  fields,
+		ContentType: "application/json",
+		Body:        req,
 	}, &newConnection)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create connection error: %w", err)
@@ -64,27 +76,15 @@ func (c *Client) CreateConnection(
 }
 
 func (c *Client) UpdateConnection(
-	workspace, connectionID, connectorID, name, description, documentation string,
-	connectionDetails, connectionSettings map[string]string,
+	workspace, connectionID string,
+	req UpdateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
-	fields := map[string]string{
-		"connector":     connectorID,
-		"name":          name,
-		"description":   description,
-		"documentation": documentation,
-	}
-	for key, value := range connectionDetails {
-		fields[fmt.Sprintf("details[%s]", key)] = value
-	}
-	for key, value := range connectionSettings {
-		fields[fmt.Sprintf("settings[%s]", key)] = value
-	}
 	var updatedConnection irminmodels.Connection
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  fields,
+		ContentType: "application/json",
+		Body:        req,
 	}, &updatedConnection)
 	if err != nil {
 		return nil, nil, fmt.Errorf("update connection error: %w", err)
@@ -94,16 +94,15 @@ func (c *Client) UpdateConnection(
 
 // TransferConnection reassigns a connection to a new owner.
 func (c *Client) TransferConnection(
-	workspace, connectionID, newOwnerID string,
+	workspace, connectionID string,
+	req TransferConnectionOwnershipRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var updatedConnection irminmodels.Connection
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s/transfer-ownership", workspace, connectionID),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"new_owner_id": newOwnerID,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, &updatedConnection)
 	if err != nil {
 		return nil, nil, fmt.Errorf("connection ownership transfer error: %w", err)
@@ -116,7 +115,7 @@ func (c *Client) DeleteConnection(workspace, connectionID string) (*irminmodels.
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
-		ContentType: "application/x-www-form-urlencoded",
+		ContentType: "application/json",
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("delete connection error: %w", err)

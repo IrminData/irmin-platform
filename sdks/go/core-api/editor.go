@@ -7,6 +7,22 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
+// CreateEditorItemRequest represents the JSON request body for creating an editor item.
+type CreateEditorItemRequest struct {
+	Type    string `json:"type"              validate:"required"`
+	Content string `json:"content,omitempty"`
+}
+
+// MoveEditorItemRequest represents the JSON request body for moving editor items.
+type MoveEditorItemRequest struct {
+	DestinationPath string `json:"destination_path" validate:"required"`
+}
+
+// ExecuteEditorItemRequest represents the JSON request body for executing editor items.
+type ExecuteEditorItemRequest struct {
+	Input []irminmodels.ActionInputData `json:"input,omitempty"`
+}
+
 func (c *Client) ListEditorItems(
 	workspace, path string,
 ) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error) {
@@ -33,14 +49,15 @@ func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminmo
 	return &editorItemContent, apiResp, nil
 }
 
-func (c *Client) MoveEditorItem(workspace, path, destinationPath string) (*irminmodels.IrminAPIResponse, error) {
+func (c *Client) MoveEditorItem(
+	workspace, path string,
+	req MoveEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/move?path=%s", workspace, path),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"destination_path": destinationPath,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("move editor item error: %w", err)
@@ -48,14 +65,15 @@ func (c *Client) MoveEditorItem(workspace, path, destinationPath string) (*irmin
 	return apiResp, nil
 }
 
-func (c *Client) CopyEditorItem(workspace, path, destinationPath string) (*irminmodels.IrminAPIResponse, error) {
+func (c *Client) CopyEditorItem(
+	workspace, path string,
+	req MoveEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/copy?path=%s", workspace, path),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"destination_path": destinationPath,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("copy editor item error: %w", err)
@@ -74,15 +92,15 @@ func (c *Client) DeleteEditorItem(workspace, path string) (*irminmodels.IrminAPI
 	return apiResp, nil
 }
 
-func (c *Client) SaveEditorItem(workspace, path, content string) (*irminmodels.IrminAPIResponse, error) {
+func (c *Client) SaveEditorItem(
+	workspace, path string,
+	req CreateEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"type":    "file",
-			"content": content,
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("save editor item error: %w", err)
@@ -90,14 +108,15 @@ func (c *Client) SaveEditorItem(workspace, path, content string) (*irminmodels.I
 	return apiResp, nil
 }
 
-func (c *Client) CreateEditorFolder(workspace, path string) (*irminmodels.IrminAPIResponse, error) {
+func (c *Client) CreateEditorFolder(
+	workspace, path string,
+	req CreateEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error) {
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields: map[string]string{
-			"type": "folder",
-		},
+		ContentType: "application/json",
+		Body:        req,
 	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create editor folder error: %w", err)
@@ -109,22 +128,16 @@ func (c *Client) RunScript(
 	workspace, path string,
 	inputs []irminmodels.ActionInputData,
 ) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error) {
-	// Initialize the form fields
-	formFields := make(map[string]string)
-
-	// Add the input data to the form fields
-	for i, input := range inputs {
-		formFields[fmt.Sprintf("input[%d].repository", i)] = input.Repository
-		formFields[fmt.Sprintf("input[%d].ref", i)] = input.Ref
-		formFields[fmt.Sprintf("input[%d].path", i)] = input.Path
+	req := ExecuteEditorItemRequest{
+		Input: inputs,
 	}
 
 	var scriptResult irminmodels.ScriptResult
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/run?path=%s", workspace, path),
-		ContentType: "application/x-www-form-urlencoded",
-		FormFields:  formFields,
+		ContentType: "application/json",
+		Body:        req,
 	}, &scriptResult)
 	if err != nil {
 		return nil, nil, fmt.Errorf("run script error: %w", err)
