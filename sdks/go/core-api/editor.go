@@ -7,10 +7,17 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// CreateEditorItemRequest represents the JSON request body for creating an editor item.
+type EditorItemType string
+
+const (
+	EditorItemTypeFile   EditorItemType = "file"
+	EditorItemTypeFolder EditorItemType = "folder"
+)
+
+// CreateEditorItemRequest represents the JSON request body for creating an editor file.
 type CreateEditorItemRequest struct {
-	Type    string `json:"type"              validate:"required"`
-	Content string `json:"content,omitempty"`
+	Content *string        `json:"content,omitempty"`
+	Type    EditorItemType `json:"type"              validate:"required"`
 }
 
 // MoveEditorItemRequest represents the JSON request body for moving editor items.
