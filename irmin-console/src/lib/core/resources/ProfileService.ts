@@ -4,6 +4,17 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { User } from '@/types/core/User';
 
 /**
+ * Interface for updating profile
+ */
+interface UpdateProfileRequest {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+}
+
+/**
  * Profile API service
  *
  * Responsible for all user profile related API calls.
@@ -67,18 +78,36 @@ class ProfileService {
     company?: string;
     avatar?: File | Blob;
   }): Promise<IrminAPIResponse<User>> {
-    const formData = new FormData();
-    if (first_name) formData.append('first_name', first_name);
-    if (last_name) formData.append('last_name', last_name);
-    if (email) formData.append('email', email);
-    if (phone) formData.append('phone', phone);
-    if (company) formData.append('company', company);
-    if (avatar) formData.append('profile_picture', avatar);
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
-        method: 'PATCH',
-        body: formData,
-      })) as IrminAPIResponse<User>;
+      // Create update request struct with only provided fields
+      const updateRequest: UpdateProfileRequest = {};
+      if (first_name !== undefined) updateRequest.first_name = first_name;
+      if (last_name !== undefined) updateRequest.last_name = last_name;
+      if (email !== undefined) updateRequest.email = email;
+      if (phone !== undefined) updateRequest.phone = phone;
+      if (company !== undefined) updateRequest.company = company;
+
+      let response: IrminAPIResponse<User>;
+
+      if (avatar) {
+        // If profile picture is provided, use multipart form data
+        const formData = new FormData();
+        formData.append('metadata', JSON.stringify(updateRequest));
+        formData.append('profile_picture', avatar);
+
+        response = (await this.irminCore.fetchAPI(`/v1/profile`, {
+          method: 'PATCH',
+          body: formData,
+        })) as IrminAPIResponse<User>;
+      } else {
+        // If no profile picture, use JSON content type
+        response = (await this.irminCore.fetchAPI(`/v1/profile`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateRequest),
+        })) as IrminAPIResponse<User>;
+      }
+
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update profile error');

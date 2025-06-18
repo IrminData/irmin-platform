@@ -130,6 +130,7 @@ export default function ActionWorkflowsSection({
             name: '',
             description: '',
             documentation: '',
+            type: 'action',
             schedule: {
               triggers: [],
               max_retries: 3,

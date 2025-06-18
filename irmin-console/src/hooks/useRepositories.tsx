@@ -55,7 +55,7 @@ export function useRepositories() {
         name: data.name,
         description: data.description,
         documentation: data.documentation,
-        default_branch: data.default_branch,
+        defaultBranch: data.default_branch,
         isImmutable: data.isImmutable,
         garbageDefaultRetentionDays: data.garbageDefaultRetentionDays,
         garbageDefaultBranchRetentionDays:

@@ -4,6 +4,13 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { User } from '@/types/core/User';
 
 /**
+ * Interface for updating user roles
+ */
+interface UpdateUserRolesRequest {
+  roles: string[];
+}
+
+/**
  * Workspace User API service
  *
  * Responsible for Workspace User related API calls.
@@ -95,16 +102,16 @@ class UserService {
     roles: string[];
   }): Promise<IrminAPIResponse<User>> {
     try {
-      const formData = new FormData();
-      // Append each role; the server will combine them as needed
-      for (const role of roles) {
-        formData.append('roles', role);
-      }
+      const requestBody: UpdateUserRolesRequest = {
+        roles,
+      };
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/users/${user}`,
         {
           method: 'PATCH',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<User>;
       return response;

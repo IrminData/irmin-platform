@@ -13,6 +13,32 @@ import {
 } from '@/types/core/Policy';
 
 /**
+ * Interface for creating a policy
+ */
+interface CreatePolicyRequest {
+  effect: PolicyEffect;
+  action: PolicyAction;
+  resource: PolicyResource;
+  principal: PolicyPrincipal;
+  resource_id?: string;
+  role_id?: string;
+  user_id?: string;
+}
+
+/**
+ * Interface for updating a policy
+ */
+interface UpdatePolicyRequest {
+  effect?: PolicyEffect;
+  action?: PolicyAction;
+  resource?: PolicyResource;
+  principal?: PolicyPrincipal;
+  resource_id?: string;
+  role_id?: string;
+  user_id?: string;
+}
+
+/**
  * Policy API service
  *
  * Responsible for all Policy related API calls.
@@ -148,21 +174,22 @@ class PolicyService {
     userId?: string;
   }): Promise<IrminAPIResponse<Policy>> {
     try {
-      const params = new URLSearchParams();
-      params.append('effect', effect);
-      params.append('action', action);
-      params.append('resource', resource);
-      params.append('principal', principal);
-      if (resourceId) params.append('resource_id', resourceId);
-      if (roleId) params.append('role_id', roleId);
-      if (userId) params.append('user_id', userId);
+      const requestBody: CreatePolicyRequest = {
+        effect,
+        action,
+        resource,
+        principal,
+        resource_id: resourceId,
+        role_id: roleId,
+        user_id: userId,
+      };
 
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/policies`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Policy>;
@@ -209,21 +236,22 @@ class PolicyService {
     userId?: string;
   }): Promise<IrminAPIResponse<Policy>> {
     try {
-      const params = new URLSearchParams();
-      if (effect) params.append('effect', effect);
-      if (action) params.append('action', action);
-      if (resource) params.append('resource', resource);
-      if (principal) params.append('principal', principal);
-      if (resourceId) params.append('resource_id', resourceId);
-      if (roleId) params.append('role_id', roleId);
-      if (userId) params.append('user_id', userId);
+      const requestBody: UpdatePolicyRequest = {};
+
+      if (effect !== undefined) requestBody.effect = effect;
+      if (action !== undefined) requestBody.action = action;
+      if (resource !== undefined) requestBody.resource = resource;
+      if (principal !== undefined) requestBody.principal = principal;
+      if (resourceId !== undefined) requestBody.resource_id = resourceId;
+      if (roleId !== undefined) requestBody.role_id = roleId;
+      if (userId !== undefined) requestBody.user_id = userId;
 
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/policies/${policyId}`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Policy>;

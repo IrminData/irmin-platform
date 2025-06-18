@@ -4,7 +4,7 @@ import { memo } from 'react';
 
 import { CreateWorkflowProvider } from '@/context/CreateWorkflowContext';
 
-import { WorkflowInput } from '@/types/internal/WorkflowInput';
+import { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 import ConfigureWorkflow from './ConfigureWorkflow';
 import ConfigureWorkflowable from './ConfigureWorkflowable';
@@ -30,7 +30,7 @@ const CreateWorkflowModalContent = ({
   closeModal: () => void;
   currentStep: number;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  initialWorkflowData?: WorkflowInput;
+  initialWorkflowData?: WorkflowRequest;
 }) => {
   if (!isOpen) return null;
 

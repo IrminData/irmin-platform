@@ -4,6 +4,14 @@ import { GitTag } from '@/types/core/GitTag';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
+ * Interface for creating a repository tag
+ */
+interface CreateRepositoryTagRequest {
+  name: string;
+  ref: string;
+}
+
+/**
  * Repository Tag API service
  *
  * Responsible for all repository tag related API calls.
@@ -104,14 +112,17 @@ class RepositoryTagService {
     ref: string;
   }): Promise<IrminAPIResponse<GitTag>> {
     try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('ref', ref);
+      const requestBody: CreateRepositoryTagRequest = {
+        name,
+        ref,
+      };
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/tags`,
         {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<GitTag>;
       return response;
@@ -140,12 +151,10 @@ class RepositoryTagService {
     tag: string;
   }): Promise<IrminAPIResponse> {
     try {
-      const formData = new FormData();
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/tags/${tag}`,
         {
           method: 'DELETE',
-          body: formData,
         }
       );
       return response;

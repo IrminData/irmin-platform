@@ -11,6 +11,22 @@ import {
 } from '@/types/internal/DynamicField';
 
 /**
+ * Interface for creating/updating connectors
+ */
+interface ConnectorRequest {
+  url: string;
+  system_token: string;
+}
+
+/**
+ * Interface for connector configuration operations
+ */
+interface ConnectorConfigurationRequest {
+  details: DynamicFieldValues;
+  settings: DynamicFieldValues;
+}
+
+/**
  * Connector API service
  *
  * Provides methods to interact with the connector API.
@@ -147,22 +163,17 @@ class ConnectorService {
     settings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<ConnectorConfigurationValidationResult>> {
     try {
-      const formData = new FormData();
-      if (details) {
-        Object.keys(details).forEach((key) => {
-          formData.append(`details[${key}]`, details[key] as string);
-        });
-      }
-      if (settings) {
-        Object.keys(settings).forEach((key) => {
-          formData.append(`settings[${key}]`, settings[key] as string);
-        });
-      }
+      const requestBody: ConnectorConfigurationRequest = {
+        details: details || {},
+        settings: settings || {},
+      };
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}/validate`,
         {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
       return response;
@@ -191,12 +202,15 @@ class ConnectorService {
     systemToken: string;
   }): Promise<IrminAPIResponse<Connector>> {
     try {
-      const formData = new FormData();
-      formData.append('url', baseUrl);
-      formData.append('system_token', systemToken);
+      const requestBody: ConnectorRequest = {
+        url: baseUrl,
+        system_token: systemToken,
+      };
+
       const response = (await this.irminCore.fetchAPI(`/v1/connectors`, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       })) as IrminAPIResponse<Connector>;
       return response;
     } catch (error) {
@@ -224,14 +238,17 @@ class ConnectorService {
     systemToken: string;
   }): Promise<IrminAPIResponse<Connector>> {
     try {
-      const formData = new FormData();
-      formData.append('url', baseUrl);
-      formData.append('system_token', systemToken);
+      const requestBody: ConnectorRequest = {
+        url: baseUrl,
+        system_token: systemToken,
+      };
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}`,
         {
           method: 'PATCH',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<Connector>;
       return response;

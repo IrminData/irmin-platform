@@ -4,6 +4,14 @@ import { APIToken } from '@/types/core/APIToken';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
+ * Interface for creating API credentials
+ */
+interface CreateCredentialRequest {
+  name: string;
+  expiry: number; // Seconds until expiry
+}
+
+/**
  * Credential API service
  *
  * Responsible for all system token related API calls.
@@ -57,12 +65,15 @@ class CredentialService {
     expiry: number;
   }): Promise<IrminAPIResponse<APIToken>> {
     try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('expiry', expiry.toString());
+      const requestBody: CreateCredentialRequest = {
+        name,
+        expiry,
+      };
+
       const response = (await this.irminCore.fetchAPI(`/v1/credentials`, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       })) as IrminAPIResponse<APIToken>;
       return response;
     } catch (error) {

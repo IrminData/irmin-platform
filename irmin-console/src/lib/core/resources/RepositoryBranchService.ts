@@ -5,6 +5,23 @@ import { Diff } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
+ * Interface for creating a branch
+ */
+interface CreateBranchRequest {
+  name: string;
+  from: string;
+  is_immutable?: boolean;
+}
+
+/**
+ * Interface for updating a branch
+ */
+interface UpdateBranchRequest {
+  name?: string;
+  is_immutable?: boolean;
+}
+
+/**
  * Repository Branch API service
  *
  * Responsible for all repository branch related API calls
@@ -123,29 +140,34 @@ class RepositoryBranchService {
    * @param props.repository - The repository slug to create the branch in
    * @param props.name - The name of the new branch
    * @param props.from - The branch to create the new branch from
+   * @param props.isImmutable - Whether the branch should be immutable
    */
   async createBranch({
     workspace,
     repository,
     name,
     from,
+    isImmutable,
   }: {
     workspace: string;
     repository: string;
     name: string;
     from: string;
+    isImmutable?: boolean;
   }) {
     try {
-      const formData = new FormData();
-
-      formData.append('name', name);
-      formData.append('from', from);
+      const requestBody: CreateBranchRequest = {
+        name,
+        from,
+        is_immutable: isImmutable,
+      };
 
       const res = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/branches`,
         {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return res;
@@ -163,27 +185,33 @@ class RepositoryBranchService {
    * @param props.branch - The branch to update
    * @param props.repository - The repository slug to update the branch in
    * @param props.name - The new name of the branch
+   * @param props.isImmutable - Whether the branch should be immutable
    */
   async updateBranch({
     workspace,
     repository,
     branch,
     name,
+    isImmutable,
   }: {
     workspace: string;
     repository: string;
     branch: string;
-    name: string;
+    name?: string;
+    isImmutable?: boolean;
   }) {
     try {
-      const formData = new FormData();
-      formData.append('name', name);
+      const requestBody: UpdateBranchRequest = {};
+
+      if (name !== undefined) requestBody.name = name;
+      if (isImmutable !== undefined) requestBody.is_immutable = isImmutable;
 
       const res = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
         {
           method: 'PATCH',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return res;

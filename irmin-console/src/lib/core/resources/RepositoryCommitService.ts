@@ -4,6 +4,23 @@ import { Commit, PathType } from '@/types/core/Commit';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
+ * Interface for creating a commit
+ */
+interface CreateCommitRequest {
+  branch: string;
+  message: string;
+}
+
+/**
+ * Interface for reverting uncommitted changes
+ */
+interface RevertUncommittedChangesRequest {
+  branch: string;
+  path?: string;
+  path_type?: string;
+}
+
+/**
  * Repository Commit API service
  *
  * Provides methods to interact with repository commit endpoints.
@@ -117,13 +134,18 @@ class RepositoryCommitService {
     message: string;
   }): Promise<IrminAPIResponse<Commit>> {
     try {
-      const formData = new FormData();
-      formData.append('branch', branch);
-      formData.append('message', message);
+      const requestBody: CreateCommitRequest = {
+        branch,
+        message,
+      };
 
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/commits`,
-        { method: 'POST', body: formData }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
       )) as IrminAPIResponse<Commit>;
       return response;
     } catch (error) {
@@ -153,18 +175,23 @@ class RepositoryCommitService {
     workspace: string;
     repository: string;
     branch: string;
-    path: string;
-    pathType: PathType;
+    path?: string;
+    pathType?: PathType;
   }): Promise<IrminAPIResponse> {
     try {
-      const formData = new FormData();
-      formData.append('branch', branch);
-      formData.append('path', path);
-      formData.append('path_type', pathType);
+      const requestBody: RevertUncommittedChangesRequest = {
+        branch,
+        path,
+        path_type: pathType,
+      };
 
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/commits/revert`,
-        { method: 'POST', body: formData }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
       )) as IrminAPIResponse;
       return response;
     } catch (error) {

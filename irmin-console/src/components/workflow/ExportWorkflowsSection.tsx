@@ -130,6 +130,7 @@ export default function ExportWorkflowsSection({
             name: '',
             description: '',
             documentation: '',
+            type: 'export',
             schedule: {
               triggers: [],
               max_retries: 3,

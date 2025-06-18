@@ -225,7 +225,7 @@ export function useWorkflow(workflowID: string) {
     mutationFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const response = await core.workflowService.startWorflow({
+      const response = await core.workflowService.startWorkflow({
         workspace: workspaceSlug,
         workflowID,
       });

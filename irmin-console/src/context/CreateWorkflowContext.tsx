@@ -5,16 +5,21 @@ import { useSearchParams } from 'next/navigation';
 
 import { useWorkflows } from '@/hooks/useWorkflows';
 
-import { WorkflowInput } from '@/types/internal/WorkflowInput';
+import {
+  ActionWorkflowableInput,
+  WorkflowableInput,
+  WorkflowRequest,
+} from '@/types/internal/WorkflowInput';
 
 /**
  * Empty workflow setup data
  */
-export const emptyWorkflowSetupData: WorkflowInput = {
+export const emptyWorkflowSetupData: WorkflowRequest = {
   // Workflow properties
   name: '',
   description: '',
   documentation: '',
+  type: 'action',
   schedule: {
     triggers: [],
     max_retries: 3,
@@ -33,8 +38,8 @@ export const emptyWorkflowSetupData: WorkflowInput = {
  * Interface for the create workflow context value.
  */
 interface CreateWorkflowContextValue {
-  workflowData: WorkflowInput;
-  setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowInput>>;
+  workflowData: WorkflowRequest;
+  setWorkflowData: React.Dispatch<React.SetStateAction<WorkflowRequest>>;
   processingCreation: boolean;
   createWorkflow: () => Promise<boolean>;
 }
@@ -45,35 +50,41 @@ const CreateWorkflowContext = createContext<
 >(undefined);
 
 export const CreateWorkflowProvider: React.FC<{
-  initialWorkflowData: WorkflowInput | undefined;
+  initialWorkflowData: WorkflowRequest | undefined;
   children: React.ReactNode;
 }> = ({ initialWorkflowData, children }) => {
   const { createWorkflowMutation } = useWorkflows();
 
-  const [workflowData, setWorkflowData] = useState<WorkflowInput>({
+  const [workflowData, setWorkflowData] = useState<WorkflowRequest>({
     ...emptyWorkflowSetupData,
     ...(initialWorkflowData ?? {}),
     workflowable: {
       ...emptyWorkflowSetupData.workflowable,
-      ...(initialWorkflowData?.workflowable ?? {}),
-    },
+      ...(initialWorkflowData?.workflowable as WorkflowableInput),
+    } as WorkflowableInput,
   });
 
   const searchParams = useSearchParams();
   const executable = searchParams.get('executable');
 
   useEffect(() => {
-    const newWorkflowInputData: WorkflowInput = {
+    const newWorkflowInputData: WorkflowRequest = {
       ...emptyWorkflowSetupData,
       ...(initialWorkflowData ?? {}),
       workflowable: {
         ...emptyWorkflowSetupData.workflowable,
-        ...(initialWorkflowData?.workflowable ?? {}),
+        ...(initialWorkflowData?.workflowable as WorkflowableInput),
       },
     };
     // Set initial values based on query params and the workflow type
-    if (executable && newWorkflowInputData.workflowable.type === 'action') {
-      newWorkflowInputData.workflowable.executable = executable;
+    if (
+      executable &&
+      newWorkflowInputData.workflowable &&
+      newWorkflowInputData.workflowable.type === 'action'
+    ) {
+      const actionWorkflowable =
+        newWorkflowInputData.workflowable as ActionWorkflowableInput;
+      actionWorkflowable.executable = executable;
     }
     // Set the workflow data
     setWorkflowData(newWorkflowInputData);

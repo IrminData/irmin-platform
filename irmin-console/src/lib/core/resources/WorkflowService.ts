@@ -1,12 +1,28 @@
 import IrminCore from '@/lib/core';
 
-import createWorkflowableFormData from '@/utils/createWorkflowableFormData';
-import createWorkflowScheduleFormData from '@/utils/createWorkflowScheduleFormData';
-
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowSchedule } from '@/types/core/Schedule';
 import { Workflow, WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowableInput } from '@/types/internal/WorkflowInput';
+import {
+  WorkflowableInput,
+  WorkflowRequest,
+} from '@/types/internal/WorkflowInput';
+
+/**
+ * Interface for updating basic workflow info
+ */
+interface UpdateWorkflowRequest {
+  name?: string;
+  description?: string;
+  documentation?: string;
+}
+
+/**
+ * Interface for transferring workflow ownership
+ */
+interface TransferWorkflowOwnershipRequest {
+  new_owner_id: string;
+}
 
 /**
  * Workflow API service
@@ -35,7 +51,7 @@ class WorkflowService {
     this.deleteWorkflow = this.deleteWorkflow.bind(this);
     this.transferWorkflow = this.transferWorkflow.bind(this);
     this.pauseWorkflow = this.pauseWorkflow.bind(this);
-    this.startWorflow = this.startWorflow.bind(this);
+    this.startWorkflow = this.startWorkflow.bind(this);
   }
 
   /**
@@ -119,6 +135,7 @@ class WorkflowService {
    *
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
+   * @param props.type - The workflow type.
    * @param props.name - The workflow name.
    * @param props.description - The workflow description.
    * @param props.documentation - The workflow documentation.
@@ -128,6 +145,7 @@ class WorkflowService {
    */
   async createWorkflow({
     workspace,
+    type,
     name,
     description,
     documentation,
@@ -135,33 +153,29 @@ class WorkflowService {
     schedule,
   }: {
     workspace: string;
+    type: WorkflowableType;
     name: string;
-    description: string;
-    documentation: string;
-    workflowable: WorkflowableInput;
-    schedule: WorkflowSchedule;
+    description?: string;
+    documentation?: string;
+    workflowable?: WorkflowableInput;
+    schedule?: WorkflowSchedule;
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
-      const params = new URLSearchParams();
-      params.append('name', name);
-      params.append('description', description);
-      params.append('documentation', documentation);
-      // Append workflowable data using helper function
-      const workflowableFormData = createWorkflowableFormData(workflowable);
-      for (const [key, value] of workflowableFormData.entries()) {
-        params.append(key, String(value));
-      }
-      // Append schedule data using helper function
-      const scheduleFormData = createWorkflowScheduleFormData(schedule);
-      for (const [key, value] of scheduleFormData.entries()) {
-        params.append(key, String(value));
-      }
+      const requestBody: WorkflowRequest = {
+        type,
+        name,
+        description,
+        documentation,
+        workflowable,
+        schedule,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Workflow>;
@@ -196,16 +210,19 @@ class WorkflowService {
     documentation?: string;
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
-      const params = new URLSearchParams();
-      if (name) params.append('name', name);
-      if (description) params.append('description', description);
-      if (documentation) params.append('documentation', documentation);
+      const requestBody: UpdateWorkflowRequest = {};
+
+      if (name !== undefined) requestBody.name = name;
+      if (description !== undefined) requestBody.description = description;
+      if (documentation !== undefined)
+        requestBody.documentation = documentation;
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Workflow>;
@@ -234,13 +251,12 @@ class WorkflowService {
     workflowable: WorkflowableInput;
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
-      const workflowableFormData = createWorkflowableFormData(workflowable);
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/workflowable`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: workflowableFormData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(workflowable),
         }
       );
       return response as IrminAPIResponse<Workflow>;
@@ -272,12 +288,12 @@ class WorkflowService {
     schedule: WorkflowSchedule;
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
-      const scheduleFormData = createWorkflowScheduleFormData(schedule);
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/schedule`,
         {
           method: 'PATCH',
-          body: scheduleFormData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(schedule),
         }
       );
       return response as IrminAPIResponse<Workflow>;
@@ -333,14 +349,16 @@ class WorkflowService {
     newOwnerID: string;
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
-      const params = new URLSearchParams();
-      params.append('new_owner_id', newOwnerID);
+      const requestBody: TransferWorkflowOwnershipRequest = {
+        new_owner_id: newOwnerID,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/workflows/${workflowID}/transfer-ownership`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Workflow>;
@@ -388,7 +406,7 @@ class WorkflowService {
    * @param props.workflowID - The workflow identifier.
    * @returns IrminAPIResponse containing the updated Workflow.
    */
-  async startWorflow({
+  async startWorkflow({
     workspace,
     workflowID,
   }: {

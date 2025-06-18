@@ -4,6 +4,38 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Repository } from '@/types/core/Repository';
 
 /**
+ * Interface for creating a repository
+ */
+interface CreateRepositoryRequest {
+  name: string;
+  description?: string;
+  documentation?: string;
+  default_branch?: string;
+  is_immutable?: boolean;
+  garbage_default_retention_days?: number;
+  garbage_default_branch_retention_days?: number;
+}
+
+/**
+ * Interface for updating a repository
+ */
+interface UpdateRepositoryRequest {
+  name?: string;
+  description?: string;
+  documentation?: string;
+  is_immutable?: boolean;
+  garbage_default_retention_days?: number;
+  garbage_default_branch_retention_days?: number;
+}
+
+/**
+ * Interface for transferring repository ownership
+ */
+interface TransferRepositoryOwnershipRequest {
+  new_owner_id: string;
+}
+
+/**
  * Repository API service
  *
  * Responsible for all Repository related API calls.
@@ -86,7 +118,7 @@ class RepositoryService {
    * @param props.name - Name of the repository.
    * @param props.description - Description of the repository.
    * @param props.documentation - Documentation for the repository.
-   * @param props.default_branch - Default branch for the repository.
+   * @param props.defaultBranch - Default branch for the repository.
    * @param props.isImmutable - Whether the repository is immutable.
    * @param props.garbageDefaultRetentionDays - Garbage collection default retention days.
    * @param props.garbageDefaultBranchRetentionDays - Garbage collection default branch retention days.
@@ -97,43 +129,38 @@ class RepositoryService {
     name,
     description,
     documentation,
-    default_branch,
+    defaultBranch,
     isImmutable,
     garbageDefaultRetentionDays,
     garbageDefaultBranchRetentionDays,
   }: {
     workspace: string;
     name: string;
-    description: string;
-    documentation: string;
-    default_branch: string;
-    isImmutable: boolean;
+    description?: string;
+    documentation?: string;
+    defaultBranch?: string;
+    isImmutable?: boolean;
     garbageDefaultRetentionDays?: number;
     garbageDefaultBranchRetentionDays?: number;
   }): Promise<IrminAPIResponse<Repository>> {
     try {
-      const params = new URLSearchParams();
-      params.append('name', name);
-      params.append('description', description);
-      params.append('documentation', documentation);
-      params.append('default_branch', default_branch);
-      params.append('is_immutable', isImmutable.toString());
-      if (garbageDefaultRetentionDays)
-        params.append(
-          'garbage_default_retention_days',
-          garbageDefaultRetentionDays.toString()
-        );
-      if (garbageDefaultBranchRetentionDays)
-        params.append(
-          'garbage_default_branch_retention_days',
-          garbageDefaultBranchRetentionDays.toString()
-        );
+      const requestBody: CreateRepositoryRequest = {
+        name,
+        description,
+        documentation,
+        default_branch: defaultBranch,
+        is_immutable: isImmutable,
+        garbage_default_retention_days: garbageDefaultRetentionDays,
+        garbage_default_branch_retention_days:
+          garbageDefaultBranchRetentionDays,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Repository>;
@@ -177,28 +204,26 @@ class RepositoryService {
     garbageDefaultBranchRetentionDays?: number;
   }): Promise<IrminAPIResponse<Repository>> {
     try {
-      const params = new URLSearchParams();
-      if (name) params.append('name', name);
-      if (description) params.append('description', description);
-      if (documentation) params.append('documentation', documentation);
-      if (isImmutable !== undefined)
-        params.append('is_immutable', isImmutable.toString());
+      const requestBody: UpdateRepositoryRequest = {};
+
+      if (name !== undefined) requestBody.name = name;
+      if (description !== undefined) requestBody.description = description;
+      if (documentation !== undefined)
+        requestBody.documentation = documentation;
+      if (isImmutable !== undefined) requestBody.is_immutable = isImmutable;
       if (garbageDefaultRetentionDays !== undefined)
-        params.append(
-          'garbage_default_retention_days',
-          garbageDefaultRetentionDays.toString()
-        );
+        requestBody.garbage_default_retention_days =
+          garbageDefaultRetentionDays;
       if (garbageDefaultBranchRetentionDays !== undefined)
-        params.append(
-          'garbage_default_branch_retention_days',
-          garbageDefaultBranchRetentionDays.toString()
-        );
+        requestBody.garbage_default_branch_retention_days =
+          garbageDefaultBranchRetentionDays;
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${slug}`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Repository>;
@@ -227,14 +252,16 @@ class RepositoryService {
     newOwnerID: string;
   }): Promise<IrminAPIResponse<Repository>> {
     try {
-      const params = new URLSearchParams();
-      params.append('new_owner_id', newOwnerID);
+      const requestBody: TransferRepositoryOwnershipRequest = {
+        new_owner_id: newOwnerID,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${slug}/transfer-ownership`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<Repository>;

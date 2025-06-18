@@ -4,6 +4,24 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Tag, TagEntityType, TagWithAssets } from '@/types/core/Tag';
 
 /**
+ * Interface for creating a tag
+ */
+interface CreateTagRequest {
+  name: string;
+  color?: string;
+  description?: string;
+}
+
+/**
+ * Interface for updating a tag
+ */
+interface UpdateTagRequest {
+  name?: string;
+  color?: string;
+  description?: string;
+}
+
+/**
  * Workspace Tag API service
  *
  * Responsible for all workspace tag related API calls.
@@ -97,20 +115,22 @@ class TagService {
   }: {
     workspace: string;
     name: string;
-    color: string;
-    description: string;
+    color?: string;
+    description?: string;
   }): Promise<IrminAPIResponse<Tag>> {
     try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('color', color);
-      formData.append('description', description);
+      const requestBody: CreateTagRequest = {
+        name,
+        color,
+        description,
+      };
 
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/tags`,
         {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<Tag>;
       return response;
@@ -140,21 +160,23 @@ class TagService {
   }: {
     workspace: string;
     tagId: string;
-    name: string;
-    color: string;
-    description: string;
+    name?: string;
+    color?: string;
+    description?: string;
   }): Promise<IrminAPIResponse<Tag>> {
     try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('color', color);
-      formData.append('description', description);
+      const requestBody: UpdateTagRequest = {};
+
+      if (name !== undefined) requestBody.name = name;
+      if (color !== undefined) requestBody.color = color;
+      if (description !== undefined) requestBody.description = description;
 
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/tags/${tagId}`,
         {
           method: 'PATCH',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<Tag>;
       return response;

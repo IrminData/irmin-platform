@@ -6,6 +6,37 @@ import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 /**
+ * Interface for creating a new connection
+ */
+interface CreateConnectionRequest {
+  name: string;
+  connector: string;
+  description?: string;
+  documentation?: string;
+  details: DynamicFieldValues;
+  settings: DynamicFieldValues;
+}
+
+/**
+ * Interface for updating a connection
+ */
+interface UpdateConnectionRequest {
+  name?: string;
+  connector?: string;
+  description?: string;
+  documentation?: string;
+  details?: DynamicFieldValues;
+  settings?: DynamicFieldValues;
+}
+
+/**
+ * Interface for transferring connection ownership
+ */
+interface TransferConnectionOwnershipRequest {
+  new_owner_id: string;
+}
+
+/**
  * Connection API service
  *
  * Provides methods to interact with connection endpoints.
@@ -114,20 +145,22 @@ class ConnectionService {
     connectionSettings: DynamicFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
     try {
-      const formData = new FormData();
-      formData.append('connector', connectorID);
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('documentation', documentation);
-      Object.keys(connectionDetails).forEach((key) => {
-        formData.append(`details[${key}]`, connectionDetails[key] as string);
-      });
-      Object.keys(connectionSettings).forEach((key) => {
-        formData.append(`settings[${key}]`, connectionSettings[key] as string);
-      });
+      const requestBody: CreateConnectionRequest = {
+        name,
+        connector: connectorID,
+        description,
+        documentation,
+        details: connectionDetails,
+        settings: connectionSettings,
+      };
+
       const res = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections`,
-        { method: 'POST', body: formData }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
       )) as IrminAPIResponse<Connection>;
       return res;
     } catch (error) {
@@ -173,27 +206,25 @@ class ConnectionService {
     connectionSettings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
     try {
-      const formData = new FormData();
-      if (connectorID) formData.append('connector', connectorID);
-      if (name) formData.append('name', name);
-      if (description) formData.append('description', description);
-      if (documentation) formData.append('documentation', documentation);
-      if (connectionDetails) {
-        Object.keys(connectionDetails).forEach((key) => {
-          formData.append(`details[${key}]`, connectionDetails[key] as string);
-        });
-      }
-      if (connectionSettings) {
-        Object.keys(connectionSettings).forEach((key) => {
-          formData.append(
-            `settings[${key}]`,
-            connectionSettings[key] as string
-          );
-        });
-      }
+      const requestBody: UpdateConnectionRequest = {};
+
+      if (connectorID !== undefined) requestBody.connector = connectorID;
+      if (name !== undefined) requestBody.name = name;
+      if (description !== undefined) requestBody.description = description;
+      if (documentation !== undefined)
+        requestBody.documentation = documentation;
+      if (connectionDetails !== undefined)
+        requestBody.details = connectionDetails;
+      if (connectionSettings !== undefined)
+        requestBody.settings = connectionSettings;
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections/${connectionID}`,
-        { method: 'PATCH', body: formData }
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
       )) as IrminAPIResponse<Connection>;
       return response;
     } catch (error) {
@@ -222,12 +253,17 @@ class ConnectionService {
     newOwner: string;
   }): Promise<IrminAPIResponse<Connection>> {
     try {
-      const formData = new FormData();
-      // Use the field name 'new_owner_id' to match the Go endpoint
-      formData.append('new_owner_id', newOwner);
+      const requestBody: TransferConnectionOwnershipRequest = {
+        new_owner_id: newOwner,
+      };
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections/${connectionID}/transfer-ownership`,
-        { method: 'POST', body: formData }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
       )) as IrminAPIResponse<Connection>;
       return response;
     } catch (error) {

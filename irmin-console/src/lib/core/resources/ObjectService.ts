@@ -10,6 +10,13 @@ import { ObjectSchema } from '@/types/core/ObjectSchema';
 import { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
+ * Interface for moving/copying repository objects
+ */
+interface MoveObjectRequest {
+  new_path: string;
+}
+
+/**
  * Object API service
  *
  * Responsible for all repository object-related API calls.
@@ -332,14 +339,16 @@ class ObjectService {
       params.append('ref', ref);
       params.append('path', path);
 
-      const formData = new FormData();
-      formData.append('new_path', newPath);
+      const requestBody: MoveObjectRequest = {
+        new_path: newPath,
+      };
 
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/move?${params.toString()}`;
 
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       })) as IrminAPIResponse<RepoObject>;
 
       return response;
@@ -378,14 +387,16 @@ class ObjectService {
       params.append('ref', ref);
       params.append('path', path);
 
-      const formData = new FormData();
-      formData.append('new_path', newPath);
+      const requestBody: MoveObjectRequest = {
+        new_path: newPath,
+      };
 
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/copy?${params.toString()}`;
 
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       })) as IrminAPIResponse<RepoObject>;
 
       return response;

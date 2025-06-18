@@ -1,5 +1,5 @@
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import { ActionInputData } from '@/types/core/Workflow';
+import { ActionInputData, WorkflowableType } from '@/types/core/Workflow';
 
 export interface ImportWorkflowableInput {
   type: 'import';
@@ -86,10 +86,14 @@ export type WorkflowableInput =
   | ActionWorkflowableInput
   | PipelineWorkflowableInput;
 
-export interface WorkflowInput {
+/**
+ * Interface for creating a workflow
+ */
+export interface WorkflowRequest {
+  type: WorkflowableType;
   name: string;
-  description: string;
-  documentation: string;
-  schedule: WorkflowSchedule;
-  workflowable: WorkflowableInput;
+  description?: string;
+  documentation?: string;
+  workflowable?: WorkflowableInput;
+  schedule?: WorkflowSchedule;
 }

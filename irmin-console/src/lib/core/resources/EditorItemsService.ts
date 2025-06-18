@@ -5,6 +5,28 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { ActionInputData } from '@/types/core/Workflow';
 
 /**
+ * Interface for creating an editor item
+ */
+interface CreateEditorItemRequest {
+  type: string;
+  content?: string;
+}
+
+/**
+ * Interface for moving/copying editor items
+ */
+interface MoveEditorItemRequest {
+  destination_path: string;
+}
+
+/**
+ * Interface for executing editor items
+ */
+interface ExecuteEditorItemRequest {
+  input?: ActionInputData[];
+}
+
+/**
  * EditorItems service
  *
  * Provides methods to interact with the editor API.
@@ -108,14 +130,14 @@ class EditorItemsService {
       const endpoint = `/v1/workspaces/${workspace}/editor/move?path=${encodeURIComponent(
         path
       )}`;
-      const body = new URLSearchParams();
-      body.append('destination_path', destinationPath);
+      const requestBody: MoveEditorItemRequest = {
+        destination_path: destinationPath,
+      };
+
       const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
       return response;
     } catch (error) {
@@ -146,14 +168,14 @@ class EditorItemsService {
       const endpoint = `/v1/workspaces/${workspace}/editor/copy?path=${encodeURIComponent(
         path
       )}`;
-      const body = new URLSearchParams();
-      body.append('destination_path', destinationPath);
+      const requestBody: MoveEditorItemRequest = {
+        destination_path: destinationPath,
+      };
+
       const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
       return response;
     } catch (error) {
@@ -213,15 +235,15 @@ class EditorItemsService {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
         path
       )}`;
-      const body = new URLSearchParams();
-      body.append('type', 'file');
-      body.append('content', content);
+      const requestBody: CreateEditorItemRequest = {
+        type: 'file',
+        content,
+      };
+
       const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
       return response;
     } catch (error) {
@@ -249,14 +271,14 @@ class EditorItemsService {
       const endpoint = `/v1/workspaces/${workspace}/editor?path=${encodeURIComponent(
         path
       )}`;
-      const body = new URLSearchParams();
-      body.append('type', 'folder');
+      const requestBody: CreateEditorItemRequest = {
+        type: 'folder',
+      };
+
       const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
       return response;
     } catch (error) {
@@ -284,19 +306,16 @@ class EditorItemsService {
     inputs?: ActionInputData[];
   }): Promise<IrminAPIResponse<ScriptResult>> {
     try {
-      const body = new URLSearchParams();
-      for (let i = 0; i < inputs.length; i++) {
-        const input = inputs[i];
-        body.append(`input[${i}].repository`, input.repository);
-        body.append(`input[${i}].ref`, input.ref);
-        body.append(`input[${i}].path`, input.path);
-      }
+      const requestBody: ExecuteEditorItemRequest = {
+        input: inputs,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/editor/run?path=${path}`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: body.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<ScriptResult>;

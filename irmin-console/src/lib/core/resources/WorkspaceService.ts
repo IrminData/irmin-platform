@@ -6,6 +6,29 @@ import { Workspace } from '@/types/core/Workspace';
 import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**
+ * Interface for creating a workspace
+ */
+interface CreateWorkspaceRequest {
+  name: string;
+  description?: string;
+}
+
+/**
+ * Interface for updating a workspace
+ */
+interface UpdateWorkspaceRequest {
+  name?: string;
+  description?: string;
+}
+
+/**
+ * Interface for transferring workspace ownership
+ */
+interface TransferOwnershipRequest {
+  new_owner_id: string;
+}
+
+/**
  * Workspace API service
  *
  * Responsible for all workspace related API calls.
@@ -90,12 +113,15 @@ class WorkspaceService {
     description?: string;
   }): Promise<IrminAPIResponse<Workspace>> {
     try {
-      const formData = new FormData();
-      formData.append('name', name);
-      if (description) formData.append('description', description);
+      const requestBody: CreateWorkspaceRequest = {
+        name,
+        description,
+      };
+
       const res = (await this.irminCore.fetchAPI(`/v1/workspaces`, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       })) as IrminAPIResponse<Workspace>;
       return res;
     } catch (error) {
@@ -120,14 +146,18 @@ class WorkspaceService {
     data: ItemUpdateProps;
   }): Promise<IrminAPIResponse<Workspace>> {
     try {
-      const formData = new FormData();
-      if (data.name) formData.append('name', data.name);
-      if (data.description) formData.append('description', data.description);
+      const requestBody: UpdateWorkspaceRequest = {};
+
+      if (data.name !== undefined) requestBody.name = data.name;
+      if (data.description !== undefined)
+        requestBody.description = data.description;
+
       const res = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}`,
         {
           method: 'PATCH',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<Workspace>;
       return res;
@@ -153,12 +183,14 @@ class WorkspaceService {
     newOwnerID: string;
   }): Promise<IrminAPIResponse<Workspace>> {
     try {
-      const params = new URLSearchParams();
-      params.append('new_owner_id', newOwnerID);
+      const requestBody: TransferOwnershipRequest = {
+        new_owner_id: newOwnerID,
+      };
+
       const res = await this.irminCore.fetchAPI(`/v1/workspaces/${workspace}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
       return res as IrminAPIResponse<Workspace>;
     } catch (error) {
@@ -205,7 +237,7 @@ class WorkspaceService {
     try {
       const res = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspaceSlug}/leave`,
-        { method: 'GET' }
+        { method: 'PATCH' }
       );
       return res;
     } catch (error) {

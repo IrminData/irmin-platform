@@ -5,6 +5,18 @@ import { Diff, MergeStrategy } from '@/types/core/Diff';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
+ * Interface for merging refs
+ */
+interface MergeRefsRequest {
+  base_ref: string;
+  compare_ref: string;
+  description?: string;
+  strategy?: string;
+  squash?: boolean;
+  allow_empty?: boolean;
+}
+
+/**
  * Diff Service: Merge and Compare API
  *
  * Provides methods to compare repository refs and merge them.
@@ -94,21 +106,21 @@ class DiffService {
     allowEmpty: boolean;
   }): Promise<IrminAPIResponse<Commit>> {
     try {
-      const params = new URLSearchParams();
-      params.append('base_ref', baseRef);
-      params.append('compare_ref', compareRef);
-      params.append('description', description);
-      params.append('strategy', mergeStrategy);
-      params.append('squash', squash.toString());
-      params.append('allow_empty', allowEmpty.toString());
+      const requestBody: MergeRefsRequest = {
+        base_ref: baseRef,
+        compare_ref: compareRef,
+        description,
+        strategy: mergeStrategy,
+        squash,
+        allow_empty: allowEmpty,
+      };
+
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/merge`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: params.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<Commit>;
       return response;

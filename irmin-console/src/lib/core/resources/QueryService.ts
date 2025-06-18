@@ -4,6 +4,38 @@ import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { QueryResult, StoredQuery } from '@/types/core/StoredQuery';
 
 /**
+ * Interface for creating a query
+ */
+interface CreateQueryRequest {
+  name?: string;
+  description?: string;
+  sql?: string;
+}
+
+/**
+ * Interface for updating a query
+ */
+interface UpdateQueryRequest {
+  name?: string;
+  description?: string;
+  sql?: string;
+}
+
+/**
+ * Interface for transferring query ownership
+ */
+interface TransferQueryOwnershipRequest {
+  new_owner_id: string;
+}
+
+/**
+ * Interface for executing SQL
+ */
+interface ExecuteSQLRequest {
+  sql?: string;
+}
+
+/**
  * Query API service
  *
  * Responsible for all stored query related API calls.
@@ -97,21 +129,23 @@ class QueryService {
     sql,
   }: {
     workspace: string;
-    name: string;
-    description: string;
-    sql: string;
+    name?: string;
+    description?: string;
+    sql?: string;
   }): Promise<IrminAPIResponse<StoredQuery>> {
     try {
-      const formData = new URLSearchParams();
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('sql', sql);
+      const requestBody: CreateQueryRequest = {
+        name,
+        description,
+        sql,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<StoredQuery>;
@@ -141,21 +175,23 @@ class QueryService {
   }: {
     workspace: string;
     queryID: string;
-    name: string;
-    description: string;
-    sql: string;
+    name?: string;
+    description?: string;
+    sql?: string;
   }): Promise<IrminAPIResponse<StoredQuery>> {
     try {
-      const formData = new URLSearchParams();
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('sql', sql);
+      const requestBody: UpdateQueryRequest = {};
+
+      if (name !== undefined) requestBody.name = name;
+      if (description !== undefined) requestBody.description = description;
+      if (sql !== undefined) requestBody.sql = sql;
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries/${queryID}`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<StoredQuery>;
@@ -211,14 +247,16 @@ class QueryService {
     newOwnerID: string;
   }): Promise<IrminAPIResponse<StoredQuery>> {
     try {
-      const formData = new URLSearchParams();
-      formData.append('new_owner_id', newOwnerID);
+      const requestBody: TransferQueryOwnershipRequest = {
+        new_owner_id: newOwnerID,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/queries/${queryID}/transfer-ownership`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<StoredQuery>;
@@ -268,17 +306,19 @@ class QueryService {
     sql,
   }: {
     workspace: string;
-    sql: string;
+    sql?: string;
   }): Promise<IrminAPIResponse<QueryResult>> {
     try {
-      const formData = new URLSearchParams();
-      formData.append('sql', sql);
+      const requestBody: ExecuteSQLRequest = {
+        sql,
+      };
+
       const response = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/sql`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       );
       return response as IrminAPIResponse<QueryResult>;

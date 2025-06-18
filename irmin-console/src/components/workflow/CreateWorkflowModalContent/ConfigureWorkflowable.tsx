@@ -91,6 +91,11 @@ function ConfigureWorkflowable({
     segmentsAfter: 1,
   });
 
+  // Early return if workflowable is not defined
+  if (!workflowable) {
+    return <></>;
+  }
+
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
       <div className='flex flex-col gap-4 py-4'>
@@ -99,7 +104,9 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.executableScriptFile}</Label>
               <FileSelector
-                currentSelectedFile={workflowable.executable ?? null}
+                currentSelectedFile={
+                  (workflowable as ActionWorkflowableInput).executable ?? null
+                }
                 onSelectFile={(filePath) =>
                   setWorkflowData({
                     ...workflowData,
@@ -114,7 +121,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
               <Select
-                value={workflowable.repository}
+                value={(workflowable as ActionWorkflowableInput).repository}
                 onValueChange={(value) => {
                   if (!value) return;
                   setWorkflowData({
@@ -126,7 +133,7 @@ function ConfigureWorkflowable({
                         repositoriesQuery.data?.data?.find(
                           (repo) => repo.slug === value
                         )?.default_branch ??
-                        workflowable.branch ??
+                        (workflowable as ActionWorkflowableInput).branch ??
                         '',
                     },
                   });
@@ -136,8 +143,11 @@ function ConfigureWorkflowable({
                 <SelectTrigger className='w-full'>
                   <SelectValue>
                     {repositoriesQuery.data?.data?.find(
-                      (repo) => workflowable.repository === repo.slug
-                    )?.name ?? workflowable.repository}
+                      (repo) =>
+                        (workflowable as ActionWorkflowableInput).repository ===
+                        repo.slug
+                    )?.name ??
+                      (workflowable as ActionWorkflowableInput).repository}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -148,9 +158,9 @@ function ConfigureWorkflowable({
                   ))}
                 </SelectContent>
               </Select>
-              {workflowable.repository && (
+              {(workflowable as ActionWorkflowableInput).repository && (
                 <Button
-                  href={`${workspaceUrl}/repositories/${workflowable.repository}?ref=${workflowable.branch}`}
+                  href={`${workspaceUrl}/repositories/${(workflowable as ActionWorkflowableInput).repository}?ref=${(workflowable as ActionWorkflowableInput).branch}`}
                   target='_blank'
                   variant='secondary'
                   className='w-full'
@@ -172,7 +182,9 @@ function ConfigureWorkflowable({
               <Input
                 required
                 type='text'
-                defaultValue={workflowable.branch ?? ''}
+                defaultValue={
+                  (workflowable as ActionWorkflowableInput).branch ?? ''
+                }
                 onChange={(e) =>
                   setWorkflowData({
                     ...workflowData,
@@ -184,29 +196,34 @@ function ConfigureWorkflowable({
                 }
               />
             </div>
-            {workflowable.repository && workflowable.branch && (
-              <div className='flex flex-col gap-2'>
-                <Label>{dict.workflow.scriptResultDestinationPath}</Label>
-                <RepositoryPathSelector
-                  repositorySlug={workflowable.repository}
-                  ref={workflowable.branch}
-                  defaultPath={workflowable.path}
-                  onPathChange={(path) =>
-                    setWorkflowData({
-                      ...workflowData,
-                      workflowable: {
-                        ...(workflowable as ActionWorkflowableInput),
-                        path: path,
-                      },
-                    })
-                  }
-                  defaultExpanded={true}
-                />
-              </div>
-            )}
+            {(workflowable as ActionWorkflowableInput).repository &&
+              (workflowable as ActionWorkflowableInput).branch && (
+                <div className='flex flex-col gap-2'>
+                  <Label>{dict.workflow.scriptResultDestinationPath}</Label>
+                  <RepositoryPathSelector
+                    repositorySlug={
+                      (workflowable as ActionWorkflowableInput).repository!
+                    }
+                    ref={(workflowable as ActionWorkflowableInput).branch!}
+                    defaultPath={(workflowable as ActionWorkflowableInput).path}
+                    onPathChange={(path) =>
+                      setWorkflowData({
+                        ...workflowData,
+                        workflowable: {
+                          ...(workflowable as ActionWorkflowableInput),
+                          path: path,
+                        },
+                      })
+                    }
+                    defaultExpanded={true}
+                  />
+                </div>
+              )}
             <div className='flex flex-col gap-2'>
               <ActionInputEditor
-                initialData={workflowable.input}
+                initialData={
+                  (workflowable as ActionWorkflowableInput).input ?? []
+                }
                 onChange={handleInputFilesChange}
                 disableSaveButton={true}
               />
@@ -218,7 +235,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importSourceConnection}</Label>
               <Select
-                value={workflowable.connection}
+                value={(workflowable as ImportWorkflowableInput).connection}
                 onValueChange={(value) => {
                   if (!value) return;
                   setWorkflowData({
@@ -234,8 +251,11 @@ function ConfigureWorkflowable({
                 <SelectTrigger className='w-full'>
                   <SelectValue>
                     {connectionsQuery.data?.data?.find(
-                      (conn) => workflowable.connection === conn.id
-                    )?.name ?? workflowable.connection}
+                      (conn) =>
+                        (workflowable as ImportWorkflowableInput).connection ===
+                        conn.id
+                    )?.name ??
+                      (workflowable as ImportWorkflowableInput).connection}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -246,9 +266,9 @@ function ConfigureWorkflowable({
                   ))}
                 </SelectContent>
               </Select>
-              {workflowable.connection && (
+              {(workflowable as ImportWorkflowableInput).connection && (
                 <Button
-                  href={`${workspaceUrl}/connections/${workflowable.connection}`}
+                  href={`${workspaceUrl}/connections/${(workflowable as ImportWorkflowableInput).connection}`}
                   target='_blank'
                   variant='secondary'
                   className='w-full'
@@ -267,12 +287,17 @@ function ConfigureWorkflowable({
                 {dict.consoleNavigation.staticSearchItems.createConnection}
               </Button>
             </div>
-            {workflowable.connection && (
+            {(workflowable as ImportWorkflowableInput).connection && (
               <div className='flex flex-col gap-2'>
                 <Label>{dict.workflow.importSourceConnectionPath}</Label>
                 <ConnectionPathSelector
-                  connectionId={workflowable.connection}
-                  defaultPath={workflowable.connection_path ?? ''}
+                  connectionId={
+                    (workflowable as ImportWorkflowableInput).connection
+                  }
+                  defaultPath={
+                    (workflowable as ImportWorkflowableInput).connection_path ??
+                    ''
+                  }
                   operationMethod={'pull'}
                   onPathChange={(path) =>
                     setWorkflowData({
@@ -289,7 +314,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationRepository}</Label>
               <Select
-                value={workflowable.repository}
+                value={(workflowable as ImportWorkflowableInput).repository}
                 onValueChange={(value) => {
                   if (!value) return;
                   setWorkflowData({
@@ -301,7 +326,7 @@ function ConfigureWorkflowable({
                         repositoriesQuery.data?.data?.find(
                           (repo) => repo.slug === value
                         )?.default_branch ??
-                        workflowable.branch ??
+                        (workflowable as ImportWorkflowableInput).branch ??
                         '',
                     },
                   });
@@ -311,8 +336,11 @@ function ConfigureWorkflowable({
                 <SelectTrigger className='w-full'>
                   <SelectValue>
                     {repositoriesQuery.data?.data?.find(
-                      (repo) => workflowable.repository === repo.slug
-                    )?.name ?? workflowable.repository}
+                      (repo) =>
+                        (workflowable as ImportWorkflowableInput).repository ===
+                        repo.slug
+                    )?.name ??
+                      (workflowable as ImportWorkflowableInput).repository}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -323,9 +351,9 @@ function ConfigureWorkflowable({
                   ))}
                 </SelectContent>
               </Select>
-              {workflowable.repository && (
+              {(workflowable as ImportWorkflowableInput).repository && (
                 <Button
-                  href={`${workspaceUrl}/repositories/${workflowable.repository}?ref=${workflowable.branch}`}
+                  href={`${workspaceUrl}/repositories/${(workflowable as ImportWorkflowableInput).repository}?ref=${(workflowable as ImportWorkflowableInput).branch}`}
                   target='_blank'
                   variant='secondary'
                   className='w-full'
@@ -349,7 +377,9 @@ function ConfigureWorkflowable({
               <Input
                 required
                 type='text'
-                defaultValue={workflowable.branch ?? ''}
+                defaultValue={
+                  (workflowable as ImportWorkflowableInput).branch ?? ''
+                }
                 onChange={(e) =>
                   setWorkflowData({
                     ...workflowData,
@@ -361,26 +391,29 @@ function ConfigureWorkflowable({
                 }
               />
             </div>
-            {workflowable.repository && workflowable.branch && (
-              <div className='flex flex-col gap-2'>
-                <Label>{dict.workflow.importDestinationPath}</Label>
-                <RepositoryPathSelector
-                  repositorySlug={workflowable.repository}
-                  ref={workflowable.branch}
-                  defaultPath={workflowable.path}
-                  onPathChange={(path) =>
-                    setWorkflowData({
-                      ...workflowData,
-                      workflowable: {
-                        ...(workflowable as ImportWorkflowableInput),
-                        path: path,
-                      },
-                    })
-                  }
-                  defaultExpanded={true}
-                />
-              </div>
-            )}
+            {(workflowable as ImportWorkflowableInput).repository &&
+              (workflowable as ImportWorkflowableInput).branch && (
+                <div className='flex flex-col gap-2'>
+                  <Label>{dict.workflow.importDestinationPath}</Label>
+                  <RepositoryPathSelector
+                    repositorySlug={
+                      (workflowable as ImportWorkflowableInput).repository
+                    }
+                    ref={(workflowable as ImportWorkflowableInput).branch}
+                    defaultPath={(workflowable as ImportWorkflowableInput).path}
+                    onPathChange={(path) =>
+                      setWorkflowData({
+                        ...workflowData,
+                        workflowable: {
+                          ...(workflowable as ImportWorkflowableInput),
+                          path: path,
+                        },
+                      })
+                    }
+                    defaultExpanded={true}
+                  />
+                </div>
+              )}
           </>
         )}
         {workflowable.type === 'export' && (
@@ -388,7 +421,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportDestinationConnection}</Label>
               <Select
-                value={workflowable.connection}
+                value={(workflowable as ExportWorkflowableInput).connection}
                 onValueChange={(value) => {
                   if (!value) return;
                   setWorkflowData({
@@ -404,8 +437,11 @@ function ConfigureWorkflowable({
                 <SelectTrigger className='w-full'>
                   <SelectValue>
                     {connectionsQuery.data?.data?.find(
-                      (conn) => workflowable.connection === conn.id
-                    )?.name ?? workflowable.connection}
+                      (conn) =>
+                        (workflowable as ExportWorkflowableInput).connection ===
+                        conn.id
+                    )?.name ??
+                      (workflowable as ExportWorkflowableInput).connection}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -416,9 +452,9 @@ function ConfigureWorkflowable({
                   ))}
                 </SelectContent>
               </Select>
-              {workflowable.connection && (
+              {(workflowable as ExportWorkflowableInput).connection && (
                 <Button
-                  href={`${workspaceUrl}/connections/${workflowable.connection}`}
+                  href={`${workspaceUrl}/connections/${(workflowable as ExportWorkflowableInput).connection}`}
                   target='_blank'
                   variant='secondary'
                   className='w-full'
@@ -437,12 +473,17 @@ function ConfigureWorkflowable({
                 {dict.consoleNavigation.staticSearchItems.createConnection}
               </Button>
             </div>
-            {workflowable.connection && (
+            {(workflowable as ExportWorkflowableInput).connection && (
               <div className='flex flex-col gap-2'>
                 <Label>{dict.workflow.exportDestinationConnectionPath}</Label>
                 <ConnectionPathSelector
-                  connectionId={workflowable.connection}
-                  defaultPath={workflowable.connection_path ?? ''}
+                  connectionId={
+                    (workflowable as ExportWorkflowableInput).connection
+                  }
+                  defaultPath={
+                    (workflowable as ExportWorkflowableInput).connection_path ??
+                    ''
+                  }
                   operationMethod={'push'}
                   onPathChange={(path) =>
                     setWorkflowData({
@@ -459,7 +500,7 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.exportSourceRepository}</Label>
               <Select
-                value={workflowable.repository}
+                value={(workflowable as ExportWorkflowableInput).repository}
                 onValueChange={(value) => {
                   if (!value) return;
                   setWorkflowData({
@@ -471,7 +512,7 @@ function ConfigureWorkflowable({
                         repositoriesQuery.data?.data?.find(
                           (repo) => repo.slug === value
                         )?.default_branch ??
-                        workflowable.branch ??
+                        (workflowable as ExportWorkflowableInput).branch ??
                         '',
                     },
                   });
@@ -481,8 +522,11 @@ function ConfigureWorkflowable({
                 <SelectTrigger className='w-full'>
                   <SelectValue>
                     {repositoriesQuery.data?.data?.find(
-                      (repo) => workflowable.repository === repo.slug
-                    )?.name ?? workflowable.repository}
+                      (repo) =>
+                        (workflowable as ExportWorkflowableInput).repository ===
+                        repo.slug
+                    )?.name ??
+                      (workflowable as ExportWorkflowableInput).repository}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -493,9 +537,9 @@ function ConfigureWorkflowable({
                   ))}
                 </SelectContent>
               </Select>
-              {workflowable.repository && (
+              {(workflowable as ExportWorkflowableInput).repository && (
                 <Button
-                  href={`${workspaceUrl}/repositories/${workflowable.repository}?ref=${workflowable.branch}`}
+                  href={`${workspaceUrl}/repositories/${(workflowable as ExportWorkflowableInput).repository}?ref=${(workflowable as ExportWorkflowableInput).branch}`}
                   target='_blank'
                   variant='secondary'
                   className='w-full'
@@ -519,7 +563,9 @@ function ConfigureWorkflowable({
               <Input
                 required
                 type='text'
-                defaultValue={workflowable.branch ?? ''}
+                defaultValue={
+                  (workflowable as ExportWorkflowableInput).branch ?? ''
+                }
                 onChange={(e) =>
                   setWorkflowData({
                     ...workflowData,
@@ -531,26 +577,29 @@ function ConfigureWorkflowable({
                 }
               />
             </div>
-            {workflowable.repository && workflowable.branch && (
-              <div className='flex flex-col gap-2'>
-                <Label>{dict.workflow.exportSourcePath}</Label>
-                <RepositoryPathSelector
-                  repositorySlug={workflowable.repository}
-                  ref={workflowable.branch}
-                  defaultPath={workflowable.path}
-                  onPathChange={(path) =>
-                    setWorkflowData({
-                      ...workflowData,
-                      workflowable: {
-                        ...(workflowable as ExportWorkflowableInput),
-                        path: path,
-                      },
-                    })
-                  }
-                  defaultExpanded={true}
-                />
-              </div>
-            )}
+            {(workflowable as ExportWorkflowableInput).repository &&
+              (workflowable as ExportWorkflowableInput).branch && (
+                <div className='flex flex-col gap-2'>
+                  <Label>{dict.workflow.exportSourcePath}</Label>
+                  <RepositoryPathSelector
+                    repositorySlug={
+                      (workflowable as ExportWorkflowableInput).repository
+                    }
+                    ref={(workflowable as ExportWorkflowableInput).branch}
+                    defaultPath={(workflowable as ExportWorkflowableInput).path}
+                    onPathChange={(path) =>
+                      setWorkflowData({
+                        ...workflowData,
+                        workflowable: {
+                          ...(workflowable as ExportWorkflowableInput),
+                          path: path,
+                        },
+                      })
+                    }
+                    defaultExpanded={true}
+                  />
+                </div>
+              )}
           </>
         )}
         {workflowable.type === 'pipeline' && (
@@ -565,7 +614,9 @@ function ConfigureWorkflowable({
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.pipeline.livePipeline}</Label>
               <Switch
-                checked={workflowable.live ?? false}
+                checked={
+                  (workflowable as PipelineWorkflowableInput).live ?? false
+                }
                 onCheckedChange={(checked) =>
                   setWorkflowData({
                     ...workflowData,

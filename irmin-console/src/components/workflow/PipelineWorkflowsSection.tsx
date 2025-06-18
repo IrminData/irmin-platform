@@ -16,16 +16,17 @@ import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import { PipelineWorkflow } from '@/types/core/Workflow';
-import { WorkflowInput } from '@/types/internal/WorkflowInput';
+import { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import PipelineWorkflowList from './PipelineWorkflowList';
 
-const initialWorkflowData: WorkflowInput = {
+const initialWorkflowData: WorkflowRequest = {
   // Workflow properties
   name: '',
   description: '',
   documentation: '',
+  type: 'pipeline',
   schedule: {
     triggers: [],
     max_retries: 3,

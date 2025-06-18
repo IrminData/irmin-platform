@@ -4,6 +4,21 @@ import { Invite } from '@/types/core/Invite';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
+ * Interface for sending an invite
+ */
+interface SendInviteRequest {
+  email: string;
+  role: string;
+}
+
+/**
+ * Interface for updating an invite
+ */
+interface UpdateInviteRequest {
+  role: string;
+}
+
+/**
  * Invite API service
  *
  * Provides methods to interact with the invite API.
@@ -114,13 +129,15 @@ class InviteService {
   }): Promise<IrminAPIResponse<Invite>> {
     try {
       const endpoint = `/v1/workspaces/${workspace}/invites`;
-      const body = new URLSearchParams();
-      body.append('email', email);
-      body.append('role', role);
+      const requestBody: SendInviteRequest = {
+        email,
+        role,
+      };
+
       const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
       return response as IrminAPIResponse<Invite>;
     } catch (error) {
@@ -194,12 +211,14 @@ class InviteService {
   }): Promise<IrminAPIResponse<Invite>> {
     try {
       const endpoint = `/v1/invites/${inviteID}`;
-      const body = new URLSearchParams();
-      body.append('role', role);
+      const requestBody: UpdateInviteRequest = {
+        role,
+      };
+
       const response = await this.irminCore.fetchAPI(endpoint, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
       return response as IrminAPIResponse<Invite>;
     } catch (error) {

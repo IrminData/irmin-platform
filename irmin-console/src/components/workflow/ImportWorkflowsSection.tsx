@@ -130,6 +130,7 @@ export default function ImportWorkflowsSection({
             name: '',
             description: '',
             documentation: '',
+            type: 'import',
             schedule: {
               triggers: [],
               max_retries: 3,

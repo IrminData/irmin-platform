@@ -10,7 +10,7 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Workflow, WorkflowableType } from '@/types/core/Workflow';
-import { WorkflowInput } from '@/types/internal/WorkflowInput';
+import { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 export const workflowsQueryKey = (
   workspaceSlug: string,
@@ -44,13 +44,14 @@ export function useWorkflows(type?: WorkflowableType) {
   const createWorkflowMutation = useMutation<
     IrminAPIResponse,
     Error,
-    WorkflowInput
+    WorkflowRequest
   >({
     mutationFn: async (data) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
       return await core.workflowService.createWorkflow({
         workspace: workspaceSlug,
+        type: data.type,
         name: data.name,
         description: data.description,
         documentation: data.documentation,
