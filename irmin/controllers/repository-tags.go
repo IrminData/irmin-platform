@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 
 	"github.com/gofiber/fiber/v3"
@@ -68,10 +69,17 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"name", "ref"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.CreateRepositoryTagRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Name == "" || req.Ref == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -87,7 +95,7 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 	}
 
 	// Create the tag in the data engine.
-	tag, createTagErr := dataEngine.CreateTag(workspace.Slug, repository.Slug, fields["name"], fields["ref"])
+	tag, createTagErr := dataEngine.CreateTag(workspace.Slug, repository.Slug, req.Name, req.Ref)
 	if createTagErr != nil {
 		api.Logger.Error("Error creating tag in Data Engine", "error", createTagErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

@@ -2,13 +2,16 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
 	"mime/multipart"
+	"strings"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/emailaddress"
@@ -40,6 +43,124 @@ func (api *APIControllers) ProfileShow(c fiber.Ctx) error {
 	})
 }
 
+// parseProfileUpdateRequest handles parsing the request based on content type.
+func (api *APIControllers) parseProfileUpdateRequest(
+	c fiber.Ctx,
+	irminUser *db.User,
+) (*irmincore.UpdateProfileRequest, error) {
+	var req irmincore.UpdateProfileRequest
+
+	contentType := c.Get("Content-Type")
+	if strings.Contains(contentType, "multipart/form-data") {
+		return api.parseMultipartFormRequest(c, irminUser)
+	}
+
+	// Handle pure JSON requests (for metadata-only updates)
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		return nil, bindErr
+	}
+
+	return &req, nil
+}
+
+// parseMultipartFormRequest handles multipart form data parsing.
+func (api *APIControllers) parseMultipartFormRequest(
+	c fiber.Ctx,
+	irminUser *db.User,
+) (*irmincore.UpdateProfileRequest, error) {
+	ctx := c.Context()
+	var req irmincore.UpdateProfileRequest
+
+	// Handle multipart form data (for file uploads)
+	form, err := c.MultipartForm()
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse JSON metadata from form field if provided
+	if parseErr := api.parseJSONMetadata(form, &req); parseErr != nil {
+		return nil, parseErr
+	}
+
+	// Handle profile picture update if provided
+	if updateErr := api.handleProfilePictureFromForm(ctx, irminUser, form); updateErr != nil {
+		return nil, updateErr
+	}
+
+	return &req, nil
+}
+
+// parseJSONMetadata extracts and parses JSON metadata from multipart form.
+func (api *APIControllers) parseJSONMetadata(form *multipart.Form, req *irmincore.UpdateProfileRequest) error {
+	jsonData := form.Value["metadata"]
+	if len(jsonData) == 0 {
+		return nil
+	}
+
+	return json.Unmarshal([]byte(jsonData[0]), req)
+}
+
+// handleProfilePictureFromForm processes profile picture from multipart form.
+func (api *APIControllers) handleProfilePictureFromForm(
+	ctx context.Context,
+	irminUser *db.User,
+	form *multipart.Form,
+) error {
+	profilePictureFiles := form.File["profile_picture"]
+	if len(profilePictureFiles) == 0 {
+		return nil
+	}
+
+	profilePictureFile := profilePictureFiles[0]
+	return api.updateProfilePicture(ctx, irminUser, profilePictureFile)
+}
+
+// updateUserFields updates the user fields based on the request.
+func (api *APIControllers) updateUserFields(irminUser *db.User, req *irmincore.UpdateProfileRequest) {
+	// Only update fields that were provided
+	if req.FirstName != "" {
+		irminUser.FirstName = req.FirstName
+	}
+	if req.LastName != "" {
+		irminUser.LastName = req.LastName
+	}
+	if req.Email != "" {
+		irminUser.Email = req.Email
+	}
+	if req.Phone != "" {
+		irminUser.Phone = req.Phone
+	}
+	if req.Company != "" {
+		irminUser.Company = req.Company
+	}
+}
+
+// updateClerkUserData coordinates all Clerk user updates.
+func (api *APIControllers) updateClerkUserData(ctx context.Context, irminUser *db.User) error {
+	// Set up Clerk client
+	clerk.SetKey(api.Env.ClerkSecretKey)
+
+	// Get user from Clerk
+	clerkUser, getUserErr := user.Get(ctx, irminUser.ClerkID)
+	if getUserErr != nil {
+		return getUserErr
+	}
+
+	// Update email and phone in Clerk
+	primaryEmailID, updateEmailErr := api.updateClerkEmail(ctx, clerkUser, irminUser)
+	if updateEmailErr != nil {
+		return updateEmailErr
+	}
+
+	primaryPhoneID, updatePhoneErr := api.updateClerkPhone(ctx, clerkUser, irminUser)
+	if updatePhoneErr != nil {
+		return updatePhoneErr
+	}
+
+	// Update profile in Clerk
+	return api.updateClerkProfile(ctx, irminUser, primaryEmailID, primaryPhoneID)
+}
+
 func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -51,35 +172,17 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse form fields - all fields are optional during update
-	fields, err := utils.ParseFormFields(
-		c,
-		nil,
-		[]string{"first_name", "last_name", "email", "phone", "company"},
-	)
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse the request
+	req, parseErr := api.parseProfileUpdateRequest(c, irminUser)
+	if parseErr != nil {
+		api.Logger.Error("Error parsing request", "error", parseErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Only update fields that were provided
-	if fields["first_name"] != "" {
-		irminUser.FirstName = fields["first_name"]
-	}
-	if fields["last_name"] != "" {
-		irminUser.LastName = fields["last_name"]
-	}
-	if fields["email"] != "" {
-		irminUser.Email = fields["email"]
-	}
-	if fields["phone"] != "" {
-		irminUser.Phone = fields["phone"]
-	}
-	if fields["company"] != "" {
-		irminUser.Company = fields["company"]
-	}
+	// Update user fields
+	api.updateUserFields(irminUser, req)
 
 	// Update user in database
 	if saveErr := api.DB.Save(&irminUser).Error; saveErr != nil {
@@ -89,51 +192,12 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Set up Clerk client
-	clerk.SetKey(api.Env.ClerkSecretKey)
-
-	// Get user from Clerk
-	clerkUser, getUserErr := user.Get(ctx, irminUser.ClerkID)
-	if getUserErr != nil {
-		api.Logger.Error("Error getting user details from Clerk", "error", getUserErr)
-		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
-	// Update email and phone in Clerk
-	primaryEmailID, updateEmailErr := api.updateClerkEmail(ctx, clerkUser, irminUser)
-	if updateEmailErr != nil {
-		api.Logger.Error("Error updating email", "error", updateEmailErr)
+	// Update Clerk user data
+	if updateErr := api.updateClerkUserData(ctx, irminUser); updateErr != nil {
+		api.Logger.Error("Error updating user data in Clerk", "error", updateErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
-	}
-
-	primaryPhoneID, updatePhoneErr := api.updateClerkPhone(ctx, clerkUser, irminUser)
-	if updatePhoneErr != nil {
-		api.Logger.Error("Error updating phone", "error", updatePhoneErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Update profile in Clerk
-	if updateProfileErr := api.updateClerkProfile(ctx, irminUser, primaryEmailID, primaryPhoneID); updateProfileErr != nil {
-		api.Logger.Error("Error updating user profile", "error", updateProfileErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Handle profile picture update if provided
-	if newProfilePicture, _ := c.FormFile("profile_picture"); newProfilePicture != nil {
-		if updateProfilePictureErr := api.updateProfilePicture(ctx, irminUser, newProfilePicture); updateProfilePictureErr != nil {
-			api.Logger.Error("Error updating profile picture", "error", updateProfilePictureErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "error_occurred")},
-			})
-		}
 	}
 
 	// Format and return response

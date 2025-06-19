@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
 	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -88,22 +90,29 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"url", "system_token"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr, "url", fields["url"])
+	// Parse JSON request body
+	var req irmincore.ConnectorRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.URL == "" || req.SystemToken == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(fields["url"], fields["system_token"], locale)
+	connectorClient := irminconnectorclient.NewClient(req.URL, req.SystemToken, locale)
 
 	// Request the info endpoint of the connector
 	connectorInfo, getInfoErr := connectorClient.GetInfo()
 	if getInfoErr != nil {
-		api.Logger.Error("Error fetching connector info", "error", getInfoErr, "url", fields["url"])
+		api.Logger.Error("Error fetching connector info", "error", getInfoErr, "url", req.URL)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -115,7 +124,7 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 		api.Logger.Error("Error getting connector by API base URL", "error", getConnectorByAPIBaseURLErr)
 	}
 	connector.APIBaseURL = connectorInfo.APIBaseURL
-	connector.SystemToken = fields["system_token"]
+	connector.SystemToken = req.SystemToken
 	connector.Name = connectorInfo.Name
 	connector.Description = connectorInfo.Description
 	connector.Version = connectorInfo.Version
@@ -168,17 +177,24 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"url", "system_token"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.ConnectorRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.URL == "" || req.SystemToken == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(fields["url"], fields["system_token"], locale)
+	connectorClient := irminconnectorclient.NewClient(req.URL, req.SystemToken, locale)
 
 	// Request the info endpoint of the connector
 	connectorInfo, getInfoErr := connectorClient.GetInfo()
@@ -190,8 +206,8 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the connector
-	connector.APIBaseURL = fields["url"]
-	connector.SystemToken = fields["system_token"]
+	connector.APIBaseURL = req.URL
+	connector.SystemToken = req.SystemToken
 	connector.Name = connectorInfo.Name
 	connector.Description = connectorInfo.Description
 	connector.Version = connectorInfo.Version
@@ -275,15 +291,43 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse connection details and settings form the request body
-	details := utils.ParseObjectFormFields(c, "details")
-	settings := utils.ParseObjectFormFields(c, "settings")
+	// Parse JSON request body
+	var req irmincore.ConnectorConfigurationRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Convert any maps to string maps for compatibility with connector client
+	detailsStr := make(map[string]string)
+	for k, v := range req.Details {
+		if str, ok := v.(string); ok {
+			detailsStr[k] = str
+		} else {
+			detailsStr[k] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	settingsStr := make(map[string]string)
+	for k, v := range req.Settings {
+		if str, ok := v.(string); ok {
+			settingsStr[k] = str
+		} else {
+			settingsStr[k] = fmt.Sprintf("%v", v)
+		}
+	}
 
 	// Create new connector client
 	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
 
 	// Get the connection settings
-	configurationFields, getConfigFieldsErr := connectorClient.GetConfigFields(configurationType, details, settings)
+	configurationFields, getConfigFieldsErr := connectorClient.GetConfigFields(
+		configurationType,
+		detailsStr,
+		settingsStr,
+	)
 	if getConfigFieldsErr != nil {
 		api.Logger.Error("Error fetching connection configuration fields", "error", getConfigFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -305,15 +349,39 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse connection details and settings form the request body
-	details := utils.ParseObjectFormFields(c, "details")
-	settings := utils.ParseObjectFormFields(c, "settings")
+	// Parse JSON request body
+	var req irmincore.ConnectorConfigurationRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Convert any maps to string maps for compatibility with connector client
+	detailsStr := make(map[string]string)
+	for k, v := range req.Details {
+		if str, ok := v.(string); ok {
+			detailsStr[k] = str
+		} else {
+			detailsStr[k] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	settingsStr := make(map[string]string)
+	for k, v := range req.Settings {
+		if str, ok := v.(string); ok {
+			settingsStr[k] = str
+		} else {
+			settingsStr[k] = fmt.Sprintf("%v", v)
+		}
+	}
 
 	// Create new connector client
 	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
 
 	// Test the connection
-	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(details, settings)
+	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(detailsStr, settingsStr)
 	if validateConfigFieldsErr != nil && testResponse == nil {
 		api.Logger.Error("Error testing connection", "error", validateConfigFieldsErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

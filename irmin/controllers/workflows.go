@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -8,12 +9,12 @@ import (
 	"irmin-api/utils"
 	"strings"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
-
-// ---- API endpoint controllers ----
 
 // WorkflowsIndex shows all workflows for a workspace.
 func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
@@ -137,24 +138,24 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body - all fields are optional during update
-	fields, err := utils.ParseFormFields(c, nil, []string{"name", "description", "documentation"})
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse JSON request body
+	var req irmincore.UpdateWorkflowRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Only update fields that were provided
-	if fields["name"] != "" {
-		workflow.Name = fields["name"]
+	if req.Name != "" {
+		workflow.Name = req.Name
 	}
-	if fields["description"] != "" {
-		workflow.Description = fields["description"]
+	if req.Description != "" {
+		workflow.Description = req.Description
 	}
-	if fields["documentation"] != "" {
-		workflow.Documentation = fields["documentation"]
+	if req.Documentation != "" {
+		workflow.Documentation = req.Documentation
 	}
 	if updateWorkflowErr := api.DB.Save(&workflow).Error; updateWorkflowErr != nil {
 		api.Logger.Error("Error updating workflow", "error", updateWorkflowErr)
@@ -200,14 +201,17 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, err := utils.ParseFormFields(
-		c,
-		[]string{"type", "name"},
-		[]string{"description", "documentation"},
-	)
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse JSON request body
+	var req irmincore.WorkflowRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Type == "" || req.Name == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -223,12 +227,12 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 	// Start a transaction for all database operations
 	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Create workflowable based on type
-		if createWorkflowableErr := api.createWorkflowableByType(c, tx, workspace, fields["type"], &importWorkflowable, &exportWorkflowable, &actionWorkflowable, &pipelineWorkflowable); createWorkflowableErr != nil {
+		if createWorkflowableErr := api.createWorkflowableByType(tx, workspace, &req, &importWorkflowable, &exportWorkflowable, &actionWorkflowable, &pipelineWorkflowable); createWorkflowableErr != nil {
 			return createWorkflowableErr
 		}
 
 		// Parse and create schedule
-		schedule, parseScheduleErr := lib.ParseScheduleFromRequest(c, api.DB, *workspace, api.SQIDManager)
+		schedule, parseScheduleErr := lib.ParseScheduleFromData(&req.Schedule, api.DB, *workspace, api.SQIDManager)
 		if parseScheduleErr != nil {
 			return parseScheduleErr
 		}
@@ -238,7 +242,7 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 
 		// Create workflow record
 		workflow = api.createWorkflowRecord(
-			fields,
+			&req,
 			user,
 			workspace,
 			schedule,
@@ -315,8 +319,13 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 
 	// Start a transaction for all database operations
 	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		// Create new workflowable based on type
-		if createWorkflowableErr := api.createWorkflowableByType(c, tx, workspace, string(workflow.Type), &importWorkflowable, &exportWorkflowable, &actionWorkflowable, &pipelineWorkflowable); createWorkflowableErr != nil {
+		// Create new workflowable based on type - parse request for workflowable update
+		var workflowableReq irmincore.WorkflowRequest
+		if bindErr := c.Bind().JSON(&workflowableReq); bindErr != nil {
+			return bindErr
+		}
+		workflowableReq.Type = irminmodels.WorkflowableType(workflow.Type) // Use existing workflow type
+		if createWorkflowableErr := api.createWorkflowableByType(tx, workspace, &workflowableReq, &importWorkflowable, &exportWorkflowable, &actionWorkflowable, &pipelineWorkflowable); createWorkflowableErr != nil {
 			return createWorkflowableErr
 		}
 
@@ -517,17 +526,24 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.TransferWorkflowOwnershipRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.NewOwnerID == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Decode the new owner ID.
-	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", fields["new_owner_id"])
+	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", req.NewOwnerID)
 	if decodeSqidsErr != nil {
 		api.Logger.Error("Error decoding new owner sqid", "error", decodeSqidsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -700,7 +716,7 @@ func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
 
 // createWorkflowRecord is a helper function to create a workflow record.
 func (api *APIControllers) createWorkflowRecord(
-	fields map[string]string,
+	req *irmincore.WorkflowRequest,
 	user *db.User,
 	workspace *db.Workspace,
 	schedule *db.Schedule,
@@ -712,9 +728,9 @@ func (api *APIControllers) createWorkflowRecord(
 	switch {
 	case importWorkflowable != nil:
 		return db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["description"],
-			Documentation: fields["documentation"],
+			Name:          req.Name,
+			Description:   req.Description,
+			Documentation: req.Documentation,
 			Type:          db.WorkflowableTypeImport,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
@@ -723,9 +739,9 @@ func (api *APIControllers) createWorkflowRecord(
 		}
 	case exportWorkflowable != nil:
 		return db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["description"],
-			Documentation: fields["documentation"],
+			Name:          req.Name,
+			Description:   req.Description,
+			Documentation: req.Documentation,
 			Type:          db.WorkflowableTypeExport,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
@@ -734,9 +750,9 @@ func (api *APIControllers) createWorkflowRecord(
 		}
 	case actionWorkflowable != nil:
 		return db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["description"],
-			Documentation: fields["documentation"],
+			Name:          req.Name,
+			Description:   req.Description,
+			Documentation: req.Documentation,
 			Type:          db.WorkflowableTypeAction,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
@@ -745,9 +761,9 @@ func (api *APIControllers) createWorkflowRecord(
 		}
 	case pipelineWorkflowable != nil:
 		return db.Workflow{
-			Name:          fields["name"],
-			Description:   fields["documentation"],
-			Documentation: fields["documentation"],
+			Name:          req.Name,
+			Description:   req.Description,
+			Documentation: req.Documentation,
 			Type:          db.WorkflowableTypePipeline,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
@@ -806,78 +822,103 @@ func (api *APIControllers) updateWorkflowWithWorkflowable(
 
 // createWorkflowableByType is a helper function to create workflowable by type.
 func (api *APIControllers) createWorkflowableByType(
-	c fiber.Ctx,
 	tx *gorm.DB,
 	workspace *db.Workspace,
-	workflowableType string,
+	req *irmincore.WorkflowRequest,
 	importWorkflowable **db.ImportWorkflowable,
 	exportWorkflowable **db.ExportWorkflowable,
 	actionWorkflowable **db.ActionWorkflowable,
 	pipelineWorkflowable **db.PipelineWorkflowable,
 ) error {
 	var err error
-	switch db.WorkflowableType(workflowableType) {
-	case db.WorkflowableTypeImport:
-		*importWorkflowable, _, err = api.createImportExportWorkflowable(c, tx, workspace, db.WorkflowableTypeImport)
-	case db.WorkflowableTypeExport:
-		_, *exportWorkflowable, err = api.createImportExportWorkflowable(c, tx, workspace, db.WorkflowableTypeExport)
-	case db.WorkflowableTypeAction:
-		*actionWorkflowable, err = api.createActionWorkflowable(c, tx, workspace)
-	case db.WorkflowableTypePipeline:
-		*pipelineWorkflowable, err = api.createPipelineWorkflowable(c, tx, workspace)
+	switch req.Type {
+	case irminmodels.WorkflowableTypeImport:
+		*importWorkflowable, _, err = api.createImportExportWorkflowable(
+			tx,
+			workspace,
+			req.Workflowable,
+			db.WorkflowableTypeImport,
+		)
+	case irminmodels.WorkflowableTypeExport:
+		_, *exportWorkflowable, err = api.createImportExportWorkflowable(
+			tx,
+			workspace,
+			req.Workflowable,
+			db.WorkflowableTypeExport,
+		)
+	case irminmodels.WorkflowableTypeAction:
+		*actionWorkflowable, err = api.createActionWorkflowable(tx, workspace, &req.Workflowable)
+	case irminmodels.WorkflowableTypePipeline:
+		*pipelineWorkflowable, err = api.createPipelineWorkflowable(tx, workspace, &req.Workflowable)
 	default:
-		return fmt.Errorf("invalid workflow type: %s", workflowableType)
+		return fmt.Errorf("invalid workflow type: %s", req.Type)
 	}
 	return err
 }
 
 // createImportExportWorkflowable is a helper function to create import or export workflowable.
 func (api *APIControllers) createImportExportWorkflowable(
-	c fiber.Ctx,
 	tx *gorm.DB,
 	workspace *db.Workspace,
+	config any, // Either *ImportWorkflowableConfig or *ExportWorkflowableConfig
 	workflowableType db.WorkflowableType,
 ) (*db.ImportWorkflowable, *db.ExportWorkflowable, error) {
-	// Parse additional request body fields
-	workflowableFields, parseErr := utils.ParseFormFields(
-		c,
-		[]string{"connection", "repository", "branch"},
-		[]string{"connection_path", "path"},
-	)
-	if parseErr != nil {
-		return nil, nil, parseErr
+	var connection string
+	var connectionPath string
+	var repository string
+	var branch string
+	var path string
+
+	// Extract fields from config based on type
+	if workflowableType == db.WorkflowableTypeImport {
+		importConfig, importConfigOk := config.(*irminmodels.Workflowable)
+		if !importConfigOk || importConfig.Type != irminmodels.WorkflowableTypeImport {
+			return nil, nil, errors.New("import configuration is required")
+		}
+		connection = importConfig.ConnectionID
+		connectionPath = importConfig.ConnectionPath
+		repository = importConfig.Repository
+		branch = importConfig.Branch
+		path = importConfig.Path
+	} else {
+		exportConfig, exportConfigOk := config.(*irminmodels.Workflowable)
+		if !exportConfigOk || exportConfig.Type != irminmodels.WorkflowableTypeExport {
+			return nil, nil, errors.New("export configuration is required")
+		}
+		connection = exportConfig.ConnectionID
+		connectionPath = exportConfig.ConnectionPath
+		repository = exportConfig.Repository
+		branch = exportConfig.Branch
+		path = exportConfig.Path
 	}
 
 	// Find the repository by slug
-	repository, err := api.DB.GetRepositoryBySlugAndWorkspaceID(
-		workflowableFields["repository"],
-		workspace.ID,
-	)
+	repo, err := api.DB.GetRepositoryBySlugAndWorkspaceID(repository, workspace.ID)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Find the connection by ID
-	connectionID, err := api.SQIDManager.Decode("connections", workflowableFields["connection"])
+	connectionID, err := api.SQIDManager.Decode("connections", connection)
 	if err != nil {
 		return nil, nil, err
 	}
-	connection, err := api.DB.GetConnectionByID(uint(connectionID))
+	conn, err := api.DB.GetConnectionByID(uint(connectionID))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Trim only leading slash from the path and the connection path
-	path := strings.TrimLeft(workflowableFields["path"], "/")
-	connectionPath := strings.TrimLeft(workflowableFields["connection_path"], "/")
+	trimmedPath := strings.TrimLeft(path, "/")
+	trimmedConnectionPath := strings.TrimLeft(connectionPath, "/")
 
 	if workflowableType == db.WorkflowableTypeImport {
 		importWorkflowable := &db.ImportWorkflowable{
-			ConnectionID:   connection.ID,
-			ConnectionPath: connectionPath,
-			RepositoryID:   repository.ID,
-			Branch:         workflowableFields["branch"],
-			Path:           path,
+			ConnectionID:   conn.ID,
+			ConnectionPath: trimmedConnectionPath,
+			RepositoryID:   repo.ID,
+			Branch:         branch,
+			Path:           trimmedPath,
 		}
 		if createImportWorkflowableErr := tx.Create(importWorkflowable).Error; createImportWorkflowableErr != nil {
 			return nil, nil, createImportWorkflowableErr
@@ -887,11 +928,11 @@ func (api *APIControllers) createImportExportWorkflowable(
 
 	// Handle export workflowable case
 	exportWorkflowable := &db.ExportWorkflowable{
-		ConnectionID:   connection.ID,
-		ConnectionPath: connectionPath,
-		RepositoryID:   repository.ID,
-		Branch:         workflowableFields["branch"],
-		Path:           path,
+		ConnectionID:   conn.ID,
+		ConnectionPath: trimmedConnectionPath,
+		RepositoryID:   repo.ID,
+		Branch:         branch,
+		Path:           trimmedPath,
 	}
 	if createExportWorkflowableErr := tx.Create(exportWorkflowable).Error; createExportWorkflowableErr != nil {
 		return nil, nil, createExportWorkflowableErr
@@ -901,51 +942,39 @@ func (api *APIControllers) createImportExportWorkflowable(
 
 // createActionWorkflowable is a helper function to create action workflowable.
 func (api *APIControllers) createActionWorkflowable(
-	c fiber.Ctx,
 	tx *gorm.DB,
 	workspace *db.Workspace,
+	config *irminmodels.Workflowable,
 ) (*db.ActionWorkflowable, error) {
-	// Parse additional request body fields
-	workflowableFields, err := utils.ParseFormFields(
-		c,
-		[]string{"executable"},
-		[]string{"repository", "branch", "path"},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse input objects
-	inputObjects, err := utils.ParseArrayFormFields(c, "input")
-	if err != nil {
-		return nil, err
+	if config == nil {
+		return nil, errors.New("action configuration is required")
 	}
 
 	// Process input data
 	var inputData []db.ActionWorkflowableInput
-	for _, inputObject := range inputObjects {
+	for _, inputObject := range config.Input {
 		repository, getRepoErr := api.DB.GetRepositoryBySlugAndWorkspaceID(
-			inputObject["repository"],
+			inputObject.Repository,
 			workspace.ID,
 		)
 		if getRepoErr != nil {
 			return nil, getRepoErr
 		}
 
-		path := strings.TrimPrefix(inputObject["path"], "/")
+		path := strings.TrimPrefix(inputObject.Path, "/")
 		inputData = append(inputData, db.ActionWorkflowableInput{
 			RepositoryID: repository.ID,
-			Ref:          inputObject["ref"],
+			Ref:          inputObject.Ref,
 			Path:         path,
 		})
 	}
 
 	// Handle repository if specified
 	var repository *db.Repository
-	if workflowableFields["repository"] != "" {
+	if config.Repository != "" {
 		var getRepositoryBySlugAndWorkspaceIDErr error
 		repository, getRepositoryBySlugAndWorkspaceIDErr = api.DB.GetRepositoryBySlugAndWorkspaceID(
-			workflowableFields["repository"],
+			config.Repository,
 			workspace.ID,
 		)
 		if getRepositoryBySlugAndWorkspaceIDErr != nil {
@@ -957,11 +986,11 @@ func (api *APIControllers) createActionWorkflowable(
 	var workflowable db.ActionWorkflowable
 	if repository != nil {
 		repositoryID := repository.ID
-		branch := workflowableFields["branch"]
-		path := strings.TrimPrefix(workflowableFields["path"], "/")
+		branch := config.Branch
+		path := strings.TrimPrefix(config.Path, "/")
 
 		workflowable = db.ActionWorkflowable{
-			Executable:   workflowableFields["executable"],
+			Executable:   config.Executable,
 			RepositoryID: &repositoryID,
 			Branch:       &branch,
 			Path:         &path,
@@ -969,7 +998,8 @@ func (api *APIControllers) createActionWorkflowable(
 		}
 	} else {
 		workflowable = db.ActionWorkflowable{
-			Executable: workflowableFields["executable"],
+			Executable: config.Executable,
+			Inputs:     inputData,
 		}
 	}
 
@@ -981,80 +1011,132 @@ func (api *APIControllers) createActionWorkflowable(
 
 // createPipelineWorkflowable is a helper function to create pipeline workflowable.
 func (api *APIControllers) createPipelineWorkflowable(
-	c fiber.Ctx,
 	tx *gorm.DB,
 	workspace *db.Workspace,
+	config *irminmodels.Workflowable,
 ) (*db.PipelineWorkflowable, error) {
-	// Parse additional request body fields
-	workflowableFields, err := utils.ParseFormFields(c, nil, []string{"live"})
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse stages
-	requestStages, err := utils.ParseArrayFormFields(c, "stage")
-	if err != nil {
-		return nil, err
+	if config == nil {
+		return nil, errors.New("pipeline configuration is required")
 	}
 
 	// Process stages
 	var stages []db.PipelineStage
-	for orderSequence, stage := range requestStages {
+	for orderSequence, stage := range config.Stages {
 		newStage := db.PipelineStage{
 			OrderSequence: orderSequence,
-			Description:   stage["description"],
-			Write:         stage["write"] == trueString,
-			Read:          stage["read"] == trueString,
+			Description:   stage.Description,
+			Write:         stage.Write,
+			Read:          stage.Read,
 		}
 
-		switch stage["type"] {
-		case "action":
-			newStage.Type = db.PipelineStageTypeAction
-			executable := strings.TrimPrefix(stage["executable"], "/")
-			newStage.Executable = &executable
-		case "connection":
-			newStage.Type = db.PipelineStageTypeConnection
-			parsedConnID, parseConnIDErr := api.SQIDManager.Decode("connections", stage["connection"])
-			if parseConnIDErr != nil {
-				return nil, parseConnIDErr
-			}
-			connection, getConnectionByIDErr := api.DB.GetConnectionByID(uint(parsedConnID))
-			if getConnectionByIDErr != nil {
-				return nil, getConnectionByIDErr
-			}
-			writePath := strings.TrimPrefix(stage["connection_write_path"], "/")
-			readPath := strings.TrimPrefix(stage["connection_read_path"], "/")
-			newStage.ConnectionID = &connection.ID
-			newStage.ConnectionWritePath = &writePath
-			newStage.ConnectionReadPath = &readPath
-		case "repository":
-			newStage.Type = db.PipelineStageTypeRepository
-			repository, getRepositoryBySlugAndWorkspaceIDErr := api.DB.GetRepositoryBySlugAndWorkspaceID(
-				stage["repository"],
-				workspace.ID,
-			)
-			if getRepositoryBySlugAndWorkspaceIDErr != nil {
-				return nil, getRepositoryBySlugAndWorkspaceIDErr
-			}
-			branch := stage["branch"]
-			path := strings.TrimLeft(stage["path"], "/")
-			newStage.RepositoryID = &repository.ID
-			newStage.RepositoryBranch = &branch
-			newStage.RepositoryPath = &path
-		default:
-			return nil, fmt.Errorf("invalid stage type: %s", stage["type"])
+		err := api.processStageByType(&newStage, stage, workspace)
+		if err != nil {
+			return nil, err
 		}
+
 		stages = append(stages, newStage)
 	}
 
 	// Create workflowable
-	live := workflowableFields["live"] == trueString
 	pipelineWorkflowable := &db.PipelineWorkflowable{
-		Live:   live,
+		Live:   config.Live,
 		Stages: stages,
 	}
 	if createPipelineWorkflowableErr := tx.Create(pipelineWorkflowable).Error; createPipelineWorkflowableErr != nil {
 		return nil, createPipelineWorkflowableErr
 	}
 	return pipelineWorkflowable, nil
+}
+
+// processStageByType processes a stage based on its type.
+func (api *APIControllers) processStageByType(
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+	workspace *db.Workspace,
+) error {
+	switch stage.Type {
+	case irminmodels.PipelineStageTypeAction:
+		return api.processActionStage(newStage, stage)
+	case irminmodels.PipelineStageTypeConnection:
+		return api.processConnectionStage(newStage, stage)
+	case irminmodels.PipelineStageTypeRepository:
+		return api.processRepositoryStage(newStage, stage, workspace)
+	default:
+		return fmt.Errorf("invalid stage type: %s", stage.Type)
+	}
+}
+
+// processActionStage processes an action stage.
+func (api *APIControllers) processActionStage(newStage *db.PipelineStage, stage irminmodels.PipelineStage) error {
+	newStage.Type = db.PipelineStageTypeAction
+	if stage.Executable != nil {
+		executable := strings.TrimPrefix(*stage.Executable, "/")
+		newStage.Executable = &executable
+	}
+	return nil
+}
+
+// processConnectionStage processes a connection stage.
+func (api *APIControllers) processConnectionStage(newStage *db.PipelineStage, stage irminmodels.PipelineStage) error {
+	newStage.Type = db.PipelineStageTypeConnection
+	if stage.ConnectionID == nil {
+		return nil
+	}
+
+	parsedConnID, parseConnIDErr := api.SQIDManager.Decode("connections", *stage.ConnectionID)
+	if parseConnIDErr != nil {
+		return parseConnIDErr
+	}
+
+	connection, getConnectionByIDErr := api.DB.GetConnectionByID(uint(parsedConnID))
+	if getConnectionByIDErr != nil {
+		return getConnectionByIDErr
+	}
+
+	newStage.ConnectionID = &connection.ID
+
+	if stage.ConnectionWritePath != nil {
+		writePath := strings.TrimPrefix(*stage.ConnectionWritePath, "/")
+		newStage.ConnectionWritePath = &writePath
+	}
+
+	if stage.ConnectionReadPath != nil {
+		readPath := strings.TrimPrefix(*stage.ConnectionReadPath, "/")
+		newStage.ConnectionReadPath = &readPath
+	}
+
+	return nil
+}
+
+// processRepositoryStage processes a repository stage.
+func (api *APIControllers) processRepositoryStage(
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+	workspace *db.Workspace,
+) error {
+	newStage.Type = db.PipelineStageTypeRepository
+	if stage.Repository == nil {
+		return nil
+	}
+
+	repository, getRepositoryBySlugAndWorkspaceIDErr := api.DB.GetRepositoryBySlugAndWorkspaceID(
+		*stage.Repository,
+		workspace.ID,
+	)
+	if getRepositoryBySlugAndWorkspaceIDErr != nil {
+		return getRepositoryBySlugAndWorkspaceIDErr
+	}
+
+	newStage.RepositoryID = &repository.ID
+
+	if stage.RepositoryBranch != nil {
+		newStage.RepositoryBranch = stage.RepositoryBranch
+	}
+
+	if stage.RepositoryPath != nil {
+		path := strings.TrimLeft(*stage.RepositoryPath, "/")
+		newStage.RepositoryPath = &path
+	}
+
+	return nil
 }

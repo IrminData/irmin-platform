@@ -10,6 +10,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -118,28 +119,24 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(
-		c,
-		[]string{"name"},
-		[]string{
-			"description",
-			"documentation",
-			"default_branch",
-			"is_immutable",
-			"garbage_default_retention_days",
-			"garbage_default_branch_retention_days",
-		},
-	)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.CreateRepositoryRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Name == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Format the slug from the name
-	repositorySlug := utils.Slugify(fields["name"])
+	repositorySlug := utils.Slugify(req.Name)
 
 	// Make sure such repository does not exist
 	if api.DB.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
@@ -150,23 +147,20 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 
 	// Determine the default branch
 	defaultBranch := "main"
-	if fields["default_branch"] != "" {
-		defaultBranch = fields["default_branch"]
+	if req.DefaultBranch != "" {
+		defaultBranch = req.DefaultBranch
 	}
 
-	// Determine if the repository should be immutable
-	isImmutable := fields["is_immutable"] == trueString
+	// Get the immutable flag
+	isImmutable := req.IsImmutable
 
-	// Parse garbage collection settings
-	gcSettings, gcParseErr := utils.ParseGarbageCollectionSettings(fields)
-	if gcParseErr != nil {
-		api.Logger.Error("Error parsing garbage collection settings", "error", gcParseErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	// Create garbage collection settings struct
+	gcSettings := utils.GarbageCollectionSettings{
+		DefaultRetentionDays:       req.GarbageDefaultRetentionDays,
+		DefaultBranchRetentionDays: req.GarbageDefaultBranchRetentionDays,
 	}
 
-	if gcValidateErr := utils.ValidateGarbageCollectionSettings(gcSettings); gcValidateErr != nil {
+	if gcValidateErr := utils.ValidateGarbageCollectionSettings(&gcSettings); gcValidateErr != nil {
 		api.Logger.Error("Invalid garbage collection settings", "error", gcValidateErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
@@ -175,10 +169,10 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 
 	// Create the repository in the database
 	repository := &db.Repository{
-		Name:          fields["name"],
+		Name:          req.Name,
 		Slug:          repositorySlug,
-		Description:   fields["description"],
-		Documentation: fields["documentation"],
+		Description:   req.Description,
+		Documentation: req.Documentation,
 		DefaultBranch: defaultBranch,
 		IsImmutable:   isImmutable,
 		WorkspaceID:   workspace.ID,
@@ -345,43 +339,29 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	}
 	repository := repositoryLocalParams.repository
 
-	// Parse the request body - all fields are optional during update
-	fields, parseFormFieldsErr := utils.ParseFormFields(
-		c,
-		nil,
-		[]string{
-			"name",
-			"description",
-			"documentation",
-			"is_immutable",
-			"garbage_default_retention_days",
-			"garbage_default_branch_retention_days",
-		},
-	)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.UpdateRepositoryRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
 		})
 	}
 
 	// Only update fields that were provided
-	if fields["name"] != "" {
-		repository.Name = fields["name"]
+	if req.Name != "" {
+		repository.Name = req.Name
 	}
-	if fields["description"] != "" {
-		repository.Description = fields["description"]
+	if req.Description != "" {
+		repository.Description = req.Description
 	}
-	if fields["documentation"] != "" {
-		repository.Documentation = fields["documentation"]
+	if req.Documentation != "" {
+		repository.Documentation = req.Documentation
 	}
 
-	// Handle is_immutable separately since it's a boolean
-	switch fields["is_immutable"] {
-	case trueString:
-		repository.IsImmutable = true
-	case falseString:
-		repository.IsImmutable = false
+	// Handle is_immutable with pointer type for optional boolean
+	if req.IsImmutable != nil {
+		repository.IsImmutable = *req.IsImmutable
 	}
 
 	// Update the repository in the database
@@ -406,13 +386,10 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse garbage collection settings
-	gcSettings, gcParseErr := utils.ParseGarbageCollectionSettings(fields)
-	if gcParseErr != nil {
-		api.Logger.Error("Error parsing garbage collection settings", "error", gcParseErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
-		})
+	// Create garbage collection settings from request
+	gcSettings := &utils.GarbageCollectionSettings{
+		DefaultRetentionDays:       req.GarbageDefaultRetentionDays,
+		DefaultBranchRetentionDays: req.GarbageDefaultBranchRetentionDays,
 	}
 
 	// If no new default branch retention days provided, use existing value
@@ -489,17 +466,24 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 
 	repository := repositoryLocalParams.repository
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.TransferRepositoryOwnershipRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.NewOwnerID == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
 		})
 	}
 
 	// Parse the ID of the new owner from the sqid
-	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", fields["new_owner_id"])
+	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", req.NewOwnerID)
 	if decodeSqidsErr != nil {
 		api.Logger.Error("Error decoding new owner sqid", "error", decodeSqidsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{

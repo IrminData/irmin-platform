@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-api/db"
@@ -11,6 +12,7 @@ import (
 	"irmin-api/utils"
 	"time"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
@@ -168,7 +170,7 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the file from the form data
+	// Parse the multipart form data
 	form, err := c.MultipartForm()
 	if err != nil {
 		api.Logger.Error("Error parsing form data", "error", err)
@@ -176,12 +178,16 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(objectLocalParams.dict, "invalid_request")},
 		})
 	}
+
+	// Validate that a file was provided
 	if len(form.File) == 0 || len(form.File["file"]) == 0 {
 		api.Logger.Error("No file found in form data")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(objectLocalParams.dict, "invalid_request")},
 		})
 	}
+
+	// Open the uploaded file
 	file, err := form.File["file"][0].Open()
 	if err != nil {
 		api.Logger.Error("Error opening file", "error", err)
@@ -190,6 +196,16 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		})
 	}
 	defer file.Close()
+
+	// Optional: Parse metadata from form fields if provided
+	// This allows clients to send additional metadata alongside the file
+	var metadata map[string]string
+	if jsonData := form.Value["metadata"]; len(jsonData) > 0 {
+		if unmarshalErr := json.Unmarshal([]byte(jsonData[0]), &metadata); unmarshalErr != nil {
+			api.Logger.Warn("Invalid metadata JSON provided, ignoring", "error", unmarshalErr)
+			// Don't fail the request for invalid metadata, just log and continue
+		}
+	}
 
 	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
@@ -261,10 +277,17 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the new path from the form data
-	fields, err := utils.ParseFormFields(c, []string{"new_path"}, nil)
-	if err != nil {
-		api.Logger.Error("Error parsing form data", "error", err)
+	// Parse the JSON request body
+	var req irmincore.MoveObjectRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.NewPath == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(objectLocalParams.dict, "invalid_request")},
 		})
@@ -283,7 +306,7 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		objectLocalParams.repository.Slug,
 		objectLocalParams.object.Path,
 		objectLocalParams.objectRef,
-		fields["new_path"],
+		req.NewPath,
 	)
 	if err != nil {
 		api.Logger.Error("Error moving object in Data Engine", "error", err)
@@ -344,10 +367,17 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the new path from the form data
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_path"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form data", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.MoveObjectRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(objectLocalParams.dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.NewPath == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(objectLocalParams.dict, "invalid_request")},
 		})
@@ -362,13 +392,13 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		})
 	}
 
-	// Move the object to the new path in the repository at ref
+	// Copy the object to the new path in the repository at ref
 	newObject, err := dataEngine.CopyObject(
 		objectLocalParams.workspace.Slug,
 		objectLocalParams.repository.Slug,
 		objectLocalParams.object.Path,
 		objectLocalParams.objectRef,
-		fields["new_path"],
+		req.NewPath,
 	)
 	if err != nil {
 		api.Logger.Error("Error copying object in Data Engine", "error", err)

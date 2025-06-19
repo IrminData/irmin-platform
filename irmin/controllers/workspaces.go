@@ -11,6 +11,7 @@ import (
 
 	"irmin-api/db"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -96,10 +97,17 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body.
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"name"}, []string{"description"})
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.CreateWorkspaceRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Name == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -107,9 +115,9 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 
 	// Create the workspace.
 	newWorkspace := db.Workspace{
-		Name:        fields["name"],
-		Slug:        utils.Slugify(fields["name"]),
-		Description: fields["description"],
+		Name:        req.Name,
+		Slug:        utils.Slugify(req.Name),
+		Description: req.Description,
 		OwnerID:     user.ID,
 	}
 	if createWorkspaceErr := api.DB.Create(&newWorkspace).Error; createWorkspaceErr != nil {
@@ -227,22 +235,22 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body - all fields are optional during update
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, nil, []string{"name", "description"})
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body - all fields are optional during update
+	var req irmincore.UpdateWorkspaceRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Only update fields that were provided
-	if fields["name"] != "" {
-		workspace.Name = fields["name"]
-		workspace.Slug = utils.Slugify(fields["name"])
+	if req.Name != "" {
+		workspace.Name = req.Name
+		workspace.Slug = utils.Slugify(req.Name)
 	}
-	if fields["description"] != "" {
-		workspace.Description = fields["description"]
+	if req.Description != "" {
+		workspace.Description = req.Description
 	}
 	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
 		api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
@@ -353,17 +361,24 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse the request body.
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.TransferOwnershipRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.NewOwnerID == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Get the ID of the new owner.
-	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", fields["new_owner_id"])
+	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", req.NewOwnerID)
 	if decodeSqidsErr != nil {
 		api.Logger.Error("Error decoding SQID", "error", decodeSqidsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{

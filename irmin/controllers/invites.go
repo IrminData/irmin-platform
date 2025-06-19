@@ -9,6 +9,7 @@ import (
 	"irmin-api/utils"
 	"time"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/invitation"
@@ -80,42 +81,50 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse and validate request fields
-	fields, err := utils.ParseFormFields(c, []string{"email", "role"}, nil)
-	if err != nil {
+	// Parse the JSON request body
+	var req irmincore.SendInviteRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Email == "" || req.Role == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Validate email
-	if !utils.ValidateEmail(fields["email"]) {
-		api.Logger.Error("Invalid email", "email", fields["email"])
+	if !utils.ValidateEmail(req.Email) {
+		api.Logger.Error("Invalid email", "email", req.Email)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Check if user is already in workspace
-	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(fields["email"], workspace.ID)
+	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(req.Email, workspace.ID)
 	if err != nil || alreadyInWorkspace {
-		api.Logger.Error("User already in workspace", "email", fields["email"], "error", err)
+		api.Logger.Error("User already in workspace", "email", req.Email, "error", err)
 		return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "already_in_workspace")},
 		})
 	}
 
 	// Check if user is already invited
-	existingInvites, err := api.DB.GetInvitesByEmail(fields["email"])
+	existingInvites, err := api.DB.GetInvitesByEmail(req.Email)
 	if err != nil {
-		api.Logger.Error("Error checking existing invites", "email", fields["email"], "error", err)
+		api.Logger.Error("Error checking existing invites", "email", req.Email, "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 	for _, invite := range existingInvites {
 		if invite.WorkspaceID == workspace.ID {
-			api.Logger.Error("User already invited to workspace", "email", fields["email"])
+			api.Logger.Error("User already invited to workspace", "email", req.Email)
 			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
 				Errors: []string{api.lm.T(dict, "already_invited_to_workspace")},
 			})
@@ -123,7 +132,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	}
 
 	// Decode the role id
-	roleID, err := api.SQIDManager.Decode("roles", fields["role"])
+	roleID, err := api.SQIDManager.Decode("roles", req.Role)
 	if err != nil {
 		api.Logger.Error("Error decoding role", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -140,7 +149,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		})
 	}
 	if role == nil {
-		api.Logger.Error("Role not found", "role", fields["role"])
+		api.Logger.Error("Role not found", "role", req.Role)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -152,7 +161,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	// Create the invite in the database
 	expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
 	newInvite := db.Invite{
-		Email:       fields["email"],
+		Email:       req.Email,
 		ExpiresAt:   expiresAt,
 		RoleID:      role.ID,
 		InvitedByID: user.ID,
@@ -185,7 +194,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	// Create the invite in Clerk
 	expiresInDays := int64(api.Env.InviteExpiresInDays)
 	clerkInvite, createClerkInviteErr := invitation.Create(c.Context(), &invitation.CreateParams{
-		EmailAddress:  fields["email"],
+		EmailAddress:  req.Email,
 		RedirectURL:   &inviteAcceptanceURL,
 		ExpiresInDays: &expiresInDays,
 	})
@@ -259,16 +268,24 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request
-	fields, err := utils.ParseFormFields(c, []string{"role"}, nil)
-	if err != nil {
+	// Parse the JSON request body
+	var req irmincore.UpdateInviteRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Role == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Parse the role id
-	roleID, err := api.SQIDManager.Decode("roles", fields["role"])
+	roleID, err := api.SQIDManager.Decode("roles", req.Role)
 	if err != nil {
 		api.Logger.Error("Error decoding role", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -285,7 +302,7 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 		})
 	}
 	if role == nil {
-		api.Logger.Error("Role not found", "role", fields["role"])
+		api.Logger.Error("Role not found", "role", req.Role)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})

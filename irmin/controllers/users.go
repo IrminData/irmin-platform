@@ -8,6 +8,7 @@ import (
 	"irmin-api/utils"
 	"strings"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -155,17 +156,24 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse form fields
-	fields, err := utils.ParseFormFields(c, []string{"roles"}, nil)
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse JSON request body
+	var req irmincore.UpdateUserRolesRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if len(req.Roles) == 0 {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Parse and validate roles
-	newRoles := parseAndValidateRoles(api, fields["roles"])
+	newRoles := parseAndValidateRoles(api, req.Roles)
 
 	// Update user roles
 	workspaceMember, err = api.DB.UpdateWorkspaceUserRoles(workspaceMember.UserID, workspace.ID, newRoles)
@@ -200,7 +208,7 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		Description: fmt.Sprintf(
 			"User %s roles updated to %s",
 			workspaceMember.User.Email,
-			fields["roles"],
+			strings.Join(req.Roles, ","),
 		),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
@@ -213,8 +221,7 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 }
 
 // parseAndValidateRoles converts string roles to UserWorkspaceRole slice.
-func parseAndValidateRoles(api *APIControllers, rolesStr string) []uint {
-	requestedRoles := strings.Split(rolesStr, ",")
+func parseAndValidateRoles(api *APIControllers, requestedRoles []string) []uint {
 	var newRoles []uint
 
 	for _, role := range requestedRoles {

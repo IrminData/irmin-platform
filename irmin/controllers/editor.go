@@ -13,6 +13,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -99,15 +100,26 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse the form data
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"type"}, []string{"content"})
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.CreateEditorItemRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	content := fields["content"]
+
+	// Validate required fields
+	if req.Type == "" {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	content := ""
+	if req.Content != nil {
+		content = *req.Content
+	}
 
 	// Create bucket client
 	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
@@ -121,7 +133,7 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 
 	// Construct the full S3 key for the file
 	key := "editor/" + workspace.Slug + "/" + path
-	if fields["type"] == "folder" {
+	if req.Type == "folder" {
 		key += "/"
 	}
 
@@ -231,15 +243,23 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 		})
 	}
 
-	// Parse the form data
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"destination_path"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.MoveEditorItemRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	destinationPath := strings.TrimPrefix(fields["destination_path"], "/")
+
+	// Validate required fields
+	if req.DestinationPath == "" {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{"destination_path is required"},
+		})
+	}
+
+	destinationPath := strings.TrimPrefix(req.DestinationPath, "/")
 	if destinationPath == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"destination_path is required"},
@@ -377,20 +397,18 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 		})
 	}
 
-	// Get the optional input data repositories, refs and paths from form fields
-	inputObjects, parseArrayFormFieldsErr := utils.ParseArrayFormFields(c, "input")
-	if parseArrayFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseArrayFormFieldsErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+	// Parse the JSON request body for optional input data
+	var req irmincore.ExecuteEditorItemRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		// If JSON parsing fails, assume no input data (optional)
+		req.Input = nil
 	}
 
 	// Initialize a map to store the input objects
 	inputFiles := make(map[string][]byte)
 
 	// Check if we have input data repositories and paths
-	if len(inputObjects) > 0 {
+	if len(req.Input) > 0 {
 		// Initialize Data Engine client
 		dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
 		if createDataEngineClientErr != nil {
@@ -404,10 +422,10 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 		var futures []utils.FutureResult[[]byte]
 
 		// Launch concurrent fetches for each input object
-		for _, input := range inputObjects {
-			inputRepository := input["repository"]
-			inputPath := strings.TrimPrefix(input["path"], "/")
-			inputRef := input["ref"]
+		for _, input := range req.Input {
+			inputRepository := input.Repository
+			inputPath := strings.TrimPrefix(input.Path, "/")
+			inputRef := input.Ref
 
 			// Create an async operation for fetching the object
 			future := utils.Async(func() ([]byte, error) {
@@ -426,7 +444,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 				})
 			}
 			// Add the object to the input objects map using the original path
-			inputFiles[inputObjects[i]["path"]] = content
+			inputFiles[req.Input[i].Path] = content
 		}
 	}
 

@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -74,20 +75,24 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, err := utils.ParseFormFields(c, []string{"name", "from"}, []string{"is_immutable"})
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse the JSON request body
+	var req irmincore.CreateBranchRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Determine if the branch should be immutable
-	isImmutable := false
-	if fields["is_immutable"] != "" {
-		isImmutable = fields["is_immutable"] == trueString
+	// Validate required fields
+	if req.Name == "" || req.From == "" {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
 	}
+
+	// Get the immutable flag
+	isImmutable := req.IsImmutable
 
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
@@ -99,7 +104,7 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 	}
 
 	// Create the branch in the data engine.
-	branch, err := dataEngine.CreateBranch(workspace.Slug, repository.Slug, fields["name"], fields["from"], isImmutable)
+	branch, err := dataEngine.CreateBranch(workspace.Slug, repository.Slug, req.Name, req.From, isImmutable)
 	if err != nil {
 		api.Logger.Error("Error creating branch in Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -145,10 +150,10 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, err := utils.ParseFormFields(c, nil, []string{"name", "is_immutable"})
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse the JSON request body
+	var req irmincore.UpdateBranchRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -156,14 +161,14 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 
 	// Determine if the branch should be immutable
 	isImmutable := branch.IsImmutable
-	if fields["is_immutable"] != "" {
-		isImmutable = fields["is_immutable"] == trueString
+	if req.IsImmutable != nil {
+		isImmutable = *req.IsImmutable
 	}
 
 	// Determine what the new branch name should be
 	newBranchName := branch.Name
-	if fields["name"] != "" {
-		newBranchName = fields["name"]
+	if req.Name != "" {
+		newBranchName = req.Name
 	}
 
 	// Delete the cached objects for the branch in a go routine

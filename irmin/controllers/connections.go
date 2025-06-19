@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -73,25 +74,24 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(
-		c,
-		[]string{"name", "connector"},
-		[]string{"description", "documentation"},
-	)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.CreateConnectionRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Parse connection details and settings form the request body
-	details := utils.ParseObjectFormFields(c, "details")
-	settings := utils.ParseObjectFormFields(c, "settings")
+	// Validate required fields
+	if req.Name == "" || req.Connector == "" {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
 
 	// Parse the connector ID
-	connectorID, decodeConnectorSQIDErr := api.SQIDManager.Decode("connectors", fields["connector"])
+	connectorID, decodeConnectorSQIDErr := api.SQIDManager.Decode("connectors", req.Connector)
 	if decodeConnectorSQIDErr != nil {
 		api.Logger.Error("Error decoding connector sqid", "error", decodeConnectorSQIDErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -99,13 +99,17 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Convert any maps to string maps for compatibility with database models
+	detailsStr := utils.ConvertToStringMap(req.Details)
+	settingsStr := utils.ConvertToStringMap(req.Settings)
+
 	// Create the connection
 	connection := &db.Connection{
-		Name:          fields["name"],
-		Description:   fields["description"],
-		Documentation: fields["documentation"],
-		Details:       details,
-		Settings:      settings,
+		Name:          req.Name,
+		Description:   req.Description,
+		Documentation: req.Documentation,
+		Details:       detailsStr,
+		Settings:      settingsStr,
 		ConnectorID:   uint(connectorID),
 		OwnerID:       user.ID,
 		WorkspaceID:   workspace.ID,
@@ -172,6 +176,37 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 	})
 }
 
+// updateConnectionFields updates the connection fields based on the request.
+func (api *APIControllers) updateConnectionFields(
+	connection *db.Connection,
+	req irmincore.UpdateConnectionRequest,
+) error {
+	// Only update fields that were provided
+	if req.Name != "" {
+		connection.Name = req.Name
+	}
+	if req.Description != "" {
+		connection.Description = req.Description
+	}
+	if req.Documentation != "" {
+		connection.Documentation = req.Documentation
+	}
+	if len(req.Details) > 0 {
+		connection.Details = utils.ConvertToStringMap(req.Details)
+	}
+	if len(req.Settings) > 0 {
+		connection.Settings = utils.ConvertToStringMap(req.Settings)
+	}
+	if req.Connector != "" {
+		connectorID, err := api.SQIDManager.Decode("connectors", req.Connector)
+		if err != nil {
+			return fmt.Errorf("error decoding connector sqid: %w", err)
+		}
+		connection.ConnectorID = uint(connectorID)
+	}
+	return nil
+}
+
 func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -180,49 +215,21 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body - all fields are optional during update
-	fields, parseFormFieldsErr := utils.ParseFormFields(
-		c,
-		nil, // No required fields for update
-		[]string{"name", "description", "documentation", "connector"},
-	)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.UpdateConnectionRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Parse connection details and settings form the request body
-	details := utils.ParseObjectFormFields(c, "details")
-	settings := utils.ParseObjectFormFields(c, "settings")
-
-	// Only update fields that were provided
-	if fields["name"] != "" {
-		connection.Name = fields["name"]
-	}
-	if fields["description"] != "" {
-		connection.Description = fields["description"]
-	}
-	if fields["documentation"] != "" {
-		connection.Documentation = fields["documentation"]
-	}
-	if len(details) > 0 {
-		connection.Details = details
-	}
-	if len(settings) > 0 {
-		connection.Settings = settings
-	}
-	if fields["connector"] != "" {
-		// Parse the connector ID
-		connectorID, decodeConnectorSQIDErr := api.SQIDManager.Decode("connectors", fields["connector"])
-		if decodeConnectorSQIDErr != nil {
-			api.Logger.Error("Error decoding connector sqid", "error", decodeConnectorSQIDErr)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "invalid_request")},
-			})
-		}
-		connection.ConnectorID = uint(connectorID)
+	// Update the connection fields
+	if err := api.updateConnectionFields(connection, req); err != nil {
+		api.Logger.Error("Error updating connection fields", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
 	}
 
 	// Update the connection
@@ -299,17 +306,24 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"new_owner_id"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.TransferConnectionOwnershipRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.NewOwnerID == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Parse the connector ID
-	newOwnerID, decodeNewOwnerSQIDErr := api.SQIDManager.Decode("users", fields["new_owner_id"])
+	newOwnerID, decodeNewOwnerSQIDErr := api.SQIDManager.Decode("users", req.NewOwnerID)
 	if decodeNewOwnerSQIDErr != nil {
 		api.Logger.Error("Error decoding connector sqid", "error", decodeNewOwnerSQIDErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{

@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 
 	"github.com/gofiber/fiber/v3"
@@ -57,10 +58,17 @@ func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse and validate request fields
-	fields, err := utils.ParseFormFields(c, []string{"name"}, []string{"color", "description"})
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse the JSON request body
+	var req irmincore.CreateTagRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Name == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -68,9 +76,9 @@ func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 
 	// Create the tag
 	tag := &db.Tag{
-		Name:        fields["name"],
-		Color:       fields["color"],
-		Description: fields["description"],
+		Name:        req.Name,
+		Color:       req.Color,
+		Description: req.Description,
 		WorkspaceID: workspace.ID,
 	}
 	if createErr := api.DB.Create(&tag); createErr.Error != nil {
@@ -373,24 +381,24 @@ func (api *APIControllers) TagsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse and validate request fields
-	fields, err := utils.ParseFormFields(c, nil, []string{"name", "color", "description"})
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse the JSON request body
+	var req irmincore.UpdateTagRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Update the tag fields
-	if fields["name"] != "" {
-		tagWithAssets.Tag.Name = fields["name"]
+	if req.Name != "" {
+		tagWithAssets.Tag.Name = req.Name
 	}
-	if fields["color"] != "" {
-		tagWithAssets.Tag.Color = fields["color"]
+	if req.Color != "" {
+		tagWithAssets.Tag.Color = req.Color
 	}
-	if fields["description"] != "" {
-		tagWithAssets.Tag.Description = fields["description"]
+	if req.Description != "" {
+		tagWithAssets.Tag.Description = req.Description
 	}
 
 	// Save the updated tag

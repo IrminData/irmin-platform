@@ -12,6 +12,7 @@ import (
 
 	"slices"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
@@ -233,16 +234,42 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse and validate request fields
-	fields, parseFormFieldsErr := utils.ParseFormFields(
-		c,
-		[]string{"effect", "action", "resource", "principal"},
-		[]string{"resource_id", "role_id", "user_id"},
-	)
-	if parseFormFieldsErr != nil {
+	// Parse the JSON request body
+	var req irmincore.CreatePolicyRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
+	}
+
+	// Validate required fields
+	if req.Effect == "" || req.Action == "" || req.Resource == "" || req.Principal == "" {
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Convert to fields map for compatibility with existing helper functions
+	fields := map[string]string{
+		"effect":      string(req.Effect),
+		"action":      string(req.Action),
+		"resource":    string(req.Resource),
+		"principal":   string(req.Principal),
+		"resource_id": "",
+		"role_id":     "",
+		"user_id":     "",
+	}
+
+	// Safely handle optional fields
+	if req.ResourceID != nil {
+		fields["resource_id"] = *req.ResourceID
+	}
+	if req.RoleID != nil {
+		fields["role_id"] = *req.RoleID
+	}
+	if req.UserID != nil {
+		fields["user_id"] = *req.UserID
 	}
 
 	// Validate and create policy
@@ -363,19 +390,52 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse and validate request fields
-	fields, err := utils.ParseFormFields(
-		c,
-		nil,
-		[]string{"effect", "action", "resource", "principal", "resource_id", "role_id", "user_id"},
-	)
-	if err != nil {
+	// Parse the JSON request body
+	var req irmincore.UpdatePolicyRequest
+	if bindErr := c.Bind().JSON(&req); bindErr != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Update required fields
+	// Convert to fields map for compatibility with existing helper functions
+	fields := map[string]string{
+		"effect":      "",
+		"action":      "",
+		"resource":    "",
+		"principal":   "",
+		"resource_id": "",
+		"role_id":     "",
+		"user_id":     "",
+	}
+
+	// Only include fields that were actually provided in the request
+	if req.Effect != "" {
+		fields["effect"] = string(req.Effect)
+	}
+	if req.Action != "" {
+		fields["action"] = string(req.Action)
+	}
+	if req.Resource != "" {
+		fields["resource"] = string(req.Resource)
+	}
+	if req.Principal != "" {
+		fields["principal"] = string(req.Principal)
+	}
+
+	// Safely handle optional pointer fields
+	if req.ResourceID != nil {
+		fields["resource_id"] = *req.ResourceID
+	}
+	if req.RoleID != nil {
+		fields["role_id"] = *req.RoleID
+	}
+	if req.UserID != nil {
+		fields["user_id"] = *req.UserID
+	}
+
+	// Update required fields only if they were provided
 	if fields["effect"] != "" {
 		policy.Effect = db.PolicyEffect(fields["effect"])
 	}

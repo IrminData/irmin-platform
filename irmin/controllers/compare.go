@@ -8,6 +8,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -67,33 +68,36 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the form fields
-	fields, err := utils.ParseFormFields(
-		c,
-		[]string{"base_ref", "compare_ref"},
-		[]string{"description", "strategy", "squash", "allow_empty"},
-	)
-	if err != nil {
-		api.Logger.Error("Error parsing form fields", "error", err)
+	// Parse the JSON request body
+	var req irmincore.MergeRefsRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.BaseRef == "" || req.CompareRef == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
 	// Get the base and compare refs
-	baseRef := fields["base_ref"]
-	compareRef := fields["compare_ref"]
+	baseRef := req.BaseRef
+	compareRef := req.CompareRef
 
 	// Get the description and strategy
-	description := fields["description"]
-	strategy := fields["strategy"]
+	description := req.Description
+	strategy := req.Strategy
 	if strategy == "default" {
 		strategy = ""
 	}
 
-	// Determine if squash and allow_empty are true
-	squash := fields["squash"] == trueString
-	allowEmpty := fields["allow_empty"] == trueString
+	// Get squash and allow_empty flags
+	squash := req.Squash
+	allowEmpty := req.AllowEmpty
 
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)

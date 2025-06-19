@@ -9,6 +9,7 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -108,10 +109,17 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"branch", "message"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.CreateCommitRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Branch == "" || req.Message == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -130,8 +138,8 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	commit, commitChangesErr := dataEngine.CommitChanges(
 		workspace.Slug,
 		repository.Slug,
-		fields["branch"],
-		fields["message"],
+		req.Branch,
+		req.Message,
 		user.Email,
 		true,
 	)
@@ -145,7 +153,7 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeCreate,
-		Description:  fmt.Sprintf("Commit %s created on branch %s", commit.Hash, fields["branch"]),
+		Description:  fmt.Sprintf("Commit %s created on branch %s", commit.Hash, req.Branch),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
@@ -210,10 +218,17 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"branch"}, []string{"path", "path_type"})
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse the JSON request body
+	var req irmincore.RevertUncommittedChangesRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request body", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Branch == "" {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -232,9 +247,9 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 	revertUncommittedChangesErr := dataEngine.RevertUncommitedChanges(
 		workspace.Slug,
 		repository.Slug,
-		fields["branch"],
-		fields["path"],
-		fields["path_type"],
+		req.Branch,
+		req.Path,
+		req.PathType,
 	)
 	if revertUncommittedChangesErr != nil {
 		api.Logger.Error("Error reverting uncommitted changes in Data Engine", "error", revertUncommittedChangesErr)
@@ -246,7 +261,7 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:         db.LogEventTypeInfo,
-		Description:  fmt.Sprintf("Uncommitted changes reverted on branch %s", fields["branch"]),
+		Description:  fmt.Sprintf("Uncommitted changes reverted on branch %s", req.Branch),
 		UserID:       &user.ID,
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,

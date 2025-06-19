@@ -7,9 +7,9 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"strconv"
 	"time"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
@@ -58,10 +58,17 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the request body.
-	fields, parseFormFieldsErr := utils.ParseFormFields(c, []string{"name", "expiry"}, nil)
-	if parseFormFieldsErr != nil {
-		api.Logger.Error("Error parsing form fields", "error", parseFormFieldsErr)
+	// Parse JSON request body
+	var req irmincore.CreateCredentialRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		api.Logger.Error("Error parsing JSON request", "error", err)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "invalid_request")},
+		})
+	}
+
+	// Validate required fields
+	if req.Name == "" || req.Expiry <= 0 {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -76,21 +83,12 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse the expiry field as an integer.
-	expiryMs, parseExpiryErr := strconv.Atoi(fields["expiry"])
-	if parseExpiryErr != nil {
-		api.Logger.Error("Error parsing expiry field", "error", parseExpiryErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
 	// Expiry is seconds until expiry, so add it to the current time.
-	expiresAt := time.Now().Add(time.Duration(expiryMs) * time.Second).UTC()
+	expiresAt := time.Now().Add(time.Duration(req.Expiry) * time.Second).UTC()
 
 	// Create the API token.
 	apiToken := &db.APIToken{
-		Name:      fields["name"],
+		Name:      req.Name,
 		Token:     fmt.Sprintf("cred_%s", token),
 		ExpiresAt: expiresAt,
 		UserID:    user.ID,

@@ -1,90 +1,86 @@
 package lib
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
-	"strconv"
 
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
-// parseOptionalFields parses optional schedule fields from the form data.
-func parseOptionalFields(fields map[string]string) (db.Schedule, error) {
+const (
+	defaultMaxRetries  = 3
+	defaultMaxRuntime  = 120
+	defaultMinInterval = 120
+)
+
+// parseOptionalFields parses optional schedule fields from the structured data.
+func parseOptionalFields(scheduleReq *irminmodels.Schedule) db.Schedule {
 	schedule := db.Schedule{}
 
-	// Parse max retries
-	if maxRetriesStr, ok := fields["max_retries"]; ok && maxRetriesStr != "" {
-		maxRetries, err := strconv.Atoi(maxRetriesStr)
-		if err != nil {
-			return schedule, err
-		}
-		schedule.MaxRetries = maxRetries
+	// Set max retries with default
+	if scheduleReq.MaxRetries > 0 {
+		schedule.MaxRetries = scheduleReq.MaxRetries
 	} else {
-		schedule.MaxRetries = 3
+		schedule.MaxRetries = defaultMaxRetries
 	}
 
-	// Parse max runtime
-	if maxRuntimeStr, ok := fields["max_runtime"]; ok && maxRuntimeStr != "" {
-		maxRuntime, err := strconv.Atoi(maxRuntimeStr)
-		if err != nil {
-			return schedule, err
-		}
-		schedule.MaxRuntime = maxRuntime
+	// Set max runtime with default
+	if scheduleReq.MaxRuntime > 0 {
+		schedule.MaxRuntime = scheduleReq.MaxRuntime
 	} else {
-		schedule.MaxRuntime = 120
+		schedule.MaxRuntime = defaultMaxRuntime
 	}
 
-	// Parse min interval
-	if minIntervalStr, ok := fields["min_interval"]; ok && minIntervalStr != "" {
-		minInterval, err := strconv.Atoi(minIntervalStr)
-		if err != nil {
-			return schedule, err
-		}
-		schedule.MinInterval = minInterval
+	// Set min interval with default
+	if scheduleReq.MinInterval > 0 {
+		schedule.MinInterval = scheduleReq.MinInterval
 	} else {
-		schedule.MinInterval = 120
+		schedule.MinInterval = defaultMinInterval
 	}
 
-	return schedule, nil
+	return schedule
 }
 
-// parseTrigger parses a single trigger from the form data.
+// parseTrigger parses a single trigger from the structured data.
 func parseTrigger(
-	trigger map[string]string,
+	trigger irminmodels.ScheduleTrigger,
 	d *db.Database,
 	workspace db.Workspace,
 	sqidManager *utils.SQIDManager,
 ) (*db.WorkflowTrigger, error) {
-	switch trigger["type"] {
-	case "time":
-		rrule := trigger["rrule"]
-		cron := trigger["cron"]
+	switch trigger.Type {
+	case irminmodels.TimeTriggerType:
 		return &db.WorkflowTrigger{
 			Type:  db.TimeTriggerType,
-			RRule: &rrule,
-			Cron:  &cron,
+			RRule: trigger.RRule,
+			Cron:  trigger.Cron,
 		}, nil
 
-	case "repository-event":
-		repositorySlug := trigger["repository"]
-		repository, err := d.GetRepositoryBySlugAndWorkspaceID(repositorySlug, workspace.ID)
+	case irminmodels.RepositoryTriggerType:
+		if trigger.Repository == nil || trigger.RepositoryEvent == nil {
+			return nil, errors.New("repository and event are required for repository-event trigger")
+		}
+		repository, err := d.GetRepositoryBySlugAndWorkspaceID(*trigger.Repository, workspace.ID)
 		if err != nil {
 			return nil, err
 		}
-		event := lakefs.WebhookEventType(trigger["event"])
-		ref := trigger["ref"]
+		event := lakefs.WebhookEventType(*trigger.RepositoryEvent)
 		return &db.WorkflowTrigger{
 			Type:            db.RepositoryTriggerType,
 			RepositoryEvent: &event,
 			RepositoryID:    &repository.ID,
-			RepositoryRef:   &ref,
+			RepositoryRef:   trigger.RepositoryRef,
 		}, nil
 
-	case "workflow-run-event":
-		workflowSqid := trigger["workflow"]
-		workflowID, err := sqidManager.Decode("workflows", workflowSqid)
+	case irminmodels.WorkflowRunTriggerType:
+		if trigger.WorkflowID == nil || trigger.WorkflowRunEvent == nil {
+			return nil, errors.New("workflow and event are required for workflow-run-event trigger")
+		}
+		workflowID, err := sqidManager.Decode("workflows", *trigger.WorkflowID)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +88,7 @@ func parseTrigger(
 		if err != nil {
 			return nil, err
 		}
-		event := db.WorkflowRunEventType(trigger["event"])
+		event := db.WorkflowRunEventType(*trigger.WorkflowRunEvent)
 		return &db.WorkflowTrigger{
 			Type:             db.WorkflowRunTriggerType,
 			WorkflowRunEvent: &event,
@@ -100,7 +96,7 @@ func parseTrigger(
 		}, nil
 
 	default:
-		return nil, fmt.Errorf("invalid trigger type: %s", trigger["type"])
+		return nil, fmt.Errorf("invalid trigger type: %s", trigger.Type)
 	}
 }
 
@@ -112,26 +108,51 @@ func ParseScheduleFromRequest(
 	workspace db.Workspace,
 	sqidManager *utils.SQIDManager,
 ) (*db.Schedule, error) {
-	// Parse the request body
-	fields, err := utils.ParseFormFields(c, nil, []string{"max_retries", "max_runtime", "min_interval"})
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse schedule triggers from the request body
-	triggers, err := utils.ParseArrayFormFields(c, "trigger")
-	if err != nil {
+	// Parse JSON request body
+	var scheduleReq irminmodels.Schedule
+	if err := c.Bind().JSON(&scheduleReq); err != nil {
 		return nil, err
 	}
 
 	// Parse optional fields
-	schedule, err := parseOptionalFields(fields)
-	if err != nil {
-		return nil, err
-	}
+	schedule := parseOptionalFields(&scheduleReq)
 
 	// Parse triggers
-	for _, trigger := range triggers {
+	for _, trigger := range scheduleReq.Triggers {
+		workflowTrigger, triggerParseErr := parseTrigger(trigger, d, workspace, sqidManager)
+		if triggerParseErr != nil {
+			return nil, triggerParseErr
+		}
+		if workflowTrigger != nil {
+			schedule.Triggers = append(schedule.Triggers, *workflowTrigger)
+		}
+	}
+
+	return &schedule, nil
+}
+
+// ParseScheduleFromData creates a schedule object from structured data instead of parsing from request context.
+// This is used when schedule data is part of a larger JSON request structure.
+func ParseScheduleFromData(
+	scheduleReq *irminmodels.Schedule,
+	d *db.Database,
+	workspace db.Workspace,
+	sqidManager *utils.SQIDManager,
+) (*db.Schedule, error) {
+	if scheduleReq == nil {
+		// Return default schedule if no schedule data provided
+		return &db.Schedule{
+			MaxRetries:  defaultMaxRetries,
+			MaxRuntime:  defaultMaxRuntime,
+			MinInterval: defaultMinInterval,
+		}, nil
+	}
+
+	// Parse optional fields
+	schedule := parseOptionalFields(scheduleReq)
+
+	// Parse triggers
+	for _, trigger := range scheduleReq.Triggers {
 		workflowTrigger, triggerParseErr := parseTrigger(trigger, d, workspace, sqidManager)
 		if triggerParseErr != nil {
 			return nil, triggerParseErr
