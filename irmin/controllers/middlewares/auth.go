@@ -61,27 +61,12 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
 	}
 
-	// Sync user with Clerk
-	irminUser, err = api.syncUserWithClerk(ctx, irminUser, clerkID)
+	// Sync user with Clerk and Novu (atomic, under lock)
+	irminUser, err = api.syncUserWithClerkAndNovu(ctx, irminUser, clerkID, locale)
 	if err != nil {
-		api.Logger.Error("Error syncing user with Clerk", "error", err)
+		api.Logger.Error("Error syncing user with Clerk/Novu", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
-
-	// Make sure the user is a subscriber in Novu, asynchronously
-	go func() {
-		// Use background context with timeout to avoid request cancellation affecting this operation
-		novuCtx, cancel := context.WithTimeout(context.Background(), NovuSubscriberTimeout)
-		defer cancel()
-
-		subscriber, novuErr := lib.EnsureNovuSubscriber(novuCtx, api.SQIDManager, api.Env, locale, irminUser)
-		if novuErr != nil {
-			api.Logger.Error("Error ensuring Novu subscriber", "error", novuErr)
-		}
-		if subscriber != nil {
-			api.Logger.Info("Novu subscriber", "subscriber.id", subscriber.ID)
-		}
-	}()
 
 	// Set the user in the context for subsequent handlers
 	c.Locals("user", irminUser)
@@ -133,11 +118,12 @@ func (api *APIMiddlewares) validateAndGetUserFromToken(token string) (*db.User, 
 	return irminUser, clerkID, nil
 }
 
-// syncUserWithClerk synchronizes user data with Clerk, either updating existing user or creating new one.
-func (api *APIMiddlewares) syncUserWithClerk(
+// syncUserWithClerkAndNovu synchronizes user data with Clerk and Novu atomically under a lock.
+func (api *APIMiddlewares) syncUserWithClerkAndNovu(
 	ctx context.Context,
 	irminUser *db.User,
 	clerkID string,
+	locale string,
 ) (*db.User, error) {
 	// Get the user details from Clerk
 	clerkUser, primaryEmail, primaryPhone, err := api.getUserFromClerk(ctx, clerkID)
@@ -145,10 +131,16 @@ func (api *APIMiddlewares) syncUserWithClerk(
 		return nil, fmt.Errorf("error getting user details from Clerk: %w", err)
 	}
 
-	// If user exists and cache is expired, update asynchronously
+	api.userMutex.Lock()
+	defer api.userMutex.Unlock()
+
+	// If user exists and cache is expired, update user fields
 	if irminUser != nil && irminUser.ID != 0 && irminUser.UpdatedAt.Before(time.Now().Add(-UserDetailsCacheMaxAge)) {
-		go api.updateUser(irminUser, clerkUser, primaryEmail, primaryPhone)
-		return irminUser, nil
+		irminUser.FirstName = *clerkUser.FirstName
+		irminUser.LastName = *clerkUser.LastName
+		irminUser.Email = primaryEmail
+		irminUser.Phone = primaryPhone
+		irminUser.ProfilePicture = *clerkUser.ImageURL
 	}
 
 	// If user doesn't exist, create synchronously
@@ -166,19 +158,27 @@ func (api *APIMiddlewares) syncUserWithClerk(
 		}
 	}
 
-	return irminUser, nil
-}
-
-// updateUser updates user details.
-func (api *APIMiddlewares) updateUser(irminUser *db.User, clerkUser *clerk.User, primaryEmail, primaryPhone string) {
-	irminUser.FirstName = *clerkUser.FirstName
-	irminUser.LastName = *clerkUser.LastName
-	irminUser.Email = primaryEmail
-	irminUser.Phone = primaryPhone
-	irminUser.ProfilePicture = *clerkUser.ImageURL
-	if saveErr := api.DB.Save(&irminUser).Error; saveErr != nil {
-		api.Logger.Error("Error updating user", "error", saveErr)
+	// Ensure the user is a subscriber in Novu (if not already)
+	if irminUser.NovuSubscriberID == "" {
+		novuCtx, cancel := context.WithTimeout(context.Background(), NovuSubscriberTimeout)
+		defer cancel()
+		subscriber, novuErr := lib.EnsureNovuSubscriber(novuCtx, api.SQIDManager, api.Env, locale, irminUser)
+		switch {
+		case novuErr != nil:
+			api.Logger.ErrorContext(ctx, "Error ensuring Novu subscriber", "error", novuErr)
+		case subscriber != nil && subscriber.ID != nil:
+			irminUser.NovuSubscriberID = *subscriber.ID
+		case subscriber != nil && subscriber.ID == nil:
+			api.Logger.ErrorContext(ctx, "Novu subscriber created but ID is nil", "subscriber", subscriber)
+		}
 	}
+
+	// Save the user after all updates
+	if saveErr := api.DB.Save(&irminUser).Error; saveErr != nil {
+		return nil, fmt.Errorf("error saving user: %w", saveErr)
+	}
+
+	return irminUser, nil
 }
 
 // getUserFromClerk gets the user from Clerk and returns the user, primary email and primary phone number.

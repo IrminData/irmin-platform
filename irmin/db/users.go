@@ -8,14 +8,15 @@ import (
 
 type User struct {
 	gorm.Model
-	ClerkID        string          `json:"clerk_id"        gorm:"uniqueIndex"`
-	FirstName      string          `json:"first_name"`
-	LastName       string          `json:"last_name"`
-	Email          string          `json:"email"           gorm:"index"`
-	Phone          string          `json:"phone"`
-	Company        string          `json:"company"`
-	ProfilePicture string          `json:"profile_picture"`
-	Workspaces     []WorkspaceUser `json:"workspaces"      gorm:"foreignKey:UserID"`
+	ClerkID          string          `json:"clerk_id"           gorm:"uniqueIndex"`
+	NovuSubscriberID string          `json:"novu_subscriber_id"`
+	FirstName        string          `json:"first_name"`
+	LastName         string          `json:"last_name"`
+	Email            string          `json:"email"              gorm:"index"`
+	Phone            string          `json:"phone"`
+	Company          string          `json:"company"`
+	ProfilePicture   string          `json:"profile_picture"`
+	Workspaces       []WorkspaceUser `json:"workspaces"         gorm:"foreignKey:UserID"`
 }
 
 type WorkspaceUserRole struct {

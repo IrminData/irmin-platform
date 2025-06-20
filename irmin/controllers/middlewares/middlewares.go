@@ -7,6 +7,7 @@ import (
 	"irmin-api/orchestrator"
 	"irmin-api/utils"
 	"log/slog"
+	"sync"
 )
 
 type APIMiddlewares struct {
@@ -17,6 +18,7 @@ type APIMiddlewares struct {
 	SQIDManager       *utils.SQIDManager
 	lm                *locales.LocaleManager
 	permissionService *lib.PermissionService
+	userMutex         sync.RWMutex // Protects user operations to prevent race conditions
 }
 
 func NewAPIMiddlewares(
