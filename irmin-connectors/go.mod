@@ -3,13 +3,13 @@ module irmin-connectors
 go 1.23.1
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250514194922-36cb1175a19d
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250618110158-2f164fd15dca
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	gorm.io/datatypes v1.2.5
-	gorm.io/driver/postgres v1.5.11
-	gorm.io/gorm v1.26.1
+	gorm.io/driver/postgres v1.6.0
+	gorm.io/gorm v1.30.0
 )
 
 require (
@@ -18,8 +18,8 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
-	github.com/go-sql-driver/mysql v1.9.2 // indirect
-	github.com/gofiber/schema v1.4.0 // indirect
+	github.com/go-sql-driver/mysql v1.9.3 // indirect
+	github.com/gofiber/schema v1.5.0 // indirect
 	github.com/gofiber/utils/v2 v2.0.0-beta.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
@@ -40,11 +40,11 @@ require (
 	github.com/valyala/fasthttp v1.62.0 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.7 // indirect
+	gorm.io/driver/mysql v1.6.0 // indirect
 )

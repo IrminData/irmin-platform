@@ -54,8 +54,10 @@ func registerConnector(
 		var res *irminmodels.IrminAPIResponse
 		newConnector, res, err = apiClient.UpdateRegisteredConnector(
 			connectorRegistration.IrminID,
-			connectorURL,
-			token,
+			irmincore.ConnectorRequest{
+				URL:         connectorURL,
+				SystemToken: token,
+			},
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error updating connector: %w", err)
@@ -81,7 +83,12 @@ func registerConnector(
 	}
 
 	// Send a request to register the connector
-	newConnector, res, err := apiClient.RegisterNewConnector(connectorURL, token)
+	newConnector, res, err := apiClient.RegisterNewConnector(
+		irmincore.ConnectorRequest{
+			URL:         connectorURL,
+			SystemToken: token,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error registering connector: %w", err)
 	}
