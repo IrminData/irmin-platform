@@ -5,6 +5,7 @@ import (
 	"irmin-api/db"
 	"time"
 
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 )
 
@@ -42,7 +43,7 @@ func CreateWorkflowRun(
 	// Save the workflow run to the database.
 	startedAt := time.Now()
 	run := &db.WorkflowRun{
-		Status:     db.WorkflowStatusPending,
+		Status:     irminmodels.WorkflowStatusPending,
 		StartedAt:  &startedAt,
 		WorkflowID: workflow.ID,
 	}

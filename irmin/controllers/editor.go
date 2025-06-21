@@ -424,8 +424,8 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 		// Launch concurrent fetches for each input object
 		for _, input := range req.Input {
 			inputRepository := input.Repository
-			inputPath := strings.TrimPrefix(input.Path, "/")
-			inputRef := input.Ref
+			inputPath := strings.TrimPrefix(input.RepositoryPath, "/")
+			inputRef := input.RepositoryRef
 
 			// Create an async operation for fetching the object
 			future := utils.Async(func() ([]byte, error) {
@@ -444,7 +444,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 				})
 			}
 			// Add the object to the input objects map using the original path
-			inputFiles[req.Input[i].Path] = content
+			inputFiles[req.Input[i].RepositoryPath] = content
 		}
 	}
 

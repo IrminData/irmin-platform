@@ -5,7 +5,7 @@ go 1.24
 toolchain go1.24.3
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250618110158-2f164fd15dca
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250621192738-418b72ab486f
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.81.0
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
@@ -25,7 +25,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/apache/arrow-go/v18 v18.3.0 // indirect
+	github.com/apache/arrow-go/v18 v18.3.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.36.5 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.29.17 // indirect
@@ -76,7 +76,7 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476 // indirect
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect

@@ -39,13 +39,13 @@ func (o *Orchestrator) executeActionWorkflowable(
 		}
 
 		// Trim slashes from the path
-		inputPath := strings.TrimLeft(input.Path, "/")
+		inputPath := strings.TrimLeft(input.RepositoryPath, "/")
 		// Get the object content from the data engine
 		content, getObjectContentErr := o.dataEngine.GetObjectContent(
 			workflow.Workspace.Slug,
 			input.Repository.Slug,
 			inputPath,
-			input.Ref,
+			input.RepositoryRef,
 		)
 		if getObjectContentErr != nil {
 			o.logger.ErrorContext(ctx, "Error getting input object content", "error", getObjectContentErr)
@@ -103,13 +103,13 @@ func (o *Orchestrator) executeActionWorkflowable(
 			// Create multipart file from the byte array
 			file := bytes.NewReader(fileContent)
 			// Construct the path to save the file
-			uploadObjectToPath := strings.Trim(*workflowable.Path, "/") + "/" + fileName
+			uploadObjectToPath := strings.Trim(*workflowable.RepositoryPath, "/") + "/" + fileName
 			// Upload the object to the path in the repository at ref
 			newObject, uploadObjectErr := o.dataEngine.UploadObject(
 				workflow.Workspace.Slug,
 				workflowable.Repository.Slug,
 				uploadObjectToPath,
-				*workflowable.Branch,
+				*workflowable.RepositoryBranch,
 				file,
 			)
 			if uploadObjectErr != nil {
@@ -120,7 +120,7 @@ func (o *Orchestrator) executeActionWorkflowable(
 						"Error saving result object ('%s') to %s@%s/%s.",
 						fileName,
 						workflowable.Repository.Slug,
-						*workflowable.Branch,
+						*workflowable.RepositoryBranch,
 						uploadObjectToPath,
 					),
 				)
@@ -128,7 +128,12 @@ func (o *Orchestrator) executeActionWorkflowable(
 			}
 			// Save the object to the database in a go routine
 			go func() {
-				_, saveObjectErr := lib.SaveObject(o.db, newObject, *workflowable.Branch, *workflowable.RepositoryID)
+				_, saveObjectErr := lib.SaveObject(
+					o.db,
+					newObject,
+					*workflowable.RepositoryBranch,
+					*workflowable.RepositoryID,
+				)
 				if saveObjectErr != nil {
 					o.logger.ErrorContext(ctx, "Error saving object to database", "error", saveObjectErr)
 				}

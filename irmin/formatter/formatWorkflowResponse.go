@@ -70,7 +70,7 @@ func FormatWorkflowResponse(
 	} else {
 		latestWorkflowRun, _ := d.GetLatestWorkflowRunByWorkflowID(workflow.ID)
 		if latestWorkflowRun != nil {
-			latestStatus = irminmodels.WorkflowStatus(latestWorkflowRun.Status)
+			latestStatus = latestWorkflowRun.Status
 		}
 	}
 
@@ -85,7 +85,7 @@ func FormatWorkflowResponse(
 		Description:   workflow.Description,
 		Documentation: workflow.Documentation,
 		Status:        latestStatus,
-		Type:          irminmodels.WorkflowableType(workflow.Type),
+		Type:          workflow.Type,
 		Owner:         *ownerResponse,
 		Tags:          tagsResponse,
 		Schedule:      scheduleResponse,

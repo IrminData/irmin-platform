@@ -37,7 +37,10 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	var workflows []db.Workflow
 	if query["type"] != "" {
 		// Get the workflows for the workspace filtered by type.
-		workflows, err = api.DB.GetWorkflowsOfTypeByWorkspaceID(workspace.ID, db.WorkflowableType(query["type"]))
+		workflows, err = api.DB.GetWorkflowsOfTypeByWorkspaceID(
+			workspace.ID,
+			irminmodels.WorkflowableType(query["type"]),
+		)
 		if err != nil {
 			api.Logger.Error("Error retrieving workflows", "error", err)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -331,7 +334,7 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 		if bindErr := c.Bind().JSON(&workflowableReq); bindErr != nil {
 			return bindErr
 		}
-		workflowableReq.Type = irminmodels.WorkflowableType(workflow.Type) // Use existing workflow type
+		workflowableReq.Type = workflow.Type // Use existing workflow type
 		var createWorkflowableErr error
 		importWorkflowable, exportWorkflowable, actionWorkflowable, pipelineWorkflowable, createWorkflowableErr = api.createWorkflowableByType(
 			tx,
@@ -744,7 +747,7 @@ func (api *APIControllers) createWorkflowRecord(
 			Name:          req.Name,
 			Description:   req.Description,
 			Documentation: req.Documentation,
-			Type:          db.WorkflowableTypeImport,
+			Type:          irminmodels.WorkflowableTypeImport,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,
@@ -755,7 +758,7 @@ func (api *APIControllers) createWorkflowRecord(
 			Name:          req.Name,
 			Description:   req.Description,
 			Documentation: req.Documentation,
-			Type:          db.WorkflowableTypeExport,
+			Type:          irminmodels.WorkflowableTypeExport,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,
@@ -766,7 +769,7 @@ func (api *APIControllers) createWorkflowRecord(
 			Name:          req.Name,
 			Description:   req.Description,
 			Documentation: req.Documentation,
-			Type:          db.WorkflowableTypeAction,
+			Type:          irminmodels.WorkflowableTypeAction,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,
@@ -777,7 +780,7 @@ func (api *APIControllers) createWorkflowRecord(
 			Name:          req.Name,
 			Description:   req.Description,
 			Documentation: req.Documentation,
-			Type:          db.WorkflowableTypePipeline,
+			Type:          irminmodels.WorkflowableTypePipeline,
 			OwnerID:       user.ID,
 			WorkspaceID:   workspace.ID,
 			ScheduleID:    &schedule.ID,
@@ -861,14 +864,14 @@ func (api *APIControllers) createWorkflowableByType(
 			tx,
 			workspace,
 			&wflConfig,
-			db.WorkflowableTypeImport,
+			irminmodels.WorkflowableTypeImport,
 		)
 	case irminmodels.WorkflowableTypeExport:
 		_, exportWorkflowable, err = api.createImportExportWorkflowable(
 			tx,
 			workspace,
 			&wflConfig,
-			db.WorkflowableTypeExport,
+			irminmodels.WorkflowableTypeExport,
 		)
 	case irminmodels.WorkflowableTypeAction:
 		actionWorkflowable, err = api.createActionWorkflowable(tx, workspace, &wflConfig)
@@ -885,10 +888,10 @@ func (api *APIControllers) createImportExportWorkflowable(
 	tx *gorm.DB,
 	workspace *db.Workspace,
 	wflConfig *irminmodels.Workflowable,
-	workflowableType db.WorkflowableType,
+	workflowableType irminmodels.WorkflowableType,
 ) (*db.ImportWorkflowable, *db.ExportWorkflowable, error) {
 	// Validate config type matches expected workflowableType
-	if wflConfig.Type != irminmodels.WorkflowableType(workflowableType) {
+	if wflConfig.Type != workflowableType {
 		return nil, nil, fmt.Errorf("%s configuration is required", workflowableType)
 	}
 
@@ -909,16 +912,17 @@ func (api *APIControllers) createImportExportWorkflowable(
 	}
 
 	// Trim only leading slash from the path and the connection path
-	trimmedPath := strings.TrimLeft(wflConfig.Path, "/")
+	trimmedPath := strings.TrimLeft(wflConfig.RepositoryPath, "/")
 	trimmedConnectionPath := strings.TrimLeft(wflConfig.ConnectionPath, "/")
 
-	if workflowableType == db.WorkflowableTypeImport {
+	if workflowableType == irminmodels.WorkflowableTypeImport {
 		importWorkflowable := &db.ImportWorkflowable{
-			ConnectionID:   conn.ID,
-			ConnectionPath: trimmedConnectionPath,
-			RepositoryID:   repo.ID,
-			Branch:         wflConfig.Branch,
-			Path:           trimmedPath,
+			ConnectionID:     conn.ID,
+			ConnectionPath:   trimmedConnectionPath,
+			RepositoryID:     repo.ID,
+			RepositoryBranch: wflConfig.RepositoryBranch,
+			RepositoryPath:   trimmedPath,
+			FieldMappings:    wflConfig.FieldMappings,
 		}
 		if createImportWorkflowableErr := tx.Create(importWorkflowable).Error; createImportWorkflowableErr != nil {
 			return nil, nil, createImportWorkflowableErr
@@ -928,11 +932,12 @@ func (api *APIControllers) createImportExportWorkflowable(
 
 	// Handle export workflowable case
 	exportWorkflowable := &db.ExportWorkflowable{
-		ConnectionID:   conn.ID,
-		ConnectionPath: trimmedConnectionPath,
-		RepositoryID:   repo.ID,
-		Branch:         wflConfig.Branch,
-		Path:           trimmedPath,
+		ConnectionID:     conn.ID,
+		ConnectionPath:   trimmedConnectionPath,
+		RepositoryID:     repo.ID,
+		RepositoryBranch: wflConfig.RepositoryBranch,
+		RepositoryPath:   trimmedPath,
+		FieldMappings:    wflConfig.FieldMappings,
 	}
 	if createExportWorkflowableErr := tx.Create(exportWorkflowable).Error; createExportWorkflowableErr != nil {
 		return nil, nil, createExportWorkflowableErr
@@ -961,11 +966,11 @@ func (api *APIControllers) createActionWorkflowable(
 			return nil, getRepoErr
 		}
 
-		path := strings.TrimPrefix(inputObject.Path, "/")
+		path := strings.TrimPrefix(inputObject.RepositoryPath, "/")
 		inputData = append(inputData, db.ActionWorkflowableInput{
-			RepositoryID: repository.ID,
-			Ref:          inputObject.Ref,
-			Path:         path,
+			RepositoryID:   repository.ID,
+			RepositoryRef:  inputObject.RepositoryRef,
+			RepositoryPath: path,
 		})
 	}
 
@@ -986,15 +991,15 @@ func (api *APIControllers) createActionWorkflowable(
 	var workflowable db.ActionWorkflowable
 	if repository != nil {
 		repositoryID := repository.ID
-		branch := config.Branch
-		path := strings.TrimPrefix(config.Path, "/")
+		branch := config.RepositoryBranch
+		path := strings.TrimPrefix(config.RepositoryPath, "/")
 
 		workflowable = db.ActionWorkflowable{
-			Executable:   config.Executable,
-			RepositoryID: &repositoryID,
-			Branch:       &branch,
-			Path:         &path,
-			Inputs:       inputData,
+			Executable:       config.Executable,
+			RepositoryID:     &repositoryID,
+			RepositoryBranch: &branch,
+			RepositoryPath:   &path,
+			Inputs:           inputData,
 		}
 	} else {
 		workflowable = db.ActionWorkflowable{

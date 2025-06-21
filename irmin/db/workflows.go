@@ -1,95 +1,77 @@
 package db
 
 import (
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
-)
-
-type WorkflowableType string
-
-const (
-	WorkflowableTypeImport   WorkflowableType = "import"
-	WorkflowableTypeAction   WorkflowableType = "action"
-	WorkflowableTypeExport   WorkflowableType = "export"
-	WorkflowableTypePipeline WorkflowableType = "pipeline"
-)
-
-type WorkflowStatus string
-
-const (
-	WorkflowStatusPaused     WorkflowStatus = "paused"
-	WorkflowStatusPending    WorkflowStatus = "pending"
-	WorkflowStatusInitiating WorkflowStatus = "initiating"
-	WorkflowStatusRunning    WorkflowStatus = "running"
-	WorkflowStatusComplete   WorkflowStatus = "complete"
-	WorkflowStatusError      WorkflowStatus = "error"
-	WorkflowStatusCancelled  WorkflowStatus = "cancelled"
 )
 
 type Workflow struct {
 	gorm.Model
 
-	Name          string                `json:"name"`
-	Description   string                `json:"description"`
-	Documentation string                `json:"documentation"`
-	Paused        bool                  `json:"paused"`
-	Type          WorkflowableType      `json:"type"                  gorm:"index"`
-	Workspace     Workspace             `json:"workspace"             gorm:"foreignKey:WorkspaceID"`
-	WorkspaceID   uint                  `json:"workspace_id"          gorm:"index"`
-	Owner         User                  `json:"owner"                 gorm:"foreignKey:OwnerID"`
-	OwnerID       uint                  `json:"owner_id"`
-	Schedule      *Schedule             `json:"schedule,omitempty"    gorm:"foreignKey:ScheduleID"`
-	ScheduleID    *uint                 `json:"schedule_id,omitempty" gorm:"index"`
-	Import        *ImportWorkflowable   `json:"import,omitempty"      gorm:"foreignKey:ImportID"`
-	ImportID      *uint                 `json:"import_id,omitempty"   gorm:"index"`
-	Export        *ExportWorkflowable   `json:"export,omitempty"      gorm:"foreignKey:ExportID"`
-	ExportID      *uint                 `json:"export_id,omitempty"   gorm:"index"`
-	Action        *ActionWorkflowable   `json:"action,omitempty"      gorm:"foreignKey:ActionID"`
-	ActionID      *uint                 `json:"action_id,omitempty"   gorm:"index"`
-	Pipeline      *PipelineWorkflowable `json:"pipeline,omitempty"    gorm:"foreignKey:PipelineID"`
-	PipelineID    *uint                 `json:"pipeline_id,omitempty" gorm:"index"`
-	Tags          []Tag                 `json:"tags,omitempty"        gorm:"many2many:workflow_tags;"`
+	Name          string                       `json:"name"`
+	Description   string                       `json:"description"`
+	Documentation string                       `json:"documentation"`
+	Paused        bool                         `json:"paused"`
+	Type          irminmodels.WorkflowableType `json:"type"                  gorm:"index"`
+	Workspace     Workspace                    `json:"workspace"             gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID   uint                         `json:"workspace_id"          gorm:"index"`
+	Owner         User                         `json:"owner"                 gorm:"foreignKey:OwnerID"`
+	OwnerID       uint                         `json:"owner_id"`
+	Schedule      *Schedule                    `json:"schedule,omitempty"    gorm:"foreignKey:ScheduleID"`
+	ScheduleID    *uint                        `json:"schedule_id,omitempty" gorm:"index"`
+	Import        *ImportWorkflowable          `json:"import,omitempty"      gorm:"foreignKey:ImportID"`
+	ImportID      *uint                        `json:"import_id,omitempty"   gorm:"index"`
+	Export        *ExportWorkflowable          `json:"export,omitempty"      gorm:"foreignKey:ExportID"`
+	ExportID      *uint                        `json:"export_id,omitempty"   gorm:"index"`
+	Action        *ActionWorkflowable          `json:"action,omitempty"      gorm:"foreignKey:ActionID"`
+	ActionID      *uint                        `json:"action_id,omitempty"   gorm:"index"`
+	Pipeline      *PipelineWorkflowable        `json:"pipeline,omitempty"    gorm:"foreignKey:PipelineID"`
+	PipelineID    *uint                        `json:"pipeline_id,omitempty" gorm:"index"`
+	Tags          []Tag                        `json:"tags,omitempty"        gorm:"many2many:workflow_tags;"`
 }
 
 type ImportWorkflowable struct {
 	gorm.Model
-	Connection     Connection `json:"connection"      gorm:"foreignKey:ConnectionID"`
-	ConnectionID   uint       `json:"connection_id"   gorm:"index"`
-	ConnectionPath string     `json:"connection_path"`
-	Repository     Repository `json:"repository"      gorm:"foreignKey:RepositoryID"`
-	RepositoryID   uint       `json:"repository_id"   gorm:"index"`
-	Branch         string     `json:"branch"`
-	Path           string     `json:"path"`
+	FieldMappings    []irminmodels.FieldMapping `json:"field_mappings,omitempty" gorm:"type:jsonb"`
+	Connection       Connection                 `json:"connection"               gorm:"foreignKey:ConnectionID"`
+	ConnectionID     uint                       `json:"connection_id"            gorm:"index"`
+	ConnectionPath   string                     `json:"connection_path"`
+	Repository       Repository                 `json:"repository"               gorm:"foreignKey:RepositoryID"`
+	RepositoryID     uint                       `json:"repository_id"            gorm:"index"`
+	RepositoryBranch string                     `json:"repository_branch"`
+	RepositoryPath   string                     `json:"repository_path"`
 }
 
 type ExportWorkflowable struct {
 	gorm.Model
-	Connection     Connection `json:"connection"      gorm:"foreignKey:ConnectionID"`
-	ConnectionID   uint       `json:"connection_id"   gorm:"index"`
-	ConnectionPath string     `json:"connection_path"`
-	Repository     Repository `json:"repository"      gorm:"foreignKey:RepositoryID"`
-	RepositoryID   uint       `json:"repository_id"   gorm:"index"`
-	Branch         string     `json:"branch"`
-	Path           string     `json:"path"`
+	FieldMappings    []irminmodels.FieldMapping `json:"field_mappings,omitempty" gorm:"type:jsonb"`
+	Connection       Connection                 `json:"connection"               gorm:"foreignKey:ConnectionID"`
+	ConnectionID     uint                       `json:"connection_id"            gorm:"index"`
+	ConnectionPath   string                     `json:"connection_path"`
+	Repository       Repository                 `json:"repository"               gorm:"foreignKey:RepositoryID"`
+	RepositoryID     uint                       `json:"repository_id"            gorm:"index"`
+	RepositoryBranch string                     `json:"repository_branch"`
+	RepositoryPath   string                     `json:"repository_path"`
 }
 
 type ActionWorkflowableInput struct {
 	gorm.Model
 	Repository           Repository          `json:"repository"             gorm:"foreignKey:RepositoryID"`
 	RepositoryID         uint                `json:"repository_id"          gorm:"index"`
-	Ref                  string              `json:"ref"`
-	Path                 string              `json:"path"`
+	RepositoryRef        string              `json:"repository_ref"`
+	RepositoryPath       string              `json:"repository_path"`
 	ActionWorkflowable   *ActionWorkflowable `json:"action_workflowable"    gorm:"foreignKey:ActionWorkflowableID"`
 	ActionWorkflowableID *uint               `json:"action_workflowable_id"`
 }
 
 type ActionWorkflowable struct {
 	gorm.Model
-	Executable   string                    `json:"executable"`
-	Repository   *Repository               `json:"repository,omitempty"    gorm:"foreignKey:RepositoryID"`
-	RepositoryID *uint                     `json:"repository_id,omitempty" gorm:"index"`
-	Branch       *string                   `json:"branch,omitempty"`
-	Path         *string                   `json:"path,omitempty"`
-	Inputs       []ActionWorkflowableInput `json:"inputs"                  gorm:"foreignKey:ActionWorkflowableID"`
+	Executable       string                    `json:"executable"`
+	Repository       *Repository               `json:"repository,omitempty"        gorm:"foreignKey:RepositoryID"`
+	RepositoryID     *uint                     `json:"repository_id,omitempty"     gorm:"index"`
+	RepositoryBranch *string                   `json:"repository_branch,omitempty"`
+	RepositoryPath   *string                   `json:"repository_path,omitempty"`
+	Inputs           []ActionWorkflowableInput `json:"inputs"                      gorm:"foreignKey:ActionWorkflowableID"`
 }
 
 type PipelineWorkflowable struct {
@@ -125,8 +107,8 @@ type PipelineStage struct {
 	// Repository
 	Repository       *Repository `json:"repository"                      gorm:"foreignKey:RepositoryID"`
 	RepositoryID     *uint       `json:"repository_id,omitempty"`
-	RepositoryBranch *string     `json:"branch,omitempty"`
-	RepositoryPath   *string     `json:"path,omitempty"`
+	RepositoryBranch *string     `json:"repository_branch,omitempty"`
+	RepositoryPath   *string     `json:"repository_path,omitempty"`
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
@@ -143,7 +125,7 @@ func (d *Database) GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, erro
 // GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace.
 func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
 	workspaceID uint,
-	workflowType WorkflowableType,
+	workflowType irminmodels.WorkflowableType,
 ) ([]Workflow, error) {
 	var workflows []Workflow
 	result := d.Preload("Owner").

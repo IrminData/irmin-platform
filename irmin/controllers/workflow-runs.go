@@ -253,7 +253,7 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 	}
 
 	// Change the workflow run status to cancelled.
-	workflowRun.Status = db.WorkflowStatusCancelled
+	workflowRun.Status = irminmodels.WorkflowStatusCancelled
 	if saveErr := api.DB.Save(&workflowRun).Error; saveErr != nil {
 		api.Logger.Error("Error cancelling workflow run", "error", saveErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

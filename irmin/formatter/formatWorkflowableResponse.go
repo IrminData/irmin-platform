@@ -13,13 +13,13 @@ import (
 // getWorkflowable retrieves the appropriate workflowable based on the workflow type.
 func getWorkflowable(d *db.Database, workflow *db.Workflow) (any, error) {
 	switch workflow.Type {
-	case db.WorkflowableTypeImport:
+	case irminmodels.WorkflowableTypeImport:
 		return d.GetImportWorkflowableByID(*workflow.ImportID)
-	case db.WorkflowableTypeExport:
+	case irminmodels.WorkflowableTypeExport:
 		return d.GetExportWorkflowableByID(*workflow.ExportID)
-	case db.WorkflowableTypeAction:
+	case irminmodels.WorkflowableTypeAction:
 		return d.GetActionWorkflowableByID(*workflow.ActionID)
-	case db.WorkflowableTypePipeline:
+	case irminmodels.WorkflowableTypePipeline:
 		return d.GetPipelineWorkflowableByID(*workflow.PipelineID)
 	default:
 		return nil, fmt.Errorf("unknown workflow type: %s", workflow.Type)
@@ -37,12 +37,13 @@ func formatImportWorkflowable(
 
 	connectionSqid, _ := sqidManager.Encode("connections", uint64(importWorkflowable.ConnectionID))
 	return &irminmodels.Workflowable{
-		Type:           irminmodels.WorkflowableTypeImport,
-		ConnectionID:   connectionSqid,
-		ConnectionPath: importWorkflowable.ConnectionPath,
-		Repository:     importWorkflowable.Repository.Slug,
-		Branch:         importWorkflowable.Branch,
-		Path:           importWorkflowable.Path,
+		Type:             irminmodels.WorkflowableTypeImport,
+		ConnectionID:     connectionSqid,
+		ConnectionPath:   importWorkflowable.ConnectionPath,
+		Repository:       importWorkflowable.Repository.Slug,
+		RepositoryBranch: importWorkflowable.RepositoryBranch,
+		RepositoryPath:   importWorkflowable.RepositoryPath,
+		FieldMappings:    importWorkflowable.FieldMappings,
 	}
 }
 
@@ -57,12 +58,13 @@ func formatExportWorkflowable(
 
 	connectionSqid, _ := sqidManager.Encode("connections", uint64(exportWorkflowable.ConnectionID))
 	return &irminmodels.Workflowable{
-		Type:           irminmodels.WorkflowableTypeExport,
-		ConnectionID:   connectionSqid,
-		ConnectionPath: exportWorkflowable.ConnectionPath,
-		Repository:     exportWorkflowable.Repository.Slug,
-		Branch:         exportWorkflowable.Branch,
-		Path:           exportWorkflowable.Path,
+		Type:             irminmodels.WorkflowableTypeExport,
+		ConnectionID:     connectionSqid,
+		ConnectionPath:   exportWorkflowable.ConnectionPath,
+		Repository:       exportWorkflowable.Repository.Slug,
+		RepositoryBranch: exportWorkflowable.RepositoryBranch,
+		RepositoryPath:   exportWorkflowable.RepositoryPath,
+		FieldMappings:    exportWorkflowable.FieldMappings,
 	}
 }
 
@@ -81,17 +83,17 @@ func formatActionWorkflowable(
 
 	if actionWorkflowable.Repository != nil {
 		response.Repository = actionWorkflowable.Repository.Slug
-		response.Branch = *actionWorkflowable.Branch
-		response.Path = *actionWorkflowable.Path
+		response.RepositoryBranch = *actionWorkflowable.RepositoryBranch
+		response.RepositoryPath = *actionWorkflowable.RepositoryPath
 	}
 
 	if actionWorkflowable.Inputs != nil {
 		var inputsResponse []irminmodels.ActionInputData
 		for _, input := range actionWorkflowable.Inputs {
 			inputsResponse = append(inputsResponse, irminmodels.ActionInputData{
-				Repository: input.Repository.Slug,
-				Ref:        input.Ref,
-				Path:       input.Path,
+				Repository:     input.Repository.Slug,
+				RepositoryRef:  input.RepositoryRef,
+				RepositoryPath: input.RepositoryPath,
 			})
 		}
 		if len(inputsResponse) == 0 {
@@ -186,25 +188,25 @@ func FormatWorkflowableResponse(
 	}
 
 	switch workflow.Type {
-	case db.WorkflowableTypeImport:
+	case irminmodels.WorkflowableTypeImport:
 		importWorkflowable, ok := workflowable.(*db.ImportWorkflowable)
 		if !ok {
 			return nil, errors.New("invalid type assertion for import workflowable")
 		}
 		return formatImportWorkflowable(importWorkflowable, sqidManager), nil
-	case db.WorkflowableTypeExport:
+	case irminmodels.WorkflowableTypeExport:
 		exportWorkflowable, ok := workflowable.(*db.ExportWorkflowable)
 		if !ok {
 			return nil, errors.New("invalid type assertion for export workflowable")
 		}
 		return formatExportWorkflowable(exportWorkflowable, sqidManager), nil
-	case db.WorkflowableTypeAction:
+	case irminmodels.WorkflowableTypeAction:
 		actionWorkflowable, ok := workflowable.(*db.ActionWorkflowable)
 		if !ok {
 			return nil, errors.New("invalid type assertion for action workflowable")
 		}
 		return formatActionWorkflowable(actionWorkflowable), nil
-	case db.WorkflowableTypePipeline:
+	case irminmodels.WorkflowableTypePipeline:
 		pipelineWorkflowable, ok := workflowable.(*db.PipelineWorkflowable)
 		if !ok {
 			return nil, errors.New("invalid type assertion for pipeline workflowable")

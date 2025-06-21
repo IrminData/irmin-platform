@@ -8,6 +8,7 @@ import (
 	"irmin-api/db"
 	"time"
 
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -72,9 +73,9 @@ func (o *Orchestrator) handleWorkflowStatus(
 		return nil, fmt.Errorf("failed to parse status notification: %w", err)
 	}
 
-	if notificationPayload.Status == string(db.WorkflowStatusCancelled) {
+	if notificationPayload.Status == string(irminmodels.WorkflowStatusCancelled) {
 		finishedAt := time.Now()
-		run.Status = db.WorkflowStatusCancelled
+		run.Status = irminmodels.WorkflowStatusCancelled
 		run.FinishedAt = &finishedAt
 		run.Logs = append(run.Logs, "Workflow execution cancelled by user")
 		if err := o.db.Save(&run).Error; err != nil {
@@ -91,7 +92,7 @@ func (o *Orchestrator) handleWorkflowTimeout(
 	maxRuntime int,
 ) (*db.WorkflowRun, error) {
 	finishedAt := time.Now()
-	run.Status = db.WorkflowStatusError
+	run.Status = irminmodels.WorkflowStatusError
 	run.FinishedAt = &finishedAt
 	run.Logs = append(run.Logs, fmt.Sprintf("Workflow execution timed out after %d seconds", maxRuntime))
 	if err := o.db.Save(&run).Error; err != nil {
@@ -184,7 +185,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 	wf any,
 ) ([]string, error) {
 	switch workflow.Type {
-	case db.WorkflowableTypeAction:
+	case irminmodels.WorkflowableTypeAction:
 		actionWorkflowable, ok := wf.(*db.ActionWorkflowable)
 		if !ok {
 			return []string{
@@ -196,7 +197,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 		}
 		return o.executeActionWorkflowable(ctx, workflow, actionWorkflowable)
 
-	case db.WorkflowableTypeExport:
+	case irminmodels.WorkflowableTypeExport:
 		exportWorkflowable, ok := wf.(*db.ExportWorkflowable)
 		if !ok {
 			return []string{
@@ -208,7 +209,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 		}
 		return o.executeExportWorkflowable(ctx, workflow, exportWorkflowable)
 
-	case db.WorkflowableTypeImport:
+	case irminmodels.WorkflowableTypeImport:
 		importWorkflowable, ok := wf.(*db.ImportWorkflowable)
 		if !ok {
 			return []string{
@@ -220,7 +221,7 @@ func (o *Orchestrator) executeWorkflowableByType(
 		}
 		return o.executeImportWorkflowable(ctx, workflow, importWorkflowable)
 
-	case db.WorkflowableTypePipeline:
+	case irminmodels.WorkflowableTypePipeline:
 		pipelineWorkflowable, ok := wf.(*db.PipelineWorkflowable)
 		if !ok {
 			return []string{
@@ -241,13 +242,13 @@ func (o *Orchestrator) executeWorkflowableByType(
 // getWorkflowableByType retrieves a workflowable based on the workflow type.
 func (o *Orchestrator) getWorkflowableByType(workflow *db.Workflow) (any, error) {
 	switch workflow.Type {
-	case db.WorkflowableTypeAction:
+	case irminmodels.WorkflowableTypeAction:
 		return o.db.GetActionWorkflowableByID(*workflow.ActionID)
-	case db.WorkflowableTypeExport:
+	case irminmodels.WorkflowableTypeExport:
 		return o.db.GetExportWorkflowableByID(*workflow.ExportID)
-	case db.WorkflowableTypeImport:
+	case irminmodels.WorkflowableTypeImport:
 		return o.db.GetImportWorkflowableByID(*workflow.ImportID)
-	case db.WorkflowableTypePipeline:
+	case irminmodels.WorkflowableTypePipeline:
 		return o.db.GetPipelineWorkflowableByID(*workflow.PipelineID)
 	default:
 		return nil, fmt.Errorf("unknown workflow type: %s", workflow.Type)
@@ -319,9 +320,9 @@ func (o *Orchestrator) updateWorkflowRunStatus(
 	allAttemptsFailed bool,
 ) (*db.WorkflowRun, error) {
 	finishedAt := time.Now()
-	run.Status = db.WorkflowStatusComplete
+	run.Status = irminmodels.WorkflowStatusComplete
 	if allAttemptsFailed {
-		run.Status = db.WorkflowStatusError
+		run.Status = irminmodels.WorkflowStatusError
 	}
 	run.FinishedAt = &finishedAt
 	run.Logs = logs

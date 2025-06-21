@@ -9,6 +9,7 @@ import (
 	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -107,7 +108,7 @@ func (o *Orchestrator) processNotifications(ctx context.Context, notificationCha
 			}
 
 			// Only process if the status is pending
-			if notification.Status != string(db.WorkflowStatusPending) {
+			if notification.Status != string(irminmodels.WorkflowStatusPending) {
 				continue
 			}
 
@@ -144,7 +145,7 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 		}
 
 		// Update status to 'initiating' with a timestamp and claim info
-		run.Status = db.WorkflowStatusInitiating
+		run.Status = irminmodels.WorkflowStatusInitiating
 		if updateRunStatusErr := tx.Save(&run).Error; updateRunStatusErr != nil {
 			return fmt.Errorf("failed to update run status: %w", updateRunStatusErr)
 		}
@@ -163,7 +164,7 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 	if run.ID != 0 {
 		if dispatchRunErr := o.dispatchRun(ctx, &run); dispatchRunErr != nil {
 			// If dispatch fails, we should mark the run as failed
-			run.Status = db.WorkflowStatusError
+			run.Status = irminmodels.WorkflowStatusError
 			run.UpdatedAt = time.Now()
 			if err := o.db.WithContext(ctx).Save(&run).Error; err != nil {
 				o.logger.ErrorContext(ctx, "failed to update run status after dispatch error",
@@ -182,7 +183,7 @@ func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, id uin
 	if claimWorkflowRunErr := tx.Clauses(clause.Locking{
 		Strength: "UPDATE",
 		Options:  "SKIP LOCKED",
-	}).Where("id = ? AND status = ? AND deleted_at IS NULL", id, db.WorkflowStatusPending).
+	}).Where("id = ? AND status = ? AND deleted_at IS NULL", id, irminmodels.WorkflowStatusPending).
 		First(&run).Error; claimWorkflowRunErr != nil {
 		if errors.Is(claimWorkflowRunErr, gorm.ErrRecordNotFound) {
 			// Job was already claimed by another dispatcher
