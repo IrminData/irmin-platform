@@ -96,11 +96,11 @@ importers:
         specifier: ^9.30.0
         version: 9.30.0(@opentelemetry/context-async-hooks@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(next@15.3.4(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(webpack@5.99.9)
       '@tanstack/react-query':
-        specifier: ^5.80.10
-        version: 5.80.10(react@19.1.0)
+        specifier: ^5.80.12
+        version: 5.80.12(react@19.1.0)
       '@tanstack/react-query-devtools':
-        specifier: ^5.80.10
-        version: 5.80.10(@tanstack/react-query@5.80.10(react@19.1.0))(react@19.1.0)
+        specifier: ^5.80.12
+        version: 5.80.12(@tanstack/react-query@5.80.12(react@19.1.0))(react@19.1.0)
       '@uiw/codemirror-theme-vscode':
         specifier: ^4.23.13
         version: 4.23.13(@codemirror/language@6.11.1)(@codemirror/state@6.5.2)(@codemirror/view@6.37.2)
@@ -141,8 +141,8 @@ importers:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       posthog-js:
-        specifier: ^1.255.0
-        version: 1.255.0
+        specifier: ^1.255.1
+        version: 1.255.1
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -202,8 +202,8 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10
       '@tanstack/eslint-plugin-query':
-        specifier: ^5.78.0
-        version: 5.78.0(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
+        specifier: ^5.80.12
+        version: 5.80.12(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^5.2.2
         version: 5.2.2(prettier@3.5.3)
@@ -2418,25 +2418,25 @@ packages:
   '@tailwindcss/postcss@4.1.10':
     resolution: {integrity: sha512-B+7r7ABZbkXJwpvt2VMnS6ujcDoR2OOcFaqrLIo1xbcdxje4Vf+VgJdBzNNbrAjBj/rLZ66/tlQ1knIGNLKOBQ==}
 
-  '@tanstack/eslint-plugin-query@5.78.0':
-    resolution: {integrity: sha512-hYkhWr3UP0CkAsn/phBVR98UQawbw8CmTSgWtdgEBUjI60/GBaEIkpgi/Bp/2I8eIDK4+vdY7ac6jZx+GR+hEQ==}
+  '@tanstack/eslint-plugin-query@5.80.12':
+    resolution: {integrity: sha512-nvK7+IxVYEolkeygs2IFxNE0YhJ2FqsXNxm26RGndOhIhefbZArD8gnIa1ysl8JCIPEn5KNU1Hc7GQoDRiWxTA==}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
 
-  '@tanstack/query-core@5.80.10':
-    resolution: {integrity: sha512-mUNQOtzxkjL6jLbyChZoSBP6A5gQDVRUiPvW+/zw/9ftOAz+H754zCj3D8PwnzPKyHzGkQ9JbH48ukhym9LK1Q==}
+  '@tanstack/query-core@5.80.12':
+    resolution: {integrity: sha512-Cy+l+jNuII87oGpzkJ+nGDydzWJeq+gDr72lGURHXjD0UqZh5yRXcLg0Ix7jG+0Tn/ayGnR9+yph7Vbf1j8QZA==}
 
-  '@tanstack/query-devtools@5.80.0':
-    resolution: {integrity: sha512-D6gH4asyjaoXrCOt5vG5Og/YSj0D/TxwNQgtLJIgWbhbWCC/emu2E92EFoVHh4ppVWg1qT2gKHvKyQBEFZhCuA==}
+  '@tanstack/query-devtools@5.80.12':
+    resolution: {integrity: sha512-Jqy9tr6cEOz39q8Ztgyg3l9ZBA1hpk7P9q0ci1MXFuKOFhOtPYZZcKlsLmNxJTBfyNXkiuW0yL0BB6FAqRstAQ==}
 
-  '@tanstack/react-query-devtools@5.80.10':
-    resolution: {integrity: sha512-6JL63fSc7kxyGOLV2w466SxhMn/m7LZk/ximQciy6OpVt+n2A8Mq3S0QwhIzfm4WEwLK/F3OELfzRToQburnYA==}
+  '@tanstack/react-query-devtools@5.80.12':
+    resolution: {integrity: sha512-aqJKpCOKDeto7pkQlWZ+Pqs1h/7IyHQtZIqthsLCunuK/4pEsyj5PRlAm6DRfFVr82EEloNI+B8Tr2VOceH0LQ==}
     peerDependencies:
-      '@tanstack/react-query': ^5.80.10
+      '@tanstack/react-query': ^5.80.12
       react: ^18 || ^19
 
-  '@tanstack/react-query@5.80.10':
-    resolution: {integrity: sha512-6zM098J8sLy9oU60XAdzUlAH4wVzoMVsWUWiiE/Iz4fd67PplxeyL4sw/MPcVJJVhbwGGXCsHn9GrQt2mlAzig==}
+  '@tanstack/react-query@5.80.12':
+    resolution: {integrity: sha512-hCtE5hw4rSqMcHSlkVLhM6jXy55rQsCE8qmgLq2MIqf/r4dRFrVlSqMczmO5w0ZQMYWeeHCYMrdRxtadajQK/Q==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -4928,8 +4928,8 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
-  posthog-js@1.255.0:
-    resolution: {integrity: sha512-2ZZKrGB1Ih425IoPvmiDYN+BcDJvNJvVGRrey2ARR4UJ85oB+sNCJAx6DuwIlvsIQTe8QjuUhxrHlxAT5/7IMA==}
+  posthog-js@1.255.1:
+    resolution: {integrity: sha512-KMh0o9MhORhEZVjXpktXB5rJ8PfDk+poqBoTSoLzWgNjhJf6D8jcyB9jUMA6vVPfn4YeepVX5NuclDRqOwr5Mw==}
     peerDependencies:
       '@rrweb/types': 2.0.0-alpha.17
       rrweb-snapshot: 2.0.0-alpha.17
@@ -5794,6 +5794,10 @@ packages:
 
   webpack-sources@3.3.2:
     resolution: {integrity: sha512-ykKKus8lqlgXX/1WjudpIEjqsafjOTcOJqxnAbMLAu/KCsDCJ6GBtvscewvTkrn24HsnvFwrSCbenFrhtcCsAA==}
+    engines: {node: '>=10.13.0'}
+
+  webpack-sources@3.3.3:
+    resolution: {integrity: sha512-yd1RBzSGanHkitROoPFd6qsrxt+oFhg/129YzheDGqeustzX0vTZJZsSsQjVQC4yzBQ56K55XU8gaNCtIzOnTg==}
     engines: {node: '>=10.13.0'}
 
   webpack-virtual-modules@0.5.0:
@@ -8567,7 +8571,7 @@ snapshots:
       postcss: 8.5.6
       tailwindcss: 4.1.10
 
-  '@tanstack/eslint-plugin-query@5.78.0(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)':
+  '@tanstack/eslint-plugin-query@5.80.12(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)':
     dependencies:
       '@typescript-eslint/utils': 8.34.1(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
       eslint: 9.29.0(jiti@2.4.2)
@@ -8575,19 +8579,19 @@ snapshots:
       - supports-color
       - typescript
 
-  '@tanstack/query-core@5.80.10': {}
+  '@tanstack/query-core@5.80.12': {}
 
-  '@tanstack/query-devtools@5.80.0': {}
+  '@tanstack/query-devtools@5.80.12': {}
 
-  '@tanstack/react-query-devtools@5.80.10(@tanstack/react-query@5.80.10(react@19.1.0))(react@19.1.0)':
+  '@tanstack/react-query-devtools@5.80.12(@tanstack/react-query@5.80.12(react@19.1.0))(react@19.1.0)':
     dependencies:
-      '@tanstack/query-devtools': 5.80.0
-      '@tanstack/react-query': 5.80.10(react@19.1.0)
+      '@tanstack/query-devtools': 5.80.12
+      '@tanstack/react-query': 5.80.12(react@19.1.0)
       react: 19.1.0
 
-  '@tanstack/react-query@5.80.10(react@19.1.0)':
+  '@tanstack/react-query@5.80.12(react@19.1.0)':
     dependencies:
-      '@tanstack/query-core': 5.80.10
+      '@tanstack/query-core': 5.80.12
       react: 19.1.0
 
   '@tanstack/react-virtual@3.13.10(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
@@ -11587,7 +11591,7 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  posthog-js@1.255.0:
+  posthog-js@1.255.1:
     dependencies:
       core-js: 3.43.0
       fflate: 0.4.8
@@ -12567,6 +12571,8 @@ snapshots:
 
   webpack-sources@3.3.2: {}
 
+  webpack-sources@3.3.3: {}
+
   webpack-virtual-modules@0.5.0: {}
 
   webpack@5.99.9:
@@ -12594,7 +12600,7 @@ snapshots:
       tapable: 2.2.2
       terser-webpack-plugin: 5.3.14(webpack@5.99.9)
       watchpack: 2.4.4
-      webpack-sources: 3.3.2
+      webpack-sources: 3.3.3
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild

@@ -2,6 +2,11 @@
   "name": "irmin-console",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://irmin.co",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IrminData/irmin-console.git"
+  },
   "scripts": {
     "dev": "next dev --experimental-https --turbopack",
     "build": "pnpm docs && next build",
@@ -47,8 +52,8 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@sentry/nextjs": "^9.30.0",
-    "@tanstack/react-query": "^5.80.10",
-    "@tanstack/react-query-devtools": "^5.80.10",
+    "@tanstack/react-query": "^5.80.12",
+    "@tanstack/react-query-devtools": "^5.80.12",
     "@uiw/codemirror-theme-vscode": "^4.23.13",
     "@uiw/react-codemirror": "^4.23.13",
     "@vercel/speed-insights": "^1.2.0",
@@ -62,7 +67,7 @@
     "markdown-to-jsx": "^7.7.8",
     "next": "15.3.4",
     "next-themes": "^0.4.6",
-    "posthog-js": "^1.255.0",
+    "posthog-js": "^1.255.1",
     "react": "19.1.0",
     "react-datasheet-grid": "^4.11.5",
     "react-day-picker": "^9.7.0",
@@ -84,7 +89,7 @@
     "@playwright/test": "^1.53.1",
     "@sentry/types": "^9.30.0",
     "@tailwindcss/postcss": "^4.1.10",
-    "@tanstack/eslint-plugin-query": "^5.78.0",
+    "@tanstack/eslint-plugin-query": "^5.80.12",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/eslint": "9.6.1",
     "@types/node": "^24.0.3",
@@ -111,8 +116,7 @@
     "typescript": "5.8.3"
   },
   "engines": {
-    "node": ">=22",
-    "npm": "please-use-pnpm"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
 }
