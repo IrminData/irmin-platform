@@ -119,24 +119,14 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 	}
 
 	// Check if the connector is already registered
-	connector, getConnectorByAPIBaseURLErr := api.DB.GetConnectorByAPIBaseURL(connectorInfo.APIBaseURL)
+	connector, getConnectorByAPIBaseURLErr := api.DB.GetConnectorByAPIBaseURL(req.URL)
 	if getConnectorByAPIBaseURLErr != nil {
-		api.Logger.Error("Error getting connector by API base URL", "error", getConnectorByAPIBaseURLErr)
+		api.Logger.Warn("Error getting connector by API base URL", "error", getConnectorByAPIBaseURLErr)
 	}
-	connector.APIBaseURL = connectorInfo.APIBaseURL
-	connector.SystemToken = req.SystemToken
-	connector.Name = connectorInfo.Name
-	connector.Description = connectorInfo.Description
-	connector.Version = connectorInfo.Version
-	connector.StructureVersion = connectorInfo.StructureVersion
-	connector.Author = connectorInfo.Author
-	connector.LogoURL = connectorInfo.LogoURL
-	connector.Capabilities = connectorInfo.Capabilities
-	connector.Locales = connectorInfo.Locales
-	connector.PrimaryCategory = connectorInfo.PrimaryCategory
-	connector.Categories = connectorInfo.Categories
-	connector.AuthorEmail = connectorInfo.AuthorEmail
-	connector.ReadMoreURL = connectorInfo.ReadMoreURL
+	if connector == nil {
+		connector = &db.Connector{}
+	}
+	api.updateConnectorFromInfo(connector, req, *connectorInfo)
 	saveConnectorErr := api.DB.Save(&connector).Error
 	if saveConnectorErr != nil {
 		api.Logger.Error("Error updating connector", "error", saveConnectorErr)
@@ -159,6 +149,27 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 		Message: api.lm.T(dict, "connector_refreshed"),
 		Data:    connectorResponse,
 	})
+}
+
+func (api *APIControllers) updateConnectorFromInfo(
+	connector *db.Connector,
+	req irmincore.ConnectorRequest,
+	connectorInfo irminconnectorclient.ConnectorInfo,
+) {
+	connector.APIBaseURL = req.URL
+	connector.SystemToken = req.SystemToken
+	connector.Name = connectorInfo.Name
+	connector.Description = connectorInfo.Description
+	connector.Version = connectorInfo.Version
+	connector.StructureVersion = connectorInfo.StructureVersion
+	connector.Author = connectorInfo.Author
+	connector.LogoURL = connectorInfo.LogoURL
+	connector.Capabilities = connectorInfo.Capabilities
+	connector.Locales = connectorInfo.Locales
+	connector.PrimaryCategory = connectorInfo.PrimaryCategory
+	connector.Categories = connectorInfo.Categories
+	connector.AuthorEmail = connectorInfo.AuthorEmail
+	connector.ReadMoreURL = connectorInfo.ReadMoreURL
 }
 
 func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
@@ -206,20 +217,7 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Update the connector
-	connector.APIBaseURL = req.URL
-	connector.SystemToken = req.SystemToken
-	connector.Name = connectorInfo.Name
-	connector.Description = connectorInfo.Description
-	connector.Version = connectorInfo.Version
-	connector.StructureVersion = connectorInfo.StructureVersion
-	connector.Author = connectorInfo.Author
-	connector.LogoURL = connectorInfo.LogoURL
-	connector.Capabilities = connectorInfo.Capabilities
-	connector.Locales = connectorInfo.Locales
-	connector.PrimaryCategory = connectorInfo.PrimaryCategory
-	connector.Categories = connectorInfo.Categories
-	connector.AuthorEmail = connectorInfo.AuthorEmail
-	connector.ReadMoreURL = connectorInfo.ReadMoreURL
+	api.updateConnectorFromInfo(connector, req, *connectorInfo)
 	saveConnectorErr := api.DB.Save(connector).Error
 	if saveConnectorErr != nil {
 		api.Logger.Error("Error updating connector", "error", saveConnectorErr)
@@ -301,23 +299,8 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	}
 
 	// Convert any maps to string maps for compatibility with connector client
-	detailsStr := make(map[string]string)
-	for k, v := range req.Details {
-		if str, ok := v.(string); ok {
-			detailsStr[k] = str
-		} else {
-			detailsStr[k] = fmt.Sprintf("%v", v)
-		}
-	}
-
-	settingsStr := make(map[string]string)
-	for k, v := range req.Settings {
-		if str, ok := v.(string); ok {
-			settingsStr[k] = str
-		} else {
-			settingsStr[k] = fmt.Sprintf("%v", v)
-		}
-	}
+	detailsStr := convertMapToMapString(req.Details)
+	settingsStr := convertMapToMapString(req.Settings)
 
 	// Create new connector client
 	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
@@ -341,6 +324,18 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	})
 }
 
+func convertMapToMapString(m map[string]any) map[string]string {
+	res := make(map[string]string)
+	for k, v := range m {
+		if str, ok := v.(string); ok {
+			res[k] = str
+		} else {
+			res[k] = fmt.Sprintf("%v", v)
+		}
+	}
+	return res
+}
+
 func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -359,23 +354,8 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 	}
 
 	// Convert any maps to string maps for compatibility with connector client
-	detailsStr := make(map[string]string)
-	for k, v := range req.Details {
-		if str, ok := v.(string); ok {
-			detailsStr[k] = str
-		} else {
-			detailsStr[k] = fmt.Sprintf("%v", v)
-		}
-	}
-
-	settingsStr := make(map[string]string)
-	for k, v := range req.Settings {
-		if str, ok := v.(string); ok {
-			settingsStr[k] = str
-		} else {
-			settingsStr[k] = fmt.Sprintf("%v", v)
-		}
-	}
+	detailsStr := convertMapToMapString(req.Details)
+	settingsStr := convertMapToMapString(req.Settings)
 
 	// Create new connector client
 	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
