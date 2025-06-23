@@ -156,7 +156,7 @@ func (api *APIControllers) updateConnectorFromInfo(
 	req irmincore.ConnectorRequest,
 	connectorInfo irminconnectorclient.ConnectorInfo,
 ) {
-	connector.APIBaseURL = req.URL
+	connector.APIBaseURL = connectorInfo.APIBaseURL
 	connector.SystemToken = req.SystemToken
 	connector.Name = connectorInfo.Name
 	connector.Description = connectorInfo.Description

@@ -52,7 +52,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofiber/schema v1.5.0 // indirect
-	github.com/gofiber/utils/v2 v2.0.0-beta.8 // indirect
+	github.com/gofiber/utils/v2 v2.0.0-beta.9 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
