@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -11,6 +12,7 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
@@ -119,13 +121,29 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 	}
 
 	// Check if the connector is already registered
-	connector, getConnectorByAPIBaseURLErr := api.DB.GetConnectorByAPIBaseURL(req.URL)
-	if getConnectorByAPIBaseURLErr != nil {
-		api.Logger.Warn("Error getting connector by API base URL", "error", getConnectorByAPIBaseURLErr)
+	var connector *db.Connector
+	var getConnectorErr error
+
+	// First, try to find the connector by the self-reported URL
+	if connectorInfo.APIBaseURL != "" {
+		connector, getConnectorErr = api.DB.GetConnectorByAPIBaseURL(connectorInfo.APIBaseURL)
+		if getConnectorErr != nil && !errors.Is(getConnectorErr, gorm.ErrRecordNotFound) {
+			api.Logger.Warn("Error getting connector by self-reported API base URL", "error", getConnectorErr)
+		}
 	}
+
+	// If not found, try with the request URL
+	if connector == nil {
+		connector, getConnectorErr = api.DB.GetConnectorByAPIBaseURL(req.URL)
+		if getConnectorErr != nil && !errors.Is(getConnectorErr, gorm.ErrRecordNotFound) {
+			api.Logger.Warn("Error getting connector by request URL", "error", getConnectorErr)
+		}
+	}
+
 	if connector == nil {
 		connector = &db.Connector{}
 	}
+
 	api.updateConnectorFromInfo(connector, req, *connectorInfo)
 	saveConnectorErr := api.DB.Save(&connector).Error
 	if saveConnectorErr != nil {
