@@ -49,10 +49,12 @@ const useConsoleNavigationLinks = (): {
   noWorkspace: ConsoleNavigationLinkType[];
   settings: ConsoleNavigationLinkType[];
   useful: ConsoleNavigationLinkType[];
+  loadingPermissions: boolean;
 } => {
   const { locale, dict } = useLocale();
   const { signOut } = useIAM();
-  const { isResourceAllowed } = useResourceAllowed();
+  const { isResourceAllowed, loading: loadingPermissions } =
+    useResourceAllowed();
   const pathname = usePathname();
 
   // Check if the link is active
@@ -226,6 +228,7 @@ const useConsoleNavigationLinks = (): {
     noWorkspace: noWorkspaceLinks.filter((link) => !link.hide),
     settings: settingsLinks.filter((link) => !link.hide),
     useful: usefulLinks.filter((link) => !link.hide),
+    loadingPermissions,
   };
 };
 

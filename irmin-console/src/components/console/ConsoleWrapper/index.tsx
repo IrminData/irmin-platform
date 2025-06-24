@@ -1,6 +1,6 @@
 'use client';
 
-import { ComponentPropsWithoutRef, useMemo, useState } from 'react';
+import { ComponentPropsWithoutRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import ConsoleSearch from '@/components/search/ConsoleSearch';
 import Button from '@/components/ui/button';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -44,28 +45,22 @@ export default function ConsoleWrapper({
 }) {
   const { dict } = useLocale();
   const params = useParams<{ workspace?: string }>();
-  const links = useConsoleNavigationLinks();
+  const { loadingPermissions, ...links } = useConsoleNavigationLinks();
+
+  const isLargeScreen = useBreakpoint('@lg');
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
 
   const { workspacesQuery } = useWorkspaces();
 
-  const workspaces = useMemo(
-    () => workspacesQuery.data?.data ?? [],
-    [workspacesQuery.data]
+  const loadingWorkspaces = workspacesQuery.isLoading;
+  const workspaces = workspacesQuery.data?.data ?? [];
+  const currentWorkspace = workspaces?.find(
+    (workspace) => workspace.slug === params.workspace
   );
 
-  const currentWorkspace = useMemo(
-    () => workspaces?.find((workspace) => workspace.slug === params.workspace),
-    [params.workspace, workspaces]
-  );
-
-  const isLargeScreen = useBreakpoint('@lg');
-  const foldMenu = useMemo(
-    () => (isLargeScreen ? isMenuFolded : false),
-    [isLargeScreen, isMenuFolded]
-  );
+  const foldMenu = isLargeScreen ? isMenuFolded : false;
 
   return (
     <div className='contents' id='console-wrapper'>
@@ -175,6 +170,12 @@ export default function ConsoleWrapper({
               )}
 
               {/* Workspace links */}
+              {loadingWorkspaces && params.workspace && (
+                <div className='flex flex-col gap-2 px-4'>
+                  <LoadingSkeleton className='h-10 w-full' />
+                  <LoadingSkeleton className='h-10 w-full' />
+                </div>
+              )}
               {currentWorkspace && (
                 <div id='console-sidebar-links-workspace'>
                   <p
@@ -184,6 +185,14 @@ export default function ConsoleWrapper({
                   >
                     {dict.consoleNavigation.workspace}
                   </p>
+                  {loadingPermissions && (
+                    <div className='flex flex-col gap-2 px-4'>
+                      <LoadingSkeleton className='h-8 w-full' />
+                      <LoadingSkeleton className='h-8 w-full' />
+                      <LoadingSkeleton className='h-8 w-full' />
+                      <LoadingSkeleton className='h-8 w-full' />
+                    </div>
+                  )}
                   <ul className='px-4'>
                     {links.hasWorkspace.map((link, index) => (
                       <ConsoleNavigationLink

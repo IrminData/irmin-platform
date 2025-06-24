@@ -77,5 +77,5 @@ export const useResourceAllowed = () => {
     [policySummaryQuery]
   );
 
-  return { isResourceAllowed };
+  return { isResourceAllowed, loading: policySummaryQuery.isLoading };
 };
