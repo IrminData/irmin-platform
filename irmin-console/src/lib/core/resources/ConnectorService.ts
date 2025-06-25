@@ -116,22 +116,16 @@ class ConnectorService {
     currentSettings?: DynamicFieldValues;
   }): Promise<IrminAPIResponse<DynamicFields>> {
     try {
-      const formData = new FormData();
-      if (currentDetails) {
-        Object.keys(currentDetails).forEach((key) => {
-          formData.append(`details[${key}]`, currentDetails[key] as string);
-        });
-      }
-      if (currentSettings) {
-        Object.keys(currentSettings).forEach((key) => {
-          formData.append(`settings[${key}]`, currentSettings[key] as string);
-        });
-      }
+      const requestBody: ConnectorConfigurationRequest = {
+        details: currentDetails || {},
+        settings: currentSettings || {},
+      };
       const response = (await this.irminCore.fetchAPI(
         `/v1/connectors/${connectorId}/fields/${configurationType}`,
         {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         }
       )) as IrminAPIResponse<DynamicFields>;
       return response;

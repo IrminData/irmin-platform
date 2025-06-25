@@ -1,22 +1,18 @@
 'use client';
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight, TbChevronUp } from 'react-icons/tb';
 
-import IrminCore from '@/lib/core';
-
 import { ButtonWithTooltip } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 
 import { Object } from '@/types/core/Object';
 
@@ -154,15 +150,8 @@ const RepositoryPathSelector = ({
   existingOnly = false,
   loading: loadingProp = false,
 }: RepositoryPathSelectorProps) => {
-  const { getToken } = useIAM();
-  const { workspaceSlug } = useWorkspaceContext();
-  const { dict, locale } = useLocale();
-  const { irminAlert } = usePopup();
+  const { dict } = useLocale();
 
-  const [loading, setLoading] = useState<boolean>(loadingProp);
-  const [rootObject, setRootObject] = useState<Object | undefined>(
-    initialRootObject
-  );
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [selectedPath, setSelectedPath] = useState<string>(
     defaultPath ? formatPath(defaultPath, false, groupOnly) : ''
@@ -173,45 +162,19 @@ const RepositoryPathSelector = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [isValidPath, setIsValidPath] = useState<boolean>(true);
 
-  const rootObjectFetchedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!repositorySlug || !ref) return;
-    if (initialRootObject) return;
-    const newRootObjectFetchedRef = `${workspaceSlug}-${repositorySlug}-${ref}`;
-    if (rootObjectFetchedRef.current === newRootObjectFetchedRef) return;
-    rootObjectFetchedRef.current = newRootObjectFetchedRef;
-    (async () => {
-      try {
-        setLoading(true);
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const newRootObject = await irminCore.objectService.getObjectAtPath({
-          workspace: workspaceSlug,
-          repository: repositorySlug,
-          path: '/',
-          ref: ref,
-        });
-        setRootObject(newRootObject?.data ?? undefined);
-      } catch (error) {
-        console.error(error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch the root object'
-        );
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [
-    initialRootObject,
+  const { repositoryObjectQuery } = useRepositoryObject(
     repositorySlug,
     ref,
-    locale,
-    workspaceSlug,
-    irminAlert,
-    getToken,
-  ]);
+    '/'
+  );
+  const rootObject = useMemo(
+    () => repositoryObjectQuery.data?.data ?? initialRootObject,
+    [repositoryObjectQuery.data?.data, initialRootObject]
+  );
+  const loading = useMemo(
+    () => repositoryObjectQuery.isLoading || loadingProp,
+    [repositoryObjectQuery.isLoading, loadingProp]
+  );
 
   // Keep input in sync with selected path
   useEffect(() => {

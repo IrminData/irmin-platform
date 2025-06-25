@@ -421,6 +421,7 @@ const en = {
       createNewImportWorkflow: 'Create new import workflow',
       createNewExportWorkflow: 'Create new export workflow',
       createNewPipelineWorkflow: 'Create new pipeline workflow',
+      configureFieldMappings: 'Configure field mappings',
       configureImport: 'Configure import',
       configureAction: 'Configure action',
       configureExport: 'Configure export',
@@ -747,6 +748,27 @@ const en = {
       resourceId:
         'Optional specific resource ID. Leave empty to apply to all resources of this type',
     },
+  },
+  schemaFieldMapper: {
+    title: 'Field Mapper',
+    description:
+      'Click a source field, then click a destination field to create a mapping',
+    descriptionWithSelection:
+      'Click a destination field to map "{fieldName}" from {source}',
+    sourceSchema: 'Source Schema',
+    destinationSchema: 'Destination Schema',
+    fieldMappings: 'Field Mappings',
+    noMappingsYet: 'No mappings yet',
+    autoMapIdenticalFields: 'Auto-Map Identical Fields',
+    clearAllMappings: 'Clear All Mappings',
+    fields: 'fields',
+    mapped: 'mapped',
+    required: 'required',
+    fileSize: '{size}KB',
+    autoMappedSuccess: 'Auto-mapped {count} identical fields!',
+    noIdenticalFieldsFound: 'No identical fields found to auto-map.',
+    sourceEmpty: 'Source is empty - no fields to map',
+    destinationEmpty: 'Destination is empty - nothing needs replacement',
   },
 };
 

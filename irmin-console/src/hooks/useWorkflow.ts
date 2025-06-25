@@ -9,8 +9,7 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import { Workflow } from '@/types/core/Workflow';
-import { WorkflowableInput } from '@/types/internal/WorkflowInput';
+import { Workflow, Workflowable } from '@/types/core/Workflow';
 
 import { workflowsQueryKey } from './useWorkflows';
 
@@ -138,7 +137,7 @@ export function useWorkflow(workflowID: string) {
   const updateWorkflowableMutation = useMutation<
     IrminAPIResponse,
     Error,
-    WorkflowableInput
+    Workflowable
   >({
     mutationFn: async (data) => {
       const token = await getToken();

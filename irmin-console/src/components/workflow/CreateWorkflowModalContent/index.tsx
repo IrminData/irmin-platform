@@ -6,47 +6,58 @@ import { CreateWorkflowProvider } from '@/context/CreateWorkflowContext';
 
 import { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
+import ConfigureFieldMappings from './ConfigureFieldMappings';
 import ConfigureWorkflow from './ConfigureWorkflow';
 import ConfigureWorkflowable from './ConfigureWorkflowable';
 
 /**
- * Workflow setup view
- *
- * @param props - Component properties
- * @param props.isOpen - If the modal is open
- * @param props.closeModal - Function to close the modal
- * @param props.currentStep - Current step in the workflow creation
- * @param props.setCurrentStep - Function to set the current step
- * @param props.initialWorkflowData - (optional) Initial workflow data
+ * Renders the content of the create workflow modal based on the current step
  */
-const CreateWorkflowModalContent = ({
-  isOpen,
-  closeModal,
-  currentStep,
-  setCurrentStep,
-  initialWorkflowData,
-}: {
-  isOpen: boolean;
-  closeModal: () => void;
-  currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  initialWorkflowData?: WorkflowRequest;
-}) => {
-  if (!isOpen) return null;
+const CreateWorkflowModalContent = memo(
+  ({
+    isOpen,
+    closeModal,
+    currentStep,
+    setCurrentStep,
+    initialWorkflowData,
+  }: {
+    isOpen: boolean;
+    closeModal: () => void;
+    currentStep: number;
+    setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+    initialWorkflowData: WorkflowRequest;
+  }) => {
+    if (!isOpen) return null;
 
-  return (
-    <CreateWorkflowProvider initialWorkflowData={initialWorkflowData}>
-      {currentStep === 1 && (
-        <ConfigureWorkflowable setCurrentStep={setCurrentStep} />
-      )}
-      {currentStep === 2 && (
-        <ConfigureWorkflow
-          setCurrentStep={setCurrentStep}
-          closeModal={closeModal}
-        />
-      )}
-    </CreateWorkflowProvider>
-  );
-};
+    const hasFieldMappings =
+      initialWorkflowData.type === 'import' ||
+      initialWorkflowData.type === 'export';
 
-export default memo(CreateWorkflowModalContent);
+    return (
+      <CreateWorkflowProvider
+        workflowType={initialWorkflowData.type}
+        initialWorkflowData={initialWorkflowData}
+      >
+        {currentStep === 1 && (
+          <ConfigureWorkflowable setCurrentStep={setCurrentStep} />
+        )}
+        {currentStep === 2 && hasFieldMappings && (
+          <ConfigureFieldMappings
+            setCurrentStep={setCurrentStep}
+            closeModal={closeModal}
+          />
+        )}
+        {currentStep === (hasFieldMappings ? 3 : 2) && (
+          <ConfigureWorkflow
+            setCurrentStep={setCurrentStep}
+            closeModal={closeModal}
+          />
+        )}
+      </CreateWorkflowProvider>
+    );
+  }
+);
+
+CreateWorkflowModalContent.displayName = 'CreateWorkflowModalContent';
+
+export default CreateWorkflowModalContent;

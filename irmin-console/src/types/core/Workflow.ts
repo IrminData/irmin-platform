@@ -4,9 +4,28 @@ import { User } from '@/types/core/User';
 import { WorkflowSchedule } from './Schedule';
 
 /**
+ * Field mapping object
+ */
+export interface FieldMapping {
+  /** Source file path */
+  source_path: string;
+  /** Field name in the source file */
+  source_field?: string;
+  /** Destination file path */
+  destination_path: string;
+  /** Field name in the destination file */
+  destination_field?: string;
+}
+
+/**
  * Types of workflows that can exist
  */
 export type WorkflowableType = 'import' | 'action' | 'export' | 'pipeline';
+
+/**
+ * Executable workflowable object
+ */
+export type Workflowable = Import | Export | Action | Pipeline;
 
 /**
  * Base Workflow object that all workflows extend
@@ -31,7 +50,7 @@ interface WorkflowBase {
   /** (optional) Schedule configuration for the workflow (eg. triggers, max retries, max runtime) */
   schedule?: WorkflowSchedule;
   /** Workflow type specific configurations */
-  workflowable?: Import | Export | Action | Pipeline;
+  workflowable?: Workflowable;
 }
 
 /**
@@ -100,9 +119,11 @@ export interface Import {
   /**  Slug of the destination repository */
   repository: string;
   /** Destination branch in the repository */
-  branch: string;
+  repository_branch: string;
   /** Path within the repository to store the imported data */
-  path: string;
+  repository_path: string;
+  /** Field mappings for the import */
+  field_mappings?: FieldMapping[];
 }
 
 /**
@@ -117,9 +138,11 @@ export interface Export {
   /** Slug of the repository to export data from */
   repository: string;
   /** Source branch in the repository */
-  branch: string;
+  repository_branch: string;
   /** Path within the repository to export data from */
-  path: string;
+  repository_path: string;
+  /** Field mappings for the export */
+  field_mappings?: FieldMapping[];
 }
 
 /**
@@ -129,9 +152,9 @@ export interface ActionInputData {
   /** Slug of the repository */
   repository: string;
   /** Ref in the repository */
-  ref: string;
+  repository_ref: string;
   /** Path within the repository */
-  path: string;
+  repository_path: string;
 }
 
 /**
@@ -146,9 +169,9 @@ export interface Action {
   /** Slug of the repository to store the results */
   repository?: string;
   /** Branch in the repository for results */
-  branch?: string;
+  repository_branch?: string;
   /** Path within the repository for results */
-  path?: string;
+  repository_path?: string;
 }
 
 /**
@@ -204,7 +227,7 @@ export interface PipelineStageRepository {
   /** Slug of the repository to use */
   repository: string;
   /** Branch in the repository */
-  branch: string;
+  repository_branch: string;
   /** Path within the repository */
-  path: string;
+  repository_path: string;
 }

@@ -113,6 +113,7 @@ export default function ImportWorkflowsSection({
         currentStep={currentStep}
         steps={[
           dict.workflow.create.configureImport,
+          dict.workflow.create.configureFieldMappings,
           dict.workflow.create.configureWorkflow,
         ]}
         title={dict.workflow.create.createNewImportWorkflow}
@@ -140,11 +141,11 @@ export default function ImportWorkflowsSection({
             // Workflowable properties
             workflowable: {
               type: 'import',
-              connection: '',
+              connection_id: '',
               connection_path: '',
               repository: '',
-              branch: '',
-              path: '',
+              repository_branch: '',
+              repository_path: '',
             },
           }}
         />

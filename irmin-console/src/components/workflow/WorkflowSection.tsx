@@ -243,7 +243,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 <Link
                   className='transition-all duration-200 hover:underline'
                   target='_blank'
-                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
+                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.repository_branch}`}
                 >
                   <p className='text-base'>
                     {repositoriesQuery.data?.data?.find(
@@ -259,7 +259,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {dict.workflow.scriptResultDestinationBranch}
                 </p>
                 <p className='text-base'>
-                  {workflow.workflowable.branch ?? '-'}
+                  {workflow.workflowable.repository_branch ?? '-'}
                 </p>
               </div>
             )}
@@ -268,7 +268,9 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 <p className='text-sm opacity-60'>
                   {dict.workflow.scriptResultDestinationPath}
                 </p>
-                <p className='text-base'>{workflow.workflowable.path ?? '/'}</p>
+                <p className='text-base'>
+                  {workflow.workflowable.repository_path ?? '/'}
+                </p>
               </div>
             )}
             {workflow.type === 'action' &&
@@ -283,10 +285,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                       key={id}
                       className='transition-all duration-200 hover:underline'
                       target='_blank'
-                      href={`${workspaceUrl}/repositories/${input.repository}/object?path=${input.path}&ref=${input.ref}`}
+                      href={`${workspaceUrl}/repositories/${input.repository}/object?path=${input.repository_path}&ref=${input.repository_ref}`}
                     >
                       <p className='text-base'>
-                        {`${input.repository}/${input.path}@${input.ref}`}
+                        {`${input.repository}/${input.repository_path}@${input.repository_ref}`}
                       </p>
                     </Link>
                   ))}
@@ -326,7 +328,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 </p>
                 <Link
                   className='transition-all duration-200 hover:underline'
-                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
+                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.repository_branch}`}
                 >
                   <p className='text-base'>
                     {repositoriesQuery.data?.data?.find(
@@ -341,7 +343,9 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 <p className='text-sm opacity-60'>
                   {dict.workflow.importDestinationBranch}
                 </p>
-                <p className='text-base'>{workflow.workflowable.branch}</p>
+                <p className='text-base'>
+                  {workflow.workflowable.repository_branch}
+                </p>
               </div>
             )}
             {workflow.type === 'import' && (
@@ -349,7 +353,9 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 <p className='text-sm opacity-60'>
                   {dict.workflow.importDestinationPath}
                 </p>
-                <p className='text-base'>{workflow.workflowable.path ?? '/'}</p>
+                <p className='text-base'>
+                  {workflow.workflowable.repository_path ?? '/'}
+                </p>
               </div>
             )}
             {workflow.type === 'export' && (
@@ -386,7 +392,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 </p>
                 <Link
                   className='transition-all duration-200 hover:underline'
-                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.branch}`}
+                  href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.repository_branch}`}
                 >
                   <p className='text-base'>
                     {repositoriesQuery.data?.data?.find(
@@ -401,7 +407,9 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 <p className='text-sm opacity-60'>
                   {dict.workflow.exportSourceBranch}
                 </p>
-                <p className='text-base'>{workflow.workflowable.branch}</p>
+                <p className='text-base'>
+                  {workflow.workflowable.repository_branch}
+                </p>
               </div>
             )}
             {workflow.type === 'export' && (
@@ -409,7 +417,9 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 <p className='text-sm opacity-60'>
                   {dict.workflow.exportSourcePath}
                 </p>
-                <p className='text-base'>{workflow.workflowable.path ?? '/'}</p>
+                <p className='text-base'>
+                  {workflow.workflowable.repository_path ?? '/'}
+                </p>
               </div>
             )}
             {workflow.type === 'pipeline' && (

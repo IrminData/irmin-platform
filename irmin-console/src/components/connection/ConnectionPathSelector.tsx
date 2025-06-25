@@ -1,22 +1,18 @@
 'use client';
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight, TbChevronUp } from 'react-icons/tb';
 
-import IrminCore from '@/lib/core';
-
 import { ButtonWithTooltip } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
-import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
+import { useConnectionSchema } from '@/hooks/useConnectionSchema';
 
 import { ObjectSchema } from '@/types/core/ObjectSchema';
 
@@ -155,15 +151,8 @@ const ConnectionPathSelector = ({
   existingOnly?: boolean;
   loading?: boolean;
 }) => {
-  const { getToken } = useIAM();
-  const { workspaceSlug } = useWorkspaceContext();
-  const { dict, locale } = useLocale();
-  const { irminAlert } = usePopup();
+  const { dict } = useLocale();
 
-  const [loading, setLoading] = useState<boolean>(loadingProp);
-  const [rootSchema, setRootSchema] = useState<ObjectSchema | undefined>(
-    initialRootSchema
-  );
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [selectedPath, setSelectedPath] = useState<string>(
     defaultPath ? formatPath(defaultPath, false, groupOnly) : ''
@@ -174,45 +163,20 @@ const ConnectionPathSelector = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [isValidPath, setIsValidPath] = useState<boolean>(true);
 
-  const rootSchemaFetchedRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!connectionId) return;
-    if (initialRootSchema) return;
-    const newRootSchemaFetchedRef = `${workspaceSlug}-${connectionId}-${operationMethod}`;
-    if (rootSchemaFetchedRef.current === newRootSchemaFetchedRef) return;
-    rootSchemaFetchedRef.current = newRootSchemaFetchedRef;
-    (async () => {
-      try {
-        setLoading(true);
-        const token = await getToken();
-        const irminCore = new IrminCore(locale, token);
-        const newRootSchema =
-          await irminCore.connectionService.fetchConnectionSchema({
-            workspace: workspaceSlug,
-            connectionID: connectionId,
-            operationMethod: operationMethod,
-          });
-        setRootSchema(newRootSchema?.data ?? undefined);
-      } catch (error) {
-        console.error(error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to fetch the root object'
-        );
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [
-    initialRootSchema,
+  const { connectionSchemaQuery } = useConnectionSchema(
     connectionId,
-    operationMethod,
-    locale,
-    workspaceSlug,
-    irminAlert,
-    getToken,
-  ]);
+    operationMethod
+  );
+
+  const loading = useMemo(
+    () => connectionSchemaQuery.isLoading || loadingProp,
+    [connectionSchemaQuery.isLoading, loadingProp]
+  );
+
+  const rootSchema = useMemo(
+    () => connectionSchemaQuery.data?.data ?? initialRootSchema,
+    [connectionSchemaQuery.data?.data, initialRootSchema]
+  );
 
   // Keep input in sync with selected path
   useEffect(() => {

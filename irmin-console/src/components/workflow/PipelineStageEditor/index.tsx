@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { PipelineStageInput } from '@/types/internal/WorkflowInput';
+import { PipelineStage } from '@/types/core/Workflow';
 
 import Stage from './Stage';
 
 type PipelineStageEditorProps = {
-  initialStages?: PipelineStageInput[];
-  onSubmit?: (stages: PipelineStageInput[]) => void;
+  initialStages?: PipelineStage[];
+  onSubmit?: (stages: PipelineStage[]) => void;
   readOnly?: boolean;
   hideSaveButton?: boolean;
   defaultCollapsed?: boolean;
@@ -37,9 +37,9 @@ function PipelineStageEditor({
   defaultCollapsed = false,
 }: PipelineStageEditorProps) {
   const { dict } = useLocale();
-  const [stages, setStages] = useState<PipelineStageInput[]>(initialStages);
+  const [stages, setStages] = useState<PipelineStage[]>(initialStages);
 
-  const prevStagesRef = useRef<PipelineStageInput[]>(stages);
+  const prevStagesRef = useRef<PipelineStage[]>(stages);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Watch for changes and trigger onSubmit if the save button is disabled

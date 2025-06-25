@@ -424,6 +424,7 @@ const fi = {
       createNewImportWorkflow: 'Luo uusi tuontiprosessi',
       createNewExportWorkflow: 'Luo uusi vientiprosessi',
       createNewPipelineWorkflow: 'Luo uusi dataputkiprosessi',
+      configureFieldMappings: 'Määritä kenttien kartoitus',
       configureImport: 'Määritä tuonti',
       configureAction: 'Määritä toiminto',
       configureExport: 'Määritä vienti',
@@ -752,6 +753,27 @@ const fi = {
       resourceId:
         'Valinnainen tietyn resurssin tunniste. Jätä tyhjäksi koskemaan kaikkia tämän tyyppisiä resursseja',
     },
+  },
+  schemaFieldMapper: {
+    title: 'Kenttien yhdistäminen',
+    description:
+      'Klikkaa lähdekenttää, sitten kohdekenttää luodaksesi yhdistämisen',
+    descriptionWithSelection:
+      'Klikkaa kohdekenttää yhdistääksesi "{fieldName}" lähteestä {source}',
+    sourceSchema: 'Lähderakenne',
+    destinationSchema: 'Kohderakenne',
+    fieldMappings: 'Kenttien yhdistämiset',
+    noMappingsYet: 'Ei vielä yhdistämisiä',
+    autoMapIdenticalFields: 'Yhdistä samat kentät automaattisesti',
+    clearAllMappings: 'Tyhjennä kaikki yhdistämiset',
+    fields: 'kenttää',
+    mapped: 'yhdistetty',
+    required: 'pakollinen',
+    fileSize: '{size}KB',
+    autoMappedSuccess: 'Yhdistetty {count} samaa kenttää automaattisesti!',
+    noIdenticalFieldsFound: 'Ei samankaltaisia kenttiä yhdistettäväksi.',
+    sourceEmpty: 'Lähde on tyhjä - ei kenttiä yhdistettäväksi',
+    destinationEmpty: 'Kohde on tyhjä - mitään ei tarvitse korvata',
   },
 };
 

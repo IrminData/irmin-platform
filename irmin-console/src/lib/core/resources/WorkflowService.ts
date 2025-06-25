@@ -2,11 +2,12 @@ import IrminCore from '@/lib/core';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import { Workflow, WorkflowableType } from '@/types/core/Workflow';
 import {
-  WorkflowableInput,
-  WorkflowRequest,
-} from '@/types/internal/WorkflowInput';
+  Workflow,
+  Workflowable,
+  WorkflowableType,
+} from '@/types/core/Workflow';
+import { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 /**
  * Interface for updating basic workflow info
@@ -157,7 +158,7 @@ class WorkflowService {
     name: string;
     description?: string;
     documentation?: string;
-    workflowable?: WorkflowableInput;
+    workflowable?: Workflowable;
     schedule?: WorkflowSchedule;
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
@@ -248,7 +249,7 @@ class WorkflowService {
   }: {
     workspace: string;
     workflowID: string;
-    workflowable: WorkflowableInput;
+    workflowable: Workflowable;
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
       const response = await this.irminCore.fetchAPI(

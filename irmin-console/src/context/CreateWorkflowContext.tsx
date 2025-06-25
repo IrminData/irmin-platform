@@ -6,16 +6,18 @@ import { useSearchParams } from 'next/navigation';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
 import {
-  ActionWorkflowableInput,
-  WorkflowableInput,
-  WorkflowRequest,
-} from '@/types/internal/WorkflowInput';
+  Action,
+  Export,
+  Import,
+  Pipeline,
+  WorkflowableType,
+} from '@/types/core/Workflow';
+import { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 /**
  * Empty workflow setup data
  */
-export const emptyWorkflowSetupData: WorkflowRequest = {
-  // Workflow properties
+const emptyWorkflowSetupData: WorkflowRequest = {
   name: '',
   description: '',
   documentation: '',
@@ -26,12 +28,38 @@ export const emptyWorkflowSetupData: WorkflowRequest = {
     max_runtime: 15,
     min_interval: 120,
   },
-  // Workflowable properties
-  workflowable: {
-    type: 'action',
-    executable: '',
-    input: [],
-  },
+};
+
+const emptyImportWorkflowable: Import = {
+  type: 'import',
+  connection_id: '',
+  connection_path: '',
+  repository: '',
+  repository_path: '',
+  repository_branch: '',
+  field_mappings: [],
+};
+
+const emptyExportWorkflowable: Export = {
+  type: 'export',
+  connection_id: '',
+  connection_path: '',
+  repository: '',
+  repository_path: '',
+  repository_branch: '',
+  field_mappings: [],
+};
+
+const emptyActionWorkflowable: Action = {
+  type: 'action',
+  executable: '',
+  input: [],
+};
+
+const emptyPipelineWorkflowable: Pipeline = {
+  type: 'pipeline',
+  live: false,
+  stages: [],
 };
 
 /**
@@ -50,18 +78,25 @@ const CreateWorkflowContext = createContext<
 >(undefined);
 
 export const CreateWorkflowProvider: React.FC<{
+  workflowType: WorkflowableType;
   initialWorkflowData: WorkflowRequest | undefined;
   children: React.ReactNode;
-}> = ({ initialWorkflowData, children }) => {
+}> = ({ workflowType, initialWorkflowData, children }) => {
   const { createWorkflowMutation } = useWorkflows();
 
   const [workflowData, setWorkflowData] = useState<WorkflowRequest>({
     ...emptyWorkflowSetupData,
     ...(initialWorkflowData ?? {}),
     workflowable: {
-      ...emptyWorkflowSetupData.workflowable,
-      ...(initialWorkflowData?.workflowable as WorkflowableInput),
-    } as WorkflowableInput,
+      ...(workflowType === 'import'
+        ? emptyImportWorkflowable
+        : workflowType === 'export'
+          ? emptyExportWorkflowable
+          : workflowType === 'action'
+            ? emptyActionWorkflowable
+            : emptyPipelineWorkflowable),
+      ...(initialWorkflowData?.workflowable ?? {}),
+    },
   });
 
   const searchParams = useSearchParams();
@@ -72,8 +107,14 @@ export const CreateWorkflowProvider: React.FC<{
       ...emptyWorkflowSetupData,
       ...(initialWorkflowData ?? {}),
       workflowable: {
-        ...emptyWorkflowSetupData.workflowable,
-        ...(initialWorkflowData?.workflowable as WorkflowableInput),
+        ...(workflowType === 'import'
+          ? emptyImportWorkflowable
+          : workflowType === 'export'
+            ? emptyExportWorkflowable
+            : workflowType === 'action'
+              ? emptyActionWorkflowable
+              : emptyPipelineWorkflowable),
+        ...(initialWorkflowData?.workflowable ?? {}),
       },
     };
     // Set initial values based on query params and the workflow type
@@ -82,13 +123,12 @@ export const CreateWorkflowProvider: React.FC<{
       newWorkflowInputData.workflowable &&
       newWorkflowInputData.workflowable.type === 'action'
     ) {
-      const actionWorkflowable =
-        newWorkflowInputData.workflowable as ActionWorkflowableInput;
+      const actionWorkflowable = newWorkflowInputData.workflowable as Action;
       actionWorkflowable.executable = executable;
     }
     // Set the workflow data
     setWorkflowData(newWorkflowInputData);
-  }, [initialWorkflowData, executable]);
+  }, [initialWorkflowData, executable, workflowType]);
 
   /**
    * Create the workflow with the provided data using the Irmin API

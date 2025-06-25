@@ -298,6 +298,7 @@ export default function ObjectDetails({
     setSelectedTags(selectedObject?.tags ?? []);
     previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
   }, [selectedObject]);
+
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {
       try {

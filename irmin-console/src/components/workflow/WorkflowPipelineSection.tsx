@@ -8,7 +8,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkflow } from '@/hooks/useWorkflow';
 
-import { PipelineStageInput } from '@/types/internal/WorkflowInput';
+import { PipelineStage } from '@/types/core/Workflow';
 
 import PipelineStageEditor from './PipelineStageEditor';
 
@@ -19,7 +19,7 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
   const { dict } = useLocale();
   const { workflowQuery } = useWorkflow(workflowID);
 
-  const stages: PipelineStageInput[] = useMemo(() => {
+  const stages: PipelineStage[] = useMemo(() => {
     if (workflowQuery.data?.data?.type !== 'pipeline') return [];
     const stageInputs = workflowQuery.data?.data.workflowable.stages.map(
       (stage) => {
@@ -30,7 +30,7 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
             write: stage.write || false,
             read: stage.read || false,
             executable: stage.executable || '',
-          } as PipelineStageInput;
+          } as PipelineStage;
         }
         if (stage.type === 'connection') {
           return {
@@ -38,10 +38,10 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
             description: stage.description || '',
             write: stage.write || false,
             read: stage.read || false,
-            connection: stage.connection_id || '',
+            connection_id: stage.connection_id || '',
             connection_read_path: stage.connection_read_path || '',
             connection_write_path: stage.connection_write_path || '',
-          } as PipelineStageInput;
+          } as PipelineStage;
         }
         if (stage.type === 'repository') {
           return {
@@ -50,9 +50,9 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
             write: stage.write || false,
             read: stage.read || false,
             repository: stage.repository || '',
-            branch: stage.branch || '',
-            path: stage.path || '',
-          } as PipelineStageInput;
+            repository_branch: stage.repository_branch || '',
+            repository_path: stage.repository_path || '',
+          } as PipelineStage;
         }
       }
     );

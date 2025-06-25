@@ -272,6 +272,7 @@ class ObjectService {
    * @param props.repository - The repository slug.
    * @param props.ref - The ref (branch, tag or commit hash) to upload to.
    * @param props.path - The path within the repository where the object will be uploaded.
+   * @param props.metadata - (optional) The metadata to attach to the object.
    * @param props.files - A FileList containing files to upload.
    * @returns IrminAPIResponse containing the uploaded object.
    */
@@ -281,23 +282,25 @@ class ObjectService {
     ref,
     path,
     files,
+    metadata,
   }: {
     workspace: string;
     repository: string;
     ref: string;
     path: string;
+    metadata?: { [key: string]: string };
     files?: FileList;
   }): Promise<IrminAPIResponse<RepoObject>> {
     try {
       const formData = new FormData();
-      formData.append('ref', ref);
-      // In the Go SDK, file uploads use in-memory bytes. Here we use FileList.
       if (files) {
         for (let i = 0; i < files.length; i++) {
           formData.append('file', files[i]);
         }
       }
-      // Note: The Go endpoint does not use the object name in the URL; it uses query parameters.
+      if (metadata) {
+        formData.append('metadata', JSON.stringify(metadata));
+      }
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'POST',

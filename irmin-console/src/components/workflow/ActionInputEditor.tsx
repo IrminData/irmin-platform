@@ -52,7 +52,10 @@ function ActionInputEditor({
 
   // Add a new input file
   const addInputFile = useCallback(() => {
-    setInputFiles((prev) => [...prev, { repository: '', ref: '', path: '' }]);
+    setInputFiles((prev) => [
+      ...prev,
+      { repository: '', repository_ref: '', repository_path: '' },
+    ]);
   }, []);
 
   // Remove an input file
@@ -77,7 +80,7 @@ function ActionInputEditor({
     (index: number, repositorySlug: string | undefined) => {
       if (!repositorySlug) {
         updateInputFile(index, 'repository', '');
-        updateInputFile(index, 'ref', '');
+        updateInputFile(index, 'repository_ref', '');
         return;
       }
 
@@ -86,7 +89,7 @@ function ActionInputEditor({
       );
       if (repo) {
         updateInputFile(index, 'repository', repositorySlug);
-        updateInputFile(index, 'ref', repo.default_branch);
+        updateInputFile(index, 'repository_ref', repo.default_branch);
       }
     },
     [repositoriesQuery.data?.data, updateInputFile]
@@ -160,29 +163,33 @@ function ActionInputEditor({
 
             {/* Branch Input */}
             <div className='space-y-2'>
-              <Label htmlFor={`inputFiles.${index}.ref`}>
+              <Label htmlFor={`inputFiles.${index}.repository_ref`}>
                 {dict.repository.branches.ref}
               </Label>
               <Input
-                id={`inputFiles.${index}.ref`}
-                value={inputFile.ref}
-                onChange={(e) => updateInputFile(index, 'ref', e.target.value)}
+                id={`inputFiles.${index}.repository_ref`}
+                value={inputFile.repository_ref}
+                onChange={(e) =>
+                  updateInputFile(index, 'repository_ref', e.target.value)
+                }
               />
             </div>
 
             {/* Path Input */}
-            {inputFile.repository && inputFile.ref && (
+            {inputFile.repository && inputFile.repository_ref && (
               <div className='space-y-2'>
-                <Label htmlFor={`inputFiles.${index}.path`}>
+                <Label htmlFor={`inputFiles.${index}.repository_path`}>
                   {dict.workflow.scriptInputFiles.path}
                 </Label>
                 <RepositoryPathSelector
                   repositorySlug={inputFile.repository}
-                  ref={inputFile.ref}
-                  defaultPath={inputFile.path}
+                  ref={inputFile.repository_ref}
+                  defaultPath={inputFile.repository_path}
                   defaultExpanded={false}
                   nonGroupOnly={true}
-                  onPathChange={(path) => updateInputFile(index, 'path', path)}
+                  onPathChange={(path) =>
+                    updateInputFile(index, 'repository_path', path)
+                  }
                 />
               </div>
             )}

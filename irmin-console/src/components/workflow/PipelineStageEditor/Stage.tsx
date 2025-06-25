@@ -31,9 +31,9 @@ import { useConnections } from '@/hooks/useConnections';
 import { useRepositories } from '@/hooks/useRepositories';
 
 import { ObjectSchema } from '@/types/core/ObjectSchema';
-import { PipelineStageInput } from '@/types/internal/WorkflowInput';
+import { PipelineStage } from '@/types/core/Workflow';
 
-const defaultStage: PipelineStageInput = {
+const defaultStage: PipelineStage = {
   type: 'action',
   executable: '',
   description: '',
@@ -66,8 +66,8 @@ function Stage({
   defaultCollapsed = false,
 }: {
   index: number;
-  initialStage?: PipelineStageInput;
-  updateStage: (stage: PipelineStageInput) => void;
+  initialStage?: PipelineStage;
+  updateStage: (stage: PipelineStage) => void;
   moveStageUp?: () => void;
   moveStageDown?: () => void;
   removeStage?: () => void;
@@ -81,15 +81,15 @@ function Stage({
   const { dict, locale } = useLocale();
 
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed ?? false);
-  const [stage, setStage] = useState<PipelineStageInput>(
+  const [stage, setStage] = useState<PipelineStage>(
     initialStage ?? defaultStage
   );
-  const prevStageRef = useRef<PipelineStageInput>(stage);
+  const prevStageRef = useRef<PipelineStage>(stage);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced update function
   const debouncedUpdate = useCallback(
-    (newStage: PipelineStageInput) => {
+    (newStage: PipelineStage) => {
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current);
       }
@@ -314,7 +314,7 @@ function Stage({
                   setStage((prevStage) => ({
                     ...prevStage,
                     type: 'connection',
-                    connection: '',
+                    connection_id: '',
                     connection_write_path: '',
                     connection_read_path: '',
                   }));
@@ -323,8 +323,8 @@ function Stage({
                     ...prevStage,
                     type: 'repository',
                     repository: '',
-                    branch: '',
-                    path: '',
+                    repository_branch: '',
+                    repository_path: '',
                   }));
                 }
               }}
@@ -400,13 +400,13 @@ function Stage({
                   {dict.connections.connection}
                 </Label>
                 <Select
-                  value={stage.connection}
+                  value={stage.connection_id}
                   onValueChange={(value) => {
                     if (!value) return;
                     fetchConnectionSchemas(value);
                     setStage((prevStage) => ({
                       ...prevStage,
-                      connection: value,
+                      connection_id: value,
                     }));
                   }}
                   disabled={readOnly}
@@ -417,8 +417,8 @@ function Stage({
                   >
                     <SelectValue>
                       {connectionsQuery.data?.data?.find(
-                        (c) => c.id === stage.connection
-                      )?.name ?? stage.connection}
+                        (c) => c.id === stage.connection_id
+                      )?.name ?? stage.connection_id}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -429,9 +429,9 @@ function Stage({
                     ))}
                   </SelectContent>
                 </Select>
-                {stage.connection && (
+                {stage.connection_id && (
                   <Button
-                    href={`${workspaceUrl}/connections/${stage.connection}`}
+                    href={`${workspaceUrl}/connections/${stage.connection_id}`}
                     target='_blank'
                     variant='secondary'
                     className='w-full'
@@ -452,7 +452,7 @@ function Stage({
                   </Button>
                 )}
               </div>
-              {stage.connection && stage.write && (
+              {stage.connection_id && stage.write && (
                 <div className='flex flex-col gap-2'>
                   <Label htmlFor={`connection_write_path-${index}`}>
                     {dict.workflow.pipeline.connectionWritePath}
@@ -460,7 +460,7 @@ function Stage({
                   {!readOnly && connectionPushSchema ? (
                     <ConnectionPathSelector
                       rootSchema={connectionPushSchema}
-                      connectionId={stage.connection}
+                      connectionId={stage.connection_id}
                       defaultPath={stage.connection_write_path ?? ''}
                       operationMethod={'push'}
                       onPathChange={(path) => {
@@ -483,12 +483,12 @@ function Stage({
                           connection_write_path: e.target.value,
                         }))
                       }
-                      readOnly={readOnly || !stage.connection}
+                      readOnly={readOnly || !stage.connection_id}
                     />
                   )}
                 </div>
               )}
-              {stage.connection && stage.read && (
+              {stage.connection_id && stage.read && (
                 <div className='flex flex-col gap-2'>
                   <Label htmlFor={`connection_read_path-${index}`}>
                     {dict.workflow.pipeline.connectionReadPath}
@@ -496,7 +496,7 @@ function Stage({
                   {!readOnly && connectionPullSchema ? (
                     <ConnectionPathSelector
                       rootSchema={connectionPullSchema}
-                      connectionId={stage.connection}
+                      connectionId={stage.connection_id}
                       defaultPath={stage.connection_read_path ?? ''}
                       operationMethod={'pull'}
                       onPathChange={(path) => {
@@ -519,7 +519,7 @@ function Stage({
                           connection_read_path: e.target.value,
                         }))
                       }
-                      readOnly={readOnly || !stage.connection}
+                      readOnly={readOnly || !stage.connection_id}
                     />
                   )}
                 </div>
@@ -591,11 +591,11 @@ function Stage({
                 </Label>
                 <Input
                   id={`branch-${index}`}
-                  value={stage.branch}
+                  value={stage.repository_branch}
                   onChange={(e) =>
                     setStage((prevStage) => ({
                       ...prevStage,
-                      branch: e.target.value,
+                      repository_branch: e.target.value,
                     }))
                   }
                   readOnly={readOnly || !stage.repository}
@@ -608,11 +608,11 @@ function Stage({
                   </Label>
                   <Input
                     id={`path-${index}`}
-                    value={stage.path}
+                    value={stage.repository_path}
                     onChange={(e) =>
                       setStage((prevStage) => ({
                         ...prevStage,
-                        path: e.target.value,
+                        repository_path: e.target.value,
                       }))
                     }
                     readOnly={readOnly}
@@ -620,19 +620,19 @@ function Stage({
                 </div>
               ) : (
                 stage.repository &&
-                stage.branch && (
+                stage.repository_branch && (
                   <div className='flex flex-col gap-2'>
                     <Label htmlFor={`path-${index}`}>
                       {dict.repository.objects.path}
                     </Label>
                     <RepositoryPathSelector
                       repositorySlug={stage.repository}
-                      ref={stage.branch}
-                      defaultPath={stage.path}
+                      ref={stage.repository_branch}
+                      defaultPath={stage.repository_path}
                       onPathChange={(path) =>
                         setStage((prevStage) => ({
                           ...prevStage,
-                          path: path,
+                          repository_path: path,
                         }))
                       }
                     />

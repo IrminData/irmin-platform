@@ -10,6 +10,7 @@ import {
   TbClockCog,
   TbDatabase,
   TbFileText,
+  TbJumpRope,
   TbPlayerPlay,
   TbRun,
   TbSettings,
@@ -106,7 +107,7 @@ export default function WorkflowLayoutWrapper({
 
   const repositoryBranch =
     workflow?.type === 'import' || workflow?.type === 'export'
-      ? workflow?.workflowable?.branch
+      ? workflow?.workflowable?.repository_branch
       : null;
 
   const tabs: TabsType = [
@@ -115,6 +116,19 @@ export default function WorkflowLayoutWrapper({
       link: `${baseUrl}`,
       active: pathname === `${baseUrl}`,
       icon: <TbRun size={14} />,
+    },
+    {
+      name: dict.schemaFieldMapper.title,
+      link: `${baseUrl}/field-mapper`,
+      active: pathname === `${baseUrl}/field-mapper`,
+      icon: <TbJumpRope size={14} />,
+      hidden:
+        (workflow.type !== 'import' && workflow.type !== 'export') ||
+        !isResourceAllowed(
+          PolicyResource.Workflow,
+          PolicyAction.Update,
+          workflowID
+        ),
     },
     {
       name: dict.workflow.pipeline.pipeline,

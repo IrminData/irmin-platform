@@ -113,6 +113,7 @@ export default function ExportWorkflowsSection({
         currentStep={currentStep}
         steps={[
           dict.workflow.create.configureExport,
+          dict.workflow.create.configureFieldMappings,
           dict.workflow.create.configureWorkflow,
         ]}
         title={dict.workflow.create.createNewExportWorkflow}
@@ -140,11 +141,11 @@ export default function ExportWorkflowsSection({
             // Workflowable properties
             workflowable: {
               type: 'export',
-              connection: '',
+              connection_id: '',
               connection_path: '',
               repository: '',
-              branch: '',
-              path: '',
+              repository_branch: '',
+              repository_path: '',
             },
           }}
         />
