@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/IrminData/irmin-sdk-go v0.0.0-20250621192738-418b72ab486f
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.81.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.82.0
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/gofiber/storage/s3/v2 v2.3.0
@@ -31,7 +31,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.17 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.81 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.82 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
@@ -62,11 +62,11 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
+	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
