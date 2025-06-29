@@ -42,16 +42,22 @@ type PipelineStage struct {
 	Write       bool              `json:"write"`
 	Read        bool              `json:"read"`
 	Type        PipelineStageType `json:"type"`
-	// Action
+
+	// Action stage specific
+
 	Executable *string `json:"executable,omitempty"`
-	// Connection
-	ConnectionID        *string `json:"connection_id,omitempty"`
-	ConnectionWritePath *string `json:"connection_write_path,omitempty"`
-	ConnectionReadPath  *string `json:"connection_read_path,omitempty"`
-	// Repository
-	Repository       *string `json:"repository,omitempty"`
-	RepositoryBranch *string `json:"repository_branch,omitempty"`
-	RepositoryPath   *string `json:"repository_path,omitempty"`
+
+	// Connection stage specific
+
+	ConnectionID         *string  `json:"connection_id,omitempty"`
+	ConnectionWritePaths []string `json:"connection_write_paths,omitempty"`
+	ConnectionReadPaths  []string `json:"connection_read_paths,omitempty"`
+
+	// Repository stage specific
+
+	Repository       *string  `json:"repository,omitempty"`
+	RepositoryBranch *string  `json:"repository_branch,omitempty"`
+	RepositoryPaths  []string `json:"repository_paths,omitempty"`
 }
 
 type ActionInputData struct {
@@ -61,17 +67,26 @@ type ActionInputData struct {
 }
 
 type Workflowable struct {
-	Type             WorkflowableType  `json:"type"`
-	ConnectionID     string            `json:"connection_id,omitempty"`
-	ConnectionPath   string            `json:"connection_path,omitempty"`
-	Repository       string            `json:"repository,omitempty"`
-	RepositoryBranch string            `json:"repository_branch,omitempty"`
-	RepositoryPath   string            `json:"repository_path,omitempty"`
-	Live             bool              `json:"live,omitempty"`
-	Stages           []PipelineStage   `json:"stages,omitempty"`
-	Executable       string            `json:"executable,omitempty"`
-	Input            []ActionInputData `json:"input,omitempty"`
-	FieldMappings    []FieldMapping    `json:"field_mappings,omitempty"`
+	Type WorkflowableType `json:"type"`
+
+	// Import & Export workflowable
+
+	FieldMappings    []FieldMapping `json:"field_mappings,omitempty"`
+	ConnectionID     string         `json:"connection_id,omitempty"`
+	ConnectionPaths  []string       `json:"connection_paths,omitempty"`
+	Repository       string         `json:"repository,omitempty"`
+	RepositoryBranch string         `json:"repository_branch,omitempty"`
+	RepositoryPaths  []string       `json:"repository_paths,omitempty"`
+
+	// Pipeline workflowable
+
+	Live   bool            `json:"live,omitempty"`
+	Stages []PipelineStage `json:"stages,omitempty"`
+
+	// Action workflowable
+
+	Executable string            `json:"executable,omitempty"`
+	Input      []ActionInputData `json:"input,omitempty"`
 }
 
 type Workflow struct {

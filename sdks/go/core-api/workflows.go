@@ -25,8 +25,10 @@ type WorkflowRequest struct {
 	Name          string                       `json:"name"                    validate:"required"`
 	Description   string                       `json:"description,omitempty"`
 	Documentation string                       `json:"documentation,omitempty"`
-	// Workflowable configuration varies by type
+
+	// Workflowable configuration
 	Workflowable irminmodels.Workflowable `json:"workflowable,omitempty"`
+
 	// Schedule configuration
 	Schedule irminmodels.Schedule `json:"schedule,omitempty"`
 }
