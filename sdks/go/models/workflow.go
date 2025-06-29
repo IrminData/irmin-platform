@@ -85,8 +85,11 @@ type Workflowable struct {
 
 	// Action workflowable
 
-	Executable string            `json:"executable,omitempty"`
-	Input      []ActionInputData `json:"input,omitempty"`
+	Executable              string            `json:"executable,omitempty"`
+	Input                   []ActionInputData `json:"input,omitempty"`
+	ResultsRepository       *string           `json:"results_repository,omitempty"`
+	ResultsRepositoryBranch *string           `json:"results_repository_branch,omitempty"`
+	ResultsRepositoryPath   string            `json:"results_repository_path,omitempty"`
 }
 
 type Workflow struct {
