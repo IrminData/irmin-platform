@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -71,6 +72,13 @@ func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	})
 }
 
+// InviteTransactionResult contains the result of invitation creation including notification status.
+type InviteTransactionResult struct {
+	Invite             *db.Invite                    `json:"invite"`
+	ClerkInviteCreated bool                          `json:"clerk_invite_created"`
+	NotificationResult *lib.InviteNotificationResult `json:"notification_result,omitempty"`
+}
+
 // sendInviteInTransaction handles the transactional creation of invites in both database and Clerk.
 func (api *APIControllers) sendInviteInTransaction(
 	ctx context.Context,
@@ -79,11 +87,13 @@ func (api *APIControllers) sendInviteInTransaction(
 	user *db.User,
 	workspace *db.Workspace,
 	locale string,
-) (*db.Invite, error) {
+) (*InviteTransactionResult, error) {
 	var newInvite *db.Invite
 	var clerkInvite *clerk.Invitation
+	var clerkInviteCreated = false
+	var inviteAcceptanceURL string
 
-	// Use database transaction to ensure atomicity
+	// Use database transaction to ensure atomicity for database operations
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Create the invite in the database
 		expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
@@ -95,56 +105,182 @@ func (api *APIControllers) sendInviteInTransaction(
 			WorkspaceID: workspace.ID,
 		}
 		if createInviteErr := tx.Create(&newInvite).Error; createInviteErr != nil {
-			api.Logger.Error("Error creating invite", "error", createInviteErr)
+			api.Logger.ErrorContext(ctx, "Error creating invite", "error", createInviteErr)
 			return createInviteErr
 		}
 
 		// Create sqid for the invite
 		inviteSqid, encodeInviteSqidErr := api.SQIDManager.Encode("invites", uint64(newInvite.ID))
 		if encodeInviteSqidErr != nil {
-			api.Logger.Error("Error encoding invite sqid", "error", encodeInviteSqidErr)
+			api.Logger.ErrorContext(ctx, "Error encoding invite sqid", "error", encodeInviteSqidErr)
 			return encodeInviteSqidErr
 		}
 
 		// Create the invite acceptance URL
-		inviteAcceptanceURL := fmt.Sprintf(
+		inviteAcceptanceURL = fmt.Sprintf(
 			"%s/%s/invite/%s",
 			api.Env.ConsoleURL,
 			locale,
 			inviteSqid,
 		)
 
-		// Set the API key with your Clerk Secret Key.
-		clerk.SetKey(api.Env.ClerkSecretKey)
-
-		// Create the invite in Clerk
-		expiresInDays := int64(api.Env.InviteExpiresInDays)
-		var createClerkInviteErr error
-		clerkInvite, createClerkInviteErr = invitation.Create(ctx, &invitation.CreateParams{
-			EmailAddress:  req.Email,
-			RedirectURL:   &inviteAcceptanceURL,
-			ExpiresInDays: &expiresInDays,
-		})
-		if createClerkInviteErr != nil {
-			api.Logger.Error("Error creating Clerk invite", "error", createClerkInviteErr)
-			return createClerkInviteErr
-		}
-
-		// Update invite with Clerk ID
-		newInvite.ClerkID = clerkInvite.ID
-		if updateInviteErr := tx.Save(&newInvite).Error; updateInviteErr != nil {
-			api.Logger.Error("Error updating invite with Clerk ID", "error", updateInviteErr)
-			return updateInviteErr
-		}
-
 		return nil
 	})
 
-	return newInvite, transactionErr
+	// If database transaction failed, return error
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	// Try to create the invite in Clerk (outside of database transaction)
+	clerk.SetKey(api.Env.ClerkSecretKey)
+	expiresInDays := int64(api.Env.InviteExpiresInDays)
+	clerkInvite, createClerkInviteErr := invitation.Create(ctx, &invitation.CreateParams{
+		EmailAddress:  req.Email,
+		RedirectURL:   &inviteAcceptanceURL,
+		ExpiresInDays: &expiresInDays,
+	})
+
+	if createClerkInviteErr != nil {
+		api.Logger.WarnContext(ctx, "Clerk invitation creation failed, will use fallback notifications",
+			"error", createClerkInviteErr,
+			"email", req.Email)
+
+		// Don't fail the entire process if Clerk fails
+		clerkInviteCreated = false
+	} else {
+		// Update invite with Clerk ID in a separate transaction
+		updateErr := api.DB.Transaction(func(tx *gorm.DB) error {
+			newInvite.ClerkID = clerkInvite.ID
+			return tx.Save(&newInvite).Error
+		})
+
+		if updateErr != nil {
+			api.Logger.ErrorContext(ctx, "Error updating invite with Clerk ID", "error", updateErr)
+			// Continue anyway since the invite exists in database
+		} else {
+			clerkInviteCreated = true
+			api.Logger.InfoContext(ctx, "Clerk invitation created successfully", "email", req.Email, "clerk_id", clerkInvite.ID)
+		}
+	}
+
+	// If Clerk invitation failed, send fallback notification
+	var notificationResult *lib.InviteNotificationResult
+	if !clerkInviteCreated {
+		// Prepare notification parameters
+		notificationParams := lib.InviteNotificationParams{
+			Invite:              newInvite,
+			Workspace:           workspace,
+			InvitedBy:           user,
+			Role:                role,
+			InviteAcceptanceURL: inviteAcceptanceURL,
+			Locale:              locale,
+		}
+
+		// Send fallback notification
+		notificationResult = lib.SendFallbackInviteNotification(
+			ctx,
+			api.DB,
+			api.SQIDManager,
+			api.Env,
+			api.Logger,
+			notificationParams,
+		)
+
+		api.Logger.InfoContext(ctx, "Fallback notification attempted",
+			"email", req.Email,
+			"method", notificationResult.Method,
+			"success", notificationResult.Success)
+	}
+
+	return &InviteTransactionResult{
+		Invite:             newInvite,
+		ClerkInviteCreated: clerkInviteCreated,
+		NotificationResult: notificationResult,
+	}, nil
 }
 
-// SendInvite sends an invite to a user to join a workspace.
-//
+// prepareResponseMessage creates the appropriate response message based on invitation method.
+func (api *APIControllers) prepareResponseMessage(
+	dict locales.Dictionary,
+	inviteResult *InviteTransactionResult,
+) string {
+	switch {
+	case inviteResult.ClerkInviteCreated:
+		return api.lm.T(dict, "invite_sent")
+	case inviteResult.NotificationResult != nil && inviteResult.NotificationResult.Success:
+		return fmt.Sprintf("Invitation created and notification sent via %s", inviteResult.NotificationResult.Method)
+	default:
+		return "Invitation created in database. Manual notification may be required."
+	}
+}
+
+// buildResponseData constructs response data with notification status.
+func (api *APIControllers) buildResponseData(
+	inviteResponse any,
+	inviteResult *InviteTransactionResult,
+) map[string]any {
+	responseData := map[string]any{
+		"invite": inviteResponse,
+		"notification_status": map[string]any{
+			"clerk_invite_created": inviteResult.ClerkInviteCreated,
+		},
+	}
+
+	// Add notification result if fallback was used
+	if inviteResult.NotificationResult != nil {
+		// Safe type assertion with error check
+		if notificationStatus, ok := responseData["notification_status"].(map[string]any); ok {
+			notificationStatus["fallback_notification"] = map[string]any{
+				"method":  inviteResult.NotificationResult.Method,
+				"success": inviteResult.NotificationResult.Success,
+				"message": inviteResult.NotificationResult.Message,
+			}
+		}
+	}
+
+	return responseData
+}
+
+// validateSendInviteRequest validates the incoming request.
+func (api *APIControllers) validateSendInviteRequest(
+	req irmincore.SendInviteRequest,
+	workspace *db.Workspace,
+	_ locales.Dictionary,
+) error {
+	// Validate required fields
+	if req.Email == "" || req.Role == "" {
+		return errors.New("invalid request: missing required fields")
+	}
+
+	// Validate email
+	if !utils.ValidateEmail(req.Email) {
+		api.Logger.Error("Invalid email", "email", req.Email)
+		return errors.New("invalid email format")
+	}
+
+	// Check if user is already in workspace
+	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(req.Email, workspace.ID)
+	if err != nil || alreadyInWorkspace {
+		api.Logger.Error("User already in workspace", "email", req.Email, "error", err)
+		return errors.New("user already in workspace")
+	}
+
+	// Check if user is already invited
+	existingInvites, err := api.DB.GetInvitesByEmail(req.Email)
+	if err != nil {
+		api.Logger.Error("Error checking existing invites", "email", req.Email, "error", err)
+		return errors.New("error checking existing invites")
+	}
+	for _, invite := range existingInvites {
+		if invite.WorkspaceID == workspace.ID {
+			api.Logger.Error("User already invited to workspace", "email", req.Email)
+			return errors.New("user already invited to workspace")
+		}
+	}
+
+	return nil
+}
 
 func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -164,43 +300,24 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		})
 	}
 
-	// Validate required fields
-	if req.Email == "" || req.Role == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate email
-	if !utils.ValidateEmail(req.Email) {
-		api.Logger.Error("Invalid email", "email", req.Email)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Check if user is already in workspace
-	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(req.Email, workspace.ID)
-	if err != nil || alreadyInWorkspace {
-		api.Logger.Error("User already in workspace", "email", req.Email, "error", err)
-		return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "already_in_workspace")},
-		})
-	}
-
-	// Check if user is already invited
-	existingInvites, err := api.DB.GetInvitesByEmail(req.Email)
-	if err != nil {
-		api.Logger.Error("Error checking existing invites", "email", req.Email, "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-	for _, invite := range existingInvites {
-		if invite.WorkspaceID == workspace.ID {
-			api.Logger.Error("User already invited to workspace", "email", req.Email)
+	// Validate request
+	if err := api.validateSendInviteRequest(req, workspace, dict); err != nil {
+		switch err.Error() {
+		case "invalid request: missing required fields", "invalid email format":
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invalid_request")},
+			})
+		case "user already in workspace":
+			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "already_in_workspace")},
+			})
+		case "user already invited to workspace":
 			return utils.WriteResponse(c, fiber.StatusConflict, irminmodels.IrminAPIResponse{
 				Errors: []string{api.lm.T(dict, "already_invited_to_workspace")},
+			})
+		default:
+			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "error_occurred")},
 			})
 		}
 	}
@@ -229,8 +346,8 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		})
 	}
 
-	// Use database transaction to ensure atomicity
-	newInvite, transactionErr := api.sendInviteInTransaction(c.Context(), req, role, user, workspace, locale)
+	// Create the invitation with enhanced error handling
+	inviteResult, transactionErr := api.sendInviteInTransaction(c.Context(), req, role, user, workspace, locale)
 	if transactionErr != nil {
 		api.Logger.Error("Transaction failed for invite creation", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -239,7 +356,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	}
 
 	// Format the invite
-	inviteResponse, formatInviteResponseErr := formatter.FormatInviteResponse(newInvite, api.SQIDManager)
+	inviteResponse, formatInviteResponseErr := formatter.FormatInviteResponse(inviteResult.Invite, api.SQIDManager)
 	if formatInviteResponseErr != nil {
 		api.Logger.Error("Error formatting invite response", "error", formatInviteResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -247,18 +364,30 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		})
 	}
 
+	// Create audit log description based on notification method used
+	auditDescription := fmt.Sprintf("Invite sent to %s, role: %s", inviteResult.Invite.Email, role.Role)
+	if inviteResult.ClerkInviteCreated {
+		auditDescription += " (via Clerk)"
+	} else if inviteResult.NotificationResult != nil {
+		auditDescription += fmt.Sprintf(" (via %s)", inviteResult.NotificationResult.Method)
+	}
+
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("Invite sent to %s, role: %s", newInvite.Email, role.Role),
+		Description: auditDescription,
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
 
+	// Prepare response components
+	responseMessage := api.prepareResponseMessage(dict, inviteResult)
+	responseData := api.buildResponseData(inviteResponse, inviteResult)
+
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
-		Message: api.lm.T(dict, "invite_sent"),
-		Data:    inviteResponse,
+		Message: responseMessage,
+		Data:    responseData,
 	})
 }
 
