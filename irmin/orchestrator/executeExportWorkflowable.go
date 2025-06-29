@@ -18,10 +18,11 @@ func (o *Orchestrator) executeExportWorkflowable(
 		workflow,
 		workflowable.ConnectionID,
 		workflowable.ConnectionPath,
-		workflowable.RepositoryPath,
 		&workflow.Workspace,
 		&workflowable.Repository,
+		workflowable.RepositoryPath,
 		workflowable.RepositoryBranch,
 		operationExport,
+		workflowable.FieldMappings,
 	)
 }

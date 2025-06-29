@@ -7,6 +7,8 @@ import (
 	"irmin-api/lakefs"
 	"irmin-api/lib"
 	"strings"
+
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
 // workflowOperation represents the type of workflow operation.
@@ -23,7 +25,7 @@ func (o *Orchestrator) saveDirectoryObjectToDB(
 	ctx context.Context,
 	workspace *db.Workspace,
 	repository *db.Repository,
-	path, branch string,
+	repositoryPath, repositoryBranch string,
 	importedObjects []lakefs.ObjectMetadata,
 ) {
 	// Check if anything was imported
@@ -31,13 +33,13 @@ func (o *Orchestrator) saveDirectoryObjectToDB(
 		return
 	}
 	// Get the directory object of the import target repository
-	engineObject, getErr := o.dataEngine.GetPath(workspace.Slug, repository.Slug, path, branch)
+	engineObject, getErr := o.dataEngine.GetPath(workspace.Slug, repository.Slug, repositoryPath, repositoryBranch)
 	if getErr != nil {
 		o.logger.ErrorContext(ctx, "Error getting root object from data engine", "error", getErr)
 		return
 	}
 	// Save the directory object to the database
-	_, saveObjectErr := lib.SaveObject(o.db, engineObject, branch, repository.ID)
+	_, saveObjectErr := lib.SaveObject(o.db, engineObject, repositoryBranch, repository.ID)
 	if saveObjectErr != nil {
 		o.logger.ErrorContext(ctx, "Error saving root object to database", "error", saveObjectErr)
 	}
@@ -50,11 +52,12 @@ func (o *Orchestrator) executeWorkflowableCommon(
 	workflow *db.Workflow,
 	connectionID uint,
 	connectionPath string,
-	path string,
 	workspace *db.Workspace,
 	repository *db.Repository,
-	branch string,
+	repositoryPath string,
+	repositoryBranch string,
 	operation workflowOperation,
+	fieldMappings []irminmodels.FieldMapping,
 ) ([]string, error) {
 	var logs []string
 
@@ -80,7 +83,7 @@ func (o *Orchestrator) executeWorkflowableCommon(
 
 	// Trim leading slashes from the paths
 	connectionPath = strings.TrimLeft(connectionPath, "/")
-	path = strings.TrimLeft(path, "/")
+	repositoryPath = strings.TrimLeft(repositoryPath, "/")
 
 	var importedObjects []lakefs.ObjectMetadata
 	var exportedPaths []string
@@ -94,8 +97,9 @@ func (o *Orchestrator) executeWorkflowableCommon(
 			connectionPath,
 			workflow.Workspace.Slug,
 			repository.Slug,
-			branch,
-			path,
+			repositoryBranch,
+			repositoryPath,
+			fieldMappings,
 		)
 	case operationExport:
 		exportedPaths, errors = o.dataEngine.DataExport(
@@ -103,8 +107,9 @@ func (o *Orchestrator) executeWorkflowableCommon(
 			connectionPath,
 			workflow.Workspace.Slug,
 			repository.Slug,
-			branch,
-			path,
+			repositoryBranch,
+			repositoryPath,
+			fieldMappings,
 		)
 	}
 
@@ -148,7 +153,7 @@ func (o *Orchestrator) executeWorkflowableCommon(
 	}
 
 	// Save the root object of the import target repository to the database in a go routine
-	go o.saveDirectoryObjectToDB(ctx, workspace, repository, path, branch, importedObjects)
+	go o.saveDirectoryObjectToDB(ctx, workspace, repository, repositoryPath, repositoryBranch, importedObjects)
 
 	return logs, nil
 }

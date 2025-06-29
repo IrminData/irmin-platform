@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"irmin-api/db"
+	"irmin-api/duckdb"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
@@ -68,8 +69,55 @@ func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*
 	return schema, nil
 }
 
+// processFieldMappings applies field mappings to files and merges results.
+// This is a common workflow used by both import and export operations.
+func (c *Client) processFieldMappings(
+	files map[string][]byte,
+	fieldMappings []irminmodels.FieldMapping,
+) (map[string][]byte, []error) {
+	// If no field mappings, return files as-is
+	if len(fieldMappings) == 0 {
+		return files, nil
+	}
+
+	// Initialize DuckDB client for field mappings and merging
+	duckDBClient, err := duckdb.NewQueryClient(c.Env, c.Logger)
+	if err != nil {
+		return nil, []error{fmt.Errorf("failed to initialize DuckDB client: %w", err)}
+	}
+	defer duckDBClient.Close()
+
+	// Apply field mappings to all files and collect results by destination
+	destinationFiles, mappingErrors := c.applyFieldMappingsToAllFiles(duckDBClient, files, fieldMappings)
+	if len(mappingErrors) > 0 {
+		return nil, mappingErrors
+	}
+
+	// Merge files that map to the same destination
+	mergedFiles, mergeErrors := c.mergeDestinationFiles(duckDBClient, destinationFiles)
+	if len(mergeErrors) > 0 {
+		return nil, mergeErrors
+	}
+
+	return mergedFiles, nil
+}
+
+// buildTargetPath constructs a target path based on base path, item name, and whether multiple items exist.
+// This is used for both upload paths and connection paths.
+func (c *Client) buildTargetPath(basePath, itemName string, hasMultipleItems bool) string {
+	targetPath := strings.TrimPrefix(basePath, "/")
+	if strings.HasSuffix(basePath, "/") || basePath == "" || hasMultipleItems {
+		// If base path is a directory (ends with "/" or is empty), or there are multiple items,
+		// append the item name to the path.
+		targetPath = path.Join(targetPath, itemName)
+	}
+	return targetPath
+}
+
 // DataImport imports data from an external source into a lakeFS repository.
-// It returns the metadata of the uploaded objects and any errors that occurred.
+// It applies field mappings to route and transform data, merges files that map
+// to the same destination, and uploads the results.
+// Returns the metadata of the uploaded objects and any errors that occurred.
 func (c *Client) DataImport(
 	connection *db.Connection,
 	connectionPath,
@@ -77,35 +125,43 @@ func (c *Client) DataImport(
 	repository,
 	branch,
 	repositoryPath string,
+	fieldMappings []irminmodels.FieldMapping,
 ) ([]lakefs.ObjectMetadata, []error) {
-	var (
-		errs    []error
-		success []lakefs.ObjectMetadata
-	)
-
 	// Pull the files from the connector.
 	allFiles, err := c.PullFilesFromConnector(connection, connectionPath)
 	if err != nil {
 		return nil, []error{err}
 	}
 
-	// Prepare upload to lakeFS.
+	// Process field mappings (or return files as-is if no mappings)
+	processedFiles, processingErrors := c.processFieldMappings(allFiles, fieldMappings)
+	if len(processingErrors) > 0 {
+		return nil, processingErrors
+	}
+
+	// Upload the processed files
+	return c.uploadFiles(processedFiles, workspace, repository, branch, repositoryPath)
+}
+
+// uploadFiles uploads files to lakeFS concurrently.
+func (c *Client) uploadFiles(
+	files map[string][]byte,
+	workspace, repository, branch, repositoryPath string,
+) ([]lakefs.ObjectMetadata, []error) {
+	var (
+		errs    []error
+		success []lakefs.ObjectMetadata
+	)
+
 	repoName := utils.GetLakeFSRepositoryName(workspace, repository)
-	uploadCh := make(chan *lakefs.ObjectMetadata, len(allFiles))
-	upErrCh := make(chan error, len(allFiles))
+	uploadCh := make(chan *lakefs.ObjectMetadata, len(files))
+	upErrCh := make(chan error, len(files))
 
-	// Upload files concurrently.
-	for filePath, fileContent := range allFiles {
+	// Upload files concurrently
+	for filePath, fileContent := range files {
 		go func() {
-			// Build the full path to the file.
-			uploadPath := strings.TrimPrefix(repositoryPath, "/")
-			if strings.HasSuffix(repositoryPath, "/") || repositoryPath == "" || len(allFiles) > 1 {
-				// If repository path is a directory (ends with "/" or is empty), or there is more than one file,
-				// append the pulled file name to the path.
-				uploadPath = path.Join(uploadPath, filePath)
-			}
+			uploadPath := c.buildTargetPath(repositoryPath, filePath, len(files) > 1)
 
-			// Upload the file.
 			meta, upErr := c.LakeFSClient.UploadObject(
 				repoName,
 				branch,
@@ -121,8 +177,8 @@ func (c *Client) DataImport(
 		}()
 	}
 
-	// Collect upload results.
-	for range allFiles {
+	// Collect upload results
+	for range files {
 		select {
 		case meta := <-uploadCh:
 			if meta != nil {
@@ -134,6 +190,69 @@ func (c *Client) DataImport(
 	}
 
 	return success, errs
+}
+
+// applyFieldMappingsToAllFiles applies field mappings to all source files.
+func (c *Client) applyFieldMappingsToAllFiles(
+	duckDBClient *duckdb.QueryClient,
+	allFiles map[string][]byte,
+	fieldMappings []irminmodels.FieldMapping,
+) (map[string]map[string][]byte, []error) {
+	// destinationFiles[destinationPath][sourcePath] = content
+	destinationFiles := make(map[string]map[string][]byte)
+	var errs []error
+
+	for sourcePath, fileContent := range allFiles {
+		// Apply field mappings to this source file
+		results, err := c.ApplyFieldMappings(duckDBClient, fileContent, sourcePath, fieldMappings)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failed to apply field mappings to %s: %w", sourcePath, err))
+			continue
+		}
+
+		// Organize results by destination path
+		for destPath, destContent := range results {
+			if destinationFiles[destPath] == nil {
+				destinationFiles[destPath] = make(map[string][]byte)
+			}
+			destinationFiles[destPath][sourcePath] = destContent
+		}
+	}
+
+	return destinationFiles, errs
+}
+
+// mergeDestinationFiles merges multiple source files that map to the same destination.
+func (c *Client) mergeDestinationFiles(
+	duckDBClient *duckdb.QueryClient,
+	destinationFiles map[string]map[string][]byte,
+) (map[string][]byte, []error) {
+	mergedFiles := make(map[string][]byte)
+	var errs []error
+
+	for destPath, sourceFiles := range destinationFiles {
+		if len(sourceFiles) == 1 {
+			// Single source, no merging needed
+			for _, content := range sourceFiles {
+				mergedFiles[destPath] = content
+				break
+			}
+		} else {
+			// Multiple sources, need to merge
+			mergeResult, err := duckDBClient.MergeFiles(
+				sourceFiles,
+				destPath,
+				duckdb.MergeStrategyUnionDistinct, // Default strategy, could be configurable
+			)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to merge files for destination %s: %w", destPath, err))
+				continue
+			}
+			mergedFiles[destPath] = mergeResult.Content
+		}
+	}
+
+	return mergedFiles, errs
 }
 
 // PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents.
@@ -171,7 +290,9 @@ func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPat
 }
 
 // DataExport exports data from a lakeFS repository to an external connector.
-// It returns the paths of the files that were pushed and an error if any occurred.
+// It applies field mappings to route and transform data, merges files that map
+// to the same destination, and pushes the results to the connector.
+// Returns the paths of the files that were pushed and any errors that occurred.
 func (c *Client) DataExport(
 	connection *db.Connection,
 	connectionPath,
@@ -179,6 +300,7 @@ func (c *Client) DataExport(
 	repository,
 	branch,
 	repositoryPath string,
+	fieldMappings []irminmodels.FieldMapping,
 ) ([]string, []error) {
 	var (
 		errs            []error
@@ -194,7 +316,7 @@ func (c *Client) DataExport(
 		return nil, errs
 	}
 
-	// Collect files for upload.
+	// Collect files for processing.
 	files := make(map[string][]byte)
 	if obj.Type == irminmodels.ObjectTypeGroup {
 		// Directory: fetch child contents concurrently.
@@ -242,11 +364,18 @@ func (c *Client) DataExport(
 		repositoryPaths = append(repositoryPaths, obj.Path)
 	}
 
+	// Process field mappings (or return files as-is if no mappings)
+	finalFiles, processingErrors := c.processFieldMappings(files, fieldMappings)
+	if len(processingErrors) > 0 {
+		errs = append(errs, processingErrors...)
+		return repositoryPaths, errs
+	}
+
 	// Push the files to the connector.
-	_, pushFilesToConnectorErr := c.PushFilesToConnector(connection, connectionPath, obj, files)
+	_, pushFilesToConnectorErr := c.PushFilesToConnector(connection, connectionPath, obj, finalFiles)
 	if pushFilesToConnectorErr != nil {
 		errs = append(errs, pushFilesToConnectorErr)
-		return nil, errs
+		return repositoryPaths, errs
 	}
 
 	// Return the repository paths and errors.
@@ -275,14 +404,11 @@ func (c *Client) PushFilesToConnector(
 	defer cancel()
 
 	// Build the connection path to push the zip to.
-	connPath := strings.TrimPrefix(connectionPath, "/")
-	if strings.HasSuffix(connectionPath, "/") || connectionPath == "" || len(files) > 1 {
-		// If connection path is a directory (ends with "/" or is empty),
-		// or there is more than one file, append the pulled file name to the path.
-		if obj != nil {
-			connPath = path.Join(connPath, obj.Name)
-		}
+	objName := ""
+	if obj != nil {
+		objName = obj.Name
 	}
+	connPath := c.buildTargetPath(connectionPath, objName, len(files) > 1)
 
 	// Push the zip to the correct path in the connector.
 	_, pushFilesErr := opClient.OperationPush(

@@ -139,8 +139,6 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 			}
 
 		case <-ticker.C:
-			o.logger.InfoContext(ctx, "running trigger scan")
-
 			// Create a new context for the trigger scan
 			triggerScanCtx := context.Background()
 
@@ -206,7 +204,6 @@ func (o *Orchestrator) processTimeTriggers(ctx context.Context) error {
 
 		// If there are no triggers to process, log and return
 		if len(triggers) == 0 {
-			o.logger.InfoContext(ctx, "no time triggers to process")
 			return nil
 		}
 

@@ -2,6 +2,7 @@ package lib
 
 import (
 	"irmin-api/db"
+	"irmin-api/duckdb"
 	"irmin-api/utils"
 	"log/slog"
 	"os"
@@ -11,9 +12,10 @@ import (
 
 // TestSuite holds the test environment and database connection.
 type TestSuite struct {
-	DB     *db.Database
-	Env    *utils.CoreAPIEnv
-	Logger *slog.Logger
+	DB           *db.Database
+	Env          *utils.CoreAPIEnv
+	Logger       *slog.Logger
+	DuckDBClient *duckdb.QueryClient
 }
 
 var (
@@ -34,35 +36,56 @@ func GetTestSuite() *TestSuite {
 }
 
 // SetupTestSuite initializes the global test suite.
-// This should be called from TestMain.
-func SetupTestSuite(t *testing.T) {
+func SetupTestSuite(t *testing.T) error {
 	globalTestSuiteMu.Lock()
 	defer globalTestSuiteMu.Unlock()
 
 	if globalTestSuite != nil {
-		t.Fatal("Test suite already initialized")
+		return nil // Already initialized
 	}
 
 	// Load test environment
 	testEnv, err := utils.LoadEnv()
 	if err != nil {
-		t.Fatalf("Failed to load test environment: %v", err)
+		if t != nil {
+			t.Fatalf("Failed to load test environment: %v", err)
+		}
+		return err
 	}
+
+	// Create logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelError,
+	}))
 
 	// Create database connection
 	testDB, err := db.InitialiseDB(testEnv)
 	if err != nil {
-		t.Fatalf("Failed to create test database: %v", err)
+		if t != nil {
+			t.Fatalf("Failed to create test database: %v", err)
+		}
+		return err
 	}
 
-	// Create logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	// Create DuckDB client for data operations
+	duckDBClient, err := duckdb.NewQueryClient(testEnv, logger)
+	if err != nil {
+		// Close the DB if DuckDB client fails
+		testDB.Close()
+		if t != nil {
+			t.Fatalf("Failed to create DuckDB client: %v", err)
+		}
+		return err
+	}
 
 	globalTestSuite = &TestSuite{
-		Logger: logger,
-		DB:     testDB,
-		Env:    testEnv,
+		Logger:       logger,
+		DB:           testDB,
+		Env:          testEnv,
+		DuckDBClient: duckDBClient,
 	}
+
+	return nil
 }
 
 // TeardownTestSuite cleans up the global test suite.
@@ -75,10 +98,34 @@ func TeardownTestSuite() {
 		return
 	}
 
+	// Close DuckDB client
+	if globalTestSuite.DuckDBClient != nil {
+		closeDuckDBClientErr := globalTestSuite.DuckDBClient.Close()
+		if closeDuckDBClientErr != nil {
+			globalTestSuite.Logger.Error("failed to close DuckDB client", "error", closeDuckDBClientErr)
+		}
+	}
+
 	// Close database connection
 	if globalTestSuite.DB != nil {
 		globalTestSuite.DB.Close()
 	}
 
 	globalTestSuite = nil
+}
+
+// GetDuckDBClient returns a DuckDB client for testing.
+// This is a convenience method that creates a new client if needed.
+func (ts *TestSuite) GetDuckDBClient() (*duckdb.QueryClient, error) {
+	if ts.DuckDBClient != nil {
+		return ts.DuckDBClient, nil
+	}
+
+	// Create a new DuckDB client if one doesn't exist
+	client, err := duckdb.NewQueryClient(ts.Env, ts.Logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }

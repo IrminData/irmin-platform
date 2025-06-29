@@ -15,7 +15,8 @@ import (
 
 // QueryClient is a client for interacting with DuckDB for querying data.
 type QueryClient struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *slog.Logger
 }
 
 // NewQueryClient creates a new client for querying data from LakeFS.
@@ -34,7 +35,7 @@ func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, e
 		return nil, fmt.Errorf("failed to install and load httpfs extension: %w", err)
 	}
 
-	client := &QueryClient{db: db}
+	client := &QueryClient{db: db, logger: logger}
 
 	// Only try to install optional extensions if SkipOptionalExtensions is false
 	if !env.SkipOptionalDuckDBExtensions {

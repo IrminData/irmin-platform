@@ -1,4 +1,4 @@
-package lib_test
+package engine_test
 
 import (
 	"irmin-api/lib"
