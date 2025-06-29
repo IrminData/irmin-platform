@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-api/db"
@@ -13,6 +14,7 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 type repositoryLocalParams struct {
@@ -112,6 +114,159 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	})
 }
 
+func (api *APIControllers) createRepositoryInTransaction(
+	dataEngine *engine.Client,
+	repositorySlug string,
+	req irmincore.CreateRepositoryRequest,
+	gcSettings *utils.GarbageCollectionSettings,
+	workspace *db.Workspace,
+	user *db.User,
+) (*db.Repository, *engine.Repository, error) {
+	var repository *db.Repository
+	var dataEngineRepository *engine.Repository
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Create the repository in the database
+		repository = &db.Repository{
+			Name:          req.Name,
+			Slug:          repositorySlug,
+			Description:   req.Description,
+			Documentation: req.Documentation,
+			DefaultBranch: req.DefaultBranch,
+			IsImmutable:   req.IsImmutable,
+			WorkspaceID:   workspace.ID,
+			OwnerID:       user.ID,
+		}
+		if createRepositoryErr := tx.Create(&repository).Error; createRepositoryErr != nil {
+			api.Logger.Error("Error creating repository in database", "error", createRepositoryErr)
+			return createRepositoryErr
+		}
+
+		// Create the repository in the Data Engine
+		var createRepositoryInDataEngineErr error
+		dataEngineRepository, createRepositoryInDataEngineErr = dataEngine.CreateRepository(
+			workspace.Slug,
+			repositorySlug,
+			req.DefaultBranch,
+			req.IsImmutable,
+			&gcSettings.DefaultRetentionDays,
+			&gcSettings.DefaultBranchRetentionDays,
+		)
+		if createRepositoryInDataEngineErr != nil {
+			api.Logger.Error("Error creating repository in Data Engine", "error", createRepositoryInDataEngineErr)
+			return createRepositoryInDataEngineErr
+		}
+
+		// Update the repository in the database with Data Engine information
+		repository.LakeFSRepoID = dataEngineRepository.ID
+		repository.GarbageCollectionRules = dataEngineRepository.GarbageCollectionRules
+		repository.IsImmutable = dataEngineRepository.IsImmutable
+		repository.DefaultBranch = dataEngineRepository.DefaultBranch
+		repository.StorageNamespace = dataEngineRepository.StorageNamespace
+		if updateRepositoryErr := tx.Save(&repository).Error; updateRepositoryErr != nil {
+			api.Logger.Error("Error updating repository with Data Engine information", "error", updateRepositoryErr)
+			return updateRepositoryErr
+		}
+
+		return nil
+	})
+
+	return repository, dataEngineRepository, transactionErr
+}
+
+func (api *APIControllers) updateRepositoryInTransaction(
+	dataEngine *engine.Client,
+	repository *db.Repository,
+	req irmincore.UpdateRepositoryRequest,
+	gcSettings *utils.GarbageCollectionSettings,
+	workspace *db.Workspace,
+) (*engine.Repository, error) {
+	var dataEngineRepository *engine.Repository
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Only update fields that were provided
+		if req.Name != "" {
+			repository.Name = req.Name
+		}
+		if req.Description != "" {
+			repository.Description = req.Description
+		}
+		if req.Documentation != "" {
+			repository.Documentation = req.Documentation
+		}
+
+		// Handle is_immutable with pointer type for optional boolean
+		if req.IsImmutable != nil {
+			repository.IsImmutable = *req.IsImmutable
+		}
+
+		// Update the repository in the database
+		if updateRepositoryErr := tx.Save(&repository).Error; updateRepositoryErr != nil {
+			api.Logger.Error("Error updating repository in database", "error", updateRepositoryErr)
+			return updateRepositoryErr
+		}
+
+		// Update the repository in the Data Engine
+		var updateRepositoryInDataEngineErr error
+		dataEngineRepository, updateRepositoryInDataEngineErr = dataEngine.UpdateRepository(
+			workspace.Slug,
+			repository.Slug,
+			&gcSettings.DefaultRetentionDays,
+			&gcSettings.DefaultBranchRetentionDays,
+		)
+		if updateRepositoryInDataEngineErr != nil {
+			api.Logger.Error("Error updating repository in Data Engine", "error", updateRepositoryInDataEngineErr)
+			return updateRepositoryInDataEngineErr
+		}
+
+		// Update the repository in the database with Data Engine information
+		repository.GarbageCollectionRules = dataEngineRepository.GarbageCollectionRules
+		if updateRepositoryErr := tx.Save(&repository).Error; updateRepositoryErr != nil {
+			api.Logger.Error("Error updating repository with Data Engine information", "error", updateRepositoryErr)
+			return updateRepositoryErr
+		}
+
+		return nil
+	})
+
+	return dataEngineRepository, transactionErr
+}
+
+func (api *APIControllers) deleteRepositoryInTransaction(
+	ctx context.Context,
+	dataEngine *engine.Client,
+	repository *db.Repository,
+	workspace *db.Workspace,
+) error {
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Remove tag associations
+		if err := tx.Where("repository_id = ?", repository.ID).Delete(&db.RepositoryTag{}).Error; err != nil {
+			return err
+		}
+		// Delete associated schema caches
+		if err := tx.Where("repository_id = ?", repository.ID).Delete(&db.RepositorySchemaCache{}).Error; err != nil {
+			return err
+		}
+		// Delete the repository
+		if err := tx.Delete(&db.Repository{}, repository.ID).Error; err != nil {
+			return err
+		}
+
+		// Delete the repository from the Data Engine after the database is deleted
+		if err := dataEngine.DeleteRepository(ctx, workspace.Slug, repository.Slug, false); err != nil {
+			api.Logger.Error("Error deleting repository in Data Engine", "error", err)
+			return err
+		}
+
+		return nil
+	})
+
+	return transactionErr
+}
+
 func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	locale, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -146,13 +301,9 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	}
 
 	// Determine the default branch
-	defaultBranch := "main"
-	if req.DefaultBranch != "" {
-		defaultBranch = req.DefaultBranch
+	if req.DefaultBranch == "" {
+		req.DefaultBranch = "main"
 	}
-
-	// Get the immutable flag
-	isImmutable := req.IsImmutable
 
 	// Create garbage collection settings struct
 	gcSettings := utils.GarbageCollectionSettings{
@@ -164,24 +315,6 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		api.Logger.Error("Invalid garbage collection settings", "error", gcValidateErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Create the repository in the database
-	repository := &db.Repository{
-		Name:          req.Name,
-		Slug:          repositorySlug,
-		Description:   req.Description,
-		Documentation: req.Documentation,
-		DefaultBranch: defaultBranch,
-		IsImmutable:   isImmutable,
-		WorkspaceID:   workspace.ID,
-		OwnerID:       user.ID,
-	}
-	if createRepositoryErr := api.DB.Create(&repository).Error; createRepositoryErr != nil {
-		api.Logger.Error("Error creating repository", "error", createRepositoryErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
@@ -199,33 +332,49 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Create the repository in the Data Engine
-	dataEngineRepository, createRepositoryInDataEngineErr := dataEngine.CreateRepository(
-		workspace.Slug,
+	// Use database transaction to ensure atomicity
+	repository, dataEngineRepository, transactionErr := api.createRepositoryInTransaction(
+		dataEngine,
 		repositorySlug,
-		defaultBranch,
-		isImmutable,
-		&gcSettings.DefaultRetentionDays,
-		&gcSettings.DefaultBranchRetentionDays,
+		req,
+		&gcSettings,
+		workspace,
+		user,
 	)
-	if createRepositoryInDataEngineErr != nil {
-		api.Logger.Error("Error creating repository in Data Engine", "error", createRepositoryInDataEngineErr)
+
+	// If transaction failed, cleanup Data Engine repository if it was created
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed, cleaning up Data Engine repository", "error", transactionErr)
+
+		// If we have a data engine repository, try to delete it
+		if dataEngineRepository != nil {
+			go func() {
+				if cleanupErr := dataEngine.DeleteRepository(c.Context(), workspace.Slug, repositorySlug, false); cleanupErr != nil {
+					api.Logger.Error(
+						"Failed to cleanup Data Engine repository",
+						"error",
+						cleanupErr,
+						"repository",
+						repositorySlug,
+					)
+				} else {
+					api.Logger.Info("Successfully cleaned up Data Engine repository", "repository", repositorySlug)
+				}
+			}()
+		}
+
+		// Log the failed event
+		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+			Type:        db.LogEventTypeError,
+			Description: fmt.Sprintf("Repository %s creation failed", repository.Slug),
+			UserID:      &user.ID,
+			WorkspaceID: &workspace.ID,
+		})
+
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Update the repository in the database asynchronously
-	repository.LakeFSRepoID = dataEngineRepository.ID
-	repository.GarbageCollectionRules = dataEngineRepository.GarbageCollectionRules
-	repository.IsImmutable = dataEngineRepository.IsImmutable
-	repository.DefaultBranch = dataEngineRepository.DefaultBranch
-	repository.StorageNamespace = dataEngineRepository.StorageNamespace
-	go func() {
-		if updateRepositoryErr := api.DB.Save(&repository).Error; updateRepositoryErr != nil {
-			api.Logger.Error("Error updating LakeFS repository ID", "error", updateRepositoryErr)
-		}
-	}()
 
 	// Format the repository response
 	repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
@@ -287,34 +436,44 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Delete the repository from the database
-	if deleteDatabaseRepositoryErr := api.DB.DeleteRepository(repositoryLocalParams.repository.ID); deleteDatabaseRepositoryErr != nil {
-		api.Logger.Error("Error deleting repository", "error", deleteDatabaseRepositoryErr)
+	// Initialize Data Engine client
+	dataEngine, createDataEngineClientErr := engine.NewClient(
+		c.Context(),
+		repositoryLocalParams.locale,
+		api.Logger,
+		api.Env,
+	)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
 		})
 	}
 
-	// Delete the repository from the Data Engine asynchronously
-	go func() {
-		// Initialize Data Engine client
-		dataEngine, createDataEngineClientErr := engine.NewClient(
-			c.Context(),
-			repositoryLocalParams.locale,
-			api.Logger,
-			api.Env,
-		)
-		if createDataEngineClientErr != nil {
-			api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
-			return
-		}
+	// Use database transaction to ensure atomicity
+	transactionErr := api.deleteRepositoryInTransaction(
+		c.Context(),
+		dataEngine,
+		repositoryLocalParams.repository,
+		repositoryLocalParams.workspace,
+	)
 
-		// Delete the repository from the Data Engine
-		if deleteDataEngineRepositoryErr := dataEngine.DeleteRepository(c.Context(), repositoryLocalParams.workspace.Slug, repositoryLocalParams.repository.Slug, false); deleteDataEngineRepositoryErr != nil {
-			api.Logger.Error("Error deleting repository in Data Engine", "error", deleteDataEngineRepositoryErr)
-			return
-		}
-	}()
+	// If transaction failed, log the error
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for repository deletion", "error", transactionErr)
+
+		// Log the failed event
+		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+			Type:        db.LogEventTypeError,
+			Description: fmt.Sprintf("Repository %s deletion failed", repositoryLocalParams.repository.Slug),
+			UserID:      &repositoryLocalParams.user.ID,
+			WorkspaceID: &repositoryLocalParams.workspace.ID,
+		})
+
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+		})
+	}
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
@@ -348,44 +507,6 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Only update fields that were provided
-	if req.Name != "" {
-		repository.Name = req.Name
-	}
-	if req.Description != "" {
-		repository.Description = req.Description
-	}
-	if req.Documentation != "" {
-		repository.Documentation = req.Documentation
-	}
-
-	// Handle is_immutable with pointer type for optional boolean
-	if req.IsImmutable != nil {
-		repository.IsImmutable = *req.IsImmutable
-	}
-
-	// Update the repository in the database
-	if updateRepositoryErr := api.DB.Save(&repository).Error; updateRepositoryErr != nil {
-		api.Logger.Error("Error updating repository", "error", updateRepositoryErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
-	}
-
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(
-		c.Context(),
-		repositoryLocalParams.locale,
-		api.Logger,
-		api.Env,
-	)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
-		})
-	}
-
 	// Create garbage collection settings from request
 	gcSettings := &utils.GarbageCollectionSettings{
 		DefaultRetentionDays:       req.GarbageDefaultRetentionDays,
@@ -407,27 +528,45 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Update the repository in the Data Engine
-	dataEngineRepository, updateRepositoryInDataEngineErr := dataEngine.UpdateRepository(
-		repositoryLocalParams.workspace.Slug,
-		repository.Slug,
-		&gcSettings.DefaultRetentionDays,
-		&gcSettings.DefaultBranchRetentionDays,
+	// Initialize Data Engine client
+	dataEngine, createDataEngineClientErr := engine.NewClient(
+		c.Context(),
+		repositoryLocalParams.locale,
+		api.Logger,
+		api.Env,
 	)
-	if updateRepositoryInDataEngineErr != nil {
-		api.Logger.Error("Error updating repository in Data Engine", "error", updateRepositoryInDataEngineErr)
+	if createDataEngineClientErr != nil {
+		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
 		})
 	}
 
-	// Update the repository in the database
-	repository.GarbageCollectionRules = dataEngineRepository.GarbageCollectionRules
-	go func() {
-		if updateRepositoryErr := api.DB.Save(&repository).Error; updateRepositoryErr != nil {
-			api.Logger.Error("Error updating LakeFS repository ID", "error", updateRepositoryErr)
-		}
-	}()
+	// Use database transaction to ensure atomicity
+	_, transactionErr := api.updateRepositoryInTransaction(
+		dataEngine,
+		repository,
+		req,
+		gcSettings,
+		repositoryLocalParams.workspace,
+	)
+
+	// If transaction failed, log the error
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for repository update", "error", transactionErr)
+
+		// Log the failed event
+		lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+			Type:        db.LogEventTypeError,
+			Description: fmt.Sprintf("Repository %s update failed", repository.Slug),
+			UserID:      &repositoryLocalParams.user.ID,
+			WorkspaceID: &repositoryLocalParams.workspace.ID,
+		})
+
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+		})
+	}
 
 	// Format the repository response
 	repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(

@@ -71,15 +71,13 @@ func (d *Database) GetFlatDBObjects(repositoryID uint, ref string) ([]Repository
 	return objects, nil
 }
 
-func (d *Database) DeleteObjects(path *string, repositoryID *uint, ref *string) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		objects, err := d.findObjectsToDelete(tx, path, repositoryID, ref)
-		if err != nil {
-			return err
-		}
+func (d *Database) DeleteObjects(tx *gorm.DB, path *string, repositoryID *uint, ref *string) error {
+	objects, err := d.findObjectsToDelete(tx, path, repositoryID, ref)
+	if err != nil {
+		return err
+	}
 
-		return d.deleteObjectsAndChildren(tx, objects)
-	})
+	return d.deleteObjectsAndChildren(tx, objects)
 }
 
 // findObjectsToDelete builds the query conditions and finds matching objects.

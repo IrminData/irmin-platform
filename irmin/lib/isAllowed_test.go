@@ -8,17 +8,24 @@ import (
 	"time"
 
 	"github.com/zeebo/assert"
+	"gorm.io/gorm"
 )
 
 // restoreUserRoles restores the roles of a user in a workspace.
 func restoreUserRoles(t *testing.T, d *db.Database, userID, workspaceID uint, roleIDs []uint) {
-	_, err := d.UpdateWorkspaceUserRoles(userID, workspaceID, roleIDs)
+	err := d.Transaction(func(tx *gorm.DB) error {
+		_, updateErr := d.UpdateWorkspaceUserRoles(tx, userID, workspaceID, roleIDs)
+		return updateErr
+	})
 	assert.NoError(t, err)
 }
 
 // setUserRole sets a single role for a user in a workspace.
 func setUserRole(t *testing.T, d *db.Database, userID, workspaceID uint, role *db.Role) {
-	_, err := d.UpdateWorkspaceUserRoles(userID, workspaceID, []uint{role.ID})
+	err := d.Transaction(func(tx *gorm.DB) error {
+		_, updateErr := d.UpdateWorkspaceUserRoles(tx, userID, workspaceID, []uint{role.ID})
+		return updateErr
+	})
 	assert.NoError(t, err)
 }
 
@@ -160,12 +167,17 @@ func createTestCases(
 			name: "non-workspace user has no access",
 			setup: func() ([]uint, func()) {
 				// Remove user from workspace
-				removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
+				removeErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+					return ts.DB.RemoveUserFromWorkspace(tx, user.ID, workspace.ID)
+				})
 				assert.NoError(t, removeErr)
 
 				return originalRoleIDs, func() {
 					// Re-add user to workspace with original roles
-					_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, originalRoleIDs)
+					addErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+						_, err := ts.DB.AddUserToWorkspace(tx, user.ID, workspace.ID, originalRoleIDs)
+						return err
+					})
 					assert.NoError(t, addErr)
 				}
 			},
@@ -248,9 +260,12 @@ func TestResourceSpecificityPrecedence(t *testing.T) {
 			t.Fatalf("Viewer role not found")
 		}
 
-		_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, []uint{viewerRole.ID})
-		if addErr != nil {
-			t.Fatalf("Failed to add user to workspace: %v", addErr)
+		addTxErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+			_, addErr := ts.DB.AddUserToWorkspace(tx, user.ID, workspace.ID, []uint{viewerRole.ID})
+			return addErr
+		})
+		if addTxErr != nil {
+			t.Fatalf("Failed to add user to workspace: %v", addTxErr)
 		}
 
 		// Set original roles to empty since user wasn't in workspace before
@@ -267,9 +282,11 @@ func TestResourceSpecificityPrecedence(t *testing.T) {
 	defer func() {
 		if len(originalRoleIDs) == 0 {
 			// User wasn't in workspace originally, remove them
-			removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
-			if removeErr != nil {
-				t.Logf("Failed to remove user from workspace during cleanup: %v", removeErr)
+			removeTxErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+				return ts.DB.RemoveUserFromWorkspace(tx, user.ID, workspace.ID)
+			})
+			if removeTxErr != nil {
+				t.Logf("Failed to remove user from workspace during cleanup: %v", removeTxErr)
 			}
 		} else {
 			// Restore original roles
@@ -378,9 +395,12 @@ func TestPermissionCache(t *testing.T) {
 			t.Fatalf("Viewer role not found")
 		}
 
-		_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, []uint{viewerRole.ID})
-		if addErr != nil {
-			t.Fatalf("Failed to add user to workspace: %v", addErr)
+		addTxErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+			_, addErr := ts.DB.AddUserToWorkspace(tx, user.ID, workspace.ID, []uint{viewerRole.ID})
+			return addErr
+		})
+		if addTxErr != nil {
+			t.Fatalf("Failed to add user to workspace: %v", addTxErr)
 		}
 
 		// Set original roles to empty since user wasn't in workspace before
@@ -397,7 +417,9 @@ func TestPermissionCache(t *testing.T) {
 	defer func() {
 		if len(originalRoleIDs) == 0 {
 			// User wasn't in workspace originally, remove them
-			removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
+			removeErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+				return ts.DB.RemoveUserFromWorkspace(tx, user.ID, workspace.ID)
+			})
 			if removeErr != nil {
 				t.Logf("Failed to remove user from workspace during cleanup: %v", removeErr)
 			}

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zeebo/assert"
+	"gorm.io/gorm"
 )
 
 func TestGetRepository(t *testing.T) {
@@ -43,9 +44,12 @@ func TestGetRepository(t *testing.T) {
 		if viewerRole == nil {
 			t.Fatalf("Viewer role not found")
 		}
-		_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, []uint{viewerRole.ID})
-		if addErr != nil {
-			t.Fatalf("Failed to add user to workspace: %v", addErr)
+		txErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+			_, addErr := ts.DB.AddUserToWorkspace(tx, user.ID, workspace.ID, []uint{viewerRole.ID})
+			return addErr
+		})
+		if txErr != nil {
+			t.Fatalf("Failed to add user to workspace: %v", txErr)
 		}
 		originalRoleIDs = []uint{}
 	} else {
@@ -56,9 +60,11 @@ func TestGetRepository(t *testing.T) {
 	}
 	defer func() {
 		if len(originalRoleIDs) == 0 {
-			removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
-			if removeErr != nil {
-				t.Logf("Failed to remove user from workspace during cleanup: %v", removeErr)
+			txErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+				return ts.DB.RemoveUserFromWorkspace(tx, user.ID, workspace.ID)
+			})
+			if txErr != nil {
+				t.Logf("Failed to remove user from workspace during cleanup: %v", txErr)
 			}
 		} else {
 			restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -14,6 +15,7 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/invitation"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 //nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
@@ -69,9 +71,81 @@ func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	})
 }
 
+// sendInviteInTransaction handles the transactional creation of invites in both database and Clerk.
+func (api *APIControllers) sendInviteInTransaction(
+	ctx context.Context,
+	req irmincore.SendInviteRequest,
+	role *db.Role,
+	user *db.User,
+	workspace *db.Workspace,
+	locale string,
+) (*db.Invite, error) {
+	var newInvite *db.Invite
+	var clerkInvite *clerk.Invitation
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Create the invite in the database
+		expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
+		newInvite = &db.Invite{
+			Email:       req.Email,
+			ExpiresAt:   expiresAt,
+			RoleID:      role.ID,
+			InvitedByID: user.ID,
+			WorkspaceID: workspace.ID,
+		}
+		if createInviteErr := tx.Create(&newInvite).Error; createInviteErr != nil {
+			api.Logger.Error("Error creating invite", "error", createInviteErr)
+			return createInviteErr
+		}
+
+		// Create sqid for the invite
+		inviteSqid, encodeInviteSqidErr := api.SQIDManager.Encode("invites", uint64(newInvite.ID))
+		if encodeInviteSqidErr != nil {
+			api.Logger.Error("Error encoding invite sqid", "error", encodeInviteSqidErr)
+			return encodeInviteSqidErr
+		}
+
+		// Create the invite acceptance URL
+		inviteAcceptanceURL := fmt.Sprintf(
+			"%s/%s/invite/%s",
+			api.Env.ConsoleURL,
+			locale,
+			inviteSqid,
+		)
+
+		// Set the API key with your Clerk Secret Key.
+		clerk.SetKey(api.Env.ClerkSecretKey)
+
+		// Create the invite in Clerk
+		expiresInDays := int64(api.Env.InviteExpiresInDays)
+		var createClerkInviteErr error
+		clerkInvite, createClerkInviteErr = invitation.Create(ctx, &invitation.CreateParams{
+			EmailAddress:  req.Email,
+			RedirectURL:   &inviteAcceptanceURL,
+			ExpiresInDays: &expiresInDays,
+		})
+		if createClerkInviteErr != nil {
+			api.Logger.Error("Error creating Clerk invite", "error", createClerkInviteErr)
+			return createClerkInviteErr
+		}
+
+		// Update invite with Clerk ID
+		newInvite.ClerkID = clerkInvite.ID
+		if updateInviteErr := tx.Save(&newInvite).Error; updateInviteErr != nil {
+			api.Logger.Error("Error updating invite with Clerk ID", "error", updateInviteErr)
+			return updateInviteErr
+		}
+
+		return nil
+	})
+
+	return newInvite, transactionErr
+}
+
 // SendInvite sends an invite to a user to join a workspace.
 //
-//nolint:funlen // this function is long, but simple. It creates an invite in the database and Clerk.
+
 func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	locale, localeOk := c.Locals("locale").(string)
@@ -155,67 +229,17 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 		})
 	}
 
-	// Set the API key with your Clerk Secret Key.
-	clerk.SetKey(api.Env.ClerkSecretKey)
-
-	// Create the invite in the database
-	expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
-	newInvite := db.Invite{
-		Email:       req.Email,
-		ExpiresAt:   expiresAt,
-		RoleID:      role.ID,
-		InvitedByID: user.ID,
-		WorkspaceID: workspace.ID,
-	}
-	if createInviteErr := api.DB.Create(&newInvite).Error; createInviteErr != nil {
-		api.Logger.Error("Error creating invite", "error", createInviteErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Create sqid for the invite
-	inviteSqid, encodeInviteSqidErr := api.SQIDManager.Encode("invites", uint64(newInvite.ID))
-	if encodeInviteSqidErr != nil {
-		api.Logger.Error("Error encoding invite sqid", "error", encodeInviteSqidErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Create the invite acceptance URL
-	inviteAcceptanceURL := fmt.Sprintf(
-		"%s/%s/invite/%s",
-		api.Env.ConsoleURL,
-		locale,
-		inviteSqid,
-	) // Example: https://console.irmin.dev/en/invite/ng20qJbi669TQlpF
-
-	// Create the invite in Clerk
-	expiresInDays := int64(api.Env.InviteExpiresInDays)
-	clerkInvite, createClerkInviteErr := invitation.Create(c.Context(), &invitation.CreateParams{
-		EmailAddress:  req.Email,
-		RedirectURL:   &inviteAcceptanceURL,
-		ExpiresInDays: &expiresInDays,
-	})
-	if createClerkInviteErr != nil {
-		api.Logger.Error("Error creating Clerk invite", "error", createClerkInviteErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Update invite with Clerk ID
-	newInvite.ClerkID = clerkInvite.ID
-	if updateInviteErr := api.DB.Save(&newInvite).Error; updateInviteErr != nil {
-		api.Logger.Error("Error updating invite with Clerk ID", "error", updateInviteErr)
+	// Use database transaction to ensure atomicity
+	newInvite, transactionErr := api.sendInviteInTransaction(c.Context(), req, role, user, workspace, locale)
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for invite creation", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the invite
-	inviteResponse, formatInviteResponseErr := formatter.FormatInviteResponse(&newInvite, api.SQIDManager)
+	inviteResponse, formatInviteResponseErr := formatter.FormatInviteResponse(newInvite, api.SQIDManager)
 	if formatInviteResponseErr != nil {
 		api.Logger.Error("Error formatting invite response", "error", formatInviteResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -341,6 +365,93 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	})
 }
 
+// deleteInviteInTransaction handles the transactional deletion of invites from both Clerk and database.
+func (api *APIControllers) deleteInviteInTransaction(
+	ctx context.Context,
+	invite *db.Invite,
+) error {
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Revoke the invite in Clerk first
+		_, revokeErr := invitation.Revoke(ctx, invite.ClerkID)
+		if revokeErr != nil {
+			api.Logger.Error("Error revoking invite in Clerk", "error", revokeErr)
+			return revokeErr
+		}
+
+		// Delete the invite from database
+		if deleteErr := tx.Delete(&db.Invite{}, invite.ID).Error; deleteErr != nil {
+			api.Logger.Error("Error deleting invite from database", "error", deleteErr)
+			return deleteErr
+		}
+
+		return nil
+	})
+
+	return transactionErr
+}
+
+// resendInviteInTransaction handles the transactional resending of invites (revoke old + create new).
+func (api *APIControllers) resendInviteInTransaction(
+	ctx context.Context,
+	invite *db.Invite,
+	locale string,
+) error {
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Create sqid for the invite
+		inviteSqid, err := api.SQIDManager.Encode("invites", uint64(invite.ID))
+		if err != nil {
+			api.Logger.Error("Error encoding invite sqid", "error", err)
+			return err
+		}
+
+		// Set the API key with your Clerk Secret Key.
+		clerk.SetKey(api.Env.ClerkSecretKey)
+
+		// Store the ID of the existing invite in Clerk
+		existingClerkInviteID := invite.ClerkID
+
+		// Create new invite in Clerk
+		inviteAcceptanceURL := fmt.Sprintf(
+			"%s/%s/invite/%s",
+			api.Env.ConsoleURL,
+			locale,
+			inviteSqid,
+		)
+		expiresInDays := int64(api.Env.InviteExpiresInDays)
+		clerkInvite, createClerkInviteErr := invitation.Create(ctx, &invitation.CreateParams{
+			EmailAddress:  invite.Email,
+			RedirectURL:   &inviteAcceptanceURL,
+			ExpiresInDays: &expiresInDays,
+		})
+		if createClerkInviteErr != nil {
+			api.Logger.Error("Error creating Clerk invite", "error", createClerkInviteErr)
+			return createClerkInviteErr
+		}
+
+		// Update the invite with the Clerk ID and the new expiration date
+		expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
+		invite.ClerkID = clerkInvite.ID
+		invite.ExpiresAt = expiresAt
+		if updateInviteErr := tx.Save(&invite).Error; updateInviteErr != nil {
+			api.Logger.Error("Error updating invite", "error", updateInviteErr)
+			return updateInviteErr
+		}
+
+		// Revoke the existing invite in Clerk
+		_, revokeErr := invitation.Revoke(ctx, existingClerkInviteID)
+		if revokeErr != nil {
+			api.Logger.Error("Error revoking existing invite in Clerk", "error", revokeErr)
+			return revokeErr
+		}
+
+		return nil
+	})
+
+	return transactionErr
+}
+
 func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
@@ -349,22 +460,10 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Create context
-	ctx := c.Context()
-
-	// Revoke the invite in Clerk
-	_, err := invitation.Revoke(ctx, invite.ClerkID)
-	if err != nil {
-		api.Logger.Error("Error revoking invite in Clerk", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Delete the invite
-	err = api.DB.DeleteInvite(invite.ID)
-	if err != nil {
-		api.Logger.Error("Error deleting invite", "error", err)
+	// Use database transaction to ensure atomicity
+	transactionErr := api.deleteInviteInTransaction(c.Context(), invite)
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for invite deletion", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -393,56 +492,10 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Create context
-	ctx := c.Context()
-
-	// Create sqid for the invite
-	inviteSqid, err := api.SQIDManager.Encode("invites", uint64(invite.ID))
-	if err != nil {
-		api.Logger.Error("Error encoding invite sqid", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Set the API key with your Clerk Secret Key.
-	clerk.SetKey(api.Env.ClerkSecretKey)
-
-	// Revoke the existing invite in Clerk
-	_, err = invitation.Revoke(ctx, invite.ClerkID)
-	if err != nil {
-		api.Logger.Error("Error revoking existing invite in Clerk", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Create new invite in Clerk
-	inviteAcceptanceURL := fmt.Sprintf(
-		"%s/%s/invite/%s",
-		api.Env.ConsoleURL,
-		locale,
-		inviteSqid,
-	) // Example: https://console.irmin.dev/en/invite/ng20qJbi669TQlpF
-	expiresInDays := int64(api.Env.InviteExpiresInDays)
-	clerkInvite, err := invitation.Create(ctx, &invitation.CreateParams{
-		EmailAddress:  invite.Email,
-		RedirectURL:   &inviteAcceptanceURL,
-		ExpiresInDays: &expiresInDays,
-	})
-	if err != nil {
-		api.Logger.Error("Error creating Clerk invite", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Update the invite with the Clerk ID and the new expiration date
-	expiresAt := time.Now().Add(time.Duration(api.Env.InviteExpiresInDays) * 24 * time.Hour)
-	invite.ClerkID = clerkInvite.ID
-	invite.ExpiresAt = expiresAt
-	if updateInviteErr := api.DB.Save(&invite).Error; updateInviteErr != nil {
-		api.Logger.Error("Error updating invite", "error", updateInviteErr)
+	// Use database transaction to ensure atomicity
+	transactionErr := api.resendInviteInTransaction(c.Context(), invite, locale)
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for invite resend", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -525,24 +578,28 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 		})
 	}
 
-	// Update the invite
-	acceptedAt := time.Now()
-	invite.AcceptedAt = &acceptedAt
-	if updateInviteErr := api.DB.Save(&invite).Error; updateInviteErr != nil {
-		api.Logger.Error("Error updating invite", "error", updateInviteErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Update the invite
+		acceptedAt := time.Now()
+		invite.AcceptedAt = &acceptedAt
+		if updateInviteErr := tx.Save(&invite).Error; updateInviteErr != nil {
+			api.Logger.Error("Error updating invite", "error", updateInviteErr)
+			return updateInviteErr
+		}
 
-	// Add the user to the workspace
-	_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(
-		user.ID,
-		invite.WorkspaceID,
-		[]uint{invite.RoleID},
-	)
-	if addUserToWorkspaceErr != nil {
-		api.Logger.Error("Error adding user to workspace", "error", addUserToWorkspaceErr)
+		// Add the user to the workspace
+		_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(tx, user.ID, invite.WorkspaceID, []uint{invite.RoleID})
+		if addUserToWorkspaceErr != nil {
+			api.Logger.Error("Error adding user to workspace", "error", addUserToWorkspaceErr)
+			return addUserToWorkspaceErr
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for invite acceptance", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})

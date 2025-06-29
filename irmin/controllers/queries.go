@@ -14,6 +14,7 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
@@ -231,7 +232,10 @@ func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the stored query from the database
-	if deleteStoredQueryErr := api.DB.DeleteStoredQuery(query.ID); deleteStoredQueryErr != nil {
+	deleteStoredQueryErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.DeleteStoredQuery(tx, query.ID)
+	})
+	if deleteStoredQueryErr != nil {
 		api.Logger.Error("Error deleting stored query", "error", deleteStoredQueryErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},

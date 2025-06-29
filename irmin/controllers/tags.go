@@ -10,6 +10,7 @@ import (
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"gorm.io/gorm"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -446,7 +447,10 @@ func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the tag
-	if deleteTagErr := api.DB.DeleteTag(tagWithAssets.Tag.ID); deleteTagErr != nil {
+	deleteTagErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.DeleteTag(tx, tagWithAssets.Tag.ID)
+	})
+	if deleteTagErr != nil {
 		api.Logger.Error("Error deleting tag", "error", deleteTagErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},

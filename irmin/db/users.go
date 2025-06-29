@@ -130,99 +130,88 @@ func (d *Database) GetUsersInWorkspace(workspaceID uint) ([]WorkspaceUser, error
 }
 
 // AddUserToWorkspace adds a user to a workspace with the specified roles.
-func (d *Database) AddUserToWorkspace(userID, workspaceID uint, roleIDs []uint) (*WorkspaceUser, error) {
-	var workspaceUser *WorkspaceUser
-	err := d.Transaction(func(tx *gorm.DB) error {
-		// Create the workspace user record
-		workspaceUser = &WorkspaceUser{
-			UserID:      userID,
-			WorkspaceID: workspaceID,
-		}
-		if err := tx.Create(workspaceUser).Error; err != nil {
-			return err
-		}
-
-		// Add roles
-		for _, roleID := range roleIDs {
-			workspaceUserRole := &WorkspaceUserRole{
-				WorkspaceUserID: workspaceUser.ID,
-				RoleID:          roleID,
-			}
-			if err := tx.Create(workspaceUserRole).Error; err != nil {
-				return err
-			}
-		}
-
-		// Reload the workspace user with roles
-		if err := tx.Preload("User").Preload("Roles").Preload("Roles.Role").First(workspaceUser, workspaceUser.ID).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
+func (d *Database) AddUserToWorkspace(tx *gorm.DB, userID, workspaceID uint, roleIDs []uint) (*WorkspaceUser, error) {
+	// Create the workspace user record
+	workspaceUser := &WorkspaceUser{
+		UserID:      userID,
+		WorkspaceID: workspaceID,
+	}
+	if err := tx.Create(workspaceUser).Error; err != nil {
 		return nil, err
 	}
+
+	// Add roles
+	for _, roleID := range roleIDs {
+		workspaceUserRole := &WorkspaceUserRole{
+			WorkspaceUserID: workspaceUser.ID,
+			RoleID:          roleID,
+		}
+		if err := tx.Create(workspaceUserRole).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	// Reload the workspace user with roles
+	if err := tx.Preload("User").Preload("Roles").Preload("Roles.Role").First(workspaceUser, workspaceUser.ID).Error; err != nil {
+		return nil, err
+	}
+
 	return workspaceUser, nil
 }
 
 // RemoveUserFromWorkspace removes a user from a workspace.
-func (d *Database) RemoveUserFromWorkspace(userID, workspaceID uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Get the workspace user
-		workspaceUser := &WorkspaceUser{}
-		if err := tx.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(workspaceUser).Error; err != nil {
-			return err
-		}
+func (d *Database) RemoveUserFromWorkspace(tx *gorm.DB, userID, workspaceID uint) error {
+	// Get the workspace user
+	workspaceUser := &WorkspaceUser{}
+	if err := tx.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(workspaceUser).Error; err != nil {
+		return err
+	}
 
-		// Delete the WorkspaceUserRole records that match the workspace user ID.
-		if err := tx.Where("workspace_user_id = ?", workspaceUser.ID).Delete(&WorkspaceUserRole{}).Error; err != nil {
-			return err
-		}
+	// Delete the WorkspaceUserRole records that match the workspace user ID.
+	if err := tx.Where("workspace_user_id = ?", workspaceUser.ID).Delete(&WorkspaceUserRole{}).Error; err != nil {
+		return err
+	}
 
-		// Delete the WorkspaceUser record.
-		if err := tx.Delete(workspaceUser).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+	// Delete the WorkspaceUser record.
+	if err := tx.Delete(workspaceUser).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UpdateWorkspaceUserRoles updates the roles for a user in a workspace.
-func (d *Database) UpdateWorkspaceUserRoles(userID, workspaceID uint, roleIDs []uint) (*WorkspaceUser, error) {
-	var workspaceUser *WorkspaceUser
-	err := d.Transaction(func(tx *gorm.DB) error {
-		// Get the workspace user
-		workspaceUser = &WorkspaceUser{}
-		if err := tx.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(workspaceUser).Error; err != nil {
-			return err
-		}
-
-		// Delete existing roles
-		if err := tx.Where("workspace_user_id = ?", workspaceUser.ID).Delete(&WorkspaceUserRole{}).Error; err != nil {
-			return err
-		}
-
-		// Add new roles
-		for _, roleID := range roleIDs {
-			workspaceUserRole := &WorkspaceUserRole{
-				WorkspaceUserID: workspaceUser.ID,
-				RoleID:          roleID,
-			}
-			if err := tx.Create(workspaceUserRole).Error; err != nil {
-				return err
-			}
-		}
-
-		// Reload the workspace user with roles
-		if err := tx.Preload("User").Preload("Roles").Preload("Roles.Role").First(workspaceUser, workspaceUser.ID).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
+func (d *Database) UpdateWorkspaceUserRoles(
+	tx *gorm.DB,
+	userID, workspaceID uint,
+	roleIDs []uint,
+) (*WorkspaceUser, error) {
+	// Get the workspace user
+	workspaceUser := &WorkspaceUser{}
+	if err := tx.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(workspaceUser).Error; err != nil {
 		return nil, err
 	}
+
+	// Delete existing roles
+	if err := tx.Where("workspace_user_id = ?", workspaceUser.ID).Delete(&WorkspaceUserRole{}).Error; err != nil {
+		return nil, err
+	}
+
+	// Add new roles
+	for _, roleID := range roleIDs {
+		workspaceUserRole := &WorkspaceUserRole{
+			WorkspaceUserID: workspaceUser.ID,
+			RoleID:          roleID,
+		}
+		if err := tx.Create(workspaceUserRole).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	// Reload the workspace user with roles
+	if err := tx.Preload("User").Preload("Roles").Preload("Roles.Role").First(workspaceUser, workspaceUser.ID).Error; err != nil {
+		return nil, err
+	}
+
 	return workspaceUser, nil
 }

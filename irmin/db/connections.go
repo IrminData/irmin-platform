@@ -53,22 +53,20 @@ func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, 
 }
 
 // DeleteConnection deletes a connection and its associated schema cache from the database.
-func (d *Database) DeleteConnection(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Remove tag associations first
-		if err := tx.Where("connection_id = ?", id).Delete(&ConnectionTag{}).Error; err != nil {
-			return err
-		}
-		// Delete associated schema cache
-		if err := tx.Where("connection_id = ?", id).Delete(&ConnectionSchemaCache{}).Error; err != nil {
-			return err
-		}
-		// Then delete the connection
-		if err := tx.Delete(&Connection{}, id).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error {
+	// Remove tag associations first
+	if err := tx.Where("connection_id = ?", id).Delete(&ConnectionTag{}).Error; err != nil {
+		return err
+	}
+	// Delete associated schema cache
+	if err := tx.Where("connection_id = ?", id).Delete(&ConnectionSchemaCache{}).Error; err != nil {
+		return err
+	}
+	// Then delete the connection
+	if err := tx.Delete(&Connection{}, id).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 // FindConnectionSchemaCache finds a connection schema cache by connection ID and op method.

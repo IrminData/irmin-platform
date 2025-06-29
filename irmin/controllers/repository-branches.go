@@ -11,6 +11,7 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
@@ -171,13 +172,13 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 		newBranchName = req.Name
 	}
 
-	// Delete the cached objects for the branch in a go routine
-	go func() {
-		dbDeleteErr := api.DB.DeleteObjects(nil, &repository.ID, &branch.Name)
-		if dbDeleteErr != nil {
-			api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
-		}
-	}()
+	// Delete the cached objects for the branch
+	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name)
+	})
+	if dbDeleteErr != nil {
+		api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
+	}
 
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
@@ -231,13 +232,13 @@ func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Delete the cached objects for the branch in a go routine
-	go func() {
-		dbDeleteErr := api.DB.DeleteObjects(nil, &repository.ID, &branch.Name)
-		if dbDeleteErr != nil {
-			api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
-		}
-	}()
+	// Delete the cached objects for the branch
+	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.DeleteObjects(tx, nil, &repository.ID, &branch.Name)
+	})
+	if dbDeleteErr != nil {
+		api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
+	}
 
 	// Initialize Data Engine client
 	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)

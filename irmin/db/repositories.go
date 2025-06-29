@@ -62,24 +62,6 @@ func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, e
 	return repositories, err
 }
 
-func (d *Database) DeleteRepository(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Remove tag associations first
-		if err := tx.Where("repository_id = ?", id).Delete(&RepositoryTag{}).Error; err != nil {
-			return err
-		}
-		// Delete associated schema cache
-		if err := tx.Where("repository_id = ?", id).Delete(&RepositorySchemaCache{}).Error; err != nil {
-			return err
-		}
-		// Then delete the repository
-		if err := tx.Delete(&Repository{}, id).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
 // FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref.
 func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error) {
 	var schemaCache RepositorySchemaCache

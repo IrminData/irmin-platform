@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/zeebo/assert"
+	"gorm.io/gorm"
 )
 
 // setupTestUser ensures the test user is in the workspace with appropriate roles.
@@ -26,9 +27,12 @@ func setupTestUser(t *testing.T, ts *lib.TestSuite, workspace *db.Workspace, use
 			t.Fatalf("Viewer role not found")
 		}
 
-		_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, []uint{viewerRole.ID})
-		if addErr != nil {
-			t.Fatalf("Failed to add user to workspace: %v", addErr)
+		txErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+			_, addErr := ts.DB.AddUserToWorkspace(tx, user.ID, workspace.ID, []uint{viewerRole.ID})
+			return addErr
+		})
+		if txErr != nil {
+			t.Fatalf("Failed to add user to workspace: %v", txErr)
 		}
 
 		originalRoleIDs = []uint{}
@@ -41,9 +45,11 @@ func setupTestUser(t *testing.T, ts *lib.TestSuite, workspace *db.Workspace, use
 
 	cleanup := func() {
 		if len(originalRoleIDs) == 0 {
-			removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
-			if removeErr != nil {
-				t.Logf("Failed to remove user from workspace during cleanup: %v", removeErr)
+			txErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+				return ts.DB.RemoveUserFromWorkspace(tx, user.ID, workspace.ID)
+			})
+			if txErr != nil {
+				t.Logf("Failed to remove user from workspace during cleanup: %v", txErr)
 			}
 		} else {
 			restoreUserRoles(t, ts.DB, user.ID, workspace.ID, originalRoleIDs)
@@ -180,11 +186,16 @@ func TestIsAllowedFilter(t *testing.T) {
 		{
 			name: "non-workspace user sees no workflows",
 			setup: func() ([]uint, func()) {
-				removeErr := ts.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
+				removeErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+					return ts.DB.RemoveUserFromWorkspace(tx, user.ID, workspace.ID)
+				})
 				assert.NoError(t, removeErr)
 				return originalRoleIDs, func() {
-					_, addErr := ts.DB.AddUserToWorkspace(user.ID, workspace.ID, originalRoleIDs)
-					assert.NoError(t, addErr)
+					addTxErr := ts.DB.Transaction(func(tx *gorm.DB) error {
+						_, addErr := ts.DB.AddUserToWorkspace(tx, user.ID, workspace.ID, originalRoleIDs)
+						return addErr
+					})
+					assert.NoError(t, addTxErr)
 				}
 			},
 			items:         workflows,

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 type objectLocalParams struct {
@@ -451,6 +453,55 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 	})
 }
 
+// deleteObjectInTransaction handles the transactional deletion of objects from both Data Engine and database.
+func (api *APIControllers) deleteObjectInTransaction(
+	ctx context.Context,
+	objectLocalParams *objectLocalParams,
+) error {
+	// Initialize Data Engine client outside transaction
+	dataEngine, err := engine.NewClient(ctx, objectLocalParams.locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.ErrorContext(ctx, "error creating data engine client", "error", err)
+		return err
+	}
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Delete the object cache from the database
+		deleteDatabaseObjectErr := api.DB.DeleteObjects(tx,
+			&objectLocalParams.object.Path,
+			&objectLocalParams.repository.ID,
+			&objectLocalParams.objectRef,
+		)
+		if deleteDatabaseObjectErr != nil {
+			api.Logger.Error("Error deleting object from database", "error", deleteDatabaseObjectErr)
+			return deleteDatabaseObjectErr
+		}
+
+		// Delete from the Data Engine
+		deleteEngineObjectErr := dataEngine.DeleteObject(
+			objectLocalParams.workspace.Slug,
+			objectLocalParams.repository.Slug,
+			objectLocalParams.object.Path,
+			objectLocalParams.objectRef,
+		)
+		if deleteEngineObjectErr != nil {
+			api.Logger.Error("Error deleting object from Data Engine", "error", deleteEngineObjectErr)
+			return deleteEngineObjectErr
+		}
+
+		return nil
+	})
+
+	// If transaction failed, log the error
+	if transactionErr != nil {
+		api.Logger.ErrorContext(ctx, "Transaction failed for object deletion", "error", transactionErr)
+		return transactionErr
+	}
+
+	return nil
+}
+
 // RepositoryObjectsDestroy handles deleting an object from a repository.
 func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
@@ -459,38 +510,11 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Delete the object from the database
-	err = api.DB.DeleteObjects(
-		&objectLocalParams.object.Path,
-		&objectLocalParams.repository.ID,
-		&objectLocalParams.objectRef,
-	)
-	if err != nil {
-		api.Logger.Error("Error deleting object from database", "error", err)
+	// Use database transaction to ensure atomicity
+	transactionErr := api.deleteObjectInTransaction(c.Context(), objectLocalParams)
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for object deletion", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
-		})
-	}
-
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
-		})
-	}
-
-	// Delete the object from the repository at ref
-	err = dataEngine.DeleteObject(
-		objectLocalParams.workspace.Slug,
-		objectLocalParams.repository.Slug,
-		objectLocalParams.object.Path,
-		objectLocalParams.objectRef,
-	)
-	if err != nil {
-		api.Logger.Error("Error deleting object from Data Engine", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
 		})
 	}

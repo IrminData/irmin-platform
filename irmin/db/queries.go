@@ -32,16 +32,15 @@ func (d *Database) GetStoredQueriesByWorkspaceID(workspaceID uint) ([]StoredQuer
 	return queries, nil
 }
 
-func (d *Database) DeleteStoredQuery(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Remove tag associations first
-		if err := tx.Where("stored_query_id = ?", id).Delete(&QueryTag{}).Error; err != nil {
-			return err
-		}
-		// Then delete the query
-		if err := tx.Delete(&StoredQuery{}, id).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+func (d *Database) DeleteStoredQuery(tx *gorm.DB, id uint) error {
+	// Remove tag associations first
+	if err := tx.Where("stored_query_id = ?", id).Delete(&QueryTag{}).Error; err != nil {
+		return err
+	}
+	// Then delete the query
+	if err := tx.Delete(&StoredQuery{}, id).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

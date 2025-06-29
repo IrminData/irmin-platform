@@ -11,6 +11,7 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 //nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
@@ -275,8 +276,13 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
+	// TODO: Verify that the connection is not used in any workflows
+
 	// Delete the connection
-	if deleteConnectionErr := api.DB.DeleteConnection(connection.ID); deleteConnectionErr != nil {
+	deleteConnectionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.DeleteConnection(tx, connection.ID)
+	})
+	if deleteConnectionErr != nil {
 		api.Logger.Error("Error deleting connection", "error", deleteConnectionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},

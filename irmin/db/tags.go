@@ -68,27 +68,24 @@ type TagWithAssets struct {
 }
 
 // DeleteTag deletes a tag and removes all its associations.
-func (d *Database) DeleteTag(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete all associations first
-		if err := tx.Where("tag_id = ?", id).Delete(&QueryTag{}).Error; err != nil {
-			return err
-		}
-		if err := tx.Where("tag_id = ?", id).Delete(&RepositoryTag{}).Error; err != nil {
-			return err
-		}
-		if err := tx.Where("tag_id = ?", id).Delete(&WorkflowTag{}).Error; err != nil {
-			return err
-		}
-		if err := tx.Where("tag_id = ?", id).Delete(&ConnectionTag{}).Error; err != nil {
-			return err
-		}
-		if err := tx.Where("tag_id = ?", id).Delete(&RepositoryObjectTag{}).Error; err != nil {
-			return err
-		}
-		// Then delete the tag itself
-		return tx.Delete(&Tag{}, id).Error
-	})
+func (d *Database) DeleteTag(tx *gorm.DB, id uint) error {
+	if err := tx.Where("tag_id = ?", id).Delete(&QueryTag{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("tag_id = ?", id).Delete(&RepositoryTag{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("tag_id = ?", id).Delete(&WorkflowTag{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("tag_id = ?", id).Delete(&ConnectionTag{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("tag_id = ?", id).Delete(&RepositoryObjectTag{}).Error; err != nil {
+		return err
+	}
+	// Then delete the tag itself
+	return tx.Delete(&Tag{}, id).Error
 }
 
 // GetTagByID retrieves a tag by its ID.

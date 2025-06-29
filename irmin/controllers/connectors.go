@@ -276,7 +276,9 @@ func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the connector from the database
-	deleteConnectorErr := api.DB.DeleteConnector(connector.ID)
+	deleteConnectorErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.DeleteConnector(tx, connector.ID)
+	})
 	if deleteConnectorErr != nil {
 		api.Logger.Error("Error deleting connector", "error", deleteConnectorErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

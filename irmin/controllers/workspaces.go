@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-api/bucket"
@@ -14,6 +15,7 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 // validateWorkspaceParams validates the common parameters needed for workspace-level operations.
@@ -88,6 +90,82 @@ func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 	})
 }
 
+// createWorkspaceInTransaction handles the transactional creation of workspaces with all related setup.
+func (api *APIControllers) createWorkspaceInTransaction(
+	ctx context.Context,
+	req irmincore.CreateWorkspaceRequest,
+	user *db.User,
+) (*db.Workspace, error) {
+	var newWorkspace *db.Workspace
+
+	// Create a bucket client
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
+	if createBucketClientErr != nil {
+		api.Logger.ErrorContext(ctx, "failed to create bucket client", "error", createBucketClientErr)
+		return nil, createBucketClientErr
+	}
+	defer bucket.Close()
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Create the workspace
+		newWorkspace = &db.Workspace{
+			Name:        req.Name,
+			Slug:        utils.Slugify(req.Name),
+			Description: req.Description,
+			OwnerID:     user.ID,
+		}
+		if createWorkspaceErr := tx.Create(&newWorkspace).Error; createWorkspaceErr != nil {
+			api.Logger.ErrorContext(ctx, "Error creating workspace", "error", createWorkspaceErr)
+			return createWorkspaceErr
+		}
+
+		// Get owner role for the workspace
+		ownerRole, err := api.DB.GetOwnerRole()
+		if err != nil {
+			api.Logger.ErrorContext(ctx, "Error getting owner role", "error", err)
+			return err
+		}
+
+		// Add user to workspace with default role
+		_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(tx, user.ID, newWorkspace.ID, []uint{ownerRole.ID})
+		if addUserToWorkspaceErr != nil {
+			api.Logger.ErrorContext(ctx, "Error adding user to workspace", "error", addUserToWorkspaceErr)
+			return addUserToWorkspaceErr
+		}
+
+		// Set default policies for the workspace
+		setDefaultPoliciesErr := lib.SetDefaultPolicies(api.DB, newWorkspace.ID, false)
+		if setDefaultPoliciesErr != nil {
+			api.Logger.ErrorContext(ctx, "Error setting default policies", "error", setDefaultPoliciesErr)
+			return setDefaultPoliciesErr
+		}
+
+		// Seed default tags for the workspace
+		seedDefaultTagsErr := lib.SeedDefaultTags(api.DB, newWorkspace.ID)
+		if seedDefaultTagsErr != nil {
+			api.Logger.ErrorContext(ctx, "Error seeding default tags", "error", seedDefaultTagsErr)
+			return seedDefaultTagsErr
+		}
+
+		// Create a bucket folder for the editor files of the workspace
+		// This is done after the database operations, so that the operations would be atomic
+		key := "editor/" + newWorkspace.Slug + "/"
+		if writePathErr := bucket.WritePath(ctx, key, ""); writePathErr != nil {
+			api.Logger.ErrorContext(ctx, "Error creating workspace editor items folder object", "error", writePathErr)
+			return writePathErr
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return newWorkspace, nil
+}
+
 func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -113,77 +191,17 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 		})
 	}
 
-	// Create the workspace.
-	newWorkspace := db.Workspace{
-		Name:        req.Name,
-		Slug:        utils.Slugify(req.Name),
-		Description: req.Description,
-		OwnerID:     user.ID,
-	}
-	if createWorkspaceErr := api.DB.Create(&newWorkspace).Error; createWorkspaceErr != nil {
-		api.Logger.Error("Error creating workspace", "error", createWorkspaceErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Find the default role for the user
-	ownerRole, err := api.DB.GetOwnerRole()
-	if err != nil {
-		api.Logger.Error("Error getting default role", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Add the user to the workspace.
-	_, addUserToWorkspaceErr := api.DB.AddUserToWorkspace(
-		user.ID,
-		newWorkspace.ID,
-		[]uint{ownerRole.ID},
-	)
-	if addUserToWorkspaceErr != nil {
-		api.Logger.Error("Error adding user to workspace", "error", addUserToWorkspaceErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Set the default policies for the workspace.
-	if setDefaultPoliciesErr := lib.SetDefaultPolicies(api.DB, newWorkspace.ID, false); setDefaultPoliciesErr != nil {
-		api.Logger.Error("Error setting default policies", "error", setDefaultPoliciesErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Seed default tags for the workspace.
-	if seedDefaultTagsErr := lib.SeedDefaultTags(api.DB, newWorkspace.ID); seedDefaultTagsErr != nil {
-		api.Logger.Error("Error seeding default tags", "error", seedDefaultTagsErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Create a bucket folder for the editor files of the workspace.
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
-	if createBucketClientErr != nil {
-		api.Logger.Error("failed to create bucket client", "error", createBucketClientErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-	defer bucket.Close()
-	key := "editor/" + newWorkspace.Slug + "/"
-	if writePathErr := bucket.WritePath(c.Context(), key, ""); writePathErr != nil {
-		api.Logger.Error("Error creating workspace editor items folder object", "error", writePathErr)
+	// Use database transaction to ensure atomicity
+	newWorkspace, transactionErr := api.createWorkspaceInTransaction(c.Context(), req, user)
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for workspace creation", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format the response.
-	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(&newWorkspace, api.SQIDManager)
+	workspaceResponse, formatWorkspaceResponseErr := formatter.FormatWorkspaceResponse(newWorkspace, api.SQIDManager)
 	if formatWorkspaceResponseErr != nil {
 		api.Logger.Error("Error formatting workspace response", "error", formatWorkspaceResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -247,11 +265,13 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 	// Only update fields that were provided
 	if req.Name != "" {
 		workspace.Name = req.Name
-		workspace.Slug = utils.Slugify(req.Name)
+		// Slug is not updated, as it is used as a unique identifier for the workspace
 	}
 	if req.Description != "" {
 		workspace.Description = req.Description
 	}
+
+	// Update the workspace in the database
 	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
 		api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -409,19 +429,32 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 		})
 	}
 
-	// Update the new owner's role to owner
-	_, updateOwnerRoleErr := api.DB.UpdateWorkspaceUserRoles(uint(newOwnerID), workspace.ID, []uint{ownerRole.ID})
-	if updateOwnerRoleErr != nil {
-		api.Logger.Error("Error updating owner role", "error", updateOwnerRoleErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Update the new owner's role to owner
+		_, updateOwnerRoleErr := api.DB.UpdateWorkspaceUserRoles(
+			tx,
+			uint(newOwnerID),
+			workspace.ID,
+			[]uint{ownerRole.ID},
+		)
+		if updateOwnerRoleErr != nil {
+			api.Logger.Error("Error updating owner role", "error", updateOwnerRoleErr)
+			return updateOwnerRoleErr
+		}
 
-	// Update the workspace owner ID.
-	workspace.OwnerID = uint(newOwnerID)
-	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
-		api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
+		// Update the workspace owner ID.
+		workspace.OwnerID = uint(newOwnerID)
+		if updateWorkspaceErr := tx.Save(&workspace).Error; updateWorkspaceErr != nil {
+			api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
+			return updateWorkspaceErr
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		api.Logger.Error("Transaction failed for workspace ownership transfer", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -485,9 +518,15 @@ func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error {
 	}
 
 	// Leave the workspace.
-	removeUserFromWorkspaceErr := api.DB.RemoveUserFromWorkspace(user.ID, workspace.ID)
-	if removeUserFromWorkspaceErr != nil {
-		api.Logger.Error("Error leaving workspace", "error", removeUserFromWorkspaceErr)
+	leaveWorkspaceErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.RemoveUserFromWorkspace(
+			tx,
+			user.ID,
+			workspace.ID,
+		)
+	})
+	if leaveWorkspaceErr != nil {
+		api.Logger.Error("Error leaving workspace", "error", leaveWorkspaceErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})

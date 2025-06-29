@@ -505,7 +505,9 @@ func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the workflow and all related records
-	deleteWorkflowErr := api.DB.DeleteWorkflow(workflow.ID)
+	deleteWorkflowErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.DeleteWorkflow(tx, workflow.ID)
+	})
 	if deleteWorkflowErr != nil {
 		api.Logger.Error("Error deleting workflow", "error", deleteWorkflowErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

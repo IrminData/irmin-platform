@@ -65,16 +65,14 @@ func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, erro
 }
 
 // DeleteConnector deletes a connector record and its associated connections from the database by its ID.
-func (d *Database) DeleteConnector(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete associated connections first
-		if err := tx.Where("connector_id = ?", id).Delete(&Connection{}).Error; err != nil {
-			return err
-		}
-		// Then delete the connector
-		if err := tx.Delete(&Connector{}, id).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+func (d *Database) DeleteConnector(tx *gorm.DB, id uint) error {
+	// Delete associated connections first
+	if err := tx.Where("connector_id = ?", id).Delete(&Connection{}).Error; err != nil {
+		return err
+	}
+	// Then delete the connector
+	if err := tx.Delete(&Connector{}, id).Error; err != nil {
+		return err
+	}
+	return nil
 }

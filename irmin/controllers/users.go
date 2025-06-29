@@ -11,6 +11,7 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 //nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
@@ -122,8 +123,11 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	}
 
 	// Remove the user from the workspace
-	if removeUserFromWorkspaceErr := api.DB.RemoveUserFromWorkspace(workspaceMember.UserID, workspace.ID); removeUserFromWorkspaceErr != nil {
-		api.Logger.Error("Error removing user from workspace", "error", removeUserFromWorkspaceErr)
+	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return api.DB.RemoveUserFromWorkspace(tx, workspaceMember.UserID, workspace.ID)
+	})
+	if txErr != nil {
+		api.Logger.Error("Error removing user from workspace", "error", txErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -176,9 +180,18 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	newRoles := parseAndValidateRoles(api, req.Roles)
 
 	// Update user roles
-	workspaceMember, err = api.DB.UpdateWorkspaceUserRoles(workspaceMember.UserID, workspace.ID, newRoles)
-	if err != nil {
-		api.Logger.Error("Error updating workspace user roles", "error", err)
+	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		var updateRolesErr error
+		workspaceMember, updateRolesErr = api.DB.UpdateWorkspaceUserRoles(
+			tx,
+			workspaceMember.UserID,
+			workspace.ID,
+			newRoles,
+		)
+		return updateRolesErr
+	})
+	if txErr != nil {
+		api.Logger.Error("Error updating workspace user roles", "error", txErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
