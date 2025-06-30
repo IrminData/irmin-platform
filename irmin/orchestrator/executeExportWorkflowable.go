@@ -15,12 +15,11 @@ func (o *Orchestrator) executeExportWorkflowable(
 ) ([]string, error) {
 	return o.executeWorkflowableCommon(
 		ctx,
-		workflow,
 		workflowable.ConnectionID,
-		workflowable.ConnectionPath,
+		[]string{workflowable.ExportToConnectionPath},
 		&workflow.Workspace,
 		&workflowable.Repository,
-		workflowable.RepositoryPath,
+		workflowable.ExportFromRepositoryPaths,
 		workflowable.RepositoryBranch,
 		operationExport,
 		workflowable.FieldMappings,

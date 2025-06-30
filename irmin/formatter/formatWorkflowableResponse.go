@@ -37,13 +37,13 @@ func formatImportWorkflowable(
 
 	connectionSqid, _ := sqidManager.Encode("connections", uint64(importWorkflowable.ConnectionID))
 	return &irminmodels.Workflowable{
-		Type:             irminmodels.WorkflowableTypeImport,
-		ConnectionID:     connectionSqid,
-		ConnectionPath:   importWorkflowable.ConnectionPath,
-		Repository:       importWorkflowable.Repository.Slug,
-		RepositoryBranch: importWorkflowable.RepositoryBranch,
-		RepositoryPath:   importWorkflowable.RepositoryPath,
-		FieldMappings:    importWorkflowable.FieldMappings,
+		Type:                      irminmodels.WorkflowableTypeImport,
+		ConnectionID:              connectionSqid,
+		ImportFromConnectionPaths: importWorkflowable.ImportFromConnectionPaths,
+		ImportToRepositoryPath:    importWorkflowable.ImportToRepositoryPath,
+		Repository:                importWorkflowable.Repository.Slug,
+		RepositoryBranch:          importWorkflowable.RepositoryBranch,
+		FieldMappings:             importWorkflowable.FieldMappings,
 	}
 }
 
@@ -58,13 +58,13 @@ func formatExportWorkflowable(
 
 	connectionSqid, _ := sqidManager.Encode("connections", uint64(exportWorkflowable.ConnectionID))
 	return &irminmodels.Workflowable{
-		Type:             irminmodels.WorkflowableTypeExport,
-		ConnectionID:     connectionSqid,
-		ConnectionPath:   exportWorkflowable.ConnectionPath,
-		Repository:       exportWorkflowable.Repository.Slug,
-		RepositoryBranch: exportWorkflowable.RepositoryBranch,
-		RepositoryPath:   exportWorkflowable.RepositoryPath,
-		FieldMappings:    exportWorkflowable.FieldMappings,
+		Type:                      irminmodels.WorkflowableTypeExport,
+		ConnectionID:              connectionSqid,
+		ExportFromRepositoryPaths: exportWorkflowable.ExportFromRepositoryPaths,
+		ExportToConnectionPath:    exportWorkflowable.ExportToConnectionPath,
+		Repository:                exportWorkflowable.Repository.Slug,
+		RepositoryBranch:          exportWorkflowable.RepositoryBranch,
+		FieldMappings:             exportWorkflowable.FieldMappings,
 	}
 }
 
@@ -81,10 +81,13 @@ func formatActionWorkflowable(
 		Executable: actionWorkflowable.Executable,
 	}
 
-	if actionWorkflowable.Repository != nil {
-		response.Repository = actionWorkflowable.Repository.Slug
-		response.RepositoryBranch = *actionWorkflowable.RepositoryBranch
-		response.RepositoryPath = *actionWorkflowable.RepositoryPath
+	if actionWorkflowable.ResultsRepository != nil {
+		response.ResultsRepository = &actionWorkflowable.ResultsRepository.Slug
+		response.ResultsRepositoryBranch = actionWorkflowable.ResultsRepositoryBranch
+		response.ResultsRepositoryPath = "/"
+		if actionWorkflowable.ResultsRepositoryPath != nil {
+			response.ResultsRepositoryPath = *actionWorkflowable.ResultsRepositoryPath
+		}
 	}
 
 	if actionWorkflowable.Inputs != nil {
@@ -124,19 +127,20 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *utils.SQIDManager)
 			Read:                stage.Read,
 			Type:                irminmodels.PipelineStageTypeConnection,
 			ConnectionWritePath: stage.ConnectionWritePath,
-			ConnectionReadPath:  stage.ConnectionReadPath,
+			ConnectionReadPaths: stage.ConnectionReadPaths,
 			ConnectionID:        &connectionSqid,
 		}
 	case db.PipelineStageTypeRepository:
 		repositorySlug := stage.Repository.Slug
 		return irminmodels.PipelineStage{
-			Description:      stage.Description,
-			Write:            stage.Write,
-			Read:             stage.Read,
-			Type:             irminmodels.PipelineStageTypeRepository,
-			RepositoryBranch: stage.RepositoryBranch,
-			RepositoryPath:   stage.RepositoryPath,
-			Repository:       &repositorySlug,
+			Description:         stage.Description,
+			Write:               stage.Write,
+			Read:                stage.Read,
+			Type:                irminmodels.PipelineStageTypeRepository,
+			RepositoryBranch:    stage.RepositoryBranch,
+			RepositoryWritePath: stage.RepositoryWritePath,
+			RepositoryReadPaths: stage.RepositoryReadPaths,
+			Repository:          &repositorySlug,
 		}
 	default:
 		return irminmodels.PipelineStage{}

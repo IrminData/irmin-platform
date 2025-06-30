@@ -91,7 +91,7 @@ func (o *Orchestrator) executeActionWorkflowable(
 	}
 
 	// Check if the results need to be saved
-	if workflowable.Repository != nil {
+	if workflowable.ResultsRepository != nil {
 		// Loop through the results and save them to the repository
 		for fileName, fileContent := range computeResult.ResultFiles {
 			// Check for context cancellation during result saving
@@ -103,13 +103,13 @@ func (o *Orchestrator) executeActionWorkflowable(
 			// Create multipart file from the byte array
 			file := bytes.NewReader(fileContent)
 			// Construct the path to save the file
-			uploadObjectToPath := strings.Trim(*workflowable.RepositoryPath, "/") + "/" + fileName
+			uploadObjectToPath := strings.Trim(*workflowable.ResultsRepositoryPath, "/") + "/" + fileName
 			// Upload the object to the path in the repository at ref
 			newObject, uploadObjectErr := o.dataEngine.UploadObject(
 				workflow.Workspace.Slug,
-				workflowable.Repository.Slug,
+				workflowable.ResultsRepository.Slug,
 				uploadObjectToPath,
-				*workflowable.RepositoryBranch,
+				*workflowable.ResultsRepositoryBranch,
 				file,
 			)
 			if uploadObjectErr != nil {
@@ -119,8 +119,8 @@ func (o *Orchestrator) executeActionWorkflowable(
 					fmt.Sprintf(
 						"Error saving result object ('%s') to %s@%s/%s.",
 						fileName,
-						workflowable.Repository.Slug,
-						*workflowable.RepositoryBranch,
+						workflowable.ResultsRepository.Slug,
+						*workflowable.ResultsRepositoryBranch,
 						uploadObjectToPath,
 					),
 				)
@@ -131,8 +131,8 @@ func (o *Orchestrator) executeActionWorkflowable(
 				_, saveObjectErr := lib.SaveObject(
 					o.db,
 					newObject,
-					*workflowable.RepositoryBranch,
-					*workflowable.RepositoryID,
+					*workflowable.ResultsRepositoryBranch,
+					*workflowable.ResultsRepositoryID,
 				)
 				if saveObjectErr != nil {
 					o.logger.ErrorContext(ctx, "Error saving object to database", "error", saveObjectErr)

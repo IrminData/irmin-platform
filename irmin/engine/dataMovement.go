@@ -3,6 +3,7 @@ package engine
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"path"
 	"strings"
 
@@ -120,15 +121,15 @@ func (c *Client) buildTargetPath(basePath, itemName string, hasMultipleItems boo
 // Returns the metadata of the uploaded objects and any errors that occurred.
 func (c *Client) DataImport(
 	connection *db.Connection,
-	connectionPath,
-	workspace,
-	repository,
-	branch,
+	connectionPaths []string,
+	workspace string,
+	repository string,
+	branch string,
 	repositoryPath string,
 	fieldMappings []irminmodels.FieldMapping,
 ) ([]lakefs.ObjectMetadata, []error) {
 	// Pull the files from the connector.
-	allFiles, err := c.PullFilesFromConnector(connection, connectionPath)
+	allFiles, err := c.PullFilesFromConnector(connection, connectionPaths)
 	if err != nil {
 		return nil, []error{err}
 	}
@@ -146,7 +147,8 @@ func (c *Client) DataImport(
 // uploadFiles uploads files to lakeFS concurrently.
 func (c *Client) uploadFiles(
 	files map[string][]byte,
-	workspace, repository, branch, repositoryPath string,
+	workspace, repository, branch string,
+	repositoryPath string,
 ) ([]lakefs.ObjectMetadata, []error) {
 	var (
 		errs    []error
@@ -160,7 +162,12 @@ func (c *Client) uploadFiles(
 	// Upload files concurrently
 	for filePath, fileContent := range files {
 		go func() {
-			uploadPath := c.buildTargetPath(repositoryPath, filePath, len(files) > 1)
+			// Use the first repository path as the base path, or empty string if none
+			var basePath string
+			if repositoryPath != "" {
+				basePath = repositoryPath
+			}
+			uploadPath := c.buildTargetPath(basePath, filePath, len(files) > 1)
 
 			meta, upErr := c.LakeFSClient.UploadObject(
 				repoName,
@@ -257,7 +264,10 @@ func (c *Client) mergeDestinationFiles(
 
 // PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents.
 // It returns a map of file paths to file contents and an error if any occurred.
-func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPath string) (map[string][]byte, error) {
+func (c *Client) PullFilesFromConnector(
+	connection *db.Connection,
+	connectionPaths []string,
+) (map[string][]byte, error) {
 	// Initialize connector operation.
 	opClient, cancel, err := c.InitializeConnectorOperation(connection)
 	if err != nil {
@@ -266,9 +276,13 @@ func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPat
 	defer cancel()
 
 	// Pull the matching files from the connector.
-	pulled, pullErr := opClient.OperationPull(connectionPath)
-	if pullErr != nil {
-		return nil, fmt.Errorf("failed to pull files: %w", pullErr)
+	pulled := make([]irminconnectorclient.PulledFile, 0)
+	for _, connectionPath := range connectionPaths {
+		pulledFiles, pullErr := opClient.OperationPull(connectionPath)
+		if pullErr != nil {
+			return nil, fmt.Errorf("failed to pull files: %w", pullErr)
+		}
+		pulled = append(pulled, pulledFiles...)
 	}
 
 	// Loop through the pulled files to unzip them and construct a list of all files.
@@ -281,12 +295,117 @@ func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPat
 		}
 
 		// Add the unzipped files to the list of all files.
-		for filePath, fileContent := range unzipped {
-			allFiles[filePath] = fileContent
-		}
+		maps.Copy(allFiles, unzipped)
 	}
 
 	return allFiles, nil
+}
+
+// fetchSingleFile fetches the content of a single file from lakeFS.
+func (c *Client) fetchSingleFile(repoName, branch, filePath string) ([]byte, error) {
+	data, err := c.LakeFSClient.GetFullObjectContent(repoName, branch, filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch object %q: %w", filePath, err)
+	}
+	return data, nil
+}
+
+// fetchDirectoryContents fetches all child contents of a directory concurrently.
+func (c *Client) fetchDirectoryContents(
+	repoName, branch string,
+	children []irminmodels.Object,
+) (map[string][]byte, []string, []error) {
+	files := make(map[string][]byte)
+	var repositoryPaths []string
+	var errs []error
+
+	if len(children) == 0 {
+		return files, repositoryPaths, errs
+	}
+
+	// Use buffered channels sized to the number of children
+	ch := make(chan struct {
+		path    string
+		content []byte
+	}, len(children))
+	errCh := make(chan error, len(children))
+
+	// Launch concurrent fetches
+	for _, child := range children {
+		go func() {
+			data, err := c.LakeFSClient.GetFullObjectContent(repoName, branch, child.Path)
+			if err != nil {
+				errCh <- fmt.Errorf("failed to fetch child %q: %w", child.Path, err)
+				return
+			}
+			ch <- struct {
+				path    string
+				content []byte
+			}{path: child.Path, content: data}
+		}()
+	}
+
+	// Collect results
+	for range children {
+		select {
+		case r := <-ch:
+			files[r.path] = r.content
+			repositoryPaths = append(repositoryPaths, r.path)
+		case e := <-errCh:
+			errs = append(errs, e)
+		}
+	}
+
+	return files, repositoryPaths, errs
+}
+
+// fetchObjectsFromPaths fetches all objects and their contents from the given repository paths.
+// It returns the objects metadata, file contents, repository paths that were fetched, and any errors.
+func (c *Client) fetchObjectsFromPaths(
+	repoName, branch string,
+	requestedRepositoryPaths []string,
+) ([]*irminmodels.Object, map[string][]byte, []string, []error) {
+	var (
+		errs            []error
+		repositoryPaths []string
+	)
+
+	objects := make([]*irminmodels.Object, 0)
+	files := make(map[string][]byte)
+
+	for _, repositoryPath := range requestedRepositoryPaths {
+		// Fetch object metadata
+		obj, err := getObject(repositoryPath, repoName, branch, *c.LakeFSClient)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failed to get object %q: %w", repositoryPath, err))
+			continue
+		}
+		objects = append(objects, obj)
+
+		// Handle different object types
+		if obj.Type == irminmodels.ObjectTypeGroup {
+			// Directory: fetch child contents concurrently
+			dirFiles, dirPaths, dirErrs := c.fetchDirectoryContents(repoName, branch, obj.Children)
+
+			// Merge results
+			for path, content := range dirFiles {
+				files[path] = content
+			}
+			repositoryPaths = append(repositoryPaths, dirPaths...)
+			errs = append(errs, dirErrs...)
+		} else {
+			// Single file: fetch content
+			data, fetchErr := c.fetchSingleFile(repoName, branch, obj.Path)
+			if fetchErr != nil {
+				errs = append(errs, fetchErr)
+				continue
+			}
+			files[obj.Path] = data
+			repositoryPaths = append(repositoryPaths, obj.Path)
+		}
+	}
+
+	return objects, files, repositoryPaths, errs
 }
 
 // DataExport exports data from a lakeFS repository to an external connector.
@@ -295,91 +414,34 @@ func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPat
 // Returns the paths of the files that were pushed and any errors that occurred.
 func (c *Client) DataExport(
 	connection *db.Connection,
-	connectionPath,
-	workspace,
-	repository,
-	branch,
-	repositoryPath string,
+	connectionPath string,
+	workspaceSlug string,
+	repositorySlug string,
+	branch string,
+	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
 ) ([]string, []error) {
-	var (
-		errs            []error
-		repositoryPaths []string
-	)
+	repoName := utils.GetLakeFSRepositoryName(workspaceSlug, repositorySlug)
 
-	repoName := utils.GetLakeFSRepositoryName(workspace, repository)
-
-	// Fetch object metadata (file or directory).
-	obj, getObjectErr := getObject(repositoryPath, repoName, branch, *c.LakeFSClient)
-	if getObjectErr != nil {
-		errs = append(errs, fmt.Errorf("failed to get object %q: %w", repositoryPath, getObjectErr))
-		return nil, errs
-	}
-
-	// Collect files for processing.
-	files := make(map[string][]byte)
-	if obj.Type == irminmodels.ObjectTypeGroup {
-		// Directory: fetch child contents concurrently.
-		ch := make(chan struct {
-			name    string
-			content []byte
-		}, len(obj.Children))
-		errCh := make(chan error, len(obj.Children))
-
-		for _, child := range obj.Children {
-			go func() {
-				data, getFullObjectContentErr := c.LakeFSClient.GetFullObjectContent(
-					repoName,
-					branch,
-					child.Path,
-				)
-				if getFullObjectContentErr != nil {
-					errCh <- fmt.Errorf("failed to fetch child %q: %w", child.Path, getFullObjectContentErr)
-					return
-				}
-				ch <- struct {
-					name    string
-					content []byte
-				}{name: child.Name, content: data}
-			}()
-		}
-
-		for range len(obj.Children) {
-			select {
-			case r := <-ch:
-				files[r.name] = r.content
-				repositoryPaths = append(repositoryPaths, r.name)
-			case e := <-errCh:
-				errs = append(errs, e)
-			}
-		}
-	} else {
-		// Single file: fetch content.
-		data, getFullObjectContentErr := c.LakeFSClient.GetFullObjectContent(repoName, branch, obj.Path)
-		if getFullObjectContentErr != nil {
-			errs = append(errs, fmt.Errorf("failed to fetch object %q: %w", obj.Path, getFullObjectContentErr))
-			return nil, errs
-		}
-		files[obj.Name] = data
-		repositoryPaths = append(repositoryPaths, obj.Path)
+	// Fetch all objects and their contents
+	objects, files, repositoryPaths, fetchErrors := c.fetchObjectsFromPaths(repoName, branch, requestedRepositoryPaths)
+	if len(fetchErrors) > 0 {
+		return repositoryPaths, fetchErrors
 	}
 
 	// Process field mappings (or return files as-is if no mappings)
 	finalFiles, processingErrors := c.processFieldMappings(files, fieldMappings)
 	if len(processingErrors) > 0 {
-		errs = append(errs, processingErrors...)
-		return repositoryPaths, errs
+		return repositoryPaths, processingErrors
 	}
 
-	// Push the files to the connector.
-	_, pushFilesToConnectorErr := c.PushFilesToConnector(connection, connectionPath, obj, finalFiles)
-	if pushFilesToConnectorErr != nil {
-		errs = append(errs, pushFilesToConnectorErr)
-		return repositoryPaths, errs
+	// Push the files to the connection path
+	_, pushErr := c.PushFilesToConnector(connection, connectionPath, objects, finalFiles)
+	if pushErr != nil {
+		return repositoryPaths, []error{pushErr}
 	}
 
-	// Return the repository paths and errors.
-	return repositoryPaths, errs
+	return repositoryPaths, nil
 }
 
 // PushFilesToConnector pushes files to a connector.
@@ -387,7 +449,7 @@ func (c *Client) DataExport(
 func (c *Client) PushFilesToConnector(
 	connection *db.Connection,
 	connectionPath string,
-	obj *irminmodels.Object,
+	objects []*irminmodels.Object,
 	files map[string][]byte,
 ) ([]string, error) {
 	// Zip the files.
@@ -405,8 +467,8 @@ func (c *Client) PushFilesToConnector(
 
 	// Build the connection path to push the zip to.
 	objName := ""
-	if obj != nil {
-		objName = obj.Name
+	if len(objects) > 0 && objects[0] != nil {
+		objName = objects[0].Name
 	}
 	connPath := c.buildTargetPath(connectionPath, objName, len(files) > 1)
 

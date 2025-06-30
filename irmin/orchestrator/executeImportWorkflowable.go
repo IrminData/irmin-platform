@@ -15,12 +15,11 @@ func (o *Orchestrator) executeImportWorkflowable(
 ) ([]string, error) {
 	return o.executeWorkflowableCommon(
 		ctx,
-		workflow,
 		workflowable.ConnectionID,
-		workflowable.ConnectionPath,
+		workflowable.ImportFromConnectionPaths,
 		&workflow.Workspace,
 		&workflowable.Repository,
-		workflowable.RepositoryPath,
+		[]string{workflowable.ImportToRepositoryPath},
 		workflowable.RepositoryBranch,
 		operationImport,
 		workflowable.FieldMappings,

@@ -227,8 +227,7 @@ func (o *Orchestrator) handleConnectionRead(
 ) ([]string, error) {
 	var logs []string
 
-	connectionPath := strings.TrimLeft(*stage.ConnectionReadPath, "/")
-	pulledPaths, err := o.dataEngine.PullFilesFromConnector(connection, connectionPath)
+	pulledPaths, err := o.dataEngine.PullFilesFromConnector(connection, stage.ConnectionReadPaths)
 	if err != nil {
 		if ctx.Err() != nil {
 			// If cancelled, collect any logs from the pull operation
@@ -269,7 +268,7 @@ func (o *Orchestrator) handleRepositoryStage(
 			// Create multipart file from the byte array
 			file := bytes.NewReader(fileContent)
 			// Construct the path to save the file
-			uploadObjectToPath := strings.Trim(*stage.RepositoryPath, "/") + "/" + fileName
+			uploadObjectToPath := strings.Trim(*stage.RepositoryWritePath, "/") + "/" + fileName
 			// Upload the object to the path in the repository at ref
 			newObject, err := o.dataEngine.UploadObject(
 				workflow.Workspace.Slug,
@@ -335,40 +334,63 @@ func (o *Orchestrator) handleRepositoryRead(
 		return logs, fmt.Errorf("workflow execution cancelled before repository read: %w", ctx.Err())
 	}
 
-	// Read the files from the repository and set them to the previous stage results
-	irminObject, err := o.dataEngine.GetPath(
-		workflow.Workspace.Slug,
-		stage.Repository.Slug,
-		*stage.RepositoryPath,
-		*stage.RepositoryBranch,
-	)
-	if err != nil {
+	// Process all repository read paths
+	for _, repositoryPath := range stage.RepositoryReadPaths {
+		// Check for context cancellation before each path
 		if ctx.Err() != nil {
 			return logs, fmt.Errorf("workflow execution cancelled during repository read: %w", ctx.Err())
 		}
-		return logs, fmt.Errorf("error getting object from Data Engine: %w", err)
-	}
-	logs = append(logs, fmt.Sprintf("Object ('%s') retrieved from repository.", irminObject.Name))
 
-	if irminObject.Type == irminmodels.ObjectTypeGroup {
-		return o.handleRepositoryGroupRead(
-			ctx,
-			workflow,
-			stage,
-			irminObject,
-			previousStageResults,
-			logs,
+		// Read the files from the repository and set them to the previous stage results
+		irminObject, err := o.dataEngine.GetPath(
+			workflow.Workspace.Slug,
+			stage.Repository.Slug,
+			repositoryPath,
+			*stage.RepositoryBranch,
 		)
+		if err != nil {
+			if ctx.Err() != nil {
+				return logs, fmt.Errorf("workflow execution cancelled during repository read: %w", ctx.Err())
+			}
+			o.logger.ErrorContext(ctx, "Error getting object from Data Engine", "error", err, "path", repositoryPath)
+			logs = append(
+				logs,
+				fmt.Sprintf("Error getting object from Data Engine at path '%s': %v", repositoryPath, err),
+			)
+			continue
+		}
+		logs = append(logs, fmt.Sprintf("Object ('%s') retrieved from repository.", irminObject.Name))
+
+		if irminObject.Type == irminmodels.ObjectTypeGroup {
+			groupLogs, groupReadErr := o.handleRepositoryGroupRead(
+				ctx,
+				workflow,
+				stage,
+				irminObject,
+				previousStageResults,
+				[]string{},
+			)
+			logs = append(logs, groupLogs...)
+			if groupReadErr != nil {
+				return logs, groupReadErr
+			}
+		} else {
+			singleObjectLogs, singleObjectReadErr := o.handleRepositorySingleObjectRead(
+				ctx,
+				workflow,
+				stage,
+				irminObject,
+				previousStageResults,
+				[]string{},
+			)
+			logs = append(logs, singleObjectLogs...)
+			if singleObjectReadErr != nil {
+				return logs, singleObjectReadErr
+			}
+		}
 	}
 
-	return o.handleRepositorySingleObjectRead(
-		ctx,
-		workflow,
-		stage,
-		irminObject,
-		previousStageResults,
-		logs,
-	)
+	return logs, nil
 }
 
 // handleRepositoryGroupRead handles reading a group of objects from a repository.
@@ -418,14 +440,14 @@ func (o *Orchestrator) handleRepositorySingleObjectRead(
 	content, err := o.dataEngine.GetObjectContent(
 		workflow.Workspace.Slug,
 		stage.Repository.Slug,
-		*stage.RepositoryPath,
+		irminObject.Path,
 		*stage.RepositoryBranch,
 	)
 	if err != nil {
 		if ctx.Err() != nil {
 			return logs, fmt.Errorf("workflow execution cancelled during repository object read: %w", ctx.Err())
 		}
-		o.logger.ErrorContext(ctx, "Error getting object from Data Engine", "error", err, "path", *stage.RepositoryPath)
+		o.logger.ErrorContext(ctx, "Error getting object from Data Engine", "error", err, "path", irminObject.Path)
 		return logs, fmt.Errorf("error getting object from Data Engine: %w", err)
 	}
 	logs = append(logs, fmt.Sprintf("Object's ('%s') content retrieved from repository.", irminObject.Name))

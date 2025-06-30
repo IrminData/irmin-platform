@@ -32,26 +32,26 @@ type Workflow struct {
 
 type ImportWorkflowable struct {
 	gorm.Model
-	FieldMappings    []irminmodels.FieldMapping `json:"field_mappings,omitempty" gorm:"type:jsonb"`
-	Connection       Connection                 `json:"connection"               gorm:"foreignKey:ConnectionID"`
-	ConnectionID     uint                       `json:"connection_id"            gorm:"index"`
-	ConnectionPath   string                     `json:"connection_path"`
-	Repository       Repository                 `json:"repository"               gorm:"foreignKey:RepositoryID"`
-	RepositoryID     uint                       `json:"repository_id"            gorm:"index"`
-	RepositoryBranch string                     `json:"repository_branch"`
-	RepositoryPath   string                     `json:"repository_path"`
+	FieldMappings             []irminmodels.FieldMapping `json:"field_mappings,omitempty"     gorm:"type:jsonb"`
+	Connection                Connection                 `json:"connection"                   gorm:"foreignKey:ConnectionID"`
+	ConnectionID              uint                       `json:"connection_id"                gorm:"index"`
+	ImportFromConnectionPaths []string                   `json:"import_from_connection_paths" gorm:"type:jsonb"`
+	ImportToRepositoryPath    string                     `json:"import_to_repository_path"`
+	Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
+	RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
+	RepositoryBranch          string                     `json:"repository_branch"`
 }
 
 type ExportWorkflowable struct {
 	gorm.Model
-	FieldMappings    []irminmodels.FieldMapping `json:"field_mappings,omitempty" gorm:"type:jsonb"`
-	Connection       Connection                 `json:"connection"               gorm:"foreignKey:ConnectionID"`
-	ConnectionID     uint                       `json:"connection_id"            gorm:"index"`
-	ConnectionPath   string                     `json:"connection_path"`
-	Repository       Repository                 `json:"repository"               gorm:"foreignKey:RepositoryID"`
-	RepositoryID     uint                       `json:"repository_id"            gorm:"index"`
-	RepositoryBranch string                     `json:"repository_branch"`
-	RepositoryPath   string                     `json:"repository_path"`
+	FieldMappings             []irminmodels.FieldMapping `json:"field_mappings,omitempty"     gorm:"type:jsonb"`
+	Connection                Connection                 `json:"connection"                   gorm:"foreignKey:ConnectionID"`
+	ConnectionID              uint                       `json:"connection_id"                gorm:"index"`
+	ExportFromRepositoryPaths []string                   `json:"export_from_repository_paths" gorm:"type:jsonb"`
+	ExportToConnectionPath    string                     `json:"export_to_connection_path"`
+	Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
+	RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
+	RepositoryBranch          string                     `json:"repository_branch"`
 }
 
 type ActionWorkflowableInput struct {
@@ -66,12 +66,12 @@ type ActionWorkflowableInput struct {
 
 type ActionWorkflowable struct {
 	gorm.Model
-	Executable       string                    `json:"executable"`
-	Repository       *Repository               `json:"repository,omitempty"        gorm:"foreignKey:RepositoryID"`
-	RepositoryID     *uint                     `json:"repository_id,omitempty"     gorm:"index"`
-	RepositoryBranch *string                   `json:"repository_branch,omitempty"`
-	RepositoryPath   *string                   `json:"repository_path,omitempty"`
-	Inputs           []ActionWorkflowableInput `json:"inputs"                      gorm:"foreignKey:ActionWorkflowableID"`
+	Executable              string                    `json:"executable"`
+	ResultsRepository       *Repository               `json:"results_repository"        gorm:"foreignKey:ResultsRepositoryID"`
+	ResultsRepositoryID     *uint                     `json:"results_repository_id"     gorm:"index"`
+	ResultsRepositoryBranch *string                   `json:"results_repository_branch"`
+	ResultsRepositoryPath   *string                   `json:"results_repository_path"`
+	Inputs                  []ActionWorkflowableInput `json:"inputs"                    gorm:"foreignKey:ActionWorkflowableID"`
 }
 
 type PipelineWorkflowable struct {
@@ -94,21 +94,28 @@ type PipelineStage struct {
 	Description   string                `json:"description"`
 	Write         bool                  `json:"write"`
 	Read          bool                  `json:"read"`
-	Pipeline      *PipelineWorkflowable `json:"pipeline"                        gorm:"foreignKey:PipelineID"`
-	PipelineID    *uint                 `json:"pipeline_id"                     gorm:"index"`
+	Pipeline      *PipelineWorkflowable `json:"pipeline"       gorm:"foreignKey:PipelineID"`
+	PipelineID    *uint                 `json:"pipeline_id"    gorm:"index"`
 	Type          PipelineStageType     `json:"type"`
-	// Action
+
+	// Action stage specific
+
 	Executable *string `json:"executable,omitempty"`
-	// Connection
+
+	// Connection stage specific
+
 	Connection          *Connection `json:"connection,omitempty"            gorm:"foreignKey:ConnectionID"`
 	ConnectionID        *uint       `json:"connection_id,omitempty"`
 	ConnectionWritePath *string     `json:"connection_write_path,omitempty"`
-	ConnectionReadPath  *string     `json:"connection_read_path,omitempty"`
-	// Repository
-	Repository       *Repository `json:"repository"                      gorm:"foreignKey:RepositoryID"`
-	RepositoryID     *uint       `json:"repository_id,omitempty"`
-	RepositoryBranch *string     `json:"repository_branch,omitempty"`
-	RepositoryPath   *string     `json:"repository_path,omitempty"`
+	ConnectionReadPaths []string    `json:"connection_read_paths"           gorm:"type:jsonb"`
+
+	// Repository stage specific
+
+	Repository          *Repository `json:"repository"                      gorm:"foreignKey:RepositoryID"`
+	RepositoryID        *uint       `json:"repository_id,omitempty"`
+	RepositoryBranch    *string     `json:"repository_branch,omitempty"`
+	RepositoryWritePath *string     `json:"repository_write_path,omitempty"`
+	RepositoryReadPaths []string    `json:"repository_read_paths"           gorm:"type:jsonb"`
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.

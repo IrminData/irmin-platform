@@ -913,18 +913,23 @@ func (api *APIControllers) createImportExportWorkflowable(
 		return nil, nil, err
 	}
 
-	// Trim only leading slash from the path and the connection path
-	trimmedPath := strings.TrimLeft(wflConfig.RepositoryPath, "/")
-	trimmedConnectionPath := strings.TrimLeft(wflConfig.ConnectionPath, "/")
-
+	// Handle import workflowable case
 	if workflowableType == irminmodels.WorkflowableTypeImport {
+		// Trim only leading slash from the path and the connection path
+		trimmedRepositoryPath := strings.TrimLeft(wflConfig.ImportToRepositoryPath, "/")
+		trimmedConnectionPaths := make([]string, len(wflConfig.ImportFromConnectionPaths))
+		for i, path := range wflConfig.ImportFromConnectionPaths {
+			trimmedConnectionPaths[i] = strings.TrimLeft(path, "/")
+		}
+
+		// Create import workflowable
 		importWorkflowable := &db.ImportWorkflowable{
-			ConnectionID:     conn.ID,
-			ConnectionPath:   trimmedConnectionPath,
-			RepositoryID:     repo.ID,
-			RepositoryBranch: wflConfig.RepositoryBranch,
-			RepositoryPath:   trimmedPath,
-			FieldMappings:    wflConfig.FieldMappings,
+			ConnectionID:              conn.ID,
+			ImportFromConnectionPaths: trimmedConnectionPaths,
+			RepositoryID:              repo.ID,
+			RepositoryBranch:          wflConfig.RepositoryBranch,
+			ImportToRepositoryPath:    trimmedRepositoryPath,
+			FieldMappings:             wflConfig.FieldMappings,
 		}
 		if createImportWorkflowableErr := tx.Create(importWorkflowable).Error; createImportWorkflowableErr != nil {
 			return nil, nil, createImportWorkflowableErr
@@ -932,14 +937,21 @@ func (api *APIControllers) createImportExportWorkflowable(
 		return importWorkflowable, nil, nil
 	}
 
+	// Trim only leading slash from the path and the connection path
+	trimmedConnectionPath := strings.TrimLeft(wflConfig.ExportToConnectionPath, "/")
+	trimmedRepositoryPaths := make([]string, len(wflConfig.ExportFromRepositoryPaths))
+	for i, path := range wflConfig.ExportFromRepositoryPaths {
+		trimmedRepositoryPaths[i] = strings.TrimLeft(path, "/")
+	}
+
 	// Handle export workflowable case
 	exportWorkflowable := &db.ExportWorkflowable{
-		ConnectionID:     conn.ID,
-		ConnectionPath:   trimmedConnectionPath,
-		RepositoryID:     repo.ID,
-		RepositoryBranch: wflConfig.RepositoryBranch,
-		RepositoryPath:   trimmedPath,
-		FieldMappings:    wflConfig.FieldMappings,
+		ConnectionID:              conn.ID,
+		ExportToConnectionPath:    trimmedConnectionPath,
+		RepositoryID:              repo.ID,
+		RepositoryBranch:          wflConfig.RepositoryBranch,
+		ExportFromRepositoryPaths: trimmedRepositoryPaths,
+		FieldMappings:             wflConfig.FieldMappings,
 	}
 	if createExportWorkflowableErr := tx.Create(exportWorkflowable).Error; createExportWorkflowableErr != nil {
 		return nil, nil, createExportWorkflowableErr
@@ -992,16 +1004,24 @@ func (api *APIControllers) createActionWorkflowable(
 	// Create workflowable
 	var workflowable db.ActionWorkflowable
 	if repository != nil {
+		// Validate that required repository result fields are provided
+		if config.ResultsRepositoryBranch == nil {
+			return nil, errors.New("results repository branch is required when repository is specified")
+		}
+		if config.ResultsRepositoryPath == "" {
+			return nil, errors.New("results repository path is required when repository is specified")
+		}
+
 		repositoryID := repository.ID
-		branch := config.RepositoryBranch
-		path := strings.TrimPrefix(config.RepositoryPath, "/")
+		branch := *config.ResultsRepositoryBranch
+		path := strings.TrimPrefix(config.ResultsRepositoryPath, "/")
 
 		workflowable = db.ActionWorkflowable{
-			Executable:       config.Executable,
-			RepositoryID:     &repositoryID,
-			RepositoryBranch: &branch,
-			RepositoryPath:   &path,
-			Inputs:           inputData,
+			Executable:              config.Executable,
+			ResultsRepositoryID:     &repositoryID,
+			ResultsRepositoryBranch: &branch,
+			ResultsRepositoryPath:   &path,
+			Inputs:                  inputData,
 		}
 	} else {
 		workflowable = db.ActionWorkflowable{
@@ -1102,14 +1122,17 @@ func (api *APIControllers) processConnectionStage(newStage *db.PipelineStage, st
 
 	newStage.ConnectionID = &connection.ID
 
+	if stage.ConnectionReadPaths != nil {
+		readPaths := []string{}
+		for _, path := range stage.ConnectionReadPaths {
+			readPaths = append(readPaths, strings.TrimPrefix(path, "/"))
+		}
+		newStage.ConnectionReadPaths = readPaths
+	}
+
 	if stage.ConnectionWritePath != nil {
 		writePath := strings.TrimPrefix(*stage.ConnectionWritePath, "/")
 		newStage.ConnectionWritePath = &writePath
-	}
-
-	if stage.ConnectionReadPath != nil {
-		readPath := strings.TrimPrefix(*stage.ConnectionReadPath, "/")
-		newStage.ConnectionReadPath = &readPath
 	}
 
 	return nil
@@ -1140,9 +1163,17 @@ func (api *APIControllers) processRepositoryStage(
 		newStage.RepositoryBranch = stage.RepositoryBranch
 	}
 
-	if stage.RepositoryPath != nil {
-		path := strings.TrimLeft(*stage.RepositoryPath, "/")
-		newStage.RepositoryPath = &path
+	if stage.RepositoryReadPaths != nil {
+		readPaths := []string{}
+		for _, path := range stage.RepositoryReadPaths {
+			readPaths = append(readPaths, strings.TrimPrefix(path, "/"))
+		}
+		newStage.RepositoryReadPaths = readPaths
+	}
+
+	if stage.RepositoryWritePath != nil {
+		writePath := strings.TrimPrefix(*stage.RepositoryWritePath, "/")
+		newStage.RepositoryWritePath = &writePath
 	}
 
 	return nil

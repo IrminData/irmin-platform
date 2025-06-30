@@ -47,9 +47,9 @@ func TestWorkflowExecution_EndToEnd(t *testing.T) {
 	// Create a test action workflowable
 	repoPath := "/test.py"
 	actionWorkflowable := &db.ActionWorkflowable{
-		Executable:     "python",
-		RepositoryID:   &repo.ID,
-		RepositoryPath: &repoPath,
+		Executable:            "python",
+		ResultsRepositoryID:   &repo.ID,
+		ResultsRepositoryPath: &repoPath,
 	}
 	err = database.Create(actionWorkflowable).Error
 	if err != nil {
