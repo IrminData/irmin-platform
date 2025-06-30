@@ -38,10 +38,11 @@ const (
 )
 
 type PipelineStage struct {
-	Description string            `json:"description"`
-	Write       bool              `json:"write"`
-	Read        bool              `json:"read"`
-	Type        PipelineStageType `json:"type"`
+	Description   string            `json:"description"`
+	Write         bool              `json:"write"`
+	Read          bool              `json:"read"`
+	OrderSequence int               `json:"order_sequence"`
+	Type          PipelineStageType `json:"type"`
 
 	// Action stage specific
 
@@ -49,15 +50,16 @@ type PipelineStage struct {
 
 	// Connection stage specific
 
-	ConnectionID         *string  `json:"connection_id,omitempty"`
-	ConnectionWritePaths []string `json:"connection_write_paths,omitempty"`
-	ConnectionReadPaths  []string `json:"connection_read_paths,omitempty"`
+	ConnectionID        *string  `json:"connection_id,omitempty"`
+	ConnectionWritePath *string  `json:"connection_write_path,omitempty"`
+	ConnectionReadPaths []string `json:"connection_read_paths,omitempty"`
 
 	// Repository stage specific
 
-	Repository       *string  `json:"repository,omitempty"`
-	RepositoryBranch *string  `json:"repository_branch,omitempty"`
-	RepositoryPaths  []string `json:"repository_paths,omitempty"`
+	Repository          *string  `json:"repository,omitempty"`
+	RepositoryBranch    *string  `json:"repository_branch,omitempty"`
+	RepositoryWritePath *string  `json:"repository_write_path,omitempty"`
+	RepositoryReadPaths []string `json:"repository_read_paths,omitempty"`
 }
 
 type ActionInputData struct {
@@ -73,10 +75,18 @@ type Workflowable struct {
 
 	FieldMappings    []FieldMapping `json:"field_mappings,omitempty"`
 	ConnectionID     string         `json:"connection_id,omitempty"`
-	ConnectionPaths  []string       `json:"connection_paths,omitempty"`
 	Repository       string         `json:"repository,omitempty"`
 	RepositoryBranch string         `json:"repository_branch,omitempty"`
-	RepositoryPaths  []string       `json:"repository_paths,omitempty"`
+
+	// Import workflowable
+
+	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty"`
+	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"`
+
+	// Export workflowable
+
+	ExportFromRepositoryPaths []string `json:"export_from_repository_paths,omitempty"`
+	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"`
 
 	// Pipeline workflowable
 
