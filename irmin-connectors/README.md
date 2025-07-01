@@ -20,6 +20,14 @@ And then run the binary file `./out`
 **Run**
 `go run main.go`
 
+**Run with hot reloading (recommended for development)**
+`air`
+
+This project includes [Air](https://github.com/air-verse/air) configuration for hot reloading during development. Air automatically rebuilds and restarts the application when you make changes to the code. Follow the instructions in the Air README to install it.
+
+**Run with flags**
+`go run main.go -skip-registrations` or `air -- -skip-registrations` (skip connector registrations with the Irmin API)
+
 ## Linting
 
 This project uses [golangci-lint](https://golangci-lint.run/) for code quality checks. The configuration is defined in `.golangci.yml`.
