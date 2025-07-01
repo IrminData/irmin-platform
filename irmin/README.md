@@ -20,6 +20,11 @@ And then run the binary file `./out`
 **Run**
 `go run main.go`
 
+**Run with hot reloading (recommended for development)**
+`air`
+
+This project includes [Air](https://github.com/air-verse/air) configuration for hot reloading during development. Air automatically rebuilds and restarts the application when you make changes to the code. Follow the instructions in the Air README to install it.
+
 **Run tests**
 `go test -timeout 2m ./...`
 
@@ -37,6 +42,13 @@ The following command line flags are available when running the application:
 - `-migrate`: Run database migrations (creates tables, adds indexes, seeds initial roles, sets default policies)
 - `-override-policies`: When used with `-migrate`, overrides existing policies with default ones
 - `-seed-tags`: Seeds default tags for all workspaces
+
+**Run with flags**
+`go run main.go -migrate` or `air -- -migrate` (run database migrations)
+
+`go run main.go -migrate -override-policies` or `air -- -migrate -override-policies` (run database migrations and override existing policies)
+
+`go run main.go -seed-tags` or `air -- -seed-tags` (seed default tags for all workspaces)
 
 Example usage:
 
