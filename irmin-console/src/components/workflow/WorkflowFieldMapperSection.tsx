@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import SchemaFieldMapper from '@/components/SchemaFieldMapper';
-import { getFilteredConnectionSchema } from '@/components/SchemaFieldMapper/utils';
+import { getFilteredSchema } from '@/components/SchemaFieldMapper/utils';
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
@@ -35,25 +35,23 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
     workflow?.workflowable?.field_mappings ?? []
   );
 
-  const {
-    connection_id = '',
-    connection_path = '',
-    repository = '',
-    repository_branch = '',
-  } = workflow?.workflowable ?? {};
-
-  const operation = useMemo(
-    () => (workflow?.type === 'import' ? 'read' : 'write'),
-    [workflow?.type]
-  );
+  const workflowable = useMemo(() => {
+    if (
+      workflow?.workflowable?.type === 'import' ||
+      workflow?.workflowable?.type === 'export'
+    ) {
+      return workflow.workflowable;
+    }
+  }, [workflow?.workflowable]);
 
   const { connectionSchemaQuery } = useConnectionSchema(
-    connection_id,
-    operation
+    workflowable?.connection_id ?? '',
+    workflowable?.type === 'import' ? 'read' : 'write'
   );
+
   const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(
-    repository,
-    repository_branch
+    workflowable?.repository ?? '',
+    workflowable?.repository_branch ?? ''
   );
 
   const isAllowed = useMemo(
@@ -85,41 +83,38 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
     [mappings, workflow?.workflowable?.field_mappings]
   );
 
+  const connectionSchema = connectionSchemaQuery.data?.data;
+  const repositorySchema = repositoryObjectSchemaQuery.data?.data;
+
   const sourceSchema = useMemo(() => {
-    if (workflow?.type === 'import') {
-      // For import workflows, source is connection schema filtered by connection_path
-      return getFilteredConnectionSchema(
-        connectionSchemaQuery.data?.data,
-        connection_path
+    if (workflowable?.type === 'import') {
+      // For import workflows, source is connection schema filtered by connection paths
+      return getFilteredSchema(
+        connectionSchema,
+        workflowable.import_from_connection_paths
       );
-    } else {
+    } else if (workflowable?.type === 'export') {
       // For export workflows, source is repository schema
-      return repositoryObjectSchemaQuery.data?.data ?? null;
+      return getFilteredSchema(
+        repositorySchema,
+        workflowable.export_from_repository_paths
+      );
     }
-  }, [
-    workflow?.type,
-    connectionSchemaQuery.data?.data,
-    repositoryObjectSchemaQuery.data?.data,
-    connection_path,
-  ]);
+  }, [workflowable, connectionSchema, repositorySchema]);
 
   const destinationSchema = useMemo(() => {
-    if (workflow?.type === 'import') {
+    if (workflowable?.type === 'import') {
       // For import workflows, destination is repository schema
-      return repositoryObjectSchemaQuery.data?.data ?? null;
-    } else {
-      // For export workflows, destination is connection schema filtered by connection_path
-      return getFilteredConnectionSchema(
-        connectionSchemaQuery.data?.data,
-        connection_path
-      );
+      return getFilteredSchema(repositorySchema, [
+        workflowable.import_to_repository_path,
+      ]);
+    } else if (workflowable?.type === 'export') {
+      // For export workflows, destination is connection schema filtered by connection path
+      return getFilteredSchema(connectionSchema, [
+        workflowable.export_to_connection_path,
+      ]);
     }
-  }, [
-    workflow?.type,
-    repositoryObjectSchemaQuery.data?.data,
-    connectionSchemaQuery.data?.data,
-    connection_path,
-  ]);
+  }, [workflowable, connectionSchema, repositorySchema]);
 
   if (
     workflowQuery.isLoading ||
@@ -166,8 +161,8 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
       <SchemaFieldMapper
         initialMappings={mappings}
         onMappingsChange={setMappings}
-        sourceSchema={sourceSchema}
-        destinationSchema={destinationSchema}
+        sourceSchema={sourceSchema ?? null}
+        destinationSchema={destinationSchema ?? null}
       />
     </div>
   );

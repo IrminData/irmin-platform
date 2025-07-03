@@ -76,19 +76,19 @@ export default function ActionWorkflow({
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.scriptResultDestinationRepository}</Label>
         <Select
-          value={workflowable.repository}
+          value={workflowable.results_repository}
           onValueChange={(value) => {
             if (!value) return;
             setWorkflowData((prev) => ({
               ...prev,
               workflowable: {
                 ...(prev.workflowable as Action),
-                repository: value,
-                repository_branch:
+                results_repository: value,
+                results_repository_branch:
                   repositoriesQuery.data?.data?.find(
                     (repo) => repo.slug === value
                   )?.default_branch ??
-                  workflowable.repository_branch ??
+                  workflowable.results_repository_branch ??
                   '',
               },
             }));
@@ -98,8 +98,8 @@ export default function ActionWorkflow({
           <SelectTrigger className='w-full'>
             <SelectValue>
               {repositoriesQuery.data?.data?.find(
-                (repo) => workflowable.repository === repo.slug
-              )?.name ?? workflowable.repository}
+                (repo) => workflowable.results_repository === repo.slug
+              )?.name ?? workflowable.results_repository}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -110,9 +110,9 @@ export default function ActionWorkflow({
             ))}
           </SelectContent>
         </Select>
-        {workflowable.repository && (
+        {workflowable.results_repository && (
           <Button
-            href={`${workspaceUrl}/repositories/${workflowable.repository}?ref=${workflowable.repository_branch}`}
+            href={`${workspaceUrl}/repositories/${workflowable.results_repository}?ref=${workflowable.results_repository_branch}`}
             target='_blank'
             variant='secondary'
             className='w-full'
@@ -134,38 +134,39 @@ export default function ActionWorkflow({
         <Input
           required
           type='text'
-          defaultValue={workflowable.repository_branch ?? ''}
+          defaultValue={workflowable.results_repository_branch ?? ''}
           onChange={(e) =>
             setWorkflowData((prev) => ({
               ...prev,
               workflowable: {
                 ...(prev.workflowable as Action),
-                repository_branch: e.target.value,
+                results_repository_branch: e.target.value,
               },
             }))
           }
         />
       </div>
-      {workflowable.repository && workflowable.repository_branch && (
-        <div className='flex flex-col gap-2'>
-          <Label>{dict.workflow.scriptResultDestinationPath}</Label>
-          <RepositoryPathSelector
-            repositorySlug={workflowable.repository!}
-            ref={workflowable.repository_branch!}
-            defaultPath={workflowable.repository_path}
-            onPathChange={(path) =>
-              setWorkflowData((prev) => ({
-                ...prev,
-                workflowable: {
-                  ...(prev.workflowable as Action),
-                  repository_path: path,
-                },
-              }))
-            }
-            defaultExpanded={true}
-          />
-        </div>
-      )}
+      {workflowable.results_repository &&
+        workflowable.results_repository_branch && (
+          <div className='flex flex-col gap-2'>
+            <Label>{dict.workflow.scriptResultDestinationPath}</Label>
+            <RepositoryPathSelector
+              repositorySlug={workflowable.results_repository!}
+              ref={workflowable.results_repository_branch!}
+              defaultPath={workflowable.results_repository_path}
+              onPathChange={(path) =>
+                setWorkflowData((prev) => ({
+                  ...prev,
+                  workflowable: {
+                    ...(prev.workflowable as Action),
+                    results_repository_path: path,
+                  },
+                }))
+              }
+              defaultExpanded={true}
+            />
+          </div>
+        )}
       <div className='flex flex-col gap-2'>
         <ActionInputEditor
           initialData={workflowable.input ?? []}

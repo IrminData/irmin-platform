@@ -30,6 +30,7 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
             write: stage.write || false,
             read: stage.read || false,
             executable: stage.executable || '',
+            order_sequence: stage.order_sequence || 0,
           } as PipelineStage;
         }
         if (stage.type === 'connection') {
@@ -39,8 +40,9 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
             write: stage.write || false,
             read: stage.read || false,
             connection_id: stage.connection_id || '',
-            connection_read_path: stage.connection_read_path || '',
+            connection_read_paths: stage.connection_read_paths || [],
             connection_write_path: stage.connection_write_path || '',
+            order_sequence: stage.order_sequence || 0,
           } as PipelineStage;
         }
         if (stage.type === 'repository') {
@@ -51,7 +53,9 @@ const WorkflowPipelineSection = ({ workflowID }: { workflowID: string }) => {
             read: stage.read || false,
             repository: stage.repository || '',
             repository_branch: stage.repository_branch || '',
-            repository_path: stage.repository_path || '',
+            repository_read_paths: stage.repository_read_paths || [],
+            repository_write_path: stage.repository_write_path || '',
+            order_sequence: stage.order_sequence || 0,
           } as PipelineStage;
         }
       }

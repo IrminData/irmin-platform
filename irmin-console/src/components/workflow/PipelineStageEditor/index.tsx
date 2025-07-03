@@ -75,12 +75,18 @@ function PipelineStageEditor({
         read: true,
         type: 'action',
         executable: '',
+        order_sequence: prevStages.length,
       },
     ]);
   }, []);
 
   const removeStage = useCallback((index: number) => {
-    setStages((prevStages) => prevStages.filter((_, i) => i !== index));
+    setStages((prevStages) => {
+      const newStages = prevStages.filter((_, i) => i !== index);
+      // Re-index all order_sequence values
+      newStages.forEach((stage, i) => (stage.order_sequence = i));
+      return newStages;
+    });
   }, []);
 
   const moveStage = useCallback((fromIndex: number, toIndex: number) => {
@@ -88,6 +94,8 @@ function PipelineStageEditor({
       const newStages = [...prevStages];
       const [movedStage] = newStages.splice(fromIndex, 1);
       newStages.splice(toIndex, 0, movedStage);
+      // Re-index all order_sequence values
+      newStages.forEach((stage, i) => (stage.order_sequence = i));
       return newStages;
     });
   }, []);

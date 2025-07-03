@@ -404,6 +404,10 @@ const fi = {
     livePipeline: 'Live-dataputki',
     triggeredBy: 'Laukaisija',
     duration: 'Kesto',
+    // New translations for MultiplePathsSelector
+    addPath: 'Lisää polku',
+    removePath: 'Poista polku',
+    multiplePaths: 'Useita polkuja',
     tabs: {
       data: 'Data',
       schedule: 'Aikataulu',

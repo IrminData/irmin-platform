@@ -3,7 +3,7 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 
 import SchemaFieldMapper from '@/components/SchemaFieldMapper';
-import { getFilteredConnectionSchema } from '@/components/SchemaFieldMapper/utils';
+import { getFilteredSchema } from '@/components/SchemaFieldMapper/utils';
 import Button from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
@@ -26,47 +26,57 @@ function ConfigureFieldMappings({
   const { dict } = useLocale();
   const { workflowData, setWorkflowData } = useCreateWorkflow();
 
-  const {
-    connection_id,
-    connection_path = '',
-    repository,
-    repository_branch: ref,
-  } = workflowData.workflowable as Import | Export;
-
-  const operation = workflowData.type === 'import' ? 'read' : 'write';
+  const workflowable = useMemo(() => {
+    if (
+      workflowData.workflowable?.type === 'import' ||
+      workflowData.workflowable?.type === 'export'
+    ) {
+      return workflowData.workflowable;
+    }
+  }, [workflowData.workflowable]);
 
   const { connectionSchemaQuery } = useConnectionSchema(
-    connection_id,
-    operation
+    workflowable?.connection_id ?? '',
+    workflowable?.type === 'import' ? 'read' : 'write'
   );
 
   const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(
-    repository,
-    ref
+    workflowable?.repository ?? '',
+    workflowable?.repository_branch ?? ''
   );
 
   const connectionSchema = connectionSchemaQuery.data?.data;
   const repositorySchema = repositoryObjectSchemaQuery.data?.data;
 
   const sourceSchema = useMemo(() => {
-    if (workflowData.type === 'import') {
+    if (workflowData.workflowable?.type === 'import') {
       // For import workflows, source is connection schema filtered by connection_path
-      return getFilteredConnectionSchema(connectionSchema, connection_path);
-    } else {
+      return getFilteredSchema(
+        connectionSchema,
+        workflowData.workflowable.import_from_connection_paths
+      );
+    } else if (workflowData.workflowable?.type === 'export') {
       // For export workflows, source is repository schema
-      return repositorySchema ?? null;
+      return getFilteredSchema(
+        repositorySchema,
+        workflowData.workflowable.export_from_repository_paths
+      );
     }
-  }, [workflowData.type, connectionSchema, repositorySchema, connection_path]);
+  }, [workflowData.workflowable, connectionSchema, repositorySchema]);
 
   const destinationSchema = useMemo(() => {
-    if (workflowData.type === 'import') {
+    if (workflowData.workflowable?.type === 'import') {
       // For import workflows, destination is repository schema
-      return repositorySchema ?? null;
-    } else {
+      return getFilteredSchema(repositorySchema, [
+        workflowData.workflowable.import_to_repository_path,
+      ]);
+    } else if (workflowData.workflowable?.type === 'export') {
       // For export workflows, destination is connection schema filtered by connection_path
-      return getFilteredConnectionSchema(connectionSchema, connection_path);
+      return getFilteredSchema(connectionSchema, [
+        workflowData.workflowable.export_to_connection_path,
+      ]);
     }
-  }, [workflowData.type, repositorySchema, connectionSchema, connection_path]);
+  }, [workflowData.workflowable, connectionSchema, repositorySchema]);
 
   const isLoading =
     connectionSchemaQuery.isLoading || repositoryObjectSchemaQuery.isLoading;

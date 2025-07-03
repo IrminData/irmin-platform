@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import MultiplePathsSelector from '@/components/workflow/CreateWorkflowModalContent/MultiplePathsSelector';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -39,6 +40,7 @@ const defaultStage: PipelineStage = {
   description: '',
   write: false,
   read: false,
+  order_sequence: 0,
 };
 
 /**
@@ -306,25 +308,35 @@ function Stage({
               onValueChange={(value) => {
                 if (value === 'action') {
                   setStage((prevStage) => ({
-                    ...prevStage,
                     type: 'action',
                     executable: '',
+                    description: prevStage.description,
+                    write: prevStage.write,
+                    read: prevStage.read,
+                    order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'connection') {
                   setStage((prevStage) => ({
-                    ...prevStage,
                     type: 'connection',
                     connection_id: '',
                     connection_write_path: '',
-                    connection_read_path: '',
+                    connection_read_paths: [],
+                    description: prevStage.description,
+                    write: prevStage.write,
+                    read: prevStage.read,
+                    order_sequence: prevStage.order_sequence,
                   }));
                 } else if (value === 'repository') {
                   setStage((prevStage) => ({
-                    ...prevStage,
                     type: 'repository',
                     repository: '',
                     repository_branch: '',
-                    repository_path: '',
+                    repository_write_path: '',
+                    repository_read_paths: [],
+                    description: prevStage.description,
+                    write: prevStage.write,
+                    read: prevStage.read,
+                    order_sequence: prevStage.order_sequence,
                   }));
                 }
               }}
@@ -490,37 +502,48 @@ function Stage({
               )}
               {stage.connection_id && stage.read && (
                 <div className='flex flex-col gap-2'>
-                  <Label htmlFor={`connection_read_path-${index}`}>
-                    {dict.workflow.pipeline.connectionReadPath}
-                  </Label>
                   {!readOnly && connectionPullSchema ? (
-                    <ConnectionPathSelector
-                      rootSchema={connectionPullSchema}
-                      connectionId={stage.connection_id}
-                      defaultPath={stage.connection_read_path ?? ''}
-                      operationMethod={'pull'}
-                      onPathChange={(path) => {
+                    <MultiplePathsSelector
+                      label={dict.workflow.pipeline.connectionReadPath}
+                      paths={stage.connection_read_paths}
+                      onPathsChange={(paths) =>
                         setStage((prevStage) => ({
                           ...prevStage,
-                          connection_read_path: path,
-                        }));
-                      }}
-                    />
-                  ) : (
-                    <Input
-                      id={`connection_read_path-${index}`}
-                      placeholder={
-                        dict.workflow.pipeline.connectionReadPathDescription
-                      }
-                      value={stage.connection_read_path}
-                      onChange={(e) =>
-                        setStage((prevStage) => ({
-                          ...prevStage,
-                          connection_read_path: e.target.value,
+                          connection_read_paths: paths,
                         }))
                       }
-                      readOnly={readOnly || !stage.connection_id}
+                      renderPathSelector={(path, onPathChange) => (
+                        <ConnectionPathSelector
+                          rootSchema={connectionPullSchema}
+                          connectionId={stage.connection_id}
+                          defaultPath={path}
+                          operationMethod={'pull'}
+                          onPathChange={onPathChange}
+                        />
+                      )}
                     />
+                  ) : (
+                    <div className='flex flex-col gap-2'>
+                      <Label htmlFor={`connection_read_paths-${index}`}>
+                        {dict.workflow.pipeline.connectionReadPath}
+                      </Label>
+                      <Input
+                        id={`connection_read_paths-${index}`}
+                        placeholder={
+                          dict.workflow.pipeline.connectionReadPathDescription
+                        }
+                        value={stage.connection_read_paths?.join(', ') ?? ''}
+                        onChange={(e) =>
+                          setStage((prevStage) => ({
+                            ...prevStage,
+                            connection_read_paths: e.target.value
+                              ? e.target.value.split(',').map((p) => p.trim())
+                              : [],
+                          }))
+                        }
+                        readOnly={readOnly || !stage.connection_id}
+                      />
+                    </div>
                   )}
                 </div>
               )}
@@ -601,43 +624,80 @@ function Stage({
                   readOnly={readOnly || !stage.repository}
                 />
               </div>
-              {readOnly ? (
+              {stage.write && (
                 <div className='flex flex-col gap-2'>
-                  <Label htmlFor={`path-${index}`}>
-                    {dict.repository.objects.path}
+                  <Label htmlFor={`write_path-${index}`}>
+                    {dict.workflow.pipeline.connectionWritePath}
                   </Label>
-                  <Input
-                    id={`path-${index}`}
-                    value={stage.repository_path}
-                    onChange={(e) =>
-                      setStage((prevStage) => ({
-                        ...prevStage,
-                        repository_path: e.target.value,
-                      }))
-                    }
-                    readOnly={readOnly}
-                  />
-                </div>
-              ) : (
-                stage.repository &&
-                stage.repository_branch && (
-                  <div className='flex flex-col gap-2'>
-                    <Label htmlFor={`path-${index}`}>
-                      {dict.repository.objects.path}
-                    </Label>
+                  {!readOnly && stage.repository && stage.repository_branch ? (
                     <RepositoryPathSelector
                       repositorySlug={stage.repository}
                       ref={stage.repository_branch}
-                      defaultPath={stage.repository_path}
+                      defaultPath={stage.repository_write_path ?? ''}
                       onPathChange={(path) =>
                         setStage((prevStage) => ({
                           ...prevStage,
-                          repository_path: path,
+                          repository_write_path: path,
                         }))
                       }
                     />
-                  </div>
-                )
+                  ) : (
+                    <Input
+                      id={`write_path-${index}`}
+                      value={stage.repository_write_path ?? ''}
+                      onChange={(e) =>
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_write_path: e.target.value,
+                        }))
+                      }
+                      readOnly={readOnly}
+                    />
+                  )}
+                </div>
+              )}
+              {stage.read && (
+                <div className='flex flex-col gap-2'>
+                  {!readOnly && stage.repository && stage.repository_branch ? (
+                    <MultiplePathsSelector
+                      label={dict.repository.objects.path}
+                      paths={stage.repository_read_paths}
+                      onPathsChange={(paths) =>
+                        setStage((prevStage) => ({
+                          ...prevStage,
+                          repository_read_paths: paths,
+                        }))
+                      }
+                      renderPathSelector={(path, onPathChange) => (
+                        <RepositoryPathSelector
+                          repositorySlug={stage.repository}
+                          ref={stage.repository_branch}
+                          defaultPath={path}
+                          onPathChange={onPathChange}
+                        />
+                      )}
+                    />
+                  ) : (
+                    <div className='flex flex-col gap-2'>
+                      <Label htmlFor={`read_paths-${index}`}>
+                        {dict.repository.objects.path}
+                      </Label>
+                      <Input
+                        id={`read_paths-${index}`}
+                        value={stage.repository_read_paths?.join(', ') ?? ''}
+                        onChange={(e) =>
+                          setStage((prevStage) => ({
+                            ...prevStage,
+                            repository_read_paths: e.target.value
+                              ? e.target.value.split(',').map((p) => p.trim())
+                              : [],
+                          }))
+                        }
+                        readOnly={readOnly}
+                      />
+                    </div>
+                  )}
+                </div>
               )}
             </>
           )}

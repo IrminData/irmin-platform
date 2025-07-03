@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import MultiplePathsSelector from '@/components/workflow/CreateWorkflowModalContent/MultiplePathsSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -98,23 +99,27 @@ export default function ImportWorkflow({
         </Button>
       </div>
       {workflowable.connection_id && (
-        <div className='flex flex-col gap-2'>
-          <Label>{dict.workflow.importSourceConnectionPath}</Label>
-          <ConnectionPathSelector
-            connectionId={workflowable.connection_id}
-            defaultPath={workflowable.connection_path ?? ''}
-            operationMethod={'pull'}
-            onPathChange={(path) =>
-              setWorkflowData((prev) => ({
-                ...prev,
-                workflowable: {
-                  ...(prev.workflowable as Import),
-                  connection_path: path,
-                },
-              }))
-            }
-          />
-        </div>
+        <MultiplePathsSelector
+          label={dict.workflow.importSourceConnectionPath}
+          paths={workflowable.import_from_connection_paths}
+          onPathsChange={(paths) =>
+            setWorkflowData((prev) => ({
+              ...prev,
+              workflowable: {
+                ...(prev.workflowable as Import),
+                import_from_connection_paths: paths,
+              },
+            }))
+          }
+          renderPathSelector={(path, onPathChange) => (
+            <ConnectionPathSelector
+              connectionId={workflowable.connection_id}
+              defaultPath={path}
+              operationMethod={'pull'}
+              onPathChange={onPathChange}
+            />
+          )}
+        />
       )}
       <div className='flex flex-col gap-2'>
         <Label>{dict.workflow.importDestinationRepository}</Label>
@@ -197,13 +202,13 @@ export default function ImportWorkflow({
           <RepositoryPathSelector
             repositorySlug={workflowable.repository}
             ref={workflowable.repository_branch}
-            defaultPath={workflowable.repository_path}
+            defaultPath={workflowable.import_to_repository_path}
             onPathChange={(path) =>
               setWorkflowData((prev) => ({
                 ...prev,
                 workflowable: {
                   ...(prev.workflowable as Import),
-                  repository_path: path,
+                  import_to_repository_path: path,
                 },
               }))
             }

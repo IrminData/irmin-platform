@@ -142,10 +142,10 @@ export default function ImportWorkflowsSection({
             workflowable: {
               type: 'import',
               connection_id: '',
-              connection_path: '',
+              import_from_connection_paths: [],
               repository: '',
               repository_branch: '',
-              repository_path: '',
+              import_to_repository_path: '',
             },
           }}
         />

@@ -33,20 +33,20 @@ const emptyWorkflowSetupData: WorkflowRequest = {
 const emptyImportWorkflowable: Import = {
   type: 'import',
   connection_id: '',
-  connection_path: '',
+  import_from_connection_paths: [],
   repository: '',
-  repository_path: '',
   repository_branch: '',
+  import_to_repository_path: '',
   field_mappings: [],
 };
 
 const emptyExportWorkflowable: Export = {
   type: 'export',
   connection_id: '',
-  connection_path: '',
+  export_from_repository_paths: [],
   repository: '',
-  repository_path: '',
   repository_branch: '',
+  export_to_connection_path: '',
   field_mappings: [],
 };
 

@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import MultiplePathsSelector from '@/components/workflow/CreateWorkflowModalContent/MultiplePathsSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -102,14 +103,14 @@ export default function ExportWorkflow({
           <Label>{dict.workflow.exportDestinationConnectionPath}</Label>
           <ConnectionPathSelector
             connectionId={workflowable.connection_id}
-            defaultPath={workflowable.connection_path ?? ''}
+            defaultPath={workflowable.export_to_connection_path ?? ''}
             operationMethod={'push'}
             onPathChange={(path) =>
               setWorkflowData((prev) => ({
                 ...prev,
                 workflowable: {
                   ...(prev.workflowable as Export),
-                  connection_path: path,
+                  export_to_connection_path: path,
                 },
               }))
             }
@@ -192,24 +193,28 @@ export default function ExportWorkflow({
         />
       </div>
       {workflowable.repository && workflowable.repository_branch && (
-        <div className='flex flex-col gap-2'>
-          <Label>{dict.workflow.exportSourcePath}</Label>
-          <RepositoryPathSelector
-            repositorySlug={workflowable.repository}
-            ref={workflowable.repository_branch}
-            defaultPath={workflowable.repository_path}
-            onPathChange={(path) =>
-              setWorkflowData((prev) => ({
-                ...prev,
-                workflowable: {
-                  ...(prev.workflowable as Export),
-                  repository_path: path,
-                },
-              }))
-            }
-            defaultExpanded={true}
-          />
-        </div>
+        <MultiplePathsSelector
+          label={dict.workflow.exportSourcePath}
+          paths={workflowable.export_from_repository_paths}
+          onPathsChange={(paths) =>
+            setWorkflowData((prev) => ({
+              ...prev,
+              workflowable: {
+                ...(prev.workflowable as Export),
+                export_from_repository_paths: paths,
+              },
+            }))
+          }
+          renderPathSelector={(path, onPathChange) => (
+            <RepositoryPathSelector
+              repositorySlug={workflowable.repository}
+              ref={workflowable.repository_branch}
+              defaultPath={path}
+              onPathChange={onPathChange}
+              defaultExpanded={path === ''}
+            />
+          )}
+        />
       )}
     </>
   );

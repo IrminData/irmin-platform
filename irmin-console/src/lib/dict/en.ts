@@ -401,6 +401,9 @@ const en = {
     livePipeline: 'Live pipeline',
     triggeredBy: 'Triggered by',
     duration: 'Duration',
+    addPath: 'Add Path',
+    removePath: 'Remove path',
+    multiplePaths: 'Multiple paths',
     tabs: {
       data: 'Data',
       schedule: 'Schedule',

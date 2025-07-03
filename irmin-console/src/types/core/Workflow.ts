@@ -105,6 +105,7 @@ export enum WorkflowStatus {
   Running = 'running',
   Complete = 'complete',
   Error = 'error',
+  Cancelled = 'cancelled',
 }
 
 /**
@@ -114,14 +115,14 @@ export interface Import {
   type: 'import';
   /** Source connection sqid */
   connection_id: string;
-  /** Path within the connection's schema to fetch data from */
-  connection_path: string;
+  /** Paths within the connection's schema to fetch data from */
+  import_from_connection_paths: string[];
   /**  Slug of the destination repository */
   repository: string;
   /** Destination branch in the repository */
   repository_branch: string;
-  /** Path within the repository to store the imported data */
-  repository_path: string;
+  /** Paths within the repository to store the imported data */
+  import_to_repository_path: string;
   /** Field mappings for the import */
   field_mappings?: FieldMapping[];
 }
@@ -133,14 +134,14 @@ export interface Export {
   type: 'export';
   /** Destination connection sqid */
   connection_id: string;
-  /** Path within the connection's schema to export data to */
-  connection_path: string;
+  /** Paths within the connection's schema to export data to */
+  export_from_repository_paths: string[];
   /** Slug of the repository to export data from */
   repository: string;
   /** Source branch in the repository */
   repository_branch: string;
-  /** Path within the repository to export data from */
-  repository_path: string;
+  /** Paths within the repository to export data from */
+  export_to_connection_path: string;
   /** Field mappings for the export */
   field_mappings?: FieldMapping[];
 }
@@ -167,11 +168,11 @@ export interface Action {
   /** Input data repositories, refs and paths */
   input?: ActionInputData[];
   /** Slug of the repository to store the results */
-  repository?: string;
+  results_repository?: string;
   /** Branch in the repository for results */
-  repository_branch?: string;
+  results_repository_branch?: string;
   /** Path within the repository for results */
-  repository_path?: string;
+  results_repository_path?: string;
 }
 
 /**
@@ -195,6 +196,8 @@ export type PipelineStage = {
   write: boolean;
   /** Whether the result of the stage should be passed to the next stage */
   read: boolean;
+  /** The order of the stage in the pipeline */
+  order_sequence: number;
 } & (PipelineStageAction | PipelineStageConnection | PipelineStageRepository);
 
 /**
@@ -215,8 +218,8 @@ export interface PipelineStageConnection {
   connection_id: string;
   /** Path to write within the connection */
   connection_write_path: string;
-  /** Path to read within the connection */
-  connection_read_path: string;
+  /** Paths to read within the connection */
+  connection_read_paths: string[];
 }
 
 /**
@@ -228,6 +231,8 @@ export interface PipelineStageRepository {
   repository: string;
   /** Branch in the repository */
   repository_branch: string;
-  /** Path within the repository */
-  repository_path: string;
+  /** Path to write within the repository */
+  repository_write_path: string;
+  /** Path to read within the repository */
+  repository_read_paths: string[];
 }
