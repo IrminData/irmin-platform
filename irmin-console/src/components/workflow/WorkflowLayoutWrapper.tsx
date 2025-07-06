@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import { RiFlowChart } from 'react-icons/ri';
 import {
+  TbAdjustments,
   TbBook,
   TbClockCog,
   TbDatabase,
@@ -110,12 +110,34 @@ export default function WorkflowLayoutWrapper({
       ? workflow?.workflowable?.repository_branch
       : null;
 
+  const configureWorkflowableLabel =
+    workflow.type === 'import'
+      ? dict.workflow.create.configureImport
+      : workflow.type === 'export'
+        ? dict.workflow.create.configureExport
+        : workflow.type === 'pipeline'
+          ? dict.workflow.create.configurePipeline
+          : workflow.type === 'action'
+            ? dict.workflow.create.configureAction
+            : '';
+
   const tabs: TabsType = [
     {
       name: dict.common.overview,
       link: `${baseUrl}`,
       active: pathname === `${baseUrl}`,
       icon: <TbRun size={14} />,
+    },
+    {
+      name: configureWorkflowableLabel,
+      link: `${baseUrl}/workflowable`,
+      active: pathname === `${baseUrl}/workflowable`,
+      icon: <TbAdjustments size={14} />,
+      hidden: !isResourceAllowed(
+        PolicyResource.Workflow,
+        PolicyAction.Update,
+        workflowID
+      ),
     },
     {
       name: dict.schemaFieldMapper.title,
@@ -129,13 +151,6 @@ export default function WorkflowLayoutWrapper({
           PolicyAction.Update,
           workflowID
         ),
-    },
-    {
-      name: dict.workflow.pipeline.pipeline,
-      link: `${baseUrl}/pipeline`,
-      active: pathname === `${baseUrl}/pipeline`,
-      icon: <RiFlowChart size={14} />,
-      hidden: workflow.type !== 'pipeline',
     },
     {
       name: dict.workflow.tabs.schedule,

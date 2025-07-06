@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import MultiplePathsSelector from '@/components/workflow/CreateWorkflowModalContent/MultiplePathsSelector';
+import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 

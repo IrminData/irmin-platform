@@ -3,17 +3,15 @@
 import { memo, useCallback, useMemo } from 'react';
 
 import Button from '@/components/ui/button';
+import ActionWorkflow from '@/components/workflow/Workflowable/ActionWorkflow';
+import ExportWorkflow from '@/components/workflow/Workflowable/ExportWorkflow';
+import ImportWorkflow from '@/components/workflow/Workflowable/ImportWorkflow';
+import PipelineWorkflow from '@/components/workflow/Workflowable/PipelineWorkflow';
 
 import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { Action, Pipeline } from '@/types/core/Workflow';
-import { Export, Import } from '@/types/core/Workflow';
-
-import ActionWorkflow from './ActionWorkflow';
-import ExportWorkflow from './ExportWorkflow';
-import ImportWorkflow from './ImportWorkflow';
-import PipelineWorkflow from './PipelineWorkflow';
+import type { Action, Export, Import, Pipeline } from '@/types/core/Workflow';
 
 /**
  * Configure workflow type specific properties

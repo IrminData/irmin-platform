@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import MultiplePathsSelector from '@/components/workflow/CreateWorkflowModalContent/MultiplePathsSelector';
+import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
