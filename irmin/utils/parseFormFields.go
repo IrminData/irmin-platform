@@ -87,10 +87,10 @@ func ParseArrayFormFields(c fiber.Ctx, prefix string) (map[int]map[string]string
 		values = make(map[string][]string)
 		// use c.Request() to get Fasthttp request, then PostArgs()
 		args := c.Request().PostArgs()
-		args.VisitAll(func(key, val []byte) {
+		for key, val := range args.All() {
 			k := string(key)
 			values[k] = append(values[k], string(val))
-		})
+		}
 
 	case strings.HasPrefix(contentType, fiber.MIMEMultipartForm):
 		// multipart/form-data

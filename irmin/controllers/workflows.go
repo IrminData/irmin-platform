@@ -330,17 +330,44 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	// Start a transaction for all database operations
 	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Create new workflowable based on type - parse request for workflowable update
-		var workflowableReq irmincore.WorkflowRequest
+		var workflowableReq irminmodels.Workflowable
 		if bindErr := c.Bind().JSON(&workflowableReq); bindErr != nil {
 			return bindErr
 		}
-		workflowableReq.Type = workflow.Type // Use existing workflow type
+
+		// Make sure the workflowable type is unchanged
+		if workflowableReq.Type != workflow.Type {
+			return errors.New("workflowable type cannot be changed")
+		}
+
+		// Create new workflowable based on type
 		var createWorkflowableErr error
-		importWorkflowable, exportWorkflowable, actionWorkflowable, pipelineWorkflowable, createWorkflowableErr = api.createWorkflowableByType(
-			tx,
-			workspace,
-			&workflowableReq,
-		)
+		switch workflowableReq.Type {
+		case irminmodels.WorkflowableTypeImport:
+			importWorkflowable, _, createWorkflowableErr = api.createImportExportWorkflowable(
+				tx,
+				workspace,
+				&workflowableReq,
+				irminmodels.WorkflowableTypeImport,
+			)
+		case irminmodels.WorkflowableTypeExport:
+			_, exportWorkflowable, createWorkflowableErr = api.createImportExportWorkflowable(
+				tx,
+				workspace,
+				&workflowableReq,
+				irminmodels.WorkflowableTypeExport,
+			)
+		case irminmodels.WorkflowableTypeAction:
+			actionWorkflowable, createWorkflowableErr = api.createActionWorkflowable(tx, workspace, &workflowableReq)
+		case irminmodels.WorkflowableTypePipeline:
+			pipelineWorkflowable, createWorkflowableErr = api.createPipelineWorkflowable(
+				tx,
+				workspace,
+				&workflowableReq,
+			)
+		default:
+			return fmt.Errorf("invalid workflowable type: %s", workflowableReq.Type)
+		}
 		if createWorkflowableErr != nil {
 			return createWorkflowableErr
 		}
@@ -913,23 +940,34 @@ func (api *APIControllers) createImportExportWorkflowable(
 		return nil, nil, err
 	}
 
+	// Ensure FieldMappings is initialized as empty slice if nil to avoid PostgreSQL JSONB NULL error
+	fieldMappings := wflConfig.FieldMappings
+	if fieldMappings == nil {
+		fieldMappings = []irminmodels.FieldMapping{}
+	}
+
+	// Trim only leading slash from the paths
+	trimmedImportToRepositoryPath := strings.TrimLeft(wflConfig.ImportToRepositoryPath, "/")
+	trimmedExportToConnectionPath := strings.TrimLeft(wflConfig.ExportToConnectionPath, "/")
+	trimmedImportFromConnectionPaths := make([]string, len(wflConfig.ImportFromConnectionPaths))
+	for i, path := range wflConfig.ImportFromConnectionPaths {
+		trimmedImportFromConnectionPaths[i] = strings.TrimLeft(path, "/")
+	}
+	trimmedExportFromRepositoryPaths := make([]string, len(wflConfig.ExportFromRepositoryPaths))
+	for i, path := range wflConfig.ExportFromRepositoryPaths {
+		trimmedExportFromRepositoryPaths[i] = strings.TrimLeft(path, "/")
+	}
+
 	// Handle import workflowable case
 	if workflowableType == irminmodels.WorkflowableTypeImport {
-		// Trim only leading slash from the path and the connection path
-		trimmedRepositoryPath := strings.TrimLeft(wflConfig.ImportToRepositoryPath, "/")
-		trimmedConnectionPaths := make([]string, len(wflConfig.ImportFromConnectionPaths))
-		for i, path := range wflConfig.ImportFromConnectionPaths {
-			trimmedConnectionPaths[i] = strings.TrimLeft(path, "/")
-		}
-
 		// Create import workflowable
 		importWorkflowable := &db.ImportWorkflowable{
 			ConnectionID:              conn.ID,
-			ImportFromConnectionPaths: trimmedConnectionPaths,
+			ImportFromConnectionPaths: trimmedImportFromConnectionPaths,
 			RepositoryID:              repo.ID,
 			RepositoryBranch:          wflConfig.RepositoryBranch,
-			ImportToRepositoryPath:    trimmedRepositoryPath,
-			FieldMappings:             wflConfig.FieldMappings,
+			ImportToRepositoryPath:    trimmedImportToRepositoryPath,
+			FieldMappings:             fieldMappings,
 		}
 		if createImportWorkflowableErr := tx.Create(importWorkflowable).Error; createImportWorkflowableErr != nil {
 			return nil, nil, createImportWorkflowableErr
@@ -937,21 +975,14 @@ func (api *APIControllers) createImportExportWorkflowable(
 		return importWorkflowable, nil, nil
 	}
 
-	// Trim only leading slash from the path and the connection path
-	trimmedConnectionPath := strings.TrimLeft(wflConfig.ExportToConnectionPath, "/")
-	trimmedRepositoryPaths := make([]string, len(wflConfig.ExportFromRepositoryPaths))
-	for i, path := range wflConfig.ExportFromRepositoryPaths {
-		trimmedRepositoryPaths[i] = strings.TrimLeft(path, "/")
-	}
-
 	// Handle export workflowable case
 	exportWorkflowable := &db.ExportWorkflowable{
 		ConnectionID:              conn.ID,
-		ExportToConnectionPath:    trimmedConnectionPath,
+		ExportToConnectionPath:    trimmedExportToConnectionPath,
 		RepositoryID:              repo.ID,
 		RepositoryBranch:          wflConfig.RepositoryBranch,
-		ExportFromRepositoryPaths: trimmedRepositoryPaths,
-		FieldMappings:             wflConfig.FieldMappings,
+		ExportFromRepositoryPaths: trimmedExportFromRepositoryPaths,
+		FieldMappings:             fieldMappings,
 	}
 	if createExportWorkflowableErr := tx.Create(exportWorkflowable).Error; createExportWorkflowableErr != nil {
 		return nil, nil, createExportWorkflowableErr
@@ -1128,6 +1159,9 @@ func (api *APIControllers) processConnectionStage(newStage *db.PipelineStage, st
 			readPaths = append(readPaths, strings.TrimPrefix(path, "/"))
 		}
 		newStage.ConnectionReadPaths = readPaths
+	} else {
+		// Ensure ConnectionReadPaths is initialized as empty slice if nil to avoid PostgreSQL JSONB NULL error
+		newStage.ConnectionReadPaths = []string{}
 	}
 
 	if stage.ConnectionWritePath != nil {
@@ -1169,6 +1203,9 @@ func (api *APIControllers) processRepositoryStage(
 			readPaths = append(readPaths, strings.TrimPrefix(path, "/"))
 		}
 		newStage.RepositoryReadPaths = readPaths
+	} else {
+		// Ensure RepositoryReadPaths is initialized as empty slice if nil to avoid PostgreSQL JSONB NULL error
+		newStage.RepositoryReadPaths = []string{}
 	}
 
 	if stage.RepositoryWritePath != nil {
