@@ -3,13 +3,13 @@ package irminmodels
 type CustomFieldValues map[string]string
 
 type Connection struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	Description   string            `json:"description"`
+	ID            string            `json:"id"             validate:"required,validsqid=connections"`
+	Name          string            `json:"name"           validate:"required,min=1,max=100"`
+	Description   string            `json:"description"    validate:"max=500"`
 	Documentation string            `json:"documentation"`
-	Details       CustomFieldValues `json:"details"`
-	Settings      CustomFieldValues `json:"settings"`
-	Owner         User              `json:"owner"`
-	Connector     Connector         `json:"connector"`
-	Tags          []Tag             `json:"tags,omitempty"`
+	Details       CustomFieldValues `json:"details"        validate:"required"`
+	Settings      CustomFieldValues `json:"settings"       validate:"required"`
+	Owner         User              `json:"owner"          validate:"required"`
+	Connector     Connector         `json:"connector"      validate:"required"`
+	Tags          []Tag             `json:"tags,omitempty" validate:"dive"`
 }

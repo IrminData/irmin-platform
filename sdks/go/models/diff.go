@@ -23,23 +23,23 @@ const (
 // ChangeItem represents a single change in a diff.
 type ChangeItem struct {
 	// Object affected by the change
-	Object Object `json:"object"`
+	Object Object `json:"object" validate:"required"`
 	// Type of the change (e.g., added, removed, changed, etc.)
-	Type ChangeType `json:"type"`
+	Type ChangeType `json:"type"   validate:"required,oneof=added removed changed conflict moved"`
 	// Size of the change
-	Size int `json:"size"`
+	Size int `json:"size"   validate:"required,min=0"`
 }
 
 // Diff represents the difference between two refs.
 type Diff struct {
-	// Name of the repository
-	Repository string `json:"repository"`
+	// Slug of the repository
+	Repository string `json:"repository"        validate:"required,validslug"`
 	// Base reference
-	BaseRef string `json:"base_ref"`
+	BaseRef string `json:"base_ref"          validate:"required,min=1"`
 	// Compare reference
-	CompareRef string `json:"compare_ref"`
+	CompareRef string `json:"compare_ref"       validate:"required,min=1"`
 	// List of changes in the diff
-	Items []ChangeItem `json:"items"`
-	// List of commits between the refs (optional)
-	Commits *[]Commit `json:"commits,omitempty"`
+	Items []ChangeItem `json:"items"             validate:"required,dive"`
+	// List of commits between the refs
+	Commits []Commit `json:"commits,omitempty" validate:"dive"`
 }

@@ -81,13 +81,13 @@ const (
 // Policy represents a policy in the API response.
 type Policy struct {
 	// ID is the unique identifier for the policy
-	ID string `json:"id"`
+	ID string `json:"id"                    validate:"required,validsqid=policies"`
 	// Effect specifies whether the policy is an allow or deny policy
-	Effect PolicyEffect `json:"effect"`
+	Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"`
 	// Action specifies the action that the policy is applied to
-	Action PolicyAction `json:"action"`
+	Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"`
 	// Resource specifies the resource type that the policy is applied to
-	Resource PolicyResource `json:"resource"`
+	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag"`
 	// ResourceID is used to specify which resource the policy is applied to.
 	// When undefined, the policy is applied to all resources of the given type.
 	//
@@ -112,7 +112,7 @@ type Policy struct {
 	// - workflow runs point to their workflow's ID
 	ResourceID *string `json:"resource_id,omitempty"`
 	// Principal specifies which group of users the policy is applied to
-	Principal PolicyPrincipal `json:"principal"`
+	Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"`
 	// Role is used to give a policy to a specific role
 	Role *Role `json:"role,omitempty"`
 	// User is used to give a policy to a specific workspace user
@@ -121,32 +121,32 @@ type Policy struct {
 
 // RolePolicySummary represents a summary of a role's policies.
 type RolePolicySummary struct {
-	Role     Role     `json:"role"`
+	Role     Role     `json:"role"     validate:"required"`
 	IsOwner  bool     `json:"is_owner"`
-	Policies []Policy `json:"policies"`
+	Policies []Policy `json:"policies" validate:"required,dive"`
 }
 
 // UserPolicySummary represents a summary of a user's policies.
 type UserPolicySummary struct {
-	UserID   string   `json:"user_id"`
-	Email    string   `json:"email"`
+	UserID   string   `json:"user_id"  validate:"required,validsqid=users"`
+	Email    string   `json:"email"    validate:"required,email"`
 	IsOwner  bool     `json:"is_owner"`
-	RoleIDs  []string `json:"role_ids"`
-	Policies []Policy `json:"policies"`
+	RoleIDs  []string `json:"role_ids" validate:"required,dive,validsqid=roles"`
+	Policies []Policy `json:"policies" validate:"required,dive"`
 }
 
 // PolicyResourceOption represents a policy resource option.
 type PolicyResourceOption struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
+	ID    string `json:"id"    validate:"required"`
+	Label string `json:"label" validate:"required,min=1,max=100"`
 }
 
 // PolicyResourceOptions represents all possible policy resource options for a given workspace.
 type PolicyResourceOptions struct {
-	Queries      []PolicyResourceOption `json:"queries"`
-	Workflows    []PolicyResourceOption `json:"workflows"`
-	Connections  []PolicyResourceOption `json:"connections"`
-	Repositories []PolicyResourceOption `json:"repositories"`
-	Users        []PolicyResourceOption `json:"users"`
-	Tags         []PolicyResourceOption `json:"tags"`
+	Queries      []PolicyResourceOption `json:"queries"      validate:"required,dive"`
+	Workflows    []PolicyResourceOption `json:"workflows"    validate:"required,dive"`
+	Connections  []PolicyResourceOption `json:"connections"  validate:"required,dive"`
+	Repositories []PolicyResourceOption `json:"repositories" validate:"required,dive"`
+	Users        []PolicyResourceOption `json:"users"        validate:"required,dive"`
+	Tags         []PolicyResourceOption `json:"tags"         validate:"required,dive"`
 }

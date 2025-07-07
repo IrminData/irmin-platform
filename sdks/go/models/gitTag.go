@@ -2,6 +2,6 @@ package irminmodels
 
 // GitTag represents a repository tag object (Git-style tag with ref).
 type GitTag struct {
-	Name string `json:"name"` // Tag name
-	Ref  string `json:"ref"`  // Commit hash referenced in a tag
+	Name string `json:"name" validate:"required,validslug"` // Tag name
+	Ref  string `json:"ref"  validate:"required,min=1"`     // Commit hash referenced in a tag
 }

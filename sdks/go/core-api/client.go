@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -16,6 +17,8 @@ import (
 	"maps"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
 )
 
 const (
@@ -35,6 +38,9 @@ type Client struct {
 
 	// HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
 	HTTPClient *http.Client
+
+	// Validator is used to validate request structs before sending them to the API.
+	Validator *irminvalidator.Validator
 }
 
 // NewClient creates a new Irmin API client with default settings.
@@ -46,6 +52,20 @@ func NewClient(baseURL, token, locale string) *Client {
 		HTTPClient: &http.Client{
 			Timeout: defaultTimeout,
 		},
+		Validator: irminvalidator.NewClientValidator(),
+	}
+}
+
+// NewClientWithSQIDManager creates a new Irmin API client with a custom SQID manager.
+func NewClientWithSQIDManager(baseURL, token, locale string, sqidManager *irminsqids.SQIDManager) *Client {
+	return &Client{
+		BaseURL: baseURL,
+		Token:   token,
+		Locale:  locale,
+		HTTPClient: &http.Client{
+			Timeout: defaultTimeout,
+		},
+		Validator: irminvalidator.NewValidator(sqidManager),
 	}
 }
 
@@ -251,6 +271,13 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 
 // FetchAPI sends a request and attempts to parse the response into IrminAPIResponse[T].
 func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error) {
+	// Validate the request body if it exists and has validation tags
+	if opts.Body != nil && c.Validator != nil {
+		if err := c.Validator.Validate(opts.Body); err != nil {
+			return nil, fmt.Errorf("request validation failed: %w", err)
+		}
+	}
+
 	// 1) Make the HTTP request using your existing `Request` method.
 	body, err := c.Request(opts)
 	if err != nil {
@@ -285,6 +312,24 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminmodels.IrminAPIRe
 	}
 
 	return &apiResp, nil
+}
+
+// ValidateRequest validates a request struct without sending it to the API.
+// This is useful for testing or pre-validation of request data.
+func (c *Client) ValidateRequest(req any) error {
+	if c.Validator == nil {
+		return errors.New("validator not initialized")
+	}
+	return c.Validator.Validate(req)
+}
+
+// ValidateVar validates a single variable against validation tags.
+// Example: client.ValidateVar("test@example.com", "email").
+func (c *Client) ValidateVar(field any, tag string) error {
+	if c.Validator == nil {
+		return errors.New("validator not initialized")
+	}
+	return c.Validator.ValidateVar(field, tag)
 }
 
 // FetchBinary sends a request and returns the raw bytes (which you can treat as a file, or parse further).
