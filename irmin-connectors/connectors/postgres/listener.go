@@ -68,7 +68,7 @@ func handleNotification(
 	path := utils.ConstructPath(settings["database"], tableName, idStr, "")
 
 	// Safely get operation with type assertion
-	operation, ok := evt["operation"].(string)
+	operationStr, ok := evt["operation"].(string)
 	if !ok {
 		logger.ErrorContext(ctx, "invalid operation type in event",
 			"operation", evt["operation"])
@@ -77,7 +77,7 @@ func handleNotification(
 
 	// Create the payload for the webhook
 	data := irminmodels.ConnectorEvent{
-		Type:      strings.ToLower(operation),
+		Type:      irminmodels.ConnectorEventType(strings.ToLower(operationStr)),
 		Path:      path,
 		Timestamp: time.Now().UnixMilli(),
 	}
