@@ -15,12 +15,11 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
+
+	irminsdkgo "github.com/IrminData/irmin-sdk-go"
 )
 
-const (
-	defaultTimeout = 120 * time.Second
-)
+// Timeout constants are now defined in the root constants.go file
 
 // Client represents the Connector API client.
 type Client struct {
@@ -44,7 +43,7 @@ func NewClient(baseURL, token, locale string) *Client {
 		Token:   token,
 		Locale:  locale,
 		HTTPClient: &http.Client{
-			Timeout: defaultTimeout,
+			Timeout: irminsdkgo.DefaultConnectorTimeout,
 		},
 	}
 }
@@ -246,7 +245,7 @@ func (c *Client) doRequest(req *http.Request, allowedStatus []int) (*http.Respon
 // It utilises prepareBodyAndHeaders and doRequest to reduce code duplication.
 func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), irminsdkgo.DefaultConnectorTimeout)
 	defer cancel()
 
 	// Construct the full URL.
@@ -313,7 +312,7 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) error {
 // If the response is multipart, each part is parsed as a separate file. Otherwise, the response is treated as a single file.
 func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error) {
 	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), irminsdkgo.DefaultConnectorTimeout)
 	defer cancel()
 
 	// Construct full URL.

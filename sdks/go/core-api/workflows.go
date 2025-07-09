@@ -9,22 +9,22 @@ import (
 
 // UpdateWorkflowRequest represents the JSON request body for updating basic workflow info.
 type UpdateWorkflowRequest struct {
-	Name          string `json:"name,omitempty"`
-	Description   string `json:"description,omitempty"`
-	Documentation string `json:"documentation,omitempty"`
+	Name          string `json:"name,omitempty"          validate:"min=1,max=100"`
+	Description   string `json:"description,omitempty"   validate:"max=500"`
+	Documentation string `json:"documentation,omitempty" validate:"validdocumentation"`
 }
 
 // TransferWorkflowOwnershipRequest represents the JSON request body for transferring workflow ownership.
 type TransferWorkflowOwnershipRequest struct {
-	NewOwnerID string `json:"new_owner_id" validate:"required"`
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users"`
 }
 
 // WorkflowRequest represents the JSON request body for creating a workflow.
 type WorkflowRequest struct {
-	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required"`
-	Name          string                       `json:"name"                    validate:"required"`
-	Description   string                       `json:"description,omitempty"`
-	Documentation string                       `json:"documentation,omitempty"`
+	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline"`
+	Name          string                       `json:"name"                    validate:"required,min=1,max=100"`
+	Description   string                       `json:"description,omitempty"   validate:"max=500"`
+	Documentation string                       `json:"documentation,omitempty" validate:"validdocumentation"`
 
 	// Workflowable configuration
 	Workflowable irminmodels.Workflowable `json:"workflowable,omitempty"`

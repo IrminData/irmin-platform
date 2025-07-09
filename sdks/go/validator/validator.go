@@ -1,29 +1,68 @@
 package irminsdkvalidator
 
 import (
-	"reflect"
+	"errors"
+	"fmt"
 	"strings"
-	"time"
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/go-playground/validator/v10"
-	"github.com/robfig/cron/v3"
-	"github.com/teambition/rrule-go"
 )
+
+// ValidationResultError contains validation results in multiple formats for different use cases.
+type ValidationResultError struct {
+	// IsValid indicates whether the validation passed
+	IsValid bool
+
+	// UserMessage provides a single, generic error message suitable for end users
+	UserMessage string
+
+	// FieldErrors maps field names to user-friendly error messages
+	FieldErrors map[string]string
+
+	// RawErrors contains the original validation errors from the underlying library
+	RawErrors error
+}
+
+// Error implements the error interface for backward compatibility.
+func (vr *ValidationResultError) Error() string {
+	if vr.IsValid {
+		return ""
+	}
+	if vr.UserMessage != "" {
+		return vr.UserMessage
+	}
+	if vr.RawErrors != nil {
+		return vr.RawErrors.Error()
+	}
+	return "validation failed"
+}
+
+// HasErrors returns true if there are any validation errors.
+func (vr *ValidationResultError) HasErrors() bool {
+	return !vr.IsValid
+}
+
+// GetUserMessage returns a single user-friendly error message.
+func (vr *ValidationResultError) GetUserMessage() string {
+	return vr.UserMessage
+}
+
+// GetFieldErrors returns a map of field-specific error messages.
+func (vr *ValidationResultError) GetFieldErrors() map[string]string {
+	return vr.FieldErrors
+}
+
+// GetRawErrors returns the original validation errors.
+func (vr *ValidationResultError) GetRawErrors() error {
+	return vr.RawErrors
+}
 
 // Validator provides validation functionality for Irmin models.
 type Validator struct {
 	validate    *validator.Validate
 	sqidManager *irminsqids.SQIDManager
 }
-
-// Constants.
-const (
-	TokenPrefix   = "cred_"
-	TokenLength   = 64
-	SlugMinLength = 1
-	SlugMaxLength = 100
-)
 
 // NewValidator creates a new validator instance.
 func NewValidator(sqidManager *irminsqids.SQIDManager) *Validator {
@@ -34,41 +73,7 @@ func NewValidator(sqidManager *irminsqids.SQIDManager) *Validator {
 		sqidManager: sqidManager,
 	}
 
-	// Register custom validation functions
-	err := v.RegisterValidation("validtoken", validateToken)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validslug", validateSlug)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validsqid", validator.validateSQID)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validrrule", validateRRule)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validcron", validateCron)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validschedule", validateScheduleTrigger)
-	if err != nil {
-		panic(err)
-	}
-
-	// // Use JSON field names in error messages
-	// v.RegisterTagNameFunc(func(fld reflect.StructField) string {
-	// 	name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-	// 	if name == "-" {
-	// 		return ""
-	// 	}
-	// 	return name
-	// })
-
+	registerValidations(v, validator)
 	return validator
 }
 
@@ -82,333 +87,58 @@ func NewClientValidator() *Validator {
 		sqidManager: nil, // No SQID manager for client-side validation
 	}
 
-	// Register custom validation functions (excluding SQID validation)
-	err := v.RegisterValidation("validtoken", validateToken)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validslug", validateSlug)
-	if err != nil {
-		panic(err)
-	}
-	// Register SQID validation but it will be skipped when sqidManager is nil
-	err = v.RegisterValidation("validsqid", validator.validateSQID)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validrrule", validateRRule)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validcron", validateCron)
-	if err != nil {
-		panic(err)
-	}
-	err = v.RegisterValidation("validschedule", validateScheduleTrigger)
-	if err != nil {
-		panic(err)
-	}
-
+	registerValidations(v, validator)
 	return validator
 }
 
-// validateTokenPrefix is a custom validation function for API token prefixes
-// Token prefixes must:
-// - Start with "cred_"
-// - Be at least 64 characters total
-// - Contain only alphanumeric characters and underscores after the prefix.
-func validateToken(fl validator.FieldLevel) bool {
-	token := fl.Field().String()
-
-	// Must start with "cred_"
-	if !strings.HasPrefix(token, TokenPrefix) {
-		return false
+// registerValidations registers all custom validation functions with the validator.
+func registerValidations(v *validator.Validate, validator *Validator) {
+	// Register custom validation functions
+	if err := v.RegisterValidation("validtoken", validateToken); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validslug", validateSlug); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validsqid", validator.validateSQID); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validrrule", validateRRule); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validcron", validateCron); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validschedule", validateScheduleTrigger); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validsql", validateSQL); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validdocumentation", validateDocumentation); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validurl", validateURL); err != nil {
+		panic(err)
+	}
+	if err := v.RegisterValidation("validphone", validatePhone); err != nil {
+		panic(err)
 	}
 
-	// Must be at least 64 characters (this is also checked by min=64)
-	if len(token) < TokenLength {
-		return false
+	// Register custom pipeline stage validation
+	if err := v.RegisterValidation("validpipelinestage", validator.validatePipelineStage); err != nil {
+		panic(err)
 	}
 
-	// Check that the rest of the token contains only alphanumeric and underscores
-	suffix := token[len(TokenPrefix):]
-	for _, char := range suffix {
-		isAlphaNumeric := (char >= 'a' && char <= 'z') ||
-			(char >= 'A' && char <= 'Z') ||
-			(char >= '0' && char <= '9')
-		isUnderscore := char == '_'
-
-		if !isAlphaNumeric && !isUnderscore {
-			return false
-		}
+	// Register custom workflowable validation
+	if err := v.RegisterValidation("validworkflowable", validator.validateWorkflowable); err != nil {
+		panic(err)
 	}
 
-	return true
-}
-
-func validateRRule(fl validator.FieldLevel) bool {
-	field := fl.Field()
-
-	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
-		return true
+	// Register image URL validation
+	if err := v.RegisterValidation("validimageurl", validateImageURL); err != nil {
+		panic(err)
 	}
-
-	// Get the actual string value
-	var rruleValue string
-	if field.Kind() == reflect.Ptr {
-		rruleValue = field.Elem().String()
-	} else {
-		rruleValue = field.String()
-	}
-
-	// Empty string is considered valid (optional field)
-	if rruleValue == "" {
-		return true
-	}
-
-	// Prepare the RRule string following the same logic as orchestrator
-	ruleStr := rruleValue
-	ruleStr = strings.TrimPrefix(ruleStr, "RRULE:")
-	ruleStr = strings.TrimSpace(ruleStr)
-	ruleStr = strings.TrimSuffix(ruleStr, ";")
-
-	// If the RRule string doesn't contain DTSTART, add it
-	if !strings.Contains(ruleStr, "DTSTART") {
-		// Format with newlines between components
-		now := time.Now()
-		ruleStr = "DTSTART:" + now.UTC().Format("20060102T150405Z") + "\n" + ruleStr
-	} else {
-		// Replace semicolons with newlines for existing DTSTART
-		ruleStr = strings.ReplaceAll(ruleStr, ";", "\n")
-	}
-
-	// Try to parse the RRule string
-	_, err := rrule.StrToRRule(ruleStr)
-	return err == nil
-}
-
-func validateCron(fl validator.FieldLevel) bool {
-	field := fl.Field()
-
-	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
-		return true
-	}
-
-	// Get the actual string value
-	var cronValue string
-	if field.Kind() == reflect.Ptr {
-		cronValue = field.Elem().String()
-	} else {
-		cronValue = field.String()
-	}
-
-	// Empty string is considered valid (optional field)
-	if cronValue == "" {
-		return true
-	}
-
-	// Prepare the cron expression following the same logic as orchestrator
-	cronStr := cronValue
-	cronStr = strings.TrimPrefix(cronStr, "CRON:")
-	cronStr = strings.TrimSpace(cronStr)
-
-	// Try to parse the cron expression
-	_, err := cron.ParseStandard(cronStr)
-	return err == nil
-}
-
-// validateBranchName is a custom validation function for branch names
-// Branch names must:
-// - Be at least 1 character
-// - Be at most 100 characters
-// - Contain only alphanumeric characters, underscores and hyphens.
-func validateSlug(fl validator.FieldLevel) bool {
-	field := fl.Field()
-
-	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
-		return true
-	}
-
-	// Get the actual string value
-	var branchName string
-	if field.Kind() == reflect.Ptr {
-		branchName = field.Elem().String()
-	} else {
-		branchName = field.String()
-	}
-
-	// Must be at least 1 character
-	if len(branchName) < SlugMinLength {
-		return false
-	}
-
-	// Must be at most 100 characters
-	if len(branchName) > SlugMaxLength {
-		return false
-	}
-
-	// Check that the branch name contains only alphanumeric characters and underscores
-	for _, char := range branchName {
-		isAlphaNumeric := (char >= 'a' && char <= 'z') ||
-			(char >= 'A' && char <= 'Z') ||
-			(char >= '0' && char <= '9')
-		isUnderscore := char == '_'
-		isHyphen := char == '-'
-
-		if !isAlphaNumeric && !isUnderscore && !isHyphen {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (v *Validator) validateSQID(fl validator.FieldLevel) bool {
-	// Skip SQID validation if no SQID manager is available (client-side scenario)
-	if v.sqidManager == nil {
-		return true
-	}
-
-	// Get the value of the field
-	field := fl.Field()
-
-	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
-		return true
-	}
-
-	// Get the actual string value
-	var sqidValue string
-	if field.Kind() == reflect.Ptr {
-		sqidValue = field.Elem().String()
-	} else {
-		sqidValue = field.String()
-	}
-
-	typeParam := fl.Param()
-
-	// Get the type of the sqid
-	typeParam = strings.TrimSpace(typeParam)
-
-	// Get the sqid manager
-	sqidManager := v.sqidManager
-
-	// Decode the sqid
-	decoded, err := sqidManager.Decode(typeParam, sqidValue)
-	if err != nil {
-		return false
-	}
-
-	// Check if the decoded value is a valid uint64
-	if decoded == 0 {
-		return false
-	}
-
-	return true
-}
-
-func validateScheduleTrigger(fl validator.FieldLevel) bool {
-	// Get the parent struct (ScheduleTrigger) from the Type field
-	parentStruct := fl.Parent()
-
-	// Make sure we're working with a struct
-	if parentStruct.Kind() != reflect.Struct {
-		return true // Let other validators handle non-struct cases
-	}
-
-	// Get the Type field value (this is the current field being validated)
-	triggerType := fl.Field().String()
-
-	// Only validate time triggers with this function
-	if triggerType != "time" {
-		return true
-	}
-
-	return validateTimeTrigger(parentStruct)
-}
-
-// validateTimeTrigger validates that time triggers have proper RRule or Cron configuration.
-func validateTimeTrigger(parentStruct reflect.Value) bool {
-	rruleField := parentStruct.FieldByName("RRule")
-	cronField := parentStruct.FieldByName("Cron")
-
-	rruleIsEmpty := isFieldEmpty(rruleField)
-	cronIsEmpty := isFieldEmpty(cronField)
-
-	// At least one must be provided
-	if rruleIsEmpty && cronIsEmpty {
-		return false
-	}
-
-	// Validate RRule if present
-	if !rruleIsEmpty {
-		rruleValue := rruleField.Elem().String()
-		if !isValidRRule(rruleValue) {
-			return false
-		}
-	}
-
-	// Validate Cron if present
-	if !cronIsEmpty {
-		cronValue := cronField.Elem().String()
-		if !isValidCron(cronValue) {
-			return false
-		}
-	}
-
-	return true
-}
-
-// isFieldEmpty checks if a pointer field is nil or contains an empty string.
-func isFieldEmpty(field reflect.Value) bool {
-	return !field.IsValid() || field.IsNil() ||
-		(field.Elem().IsValid() && field.Elem().String() == "")
-}
-
-// Helper function to validate RRule.
-func isValidRRule(rruleValue string) bool {
-	if rruleValue == "" {
-		return true
-	}
-
-	// Prepare the RRule string following the same logic as orchestrator
-	ruleStr := rruleValue
-	ruleStr = strings.TrimPrefix(ruleStr, "RRULE:")
-	ruleStr = strings.TrimSpace(ruleStr)
-	ruleStr = strings.TrimSuffix(ruleStr, ";")
-
-	// If the RRule string doesn't contain DTSTART, add it
-	if !strings.Contains(ruleStr, "DTSTART") {
-		// Format with newlines between components
-		now := time.Now()
-		ruleStr = "DTSTART:" + now.UTC().Format("20060102T150405Z") + "\n" + ruleStr
-	} else {
-		// Replace semicolons with newlines for existing DTSTART
-		ruleStr = strings.ReplaceAll(ruleStr, ";", "\n")
-	}
-
-	// Try to parse the RRule string
-	_, err := rrule.StrToRRule(ruleStr)
-	return err == nil
-}
-
-// Helper function to validate Cron.
-func isValidCron(cronValue string) bool {
-	if cronValue == "" {
-		return true
-	}
-
-	// Prepare the cron expression following the same logic as orchestrator
-	cronStr := cronValue
-	cronStr = strings.TrimPrefix(cronStr, "CRON:")
-	cronStr = strings.TrimSpace(cronStr)
-
-	// Try to parse the cron expression
-	_, err := cron.ParseStandard(cronStr)
-	return err == nil
 }
 
 // Validate validates a struct and returns validation errors.
@@ -419,4 +149,182 @@ func (v *Validator) Validate(s any) error {
 // ValidateVar validates a single variable.
 func (v *Validator) ValidateVar(field any, tag string) error {
 	return v.validate.Var(field, tag)
+}
+
+// ValidateEnhanced validates a struct and returns a detailed ValidationResultError.
+// This provides multiple error formats for different use cases.
+func (v *Validator) ValidateEnhanced(s any) *ValidationResultError {
+	err := v.validate.Struct(s)
+	if err == nil {
+		return &ValidationResultError{
+			IsValid:     true,
+			UserMessage: "",
+			FieldErrors: make(map[string]string),
+			RawErrors:   nil,
+		}
+	}
+
+	return v.buildValidationResult(err)
+}
+
+// ValidateVarEnhanced validates a single variable and returns a detailed ValidationResultError.
+func (v *Validator) ValidateVarEnhanced(field any, tag string) *ValidationResultError {
+	err := v.validate.Var(field, tag)
+	if err == nil {
+		return &ValidationResultError{
+			IsValid:     true,
+			UserMessage: "",
+			FieldErrors: make(map[string]string),
+			RawErrors:   nil,
+		}
+	}
+
+	return v.buildValidationResult(err)
+}
+
+// buildValidationResult converts validation errors into a structured ValidationResultError.
+func (v *Validator) buildValidationResult(err error) *ValidationResultError {
+	result := &ValidationResultError{
+		IsValid:     false,
+		FieldErrors: make(map[string]string),
+		RawErrors:   err,
+	}
+
+	// Check if it's a ValidationErrors type from go-playground/validator
+	var validationErrors validator.ValidationErrors
+	if errors.As(err, &validationErrors) {
+		var userMessages []string
+
+		for _, fieldError := range validationErrors {
+			fieldName := v.getFieldName(fieldError)
+			fieldMessage := v.getFieldErrorMessage(fieldError)
+
+			result.FieldErrors[fieldName] = fieldMessage
+			userMessages = append(userMessages, fmt.Sprintf("%s: %s", fieldName, fieldMessage))
+		}
+
+		if len(userMessages) == 1 {
+			result.UserMessage = userMessages[0]
+		} else {
+			result.UserMessage = fmt.Sprintf("Validation failed: %s", strings.Join(userMessages, "; "))
+		}
+	} else {
+		// Not a ValidationErrors, just use the error message
+		result.UserMessage = err.Error()
+	}
+
+	return result
+}
+
+// getFieldName extracts a user-friendly field name from a validation error.
+func (v *Validator) getFieldName(fieldError validator.FieldError) string {
+	fieldName := fieldError.Field()
+
+	// Convert PascalCase to snake_case for better readability
+	result := make([]rune, 0, len(fieldName)+FieldNameConversionBuffer)
+	for i, r := range fieldName {
+		if i > 0 && 'A' <= r && r <= 'Z' {
+			result = append(result, '_')
+		}
+		result = append(result, r)
+	}
+
+	return strings.ToLower(string(result))
+}
+
+// getStandardValidationMessage returns a user-friendly message for standard validation tags.
+func (v *Validator) getStandardValidationMessage(field, tag, param string) (string, bool) {
+	switch tag {
+	case "required":
+		return fmt.Sprintf("%s is required", field), true
+	case "email":
+		return fmt.Sprintf("%s must be a valid email address", field), true
+	case "min":
+		return fmt.Sprintf("%s must be at least %s characters", field, param), true
+	case "max":
+		return fmt.Sprintf("%s must be at most %s characters", field, param), true
+	case "len":
+		return fmt.Sprintf("%s must be exactly %s characters", field, param), true
+	case "oneof":
+		return fmt.Sprintf("%s must be one of: %s", field, param), true
+	case "datetime":
+		return fmt.Sprintf("%s must be a valid datetime", field), true
+	case "dive":
+		return fmt.Sprintf("%s contains invalid items", field), true
+	default:
+		return "", false
+	}
+}
+
+// getStringValidationMessage returns user-friendly messages for string-specific validations.
+func (v *Validator) getStringValidationMessage(field, tag, param string) (string, bool) {
+	switch tag {
+	case "required_if", "required_with":
+		return fmt.Sprintf("%s is required", field), true
+	case "excludes":
+		return fmt.Sprintf("%s contains invalid characters", field), true
+	case "contains":
+		return fmt.Sprintf("%s must contain %s", field, param), true
+	default:
+		return "", false
+	}
+}
+
+// getCustomValidationMessage returns user-friendly messages for custom validation tags.
+func (v *Validator) getCustomValidationMessage(field, tag string) (string, bool) {
+	switch tag {
+	case "validtoken":
+		return fmt.Sprintf("%s must be a valid API token starting with 'cred_'", field), true
+	case "validslug":
+		return fmt.Sprintf("%s must contain only letters, numbers, underscores, and hyphens", field), true
+	case "validsqid":
+		return fmt.Sprintf("%s must be a valid identifier", field), true
+	case "validrrule":
+		return fmt.Sprintf("%s must be a valid recurrence rule", field), true
+	case "validcron":
+		return fmt.Sprintf("%s must be a valid cron expression", field), true
+	case "validschedule":
+		return fmt.Sprintf("%s must have valid schedule configuration", field), true
+	case "validsql":
+		return fmt.Sprintf("%s must be a valid SQL query", field), true
+	case "validdocumentation":
+		return fmt.Sprintf("%s must be valid documentation content", field), true
+	case "validurl":
+		return fmt.Sprintf("%s must be a valid URL", field), true
+	case "validphone":
+		return fmt.Sprintf("%s must be a valid phone number", field), true
+	case "validimageurl":
+		return fmt.Sprintf("%s must be a valid image URL", field), true
+	case "validpipelinestage":
+		return fmt.Sprintf("%s must have valid configuration for its type", field), true
+	case "validworkflowable":
+		return fmt.Sprintf("%s must have valid configuration for its type", field), true
+	default:
+		return "", false
+	}
+}
+
+// getFieldErrorMessage generates a user-friendly error message for a field validation error.
+func (v *Validator) getFieldErrorMessage(fieldError validator.FieldError) string {
+	field := v.getFieldName(fieldError)
+	tag := fieldError.Tag()
+	param := fieldError.Param()
+
+	// Try custom validation messages first
+	if message, ok := v.getCustomValidationMessage(field, tag); ok {
+		return message
+	}
+
+	// Try standard validation messages
+	if message, ok := v.getStandardValidationMessage(field, tag, param); ok {
+		return message
+	}
+
+	// Try string-specific validation messages
+	if message, ok := v.getStringValidationMessage(field, tag, param); ok {
+		return message
+	}
+
+	// Fallback to generic message
+	return fmt.Sprintf("%s failed validation: %s", field, tag)
 }

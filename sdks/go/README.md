@@ -1,14 +1,15 @@
 # Irmin SDK for Go
 
-Go SDK for the Irmin Core API.
+A comprehensive Go SDK for the Irmin platform, providing type-safe access to the Core API, data models, validation, utilities, and connector management.
 
-## Features
+## What's Included
 
-- **Complete API Coverage**: Full support for all Irmin Core API endpoints
-- **Type Safety**: Strongly typed requests and responses
-- **Client-Side Validation**: Validate requests before sending them to the API
-- **Flexible HTTP Client**: Customizable HTTP client with timeout and proxy support
-- **Multiple Content Types**: Support for JSON, multipart form data, and file uploads
+- **🔌 API Client**: Complete REST client for all Irmin Core API endpoints
+- **📋 Data Models**: Strongly typed Go structs for all API entities  
+- **✅ Validation**: Client-side request validation with enhanced security features
+- **🆔 SQID Management**: Unique identifier generation and validation
+- **🔗 Connector Client**: Manage data source connections and operations
+- **🛠️ Utilities**: Helper functions for common tasks (JSON schema generation, file handling, etc.)
 
 ## Installation
 
@@ -18,6 +19,8 @@ go get github.com/IrminData/irmin-sdk-go
 
 ## Quick Start
 
+### Basic API Client Usage
+
 ```go
 package main
 
@@ -26,6 +29,7 @@ import (
     "log"
 
     irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+    "github.com/IrminData/irmin-sdk-go/models"
 )
 
 func main() {
@@ -45,29 +49,101 @@ func main() {
 }
 ```
 
-## Client-Side Validation
+### Working with Connectors
 
-The SDK includes built-in validation for all request types. Requests are automatically validated before being sent to the API, helping you catch errors early.
+```go
+import (
+    irminconnector "github.com/IrminData/irmin-sdk-go/connector"
+)
+
+// Create a connector client
+connectorClient := irminconnector.NewClient("https://connector.irmin.co", "your-token")
+
+// Get connector information
+info, err := connectorClient.GetInfo("postgres")
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Connector: %s\n", info.Name)
+```
+
+### Using Data Models
+
+```go
+import "github.com/IrminData/irmin-sdk-go/models"
+
+// Work with strongly typed models
+var connection models.Connection
+connection.Name = "My Database"
+connection.Connector = "postgres"
+
+// All API responses are mapped to these models automatically
+```
+
+## API Client Features
+
+The Core API client provides methods for all Irmin endpoints:
+
+### Workspaces
+```go
+// Create, update, delete workspaces
+workspace, _, err := client.CreateWorkspace(request)
+workspaces, _, err := client.GetWorkspaces()
+_, err = client.UpdateWorkspace("workspace-id", updateRequest)
+```
+
+### Connections
+```go
+// Manage data source connections
+connection, _, err := client.CreateConnection("workspace-id", request)
+connections, _, err := client.GetConnections("workspace-id")
+```
+
+### Workflows & Queries
+```go
+// Create and manage workflows
+workflow, _, err := client.CreateWorkflow("workspace-id", request)
+
+// Execute and manage SQL queries
+query, _, err := client.CreateQuery("workspace-id", request)
+```
+
+### Repositories & Version Control
+```go
+// Git-like data versioning
+repo, _, err := client.CreateRepository("workspace-id", request)
+branches, _, err := client.GetRepositoryBranches("workspace-id", "repo-id")
+commits, _, err := client.GetRepositoryCommits("workspace-id", "repo-id", "branch")
+```
+
+### User & Role Management
+```go
+// Manage users and permissions
+users, _, err := client.GetUsers()
+roles, _, err := client.GetRoles()
+```
+
+## Validation
+
+The SDK includes comprehensive client-side validation to catch errors before API calls.
 
 ### Automatic Validation
 
-All API methods automatically validate request data:
+All API methods automatically validate requests:
 
 ```go
 // This will fail validation before making the HTTP request
-_, _, err := client.CreateConnection("my-workspace", irmincore.CreateConnectionRequest{
-    // Missing required "Name" and "Connector" fields
+_, _, err := client.CreateConnection("workspace", irmincore.CreateConnectionRequest{
+    // Missing required fields
     Description: "Invalid request",
 })
 if err != nil {
-    // Error will mention validation failure
-    fmt.Printf("Error: %v\n", err)
+    fmt.Printf("Validation error: %v\n", err)
 }
 ```
 
 ### Manual Validation
-
-You can also validate requests without sending them:
 
 ```go
 request := irmincore.CreateConnectionRequest{
@@ -77,35 +153,82 @@ request := irmincore.CreateConnectionRequest{
 
 // Validate without sending
 if err := client.ValidateRequest(request); err != nil {
-    fmt.Printf("Request is invalid: %v\n", err)
+    fmt.Printf("Invalid request: %v\n", err)
     return
 }
-
-// Now send the validated request
-connection, _, err := client.CreateConnection("my-workspace", request)
 ```
 
-### Individual Field Validation
+### Enhanced Validation Features
 
-You can validate individual fields using validation tags:
+- **SQL Security**: Validates SQL queries, blocking dangerous operations
+- **Markdown Safety**: Validates documentation fields as safe markdown
+- **URL Validation**: Restricts URLs to safe schemes with format checks
+- **Phone Numbers**: E.164 format validation
+- **Custom Tags**: Support for specialized validation tags
 
 ```go
-// Validate an email address
-if err := client.ValidateVar("user@example.com", "email"); err != nil {
-    fmt.Printf("Invalid email: %v\n", err)
-}
-
-// Validate a required field
-if err := client.ValidateVar("", "required"); err != nil {
-    fmt.Printf("Field is required: %v\n", err)
+// Enhanced validation with detailed error messages
+result := client.ValidateRequestEnhanced(request)
+if result.HasErrors() {
+    fmt.Printf("Error: %s\n", result.GetUserMessage())
+    for field, message := range result.GetFieldErrors() {
+        fmt.Printf("Field '%s': %s\n", field, message)
+    }
 }
 ```
 
-### SQID Validation
+## SQID Management
 
-SQID (unique identifier) validation is automatically skipped on the client side since clients don't have access to the server's SQID alphabet. SQID fields will be validated on the server when requests are sent.
+Generate and validate unique identifiers:
 
-## Advanced Usage
+```go
+import irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+
+// Create SQID manager
+sqidManager := irminsqids.NewSQIDManager("your-alphabet")
+
+// Use with API client for server-side validation
+client := irmincore.NewClientWithSQIDManager(
+    "https://api.irmin.co/api",
+    "your-token", 
+    "en",
+    sqidManager,
+)
+```
+
+## Connector Operations
+
+The connector client supports various data operations:
+
+```go
+// Pull data from a source
+result, err := connectorClient.Pull("connector-id", pullConfig)
+
+// Push data to a destination  
+err = connectorClient.Push("connector-id", pushConfig, data)
+
+// Subscribe to real-time updates
+err = connectorClient.Subscribe("connector-id", subscribeConfig)
+```
+
+## Utilities
+
+The SDK includes helpful utilities:
+
+```go
+import "github.com/IrminData/irmin-sdk-go/utils"
+
+// Generate JSON schema from Go structs
+schema, err := utils.GenerateJSONSchema(myStruct)
+
+// Handle file operations
+files, err := utils.GetInputFiles(directory)
+
+// Create ZIP archives
+err = utils.CreateZipArchive(files, outputPath)
+```
+
+## Configuration
 
 ### Custom HTTP Client
 
@@ -116,66 +239,53 @@ client := irmincore.NewClient("https://api.irmin.co/api", "your-token", "en")
 client.HTTPClient.Timeout = 30 * time.Second
 ```
 
-### Server-Side Validation (for servers with SQID access)
+### Content Type Support
 
-If you're using the SDK on the server side and have access to the SQID alphabet:
-
-```go
-import (
-    irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
-    irmincore "github.com/IrminData/irmin-sdk-go/core-api"
-)
-
-sqidManager := irminsqids.NewSQIDManager("your-sqid-alphabet")
-client := irmincore.NewClientWithSQIDManager(
-    "https://api.irmin.co/api",
-    "your-token",
-    "en",
-    sqidManager,
-)
-```
-
-## API Reference
-
-The SDK provides methods for all Irmin Core API endpoints:
-
-- **Workspaces**: Create, update, delete, and manage workspaces
-- **Connections**: Manage data source connections
-- **Workflows**: Create and manage data workflows
-- **Repositories**: Git-like data versioning
-- **Queries**: SQL query management
-- **Users & Permissions**: User and role management
-- And much more...
+The SDK supports multiple content types:
+- JSON requests/responses
+- Multipart form data
+- File uploads
+- Custom headers
 
 ## Error Handling
 
-The SDK provides detailed error information:
+Comprehensive error information with validation details:
 
 ```go
-connection, resp, err := client.CreateConnection("workspace", request)
+result, resp, err := client.CreateConnection("workspace", request)
 if err != nil {
-    // Check if it's a validation error
+    // Check for validation errors
     if strings.Contains(err.Error(), "validation failed") {
         fmt.Println("Request validation failed")
     }
-    // Check API response for more details
+    
+    // Check API response errors
     if resp != nil && len(resp.Errors) > 0 {
         fmt.Printf("API errors: %v\n", resp.Errors)
     }
 }
 ```
 
-## Examples and Tests
+## Examples & Testing
 
-Comprehensive validation examples and usage patterns can be found in the test files:
-
-- `validator/validator_test.go` - Contains tests for both client-side and server-side validation
-- Core API request validation examples
-- SQID validation behavior demonstrations
-
-Run the tests to see validation in action:
+Run the comprehensive test suite to see the SDK in action:
 
 ```bash
-cd irmin-sdk-go
+# Run all tests
+go test ./...
+
+# Run specific component tests
 go test ./validator -v
+go test ./core-api -v
+go test ./connector -v
 ```
+
+## Contributing
+
+The SDK is organized into focused packages:
+- `core-api/` - Main API client
+- `models/` - Data models  
+- `validator/` - Validation logic
+- `sqids/` - SQID management
+- `connector/` - Connector client
+- `utils/` - Utility functions

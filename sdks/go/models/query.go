@@ -6,7 +6,7 @@ type StoredQuery struct {
 	ID          string    `json:"id"             validate:"required,validsqid=queries"`
 	Name        string    `json:"name"           validate:"required,min=1,max=100"`
 	Description string    `json:"description"    validate:"max=500"`
-	SQL         string    `json:"sql"            validate:"required"`
+	SQL         string    `json:"sql"            validate:"required,validsql"`
 	Owner       User      `json:"owner"          validate:"required"`
 	Tags        []Tag     `json:"tags,omitempty" validate:"dive"`
 	CreatedAt   time.Time `json:"created_at"     validate:"required"`

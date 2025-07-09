@@ -42,21 +42,18 @@ type PipelineStage struct {
 	Write         bool              `json:"write"`
 	Read          bool              `json:"read"`
 	OrderSequence int               `json:"order_sequence" validate:"required,min=1"`
-	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository"`
+	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository,validpipelinestage"`
 
 	// Action stage specific
-
 	Executable *string `json:"executable,omitempty" validate:"min=1"`
 
 	// Connection stage specific
-
 	ConnectionID        *string  `json:"connection_id,omitempty"         validate:"validsqid=connections"`
 	ConnectionWritePath *string  `json:"connection_write_path,omitempty" validate:"min=1"`
 	ConnectionReadPaths []string `json:"connection_read_paths,omitempty" validate:"dive,min=1"`
 
 	// Repository stage specific
-
-	Repository          *string  `json:"repository,omitempty"            validate:"min=1"`
+	Repository          *string  `json:"repository,omitempty"`
 	RepositoryBranch    *string  `json:"repository_branch,omitempty"     validate:"min=1"`
 	RepositoryWritePath *string  `json:"repository_write_path,omitempty" validate:"min=1"`
 	RepositoryReadPaths []string `json:"repository_read_paths,omitempty" validate:"dive,min=1"`
@@ -69,10 +66,9 @@ type ActionInputData struct {
 }
 
 type Workflowable struct {
-	Type WorkflowableType `json:"type" validate:"required,oneof=import action export pipeline"`
+	Type WorkflowableType `json:"type" validate:"required,oneof=import action export pipeline,validworkflowable"`
 
 	// Import & Export workflowable
-
 	FieldMappings    []FieldMapping `json:"field_mappings,omitempty"    validate:"dive,required_if=Type import,required_if=Type export"`
 	ConnectionID     string         `json:"connection_id,omitempty"     validate:"validsqid=connections,required_if=Type import,required_if=Type export"`
 	Repository       string         `json:"repository,omitempty"        validate:"min=1,required_if=Type import,required_if=Type export"`
@@ -106,7 +102,7 @@ type Workflow struct {
 	ID            string           `json:"id"                     validate:"required,validsqid=workflows"`
 	Name          string           `json:"name"                   validate:"required,min=1,max=100"`
 	Description   string           `json:"description"            validate:"max=500"`
-	Documentation string           `json:"documentation"`
+	Documentation string           `json:"documentation"          validate:"validdocumentation"`
 	Status        WorkflowStatus   `json:"status"                 validate:"required,oneof=paused pending initiating running complete error cancelled"`
 	Type          WorkflowableType `json:"type"                   validate:"required,oneof=import action export pipeline"`
 	Owner         User             `json:"owner"                  validate:"required"`

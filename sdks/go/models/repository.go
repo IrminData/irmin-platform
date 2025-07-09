@@ -19,7 +19,7 @@ type Repository struct {
 	Name                   string                  `json:"name"                               validate:"required,min=1,max=100"`
 	Slug                   string                  `json:"slug"                               validate:"required,validslug"`
 	Description            string                  `json:"description"                        validate:"max=500"`
-	Documentation          string                  `json:"documentation"`
+	Documentation          string                  `json:"documentation"                      validate:"validdocumentation"`
 	IsImmutable            bool                    `json:"is_immutable"`
 	DefaultBranch          string                  `json:"default_branch"                     validate:"required,validslug"`
 	Owner                  User                    `json:"owner"                              validate:"required"`

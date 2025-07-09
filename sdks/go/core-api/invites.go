@@ -9,13 +9,13 @@ import (
 
 // SendInviteRequest represents the JSON request body for sending an invite.
 type SendInviteRequest struct {
-	Email string `json:"email" validate:"required"`
-	Role  string `json:"role"  validate:"required"`
+	Email string `json:"email" validate:"required,email"`
+	Role  string `json:"role"  validate:"required,min=1,max=50"`
 }
 
 // UpdateInviteRequest represents the JSON request body for updating an invite.
 type UpdateInviteRequest struct {
-	Role string `json:"role" validate:"required"`
+	Role string `json:"role" validate:"required,min=1,max=50"`
 }
 
 func (c *Client) ListInviteInbox() ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error) {

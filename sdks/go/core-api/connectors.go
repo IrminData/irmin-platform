@@ -9,8 +9,8 @@ import (
 
 // ConnectorRequest represents the JSON request body for creating/updating connectors.
 type ConnectorRequest struct {
-	URL         string `json:"url"          validate:"required"`
-	SystemToken string `json:"system_token" validate:"required"`
+	URL         string `json:"url"          validate:"required,validurl"`
+	SystemToken string `json:"system_token" validate:"required,min=1,max=100"`
 }
 
 // ConnectorConfigurationRequest represents the JSON request body for connector configuration operations.

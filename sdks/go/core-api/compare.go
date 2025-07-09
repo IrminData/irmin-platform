@@ -12,7 +12,7 @@ type MergeRefsRequest struct {
 	BaseRef     string `json:"base_ref"              validate:"required"`
 	CompareRef  string `json:"compare_ref"           validate:"required"`
 	Description string `json:"description,omitempty"`
-	Strategy    string `json:"strategy,omitempty"`
+	Strategy    string `json:"strategy"              validate:"required,oneof=default dest-wins source-wins"`
 	Squash      bool   `json:"squash,omitempty"`
 	AllowEmpty  bool   `json:"allow_empty,omitempty"`
 }

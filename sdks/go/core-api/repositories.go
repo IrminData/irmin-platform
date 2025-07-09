@@ -9,28 +9,28 @@ import (
 
 // CreateRepositoryRequest represents the JSON request body for creating a repository.
 type CreateRepositoryRequest struct {
-	Name                              string `json:"name"                                            validate:"required"`
-	Description                       string `json:"description,omitempty"`
-	Documentation                     string `json:"documentation,omitempty"`
-	DefaultBranch                     string `json:"default_branch,omitempty"`
+	Name                              string `json:"name"                                            validate:"required,min=1,max=100"`
+	Description                       string `json:"description,omitempty"                           validate:"max=500"`
+	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation"`
+	DefaultBranch                     string `json:"default_branch,omitempty"                        validate:"validslug"`
 	IsImmutable                       bool   `json:"is_immutable,omitempty"`
-	GarbageDefaultRetentionDays       int    `json:"garbage_default_retention_days,omitempty"`
-	GarbageDefaultBranchRetentionDays int    `json:"garbage_default_branch_retention_days,omitempty"`
+	GarbageDefaultRetentionDays       int    `json:"garbage_default_retention_days,omitempty"        validate:"min=1,max=3650"`
+	GarbageDefaultBranchRetentionDays int    `json:"garbage_default_branch_retention_days,omitempty" validate:"min=1,max=3650"`
 }
 
 // UpdateRepositoryRequest represents the JSON request body for updating a repository.
 type UpdateRepositoryRequest struct {
-	Name                              string `json:"name,omitempty"`
-	Description                       string `json:"description,omitempty"`
-	Documentation                     string `json:"documentation,omitempty"`
+	Name                              string `json:"name,omitempty"                                  validate:"min=1,max=100"`
+	Description                       string `json:"description,omitempty"                           validate:"max=500"`
+	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation"`
 	IsImmutable                       *bool  `json:"is_immutable,omitempty"`
-	GarbageDefaultRetentionDays       int    `json:"garbage_default_retention_days,omitempty"`
-	GarbageDefaultBranchRetentionDays int    `json:"garbage_default_branch_retention_days,omitempty"`
+	GarbageDefaultRetentionDays       int    `json:"garbage_default_retention_days,omitempty"        validate:"min=1,max=3650"`
+	GarbageDefaultBranchRetentionDays int    `json:"garbage_default_branch_retention_days,omitempty" validate:"min=1,max=3650"`
 }
 
 // TransferRepositoryOwnershipRequest represents the JSON request body for transferring repository ownership.
 type TransferRepositoryOwnershipRequest struct {
-	NewOwnerID string `json:"new_owner_id" validate:"required"`
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users"`
 }
 
 func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {

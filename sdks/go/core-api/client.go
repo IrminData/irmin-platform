@@ -12,18 +12,16 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"time"
 
 	"maps"
 
+	irminsdkgo "github.com/IrminData/irmin-sdk-go"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
 )
 
-const (
-	defaultTimeout = 10 * time.Second
-)
+// Timeout constants are now defined in the root constants.go file
 
 // Client represents the Irmin API client.
 type Client struct {
@@ -50,9 +48,9 @@ func NewClient(baseURL, token, locale string) *Client {
 		Token:   token,
 		Locale:  locale,
 		HTTPClient: &http.Client{
-			Timeout: defaultTimeout,
+			Timeout: irminsdkgo.DefaultAPITimeout,
 		},
-		Validator: irminvalidator.NewClientValidator(),
+		Validator: irminvalidator.NewValidator(nil),
 	}
 }
 
@@ -63,7 +61,7 @@ func NewClientWithSQIDManager(baseURL, token, locale string, sqidManager *irmins
 		Token:   token,
 		Locale:  locale,
 		HTTPClient: &http.Client{
-			Timeout: defaultTimeout,
+			Timeout: irminsdkgo.DefaultAPITimeout,
 		},
 		Validator: irminvalidator.NewValidator(sqidManager),
 	}
@@ -213,7 +211,7 @@ func (c *Client) prepareRequestBody(opts RequestOptions) (io.Reader, map[string]
 
 // Request is the main method that sends requests to the Irmin API and returns raw response data.
 func (c *Client) Request(opts RequestOptions) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), irminsdkgo.DefaultAPITimeout)
 	defer cancel()
 
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
@@ -330,6 +328,96 @@ func (c *Client) ValidateVar(field any, tag string) error {
 		return errors.New("validator not initialized")
 	}
 	return c.Validator.ValidateVar(field, tag)
+}
+
+// ValidateRequestEnhanced validates a request struct and returns detailed validation results.
+// This provides multiple error formats for different use cases:
+// - A single user-friendly message
+// - A map of field-specific error messages
+// - The original validation errors.
+func (c *Client) ValidateRequestEnhanced(req any) *irminvalidator.ValidationResultError {
+	if c.Validator == nil {
+		return &irminvalidator.ValidationResultError{
+			IsValid:     false,
+			UserMessage: "validator not initialized",
+			FieldErrors: make(map[string]string),
+			RawErrors:   errors.New("validator not initialized"),
+		}
+	}
+	return c.Validator.ValidateEnhanced(req)
+}
+
+// ValidateVarEnhanced validates a single variable and returns detailed validation results.
+// Example: client.ValidateVarEnhanced("test@example.com", "email").
+func (c *Client) ValidateVarEnhanced(field any, tag string) *irminvalidator.ValidationResultError {
+	if c.Validator == nil {
+		return &irminvalidator.ValidationResultError{
+			IsValid:     false,
+			UserMessage: "validator not initialized",
+			FieldErrors: make(map[string]string),
+			RawErrors:   errors.New("validator not initialized"),
+		}
+	}
+	return c.Validator.ValidateVarEnhanced(field, tag)
+}
+
+// FetchAPIEnhanced sends a request with enhanced validation and attempts to parse the response into IrminAPIResponse[T].
+// This method provides detailed validation results before sending the request.
+func (c *Client) FetchAPIEnhanced(
+	opts RequestOptions,
+	out any,
+) (*irminmodels.IrminAPIResponse, *irminvalidator.ValidationResultError, error) {
+	// Enhanced validation of the request body if it exists and has validation tags
+	var validationResult *irminvalidator.ValidationResultError
+	if opts.Body != nil && c.Validator != nil {
+		validationResult = c.Validator.ValidateEnhanced(opts.Body)
+		if validationResult.HasErrors() {
+			return nil, validationResult, fmt.Errorf("request validation failed: %s", validationResult.GetUserMessage())
+		}
+	} else {
+		// No validation needed or validator not available
+		validationResult = &irminvalidator.ValidationResultError{
+			IsValid:     true,
+			UserMessage: "",
+			FieldErrors: make(map[string]string),
+			RawErrors:   nil,
+		}
+	}
+
+	// 1) Make the HTTP request using your existing `Request` method.
+	body, err := c.Request(opts)
+	if err != nil {
+		return nil, validationResult, err
+	}
+
+	// 2) Unmarshal the main response.
+	var apiResp irminmodels.IrminAPIResponse
+	err = json.Unmarshal(body, &apiResp)
+	if err != nil {
+		return nil, validationResult, fmt.Errorf("failed to unmarshal response JSON: %w", err)
+	}
+
+	// 3) Check for top-level errors.
+	if len(apiResp.Errors) > 0 {
+		return &apiResp, validationResult, fmt.Errorf("irmin core API errors: %v", apiResp.Errors)
+	}
+
+	// 4) If the caller passed a destination for `Data`, unmarshal it.
+	if out != nil && apiResp.Data != nil {
+		// Create byte map from the Data field
+		var dataBytes []byte
+		dataBytes, err = json.Marshal(apiResp.Data)
+		if err != nil {
+			return nil, validationResult, fmt.Errorf("failed to marshal Data field: %w", err)
+		}
+		// Unmarshal the byte map into the provided destination
+		err = json.Unmarshal(dataBytes, out)
+		if err != nil {
+			return nil, validationResult, fmt.Errorf("failed to unmarshal Data field: %w", err)
+		}
+	}
+
+	return &apiResp, validationResult, nil
 }
 
 // FetchBinary sends a request and returns the raw bytes (which you can treat as a file, or parse further).
