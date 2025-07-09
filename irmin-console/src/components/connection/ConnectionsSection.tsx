@@ -6,6 +6,7 @@ import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -134,7 +135,18 @@ export default function ConnectionsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <ConnectionList connections={filteredItems} />
+        {connectionsQuery.error ? (
+          <QueryError
+            error={connectionsQuery.error}
+            onRetry={() => connectionsQuery.refetch()}
+            title={dict.common.somethingWentWrong}
+          />
+        ) : (
+          <ConnectionList
+            loading={connectionsQuery.isLoading}
+            connections={filteredItems}
+          />
+        )}
       </div>
     </div>
   );

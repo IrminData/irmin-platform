@@ -18,7 +18,9 @@ import {
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -210,6 +212,29 @@ export default function RepositorySection({
     );
   }
 
+  // Handle loading state for repository object
+  if (repositoryObjectQuery.isLoading) {
+    return (
+      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+        <PageSkeleton showHeader={true} contentRows={3} className='py-4' />
+      </div>
+    );
+  }
+
+  // Handle error state for repository object
+  if (repositoryObjectQuery.error) {
+    return (
+      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+        <QueryError
+          error={repositoryObjectQuery.error}
+          onRetry={() => repositoryObjectQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+          className='py-8'
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
@@ -367,6 +392,14 @@ export default function RepositorySection({
                       objectContent={repositoryObjectContentQuery.data}
                     />
                   </div>
+                ) : repositoryObjectContentQuery.error ? (
+                  <QueryError
+                    error={repositoryObjectContentQuery.error}
+                    onRetry={() => repositoryObjectContentQuery.refetch()}
+                    title={dict.common.somethingWentWrong}
+                    size='sm'
+                    className='p-8'
+                  />
                 ) : (
                   <LoadingSkeleton className='h-96 w-full' />
                 )}

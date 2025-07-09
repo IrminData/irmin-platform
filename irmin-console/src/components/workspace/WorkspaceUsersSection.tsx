@@ -7,6 +7,8 @@ import { TbBook } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import QueryError from '@/components/ui/error/QueryError';
+import TableSkeleton from '@/components/ui/loading/TableSkeleton';
 import { MultiSelect } from '@/components/ui/multi-select';
 import {
   Table,
@@ -35,6 +37,38 @@ const WorkspaceUsersSection = () => {
   const { usersQuery, deleteUserMutation, changeUserRoleMutation } = useUsers();
   const { workspaceSlug, workspaceQuery, confirmTransferWorkspace } =
     useWorkspaceContext();
+
+  if (usersQuery.isLoading || rolesQuery.isLoading) {
+    return (
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <TableSkeleton rows={5} columns={6} className='w-full' />
+      </ContentWrapper>
+    );
+  }
+
+  if (usersQuery.error) {
+    return (
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <QueryError
+          error={usersQuery.error}
+          onRetry={() => usersQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+        />
+      </ContentWrapper>
+    );
+  }
+
+  if (rolesQuery.error) {
+    return (
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <QueryError
+          error={rolesQuery.error}
+          onRetry={() => rolesQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+        />
+      </ContentWrapper>
+    );
+  }
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>

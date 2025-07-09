@@ -3,7 +3,9 @@
 import { GoWorkflow } from 'react-icons/go';
 import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 
+import QueryError from '@/components/ui/error/QueryError';
 import LinkCard from '@/components/ui/LinkCard';
+import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -24,6 +26,31 @@ const WorkspaceHomeSection = () => {
     includeSegment: true,
     segmentsAfter: 1,
   });
+
+  if (workspaceQuery?.isLoading) {
+    return (
+      <div className='pattern-bg h-full py-12'>
+        <div className='relative container mx-auto max-w-6xl px-4'>
+          <PageSkeleton showHeader={true} contentRows={2} />
+        </div>
+      </div>
+    );
+  }
+
+  if (workspaceQuery?.error) {
+    return (
+      <div className='pattern-bg h-full py-12'>
+        <div className='relative container mx-auto max-w-6xl px-4'>
+          <QueryError
+            error={workspaceQuery.error}
+            onRetry={() => workspaceQuery.refetch()}
+            title={dict.common.somethingWentWrong}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='pattern-bg h-full py-12'>
       <div className='relative container mx-auto max-w-6xl px-4'>

@@ -6,6 +6,7 @@ import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -123,10 +124,18 @@ export default function WorkflowsSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <WorkflowList
-          loading={workflowsQuery.isLoading}
-          workflows={filteredItems}
-        />
+        {workflowsQuery.error ? (
+          <QueryError
+            error={workflowsQuery.error}
+            onRetry={() => workflowsQuery.refetch()}
+            title={dict.common.somethingWentWrong}
+          />
+        ) : (
+          <WorkflowList
+            loading={workflowsQuery.isLoading}
+            workflows={filteredItems}
+          />
+        )}
       </div>
     </div>
   );

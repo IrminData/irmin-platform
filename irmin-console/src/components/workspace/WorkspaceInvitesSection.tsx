@@ -6,6 +6,8 @@ import { IoExit, IoMailOpenOutline } from 'react-icons/io5';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import QueryError from '@/components/ui/error/QueryError';
+import TableSkeleton from '@/components/ui/loading/TableSkeleton';
 import {
   Select,
   SelectContent,
@@ -62,6 +64,41 @@ const WorkspaceInvitesSection = () => {
       />
     );
   }, [dict, irminModal, rolesQuery.data?.data, sendInviteMutation]);
+
+  if (invitesQuery.isLoading || rolesQuery.isLoading) {
+    return (
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <div className='mb-4 flex flex-row items-center justify-end px-2'>
+          <div className='h-8 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800'></div>
+        </div>
+        <TableSkeleton rows={5} columns={3} />
+      </ContentWrapper>
+    );
+  }
+
+  if (invitesQuery.error) {
+    return (
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <QueryError
+          error={invitesQuery.error}
+          onRetry={() => invitesQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+        />
+      </ContentWrapper>
+    );
+  }
+
+  if (rolesQuery.error) {
+    return (
+      <ContentWrapper wrapperClassName='max-w-7xl py-4'>
+        <QueryError
+          error={rolesQuery.error}
+          onRetry={() => rolesQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+        />
+      </ContentWrapper>
+    );
+  }
 
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>

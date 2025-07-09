@@ -6,7 +6,8 @@ import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import QueryError from '@/components/ui/error/QueryError';
+import TableSkeleton from '@/components/ui/loading/TableSkeleton';
 import {
   Table,
   TableBody,
@@ -123,7 +124,26 @@ const WorkspaceTagsSection = () => {
   if (workspaceTagsQuery.isLoading) {
     return (
       <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-        <LoadingSkeleton />
+        <div className='flex items-center justify-end px-4'>
+          <div className='h-10 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-800'></div>
+        </div>
+        <ContentWrapper>
+          <TableSkeleton rows={5} columns={3} />
+        </ContentWrapper>
+      </div>
+    );
+  }
+
+  if (workspaceTagsQuery.error) {
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <ContentWrapper>
+          <QueryError
+            error={workspaceTagsQuery.error}
+            onRetry={() => workspaceTagsQuery.refetch()}
+            title={dict.workspace.failedToLoadTags}
+          />
+        </ContentWrapper>
       </div>
     );
   }

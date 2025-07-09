@@ -679,6 +679,8 @@ const en = {
       'You can currently only manage billing by contacting our team.',
     taggedItems: 'Tagged items',
     addTags: 'Add tags',
+    failedToLoadTags: 'Failed to load tags',
+    failedToLoadWorkspaces: 'Failed to load workspaces',
   },
   logs: {
     workspaceLogs: 'Workspace audit logs',

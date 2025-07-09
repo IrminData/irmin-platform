@@ -6,7 +6,10 @@ import { TbChevronLeft } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import QueryError from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import { useConnector } from '@/hooks/useConnector';
 
@@ -20,6 +23,7 @@ import { ConnectorInfo } from './ConnectorInfo';
  */
 const ConnectorSection = ({ connectorID }: { connectorID: string }) => {
   const router = useRouter();
+  const { dict } = useLocale();
   const { connectorQuery } = useConnector(connectorID);
 
   return (
@@ -35,6 +39,13 @@ const ConnectorSection = ({ connectorID }: { connectorID: string }) => {
         <ContentWrapper>
           {connectorQuery.isLoading && (
             <LoadingSkeleton className='h-80 w-full' />
+          )}
+          {connectorQuery.error && (
+            <QueryError
+              error={connectorQuery.error}
+              onRetry={() => connectorQuery.refetch()}
+              title={dict.common.somethingWentWrong}
+            />
           )}
           {connectorQuery.data?.data && (
             <ConnectorInfo connector={connectorQuery.data.data} />

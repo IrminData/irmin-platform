@@ -9,8 +9,14 @@ const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
 const appPassword = process.env.ENV_PASSWORD;
 
 // Validate that password is set when auth is required
-if (requireAuth === 'true' && !appPassword && process.env.NODE_ENV === 'production') {
-  throw new Error('ENV_PASSWORD environment variable must be set when REQUIRE_ENV_AUTH is true in production');
+if (
+  requireAuth === 'true' &&
+  !appPassword &&
+  process.env.NODE_ENV === 'production'
+) {
+  throw new Error(
+    'ENV_PASSWORD environment variable must be set when REQUIRE_ENV_AUTH is true in production'
+  );
 }
 
 // List of available locales
@@ -100,13 +106,21 @@ export default clerkMiddleware(async (auth, req) => {
     // Skip auth check if no password is configured and auth is not required
     if (!appPassword) {
       if (requireAuth === 'true' && process.env.NODE_ENV === 'production') {
-        return NextResponse.redirect(new URL('/api/verify-dev-access', req.url));
+        return NextResponse.redirect(
+          new URL('/api/verify-dev-access', req.url)
+        );
       }
       // Allow access when no password is set and auth is not required, or in development
     } else {
       const authorisedDev = cookies.get('authorisedDev');
-      if (!authorisedDev || (authorisedDev.value !== appPassword && authorisedDev.value !== 'no-auth-required')) {
-        return NextResponse.redirect(new URL('/api/verify-dev-access', req.url));
+      if (
+        !authorisedDev ||
+        (authorisedDev.value !== appPassword &&
+          authorisedDev.value !== 'no-auth-required')
+      ) {
+        return NextResponse.redirect(
+          new URL('/api/verify-dev-access', req.url)
+        );
       }
     }
   }

@@ -6,8 +6,9 @@ import { Controller, useForm } from 'react-hook-form';
 
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import Input from '@/components/ui/input';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -68,22 +69,12 @@ const ManageWorkspacesSection = () => {
           <div className='flex flex-col'>
             <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
             <div className='flex flex-col gap-4 px-4 pb-28'>
-              <div className='bg-card border-destructive w-full rounded-lg border px-4 py-8'>
-                <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
-                  {dict.common.ohNo}
-                </p>
-                <p className='text-card-foreground/80 mx-auto max-w-lg text-center text-sm'>
-                  {(workspacesQuery.error as Error).message}
-                </p>
-                <div className='mt-4 flex justify-center'>
-                  <Button
-                    variant='default'
-                    onClick={() => window.location.reload()}
-                  >
-                    {dict.common.tryAgain}
-                  </Button>
-                </div>
-              </div>
+              <QueryError
+                error={workspacesQuery.error}
+                onRetry={() => workspacesQuery.refetch()}
+                title={dict.workspace.failedToLoadWorkspaces}
+                className='py-8'
+              />
             </div>
           </div>
         </div>
@@ -184,7 +175,9 @@ const ManageWorkspacesSection = () => {
               </div>
             ) : (
               <div className='ml-auto grow'>
-                <LoadingSkeleton className='h-80 w-full' />
+                <div className='-mx-2 flex w-full flex-wrap content-stretch items-stretch justify-start'>
+                  <ListSkeleton items={6} className='p-2' />
+                </div>
               </div>
             )}
           </div>

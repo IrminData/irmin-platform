@@ -6,6 +6,7 @@ import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -121,10 +122,18 @@ export default function RepositoriesSection({
             placeholder={dict.list.searchPlaceholder}
           />
         </div>
-        <RepositoryList
-          loading={repositoriesQuery.isLoading}
-          repositories={filteredItems}
-        />
+        {repositoriesQuery.error ? (
+          <QueryError
+            error={repositoriesQuery.error}
+            onRetry={() => repositoriesQuery.refetch()}
+            title={dict.common.somethingWentWrong}
+          />
+        ) : (
+          <RepositoryList
+            loading={repositoriesQuery.isLoading}
+            repositories={filteredItems}
+          />
+        )}
       </div>
     </div>
   );

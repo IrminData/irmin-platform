@@ -25,6 +25,7 @@ import {
 import { Dictionary } from '@/lib/dict';
 
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import TagBadge from '@/components/ui/TagBadge';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -464,6 +465,19 @@ export default function SearchPageComponent() {
                 {dict.list.noItemsFound}
               </p>
             </div>
+          ) : workspaceTagsQuery.error ? (
+            <div>
+              <label className='mb-3 block text-sm text-gray-700 dark:text-gray-300'>
+                {dict.workspace.tags}
+              </label>
+              <QueryError
+                error={workspaceTagsQuery.error}
+                onRetry={() => workspaceTagsQuery.refetch()}
+                title={dict.workspace.failedToLoadTags}
+                size='sm'
+                showRefresh={false}
+              />
+            </div>
           ) : null}
 
           {/* Date Range Filter */}
@@ -546,10 +560,22 @@ export default function SearchPageComponent() {
           </div>
         )}
 
-        {/* Loading State - only show when no results available */}
-        {isLoading && accumulatedResults.length === 0 && (
-          <SearchResultsSkeleton />
+        {/* Error State */}
+        {(workspaceSearchQuery.error || staticSearchItemsQuery.error) && (
+          <QueryError
+            error={workspaceSearchQuery.error || staticSearchItemsQuery.error}
+            onRetry={() => {
+              if (workspaceSearchQuery.error) workspaceSearchQuery.refetch();
+            }}
+            title={dict.common.somethingWentWrong}
+          />
         )}
+
+        {/* Loading State - only show when no results available */}
+        {isLoading &&
+          accumulatedResults.length === 0 &&
+          !workspaceSearchQuery.error &&
+          !staticSearchItemsQuery.error && <SearchResultsSkeleton />}
 
         {/* Results */}
         {filters.query && accumulatedResults.length > 0 && (

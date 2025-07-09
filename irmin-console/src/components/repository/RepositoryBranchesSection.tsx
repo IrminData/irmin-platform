@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { IoAdd } from 'react-icons/io5';
 
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -118,6 +119,18 @@ export default function RepositoryBranchesSection() {
         <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
           {dict.common.insufficientPermissions}
         </p>
+      </div>
+    );
+  }
+
+  if (repositoryBranchesQuery.error) {
+    return (
+      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+        <QueryError
+          error={repositoryBranchesQuery.error}
+          onRetry={() => repositoryBranchesQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+        />
       </div>
     );
   }

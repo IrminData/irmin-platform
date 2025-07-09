@@ -19,27 +19,27 @@ export default function removeCircularJSON(target: any) {
 
   // Use WeakMap for better performance and automatic garbage collection
   const seen = new WeakMap<object, any>();
-  
+
   const recurse = (obj: any): any => {
     // Handle non-objects
     if (typeof obj !== 'object' || obj === null) {
       return obj;
     }
-    
+
     // Check for circular reference
     if (seen.has(obj)) {
       return '[Circular Reference]'; // Replace with a string marker instead of deleting
     }
-    
+
     // Mark as visited
     seen.set(obj, true);
-    
+
     // Handle arrays
     if (Array.isArray(obj)) {
-      const result = obj.map(item => recurse(item));
+      const result = obj.map((item) => recurse(item));
       return result;
     }
-    
+
     // Handle objects
     const result: any = {};
     for (const key in obj) {
@@ -47,7 +47,7 @@ export default function removeCircularJSON(target: any) {
         result[key] = recurse(obj[key]);
       }
     }
-    
+
     return result;
   };
 

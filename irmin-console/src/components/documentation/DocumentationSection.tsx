@@ -11,6 +11,8 @@ import { BsFilePdf } from 'react-icons/bs';
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
+import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useIAM } from '@/context/IAMContext';
@@ -44,6 +46,53 @@ export default function DocumentationSection() {
     toPDF();
     pdfHeaderRef.current?.classList.add('hidden');
   }, [toPDF]);
+
+  // Handle loading states
+  if (
+    workspaceQuery.isLoading ||
+    connectionsQuery.isLoading ||
+    workflowsQuery.isLoading ||
+    repositoriesQuery.isLoading
+  ) {
+    return (
+      <div className='bg-background'>
+        <div className='relative container mx-auto max-w-7xl'>
+          <div className='flex flex-col px-2 md:px-4'>
+            <PageSkeleton showHeader={true} contentRows={4} className='py-8' />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error states
+  const errors = [
+    workspaceQuery.error,
+    connectionsQuery.error,
+    workflowsQuery.error,
+    repositoriesQuery.error,
+  ].filter(Boolean);
+
+  if (errors.length > 0) {
+    return (
+      <div className='bg-background'>
+        <div className='relative container mx-auto max-w-7xl'>
+          <div className='flex flex-col px-2 py-8 md:px-4'>
+            <QueryError
+              error={errors[0]}
+              onRetry={() => {
+                if (workspaceQuery.error) workspaceQuery.refetch();
+                if (connectionsQuery.error) connectionsQuery.refetch();
+                if (workflowsQuery.error) workflowsQuery.refetch();
+                if (repositoriesQuery.error) repositoriesQuery.refetch();
+              }}
+              title={dict.common.somethingWentWrong}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!workspaceQuery?.data) return null;
 

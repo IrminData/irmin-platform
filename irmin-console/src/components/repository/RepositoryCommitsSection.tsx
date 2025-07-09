@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -41,6 +42,18 @@ export default function RepositoryCommitsSection() {
         <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
           {dict.common.insufficientPermissions}
         </p>
+      </div>
+    );
+  }
+
+  if (commitsQuery.error) {
+    return (
+      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+        <QueryError
+          error={commitsQuery.error}
+          onRetry={() => commitsQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+        />
       </div>
     );
   }

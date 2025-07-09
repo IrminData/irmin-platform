@@ -12,6 +12,7 @@ import {
 } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import {
   Table,
   TableBody,
@@ -176,6 +177,15 @@ export default function ObjectList({
       <div className='bg-background max-h-[400px] w-full overflow-scroll'>
         {repositoryObjectQuery.isLoading ? (
           <TableSkeleton />
+        ) : repositoryObjectQuery.error ? (
+          <div className='p-8'>
+            <QueryError
+              error={repositoryObjectQuery.error}
+              onRetry={() => repositoryObjectQuery.refetch()}
+              title={dict.common.somethingWentWrong}
+              size='sm'
+            />
+          </div>
         ) : (
           <>
             <Table>

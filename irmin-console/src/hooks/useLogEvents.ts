@@ -204,29 +204,16 @@ export const useLogEvents = (
     }, 400);
   }, []);
 
-  // Handle errors after all hooks are defined
-  if (logEventsQuery.isError) {
-    console.error('Failed to fetch log events:', logEventsQuery.error);
-    return {
-      logEvents: [],
-      loading: false,
-      totalItems: 0,
-      currentPage: 1,
-      totalPages: 1,
-      refresh,
-      goToPage,
-      setSearchQuery: handleSearchQueryChange,
-    };
-  }
-
   return {
     logEvents: logEventsQuery.data?.data ?? [],
     loading: logEventsQuery.isLoading,
+    error: logEventsQuery.error,
     totalItems: logEventsQuery.data?.pagination?.total ?? 0,
     currentPage,
     totalPages: logEventsQuery.data?.pagination?.total_pages ?? 1,
     refresh,
     goToPage,
     setSearchQuery: handleSearchQueryChange,
+    refetch: logEventsQuery.refetch,
   };
 };

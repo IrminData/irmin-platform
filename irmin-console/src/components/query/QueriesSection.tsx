@@ -19,6 +19,8 @@ import QueryResults from '@/components/query/QueryResults';
 import SchemaViewer from '@/components/repository/objects/SchemaViewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
+import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
@@ -315,7 +317,16 @@ export default function QueriesSection() {
             </Button>
           </div>
           {storedQueriesQuery.isLoading && (
-            <LoadingSkeleton className='h-80 w-full' />
+            <ListSkeleton items={6} className='p-2' />
+          )}
+          {storedQueriesQuery.error && (
+            <QueryError
+              error={storedQueriesQuery.error}
+              onRetry={() => storedQueriesQuery.refetch()}
+              title={dict.common.somethingWentWrong}
+              size='sm'
+              className='m-4'
+            />
           )}
           {storedQueriesQuery.data?.data?.map((query, idx) => (
             <div
@@ -432,11 +443,12 @@ export default function QueriesSection() {
       {!queryResultsOpen ? (
         <div className='contents'>
           <div className='h-full max-h-[calc(100vh-400px)] overflow-y-scroll border-t border-gray-200 p-4 dark:border-gray-800'>
-            {workspaceSchema.loading && (
+            {workspaceSchema.loading ? (
               <LoadingSkeleton className='h-full w-full' />
-            )}
-            {!workspaceSchema.loading && workspaceSchema.schema && (
+            ) : workspaceSchema.schema ? (
               <SchemaViewer schema={workspaceSchema.schema} isExpanded={true} />
+            ) : (
+              <></>
             )}
           </div>
 

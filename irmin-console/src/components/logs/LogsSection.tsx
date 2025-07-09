@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { TbChevronLeft, TbSearch } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
+import QueryError from '@/components/ui/error/QueryError';
 import PaginationControls from '@/components/ui/PaginationControls';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -70,7 +71,9 @@ export default function LogsSection({
     currentPage,
     totalPages,
     loading,
+    error,
     setSearchQuery,
+    refetch,
   } = useLogEvents({
     perPage: 50,
     logsForType,
@@ -172,7 +175,15 @@ export default function LogsSection({
         <p className='text-foreground/80 text-xs lg:text-sm'>
           {dict.logs.foundLogEvents}: {totalItems}
         </p>
-        <LogEventFeed events={logEvents} loading={loading} />
+        {error ? (
+          <QueryError
+            error={error}
+            onRetry={() => refetch()}
+            title={dict.common.somethingWentWrong}
+          />
+        ) : (
+          <LogEventFeed events={logEvents} loading={loading} />
+        )}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

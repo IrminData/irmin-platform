@@ -9,6 +9,7 @@ Irmin Console is the main web application for the Irmin data platform - a Next.j
 ## Architecture
 
 ### Core Stack
+
 - **Next.js 15** with App Router and React 19
 - **TypeScript** with strict configuration
 - **Tailwind CSS v4** with custom design tokens
@@ -17,6 +18,7 @@ Irmin Console is the main web application for the Irmin data platform - a Next.j
 - **Clerk** for authentication and user management
 
 ### Key Architecture Patterns
+
 - **Service Layer**: Centralized API client (`IrminCore`) with domain-specific services
 - **Context-Driven**: Multiple layered providers for global state management
 - **Custom Hooks**: Domain-specific hooks for data fetching and state management
@@ -24,6 +26,7 @@ Irmin Console is the main web application for the Irmin data platform - a Next.j
 - **Internationalization**: URL-based locale routing with `[lang]` parameter
 
 ### Directory Structure
+
 ```
 src/
 ├── app/                     # Next.js App Router pages
@@ -43,12 +46,14 @@ src/
 ## Development Commands
 
 ### Dependencies
+
 ```bash
 # Install dependencies (requires Node.js 22+, pnpm 10.12.1+)
 pnpm install
 ```
 
 ### Development
+
 ```bash
 # Start development server with HTTPS and Turbopack
 pnpm dev
@@ -61,6 +66,7 @@ pnpm start
 ```
 
 ### Code Quality
+
 ```bash
 # Linting
 pnpm lint
@@ -75,6 +81,7 @@ pnpm docs
 ```
 
 ### Testing
+
 ```bash
 # Run end-to-end tests
 pnpm e2e
@@ -95,6 +102,7 @@ pnpm e2e:codegen-mobile
 ## Development Guidelines
 
 ### Code Quality Standards
+
 - Use ESLint with Next.js and TypeScript strict rules
 - Document all exported functions with TypeDoc comments
 - Follow React best practices with hooks and functional components
@@ -102,18 +110,21 @@ pnpm e2e:codegen-mobile
 - All E2E tests must pass before deployment
 
 ### Component Development
+
 - Use Radix UI primitives for accessible components
 - Follow the compound component pattern for complex UI elements
 - Create layout wrappers for consistent page structure
 - Use TypeScript for all component props and state
 
 ### State Management
+
 - Use TanStack Query for server state with standardized query keys
 - Implement React Context for cross-cutting concerns
 - Use React Hook Form for form state management
 - Follow the custom hook pattern for domain-specific logic
 
 ### API Integration
+
 - Use the centralized `IrminCore` client for all API calls
 - Implement service classes for each domain (connections, repositories, etc.)
 - Handle authentication tokens automatically via Clerk integration
@@ -122,23 +133,27 @@ pnpm e2e:codegen-mobile
 ## Key Features
 
 ### Authentication & Authorization
+
 - Clerk integration for user management
 - Role-based access control at workspace level
 - Dynamic authentication provider loading
 
 ### Data Management
+
 - Git-like repository structure with branches, commits, and tags
 - Visual diff viewers for data changes
 - Object upload and management with schema validation
 - Query execution with results visualization
 
-### Workflow Orchestration  
+### Workflow Orchestration
+
 - Visual pipeline editor for workflow creation
 - Scheduled and event-driven workflow execution
 - Connector-based data integrations
 - Real-time workflow run monitoring
 
 ### Internationalization
+
 - URL-based locale detection (`/en/`, `/fi/`)
 - Cookie-based locale persistence
 - Typed dictionary system with compile-time safety
@@ -147,12 +162,14 @@ pnpm e2e:codegen-mobile
 ## Testing Strategy
 
 ### End-to-End Testing
+
 - Playwright for comprehensive E2E testing
 - Pre-configured test user authentication
 - Cross-browser testing (Chrome, Firefox, Safari)
 - Mobile viewport testing capabilities
 
 ### Test Environment Setup
+
 - Requires test user credentials in environment variables
 - Uses authentication state persistence for faster test execution
 - Includes CI/CD integration with retry logic
@@ -160,6 +177,7 @@ pnpm e2e:codegen-mobile
 ## Environment Configuration
 
 ### Required Environment Variables
+
 ```bash
 # Core application settings
 NEXT_PUBLIC_BASE_URL=https://console.irmin.dev
@@ -183,16 +201,19 @@ TEST_USER_WORKSPACE=workspace_name
 ## Deployment Notes
 
 ### Build Process
+
 - TypeDoc documentation is generated during build
 - Sentry source maps are uploaded automatically
 - Standalone output for containerized deployment
 
 ### Performance Monitoring
+
 - Vercel Speed Insights integration
 - Sentry performance monitoring
 - PostHog analytics for user behavior
 
 ### Development Features
+
 - Local HTTPS development with custom certificates
 - Hot module replacement with Turbopack
 - Environment-based access control for staging

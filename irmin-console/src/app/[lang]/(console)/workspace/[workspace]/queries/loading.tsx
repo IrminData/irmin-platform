@@ -1,4 +1,4 @@
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
 export default function QueriesLoading() {
   return (
@@ -6,7 +6,7 @@ export default function QueriesLoading() {
       id='queries-loading'
       className='relative container mx-auto max-w-7xl py-12'
     >
-      <LoadingSkeleton className='h-96' />
+      <PageSkeleton showSidebar={true} contentRows={3} />
     </div>
   );
 }
