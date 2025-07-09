@@ -11,9 +11,14 @@ A collection of deployable connectors for Irmin that enable universal interactio
 - **[Planned Connectors](planned-connectors.md)** - Roadmap and upcoming integrations
 - **[Future Improvements](future-improvements.md)** - Enhancement plans and architecture evolution
 
-## What is Irmin Connectors?
+### Available Connectors
 
-Irmin Connectors is a repository containing connector implementations that allow the Irmin platform to interact with virtually any external system. Connectors define standardized interfaces that enable seamless data import, export, and synchronization across diverse platforms and services.
+- **[PostgreSQL](connectors/postgres/README.md)** - Database connector for PostgreSQL.
+- **[MySQL](connectors/mysql/README.md)** - Database connector for MySQL.
+
+## What are Irmin Connectors?
+
+Irmin Connectors are a collection of API services that allow the Irmin platform to interact with virtually any external system. Connectors define standardized interfaces that enable seamless data import, export, and synchronization across diverse platforms and services.
 
 For detailed information about how connectors work, the registration process, data transmission, and core concepts, see our [Concepts and Processes](concepts-and-processes.md) documentation.
 
@@ -34,23 +39,10 @@ For detailed information about how connectors work, the registration process, da
 - **Dependency Management**: Go modules for package management
 - **Testing**: Built-in Go testing framework with custom extensions
 
-## Available Connectors
-
-### Production Ready
-- **PostgreSQL** ✅ - Complete database integration with real-time change detection
-
-Each connector includes its own detailed README with specific implementation details, configuration options, and usage examples. You can find connector-specific documentation in their respective directories under `connectors/`.
-
-### Planned Connectors
-See [Planned Connectors](planned-connectors.md) for the complete roadmap including:
-- Database connectors (MySQL, MongoDB, etc.)
-- Cloud storage (Google Drive, S3, etc.)
-- Business applications (Salesforce, HubSpot, etc.)
-- API integrations (REST, GraphQL, etc.)
-
 ## Getting Started
 
 ### Prerequisites
+
 - Go 1.21 or higher
 - PostgreSQL database
 - Access to Irmin API instance
@@ -58,11 +50,13 @@ See [Planned Connectors](planned-connectors.md) for the complete roadmap includi
 ### Installation and Setup
 
 **Install dependencies**
+
 ```bash
 go mod download
 ```
 
 **Update dependencies**
+
 ```bash
 go mod tidy && go get -u ./...
 ```
@@ -70,6 +64,7 @@ go mod tidy && go get -u ./...
 **Environment Configuration**
 
 Create a `.env` file with the following variables:
+
 ```bash
 PORT=8080
 URL=http://localhost:8080
@@ -88,17 +83,20 @@ DATABASE_CONNECTION_STRING=postgres://user:password@localhost:5432/database
 ### Running the Application
 
 **Development (with hot reloading)**
+
 ```bash
 air
 ```
 
 **Production build**
+
 ```bash
 go build -o out
 ./out
 ```
 
 **With flags**
+
 ```bash
 go run main.go -skip-registrations  # Skip connector registrations
 ```
@@ -106,11 +104,13 @@ go run main.go -skip-registrations  # Skip connector registrations
 ### Code Quality
 
 **Run linter**
+
 ```bash
 golangci-lint run
 ```
 
 **Run with autofix**
+
 ```bash
 golangci-lint run --fix
 ```
@@ -118,14 +118,17 @@ golangci-lint run --fix
 ## Documentation
 
 ### Architecture and Concepts
+
 - [Concepts and Processes](concepts-and-processes.md) - Core concepts, architecture, and how connectors work
 
 ### For Developers
+
 - [How to Create Connectors](how-to-create-connectors.md) - Complete guide for building new connectors
 - [PostgreSQL Connector](connectors/postgres/README.md) - Detailed PostgreSQL connector documentation
 - [Future Improvements](future-improvements.md) - Planned enhancements and roadmap
 
 ### For Users
+
 - [Planned Connectors](planned-connectors.md) - Roadmap of upcoming connectors
 - API documentation available at runtime on `/docs` endpoint
 
@@ -166,6 +169,7 @@ We welcome contributions from the community! Whether you want to:
 ### Roadmap and Updates
 
 Stay updated with:
+
 - **Release Notes**: Regular updates on new features and improvements
 - **Roadmap**: Check our planned connectors and improvements
 - **Community Feedback**: Your input helps shape our development priorities

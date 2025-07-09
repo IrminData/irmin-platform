@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"encoding/json"
+	mysqlconnector "irmin-connectors/connectors/mysql"
 	postgresconnector "irmin-connectors/connectors/postgres"
 	"irmin-connectors/db"
 	"irmin-connectors/models"
@@ -13,6 +14,7 @@ import (
 func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	// Setup routes for each connector
 	postgresconnector.SetupRoutes(app)
+	mysqlconnector.SetupRoutes(app)
 	// ... Add new connectors here ...
 }
 
@@ -27,8 +29,11 @@ func StartConnectorSubscriptionListener(
 	var err error
 
 	// Start the listener using the correct connector
-	if connectorName == "PostgreSQL" {
+	switch connectorName {
+	case "PostgreSQL":
 		err = postgresconnector.StartListener(ctx, logger, subscription, d)
+	case "MySQL":
+		err = mysqlconnector.StartListener(ctx, logger, subscription, d)
 	}
 	// ... Add new connectors here ...
 
@@ -50,6 +55,7 @@ func RegisterAllConnectors(
 		Slug string
 	}{
 		{"PostgreSQL", "postgres"},
+		{"MySQL", "mysql"},
 		// ... Add new connectors here ...
 	}
 
