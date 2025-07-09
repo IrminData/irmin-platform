@@ -82,6 +82,15 @@ func registerConnector(
 		return nil, fmt.Errorf("error updating connector in the database: %w", err)
 	}
 
+	// Ensure cleanup of temporary registration regardless of success or failure
+	defer func() {
+		if deleteErr := database.DeleteConnectorRegistration(tempRegistration.ID); deleteErr != nil {
+			logger.Error("Failed to delete temporary connector registration",
+				"error", deleteErr,
+				"registration_id", tempRegistration.ID)
+		}
+	}()
+
 	// Send a request to register the connector
 	newConnector, res, err := apiClient.RegisterNewConnector(
 		irmincore.ConnectorRequest{
@@ -94,12 +103,6 @@ func registerConnector(
 	}
 	logger.Info("Connector registered",
 		"message", res.Message)
-
-	// Delete the temporary registration
-	err = database.DeleteConnectorRegistration(tempRegistration.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error deleting temporary connector registration: %w", err)
-	}
 
 	// Create a new connector in the database
 	err = lib.UpdateConnectorInDB(database, logger, newConnector.ID, token, connectorName)

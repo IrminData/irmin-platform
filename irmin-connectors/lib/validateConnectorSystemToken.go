@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"crypto/subtle"
 	"irmin-connectors/db"
 	"log/slog"
 	"strings"
@@ -37,7 +38,8 @@ func ValidateConnectorSystemToken(
 	var validToken = false
 	var validRegistration *db.ConnectorRegistration
 	for _, registrationInstance := range registrations {
-		if token == registrationInstance.SystemToken {
+		// Use constant-time comparison to prevent timing attacks
+		if subtle.ConstantTimeCompare([]byte(token), []byte(registrationInstance.SystemToken)) == 1 {
 			validToken = true
 			validRegistration = &registrationInstance
 		}

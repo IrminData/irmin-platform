@@ -10,9 +10,13 @@ import (
 	"irmin-connectors/utils"
 	"log"
 	"log/slog"
+	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -26,6 +30,18 @@ import (
 
 // Constants for the application.
 const (
+	// StartupTimeoutSeconds is the duration for which the startup is allowed to take.
+	StartupTimeoutSeconds = 30
+
+	// MaxStartupAttempts is the maximum number of attempts to start the server.
+	MaxStartupAttempts = 600
+
+	// StartupAttemptsInterval is the interval between startup attempts.
+	StartupAttemptsInterval = 50 * time.Millisecond
+
+	// ConnectionTimeout is the timeout for TCP connection attempts.
+	ConnectionTimeout = 100 * time.Millisecond
+
 	// CacheExpirationSeconds is the duration for which the cache is valid.
 	CacheExpirationSeconds = 10
 
@@ -165,14 +181,45 @@ func initializeConnectors(app *models.ConnectorsApp, skipRegistrations bool) err
 	return nil
 }
 
+// waitForServerReady waits for the server to be ready by attempting to connect to it.
+// Returns true if server is ready, false if context is cancelled or max attempts reached.
+func waitForServerReady(ctx context.Context, port string, maxAttempts int) bool {
+	address := ":" + port
+
+	for range maxAttempts {
+		select {
+		case <-ctx.Done():
+			return false
+		default:
+		}
+
+		conn, err := net.DialTimeout("tcp", address, ConnectionTimeout)
+		if err == nil {
+			if closeErr := conn.Close(); closeErr != nil {
+				log.Printf("Warning: failed to close connection: %v", closeErr)
+			}
+			return true
+		}
+
+		// Wait a bit before retrying
+		time.Sleep(StartupAttemptsInterval)
+	}
+
+	return false
+}
+
 func main() {
 	// Define flags.
 	skipRegistrations := flag.Bool("skip-registrations", false, "Skip connector registrations")
 	migrate := flag.Bool("migrate", false, "Run database migrations")
 	flag.Parse()
 
+	// Create context for startup timeout (reasonable time limit) - do this early so it can be used throughout
+	startupCtx, startupCancel := context.WithTimeout(context.Background(), StartupTimeoutSeconds*time.Second)
+
 	app, err := NewConnectorsApp(*migrate)
 	if err != nil {
+		startupCancel()
 		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
@@ -180,17 +227,72 @@ func main() {
 	app.App.Get("/public/*", static.New("./public"))
 	connectors.SetupConnectorRoutes(app)
 
-	// Start the server
-	go func() {
-		log.Printf("Server starting on port %s...", app.Env.Port)
-		log.Fatal(app.App.Listen(":"+app.Env.Port, fiber.ListenConfig{
-			EnablePrefork: app.Env.PreforkEnabled,
-		}))
-	}()
-
+	// Initialize connectors before starting server
 	if initConnErr := initializeConnectors(app, *skipRegistrations); initConnErr != nil {
+		startupCancel()
 		log.Fatalf("Error initializing connectors: %v", initConnErr)
 	}
 
-	select {}
+	// Channel for server errors
+	serverErr := make(chan error, 1)
+
+	// Start the server
+	go func() {
+		log.Printf("Server starting on port %s...", app.Env.Port)
+
+		// Try to start the server
+		appListenErr := app.App.Listen(":"+app.Env.Port, fiber.ListenConfig{
+			EnablePrefork: app.Env.PreforkEnabled,
+		})
+
+		// If Listen returns, it's either due to an error or graceful shutdown
+		serverErr <- appListenErr
+	}()
+
+	// Setup graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// Wait for server to be ready or fail
+	serverReady := make(chan bool, 1)
+	go func() {
+		// Wait for server to actually accept connections
+		ready := waitForServerReady(startupCtx, app.Env.Port, MaxStartupAttempts)
+		serverReady <- ready
+	}()
+
+	// Wait for startup completion or failure
+	select {
+	case appListenErr := <-serverErr:
+		// Server returned an error (startup failure)
+		startupCancel()
+		log.Fatalf("Server failed to start: %v", appListenErr)
+	case ready := <-serverReady:
+		if !ready {
+			startupCancel()
+			log.Fatalf("Server failed to become ready within startup timeout")
+		}
+
+		// Server is confirmed ready - startup phase is complete
+		startupCancel()
+		log.Printf("Server successfully started and ready on port %s", app.Env.Port)
+
+		// Now wait for shutdown signal or runtime error
+		select {
+		case appListenErr := <-serverErr:
+			// Server encountered a runtime error or was shut down
+			if appListenErr != nil {
+				log.Printf("Server error: %v", appListenErr)
+			}
+		case <-quit:
+			log.Println("Shutting down server...")
+
+			// Shutdown with timeout
+			if appShutdownErr := app.App.Shutdown(); appShutdownErr != nil {
+				log.Printf("Server forced to shutdown: %v", appShutdownErr)
+			}
+
+			log.Println("Server gracefully stopped")
+		}
+	}
 }
