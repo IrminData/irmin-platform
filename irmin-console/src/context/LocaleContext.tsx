@@ -54,9 +54,14 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const switchLocale = useCallback(
     (newLocale: Locale) => {
       setCookie('locale', newLocale, 365);
-      router.push(`/${newLocale}${pathname}`);
+      
+      // Remove the current locale from the pathname before adding the new locale
+      // pathname format: /[locale]/rest/of/path
+      const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+      
+      router.push(`/${newLocale}${pathWithoutLocale}`);
     },
-    [pathname, router]
+    [pathname, router, locale]
   );
 
   const value = useMemo(

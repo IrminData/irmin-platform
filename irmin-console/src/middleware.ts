@@ -124,7 +124,7 @@ export default clerkMiddleware(async (auth, req) => {
     // Redirect /tsdocs/* to /frontend-docs/*
     if (pathname.startsWith('/tsdocs')) {
       return NextResponse.redirect(
-        new URL(pathname.replace('/tsdoc', '/frontend-docs'), req.url)
+        new URL(pathname.replace('/tsdocs', '/frontend-docs'), req.url)
       );
     }
 
