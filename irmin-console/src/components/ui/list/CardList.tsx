@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
+import EmptyState from '@/components/ui/EmptyState';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -121,8 +122,13 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
         )}
       </div>
       {!loading && rows.length === 0 && (
-        <div className='text-foreground col-span-full p-4 py-8 text-center text-sm lg:text-base'>
-          {dict.list.noItemsFound}
+        <div className='col-span-full'>
+          <EmptyState
+            title={dict.list.emptyState.generic.title}
+            description={dict.list.emptyState.generic.description}
+            size="sm"
+            className="py-8"
+          />
         </div>
       )}
     </div>

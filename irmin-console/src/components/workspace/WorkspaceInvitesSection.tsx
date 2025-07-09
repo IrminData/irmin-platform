@@ -6,6 +6,7 @@ import { IoExit, IoMailOpenOutline } from 'react-icons/io5';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import EmptyState from '@/components/ui/EmptyState';
 import QueryError from '@/components/ui/error/QueryError';
 import TableSkeleton from '@/components/ui/loading/TableSkeleton';
 import {
@@ -100,85 +101,102 @@ const WorkspaceInvitesSection = () => {
     );
   }
 
+  const invites = invitesQuery.data?.data ?? [];
+  const hasInvites = invites.length > 0;
+
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       {/* Row containing the invite button */}
-      <div className='flex flex-row items-center justify-end px-2'>
+      <div className='flex flex-row items-center justify-end px-2 mb-4'>
         <Button size='sm' variant='default' onClick={handleSendInvite}>
           {dict.users.inviteUser}
         </Button>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
-              {dict.users.email}
-            </TableHead>
-            <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
-              {dict.users.role}
-            </TableHead>
-            <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
-              {/* Actions */}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invitesQuery.data?.data?.map((invite, idx) => (
-            <TableRow
-              key={`workspace-invite-${invite.id}-${idx}`}
-              className='h-14 border-b dark:border-gray-800'
-            >
-              <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
-                {invite.email}
-              </TableCell>
-              <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
-                <Select
-                  value={invite.role.id}
-                  onValueChange={(value) => {
-                    if (!value) return;
-                    // Change role of an invited user
-                    changeInviteRoleMutation.mutate({
-                      id: invite.id,
-                      roleId: value,
-                    });
-                  }}
-                >
-                  <SelectTrigger className='w-[200px]'>
-                    <SelectValue placeholder={invite.role.role} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rolesQuery.data?.data?.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className='px-4 py-2 text-right'>
-                <div className='flex w-full flex-row justify-end gap-2 align-middle'>
-                  <ButtonWithTooltip
-                    size='icon'
-                    variant='secondary'
-                    aria-label='Resend invite'
-                    icon={<IoMailOpenOutline size={14} />}
-                    onClick={() => resendInviteMutation.mutate(invite.id)}
-                    tooltip={dict.users.resendInvite}
-                  />
-                  <ButtonWithTooltip
-                    size='icon'
-                    variant='secondary'
-                    aria-label='Cancel invite'
-                    icon={<IoExit size={14} />}
-                    onClick={() => deleteInviteMutation.mutate(invite.id)}
-                    tooltip={dict.users.cancelInvite}
-                  />
-                </div>
-              </TableCell>
+
+      {!hasInvites ? (
+        <EmptyState
+          title={dict.list.emptyState.invites.title}
+          description={dict.list.emptyState.invites.description}
+          action={{
+            label: dict.users.inviteUser,
+            onClick: handleSendInvite,
+            variant: 'gradient'
+          }}
+          className="py-16"
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+                {dict.users.email}
+              </TableHead>
+              <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+                {dict.users.role}
+              </TableHead>
+              <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+                {/* Actions */}
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {invites.map((invite, idx) => (
+              <TableRow
+                key={`workspace-invite-${invite.id}-${idx}`}
+                className='h-14 border-b dark:border-gray-800'
+              >
+                <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                  {invite.email}
+                </TableCell>
+                <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
+                  <Select
+                    value={invite.role.id}
+                    onValueChange={(value) => {
+                      if (!value) return;
+                      // Change role of an invited user
+                      changeInviteRoleMutation.mutate({
+                        id: invite.id,
+                        roleId: value,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className='w-[200px]'>
+                      <SelectValue placeholder={invite.role.role} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rolesQuery.data?.data?.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className='px-4 py-2 text-right'>
+                  <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                    <ButtonWithTooltip
+                      size='icon'
+                      variant='secondary'
+                      aria-label='Resend invite'
+                      icon={<IoMailOpenOutline size={14} />}
+                      onClick={() => resendInviteMutation.mutate(invite.id)}
+                      tooltip={dict.users.resendInvite}
+                    />
+                    <ButtonWithTooltip
+                      size='icon'
+                      variant='secondary'
+                      aria-label='Cancel invite'
+                      icon={<IoExit size={14} />}
+                      onClick={() => deleteInviteMutation.mutate(invite.id)}
+                      tooltip={dict.users.cancelInvite}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </ContentWrapper>
   );
 };

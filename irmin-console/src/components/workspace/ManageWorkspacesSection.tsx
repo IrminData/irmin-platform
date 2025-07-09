@@ -6,6 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import Button from '@/components/ui/button';
+import EmptyState from '@/components/ui/EmptyState';
 import QueryError from '@/components/ui/error/QueryError';
 import Input from '@/components/ui/input';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
@@ -83,7 +84,93 @@ const ManageWorkspacesSection = () => {
   }
 
   const workspaceList = workspacesQuery.data?.data ?? [];
+  const hasWorkspaces = workspaceList.length > 0;
 
+  // When there are no workspaces, show only the big creation form
+  if (!workspacesQuery.isLoading && !hasWorkspaces) {
+    return (
+      <div className='pattern-bg h-full'>
+        <div className='relative container mx-auto max-w-2xl'>
+          <div className='flex flex-col items-center justify-center min-h-[60vh] px-4'>
+            <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} className="mb-8" />
+            
+            <div className='w-full max-w-lg'>
+              <EmptyState
+                title={dict.workspaceSwitcher.createFirstWorkspace}
+                description={dict.workspaceSwitcher.createFirstWorkspaceDescription}
+                size="lg"
+                className="mb-8"
+              />
+              
+              {/* Big creation form */}
+              <div className='bg-background text-foreground rounded-xl p-6 shadow-md border'>
+                <h2 className="text-xl font-semibold mb-4">{dict.workspaceSwitcher.createNewWorkspace}</h2>
+                <form
+                  onSubmit={handleSubmit(handleCreateWorkspace)}
+                  className={`${createMutation.isPending && 'blur-xs'}`}
+                >
+                  <Controller
+                    name='newWorkspaceName'
+                    control={control}
+                    rules={{ required: dict.common.fieldRequired }}
+                    render={({ field }) => (
+                      <Input
+                        type='text'
+                        placeholder={dict.workspace.workspaceName}
+                        required
+                        className='mb-4'
+                        disabled={createMutation.isPending}
+                        {...field}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name='newWorkspaceDescription'
+                    control={control}
+                    rules={{
+                      maxLength: {
+                        value: 255,
+                        message: dict.common.fieldInvalid,
+                      },
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        type='text'
+                        placeholder={dict.workspace.workspaceDescription}
+                        maxLength={255}
+                        longtext={{
+                          rows: 3,
+                        }}
+                        className='mb-4'
+                        disabled={createMutation.isPending}
+                        {...field}
+                      />
+                    )}
+                  />
+                  {createMutation.error && (
+                    <p className='text-destructive mb-4'>
+                      {(createMutation.error as Error).message}
+                    </p>
+                  )}
+                  <Button
+                    variant='gradient'
+                    size='lg'
+                    className='h-12 w-full text-base'
+                    type='submit'
+                    loading={createMutation.isPending}
+                  >
+                    {dict.workspaceSwitcher.createNewWorkspace}
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // When there are workspaces, show the existing layout with both list and form
   return (
     <div className='pattern-bg h-full'>
       <div className='relative container mx-auto max-w-7xl'>

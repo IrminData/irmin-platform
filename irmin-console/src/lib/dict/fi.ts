@@ -174,6 +174,8 @@ const fi = {
     manageWorkspaces: 'Hallinnoi työtiloja',
     selectWorkspace: 'Valitse työtila',
     createNewWorkspace: 'Luo uusi työtila',
+    createFirstWorkspace: 'Luo ensimmäinen työtilasi',
+    createFirstWorkspaceDescription: 'Työtilat auttavat organisoimaan datasi, työnkulkusi ja tiimityöskentelyn. Aloita luomalla ensimmäinen työtilasi.',
     workspace: 'Työtila',
     leaveWorkspace: 'Poistu työtilasta',
     leaveWorkspaceConfirm:
@@ -586,6 +588,56 @@ const fi = {
     destination: 'Kohde',
     searchPlaceholder: 'Kirjoita hakusana...',
     noItemsFound: 'Ei kohteita',
+    emptyState: {
+      repositories: {
+        title: 'Ei vielä repositorioita',
+        description: 'Repositoriot tallentavat datasi Git-tyylisessä rakenteessa. Luo ensimmäinen repositorio aloittaaksesi.',
+      },
+      workflows: {
+        title: 'Ei vielä työnkulkuja',
+        description: 'Työnkulut automatisoivat data-tehtäviäsi. Luo tuonti-, vienti-, toiminto- tai putki-työnkulkuja aloittaaksesi.',
+      },
+      connections: {
+        title: 'Ei vielä yhteyksiä',
+        description: 'Yhteydet mahdollistavat tuonnin ja viennin ulkoisista tietolähteistä. Luo ensimmäinen yhteys aloittaaksesi.',
+      },
+      users: {
+        title: 'Ei vielä käyttäjiä',
+        description: 'Kutsu tiimin jäseniä yhteistyöhön tässä työtilassa.',
+      },
+      invites: {
+        title: 'Ei odottavia kutsuja',
+        description: 'Kun kutsut ihmisiä tähän työtilaan, he näkyvät täällä kunnes hyväksyvät tai hylkäävät kutsun.',
+      },
+      queries: {
+        title: 'Ei tallennettuja kyselyjä',
+        description: 'Aloita kirjoittamalla SQL-kysely editorissa ja tallenna se tulevaa käyttöä varten.',
+      },
+      tokens: {
+        title: 'Ei API-tunnuksia',
+        description: 'API-tunnukset mahdollistavat ohjelmoitavan autentikoinnin Irmin API:n kanssa. Luo ensimmäinen tunnus aloittaaksesi.',
+      },
+      commits: {
+        title: 'Ei vielä committeja',
+        description: 'Aloita tekemällä muutoksia repositorioosi nähdäksesi commitit täällä.',
+      },
+      tags: {
+        title: 'Ei vielä tageja',
+        description: 'Tagit ovat muuttumattomia osoittimia tiettyihin committeihin. Luo tageja merkitäksesi tärkeitä versioita.',
+      },
+      branches: {
+        title: 'Ei vielä haaroja',
+        description: 'Haarat mahdollistavat datasi eri versioiden käsittelyn samanaikaisesti.',
+      },
+      objects: {
+        title: 'Ei vielä objekteja',
+        description: 'Aloita lataamalla tiedostoja tai luo työnkulku täyttääksesi tämän repositorion.',
+      },
+      generic: {
+        title: 'Kohteita ei löytynyt',
+        description: 'Yritä muuttaa hakuehtojasi tai suodattimiasi löytääksesi etsimäsi.',
+      },
+    },
   },
   fileNavigator: {
     original: 'Alkuperäinen',

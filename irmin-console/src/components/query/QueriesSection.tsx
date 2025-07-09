@@ -328,6 +328,16 @@ export default function QueriesSection() {
               className='m-4'
             />
           )}
+          {!storedQueriesQuery.isLoading && !storedQueriesQuery.error && storedQueriesQuery.data?.data?.length === 0 && (
+            <div className='p-4'>
+              <div className='text-center py-8'>
+                <h3 className='text-lg font-medium text-gray-700 dark:text-gray-300 mb-2'>{dict.list.emptyState.queries.title}</h3>
+                <p className='text-gray-500 dark:text-gray-400 mb-4 max-w-sm mx-auto'>
+                  {dict.list.emptyState.queries.description}
+                </p>
+              </div>
+            </div>
+          )}
           {storedQueriesQuery.data?.data?.map((query, idx) => (
             <div
               className={`border-border hover:bg-card flex cursor-pointer flex-row items-center justify-between gap-2 border-b p-4 transition-all ${selectedQuery?.id === query.id ? 'bg-card' : ''} `}

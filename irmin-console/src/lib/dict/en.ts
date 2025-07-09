@@ -173,6 +173,8 @@ const en = {
     manageWorkspaces: 'Manage Workspaces',
     selectWorkspace: 'Select a workspace',
     createNewWorkspace: 'Create new workspace',
+    createFirstWorkspace: 'Create your first workspace',
+    createFirstWorkspaceDescription: 'Workspaces help you organize your data, workflows, and team collaboration. Get started by creating your first workspace.',
     workspace: 'Workspace',
     leaveWorkspace: 'Leave workspace',
     leaveWorkspaceConfirm: 'Are you sure you want to leave this workspace?',
@@ -582,6 +584,56 @@ const en = {
     destination: 'Destination',
     searchPlaceholder: 'Type to search...',
     noItemsFound: 'No items found',
+    emptyState: {
+      repositories: {
+        title: 'No repositories yet',
+        description: 'Repositories store your data in a Git-like structure. Create your first repository to get started.',
+      },
+      workflows: {
+        title: 'No workflows yet',
+        description: 'Workflows automate your data tasks. Create import, export, action, or pipeline workflows to get started.',
+      },
+      connections: {
+        title: 'No connections yet',
+        description: 'Connections allow you to import from and export to external data sources. Create your first connection to get started.',
+      },
+      users: {
+        title: 'No users yet',
+        description: 'Invite team members to collaborate on this workspace.',
+      },
+      invites: {
+        title: 'No pending invites',
+        description: 'When you invite people to this workspace, they\'ll appear here until they accept or decline.',
+      },
+      queries: {
+        title: 'No saved queries',
+        description: 'Start by writing a SQL query in the editor and save it for future use.',
+      },
+      tokens: {
+        title: 'No API tokens',
+        description: 'API tokens allow you to authenticate with the Irmin API programmatically. Create your first token to get started.',
+      },
+      commits: {
+        title: 'No commits yet',
+        description: 'Start making changes to your repository to see commits here.',
+      },
+      tags: {
+        title: 'No tags yet',
+        description: 'Tags are immutable pointers to specific commits. Create tags to mark important versions.',
+      },
+      branches: {
+        title: 'No branches yet',
+        description: 'Branches allow you to work on different versions of your data simultaneously.',
+      },
+      objects: {
+        title: 'No objects yet',
+        description: 'Start by uploading files or create a workflow to populate this repository.',
+      },
+      generic: {
+        title: 'No items found',
+        description: 'Try adjusting your search or filters to find what you\'re looking for.',
+      },
+    },
   },
   fileNavigator: {
     original: 'Original',

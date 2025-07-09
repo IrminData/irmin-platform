@@ -6,6 +6,7 @@ import { TbTrash } from 'react-icons/tb';
 
 import Button, { ButtonWithTooltip } from '@/components/ui/button';
 import ContentWrapper from '@/components/ui/ContentWrapper';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   Table,
   TableBody,
@@ -61,7 +62,7 @@ export default function TokensSection() {
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       {/* Row with the create token button */}
-      <div className='flex flex-row items-center justify-end px-2'>
+      <div className='flex flex-row items-center justify-end px-2 mb-4'>
         <Button size='sm' variant='default' onClick={handleCreateToken}>
           {dict.tokens.createAPIToken}
         </Button>
@@ -73,9 +74,16 @@ export default function TokensSection() {
           </div>
         )}
       {credentialsQuery.data?.data?.length === 0 ? (
-        <div className='py-12 text-center text-lg text-gray-500 lg:text-2xl dark:text-gray-400'>
-          {dict.tokens.noTokens}
-        </div>
+        <EmptyState
+          title={dict.list.emptyState.tokens.title}
+          description={dict.list.emptyState.tokens.description}
+          action={{
+            label: dict.tokens.createAPIToken,
+            onClick: handleCreateToken,
+            variant: 'gradient'
+          }}
+          className="py-16"
+        />
       ) : (
         <Table className='min-w-full'>
           <TableHeader>

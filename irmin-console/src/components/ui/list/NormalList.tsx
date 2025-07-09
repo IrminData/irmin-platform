@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
 import Button from '@/components/ui/button';
+import EmptyState from '@/components/ui/EmptyState';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -189,11 +190,14 @@ const NormalList: React.FC<ListProps> = ({
             <tr>
               <td
                 colSpan={totalColumns}
-                className='p-4 py-8 text-center align-middle'
+                className='p-0 align-middle'
               >
-                <span className='text-foreground text-sm lg:text-base'>
-                  {dict.list.noItemsFound}
-                </span>
+                <EmptyState
+                  title={dict.list.emptyState.generic.title}
+                  description={dict.list.emptyState.generic.description}
+                  size="sm"
+                  className="py-12"
+                />
               </td>
             </tr>
           )}
