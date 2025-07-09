@@ -20,6 +20,21 @@ export default function deepEqual(a: unknown, b: unknown): boolean {
     return false;
   }
 
+  // Handle Date objects
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+
+  // Handle RegExp objects
+  if (a instanceof RegExp && b instanceof RegExp) {
+    return a.toString() === b.toString();
+  }
+
+  // Handle different object types (Date vs Object, etc.)
+  if (a.constructor !== (b as Record<string, unknown>).constructor) {
+    return false;
+  }
+
   if (Array.isArray(a) && Array.isArray(b)) {
     // Compare arrays
     if (a.length !== b.length) {

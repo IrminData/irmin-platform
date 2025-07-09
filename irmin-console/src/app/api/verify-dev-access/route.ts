@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const appPassword = process.env.ENV_PASSWORD ?? 'oiDeNuDEvenTICYc';
+const appPassword = process.env.ENV_PASSWORD;
+const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
 const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
+
+// Validate that password is set when auth is required in production environments
+if (requireAuth === 'true' && !appPassword && process.env.NODE_ENV === 'production') {
+  throw new Error('ENV_PASSWORD environment variable must be set when REQUIRE_ENV_AUTH is true in production');
+}
 
 /**
  * HTML form for signing in to the development environment
@@ -58,9 +64,20 @@ body {
  * Users will be redirected to this page when they try to access the development environment
  * without being authorised.
  *
- * @returns HTML form for signing in to the development environment
+ * @returns HTML form for signing in to the development environment, or redirect if auth is not required
  */
 export async function GET() {
+  // If auth is not required and no password is set, redirect directly to home
+  if (requireAuth !== 'true' && !appPassword) {
+    const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
+    const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
+    
+    const headers = new Headers();
+    headers.append('Set-Cookie', setCookieHeader);
+    headers.append('Location', '/');
+    return new NextResponse(null, { status: 302, headers });
+  }
+
   const response = new NextResponse(signIn, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
@@ -86,6 +103,22 @@ export async function GET() {
  * @returns Response object - Redirects to the home page
  */
 export async function POST(req: NextRequest) {
+  // Check if password is configured when auth is required
+  if (!appPassword) {
+    if (requireAuth === 'true') {
+      return new NextResponse('Development access not configured', { status: 503 });
+    } else {
+      // If auth is not required, allow access without password verification
+      const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
+      const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
+      
+      const headers = new Headers();
+      headers.append('Set-Cookie', setCookieHeader);
+      headers.append('Location', '/');
+      return new NextResponse(null, { status: 302, headers });
+    }
+  }
+
   // Parse the request body
   const body = await req.formData();
   const password = body.get('password');

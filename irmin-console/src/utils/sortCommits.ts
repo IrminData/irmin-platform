@@ -37,9 +37,18 @@ export const sortCommits = (commits: Commit[]): Commit[] => {
 
   // Starting from the head commit, build the sorted array by following previous_hash links
   const sortedCommits: Commit[] = [];
+  const visited = new Set<string>(); // Track visited commits to prevent infinite loops
   let currentCommit: Commit | undefined = headCommits[0];
 
   while (currentCommit) {
+    // Check for circular dependency
+    if (visited.has(currentCommit.hash)) {
+      throw new Error(
+        `Circular dependency detected in commit chain at commit: ${currentCommit.hash}`
+      );
+    }
+
+    visited.add(currentCommit.hash);
     sortedCommits.push(currentCommit);
     const nextHash: string | undefined = currentCommit.previous_hash;
 

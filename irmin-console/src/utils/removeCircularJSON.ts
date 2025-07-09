@@ -5,7 +5,7 @@
  *
  * Make sure the target is an object.
  * Clone the target object to avoid modifying the original object.
- * Recursively remove falsy elements and circular references.
+ * Recursively remove circular references while preserving valid falsy values.
  *
  * @param target - JSON object to remove circular references from
  *
@@ -17,25 +17,39 @@ export default function removeCircularJSON(target: any) {
     return target;
   }
 
-  // Clone the target object to avoid modifying the original object
-  const obj = Array.isArray(target)
-    ? [...target].filter(Boolean)
-    : { ...target };
-
-  // Recursively remove circular references and falsy elements
-  const seen = new Map<any, any>();
-  const recurse = (obj: any) => {
+  // Use WeakMap for better performance and automatic garbage collection
+  const seen = new WeakMap<object, any>();
+  
+  const recurse = (obj: any): any => {
+    // Handle non-objects
+    if (typeof obj !== 'object' || obj === null) {
+      return obj;
+    }
+    
+    // Check for circular reference
+    if (seen.has(obj)) {
+      return '[Circular Reference]'; // Replace with a string marker instead of deleting
+    }
+    
+    // Mark as visited
     seen.set(obj, true);
-    for (const [k, v] of Object.entries(obj)) {
-      if (typeof v !== 'object' || v === null) continue;
-      if (seen.has(v)) delete obj[k];
-      else {
-        if (!v) delete obj[k];
-        else recurse(v);
+    
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      const result = obj.map(item => recurse(item));
+      return result;
+    }
+    
+    // Handle objects
+    const result: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        result[key] = recurse(obj[key]);
       }
     }
+    
+    return result;
   };
-  recurse(obj);
 
-  return obj;
+  return recurse(target);
 }
