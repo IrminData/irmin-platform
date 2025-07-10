@@ -2,12 +2,65 @@
  * Finnish dictionary, key-value pairs for static strings in the application
  */
 const fi = {
+  // === CORE APPLICATION ===
   common: {
-    selectLanguage: 'Valitse kieli',
+    // Basic actions
     loading: 'Ladataan...',
     cancel: 'Peruuta',
     confirm: 'Vahvista',
+    save: 'Tallenna',
+    delete: 'Poista',
+    edit: 'Muokkaa',
+    view: 'Näytä',
+    create: 'Luo',
+    update: 'Päivitä',
+    add: 'Lisää',
+    remove: 'Poista',
+    upload: 'Lataa',
+    download: 'Lataa',
+    back: 'Takaisin',
+    next: 'Seuraava',
+    previous: 'Edellinen',
+    close: 'Sulje',
+    open: 'Avaa',
+    refresh: 'Päivitä',
+    tryAgain: 'Yritä uudelleen',
+
+    // Search and navigation
+    search: 'Hae',
+    filters: 'Suodattimet',
+    noResults: 'Ei tuloksia',
+    loadMore: 'Lataa lisää',
+    selectAll: 'Valitse kaikki',
+
+    // Status and feedback
+    success: 'Onnistui',
     error: 'Virhe',
+    info: 'Info',
+    yes: 'Kyllä',
+    no: 'Ei',
+
+    // Content
+    name: 'Nimi',
+    description: 'Kuvaus',
+    email: 'Sähköposti',
+    message: 'Viesti',
+    overview: 'Yleiskatsaus',
+    actions: 'Toiminnot',
+    logs: 'Lokit',
+    timestamp: 'Aikaleima',
+    lastModified: 'Viimeksi muokattu',
+    size: 'Koko',
+    color: 'Väri',
+
+    // Forms
+    fieldRequired: 'Kenttä on pakollinen',
+    fieldInvalid: 'Kenttä on virheellinen',
+    resetForm: 'Tyhjennä lomake',
+    pleaseFixErrors: 'Korjaa virheet yllä',
+    messagePlaceholder: 'Kirjoita viestisi tähän...',
+
+    // Messages and alerts
     insufficientPermissions: 'Liian vähän oikeuksia',
     ohNo: 'Voi ei!',
     pageNotFound: 'Sivua ei löytynyt',
@@ -16,63 +69,32 @@ const fi = {
     tryAgainOrContactSupport: 'Yritä uudelleen tai ota yhteyttä tukeen',
     goBackHome: 'Mene takaisin kotisivulle',
     goBackConsole: 'Palaa Irmin-konsoliin',
-    back: 'Takaisin',
-    remove: 'Poista',
-    tryAgain: 'Yritä uudelleen',
-    success: 'Onnistui',
-    info: 'Info',
     noOptionsMessage: 'Ei vaihtoehtoja',
-    selectAll: 'Valitse kaikki',
-    yes: 'Kyllä',
-    no: 'Ei',
-    fieldRequired: 'Kenttä on pakollinen',
-    fieldInvalid: 'Kenttä on virheellinen',
-    refresh: 'Päivitä',
+    downloadSuccess: 'Lataus onnistui',
     dangerZone: 'Vaaravyöhyke',
-    resetForm: 'Tyhjennä lomake',
-    pleaseFixErrors: 'Korjaa virheet yllä',
-    lastModified: 'Viimeksi muokattu',
-    size: 'Koko',
-    close: 'Sulje',
-    open: 'Avaa',
-    timestamp: 'Aikaleima',
+
+    // Confirmations
     areYouSureYouWantToDelete:
       'Oletko varma, että haluat poistaa tämän kohteen?',
     areYouSureYouWantToTransferOwnership:
       'Oletko varma, että haluat vaihtaa tämän kohteen omistajan?',
-    name: 'Nimi',
-    description: 'Kuvaus',
-    save: 'Tallenna',
-    search: 'Hae',
-    noResults: 'Ei tuloksia',
+
+    // Contact and support
     contactUs: 'Ota yhteyttä',
     readMore: 'Lue lisää',
-    overview: 'Yleiskatsaus',
-    email: 'Sähköposti',
-    message: 'Viesti',
-    messagePlaceholder: 'Kirjoita viestisi tähän...',
-    pleaseWait: 'Odota hetki...',
-    downloadSuccess: 'Lataus onnistui',
-    next: 'Seuraava',
-    previous: 'Edellinen',
-    loadMore: 'Lataa lisää',
-    logs: 'Lokit',
-    actions: 'Toiminnot',
-    add: 'Lisää',
-    edit: 'Muokkaa',
-    delete: 'Poista',
-    view: 'Näytä',
-    create: 'Luo',
-    update: 'Päivitä',
-    download: 'Lataa',
-    upload: 'Lataa',
-    filters: 'Suodattimet',
-    terms: {
-      termsAndConditions: 'Käyttöehdot',
-      privacyPolicy: 'Tietosuojakäytäntö',
-    },
-    color: 'Väri',
+
+    // Language and localization
+    selectLanguage: 'Valitse kieli',
   },
+
+  // === USER INTERFACE ===
+  theme: {
+    toggle: 'Vaihda teemaa',
+    light: 'Vaalea',
+    dark: 'Tumma',
+    system: 'Järjestelmä',
+  },
+
   search: {
     advancedSearch: 'Edistynyt haku',
     searchDescription:
@@ -91,14 +113,28 @@ const fi = {
     resultsFoundFor: 'tulosta löytyi haulle',
     resultFoundFor: 'tulos löytyi haulle',
   },
-  theme: {
-    toggle: 'Vaihda teemaa',
-    light: 'Vaalea',
-    dark: 'Tumma',
-    system: 'Järjestelmä',
-  },
+
+  // === NAVIGATION ===
   consoleNavigation: {
     searchPlaceholder: 'Etsi tietoja ja muuta',
+    irmin: 'Irmin',
+    irminConsole: 'Irmin-konsoli',
+    irminWebsite: 'Irmin-verkkosivu',
+    workspace: 'Työtila',
+    workspaces: 'Työtilat',
+    settings: 'Asetukset',
+    usefulLinks: 'Hyödylliset linkit',
+    editor: 'Editori',
+    queries: 'Kyselyt',
+    workspaceSettings: 'Työtila',
+    goToWebsite: 'Siirry verkkosivustolle',
+    myProfile: 'Profiilini',
+    signOut: 'Kirjaudu ulos',
+    guides: 'Oppaat',
+    contactSupport: 'Ota yhteyttä tukeen',
+    developerDocs: 'Dokumentaatio kehittäjille',
+    termsAndPrivacy: 'Käyttöehdot ja tietosuoja',
+
     staticSearchItems: {
       guides: 'Irmin Oppaat',
       documentation: 'Irmin Dokumentaatio',
@@ -112,6 +148,7 @@ const fi = {
       createWorkflow: 'Luo uusi prosessi',
       createConnection: 'Luo uusi yhteys',
       createRepository: 'Luo uusi data-arkisto',
+
       description: {
         irminWebsite: 'Siirry Irmin verkkosivustolle',
         contactUs: 'Ota yhteyttä tiimiimme',
@@ -137,24 +174,46 @@ const fi = {
         createRepository: 'Luo uusi data-arkisto tietojen tallentamista varten',
       },
     },
-    irmin: 'Irmin',
-    irminConsole: 'Irmin-konsoli',
-    irminWebsite: 'Irmin-verkkosivu',
-    workspace: 'Työtila',
-    settings: 'Asetukset',
-    usefulLinks: 'Hyödylliset linkit',
-    editor: 'Editori',
-    queries: 'Kyselyt',
-    workspaceSettings: 'Työtila',
-    workspaces: 'Työtilat',
-    goToWebsite: 'Siirry verkkosivustolle',
-    myProfile: 'Profiilini',
-    signOut: 'Kirjaudu ulos',
-    guides: 'Oppaat',
-    contactSupport: 'Ota yhteyttä tukeen',
-    developerDocs: 'Dokumentaatio kehittäjille',
-    termsAndPrivacy: 'Käyttöehdot ja tietosuoja',
   },
+  // === WORKSPACE ===
+  workspace: {
+    general: 'Yleiset',
+    users: 'Käyttäjät',
+    policies: 'Oikeudet',
+    invites: 'Kutsut',
+    tags: 'Tunnisteet',
+    billing: 'Laskutus',
+    deletionWarning:
+      'Oletko varma, että haluat poistaa tämän työtilan? Tätä toimintoa ei voi peruuttaa ja se poistaa kaiken tähän työtilaan liittyvän datan.',
+    generalSettings: 'Yleiset asetukset',
+    workspaceName: 'Työtilan nimi',
+    workspaceDescription: 'Työtilan kuvaus',
+    saveChanges: 'Tallenna muutokset',
+    deletionNote:
+      'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
+    deleteWorkspace: 'Poista työtila',
+    billingSettings: 'Laskutuksen asetukset',
+    billingNote:
+      'Voit tällä hetkellä hallita laskutusta vain ottamalla yhteyttä tiimiimme.',
+    taggedItems: 'Tunnistetut kohteet',
+    addTags: 'Lisää tunnisteet',
+    failedToLoadTags: 'Tunnisteiden lataaminen epäonnistui',
+    failedToLoadWorkspaces: 'Työtilojen lataaminen epäonnistui',
+  },
+
+  workspaceSwitcher: {
+    manageWorkspaces: 'Hallinnoi työtiloja',
+    selectWorkspace: 'Valitse työtila',
+    createNewWorkspace: 'Luo uusi työtila',
+    createFirstWorkspace: 'Luo ensimmäinen työtilasi',
+    createFirstWorkspaceDescription:
+      'Työtilat auttavat organisoimaan datasi, työnkulkusi ja tiimityöskentelyn. Aloita luomalla ensimmäinen työtilasi.',
+    workspace: 'Työtila',
+    leaveWorkspace: 'Poistu työtilasta',
+    leaveWorkspaceConfirm:
+      'Oletko varma, että haluat poistua tästä työtilasta?',
+  },
+
   consoleHome: {
     welcomeToWorkspace: 'Aloita työskentely valitsemalla näistä toiminnoista:',
     createNewConnection: 'Luo uusi yhteys',
@@ -170,17 +229,8 @@ const fi = {
     browseRepositoriesDescription:
       'Selaa, käsittele ja hallinnoi tietojasi Git-tyyppisessä ympäristössä',
   },
-  workspaceSwitcher: {
-    manageWorkspaces: 'Hallinnoi työtiloja',
-    selectWorkspace: 'Valitse työtila',
-    createNewWorkspace: 'Luo uusi työtila',
-    createFirstWorkspace: 'Luo ensimmäinen työtilasi',
-    createFirstWorkspaceDescription: 'Työtilat auttavat organisoimaan datasi, työnkulkusi ja tiimityöskentelyn. Aloita luomalla ensimmäinen työtilasi.',
-    workspace: 'Työtila',
-    leaveWorkspace: 'Poistu työtilasta',
-    leaveWorkspaceConfirm:
-      'Oletko varma, että haluat poistua tästä työtilasta?',
-  },
+
+  // === DATA MANAGEMENT ===
   repository: {
     repository: 'Data-arkisto',
     repositories: 'Data-arkistot',
@@ -286,15 +336,15 @@ const fi = {
       fileToUpload: 'Ladattava tiedosto',
       pathInRepository: 'Polku data-arkistossa',
       noFilesSelected: 'Valitse tiedostot ennen lataamista',
-      binary: 'Binary',
-      group: 'Group',
-      structured: 'Structured',
+      binary: 'Binääri',
+      group: 'Ryhmä',
+      structured: 'Strukturoitu',
       children: 'Lapset',
-      hideChildren: 'Hide children',
-      showChildren: 'Show children',
-      unknownType: 'Unknown type',
-      hideSchema: 'Hide schema',
-      showSchema: 'Show schema',
+      hideChildren: 'Piilota lapset',
+      showChildren: 'Näytä lapset',
+      unknownType: 'Tuntematon tyyppi',
+      hideSchema: 'Piilota rakenne',
+      showSchema: 'Näytä rakenne',
       enterPath: 'Syötä data-arkiston polku (esim. polku/tiedostoon.json)',
       newObjectWillBeCreated: 'Uusi objekti luodaan',
     },
@@ -348,6 +398,7 @@ const fi = {
       requiredFieldsMissing: 'Pakollisia kenttiä puuttuu',
     },
   },
+
   connectors: {
     connector: 'Yhdistin',
     connectors: 'Yhdistimet',
@@ -358,6 +409,8 @@ const fi = {
     capabilities: 'Toiminallisuudet',
     locales: 'Kielet',
   },
+
+  // === WORKFLOWS ===
   workflow: {
     workflows: 'Prosessit',
     importWorkflows: 'Tuontiprosessit',
@@ -542,6 +595,8 @@ const fi = {
       },
     },
   },
+
+  // === DEVELOPMENT TOOLS ===
   editor: {
     writeYourJS: 'Kirjoita JavaScriptisi tähän...',
     writeYourGo: 'Kirjoita Go-skriptisi tähän...',
@@ -557,6 +612,7 @@ const fi = {
     scriptNeedsToBeSaved:
       'Skripti on tallennettava ennen suorittamista. Tallenna skripti editoriin ja suorita se uudelleen.',
   },
+
   query: {
     queryExecutionStarted: 'Kyselyn suoritus aloitettu',
     results: 'Tulokset',
@@ -572,73 +628,7 @@ const fi = {
     newQuery: 'Uusi kysely',
     selectedQuery: 'Valittu kysely',
   },
-  list: {
-    status: 'Tila',
-    runs: 'Ajot',
-    actions: 'Toiminnot',
-    view: 'Katso',
-    delete: 'Poista',
-    edit: 'Muokkaa',
-    owner: 'Omistaja',
-    author: 'Luoja',
-    lastUpdated: 'Päivitetty',
-    createdAt: 'Luotu',
-    immutable: 'Muuttumaton',
-    source: 'Lähde',
-    destination: 'Kohde',
-    searchPlaceholder: 'Kirjoita hakusana...',
-    noItemsFound: 'Ei kohteita',
-    emptyState: {
-      repositories: {
-        title: 'Ei vielä repositorioita',
-        description: 'Repositoriot tallentavat datasi Git-tyylisessä rakenteessa. Luo ensimmäinen repositorio aloittaaksesi.',
-      },
-      workflows: {
-        title: 'Ei vielä työnkulkuja',
-        description: 'Työnkulut automatisoivat data-tehtäviäsi. Luo tuonti-, vienti-, toiminto- tai putki-työnkulkuja aloittaaksesi.',
-      },
-      connections: {
-        title: 'Ei vielä yhteyksiä',
-        description: 'Yhteydet mahdollistavat tuonnin ja viennin ulkoisista tietolähteistä. Luo ensimmäinen yhteys aloittaaksesi.',
-      },
-      users: {
-        title: 'Ei vielä käyttäjiä',
-        description: 'Kutsu tiimin jäseniä yhteistyöhön tässä työtilassa.',
-      },
-      invites: {
-        title: 'Ei odottavia kutsuja',
-        description: 'Kun kutsut ihmisiä tähän työtilaan, he näkyvät täällä kunnes hyväksyvät tai hylkäävät kutsun.',
-      },
-      queries: {
-        title: 'Ei tallennettuja kyselyjä',
-        description: 'Aloita kirjoittamalla SQL-kysely editorissa ja tallenna se tulevaa käyttöä varten.',
-      },
-      tokens: {
-        title: 'Ei API-tunnuksia',
-        description: 'API-tunnukset mahdollistavat ohjelmoitavan autentikoinnin Irmin API:n kanssa. Luo ensimmäinen tunnus aloittaaksesi.',
-      },
-      commits: {
-        title: 'Ei vielä committeja',
-        description: 'Aloita tekemällä muutoksia repositorioosi nähdäksesi commitit täällä.',
-      },
-      tags: {
-        title: 'Ei vielä tageja',
-        description: 'Tagit ovat muuttumattomia osoittimia tiettyihin committeihin. Luo tageja merkitäksesi tärkeitä versioita.',
-      },
-      branches: {
-        title: 'Ei vielä haaroja',
-        description: 'Haarat mahdollistavat datasi eri versioiden käsittelyn samanaikaisesti.',
-      },
-      objects: {
-        title: 'Ei vielä objekteja',
-        description: 'Aloita lataamalla tiedostoja tai luo työnkulku täyttääksesi tämän repositorion.',
-      },
-      generic: {
-        title: 'Kohteita ei löytynyt',
-        description: 'Yritä muuttaa hakuehtojasi tai suodattimiasi löytääksesi etsimäsi.',
-      },
-    },
-  },
+
   fileNavigator: {
     original: 'Alkuperäinen',
     saveFile: 'Tallenna tiedosto',
@@ -664,6 +654,7 @@ const fi = {
     deleteConfirmation: 'Oletko varma, että haluat poistaa',
     deleteFolderWarning:
       'Kaikki tämän kansion tiedostot ja alikansiot poistetaan',
+
     errors: {
       invalidType: 'Virheellinen tyyppi (tiedosto tai kansio)',
       noExtension: 'Tiedoston pääte puuttuu tai on virheellinen',
@@ -676,14 +667,8 @@ const fi = {
       parentPathNotExist: 'Yläkansiota ei ole olemassa',
     },
   },
-  documentation: {
-    documentation: 'Dokumentaatio',
-    startTypingDocumentation:
-      'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
-    schema: 'Rakenne',
-    workspace: 'Työtila',
-    createdBy: 'Luonut',
-  },
+
+  // === USER MANAGEMENT ===
   users: {
     removeUserConfirmation:
       'Oletko varma, että haluat poistaa tämän käyttäjän?',
@@ -707,6 +692,7 @@ const fi = {
     cancelInvite: 'Peruuta kutsu',
     invite: 'Kutsu',
   },
+
   invite: {
     acceptInvitation: 'Hyväksy kutsu',
     declineInvitation: 'Hylkää kutsu',
@@ -716,43 +702,7 @@ const fi = {
     workspace: 'Työtila',
     role: 'Rooli',
   },
-  workspace: {
-    general: 'Yleiset',
-    users: 'Käyttäjät',
-    policies: 'Oikeudet',
-    invites: 'Kutsut',
-    tags: 'Tunnisteet',
-    billing: 'Laskutus',
-    deletionWarning:
-      'Oletko varma, että haluat poistaa tämän työtilan? Tätä toimintoa ei voi peruuttaa ja se poistaa kaiken tähän työtilaan liittyvän datan.',
-    generalSettings: 'Yleiset asetukset',
-    workspaceName: 'Työtilan nimi',
-    workspaceDescription: 'Työtilan kuvaus',
-    saveChanges: 'Tallenna muutokset',
-    deletionNote:
-      'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
-    deleteWorkspace: 'Poista työtila',
-    billingSettings: 'Laskutuksen asetukset',
-    billingNote:
-      'Voit tällä hetkellä hallita laskutusta vain ottamalla yhteyttä tiimiimme.',
-    taggedItems: 'Tunnistetut kohteet',
-    addTags: 'Lisää tunnisteet',
-    failedToLoadTags: 'Tunnisteiden lataaminen epäonnistui',
-    failedToLoadWorkspaces: 'Työtilojen lataaminen epäonnistui',
-  },
-  logs: {
-    workspaceLogs: 'Työtilan audit lokit',
-    connectionLogs: 'Yhteyden audit lokit',
-    repositoryLogs: 'Data-arkiston audit lokit',
-    userAuditLogs: 'Käyttäjän audit lokit',
-    workflowLogs: 'Prosessin audit lokit',
-    noLogsFound: 'Ei lokeja löytynyt',
-    system: 'Järjestelmä',
-    foundLogEvents: 'Lokitapahtumia löytyi',
-    storedQueryLogs: 'Kyselyn audit lokit',
-    policyLogs: 'Käyttöoikeuden audit lokit',
-    repositoryObjectLogs: 'Data-arkiston objektin audit lokit',
-  },
+
   tokens: {
     apiTokens: 'API avaimet',
     noTokens: 'Sinulla ei ole vielä luotuja API avaimia',
@@ -768,6 +718,7 @@ const fi = {
     copied: 'Kopioitu!',
     copyToken: 'Kopioi avain',
   },
+
   policy: {
     title: 'Käyttöoikeudet',
     description: 'Hallitse käyttöoikeuksia ja käyttöoikeuksia',
@@ -801,6 +752,7 @@ const fi = {
     principalRole: 'Rooli',
     principalEveryone: 'Kaikki',
     allResources: 'Kaikki',
+
     tooltips: {
       effect: 'Onko käyttöoikeus eksplisiittisesti estävä vai salliva',
       action:
@@ -812,6 +764,113 @@ const fi = {
         'Valinnainen tietyn resurssin tunniste. Jätä tyhjäksi koskemaan kaikkia tämän tyyppisiä resursseja',
     },
   },
+
+  // === LOGGING & MONITORING ===
+  logs: {
+    workspaceLogs: 'Työtilan audit lokit',
+    connectionLogs: 'Yhteyden audit lokit',
+    repositoryLogs: 'Data-arkiston audit lokit',
+    userAuditLogs: 'Käyttäjän audit lokit',
+    workflowLogs: 'Prosessin audit lokit',
+    noLogsFound: 'Ei lokeja löytynyt',
+    system: 'Järjestelmä',
+    foundLogEvents: 'Lokitapahtumia löytyi',
+    storedQueryLogs: 'Kyselyn audit lokit',
+    policyLogs: 'Käyttöoikeuden audit lokit',
+    repositoryObjectLogs: 'Data-arkiston objektin audit lokit',
+  },
+
+  // === DOCUMENTATION ===
+  documentation: {
+    documentation: 'Dokumentaatio',
+    startTypingDocumentation:
+      'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
+    schema: 'Rakenne',
+    workspace: 'Työtila',
+    createdBy: 'Luonut',
+  },
+
+  // === LIST COMPONENTS ===
+  list: {
+    status: 'Tila',
+    runs: 'Ajot',
+    actions: 'Toiminnot',
+    view: 'Katso',
+    delete: 'Poista',
+    edit: 'Muokkaa',
+    owner: 'Omistaja',
+    author: 'Luoja',
+    lastUpdated: 'Päivitetty',
+    createdAt: 'Luotu',
+    immutable: 'Muuttumaton',
+    source: 'Lähde',
+    destination: 'Kohde',
+    searchPlaceholder: 'Kirjoita hakusana...',
+    noItemsFound: 'Ei kohteita',
+    emptyState: {
+      repositories: {
+        title: 'Ei vielä repositorioita',
+        description:
+          'Repositoriot tallentavat datasi Git-tyylisessä rakenteessa. Luo ensimmäinen repositorio aloittaaksesi.',
+      },
+      workflows: {
+        title: 'Ei vielä työnkulkuja',
+        description:
+          'Työnkulut automatisoivat data-tehtäviäsi. Luo tuonti-, vienti-, toiminto- tai putki-työnkulkuja aloittaaksesi.',
+      },
+      connections: {
+        title: 'Ei vielä yhteyksiä',
+        description:
+          'Yhteydet mahdollistavat tuonnin ja viennin ulkoisista tietolähteistä. Luo ensimmäinen yhteys aloittaaksesi.',
+      },
+      users: {
+        title: 'Ei vielä käyttäjiä',
+        description: 'Kutsu tiimin jäseniä yhteistyöhön tässä työtilassa.',
+      },
+      invites: {
+        title: 'Ei odottavia kutsuja',
+        description:
+          'Kun kutsut ihmisiä tähän työtilaan, he näkyvät täällä kunnes hyväksyvät tai hylkäävät kutsun.',
+      },
+      queries: {
+        title: 'Ei tallennettuja kyselyjä',
+        description:
+          'Aloita kirjoittamalla SQL-kysely editorissa ja tallenna se tulevaa käyttöä varten.',
+      },
+      tokens: {
+        title: 'Ei API-tunnuksia',
+        description:
+          'API-tunnukset mahdollistavat ohjelmoitavan autentikoinnin Irmin API:n kanssa. Luo ensimmäinen tunnus aloittaaksesi.',
+      },
+      commits: {
+        title: 'Ei vielä committeja',
+        description:
+          'Aloita tekemällä muutoksia repositorioosi nähdäksesi commitit täällä.',
+      },
+      tags: {
+        title: 'Ei vielä tageja',
+        description:
+          'Tagit ovat muuttumattomia osoittimia tiettyihin committeihin. Luo tageja merkitäksesi tärkeitä versioita.',
+      },
+      branches: {
+        title: 'Ei vielä haaroja',
+        description:
+          'Haarat mahdollistavat datasi eri versioiden käsittelyn samanaikaisesti.',
+      },
+      objects: {
+        title: 'Ei vielä objekteja',
+        description:
+          'Aloita lataamalla tiedostoja tai luo työnkulku täyttääksesi tämän repositorion.',
+      },
+      generic: {
+        title: 'Kohteita ei löytynyt',
+        description:
+          'Yritä muuttaa hakuehtojasi tai suodattimiasi löytääksesi etsimäsi.',
+      },
+    },
+  },
+
+  // === UTILITIES ===
   schemaFieldMapper: {
     title: 'Kenttien yhdistäminen',
     description:

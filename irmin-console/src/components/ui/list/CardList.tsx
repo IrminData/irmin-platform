@@ -126,8 +126,8 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
           <EmptyState
             title={dict.list.emptyState.generic.title}
             description={dict.list.emptyState.generic.description}
-            size="sm"
-            className="py-8"
+            size='sm'
+            className='py-8'
           />
         </div>
       )}

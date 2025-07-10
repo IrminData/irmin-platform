@@ -2,12 +2,65 @@
  * English dictionary, key-value pairs for static strings in the application
  */
 const en = {
+  // === CORE APPLICATION ===
   common: {
-    selectLanguage: 'Select language',
+    // Basic actions
     loading: 'Loading...',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    view: 'View',
+    create: 'Create',
+    update: 'Update',
+    add: 'Add',
+    remove: 'Remove',
+    upload: 'Upload',
+    download: 'Download',
+    back: 'Back',
+    next: 'Next',
+    previous: 'Previous',
+    close: 'Close',
+    open: 'Open',
+    refresh: 'Refresh',
+    tryAgain: 'Try again',
+
+    // Search and navigation
+    search: 'Search',
+    filters: 'Filters',
+    noResults: 'No results',
+    loadMore: 'Load more',
+    selectAll: 'Select All',
+
+    // Status and feedback
+    success: 'Success',
     error: 'Error',
+    info: 'Info',
+    yes: 'Yes',
+    no: 'No',
+
+    // Content
+    name: 'Name',
+    description: 'Description',
+    email: 'Email',
+    message: 'Message',
+    overview: 'Overview',
+    actions: 'Actions',
+    logs: 'Logs',
+    timestamp: 'Timestamp',
+    lastModified: 'Last modified',
+    size: 'Size',
+    color: 'Color',
+
+    // Forms
+    fieldRequired: 'This field is required',
+    fieldInvalid: 'This field is invalid',
+    resetForm: 'Clear form',
+    pleaseFixErrors: 'Please fix the errors above',
+    messagePlaceholder: 'Write your message here...',
+
+    // Messages and alerts
     insufficientPermissions: 'Insufficient permissions',
     ohNo: 'Oh no!',
     pageNotFound: 'Page not found',
@@ -16,62 +69,31 @@ const en = {
     tryAgainOrContactSupport: 'Please try again or contact support',
     goBackHome: 'Go back to the home page',
     goBackConsole: 'Go back to Irmin Console',
-    back: 'Back',
-    remove: 'Remove',
-    tryAgain: 'Try again',
-    success: 'Success',
-    info: 'Info',
     noOptionsMessage: 'No options',
-    selectAll: 'Select All',
-    yes: 'Yes',
-    no: 'No',
-    fieldRequired: 'This field is required',
-    fieldInvalid: 'This field is invalid',
-    refresh: 'Refresh',
+    downloadSuccess: 'Download successful',
     dangerZone: 'Danger zone',
-    resetForm: 'Clear form',
-    pleaseFixErrors: 'Please fix the errors above',
-    lastModified: 'Last modified',
-    size: 'Size',
-    close: 'Close',
-    open: 'Open',
-    timestamp: 'Timestamp',
+
+    // Confirmations
     areYouSureYouWantToDelete: 'Are you sure you want to delete this item?',
     areYouSureYouWantToTransferOwnership:
       'Are you sure you want to transfer the ownership of this item?',
-    name: 'Name',
-    description: 'Description',
-    save: 'Save',
-    search: 'Search',
-    noResults: 'No results',
+
+    // Contact and support
     contactUs: 'Contact Us',
     readMore: 'Read more',
-    overview: 'Overview',
-    email: 'Email',
-    message: 'Message',
-    messagePlaceholder: 'Write your message here...',
-    pleaseWait: 'Please wait...',
-    downloadSuccess: 'Download successful',
-    next: 'Next',
-    previous: 'Previous',
-    loadMore: 'Load more',
-    logs: 'Logs',
-    actions: 'Actions',
-    add: 'Add',
-    edit: 'Edit',
-    delete: 'Delete',
-    view: 'View',
-    create: 'Create',
-    update: 'Update',
-    download: 'Download',
-    upload: 'Upload',
-    filters: 'Filters',
-    terms: {
-      termsAndConditions: 'Terms and conditions',
-      privacyPolicy: 'Privacy policy',
-    },
-    color: 'Color',
+
+    // Language and localization
+    selectLanguage: 'Select language',
   },
+
+  // === USER INTERFACE ===
+  theme: {
+    toggle: 'Toggle theme',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+  },
+
   search: {
     advancedSearch: 'Advanced search',
     searchDescription:
@@ -90,14 +112,28 @@ const en = {
     resultsFoundFor: 'results found for',
     resultFoundFor: 'result found for',
   },
-  theme: {
-    toggle: 'Toggle theme',
-    light: 'Light',
-    dark: 'Dark',
-    system: 'System',
-  },
+
+  // === NAVIGATION ===
   consoleNavigation: {
     searchPlaceholder: 'Search for data and more',
+    irmin: 'Irmin',
+    irminConsole: 'Irmin Console',
+    irminWebsite: 'Irmin Website',
+    workspace: 'Workspace',
+    workspaces: 'Workspaces',
+    settings: 'Settings',
+    usefulLinks: 'Useful links',
+    editor: 'Editor',
+    queries: 'Queries',
+    workspaceSettings: 'Workspace',
+    goToWebsite: 'Go to website',
+    myProfile: 'My Profile',
+    signOut: 'Sign out',
+    guides: 'Guides',
+    contactSupport: 'Contact our team',
+    developerDocs: 'Developer Docs',
+    termsAndPrivacy: 'Terms & Privacy',
+
     staticSearchItems: {
       guides: 'Irmin Guides',
       documentation: 'Irmin Documentation',
@@ -111,6 +147,7 @@ const en = {
       createWorkflow: 'Create new workflow',
       createConnection: 'Create new connection',
       createRepository: 'Create new repository',
+
       description: {
         irminWebsite: 'Go to the Irmin website',
         contactUs: 'Contact our team',
@@ -136,24 +173,46 @@ const en = {
         createRepository: 'Create a new repository to store your data',
       },
     },
-    irmin: 'Irmin',
-    irminConsole: 'Irmin Console',
-    irminWebsite: 'Irmin Website',
-    workspace: 'Workspace',
-    settings: 'Settings',
-    usefulLinks: 'Useful links',
-    editor: 'Editor',
-    queries: 'Queries',
-    workspaceSettings: 'Workspace',
-    workspaces: 'Workspaces',
-    goToWebsite: 'Go to website',
-    myProfile: 'My Profile',
-    signOut: 'Sign out',
-    guides: 'Guides',
-    contactSupport: 'Contact our team',
-    developerDocs: 'Developer Docs',
-    termsAndPrivacy: 'Terms & Privacy',
   },
+
+  // === WORKSPACE ===
+  workspace: {
+    general: 'General',
+    users: 'Users',
+    policies: 'Policies',
+    invites: 'Invites',
+    tags: 'Tags',
+    billing: 'Billing',
+    deletionWarning:
+      'Are you sure you want to delete this workspace? This action cannot be undone and will remove all data associated with this workspace.',
+    generalSettings: 'General Settings',
+    workspaceName: 'Workspace Name',
+    workspaceDescription: 'Workspace Description',
+    saveChanges: 'Save Changes',
+    deletionNote:
+      'Deleting your workspace will remove all data associated with it. This action is irreversible.',
+    deleteWorkspace: 'Delete Workspace',
+    billingSettings: 'Billing Settings',
+    billingNote:
+      'You can currently only manage billing by contacting our team.',
+    taggedItems: 'Tagged items',
+    addTags: 'Add tags',
+    failedToLoadTags: 'Failed to load tags',
+    failedToLoadWorkspaces: 'Failed to load workspaces',
+  },
+
+  workspaceSwitcher: {
+    manageWorkspaces: 'Manage Workspaces',
+    selectWorkspace: 'Select a workspace',
+    createNewWorkspace: 'Create new workspace',
+    createFirstWorkspace: 'Create your first workspace',
+    createFirstWorkspaceDescription:
+      'Workspaces help you organize your data, workflows, and team collaboration. Get started by creating your first workspace.',
+    workspace: 'Workspace',
+    leaveWorkspace: 'Leave workspace',
+    leaveWorkspaceConfirm: 'Are you sure you want to leave this workspace?',
+  },
+
   consoleHome: {
     welcomeToWorkspace: 'Get started on Irmin with these quick actions:',
     createNewConnection: 'Create new connection',
@@ -169,16 +228,8 @@ const en = {
     browseRepositoriesDescription:
       'Browse, query, and manage your data, in a Git-like environment',
   },
-  workspaceSwitcher: {
-    manageWorkspaces: 'Manage Workspaces',
-    selectWorkspace: 'Select a workspace',
-    createNewWorkspace: 'Create new workspace',
-    createFirstWorkspace: 'Create your first workspace',
-    createFirstWorkspaceDescription: 'Workspaces help you organize your data, workflows, and team collaboration. Get started by creating your first workspace.',
-    workspace: 'Workspace',
-    leaveWorkspace: 'Leave workspace',
-    leaveWorkspaceConfirm: 'Are you sure you want to leave this workspace?',
-  },
+
+  // === DATA MANAGEMENT ===
   repository: {
     repository: 'Repository',
     repositories: 'Repositories',
@@ -188,6 +239,7 @@ const en = {
     immutableWarning: 'Immutable repository or branch',
     immutableWarningDescription:
       'Current repository or selected branch are immutable and cannot be edited.',
+
     branches: {
       branches: 'Branches',
       currentBranch: 'Current',
@@ -200,6 +252,7 @@ const en = {
       fromBranch: 'From branch',
       confirmDeleteBranch: 'Are you sure you want to delete this branch?',
     },
+
     tags: {
       tag: 'Tag',
       tags: 'Tags',
@@ -210,6 +263,7 @@ const en = {
       confirmDeleteTag: 'Are you sure you want to delete this tag?',
       currentlyViewing: 'Currently viewing',
     },
+
     commit: {
       commits: 'Commits',
       commitHash: 'Commit hash',
@@ -228,6 +282,7 @@ const en = {
       commitMessage: 'Commit message',
       commitMessagePlaceholder: 'Describe your changes',
     },
+
     compare: {
       compare: 'Compare',
       switchDirection: 'Switch direction',
@@ -257,6 +312,7 @@ const en = {
       mergeExplanation:
         'In case of a merge conflict, this option will force the merge process to automatically favour changes from the base ("Destination wins") or from the comparison ("Source wins"). In case no selection is made, the merge process will fail in case of a conflict.',
     },
+
     objects: {
       object: 'Object',
       objects: 'Objects',
@@ -295,19 +351,24 @@ const en = {
       enterPath: 'Enter repository path (e.g. path/to/file.json)',
       newObjectWillBeCreated: 'New object will be created',
     },
+
     settings: {
       deletionNote:
         'Deleting this repository will remove all data associated with it. This action is irreversible.',
       deleteRepository: 'Delete repository',
     },
+
     schema: {
       schema: 'Schema',
       noSchema: 'No schema available',
     },
   },
+
+  // === CONNECTIONS ===
   connections: {
     connection: 'Connection',
     connections: 'Connections',
+
     settings: {
       title: 'Connection settings',
       saveChanges: 'Save changes',
@@ -317,6 +378,7 @@ const en = {
       areYouSureYouWantToDelete:
         'Are you sure you want to delete this connection?',
     },
+
     create: {
       selectConnector: 'Select a connector',
       establishConnection: 'Establish connection',
@@ -345,6 +407,7 @@ const en = {
       requiredFieldsMissing: 'Required fields are missing',
     },
   },
+
   connectors: {
     connector: 'Connector',
     connectors: 'Connectors',
@@ -355,6 +418,8 @@ const en = {
     capabilities: 'Capabilities',
     locales: 'Locales',
   },
+
+  // === WORKFLOWS ===
   workflow: {
     workflows: 'Workflows',
     importWorkflows: 'Import workflows',
@@ -380,6 +445,7 @@ const en = {
     openInEditor: 'Open in editor',
     executableScriptFile: 'Executable script file',
     scriptInputData: 'Input data',
+
     scriptInputFiles: {
       title: 'Script Input Files',
       inputFile: 'Input File',
@@ -387,6 +453,7 @@ const en = {
       path: 'Path',
       save: 'Save Input Files',
     },
+
     scriptResultDestinationRepository: 'Result to repository',
     scriptResultDestinationBranch: 'Result to branch',
     scriptResultDestinationPath: 'Result to path',
@@ -406,10 +473,12 @@ const en = {
     addPath: 'Add Path',
     removePath: 'Remove path',
     multiplePaths: 'Multiple paths',
+
     tabs: {
       data: 'Data',
       schedule: 'Schedule',
     },
+
     settings: {
       saveChanges: 'Save changes',
       deletionNote:
@@ -420,6 +489,7 @@ const en = {
       resumeWorkflow: 'Resume',
       pauseWorkflow: 'Pause',
     },
+
     create: {
       createNewWorkflow: 'Create new workflow',
       createNewActionWorkflow: 'Create new action workflow',
@@ -436,6 +506,7 @@ const en = {
       confirmAndContinue: 'Confirm and continue',
       goBack: 'Go back',
     },
+
     pipeline: {
       pipeline: 'Pipeline',
       livePipeline: 'Live pipeline',
@@ -459,6 +530,7 @@ const en = {
       savePipelineStages: 'Save pipeline stages',
       noStages: 'No stages',
     },
+
     schedule: {
       workflowSchedule: 'Workflow schedule',
       frequency: 'Frequency',
@@ -481,6 +553,7 @@ const en = {
       saveSchedule: 'Save Schedule',
       presets: 'Presets',
       custom: 'Custom',
+
       cron: {
         selectPreset: 'Select a preset schedule',
         generatedCron: 'Generated Cron Expression',
@@ -509,6 +582,7 @@ const en = {
         copyCron: 'Copy cron expression',
         cronSyntaxHelp: 'Cron syntax help',
       },
+
       rrule: {
         selectPreset: 'Select a preset schedule',
         generatedRRule: 'Generated RRule',
@@ -538,6 +612,8 @@ const en = {
       },
     },
   },
+
+  // === DEVELOPMENT TOOLS ===
   editor: {
     writeYourJS: 'Write your JavaScript here...',
     writeYourGo: 'Write your Go script here...',
@@ -553,6 +629,7 @@ const en = {
     scriptNeedsToBeSaved:
       'Script needs to be saved before running. Save the script in the editor and run it again.',
   },
+
   query: {
     queryExecutionStarted: 'Query execution started',
     results: 'Results',
@@ -568,73 +645,7 @@ const en = {
     newQuery: 'New query',
     selectedQuery: 'Selected query',
   },
-  list: {
-    status: 'Status',
-    runs: 'Runs',
-    actions: 'Actions',
-    view: 'View',
-    delete: 'Delete',
-    edit: 'Edit',
-    owner: 'Owner',
-    author: 'Author',
-    lastUpdated: 'Last updated',
-    createdAt: 'Created at',
-    immutable: 'Immutable',
-    source: 'Source',
-    destination: 'Destination',
-    searchPlaceholder: 'Type to search...',
-    noItemsFound: 'No items found',
-    emptyState: {
-      repositories: {
-        title: 'No repositories yet',
-        description: 'Repositories store your data in a Git-like structure. Create your first repository to get started.',
-      },
-      workflows: {
-        title: 'No workflows yet',
-        description: 'Workflows automate your data tasks. Create import, export, action, or pipeline workflows to get started.',
-      },
-      connections: {
-        title: 'No connections yet',
-        description: 'Connections allow you to import from and export to external data sources. Create your first connection to get started.',
-      },
-      users: {
-        title: 'No users yet',
-        description: 'Invite team members to collaborate on this workspace.',
-      },
-      invites: {
-        title: 'No pending invites',
-        description: 'When you invite people to this workspace, they\'ll appear here until they accept or decline.',
-      },
-      queries: {
-        title: 'No saved queries',
-        description: 'Start by writing a SQL query in the editor and save it for future use.',
-      },
-      tokens: {
-        title: 'No API tokens',
-        description: 'API tokens allow you to authenticate with the Irmin API programmatically. Create your first token to get started.',
-      },
-      commits: {
-        title: 'No commits yet',
-        description: 'Start making changes to your repository to see commits here.',
-      },
-      tags: {
-        title: 'No tags yet',
-        description: 'Tags are immutable pointers to specific commits. Create tags to mark important versions.',
-      },
-      branches: {
-        title: 'No branches yet',
-        description: 'Branches allow you to work on different versions of your data simultaneously.',
-      },
-      objects: {
-        title: 'No objects yet',
-        description: 'Start by uploading files or create a workflow to populate this repository.',
-      },
-      generic: {
-        title: 'No items found',
-        description: 'Try adjusting your search or filters to find what you\'re looking for.',
-      },
-    },
-  },
+
   fileNavigator: {
     original: 'Original',
     saveFile: 'Save file',
@@ -659,6 +670,7 @@ const en = {
     newFolderPath: 'New folder path',
     deleteConfirmation: 'Are you sure you want to delete',
     deleteFolderWarning: 'All files and folders inside will be deleted',
+
     errors: {
       invalidType: 'Invalid item type (file or folder)',
       noExtension: 'No extension provided',
@@ -671,14 +683,8 @@ const en = {
       parentPathNotExist: 'Parent path does not exist',
     },
   },
-  documentation: {
-    documentation: 'Documentation',
-    startTypingDocumentation:
-      'Start typing your documentation and notes here...',
-    schema: 'Schema',
-    workspace: 'Workspace',
-    createdBy: 'Created by',
-  },
+
+  // === USER MANAGEMENT ===
   users: {
     removeUserConfirmation: 'Are you sure you want to remove this user?',
     transferOwnershipConfirmation:
@@ -701,6 +707,7 @@ const en = {
     cancelInvite: 'Cancel invite',
     invite: 'Invite',
   },
+
   invite: {
     acceptInvitation: 'Accept Invitation',
     declineInvitation: 'Decline invitation',
@@ -710,43 +717,7 @@ const en = {
     workspace: 'Workspace',
     role: 'Role',
   },
-  workspace: {
-    general: 'General',
-    users: 'Users',
-    policies: 'Policies',
-    invites: 'Invites',
-    tags: 'Tags',
-    billing: 'Billing',
-    deletionWarning:
-      'Are you sure you want to delete this workspace? This action cannot be undone and will remove all data associated with this workspace.',
-    generalSettings: 'General Settings',
-    workspaceName: 'Workspace Name',
-    workspaceDescription: 'Workspace Description',
-    saveChanges: 'Save Changes',
-    deletionNote:
-      'Deleting your workspace will remove all data associated with it. This action is irreversible.',
-    deleteWorkspace: 'Delete Workspace',
-    billingSettings: 'Billing Settings',
-    billingNote:
-      'You can currently only manage billing by contacting our team.',
-    taggedItems: 'Tagged items',
-    addTags: 'Add tags',
-    failedToLoadTags: 'Failed to load tags',
-    failedToLoadWorkspaces: 'Failed to load workspaces',
-  },
-  logs: {
-    workspaceLogs: 'Workspace audit logs',
-    connectionLogs: 'Connection audit logs',
-    repositoryLogs: 'Repository audit logs',
-    userAuditLogs: 'User audit logs',
-    workflowLogs: 'Workflow audit logs',
-    noLogsFound: 'No logs found',
-    system: 'System',
-    foundLogEvents: 'Found log events',
-    storedQueryLogs: 'Query audit logs',
-    policyLogs: 'Policy audit logs',
-    repositoryObjectLogs: 'Repository object audit logs',
-  },
+
   tokens: {
     apiTokens: 'API tokens',
     noTokens: 'You have no API tokens',
@@ -762,6 +733,7 @@ const en = {
     copied: 'Copied!',
     copyToken: 'Copy token',
   },
+
   policy: {
     title: 'Access Policies',
     description: 'Manage access policies and permissions',
@@ -795,6 +767,7 @@ const en = {
     principalRole: 'Role',
     principalEveryone: 'Everyone',
     allResources: 'All',
+
     tooltips: {
       effect: 'Whether the policy explicitly denies or allows the action',
       action:
@@ -806,6 +779,114 @@ const en = {
         'Optional specific resource ID. Leave empty to apply to all resources of this type',
     },
   },
+
+  // === LOGGING & MONITORING ===
+  logs: {
+    workspaceLogs: 'Workspace audit logs',
+    connectionLogs: 'Connection audit logs',
+    repositoryLogs: 'Repository audit logs',
+    userAuditLogs: 'User audit logs',
+    workflowLogs: 'Workflow audit logs',
+    noLogsFound: 'No logs found',
+    system: 'System',
+    foundLogEvents: 'Found log events',
+    storedQueryLogs: 'Query audit logs',
+    policyLogs: 'Policy audit logs',
+    repositoryObjectLogs: 'Repository object audit logs',
+  },
+
+  // === DOCUMENTATION ===
+  documentation: {
+    documentation: 'Documentation',
+    startTypingDocumentation:
+      'Start typing your documentation and notes here...',
+    schema: 'Schema',
+    workspace: 'Workspace',
+    createdBy: 'Created by',
+  },
+
+  // === LIST COMPONENTS ===
+  list: {
+    status: 'Status',
+    runs: 'Runs',
+    actions: 'Actions',
+    view: 'View',
+    delete: 'Delete',
+    edit: 'Edit',
+    owner: 'Owner',
+    author: 'Author',
+    lastUpdated: 'Last updated',
+    createdAt: 'Created at',
+    immutable: 'Immutable',
+    source: 'Source',
+    destination: 'Destination',
+    searchPlaceholder: 'Type to search...',
+    noItemsFound: 'No items found',
+
+    emptyState: {
+      repositories: {
+        title: 'No repositories yet',
+        description:
+          'Repositories store your data in a Git-like structure. Create your first repository to get started.',
+      },
+      workflows: {
+        title: 'No workflows yet',
+        description:
+          'Workflows automate your data tasks. Create import, export, action, or pipeline workflows to get started.',
+      },
+      connections: {
+        title: 'No connections yet',
+        description:
+          'Connections allow you to import from and export to external data sources. Create your first connection to get started.',
+      },
+      users: {
+        title: 'No users yet',
+        description: 'Invite team members to collaborate on this workspace.',
+      },
+      invites: {
+        title: 'No pending invites',
+        description:
+          "When you invite people to this workspace, they'll appear here until they accept or decline.",
+      },
+      queries: {
+        title: 'No saved queries',
+        description:
+          'Start by writing a SQL query in the editor and save it for future use.',
+      },
+      tokens: {
+        title: 'No API tokens',
+        description:
+          'API tokens allow you to authenticate with the Irmin API programmatically. Create your first token to get started.',
+      },
+      commits: {
+        title: 'No commits yet',
+        description:
+          'Start making changes to your repository to see commits here.',
+      },
+      tags: {
+        title: 'No tags yet',
+        description:
+          'Tags are immutable pointers to specific commits. Create tags to mark important versions.',
+      },
+      branches: {
+        title: 'No branches yet',
+        description:
+          'Branches allow you to work on different versions of your data simultaneously.',
+      },
+      objects: {
+        title: 'No objects yet',
+        description:
+          'Start by uploading files or create a workflow to populate this repository.',
+      },
+      generic: {
+        title: 'No items found',
+        description:
+          "Try adjusting your search or filters to find what you're looking for.",
+      },
+    },
+  },
+
+  // === UTILITIES ===
   schemaFieldMapper: {
     title: 'Field Mapper',
     description:

@@ -107,7 +107,7 @@ const WorkspaceInvitesSection = () => {
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       {/* Row containing the invite button */}
-      <div className='flex flex-row items-center justify-end px-2 mb-4'>
+      <div className='mb-4 flex flex-row items-center justify-end px-2'>
         <Button size='sm' variant='default' onClick={handleSendInvite}>
           {dict.users.inviteUser}
         </Button>
@@ -120,9 +120,9 @@ const WorkspaceInvitesSection = () => {
           action={{
             label: dict.users.inviteUser,
             onClick: handleSendInvite,
-            variant: 'gradient'
+            variant: 'gradient',
           }}
-          className="py-16"
+          className='py-16'
         />
       ) : (
         <Table>

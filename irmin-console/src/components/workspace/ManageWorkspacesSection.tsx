@@ -91,20 +91,27 @@ const ManageWorkspacesSection = () => {
     return (
       <div className='pattern-bg h-full'>
         <div className='relative container mx-auto max-w-2xl'>
-          <div className='flex flex-col items-center justify-center min-h-[60vh] px-4'>
-            <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} className="mb-8" />
-            
+          <div className='flex min-h-[60vh] flex-col items-center justify-center px-4'>
+            <ConsoleTitle
+              title={dict.workspaceSwitcher.manageWorkspaces}
+              className='mb-8'
+            />
+
             <div className='w-full max-w-lg'>
               <EmptyState
                 title={dict.workspaceSwitcher.createFirstWorkspace}
-                description={dict.workspaceSwitcher.createFirstWorkspaceDescription}
-                size="lg"
-                className="mb-8"
+                description={
+                  dict.workspaceSwitcher.createFirstWorkspaceDescription
+                }
+                size='lg'
+                className='mb-8'
               />
-              
+
               {/* Big creation form */}
-              <div className='bg-background text-foreground rounded-xl p-6 shadow-md border'>
-                <h2 className="text-xl font-semibold mb-4">{dict.workspaceSwitcher.createNewWorkspace}</h2>
+              <div className='bg-background text-foreground rounded-xl border p-6 shadow-md'>
+                <h2 className='mb-4 text-xl font-semibold'>
+                  {dict.workspaceSwitcher.createNewWorkspace}
+                </h2>
                 <form
                   onSubmit={handleSubmit(handleCreateWorkspace)}
                   className={`${createMutation.isPending && 'blur-xs'}`}

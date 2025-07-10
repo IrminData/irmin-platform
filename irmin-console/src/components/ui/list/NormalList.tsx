@@ -188,15 +188,12 @@ const NormalList: React.FC<ListProps> = ({
           {/* No items found row */}
           {!loading && rows.length === 0 && (
             <tr>
-              <td
-                colSpan={totalColumns}
-                className='p-0 align-middle'
-              >
+              <td colSpan={totalColumns} className='p-0 align-middle'>
                 <EmptyState
                   title={dict.list.emptyState.generic.title}
                   description={dict.list.emptyState.generic.description}
-                  size="sm"
-                  className="py-12"
+                  size='sm'
+                  className='py-12'
                 />
               </td>
             </tr>

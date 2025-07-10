@@ -62,7 +62,7 @@ export default function TokensSection() {
   return (
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       {/* Row with the create token button */}
-      <div className='flex flex-row items-center justify-end px-2 mb-4'>
+      <div className='mb-4 flex flex-row items-center justify-end px-2'>
         <Button size='sm' variant='default' onClick={handleCreateToken}>
           {dict.tokens.createAPIToken}
         </Button>
@@ -80,9 +80,9 @@ export default function TokensSection() {
           action={{
             label: dict.tokens.createAPIToken,
             onClick: handleCreateToken,
-            variant: 'gradient'
+            variant: 'gradient',
           }}
-          className="py-16"
+          className='py-16'
         />
       ) : (
         <Table className='min-w-full'>
