@@ -36,7 +36,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	defer mysqlClient.Close()
 
 	// Get schema information based on operation type
-	var schema interface{}
+	var schema any
 
 	switch operationType {
 	case "pull":
@@ -65,39 +65,39 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 }
 
 // getPullSchema returns schema information for pull operations.
-func (cs *Controllers) getPullSchema(ctx context.Context, mysqlClient *mysqlclient.MySQLClient) (interface{}, error) {
+func (cs *Controllers) getPullSchema(ctx context.Context, mysqlClient *mysqlclient.MySQLClient) (any, error) {
 	tablesAndStructures, err := mysqlClient.GetTablesAndStructures(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"operation": "pull",
 		"tables":    tablesAndStructures,
 	}, nil
 }
 
 // getPushSchema returns schema information for push operations.
-func (cs *Controllers) getPushSchema(ctx context.Context, mysqlClient *mysqlclient.MySQLClient) (interface{}, error) {
+func (cs *Controllers) getPushSchema(ctx context.Context, mysqlClient *mysqlclient.MySQLClient) (any, error) {
 	tablesAndStructures, err := mysqlClient.GetTablesAndStructures(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"operation": "push",
 		"tables":    tablesAndStructures,
 	}, nil
 }
 
 // getPatchSchema returns schema information for patch operations.
-func (cs *Controllers) getPatchSchema(ctx context.Context, mysqlClient *mysqlclient.MySQLClient) (interface{}, error) {
+func (cs *Controllers) getPatchSchema(ctx context.Context, mysqlClient *mysqlclient.MySQLClient) (any, error) {
 	tablesAndStructures, err := mysqlClient.GetTablesAndStructures(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"operation": "patch",
 		"tables":    tablesAndStructures,
 	}, nil

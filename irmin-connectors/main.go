@@ -47,13 +47,6 @@ const (
 
 	// BodyLimitBytes is the maximum body size in bytes.
 	BodyLimitBytes = 5 * 1024 * 1024 * 1024 // 5 GB
-
-	// CacheMethodGet is the HTTP method for GET requests.
-	CacheMethodGet = http.MethodGet
-	// CacheMethodHead is the HTTP method for HEAD requests.
-	CacheMethodHead = http.MethodHead
-	// CacheMethodOptions is the HTTP method for OPTIONS requests.
-	CacheMethodOptions = http.MethodOptions
 )
 
 // NewConnectorsApp creates a new application instance with all dependencies and a Fiber app.
@@ -90,9 +83,9 @@ func NewConnectorsApp(runMigrations bool) (*models.ConnectorsApp, error) {
 		cache.Config{
 			Expiration: CacheExpirationSeconds * time.Second,
 			Methods: []string{
-				CacheMethodGet,
-				CacheMethodHead,
-				CacheMethodOptions,
+				http.MethodGet,
+				http.MethodHead,
+				http.MethodOptions,
 			},
 			KeyGenerator: func(c fiber.Ctx) string {
 				queriesMap := c.Queries()
@@ -227,12 +220,6 @@ func main() {
 	app.App.Get("/public/*", static.New("./public"))
 	connectors.SetupConnectorRoutes(app)
 
-	// Initialize connectors before starting server
-	if initConnErr := initializeConnectors(app, *skipRegistrations); initConnErr != nil {
-		startupCancel()
-		log.Fatalf("Error initializing connectors: %v", initConnErr)
-	}
-
 	// Channel for server errors
 	serverErr := make(chan error, 1)
 
@@ -276,6 +263,12 @@ func main() {
 		// Server is confirmed ready - startup phase is complete
 		startupCancel()
 		log.Printf("Server successfully started and ready on port %s", app.Env.Port)
+
+		// Initialize connectors after server is ready
+		if initConnErr := initializeConnectors(app, *skipRegistrations); initConnErr != nil {
+			log.Printf("Error initializing connectors: %v", initConnErr)
+			// Don't exit here, just log the error and continue
+		}
 
 		// Now wait for shutdown signal or runtime error
 		select {

@@ -1,6 +1,10 @@
 package config
 
-import "irmin-connectors/models"
+import (
+	"irmin-connectors/models"
+
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+)
 
 // GetConnectorInfo returns the default connector information for PostgreSQL.
 func GetConnectorInfo() models.ConnectorDetails {
@@ -12,11 +16,16 @@ func GetConnectorInfo() models.ConnectorDetails {
 		Author:           "Tim Borovkov / Irmin",
 		APIBaseURL:       "/postgres",
 		LogoURL:          "/public/postgres.png",
-		Capabilities:     []string{"pull", "push", "event"},
-		Locales:          []string{"en"},
-		PrimaryCategory:  "database",
-		Categories:       []string{"database"},
-		AuthorEmail:      "hello@irmin.co",
-		ReadMoreURL:      "/postgres/details",
+		Capabilities: []irminmodels.ConnectorCapability{
+			irminmodels.ConnectorCapabilityPullFullSync,
+			irminmodels.ConnectorCapabilityPushFullSync,
+			irminmodels.ConnectorCapabilityPushPatch,
+			irminmodels.ConnectorCapabilityEventWebhook,
+		},
+		Locales:         []string{"en"},
+		PrimaryCategory: irminmodels.ConnectorCategoryDatabase,
+		Categories:      []irminmodels.ConnectorCategory{irminmodels.ConnectorCategoryDatabase},
+		AuthorEmail:     "hello@irmin.co",
+		ReadMoreURL:     "/postgres/details",
 	}
 }

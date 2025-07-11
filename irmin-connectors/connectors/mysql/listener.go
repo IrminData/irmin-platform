@@ -78,7 +78,7 @@ func handleMySQLNotification(
 		"payload", payload)
 
 	// Parse the notification payload
-	var notification map[string]interface{}
+	var notification map[string]any
 	if err := json.Unmarshal([]byte(payload), &notification); err != nil {
 		logger.ErrorContext(ctx, "Failed to parse notification payload",
 			"error", err,
@@ -180,7 +180,7 @@ func handleMySQLNotification(
 }
 
 // getEventType extracts the event type from MySQL notification data.
-func getEventType(notification map[string]interface{}) string {
+func getEventType(notification map[string]any) string {
 	if eventType, ok := notification["event_type"].(string); ok {
 		return eventType
 	}
@@ -189,7 +189,7 @@ func getEventType(notification map[string]interface{}) string {
 }
 
 // getTableName extracts the table name from MySQL notification data.
-func getTableName(notification map[string]interface{}) string {
+func getTableName(notification map[string]any) string {
 	if tableName, ok := notification["table_name"].(string); ok {
 		return tableName
 	}
