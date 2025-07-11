@@ -215,14 +215,13 @@ func (v *Validator) ValidateDynamic(data any) *ValidationResultError {
 	}
 
 	// Check if it's an array or slice
-	switch dataType.Kind() {
-	case reflect.Slice, reflect.Array:
+	if dataType.Kind() == reflect.Slice || dataType.Kind() == reflect.Array || dataType.Kind() == reflect.Map {
 		// For arrays/slices, validate each element individually (equivalent to "dive" validation)
 		return v.validateArray(dataValue)
-	default:
-		// For single structs, validate directly
-		return v.ValidateEnhanced(data)
 	}
+
+	// For single structs, validate directly
+	return v.ValidateEnhanced(data)
 }
 
 // validateArray validates each element in an array or slice.
@@ -249,7 +248,10 @@ func (v *Validator) validateArray(arrayValue reflect.Value) *ValidationResultErr
 
 			// Add user message with index
 			if validationResult.GetUserMessage() != "" {
-				allUserMessages = append(allUserMessages, fmt.Sprintf("Item %d: %s", i, validationResult.GetUserMessage()))
+				allUserMessages = append(
+					allUserMessages,
+					fmt.Sprintf("Item %d: %s", i, validationResult.GetUserMessage()),
+				)
 			}
 		}
 	}
@@ -265,19 +267,20 @@ func (v *Validator) validateArray(arrayValue reflect.Value) *ValidationResultErr
 
 	// Combine all error messages
 	var userMessage string
-	if len(allUserMessages) == 1 {
-		userMessage = allUserMessages[0]
-	} else if len(allUserMessages) > 1 {
-		userMessage = fmt.Sprintf("Multiple validation errors: %v", allUserMessages)
-	} else {
+	switch len(allUserMessages) {
+	case 0:
 		userMessage = "Array validation failed"
+	case 1:
+		userMessage = allUserMessages[0]
+	default:
+		userMessage = fmt.Sprintf("Multiple validation errors: %v", allUserMessages)
 	}
 
 	return &ValidationResultError{
 		IsValid:     false,
 		UserMessage: userMessage,
 		FieldErrors: allFieldErrors,
-		RawErrors:   fmt.Errorf("array validation failed"),
+		RawErrors:   errors.New("array validation failed"),
 	}
 }
 

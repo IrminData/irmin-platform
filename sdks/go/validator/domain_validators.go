@@ -232,7 +232,6 @@ func (v *Validator) validateCommonWorkflowableFields(parentStruct reflect.Value)
 
 	repositoryField := parentStruct.FieldByName("Repository")
 	repositoryBranchField := parentStruct.FieldByName("RepositoryBranch")
-	fieldMappingsField := parentStruct.FieldByName("FieldMappings")
 
 	// Must have repository
 	if !repositoryField.IsValid() || repositoryField.String() == "" {
@@ -244,10 +243,10 @@ func (v *Validator) validateCommonWorkflowableFields(parentStruct reflect.Value)
 		return false
 	}
 
-	// Must have field mappings
-	if !fieldMappingsField.IsValid() || fieldMappingsField.Len() == 0 {
-		return false
-	}
+	// FieldMappings validation is handled by standard tags:
+	// - "required_if=Type import,required_if=Type export" ensures they're required when needed
+	// - "dive" validates each FieldMapping when present
+	// Custom validator doesn't need to check this field
 
 	return true
 }
@@ -256,8 +255,8 @@ func (v *Validator) validateCommonWorkflowableFields(parentStruct reflect.Value)
 func (v *Validator) validatePipelineWorkflowable(parentStruct reflect.Value) bool {
 	stagesField := parentStruct.FieldByName("Stages")
 
-	// Pipeline workflowables must have at least one stage
-	if !stagesField.IsValid() || stagesField.Len() == 0 {
+	// Pipeline workflowables must have stages array, but it can be empty
+	if !stagesField.IsValid() {
 		return false
 	}
 
@@ -271,7 +270,7 @@ func (v *Validator) validateActionWorkflowable(_ reflect.Value) bool {
 	return true
 }
 
-// validateConnectionID validates that a connection ID field is properly set.
+// validateConnectionID validates that a connection ID field is a valid SQID.
 func (v *Validator) validateConnectionID(connectionIDField reflect.Value) bool {
 	if !connectionIDField.IsValid() {
 		return false
@@ -288,6 +287,22 @@ func (v *Validator) validateConnectionID(connectionIDField reflect.Value) bool {
 	}
 
 	if connectionID == "" {
+		return false
+	}
+
+	// Skip SQID validation if no SQID manager is available (client-side scenario)
+	if v.sqidManager == nil {
+		return true
+	}
+
+	// Validate that the connection ID is a valid SQID for connection type
+	decoded, err := v.sqidManager.Decode("connections", connectionID)
+	if err != nil {
+		return false
+	}
+
+	// Check if the decoded value is a valid uint64
+	if decoded == 0 {
 		return false
 	}
 

@@ -966,7 +966,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			Executable:              "dummy-executable",
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
-			ResultsRepositoryPath:   resultsRepositoryPath,
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -994,7 +994,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			Executable:              "dummy-executable",
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
-			ResultsRepositoryPath:   resultsRepositoryPath,
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -1008,6 +1008,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
+		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
 			Type:       models.WorkflowableTypeAction,
@@ -1019,7 +1020,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 					RepositoryPath: "/path/to/file",
 				},
 			},
-			ResultsRepositoryPath: "/results",
+			ResultsRepositoryPath: &resultsRepositoryPath,
 			// Provide defaults for all other fields
 			ConnectionID:            connectionID,
 			Repository:              "dummy-repo",
@@ -1041,6 +1042,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
+		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
 			Type: models.WorkflowableTypeAction,
@@ -1052,7 +1054,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 					RepositoryPath: "/path/to/file",
 				},
 			},
-			ResultsRepositoryPath:   "/results",
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 			ConnectionID:            connectionID,
 			Repository:              "dummy-repo",
 			RepositoryBranch:        "main",
@@ -1097,7 +1099,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			Executable:              "dummy-executable",
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
-			ResultsRepositoryPath:   resultsRepositoryPath,
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -1133,7 +1135,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			Executable:                "dummy-executable",
 			ResultsRepository:         &resultsRepository,
 			ResultsRepositoryBranch:   &resultsRepositoryBranch,
-			ResultsRepositoryPath:     resultsRepositoryPath,
+			ResultsRepositoryPath:     &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -1171,7 +1173,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			Executable:              "dummy-executable",
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
-			ResultsRepositoryPath:   resultsRepositoryPath,
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -1199,7 +1201,7 @@ func TestValidator_ValidateWorkflowable(t *testing.T) {
 			Executable:                "dummy-executable",
 			ResultsRepository:         &resultsRepository,
 			ResultsRepositoryBranch:   &resultsRepositoryBranch,
-			ResultsRepositoryPath:     resultsRepositoryPath,
+			ResultsRepositoryPath:     &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -1657,7 +1659,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			Executable:              "dummy-executable",
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
-			ResultsRepositoryPath:   resultsRepositoryPath,
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -1670,6 +1672,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 		connectionID, _ := sqidManager.Encode("connections", 123)
 		resultsRepository := "results-repo"
 		resultsRepositoryBranch := "main"
+		resultsRepositoryPath := "/results"
 
 		workflowable := models.Workflowable{
 			Type:       models.WorkflowableTypeAction,
@@ -1681,7 +1684,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 					RepositoryPath: "/path/to/file",
 				},
 			},
-			ResultsRepositoryPath: "/results",
+			ResultsRepositoryPath: &resultsRepositoryPath,
 			// Provide defaults for all other fields
 			ConnectionID:            connectionID,
 			Repository:              "dummy-repo",
@@ -1726,7 +1729,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			Executable:              "dummy-executable",
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
-			ResultsRepositoryPath:   resultsRepositoryPath,
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
@@ -1763,7 +1766,7 @@ func TestValidateWorkflowableFixed(t *testing.T) {
 			Executable:              "dummy-executable",
 			ResultsRepository:       &resultsRepository,
 			ResultsRepositoryBranch: &resultsRepositoryBranch,
-			ResultsRepositoryPath:   resultsRepositoryPath,
+			ResultsRepositoryPath:   &resultsRepositoryPath,
 		}
 
 		err := validator.Validate(workflowable)
