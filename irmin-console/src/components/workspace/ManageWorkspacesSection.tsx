@@ -9,7 +9,7 @@ import Button from '@/components/ui/button';
 import EmptyState from '@/components/ui/EmptyState';
 import QueryError from '@/components/ui/error/QueryError';
 import Input from '@/components/ui/input';
-import ListSkeleton from '@/components/ui/loading/ListSkeleton';
+import WorkspaceCardSkeleton from '@/components/ui/loading/WorkspaceCardSkeleton';
 import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -269,9 +269,7 @@ const ManageWorkspacesSection = () => {
               </div>
             ) : (
               <div className='ml-auto grow'>
-                <div className='-mx-2 flex w-full flex-wrap content-stretch items-stretch justify-start'>
-                  <ListSkeleton items={6} className='p-2' />
-                </div>
+                <WorkspaceCardSkeleton items={6} className='-mx-2' />
               </div>
             )}
           </div>

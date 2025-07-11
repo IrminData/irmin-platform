@@ -5,7 +5,7 @@ import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 
 import QueryError from '@/components/ui/error/QueryError';
 import LinkCard from '@/components/ui/LinkCard';
-import PageSkeleton from '@/components/ui/loading/PageSkeleton';
+import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -27,17 +27,7 @@ const WorkspaceHomeSection = () => {
     segmentsAfter: 1,
   });
 
-  if (workspaceQuery?.isLoading) {
-    return (
-      <div className='pattern-bg h-full py-12'>
-        <div className='relative container mx-auto max-w-6xl px-4'>
-          <PageSkeleton showHeader={true} contentRows={2} />
-        </div>
-      </div>
-    );
-  }
-
-  if (workspaceQuery?.error) {
+  if (workspaceQuery?.isError) {
     return (
       <div className='pattern-bg h-full py-12'>
         <div className='relative container mx-auto max-w-6xl px-4'>
@@ -56,9 +46,15 @@ const WorkspaceHomeSection = () => {
       <div className='relative container mx-auto max-w-6xl px-4'>
         <div className='flex flex-col gap-8 px-4'>
           <div className='flex w-full flex-col gap-4'>
-            <h2 className='font-display text-foreground/90 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
-              {workspaceQuery?.data?.data?.name ?? ''}
-            </h2>
+            {workspaceQuery?.data?.data?.name ? (
+              <h2 className='font-display text-foreground/90 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
+                {workspaceQuery?.data?.data?.name ?? ''}
+              </h2>
+            ) : (
+              <div className='mx-auto w-1/2 max-w-80'>
+                <LoadingSkeleton className='mx-auto h-14 w-full' />
+              </div>
+            )}
             <p className='text-center text-sm opacity-80'>
               {dict.consoleHome.welcomeToWorkspace}
             </p>
