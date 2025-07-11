@@ -1,6 +1,6 @@
-# CLAUDE.md
+# GEMINI.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Gemini CLI when working with code in this repository.
 
 ## Project Overview
 
@@ -59,6 +59,7 @@ Irmin Connectors is a Go-based microservice that provides a universal way to int
 ## Development Commands
 
 ### Dependencies
+
 ```bash
 go mod download          # Install dependencies
 go mod tidy              # Clean up dependencies
@@ -66,6 +67,7 @@ go get -u ./...          # Update all dependencies
 ```
 
 ### Build and Run
+
 ```bash
 go build -o out          # Build binary
 ./out                    # Run binary
@@ -74,6 +76,7 @@ air                      # Run with hot reloading (recommended for development)
 ```
 
 ### Command Line Flags
+
 ```bash
 go run main.go -skip-registrations    # Skip connector registrations with Irmin API
 go run main.go -migrate              # Run database migrations
@@ -81,12 +84,14 @@ air -- -skip-registrations          # Use flags with Air hot reloading
 ```
 
 ### Code Quality
+
 ```bash
 golangci-lint run        # Run linter
 golangci-lint run --fix  # Run linter with automatic fixes
 ```
 
 ### Testing
+
 ```bash
 go test ./...            # Run all tests
 go test -v ./...         # Run tests with verbose output
@@ -96,6 +101,7 @@ go test -race ./...      # Run tests with race detection
 ## Environment Configuration
 
 Required environment variables in `.env`:
+
 ```bash
 # Server Configuration
 PORT=8080
@@ -141,6 +147,7 @@ DATABASE_CONNECTION_STRING=postgres://user:password@localhost:5432/database
 ## Database Operations
 
 The application uses GORM with PostgreSQL and supports:
+
 - **Auto-migrations**: Run with `-migrate` flag
 - **Operation Tracking**: All data operations are logged and tracked
 - **Real-time Subscriptions**: PostgreSQL LISTEN/NOTIFY for change detection
@@ -149,6 +156,7 @@ The application uses GORM with PostgreSQL and supports:
 ## Hot Reloading
 
 Air configuration (`.air.toml`) provides:
+
 - Automatic rebuilds on Go file changes
 - Exclusion of test files and temporary directories
 - Build error logging
