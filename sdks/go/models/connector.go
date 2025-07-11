@@ -2,29 +2,29 @@ package irminmodels
 
 // Connector represents general information about a connector.
 type Connector struct {
-	ID               string                `json:"id"                          validate:"required,validsqid=connectors"`
-	Name             string                `json:"name"                        validate:"required,min=1,max=100"`
-	Description      string                `json:"description"                 validate:"required,min=1,max=500"`
-	Version          string                `json:"version"                     validate:"required,min=1,max=20"`
-	StructureVersion string                `json:"structure_version,omitempty" validate:"min=1,max=20"`
-	Author           string                `json:"author"                      validate:"required,min=1,max=100"`
-	LogoURL          string                `json:"logo_url"                    validate:"required,validimageurl"`
-	Capabilities     []ConnectorCapability `json:"capabilities"                validate:"required,min=1,dive,oneof=pull push webhook_patch webhook_pull"`
-	Locales          []string              `json:"locales"                     validate:"required,min=1,dive,min=2,max=5"`
-	Categories       []ConnectorCategory   `json:"categories"                  validate:"required,min=1,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
-	PrimaryCategory  ConnectorCategory     `json:"primary_category"            validate:"required,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
-	AuthorEmail      string                `json:"author_email"                validate:"required,email"`
-	ReadMoreURL      string                `json:"read_more_url"               validate:"required,validurl"`
+	ID               string                `json:"id"                validate:"required,validsqid=connectors"`
+	Name             string                `json:"name"              validate:"required,min=1,max=100"`
+	Description      string                `json:"description"       validate:"required,min=1,max=500"`
+	Version          string                `json:"version"           validate:"required,min=1,max=20"`
+	StructureVersion string                `json:"structure_version" validate:"required,min=1,max=20"`
+	Author           string                `json:"author"            validate:"required,min=1,max=100"`
+	LogoURL          string                `json:"logo_url"          validate:"required,validimageurl"`
+	Capabilities     []ConnectorCapability `json:"capabilities"      validate:"required,min=1,dive,oneof=pull push push_patch event_webhook"`
+	Locales          []string              `json:"locales"           validate:"required,min=1,dive,min=2,max=5"`
+	Categories       []ConnectorCategory   `json:"categories"        validate:"required,min=1,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
+	PrimaryCategory  ConnectorCategory     `json:"primary_category"  validate:"required,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
+	AuthorEmail      string                `json:"author_email"      validate:"required,email"`
+	ReadMoreURL      string                `json:"read_more_url"     validate:"required,validurl"`
 }
 
 // ConnectorCapability represents the capabilities of a connector.
 type ConnectorCapability string
 
 const (
-	ConnectorCapabilityPullFullSync  ConnectorCapability = "pull"
-	ConnectorCapabilityPushFullSync  ConnectorCapability = "push"
-	ConnectorCapabilityPushPatchSync ConnectorCapability = "webhook_patch"
-	ConnectorCapabilityPullPatchSync ConnectorCapability = "webhook_pull"
+	ConnectorCapabilityPullFullSync ConnectorCapability = "pull"
+	ConnectorCapabilityPushFullSync ConnectorCapability = "push"
+	ConnectorCapabilityPushPatch    ConnectorCapability = "push_patch"
+	ConnectorCapabilityEventWebhook ConnectorCapability = "event_webhook"
 )
 
 // ConnectorCategory represents the category of a connector.
