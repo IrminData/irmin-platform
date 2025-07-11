@@ -3,6 +3,7 @@ package irminsdkvalidator
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
@@ -180,6 +181,104 @@ func (v *Validator) ValidateVarEnhanced(field any, tag string) *ValidationResult
 	}
 
 	return v.buildValidationResult(err)
+}
+
+// ValidateDynamic validates data that could be either a single struct or an array of structs.
+// It dynamically determines the type and applies appropriate validation.
+// This is useful for API responses where the data field can contain either a single object or an array.
+func (v *Validator) ValidateDynamic(data any) *ValidationResultError {
+	if data == nil {
+		return &ValidationResultError{
+			IsValid:     true,
+			UserMessage: "",
+			FieldErrors: make(map[string]string),
+			RawErrors:   nil,
+		}
+	}
+
+	// Use reflection to determine the type of data
+	dataValue := reflect.ValueOf(data)
+	dataType := dataValue.Type()
+
+	// Handle pointers by dereferencing them
+	if dataType.Kind() == reflect.Ptr {
+		if dataValue.IsNil() {
+			return &ValidationResultError{
+				IsValid:     true,
+				UserMessage: "",
+				FieldErrors: make(map[string]string),
+				RawErrors:   nil,
+			}
+		}
+		dataValue = dataValue.Elem()
+		dataType = dataValue.Type()
+	}
+
+	// Check if it's an array or slice
+	switch dataType.Kind() {
+	case reflect.Slice, reflect.Array:
+		// For arrays/slices, validate each element individually (equivalent to "dive" validation)
+		return v.validateArray(dataValue)
+	default:
+		// For single structs, validate directly
+		return v.ValidateEnhanced(data)
+	}
+}
+
+// validateArray validates each element in an array or slice.
+// This provides the equivalent functionality of the "dive" validation tag.
+func (v *Validator) validateArray(arrayValue reflect.Value) *ValidationResultError {
+	length := arrayValue.Len()
+
+	// Track all validation errors
+	allFieldErrors := make(map[string]string)
+	var allUserMessages []string
+	hasErrors := false
+
+	for i := range length {
+		element := arrayValue.Index(i).Interface()
+		validationResult := v.ValidateEnhanced(element)
+
+		if validationResult.HasErrors() {
+			hasErrors = true
+
+			// Add field errors with index prefix
+			for field, message := range validationResult.GetFieldErrors() {
+				allFieldErrors[fmt.Sprintf("[%d].%s", i, field)] = message
+			}
+
+			// Add user message with index
+			if validationResult.GetUserMessage() != "" {
+				allUserMessages = append(allUserMessages, fmt.Sprintf("Item %d: %s", i, validationResult.GetUserMessage()))
+			}
+		}
+	}
+
+	if !hasErrors {
+		return &ValidationResultError{
+			IsValid:     true,
+			UserMessage: "",
+			FieldErrors: make(map[string]string),
+			RawErrors:   nil,
+		}
+	}
+
+	// Combine all error messages
+	var userMessage string
+	if len(allUserMessages) == 1 {
+		userMessage = allUserMessages[0]
+	} else if len(allUserMessages) > 1 {
+		userMessage = fmt.Sprintf("Multiple validation errors: %v", allUserMessages)
+	} else {
+		userMessage = "Array validation failed"
+	}
+
+	return &ValidationResultError{
+		IsValid:     false,
+		UserMessage: userMessage,
+		FieldErrors: allFieldErrors,
+		RawErrors:   fmt.Errorf("array validation failed"),
+	}
 }
 
 // buildValidationResult converts validation errors into a structured ValidationResultError.
