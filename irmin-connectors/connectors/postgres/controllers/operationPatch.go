@@ -243,12 +243,12 @@ func handleMoveOperation(
 	rowIdentifier any,
 	columnName string,
 ) error {
-	if op.From == "" {
+	if op.From == nil || *op.From == "" {
 		return errors.New("missing 'from' path in move operation")
 	}
 
 	// Parse the 'from' path
-	_, fromTable, fromRowID, fromColumnName := utils.ExtractPathComponents(op.From)
+	_, fromTable, fromRowID, fromColumnName := utils.ExtractPathComponents(*op.From)
 
 	// We'll determine if we're dealing with column-level or row-level move
 	sourceIsColumn := (fromColumnName != "")
@@ -391,11 +391,11 @@ func handleCopyOperation(
 	rowIdentifier any,
 	columnName string,
 ) error {
-	if op.From == "" {
+	if op.From == nil || *op.From == "" {
 		return errors.New("missing 'from' path in copy operation")
 	}
 
-	_, fromTable, fromRowID, fromColumnName := utils.ExtractPathComponents(op.From)
+	_, fromTable, fromRowID, fromColumnName := utils.ExtractPathComponents(*op.From)
 
 	sourceIsColumn := (fromColumnName != "")
 	destIsColumn := (columnName != "")
