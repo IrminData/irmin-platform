@@ -5,15 +5,15 @@ import { JSONValue } from '@/types/internal/GenericJSON';
  */
 export interface IrminAPIPaginationMetadata {
   /** Total number of items available */
-  total: number;
+  total?: number;
   /** Current page number */
   page?: number;
   /** Number of items per page */
-  per_page: number;
+  per_page?: number;
   /** Total number of pages */
-  total_pages: number;
+  total_pages?: number;
   /** Whether there are more items available */
-  has_more: boolean;
+  has_more?: boolean;
   /** The next identifier (page number or token) */
   next?: string;
 }

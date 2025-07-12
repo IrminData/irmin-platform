@@ -190,8 +190,6 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
       </div>
 
       <div className='flex flex-col gap-2'>
-        <h3 className='text-center text-base'>{dict.workspace.taggedItems}</h3>
-
         {/* Related assets */}
         {(assets?.queries && assets.queries.length > 0) ||
         (assets?.repositories && assets.repositories.length > 0) ||
@@ -202,7 +200,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Queries */}
             {assets?.queries && assets.queries.length > 0 && (
               <div>
-                <h3 className='mb-3 text-gray-700 dark:text-gray-300'>
+                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
                   {dict.consoleNavigation.queries} ({assets.queries.length})
                 </h3>
                 <Table>
@@ -227,7 +225,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Repositories */}
             {assets?.repositories && assets.repositories.length > 0 && (
               <div>
-                <h3 className='mb-3 text-gray-700 dark:text-gray-300'>
+                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
                   {dict.repository.repositories} ({assets.repositories.length})
                 </h3>
                 <Table>
@@ -252,7 +250,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Workflows */}
             {assets?.workflows && assets.workflows.length > 0 && (
               <div>
-                <h3 className='mb-3 text-gray-700 dark:text-gray-300'>
+                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
                   {dict.workflow.workflows} ({assets.workflows.length})
                 </h3>
                 <Table>
@@ -277,7 +275,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Connections */}
             {assets?.connections && assets.connections.length > 0 && (
               <div>
-                <h3 className='mb-3 text-gray-700 dark:text-gray-300'>
+                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
                   {dict.connections.connections} ({assets.connections.length})
                 </h3>
                 <Table>
@@ -303,7 +301,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {assets?.repository_objects &&
               assets.repository_objects.length > 0 && (
                 <div>
-                  <h3 className='mb-3 text-gray-700 dark:text-gray-300'>
+                  <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
                     {dict.repository.objects.objects} (
                     {assets.repository_objects.length})
                   </h3>

@@ -195,7 +195,6 @@ const en = {
     billingSettings: 'Billing Settings',
     billingNote:
       'You can currently only manage billing by contacting our team.',
-    taggedItems: 'Tagged items',
     addTags: 'Add tags',
     failedToLoadTags: 'Failed to load tags',
     failedToLoadWorkspaces: 'Failed to load workspaces',

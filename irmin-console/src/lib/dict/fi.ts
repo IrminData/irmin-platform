@@ -195,7 +195,6 @@ const fi = {
     billingSettings: 'Laskutuksen asetukset',
     billingNote:
       'Voit tällä hetkellä hallita laskutusta vain ottamalla yhteyttä tiimiimme.',
-    taggedItems: 'Tunnistetut kohteet',
     addTags: 'Lisää tunnisteet',
     failedToLoadTags: 'Tunnisteiden lataaminen epäonnistui',
     failedToLoadWorkspaces: 'Työtilojen lataaminen epäonnistui',
