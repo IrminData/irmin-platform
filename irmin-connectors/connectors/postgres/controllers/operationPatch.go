@@ -150,8 +150,8 @@ func handleAddOperation(ctx context.Context, tx *postgresclient.Tx, tableName st
 		colsPlaceholder[i] = fmt.Sprintf("$%d", i+1)
 	}
 	insertSQL := fmt.Sprintf(
-		`INSERT INTO "%s" (%s) VALUES (%s)`,
-		tableName,
+		`INSERT INTO %s (%s) VALUES (%s)`,
+		quoteIdentifier(tableName),
 		strings.Join(quoteIdentifiers(columns), ", "),
 		strings.Join(colsPlaceholder, ", "),
 	)
@@ -172,9 +172,21 @@ func handleAddOperation(ctx context.Context, tx *postgresclient.Tx, tableName st
 
 // handleRemoveOperation handles the "remove" patch operation.
 func handleRemoveOperation(ctx context.Context, tx *postgresclient.Tx, tableName string, rowIdentifier any) error {
-	deleteSQL := fmt.Sprintf(`DELETE FROM "%s" WHERE id = $1`, tableName)
-	if _, err := tx.Exec(ctx, deleteSQL, rowIdentifier); err != nil {
-		return fmt.Errorf("failed to remove row: %w", err)
+	// Get primary key columns for this table
+	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(ctx, tx, tableName)
+	if primaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns: %w", primaryKeysErr)
+	}
+
+	// Build WHERE clause with dynamic primary keys
+	whereClause, whereArgs, whereClauseErr := buildWhereClause(primaryKeys, rowIdentifier)
+	if whereClauseErr != nil {
+		return fmt.Errorf("failed to build WHERE clause: %w", whereClauseErr)
+	}
+
+	deleteSQL := fmt.Sprintf(`DELETE FROM %s WHERE %s`, quoteIdentifier(tableName), whereClause)
+	if _, execErr := tx.Exec(ctx, deleteSQL, whereArgs...); execErr != nil {
+		return fmt.Errorf("failed to remove row: %w", execErr)
 	}
 	return nil
 }
@@ -188,11 +200,29 @@ func handleReplaceOperation(
 	columnName string,
 	value any,
 ) error {
+	// Get primary key columns for this table
+	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(ctx, tx, tableName)
+	if primaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns: %w", primaryKeysErr)
+	}
+
+	// Build WHERE clause with dynamic primary keys
+	whereClause, whereArgs, whereClauseErr := buildWhereClause(primaryKeys, rowIdentifier)
+	if whereClauseErr != nil {
+		return fmt.Errorf("failed to build WHERE clause: %w", whereClauseErr)
+	}
+
 	if columnName != "" {
 		// Single column replace
-		updateSQL := fmt.Sprintf(`UPDATE "%s" SET "%s" = $1 WHERE id = $2`, tableName, columnName)
-		if _, err := tx.Exec(ctx, updateSQL, value, rowIdentifier); err != nil {
-			return fmt.Errorf("failed to replace column value: %w", err)
+		updateSQL := fmt.Sprintf(
+			`UPDATE %s SET %s = $1 WHERE %s`,
+			quoteIdentifier(tableName),
+			quoteIdentifier(columnName),
+			whereClause,
+		)
+		args := append([]any{value}, whereArgs...)
+		if _, execErr := tx.Exec(ctx, updateSQL, args...); execErr != nil {
+			return fmt.Errorf("failed to replace column value: %w", execErr)
 		}
 		return nil
 	}
@@ -205,30 +235,30 @@ func handleReplaceOperation(
 
 	// Build an UPDATE statement for every column in the JSON
 	setClauses := make([]string, 0, len(updatedRow))
-	args := make([]any, 0, len(updatedRow)+1)
+	args := make([]any, 0, len(updatedRow)+len(whereArgs))
 
-	i := 1
+	paramIndex := 1
 	for col, val := range updatedRow {
 		setClauses = append(
 			setClauses,
-			fmt.Sprintf(`"%s" = $%d`, col, i),
+			fmt.Sprintf(`%s = $%d`, quoteIdentifier(col), paramIndex),
 		)
 		args = append(args, val)
-		i++
+		paramIndex++
 	}
 
 	updateSQL := fmt.Sprintf(
-		`UPDATE "%s" SET %s WHERE id = $%d`,
-		tableName,
+		`UPDATE %s SET %s WHERE %s`,
+		quoteIdentifier(tableName),
 		strings.Join(setClauses, ", "),
-		i,
+		whereClause,
 	)
 
-	// Append the row identifier to the arguments
-	args = append(args, rowIdentifier)
+	// Append the WHERE arguments
+	args = append(args, whereArgs...)
 
-	if _, err := tx.Exec(ctx, updateSQL, args...); err != nil {
-		return fmt.Errorf("failed to replace row: %w", err)
+	if _, execErr := tx.Exec(ctx, updateSQL, args...); execErr != nil {
+		return fmt.Errorf("failed to replace row: %w", execErr)
 	}
 
 	return nil
@@ -284,32 +314,56 @@ func handleColumnToColumnMove(
 	toRowID any,
 	toColumnName string,
 ) error {
+	// Get primary key columns for source table
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	if fromPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
+	}
+
+	// Get primary key columns for destination table
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	if toPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
+	}
+
+	// Build WHERE clauses
+	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
+	if fromWhereClauseErr != nil {
+		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
+	}
+
+	toWhereClause, toWhereArgs, toWhereClauseErr := buildWhereClause(toPrimaryKeys, toRowID)
+	if toWhereClauseErr != nil {
+		return fmt.Errorf("failed to build TO WHERE clause: %w", toWhereClauseErr)
+	}
+
 	// 1) SELECT the existing value from the source column
 	selectSQL := fmt.Sprintf(
-		`SELECT "%s" FROM "%s" WHERE id = $1`,
-		fromColumnName, fromTable,
+		`SELECT %s FROM %s WHERE %s`,
+		quoteIdentifier(fromColumnName), quoteIdentifier(fromTable), fromWhereClause,
 	)
 	var columnValue any
-	if err := tx.QueryRow(ctx, selectSQL, fromRowID).Scan(&columnValue); err != nil {
-		return fmt.Errorf("failed to retrieve source column for move: %w", err)
+	if queryRowErr := tx.QueryRow(ctx, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
+		return fmt.Errorf("failed to retrieve source column for move: %w", queryRowErr)
 	}
 
 	// 2) Set the source column to NULL
 	updateSourceSQL := fmt.Sprintf(
-		`UPDATE "%s" SET "%s" = NULL WHERE id = $1`,
-		fromTable, fromColumnName,
+		`UPDATE %s SET %s = NULL WHERE %s`,
+		quoteIdentifier(fromTable), quoteIdentifier(fromColumnName), fromWhereClause,
 	)
-	if _, err := tx.Exec(ctx, updateSourceSQL, fromRowID); err != nil {
-		return fmt.Errorf("failed to clear source column in move: %w", err)
+	if _, execErr := tx.Exec(ctx, updateSourceSQL, fromWhereArgs...); execErr != nil {
+		return fmt.Errorf("failed to clear source column in move: %w", execErr)
 	}
 
 	// 3) Write the retrieved value into the destination column
 	updateDestSQL := fmt.Sprintf(
-		`UPDATE "%s" SET "%s" = $1 WHERE id = $2`,
-		toTable, toColumnName,
+		`UPDATE %s SET %s = $1 WHERE %s`,
+		quoteIdentifier(toTable), quoteIdentifier(toColumnName), toWhereClause,
 	)
-	if _, err := tx.Exec(ctx, updateDestSQL, columnValue, toRowID); err != nil {
-		return fmt.Errorf("failed to write destination column in move: %w", err)
+	args := append([]any{columnValue}, toWhereArgs...)
+	if _, execErr := tx.Exec(ctx, updateDestSQL, args...); execErr != nil {
+		return fmt.Errorf("failed to write destination column in move: %w", execErr)
 	}
 
 	return nil
@@ -324,11 +378,29 @@ func handleRowToRowMove(
 	toTable string,
 	toRowID any,
 ) error {
+	// Get primary key columns for source table
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	if fromPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
+	}
+
+	// Get primary key columns for destination table
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	if toPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
+	}
+
+	// Build WHERE clause for source
+	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
+	if fromWhereClauseErr != nil {
+		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
+	}
+
 	// 1) SELECT * from the source row
-	selectSQL := fmt.Sprintf(`SELECT * FROM "%s" WHERE id = $1`, fromTable)
-	rows, err := tx.Query(ctx, selectSQL, fromRowID)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve source row for move: %w", err)
+	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE %s`, quoteIdentifier(fromTable), fromWhereClause)
+	rows, queryErr := tx.Query(ctx, selectSQL, fromWhereArgs...)
+	if queryErr != nil {
+		return fmt.Errorf("failed to retrieve source row for move: %w", queryErr)
 	}
 	defer rows.Close()
 
@@ -338,9 +410,9 @@ func handleRowToRowMove(
 
 	// Extract column info
 	fieldDescriptions := rows.FieldDescriptions()
-	values, err := rows.Values()
-	if err != nil {
-		return fmt.Errorf("failed to read row data: %w", err)
+	values, valuesErr := rows.Values()
+	if valuesErr != nil {
+		return fmt.Errorf("failed to read row data: %w", valuesErr)
 	}
 
 	// Build a map[columnName -> value]
@@ -350,28 +422,45 @@ func handleRowToRowMove(
 	}
 
 	// 2) DELETE the source row
-	deleteSQL := fmt.Sprintf(`DELETE FROM "%s" WHERE id = $1`, fromTable)
-	if _, execErr := tx.Exec(ctx, deleteSQL, fromRowID); execErr != nil {
+	deleteSQL := fmt.Sprintf(`DELETE FROM %s WHERE %s`, quoteIdentifier(fromTable), fromWhereClause)
+	if _, execErr := tx.Exec(ctx, deleteSQL, fromWhereArgs...); execErr != nil {
 		return fmt.Errorf("failed to remove source row in move: %w", execErr)
 	}
 
 	// 3) INSERT the row into the destination table
-	rowData["id"] = toRowID
+	// Update primary key columns with new values
+	if len(toPrimaryKeys) == 1 {
+		rowData[toPrimaryKeys[0]] = toRowID
+	} else {
+		// Handle composite primary keys
+		toRowIDStr, ok := toRowID.(string)
+		if !ok {
+			return errors.New("composite primary key requires string identifier")
+		}
+		parts := strings.Split(toRowIDStr, ":")
+		if len(parts) != len(toPrimaryKeys) {
+			return fmt.Errorf("identifier parts (%d) don't match primary key columns (%d)", len(parts), len(toPrimaryKeys))
+		}
+		for i, key := range toPrimaryKeys {
+			rowData[key] = parts[i]
+		}
+	}
+
 	columns := make([]string, 0, len(rowData))
 	placeholders := make([]string, 0, len(rowData))
 	args := make([]any, 0, len(rowData))
 
-	i := 1
+	paramIndex := 1
 	for col, val := range rowData {
-		columns = append(columns, fmt.Sprintf(`"%s"`, col))
-		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		columns = append(columns, quoteIdentifier(col))
+		placeholders = append(placeholders, fmt.Sprintf("$%d", paramIndex))
 		args = append(args, val)
-		i++
+		paramIndex++
 	}
 
 	insertSQL := fmt.Sprintf(
-		`INSERT INTO "%s" (%s) VALUES (%s)`,
-		toTable,
+		`INSERT INTO %s (%s) VALUES (%s)`,
+		quoteIdentifier(toTable),
 		strings.Join(columns, ", "),
 		strings.Join(placeholders, ", "),
 	)
@@ -430,23 +519,47 @@ func handleColumnToColumnCopy(
 	toRowID any,
 	toColumnName string,
 ) error {
+	// Get primary key columns for source table
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	if fromPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
+	}
+
+	// Get primary key columns for destination table
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	if toPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
+	}
+
+	// Build WHERE clauses
+	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
+	if fromWhereClauseErr != nil {
+		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
+	}
+
+	toWhereClause, toWhereArgs, toWhereClauseErr := buildWhereClause(toPrimaryKeys, toRowID)
+	if toWhereClauseErr != nil {
+		return fmt.Errorf("failed to build TO WHERE clause: %w", toWhereClauseErr)
+	}
+
 	// 1) SELECT the existing value from the source column
 	selectSQL := fmt.Sprintf(
-		`SELECT "%s" FROM "%s" WHERE id = $1`,
-		fromColumnName, fromTable,
+		`SELECT %s FROM %s WHERE %s`,
+		quoteIdentifier(fromColumnName), quoteIdentifier(fromTable), fromWhereClause,
 	)
 	var columnValue any
-	if err := tx.QueryRow(ctx, selectSQL, fromRowID).Scan(&columnValue); err != nil {
-		return fmt.Errorf("failed to retrieve source column for copy: %w", err)
+	if queryRowErr := tx.QueryRow(ctx, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
+		return fmt.Errorf("failed to retrieve source column for copy: %w", queryRowErr)
 	}
 
 	// 2) Write the retrieved value into the destination column
 	updateDestSQL := fmt.Sprintf(
-		`UPDATE "%s" SET "%s" = $1 WHERE id = $2`,
-		toTable, toColumnName,
+		`UPDATE %s SET %s = $1 WHERE %s`,
+		quoteIdentifier(toTable), quoteIdentifier(toColumnName), toWhereClause,
 	)
-	if _, err := tx.Exec(ctx, updateDestSQL, columnValue, toRowID); err != nil {
-		return fmt.Errorf("failed to write destination column in copy: %w", err)
+	args := append([]any{columnValue}, toWhereArgs...)
+	if _, execErr := tx.Exec(ctx, updateDestSQL, args...); execErr != nil {
+		return fmt.Errorf("failed to write destination column in copy: %w", execErr)
 	}
 
 	return nil
@@ -461,11 +574,29 @@ func handleRowToRowCopy(
 	toTable string,
 	toRowID any,
 ) error {
+	// Get primary key columns for source table
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	if fromPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
+	}
+
+	// Get primary key columns for destination table
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	if toPrimaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
+	}
+
+	// Build WHERE clause for source
+	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
+	if fromWhereClauseErr != nil {
+		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
+	}
+
 	// 1) SELECT * from the source row
-	selectSQL := fmt.Sprintf(`SELECT * FROM "%s" WHERE id = $1`, fromTable)
-	rows, err := tx.Query(ctx, selectSQL, fromRowID)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve source row for copy: %w", err)
+	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE %s`, quoteIdentifier(fromTable), fromWhereClause)
+	rows, queryErr := tx.Query(ctx, selectSQL, fromWhereArgs...)
+	if queryErr != nil {
+		return fmt.Errorf("failed to retrieve source row for copy: %w", queryErr)
 	}
 	defer rows.Close()
 
@@ -474,9 +605,9 @@ func handleRowToRowCopy(
 	}
 
 	fieldDescriptions := rows.FieldDescriptions()
-	values, err := rows.Values()
-	if err != nil {
-		return fmt.Errorf("failed to read row data: %w", err)
+	values, valuesErr := rows.Values()
+	if valuesErr != nil {
+		return fmt.Errorf("failed to read row data: %w", valuesErr)
 	}
 
 	rowData := make(map[string]any, len(fieldDescriptions))
@@ -485,22 +616,39 @@ func handleRowToRowCopy(
 	}
 
 	// 2) INSERT the row into the destination table
-	rowData["id"] = toRowID
+	// Update primary key columns with new values
+	if len(toPrimaryKeys) == 1 {
+		rowData[toPrimaryKeys[0]] = toRowID
+	} else {
+		// Handle composite primary keys
+		toRowIDStr, ok := toRowID.(string)
+		if !ok {
+			return errors.New("composite primary key requires string identifier")
+		}
+		parts := strings.Split(toRowIDStr, ":")
+		if len(parts) != len(toPrimaryKeys) {
+			return fmt.Errorf("identifier parts (%d) don't match primary key columns (%d)", len(parts), len(toPrimaryKeys))
+		}
+		for i, key := range toPrimaryKeys {
+			rowData[key] = parts[i]
+		}
+	}
+
 	columns := make([]string, 0, len(rowData))
 	placeholders := make([]string, 0, len(rowData))
 	args := make([]any, 0, len(rowData))
 
-	i := 1
+	paramIndex := 1
 	for col, val := range rowData {
-		columns = append(columns, fmt.Sprintf(`"%s"`, col))
-		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		columns = append(columns, quoteIdentifier(col))
+		placeholders = append(placeholders, fmt.Sprintf("$%d", paramIndex))
 		args = append(args, val)
-		i++
+		paramIndex++
 	}
 
 	insertSQL := fmt.Sprintf(
-		`INSERT INTO "%s" (%s) VALUES (%s)`,
-		toTable,
+		`INSERT INTO %s (%s) VALUES (%s)`,
+		quoteIdentifier(toTable),
 		strings.Join(columns, ", "),
 		strings.Join(placeholders, ", "),
 	)

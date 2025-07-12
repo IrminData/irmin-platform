@@ -173,10 +173,11 @@ func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...any) (p
 
 // Exec performs a statement (INSERT/UPDATE/DELETE/DDL) that doesn't return rows.
 func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
-	cmdTag, err := pc.pool.Exec(ctx, sql, args...)
 	if pc.dbName == "" {
-		return cmdTag, errors.New("cannot Exec without a specific database - create a client with db first")
+		return pgconn.CommandTag{}, errors.New(
+			"cannot Exec without a specific database - create a client with db first")
 	}
+	cmdTag, err := pc.pool.Exec(ctx, sql, args...)
 	if err != nil {
 		return cmdTag, fmt.Errorf("Exec error: %w", err)
 	}

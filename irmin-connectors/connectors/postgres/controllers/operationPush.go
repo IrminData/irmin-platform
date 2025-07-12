@@ -95,21 +95,6 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	})
 }
 
-// processPath processes the path field from the form data and returns the target table path.
-func processPath(c fiber.Ctx, databaseName *string) (string, error) {
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		return "", fmt.Errorf("invalid form data: %w", err)
-	}
-
-	path := strings.TrimSuffix(fields["path"], ".json")
-	path = strings.Trim(path, "/")
-	path = strings.TrimPrefix(path, *databaseName)
-	path = strings.Trim(path, "/")
-
-	return path, nil
-}
-
 // handleUploadedFile processes the uploaded file and returns the unzipped files.
 func handleUploadedFile(c fiber.Ctx) (map[string][]byte, error) {
 	fileHeader, err := c.FormFile("file")
@@ -172,15 +157,6 @@ func getSortedColumns(record map[string]any) []string {
 	}
 	sort.Strings(columns)
 	return columns
-}
-
-// processTableName extracts the table name from a file path.
-func processTableName(filePath string, databaseName *string) string {
-	tableName := strings.TrimSuffix(filePath, ".json")
-	tableName = strings.Trim(tableName, "/")
-	tableName = strings.TrimPrefix(tableName, *databaseName)
-	tableName = strings.Trim(tableName, "/")
-	return tableName
 }
 
 // buildInsertStatement builds the INSERT statement with placeholders.
@@ -320,15 +296,4 @@ func backoff() {
 	// sleep for baseBackoff + [0, maxJitter) milliseconds
 	delay := time.Duration(utils.BaseBackoff+int(jitter)) * time.Millisecond
 	time.Sleep(delay)
-}
-
-// quoteIdentifiers wraps each identifier in double quotes to prevent SQL injection.
-//
-// cols is a slice of unquoted column names, out is a new slice where each name is quoted.
-func quoteIdentifiers(cols []string) []string {
-	out := make([]string, len(cols))
-	for i, c := range cols {
-		out[i] = fmt.Sprintf(`"%s"`, c)
-	}
-	return out
 }

@@ -49,7 +49,12 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	}
 	path := strings.TrimSuffix(fields["path"], ".json")
 	path = strings.Trim(path, "/")
-	path = strings.TrimPrefix(path, *databaseName)
+
+	// Safe dereference of databaseName pointer
+	if databaseName != nil {
+		path = strings.TrimPrefix(path, *databaseName)
+	}
+
 	path = strings.Trim(path, "/")
 
 	// prepare the object to store the result files

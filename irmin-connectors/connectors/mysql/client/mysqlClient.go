@@ -322,35 +322,121 @@ func (t *Tx) Rollback() error {
 	return t.sqlTx.Rollback()
 }
 
-// StartBinlogListener sets up a binlog listener for real-time change notifications.
-// This is a simplified implementation - in production you might want to use a proper binlog library.
+// StartBinlogListener sets up a polling-based change listener for MySQL.
+// This implementation uses MySQL's timestamp-based change detection instead of binlog.
 func (mc *MySQLClient) StartBinlogListener(
 	ctx context.Context,
 	logger *slog.Logger,
-	_ func(payload string), // onNotify parameter renamed to indicate it's unused in this placeholder
+	onNotify func(payload string),
 ) error {
-	// Note: MySQL binlog listening is more complex than PostgreSQL's LISTEN/NOTIFY
-	// This is a placeholder implementation. In production, you'd want to use
-	// a library like go-mysql or mysql-binlog-connector-go for proper binlog parsing
+	if mc.dbName == "" {
+		return errors.New("cannot start listener without a specific database")
+	}
 
-	logger.InfoContext(ctx, "MySQL binlog listener would be implemented here")
-	logger.InfoContext(ctx, "For now, this is a placeholder - real binlog parsing requires specialized libraries")
+	logger.InfoContext(ctx, "Starting MySQL polling-based change listener",
+		"database", mc.dbName,
+		"interval", ChangeCheckInterval)
 
-	// For demonstration, we could poll for changes instead
+	// Setup change tracking table if it doesn't exist
+	if err := mc.setupChangeTracking(ctx); err != nil {
+		return fmt.Errorf("failed to setup change tracking: %w", err)
+	}
+
+	// Start polling for changes
 	go func() {
 		ticker := time.NewTicker(ChangeCheckInterval)
 		defer ticker.Stop()
 
+		lastCheck := time.Now()
+
 		for {
 			select {
 			case <-ctx.Done():
+				logger.InfoContext(ctx, "MySQL change listener stopped")
 				return
 			case <-ticker.C:
-				// Placeholder for change detection
-				logger.DebugContext(ctx, "Checking for changes in MySQL database")
+				changes, err := mc.checkForChanges(ctx, lastCheck)
+				if err != nil {
+					logger.ErrorContext(ctx, "Error checking for changes",
+						"error", err)
+					continue
+				}
+
+				// Process each change
+				for _, change := range changes {
+					payload := fmt.Sprintf(`{"table_name":"%s","event_type":"change","id":"%s","timestamp":"%s"}`,
+						change.TableName, change.ID, change.Timestamp.Format(time.RFC3339))
+					onNotify(payload)
+				}
+
+				lastCheck = time.Now()
 			}
 		}
 	}()
 
 	return nil
+}
+
+// ChangeRecord represents a detected change in MySQL.
+type ChangeRecord struct {
+	TableName string
+	ID        string
+	Timestamp time.Time
+}
+
+// setupChangeTracking creates necessary infrastructure for change tracking.
+func (mc *MySQLClient) setupChangeTracking(ctx context.Context) error {
+	// Create the irmin_change_log table if it doesn't exist
+	if err := mc.createChangeLogTable(ctx); err != nil {
+		return fmt.Errorf("failed to create change log table: %w", err)
+	}
+
+	// Get all tables in the current database
+	tables, err := mc.GetTables(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get tables: %w", err)
+	}
+
+	// Create triggers for each table (excluding the change log table itself)
+	for _, tableName := range tables {
+		if tableName == "irmin_change_log" {
+			continue // Skip the change log table itself
+		}
+		if createErr := mc.createTriggersForTable(ctx, tableName); createErr != nil {
+			return fmt.Errorf("failed to create triggers for table %s: %w", tableName, createErr)
+		}
+	}
+
+	return nil
+}
+
+// checkForChanges polls for recent changes in the database using the change log table.
+func (mc *MySQLClient) checkForChanges(ctx context.Context, since time.Time) ([]ChangeRecord, error) {
+	query := `
+		SELECT table_name, row_id, changed_at
+		FROM irmin_change_log
+		WHERE changed_at > ?
+		ORDER BY changed_at ASC
+	`
+
+	rows, err := mc.Query(ctx, query, since)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query change log: %w", err)
+	}
+	defer rows.Close()
+
+	var changes []ChangeRecord
+	for rows.Next() {
+		var change ChangeRecord
+		if scanErr := rows.Scan(&change.TableName, &change.ID, &change.Timestamp); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan change record: %w", scanErr)
+		}
+		changes = append(changes, change)
+	}
+
+	if rowErr := rows.Err(); rowErr != nil {
+		return nil, fmt.Errorf("error iterating over change records: %w", rowErr)
+	}
+
+	return changes, nil
 }
