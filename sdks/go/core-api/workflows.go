@@ -9,8 +9,8 @@ import (
 
 // UpdateWorkflowRequest represents the JSON request body for updating basic workflow info.
 type UpdateWorkflowRequest struct {
-	Name          string `json:"name,omitempty"          validate:"max=100"`
-	Description   string `json:"description,omitempty"   validate:"max=500"`
+	Name          string `json:"name,omitempty"          validate:"omitempty,max=100"`
+	Description   string `json:"description,omitempty"   validate:"omitempty,max=500"`
 	Documentation string `json:"documentation,omitempty" validate:"validdocumentation"`
 }
 
@@ -23,14 +23,14 @@ type TransferWorkflowOwnershipRequest struct {
 type WorkflowRequest struct {
 	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline"`
 	Name          string                       `json:"name"                    validate:"required,max=100"`
-	Description   string                       `json:"description,omitempty"   validate:"max=500"`
+	Description   string                       `json:"description,omitempty"   validate:"omitempty,max=500"`
 	Documentation string                       `json:"documentation,omitempty" validate:"validdocumentation"`
 
 	// Workflowable configuration
-	Workflowable irminmodels.Workflowable `json:"workflowable,omitempty"`
+	Workflowable irminmodels.Workflowable `json:"workflowable"`
 
 	// Schedule configuration
-	Schedule irminmodels.Schedule `json:"schedule,omitempty"`
+	Schedule irminmodels.Schedule `json:"schedule"`
 }
 
 func (c *Client) ListWorkflows(workspace string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error) {

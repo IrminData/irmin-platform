@@ -4,11 +4,11 @@ package irminmodels
 type ObjectType string
 
 const (
-	// ObjectTypeGroup indicates the object is a group.
+	// ObjectTypeGroup is a folder object, which can contain other objects.
 	ObjectTypeGroup ObjectType = "group"
-	// ObjectTypeStructured indicates the object is structured.
+	// ObjectTypeStructured is a tabular file, which can be parsed and queried (e.g. CSV, JSON, Parquet, etc.)
 	ObjectTypeStructured ObjectType = "structured"
-	// ObjectTypeBinary indicates the object is binary.
+	// ObjectTypeBinary is a binary file, which can't be parsed or queried (e.g. image, video, audio, etc.)
 	ObjectTypeBinary ObjectType = "binary"
 )
 

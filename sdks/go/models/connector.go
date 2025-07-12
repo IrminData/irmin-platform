@@ -2,28 +2,45 @@ package irminmodels
 
 // Connector represents general information about a connector.
 type Connector struct {
-	ID               string                `json:"id"                validate:"required,validsqid=connectors"`
-	Name             string                `json:"name"              validate:"required,max=100"`
-	Description      string                `json:"description"       validate:"required,max=500"`
-	Version          string                `json:"version"           validate:"required,max=20"`
-	StructureVersion string                `json:"structure_version" validate:"required,max=20"`
-	Author           string                `json:"author"            validate:"required,max=100"`
-	LogoURL          string                `json:"logo_url"          validate:"required,validimageurl"`
-	Capabilities     []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push push_patch event_webhook"`
-	Locales          []string              `json:"locales"           validate:"required,dive,min=2,max=5"`
-	Categories       []ConnectorCategory   `json:"categories"        validate:"required,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
-	PrimaryCategory  ConnectorCategory     `json:"primary_category"  validate:"required,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
-	AuthorEmail      string                `json:"author_email"      validate:"required,email"`
-	ReadMoreURL      string                `json:"read_more_url"     validate:"required,validurl"`
+	// ID is a unique SQIDidentifier of the connector
+	ID string `json:"id"                validate:"required,validsqid=connectors"`
+	// Name of the connector
+	Name string `json:"name"              validate:"required,max=100"`
+	// Description of the connector
+	Description string `json:"description"       validate:"required,max=500"`
+	// Version of the connector (provided by the connector author)
+	Version string `json:"version"           validate:"required,max=20"`
+	// Structure version of the connector (e.g. which connector guideline version the connector is based on)
+	StructureVersion string `json:"structure_version" validate:"required,max=20"`
+	// Author of the connector
+	Author string `json:"author"            validate:"required,max=100"`
+	// URL to the connector's logo
+	LogoURL string `json:"logo_url"          validate:"required,validimageurl"`
+	// Array of capabilities of the connector, eg. what kind of operations the connector can perform
+	Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push push_patch event_webhook"`
+	// Array of locales supported by the connector, eg. what languages the connector supports
+	Locales []string `json:"locales"           validate:"required,dive,min=2,max=5"`
+	// Array of categories associated with the connector, eg. what kind of connector it is
+	Categories []ConnectorCategory `json:"categories"        validate:"required,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
+	// Primary category of the connector
+	PrimaryCategory ConnectorCategory `json:"primary_category"  validate:"required,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"`
+	// Author's email address, eg. who to contact if there are any issues with the connector
+	AuthorEmail string `json:"author_email"      validate:"required,email"`
+	// URL for more information about the connector, eg. a website where the connector is described
+	ReadMoreURL string `json:"read_more_url"     validate:"required,validurl"`
 }
 
 // ConnectorCapability represents the capabilities of a connector.
 type ConnectorCapability string
 
 const (
-	ConnectorCapabilityPullFullSync ConnectorCapability = "pull"
-	ConnectorCapabilityPushFullSync ConnectorCapability = "push"
-	ConnectorCapabilityPushPatch    ConnectorCapability = "push_patch"
+	// ConnectorCapabilityPull means that data files can be pulled from different paths in the connector.
+	ConnectorCapabilityPull ConnectorCapability = "pull"
+	// ConnectorCapabilityPush means that data files can be pushed to different paths in the connector.
+	ConnectorCapabilityPush ConnectorCapability = "push"
+	// ConnectorCapabilityPushPatch means that JSON Patch based change sets can be pushed to the connector.
+	ConnectorCapabilityPushPatch ConnectorCapability = "push_patch"
+	// ConnectorCapabilityEventWebhook means that the connector can send webhook notifications when something changes in the underlying data.
 	ConnectorCapabilityEventWebhook ConnectorCapability = "event_webhook"
 )
 
@@ -59,6 +76,6 @@ type ConnectorConfigurationValidationResult struct {
 	ConnectionDetailsValid bool `json:"connection_details_valid"`
 	// Indicates if the connection settings are valid
 	ConnectionSettingsValid bool `json:"connection_settings_valid"`
-	// (Optional) Validation error messages
+	// (Optional) Array of validation errors
 	Errors []string `json:"errors,omitempty"          validate:"dive"`
 }
