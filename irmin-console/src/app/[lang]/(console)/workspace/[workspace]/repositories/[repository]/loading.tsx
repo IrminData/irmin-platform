@@ -1,12 +1,5 @@
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import DetailPageSkeleton from '@/components/ui/loading/DetailPageSkeleton';
 
 export default function RepositoryLoading() {
-  return (
-    <div
-      id='repository-loading'
-      className='relative container mx-auto max-w-7xl py-12'
-    >
-      <LoadingSkeleton className='h-96' />
-    </div>
-  );
+  return <DetailPageSkeleton />;
 }

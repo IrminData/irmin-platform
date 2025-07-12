@@ -1,4 +1,4 @@
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import FormPageSkeleton from '@/components/ui/loading/FormPageSkeleton';
 
 /**
  * Loading UI for the Website
@@ -8,15 +8,8 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
  *
  * This is used for the website pages.
  *
- * It uses LoadingSkeleton component to show the loading animation.
+ * It uses FormPageSkeleton component to show the loading animation.
  */
 export default function WebsiteLoading() {
-  return (
-    <div
-      className='flex h-full w-full flex-col items-center justify-center p-2'
-      id='website-loading'
-    >
-      <LoadingSkeleton className='h-96' />
-    </div>
-  );
+  return <FormPageSkeleton />;
 }
