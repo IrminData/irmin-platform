@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	novugo "github.com/novuhq/novu-go"
 )
 
@@ -38,7 +39,7 @@ type InviteNotificationParams struct {
 func SendNovuInviteNotification(
 	ctx context.Context,
 	database *db.Database,
-	_ *utils.SQIDManager, // Unused, kept for API compatibility
+	_ *irminsqids.SQIDManager, // Unused, kept for API compatibility
 	env *utils.CoreAPIEnv,
 	logger *slog.Logger,
 	params InviteNotificationParams,
@@ -332,7 +333,7 @@ func SendResendInviteNotification(
 func SendFallbackInviteNotification(
 	ctx context.Context,
 	database *db.Database,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 	env *utils.CoreAPIEnv,
 	logger *slog.Logger,
 	params InviteNotificationParams,

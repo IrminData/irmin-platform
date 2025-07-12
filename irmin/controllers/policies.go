@@ -139,7 +139,7 @@ func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: policiesResponse,
 	})
 }
@@ -234,20 +234,10 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.CreatePolicyRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Effect == "" || req.Action == "" || req.Resource == "" || req.Principal == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Convert to fields map for compatibility with existing helper functions
@@ -340,7 +330,7 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 		PolicyID:    &newPolicy.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "policy_created"),
 		Data:    policyResponse,
 	})
@@ -370,7 +360,7 @@ func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: policyResponse,
 	})
 }
@@ -390,13 +380,10 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.UpdatePolicyRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Convert to fields map for compatibility with existing helper functions
@@ -483,7 +470,7 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 		PolicyID:    &policy.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "policy_updated"),
 		Data:    policyResponse,
 	})
@@ -522,7 +509,7 @@ func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 		PolicyID:    &policy.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "policy_deleted"),
 	})
 }
@@ -633,7 +620,7 @@ func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: policyResourceOptions,
 	})
 }
@@ -744,7 +731,7 @@ func (api *APIControllers) PoliciesRoleSummary(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: rolePolicies,
 	})
 }
@@ -1025,7 +1012,7 @@ func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 		Policies: formattedPolicies,
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: summary,
 	})
 }

@@ -3,12 +3,15 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
-func FormatWorkspaceResponse(workspace *db.Workspace, sqidManager *utils.SQIDManager) (*irminmodels.Workspace, error) {
+func FormatWorkspaceResponse(
+	workspace *db.Workspace,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Workspace, error) {
 	sqid, _ := sqidManager.Encode("workspaces", uint64(workspace.ID))
 	ownerSqid, _ := sqidManager.Encode("users", uint64(workspace.Owner.ID))
 	var workspaceUsers []irminmodels.User

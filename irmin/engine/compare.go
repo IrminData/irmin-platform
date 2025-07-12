@@ -97,7 +97,7 @@ func (c *Client) CompareRefs(
 		BaseRef:    baseRef,
 		CompareRef: compareRef,
 		Items:      irminChangeItems,
-		Commits:    &irminCommits,
+		Commits:    irminCommits,
 	}
 
 	return irminDiff, nil

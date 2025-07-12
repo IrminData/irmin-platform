@@ -62,7 +62,7 @@ func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: usersResponse,
 	})
 }
@@ -90,7 +90,7 @@ func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: *userResponse,
 	})
 }
@@ -142,7 +142,7 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusNoContent, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusNoContent, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "member_removed_from_workspace"),
 	})
 }
@@ -160,20 +160,10 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.UpdateUserRolesRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if len(req.Roles) == 0 {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Parse and validate roles
@@ -227,7 +217,7 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_member_updated"),
 		Data:    userResponse,
 	})

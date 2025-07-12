@@ -12,17 +12,17 @@ import (
 
 // SystemWebhook handles the webhook events from internal services, like LakeFS.
 func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
-	// Make sure the request is authenticated with a system token
 	isSystem, isSystemOk := c.Locals("is_system").(bool)
 	if !isSystemOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{"System token not found"},
+			Errors: []string{"Access denied"},
 		})
 	}
 
+	// Make sure the request is authenticated with a system token
 	if !isSystem {
 		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{
-			Errors: []string{"Unauthorized"},
+			Errors: []string{"Access denied"},
 		})
 	}
 
@@ -66,12 +66,13 @@ func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
 		// Add the event to the orchestrator
 		api.Orchestrator.AddDispatchedEvent(&dispatchEvent)
 	default:
+		api.Logger.Error("Invalid webhook type")
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"Invalid webhook type"},
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: "Webhook received",
 	})
 }

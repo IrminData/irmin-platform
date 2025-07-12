@@ -45,7 +45,7 @@ func (api *APIControllers) CredentialsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the API tokens.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: tokensResponse,
 	})
 }
@@ -60,18 +60,8 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 
 	// Parse JSON request body
 	var req irmincore.CreateCredentialRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Name == "" || req.Expiry <= 0 {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Generate a random 64-character token.
@@ -108,7 +98,7 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 		CreatedAt: apiToken.CreatedAt,
 		UpdatedAt: apiToken.UpdatedAt,
 		Name:      apiToken.Name,
-		Token:     apiToken.Token,
+		Token:     &apiToken.Token,
 		ExpiresAt: apiToken.ExpiresAt,
 	}
 
@@ -120,7 +110,7 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 	})
 
 	// Return the API token.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "api_token_created"),
 		Data:    apiTokenResponse,
 	})
@@ -189,7 +179,7 @@ func (api *APIControllers) CredentialsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success message.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "api_token_deleted"),
 	})
 }

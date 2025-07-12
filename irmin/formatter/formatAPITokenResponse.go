@@ -2,13 +2,13 @@ package formatter
 
 import (
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatAPITokenResponse formats an API token for the response.
-func FormatAPITokenResponse(token *db.APIToken, sqidManager *utils.SQIDManager) (*irminmodels.APIToken, error) {
+func FormatAPITokenResponse(token *db.APIToken, sqidManager *irminsqids.SQIDManager) (*irminmodels.APIToken, error) {
 	// Convert the API token to an API token response.
 	sqid, sqidErr := sqidManager.Encode("api_tokens", uint64(token.ID))
 	if sqidErr != nil {
@@ -19,7 +19,7 @@ func FormatAPITokenResponse(token *db.APIToken, sqidManager *utils.SQIDManager) 
 		CreatedAt: token.CreatedAt,
 		UpdatedAt: token.UpdatedAt,
 		Name:      token.Name,
-		Token:     token.Token,
+		Token:     &token.Token,
 		ExpiresAt: token.ExpiresAt,
 	}
 	// Return the API token response.

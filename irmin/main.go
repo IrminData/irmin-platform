@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/compress"
@@ -194,7 +195,7 @@ func setupCORS(env *utils.CoreAPIEnv) fiber.Handler {
 func setupServices(
 	env *utils.CoreAPIEnv,
 	database *db.Database,
-) (*orchestrator.Orchestrator, *utils.SQIDManager, *locales.LocaleManager, *lib.PermissionService, error) {
+) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *lib.PermissionService, error) {
 	// Initialize data engine
 	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env)
 	if err != nil {
@@ -212,7 +213,7 @@ func setupServices(
 	}
 
 	// Initialize SQID manager
-	sqidManager := utils.NewSQIDManager(env)
+	sqidManager := irminsqids.NewSQIDManager(env.SqidAlphabet)
 
 	// Initialize locale manager
 	localeManager, err := locales.New()

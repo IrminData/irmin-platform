@@ -65,7 +65,7 @@ func (api *APIControllers) QueriesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: queriesResponse,
 	})
 }
@@ -81,11 +81,8 @@ func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.CreateQueryRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Pick the name to use for the description, defaulting to the current time if not provided
@@ -128,7 +125,7 @@ func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 	})
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: formattedQuery,
 	})
 }
@@ -151,7 +148,7 @@ func (api *APIControllers) QueriesShow(c fiber.Ctx) error {
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: formattedQuery,
 	})
 }
@@ -167,11 +164,8 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.UpdateQueryRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Check if the query exists
@@ -217,7 +211,7 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error {
 	})
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "query_updated"),
 		Data:    formattedQuery,
 	})
@@ -252,7 +246,7 @@ func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 	})
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "query_deleted"),
 	})
 }
@@ -269,11 +263,8 @@ func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.TransferQueryOwnershipRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Validate required fields
@@ -334,7 +325,7 @@ func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
 	})
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "query_ownership_transferred"),
 		Data:    formattedQuery,
 	})
@@ -352,11 +343,8 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.ExecuteSQLRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Initialize Data Engine client
@@ -397,7 +385,7 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "query_executed"),
 		Data:    result,
 	})
@@ -456,7 +444,7 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "query_executed"),
 		Data:    result,
 	})

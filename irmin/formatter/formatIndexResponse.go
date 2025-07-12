@@ -1,13 +1,15 @@
 package formatter
 
-import "irmin-api/utils"
+import (
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+)
 
 // FormatIndexResponse is a generic helper function to format index responses.
 // It takes a slice of items, a formatter function, and returns a formatted response.
 func FormatIndexResponse[T any, R any](
 	items []T,
-	formatter func(*T, *utils.SQIDManager) (*R, error),
-	sqidManager *utils.SQIDManager,
+	formatter func(*T, *irminsqids.SQIDManager) (*R, error),
+	sqidManager *irminsqids.SQIDManager,
 ) ([]R, error) {
 	var response []R
 	for _, item := range items {

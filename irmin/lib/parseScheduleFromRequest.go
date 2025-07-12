@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lakefs"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -50,7 +50,7 @@ func parseTrigger(
 	trigger irminmodels.ScheduleTrigger,
 	d *db.Database,
 	workspace db.Workspace,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*db.WorkflowTrigger, error) {
 	switch trigger.Type {
 	case irminmodels.TimeTriggerType:
@@ -106,7 +106,7 @@ func ParseScheduleFromRequest(
 	c fiber.Ctx,
 	d *db.Database,
 	workspace db.Workspace,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*db.Schedule, error) {
 	// Parse JSON request body
 	var scheduleReq irminmodels.Schedule
@@ -137,7 +137,7 @@ func ParseScheduleFromData(
 	scheduleReq *irminmodels.Schedule,
 	d *db.Database,
 	workspace db.Workspace,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*db.Schedule, error) {
 	if scheduleReq == nil {
 		// Return default schedule if no schedule data provided

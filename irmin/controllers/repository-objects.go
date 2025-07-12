@@ -159,7 +159,7 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: objectResponse,
 	})
 }
@@ -265,7 +265,7 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 	}
 
 	// Return the object from the database.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(objectLocalParams.dict, "object_uploaded"),
 		Data:    repositoryObjectResponse,
 	})
@@ -355,7 +355,7 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(objectLocalParams.dict, "object_moved"),
 		Data:    repositoryObjectResponse,
 	})
@@ -447,7 +447,7 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(objectLocalParams.dict, "object_copied"),
 		Data:    repositoryObjectResponse,
 	})
@@ -533,7 +533,7 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 		RepositoryObjectID: &objectLocalParams.object.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(objectLocalParams.dict, "object_deleted"),
 	})
 }
@@ -639,7 +639,7 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 	}
 
 	// Return the results
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: parsedResults[objectLocalParams.object.Path],
 	})
 }
@@ -733,7 +733,7 @@ func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: commits,
 	})
 }
@@ -764,7 +764,7 @@ func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: schema,
 	})
 }

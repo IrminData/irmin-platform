@@ -85,7 +85,7 @@ func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the workspaces.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workspacesResponse,
 	})
 }
@@ -175,20 +175,10 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.CreateWorkspaceRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Name == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Use database transaction to ensure atomicity
@@ -218,7 +208,7 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 	})
 
 	// Return the new workspace.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_created"),
 		Data:    workspaceResponse,
 	})
@@ -241,7 +231,7 @@ func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 	}
 
 	// Return the workspace.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workspaceResponse,
 	})
 }
@@ -253,13 +243,10 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the JSON request body - all fields are optional during update
+	// Parse and validate the JSON request body - all fields are optional during update
 	var req irmincore.UpdateWorkspaceRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Only update fields that were provided
@@ -300,7 +287,7 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the updated workspace.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_updated"),
 		Data:    workspaceResponse,
 	})
@@ -361,7 +348,7 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success message.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_deleted"),
 	})
 }
@@ -381,26 +368,16 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 		})
 	}
 
-	// Parse the JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.TransferOwnershipRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
-	// Validate required fields
-	if req.NewOwnerID == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Get the ID of the new owner.
-	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", req.NewOwnerID)
-	if decodeSqidsErr != nil {
-		api.Logger.Error("Error decoding SQID", "error", decodeSqidsErr)
+	// Validate and decode the new owner SQID
+	newOwnerID, err := api.SQIDManager.Decode("users", req.NewOwnerID)
+	if err != nil {
+		api.Logger.Error("Error decoding SQID", "sqid", req.NewOwnerID, "type", "users", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -485,7 +462,7 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 	})
 
 	// Return the updated workspace.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_ownership_transferred"),
 		Data:    workspaceResponse,
 	})
@@ -541,7 +518,7 @@ func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error {
 	})
 
 	// Return a success message.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_left"),
 	})
 }

@@ -106,7 +106,7 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 		rootGroupSchemas[i] = *schema
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: irminmodels.ObjectSchema{
 			Name: workspace.Slug,
 			Path: workspace.Slug,

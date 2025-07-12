@@ -6,6 +6,7 @@ import (
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // formatLogEventFutures creates all async formatting operations for a log event.
@@ -13,7 +14,7 @@ func formatLogEventFutures(
 	ctx context.Context,
 	d *db.Database,
 	logEvent db.LogEvent,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) map[string]utils.FutureResult[any] {
 	futures := make(map[string]utils.FutureResult[any])
 
@@ -136,7 +137,7 @@ func FormatLogEventResponse(
 	ctx context.Context,
 	d *db.Database,
 	logEvent db.LogEvent,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.LogEvent, error) {
 	// Encode event SQID
 	eventSqid, err := sqidManager.Encode("logs", uint64(logEvent.ID))

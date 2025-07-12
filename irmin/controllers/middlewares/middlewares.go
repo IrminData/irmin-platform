@@ -8,6 +8,9 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 	"sync"
+
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
 )
 
 type APIMiddlewares struct {
@@ -15,10 +18,11 @@ type APIMiddlewares struct {
 	Logger            *slog.Logger
 	Env               *utils.CoreAPIEnv
 	Orchestrator      *orchestrator.Orchestrator
-	SQIDManager       *utils.SQIDManager
+	SQIDManager       *irminsqids.SQIDManager
 	lm                *locales.LocaleManager
 	permissionService *lib.PermissionService
 	userMutex         sync.RWMutex // Protects user operations to prevent race conditions
+	validator         *irminvalidator.Validator
 }
 
 func NewAPIMiddlewares(
@@ -26,7 +30,7 @@ func NewAPIMiddlewares(
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	orchestrator *orchestrator.Orchestrator,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 	localeManager *locales.LocaleManager,
 	permissionService *lib.PermissionService,
 ) *APIMiddlewares {
@@ -38,5 +42,6 @@ func NewAPIMiddlewares(
 		SQIDManager:       sqidManager,
 		lm:                localeManager,
 		permissionService: permissionService,
+		validator:         irminvalidator.NewValidator(sqidManager),
 	}
 }

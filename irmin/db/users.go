@@ -79,6 +79,7 @@ func (d *Database) GetUserWorkspaces(userID uint) ([]WorkspaceUser, error) {
 	var workspaceUsers []WorkspaceUser
 	if err := d.Where("user_id = ?", userID).
 		Preload("Workspace").
+		Preload("Workspace.Owner").
 		Preload("Roles").
 		Preload("Roles.Role").
 		Order("created_at desc").

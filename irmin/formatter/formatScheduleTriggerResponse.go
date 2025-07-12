@@ -4,15 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatScheduleTriggerResponse formats a schedule trigger for the response.
 func FormatScheduleTriggerResponse(
 	trigger *db.WorkflowTrigger,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.ScheduleTrigger, error) {
 	if trigger == nil {
 		return nil, errors.New("trigger is nil")

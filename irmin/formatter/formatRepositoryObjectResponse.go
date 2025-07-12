@@ -3,15 +3,15 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatRepositoryObjectResponse formats a repository object to an Irmin object.
 func FormatRepositoryObjectResponse(
 	object *db.RepositoryObject,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.Object, error) {
 	// Format the children objects.
 	children := make([]irminmodels.Object, len(object.Children))

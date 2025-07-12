@@ -6,13 +6,14 @@ import (
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatWorkflowResponse creates a workflow response object from a workflow object.
 func FormatWorkflowResponse(
 	d *db.Database,
 	workflow *db.Workflow,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.Workflow, error) {
 	// Run all formatting operations concurrently using async utilities
 	ownerFuture := utils.Async(func() (*irminmodels.User, error) {

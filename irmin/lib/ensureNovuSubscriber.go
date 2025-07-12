@@ -5,6 +5,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	novugo "github.com/novuhq/novu-go"
 	"github.com/novuhq/novu-go/models/components"
 )
@@ -13,7 +14,7 @@ import (
 // It creates the subscriber if it doesn't exist, or updates it if it does.
 func EnsureNovuSubscriber(
 	ctx context.Context,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 	env *utils.CoreAPIEnv,
 	locale string,
 	user *db.User,

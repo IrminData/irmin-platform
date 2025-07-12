@@ -60,6 +60,29 @@ func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
 	return irminRepositories, nil
 }
 
+func convertGarbageCollectionRules(
+	lakefsGarbageCollectionRules *lakefs.GarbageCollectionRules,
+) *irminmodels.GarbageCollectionRules {
+	if lakefsGarbageCollectionRules == nil {
+		return nil
+	}
+
+	irminGarbageCollectionRules := irminmodels.GarbageCollectionRules{
+		DefaultRetentionDays: &lakefsGarbageCollectionRules.DefaultRetentionDays,
+		Branches: func() []irminmodels.BranchGarbageCollectionRules {
+			var branches []irminmodels.BranchGarbageCollectionRules
+			for _, branch := range lakefsGarbageCollectionRules.Branches {
+				branches = append(branches, irminmodels.BranchGarbageCollectionRules{
+					BranchID:      branch.BranchID,
+					RetentionDays: branch.RetentionDays,
+				})
+			}
+			return branches
+		}(),
+	}
+	return &irminGarbageCollectionRules
+}
+
 func (c *Client) GetRepository(ctx context.Context, workspace, repository string) (*Repository, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
@@ -86,25 +109,13 @@ func (c *Client) GetRepository(ctx context.Context, workspace, repository string
 
 	// Convert LakeFS repository to Irmin repository.
 	irminRepository := Repository{
-		ID:               lakefsRepository.ID,
-		Workspace:        workspace,
-		StorageNamespace: lakefsRepository.StorageNamespace,
-		IsImmutable:      lakefsRepository.ReadOnly,
-		DefaultBranch:    lakefsRepository.DefaultBranch,
-		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &irminmodels.GarbageCollectionRules{
-			DefaultRetentionDays: lakefsGarbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []irminmodels.BranchGarbageCollectionRules {
-				var branches []irminmodels.BranchGarbageCollectionRules
-				for _, branch := range lakefsGarbageCollectionRules.Branches {
-					branches = append(branches, irminmodels.BranchGarbageCollectionRules{
-						BranchID:      branch.BranchID,
-						RetentionDays: branch.RetentionDays,
-					})
-				}
-				return branches
-			}(),
-		},
+		ID:                     lakefsRepository.ID,
+		Workspace:              workspace,
+		StorageNamespace:       lakefsRepository.StorageNamespace,
+		IsImmutable:            lakefsRepository.ReadOnly,
+		DefaultBranch:          lakefsRepository.DefaultBranch,
+		CreatedAt:              time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
+		GarbageCollectionRules: convertGarbageCollectionRules(lakefsGarbageCollectionRules),
 	}
 
 	return &irminRepository, nil
@@ -169,25 +180,13 @@ func (c *Client) CreateRepository(
 
 	// Convert LakeFS repository to Irmin repository.
 	irminRepository := Repository{
-		ID:               lakefsRepository.ID,
-		Workspace:        workspace,
-		StorageNamespace: lakefsRepository.StorageNamespace,
-		IsImmutable:      lakefsRepository.ReadOnly,
-		DefaultBranch:    lakefsRepository.DefaultBranch,
-		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &irminmodels.GarbageCollectionRules{
-			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []irminmodels.BranchGarbageCollectionRules {
-				var branches []irminmodels.BranchGarbageCollectionRules
-				for _, branch := range garbageCollectionRules.Branches {
-					branches = append(branches, irminmodels.BranchGarbageCollectionRules{
-						BranchID:      branch.BranchID,
-						RetentionDays: branch.RetentionDays,
-					})
-				}
-				return branches
-			}(),
-		},
+		ID:                     lakefsRepository.ID,
+		Workspace:              workspace,
+		StorageNamespace:       lakefsRepository.StorageNamespace,
+		IsImmutable:            lakefsRepository.ReadOnly,
+		DefaultBranch:          lakefsRepository.DefaultBranch,
+		CreatedAt:              time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
+		GarbageCollectionRules: convertGarbageCollectionRules(&garbageCollectionRules),
 	}
 
 	return &irminRepository, nil
@@ -284,25 +283,13 @@ func (c *Client) UpdateRepository(
 
 	// Convert LakeFS repository to Irmin repository.
 	irminRepository := Repository{
-		ID:               lakefsRepository.ID,
-		Workspace:        workspace,
-		StorageNamespace: lakefsRepository.StorageNamespace,
-		IsImmutable:      lakefsRepository.ReadOnly,
-		DefaultBranch:    lakefsRepository.DefaultBranch,
-		CreatedAt:        time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
-		GarbageCollectionRules: &irminmodels.GarbageCollectionRules{
-			DefaultRetentionDays: garbageCollectionRules.DefaultRetentionDays,
-			Branches: func() []irminmodels.BranchGarbageCollectionRules {
-				var branches []irminmodels.BranchGarbageCollectionRules
-				for _, branch := range garbageCollectionRules.Branches {
-					branches = append(branches, irminmodels.BranchGarbageCollectionRules{
-						BranchID:      branch.BranchID,
-						RetentionDays: branch.RetentionDays,
-					})
-				}
-				return branches
-			}(),
-		},
+		ID:                     lakefsRepository.ID,
+		Workspace:              workspace,
+		StorageNamespace:       lakefsRepository.StorageNamespace,
+		IsImmutable:            lakefsRepository.ReadOnly,
+		DefaultBranch:          lakefsRepository.DefaultBranch,
+		CreatedAt:              time.Unix(lakefsRepository.CreationDate, 0).Format(time.RFC3339),
+		GarbageCollectionRules: convertGarbageCollectionRules(&garbageCollectionRules),
 	}
 
 	return &irminRepository, nil

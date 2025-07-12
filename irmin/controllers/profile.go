@@ -39,7 +39,7 @@ func (api *APIControllers) ProfileShow(c fiber.Ctx) error {
 	}
 
 	// Send the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: userResponse,
 	})
 }
@@ -161,7 +161,7 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "profile_updated"),
 		Data:    userResponse,
 	})

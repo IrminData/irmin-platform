@@ -3,15 +3,15 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatWorkspaceUserResponse creates a user response object from a workspace user object.
 func FormatWorkspaceUserResponse(
 	workspaceUser *db.WorkspaceUser,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.User, error) {
 	// Construct the user sqid
 	userSqid, err := sqidManager.Encode("users", uint64(workspaceUser.UserID))
@@ -42,7 +42,7 @@ func FormatWorkspaceUserResponse(
 }
 
 // FormatUserResponse creates a role response object from a workspace role object.
-func FormatUserResponse(user *db.User, sqidManager *utils.SQIDManager) (*irminmodels.User, error) {
+func FormatUserResponse(user *db.User, sqidManager *irminsqids.SQIDManager) (*irminmodels.User, error) {
 	// Construct the user sqid
 	userSqid, err := sqidManager.Encode("users", uint64(user.ID))
 	if err != nil {

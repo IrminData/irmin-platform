@@ -62,7 +62,7 @@ func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: connectionsResponse,
 	})
 }
@@ -75,26 +75,16 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.CreateConnectionRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
-	// Validate required fields
-	if req.Name == "" || req.Connector == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Parse the connector ID
-	connectorID, decodeConnectorSQIDErr := api.SQIDManager.Decode("connectors", req.Connector)
-	if decodeConnectorSQIDErr != nil {
-		api.Logger.Error("Error decoding connector sqid", "error", decodeConnectorSQIDErr)
+	// Validate and decode the connector SQID
+	connectorID, err := api.SQIDManager.Decode("connectors", req.Connector)
+	if err != nil {
+		api.Logger.Error("Error decoding SQID", "sqid", req.Connector, "type", "connectors", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -149,7 +139,7 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connection_created"),
 		Data:    connectionResponse,
 	})
@@ -172,7 +162,7 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: connectionResponse,
 	})
 }
@@ -216,13 +206,10 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.UpdateConnectionRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Update the connection fields
@@ -262,7 +249,7 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connection_updated"),
 		Data:    connectionResponse,
 	})
@@ -298,7 +285,7 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connection_deleted"),
 	})
 }
@@ -312,26 +299,16 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.TransferConnectionOwnershipRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
-	// Validate required fields
-	if req.NewOwnerID == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Parse the connector ID
-	newOwnerID, decodeNewOwnerSQIDErr := api.SQIDManager.Decode("users", req.NewOwnerID)
-	if decodeNewOwnerSQIDErr != nil {
-		api.Logger.Error("Error decoding connector sqid", "error", decodeNewOwnerSQIDErr)
+	// Validate and decode the new owner SQID
+	newOwnerID, err := api.SQIDManager.Decode("users", req.NewOwnerID)
+	if err != nil {
+		api.Logger.Error("Error decoding SQID", "sqid", req.NewOwnerID, "type", "users", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
@@ -385,7 +362,7 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connection_updated"),
 		Data:    connectionResponse,
 	})
@@ -429,7 +406,7 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: schema,
 	})
 }

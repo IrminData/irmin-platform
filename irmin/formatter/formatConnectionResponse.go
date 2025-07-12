@@ -3,15 +3,15 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatConnectionResponse creates a connection response object from a connection object.
 func FormatConnectionResponse(
 	connection *db.Connection,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.Connection, error) {
 	// Structure the owner response.
 	ownerResponse, err := FormatUserResponse(&connection.Owner, sqidManager)

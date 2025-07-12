@@ -88,13 +88,13 @@ func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 			lakefsPagination.HasMore,
 			&lakefsPagination.NextOffset,
 		)
-		return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 			Pagination: paginationResponse,
 			Data:       filteredCommits,
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: filteredCommits,
 	})
 }
@@ -111,18 +111,8 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.CreateCommitRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Branch == "" || req.Message == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Initialize Data Engine client
@@ -160,7 +150,7 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	})
 
 	// Return the created commit
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "commit_created"),
 		Data:    commit,
 	})
@@ -203,7 +193,7 @@ func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 	}
 
 	// Return the commit
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: commit,
 	})
 }
@@ -220,18 +210,8 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 
 	// Parse the JSON request body
 	var req irmincore.RevertUncommittedChangesRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Branch == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Initialize Data Engine client
@@ -268,7 +248,7 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 	})
 
 	// Return the created commit
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "changes_reverted_to_previous_commit"),
 	})
 }

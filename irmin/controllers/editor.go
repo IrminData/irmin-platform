@@ -72,7 +72,7 @@ func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: editorItems,
 	})
 }
@@ -102,20 +102,9 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.CreateEditorItemRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
-
-	// Validate required fields
-	if req.Type == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
 	content := ""
 	if req.Content != nil {
 		content = *req.Content
@@ -155,7 +144,7 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 	})
 
 	// Return a success response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "editor_item_saved"),
 	})
 }
@@ -214,7 +203,7 @@ func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "editor_item_deleted"),
 	})
 }
@@ -310,7 +299,7 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 	if !isMove {
 		messageKey = "editor_item_copied"
 	}
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, messageKey),
 	})
 }
@@ -368,7 +357,7 @@ func (api *APIControllers) EditorItemContent(c fiber.Ctx) error {
 	}
 
 	// Return the item's content
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: content,
 	})
 }
@@ -486,7 +475,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 	}
 
 	// Return the results
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: &irminmodels.ScriptResult{
 			StructuredResults: parsedResults,
 			StartedAt:         computeResult.StartTime,

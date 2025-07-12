@@ -72,5 +72,9 @@
   "merge_commit_created": "Merge commit created",
   "policy_created": "Policy created",
   "policy_updated": "Policy updated",
-  "policy_deleted": "Policy deleted"
+  "policy_deleted": "Policy deleted",
+  "validation_failed": "Validation failed",
+  "response_validation_failed": "Response validation failed",
+  "search_failed": "Search failed",
+  "system_only_action": "This action is only available to system users"
 }

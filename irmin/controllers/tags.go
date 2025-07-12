@@ -46,7 +46,7 @@ func (api *APIControllers) TagsIndex(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: formattedTags,
 	})
 }
@@ -61,11 +61,8 @@ func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.CreateTagRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Validate required fields
@@ -106,7 +103,7 @@ func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: formattedTag,
 	})
 }
@@ -147,7 +144,7 @@ func (api *APIControllers) TagsShow(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: formattedTagWithAssets,
 	})
 }
@@ -426,7 +423,7 @@ func (api *APIControllers) TagsUpdate(c fiber.Ctx) error {
 		UserID:      &user.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: formattedTag,
 	})
 }
@@ -464,7 +461,7 @@ func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
 		UserID:      &user.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "tag_deleted"),
 	})
 }
@@ -584,7 +581,7 @@ func (api *APIControllers) handleTagEntityOperation(c fiber.Ctx, operation strin
 		messageKey = "tag_removed"
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, messageKey),
 	})
 }

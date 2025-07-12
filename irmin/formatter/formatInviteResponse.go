@@ -3,13 +3,13 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
-func FormatInviteResponse(invite *db.Invite, sqidManager *utils.SQIDManager) (*irminmodels.Invite, error) {
+func FormatInviteResponse(invite *db.Invite, sqidManager *irminsqids.SQIDManager) (*irminmodels.Invite, error) {
 	// Get the sqid of the invite
 	inviteSqid, err := sqidManager.Encode("invites", uint64(invite.ID))
 	if err != nil {

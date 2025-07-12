@@ -3,12 +3,12 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
-func FormatRoleResponse(role *db.Role, sqidManager *utils.SQIDManager) (*irminmodels.Role, error) {
+func FormatRoleResponse(role *db.Role, sqidManager *irminsqids.SQIDManager) (*irminmodels.Role, error) {
 	// Get the sqid of the role
 	roleSqid, err := sqidManager.Encode("roles", uint64(role.ID))
 	if err != nil {

@@ -61,7 +61,7 @@ func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: filteredBranches,
 	})
 }
@@ -78,18 +78,8 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.CreateBranchRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Name == "" || req.From == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Get the immutable flag
@@ -123,7 +113,7 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 	})
 
 	// Return the created branch
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "branch_created"),
 		Data:    branch,
 	})
@@ -135,7 +125,7 @@ func (api *APIControllers) RepositoryBranchesShow(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: branch,
 	})
 }
@@ -153,11 +143,8 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.UpdateBranchRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Determine if the branch should be immutable
@@ -215,7 +202,7 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the updated branch
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "branch_updated"),
 		Data:    branch,
 	})
@@ -268,7 +255,7 @@ func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success message
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "branch_deleted"),
 	})
 }
@@ -301,7 +288,7 @@ func (api *APIControllers) RepositoryGetUncommittedChanges(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: diff,
 	})
 }

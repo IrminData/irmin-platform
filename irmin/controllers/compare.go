@@ -71,18 +71,8 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.MergeRefsRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.BaseRef == "" || req.CompareRef == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Get the base and compare refs
@@ -146,7 +136,7 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "merge_commit_created"),
 		Data:    mergeCommit,
 	})

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
+	"irmin-api/locales"
 	"irmin-api/utils"
 	"strconv"
 	"strings"
@@ -21,10 +22,10 @@ const (
 
 // WorkspaceSearch handles workspace-wide search requests.
 func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
-	// Get workspace from context (set by middleware)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	user, userOk := c.Locals("user").(*db.User)
-	if !workspaceOk || !userOk {
+	if !dictOk || !workspaceOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{"Workspace not found"},
 		})
@@ -43,7 +44,7 @@ func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
 	if err != nil {
 		api.Logger.Error("Failed to search workspace", "error", err, "workspace_id", workspace.ID)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{"Search failed"},
+			Errors: []string{api.lm.T(dict, "search_failed")},
 		})
 	}
 
@@ -89,7 +90,7 @@ func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
 		},
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: response,
 	})
 }

@@ -47,7 +47,7 @@ func (api *APIControllers) RepositoryTagsIndex(c fiber.Ctx) error {
 		})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: tags,
 	})
 }
@@ -71,18 +71,8 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.CreateRepositoryTagRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Name == "" || req.Ref == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Initialize Data Engine client
@@ -113,7 +103,7 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 	})
 
 	// Return the created tag
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: tag,
 	})
 }
@@ -121,12 +111,10 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 func (api *APIControllers) RepositoryTagsShow(c fiber.Ctx) error {
 	tag, tagOk := c.Locals("tag").(*irminmodels.GitTag)
 	if !tagOk {
-		api.Logger.Error("Error getting locals for RepositoryTagsShow",
-			"tagOk", tagOk)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: tag,
 	})
 }
@@ -140,14 +128,9 @@ func (api *APIControllers) RepositoryTagsDestroy(c fiber.Ctx) error {
 	tag, tagOk := c.Locals("tag").(*irminmodels.GitTag)
 
 	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !tagOk {
-		api.Logger.Error("Error getting locals for RepositoryTagsDestroy",
-			"localeOk", localeOk,
-			"dictOk", dictOk,
-			"userOk", userOk,
-			"workspaceOk", workspaceOk,
-			"repositoryOk", repositoryOk,
-			"tagOk", tagOk)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
 	}
 
 	// Initialize Data Engine client
@@ -177,7 +160,7 @@ func (api *APIControllers) RepositoryTagsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return a success message
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "tag_deleted"),
 	})
 }

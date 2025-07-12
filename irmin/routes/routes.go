@@ -10,6 +10,7 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -22,7 +23,7 @@ func RegisterAPIRoutes(
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	orchestrator *orchestrator.Orchestrator,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 	localeManager *locales.LocaleManager,
 	permissionService *lib.PermissionService,
 ) {

@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 func FormatRepositoryResponse(
 	repository *db.Repository,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.Repository, error) {
 	// Check if the repository is a nil pointer
 	if repository == nil {
@@ -48,8 +48,8 @@ func FormatRepositoryResponse(
 		}
 	} else {
 		gcRules = &irminmodels.GarbageCollectionRules{
-			DefaultRetentionDays: 0,
-			Branches:             nil,
+			DefaultRetentionDays: nil,
+			Branches:             []irminmodels.BranchGarbageCollectionRules{},
 		}
 	}
 

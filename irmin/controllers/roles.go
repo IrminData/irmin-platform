@@ -18,6 +18,7 @@ func (api *APIControllers) RolesIndex(c fiber.Ctx) error {
 	// Get the roles
 	roles, err := api.DB.GetRoles()
 	if err != nil {
+		api.Logger.Error("Error getting roles", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -33,7 +34,7 @@ func (api *APIControllers) RolesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the roles.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: rolesResponse,
 	})
 }

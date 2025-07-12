@@ -3,14 +3,14 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 func FormatWorkflowRunResponse(
 	workflowRun *db.WorkflowRun,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.WorkflowRun, error) {
 	// Get the sqid of the workflow run
 	workflowRunSqid, encodeWorkflowRunSqidErr := sqidManager.Encode("workflow-runs", uint64(workflowRun.ID))

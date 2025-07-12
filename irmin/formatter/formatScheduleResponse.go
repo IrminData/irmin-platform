@@ -3,13 +3,12 @@ package formatter
 import (
 	"irmin-api/db"
 
-	"irmin-api/utils"
-
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatScheduleResponse creates a schedule response object from a schedule object.
-func FormatScheduleResponse(schedule *db.Schedule, sqidManager *utils.SQIDManager) (*irminmodels.Schedule, error) {
+func FormatScheduleResponse(schedule *db.Schedule, sqidManager *irminsqids.SQIDManager) (*irminmodels.Schedule, error) {
 	// Format the response
 	var scheduleResponse irminmodels.Schedule
 	var scheduleTriggersResponse []irminmodels.ScheduleTrigger

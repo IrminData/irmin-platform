@@ -109,7 +109,7 @@ func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: repositoriesResponse,
 	})
 }
@@ -150,8 +150,8 @@ func (api *APIControllers) createRepositoryInTransaction(
 			repositorySlug,
 			req.DefaultBranch,
 			req.IsImmutable,
-			&gcSettings.DefaultRetentionDays,
-			&gcSettings.DefaultBranchRetentionDays,
+			gcSettings.DefaultRetentionDays,
+			gcSettings.DefaultBranchRetentionDays,
 		)
 		if createRepositoryInDataEngineErr != nil {
 			api.Logger.Error("Error creating repository in Data Engine", "error", createRepositoryInDataEngineErr)
@@ -213,8 +213,8 @@ func (api *APIControllers) updateRepositoryInTransaction(
 		dataEngineRepository, updateRepositoryInDataEngineErr = dataEngine.UpdateRepository(
 			workspace.Slug,
 			repository.Slug,
-			&gcSettings.DefaultRetentionDays,
-			&gcSettings.DefaultBranchRetentionDays,
+			gcSettings.DefaultRetentionDays,
+			gcSettings.DefaultBranchRetentionDays,
 		)
 		if updateRepositoryInDataEngineErr != nil {
 			api.Logger.Error("Error updating repository in Data Engine", "error", updateRepositoryInDataEngineErr)
@@ -274,20 +274,10 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.CreateRepositoryRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Name == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Format the slug from the name
@@ -398,7 +388,7 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "repository_created"),
 		Data:    *repositoryResponse,
 	})
@@ -424,7 +414,7 @@ func (api *APIControllers) RepositoriesShow(c fiber.Ctx) error {
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: *repositoryResponse,
 	})
 }
@@ -485,7 +475,7 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(repositoryLocalParams.dict, "repository_deleted"),
 	})
 }
@@ -498,13 +488,10 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	}
 	repository := repositoryLocalParams.repository
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.UpdateRepositoryRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, repositoryLocalParams.dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Create garbage collection settings from request
@@ -514,7 +501,7 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	}
 
 	// If no new default branch retention days provided, use existing value
-	if gcSettings.DefaultBranchRetentionDays == 0 {
+	if gcSettings.DefaultBranchRetentionDays == nil {
 		gcSettings.DefaultBranchRetentionDays = utils.GetDefaultBranchRetentionDays(
 			repository.GarbageCollectionRules.Branches,
 			repository.DefaultBranch,
@@ -590,7 +577,7 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(repositoryLocalParams.dict, "repository_updated"),
 		Data:    *repositoryResponse,
 	})
@@ -605,26 +592,16 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 
 	repository := repositoryLocalParams.repository
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.TransferRepositoryOwnershipRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, repositoryLocalParams.dict); validationErr != nil {
+		return validationErr
 	}
 
-	// Validate required fields
-	if req.NewOwnerID == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
-		})
-	}
-
-	// Parse the ID of the new owner from the sqid
-	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", req.NewOwnerID)
-	if decodeSqidsErr != nil {
-		api.Logger.Error("Error decoding new owner sqid", "error", decodeSqidsErr)
+	// Validate and decode the new owner SQID
+	newOwnerID, err := api.SQIDManager.Decode("users", req.NewOwnerID)
+	if err != nil {
+		api.Logger.Error("Error decoding SQID", "sqid", req.NewOwnerID, "type", "users", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(repositoryLocalParams.dict, "invalid_request")},
 		})
@@ -675,7 +652,7 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(repositoryLocalParams.dict, "repository_ownership_transferred"),
 		Data:    *repositoryResponse,
 	})

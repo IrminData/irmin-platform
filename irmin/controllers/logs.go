@@ -121,13 +121,17 @@ func (api *APIControllers) buildLogsResponse(
 	events []irminmodels.LogEvent,
 	total int64,
 	queryParams *logsQueryParams,
-) map[string]any {
-	return map[string]any{
-		"data":        events,
-		"total":       total,
-		"per_page":    queryParams.perPage,
-		"page":        queryParams.page,
-		"total_pages": int(math.Ceil(float64(total) / float64(queryParams.perPage))),
+) irminmodels.IrminAPIResponse {
+	totalItems := int(total)
+	totalPages := int(math.Ceil(float64(total) / float64(queryParams.perPage)))
+	return irminmodels.IrminAPIResponse{
+		Pagination: &irminmodels.IrminAPIPaginationMetadata{
+			Total:      &totalItems,
+			PerPage:    &queryParams.perPage,
+			Page:       &queryParams.page,
+			TotalPages: &totalPages,
+		},
+		Data: events,
 	}
 }
 
@@ -200,9 +204,11 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: api.buildLogsResponse(formattedEvents, total, queryParams),
-	})
+	return api.validateAndWriteResponse(
+		c,
+		fiber.StatusOK,
+		api.buildLogsResponse(formattedEvents, total, queryParams),
+	)
 }
 
 // getAssetParams gets the asset parameters from the request.

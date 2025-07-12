@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // formatQueries formats a slice of database queries into model queries.
-func formatQueries(queries []db.StoredQuery, sqidManager *utils.SQIDManager) ([]irminmodels.StoredQuery, error) {
+func formatQueries(queries []db.StoredQuery, sqidManager *irminsqids.SQIDManager) ([]irminmodels.StoredQuery, error) {
 	var formattedQueries []irminmodels.StoredQuery
 	for _, query := range queries {
 		formattedQuery, err := FormatStoredQueryResponse(&query, sqidManager)
@@ -28,7 +28,7 @@ func formatQueries(queries []db.StoredQuery, sqidManager *utils.SQIDManager) ([]
 // formatRepositories formats a slice of database repositories into model repositories.
 func formatRepositories(
 	repositories []db.Repository,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.Repository, error) {
 	var formattedRepositories []irminmodels.Repository
 	for _, repository := range repositories {
@@ -47,7 +47,7 @@ func formatRepositories(
 // formatWorkflows formats a slice of database workflows into model workflows.
 func formatWorkflows(
 	workflows []db.Workflow,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 	d *db.Database,
 ) ([]irminmodels.Workflow, error) {
 	var formattedWorkflows []irminmodels.Workflow
@@ -65,7 +65,10 @@ func formatWorkflows(
 }
 
 // formatConnections formats a slice of database connections into model connections.
-func formatConnections(connections []db.Connection, sqidManager *utils.SQIDManager) ([]irminmodels.Connection, error) {
+func formatConnections(
+	connections []db.Connection,
+	sqidManager *irminsqids.SQIDManager,
+) ([]irminmodels.Connection, error) {
 	var formattedConnections []irminmodels.Connection
 	for _, connection := range connections {
 		formattedConnection, err := FormatConnectionResponse(&connection, sqidManager)
@@ -83,7 +86,7 @@ func formatConnections(connections []db.Connection, sqidManager *utils.SQIDManag
 // formatRepositoryObjects formats a slice of database repository objects into model objects.
 func formatRepositoryObjects(
 	repositoryObjects []db.RepositoryObject,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.Object, error) {
 	var formattedRepositoryObjects []irminmodels.Object
 	for _, repositoryObject := range repositoryObjects {
@@ -102,7 +105,7 @@ func formatRepositoryObjects(
 // FormatTagWithAssetsResponse creates a tag response object from a database tag object.
 func FormatTagWithAssetsResponse(
 	tag *db.TagWithAssets,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 	d *db.Database,
 ) (*irminmodels.TagWithAssets, error) {
 	if tag == nil {
@@ -158,7 +161,7 @@ func FormatTagWithAssetsResponse(
 }
 
 // FormatTagResponse creates a tag response object from a database tag object.
-func FormatTagResponse(tag *db.Tag, sqidManager *utils.SQIDManager) (*irminmodels.Tag, error) {
+func FormatTagResponse(tag *db.Tag, sqidManager *irminsqids.SQIDManager) (*irminmodels.Tag, error) {
 	if tag == nil {
 		return nil, errors.New("tag is nil")
 	}
@@ -181,7 +184,7 @@ func FormatTagResponse(tag *db.Tag, sqidManager *utils.SQIDManager) (*irminmodel
 }
 
 // FormatTagsResponse creates a slice of tag response objects from database tag objects.
-func FormatTagsResponse(tags []db.Tag, sqidManager *utils.SQIDManager) ([]irminmodels.Tag, error) {
+func FormatTagsResponse(tags []db.Tag, sqidManager *irminsqids.SQIDManager) ([]irminmodels.Tag, error) {
 	var formattedTags []irminmodels.Tag
 
 	for _, tag := range tags {

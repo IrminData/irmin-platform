@@ -3,14 +3,14 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 func FormatStoredQueryResponse(
 	query *db.StoredQuery,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.StoredQuery, error) {
 	// Structure the owner response.
 	ownerResponse, err := FormatUserResponse(&query.Owner, sqidManager)

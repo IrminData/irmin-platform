@@ -12,6 +12,7 @@ import (
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
@@ -76,7 +77,7 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	}
 
 	// Create a wrapper function that adapts FormatWorkflowResponse to the expected signature
-	formatWorkflow := func(workflow *db.Workflow, sqidManager *utils.SQIDManager) (*irminmodels.Workflow, error) {
+	formatWorkflow := func(workflow *db.Workflow, sqidManager *irminsqids.SQIDManager) (*irminmodels.Workflow, error) {
 		return formatter.FormatWorkflowResponse(api.DB, workflow, sqidManager)
 	}
 
@@ -94,7 +95,7 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workflowsResponse,
 	})
 }
@@ -123,7 +124,7 @@ func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: workflowResponse,
 	})
 }
@@ -142,13 +143,10 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.UpdateWorkflowRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Only update fields that were provided
@@ -191,7 +189,7 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_updated"),
 		Data:    workflowResponse,
 	})
@@ -205,20 +203,10 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.WorkflowRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.Type == "" || req.Name == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Create variables to store all possible workflowable objects.
@@ -301,7 +289,7 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_created"),
 		Data:    workflowResponse,
 	})
@@ -425,7 +413,7 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_updated"),
 		Data:    workflowResponse,
 	})
@@ -511,7 +499,7 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "schedule_updated"),
 		Data:    workflowResponse,
 	})
@@ -552,7 +540,7 @@ func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_deleted"),
 	})
 }
@@ -571,26 +559,16 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse JSON request body
+	// Parse and validate the JSON request body
 	var req irmincore.TransferWorkflowOwnershipRequest
-	if bindErr := c.Bind().JSON(&req); bindErr != nil {
-		api.Logger.Error("Error parsing JSON request", "error", bindErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
-	// Validate required fields
-	if req.NewOwnerID == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Decode the new owner ID.
-	newOwnerID, decodeSqidsErr := api.SQIDManager.Decode("users", req.NewOwnerID)
-	if decodeSqidsErr != nil {
-		api.Logger.Error("Error decoding new owner sqid", "error", decodeSqidsErr)
+	// Validate and decode the new owner SQID
+	newOwnerID, err := api.SQIDManager.Decode("users", req.NewOwnerID)
+	if err != nil {
+		api.Logger.Error("Error decoding SQID", "sqid", req.NewOwnerID, "type", "users", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -642,7 +620,7 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 	})
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_ownership_transferred"),
 		Data:    workflowResponse,
 	})
@@ -693,7 +671,7 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_stopped"),
 		Data:    workflowResponse,
 	})
@@ -751,7 +729,7 @@ func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_started"),
 		Data:    workflowResponse,
 	})
@@ -1039,13 +1017,13 @@ func (api *APIControllers) createActionWorkflowable(
 		if config.ResultsRepositoryBranch == nil {
 			return nil, errors.New("results repository branch is required when repository is specified")
 		}
-		if config.ResultsRepositoryPath == "" {
+		if config.ResultsRepositoryPath == nil {
 			return nil, errors.New("results repository path is required when repository is specified")
 		}
 
 		repositoryID := repository.ID
 		branch := *config.ResultsRepositoryBranch
-		path := strings.TrimPrefix(config.ResultsRepositoryPath, "/")
+		path := strings.TrimPrefix(*config.ResultsRepositoryPath, "/")
 
 		workflowable = db.ActionWorkflowable{
 			Executable:              config.Executable,
@@ -1155,7 +1133,7 @@ func (api *APIControllers) processConnectionStage(newStage *db.PipelineStage, st
 
 	if stage.ConnectionReadPaths != nil {
 		readPaths := []string{}
-		for _, path := range stage.ConnectionReadPaths {
+		for _, path := range *stage.ConnectionReadPaths {
 			readPaths = append(readPaths, strings.TrimPrefix(path, "/"))
 		}
 		newStage.ConnectionReadPaths = readPaths
@@ -1199,7 +1177,7 @@ func (api *APIControllers) processRepositoryStage(
 
 	if stage.RepositoryReadPaths != nil {
 		readPaths := []string{}
-		for _, path := range stage.RepositoryReadPaths {
+		for _, path := range *stage.RepositoryReadPaths {
 			readPaths = append(readPaths, strings.TrimPrefix(path, "/"))
 		}
 		newStage.RepositoryReadPaths = readPaths

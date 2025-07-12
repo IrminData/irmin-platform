@@ -72,5 +72,9 @@
   "merge_commit_created": "Yhdistelmätallennus luotu",
   "policy_created": "Käyttöoikeus luotu",
   "policy_updated": "Käyttöoikeus päivitetty",
-  "policy_deleted": "Käyttöoikeus poistettu"
+  "policy_deleted": "Käyttöoikeus poistettu",
+  "validation_failed": "Validointi epäonnistui",
+  "response_validation_failed": "Vastauksen validointi epäonnistui",
+  "search_failed": "Haku epäonnistui",
+  "system_only_action": "Tämä toiminto on saatavilla vain järjestelmäkäyttäjille"
 }

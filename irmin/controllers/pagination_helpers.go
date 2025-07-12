@@ -36,7 +36,7 @@ func parsePaginationParams(params map[string]string) paginationParams {
 }
 
 // buildPaginationResponse builds the pagination response.
-func buildPaginationResponse(count int64, pagination paginationParams) *irminmodels.IrminAPIPaginationMetadata {
+func buildPaginationResponse(count int, pagination paginationParams) *irminmodels.IrminAPIPaginationMetadata {
 	totalPages := int(math.Ceil(float64(count) / float64(pagination.perPage)))
 	hasMore := pagination.page < totalPages
 	var nextPage *string
@@ -46,11 +46,11 @@ func buildPaginationResponse(count int64, pagination paginationParams) *irminmod
 	}
 
 	return &irminmodels.IrminAPIPaginationMetadata{
-		Total:      int(count),
-		TotalPages: totalPages,
+		Total:      &count,
+		TotalPages: &totalPages,
 		Page:       &pagination.page,
-		PerPage:    pagination.perPage,
-		HasMore:    hasMore,
+		PerPage:    &pagination.perPage,
+		HasMore:    &hasMore,
 		Next:       nextPage,
 	}
 }
@@ -89,9 +89,9 @@ func buildCursorPaginationResponse(
 	nextOffset *string,
 ) *irminmodels.IrminAPIPaginationMetadata {
 	return &irminmodels.IrminAPIPaginationMetadata{
-		Total:   count,
-		PerPage: perPage,
-		HasMore: hasMore,
+		Total:   &count,
+		PerPage: &perPage,
+		HasMore: &hasMore,
 		Next:    nextOffset,
 	}
 }

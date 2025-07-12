@@ -21,6 +21,15 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
 	if !dictOk || !workflowOk || !userOk || !workspaceOk {
+		api.Logger.Error(
+			"Error getting workflow, user or workspace from context",
+			"workflowOk",
+			workflowOk,
+			"userOk",
+			userOk,
+			"workspaceOk",
+			workspaceOk,
+		)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -65,7 +74,7 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 	})
 
 	// Return the formatted workflow run.
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: formattedRun,
 	})
 }
@@ -78,6 +87,15 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
 	if !dictOk || !workflowOk || !userOk || !workspaceOk {
+		api.Logger.Error(
+			"Error getting workflow, user or workspace from context",
+			"workflowOk",
+			workflowOk,
+			"userOk",
+			userOk,
+			"workspaceOk",
+			workspaceOk,
+		)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -143,7 +161,7 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 	paginationResponse := buildPaginationResponse(count, pagination)
 
 	// Return the formatted workflow runs.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Pagination: paginationResponse,
 		Data:       formattedRuns,
 	})
@@ -154,6 +172,7 @@ func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 
 	if !dictOk || !workflowOk {
+		api.Logger.Error("Error getting workflow from context", "workflowOk", workflowOk)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -202,7 +221,7 @@ func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 	}
 
 	// Return the formatted workflow run.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: formattedRun,
 	})
 }
@@ -214,6 +233,15 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 
 	if !dictOk || !userOk || !workspaceOk || !workflowOk {
+		api.Logger.Error(
+			"Error getting workflow, user, workspace or workflow from context",
+			"workflowOk",
+			workflowOk,
+			"userOk",
+			userOk,
+			"workspaceOk",
+			workspaceOk,
+		)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -282,7 +310,7 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the formatted workflow run.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: formattedRun,
 	})
 }

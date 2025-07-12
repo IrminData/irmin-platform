@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // FormatPolicyResponse formats a single policy into an API response.
-func FormatPolicyResponse(policy *db.Policy, sqidManager *utils.SQIDManager) (*irminmodels.Policy, error) {
+func FormatPolicyResponse(policy *db.Policy, sqidManager *irminsqids.SQIDManager) (*irminmodels.Policy, error) {
 	// Create the base policy response
 	response := &irminmodels.Policy{
 		Effect:    irminmodels.PolicyEffect(policy.Effect),

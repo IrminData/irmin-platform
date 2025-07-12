@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
@@ -44,7 +43,7 @@ func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
 	}
 
 	// Return the connectors
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: connectorsResponse,
 	})
 }
@@ -72,7 +71,7 @@ func (api *APIControllers) ConnectorsShow(c fiber.Ctx) error {
 	}
 
 	// Return the connector info
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: connectorResponse,
 	})
 }
@@ -94,18 +93,8 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 
 	// Parse JSON request body
 	var req irmincore.ConnectorRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Validate required fields
-	if req.URL == "" || req.SystemToken == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Create new connector client
@@ -163,7 +152,7 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 	}
 
 	// Return the connector info
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connector_refreshed"),
 		Data:    connectorResponse,
 	})
@@ -254,7 +243,7 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Return the connector info
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connector_refreshed"),
 		Data:    connectorResponse,
 	})
@@ -287,7 +276,7 @@ func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 	}
 
 	// Return the success response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connector_deleted"),
 	})
 }
@@ -319,8 +308,8 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	}
 
 	// Convert any maps to string maps for compatibility with connector client
-	detailsStr := convertMapToMapString(req.Details)
-	settingsStr := convertMapToMapString(req.Settings)
+	detailsStr := utils.ConvertToStringMap(req.Details)
+	settingsStr := utils.ConvertToStringMap(req.Settings)
 
 	// Create new connector client
 	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
@@ -339,21 +328,9 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	}
 
 	// Return the array of the dynamic fields required for the connection settings
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: configurationFields,
 	})
-}
-
-func convertMapToMapString(m map[string]any) map[string]string {
-	res := make(map[string]string)
-	for k, v := range m {
-		if str, ok := v.(string); ok {
-			res[k] = str
-		} else {
-			res[k] = fmt.Sprintf("%v", v)
-		}
-	}
-	return res
 }
 
 func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
@@ -374,8 +351,8 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 	}
 
 	// Convert any maps to string maps for compatibility with connector client
-	detailsStr := convertMapToMapString(req.Details)
-	settingsStr := convertMapToMapString(req.Settings)
+	detailsStr := utils.ConvertToStringMap(req.Details)
+	settingsStr := utils.ConvertToStringMap(req.Settings)
 
 	// Create new connector client
 	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
@@ -390,7 +367,7 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: testResponse,
 	})
 }

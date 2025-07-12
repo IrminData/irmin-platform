@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
+
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // DecodePolicyResourceID decodes a SQID based on the resource type for policy resources.
 func DecodePolicyResourceID(
 	sqid string,
 	resource db.PolicyResource,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*uint, error) {
 	var id uint64
 	var err error
@@ -69,7 +70,7 @@ func DecodePolicyResourceID(
 func EncodePolicyResourceID(
 	id uint,
 	resource db.PolicyResource,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (string, error) {
 	switch resource {
 	case db.PolicyResourceWorkspace:

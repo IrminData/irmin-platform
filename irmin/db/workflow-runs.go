@@ -25,7 +25,7 @@ type WorkflowRun struct {
 
 // GetWorkflowRunsByWorkflowID returns workflow runs for the given workflow ID,
 // sorted by creation time, along with the total count of matching runs for pagination.
-func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset int) ([]WorkflowRun, int64, error) {
+func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset int) ([]WorkflowRun, int, error) {
 	// Count total number of matching events
 	var total int64
 	if err := d.Model(&WorkflowRun{}).
@@ -44,7 +44,8 @@ func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset in
 		Limit(limit).
 		Offset(offset).
 		Find(&workflowRuns)
-	return workflowRuns, total, result.Error
+
+	return workflowRuns, int(total), result.Error
 }
 
 func (d *Database) GetLatestWorkflowRunByWorkflowID(workflowID uint) (*WorkflowRun, error) {

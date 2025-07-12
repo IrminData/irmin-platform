@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/zeebo/assert"
 )
 
@@ -304,7 +305,7 @@ func TestSendNovuInviteNotification_UserNotFound(t *testing.T) {
 	}))
 
 	// Create SQID manager
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result, err := lib.SendNovuInviteNotification(ctx, ts.DB, sqidManager, ts.Env, logger, params)
 
@@ -341,7 +342,7 @@ func TestSendNovuInviteNotification_ExistingUser(t *testing.T) {
 	}))
 
 	// Create SQID manager
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result, err := lib.SendNovuInviteNotification(ctx, ts.DB, sqidManager, ts.Env, logger, params)
 
@@ -380,7 +381,7 @@ func TestSendFallbackInviteNotification_NoAPIKeys(t *testing.T) {
 	}))
 
 	// Create SQID manager
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result := lib.SendFallbackInviteNotification(ctx, ts.DB, sqidManager, envWithoutKeys, logger, params)
 
@@ -412,7 +413,7 @@ func TestSendFallbackInviteNotification_ResendOnly(t *testing.T) {
 	}))
 
 	// Create SQID manager
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result := lib.SendFallbackInviteNotification(ctx, ts.DB, sqidManager, envWithResendOnly, logger, params)
 
@@ -534,7 +535,7 @@ func TestSendNovuInviteNotification_NoSecretKey(t *testing.T) {
 		Level: slog.LevelError,
 	}))
 
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result, err := lib.SendNovuInviteNotification(ctx, ts.DB, sqidManager, envWithoutNovuKey, logger, params)
 
@@ -568,7 +569,7 @@ func TestSendNovuInviteNotification_UserWithoutNovuID(t *testing.T) {
 		Level: slog.LevelError,
 	}))
 
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result, err := lib.SendNovuInviteNotification(ctx, ts.DB, sqidManager, ts.Env, logger, params)
 
@@ -607,7 +608,7 @@ func TestSendNovuInviteNotification_UserWithNovuID(t *testing.T) {
 		Level: slog.LevelError,
 	}))
 
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result, err := lib.SendNovuInviteNotification(ctx, ts.DB, sqidManager, ts.Env, logger, params)
 
@@ -717,7 +718,7 @@ func TestSendFallbackInviteNotification_InvalidParameters(t *testing.T) {
 		Level: slog.LevelError,
 	}))
 
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	// Test with nil invite
 	invalidParams := lib.InviteNotificationParams{
@@ -754,7 +755,7 @@ func TestSendFallbackInviteNotification_DetailedErrorLogging(t *testing.T) {
 		Level: slog.LevelDebug, // Enable debug logging to see error details
 	}))
 
-	sqidManager := &utils.SQIDManager{}
+	sqidManager := &irminsqids.SQIDManager{}
 
 	result := lib.SendFallbackInviteNotification(ctx, ts.DB, sqidManager, envWithInvalidKeys, logger, params)
 

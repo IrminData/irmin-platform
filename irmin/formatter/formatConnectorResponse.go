@@ -3,12 +3,15 @@ package formatter
 import (
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
-func FormatConnectorResponse(connector *db.Connector, sqidManager *utils.SQIDManager) (*irminmodels.Connector, error) {
+func FormatConnectorResponse(
+	connector *db.Connector,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Connector, error) {
 	connectorSqid, err := sqidManager.Encode("connectors", uint64(connector.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error encoding connector sqid: %w", err)
@@ -22,18 +25,19 @@ func FormatConnectorResponse(connector *db.Connector, sqidManager *utils.SQIDMan
 		categories = append(categories, irminmodels.ConnectorCategory(category))
 	}
 	connectorResponse := irminmodels.Connector{
-		ID:              connectorSqid,
-		Name:            connector.Name,
-		Description:     connector.Description,
-		Version:         connector.Version,
-		Author:          connector.Author,
-		LogoURL:         connector.LogoURL,
-		Capabilities:    capabilities,
-		Locales:         connector.Locales,
-		Categories:      categories,
-		PrimaryCategory: irminmodels.ConnectorCategory(connector.PrimaryCategory),
-		AuthorEmail:     connector.AuthorEmail,
-		ReadMoreURL:     connector.ReadMoreURL,
+		ID:               connectorSqid,
+		Name:             connector.Name,
+		Description:      connector.Description,
+		Version:          connector.Version,
+		StructureVersion: connector.StructureVersion,
+		Author:           connector.Author,
+		LogoURL:          connector.LogoURL,
+		Capabilities:     capabilities,
+		Locales:          connector.Locales,
+		Categories:       categories,
+		PrimaryCategory:  irminmodels.ConnectorCategory(connector.PrimaryCategory),
+		AuthorEmail:      connector.AuthorEmail,
+		ReadMoreURL:      connector.ReadMoreURL,
 	}
 
 	return &connectorResponse, nil

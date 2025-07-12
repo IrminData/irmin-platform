@@ -3,15 +3,15 @@ package lib_test
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
-	"irmin-api/utils"
 	"testing"
 
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/zeebo/assert"
 )
 
 func TestDecodePolicyResourceID(t *testing.T) {
 	ts := lib.GetTestSuite()
-	sqidManager := utils.NewSQIDManager(ts.Env)
+	sqidManager := irminsqids.NewSQIDManager(ts.Env.SqidAlphabet)
 
 	testCases := []struct {
 		name         string
@@ -70,7 +70,7 @@ func TestDecodePolicyResourceID(t *testing.T) {
 
 func TestEncodePolicyResourceID(t *testing.T) {
 	ts := lib.GetTestSuite()
-	sqidManager := utils.NewSQIDManager(ts.Env)
+	sqidManager := irminsqids.NewSQIDManager(ts.Env.SqidAlphabet)
 
 	testCases := []struct {
 		name         string
@@ -126,7 +126,7 @@ func TestEncodePolicyResourceID(t *testing.T) {
 // TestEncodeDecodeRoundTrip tests that encoding and decoding work correctly together.
 func TestEncodeDecodeRoundTrip(t *testing.T) {
 	ts := lib.GetTestSuite()
-	sqidManager := utils.NewSQIDManager(ts.Env)
+	sqidManager := irminsqids.NewSQIDManager(ts.Env.SqidAlphabet)
 
 	// Test resources that should support encoding/decoding
 	validResources := []db.PolicyResource{

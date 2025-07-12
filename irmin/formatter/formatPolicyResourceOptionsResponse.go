@@ -6,12 +6,13 @@ import (
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // formatQueryResourceOptions formats the queries into PolicyResourceOptions.
 func formatQueryResourceOptions(
 	queries []db.StoredQuery,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.PolicyResourceOption, error) {
 	formattedQueries := make([]irminmodels.PolicyResourceOption, len(queries))
 	for i, query := range queries {
@@ -30,7 +31,7 @@ func formatQueryResourceOptions(
 // formatWorkflowResourceOptions formats the workflows into PolicyResourceOptions.
 func formatWorkflowResourceOptions(
 	workflows []db.Workflow,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.PolicyResourceOption, error) {
 	formattedWorkflows := make([]irminmodels.PolicyResourceOption, len(workflows))
 	for i, workflow := range workflows {
@@ -49,7 +50,7 @@ func formatWorkflowResourceOptions(
 // formatConnectionResourceOptions formats the connections into PolicyResourceOptions.
 func formatConnectionResourceOptions(
 	connections []db.Connection,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.PolicyResourceOption, error) {
 	formattedConnections := make([]irminmodels.PolicyResourceOption, len(connections))
 	for i, connection := range connections {
@@ -68,7 +69,7 @@ func formatConnectionResourceOptions(
 // formatRepositoryResourceOptions formats the repositories into PolicyResourceOptions.
 func formatRepositoryResourceOptions(
 	repositories []db.Repository,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.PolicyResourceOption, error) {
 	formattedRepositories := make([]irminmodels.PolicyResourceOption, len(repositories))
 	for i, repository := range repositories {
@@ -87,7 +88,7 @@ func formatRepositoryResourceOptions(
 // formatUserResourceOptions formats the users into PolicyResourceOptions.
 func formatUserResourceOptions(
 	users []db.WorkspaceUser,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.PolicyResourceOption, error) {
 	formattedUsers := make([]irminmodels.PolicyResourceOption, len(users))
 	for i, user := range users {
@@ -106,7 +107,7 @@ func formatUserResourceOptions(
 // formatTagResourceOptions formats the tags into PolicyResourceOptions.
 func formatTagResourceOptions(
 	tags []db.Tag,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) ([]irminmodels.PolicyResourceOption, error) {
 	formattedTags := make([]irminmodels.PolicyResourceOption, len(tags))
 	for i, tag := range tags {
@@ -129,7 +130,7 @@ func FormatPolicyResourceOptionsResponse(
 	repositories []db.Repository,
 	tags []db.Tag,
 	users []db.WorkspaceUser,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.PolicyResourceOptions, error) {
 	// Run all formatting operations concurrently
 	queriesFuture := utils.Async(func() ([]irminmodels.PolicyResourceOption, error) {

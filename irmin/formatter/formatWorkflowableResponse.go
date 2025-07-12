@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/utils"
 	"slices"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 )
 
 // getWorkflowable retrieves the appropriate workflowable based on the workflow type.
@@ -29,7 +29,7 @@ func getWorkflowable(d *db.Database, workflow *db.Workflow) (any, error) {
 // formatImportWorkflowable formats an import workflowable response.
 func formatImportWorkflowable(
 	importWorkflowable *db.ImportWorkflowable,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) *irminmodels.Workflowable {
 	if importWorkflowable == nil {
 		return nil
@@ -50,7 +50,7 @@ func formatImportWorkflowable(
 // formatExportWorkflowable formats an export workflowable response.
 func formatExportWorkflowable(
 	exportWorkflowable *db.ExportWorkflowable,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) *irminmodels.Workflowable {
 	if exportWorkflowable == nil {
 		return nil
@@ -84,10 +84,11 @@ func formatActionWorkflowable(
 	if actionWorkflowable.ResultsRepository != nil {
 		response.ResultsRepository = &actionWorkflowable.ResultsRepository.Slug
 		response.ResultsRepositoryBranch = actionWorkflowable.ResultsRepositoryBranch
-		response.ResultsRepositoryPath = "/"
+		resultsRepositoryPath := "/"
 		if actionWorkflowable.ResultsRepositoryPath != nil {
-			response.ResultsRepositoryPath = *actionWorkflowable.ResultsRepositoryPath
+			resultsRepositoryPath = *actionWorkflowable.ResultsRepositoryPath
 		}
+		response.ResultsRepositoryPath = &resultsRepositoryPath
 	}
 
 	if actionWorkflowable.Inputs != nil {
@@ -109,7 +110,7 @@ func formatActionWorkflowable(
 }
 
 // formatPipelineStage formats a single pipeline stage.
-func formatPipelineStage(stage db.PipelineStage, sqidManager *utils.SQIDManager) irminmodels.PipelineStage {
+func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDManager) irminmodels.PipelineStage {
 	switch stage.Type {
 	case db.PipelineStageTypeAction:
 		return irminmodels.PipelineStage{
@@ -127,7 +128,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *utils.SQIDManager)
 			Read:                stage.Read,
 			Type:                irminmodels.PipelineStageTypeConnection,
 			ConnectionWritePath: stage.ConnectionWritePath,
-			ConnectionReadPaths: stage.ConnectionReadPaths,
+			ConnectionReadPaths: &stage.ConnectionReadPaths,
 			ConnectionID:        &connectionSqid,
 		}
 	case db.PipelineStageTypeRepository:
@@ -139,7 +140,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *utils.SQIDManager)
 			Type:                irminmodels.PipelineStageTypeRepository,
 			RepositoryBranch:    stage.RepositoryBranch,
 			RepositoryWritePath: stage.RepositoryWritePath,
-			RepositoryReadPaths: stage.RepositoryReadPaths,
+			RepositoryReadPaths: &stage.RepositoryReadPaths,
 			Repository:          &repositorySlug,
 		}
 	default:
@@ -150,7 +151,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *utils.SQIDManager)
 // formatPipelineWorkflowable formats a pipeline workflowable response.
 func formatPipelineWorkflowable(
 	pipelineWorkflowable *db.PipelineWorkflowable,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) *irminmodels.Workflowable {
 	if pipelineWorkflowable == nil {
 		return nil
@@ -184,7 +185,7 @@ func formatPipelineWorkflowable(
 func FormatWorkflowableResponse(
 	d *db.Database,
 	workflow *db.Workflow,
-	sqidManager *utils.SQIDManager,
+	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.Workflowable, error) {
 	workflowable, err := getWorkflowable(d, workflow)
 	if err != nil {

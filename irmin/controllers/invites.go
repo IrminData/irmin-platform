@@ -67,7 +67,7 @@ func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	}
 
 	// Return the response.
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: invitesResponse,
 	})
 }
@@ -243,22 +243,12 @@ func (api *APIControllers) buildResponseData(
 }
 
 // validateSendInviteRequest validates the incoming request.
+// it checks if the user is already in the workspace and if the user is already invited to the workspace.
 func (api *APIControllers) validateSendInviteRequest(
 	req irmincore.SendInviteRequest,
 	workspace *db.Workspace,
 	_ locales.Dictionary,
 ) error {
-	// Validate required fields
-	if req.Email == "" || req.Role == "" {
-		return errors.New("invalid request: missing required fields")
-	}
-
-	// Validate email
-	if !utils.ValidateEmail(req.Email) {
-		api.Logger.Error("Invalid email", "email", req.Email)
-		return errors.New("invalid email format")
-	}
-
 	// Check if user is already in workspace
 	alreadyInWorkspace, err := api.DB.IsUserInWorkspaceByEmail(req.Email, workspace.ID)
 	if err != nil || alreadyInWorkspace {
@@ -293,11 +283,8 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 
 	// Parse the JSON request body
 	var req irmincore.SendInviteRequest
-	if err := c.Bind().JSON(&req); err != nil {
-		api.Logger.Error("Error parsing JSON request body", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
+	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
+		return validationErr
 	}
 
 	// Validate request
@@ -385,7 +372,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	responseData := api.buildResponseData(inviteResponse, inviteResult)
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: responseMessage,
 		Data:    responseData,
 	})
@@ -408,7 +395,7 @@ func (api *APIControllers) InvitesShow(c fiber.Ctx) error {
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: inviteResponse,
 	})
 }
@@ -488,7 +475,7 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "invite_updated"),
 		Data:    inviteResponse,
 	})
@@ -607,7 +594,7 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "invite_deleted"),
 	})
 }
@@ -648,7 +635,7 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "invite_sent"),
 		Data:    inviteResponse,
 	})
@@ -686,7 +673,7 @@ func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error {
 	}
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: invitesResponse,
 	})
 }
@@ -748,7 +735,7 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 	})
 
 	// Return the response
-	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "invite_accepted"),
 	})
 }
