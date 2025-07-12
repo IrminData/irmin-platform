@@ -94,16 +94,8 @@ func IsAllowedFilter[T any](
 		return nil, fmt.Errorf("failed to query policies: %w", findPoliciesErr)
 	}
 
-	// Create a map of resource IDs to their allowed status
-	allowedResources := make(map[uint]bool)
-	for _, res := range resources {
-		resourceID := idExtractor(res)
-		allowed, isAllowedErr := ps.IsAllowed(user, workspace, resource, &resourceID, action)
-		if isAllowedErr != nil {
-			return nil, fmt.Errorf("failed to check permission for resource %d: %w", resourceID, isAllowedErr)
-		}
-		allowedResources[resourceID] = allowed
-	}
+	// Use batch evaluation to avoid N+1 queries
+	allowedResources := evaluatePoliciesBatch(policies, workspaceUser.ID, roleIDs, resourceIDs)
 
 	// Filter the resources based on the allowed status
 	var filteredResources []T
@@ -114,4 +106,76 @@ func IsAllowedFilter[T any](
 	}
 
 	return filteredResources, nil
+}
+
+// evaluatePoliciesBatch evaluates policies for multiple resources in a single operation.
+func evaluatePoliciesBatch(
+	policies []PolicyMatch,
+	workspaceUserID uint,
+	roleIDs []uint,
+	resourceIDs []uint,
+) map[uint]bool {
+	roleIDMap := make(map[uint]bool, len(roleIDs))
+	for _, id := range roleIDs {
+		roleIDMap[id] = true
+	}
+
+	allowedResources := make(map[uint]bool)
+
+	// Initialize all resources as denied
+	for _, resourceID := range resourceIDs {
+		allowedResources[resourceID] = false
+	}
+
+	// Group policies by resource ID for efficient evaluation
+	policiesByResource := make(map[uint][]PolicyMatch)
+	genericPolicies := make([]PolicyMatch, 0)
+
+	for _, policy := range policies {
+		// Check if policy applies to the user
+		if !policyAppliesForUser(policy, workspaceUserID, roleIDMap) {
+			continue
+		}
+
+		if policy.ResourceID == nil || *policy.ResourceID == 0 {
+			// Generic policy applies to all resources
+			genericPolicies = append(genericPolicies, policy)
+		} else {
+			// Specific policy for a resource
+			if policiesByResource[*policy.ResourceID] == nil {
+				policiesByResource[*policy.ResourceID] = make([]PolicyMatch, 0)
+			}
+			policiesByResource[*policy.ResourceID] = append(policiesByResource[*policy.ResourceID], policy)
+		}
+	}
+
+	// Evaluate permissions for each resource
+	for _, resourceID := range resourceIDs {
+		specificPolicies := policiesByResource[resourceID]
+
+		// Check specific resource policies first (highest precedence)
+		if hasAllowPolicy(specificPolicies) {
+			allowedResources[resourceID] = true
+			continue
+		}
+		if hasDenyPolicy(specificPolicies) {
+			allowedResources[resourceID] = false
+			continue
+		}
+
+		// Fall back to generic policies
+		if hasDenyPolicy(genericPolicies) {
+			allowedResources[resourceID] = false
+			continue
+		}
+		if hasAllowPolicy(genericPolicies) {
+			allowedResources[resourceID] = true
+			continue
+		}
+
+		// Default deny if no policies match
+		allowedResources[resourceID] = false
+	}
+
+	return allowedResources
 }

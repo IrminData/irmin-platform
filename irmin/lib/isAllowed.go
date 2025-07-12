@@ -20,10 +20,10 @@ const (
 	CacheSizeReductionFactor = 2
 
 	// OwnerPermissionCacheTTL is how long to cache permissions for workspace owners.
-	OwnerPermissionCacheTTL = 5 * time.Minute
+	OwnerPermissionCacheTTL = 10 * time.Minute
 
 	// DefaultPermissionCacheTTL is the default TTL for cached permissions.
-	DefaultPermissionCacheTTL = time.Minute
+	DefaultPermissionCacheTTL = 5 * time.Minute
 )
 
 // PermissionCacheEntry represents a cached permission result.

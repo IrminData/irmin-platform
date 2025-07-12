@@ -5,6 +5,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	// DefaultWorkflowListLimit is the default limit for workflow listings to improve performance.
+	DefaultWorkflowListLimit = 100
+)
+
 type Workflow struct {
 	gorm.Model
 
@@ -119,26 +124,34 @@ type PipelineStage struct {
 }
 
 // GetWorkflowsByWorkspaceID retrieves all workflows for a workspace.
+// Optimized for listing - minimal preloads, reasonable limit.
 func (d *Database) GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error) {
 	var workflows []Workflow
-	result := d.Preload("Owner").
+	result := d.Select("id, name, description, documentation, type, created_at, updated_at, owner_id, paused, workspace_id, schedule_id, import_id, export_id, action_id, pipeline_id").
+		Preload("Owner").
 		Preload("Tags").
+		Preload("Schedule").
 		Where("workspace_id = ?", workspaceID).
 		Order("created_at desc").
+		Limit(DefaultWorkflowListLimit).
 		Find(&workflows)
 	return workflows, result.Error
 }
 
 // GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type for a workspace.
+// Optimized for listing - minimal preloads, reasonable limit.
 func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
 	workspaceID uint,
 	workflowType irminmodels.WorkflowableType,
 ) ([]Workflow, error) {
 	var workflows []Workflow
-	result := d.Preload("Owner").
+	result := d.Select("id, name, description, documentation, type, created_at, updated_at, owner_id, paused, workspace_id, schedule_id, import_id, export_id, action_id, pipeline_id").
+		Preload("Owner").
 		Preload("Tags").
+		Preload("Schedule").
 		Where("workspace_id = ? AND type = ?", workspaceID, workflowType).
 		Order("created_at desc").
+		Limit(DefaultWorkflowListLimit).
 		Find(&workflows)
 	return workflows, result.Error
 }

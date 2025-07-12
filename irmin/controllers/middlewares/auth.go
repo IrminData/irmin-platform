@@ -8,6 +8,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/utils"
 	"strings"
+	"sync"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -23,7 +24,59 @@ const (
 
 	// NovuSubscriberTimeout is the timeout for ensuring a Novu subscriber.
 	NovuSubscriberTimeout = 30 * time.Second
+
+	// AuthCacheTTL is how long to cache auth results.
+	AuthCacheTTL = 5 * time.Minute
 )
+
+// AuthCacheEntry represents a cached authentication result.
+type AuthCacheEntry struct {
+	User      *db.User
+	ExpiresAt time.Time
+}
+
+// AuthCache provides thread-safe caching for authentication results.
+type AuthCache struct {
+	cache map[string]*AuthCacheEntry
+	mu    sync.RWMutex
+}
+
+// getCachedAuth retrieves a cached authentication result.
+func (api *APIMiddlewares) getCachedAuth(token string) *db.User {
+	api.authCache.mu.RLock()
+	entry, exists := api.authCache.cache[token]
+	if !exists {
+		api.authCache.mu.RUnlock()
+		return nil
+	}
+
+	if time.Now().Before(entry.ExpiresAt) {
+		user := entry.User
+		api.authCache.mu.RUnlock()
+		return user
+	}
+	api.authCache.mu.RUnlock()
+
+	// Clean expired entry with write lock - double check after acquiring write lock
+	api.authCache.mu.Lock()
+	defer api.authCache.mu.Unlock()
+	entry, exists = api.authCache.cache[token]
+	if exists && time.Now().After(entry.ExpiresAt) {
+		delete(api.authCache.cache, token)
+	}
+	return nil
+}
+
+// setCachedAuth stores an authentication result in cache.
+func (api *APIMiddlewares) setCachedAuth(token string, user *db.User) {
+	api.authCache.mu.Lock()
+	defer api.authCache.mu.Unlock()
+
+	api.authCache.cache[token] = &AuthCacheEntry{
+		User:      user,
+		ExpiresAt: time.Now().Add(AuthCacheTTL),
+	}
+}
 
 // AuthMiddleware handles the user authentication for the API, tokens and user details syncing with Clerk.
 func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
@@ -54,11 +107,22 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 		return c.Next()
 	}
 
-	// Validate token and get user
+	// Validate token first (this ensures token hasn't expired)
 	irminUser, clerkID, err := api.validateAndGetUserFromToken(token)
 	if err != nil {
 		api.Logger.Error("Token validation failed", "error", err)
+		// Remove from cache if it exists since token is invalid
+		api.authCache.mu.Lock()
+		delete(api.authCache.cache, token)
+		api.authCache.mu.Unlock()
 		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
+	}
+
+	// Check cache after validation for performance optimization
+	if cachedUser := api.getCachedAuth(token); cachedUser != nil {
+		c.Locals("user", cachedUser)
+		c.Locals("is_system", false)
+		return c.Next()
 	}
 
 	// Sync user with Clerk and Novu (atomic, under lock)
@@ -67,6 +131,9 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 		api.Logger.Error("Error syncing user with Clerk/Novu", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
+
+	// Cache the authenticated user
+	api.setCachedAuth(token, irminUser)
 
 	// Set the user in the context for subsequent handlers
 	c.Locals("user", irminUser)

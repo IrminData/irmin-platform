@@ -30,7 +30,7 @@ const (
 	// MaxRequestBodySize is the maximum size of request body in bytes (5 GB).
 	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
 	// CacheExpirationDuration is the duration for which responses are cached.
-	CacheExpirationDuration = 10 * time.Second
+	CacheExpirationDuration = 5 * time.Minute
 )
 
 // setupDefaultTags seeds default tags for all workspaces.

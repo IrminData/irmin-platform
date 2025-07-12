@@ -23,6 +23,8 @@ type APIMiddlewares struct {
 	permissionService *lib.PermissionService
 	userMutex         sync.RWMutex // Protects user operations to prevent race conditions
 	validator         *irminvalidator.Validator
+	authCache         *AuthCache     // Cache for authentication results
+	responseCache     *ResponseCache // Cache for API responses
 }
 
 func NewAPIMiddlewares(
@@ -43,5 +45,7 @@ func NewAPIMiddlewares(
 		lm:                localeManager,
 		permissionService: permissionService,
 		validator:         irminvalidator.NewValidator(sqidManager),
+		authCache:         &AuthCache{cache: make(map[string]*AuthCacheEntry)},
+		responseCache:     &ResponseCache{cache: make(map[string]*ResponseCacheEntry)},
 	}
 }
