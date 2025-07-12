@@ -11,5 +11,5 @@ type Commit struct {
 	// Commit author
 	Author string `json:"author"                  validate:"required"`
 	// Previous commit hash, if any (optional)
-	PreviousHash *string `json:"previous_hash,omitempty" validate:"notsamefield=Hash"`
+	PreviousHash *string `json:"previous_hash,omitempty"`
 }
