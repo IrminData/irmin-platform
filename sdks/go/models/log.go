@@ -18,7 +18,7 @@ const (
 type LogEvent struct {
 	ID          string       `json:"id"                     validate:"required,validsqid=logs"`
 	Type        LogEventType `json:"type"                   validate:"required,oneof=CREATE UPDATE DELETE LOGIN LOGOUT ERROR INFO WARNING"`
-	Description string       `json:"description"            validate:"required,min=1,max=500"`
+	Description string       `json:"description"            validate:"required,max=500"`
 	CreatedAt   time.Time    `json:"created_at"             validate:"required"`
 	Workspace   *Workspace   `json:"workspace,omitempty"`
 	User        *User        `json:"user,omitempty"`

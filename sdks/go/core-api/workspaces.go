@@ -9,13 +9,13 @@ import (
 
 // CreateWorkspaceRequest represents the JSON request body for creating a workspace.
 type CreateWorkspaceRequest struct {
-	Name        string `json:"name"                  validate:"required,min=1,max=100"`
+	Name        string `json:"name"                  validate:"required,max=100"`
 	Description string `json:"description,omitempty" validate:"max=500"`
 }
 
 // UpdateWorkspaceRequest represents the JSON request body for updating a workspace.
 type UpdateWorkspaceRequest struct {
-	Name        string `json:"name,omitempty"        validate:"min=1,max=100"`
+	Name        string `json:"name,omitempty"        validate:"max=100"`
 	Description string `json:"description,omitempty" validate:"max=500"`
 }
 

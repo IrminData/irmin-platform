@@ -4,7 +4,7 @@ import "time"
 
 type StoredQuery struct {
 	ID          string    `json:"id"             validate:"required,validsqid=queries"`
-	Name        string    `json:"name"           validate:"required,min=1,max=100"`
+	Name        string    `json:"name"           validate:"required,max=100"`
 	Description string    `json:"description"    validate:"max=500"`
 	SQL         string    `json:"sql"            validate:"required,validsql"`
 	Owner       User      `json:"owner"          validate:"required"`
@@ -14,7 +14,7 @@ type StoredQuery struct {
 }
 
 type QueryResult struct {
-	Columns    []string         `json:"columns,omitempty"     validate:"dive,min=1"`
+	Columns    []string         `json:"columns,omitempty"     validate:"dive"`
 	Data       []map[string]any `json:"data,omitempty"`
 	HasErrors  bool             `json:"has_errors,omitempty"`
 	Duration   time.Duration    `json:"duration,omitempty"    validate:"min=0"`

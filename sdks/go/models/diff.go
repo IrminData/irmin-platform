@@ -35,9 +35,9 @@ type Diff struct {
 	// Slug of the repository
 	Repository string `json:"repository"        validate:"required,validslug"`
 	// Base reference
-	BaseRef string `json:"base_ref"          validate:"required,min=1"`
+	BaseRef string `json:"base_ref"          validate:"required"`
 	// Compare reference
-	CompareRef string `json:"compare_ref"       validate:"required,min=1"`
+	CompareRef string `json:"compare_ref"       validate:"required"`
 	// List of changes in the diff
 	Items []ChangeItem `json:"items"             validate:"required,dive"`
 	// List of commits between the refs

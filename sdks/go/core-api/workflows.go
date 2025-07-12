@@ -9,7 +9,7 @@ import (
 
 // UpdateWorkflowRequest represents the JSON request body for updating basic workflow info.
 type UpdateWorkflowRequest struct {
-	Name          string `json:"name,omitempty"          validate:"min=1,max=100"`
+	Name          string `json:"name,omitempty"          validate:"max=100"`
 	Description   string `json:"description,omitempty"   validate:"max=500"`
 	Documentation string `json:"documentation,omitempty" validate:"validdocumentation"`
 }
@@ -22,7 +22,7 @@ type TransferWorkflowOwnershipRequest struct {
 // WorkflowRequest represents the JSON request body for creating a workflow.
 type WorkflowRequest struct {
 	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline"`
-	Name          string                       `json:"name"                    validate:"required,min=1,max=100"`
+	Name          string                       `json:"name"                    validate:"required,max=100"`
 	Description   string                       `json:"description,omitempty"   validate:"max=500"`
 	Documentation string                       `json:"documentation,omitempty" validate:"validdocumentation"`
 

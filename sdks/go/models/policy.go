@@ -138,7 +138,7 @@ type UserPolicySummary struct {
 // PolicyResourceOption represents a policy resource option.
 type PolicyResourceOption struct {
 	ID    string `json:"id"    validate:"required"`
-	Label string `json:"label" validate:"required,min=1,max=100"`
+	Label string `json:"label" validate:"required,max=100"`
 }
 
 // PolicyResourceOptions represents all possible policy resource options for a given workspace.

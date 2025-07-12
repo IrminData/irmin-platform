@@ -100,7 +100,7 @@ All models in the `models` package include comprehensive validation tags. Common
 
 - `validate:"required"` - Field is required
 - `validate:"email"` - Valid email format
-- `validate:"min=1,max=100"` - String length constraints
+- `validate:"max=100"` - String length constraints
 - `validate:"min=0,max=10"` - Numeric range constraints
 
 ### Custom Validation

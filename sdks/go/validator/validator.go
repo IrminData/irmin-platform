@@ -67,7 +67,7 @@ type Validator struct {
 
 // NewValidator creates a new validator instance.
 func NewValidator(sqidManager *irminsqids.SQIDManager) *Validator {
-	v := validator.New()
+	v := validator.New(validator.WithRequiredStructEnabled())
 
 	validator := &Validator{
 		validate:    v,
@@ -218,6 +218,16 @@ func (v *Validator) ValidateDynamic(data any) *ValidationResultError {
 	if dataType.Kind() == reflect.Slice || dataType.Kind() == reflect.Array || dataType.Kind() == reflect.Map {
 		// For arrays/slices, validate each element individually (equivalent to "dive" validation)
 		return v.validateArray(dataValue)
+	}
+
+	// Check if data is just a string, which is valid
+	if dataType.Kind() == reflect.String {
+		return &ValidationResultError{
+			IsValid:     true,
+			UserMessage: "",
+			FieldErrors: make(map[string]string),
+			RawErrors:   nil,
+		}
 	}
 
 	// For single structs, validate directly

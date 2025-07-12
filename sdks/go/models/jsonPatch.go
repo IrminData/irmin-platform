@@ -5,11 +5,11 @@ type PatchOperation struct {
 	// The operation: "add", "remove", "replace", "move" or "copy"
 	Op string `json:"op"              validate:"required,oneof=add remove replace move copy"`
 	// The JSON-Pointer location to apply the operation
-	Path string `json:"path"            validate:"required,min=1"`
+	Path string `json:"path"            validate:"required"`
 	// Used for "move" or "copy" operations
-	From string `json:"from,omitempty"  validate:"min=1"`
+	From *string `json:"from,omitempty"  validate:"required_if=Op move,required_if=Op copy"`
 	// Used for "add" or "replace" operations
-	Value any `json:"value,omitempty"`
+	Value *any `json:"value,omitempty" validate:"required_if=Op add,required_if=Op replace"`
 }
 
 // Patch is a series of patch operations.

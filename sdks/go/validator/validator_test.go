@@ -58,32 +58,34 @@ func TestValidator_ValidateAPIToken(t *testing.T) {
 
 	t.Run("valid API token", func(t *testing.T) {
 		tokenID, _ := sqidManager.Encode("api_tokens", 123)
-		token := models.APIToken{
+		token := "cred_1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+		tokenModel := models.APIToken{
 			ID:        tokenID,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			Name:      "My Token",
-			Token:     "cred_1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+			Token:     &token,
 			ExpiresAt: time.Now().Add(24 * time.Hour),
 		}
 
-		err := validator.Validate(token)
+		err := validator.Validate(tokenModel)
 		if err != nil {
 			t.Errorf("Expected valid token, got error: %v", err)
 		}
 	})
 
 	t.Run("invalid API token", func(t *testing.T) {
-		token := models.APIToken{
+		token := "wrong_prefix_short"
+		tokenModel := models.APIToken{
 			ID:        "token-123",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			Name:      "My Token",
-			Token:     "wrong_prefix_short", // Wrong prefix and too short
+			Token:     &token, // Wrong prefix and too short
 			ExpiresAt: time.Now().Add(24 * time.Hour),
 		}
 
-		err := validator.Validate(token)
+		err := validator.Validate(tokenModel)
 		if err == nil {
 			t.Error("Expected validation error for invalid token")
 		}
@@ -430,11 +432,9 @@ func TestCoreAPIRequestStructs_ComprehensiveValidation(t *testing.T) {
 		{
 			name: "CreateRepositoryRequest - Valid",
 			request: coreapi.CreateRepositoryRequest{
-				Name:                              "my-repo",
-				DefaultBranch:                     "main",
-				Description:                       "My data repository",
-				GarbageDefaultRetentionDays:       30, // Provide valid min=1 value
-				GarbageDefaultBranchRetentionDays: 30, // Provide valid min=1 value
+				Name:          "my-repo",
+				DefaultBranch: "main",
+				Description:   "My data repository",
 			},
 			wantErr: false,
 		},

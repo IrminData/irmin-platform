@@ -1,10 +1,10 @@
 package irminmodels
 
 type FieldMapping struct {
-	SourcePath       string  `json:"source_path"                 validate:"required,min=1"`
-	SourceField      *string `json:"source_field,omitempty"      validate:"min=1"`
-	DestinationPath  string  `json:"destination_path"            validate:"required,min=1"`
-	DestinationField *string `json:"destination_field,omitempty" validate:"min=1"`
+	SourcePath       string  `json:"source_path"                 validate:"required"`
+	SourceField      *string `json:"source_field,omitempty"`
+	DestinationPath  string  `json:"destination_path"            validate:"required"`
+	DestinationField *string `json:"destination_field,omitempty"`
 }
 
 type WorkflowableType string
@@ -38,31 +38,31 @@ const (
 )
 
 type PipelineStage struct {
-	Description   string            `json:"description"    validate:"required,min=1,max=200"`
+	Description   string            `json:"description"    validate:"required,max=200"`
 	Write         bool              `json:"write"`
 	Read          bool              `json:"read"`
-	OrderSequence int               `json:"order_sequence" validate:"required,min=1"`
+	OrderSequence int               `json:"order_sequence" validate:"required"`
 	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository,validpipelinestage"`
 
 	// Action stage specific
 	Executable *string `json:"executable,omitempty" validate:"min=1"`
 
 	// Connection stage specific
-	ConnectionID        *string  `json:"connection_id,omitempty"         validate:"validsqid=connections"`
-	ConnectionWritePath *string  `json:"connection_write_path,omitempty" validate:"min=1"`
-	ConnectionReadPaths []string `json:"connection_read_paths,omitempty" validate:"dive,min=1"`
+	ConnectionID        *string   `json:"connection_id,omitempty"         validate:"validsqid=connections"`
+	ConnectionWritePath *string   `json:"connection_write_path,omitempty"`
+	ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"dive"`
 
 	// Repository stage specific
-	Repository          *string  `json:"repository,omitempty"`
-	RepositoryBranch    *string  `json:"repository_branch,omitempty"     validate:"min=1"`
-	RepositoryWritePath *string  `json:"repository_write_path,omitempty" validate:"min=1"`
-	RepositoryReadPaths []string `json:"repository_read_paths,omitempty" validate:"dive,min=1"`
+	Repository          *string   `json:"repository,omitempty"`
+	RepositoryBranch    *string   `json:"repository_branch,omitempty"`
+	RepositoryWritePath *string   `json:"repository_write_path,omitempty"`
+	RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" validate:"dive"`
 }
 
 type ActionInputData struct {
-	Repository     string `json:"repository"      validate:"required,min=1"`
-	RepositoryRef  string `json:"repository_ref"  validate:"required,min=1"`
-	RepositoryPath string `json:"repository_path" validate:"required,min=1"`
+	Repository     string `json:"repository"      validate:"required"`
+	RepositoryRef  string `json:"repository_ref"  validate:"required"`
+	RepositoryPath string `json:"repository_path" validate:"required"`
 }
 
 type Workflowable struct {
@@ -100,11 +100,11 @@ type Workflowable struct {
 
 type Workflow struct {
 	ID            string           `json:"id"                     validate:"required,validsqid=workflows"`
-	Name          string           `json:"name"                   validate:"required,min=1,max=100"`
+	Name          string           `json:"name"                   validate:"required,max=100"`
 	Description   string           `json:"description"            validate:"max=500"`
 	Documentation string           `json:"documentation"          validate:"validdocumentation"`
-	Status        WorkflowStatus   `json:"status"                 validate:"required,oneof=paused pending initiating running complete error cancelled"`
-	Type          WorkflowableType `json:"type"                   validate:"required,oneof=import action export pipeline"`
+	Status        WorkflowStatus   `json:"status"                 validate:"required"`
+	Type          WorkflowableType `json:"type"                   validate:"required"`
 	Owner         User             `json:"owner"                  validate:"required"`
 	Tags          []Tag            `json:"tags,omitempty"         validate:"dive"`
 	Schedule      *Schedule        `json:"schedule,omitempty"`

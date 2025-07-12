@@ -11,8 +11,8 @@ import (
 
 // UpdateProfileRequest represents the JSON request body for updating profile.
 type UpdateProfileRequest struct {
-	FirstName string `json:"first_name,omitempty" validate:"min=1,max=50"`
-	LastName  string `json:"last_name,omitempty"  validate:"min=1,max=50"`
+	FirstName string `json:"first_name,omitempty" validate:"max=50"`
+	LastName  string `json:"last_name,omitempty"  validate:"max=50"`
 	Email     string `json:"email,omitempty"      validate:"email"`
 	Phone     string `json:"phone,omitempty"      validate:"validphone"`
 	Company   string `json:"company,omitempty"    validate:"max=100"`
