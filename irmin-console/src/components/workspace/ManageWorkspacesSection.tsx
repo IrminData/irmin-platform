@@ -177,101 +177,104 @@ const ManageWorkspacesSection = () => {
     );
   }
 
-  // When there are workspaces, show the existing layout with both list and form
+  // When there are workspaces, show the redesigned layout
   return (
     <div className='pattern-bg h-full'>
       <div className='relative container mx-auto max-w-7xl'>
         <div className='flex flex-col'>
-          <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
-          <div className='flex flex-col gap-4 px-4 pb-28 lg:flex-row-reverse'>
-            {/* Form for creating a new workspace */}
-            <div className='w-full pr-4 lg:max-w-80'>
-              <div className='bg-background text-foreground rounded-xl p-2 text-xs shadow-xs sm:p-4 lg:p-4 lg:text-base'>
-                <form
-                  onSubmit={handleSubmit(handleCreateWorkspace)}
-                  className={`${createMutation.isPending && 'blur-xs'}`}
-                >
-                  <Controller
-                    name='newWorkspaceName'
-                    control={control}
-                    rules={{ required: dict.common.fieldRequired }}
-                    render={({ field }) => (
-                      <Input
-                        type='text'
-                        placeholder={dict.workspace.workspaceName}
-                        required
-                        className='mb-2 md:mb-4'
-                        disabled={createMutation.isPending}
-                        {...field}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name='newWorkspaceDescription'
-                    control={control}
-                    rules={{
-                      maxLength: {
-                        value: 255,
-                        message: dict.common.fieldInvalid,
-                      },
-                    }}
-                    render={({ field }) => (
-                      <Input
-                        type='text'
-                        placeholder={dict.workspace.workspaceDescription}
-                        maxLength={255}
-                        longtext={{
-                          rows: 3,
-                        }}
-                        className='mb-2 md:mb-4'
-                        disabled={createMutation.isPending}
-                        {...field}
-                      />
-                    )}
-                  />
+          <div className='px-4 pt-28 pb-28'>
+            <div className='flex flex-col gap-8 lg:flex-row lg:gap-12'>
+              {/* Create workspace form - on the left */}
+              <div className='w-full lg:w-96 lg:shrink-0'>
+                <div className='bg-card ring-border/20 rounded-xl p-6 ring-1'>
+                  <h2 className='mb-6 text-lg font-semibold'>
+                    {dict.workspaceSwitcher.createNewWorkspace}
+                  </h2>
+                  <form
+                    onSubmit={handleSubmit(handleCreateWorkspace)}
+                    className={`space-y-4 ${createMutation.isPending && 'blur-xs'}`}
+                  >
+                    <Controller
+                      name='newWorkspaceName'
+                      control={control}
+                      rules={{ required: dict.common.fieldRequired }}
+                      render={({ field }) => (
+                        <Input
+                          type='text'
+                          placeholder={dict.workspace.workspaceName}
+                          required
+                          disabled={createMutation.isPending}
+                          className='bg-background/50 border-border/50'
+                          {...field}
+                        />
+                      )}
+                    />
+                    <Controller
+                      name='newWorkspaceDescription'
+                      control={control}
+                      rules={{
+                        maxLength: {
+                          value: 255,
+                          message: dict.common.fieldInvalid,
+                        },
+                      }}
+                      render={({ field }) => (
+                        <Input
+                          type='text'
+                          placeholder={dict.workspace.workspaceDescription}
+                          maxLength={255}
+                          disabled={createMutation.isPending}
+                          className='bg-background/50 border-border/50'
+                          {...field}
+                        />
+                      )}
+                    />
+                    <Button
+                      variant='gradient'
+                      size='lg'
+                      className='w-full'
+                      type='submit'
+                      loading={createMutation.isPending}
+                    >
+                      {dict.workspaceSwitcher.createNewWorkspace}
+                    </Button>
+                  </form>
                   {createMutation.error && (
-                    <p className='text-destructive mb-2'>
+                    <p className='text-destructive mt-4 text-sm'>
                       {(createMutation.error as Error).message}
                     </p>
                   )}
-                  <Button
-                    variant='gradient'
-                    size='sm'
-                    className='mb-0 h-11 w-full'
-                    type='submit'
-                    loading={createMutation.isPending}
-                  >
-                    {dict.workspaceSwitcher.createNewWorkspace}
-                  </Button>
-                </form>
-              </div>
-            </div>
-            {/* Display existing workspaces */}
-            {!workspacesQuery.isLoading ? (
-              <div className='ml-auto grow'>
-                <div
-                  className={`flex w-full flex-wrap content-stretch items-stretch justify-start ${
-                    createMutation.isPending && 'blur-xs'
-                  } -mx-2`}
-                >
-                  {workspaceList.map((workspace: Workspace, idx: number) => (
-                    <div
-                      className='w-full min-w-1/2 p-2 lg:max-w-60'
-                      key={`select-workspace-card-${idx}`}
-                    >
-                      <WorkspaceCard
-                        workspace={workspace}
-                        handleClick={switchWorkspace}
-                      />
-                    </div>
-                  ))}
                 </div>
               </div>
-            ) : (
-              <div className='ml-auto grow'>
-                <WorkspaceCardSkeleton items={6} className='-mx-2' />
+
+              {/* Workspace cards grid - on the right */}
+              <div className='min-w-0 flex-1'>
+                <h2 className='mb-6 text-lg font-semibold'>
+                  {dict.workspaceSwitcher.selectWorkspace}
+                </h2>
+                {!workspacesQuery.isLoading ? (
+                  <div className={`${createMutation.isPending && 'blur-xs'}`}>
+                    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+                      {workspaceList.map(
+                        (workspace: Workspace, idx: number) => (
+                          <WorkspaceCard
+                            key={`workspace-${workspace.id}-${idx}`}
+                            workspace={workspace}
+                            handleClick={switchWorkspace}
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+                    {Array.from({ length: 6 }).map((_, idx) => (
+                      <WorkspaceCardSkeleton key={`skeleton-${idx}`} />
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

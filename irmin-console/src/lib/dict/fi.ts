@@ -188,6 +188,7 @@ const fi = {
     generalSettings: 'Yleiset asetukset',
     workspaceName: 'Työtilan nimi',
     workspaceDescription: 'Työtilan kuvaus',
+    noWorkspaceDescription: 'Ei työtilan kuvausta',
     saveChanges: 'Tallenna muutokset',
     deletionNote:
       'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
@@ -198,6 +199,9 @@ const fi = {
     addTags: 'Lisää tunnisteet',
     failedToLoadTags: 'Tunnisteiden lataaminen epäonnistui',
     failedToLoadWorkspaces: 'Työtilojen lataaminen epäonnistui',
+    member: 'jäsen',
+    members: 'jäseniä',
+    noMembersYet: 'Ei jäseniä vielä',
   },
 
   workspaceSwitcher: {

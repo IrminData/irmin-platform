@@ -188,6 +188,7 @@ const en = {
     generalSettings: 'General Settings',
     workspaceName: 'Workspace Name',
     workspaceDescription: 'Workspace Description',
+    noWorkspaceDescription: 'No description provided',
     saveChanges: 'Save Changes',
     deletionNote:
       'Deleting your workspace will remove all data associated with it. This action is irreversible.',
@@ -198,6 +199,9 @@ const en = {
     addTags: 'Add tags',
     failedToLoadTags: 'Failed to load tags',
     failedToLoadWorkspaces: 'Failed to load workspaces',
+    member: 'member',
+    members: 'members',
+    noMembersYet: 'No members yet',
   },
 
   workspaceSwitcher: {
