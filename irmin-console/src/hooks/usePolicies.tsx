@@ -8,6 +8,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { generateTempId } from '@/utils/generateTempId';
+
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import {
   Policy,
@@ -131,15 +133,153 @@ export function usePolicies({
         userId: data.userId,
       });
     },
-    onSuccess: (res) => {
+    onMutate: async (data: PolicyCreateInput) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: policiesQueryKey(workspaceSlug),
+      });
+
+      // Snapshot the previous value
+      const previousPolicies = queryClient.getQueryData<
+        IrminAPIResponse<Policy[]>
+      >(
+        policiesQueryKey(
+          workspaceSlug,
+          effect,
+          action,
+          resource,
+          resourceId,
+          principal,
+          roleId,
+          userId
+        )
+      );
+
+      // Create unique temp ID for this specific mutation
+      const tempId = generateTempId('policies');
+
+      // Optimistically update the cache
+      queryClient.setQueryData<IrminAPIResponse<Policy[]>>(
+        policiesQueryKey(
+          workspaceSlug,
+          effect,
+          action,
+          resource,
+          resourceId,
+          principal,
+          roleId,
+          userId
+        ),
+        (old: IrminAPIResponse<Policy[]> | undefined) => {
+          if (!old?.data) return old;
+
+          // Create optimistic policy object
+          const optimisticPolicy: Policy = {
+            id: tempId, // Unique temporary ID
+            effect: data.effect,
+            action: data.action,
+            resource: data.resource,
+            principal: data.principal,
+            resourceId: data.resourceId,
+            // Add role or user if provided
+            ...(data.roleId && {
+              role: {
+                id: data.roleId,
+                role: 'Loading...',
+                description: '',
+                isOwner: false,
+                isDefault: false,
+              },
+            }),
+            ...(data.userId && {
+              user: {
+                id: data.userId,
+                first_name: 'Loading',
+                last_name: 'User',
+                email: '',
+                phone: '',
+                company: '',
+                profile_picture: '',
+              },
+            }),
+          };
+
+          return {
+            ...old,
+            data: [...old.data, optimisticPolicy],
+          };
+        }
+      );
+
+      // Return context for rollback
+      return { previousPolicies, tempId };
+    },
+    onError: (error, data: PolicyCreateInput, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | { previousPolicies?: IrminAPIResponse<Policy[]>; tempId?: string }
+        | undefined;
+      if (ctx?.previousPolicies) {
+        queryClient.setQueryData(
+          policiesQueryKey(
+            workspaceSlug,
+            effect,
+            action,
+            resource,
+            resourceId,
+            principal,
+            roleId,
+            userId
+          ),
+          ctx.previousPolicies
+        );
+      }
+      console.error(error);
+      irminAlert('error', error.message ?? 'Error creating policy');
+    },
+    onSuccess: (
+      res: IrminAPIResponse<Policy>,
+      data: PolicyCreateInput,
+      context: unknown
+    ) => {
+      // Update the cache with the real data from the server
+      const ctx = context as
+        | { previousPolicies?: IrminAPIResponse<Policy[]>; tempId?: string }
+        | undefined;
+
+      queryClient.setQueryData<IrminAPIResponse<Policy[]>>(
+        policiesQueryKey(
+          workspaceSlug,
+          effect,
+          action,
+          resource,
+          resourceId,
+          principal,
+          roleId,
+          userId
+        ),
+        (old: IrminAPIResponse<Policy[]> | undefined) => {
+          if (!old?.data || !res.data || !ctx?.tempId) return old;
+
+          // Replace the specific optimistic policy with the real one using exact temp ID
+          const updatedPolicies = old.data.map((policy: Policy) =>
+            policy.id === ctx.tempId ? res.data! : policy
+          );
+
+          return {
+            ...old,
+            data: updatedPolicies,
+          };
+        }
+      );
+
+      irminAlert('success', res.message ?? 'Policy created successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({
         queryKey: policiesQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Policy created successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error creating policy');
     },
   });
 
@@ -152,17 +292,108 @@ export function usePolicies({
         policyId: policyId,
       });
     },
-    onSuccess: (res, policyId) => {
-      queryClient.invalidateQueries({
+    onMutate: async (policyId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
         queryKey: policyQueryKey(workspaceSlug, policyId),
       });
+      await queryClient.cancelQueries({
+        queryKey: policiesQueryKey(workspaceSlug),
+      });
+
+      // Snapshot the previous values
+      const previousPolicy = queryClient.getQueryData<IrminAPIResponse<Policy>>(
+        policyQueryKey(workspaceSlug, policyId)
+      );
+      const previousPolicies = queryClient.getQueryData<
+        IrminAPIResponse<Policy[]>
+      >(
+        policiesQueryKey(
+          workspaceSlug,
+          effect,
+          action,
+          resource,
+          resourceId,
+          principal,
+          roleId,
+          userId
+        )
+      );
+
+      // Optimistically remove from policies list cache
+      queryClient.setQueryData<IrminAPIResponse<Policy[]>>(
+        policiesQueryKey(
+          workspaceSlug,
+          effect,
+          action,
+          resource,
+          resourceId,
+          principal,
+          roleId,
+          userId
+        ),
+        (old: IrminAPIResponse<Policy[]> | undefined) => {
+          if (!old?.data) return old;
+
+          const filteredPolicies = old.data.filter(
+            (policy: Policy) => policy.id !== policyId
+          );
+
+          return {
+            ...old,
+            data: filteredPolicies,
+          };
+        }
+      );
+
+      // Clear single policy cache
+      queryClient.removeQueries({
+        queryKey: policyQueryKey(workspaceSlug, policyId),
+      });
+
+      // Return context for rollback
+      return { previousPolicy, previousPolicies };
+    },
+    onError: (error, policyId: string, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | {
+            previousPolicy?: IrminAPIResponse<Policy>;
+            previousPolicies?: IrminAPIResponse<Policy[]>;
+          }
+        | undefined;
+      if (ctx?.previousPolicy) {
+        queryClient.setQueryData(
+          policyQueryKey(workspaceSlug, policyId),
+          ctx.previousPolicy
+        );
+      }
+      if (ctx?.previousPolicies) {
+        queryClient.setQueryData(
+          policiesQueryKey(
+            workspaceSlug,
+            effect,
+            action,
+            resource,
+            resourceId,
+            principal,
+            roleId,
+            userId
+          ),
+          ctx.previousPolicies
+        );
+      }
+      irminAlert('error', error.message ?? 'Error deleting policy');
+    },
+    onSuccess: (res: IrminAPIResponse, _policyId: string) => {
+      // The optimistic update is already done, just show success message
+      irminAlert('success', res.message ?? 'Policy deleted successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({
         queryKey: policiesQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Policy deleted successfully');
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Error deleting policy');
     },
   });
 

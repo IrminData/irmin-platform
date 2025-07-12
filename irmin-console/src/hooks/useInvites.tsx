@@ -7,6 +7,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { generateTempId } from '@/utils/generateTempId';
+
 import { Invite } from '@/types/core/Invite';
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
@@ -63,17 +65,62 @@ export function useInvites() {
       const res = await core.inviteService.deleteInvite({ inviteID });
       return res;
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
+    onMutate: async (inviteID: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
         queryKey: invitesQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Invite deleted successfully');
+
+      // Snapshot the previous value
+      const previousInvites = queryClient.getQueryData<
+        IrminAPIResponse<Invite[]>
+      >(invitesQueryKey(workspaceSlug));
+
+      // Optimistically remove from invites list cache
+      queryClient.setQueryData<IrminAPIResponse<Invite[]>>(
+        invitesQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<Invite[]> | undefined) => {
+          if (!old?.data) return old;
+
+          const filteredInvites = old.data.filter(
+            (invite: Invite) => invite.id !== inviteID
+          );
+
+          return {
+            ...old,
+            data: filteredInvites,
+          };
+        }
+      );
+
+      // Return context for rollback
+      return { previousInvites };
     },
-    onError: (error) => {
+    onError: (error, inviteID: string, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | { previousInvites?: IrminAPIResponse<Invite[]> }
+        | undefined;
+      if (ctx?.previousInvites) {
+        queryClient.setQueryData(
+          invitesQueryKey(workspaceSlug),
+          ctx.previousInvites
+        );
+      }
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Error deleting the invite'
       );
+    },
+    onSuccess: (res: IrminAPIResponse) => {
+      // The optimistic update is already done, just show success message
+      irminAlert('success', res.message ?? 'Invite deleted successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: invitesQueryKey(workspaceSlug),
+      });
     },
   });
 
@@ -144,17 +191,117 @@ export function useInvites() {
       });
       return res;
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
+    onMutate: async (input: InviteWorkspaceUserInput) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
         queryKey: invitesQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Invite sent successfully');
+
+      // Snapshot the previous value
+      const previousInvites = queryClient.getQueryData<
+        IrminAPIResponse<Invite[]>
+      >(invitesQueryKey(workspaceSlug));
+
+      // Create unique temp ID for this specific mutation
+      const tempId = generateTempId('invites');
+
+      // Optimistically update the cache
+      queryClient.setQueryData<IrminAPIResponse<Invite[]>>(
+        invitesQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<Invite[]> | undefined) => {
+          if (!old?.data) return old;
+
+          // Create optimistic invite object
+          const optimisticInvite: Invite = {
+            id: tempId, // Unique temporary ID
+            email: input.email,
+            role: {
+              id: input.roleId,
+              role: 'Loading...',
+              description: '',
+              isOwner: false,
+              isDefault: false,
+            },
+            expires_at: new Date(
+              Date.now() + 7 * 24 * 60 * 60 * 1000
+            ).toISOString(), // 7 days from now
+            invited_by: {
+              id: 'temp-user',
+              first_name: 'Current',
+              last_name: 'User',
+              email: '',
+              phone: '',
+              company: '',
+              profile_picture: '',
+            },
+            workspace: {
+              id: 'temp-workspace',
+              name: 'Current Workspace',
+              slug: workspaceSlug,
+              description: '',
+            },
+          };
+
+          return {
+            ...old,
+            data: [...old.data, optimisticInvite],
+          };
+        }
+      );
+
+      // Return context for rollback
+      return { previousInvites, tempId };
     },
-    onError: (error) => {
+    onError: (error, input: InviteWorkspaceUserInput, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | { previousInvites?: IrminAPIResponse<Invite[]>; tempId?: string }
+        | undefined;
+      if (ctx?.previousInvites) {
+        queryClient.setQueryData(
+          invitesQueryKey(workspaceSlug),
+          ctx.previousInvites
+        );
+      }
       irminAlert(
         'error',
         (error as Error)?.message ?? 'Error sending the invite'
       );
+    },
+    onSuccess: (
+      res: IrminAPIResponse<Invite>,
+      input: InviteWorkspaceUserInput,
+      context: unknown
+    ) => {
+      // Update the cache with the real data from the server
+      const ctx = context as
+        | { previousInvites?: IrminAPIResponse<Invite[]>; tempId?: string }
+        | undefined;
+
+      queryClient.setQueryData<IrminAPIResponse<Invite[]>>(
+        invitesQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<Invite[]> | undefined) => {
+          if (!old?.data || !res.data || !ctx?.tempId) return old;
+
+          // Replace the specific optimistic invite with the real one using exact temp ID
+          const updatedInvites = old.data.map((invite: Invite) =>
+            invite.id === ctx.tempId ? res.data! : invite
+          );
+
+          return {
+            ...old,
+            data: updatedInvites,
+          };
+        }
+      );
+
+      irminAlert('success', res.message ?? 'Invite sent successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: invitesQueryKey(workspaceSlug),
+      });
     },
   });
 

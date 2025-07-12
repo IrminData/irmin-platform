@@ -7,6 +7,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
+import { EditorItem } from '@/types/core/EditorItems';
+import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { ActionInputData } from '@/types/core/Workflow';
 
 export const editorItemsQueryKey = (workspaceSlug: string) =>
@@ -101,17 +103,102 @@ export function useEditorItems(path?: string) {
         path: item.path,
       });
     },
-    onSuccess: (res, item) => {
+    onMutate: async (item: { path: string }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: editorItemsQueryKey(workspaceSlug),
+      });
+      await queryClient.cancelQueries({
+        queryKey: editorItemQueryKey(workspaceSlug, item.path),
+      });
+
+      // Snapshot the previous values
+      const previousEditorItems = queryClient.getQueryData(
+        editorItemsQueryKey(workspaceSlug)
+      );
+      const previousEditorItem = queryClient.getQueryData(
+        editorItemQueryKey(workspaceSlug, item.path)
+      );
+
+      // Optimistically remove the item from the editor items cache
+      queryClient.setQueryData(
+        editorItemsQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<EditorItem[]> | undefined) => {
+          if (!old?.data) return old;
+
+          // Filter out the deleted item - need to handle nested structure
+          const filterItems = (items: EditorItem[]): EditorItem[] => {
+            return items
+              .filter((editorItem: EditorItem) => {
+                if (editorItem.path === item.path) {
+                  return false; // Remove this item
+                }
+                return true;
+              })
+              .map((editorItem: EditorItem) => {
+                // Create new object with filtered children to maintain immutability
+                if (editorItem.children) {
+                  return {
+                    ...editorItem,
+                    children: filterItems(editorItem.children),
+                  };
+                }
+                return editorItem;
+              });
+          };
+
+          return {
+            ...old,
+            data: filterItems(old.data),
+          };
+        }
+      );
+
+      // Clear single editor item cache
+      queryClient.removeQueries({
+        queryKey: editorItemQueryKey(workspaceSlug, item.path),
+      });
+
+      // Return context for rollback
+      return {
+        previousEditorItems: previousEditorItems as
+          | IrminAPIResponse<EditorItem[]>
+          | undefined,
+        previousEditorItem,
+      };
+    },
+    onError: (
+      error,
+      item: { path: string },
+      context?: {
+        previousEditorItems?: IrminAPIResponse<EditorItem[]>;
+        previousEditorItem?: unknown;
+      }
+    ) => {
+      // Rollback on error
+      if (context?.previousEditorItems) {
+        queryClient.setQueryData(
+          editorItemsQueryKey(workspaceSlug),
+          context.previousEditorItems
+        );
+      }
+      if (context?.previousEditorItem) {
+        queryClient.setQueryData(
+          editorItemQueryKey(workspaceSlug, item.path),
+          context.previousEditorItem
+        );
+      }
+      irminAlert('error', error.message ?? 'Failed to delete editor item.');
+    },
+    onSuccess: (res: IrminAPIResponse, _item: { path: string }) => {
+      // The optimistic update is already done, just show success message
+      irminAlert('success', res.message ?? 'Editor item deleted successfully.');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
-      queryClient.invalidateQueries({
-        queryKey: editorItemQueryKey(workspaceSlug, item.path),
-      });
-      irminAlert('success', res.message ?? 'Editor item deleted successfully.');
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to delete editor item.');
     },
   });
 
@@ -148,17 +235,139 @@ export function useEditorItems(path?: string) {
         path: item.path,
       });
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
+    onMutate: async (item: { path: string }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
+
+      // Snapshot the previous value
+      const previousEditorItems = queryClient.getQueryData(
+        editorItemsQueryKey(workspaceSlug)
+      );
+
+      // Optimistically add the new folder to the editor items cache
+      queryClient.setQueryData(
+        editorItemsQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<EditorItem[]> | undefined) => {
+          if (!old?.data) return old;
+
+          // Create optimistic folder object
+          const optimisticFolder: EditorItem = {
+            name: item.path.split('/').pop() || 'New Folder',
+            path: item.path,
+            type: 'folder' as const,
+            children: [],
+            last_modified: new Date().toISOString(),
+          };
+
+          // Add the new folder to the appropriate location in the tree
+          const addToTree = (
+            items: EditorItem[],
+            targetPath: string
+          ): EditorItem[] => {
+            const pathParts = targetPath.split('/');
+            const parentPath = pathParts.slice(0, -1).join('/');
+
+            if (parentPath === '' || parentPath === '.') {
+              // Add to root level
+              return [...items, optimisticFolder];
+            }
+
+            // Find parent folder and add to its children
+            return items.map((editorItem: EditorItem) => {
+              if (
+                editorItem.path === parentPath &&
+                editorItem.type === 'folder'
+              ) {
+                return {
+                  ...editorItem,
+                  children: [...(editorItem.children || []), optimisticFolder],
+                };
+              }
+              if (editorItem.children) {
+                return {
+                  ...editorItem,
+                  children: addToTree(editorItem.children, targetPath),
+                };
+              }
+              return editorItem;
+            });
+          };
+
+          return {
+            ...old,
+            data: addToTree(old.data, item.path),
+          };
+        }
+      );
+
+      // Return context for rollback
+      return {
+        previousEditorItems: previousEditorItems as
+          | IrminAPIResponse<EditorItem[]>
+          | undefined,
+      };
+    },
+    onError: (
+      error,
+      item: { path: string },
+      context?: { previousEditorItems?: IrminAPIResponse<EditorItem[]> }
+    ) => {
+      // Rollback on error
+      if (context?.previousEditorItems) {
+        queryClient.setQueryData(
+          editorItemsQueryKey(workspaceSlug),
+          context.previousEditorItems
+        );
+      }
+      irminAlert('error', error.message ?? 'Failed to create editor folder.');
+    },
+    onSuccess: (res: IrminAPIResponse, item: { path: string }) => {
+      // Update with real data from server if available
+      if (res.data) {
+        // Update the optimistic folder with real data
+        queryClient.setQueryData(
+          editorItemsQueryKey(workspaceSlug),
+          (old: IrminAPIResponse<EditorItem[]> | undefined) => {
+            if (!old?.data) return old;
+
+            const updateFolder = (items: EditorItem[]): EditorItem[] => {
+              return items.map((editorItem: EditorItem) => {
+                if (
+                  editorItem.path === item.path &&
+                  editorItem.type === 'folder'
+                ) {
+                  return res.data as EditorItem; // Replace with real data
+                }
+                if (editorItem.children) {
+                  return {
+                    ...editorItem,
+                    children: updateFolder(editorItem.children),
+                  };
+                }
+                return editorItem;
+              });
+            };
+
+            return {
+              ...old,
+              data: updateFolder(old.data),
+            };
+          }
+        );
+      }
+
       irminAlert(
         'success',
         res.message ?? 'Editor folder created successfully.'
       );
     },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to create editor folder.');
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: editorItemsQueryKey(workspaceSlug),
+      });
     },
   });
 

@@ -75,6 +75,12 @@ pnpm format
 pnpm format:fix
 ```
 
+Compile TypeScript:
+
+```
+npx tsc --noEmit
+```
+
 Start the server:
 
 ```

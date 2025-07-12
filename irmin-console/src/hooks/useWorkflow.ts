@@ -9,7 +9,7 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { WorkflowSchedule } from '@/types/core/Schedule';
-import { Workflow, Workflowable } from '@/types/core/Workflow';
+import { Workflow, Workflowable, WorkflowStatus } from '@/types/core/Workflow';
 
 import { workflowsQueryKey } from './useWorkflows';
 
@@ -54,23 +54,88 @@ export function useWorkflow(workflowID: string) {
       });
       return response;
     },
-    onSuccess: (res) => {
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: workflowQueryKey(workspaceSlug, workflowID),
+      });
+      await queryClient.cancelQueries({
+        queryKey: workflowsQueryKey(workspaceSlug),
+      });
+
+      // Snapshot the previous values
+      const previousWorkflow = queryClient.getQueryData<
+        IrminAPIResponse<Workflow>
+      >(workflowQueryKey(workspaceSlug, workflowID));
+      const previousWorkflows = queryClient.getQueryData<
+        IrminAPIResponse<Workflow[]>
+      >(workflowsQueryKey(workspaceSlug));
+
+      // Optimistically remove from workflows list cache
+      queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
+        workflowsQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<Workflow[]> | undefined) => {
+          if (!old?.data) return old;
+
+          const filteredWorkflows = old.data.filter(
+            (workflow: Workflow) => workflow.id !== workflowID
+          );
+
+          return {
+            ...old,
+            data: filteredWorkflows,
+          };
+        }
+      );
+
+      // Clear single workflow cache
+      queryClient.removeQueries({
+        queryKey: workflowQueryKey(workspaceSlug, workflowID),
+      });
+
+      // Return context for rollback
+      return { previousWorkflow, previousWorkflows };
+    },
+    onError: (error, variables: void, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | {
+            previousWorkflow?: IrminAPIResponse<Workflow>;
+            previousWorkflows?: IrminAPIResponse<Workflow[]>;
+          }
+        | undefined;
+      if (ctx?.previousWorkflow) {
+        queryClient.setQueryData(
+          workflowQueryKey(workspaceSlug, workflowID),
+          ctx.previousWorkflow
+        );
+      }
+      if (ctx?.previousWorkflows) {
+        queryClient.setQueryData(
+          workflowsQueryKey(workspaceSlug),
+          ctx.previousWorkflows
+        );
+      }
+      console.error(error);
+      irminAlert('error', error.message ?? 'Error deleting workflow');
+    },
+    onSuccess: (res: IrminAPIResponse) => {
+      // The optimistic update is already done, just show success message
+      irminAlert('success', res.message ?? 'Workflow deleted successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
       queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Workflow deleted successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error deleting workflow');
     },
   });
 
   const updateWorkflowMutation = useMutation<
-    IrminAPIResponse,
+    IrminAPIResponse<Workflow>,
     Error,
     UpdateWorkflowInput
   >({
@@ -86,23 +151,126 @@ export function useWorkflow(workflowID: string) {
       });
       return response;
     },
-    onSuccess: (res) => {
+    onMutate: async (data: UpdateWorkflowInput) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: workflowQueryKey(workspaceSlug, workflowID),
+      });
+      await queryClient.cancelQueries({
+        queryKey: workflowsQueryKey(workspaceSlug),
+      });
+
+      // Snapshot the previous values
+      const previousWorkflow = queryClient.getQueryData<
+        IrminAPIResponse<Workflow>
+      >(workflowQueryKey(workspaceSlug, workflowID));
+      const previousWorkflows = queryClient.getQueryData<
+        IrminAPIResponse<Workflow[]>
+      >(workflowsQueryKey(workspaceSlug));
+
+      // Optimistically update the single workflow cache
+      queryClient.setQueryData<IrminAPIResponse<Workflow>>(
+        workflowQueryKey(workspaceSlug, workflowID),
+        (old: IrminAPIResponse<Workflow> | undefined) => {
+          if (!old?.data) return old;
+
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              ...data,
+            },
+          };
+        }
+      );
+
+      // Optimistically update the workflows list cache
+      queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
+        workflowsQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<Workflow[]> | undefined) => {
+          if (!old?.data) return old;
+
+          const updatedWorkflows = old.data.map((workflow: Workflow) =>
+            workflow.id === workflowID ? { ...workflow, ...data } : workflow
+          );
+
+          return {
+            ...old,
+            data: updatedWorkflows,
+          };
+        }
+      );
+
+      // Return context for rollback
+      return { previousWorkflow, previousWorkflows };
+    },
+    onError: (error, data: UpdateWorkflowInput, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | {
+            previousWorkflow?: IrminAPIResponse<Workflow>;
+            previousWorkflows?: IrminAPIResponse<Workflow[]>;
+          }
+        | undefined;
+      if (ctx?.previousWorkflow) {
+        queryClient.setQueryData(
+          workflowQueryKey(workspaceSlug, workflowID),
+          ctx.previousWorkflow
+        );
+      }
+      if (ctx?.previousWorkflows) {
+        queryClient.setQueryData(
+          workflowsQueryKey(workspaceSlug),
+          ctx.previousWorkflows
+        );
+      }
+      console.error(error);
+      irminAlert('error', error.message ?? 'Error updating workflow');
+    },
+    onSuccess: (
+      res: IrminAPIResponse<Workflow>,
+      _data: UpdateWorkflowInput
+    ) => {
+      // Update the cache with the real data from the server if available
+      if (res.data) {
+        queryClient.setQueryData<IrminAPIResponse<Workflow>>(
+          workflowQueryKey(workspaceSlug, workflowID),
+          res
+        );
+
+        // Update the workflows list
+        queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
+          workflowsQueryKey(workspaceSlug),
+          (old: IrminAPIResponse<Workflow[]> | undefined) => {
+            if (!old?.data) return old;
+
+            const updatedWorkflows = old.data.map((workflow: Workflow) =>
+              workflow.id === workflowID ? res.data! : workflow
+            );
+
+            return {
+              ...old,
+              data: updatedWorkflows,
+            };
+          }
+        );
+      }
+
+      irminAlert('success', res.message ?? 'Workflow updated successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
       queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Workflow updated successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error updating workflow');
     },
   });
 
   const updateWorkflowScheduleMutation = useMutation<
-    IrminAPIResponse,
+    IrminAPIResponse<Workflow>,
     Error,
     WorkflowSchedule
   >({
@@ -116,7 +284,7 @@ export function useWorkflow(workflowID: string) {
       });
       return response;
     },
-    onSuccess: (res) => {
+    onSuccess: (res: IrminAPIResponse<Workflow>) => {
       queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
@@ -135,7 +303,7 @@ export function useWorkflow(workflowID: string) {
   });
 
   const updateWorkflowableMutation = useMutation<
-    IrminAPIResponse,
+    IrminAPIResponse<Workflow>,
     Error,
     Workflowable
   >({
@@ -149,7 +317,7 @@ export function useWorkflow(workflowID: string) {
       });
       return response;
     },
-    onSuccess: (res) => {
+    onSuccess: (res: IrminAPIResponse<Workflow>) => {
       queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
@@ -164,38 +332,37 @@ export function useWorkflow(workflowID: string) {
     },
   });
 
-  const transferWorkflowMutation = useMutation<IrminAPIResponse, Error, string>(
-    {
-      mutationFn: async (newOwnerID: string) => {
-        const token = await getToken();
-        const core = new IrminCore(locale, token);
-        const response = await core.workflowService.transferWorkflow({
-          workspace: workspaceSlug,
-          workflowID,
-          newOwnerID,
-        });
-        return response;
-      },
-      onSuccess: (res) => {
-        queryClient.invalidateQueries({
-          queryKey: workflowQueryKey(workspaceSlug, workflowID),
-        });
-        queryClient.invalidateQueries({
-          queryKey: workflowsQueryKey(workspaceSlug),
-        });
-        irminAlert(
-          'success',
-          res.message ?? 'Workflow transfered successfully'
-        );
-      },
-      onError: (error) => {
-        console.error(error);
-        irminAlert('error', error.message ?? 'Error transfering workflow');
-      },
-    }
-  );
+  const transferWorkflowMutation = useMutation<
+    IrminAPIResponse<Workflow>,
+    Error,
+    string
+  >({
+    mutationFn: async (newOwnerID: string) => {
+      const token = await getToken();
+      const core = new IrminCore(locale, token);
+      const response = await core.workflowService.transferWorkflow({
+        workspace: workspaceSlug,
+        workflowID,
+        newOwnerID,
+      });
+      return response;
+    },
+    onSuccess: (res: IrminAPIResponse<Workflow>) => {
+      queryClient.invalidateQueries({
+        queryKey: workflowQueryKey(workspaceSlug, workflowID),
+      });
+      queryClient.invalidateQueries({
+        queryKey: workflowsQueryKey(workspaceSlug),
+      });
+      irminAlert('success', res.message ?? 'Workflow transfered successfully');
+    },
+    onError: (error) => {
+      console.error(error);
+      irminAlert('error', error.message ?? 'Error transfering workflow');
+    },
+  });
 
-  const pauseWorkflowMutation = useMutation<IrminAPIResponse, Error>({
+  const pauseWorkflowMutation = useMutation<IrminAPIResponse<Workflow>, Error>({
     mutationFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
@@ -205,45 +372,215 @@ export function useWorkflow(workflowID: string) {
       });
       return response;
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
-      queryClient.invalidateQueries({
+      await queryClient.cancelQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Workflow paused successfully');
+
+      // Snapshot the previous values
+      const previousWorkflow = queryClient.getQueryData<
+        IrminAPIResponse<Workflow>
+      >(workflowQueryKey(workspaceSlug, workflowID));
+      const previousWorkflows = queryClient.getQueryData<
+        IrminAPIResponse<Workflow[]>
+      >(workflowsQueryKey(workspaceSlug));
+
+      // Optimistically update the single workflow cache with paused status
+      queryClient.setQueryData<IrminAPIResponse<Workflow>>(
+        workflowQueryKey(workspaceSlug, workflowID),
+        (old: IrminAPIResponse<Workflow> | undefined) => {
+          if (!old?.data) return old;
+
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              status: WorkflowStatus.Paused, // Paused status
+            },
+          };
+        }
+      );
+
+      // Optimistically update the workflows list cache
+      queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
+        workflowsQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<Workflow[]> | undefined) => {
+          if (!old?.data) return old;
+
+          const updatedWorkflows = old.data.map((workflow: Workflow) =>
+            workflow.id === workflowID
+              ? { ...workflow, status: WorkflowStatus.Paused }
+              : workflow
+          );
+
+          return {
+            ...old,
+            data: updatedWorkflows,
+          };
+        }
+      );
+
+      // Return context for rollback
+      return { previousWorkflow, previousWorkflows };
     },
-    onError: (error) => {
+    onError: (error, variables: void, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | {
+            previousWorkflow?: IrminAPIResponse<Workflow>;
+            previousWorkflows?: IrminAPIResponse<Workflow[]>;
+          }
+        | undefined;
+      if (ctx?.previousWorkflow) {
+        queryClient.setQueryData(
+          workflowQueryKey(workspaceSlug, workflowID),
+          ctx.previousWorkflow
+        );
+      }
+      if (ctx?.previousWorkflows) {
+        queryClient.setQueryData(
+          workflowsQueryKey(workspaceSlug),
+          ctx.previousWorkflows
+        );
+      }
       console.error(error);
       irminAlert('error', error.message ?? 'Error pausing workflow');
     },
-  });
-
-  const resumeWorkflowMutation = useMutation<IrminAPIResponse, Error>({
-    mutationFn: async () => {
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
-      const response = await core.workflowService.startWorkflow({
-        workspace: workspaceSlug,
-        workflowID,
-      });
-      return response;
+    onSuccess: (res: IrminAPIResponse<Workflow>) => {
+      // Update with real data from server if available
+      if (res.data) {
+        queryClient.setQueryData<IrminAPIResponse<Workflow>>(
+          workflowQueryKey(workspaceSlug, workflowID),
+          res
+        );
+      }
+      irminAlert('success', res.message ?? 'Workflow paused successfully');
     },
-    onSuccess: (res) => {
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
       queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
       queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
-      irminAlert('success', res.message ?? 'Workflow resumed successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error resuming workflow');
     },
   });
+
+  const resumeWorkflowMutation = useMutation<IrminAPIResponse<Workflow>, Error>(
+    {
+      mutationFn: async () => {
+        const token = await getToken();
+        const core = new IrminCore(locale, token);
+        const response = await core.workflowService.startWorkflow({
+          workspace: workspaceSlug,
+          workflowID,
+        });
+        return response;
+      },
+      onMutate: async () => {
+        // Cancel any outgoing refetches
+        await queryClient.cancelQueries({
+          queryKey: workflowQueryKey(workspaceSlug, workflowID),
+        });
+        await queryClient.cancelQueries({
+          queryKey: workflowsQueryKey(workspaceSlug),
+        });
+
+        // Snapshot the previous values
+        const previousWorkflow = queryClient.getQueryData<
+          IrminAPIResponse<Workflow>
+        >(workflowQueryKey(workspaceSlug, workflowID));
+        const previousWorkflows = queryClient.getQueryData<
+          IrminAPIResponse<Workflow[]>
+        >(workflowsQueryKey(workspaceSlug));
+
+        // Optimistically update the single workflow cache with running status
+        queryClient.setQueryData<IrminAPIResponse<Workflow>>(
+          workflowQueryKey(workspaceSlug, workflowID),
+          (old: IrminAPIResponse<Workflow> | undefined) => {
+            if (!old?.data) return old;
+
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                status: WorkflowStatus.Running, // Running status
+              },
+            };
+          }
+        );
+
+        // Optimistically update the workflows list cache
+        queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
+          workflowsQueryKey(workspaceSlug),
+          (old: IrminAPIResponse<Workflow[]> | undefined) => {
+            if (!old?.data) return old;
+
+            const updatedWorkflows = old.data.map((workflow: Workflow) =>
+              workflow.id === workflowID
+                ? { ...workflow, status: WorkflowStatus.Running }
+                : workflow
+            );
+
+            return {
+              ...old,
+              data: updatedWorkflows,
+            };
+          }
+        );
+
+        // Return context for rollback
+        return { previousWorkflow, previousWorkflows };
+      },
+      onError: (error, variables: void, context: unknown) => {
+        // Rollback on error
+        const ctx = context as
+          | {
+              previousWorkflow?: IrminAPIResponse<Workflow>;
+              previousWorkflows?: IrminAPIResponse<Workflow[]>;
+            }
+          | undefined;
+        if (ctx?.previousWorkflow) {
+          queryClient.setQueryData(
+            workflowQueryKey(workspaceSlug, workflowID),
+            ctx.previousWorkflow
+          );
+        }
+        if (ctx?.previousWorkflows) {
+          queryClient.setQueryData(
+            workflowsQueryKey(workspaceSlug),
+            ctx.previousWorkflows
+          );
+        }
+        console.error(error);
+        irminAlert('error', error.message ?? 'Error resuming workflow');
+      },
+      onSuccess: (res: IrminAPIResponse<Workflow>) => {
+        // Update with real data from server if available
+        if (res.data) {
+          queryClient.setQueryData<IrminAPIResponse<Workflow>>(
+            workflowQueryKey(workspaceSlug, workflowID),
+            res
+          );
+        }
+        irminAlert('success', res.message ?? 'Workflow resumed successfully');
+      },
+      onSettled: () => {
+        // Always refetch after error or success to ensure consistency
+        queryClient.invalidateQueries({
+          queryKey: workflowQueryKey(workspaceSlug, workflowID),
+        });
+        queryClient.invalidateQueries({
+          queryKey: workflowsQueryKey(workspaceSlug),
+        });
+      },
+    }
+  );
 
   return {
     // Queries

@@ -10,6 +10,8 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
+import { generateTempId } from '@/utils/generateTempId';
+
 import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import { Workspace } from '@/types/core/Workspace';
 
@@ -49,13 +51,93 @@ export function useWorkspaces() {
         description: input.description,
       });
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
-      irminAlert('success', res.message ?? 'Workspace created successfully');
+    onMutate: async (newWorkspace: CreateWorkspaceInput) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: workspacesQueryKey });
+
+      // Snapshot the previous value
+      const previousWorkspaces =
+        queryClient.getQueryData<IrminAPIResponse<Workspace[]>>(
+          workspacesQueryKey
+        );
+
+      // Create unique temp ID for this specific mutation
+      const tempId = generateTempId('workspaces');
+
+      // Optimistically update the cache
+      queryClient.setQueryData<IrminAPIResponse<Workspace[]>>(
+        workspacesQueryKey,
+        (old) => {
+          if (!old?.data) return old;
+
+          // Create optimistic workspace object
+          const optimisticWorkspace: Workspace = {
+            id: tempId, // Unique temporary ID
+            name: newWorkspace.name,
+            description: newWorkspace.description,
+            slug: newWorkspace.name.toLowerCase().replace(/\s+/g, '-'),
+            users: [],
+          };
+
+          return {
+            ...old,
+            data: [...old.data, optimisticWorkspace],
+          };
+        }
+      );
+
+      // Return context for rollback
+      return { previousWorkspaces, tempId };
     },
-    onError: (error) => {
+    onError: (error, newWorkspace: CreateWorkspaceInput, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | {
+            previousWorkspaces?: IrminAPIResponse<Workspace[]>;
+            tempId?: string;
+          }
+        | undefined;
+      if (ctx?.previousWorkspaces) {
+        queryClient.setQueryData(workspacesQueryKey, ctx.previousWorkspaces);
+      }
       console.error('Failed to create workspace:', error);
       irminAlert('error', error.message ?? 'Failed to create workspace');
+    },
+    onSuccess: (
+      res: IrminAPIResponse<Workspace>,
+      newWorkspace: CreateWorkspaceInput,
+      context: unknown
+    ) => {
+      // Update the cache with the real data from the server
+      const ctx = context as
+        | {
+            previousWorkspaces?: IrminAPIResponse<Workspace[]>;
+            tempId?: string;
+          }
+        | undefined;
+
+      queryClient.setQueryData<IrminAPIResponse<Workspace[]>>(
+        workspacesQueryKey,
+        (old) => {
+          if (!old?.data || !res.data || !ctx?.tempId) return old;
+
+          // Replace the specific optimistic workspace with the real one using exact temp ID
+          const updatedWorkspaces = old.data.map((workspace: Workspace) =>
+            workspace.id === ctx.tempId ? res.data! : workspace
+          );
+
+          return {
+            ...old,
+            data: updatedWorkspaces,
+          };
+        }
+      );
+
+      irminAlert('success', res.message ?? 'Workspace created successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
     },
   });
 

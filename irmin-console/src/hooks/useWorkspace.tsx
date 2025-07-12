@@ -58,14 +58,111 @@ export function useWorkspace(slug: string) {
         data: input,
       });
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: workspaceQueryKey(slug!) });
-      queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
-      irminAlert('success', res.message ?? 'Workspace updated successfully');
+    onMutate: async (input: UpdateWorkspaceInput) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: workspaceQueryKey(slug!) });
+      await queryClient.cancelQueries({ queryKey: workspacesQueryKey });
+
+      // Snapshot the previous values
+      const previousWorkspace = queryClient.getQueryData<
+        IrminAPIResponse<Workspace>
+      >(workspaceQueryKey(slug!));
+      const previousWorkspaces =
+        queryClient.getQueryData<IrminAPIResponse<Workspace[]>>(
+          workspacesQueryKey
+        );
+
+      // Optimistically update the single workspace cache
+      queryClient.setQueryData<IrminAPIResponse<Workspace>>(
+        workspaceQueryKey(slug!),
+        (old: IrminAPIResponse<Workspace> | undefined) => {
+          if (!old?.data) return old;
+
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              ...input,
+            },
+          };
+        }
+      );
+
+      // Optimistically update the workspaces list cache
+      queryClient.setQueryData<IrminAPIResponse<Workspace[]>>(
+        workspacesQueryKey,
+        (old: IrminAPIResponse<Workspace[]> | undefined) => {
+          if (!old?.data) return old;
+
+          const updatedWorkspaces = old.data.map((workspace: Workspace) =>
+            workspace.slug === slug ? { ...workspace, ...input } : workspace
+          );
+
+          return {
+            ...old,
+            data: updatedWorkspaces,
+          };
+        }
+      );
+
+      // Return context for rollback
+      return { previousWorkspace, previousWorkspaces };
     },
-    onError: (error) => {
+    onError: (error, input: UpdateWorkspaceInput, context: unknown) => {
+      // Rollback on error
+      const ctx = context as
+        | {
+            previousWorkspace?: IrminAPIResponse<Workspace>;
+            previousWorkspaces?: IrminAPIResponse<Workspace[]>;
+          }
+        | undefined;
+      if (ctx?.previousWorkspace) {
+        queryClient.setQueryData(
+          workspaceQueryKey(slug!),
+          ctx.previousWorkspace
+        );
+      }
+      if (ctx?.previousWorkspaces) {
+        queryClient.setQueryData(workspacesQueryKey, ctx.previousWorkspaces);
+      }
       console.error('Failed to update workspace:', error);
       irminAlert('error', error.message ?? 'Failed to update workspace');
+    },
+    onSuccess: (
+      res: IrminAPIResponse<Workspace>,
+      _input: UpdateWorkspaceInput
+    ) => {
+      // Update the cache with the real data from the server
+      queryClient.setQueryData<IrminAPIResponse<Workspace>>(
+        workspaceQueryKey(slug!),
+        res
+      );
+
+      // Update the workspaces list if we have the real data
+      if (res.data) {
+        queryClient.setQueryData<IrminAPIResponse<Workspace[]>>(
+          workspacesQueryKey,
+          (old: IrminAPIResponse<Workspace[]> | undefined) => {
+            if (!old?.data) return old;
+
+            const updatedWorkspaces = old.data.map((workspace: Workspace) =>
+              workspace.slug === slug ? res.data! : workspace
+            );
+
+            return {
+              ...old,
+              data: updatedWorkspaces,
+            };
+          }
+        );
+      }
+
+      irminAlert('success', res.message ?? 'Workspace updated successfully');
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({ queryKey: workspaceQueryKey(slug!) });
+      queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
     },
   });
 
