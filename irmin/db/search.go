@@ -47,6 +47,13 @@ const (
 	// Batch loading constants.
 	MaxBatchSize = 1000 // Maximum number of entities to load in a single batch
 
+	// SQL condition constants.
+	NeverMatchCondition = "1=0"
+	NullFieldReference  = "NULL"
+
+	// Field parsing constants.
+	MaxFieldParts = 2
+
 	// Query normalization constants.
 	DefaultMinTokenLength = 2 // Default minimum length for search tokens
 
@@ -69,6 +76,8 @@ const (
 	// Security constants for input validation.
 	MaxSearchTokenLength = 1000 // Maximum length for a search token to prevent abuse
 	MaxSearchQueryLength = 5000 // Maximum length for entire search query
+	MaxFieldNameLength   = 100  // Maximum length for field names
+	MaxTableNameLength   = 100  // Maximum length for table names
 
 	// Relevance boost constants.
 	ExactMatchBoostFactor  = 1.5 // 50% boost for exact matches
@@ -81,6 +90,10 @@ const (
 	SearchEntityTypeConnection       = "connection"
 	SearchEntityTypeQuery            = "query"
 	SearchEntityTypeRepositoryObject = "repository_object"
+
+	// Cursor-based pagination constants.
+	DefaultCursorDatabaseTimeout = 10 // Default database timeout for cursor-based searches in seconds
+	CursorPartsCount             = 2  // Number of parts in cursor string (ID_timestamp)
 )
 
 // QueryNormalizationOptions represents options for query normalization.
@@ -364,6 +377,84 @@ type SearchCondition struct {
 	Weight float64
 }
 
+// validateSearchFilters validates and sanitizes search filters to prevent injection.
+func validateSearchFilters(filters *SearchFilters) *SearchFilters {
+	if filters == nil {
+		return &SearchFilters{}
+	}
+
+	validatedFilters := &SearchFilters{
+		Query:         "",
+		Types:         []string{},
+		Tags:          []uint{},
+		OwnerID:       filters.OwnerID,
+		DateFrom:      filters.DateFrom,
+		DateTo:        filters.DateTo,
+		Limit:         filters.Limit,
+		Offset:        filters.Offset,
+		FuzzyMatch:    filters.FuzzyMatch,
+		CaseSensitive: filters.CaseSensitive,
+		SearchFields:  []string{},
+		Limits:        filters.Limits,
+	}
+
+	// Validate and sanitize query
+	if filters.Query != "" {
+		query := strings.TrimSpace(filters.Query)
+		if len(query) <= MaxSearchQueryLength && !ContainsSQLInjectionPattern(query) {
+			validatedFilters.Query = query
+		}
+	}
+
+	// Validate entity types against allowed values
+	allowedTypes := map[string]bool{
+		"workflow":          true,
+		"repository":        true,
+		"connection":        true,
+		"query":             true,
+		"user":              true,
+		"repository_object": true,
+		"invite":            true,
+	}
+
+	for _, entityType := range filters.Types {
+		if allowedTypes[strings.ToLower(strings.TrimSpace(entityType))] {
+			validatedFilters.Types = append(validatedFilters.Types, entityType)
+		}
+	}
+
+	// Validate tag IDs (ensure they're positive integers)
+	for _, tagID := range filters.Tags {
+		if tagID > 0 && tagID < 4294967295 { // Valid uint range
+			validatedFilters.Tags = append(validatedFilters.Tags, tagID)
+		}
+	}
+
+	// Validate search fields
+	for _, field := range filters.SearchFields {
+		if IsValidFieldName(field) && !ContainsSuspiciousPatterns(field) {
+			validatedFilters.SearchFields = append(validatedFilters.SearchFields, field)
+		}
+	}
+
+	// Validate limits
+	if validatedFilters.Limit < 0 {
+		validatedFilters.Limit = 0
+	}
+	if validatedFilters.Limit > MaxSearchResults {
+		validatedFilters.Limit = MaxSearchResults
+	}
+
+	if validatedFilters.Offset < 0 {
+		validatedFilters.Offset = 0
+	}
+	if validatedFilters.Offset > MaxSearchResults {
+		validatedFilters.Offset = MaxSearchResults
+	}
+
+	return validatedFilters
+}
+
 // ParseSearchQuery parses a search query string into tokens and metadata.
 func ParseSearchQuery(query string) *SearchQuery {
 	query = strings.TrimSpace(query)
@@ -371,6 +462,17 @@ func ParseSearchQuery(query string) *SearchQuery {
 	// SECURITY: Validate query length to prevent abuse
 	if len(query) > MaxSearchQueryLength {
 		query = query[:MaxSearchQueryLength]
+	}
+
+	// SECURITY: Check for SQL injection patterns
+	if ContainsSQLInjectionPattern(query) {
+		return &SearchQuery{
+			OriginalQuery:   "",
+			NormalizedQuery: "",
+			Tokens:          []SearchToken{},
+			ExactPhrases:    []string{},
+			HasFilters:      false,
+		}
 	}
 
 	if query == "" {
@@ -606,6 +708,17 @@ func (d *Database) buildEnhancedSearchConditions(
 		return []SearchCondition{}
 	}
 
+	// Validate table name first
+	if !IsValidTableName(tableName) {
+		return []SearchCondition{}
+	}
+
+	// Validate and sanitize field mappings
+	validFieldMappings := ValidateFieldMappings(fieldMappings)
+	if len(validFieldMappings) == 0 {
+		return []SearchCondition{}
+	}
+
 	var conditions []SearchCondition
 
 	for _, token := range parsedQuery.Tokens {
@@ -613,7 +726,7 @@ func (d *Database) buildEnhancedSearchConditions(
 			var fieldConditions []string
 			var args []any
 
-			for _, fieldName := range fieldMappings {
+			for _, fieldName := range validFieldMappings {
 				// Build parameterized condition for each field
 				condition, fieldArgs := d.buildFieldSearchConditionParameterized(tableName, fieldName, token)
 				if condition != "" {
@@ -635,42 +748,100 @@ func (d *Database) buildEnhancedSearchConditions(
 	return conditions
 }
 
+// ValidateFieldMappings validates and filters field mappings to ensure they are safe.
+func ValidateFieldMappings(fieldMappings map[string]string) map[string]string {
+	validMappings := make(map[string]string)
+
+	for key, fieldName := range fieldMappings {
+		// Validate the field name
+		if IsValidFieldName(fieldName) {
+			// Additional check: ensure the field name doesn't contain suspicious patterns
+			if !ContainsSuspiciousPatterns(fieldName) && !ContainsSQLInjectionPattern(fieldName) {
+				validMappings[key] = fieldName
+			}
+		}
+	}
+
+	return validMappings
+}
+
 // buildFieldSearchConditionParameterized builds a parameterized search condition for a specific field and token.
 func (d *Database) buildFieldSearchConditionParameterized(
 	tableName, fieldName string,
 	token SearchToken,
 ) (string, []any) {
 	// SECURITY: Validate token before processing
-	if !validateSearchToken(token) {
-		return "1=0", []any{} // Return a condition that will never match
+	if !ValidateSearchToken(token) {
+		return NeverMatchCondition, []any{} // Return a condition that will never match
 	}
 
-	// Build field reference with proper table prefix handling
-	var fieldRef string
-	if strings.Contains(fieldName, ".") {
-		// Field name already includes table prefix (e.g., "repositories.name")
-		fieldRef = "COALESCE(" + fieldName + ", '')"
-	} else {
-		// Field name is just the column name, add table prefix
-		fieldRef = "COALESCE(" + tableName + "." + fieldName + ", '')"
+	// SECURITY: Validate table and field names
+	if !IsValidTableName(tableName) || !IsValidFieldName(fieldName) {
+		return NeverMatchCondition, []any{} // Return a condition that will never match
+	}
+
+	// Build field reference with proper table prefix handling and validation
+	fieldRef := d.buildFieldReference(fieldName, tableName)
+	if fieldRef == NullFieldReference {
+		return NeverMatchCondition, []any{} // Return a condition that will never match
+	}
+
+	// Wrap field reference in COALESCE for NULL safety
+	fieldRefWithCoalesce := "COALESCE(" + fieldRef + ", '')"
+
+	// Sanitize the search value before building conditions
+	sanitizedValue := SanitizeSearchValue(token.Value)
+	if sanitizedValue == "" {
+		return NeverMatchCondition, []any{} // Return a condition that will never match for empty/invalid values
 	}
 
 	// Build parameterized condition based on token type
 	switch {
 	case token.IsExact:
 		// For exact matches, search for the value surrounded by any characters
-		searchValue := "%" + token.Value + "%"
-		return fieldRef + " ILIKE ?", []any{searchValue}
+		searchValue := "%" + sanitizedValue + "%"
+		return fieldRefWithCoalesce + " ILIKE ?", []any{searchValue}
 	case token.IsPrefix:
 		// For prefix matches, remove the trailing * and search for prefix
-		prefix := strings.TrimSuffix(token.Value, "*")
+		prefix := strings.TrimSuffix(sanitizedValue, "*")
+		if prefix == "" {
+			return NeverMatchCondition, []any{} // Return a condition that will never match for empty prefix
+		}
 		searchValue := prefix + "%"
-		return fieldRef + " ILIKE ?", []any{searchValue}
+		return fieldRefWithCoalesce + " ILIKE ?", []any{searchValue}
 	default:
 		// For partial matches, search for the value surrounded by any characters
-		searchValue := "%" + token.Value + "%"
-		return fieldRef + " ILIKE ?", []any{searchValue}
+		searchValue := "%" + sanitizedValue + "%"
+		return fieldRefWithCoalesce + " ILIKE ?", []any{searchValue}
 	}
+}
+
+// SanitizeSearchValue sanitizes a search value for use in ILIKE patterns.
+func SanitizeSearchValue(value string) string {
+	// Basic length check
+	if len(value) == 0 || len(value) > MaxSearchTokenLength {
+		return ""
+	}
+
+	// Check for SQL injection patterns
+	if ContainsSQLInjectionPattern(value) {
+		return ""
+	}
+
+	// Escape ILIKE pattern characters to prevent pattern injection
+	sanitized := strings.ReplaceAll(value, "\\", "\\\\")  // Escape backslashes first
+	sanitized = strings.ReplaceAll(sanitized, "%", "\\%") // Escape percent signs
+	sanitized = strings.ReplaceAll(sanitized, "_", "\\_") // Escape underscores
+
+	// Remove other potentially dangerous characters
+	sanitized = strings.ReplaceAll(sanitized, "'", "")  // Remove single quotes
+	sanitized = strings.ReplaceAll(sanitized, "\"", "") // Remove double quotes
+	sanitized = strings.ReplaceAll(sanitized, ";", "")  // Remove semicolons
+	sanitized = strings.ReplaceAll(sanitized, "--", "") // Remove SQL comments
+	sanitized = strings.ReplaceAll(sanitized, "/*", "") // Remove block comments start
+	sanitized = strings.ReplaceAll(sanitized, "*/", "") // Remove block comments end
+
+	return sanitized
 }
 
 // applySearchConditions applies search conditions to a GORM query using parameterized queries.
@@ -727,16 +898,28 @@ func (d *Database) buildTokenRelevancePartsSecure(
 	fieldMappings map[string]string,
 	fieldWeights map[string]float64,
 ) []string {
+	// Validate inputs first
+	if !ValidateSearchToken(token) || !IsValidTableName(tableName) {
+		return []string{}
+	}
+
+	// Validate field mappings
+	validFieldMappings := ValidateFieldMappings(fieldMappings)
+
 	var parts []string
 	for fieldKey, weight := range fieldWeights {
-		actualFieldName, exists := fieldMappings[fieldKey]
+		actualFieldName, exists := validFieldMappings[fieldKey]
 		if !exists {
 			continue
 		}
 
 		fieldRef := d.buildFieldReference(actualFieldName, tableName)
+		if fieldRef == NullFieldReference {
+			continue // Skip invalid field references
+		}
+
 		relevancePart := d.buildFieldRelevanceExpressionSecure(fieldRef, token, weight)
-		if relevancePart != "" {
+		if relevancePart != "" && relevancePart != "0" {
 			parts = append(parts, relevancePart)
 		}
 	}
@@ -747,13 +930,18 @@ func (d *Database) buildTokenRelevancePartsSecure(
 // Uses input validation and sanitization since parameterization is not feasible in SELECT clauses.
 func (d *Database) buildFieldRelevanceExpressionSecure(fieldRef string, token SearchToken, fieldWeight float64) string {
 	// SECURITY: Validate token before processing
-	if !validateSearchToken(token) {
+	if !ValidateSearchToken(token) {
 		return "0" // Return zero relevance for invalid tokens
 	}
 
 	// SECURITY: Additional validation for relevance scoring
-	if !isValidFieldReference(fieldRef) {
+	if !isValidFieldReference(fieldRef) || fieldRef == NullFieldReference {
 		return "0" // Return zero relevance for invalid field references
+	}
+
+	// SECURITY: Validate field weight to prevent injection through numeric values
+	if fieldWeight < 0 || fieldWeight > 100 || math.IsNaN(fieldWeight) || math.IsInf(fieldWeight, 0) {
+		return "0" // Return zero relevance for invalid weights
 	}
 
 	baseWeight := token.Weight * fieldWeight
@@ -761,30 +949,45 @@ func (d *Database) buildFieldRelevanceExpressionSecure(fieldRef string, token Se
 	// Handle NULL values by using COALESCE in the field reference
 	coalescedField := "COALESCE(" + fieldRef + ", '')"
 
-	// Build secure condition using PostgreSQL's quote_literal function for additional safety
+	// Sanitize the search value with enhanced security
+	var sanitizedValue string
+	switch {
+	case token.IsExact:
+		sanitizedValue = sanitizeForLiteral(token.Value)
+		if sanitizedValue == "" {
+			return "0" // Return zero relevance for empty sanitized values
+		}
+	case token.IsPrefix:
+		prefix := strings.TrimSuffix(token.Value, "*")
+		sanitizedValue = sanitizeForLiteral(prefix)
+		if sanitizedValue == "" {
+			return "0" // Return zero relevance for empty sanitized values
+		}
+	default:
+		sanitizedValue = sanitizeForLiteral(token.Value)
+		if sanitizedValue == "" {
+			return "0" // Return zero relevance for empty sanitized values
+		}
+	}
+
+	// Build secure condition with additional validation
 	var condition string
 	switch {
 	case token.IsExact:
-		// For exact matches, use PostgreSQL's quote_literal for additional security
-		sanitizedValue := sanitizeForLiteral(token.Value)
 		condition = coalescedField + " ILIKE '%" + sanitizedValue + "%'"
 	case token.IsPrefix:
-		// For prefix matches, remove the trailing * and sanitize
-		prefix := strings.TrimSuffix(token.Value, "*")
-		sanitizedPrefix := sanitizeForLiteral(prefix)
-		condition = coalescedField + " ILIKE '" + sanitizedPrefix + "%'"
+		condition = coalescedField + " ILIKE '" + sanitizedValue + "%'"
 	default:
-		// For partial matches, sanitize the value
-		sanitizedValue := sanitizeForLiteral(token.Value)
 		condition = coalescedField + " ILIKE '%" + sanitizedValue + "%'"
 	}
 
-	relevanceValue := strconv.FormatFloat(
-		baseWeight*PartialMatchWeight,
-		'f',
-		2,
-		64,
-	)
+	// Validate and format the relevance value with bounds checking
+	finalWeight := baseWeight * PartialMatchWeight
+	if finalWeight < 0 || finalWeight > 1000 || math.IsNaN(finalWeight) || math.IsInf(finalWeight, 0) {
+		return "0" // Return zero relevance for invalid final weights
+	}
+
+	relevanceValue := strconv.FormatFloat(finalWeight, 'f', 2, 64)
 
 	return "CASE WHEN " + condition + " THEN " + relevanceValue + " ELSE 0 END"
 }
@@ -796,11 +999,17 @@ func isValidFieldReference(fieldRef string) bool {
 	return validFieldRegex.MatchString(fieldRef)
 }
 
-// sanitizeForLiteral sanitizes a string for use in SQL literals with additional safety measures.
+// sanitizeForLiteral sanitizes a string for use in SQL literals with comprehensive safety measures.
 func sanitizeForLiteral(input string) string {
 	// Validate input length to prevent abuse
 	if len(input) > MaxSearchTokenLength {
 		input = input[:MaxSearchTokenLength]
+	}
+
+	// Check for SQL injection patterns first
+	if ContainsSQLInjectionPattern(input) {
+		// Return empty string for obviously malicious input
+		return ""
 	}
 
 	// Remove or escape dangerous characters
@@ -811,23 +1020,111 @@ func sanitizeForLiteral(input string) string {
 	// Replace percent signs and underscores to prevent ILIKE pattern injection
 	sanitized = strings.ReplaceAll(sanitized, "%", "\\%")
 	sanitized = strings.ReplaceAll(sanitized, "_", "\\_")
-	// Remove other potentially dangerous characters
-	sanitized = strings.ReplaceAll(sanitized, ";", "")
+
+	// Remove SQL comment sequences
 	sanitized = strings.ReplaceAll(sanitized, "--", "")
 	sanitized = strings.ReplaceAll(sanitized, "/*", "")
 	sanitized = strings.ReplaceAll(sanitized, "*/", "")
 
+	// Remove other dangerous characters and sequences
+	sanitized = strings.ReplaceAll(sanitized, ";", "")
+	sanitized = strings.ReplaceAll(sanitized, "@@", "")
+	sanitized = strings.ReplaceAll(sanitized, "xp_", "")
+	sanitized = strings.ReplaceAll(sanitized, "sp_", "")
+
+	// Remove HTML/script tags
+	sanitized = regexp.MustCompile(`(?i)<[^>]*>`).ReplaceAllString(sanitized, "")
+
+	// Remove excessive whitespace
+	sanitized = regexp.MustCompile(`\s+`).ReplaceAllString(sanitized, " ")
+	sanitized = strings.TrimSpace(sanitized)
+
 	return sanitized
 }
 
-// buildFieldReference builds a field reference with proper table prefix handling.
+// buildFieldReference builds a field reference with proper table prefix handling and security validation.
 func (d *Database) buildFieldReference(fieldName, tableName string) string {
+	// Validate inputs first
+	if !IsValidFieldName(fieldName) || !IsValidTableName(tableName) {
+		// Return a safe default that won't match anything
+		return NullFieldReference
+	}
+
 	if strings.Contains(fieldName, ".") {
 		// Field name already includes table prefix (e.g., "repositories.name")
+		// Validate the full reference
+		if !isValidFieldReference(fieldName) {
+			return "NULL"
+		}
+
+		// Extract table and field parts for additional validation
+		parts := strings.SplitN(fieldName, ".", MaxFieldParts)
+		if len(parts) == MaxFieldParts {
+			if !IsValidTableName(parts[0]) || !IsValidFieldName(parts[1]) {
+				return NullFieldReference
+			}
+		}
+
 		return fieldName
 	}
+
 	// Field name is just the column name, add table prefix
 	return tableName + "." + fieldName
+}
+
+// IsValidFieldName validates that a field name is in the allowed whitelist.
+func IsValidFieldName(fieldName string) bool {
+	// Check length
+	if len(fieldName) == 0 || len(fieldName) > MaxFieldNameLength {
+		return false
+	}
+
+	// Check pattern
+	if !validFieldRegex.MatchString(fieldName) {
+		return false
+	}
+
+	// For dotted references (table.field), validate each part appropriately
+	if strings.Contains(fieldName, ".") {
+		parts := strings.Split(fieldName, ".")
+		if len(parts) != MaxFieldParts {
+			return false // We only support table.field format
+		}
+
+		tableName := parts[0]
+		fieldPart := parts[1]
+
+		// First part should be a valid table name
+		if !IsValidTableName(tableName) {
+			return false
+		}
+
+		// Second part should be a valid field name
+		if !getAllowedFieldNames()[fieldPart] {
+			return false
+		}
+
+		return true
+	}
+
+	// Check whitelist for simple field names
+	return getAllowedFieldNames()[fieldName]
+}
+
+// IsValidTableName validates that a table name is in the allowed whitelist.
+func IsValidTableName(tableName string) bool {
+	// Check length
+	if len(tableName) == 0 || len(tableName) > MaxTableNameLength {
+		return false
+	}
+
+	// Check pattern
+	if !validTableRegex.MatchString(tableName) {
+		return false
+	}
+
+	// Check whitelist
+	return getAllowedTableNames()[tableName]
 }
 
 // SearchWorkspace performs a full-text search across all entities in a workspace with timeout and limits.
@@ -835,27 +1132,35 @@ func (d *Database) SearchWorkspace(
 	workspaceID uint,
 	filters SearchFilters,
 ) ([]SearchResult, int, error) {
+	// SECURITY: Validate and sanitize search filters
+	validatedFilters := validateSearchFilters(&filters)
+
 	// Apply default limits if not provided
-	if filters.Limits == nil {
+	if validatedFilters.Limits == nil {
 		defaultLimits := DefaultSearchLimits()
-		filters.Limits = &defaultLimits
+		validatedFilters.Limits = &defaultLimits
 	} else {
 		// Validate and normalize provided limits
-		*filters.Limits = ValidateSearchLimits(*filters.Limits)
+		*validatedFilters.Limits = ValidateSearchLimits(*validatedFilters.Limits)
 	}
 
 	// Create context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(filters.Limits.TimeoutSeconds)*time.Second)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(validatedFilters.Limits.TimeoutSeconds)*time.Second,
+	)
 	defer cancel()
 
 	// Parse the search query for enhanced processing
-	parsedQuery := ParseSearchQuery(filters.Query)
-	searchQuery := strings.TrimSpace(filters.Query)
+	parsedQuery := ParseSearchQuery(validatedFilters.Query)
+	searchQuery := strings.TrimSpace(validatedFilters.Query)
 
 	// Check if we have any search criteria
 	hasQuery := searchQuery != ""
-	hasFilters := filters.OwnerID != nil || filters.DateFrom != nil || filters.DateTo != nil ||
-		len(filters.Tags) > 0 || len(filters.Types) > 0
+	hasFilters := validatedFilters.OwnerID != nil || validatedFilters.DateFrom != nil ||
+		validatedFilters.DateTo != nil ||
+		len(validatedFilters.Tags) > 0 ||
+		len(validatedFilters.Types) > 0
 
 	// If no query and no filters, return empty results
 	if !hasQuery && !hasFilters {
@@ -863,11 +1168,17 @@ func (d *Database) SearchWorkspace(
 	}
 
 	// Perform all searches concurrently with timeout protection
-	results, err := d.performAllSearchesConcurrentWithLimits(ctx, workspaceID, searchQuery, filters, parsedQuery)
+	results, err := d.performAllSearchesConcurrentWithLimits(
+		ctx,
+		workspaceID,
+		searchQuery,
+		*validatedFilters,
+		parsedQuery,
+	)
 	if err != nil {
 		// Check if error is due to timeout
 		if ctx.Err() == context.DeadlineExceeded {
-			return nil, 0, NewSearchTimeoutError(filters.Limits.TimeoutSeconds)
+			return nil, 0, NewSearchTimeoutError(validatedFilters.Limits.TimeoutSeconds)
 		}
 		return nil, 0, err
 	}
@@ -885,15 +1196,15 @@ func (d *Database) SearchWorkspace(
 	}
 
 	// Apply total result limit
-	if len(results) > filters.Limits.MaxTotalResults {
-		results = results[:filters.Limits.MaxTotalResults]
+	if len(results) > validatedFilters.Limits.MaxTotalResults {
+		results = results[:validatedFilters.Limits.MaxTotalResults]
 	}
 
 	// Calculate total count
 	totalCount := len(results)
 
 	// Apply pagination using switch statement
-	results = d.applyPagination(results, filters.Offset, filters.Limit)
+	results = d.applyPagination(results, validatedFilters.Offset, validatedFilters.Limit)
 
 	return results, totalCount, nil
 }
@@ -903,27 +1214,35 @@ func (d *Database) SearchWorkspaceCount(
 	workspaceID uint,
 	filters SearchFilters,
 ) (int, error) {
+	// SECURITY: Validate and sanitize search filters
+	validatedFilters := validateSearchFilters(&filters)
+
 	// Apply default limits if not provided
-	if filters.Limits == nil {
+	if validatedFilters.Limits == nil {
 		defaultLimits := DefaultSearchLimits()
-		filters.Limits = &defaultLimits
+		validatedFilters.Limits = &defaultLimits
 	} else {
 		// Validate and normalize provided limits
-		*filters.Limits = ValidateSearchLimits(*filters.Limits)
+		*validatedFilters.Limits = ValidateSearchLimits(*validatedFilters.Limits)
 	}
 
 	// Create context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(filters.Limits.TimeoutSeconds)*time.Second)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(validatedFilters.Limits.TimeoutSeconds)*time.Second,
+	)
 	defer cancel()
 
 	// Parse the search query for enhanced processing
-	parsedQuery := ParseSearchQuery(filters.Query)
-	searchQuery := strings.TrimSpace(filters.Query)
+	parsedQuery := ParseSearchQuery(validatedFilters.Query)
+	searchQuery := strings.TrimSpace(validatedFilters.Query)
 
 	// Check if we have any search criteria
 	hasQuery := searchQuery != ""
-	hasFilters := filters.OwnerID != nil || filters.DateFrom != nil || filters.DateTo != nil ||
-		len(filters.Tags) > 0 || len(filters.Types) > 0
+	hasFilters := validatedFilters.OwnerID != nil || validatedFilters.DateFrom != nil ||
+		validatedFilters.DateTo != nil ||
+		len(validatedFilters.Tags) > 0 ||
+		len(validatedFilters.Types) > 0
 
 	// If no query and no filters, return 0
 	if !hasQuery && !hasFilters {
@@ -931,11 +1250,17 @@ func (d *Database) SearchWorkspaceCount(
 	}
 
 	// Perform all searches concurrently with timeout protection
-	results, err := d.performAllSearchesConcurrentWithLimits(ctx, workspaceID, searchQuery, filters, parsedQuery)
+	results, err := d.performAllSearchesConcurrentWithLimits(
+		ctx,
+		workspaceID,
+		searchQuery,
+		*validatedFilters,
+		parsedQuery,
+	)
 	if err != nil {
 		// Check if error is due to timeout
 		if ctx.Err() == context.DeadlineExceeded {
-			return 0, NewSearchTimeoutError(filters.Limits.TimeoutSeconds)
+			return 0, NewSearchTimeoutError(validatedFilters.Limits.TimeoutSeconds)
 		}
 		return 0, err
 	}
@@ -953,8 +1278,8 @@ func (d *Database) SearchWorkspaceCount(
 	}
 
 	// Apply total result limit
-	if len(results) > filters.Limits.MaxTotalResults {
-		results = results[:filters.Limits.MaxTotalResults]
+	if len(results) > validatedFilters.Limits.MaxTotalResults {
+		results = results[:validatedFilters.Limits.MaxTotalResults]
 	}
 
 	// Return only the count
@@ -2512,8 +2837,8 @@ func CreateExtensiveSearchLimits() SearchLimits {
 	}
 }
 
-// validateSearchToken performs security validation on search tokens.
-func validateSearchToken(token SearchToken) bool {
+// ValidateSearchToken performs comprehensive security validation on search tokens.
+func ValidateSearchToken(token SearchToken) bool {
 	// Check token value length
 	if len(token.Value) == 0 || len(token.Value) > MaxSearchTokenLength {
 		return false
@@ -2521,10 +2846,158 @@ func validateSearchToken(token SearchToken) bool {
 
 	// Reject tokens that are only special characters or whitespace
 	trimmed := strings.TrimSpace(token.Value)
-	return len(trimmed) != 0
+	if len(trimmed) == 0 {
+		return false
+	}
+
+	// Check for SQL injection patterns
+	if ContainsSQLInjectionPattern(token.Value) {
+		return false
+	}
+
+	// Validate token content based on type
+	switch token.Type {
+	case TokenTypeWord, TokenTypePhrase:
+		// Allow normal search terms but check for suspicious patterns
+		return !ContainsSuspiciousPatterns(token.Value)
+	case TokenTypeFilter, TokenTypeOperator:
+		// Stricter validation for filter/operator tokens
+		return isValidFilterToken(token.Value)
+	default:
+		return true
+	}
+}
+
+// ContainsSQLInjectionPattern checks for common SQL injection patterns.
+func ContainsSQLInjectionPattern(input string) bool {
+	for _, pattern := range getSQLInjectionPatterns() {
+		if pattern.MatchString(input) {
+			return true
+		}
+	}
+	return false
+}
+
+// ContainsSuspiciousPatterns checks for additional suspicious patterns.
+func ContainsSuspiciousPatterns(input string) bool {
+	// Check for excessive special characters (but be more lenient for legitimate searches)
+	specialCharCount := 0
+	for _, char := range input {
+		if !unicode.IsLetter(char) && !unicode.IsDigit(char) && !unicode.IsSpace(char) {
+			// Allow common legitimate special characters
+			if char != '.' && char != '@' && char != '_' && char != '-' && char != '+' && char != '#' {
+				specialCharCount++
+			}
+		}
+	}
+
+	// Reject if more than 70% special characters (more lenient than 50%)
+	// This allows searches like "C++", "user@domain.com", etc.
+	if len(input) > 0 && float64(specialCharCount)/float64(len(input)) > 0.7 {
+		return true
+	}
+
+	// Check for suspicious character sequences
+	suspiciousPatterns := []string{
+		"--", "/*", "*/", "@@", "xp_", "sp_", "<script", "</script>",
+		"<iframe", "javascript:", "vbscript:", "onload=", "onerror=",
+	}
+
+	lowerInput := strings.ToLower(input)
+	for _, pattern := range suspiciousPatterns {
+		if strings.Contains(lowerInput, pattern) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isValidFilterToken validates filter/operator tokens against allowed patterns.
+func isValidFilterToken(token string) bool {
+	// Allow specific filter operators only
+	allowedFilters := []string{
+		"type:", "tag:", "owner:", "date:", "created:", "updated:",
+	}
+
+	for _, allowed := range allowedFilters {
+		if strings.HasPrefix(strings.ToLower(token), allowed) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // roundRelevance rounds a relevance score to 2 decimal places.
 func roundRelevance(score float64) float64 {
 	return math.Round(score*RelevanceRoundingBase) / RelevanceRoundingBase
+}
+
+// Security validation patterns.
+var (
+	// Valid field reference pattern (alphanumeric, dots, underscores only).
+	validFieldRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_.]*$`)
+
+	// Valid table name pattern.
+	validTableRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
+)
+
+// getSQLInjectionPatterns returns SQL injection detection patterns.
+func getSQLInjectionPatterns() []*regexp.Regexp {
+	return []*regexp.Regexp{
+		regexp.MustCompile(`(?i)\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b`),
+		regexp.MustCompile(`(?i)\b(script|javascript|vbscript)\b|(?i)(onload|onerror|onclick)`),
+		regexp.MustCompile(`(?i)(xp_|sp_|sys\.|information_schema\.)`),
+		regexp.MustCompile(`[';](\s*--|\s*/\*)`),
+		regexp.MustCompile(`\b(0x[0-9a-f]+|char\(|ascii\(|substring\()`),
+		regexp.MustCompile(`(?i)(load_file|into\s+outfile|into\s+dumpfile)`),
+	}
+}
+
+// getAllowedFieldNames returns the whitelist of allowed field names.
+func getAllowedFieldNames() map[string]bool {
+	return map[string]bool{
+		"id":            true,
+		"name":          true,
+		"title":         true,
+		"description":   true,
+		"documentation": true,
+		"content":       true,
+		"filename":      true,
+		"path":          true,
+		"email":         true,
+		"username":      true,
+		"display_name":  true,
+		"first_name":    true,
+		"last_name":     true,
+		"company":       true,
+		"sql":           true,
+		"content_type":  true,
+		"clerk_id":      true,
+		"slug":          true,
+		"created_at":    true,
+		"updated_at":    true,
+		"workspace_id":  true,
+		"owner_id":      true,
+		"type":          true,
+		"status":        true,
+		"url":           true,
+		"config":        true,
+		"metadata":      true,
+	}
+}
+
+// getAllowedTableNames returns the whitelist of allowed table names.
+func getAllowedTableNames() map[string]bool {
+	return map[string]bool{
+		"workflows":          true,
+		"repositories":       true,
+		"connections":        true,
+		"stored_queries":     true,
+		"users":              true,
+		"repository_objects": true,
+		"invites":            true,
+		"workspace_users":    true,
+	}
 }

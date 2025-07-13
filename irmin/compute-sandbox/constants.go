@@ -18,6 +18,20 @@ const (
 	SampleChannelBufferSize = 100 // Buffer size for the metrics sampling channel
 	StatsSplitCount         = 2   // Number of parts when splitting stats values (e.g. "X/Y")
 
+	// Container operation timeouts.
+
+	ContainerStartTimeout     = 30 * time.Second // Timeout for starting a container
+	ContainerExecTimeout      = 10 * time.Second // Timeout for container stop operations
+	DockerCommandTimeout      = 60 * time.Second // Timeout for general Docker commands
+	ContainerCleanupTimeout   = 10 * time.Second // Timeout for container cleanup operations
+	ContainerOperationTimeout = 30 * time.Minute // Maximum time for container operations
+
+	// File operation timeouts.
+
+	FileDownloadTimeout  = 300 * time.Second // 5 minutes for large files
+	FileUploadTimeout    = 180 * time.Second // 3 minutes
+	FileOperationTimeout = 30 * time.Second  // Timeout for general file operations
+
 	// Runtime versions.
 
 	LatestGoVersion     = "1.24.3"

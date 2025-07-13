@@ -1,6 +1,7 @@
 package sandbox
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -57,23 +58,28 @@ func (s *ComputeSandbox) buildDockerRunCommand(tmpDir, executable, executableTyp
 
 // collectContainerMetrics starts a container and collects its metrics.
 func (s *ComputeSandbox) collectContainerMetrics(
+	ctx context.Context,
 	tmpDir, executable, executableType, apiKey, apiURL string,
 ) (string, ResourceUsageMetrics) {
 	containerIDChan := make(chan string, 1)
 	doneChan := make(chan struct{})
 
 	go func() {
+		defer close(doneChan)
+
 		args := s.buildDockerRunCommand(tmpDir, executable, executableType, apiKey, apiURL)
 		if len(args) == 0 {
-			close(doneChan)
 			return
 		}
 
-		cmd := exec.Command("docker", args...)
+		// Use context with timeout for container start
+		startCtx, cancel := context.WithTimeout(ctx, ContainerStartTimeout)
+		defer cancel()
+
+		cmd := exec.CommandContext(startCtx, "docker", args...)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			s.logger.Error("docker run failed", "error", err, "output", string(output))
-			close(doneChan)
 			return
 		}
 
@@ -86,43 +92,69 @@ func (s *ComputeSandbox) collectContainerMetrics(
 		if containerID == "" {
 			return "", ResourceUsageMetrics{}
 		}
-		metrics := s.CollectMetricsFromContainer(containerID)
+		metrics := s.CollectMetricsFromContainer(ctx, containerID)
 		return containerID, metrics
 	case <-doneChan:
+		return "", ResourceUsageMetrics{}
+	case <-ctx.Done():
+		s.logger.InfoContext(ctx, "Container start cancelled", "error", ctx.Err())
 		return "", ResourceUsageMetrics{}
 	}
 }
 
 // cleanupContainer removes the container and logs any errors.
-func (s *ComputeSandbox) cleanupContainer(containerID string) {
+func (s *ComputeSandbox) cleanupContainer(ctx context.Context, containerID string) {
 	if containerID == "" {
 		return
 	}
 
-	rmCmd := exec.Command("docker", "rm", containerID)
+	// Sanitize container ID to prevent command injection
+	sanitizedID := sanitizeContainerID(containerID)
+	if sanitizedID == "" {
+		s.logger.ErrorContext(ctx, "Invalid container ID for cleanup", "containerID", containerID)
+		return
+	}
+
+	// Use context with timeout for cleanup
+	cleanupCtx, cancel := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancel()
+
+	rmCmd := exec.CommandContext(cleanupCtx, "docker", "rm", sanitizedID)
 	if err := rmCmd.Run(); err != nil {
-		s.logger.Error("Error removing container", "error", err)
+		s.logger.ErrorContext(ctx, "Error removing container", "error", err)
 	}
 }
 
 // getContainerLogs retrieves logs and exit code from the container.
-func (s *ComputeSandbox) getContainerLogs(containerID string) (string, error) {
+func (s *ComputeSandbox) getContainerLogs(ctx context.Context, containerID string) (string, error) {
 	if containerID == "" {
 		return "", nil
 	}
 
-	logsCmd := exec.Command("docker", "logs", containerID)
+	// Sanitize container ID to prevent command injection
+	sanitizedID := sanitizeContainerID(containerID)
+	if sanitizedID == "" {
+		return "", fmt.Errorf("invalid container ID: %s", containerID)
+	}
+
+	// Use context with timeout for logs retrieval
+	logsCtx, cancel := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancel()
+
+	logsCmd := exec.CommandContext(logsCtx, "docker", "logs", sanitizedID)
 	logsOutput, err := logsCmd.CombinedOutput()
 	if err != nil {
 		return string(logsOutput), err
 	}
 
 	// Log the exit code for debugging
+	waitCtx, waitCancel := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer waitCancel()
 
-	waitCmd := exec.Command("docker", "wait", containerID)
+	waitCmd := exec.CommandContext(waitCtx, "docker", "wait", sanitizedID)
 	if waitOutput, waitErr := waitCmd.CombinedOutput(); waitErr == nil {
 		if exitCode, atoiErr := strconv.Atoi(strings.TrimSpace(string(waitOutput))); atoiErr == nil && exitCode != 0 {
-			s.logger.Info("Container completed with non-zero exit code",
+			s.logger.InfoContext(ctx, "Container completed with non-zero exit code",
 				"container", containerID,
 				"exit_code", exitCode)
 		}
@@ -140,37 +172,57 @@ func (s *ComputeSandbox) getContainerLogs(containerID string) (string, error) {
 // The executable parameter is the name of the executable file to run inside the container.
 // The function returns an ExecutionResult struct containing the container logs and resource usage metrics.
 func (s *ComputeSandbox) runInDocker(
+	ctx context.Context,
 	executable, tmpDir, executableType, apiKey, apiURL string,
 ) (ExecutionResult, error) {
 	var result ExecutionResult
 	result.StartTime = time.Now()
 
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		return result, ctx.Err()
+	}
+
 	// Start container and collect metrics
-	containerID, metrics := s.collectContainerMetrics(tmpDir, executable, executableType, apiKey, apiURL)
+	containerID, metrics := s.collectContainerMetrics(ctx, tmpDir, executable, executableType, apiKey, apiURL)
 	result.ContainerID = containerID
 	result.ResourceUsageMetrics = metrics
 
-	// Ensure container cleanup
+	// Ensure container cleanup using background context to avoid cancellation issues
 	if containerID != "" {
-		defer s.cleanupContainer(containerID)
+		defer func() {
+			cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), ContainerCleanupTimeout)
+			defer cleanupCancel()
+			s.cleanupContainer(cleanupCtx, containerID)
+		}()
+	}
+
+	// Check for context cancellation before getting logs
+	if ctx.Err() != nil {
+		return result, ctx.Err()
 	}
 
 	// Get container logs
-	logs, err := s.getContainerLogs(containerID)
+	logs, err := s.getContainerLogs(ctx, containerID)
 	if err != nil {
 		result.Logs = logs
 		return result, err
 	}
 	result.Logs = logs
 
-	// Process result files if logs exist
-	if logs != "" {
+	// Process result files if logs exist and context not cancelled
+	if logs != "" && ctx.Err() == nil {
 		resultFiles := s.parseResultFiles(logs)
 		resultFileData := make(map[string][]byte)
 
 		for _, fileName := range resultFiles {
+			// Check for context cancellation before each file read
+			if ctx.Err() != nil {
+				break
+			}
+
 			containerFilePath := filepath.Join("/usr/src/app", fileName)
-			if data, readResultErr := s.readResultFileFromContainer(containerID, containerFilePath); readResultErr == nil {
+			if data, readResultErr := s.readResultFileFromContainer(ctx, containerID, containerFilePath); readResultErr == nil {
 				resultFileData[fileName] = data
 			}
 		}

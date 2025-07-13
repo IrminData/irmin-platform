@@ -108,7 +108,7 @@ func (api *APIMiddlewares) UserPermissionMiddleware(action db.PolicyAction) fibe
 		func(c fiber.Ctx) *uint {
 			userSQID := c.Params("user")
 			if userSQID == "" {
-				api.Logger.Warn("Error getting user SQID", "userSQID", userSQID)
+				// No user parameter in URL, this is expected for index routes
 				return nil
 			}
 			userID, decodeErr := api.SQIDManager.Decode("users", userSQID)
@@ -141,7 +141,7 @@ func (api *APIMiddlewares) ConnectionPermissionMiddleware(action db.PolicyAction
 			if connectionOk {
 				return &connection.ID
 			}
-			api.Logger.Warn("Error getting connection", "connectionOk", connectionOk)
+			// Don't log warning for index routes where no specific connection is expected
 			return nil
 		},
 	)
@@ -166,7 +166,7 @@ func (api *APIMiddlewares) QueryPermissionMiddleware(action db.PolicyAction) fib
 			if storedQueryOk {
 				return &storedQuery.ID
 			}
-			api.Logger.Warn("Error getting stored query", "storedQueryOk", storedQueryOk)
+			// Don't log warning for index routes where no specific query is expected
 			return nil
 		},
 	)
@@ -182,7 +182,7 @@ func (api *APIMiddlewares) WorkflowPermissionMiddleware(action db.PolicyAction) 
 			if workflowOk {
 				return &workflow.ID
 			}
-			api.Logger.Warn("Error getting workflow", "workflowOk", workflowOk)
+			// Don't log warning for index routes where no specific workflow is expected
 			return nil
 		},
 	)
@@ -198,7 +198,7 @@ func (api *APIMiddlewares) WorkflowRunPermissionMiddleware(action db.PolicyActio
 			if workflow != nil {
 				return &workflow.ID
 			}
-			api.Logger.Warn("Error getting workflow", "workflow", nil)
+			// Don't log warning for index routes where no specific workflow is expected
 			return nil
 		},
 	)
@@ -223,7 +223,7 @@ func (api *APIMiddlewares) RepositoryPermissionMiddleware(action db.PolicyAction
 			if repository != nil {
 				return &repository.ID
 			}
-			api.Logger.Warn("Error getting repository", "repository", nil)
+			// Don't log warning for index routes where no specific repository is expected
 			return nil
 		},
 	)
@@ -239,7 +239,7 @@ func (api *APIMiddlewares) RepositoryBranchPermissionMiddleware(action db.Policy
 			if repositoryOk {
 				return &repository.ID
 			}
-			api.Logger.Warn("Error getting repository", "repositoryOk", repositoryOk)
+			// Don't log warning for index routes where no specific repository is expected
 			return nil
 		},
 	)
@@ -255,7 +255,7 @@ func (api *APIMiddlewares) RepositoryTagPermissionMiddleware(action db.PolicyAct
 			if repositoryOk {
 				return &repository.ID
 			}
-			api.Logger.Warn("Error getting repository", "repositoryOk", repositoryOk)
+			// Don't log warning for index routes where no specific repository is expected
 			return nil
 		},
 	)
@@ -271,7 +271,7 @@ func (api *APIMiddlewares) RepositoryObjectPermissionMiddleware(action db.Policy
 			if object != nil {
 				return &object.ID
 			}
-			api.Logger.Warn("Error getting repository object", "object", nil)
+			// Don't log warning for index routes where no specific object is expected
 			return nil
 		},
 	)
@@ -287,7 +287,7 @@ func (api *APIMiddlewares) RepositoryCommitPermissionMiddleware(action db.Policy
 			if repositoryOk {
 				return &repository.ID
 			}
-			api.Logger.Warn("Error getting repository", "repositoryOk", repositoryOk)
+			// Don't log warning for index routes where no specific repository is expected
 			return nil
 		},
 	)
@@ -312,7 +312,6 @@ func (api *APIMiddlewares) WorkspaceTagPermissionMiddleware(action db.PolicyActi
 			if !tagWithAssetsOk {
 				// For create operations, there's no tag in context yet, so return nil
 				// This will check workspace-level permissions instead of specific tag permissions
-				api.Logger.Warn("Error getting tag", "tagWithAssetsOk", tagWithAssetsOk)
 				return nil
 			}
 			return &tagWithAssets.Tag.ID

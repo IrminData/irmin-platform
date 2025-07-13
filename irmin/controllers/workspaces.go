@@ -337,7 +337,14 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Delete all related data (repositories, etc.)
+	// TODO: Delete all related data (repositories, workflows, connections, etc.) when workspace is deleted
+	// This should include:
+	// - All repositories owned by the workspace
+	// - All workflows within the workspace
+	// - All connections within the workspace
+	// - Any cached data or temporary files
+	// - Audit logs related to the workspace (consider retention policy)
+	// Note: This needs to be done in a transaction to ensure consistency
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{

@@ -108,44 +108,56 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 		case event := <-o.dispatchedEventQueue:
 			o.logger.InfoContext(ctx, "received dispatched event", "event", event)
 
-			// Create a new context for the dispatched event
-			dispatchedCtx := context.Background()
+			// Create a new context for the dispatched event with proper cancellation
+			dispatchedCtx, cancelDispatched := context.WithCancel(ctx)
 
 			// Execute the dispatched event
 			if err := o.ExecuteDispatchedEvent(dispatchedCtx, event); err != nil {
 				o.logger.ErrorContext(ctx, "error executing dispatched event", "error", err)
 			}
 
+			// Properly cancel the context to prevent resource leaks
+			cancelDispatched()
+
 		case event := <-o.lakefsEventQueue:
 			o.logger.InfoContext(ctx, "received lakefs event", "event", event)
 
-			// Create a new context for the lakefs event
-			lakefsCtx := context.Background()
+			// Create a new context for the lakefs event with proper cancellation
+			lakefsCtx, cancelLakefs := context.WithCancel(ctx)
 
 			// Process the lakefs event
 			if err := o.processRepositoryEvent(lakefsCtx, event); err != nil {
 				o.logger.ErrorContext(ctx, "error processing repository event", "error", err)
 			}
 
+			// Properly cancel the context to prevent resource leaks
+			cancelLakefs()
+
 		case event := <-o.workerEventQueue:
 			o.logger.InfoContext(ctx, "received worker event", "event", event)
 
-			// Create a new context for the worker event
-			workerCtx := context.Background()
+			// Create a new context for the worker event with proper cancellation
+			workerCtx, cancelWorker := context.WithCancel(ctx)
 
 			// Process the worker event
 			if err := o.processWorkerEvent(workerCtx, event); err != nil {
 				o.logger.ErrorContext(ctx, "error processing worker event", "error", err)
 			}
 
+			// Properly cancel the context to prevent resource leaks
+			cancelWorker()
+
 		case <-ticker.C:
-			// Create a new context for the trigger scan
-			triggerScanCtx := context.Background()
+			// Create a new context for the trigger scan with proper cancellation
+			triggerScanCtx, cancelTriggerScan := context.WithCancel(ctx)
 
 			// Process the time triggers
 			if err := o.processTimeTriggers(triggerScanCtx); err != nil {
 				o.logger.ErrorContext(ctx, "error processing time triggers", "error", err)
 			}
+
+			// Properly cancel the context to prevent resource leaks
+			cancelTriggerScan()
 		}
 	}
 }

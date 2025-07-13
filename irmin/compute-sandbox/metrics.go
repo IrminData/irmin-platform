@@ -1,6 +1,8 @@
 package sandbox
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"irmin-api/utils"
 	"os/exec"
@@ -33,22 +35,21 @@ type ResourceUsageMetrics struct {
 	BlockOutput float64 `json:"block_output"` // Average cumulative block output in bytes
 }
 
-func (c *ComputeSandbox) CollectMetricsFromContainer(containerID string) ResourceUsageMetrics {
+func (c *ComputeSandbox) CollectMetricsFromContainer(ctx context.Context, containerID string) ResourceUsageMetrics {
 	shortID := containerID
 	if len(containerID) > DockerShortIDLength {
 		shortID = containerID[:DockerShortIDLength]
 	}
 
-	doneChan := make(chan struct{})
-	samples, err := c.collectSamplesUntilDone(containerID, shortID, doneChan)
+	samples, err := c.collectSamplesUntilDone(ctx, containerID, shortID)
 	if err != nil {
 		// If we have any samples, use them even if we got an error
 		if len(samples) > 0 {
-			c.logger.Info("Container stopped but collected metrics",
+			c.logger.InfoContext(ctx, "Container stopped but collected metrics",
 				"container", containerID,
 				"samples", len(samples))
 		} else {
-			c.logger.Error("Error collecting metrics",
+			c.logger.ErrorContext(ctx, "Error collecting metrics",
 				"error", err,
 				"container", containerID)
 			return ResourceUsageMetrics{}
@@ -139,83 +140,121 @@ func constructDockerFilter(containerID string) (string, error) {
 	return fmt.Sprintf("id=%s", sanitizedID), nil
 }
 
-// waitForContainer waits for a container to stop and signals through the done channel.
-func (c *ComputeSandbox) waitForContainer(containerID string, doneChan chan struct{}) error {
+// waitForContainer waits for the container to finish and returns its exit code.
+func (c *ComputeSandbox) waitForContainer(ctx context.Context, containerID string) (int, error) {
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		return -1, ctx.Err()
+	}
+
+	// Sanitize container ID to prevent command injection
 	sanitizedID := sanitizeContainerID(containerID)
 	if sanitizedID == "" {
-		return fmt.Errorf("invalid container ID: %s", containerID)
+		return -1, fmt.Errorf("invalid container ID: %s", containerID)
 	}
 
-	waitCmd := exec.Command("docker", "wait", sanitizedID)
-	output, err := waitCmd.CombinedOutput()
+	// Create context with timeout for docker wait command
+	waitCtx, cancel := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancel()
+
+	// Wait for container to finish
+	cmd := exec.CommandContext(waitCtx, "docker", "wait", sanitizedID)
+	output, err := cmd.Output()
 	if err != nil {
-		// Check if container exists
-		filter, constructFilterErr := constructDockerFilter(containerID)
-		if constructFilterErr != nil {
-			return fmt.Errorf("error constructing Docker filter: %w", constructFilterErr)
+		// Check if container exists using safe filter
+		filter, filterErr := constructDockerFilter(containerID)
+		if filterErr != nil {
+			return -1, fmt.Errorf("failed to construct docker filter: %w", filterErr)
 		}
-		psCmd := exec.Command("docker", "ps", "-a", "-q", "--filter", filter)
-		var psOutput []byte
-		psOutput, psCombinedOutputErr := psCmd.CombinedOutput()
-		if psCombinedOutputErr != nil || len(strings.TrimSpace(string(psOutput))) == 0 {
-			return fmt.Errorf("container %s does not exist", containerID)
+
+		checkCtx, checkCancel := context.WithTimeout(ctx, DockerCommandTimeout)
+		defer checkCancel()
+
+		checkCmd := exec.CommandContext(checkCtx, "docker", "ps", "-a", "--filter", filter, "--format", "{{.ID}}")
+		checkOutput, checkErr := checkCmd.Output()
+		if checkErr != nil || len(strings.TrimSpace(string(checkOutput))) == 0 {
+			return -1, fmt.Errorf("container %s does not exist", containerID)
 		}
-		return fmt.Errorf("error waiting for container: %w", err)
+		return -1, fmt.Errorf("failed to wait for container %s: %w", containerID, err)
 	}
 
-	// Parse the exit code
-	exitCode, err := strconv.Atoi(strings.TrimSpace(string(output)))
+	// Parse exit code
+	exitCodeStr := strings.TrimSpace(string(output))
+	exitCode, err := strconv.Atoi(exitCodeStr)
 	if err != nil {
-		return fmt.Errorf("error parsing container exit code: %w", err)
+		return -1, fmt.Errorf("failed to parse exit code '%s': %w", exitCodeStr, err)
 	}
 
+	// Check if container exited with non-zero code
 	if exitCode != 0 {
-		// Get container logs for non-zero exit
-		logsCmd := exec.Command("docker", "logs", sanitizedID)
-		logsOutput, _ := logsCmd.CombinedOutput()
-		return fmt.Errorf("container exited with code %d\nLogs:\n%s", exitCode, string(logsOutput))
+		// Get container logs for error context using sanitized ID
+		logsCtx, logsCancel := context.WithTimeout(ctx, DockerCommandTimeout)
+		defer logsCancel()
+
+		logsCmd := exec.CommandContext(logsCtx, "docker", "logs", sanitizedID)
+		logsOutput, logsErr := logsCmd.Output()
+		if logsErr != nil {
+			return exitCode, fmt.Errorf("container %s exited with code %d", containerID, exitCode)
+		}
+
+		return exitCode, fmt.Errorf(
+			"container %s exited with code %d. Logs: %s",
+			containerID,
+			exitCode,
+			string(logsOutput),
+		)
 	}
 
-	close(doneChan)
-	return nil
+	return exitCode, nil
 }
 
-// collectStatsSample collects a single stats sample for a container.
-func (c *ComputeSandbox) collectStatsSample(containerID, shortID string) (ResourceUsage, error) {
-	// First check if container exists (not just if it's running)
+// checkContainerRunning checks if a container is still running.
+func (c *ComputeSandbox) checkContainerRunning(ctx context.Context, containerID string) (bool, error) {
 	filter, err := constructDockerFilter(containerID)
 	if err != nil {
-		return ResourceUsage{}, err
-	}
-	psCmd := exec.Command("docker", "ps", "-a", "-q", "--filter", filter)
-	psOutput, err := psCmd.CombinedOutput()
-	if err != nil {
-		return ResourceUsage{}, fmt.Errorf("error checking container status: %w", err)
-	}
-	if len(strings.TrimSpace(string(psOutput))) == 0 {
-		return ResourceUsage{}, fmt.Errorf("container %s does not exist", containerID)
+		return false, err
 	}
 
-	// Try to get stats even if container is not running
+	// Use context with timeout for the ps command
+	psCtx, cancel := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancel()
+
+	psCmd := exec.CommandContext(psCtx, "docker", "ps", "-a", "-q", "--filter", filter)
+	output, err := psCmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("error checking container status: %w", err)
+	}
+
+	return strings.TrimSpace(string(output)) != "", nil
+}
+
+// collectStatsSample collects a single stats sample from a container.
+func (c *ComputeSandbox) collectStatsSample(ctx context.Context, containerID, shortID string) (ResourceUsage, error) {
 	sanitizedID := sanitizeContainerID(containerID)
 	if sanitizedID == "" {
 		return ResourceUsage{}, fmt.Errorf("invalid container ID: %s", containerID)
 	}
-	statsCmd := exec.Command("docker", "stats", "--no-stream", sanitizedID)
-	statsOutput, err := statsCmd.CombinedOutput()
+
+	// Check if container is still running first
+	running, err := c.checkContainerRunning(ctx, containerID)
 	if err != nil {
-		// If container is not running, try to get the last stats
-		if strings.Contains(string(statsOutput), "No such container") {
-			return ResourceUsage{}, fmt.Errorf("container %s no longer exists", containerID)
-		}
-		// For other errors, try one more time with a small delay
-		time.Sleep(StatsRetryDelay)
-		statsOutput, err = statsCmd.CombinedOutput()
-		if err != nil {
-			return ResourceUsage{}, fmt.Errorf("error getting stats: %w", err)
-		}
+		return ResourceUsage{}, err
 	}
-	return c.parseDockerStats(string(statsOutput), shortID)
+	if !running {
+		return ResourceUsage{}, fmt.Errorf("container %s is no longer running", shortID)
+	}
+
+	// Use context with timeout for the stats command
+	statsCtx, cancel := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancel()
+
+	statsCmd := exec.CommandContext(statsCtx, "docker", "stats", "--no-stream", sanitizedID)
+	output, err := statsCmd.CombinedOutput()
+	if err != nil {
+		return ResourceUsage{}, fmt.Errorf("error getting container stats: %w", err)
+	}
+
+	return c.parseDockerStats(string(output), shortID)
 }
 
 // shouldSwitchToNormalSampling determines if we should switch from initial to normal sampling interval.
@@ -223,55 +262,57 @@ func (c *ComputeSandbox) shouldSwitchToNormalSampling(startTime time.Time) bool 
 	return time.Since(startTime) > InitialSamplingDuration
 }
 
-// handleSamplingError processes sampling errors and determines if we should stop sampling.
+// handleSamplingError handles errors during sampling and determines if we should continue.
 func (c *ComputeSandbox) handleSamplingError(
 	err error,
 	containerID string,
 	samplesCollected int,
 	lastSampleTime time.Time,
-	doneChan chan struct{},
 ) bool {
-	if strings.Contains(err.Error(), "is not running") ||
-		strings.Contains(err.Error(), "no longer exists") {
-		if samplesCollected > 0 || time.Since(lastSampleTime) > ContainerStopTimeout {
-			close(doneChan)
-			return true
-		}
+	// If context was cancelled, stop sampling
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return true
 	}
-	c.logger.Debug("Error collecting stats sample",
-		"error", err,
-		"container", containerID,
-		"samples_collected", samplesCollected)
+
+	// If we haven't collected any samples recently and got an error, the container might be gone
+	if samplesCollected == 0 || time.Since(lastSampleTime) > ContainerStopTimeout {
+		c.logger.Info("Container appears to have stopped", "container", containerID, "samples", samplesCollected)
+		return true
+	}
+
+	// For other errors, continue sampling with a delay
+	time.Sleep(StatsRetryDelay)
 	return false
 }
 
-// collectAndSendSample attempts to collect a sample and send it to the channel.
+// collectAndSendSample collects a stats sample and sends it to the channel.
 func (c *ComputeSandbox) collectAndSendSample(
+	ctx context.Context,
 	containerID, shortID string,
 	sampleChan chan ResourceUsage,
 ) (bool, time.Time, error) {
-	ru, err := c.collectStatsSample(containerID, shortID)
+	ru, err := c.collectStatsSample(ctx, containerID, shortID)
 	if err != nil {
-		return false, time.Now(), err
+		return false, time.Time{}, err
 	}
 
 	select {
 	case sampleChan <- ru:
-		c.logger.Debug("Collected stats sample",
-			"container", containerID)
 		return true, time.Now(), nil
+	case <-ctx.Done():
+		return false, time.Time{}, ctx.Err()
 	default:
-		// Drop sample if channel is full
+		// Channel is full, sample dropped but continue
 		return false, time.Now(), nil
 	}
 }
 
-// startSamplingGoroutine starts a goroutine that periodically collects container stats
+// startSamplingGoroutine starts a goroutine that collects container metrics samples
 // and sends them to the provided channel. It returns a cleanup function that should be
 // called when sampling is complete.
 func (c *ComputeSandbox) startSamplingGoroutine(
+	ctx context.Context,
 	containerID, shortID string,
-	doneChan chan struct{},
 	sampleChan chan ResourceUsage,
 ) func() {
 	ticker := time.NewTicker(InitialSamplingIntervalMs * time.Millisecond)
@@ -280,20 +321,21 @@ func (c *ComputeSandbox) startSamplingGoroutine(
 	samplesCollected := 0
 
 	go func() {
+		defer ticker.Stop()
 		for {
 			select {
-			case <-doneChan:
+			case <-ctx.Done():
 				return
 			case <-ticker.C:
 				if c.shouldSwitchToNormalSampling(startTime) {
 					ticker.Reset(NormalSamplingIntervalMs * time.Millisecond)
 				}
 
-				success, newLastSampleTime, err := c.collectAndSendSample(containerID, shortID, sampleChan)
+				success, newLastSampleTime, err := c.collectAndSendSample(ctx, containerID, shortID, sampleChan)
 				if success {
 					samplesCollected++
 					lastSampleTime = newLastSampleTime
-				} else if err != nil && c.handleSamplingError(err, containerID, samplesCollected, lastSampleTime, doneChan) {
+				} else if err != nil && c.handleSamplingError(err, containerID, samplesCollected, lastSampleTime) {
 					return
 				}
 			}
@@ -305,17 +347,17 @@ func (c *ComputeSandbox) startSamplingGoroutine(
 	}
 }
 
-// collectSamplesUntilDone collects stats samples until the container stops.
+// collectSamplesUntilDone collects stats samples until the container stops or context is cancelled.
 func (c *ComputeSandbox) collectSamplesUntilDone(
+	ctx context.Context,
 	containerID, shortID string,
-	doneChan chan struct{},
 ) ([]ResourceUsage, error) {
 	sampleChan := make(chan ResourceUsage, SampleChannelBufferSize)
 	errChan := make(chan error, 1)
 
 	// Start container wait goroutine
 	go func() {
-		if err := c.waitForContainer(containerID, doneChan); err != nil {
+		if _, err := c.waitForContainer(ctx, containerID); err != nil {
 			// Only send error if we haven't collected any samples
 			select {
 			case errChan <- err:
@@ -327,34 +369,46 @@ func (c *ComputeSandbox) collectSamplesUntilDone(
 	}()
 
 	// Start sampling and get cleanup function
-	cleanup := c.startSamplingGoroutine(containerID, shortID, doneChan, sampleChan)
+	cleanup := c.startSamplingGoroutine(ctx, containerID, shortID, sampleChan)
 	defer cleanup()
 
 	// Collect samples until done
 	var samples []ResourceUsage
-	for {
+	containerDone := false
+
+	for !containerDone {
 		select {
 		case err := <-errChan:
 			// If we have samples, return them even if we got an error
 			if len(samples) > 0 {
-				c.logger.Info("Container stopped but collected metrics",
+				c.logger.InfoContext(ctx, "Container stopped but collected metrics",
 					"container", containerID,
 					"samples", len(samples))
 				return samples, nil
 			}
 			return nil, err
-		case <-doneChan:
-			// Drain remaining samples
-			for {
-				select {
-				case ru := <-sampleChan:
-					samples = append(samples, ru)
-				default:
-					return samples, nil
-				}
-			}
+		case <-ctx.Done():
+			// Context cancelled, return what we have
+			c.logger.InfoContext(ctx, "Metrics collection cancelled", "container", containerID, "samples", len(samples))
+			return samples, ctx.Err()
 		case ru := <-sampleChan:
 			samples = append(samples, ru)
+		case <-time.After(ContainerStopTimeout):
+			// Check if container is still running periodically
+			running, err := c.checkContainerRunning(ctx, containerID)
+			if err != nil || !running {
+				containerDone = true
+			}
+		}
+	}
+
+	// Drain remaining samples
+	for {
+		select {
+		case ru := <-sampleChan:
+			samples = append(samples, ru)
+		default:
+			return samples, nil
 		}
 	}
 }

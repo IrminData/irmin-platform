@@ -1,6 +1,7 @@
 package sandbox
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -49,13 +50,28 @@ func (s *ComputeSandbox) parseResultFiles(logs string) []string {
 // file on the host system. It then reads the file's bytes and cleans up the temporary file.
 //
 // Parameters:
+// - ctx: context for cancellation and timeout control.
 // - containerID: the ID of the container.
 // - filePath: the full path to the file within the container.
 //
 // Returns:
 // - A byte slice containing the file's content if successful.
 // - An error if the file cannot be read.
-func (s *ComputeSandbox) readResultFileFromContainer(containerID, filePath string) ([]byte, error) {
+func (s *ComputeSandbox) readResultFileFromContainer(
+	ctx context.Context,
+	containerID, filePath string,
+) ([]byte, error) {
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
+	// Sanitize container ID to prevent command injection
+	sanitizedID := sanitizeContainerID(containerID)
+	if sanitizedID == "" {
+		return nil, fmt.Errorf("invalid container ID: %s", containerID)
+	}
+
 	// Create a temporary file to copy the container file into.
 	tmpFile, createTempFileErr := os.CreateTemp("", "docker-file-*")
 	if createTempFileErr != nil {
@@ -67,12 +83,21 @@ func (s *ComputeSandbox) readResultFileFromContainer(containerID, filePath strin
 	defer tmpFile.Close()
 
 	// Construct the source identifier for docker cp in the format "containerID:filePath".
-	source := fmt.Sprintf("%s:%s", containerID, filePath)
+	source := fmt.Sprintf("%s:%s", sanitizedID, filePath)
 
 	// Execute the docker cp command to copy the file from the container to the temporary file.
-	cpCmd := exec.Command("docker", "cp", source, tmpFile.Name())
+	// Use context with timeout for the docker cp operation
+	cpCtx, cancel := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancel()
+
+	cpCmd := exec.CommandContext(cpCtx, "docker", "cp", source, tmpFile.Name())
 	if runCpCmdErr := cpCmd.Run(); runCpCmdErr != nil {
 		return nil, fmt.Errorf("failed to copy file from container: %w", runCpCmdErr)
+	}
+
+	// Check for context cancellation before reading file
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
 	}
 
 	// Read the content of the temporary file.

@@ -130,12 +130,10 @@ func (c *Client) GetObjectContentWithRange(
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent &&
 		resp.StatusCode != http.StatusFound {
+		defer resp.Body.Close()
 		bodyBytes, readAllErr := io.ReadAll(resp.Body)
 		if readAllErr != nil {
 			return nil, fmt.Errorf("failed to read response body: %w", readAllErr)
-		}
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			return nil, fmt.Errorf("failed to close response body: %w", closeErr)
 		}
 		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(bodyBytes))
 	}

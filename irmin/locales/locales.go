@@ -44,15 +44,6 @@ func New() (*LocaleManager, error) {
 	return lm, nil
 }
 
-// MustNew creates a new LocaleManager instance and panics if there's an error.
-func MustNew() *LocaleManager {
-	lm, err := New()
-	if err != nil {
-		panic("failed to initialize locale manager: " + err.Error())
-	}
-	return lm
-}
-
 // T returns the translation for a given key from the dictionary.
 // It falls back to English if the key is not found in the current dictionary.
 func (lm *LocaleManager) T(dict Dictionary, key string) string {

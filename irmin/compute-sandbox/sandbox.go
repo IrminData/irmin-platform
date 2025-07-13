@@ -42,6 +42,11 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 ) (ExecutionResult, error) {
 	var result ExecutionResult
 
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		return result, ctx.Err()
+	}
+
 	// Initialize bucket client
 	bucket, err := bucket.CreateClient(s.env)
 	if err != nil {
@@ -49,7 +54,7 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	}
 	defer bucket.Close()
 
-	// Setup workspace files
+	// Setup workspace files with context
 	workspaceTempDir, err := s.setupWorkspaceFiles(ctx, workspaceSlug, inputFiles)
 	if err != nil {
 		return result, err
@@ -63,9 +68,22 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 		s.logger.InfoContext(ctx, "Temporary directory removed", "workspaceTempDir", workspaceTempDir)
 	}()
 
-	// Download workspace files
-	if downloadFolderErr := bucket.DownloadFolder(ctx, fmt.Sprintf("editor/%s/", workspaceSlug), workspaceTempDir); downloadFolderErr != nil {
+	// Check for context cancellation before downloading
+	if ctx.Err() != nil {
+		return result, ctx.Err()
+	}
+
+	// Download workspace files with timeout
+	downloadCtx, cancelDownload := context.WithTimeout(ctx, FileDownloadTimeout)
+	defer cancelDownload()
+
+	if downloadFolderErr := bucket.DownloadFolder(downloadCtx, fmt.Sprintf("editor/%s/", workspaceSlug), workspaceTempDir); downloadFolderErr != nil {
 		return result, downloadFolderErr
+	}
+
+	// Check for context cancellation before determining executable type
+	if ctx.Err() != nil {
+		return result, ctx.Err()
 	}
 
 	// Determine executable type and setup SDK
@@ -83,6 +101,11 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 		executableType = "python"
 	}
 
+	// Check for context cancellation before creating token
+	if ctx.Err() != nil {
+		return result, ctx.Err()
+	}
+
 	// Create temporary token
 	apiToken, err := s.createTemporaryToken(filepath.Base(workspaceTempDir), responsibleUser)
 	if err != nil {
@@ -94,8 +117,9 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 		}
 	}()
 
-	// Execute in Docker
+	// Execute in Docker with context
 	return s.runInDocker(
+		ctx,
 		executablePath,
 		workspaceTempDir,
 		executableType,
@@ -110,6 +134,11 @@ func (s *ComputeSandbox) setupWorkspaceFiles(
 	workspaceSlug string,
 	inputFiles map[string][]byte,
 ) (string, error) {
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		return "", ctx.Err()
+	}
+
 	tempDirName, err := utils.GenerateRandomString()
 	if err != nil {
 		return "", err
@@ -127,15 +156,42 @@ func (s *ComputeSandbox) setupWorkspaceFiles(
 		return "", fmt.Errorf("failed to create _input directory: %w", mkdirAllErr)
 	}
 
-	for filePath, content := range inputFiles {
-		fullPath := filepath.Join(inputDir, filePath)
-		if mkdirAllErr := os.MkdirAll(filepath.Dir(fullPath), 0750); mkdirAllErr != nil {
-			return "", fmt.Errorf("failed to create directory for input file %s: %w", filePath, mkdirAllErr)
+	// Create a channel to signal completion of file operations
+	done := make(chan error, 1)
+
+	go func() {
+		// Write input files with context checking
+		for filePath, content := range inputFiles {
+			// Check for context cancellation before each file write
+			if ctx.Err() != nil {
+				done <- ctx.Err()
+				return
+			}
+
+			fullPath := filepath.Join(inputDir, filePath)
+			if mkdirAllErr := os.MkdirAll(filepath.Dir(fullPath), 0750); mkdirAllErr != nil {
+				done <- fmt.Errorf("failed to create directory for input file %s: %w", filePath, mkdirAllErr)
+				return
+			}
+
+			// Write file - since os.WriteFile is not context-aware, we do the context check before
+			if writeFileErr := os.WriteFile(fullPath, content, 0600); writeFileErr != nil {
+				done <- fmt.Errorf("failed to write input file %s: %w", filePath, writeFileErr)
+				return
+			}
+			s.logger.InfoContext(ctx, "Input file written", "filePath", filePath)
 		}
-		if writeFileErr := os.WriteFile(fullPath, content, 0600); writeFileErr != nil {
-			return "", fmt.Errorf("failed to write input file %s: %w", filePath, writeFileErr)
+		done <- nil
+	}()
+
+	// Wait for completion or context cancellation with timeout
+	select {
+	case doneChanErr := <-done:
+		if doneChanErr != nil {
+			return workspaceTempDir, doneChanErr
 		}
-		s.logger.InfoContext(ctx, "Input file written", "filePath", filePath)
+	case <-ctx.Done():
+		return workspaceTempDir, ctx.Err()
 	}
 
 	return workspaceTempDir, nil

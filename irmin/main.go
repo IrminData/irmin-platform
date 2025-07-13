@@ -31,6 +31,8 @@ const (
 	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
 	// CacheExpirationDuration is the duration for which responses are cached.
 	CacheExpirationDuration = 5 * time.Minute
+	// CachePreflightDuration is the duration for which preflight requests are cached.
+	CachePreflightDuration = 24 * time.Hour
 )
 
 // setupDefaultTags seeds default tags for all workspaces.
@@ -188,6 +190,18 @@ func setupCORS(env *utils.CoreAPIEnv) fiber.Handler {
 	return cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
 		AllowCredentials: true,
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Accept",
+			"Authorization",
+			"X-Requested-With",
+			"Accept-Language",
+			"Referer",
+			"Cache-Control",
+		},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		MaxAge:       int(CachePreflightDuration.Seconds()),
 	})
 }
 

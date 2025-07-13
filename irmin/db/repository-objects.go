@@ -160,8 +160,11 @@ func deleteChildrenRecursively(tx *gorm.DB, parentID uint) error {
 		}
 	}
 
-	// Remove tag associations for all direct children
-	if err := tx.Where("repository_object_id IN (SELECT id FROM repository_objects WHERE parent_id = ?)", parentID).Delete(&RepositoryObjectTag{}).Error; err != nil {
+	// Remove tag associations for all direct children using a JOIN for better performance
+	if err := tx.Table("repository_object_tags").
+		Joins("JOIN repository_objects ON repository_object_tags.repository_object_id = repository_objects.id").
+		Where("repository_objects.parent_id = ?", parentID).
+		Delete(&RepositoryObjectTag{}).Error; err != nil {
 		return err
 	}
 

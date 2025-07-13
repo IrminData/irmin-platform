@@ -2,41 +2,68 @@ package sandbox
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 )
 
-// installGoSDK retrieves the Go SDK by running "go get" in the destination directory.
-// Returns an error if the installation fails.
-func (s *ComputeSandbox) installGoSDK(ctx context.Context, destDir string, projectName string) error {
-	// Prepare the module initialization command.
-	cmd := exec.Command("go", "mod", "init", projectName)
-	cmd.Dir = destDir // Set the working directory to the destination directory.
-	if cmdRunErr := cmd.Run(); cmdRunErr != nil {
-		return fmt.Errorf("failed to initialize go module: %w", cmdRunErr)
+// installGoSDK installs the Go SDK for the given workspace.
+func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, projectName string) error {
+	// Check for context cancellation before starting
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
 
-	// Set the Go version in go.mod
-	cmd = exec.Command("go", "mod", "edit", "-go="+LatestGoVersion)
-	cmd.Dir = destDir
-	if cmdRunErr := cmd.Run(); cmdRunErr != nil {
-		return fmt.Errorf("failed to set go version: %w", cmdRunErr)
+	// Initialize go module with context and timeout
+	initCtx, cancelInitCtx := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancelInitCtx()
+
+	cmd := exec.CommandContext(initCtx, "go", "mod", "init", projectName)
+	cmd.Dir = workspaceTempDir
+	if err := cmd.Run(); err != nil {
+		return err
 	}
 
-	// Prepare the SDK installation command.
-	cmd = exec.Command(
-		"go",
-		"get",
+	// Check for context cancellation before go version update
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	// Update go version in go.mod with context and timeout
+	versionCtx, cancelVersionCtx := context.WithTimeout(ctx, DockerCommandTimeout)
+	defer cancelVersionCtx()
+
+	cmd = exec.CommandContext(versionCtx, "go", "mod", "edit", "-go="+LatestGoVersion)
+	cmd.Dir = workspaceTempDir
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	// Check for context cancellation before package installation
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	// Install the three specific packages as originally intended
+	packages := []string{
 		"github.com/IrminData/irmin-sdk-go",
 		"github.com/IrminData/irmin-sdk-go/core-api",
 		"github.com/IrminData/irmin-sdk-go/utils",
-	)
-	cmd.Dir = destDir // Set the working directory to the destination directory.
-	// Run the command and capture combined output.
-	output, outputErr := cmd.CombinedOutput()
-	if outputErr != nil {
-		return fmt.Errorf("failed to get go sdk: %w, output: %s", outputErr, output)
 	}
-	s.logger.InfoContext(ctx, "Go SDK installed successfully", "destDir", destDir)
+
+	for _, pkg := range packages {
+		// Check for context cancellation before each package installation
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		getCtx, cancelGetCtx := context.WithTimeout(ctx, DockerCommandTimeout)
+		cmd = exec.CommandContext(getCtx, "go", "get", pkg)
+		cmd.Dir = workspaceTempDir
+		if err := cmd.Run(); err != nil {
+			cancelGetCtx()
+			return err
+		}
+		cancelGetCtx()
+	}
+
 	return nil
 }

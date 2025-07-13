@@ -263,7 +263,13 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// TODO: Verify that the connection is not used in any workflows
+	// TODO: Verify that the connection is not used in any workflows before deletion
+	// This should include:
+	// - Check if connection is referenced in any active workflows
+	// - Check if connection is referenced in any scheduled workflows
+	// - Check if connection is referenced in any workflow templates
+	// - Optionally provide a force delete option that removes workflow references
+	// - Return appropriate error message if connection is in use
 
 	// Delete the connection
 	deleteConnectionErr := api.DB.Transaction(func(tx *gorm.DB) error {

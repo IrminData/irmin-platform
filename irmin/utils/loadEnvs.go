@@ -68,6 +68,18 @@ func getEnv(key string, required bool, defaultVal string) (string, error) {
 	return val, nil
 }
 
+// validateJWTAlgorithm validates that the provided JWT algorithm is supported.
+func validateJWTAlgorithm(algorithm string) error {
+	if !IsJWTAlgorithmSupported(algorithm) {
+		return fmt.Errorf(
+			"unsupported JWT algorithm '%s'. Supported algorithms: %v",
+			algorithm,
+			GetSupportedJWTAlgorithms(),
+		)
+	}
+	return nil
+}
+
 // LoadRootEnv loads environment variables from the .env file in the project root.
 func LoadRootEnv() error {
 	rootDir, findErr := FindProjectRoot()
@@ -196,6 +208,11 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	clerkSigningAlgorithm, err := getEnv("CLERK_SIGNING_ALGORITHM", true, "")
 	if err != nil {
 		return nil, err
+	}
+
+	// Validate that the configured JWT algorithm is supported
+	if validateJWTAlgorithmErr := validateJWTAlgorithm(clerkSigningAlgorithm); validateJWTAlgorithmErr != nil {
+		return nil, fmt.Errorf("CLERK_SIGNING_ALGORITHM validation failed: %w", validateJWTAlgorithmErr)
 	}
 
 	novuSecretKey, err := getEnv("NOVU_SECRET_KEY", true, "")

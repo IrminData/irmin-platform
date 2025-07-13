@@ -2,14 +2,17 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"irmin-api/utils"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // RunStatusNotificationPayload represents the structure of a notification from PostgreSQL.
@@ -30,7 +33,107 @@ const (
 	maxIdleConns    = 10
 	maxOpenConns    = 50
 	connMaxLifetime = time.Hour
+
+	// Connection pool validation constants.
+	minPoolSize        = 1
+	maxPoolSize        = 100
+	minConnTimeout     = 1 * time.Second
+	maxConnTimeout     = 30 * time.Second
+	minConnMaxLifetime = 1 * time.Minute
+	maxConnMaxLifetime = 24 * time.Hour
+	minConnMaxIdleTime = 1 * time.Minute
+	maxConnMaxIdleTime = 8 * time.Hour
+
+	// Default connection pool settings.
+	defaultMaxConns        = 10
+	defaultMinConnsDivisor = 5
+	defaultConnectTimeout  = 10 * time.Second
 )
+
+// validatePoolConfig validates the connection pool configuration parameters.
+func validatePoolConfig(config *pgxpool.Config) error {
+	if config == nil {
+		return errors.New("pool configuration cannot be nil")
+	}
+
+	// Validate connection string
+	if config.ConnConfig.Host == "" {
+		return errors.New("database host cannot be empty")
+	}
+
+	if config.ConnConfig.Database == "" {
+		return errors.New("database name cannot be empty")
+	}
+
+	if config.ConnConfig.User == "" {
+		return errors.New("database user cannot be empty")
+	}
+
+	// Validate pool size limits
+	if config.MinConns < minPoolSize {
+		return fmt.Errorf("minimum connections (%d) must be at least %d", config.MinConns, minPoolSize)
+	}
+
+	if config.MaxConns > maxPoolSize {
+		return fmt.Errorf("maximum connections (%d) cannot exceed %d", config.MaxConns, maxPoolSize)
+	}
+
+	if config.MinConns > config.MaxConns {
+		return fmt.Errorf(
+			"minimum connections (%d) cannot be greater than maximum connections (%d)",
+			config.MinConns,
+			config.MaxConns,
+		)
+	}
+
+	// Validate timeout settings
+	if config.ConnConfig.ConnectTimeout < minConnTimeout {
+		return fmt.Errorf(
+			"connection timeout (%v) must be at least %v",
+			config.ConnConfig.ConnectTimeout,
+			minConnTimeout,
+		)
+	}
+
+	if config.ConnConfig.ConnectTimeout > maxConnTimeout {
+		return fmt.Errorf("connection timeout (%v) cannot exceed %v", config.ConnConfig.ConnectTimeout, maxConnTimeout)
+	}
+
+	// Validate connection lifecycle settings
+	if config.MaxConnLifetime < 0 {
+		return fmt.Errorf("connection max lifetime (%v) cannot be negative", config.MaxConnLifetime)
+	}
+
+	if config.MaxConnLifetime > 0 && config.MaxConnLifetime < minConnMaxLifetime {
+		return fmt.Errorf(
+			"connection max lifetime (%v) must be at least %v",
+			config.MaxConnLifetime,
+			minConnMaxLifetime,
+		)
+	}
+
+	if config.MaxConnLifetime > maxConnMaxLifetime {
+		return fmt.Errorf("connection max lifetime (%v) cannot exceed %v", config.MaxConnLifetime, maxConnMaxLifetime)
+	}
+
+	if config.MaxConnIdleTime < 0 {
+		return fmt.Errorf("connection max idle time (%v) cannot be negative", config.MaxConnIdleTime)
+	}
+
+	if config.MaxConnIdleTime > 0 && config.MaxConnIdleTime < minConnMaxIdleTime {
+		return fmt.Errorf(
+			"connection max idle time (%v) must be at least %v",
+			config.MaxConnIdleTime,
+			minConnMaxIdleTime,
+		)
+	}
+
+	if config.MaxConnIdleTime > maxConnMaxIdleTime {
+		return fmt.Errorf("connection max idle time (%v) cannot exceed %v", config.MaxConnIdleTime, maxConnMaxIdleTime)
+	}
+
+	return nil
+}
 
 // NewDatabase creates a new database instance.
 func NewDatabase(db *gorm.DB, connectionString string) (*Database, error) {
@@ -38,6 +141,37 @@ func NewDatabase(db *gorm.DB, connectionString string) (*Database, error) {
 	poolConfig, parseConfigErr := pgxpool.ParseConfig(connectionString)
 	if parseConfigErr != nil {
 		return nil, fmt.Errorf("failed to parse pgx connection string: %w", parseConfigErr)
+	}
+
+	// Apply sensible defaults only when values are not explicitly set
+	// Note: pgxpool.ParseConfig may already set some defaults
+
+	// Handle connection pool size defaults consistently
+	if poolConfig.MaxConns == 0 {
+		poolConfig.MaxConns = defaultMaxConns
+	}
+	if poolConfig.MinConns == 0 {
+		// Set MinConns to a reasonable fraction of MaxConns, but at least 1
+		poolConfig.MinConns = max(1, poolConfig.MaxConns/defaultMinConnsDivisor)
+	}
+
+	// Ensure MinConns doesn't exceed MaxConns after defaults are applied
+	if poolConfig.MinConns > poolConfig.MaxConns {
+		poolConfig.MinConns = poolConfig.MaxConns
+	}
+
+	// Set connection timeout default if not configured
+	if poolConfig.ConnConfig.ConnectTimeout == 0 {
+		poolConfig.ConnConfig.ConnectTimeout = defaultConnectTimeout
+	}
+
+	// Note: MaxConnLifetime and MaxConnIdleTime are left as 0 by default
+	// In pgxpool, 0 means "no limit" which is often the desired behavior
+	// Users can explicitly set these values in their connection string if needed
+
+	// Validate pool configuration before creating the pool
+	if validationErr := validatePoolConfig(poolConfig); validationErr != nil {
+		return nil, fmt.Errorf("invalid pool configuration: %w", validationErr)
 	}
 
 	pool, newPoolErr := pgxpool.NewWithConfig(context.Background(), poolConfig)
@@ -84,9 +218,35 @@ func (d *Database) ListenForNotifications(ctx context.Context, channel string) (
 		return nil, fmt.Errorf("failed to start listening on channel %s: %w", channel, execErr)
 	}
 
+	// Use sync.Once to ensure cleanup happens exactly once
+	var once sync.Once
+	// Use a channel to signal when cleanup has been performed, allowing the goroutine to exit
+	done := make(chan struct{})
+
+	cleanup := func() {
+		conn.Release()
+		// Signal that cleanup is done (safe to call multiple times due to sync.Once)
+		select {
+		case <-done:
+			// Channel already closed
+		default:
+			close(done)
+		}
+	}
+
+	// Monitor context cancellation to ensure connection is released
+	go func() {
+		select {
+		case <-ctx.Done():
+			once.Do(cleanup)
+		case <-done:
+			// Cleanup was called manually, exit goroutine
+		}
+	}()
+
 	// Return a cleanup function
 	return func() error {
-		conn.Release()
+		once.Do(cleanup)
 		return nil
 	}, nil
 }
@@ -112,7 +272,9 @@ func (d *Database) WaitForNotification(ctx context.Context, channel string) (*pg
 // InitialiseDB establishes a Postgres database connection, performs any necessary migrations,
 // and returns an error if something goes wrong.
 func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error) {
-	db, openErr := gorm.Open(postgres.Open(env.DatabaseConnectionString), &gorm.Config{})
+	db, openErr := gorm.Open(postgres.Open(env.DatabaseConnectionString), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if openErr != nil {
 		return nil, fmt.Errorf("failed to open database: %w", openErr)
 	}
