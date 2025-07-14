@@ -2,10 +2,10 @@
 
 import { useCallback } from 'react';
 
-import Button from '@/components/ui/button';
-import DocumentationForm, {
-  DocumentationFormValues,
-} from '@/components/ui/form/DocumentationForm';
+import { Button } from '@/components/ui/button';
+import SafeComponent from '@/components/ui/error/SafeComponent';
+import type { DocumentationFormValues } from '@/components/ui/form/DocumentationForm';
+import DocumentationForm from '@/components/ui/form/DocumentationForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
@@ -19,6 +19,18 @@ import { PolicyAction, PolicyResource } from '@/types/core/Policy';
  * Repository Documentation section component for displaying and updating the documentation.
  */
 const RepositoryDocumentationSection = () => {
+  return (
+    <SafeComponent
+      level='section'
+      title='Repository Documentation Error'
+      description='The repository documentation section encountered an error. Please try refreshing the page.'
+    >
+      <RepositoryDocumentationSectionContent />
+    </SafeComponent>
+  );
+};
+
+const RepositoryDocumentationSectionContent = () => {
   const { dict } = useLocale();
   const { repository } = useRepositoryContext();
   const { updateRepositoryMutation } = useRepository(repository.slug);

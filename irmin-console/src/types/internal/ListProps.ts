@@ -27,6 +27,27 @@ export type GridRow = {
 };
 
 /**
+ * Action for empty state component
+ */
+export type EmptyStateAction = {
+  /** Label for the action button */
+  label: string;
+  /** Function to call when the action is clicked */
+  onClick?: () => void;
+  /** URL to navigate to when the action is clicked */
+  href?: string;
+  /** Button variant */
+  variant?:
+    | 'default'
+    | 'ghost'
+    | 'gradient'
+    | 'gray'
+    | 'link'
+    | 'outline'
+    | 'secondary';
+};
+
+/**
  * Props for the NormalList and CardList UI components
  * @example used for displaying a list of connections, actions, exports, repositories, etc.
  */
@@ -41,4 +62,6 @@ export type ListProps = {
   hideHeaders?: boolean;
   /** Whether to hide the actions of the list */
   noActions?: boolean;
+  /** Action to show in the empty state when there are no rows */
+  emptyStateAction?: EmptyStateAction;
 };

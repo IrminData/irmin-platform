@@ -5,7 +5,7 @@
  * @param mimeType - MIME type of the content
  */
 export const downloadFile = (
-  content: string | Blob,
+  content: Blob | string,
   filename: string,
   mimeType: string
 ) => {

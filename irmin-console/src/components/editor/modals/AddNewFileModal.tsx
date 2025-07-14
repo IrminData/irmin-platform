@@ -7,8 +7,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
 import PathSelector from '@/components/editor/PathSelector';
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -27,11 +27,8 @@ import {
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
-import {
-  EditorItem,
-  IrminFileLanguage,
-  irminFileLanguages,
-} from '@/types/core/EditorItems';
+import type { EditorItem, IrminFileLanguage } from '@/types/core/EditorItems';
+import { irminFileLanguages } from '@/types/core/EditorItems';
 
 type FormData = {
   extension: IrminFileLanguage;

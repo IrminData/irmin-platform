@@ -1,6 +1,6 @@
 'use client';
 
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useIAM } from '@/context/IAMContext';

@@ -2,7 +2,7 @@
 
 import type { Metadata } from 'next';
 
-import { Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
 
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
 

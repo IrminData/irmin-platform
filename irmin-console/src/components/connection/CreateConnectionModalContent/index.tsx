@@ -1,15 +1,9 @@
 'use client';
 
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 
 import ConfigureConnection from './ConfigureConnection';
 import DefineDetails from './DefineDetails';
@@ -19,7 +13,7 @@ import SelectConnector from './SelectConnector';
 /**
  * Initial connection data state.
  */
-export const initialConnectionData: ConnectionSetup = {
+const initialConnectionData: ConnectionSetup = {
   name: '',
   description: '',
   connector: undefined,

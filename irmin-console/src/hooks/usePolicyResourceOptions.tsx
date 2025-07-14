@@ -1,16 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { policyResourceOptionsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { PolicyResourceOptions } from '@/types/core/Policy';
-
-export const policyResourceOptionsQueryKey = (workspaceSlug: string) =>
-  ['policy-resource-options', workspaceSlug] as const;
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { PolicyResourceOptions } from '@/types/core/Policy';
 
 export function usePolicyResourceOptions() {
   const { getToken } = useIAM();

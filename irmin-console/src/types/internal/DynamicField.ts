@@ -1,24 +1,24 @@
 /** Field value type */
-export type FieldValue = string | number | boolean | undefined;
+type FieldValue = boolean | number | string | undefined;
 
 /**
  * Object used to define a field for user to fill in
  */
 export interface DynamicField {
   type:
+    | 'checkbox'
+    | 'date'
+    | 'datetime'
+    | 'email'
+    | 'file'
+    | 'float'
+    | 'integer'
+    | 'password'
+    | 'radio'
+    | 'select'
     | 'text'
     | 'textarea'
-    | 'password'
-    | 'email'
-    | 'checkbox'
-    | 'integer'
-    | 'float'
-    | 'select'
-    | 'radio'
-    | 'file'
-    | 'date'
-    | 'time'
-    | 'datetime';
+    | 'time';
   label: string;
   min?: FieldValue;
   max?: FieldValue;

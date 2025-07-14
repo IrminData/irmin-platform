@@ -45,19 +45,45 @@ const FieldGroup = ({
           <div key={group.filePath} className='space-y-1'>
             {/* File Header */}
             <div
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  onToggleFileExpansion(group.filePath);
+                }
+              }}
               onClick={() => onToggleFileExpansion(group.filePath)}
-              className='bg-muted/50 hover:bg-input flex cursor-pointer items-center justify-between rounded-lg p-3 transition-colors'
+              className={`
+                flex cursor-pointer items-center justify-between rounded-lg
+                bg-muted/50 p-3 transition-colors
+                hover:bg-input
+              `}
             >
               <div className='flex items-center gap-2'>
                 {isExpanded ? (
-                  <TbChevronDown className='h-4 w-4 text-gray-500 dark:text-gray-400' />
+                  <TbChevronDown
+                    className={`
+                      size-4 text-gray-500
+                      dark:text-gray-400
+                    `}
+                  />
                 ) : (
-                  <TbChevronRight className='h-4 w-4 text-gray-500 dark:text-gray-400' />
+                  <TbChevronRight
+                    className={`
+                      size-4 text-gray-500
+                      dark:text-gray-400
+                    `}
+                  />
                 )}
                 {getFileIcon(group.fileType)}
                 <div>
                   <div className='text-sm font-medium'>{group.filePath}</div>
-                  <div className='text-xs text-gray-500 dark:text-gray-400'>
+                  <div
+                    className={`
+                      text-xs text-gray-500
+                      dark:text-gray-400
+                    `}
+                  >
                     {group.fields.length} {dict.schemaFieldMapper.fields}
                     {mappedFieldsCount > 0 &&
                       ` • ${mappedFieldsCount} ${dict.schemaFieldMapper.mapped}`}
@@ -65,7 +91,12 @@ const FieldGroup = ({
                       ` • ${dict.schemaFieldMapper.fileSize.replace('{size}', (group.size / 1024).toFixed(1))}`}
                   </div>
                   {group.description && (
-                    <div className='mt-1 text-xs text-gray-400 dark:text-gray-500'>
+                    <div
+                      className={`
+                        mt-1 text-xs text-gray-400
+                        dark:text-gray-500
+                      `}
+                    >
                       {group.description}
                     </div>
                   )}
@@ -84,24 +115,64 @@ const FieldGroup = ({
                   return (
                     <div
                       key={field.path}
-                      onClick={() =>
-                        isSource
-                          ? onSourceClick(field)
-                          : canMap && onDestinationClick(field)
-                      }
-                      className={`rounded-md border p-2 transition-all ${
-                        isSelected
-                          ? 'cursor-pointer border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950/50'
-                          : isMapped
-                            ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-950/50'
-                            : canMap
-                              ? 'cursor-pointer border-blue-300 bg-blue-50 hover:bg-blue-100 dark:border-blue-600 dark:bg-blue-950/50 dark:hover:bg-blue-950/70'
-                              : isSource
-                                ? 'cursor-pointer border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-800/50'
-                                : selectedSource
-                                  ? 'cursor-not-allowed border-gray-200 bg-gray-100 opacity-50 dark:border-gray-700 dark:bg-gray-800/50'
-                                  : 'border-gray-200 dark:border-gray-700'
-                      }`}
+                      role='button'
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          if (isSource) {
+                            onSourceClick(field);
+                          } else if (canMap) {
+                            onDestinationClick(field);
+                          }
+                        }
+                      }}
+                      onClick={() => {
+                        if (isSource) {
+                          onSourceClick(field);
+                        } else if (canMap) {
+                          onDestinationClick(field);
+                        }
+                      }}
+                      className={`
+                        rounded-md border p-2 transition-all
+                        ${
+                          isSelected
+                            ? `
+                              cursor-pointer border-blue-500 bg-blue-50
+                              dark:border-blue-400 dark:bg-blue-950/50
+                            `
+                            : isMapped
+                              ? `
+                                border-green-300 bg-green-50
+                                dark:border-green-600 dark:bg-green-950/50
+                              `
+                              : canMap
+                                ? `
+                                  cursor-pointer border-blue-300 bg-blue-50
+                                  hover:bg-blue-100
+                                  dark:border-blue-600 dark:bg-blue-950/50
+                                  dark:hover:bg-blue-950/70
+                                `
+                                : isSource
+                                  ? `
+                                    cursor-pointer border-gray-200
+                                    hover:border-gray-300 hover:bg-gray-50
+                                    dark:border-gray-700
+                                    dark:hover:border-gray-600
+                                    dark:hover:bg-gray-800/50
+                                  `
+                                  : selectedSource
+                                    ? `
+                                      cursor-not-allowed border-gray-200
+                                      bg-gray-100 opacity-50
+                                      dark:border-gray-700 dark:bg-gray-800/50
+                                    `
+                                    : `
+                                      border-gray-200
+                                      dark:border-gray-700
+                                    `
+                        }
+                      `}
                     >
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-2'>
@@ -119,11 +190,21 @@ const FieldGroup = ({
                           )}
                         </div>
                         {isMapped && (
-                          <div className='h-2 w-2 rounded-full bg-green-500 dark:bg-green-400'></div>
+                          <div
+                            className={`
+                              size-2 rounded-full bg-green-500
+                              dark:bg-green-400
+                            `}
+                          />
                         )}
                       </div>
                       {field.description && (
-                        <div className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                        <div
+                          className={`
+                            mt-1 text-xs text-gray-500
+                            dark:text-gray-400
+                          `}
+                        >
                           {field.description}
                         </div>
                       )}

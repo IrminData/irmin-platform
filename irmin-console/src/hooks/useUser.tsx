@@ -1,21 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { userQueryKey, usersQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { User } from '@/types/core/User';
-
-export const userQueryKey = (id: string, workspaceSlug: string) =>
-  ['user', id, workspaceSlug] as const;
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { User } from '@/types/core/User';
 
 export function useUser(userID: string) {
   const { workspaceSlug } = useWorkspaceContext();
   const { getToken } = useIAM();
   const { locale } = useLocale();
+  const queryClient = useQueryClient();
 
   // Query for fetching a single user by ID
   const userQuery = useQuery<IrminAPIResponse<User>>({
@@ -29,6 +28,18 @@ export function useUser(userID: string) {
         user: userID,
       });
       return user;
+    },
+    initialData: () => {
+      const users = queryClient.getQueryData<IrminAPIResponse<User[]>>(
+        usersQueryKey(workspaceSlug)
+      );
+      return users?.data?.find((u: User) => u.id === userID)
+        ? {
+            data: users.data.find((u: User) => u.id === userID),
+            success: true,
+            message: 'Cached data',
+          }
+        : undefined;
     },
     enabled: !!userID,
   });

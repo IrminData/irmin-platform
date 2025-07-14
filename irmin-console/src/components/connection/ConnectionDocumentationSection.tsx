@@ -1,6 +1,6 @@
 'use client';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import DocumentationForm from '@/components/ui/form/DocumentationForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 

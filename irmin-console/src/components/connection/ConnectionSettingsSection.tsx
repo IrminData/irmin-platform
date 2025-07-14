@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
+import type { FieldConfig } from '@/components/ui/form/SettingsForm';
+import SettingsForm from '@/components/ui/form/SettingsForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
@@ -18,7 +19,8 @@ import { useUsers } from '@/hooks/useUsers';
 import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { Tag, TagEntityType } from '@/types/core/Tag';
+import type { Tag } from '@/types/core/Tag';
+import { TagEntityType } from '@/types/core/Tag';
 
 interface ConnectionFormValues {
   name: string;
@@ -274,7 +276,12 @@ const ConnectionSettingsSection = () => {
         additionalContentRight={
           <>
             {canViewTags && (
-              <div className='border-b border-gray-200 pb-4 dark:border-gray-800'>
+              <div
+                className={`
+                  border-b border-gray-200 pb-4
+                  dark:border-gray-800
+                `}
+              >
                 <WorkspaceTagSelector
                   selectedTags={selectedTags}
                   onTagsChange={handleUpdateTags}

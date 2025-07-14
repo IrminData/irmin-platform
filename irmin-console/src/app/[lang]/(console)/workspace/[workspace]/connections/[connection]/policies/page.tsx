@@ -1,6 +1,6 @@
 import ConnectionPoliciesSection from '@/components/connection/ConnectionPoliciesSection';
 
-import { SingleConnectionLayoutParams } from '../layout';
+import type { SingleConnectionLayoutParams } from '../layout';
 
 /**
  * Page for the Connection policies

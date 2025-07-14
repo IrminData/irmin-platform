@@ -8,7 +8,7 @@ import { Inbox } from '@novu/react';
 import { dark } from '@novu/react/themes';
 import { useTheme } from 'next-themes';
 
-import { User } from '@/types/core/User';
+import type { User } from '@/types/core/User';
 
 const novuApplicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
 
@@ -35,13 +35,13 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
         },
         baseTheme: resolvedTheme === 'dark' ? dark : undefined,
       }}
-      onPrimaryActionClick={(notification) => {
-        // TODO: logic to handle primary action click
-        console.log('Primary action clicked', notification);
+      onPrimaryActionClick={(_notification) => {
+        // TODO: Implement primary action click handler - should navigate to relevant page or perform action based on notification type
+        // console.log('Primary action clicked', notification);
       }}
-      onSecondaryActionClick={(notification) => {
-        // TODO: logic to handle secondary action click
-        console.log('Secondary action clicked', notification);
+      onSecondaryActionClick={(_notification) => {
+        // TODO: Implement secondary action click handler - typically for dismissing, marking as read, or alternative action
+        // console.log('Secondary action clicked', notification);
       }}
     />
   );

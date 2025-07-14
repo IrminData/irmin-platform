@@ -1,8 +1,8 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { EditorItem, ScriptResult } from '@/types/core/EditorItems';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { ActionInputData } from '@/types/core/Workflow';
+import type { EditorItem, ScriptResult } from '@/types/core/EditorItems';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 /**
  * Interface for creating an editor item

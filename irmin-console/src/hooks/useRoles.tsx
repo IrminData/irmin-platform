@@ -1,32 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { rolesQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Role } from '@/types/core/Role';
-
-export const rolesQueryKey = ['roles'] as const;
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Role } from '@/types/core/Role';
 
 export function useRoles() {
   const { getToken } = useIAM();
   const { locale } = useLocale();
 
-  // Query for fetching all roles
-  const rolesQuery = useQuery<IrminAPIResponse<Role[]>>({
+  const rolesQuery = useQuery<IrminAPIResponse<Role[]>, Error>({
     queryKey: rolesQueryKey,
     queryFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const roles = await core.roleService.fetchRoles();
-      return roles;
+      return await core.roleService.fetchRoles();
     },
   });
 
   return {
-    // Queries
     rolesQuery,
   };
 }

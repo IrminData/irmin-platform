@@ -1,18 +1,24 @@
-import React, { createContext, useCallback, useContext } from 'react';
-import { useEffect, useState } from 'react';
+import type React from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
 import { useWorkflows } from '@/hooks/useWorkflows';
 
-import {
+import type {
   Action,
   Export,
   Import,
   Pipeline,
   WorkflowableType,
 } from '@/types/core/Workflow';
-import { WorkflowRequest } from '@/types/internal/WorkflowInput';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 /**
  * Empty workflow setup data

@@ -25,6 +25,7 @@ export const createQueryString = (
  * @param searchParams - The current searchParams string
  * @returns The new searchParams string
  */
+// eslint-disable-next-line import-x/no-unused-modules
 export const deleteQueryParam = (name: string, searchParams: string) => {
   const params = new URLSearchParams(searchParams);
   params.delete(name);

@@ -1,12 +1,13 @@
-import * as React from 'react';
+import type { ComponentProps, MouseEvent } from 'react';
 
 import { TbChevronLeft, TbChevronRight, TbDots } from 'react-icons/tb';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import type { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 
 import { cn } from '@/utils/tw';
 
-function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
+function Pagination({ className, ...props }: ComponentProps<'nav'>) {
   return (
     <nav
       role='navigation'
@@ -18,10 +19,7 @@ function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   );
 }
 
-function PaginationContent({
-  className,
-  ...props
-}: React.ComponentProps<'ul'>) {
+function PaginationContent({ className, ...props }: ComponentProps<'ul'>) {
   return (
     <ul
       data-slot='pagination-content'
@@ -31,15 +29,15 @@ function PaginationContent({
   );
 }
 
-function PaginationItem({ ...props }: React.ComponentProps<'li'>) {
+function PaginationItem({ ...props }: ComponentProps<'li'>) {
   return <li data-slot='pagination-item' {...props} />;
 }
 
-type PaginationLinkProps = {
-  isActive?: boolean;
-  label?: string;
-} & Pick<React.ComponentProps<typeof Button>, 'size'> &
-  React.ComponentProps<'a'>;
+type PaginationLinkProps = Pick<ComponentProps<typeof Button>, 'size'> &
+  ComponentProps<'a'> & {
+    isActive?: boolean;
+    label?: string;
+  };
 
 function PaginationLink({
   className,
@@ -49,6 +47,14 @@ function PaginationLink({
 }: PaginationLinkProps) {
   return (
     <a
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          props.onClick?.(e as unknown as MouseEvent<HTMLAnchorElement>);
+        }
+      }}
       aria-current={isActive ? 'page' : undefined}
       data-slot='pagination-link'
       data-active={isActive}
@@ -60,7 +66,9 @@ function PaginationLink({
         className
       )}
       {...props}
-    />
+    >
+      {props.children}
+    </a>
   );
 }
 
@@ -68,16 +76,29 @@ function PaginationPrevious({
   className,
   label,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) {
+}: ComponentProps<typeof PaginationLink>) {
   return (
     <PaginationLink
       aria-label='Go to previous page'
       size='default'
-      className={cn('gap-1 px-2.5 sm:pl-2.5', className)}
+      className={cn(
+        `
+          gap-1 px-2.5
+          sm:pl-2.5
+        `,
+        className
+      )}
       {...props}
     >
       <TbChevronLeft />
-      <span className='hidden sm:block'>{label ?? 'Previous'}</span>
+      <span
+        className={`
+          hidden
+          sm:block
+        `}
+      >
+        {label ?? 'Previous'}
+      </span>
     </PaginationLink>
   );
 }
@@ -86,24 +107,34 @@ function PaginationNext({
   className,
   label,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) {
+}: ComponentProps<typeof PaginationLink>) {
   return (
     <PaginationLink
       aria-label='Go to next page'
       size='default'
-      className={cn('gap-1 px-2.5 sm:pr-2.5', className)}
+      className={cn(
+        `
+          gap-1 px-2.5
+          sm:pr-2.5
+        `,
+        className
+      )}
       {...props}
     >
-      <span className='hidden sm:block'>{label ?? 'Next'}</span>
+      <span
+        className={`
+          hidden
+          sm:block
+        `}
+      >
+        {label ?? 'Next'}
+      </span>
       <TbChevronRight />
     </PaginationLink>
   );
 }
 
-function PaginationEllipsis({
-  className,
-  ...props
-}: React.ComponentProps<'span'>) {
+function PaginationEllipsis({ className, ...props }: ComponentProps<'span'>) {
   return (
     <span
       aria-hidden

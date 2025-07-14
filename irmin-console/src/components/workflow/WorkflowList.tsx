@@ -13,8 +13,12 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { Workflow } from '@/types/core/Workflow';
-import { GridRow } from '@/types/internal/ListProps';
+import type { Workflow } from '@/types/core/Workflow';
+import type {
+  EmptyStateAction,
+  GridRow,
+  TableRowAction,
+} from '@/types/internal/ListProps';
 
 /**
  * Table UI to display a list of Workflows of all types
@@ -24,9 +28,11 @@ import { GridRow } from '@/types/internal/ListProps';
 const WorkflowList = ({
   loading,
   workflows: items,
+  emptyStateAction,
 }: {
   loading: boolean;
   workflows: Workflow[];
+  emptyStateAction?: EmptyStateAction;
 }) => {
   const { dict } = useLocale();
   const { isResourceAllowed } = useResourceAllowed();
@@ -42,7 +48,7 @@ const WorkflowList = ({
   const rows: GridRow[] = useMemo(
     () =>
       items
-        .map((item, i) => {
+        .map((item) => {
           if (
             !isResourceAllowed(
               PolicyResource.Workflow,
@@ -53,7 +59,7 @@ const WorkflowList = ({
             return null;
           }
 
-          const tableActions = [
+          const tableActions: (TableRowAction & { hidden?: boolean })[] = [
             {
               label: dict.list.view,
               primary: true,
@@ -82,7 +88,7 @@ const WorkflowList = ({
           return {
             columns: [
               <div
-                key={`name-and-owner-${i}`}
+                key={`name-and-owner-${item.id}`}
                 className='inline-flex flex-col gap-1'
               >
                 <div className='text-base'>
@@ -101,7 +107,7 @@ const WorkflowList = ({
                 </span>
               </div>,
               <div
-                key={`status-${i}`}
+                key={`status-${item.id}`}
                 className='inline-flex flex-row items-center gap-2'
               >
                 <StatusBadge
@@ -109,8 +115,7 @@ const WorkflowList = ({
                   label={item.status ?? dict.workflow.noStatus}
                 />
                 <div className='flex flex-col'>
-                  {item.schedule &&
-                  item.schedule.triggers &&
+                  {item.schedule?.triggers &&
                   item.schedule.triggers.length > 0 ? (
                     <span className='text-xs text-gray-400'>
                       {dict.workflow.scheduled}
@@ -151,6 +156,7 @@ const WorkflowList = ({
       headers={[dict.common.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
+      emptyStateAction={emptyStateAction}
     />
   );
 };

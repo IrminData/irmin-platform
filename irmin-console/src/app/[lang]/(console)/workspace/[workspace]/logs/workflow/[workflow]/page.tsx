@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkflow } from '@/hooks/useWorkflow';
 
-import { WorkflowLogsLayoutParams } from './layout';
+import type { WorkflowLogsLayoutParams } from './layout';
 
 /**
  * Workflow Audit Logs page

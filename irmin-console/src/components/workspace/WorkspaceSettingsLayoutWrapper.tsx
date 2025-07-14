@@ -111,11 +111,27 @@ export default function WorkspaceSettingsLayoutWrapper({
   return (
     <>
       <div className='relative container mx-auto max-w-7xl'>
-        <div className='mx-auto my-8 flex w-full flex-col gap-2 px-2 md:px-4'>
-          <h1 className='font-display text-foreground/90 text-3xl font-bold sm:text-4xl lg:text-5xl'>
+        <div
+          className={`
+            mx-auto my-8 flex w-full flex-col gap-2 px-2
+            md:px-4
+          `}
+        >
+          <h1
+            className={`
+              font-display text-3xl font-bold text-foreground/90
+              sm:text-4xl
+              lg:text-5xl
+            `}
+          >
             {dict.consoleNavigation.workspaceSettings}
           </h1>
-          <p className='max-w-lg text-base text-gray-400 lg:text-lg'>
+          <p
+            className={`
+              max-w-lg text-base text-gray-400
+              lg:text-lg
+            `}
+          >
             {workspaceQuery?.data?.data?.name ?? ''}
           </p>
         </div>

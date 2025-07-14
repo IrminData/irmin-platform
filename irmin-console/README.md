@@ -23,7 +23,6 @@ NEXT_PUBLIC_BASE_URL=https://console.irmin.dev  # Base URL of the console
 NEXT_PUBLIC_WEBSITE_URL=https://irmin.dev  # Website URL
 NODE_ENV=development  # Environment type. Can be development, staging or production.
 NEXT_PUBLIC_REVALIDATE="60" # Revalidation time in seconds for ISR (Incremental Static Regeneration)
-NEXT_PUBLIC_LOG_NETWORK_REQUESTS="true" # Enable logging of network requests
 
 # Vercel
 ENABLE_EXPERIMENTAL_COREPACK=1
@@ -65,43 +64,56 @@ TEST_USER_REPOSITORY_SLUG="kpi-and-performance-metrics" # Slug of the repository
 
 ## Running the Project
 
-Lint and code formatting:
+**Validate code**
 
 ```
+# Compiles TypeScript, lints, and formats code, with auto-fixing of linting and formatting errors
+pnpm validate
+```
+
+**Other commands**
+
+```
+# Checks for TypeScript errors
+pnpm typecheck
+
+# Lints code, checking for linting and formatting errors
 pnpm lint
 
+# Lints code, with auto-fixing of linting and formatting errors
+pnpm lint:fix
+
+# Checks the code formatting
 pnpm format
-# or
+
+# Auto-fixes the code formatting
 pnpm format:fix
 ```
 
-Compile TypeScript:
+**Running the server**
 
 ```
-npx tsc --noEmit
-```
-
-Start the server:
-
-```
+# Runs the development server with HTTPS using Turbopack (default)
 pnpm dev
-```
 
-Build and start the server:
+# Same as above, but without HTTPS (not recommended)
+pnpm dev:no-https
 
-```
+# Builds the project and automatically runs the TypeDoc documentation
 pnpm build
+
+# Starts the server
 pnpm start
 ```
 
-With Docker:
+**With Docker**
 
 ```
 docker build -t irmin-console .
 docker run -p 3000:3000 irmin-console
 ```
 
-Creating Docker image:
+**Creating Docker image**
 
 ```
 docker buildx create --use # Verify Buildx is active: docker buildx ls

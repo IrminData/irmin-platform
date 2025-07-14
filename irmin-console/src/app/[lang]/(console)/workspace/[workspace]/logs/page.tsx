@@ -2,7 +2,7 @@ import { initDict } from '@/lib/initDict';
 
 import LogsSection from '@/components/logs/LogsSection';
 
-import { WorkspaceLayoutParams } from '../layout';
+import type { WorkspaceLayoutParams } from '../layout';
 
 /**
  * Workspace Audit Logs page

@@ -3,7 +3,7 @@
 import { GoWorkflow } from 'react-icons/go';
 import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 
-import QueryError from '@/components/ui/error/QueryError';
+import { QueryError } from '@/components/ui/error/QueryError';
 import LinkCard from '@/components/ui/LinkCard';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
@@ -47,7 +47,13 @@ const WorkspaceHomeSection = () => {
         <div className='flex flex-col gap-8 px-4'>
           <div className='flex w-full flex-col gap-4'>
             {workspaceQuery?.data?.data?.name ? (
-              <h2 className='font-display text-foreground/90 text-center text-3xl font-bold sm:text-4xl lg:text-5xl'>
+              <h2
+                className={`
+                  text-center font-display text-3xl font-bold text-foreground/90
+                  sm:text-4xl
+                  lg:text-5xl
+                `}
+              >
                 {workspaceQuery?.data?.data?.name ?? ''}
               </h2>
             ) : (
@@ -59,7 +65,9 @@ const WorkspaceHomeSection = () => {
               {dict.consoleHome.welcomeToWorkspace}
             </p>
           </div>
-          <div className='flex w-full flex-wrap items-center justify-center gap-8'>
+          <div
+            className={`flex w-full flex-wrap items-center justify-center gap-8`}
+          >
             <LinkCard
               href={`${workspaceUrl}/connections?create`}
               title={dict.consoleHome.createNewConnection}

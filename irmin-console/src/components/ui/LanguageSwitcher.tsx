@@ -2,7 +2,8 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { languages, Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
+import { languages } from '@/lib/dict';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import {

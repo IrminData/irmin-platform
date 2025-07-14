@@ -1,4 +1,4 @@
-import { Fragment, memo, MouseEvent } from 'react';
+import { Fragment, memo, type MouseEvent } from 'react';
 
 import {
   Pagination,
@@ -10,7 +10,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 
-export interface PaginationControlsProps {
+interface PaginationControlsProps {
   /** current active page (1-indexed) */
   currentPage: number;
   /** total number of pages */

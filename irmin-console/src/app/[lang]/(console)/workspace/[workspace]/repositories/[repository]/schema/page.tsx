@@ -1,6 +1,8 @@
 import RepositorySchemaSection from '@/components/repository/RepositorySchemaSection';
 
-import { RepositoryRouteParams } from '../layout';
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
+
+import type { RepositoryRouteParams } from '../layout';
 
 /**
  * Page for the Repository Schema viewer
@@ -9,7 +11,7 @@ import { RepositoryRouteParams } from '../layout';
  */
 export default async function RepositorySchemaPage(props: {
   params: Promise<RepositoryRouteParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const searchParams = await props.searchParams;
 

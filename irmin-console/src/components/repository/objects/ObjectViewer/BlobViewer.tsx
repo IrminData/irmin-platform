@@ -3,12 +3,11 @@
 import { memo, useEffect, useState } from 'react';
 
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
-
 import '@cyntler/react-doc-viewer/dist/index.css';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Object } from '@/types/core/Object';
+import type { Object } from '@/types/core/Object';
 
 const allowedMimeTypes = [
   'image/bmp',
@@ -71,8 +70,18 @@ const BlobViewer = ({ blob, object }: { blob: Blob; object: Object }) => {
     );
   } else {
     return (
-      <div className='w-full pt-4 pb-12 text-center text-gray-600 dark:text-gray-400'>
-        <p className='text-sm lg:text-lg'>
+      <div
+        className={`
+          w-full pt-4 pb-12 text-center text-gray-600
+          dark:text-gray-400
+        `}
+      >
+        <p
+          className={`
+            text-sm
+            lg:text-lg
+          `}
+        >
           {dict.repository.objects.unsupportedContentType}
         </p>
         <p className='text-xs'>{object.content_type}</p>

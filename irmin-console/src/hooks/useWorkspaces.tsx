@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workspacesQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -12,12 +13,10 @@ import { usePopup } from '@/context/PopupContext';
 
 import { generateTempId } from '@/utils/generateTempId';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Workspace } from '@/types/core/Workspace';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Workspace } from '@/types/core/Workspace';
 
-export const workspacesQueryKey = ['workspaces'] as const;
-
-type CreateWorkspaceInput = Pick<Workspace, 'name' | 'description'>;
+type CreateWorkspaceInput = Pick<Workspace, 'description' | 'name'>;
 
 export function useWorkspaces() {
   const { getToken } = useIAM();
@@ -137,7 +136,7 @@ export function useWorkspaces() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
+      void queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
     },
   });
 

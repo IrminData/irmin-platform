@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { SearchFilters, SearchResponse } from '@/types/core/Search';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { SearchFilters, SearchResponse } from '@/types/core/Search';
 
 /**
  * Search API service

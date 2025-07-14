@@ -4,22 +4,21 @@ import { memo, Suspense, useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
+import type { Column } from 'react-datasheet-grid';
 import {
   checkboxColumn,
-  Column,
   floatColumn,
   intColumn,
   keyColumn,
   textColumn,
 } from 'react-datasheet-grid';
-
 import 'react-datasheet-grid/dist/style.css';
 
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { TableRow } from '@/types/internal/Datatable';
+import type { TableRow } from '@/types/internal/Datatable';
 
 const DataSheet = dynamic(() => import('./DataSheet'), {
   loading: () => <LoadingSkeleton />,
@@ -61,7 +60,7 @@ function AdvancedDatatable({ items }: { items: TableRow[] }) {
 
         // Store the matched types of the columns
         const columnsWithTypes: {
-          [key: string]: 'string' | 'float' | 'int' | 'boolean' | 'date';
+          [key: string]: 'boolean' | 'date' | 'float' | 'int' | 'string';
         } = {};
 
         // Create columns from the properties
@@ -138,7 +137,7 @@ function AdvancedDatatable({ items }: { items: TableRow[] }) {
 
   if (!mounted || isLoading || !columns.length || !renderItems.length) {
     return (
-      <div className='h-full w-full'>
+      <div className='size-full'>
         <LoadingSkeleton className='h-96' />
       </div>
     );
@@ -146,11 +145,11 @@ function AdvancedDatatable({ items }: { items: TableRow[] }) {
 
   return (
     <div
-      className='h-full min-h-[500px] w-full overflow-scroll'
+      className='size-full min-h-[500px] overflow-scroll'
       id='advanced-datatable'
     >
-      <div className='relative h-full w-full'>
-        <div className='absolute h-full w-full'>
+      <div className='relative size-full'>
+        <div className='absolute size-full'>
           <Suspense fallback={<LoadingSkeleton />}>
             <DataSheet items={renderItems} columns={columns} />
           </Suspense>

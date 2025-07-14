@@ -9,9 +9,9 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
-import { GitTag } from '@/types/core/GitTag';
+import type { GitTag } from '@/types/core/GitTag';
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { GridRow } from '@/types/internal/ListProps';
+import type { EmptyStateAction, GridRow } from '@/types/internal/ListProps';
 
 interface TagListProps {
   repositoryID: string;
@@ -20,6 +20,7 @@ interface TagListProps {
   handleViewRef: (ref: string) => void;
   handleDeleteTag?: (tag: string) => void;
   loading: boolean;
+  emptyStateAction?: EmptyStateAction;
 }
 
 /**
@@ -39,26 +40,33 @@ export default function TagList({
   handleViewRef,
   handleDeleteTag,
   loading,
+  emptyStateAction,
 }: TagListProps) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
   const { isResourceAllowed } = useResourceAllowed();
   const rows: GridRow[] = useMemo(
     () =>
-      tags.map((tag, i) => ({
+      tags.map((tag) => ({
         columns: [
           <div
-            key={`tag-${i}-name`}
+            key={`tag-${tag.name}-name`}
             className='inline-flex flex-row items-center gap-2'
           >
             <p className='text-base'>{tag.name}</p>
             {tag.name === currentRef && (
-              <span className='text-foreground h-max rounded-lg bg-gray-300 px-1 text-xs leading-4 dark:bg-gray-600'>
+              <span
+                className={`
+                  h-max rounded-lg bg-gray-300 px-1 text-xs leading-4
+                  text-foreground
+                  dark:bg-gray-600
+                `}
+              >
                 {dict.repository.tags.currentlyViewing}
               </span>
             )}
           </div>,
-          <p key={`tag-${i}-ref`} className='text-xs'>
+          <p key={`tag-${tag.ref}-ref`} className='text-xs'>
             {tag.ref.substring(0, 30)}...
           </p>,
         ],
@@ -117,6 +125,7 @@ export default function TagList({
         hideHeaders={false}
         loading={loading}
         rows={rows}
+        emptyStateAction={emptyStateAction}
       />
     </div>
   );

@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useUser } from '@/hooks/useUser';
 
-import { UserLogsLayoutParams } from './layout';
+import type { UserLogsLayoutParams } from './layout';
 
 /**
  * User Audit Logs page

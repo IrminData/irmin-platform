@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -22,6 +23,24 @@ import SchemaViewer from './objects/SchemaViewer';
  * @returns The repository section component
  */
 export default function RepositorySchemaSection({
+  initialSelectedPath = '',
+}: {
+  initialSelectedPath?: string;
+}) {
+  return (
+    <SafeComponent
+      level='section'
+      title='Repository Schema Error'
+      description='The repository schema section encountered an error. Please try refreshing the page.'
+    >
+      <RepositorySchemaSectionContent
+        initialSelectedPath={initialSelectedPath}
+      />
+    </SafeComponent>
+  );
+}
+
+function RepositorySchemaSectionContent({
   initialSelectedPath = '',
 }: {
   initialSelectedPath?: string;
@@ -47,8 +66,18 @@ export default function RepositorySchemaSection({
 
   if (!canViewSchema) {
     return (
-      <div className='bg-card w-full rounded-lg border border-gray-200 px-2 py-8 dark:border-gray-800'>
-        <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
+      <div
+        className={`
+          w-full rounded-lg border border-gray-200 bg-card px-2 py-8
+          dark:border-gray-800
+        `}
+      >
+        <p
+          className={`
+            mx-auto mb-2 max-w-lg text-center text-lg text-card-foreground
+            lg:text-2xl
+          `}
+        >
           {dict.common.insufficientPermissions}
         </p>
       </div>
@@ -57,18 +86,37 @@ export default function RepositorySchemaSection({
 
   if (repositoryObjectSchemaQuery.isLoading)
     return (
-      <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
+      <div
+        className={`
+          relative container mx-auto mb-4 flex max-w-7xl flex-col px-2
+          md:px-4
+        `}
+      >
         <LoadingSkeleton />
       </div>
     );
 
   if (!repositoryObjectSchemaQuery.data?.data) {
     return (
-      <div className='bg-card w-full rounded-lg border border-gray-200 px-2 py-8 dark:border-gray-800'>
-        <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
+      <div
+        className={`
+          w-full rounded-lg border border-gray-200 bg-card px-2 py-8
+          dark:border-gray-800
+        `}
+      >
+        <p
+          className={`
+            mx-auto mb-2 max-w-lg text-center text-lg text-card-foreground
+            lg:text-2xl
+          `}
+        >
           {dict.common.error}
         </p>
-        <p className='text-card-foreground/80 mx-auto max-w-lg text-center text-sm'>
+        <p
+          className={`
+            mx-auto max-w-lg text-center text-sm text-card-foreground/80
+          `}
+        >
           {dict.repository.schema.noSchema}
         </p>
       </div>
@@ -76,7 +124,12 @@ export default function RepositorySchemaSection({
   }
 
   return (
-    <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
+    <div
+      className={`
+        relative container mx-auto mb-4 flex max-w-7xl flex-col px-2
+        md:px-4
+      `}
+    >
       <SchemaViewer
         schema={repositoryObjectSchemaQuery.data?.data}
         isExpanded={true}

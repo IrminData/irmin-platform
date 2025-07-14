@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -19,15 +20,14 @@ import type {
 } from '@/types/core/Workflow';
 import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
-import Button from '../ui/button';
 import ActionWorkflow from './Workflowable/ActionWorkflow';
 import ExportWorkflow from './Workflowable/ExportWorkflow';
 import ImportWorkflow from './Workflowable/ImportWorkflow';
 import PipelineWorkflow from './Workflowable/PipelineWorkflow';
 
 type WorkflowableUpdater =
-  | ((prevState: WorkflowRequest) => WorkflowRequest)
-  | WorkflowRequest;
+  | WorkflowRequest
+  | ((prevState: WorkflowRequest) => WorkflowRequest);
 
 /**
  * Workflow Pipeline section component
@@ -142,7 +142,10 @@ const WorkflowWorkflowableSection = ({
 
   return (
     <div
-      className='bg-background relative container mx-auto my-8 flex w-full max-w-4xl flex-col px-4 pb-6'
+      className={`
+        relative container mx-auto my-8 flex w-full max-w-4xl flex-col
+        bg-background px-4 pb-6
+      `}
       id='workflow-workflowable-section'
     >
       <div className='flex flex-col gap-4 py-4'>
@@ -173,7 +176,12 @@ const WorkflowWorkflowableSection = ({
         )}
       </div>
       {canUpdate && (
-        <div className='mt-auto border-t pt-4 dark:border-gray-800'>
+        <div
+          className={`
+            mt-auto border-t pt-4
+            dark:border-gray-800
+          `}
+        >
           <Button
             className='mb-6 inline-block w-full'
             variant='gradient'

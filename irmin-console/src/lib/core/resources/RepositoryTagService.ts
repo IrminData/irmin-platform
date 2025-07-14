@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { GitTag } from '@/types/core/GitTag';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { GitTag } from '@/types/core/GitTag';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Interface for creating a repository tag

@@ -11,8 +11,12 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { Repository } from '@/types/core/Repository';
-import { GridRow } from '@/types/internal/ListProps';
+import type { Repository } from '@/types/core/Repository';
+import type {
+  EmptyStateAction,
+  GridRow,
+  TableRowAction,
+} from '@/types/internal/ListProps';
 
 /**
  * Table UI to display a list of repositories
@@ -22,9 +26,11 @@ import { GridRow } from '@/types/internal/ListProps';
 const RepositoryList = ({
   loading,
   repositories: items,
+  emptyStateAction,
 }: {
   loading: boolean;
   repositories: Repository[];
+  emptyStateAction?: EmptyStateAction;
 }) => {
   const { dict, locale } = useLocale();
 
@@ -38,8 +44,8 @@ const RepositoryList = ({
 
   const rows: GridRow[] = useMemo(
     () =>
-      items.map((item, i) => {
-        const actions = [
+      items.map((item) => {
+        const actions: TableRowAction[] = [
           {
             label: dict.list.view,
             primary: true,
@@ -55,7 +61,7 @@ const RepositoryList = ({
         return {
           columns: [
             <div
-              key={`name-and-owner-${i}`}
+              key={`name-and-owner-${item.slug}`}
               className='inline-flex flex-col gap-1'
             >
               <div className='text-base'>
@@ -66,25 +72,40 @@ const RepositoryList = ({
                   </Badge>
                 )}
               </div>
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
+              <span
+                className={`
+                  text-sm text-gray-600
+                  dark:text-gray-400
+                `}
+              >
                 {dict.list.owner}: {item.owner.email}
                 {item.owner.company ? ` (${item.owner.company})` : ''}
               </span>
             </div>,
             <div
-              key={`status-${i}`}
+              key={`status-${item.slug}`}
               className='inline-flex flex-row items-center gap-2'
             >
               {/* Status */}
               <StatusBadge status={'private'} label={'Private'} />
               {/* Last updated and created at */}
               <div className='flex flex-col'>
-                <span className='text-xs text-gray-600 dark:text-gray-400'>
+                <span
+                  className={`
+                    text-xs text-gray-600
+                    dark:text-gray-400
+                  `}
+                >
                   {dict.list.lastUpdated}
                   {': '}
                   {new Date(item.updated_at).toLocaleString(locale)}
                 </span>
-                <span className='text-xs text-gray-600 dark:text-gray-400'>
+                <span
+                  className={`
+                    text-xs text-gray-600
+                    dark:text-gray-400
+                  `}
+                >
                   {dict.list.createdAt}
                   {': '}
                   {new Date(item.created_at).toLocaleString(locale)}
@@ -104,7 +125,12 @@ const RepositoryList = ({
           ],
           actions,
           details: (
-            <p className='max-w-sm pb-4 text-sm text-gray-600 dark:text-gray-400'>
+            <p
+              className={`
+                max-w-sm pb-4 text-sm text-gray-600
+                dark:text-gray-400
+              `}
+            >
               {item.description}
             </p>
           ),
@@ -119,6 +145,7 @@ const RepositoryList = ({
       headers={[dict.common.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
+      emptyStateAction={emptyStateAction}
     />
   );
 };

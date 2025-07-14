@@ -7,8 +7,12 @@ import NormalList from '@/components/ui/list/NormalList';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Branch } from '@/types/core/Branch';
-import { GridRow } from '@/types/internal/ListProps';
+import type { Branch } from '@/types/core/Branch';
+import type {
+  EmptyStateAction,
+  GridRow,
+  TableRowAction,
+} from '@/types/internal/ListProps';
 
 interface BranchListProps {
   currentRef: string | undefined;
@@ -17,6 +21,7 @@ interface BranchListProps {
   handleDeleteBranch?: (branch: string) => void;
   loading: boolean;
   immutable: boolean;
+  emptyStateAction?: EmptyStateAction;
 }
 
 /**
@@ -37,15 +42,16 @@ export default function BranchList({
   handleDeleteBranch,
   loading,
   immutable,
+  emptyStateAction,
 }: BranchListProps) {
   const { dict } = useLocale();
 
   const rows: GridRow[] = useMemo(
     () =>
-      branches.map((branch, i) => ({
+      branches.map((branch) => ({
         columns: [
           <div
-            key={`branch-${i}-name`}
+            key={`branch-${branch.name}-name`}
             className='inline-flex flex-row items-center gap-2'
           >
             <p className='text-base'>{branch.name}</p>
@@ -63,7 +69,7 @@ export default function BranchList({
           </div>,
         ],
         actions: (() => {
-          const addActions = [
+          const addActions: TableRowAction[] = [
             {
               label: dict.list.view,
               primary: true,
@@ -106,6 +112,7 @@ export default function BranchList({
         hideHeaders={false}
         loading={loading}
         rows={rows}
+        emptyStateAction={emptyStateAction}
       />
     </div>
   );

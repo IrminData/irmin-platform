@@ -10,8 +10,8 @@ import { BsFilePdf } from 'react-icons/bs';
 
 import ConsoleTitle from '@/components/console/ConsoleTitle';
 import { Badge } from '@/components/ui/badge';
-import Button from '@/components/ui/button';
-import QueryError from '@/components/ui/error/QueryError';
+import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
@@ -57,7 +57,12 @@ export default function DocumentationSection() {
     return (
       <div className='bg-background'>
         <div className='relative container mx-auto max-w-7xl'>
-          <div className='flex flex-col px-2 md:px-4'>
+          <div
+            className={`
+              flex flex-col px-2
+              md:px-4
+            `}
+          >
             <PageSkeleton showHeader={true} contentRows={4} className='py-8' />
           </div>
         </div>
@@ -77,7 +82,12 @@ export default function DocumentationSection() {
     return (
       <div className='bg-background'>
         <div className='relative container mx-auto max-w-7xl'>
-          <div className='flex flex-col px-2 py-8 md:px-4'>
+          <div
+            className={`
+              flex flex-col px-2 py-8
+              md:px-4
+            `}
+          >
             <QueryError
               error={errors[0]}
               onRetry={() => {
@@ -102,7 +112,12 @@ export default function DocumentationSection() {
   return (
     <div className='bg-background'>
       <div className='relative container mx-auto max-w-7xl'>
-        <div className='flex flex-col px-2 md:px-4'>
+        <div
+          className={`
+            flex flex-col px-2
+            md:px-4
+          `}
+        >
           <Button
             variant='gray'
             size='lg'
@@ -111,29 +126,53 @@ export default function DocumentationSection() {
           >
             {dict.common.download}
           </Button>
-          <div className='flex flex-col px-2 py-4 md:px-4'>
+          <div
+            className={`
+              flex flex-col px-2 py-4
+              md:px-4
+            `}
+          >
             <div ref={targetRef}>
               <div
                 ref={pdfHeaderRef}
-                className='hidden border-b-2 py-4 dark:border-gray-800'
+                className={`
+                  hidden border-b-2 py-4
+                  dark:border-gray-800
+                `}
               >
-                <div className='flex w-full flex-row items-center justify-between pb-4'>
+                <div
+                  className={`
+                    flex w-full flex-row items-center justify-between pb-4
+                  `}
+                >
                   <Image
-                    className='block h-8 w-auto dark:hidden'
+                    className={`
+                      block h-8 w-auto
+                      dark:hidden
+                    `}
                     src='/irmin-logo.svg'
                     alt='Irmin logo'
                     width={100}
                     height={100}
                   />
                   <Image
-                    className='hidden h-8 w-auto dark:block'
+                    className={`
+                      hidden h-8 w-auto
+                      dark:block
+                    `}
                     src='/irmin-logo-light.svg'
                     alt='Irmin logo'
                     width={100}
                     height={100}
                   />
                 </div>
-                <div className='text-foreground flex w-full flex-col justify-start pb-4 text-sm dark:text-gray-200'>
+                <div
+                  className={`
+                    flex w-full flex-col justify-start pb-4 text-sm
+                    text-foreground
+                    dark:text-gray-200
+                  `}
+                >
                   {profile && (
                     <p>
                       <b>{dict.documentation.createdBy}: </b>
@@ -148,12 +187,14 @@ export default function DocumentationSection() {
                   </p>
                 </div>
               </div>
-              <div className='flex flex-col gap-4 border-b-2 py-12 dark:border-gray-800'>
+              <div
+                className={`
+                  flex flex-col gap-4 border-b-2 py-12
+                  dark:border-gray-800
+                `}
+              >
                 <Badge>{dict.documentation.workspace}</Badge>
-                <ConsoleTitle
-                  title={workspace?.name ?? '-'}
-                  className='px-0 py-0'
-                />
+                <ConsoleTitle title={workspace?.name ?? '-'} className='p-0' />
                 <p className='m-0 p-0 text-sm'>
                   {workspace?.description ?? ''}
                 </p>
@@ -161,27 +202,52 @@ export default function DocumentationSection() {
               {repositoriesQuery.data?.data?.length &&
                 repositoriesQuery.data?.data?.length > 0 && (
                   <div className='flex flex-col py-6'>
-                    <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                    <h2
+                      className={`
+                        font-display text-2xl font-bold
+                        lg:text-4xl
+                      `}
+                    >
                       {dict.repository.repositories}
                     </h2>
                     <div className='w-full'>
-                      {repositoriesQuery.data?.data?.map((item, i) => (
+                      {repositoriesQuery.data?.data?.map((item) => (
                         <div
-                          key={`repository-${i}`}
-                          className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                          key={`repository-${item.id}`}
+                          className={`
+                            flex flex-col gap-2 border-b py-6
+                            dark:border-gray-800
+                          `}
                         >
                           <div className='flex flex-row justify-between gap-2'>
-                            <h3 className='text-foreground text-xl font-semibold'>
+                            <h3
+                              className={`text-xl font-semibold text-foreground`}
+                            >
                               {item.name}
                             </h3>
                             <StatusBadge status={'private'} label={'private'} />
                           </div>
-                          <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                          <p
+                            className={`
+                              max-w-sm text-sm text-gray-600
+                              dark:text-gray-400
+                            `}
+                          >
                             {item.description}
                           </p>
-                          <p className='text-sm text-gray-600 dark:text-gray-400'>
+                          <p
+                            className={`
+                              text-sm text-gray-600
+                              dark:text-gray-400
+                            `}
+                          >
                             {dict.list.owner}:{' '}
-                            <span className='text-gray-800 dark:text-gray-200'>
+                            <span
+                              className={`
+                                text-gray-800
+                                dark:text-gray-200
+                              `}
+                            >
                               {`${item.owner.first_name} ${item.owner.last_name}`}
                               {item.owner.company
                                 ? ` (${item.owner.company})`
@@ -191,7 +257,7 @@ export default function DocumentationSection() {
                           </p>
                           {item.documentation &&
                             item.documentation.length > 0 && (
-                              <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                              <div className='rounded-md bg-card px-2 pt-8 pb-6'>
                                 <MDXViewer content={item.documentation} />
                               </div>
                             )}
@@ -203,24 +269,47 @@ export default function DocumentationSection() {
               {connectionsQuery.data?.data &&
                 connectionsQuery.data.data.length > 0 && (
                   <div className='flex flex-col py-6'>
-                    <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                    <h2
+                      className={`
+                        font-display text-2xl font-bold
+                        lg:text-4xl
+                      `}
+                    >
                       {dict.connections.connections}
                     </h2>
                     <div className='w-full'>
-                      {connectionsQuery.data?.data?.map((item, i) => (
+                      {connectionsQuery.data?.data?.map((item) => (
                         <div
-                          key={`connection-${i}`}
-                          className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                          key={`connection-${item.id}`}
+                          className={`
+                            flex flex-col gap-2 border-b py-6
+                            dark:border-gray-800
+                          `}
                         >
-                          <h3 className='text-foreground text-xl font-semibold'>
+                          <h3 className='text-xl font-semibold text-foreground'>
                             {item.name}
                           </h3>
-                          <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                          <p
+                            className={`
+                              max-w-sm text-sm text-gray-600
+                              dark:text-gray-400
+                            `}
+                          >
                             {item.description}
                           </p>
-                          <p className='text-sm text-gray-600 dark:text-gray-400'>
+                          <p
+                            className={`
+                              text-sm text-gray-600
+                              dark:text-gray-400
+                            `}
+                          >
                             {dict.list.owner}:{' '}
-                            <span className='text-gray-800 dark:text-gray-200'>
+                            <span
+                              className={`
+                                text-gray-800
+                                dark:text-gray-200
+                              `}
+                            >
                               {`${item.owner.first_name} ${item.owner.last_name}`}
                               {item.owner.company
                                 ? ` (${item.owner.company})`
@@ -228,15 +317,25 @@ export default function DocumentationSection() {
                               - {item.owner.email}
                             </span>
                           </p>
-                          <p className='text-sm text-gray-600 dark:text-gray-400'>
+                          <p
+                            className={`
+                              text-sm text-gray-600
+                              dark:text-gray-400
+                            `}
+                          >
                             {dict.connectors.connector}:{' '}
-                            <span className='text-gray-800 dark:text-gray-200'>
+                            <span
+                              className={`
+                                text-gray-800
+                                dark:text-gray-200
+                              `}
+                            >
                               {item.connector.name}
                             </span>
                           </p>
                           {item.documentation &&
                             item.documentation.length > 0 && (
-                              <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                              <div className='rounded-md bg-card px-2 pt-8 pb-6'>
                                 <MDXViewer content={item.documentation} />
                               </div>
                             )}
@@ -247,20 +346,33 @@ export default function DocumentationSection() {
                 )}
               {workflows.filter((item) => item.type === 'import').length > 0 &&
                 !workflowsQuery.isLoading && (
-                  <div className='flex flex-col border-b-2 py-6 dark:border-gray-800'>
-                    <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                  <div
+                    className={`
+                      flex flex-col border-b-2 py-6
+                      dark:border-gray-800
+                    `}
+                  >
+                    <h2
+                      className={`
+                        font-display text-2xl font-bold
+                        lg:text-4xl
+                      `}
+                    >
                       {dict.workflow.importWorkflows}
                     </h2>
                     <div className='w-full'>
                       {workflows
                         .filter((item) => item.type === 'import')
-                        .map((item, i) => (
+                        .map((item) => (
                           <div
-                            key={`connection-${i}`}
-                            className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                            key={`connection-${item.id}`}
+                            className={`
+                              flex flex-col gap-2 border-b py-6
+                              dark:border-gray-800
+                            `}
                           >
                             <div className='flex flex-row justify-between gap-2'>
-                              <h3 className='text-foreground text-xl'>
+                              <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
                               <StatusBadge
@@ -268,12 +380,27 @@ export default function DocumentationSection() {
                                 label={item.status ?? dict.workflow.noStatus}
                               />
                             </div>
-                            <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                max-w-sm text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {item.description}
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.list.owner}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
                                 {`${item.owner.first_name} ${item.owner.last_name}`}
                                 {item.owner.company
                                   ? ` (${item.owner.company})`
@@ -281,11 +408,20 @@ export default function DocumentationSection() {
                                 - {item.owner.email}
                               </span>
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.workflow.schedule.workflowSchedule}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
-                                {item.schedule &&
-                                item.schedule.triggers &&
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
+                                {item.schedule?.triggers &&
                                 item.schedule.triggers.length > 0
                                   ? dict.workflow.scheduled
                                   : dict.workflow.notScheduled}
@@ -293,7 +429,9 @@ export default function DocumentationSection() {
                             </p>
                             {item.documentation &&
                               item.documentation.length > 0 && (
-                                <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                                <div
+                                  className={`rounded-md bg-card px-2 pt-8 pb-6`}
+                                >
                                   <MDXViewer content={item.documentation} />
                                 </div>
                               )}
@@ -305,19 +443,27 @@ export default function DocumentationSection() {
               {workflows.filter((item) => item.type === 'export').length > 0 &&
                 !workflowsQuery.isLoading && (
                   <div className='flex flex-col py-6'>
-                    <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                    <h2
+                      className={`
+                        font-display text-2xl font-bold
+                        lg:text-4xl
+                      `}
+                    >
                       {dict.workflow.exportWorkflows}
                     </h2>
                     <div className='w-full'>
                       {workflows
                         .filter((item) => item.type === 'export')
-                        .map((item, i) => (
+                        .map((item) => (
                           <div
-                            key={`export-${i}`}
-                            className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                            key={`export-${item.id}`}
+                            className={`
+                              flex flex-col gap-2 border-b py-6
+                              dark:border-gray-800
+                            `}
                           >
                             <div className='flex flex-row justify-between gap-2'>
-                              <h3 className='text-foreground text-xl'>
+                              <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
                               <StatusBadge
@@ -325,12 +471,27 @@ export default function DocumentationSection() {
                                 label={item.status ?? dict.workflow.noStatus}
                               />
                             </div>
-                            <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                max-w-sm text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {item.description}
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.list.owner}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
                                 {`${item.owner.first_name} ${item.owner.last_name}`}
                                 {item.owner.company
                                   ? ` (${item.owner.company})`
@@ -338,11 +499,20 @@ export default function DocumentationSection() {
                                 - {item.owner.email}
                               </span>
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.workflow.schedule.workflowSchedule}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
-                                {item.schedule &&
-                                item.schedule.triggers &&
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
+                                {item.schedule?.triggers &&
                                 item.schedule.triggers.length > 0
                                   ? dict.workflow.scheduled
                                   : dict.workflow.notScheduled}
@@ -350,7 +520,9 @@ export default function DocumentationSection() {
                             </p>
                             {item.documentation &&
                               item.documentation.length > 0 && (
-                                <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                                <div
+                                  className={`rounded-md bg-card px-2 pt-8 pb-6`}
+                                >
                                   <MDXViewer content={item.documentation} />
                                 </div>
                               )}
@@ -362,19 +534,27 @@ export default function DocumentationSection() {
               {workflows.filter((item) => item.type === 'action').length > 0 &&
                 !workflowsQuery.isLoading && (
                   <div className='flex flex-col py-6'>
-                    <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                    <h2
+                      className={`
+                        font-display text-2xl font-bold
+                        lg:text-4xl
+                      `}
+                    >
                       {dict.workflow.actionWorkflows}
                     </h2>
                     <div className='w-full'>
                       {workflows
                         .filter((item) => item.type === 'action')
-                        .map((item, i) => (
+                        .map((item) => (
                           <div
-                            key={`actions-${i}`}
-                            className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                            key={`actions-${item.id}`}
+                            className={`
+                              flex flex-col gap-2 border-b py-6
+                              dark:border-gray-800
+                            `}
                           >
                             <div className='flex flex-row justify-between gap-2'>
-                              <h3 className='text-foreground text-xl'>
+                              <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
                               <StatusBadge
@@ -382,12 +562,27 @@ export default function DocumentationSection() {
                                 label={item.status ?? dict.workflow.noStatus}
                               />
                             </div>
-                            <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                max-w-sm text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {item.description}
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.list.owner}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
                                 {`${item.owner.first_name} ${item.owner.last_name}`}
                                 {item.owner.company
                                   ? ` (${item.owner.company})`
@@ -395,11 +590,20 @@ export default function DocumentationSection() {
                                 - {item.owner.email}
                               </span>
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.workflow.schedule.workflowSchedule}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
-                                {item.schedule &&
-                                item.schedule.triggers &&
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
+                                {item.schedule?.triggers &&
                                 item.schedule.triggers.length > 0
                                   ? dict.workflow.scheduled
                                   : dict.workflow.notScheduled}
@@ -407,7 +611,9 @@ export default function DocumentationSection() {
                             </p>
                             {item.documentation &&
                               item.documentation.length > 0 && (
-                                <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                                <div
+                                  className={`rounded-md bg-card px-2 pt-8 pb-6`}
+                                >
                                   <MDXViewer content={item.documentation} />
                                 </div>
                               )}
@@ -420,19 +626,27 @@ export default function DocumentationSection() {
                 0 &&
                 !workflowsQuery.isLoading && (
                   <div className='flex flex-col py-6'>
-                    <h2 className='font-display text-2xl font-bold lg:text-4xl'>
+                    <h2
+                      className={`
+                        font-display text-2xl font-bold
+                        lg:text-4xl
+                      `}
+                    >
                       {dict.workflow.pipelineWorkflows}
                     </h2>
                     <div className='w-full'>
                       {workflows
                         .filter((item) => item.type === 'pipeline')
-                        .map((item, i) => (
+                        .map((item) => (
                           <div
-                            key={`actions-${i}`}
-                            className='flex flex-col gap-2 border-b py-6 dark:border-gray-800'
+                            key={`actions-${item.id}`}
+                            className={`
+                              flex flex-col gap-2 border-b py-6
+                              dark:border-gray-800
+                            `}
                           >
                             <div className='flex flex-row justify-between gap-2'>
-                              <h3 className='text-foreground text-xl'>
+                              <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
                               <StatusBadge
@@ -440,12 +654,27 @@ export default function DocumentationSection() {
                                 label={item.status ?? dict.workflow.noStatus}
                               />
                             </div>
-                            <p className='max-w-sm text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                max-w-sm text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {item.description}
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.list.owner}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
                                 {`${item.owner.first_name} ${item.owner.last_name}`}
                                 {item.owner.company
                                   ? ` (${item.owner.company})`
@@ -453,11 +682,20 @@ export default function DocumentationSection() {
                                 - {item.owner.email}
                               </span>
                             </p>
-                            <p className='text-sm text-gray-600 dark:text-gray-400'>
+                            <p
+                              className={`
+                                text-sm text-gray-600
+                                dark:text-gray-400
+                              `}
+                            >
                               {dict.workflow.schedule.workflowSchedule}:{' '}
-                              <span className='text-gray-800 dark:text-gray-200'>
-                                {item.schedule &&
-                                item.schedule.triggers &&
+                              <span
+                                className={`
+                                  text-gray-800
+                                  dark:text-gray-200
+                                `}
+                              >
+                                {item.schedule?.triggers &&
                                 item.schedule.triggers.length > 0
                                   ? dict.workflow.scheduled
                                   : dict.workflow.notScheduled}
@@ -465,7 +703,9 @@ export default function DocumentationSection() {
                             </p>
                             {item.documentation &&
                               item.documentation.length > 0 && (
-                                <div className='bg-card rounded-md px-2 pt-8 pb-6'>
+                                <div
+                                  className={`rounded-md bg-card px-2 pt-8 pb-6`}
+                                >
                                   <MDXViewer content={item.documentation} />
                                 </div>
                               )}

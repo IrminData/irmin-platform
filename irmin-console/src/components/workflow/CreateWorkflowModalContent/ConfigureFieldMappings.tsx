@@ -1,10 +1,11 @@
 'use client';
 
-import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import SchemaFieldMapper from '@/components/SchemaFieldMapper';
 import { getFilteredSchema } from '@/components/SchemaFieldMapper/utils';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
@@ -13,7 +14,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useConnectionSchema } from '@/hooks/useConnectionSchema';
 import { useRepositoryObjectSchema } from '@/hooks/useRepositoryObjectSchema';
 
-import { Export, FieldMapping, Import } from '@/types/core/Workflow';
+import type { Export, FieldMapping, Import } from '@/types/core/Workflow';
 
 interface ConfigureFieldMappingsProps {
   setCurrentStep: Dispatch<SetStateAction<number>>;
@@ -88,7 +89,7 @@ function ConfigureFieldMappings({
       setWorkflowData((prev) => ({
         ...prev,
         workflowable: {
-          ...(prev.workflowable as Import | Export),
+          ...(prev.workflowable as Export | Import),
           field_mappings: newMappings,
         },
       }));
@@ -115,8 +116,13 @@ function ConfigureFieldMappings({
         sourceSchema={sourceSchema ?? null}
         destinationSchema={destinationSchema ?? null}
       />
-      <div className='grow'></div>
-      <div className='mt-auto border-t pt-4 dark:border-gray-800'>
+      <div className='grow' />
+      <div
+        className={`
+          mt-auto border-t pt-4
+          dark:border-gray-800
+        `}
+      >
         <Button
           className='mb-6 inline-block w-full'
           variant='gradient'

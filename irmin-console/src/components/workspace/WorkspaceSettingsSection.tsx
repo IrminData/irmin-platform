@@ -4,8 +4,9 @@ import { useCallback } from 'react';
 
 import { TbLogout } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
-import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
+import { Button } from '@/components/ui/button';
+import type { FieldConfig } from '@/components/ui/form/SettingsForm';
+import SettingsForm from '@/components/ui/form/SettingsForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';

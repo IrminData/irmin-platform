@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 
 import { TbInfoCircle } from 'react-icons/tb';
 
@@ -30,7 +31,7 @@ import {
   PolicyResource,
 } from '@/types/core/Policy';
 
-import { PolicyFormProps } from './types';
+import type { PolicyFormProps } from './types';
 import { formatResourceName } from './utils';
 
 export default function PolicyForm({
@@ -65,7 +66,7 @@ export default function PolicyForm({
             <Tooltip>
               <TooltipTrigger>
                 <TbInfoCircle
-                  className='text-muted-foreground cursor-help'
+                  className='cursor-help text-muted-foreground'
                   size={16}
                 />
               </TooltipTrigger>
@@ -101,7 +102,7 @@ export default function PolicyForm({
             <Tooltip>
               <TooltipTrigger>
                 <TbInfoCircle
-                  className='text-muted-foreground cursor-help'
+                  className='cursor-help text-muted-foreground'
                   size={16}
                 />
               </TooltipTrigger>
@@ -143,7 +144,7 @@ export default function PolicyForm({
             <Tooltip>
               <TooltipTrigger>
                 <TbInfoCircle
-                  className='text-muted-foreground cursor-help'
+                  className='cursor-help text-muted-foreground'
                   size={16}
                 />
               </TooltipTrigger>
@@ -178,7 +179,7 @@ export default function PolicyForm({
             <Tooltip>
               <TooltipTrigger>
                 <TbInfoCircle
-                  className='text-muted-foreground cursor-help'
+                  className='cursor-help text-muted-foreground'
                   size={16}
                 />
               </TooltipTrigger>
@@ -240,7 +241,7 @@ export default function PolicyForm({
             <Tooltip>
               <TooltipTrigger>
                 <TbInfoCircle
-                  className='text-muted-foreground cursor-help'
+                  className='cursor-help text-muted-foreground'
                   size={16}
                 />
               </TooltipTrigger>

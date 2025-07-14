@@ -13,7 +13,7 @@ import {
 
 import LogFeed from '@/components/logs/LogFeed';
 import TableViewer from '@/components/repository/objects/ObjectViewer/TableViewer';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -22,9 +22,9 @@ import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
-import { ScriptResult } from '@/types/core/EditorItems';
+import type { ScriptResult } from '@/types/core/EditorItems';
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { ActionInputData } from '@/types/core/Workflow';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 /**
  * Script Results component
@@ -101,13 +101,27 @@ const ScriptResults = ({
 
   return (
     <div
-      className='bg-background flex flex-1 flex-col overflow-hidden border-t border-gray-200 dark:border-gray-800'
+      className={`
+        flex flex-1 flex-col overflow-hidden border-t border-gray-200
+        bg-background
+        dark:border-gray-800
+      `}
       id='query-results'
     >
       {/* Tab Buttons */}
-      <div className='mt-1 mb-0 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
+      <div
+        className={`
+          mt-1 mb-0 flex w-full flex-wrap justify-start gap-2 border-gray-200
+          px-2
+          md:border-b
+          dark:border-gray-800
+        `}
+      >
         <div
-          className={`border-accent ${activeTab === 'data' ? 'border-b-2' : ''}`}
+          className={`
+            border-accent
+            ${activeTab === 'data' ? 'border-b-2' : ''}
+          `}
         >
           <Button
             size='sm'
@@ -120,7 +134,10 @@ const ScriptResults = ({
           </Button>
         </div>
         <div
-          className={`border-accent ${activeTab === 'logs' ? 'border-b-2' : ''}`}
+          className={`
+            border-accent
+            ${activeTab === 'logs' ? 'border-b-2' : ''}
+          `}
         >
           <Button
             size='sm'
@@ -135,7 +152,10 @@ const ScriptResults = ({
         </div>
         {setInputFiles && (
           <div
-            className={`border-accent ${activeTab === 'inputs' ? 'border-b-2' : ''}`}
+            className={`
+              border-accent
+              ${activeTab === 'inputs' ? 'border-b-2' : ''}
+            `}
           >
             <Button
               size='sm'
@@ -170,11 +190,15 @@ const ScriptResults = ({
               className='text-xs'
               loading={processingSave}
               disabled={!canSave}
-              onClick={() => {
+              onClick={async () => {
                 setProcessingSave(true);
-                onSave().finally(() => {
+                try {
+                  await onSave();
+                } catch (error) {
+                  console.error(error);
+                } finally {
                   setProcessingSave(false);
-                });
+                }
               }}
             >
               {dict.common.save}
@@ -188,11 +212,15 @@ const ScriptResults = ({
               className='px-4 text-xs'
               loading={processingRun || loading}
               disabled={!canRun}
-              onClick={() => {
+              onClick={async () => {
                 setProcessingRun(true);
-                onRun().finally(() => {
+                try {
+                  await onRun();
+                } catch (error) {
+                  console.error(error);
+                } finally {
                   setProcessingRun(false);
-                });
+                }
               }}
             >
               {dict.query.run}

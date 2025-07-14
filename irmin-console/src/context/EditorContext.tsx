@@ -1,13 +1,21 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { editorItemQueryKey } from '@/lib/queryKeys';
 
 import AddNewFileModal from '@/components/editor/modals/AddNewFileModal';
 import AddNewFolderModal from '@/components/editor/modals/AddNewFolderModal';
@@ -20,7 +28,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { editorItemQueryKey, useEditorItems } from '@/hooks/useEditorItems';
+import { useEditorItems } from '@/hooks/useEditorItems';
 
 import {
   getItemByPath,
@@ -28,14 +36,14 @@ import {
   transformEditorItemsToFileNavItem,
 } from '@/utils/editorItems';
 
-import {
+import type {
   EditorItem,
   IrminFileLanguage,
   ScriptResult,
 } from '@/types/core/EditorItems';
-import { ActionInputData } from '@/types/core/Workflow';
-import { FileContents } from '@/types/internal/FileContents';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+import type { ActionInputData } from '@/types/core/Workflow';
+import type { FileContents } from '@/types/internal/FileContents';
+import type { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 interface EditorContextType {
   items: FileNavigatorItem[];
@@ -226,7 +234,7 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
       if (openTabs.some((tab) => tab.path === path)) continue;
       const editorItem = getItemByPath(path, currentEditorItems);
       if (!editorItem) continue;
-      openFile({ current: editorItem, original: editorItem });
+      void openFile({ current: editorItem, original: editorItem });
     }
     setInitialOpenTabs.current = true;
   }, [searchParams, currentEditorItems, openTabs, openFile]);
@@ -467,24 +475,23 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
    * @param item - File navigator item to be deleted.
    */
   const deleteItem = useCallback(
-    (item: FileNavigatorItem) => {
+    async (item: FileNavigatorItem) => {
       if (!item.current) return;
+      const editorItem = item.original ?? item.current;
+      if (!editorItem) return;
       const itemName = item.current.name || 'this item';
-      irminConfirm(
+      const confirmed = await irminConfirm(
         'warning',
         `${dict.fileNavigator.deleteConfirmation} ${itemName}?`
-      ).then(async (confirmed) => {
-        if (!confirmed) return;
-        const editorItem = item.original ?? item.current;
-        if (!editorItem) return;
-        await deleteEditorItemMutation.mutateAsync({
-          path: editorItem.path,
-        });
-        // - Close the tab if the item is a file
-        if (editorItem.type === 'file') {
-          closeTab(item.current!.path);
-        }
+      );
+      if (!confirmed) return;
+      await deleteEditorItemMutation.mutateAsync({
+        path: editorItem.path,
       });
+      // - Close the tab if the item is a file
+      if (editorItem.type === 'file') {
+        closeTab(item.current!.path);
+      }
     },
     [
       closeTab,

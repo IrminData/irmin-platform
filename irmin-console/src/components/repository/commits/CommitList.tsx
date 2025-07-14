@@ -8,8 +8,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { Commit } from '@/types/core/Commit';
-import { GridRow } from '@/types/internal/ListProps';
+import type { Commit } from '@/types/core/Commit';
+import type { GridRow } from '@/types/internal/ListProps';
 
 /**
  * Component to display a list of commits
@@ -32,16 +32,19 @@ export default function CommitList({
 
   const rows: GridRow[] = useMemo(
     () =>
-      commits.map((commit, i) => ({
+      commits.map((commit) => ({
         columns: [
           <div
-            key={`commit-${i}-message-and-author`}
+            key={`commit-${commit.hash}-message-and-author`}
             className='inline-flex flex-col gap-2'
           >
             <p className='text-sm'>{commit.message}</p>
             <p className='text-xs'>{commit.author}</p>
           </div>,
-          <div key={`commit-${i}-hash`} className='inline-flex flex-col gap-2'>
+          <div
+            key={`commit-${commit.hash}-hash`}
+            className='inline-flex flex-col gap-2'
+          >
             <p className='text-xs'>{commit.hash.substring(0, 30)}...</p>
             <p className='text-xs'>
               {new Date(commit.timestamp).toLocaleString(locale ?? 'en')}

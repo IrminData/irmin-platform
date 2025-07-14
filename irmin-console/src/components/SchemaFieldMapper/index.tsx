@@ -200,25 +200,42 @@ const SchemaFieldMapper = ({
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 py-4'>
       {/* Description Section */}
-      <p className='text-foreground/80 text-center text-sm leading-relaxed'>
+      <p className='text-center text-sm leading-relaxed text-foreground/80'>
         {description}
       </p>
 
-      <div className='grid grid-cols-1 gap-8 lg:grid-cols-2'>
+      <div
+        className={`
+          grid grid-cols-1 gap-8
+          lg:grid-cols-2
+        `}
+      >
         {/* Source Fields */}
-        <div className='border-border bg-background overflow-hidden rounded-xl border'>
-          <div className='border-border from-card border-b bg-gradient-to-r px-4 py-2'>
-            <h3 className='text-foreground text-lg font-medium'>
+        <div
+          className={`
+            overflow-hidden rounded-xl border border-border bg-background
+          `}
+        >
+          <div
+            className={`
+              border-b border-border bg-linear-to-r from-card px-4 py-2
+            `}
+          >
+            <h3 className='text-lg font-medium text-foreground'>
               {dict.schemaFieldMapper.sourceSchema}
             </h3>
           </div>
           <div className='max-h-[700px] space-y-3 overflow-y-auto p-2'>
             {sourceFileGroups.length === 0 ? (
-              <div className='flex flex-col items-center justify-center py-12 text-center'>
-                <div className='bg-muted mb-4 rounded-full p-3'>
-                  <TbArrowRight className='text-muted-foreground h-6 w-6' />
+              <div
+                className={`
+                  flex flex-col items-center justify-center py-12 text-center
+                `}
+              >
+                <div className='mb-4 rounded-full bg-muted p-3'>
+                  <TbArrowRight className='size-6 text-muted-foreground' />
                 </div>
-                <p className='text-muted-foreground text-sm'>
+                <p className='text-sm text-muted-foreground'>
                   {dict.schemaFieldMapper.sourceEmpty}
                 </p>
               </div>
@@ -238,19 +255,31 @@ const SchemaFieldMapper = ({
         </div>
 
         {/* Destination Fields */}
-        <div className='border-border bg-background overflow-hidden rounded-xl border'>
-          <div className='border-border from-card border-b bg-gradient-to-r px-4 py-2'>
-            <h3 className='text-foreground text-lg font-medium'>
+        <div
+          className={`
+            overflow-hidden rounded-xl border border-border bg-background
+          `}
+        >
+          <div
+            className={`
+              border-b border-border bg-linear-to-r from-card px-4 py-2
+            `}
+          >
+            <h3 className='text-lg font-medium text-foreground'>
               {dict.schemaFieldMapper.destinationSchema}
             </h3>
           </div>
           <div className='max-h-[700px] space-y-3 overflow-y-auto p-2'>
             {destinationFileGroups.length === 0 ? (
-              <div className='flex flex-col items-center justify-center py-12 text-center'>
-                <div className='bg-muted mb-4 rounded-full p-3'>
-                  <TbArrowRight className='text-muted-foreground h-6 w-6' />
+              <div
+                className={`
+                  flex flex-col items-center justify-center py-12 text-center
+                `}
+              >
+                <div className='mb-4 rounded-full bg-muted p-3'>
+                  <TbArrowRight className='size-6 text-muted-foreground' />
                 </div>
-                <p className='text-muted-foreground text-sm'>
+                <p className='text-sm text-muted-foreground'>
                   {dict.schemaFieldMapper.destinationEmpty}
                 </p>
               </div>
@@ -271,22 +300,41 @@ const SchemaFieldMapper = ({
       </div>
 
       {/* Mappings */}
-      <div className='border-border bg-background overflow-hidden rounded-xl border'>
-        <div className='border-border from-irmin-green-100 to-irmin-teal-100 border-b bg-gradient-to-r px-6 py-4'>
-          <h3 className='text-foreground text-lg font-medium'>
+      <div
+        className={`
+          overflow-hidden rounded-xl border border-border bg-background
+        `}
+      >
+        <div
+          className={`
+            border-b border-border bg-linear-to-r from-irmin-green-100
+            to-irmin-teal-100 px-6 py-4
+          `}
+        >
+          <h3 className='text-lg font-medium text-foreground'>
             {dict.schemaFieldMapper.fieldMappings}
-            <span className='bg-irmin-green-200 text-irmin-green-700 ml-2 inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
+            <span
+              className={`
+                ml-2 inline-flex items-center justify-center rounded-full
+                bg-irmin-green-200 px-2.5 py-0.5 text-sm font-medium
+                text-irmin-green-700
+              `}
+            >
               {mappingsCount}
             </span>
           </h3>
         </div>
         <div className='max-h-96 space-y-3 overflow-y-auto p-4'>
           {!hasMappings ? (
-            <div className='flex flex-col items-center justify-center py-12 text-center'>
-              <div className='bg-muted mb-4 rounded-full p-3'>
-                <TbArrowRight className='text-muted-foreground h-6 w-6' />
+            <div
+              className={`
+                flex flex-col items-center justify-center py-12 text-center
+              `}
+            >
+              <div className='mb-4 rounded-full bg-muted p-3'>
+                <TbArrowRight className='size-6 text-muted-foreground' />
               </div>
-              <p className='text-muted-foreground text-sm'>
+              <p className='text-sm text-muted-foreground'>
                 {dict.schemaFieldMapper.noMappingsYet}
               </p>
             </div>
@@ -295,31 +343,50 @@ const SchemaFieldMapper = ({
               {mappings.map((mapping) => (
                 <div
                   key={mapping.destination_path}
-                  className='group border-border from-card to-background hover: relative rounded-lg border bg-gradient-to-r p-4 transition-all duration-200'
+                  className={`
+                    group relative rounded-lg border border-border
+                    bg-linear-to-r from-card to-background p-4 transition-all
+                    duration-200
+                  `}
                 >
                   <Button
                     variant='ghost'
                     size='sm'
                     onClick={() => removeMapping(mapping.destination_path)}
-                    className='hover:bg-destructive/10 hover:text-destructive absolute top-2 right-2 h-6 w-6 p-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100'
+                    className={`
+                      absolute top-2 right-2 size-6 p-0 opacity-0
+                      transition-opacity duration-200
+                      group-hover:opacity-100
+                      hover:bg-destructive/10 hover:text-destructive
+                    `}
                   >
-                    <TbX className='h-3 w-3' />
+                    <TbX className='size-3' />
                   </Button>
                   <div className='space-y-3 pr-8'>
                     <div className='space-y-1 text-xs'>
-                      <div className='text-muted-foreground font-medium'>
+                      <div className='font-medium text-muted-foreground'>
                         {mapping.source_path}
                       </div>
-                      <div className='text-muted-foreground font-medium'>
+                      <div className='font-medium text-muted-foreground'>
                         {mapping.destination_path}
                       </div>
                     </div>
                     <div className='flex items-center gap-3 text-sm'>
-                      <span className='bg-irmin-blue-100 text-irmin-blue-700 rounded px-2 py-1 font-medium'>
+                      <span
+                        className={`
+                          rounded bg-irmin-blue-100 px-2 py-1 font-medium
+                          text-irmin-blue-700
+                        `}
+                      >
                         {mapping.source_field}
                       </span>
-                      <TbArrowRight className='text-primary h-4 w-4' />
-                      <span className='bg-irmin-green-100 text-irmin-green-700 rounded px-2 py-1 font-medium'>
+                      <TbArrowRight className='size-4 text-primary' />
+                      <span
+                        className={`
+                          rounded bg-irmin-green-100 px-2 py-1 font-medium
+                          text-irmin-green-700
+                        `}
+                      >
                         {mapping.destination_field}
                       </span>
                     </div>

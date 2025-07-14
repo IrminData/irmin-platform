@@ -4,7 +4,8 @@ import { memo } from 'react';
 
 import { IoClose } from 'react-icons/io5';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -31,7 +32,7 @@ const Confirm = ({
   message,
   onSelect,
 }: {
-  type: 'warning' | 'info';
+  type: 'info' | 'warning';
   message: string;
   onSelect: (_confirmed: boolean) => void;
 }) => {
@@ -39,12 +40,19 @@ const Confirm = ({
   return (
     <div
       id='confirm'
-      className='animate-slideInUp fixed bottom-[20px] z-50 flex w-screen justify-center p-4 align-middle'
+      className={`
+        fixed bottom-[20px] z-50 flex w-screen animate-in justify-center p-4
+        align-middle fade-in
+      `}
     >
       <div
-        className={`dark:bg-irmin_black flex w-[400px] max-w-[90vw] flex-col items-start justify-between rounded-lg border bg-gray-50 p-4 shadow-md ${type === 'warning' ? 'border-destructive' : ''} ${
-          type === 'info' ? 'border-irmin_blue' : ''
-        }`}
+        className={`
+          flex w-[400px] max-w-[90vw] flex-col items-start justify-between
+          rounded-lg border bg-gray-50 p-4 shadow-md
+          dark:bg-irmin-black-500
+          ${type === 'warning' ? `border-destructive` : ''}
+          ${type === 'info' ? 'border-irmin-blue-500' : ''}
+        `}
       >
         <div className='flex w-full flex-row items-center justify-between'>
           <p className='text-base font-normal'>{message}</p>

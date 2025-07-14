@@ -16,7 +16,7 @@ import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
 import { constructBaseUrl } from '@/utils/constructBaseUrl';
 import { createQueryString } from '@/utils/queryParams';
 
-import { Repository } from '@/types/core/Repository';
+import type { Repository } from '@/types/core/Repository';
 
 /**
  * Repository context props

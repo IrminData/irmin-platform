@@ -5,13 +5,44 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
  * Displays multiple skeleton sections with items to simulate search results
  */
 export default function SearchResultsSkeleton() {
+  // Unique keys for each repetitive element
+  const sectionKeys = [...Array(3)].map(
+    (_, index) => `skeleton-section-${index}`
+  );
+  const itemKeys = [...Array(3)].map((sectionIndex) =>
+    [...Array(2 + sectionIndex)].map(
+      (_, itemIndex) => `skeleton-item-${sectionIndex}-${itemIndex}`
+    )
+  );
+
   return (
-    <div className='px-2 pt-2 lg:px-4 lg:pt-4'>
+    <div
+      className={`
+        px-2 pt-2
+        lg:px-4 lg:pt-4
+      `}
+    >
       {[...Array(3)].map((_, sectionIndex) => (
-        <div key={`skeleton-section-${sectionIndex}`} className='mb-2 lg:mb-4'>
+        <div
+          key={sectionKeys[sectionIndex]}
+          className={`
+            mb-2
+            lg:mb-4
+          `}
+        >
           {/* Section header skeleton */}
-          <div className='mb-1 flex items-center pl-2 lg:mb-2'>
-            <div className='h-5 w-5 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+          <div
+            className={`
+              mb-1 flex items-center pl-2
+              lg:mb-2
+            `}
+          >
+            <div
+              className={`
+                size-5 animate-pulse rounded bg-gray-200
+                dark:bg-gray-800
+              `}
+            />
             <LoadingSkeleton className='ml-2 h-4 w-24' />
           </div>
 
@@ -19,8 +50,8 @@ export default function SearchResultsSkeleton() {
           <ul className='space-y-1'>
             {[...Array(2 + sectionIndex)].map((_, itemIndex) => (
               <li
-                key={`skeleton-item-${sectionIndex}-${itemIndex}`}
-                className='rounded-lg px-2 py-2'
+                key={itemKeys[sectionIndex][itemIndex]}
+                className='rounded-lg p-2'
               >
                 <div className='space-y-2'>
                   <LoadingSkeleton className='h-4 w-full max-w-xs' />

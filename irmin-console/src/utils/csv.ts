@@ -3,7 +3,7 @@
  * @param array - The array of objects to convert.
  * @returns The CSV string representation of the array.
  */
-export function convertArrayOfObjectsToCSV<T extends Record<string, unknown>>(
+function convertArrayOfObjectsToCSV<T extends Record<string, unknown>>(
   array: T[]
 ): string {
   if (array.length === 0) return '';

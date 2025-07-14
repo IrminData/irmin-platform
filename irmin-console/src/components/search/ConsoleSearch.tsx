@@ -19,7 +19,7 @@ import {
   TbUser,
 } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -31,11 +31,9 @@ import { useWorkspaceSearch } from '@/hooks/useWorkspaceSearch';
 
 import { convertSearchResultToConsoleItem } from '@/utils/search';
 
-import { SearchResult } from '@/types/core/Search';
-import {
-  ConsoleSearchItem,
-  ConsoleSearchItemType,
-} from '@/types/internal/ConsoleSearch';
+import type { SearchResult } from '@/types/core/Search';
+import type { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
+import { ConsoleSearchItemType } from '@/types/internal/ConsoleSearch';
 
 import SearchResultsSkeleton from './SearchResultsSkeleton';
 
@@ -256,10 +254,19 @@ export default function ConsoleSearch() {
   return (
     <div ref={searchRef} className='relative' id='console-search'>
       <form
-        className='relative flex h-full w-full flex-row items-center rounded-full border border-gray-200 transition-all dark:border-gray-800'
+        className={`
+          relative flex size-full flex-row items-center rounded-full border
+          border-gray-200 transition-all
+          dark:border-gray-800
+        `}
         onFocus={() => setIsFocused(true)} // Set focus state on input focus
       >
-        <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
+        <div
+          className={`
+            pointer-events-none absolute inset-y-0 start-0 flex items-center
+            ps-3
+          `}
+        >
           <TbSearch className='text-gray-500' />
         </div>
         <input
@@ -280,12 +287,32 @@ export default function ConsoleSearch() {
               );
             }
           }}
-          className='dark:bg-irmin_black/50 block w-full rounded-full bg-gray-50/50 px-4 py-3 ps-10 pr-16 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 group-focus-within:placeholder:visible focus:outline-hidden md:placeholder:visible lg:text-sm dark:text-white'
+          className={`
+            block w-full rounded-full bg-gray-50/50 px-4 py-3 ps-10 pr-16
+            text-xs text-gray-900
+            placeholder:invisible placeholder:opacity-40
+            group-focus-within:placeholder:visible
+            focus:outline-hidden
+            md:placeholder:visible
+            lg:text-sm
+            dark:bg-irmin-black-500/50 dark:text-white
+          `}
           placeholder={dict.consoleNavigation.searchPlaceholder}
         />
         {/* Keyboard shortcut indicator */}
-        <div className='pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3'>
-          <div className='hidden items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 md:flex dark:bg-gray-800 dark:text-gray-400'>
+        <div
+          className={`
+            pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3
+          `}
+        >
+          <div
+            className={`
+              hidden items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5
+              text-xs text-gray-500
+              md:flex
+              dark:bg-gray-800 dark:text-gray-400
+            `}
+          >
             <span>{isMac ? '⌘' : 'Ctrl'}</span>
             <span>K</span>
           </div>
@@ -294,15 +321,42 @@ export default function ConsoleSearch() {
 
       {/* Results Modal */}
       {debouncedQuery.length > 2 && isFocused && (
-        <div className='bg-background absolute mt-1 flex max-h-[calc(100vh-200px)] w-full flex-col rounded-xl border border-gray-200 shadow-lg dark:border-gray-900'>
+        <div
+          className={`
+            absolute mt-1 flex max-h-[calc(100vh-200px)] w-full flex-col
+            rounded-xl border border-gray-200 bg-background shadow-lg
+            dark:border-gray-900
+          `}
+        >
           <div className='flex-1 overflow-y-scroll'>
             {results.length > 0 ? (
-              <div className='px-2 pt-2 lg:px-4 lg:pt-4'>
+              <div
+                className={`
+                  px-2 pt-2
+                  lg:px-4 lg:pt-4
+                `}
+              >
                 {Object.keys(groupedResults).map((type) => (
-                  <div key={type} className='mb-2 lg:mb-4'>
-                    <div className='mb-1 flex items-center pl-2 opacity-70 lg:mb-2'>
+                  <div
+                    key={type}
+                    className={`
+                      mb-2
+                      lg:mb-4
+                    `}
+                  >
+                    <div
+                      className={`
+                        mb-1 flex items-center pl-2 opacity-70
+                        lg:mb-2
+                      `}
+                    >
                       {getIconForType(type as ConsoleSearchItemType)}
-                      <span className='ml-2 text-sm lg:text-base'>
+                      <span
+                        className={`
+                          ml-2 text-sm
+                          lg:text-base
+                        `}
+                      >
                         {type === 'workflow' && dict.workflow.workflows}
                         {type === 'connection' && dict.connections.connections}
                         {type === 'repository' && dict.repository.repositories}
@@ -317,10 +371,15 @@ export default function ConsoleSearch() {
                     </div>
                     <ul>
                       {groupedResults[type as ConsoleSearchItemType].map(
-                        (result, idx) => (
+                        (result) => (
                           <li
-                            key={`search-result-${type}-${idx}`}
-                            className='rounded-lg px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 lg:text-base dark:text-gray-300 dark:hover:bg-gray-700'
+                            key={`search-result-${type}-${result.link}-${result.title}`}
+                            className={`
+                              rounded-lg p-2 text-sm text-gray-600
+                              hover:bg-gray-100
+                              lg:text-base
+                              dark:text-gray-300 dark:hover:bg-gray-700
+                            `}
                           >
                             <Link
                               href={result.link}
@@ -342,9 +401,20 @@ export default function ConsoleSearch() {
             ) : isStaticLoading || isWorkspaceLoading ? (
               <SearchResultsSkeleton />
             ) : (
-              <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
-                <LuSearchX className='h-12 w-12 text-gray-400' />
-                <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>
+              <div
+                className={`
+                  flex size-full min-h-96 flex-col items-center justify-center
+                  gap-4
+                `}
+              >
+                <LuSearchX className='size-12 text-gray-400' />
+                <div
+                  className={`
+                    text-base text-gray-600
+                    lg:text-lg
+                    dark:text-gray-300
+                  `}
+                >
                   {dict.common.noResults}
                 </div>
               </div>
@@ -353,7 +423,12 @@ export default function ConsoleSearch() {
 
           {/* Advanced Search Link (only in workspace) */}
           {workspaceSlug && (
-            <div className='border-t border-gray-200 p-2 dark:border-gray-700'>
+            <div
+              className={`
+                border-t border-gray-200 p-2
+                dark:border-gray-700
+              `}
+            >
               <Button
                 variant='gray'
                 icon={<TbSearch size={16} />}

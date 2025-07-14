@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { TbPlus } from 'react-icons/tb';
 
@@ -14,7 +14,7 @@ import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import PolicyTable from './PolicyTable';
-import { PolicyEditorProps } from './types';
+import type { PolicyEditorProps } from './types';
 import { usePolicyForm } from './usePolicyForm';
 
 export default function PolicyEditor({
@@ -69,7 +69,7 @@ export default function PolicyEditor({
     return (
       <div className='flex flex-col gap-4 p-4'>
         <div className='flex items-center justify-center py-8'>
-          <div className='text-muted-foreground text-lg'>
+          <div className='text-lg text-muted-foreground'>
             {dict.common.insufficientPermissions}
           </div>
         </div>
@@ -84,13 +84,13 @@ export default function PolicyEditor({
           <h2 className='text-lg font-semibold'>
             {title || dict.policy.title}
           </h2>
-          <p className='text-muted-foreground text-sm'>
+          <p className='text-sm text-muted-foreground'>
             {description || dict.policy.description}
           </p>
         </div>
         {allowCreate && canCreate && (
           <Button onClick={showCreateForm} loading={isCreating}>
-            <TbPlus className='mr-2 h-4 w-4' />
+            <TbPlus className='mr-2 size-4' />
             {dict.policy.addPolicy}
           </Button>
         )}
@@ -103,11 +103,11 @@ export default function PolicyEditor({
           </div>
         ) : policiesError ? (
           <div className='flex items-center justify-center py-8'>
-            <div className='text-destructive text-lg'>{dict.policy.error}</div>
+            <div className='text-lg text-destructive'>{dict.policy.error}</div>
           </div>
         ) : policies.length === 0 ? (
           <div className='flex items-center justify-center py-8'>
-            <div className='text-muted-foreground text-lg'>
+            <div className='text-lg text-muted-foreground'>
               {dict.policy.noPolicies}
             </div>
           </div>

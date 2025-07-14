@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
+import type { UseQueryResult } from '@tanstack/react-query';
+
 import { LuSearchX } from 'react-icons/lu';
 import {
   TbArrowsSort,
@@ -12,7 +14,7 @@ import {
 } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
-import QueryError from '@/components/ui/error/QueryError';
+import { QueryError } from '@/components/ui/error/QueryError';
 import {
   Table,
   TableBody,
@@ -23,14 +25,12 @@ import {
 } from '@/components/ui/table';
 
 import { useLocale } from '@/context/LocaleContext';
-import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryObject } from '@/hooks/useRepositoryObject';
-
-import { Object } from '@/types/core/Object';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Object } from '@/types/core/Object';
 
 import ObjectListHeader from './ObjectListHeader';
-import TableSkeleton from './TableSkeleton';
+import ObjectListTableSkeleton from './ObjectListTableSkeleton';
 
 /**
  * Removes a trailing slash (except when the path is just "/").
@@ -59,27 +59,24 @@ const flattenObjects = (obj: Object): Object[] => {
  * @param props.selectObject - The function to call when an object is selected
  * @param props.currentPath - The current path in the repository
  * @param props.setCurrentPath - The function to set the current path
+ * @param props.repositoryObjectQuery - The query result for the repository object
  */
 export default function ObjectList({
   selectObject,
   currentPath,
   setCurrentPath,
+  repositoryObjectQuery,
 }: {
   selectObject: (object: Object) => void;
   currentPath: string;
   setCurrentPath: (path: string) => void;
+  repositoryObjectQuery: UseQueryResult<IrminAPIResponse<Object>, Error>;
 }) {
   const { locale, dict } = useLocale();
-  const { repository, currentRef } = useRepositoryContext();
-  const { repositoryObjectQuery } = useRepositoryObject(
-    repository.slug,
-    currentRef,
-    currentPath
-  );
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{
-    key: 'name' | 'path' | 'type' | 'content_type' | 'last_modified';
+    key: 'content_type' | 'last_modified' | 'name' | 'path' | 'type';
     direction: 'ascending' | 'descending';
   }>({ key: 'name', direction: 'ascending' });
 
@@ -88,7 +85,7 @@ export default function ObjectList({
 
     const rootObject = repositoryObjectQuery.data?.data;
 
-    // strip any trailing slash off the folder we’re in
+    // strip any trailing slash off the folder we're in
     const normCurrent = normalizePath(currentPath);
 
     // unify your search term
@@ -141,7 +138,7 @@ export default function ObjectList({
   }, [filteredObjects, sortConfig]);
 
   const handleSort = useCallback(
-    (key: 'name' | 'path' | 'type' | 'content_type' | 'last_modified') => {
+    (key: 'content_type' | 'last_modified' | 'name' | 'path' | 'type') => {
       setSortConfig((prevConfig) => ({
         key,
         direction:
@@ -157,26 +154,45 @@ export default function ObjectList({
     switch (type) {
       case 'group':
         return (
-          <TbFolder className='h-5 w-5 text-yellow-500 dark:text-yellow-400' />
+          <TbFolder
+            className={`
+              size-5 text-yellow-500
+              dark:text-yellow-400
+            `}
+          />
         );
       case 'structured':
-        return <TbTable className='h-5 w-5 text-blue-500 dark:text-blue-400' />;
+        return (
+          <TbTable
+            className={`
+              size-5 text-blue-500
+              dark:text-blue-400
+            `}
+          />
+        );
       case 'binary':
-        return <TbFile className='h-5 w-5 text-gray-500 dark:text-gray-400' />;
+        return (
+          <TbFile
+            className={`
+              size-5 text-gray-500
+              dark:text-gray-400
+            `}
+          />
+        );
     }
   }, []);
 
   return (
-    <div className='border-card mb-4 w-full overflow-hidden rounded-lg border'>
+    <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
       <ObjectListHeader
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         currentPath={currentPath}
         setCurrentPath={setCurrentPath}
       />
-      <div className='bg-background max-h-[400px] w-full overflow-scroll'>
+      <div className='max-h-[400px] w-full overflow-scroll bg-background'>
         {repositoryObjectQuery.isLoading ? (
-          <TableSkeleton />
+          <ObjectListTableSkeleton />
         ) : repositoryObjectQuery.error ? (
           <div className='p-8'>
             <QueryError
@@ -194,7 +210,7 @@ export default function ObjectList({
                   <TableHead className='w-[300px]'>
                     <Button variant='ghost' onClick={() => handleSort('name')}>
                       {dict.common.name}
-                      <TbArrowsSort className='ml-2 h-4 w-4' />
+                      <TbArrowsSort className='ml-2 size-4' />
                     </Button>
                   </TableHead>
                   <TableHead className='font-normal'>
@@ -203,7 +219,7 @@ export default function ObjectList({
                       onClick={() => handleSort('content_type')}
                     >
                       {dict.repository.objects.contentType}
-                      <TbArrowsSort className='ml-2 h-4 w-4' />
+                      <TbArrowsSort className='ml-2 size-4' />
                     </Button>
                   </TableHead>
                   <TableHead>
@@ -212,7 +228,7 @@ export default function ObjectList({
                       onClick={() => handleSort('last_modified')}
                     >
                       {dict.common.lastModified}
-                      <TbArrowsSort className='ml-2 h-4 w-4' />
+                      <TbArrowsSort className='ml-2 size-4' />
                     </Button>
                   </TableHead>
                   <TableHead />
@@ -252,7 +268,7 @@ export default function ObjectList({
                           selectObject(obj);
                         }}
                       >
-                        <TbDotsVertical className='h-5 w-5' />
+                        <TbDotsVertical className='size-5' />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -261,12 +277,28 @@ export default function ObjectList({
             </Table>
 
             {!repositoryObjectQuery.data?.data?.children && (
-              <div className='flex h-full min-h-96 w-full flex-col items-center justify-center gap-4'>
-                <LuSearchX className='h-12 w-12 text-gray-400' />
-                <div className='text-base text-gray-600 lg:text-lg dark:text-gray-300'>
+              <div
+                className={`
+                  flex size-full min-h-96 flex-col items-center justify-center
+                  gap-4
+                `}
+              >
+                <LuSearchX className='size-12 text-gray-400' />
+                <div
+                  className={`
+                    text-base text-gray-600
+                    lg:text-lg
+                    dark:text-gray-300
+                  `}
+                >
                   {dict.repository.objects.noObjects}
                 </div>
-                <div className='text-sm text-gray-500 dark:text-gray-400'>
+                <div
+                  className={`
+                    text-sm text-gray-500
+                    dark:text-gray-400
+                  `}
+                >
                   {dict.repository.objects.noObjectsMessage}
                 </div>
               </div>

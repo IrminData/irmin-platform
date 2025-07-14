@@ -4,9 +4,9 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { checkIfSimpleArrayOfObjects } from '@/utils/checkIfSimpleArrayOfObjects';
 
-import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
-import { Object } from '@/types/core/Object';
-import { JSONValue } from '@/types/internal/GenericJSON';
+import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
+import type { Object } from '@/types/core/Object';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 import BlobViewer from './BlobViewer';
 import JSONViewer from './JSONViewer';
@@ -30,8 +30,18 @@ const ObjectViewer = ({
   if (!objectContent) {
     // If the content is not available, show a message
     return (
-      <div className='w-full pt-4 pb-12 text-center text-gray-600 dark:text-gray-400'>
-        <p className='text-sm lg:text-lg'>
+      <div
+        className={`
+          w-full pt-4 pb-12 text-center text-gray-600
+          dark:text-gray-400
+        `}
+      >
+        <p
+          className={`
+            text-sm
+            lg:text-lg
+          `}
+        >
           {dict.repository.objects.contentUnavailable}
         </p>
       </div>
@@ -64,8 +74,18 @@ const ObjectViewer = ({
   } else {
     // Group objects (e.g. directories are not supported in the Object Viewer)
     return (
-      <div className='w-full pt-4 pb-12 text-center text-gray-600 dark:text-gray-400'>
-        <p className='text-sm lg:text-lg'>
+      <div
+        className={`
+          w-full pt-4 pb-12 text-center text-gray-600
+          dark:text-gray-400
+        `}
+      >
+        <p
+          className={`
+            text-sm
+            lg:text-lg
+          `}
+        >
           {dict.repository.objects.unsupportedContentType}
         </p>
       </div>

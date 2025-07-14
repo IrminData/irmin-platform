@@ -18,7 +18,7 @@ interface WorkspaceTagDisplayProps {
   /** Maximum number of tags to show before truncating (default: 3) */
   maxVisible?: number;
   /** Size of the tag badges */
-  size?: 'sm' | 'md';
+  size?: 'md' | 'sm';
   /** Whether tags should be clickable to navigate to tag details */
   clickable?: boolean;
   /** Additional CSS classes for the container */
@@ -33,14 +33,14 @@ interface WorkspaceTagDisplayProps {
  *
  * @param props - The component props
  */
-export function WorkspaceTagDisplay({
+const WorkspaceTagDisplay = ({
   tags,
   maxVisible = 3,
   size = 'sm',
   clickable = true,
   className = '',
   tagClassName = '',
-}: WorkspaceTagDisplayProps) {
+}: WorkspaceTagDisplayProps) => {
   const router = useRouter();
 
   const { isResourceAllowed } = useResourceAllowed();
@@ -81,7 +81,12 @@ export function WorkspaceTagDisplay({
   }
 
   return (
-    <div className={`flex flex-wrap items-center gap-1 ${className}`}>
+    <div
+      className={`
+        flex flex-wrap items-center gap-1
+        ${className}
+      `}
+    >
       {visibleTags.map((tag) => (
         <TagBadge
           key={tag.id}
@@ -92,12 +97,12 @@ export function WorkspaceTagDisplay({
         />
       ))}
       {remainingCount > 0 && (
-        <span className='text-muted-foreground ml-1 text-xs'>
+        <span className='ml-1 text-xs text-muted-foreground'>
           +{remainingCount}
         </span>
       )}
     </div>
   );
-}
+};
 
 export default WorkspaceTagDisplay;

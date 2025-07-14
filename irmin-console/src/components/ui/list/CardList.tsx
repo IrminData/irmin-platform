@@ -1,16 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
+import { memo, useState } from 'react';
 
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
-import EmptyState from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ListProps } from '@/types/internal/ListProps';
+import type { ListProps } from '@/types/internal/ListProps';
+
+const LoadingCard = () => {
+  return (
+    <div
+      className={`
+        flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4
+        text-xs
+        md:text-sm
+        xl:text-base
+        dark:border-gray-900 dark:bg-irmin-black-600
+      `}
+    >
+      <LoadingSkeleton className='h-32 w-full' />
+    </div>
+  );
+};
+
+const CardListLoadingSkeleton = () => {
+  return (
+    <>
+      <LoadingCard />
+      <LoadingCard />
+      <LoadingCard />
+      <LoadingCard />
+      <LoadingCard />
+      <LoadingCard />
+      <LoadingCard />
+      <LoadingCard />
+    </>
+  );
+};
 
 /**
  * Card List UI component
@@ -23,36 +54,64 @@ import { ListProps } from '@/types/internal/ListProps';
  *
  * The component is responsive and can be used in any layout.
  */
-const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
+const CardList = ({
+  rows,
+  loading = false,
+  noActions = false,
+  emptyStateAction,
+}: ListProps) => {
   const { dict } = useLocale();
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
+  // Unique keys for each repetitive element
+  const cardKeys = rows.map((_, index) => `list-card-${index}`);
+  const cardColumnKeys = rows.map((card, index) =>
+    card.columns.map((_, colIndex) => `list-card-${index}-column-${colIndex}`)
+  );
+  const cardActionKeys = rows.map(
+    (card, index) =>
+      card.actions?.map(
+        (_, actionIndex) => `list-card-${index}-action-${actionIndex}`
+      ) ?? []
+  );
+
   return (
     <div
-      className='scrollbar-hide bg-popover/10 h-full w-full max-w-3xl max-w-full overflow-scroll rounded-lg border p-2 dark:border-gray-800'
+      className={`
+        scrollbar-hide size-full max-w-3xl overflow-scroll rounded-lg border
+        bg-popover/10 p-2
+        dark:border-gray-800
+      `}
       id='list'
     >
-      <div className='grid grid-cols-1 items-start gap-2 sm:grid-cols-2 lg:grid-cols-3'>
+      <div
+        className={`
+          grid grid-cols-1 items-start gap-2
+          sm:grid-cols-2
+          lg:grid-cols-3
+        `}
+      >
         {loading ? (
           <div id='card-list-loading' className='contents'>
-            {[...Array(8)].map((_, index) => (
-              <LoadingSkeleton
-                key={`normal-list-loading-skeleton-${index}`}
-                className='h-32 w-full'
-              />
-            ))}
+            <CardListLoadingSkeleton />
           </div>
         ) : (
           rows.map((card, rowIndex) => (
             <div
-              key={`list-card-${rowIndex}`}
+              key={cardKeys[rowIndex]}
               id='list-card'
-              className='dark:bg-irmin_black-600 flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4 text-xs md:text-sm xl:text-base dark:border-gray-900'
+              className={`
+                flex flex-col gap-1 rounded-lg border border-gray-200 bg-white
+                p-4 text-xs
+                md:text-sm
+                xl:text-base
+                dark:border-gray-900 dark:bg-irmin-black-600
+              `}
             >
               <div className='flex flex-wrap items-center justify-between gap-4'>
                 {card.columns.map((column, index) => (
                   <div
-                    key={`card-${rowIndex}-row-${index}`}
+                    key={cardColumnKeys[rowIndex][index]}
                     className='contents'
                   >
                     {column}
@@ -60,8 +119,10 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
                 ))}
               </div>
               {card.actions && card.actions.length > 0 && !noActions && (
-                <div className='mt-4 flex items-center justify-between space-x-2'>
-                  <div className='flex-card flex justify-start'>
+                <div
+                  className={`mt-4 flex items-center justify-between space-x-2`}
+                >
+                  <div className='flex flex-wrap justify-start gap-2'>
                     {card.actions
                       .slice()
                       .sort((a, b) =>
@@ -73,12 +134,15 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
                       )
                       .map((action, index) => (
                         <Button
-                          key={`list-card-${rowIndex}-actions-${index}`}
+                          key={cardActionKeys[rowIndex][index]}
                           variant={action.primary ? 'gray' : 'link'}
                           aria-label={action.label}
                           href={action.href}
                           onClick={action.onClick}
-                          className={`w-max ${action.primary ? 'min-w-24' : ''}`}
+                          className={`
+                            w-max
+                            ${action.primary ? 'min-w-24' : ''}
+                          `}
                         >
                           {action.label}
                         </Button>
@@ -105,9 +169,9 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
                         }
                       >
                         {openDetails.includes(rowIndex) ? (
-                          <TbChevronUp className='h-5 w-5' />
+                          <TbChevronUp className='size-5' />
                         ) : (
-                          <TbChevronDown className='h-5 w-5' />
+                          <TbChevronDown className='size-5' />
                         )}
                       </Button>
                     </div>
@@ -128,6 +192,7 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
             description={dict.list.emptyState.generic.description}
             size='sm'
             className='py-8'
+            action={emptyStateAction}
           />
         </div>
       )}
@@ -135,4 +200,4 @@ const CardList = ({ rows, loading = false, noActions = false }: ListProps) => {
   );
 };
 
-export default React.memo(CardList);
+export default memo(CardList);

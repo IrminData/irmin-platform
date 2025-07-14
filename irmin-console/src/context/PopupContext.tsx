@@ -31,11 +31,11 @@ import Modal from '@/components/ui/popup/Modal';
  */
 const PopupContext = createContext<{
   irminAlert: (
-    _type: 'success' | 'error' | 'info',
-    _message: string | JSX.Element
+    _type: 'error' | 'info' | 'success',
+    _message: JSX.Element | string
   ) => void;
   irminConfirm: (
-    _type: 'warning' | 'info',
+    _type: 'info' | 'warning',
     _message: string
   ) => Promise<boolean>;
   irminModal: {
@@ -57,14 +57,14 @@ const PopupContext = createContext<{
 
 export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle alerts
-  const [alertMessage, setAlertMessage] = useState<string | JSX.Element | null>(
+  const [alertMessage, setAlertMessage] = useState<JSX.Element | string | null>(
     null
   );
   const [alertType, setAlertType] = useState<
-    'success' | 'error' | 'info' | null
+    'error' | 'info' | 'success' | null
   >(null);
   const irminAlert = useCallback(
-    (type: 'success' | 'error' | 'info', message: string | JSX.Element) => {
+    (type: 'error' | 'info' | 'success', message: JSX.Element | string) => {
       setAlertType(type);
       setAlertMessage(message);
       setTimeout(() => {
@@ -80,11 +80,11 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Handle confirmations
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
-  const [confirmType, setConfirmType] = useState<'warning' | 'info' | null>(
+  const [confirmType, setConfirmType] = useState<'info' | 'warning' | null>(
     null
   );
   const [confirmResolver, setConfirmResolver] = useState<
-    null | ((value: boolean) => void)
+    ((value: boolean) => void) | null
   >(null);
   const handleConfirmSelection = useCallback(
     (confirmed: boolean) => {
@@ -98,7 +98,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     [confirmResolver]
   );
   const irminConfirm = useCallback(
-    (type: 'warning' | 'info', message: string): Promise<boolean> => {
+    (type: 'info' | 'warning', message: string): Promise<boolean> => {
       setConfirmType(type);
       setConfirmMessage(message);
 
@@ -115,7 +115,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   const [modalContent, setModalContent] = useState<React.JSX.Element | null>(
     null
   );
-  const [modalOnClose, setModalOnClose] = useState<null | (() => void)>(null);
+  const [modalOnClose, setModalOnClose] = useState<(() => void) | null>(null);
   const showIrminModal = useCallback(
     (title: string, content: React.JSX.Element, onClose?: () => void) => {
       setModalTitle(title);

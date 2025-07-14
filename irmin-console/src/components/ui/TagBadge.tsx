@@ -1,5 +1,7 @@
 'use client';
 
+import type { MouseEvent } from 'react';
+
 import { TbX } from 'react-icons/tb';
 
 import { cn } from '@/utils/tw';
@@ -42,17 +44,34 @@ export default function TagBadge({
   onClick?: () => void;
   className?: string;
   showDelete?: boolean;
-  onDelete?: (e: React.MouseEvent) => void;
-  size?: 'sm' | 'md';
+  onDelete?: (e: MouseEvent) => void;
+  size?: 'md' | 'sm';
 }) {
   const sizeConfig = sizeClasses[size];
 
   return (
     <div
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
       className={cn(
-        'inline-flex items-center rounded-full border border-gray-200 bg-gray-50 font-medium transition-all dark:border-gray-700 dark:bg-gray-800',
+        `
+          inline-flex items-center rounded-full border border-gray-200
+          bg-gray-50 font-medium transition-all
+          dark:border-gray-700 dark:bg-gray-800
+        `,
         sizeConfig.container,
-        onClick && 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700',
+        onClick &&
+          `
+            cursor-pointer
+            hover:bg-gray-100
+            dark:hover:bg-gray-700
+          `,
         className
       )}
       onClick={onClick}
@@ -60,14 +79,24 @@ export default function TagBadge({
       {/* Circular color indicator */}
       <div
         className={cn(
-          'rounded-full border border-gray-300 dark:border-gray-600',
+          `
+            rounded-full border border-gray-300
+            dark:border-gray-600
+          `,
           sizeConfig.circle
         )}
         style={{ backgroundColor: tag.color }}
       />
 
       {/* Tag name */}
-      <span className='text-gray-900 dark:text-gray-100'>{tag.name}</span>
+      <span
+        className={`
+          text-gray-900
+          dark:text-gray-100
+        `}
+      >
+        {tag.name}
+      </span>
 
       {/* Delete button */}
       {showDelete && (
@@ -76,7 +105,11 @@ export default function TagBadge({
             e.stopPropagation();
             onDelete?.(e);
           }}
-          className='rounded-full p-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600'
+          className={`
+            rounded-full p-0.5 transition-colors
+            hover:bg-gray-200
+            dark:hover:bg-gray-600
+          `}
           aria-label={`Remove ${tag.name} tag`}
         >
           <TbX size={sizeConfig.deleteIcon} />

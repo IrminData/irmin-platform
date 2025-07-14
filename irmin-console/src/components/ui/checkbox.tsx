@@ -9,13 +9,19 @@ import { TbCheck } from 'react-icons/tb';
 import { cn } from '@/utils/tw';
 
 const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
+  React.ComponentRef<typeof CheckboxPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 >(({ className, ...props }, ref) => (
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      'peer border-accent bg-card focus-visible:ring-ring data-[state=checked]:bg-accent data-[state=checked]:text-foreground h-4 w-4 shrink-0 rounded-sm border shadow-xs focus-visible:ring-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50',
+      `
+        peer size-4 shrink-0 rounded-sm border border-accent bg-card shadow-xs
+        focus-visible:ring-1 focus-visible:ring-ring
+        focus-visible:outline-hidden
+        disabled:cursor-not-allowed disabled:opacity-50
+        data-[state=checked]:bg-accent data-[state=checked]:text-foreground
+      `,
       className
     )}
     {...props}

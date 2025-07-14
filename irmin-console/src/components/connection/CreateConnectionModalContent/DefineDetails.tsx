@@ -1,9 +1,10 @@
 'use client';
 
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
@@ -12,8 +13,8 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useConnectionConfiguration } from '@/hooks/useConnectionConfiguration';
 
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
-import {
+import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
@@ -112,7 +113,12 @@ export default function DefineDetails({
     <div className='p-4 pb-6'>
       {/* Display Connector Information */}
       {connectionData.connector && (
-        <div className='flex flex-col justify-center border-b py-4 dark:border-gray-800'>
+        <div
+          className={`
+            flex flex-col justify-center border-b py-4
+            dark:border-gray-800
+          `}
+        >
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>

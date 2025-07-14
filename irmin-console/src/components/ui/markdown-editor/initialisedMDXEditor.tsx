@@ -22,12 +22,11 @@ import {
   toolbarPlugin,
   UndoRedo,
 } from '@mdxeditor/editor';
-
 import '@mdxeditor/editor/style.css';
 
-export type InitialisedMDXEditorProps = {
+export type InitialisedMDXEditorProps = MDXEditorProps & {
   children: React.ReactNode;
-} & MDXEditorProps;
+};
 
 /**
  * Initialized MDX editor
@@ -43,10 +42,10 @@ export default function InitialisedMDXEditor({
   editorRef,
   children,
   ...props
-}: {
+}: MDXEditorProps & {
   children: React.ReactNode;
   editorRef: ForwardedRef<MDXEditorMethods> | null;
-} & MDXEditorProps) {
+}) {
   return (
     <div>
       <MDXEditor

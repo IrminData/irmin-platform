@@ -1,9 +1,10 @@
 'use client';
 
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -11,9 +12,9 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useConnections } from '@/hooks/useConnections';
 
-import { CustomFieldValues } from '@/types/core/Connection';
-import { ConnectionSetup } from '@/types/internal/ConnectionSetup';
-import {
+import type { CustomFieldValues } from '@/types/core/Connection';
+import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
@@ -89,7 +90,12 @@ export default function ConfigureConnection({
   return (
     <div className='p-4 pb-6'>
       {connectionData.connector && (
-        <div className='flex flex-col justify-center border-b py-4 dark:border-gray-800'>
+        <div
+          className={`
+            flex flex-col justify-center border-b py-4
+            dark:border-gray-800
+          `}
+        >
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>

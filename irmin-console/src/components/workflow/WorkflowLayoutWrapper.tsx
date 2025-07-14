@@ -18,7 +18,7 @@ import {
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
@@ -32,7 +32,7 @@ import { useWorkflow } from '@/hooks/useWorkflow';
 import useWorkflowRuns from '@/hooks/useWorkflowRuns';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { TabsType } from '@/types/internal/Tabs';
+import type { TabDetails } from '@/types/internal/Tabs';
 
 /**
  * Component to wrap the single Workflow pages in.
@@ -121,7 +121,7 @@ export default function WorkflowLayoutWrapper({
             ? dict.workflow.create.configureAction
             : '';
 
-  const tabs: TabsType = [
+  const tabs: TabDetails[] = [
     {
       name: dict.common.overview,
       link: `${baseUrl}`,
@@ -198,11 +198,27 @@ export default function WorkflowLayoutWrapper({
   return (
     <>
       <div className='relative container mx-auto max-w-7xl'>
-        <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
+        <div
+          className={`
+            mx-auto my-4 flex w-full flex-col px-2
+            md:px-4
+            lg:flex-row lg:items-center
+          `}
+        >
           <div className='flex flex-1 flex-col gap-2 py-4'>
-            <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
+            <div
+              className={`
+                flex flex-row items-center divide-x divide-gray-300
+                dark:divide-gray-700
+              `}
+            >
               <div className='flex flex-row items-center gap-2 pr-2'>
-                <span className='text-xs text-gray-400 md:text-sm'>
+                <span
+                  className={`
+                    text-xs text-gray-400
+                    md:text-sm
+                  `}
+                >
                   {dict.workflow.workflow}
                 </span>
                 <Badge>
@@ -213,7 +229,12 @@ export default function WorkflowLayoutWrapper({
                     dict.workflow.pipeline.pipeline}
                 </Badge>
               </div>
-              <span className='px-2 text-xs text-gray-400 md:text-sm'>
+              <span
+                className={`
+                  px-2 text-xs text-gray-400
+                  md:text-sm
+                `}
+              >
                 {dict.list.owner}:{' '}
                 {`${workflow.owner.first_name} ${workflow.owner.last_name}`}
                 {workflow.owner.company
@@ -222,7 +243,12 @@ export default function WorkflowLayoutWrapper({
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
-              <h1 className='text-foreground text-lg font-normal md:text-2xl'>
+              <h1
+                className={`
+                  text-lg font-normal text-foreground
+                  md:text-2xl
+                `}
+              >
                 {workflow.name}
               </h1>
               {workflow ? (
@@ -241,7 +267,12 @@ export default function WorkflowLayoutWrapper({
                 />
               )}
             </div>
-            <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
+            <p
+              className={`
+                max-w-lg text-xs text-gray-400
+                lg:text-sm
+              `}
+            >
               {workflow.description}
             </p>
           </div>

@@ -17,8 +17,10 @@ import {
 
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
-import QueryError from '@/components/ui/error/QueryError';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import { QueryError } from '@/components/ui/error/QueryError';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
@@ -33,7 +35,7 @@ import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
-import { Object } from '@/types/core/Object';
+import type { Object } from '@/types/core/Object';
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import ObjectDetails from './objects/ObjectDetails';
@@ -50,6 +52,27 @@ import UploadObjectModal from './objects/UploadObjectModal';
  * @returns The repository section component
  */
 export default function RepositorySection({
+  initialSelectedObject,
+  initialObjectContentViewerOpen = false,
+}: {
+  initialSelectedObject?: Object;
+  initialObjectContentViewerOpen?: boolean;
+}) {
+  return (
+    <SafeComponent
+      level='section'
+      title='Repository Section Error'
+      description='The repository section encountered an error. Please try refreshing the page.'
+    >
+      <RepositorySectionContent
+        initialSelectedObject={initialSelectedObject}
+        initialObjectContentViewerOpen={initialObjectContentViewerOpen}
+      />
+    </SafeComponent>
+  );
+}
+
+function RepositorySectionContent({
   initialSelectedObject,
   initialObjectContentViewerOpen = false,
 }: {
@@ -76,7 +99,7 @@ export default function RepositorySection({
   const { repositoryObjectQuery, uploadObjectMutation } = useRepositoryObject(
     repository.slug,
     currentRef,
-    selectedObject?.path
+    '' // Always fetch root object of the repository
   );
 
   const { repositoryObjectContentQuery, downloadObjectAsZipMutation } =
@@ -215,7 +238,12 @@ export default function RepositorySection({
   // Handle loading state for repository object
   if (repositoryObjectQuery.isLoading) {
     return (
-      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+      <div
+        className={`
+          relative container mx-auto max-w-7xl px-2
+          md:px-4
+        `}
+      >
         <PageSkeleton showHeader={true} contentRows={3} className='py-4' />
       </div>
     );
@@ -224,7 +252,12 @@ export default function RepositorySection({
   // Handle error state for repository object
   if (repositoryObjectQuery.error) {
     return (
-      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+      <div
+        className={`
+          relative container mx-auto max-w-7xl px-2
+          md:px-4
+        `}
+      >
         <QueryError
           error={repositoryObjectQuery.error}
           onRetry={() => repositoryObjectQuery.refetch()}
@@ -237,10 +270,27 @@ export default function RepositorySection({
 
   return (
     <>
-      <div className='relative container mx-auto mb-4 flex max-w-7xl flex-col px-2 md:px-4'>
+      <div
+        className={`
+          relative container mx-auto mb-4 flex max-w-7xl flex-col px-2
+          md:px-4
+        `}
+      >
         {canQuery && (
-          <div className='bg-background w-full max-w-full overflow-hidden rounded-md border border-gray-100 dark:border-gray-800'>
-            <div className='flex w-full flex-row items-center justify-between bg-gray-100 pl-4 dark:bg-gray-800'>
+          <div
+            className={`
+              w-full max-w-full overflow-hidden rounded-md border
+              border-gray-100 bg-background
+              dark:border-gray-800
+            `}
+          >
+            <div
+              className={`
+                flex w-full flex-row items-center justify-between bg-gray-100
+                pl-4
+                dark:bg-gray-800
+              `}
+            >
               <div className='py-2 text-sm font-semibold'>
                 {dict.repository.sqlQuery}
               </div>
@@ -264,17 +314,36 @@ export default function RepositorySection({
         )}
         {!queryResultsOpen ? (
           <>
-            <div className='my-4 flex w-full flex-wrap items-center justify-between gap-4'>
-              <div className='inline max-w-full overflow-x-scroll text-xs whitespace-nowrap text-gray-600 lg:text-sm dark:text-gray-400'>
+            <div
+              className={`
+                my-4 flex w-full flex-wrap items-center justify-between gap-4
+              `}
+            >
+              <div
+                className={`
+                  inline max-w-full overflow-x-scroll text-xs whitespace-nowrap
+                  text-gray-600
+                  lg:text-sm
+                  dark:text-gray-400
+                `}
+              >
                 <Link
-                  className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
+                  className={`
+                    transition-all
+                    hover:text-gray-800 hover:underline
+                    dark:hover:text-gray-200
+                  `}
                   href={`${workspaceUrl}/repositories`}
                 >
                   {workspaceSlug}
                 </Link>
                 {' / '}
                 <Link
-                  className='transition-all hover:text-gray-800 hover:underline dark:hover:text-gray-200'
+                  className={`
+                    transition-all
+                    hover:text-gray-800 hover:underline
+                    dark:hover:text-gray-200
+                  `}
                   href={`${workspaceUrl}/repositories/${repository.slug}`}
                 >
                   {repository.slug}
@@ -328,11 +397,17 @@ export default function RepositorySection({
                 )}
               </div>
             </div>
-            <div className='flex w-full flex-col items-start gap-2 md:flex-row md:gap-2'>
+            <div
+              className={`
+                flex w-full flex-col items-start gap-2
+                md:flex-row md:gap-2
+              `}
+            >
               <ObjectList
                 selectObject={setSelectedObject}
                 currentPath={currentDirectoryPath}
                 setCurrentPath={setCurrentDirectoryPath}
+                repositoryObjectQuery={repositoryObjectQuery}
               />
               <ObjectDetails
                 selectedObject={selectedObject}
@@ -368,11 +443,22 @@ export default function RepositorySection({
       {objectContentViewerOpen && !queryResultsOpen && selectedObject && (
         <div
           id='object-content-modal'
-          className='animate-fadeIn bg-background/30 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]'
+          className={`
+            fixed inset-0 z-50 flex animate-in items-center justify-center
+            bg-background/30 backdrop-blur-[2px] fade-in
+          `}
         >
           <div className='w-full max-w-[90vw]'>
-            <div className='border-border bg-popover rounded-lg border shadow-lg'>
-              <div className='flex flex-row items-center justify-between border-b px-4 pt-4 pb-2 dark:border-b-gray-800'>
+            <div
+              className={`rounded-lg border border-border bg-popover shadow-lg`}
+            >
+              <div
+                className={`
+                  flex flex-row items-center justify-between border-b px-4 pt-4
+                  pb-2
+                  dark:border-b-gray-800
+                `}
+              >
                 <h2 className='text-lg font-normal'>{selectedObject.path}</h2>
                 <ButtonWithTooltip
                   size='icon'
@@ -384,9 +470,13 @@ export default function RepositorySection({
                   icon={<IoClose size={24} />}
                 />
               </div>
-              <div className='relative max-h-[calc(100vh-200px)] overflow-scroll px-0 pt-0'>
+              <div
+                className={`
+                  relative max-h-[calc(100vh-200px)] overflow-scroll px-0 pt-0
+                `}
+              >
                 {repositoryObjectContentQuery.data ? (
-                  <div className='bg-background w-full rounded'>
+                  <div className='w-full rounded bg-background'>
                     <ObjectViewer
                       object={selectedObject}
                       objectContent={repositoryObjectContentQuery.data}

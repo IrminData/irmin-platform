@@ -8,7 +8,7 @@ import { cn } from '@/utils/tw';
  * @param props.wrapperClassName - The class name for the div wrapping the content
  * @param props.children - The children to render inside the wrapper
  */
-const ContentWrapper = ({
+export const ContentWrapper = ({
   children,
   className,
   wrapperClassName,
@@ -20,13 +20,19 @@ const ContentWrapper = ({
   return (
     <div
       className={cn(
-        'relative container my-8 max-w-7xl px-2 sm:mx-auto',
+        `
+          relative container my-8 max-w-7xl px-2
+          sm:mx-auto
+        `,
         className
       )}
     >
       <div
         className={cn(
-          'bg-popover/10 w-full max-w-full rounded-lg border p-2 dark:border-gray-800',
+          `
+            w-full max-w-full rounded-lg border bg-popover/10 p-2
+            dark:border-gray-800
+          `,
           wrapperClassName
         )}
       >
@@ -35,5 +41,3 @@ const ContentWrapper = ({
     </div>
   );
 };
-
-export default ContentWrapper;

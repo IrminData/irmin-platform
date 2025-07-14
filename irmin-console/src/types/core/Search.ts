@@ -1,10 +1,10 @@
-import { Connection } from '@/types/core/Connection';
-import { Invite } from '@/types/core/Invite';
-import { Object } from '@/types/core/Object';
-import { Repository } from '@/types/core/Repository';
-import { StoredQuery } from '@/types/core/StoredQuery';
-import { User } from '@/types/core/User';
-import { Workflow } from '@/types/core/Workflow';
+import type { Connection } from '@/types/core/Connection';
+import type { Invite } from '@/types/core/Invite';
+import type { Object } from '@/types/core/Object';
+import type { Repository } from '@/types/core/Repository';
+import type { StoredQuery } from '@/types/core/StoredQuery';
+import type { User } from '@/types/core/User';
+import type { Workflow } from '@/types/core/Workflow';
 
 /**
  * Represents a unified search result with typed entity data.

@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { TbArrowLeft, TbPencil, TbTrash } from 'react-icons/tb';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import {
   Table,
@@ -26,8 +26,7 @@ import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkspaceTag } from '@/hooks/useWorkspaceTag';
 import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
-import { PolicyResource } from '@/types/core/Policy';
-import { PolicyAction } from '@/types/core/Policy';
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
 
 import { WorkspaceTagModal } from './WorkspaceTagModal';
@@ -122,7 +121,12 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
       <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
         <div className='flex items-center justify-center py-8'>
           <div className='text-center'>
-            <p className='text-red-600 dark:text-red-400'>
+            <p
+              className={`
+                text-red-600
+                dark:text-red-400
+              `}
+            >
               {dict.common.error}
             </p>
           </div>
@@ -146,7 +150,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
           </ButtonWithTooltip>
           <div className='flex items-center gap-2'>
             <div
-              className='h-8 w-8 rounded-full border border-gray-300'
+              className='size-8 rounded-full border border-gray-300'
               style={{ backgroundColor: tag.color }}
             />
             <h1 className='text-xl font-medium'>{tag.name}</h1>
@@ -200,7 +204,12 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Queries */}
             {assets?.queries && assets.queries.length > 0 && (
               <div>
-                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
+                <h3
+                  className={`
+                    mb-3 pl-2 text-gray-700
+                    dark:text-gray-300
+                  `}
+                >
                   {dict.consoleNavigation.queries} ({assets.queries.length})
                 </h3>
                 <Table>
@@ -225,7 +234,12 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Repositories */}
             {assets?.repositories && assets.repositories.length > 0 && (
               <div>
-                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
+                <h3
+                  className={`
+                    mb-3 pl-2 text-gray-700
+                    dark:text-gray-300
+                  `}
+                >
                   {dict.repository.repositories} ({assets.repositories.length})
                 </h3>
                 <Table>
@@ -250,7 +264,12 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Workflows */}
             {assets?.workflows && assets.workflows.length > 0 && (
               <div>
-                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
+                <h3
+                  className={`
+                    mb-3 pl-2 text-gray-700
+                    dark:text-gray-300
+                  `}
+                >
                   {dict.workflow.workflows} ({assets.workflows.length})
                 </h3>
                 <Table>
@@ -275,7 +294,12 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Connections */}
             {assets?.connections && assets.connections.length > 0 && (
               <div>
-                <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
+                <h3
+                  className={`
+                    mb-3 pl-2 text-gray-700
+                    dark:text-gray-300
+                  `}
+                >
                   {dict.connections.connections} ({assets.connections.length})
                 </h3>
                 <Table>
@@ -301,7 +325,12 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {assets?.repository_objects &&
               assets.repository_objects.length > 0 && (
                 <div>
-                  <h3 className='mb-3 pl-2 text-gray-700 dark:text-gray-300'>
+                  <h3
+                    className={`
+                      mb-3 pl-2 text-gray-700
+                      dark:text-gray-300
+                    `}
+                  >
                     {dict.repository.objects.objects} (
                     {assets.repository_objects.length})
                   </h3>
@@ -325,7 +354,12 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
               )}
           </div>
         ) : (
-          <p className='py-12 text-center text-2xl text-gray-600 dark:text-gray-400'>
+          <p
+            className={`
+              py-12 text-center text-2xl text-gray-600
+              dark:text-gray-400
+            `}
+          >
             {dict.list.noItemsFound}
           </p>
         )}

@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Tag, TagEntityType, TagWithAssets } from '@/types/core/Tag';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Tag, TagEntityType, TagWithAssets } from '@/types/core/Tag';
 
 /**
  * Interface for creating a tag

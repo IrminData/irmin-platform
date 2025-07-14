@@ -11,7 +11,7 @@ export interface Field {
 export interface FileGroup {
   filePath: string;
   fields: Field[];
-  fileType: 'structured' | 'binary' | 'group';
+  fileType: 'binary' | 'group' | 'structured';
   contentType?: string;
   size?: number;
   description?: string;

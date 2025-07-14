@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { User } from '@/types/core/User';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { User } from '@/types/core/User';
 
 /**
  * Interface for updating profile
@@ -76,7 +76,7 @@ class ProfileService {
     email?: string;
     phone?: string;
     company?: string;
-    avatar?: File | Blob;
+    avatar?: Blob | File;
   }): Promise<IrminAPIResponse<User>> {
     try {
       // Create update request struct with only provided fields

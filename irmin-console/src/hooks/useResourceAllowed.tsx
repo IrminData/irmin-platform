@@ -2,11 +2,8 @@ import { useCallback } from 'react';
 
 import { useParams } from 'next/navigation';
 
-import {
-  PolicyAction,
-  PolicyEffect,
-  PolicyResource,
-} from '@/types/core/Policy';
+import type { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { PolicyEffect } from '@/types/core/Policy';
 
 import { usePolicySummary } from './usePolicySummary';
 

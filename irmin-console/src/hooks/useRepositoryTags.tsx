@@ -1,20 +1,15 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { repositoryTagsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { GitTag } from '@/types/core/GitTag';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-export const repositoryTagsQueryKey = (
-  workspaceSlug: string,
-  repositorySlug: string
-) => ['repositoryTags', workspaceSlug, repositorySlug] as const;
+import type { GitTag } from '@/types/core/GitTag';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export function useRepositoryTags(repositorySlug: string) {
   const { getToken } = useIAM();
@@ -51,7 +46,7 @@ export function useRepositoryTags(repositorySlug: string) {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryTagsQueryKey(workspaceSlug, repositorySlug),
       });
       irminAlert('success', res.message ?? 'Tag created successfully');
@@ -73,7 +68,7 @@ export function useRepositoryTags(repositorySlug: string) {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryTagsQueryKey(workspaceSlug, repositorySlug),
       });
       irminAlert('success', res.message ?? 'Tag deleted successfully');

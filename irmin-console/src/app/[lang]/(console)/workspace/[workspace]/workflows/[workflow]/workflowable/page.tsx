@@ -1,6 +1,6 @@
 import WorkflowWorkflowableSection from '@/components/workflow/WorkflowWorkflowableSection';
 
-import { SingleWorkflowLayoutParams } from '../layout';
+import type { SingleWorkflowLayoutParams } from '../layout';
 
 /**
  * Page to view and update workflow's workflowable

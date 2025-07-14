@@ -9,6 +9,7 @@ import { TbCopy, TbInfoCircle } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -361,391 +362,433 @@ const CronGenerator = ({
   );
 
   return (
-    <div className='flex flex-col space-y-4'>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-        <TabsList className='grid w-full grid-cols-2'>
-          <TabsTrigger value='presets' disabled={isDisabled}>
-            {dict.workflow.schedule.presets}
-          </TabsTrigger>
-          <TabsTrigger value='custom' disabled={isDisabled}>
-            {dict.workflow.schedule.custom}
-          </TabsTrigger>
-        </TabsList>
+    <SafeComponent
+      level='component'
+      title='Cron Generator Error'
+      description='Failed to load cron expression generator'
+    >
+      <div className='flex flex-col space-y-4'>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
+          <TabsList className='grid w-full grid-cols-2'>
+            <TabsTrigger value='presets' disabled={isDisabled}>
+              {dict.workflow.schedule.presets}
+            </TabsTrigger>
+            <TabsTrigger value='custom' disabled={isDisabled}>
+              {dict.workflow.schedule.custom}
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value='presets' className='mt-4'>
-          <div
-            className={cn(
-              'flex flex-col space-y-2',
-              isDisabled && 'pointer-events-none opacity-50'
-            )}
+          <TabsContent value='presets' className='mt-4'>
+            <div
+              className={cn(
+                'flex flex-col space-y-2',
+                isDisabled && 'pointer-events-none opacity-50'
+              )}
+            >
+              <Label htmlFor='preset-select'>
+                {dict.workflow.schedule.cron.selectPreset}
+              </Label>
+              <Select
+                onValueChange={handlePresetChange}
+                defaultValue={expression}
+                disabled={isDisabled}
+              >
+                <SelectTrigger id='preset-select' className='w-full'>
+                  <SelectValue
+                    placeholder={dict.workflow.schedule.cron.selectPreset}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESETS.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </TabsContent>
+
+          <TabsContent
+            value='custom'
+            className='mt-4 flex flex-wrap justify-between space-y-4 space-x-4'
           >
-            <Label htmlFor='preset-select'>
-              {dict.workflow.schedule.cron.selectPreset}
-            </Label>
-            <Select
-              onValueChange={handlePresetChange}
-              defaultValue={expression}
-              disabled={isDisabled}
+            {/* Minutes */}
+            <div
+              className={`
+                flex max-w-80 flex-col space-y-3 rounded-md border
+                border-border/20 p-2
+              `}
             >
-              <SelectTrigger id='preset-select' className='w-full'>
-                <SelectValue
-                  placeholder={dict.workflow.schedule.cron.selectPreset}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {PRESETS.map((preset) => (
-                  <SelectItem key={preset.value} value={preset.value}>
-                    {preset.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </TabsContent>
-
-        <TabsContent
-          value='custom'
-          className='mt-4 flex flex-wrap justify-between space-y-4 space-x-4'
-        >
-          {/* Minutes */}
-          <div className='border-border/20 flex max-w-80 flex-col space-y-3 rounded-md border p-2'>
-            <div className='flex items-center justify-between'>
-              <Label>{dict.workflow.schedule.cron.minutes}</Label>
-              <Badge variant='secondary'>{minute.value}</Badge>
-            </div>
-            <RadioGroup
-              value={minute.type}
-              onValueChange={(value) => updateField(minute, setMinute, value)}
-              className='flex flex-col space-y-1'
-              disabled={isDisabled}
-            >
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='every' id='minute-every' />
-                <Label htmlFor='minute-every'>
-                  {dict.workflow.schedule.cron.everyMinute}
-                </Label>
+              <div className='flex items-center justify-between'>
+                <Label>{dict.workflow.schedule.cron.minutes}</Label>
+                <Badge variant='secondary'>{minute.value}</Badge>
               </div>
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='specific' id='minute-specific' />
-                <Label htmlFor='minute-specific'>
-                  {dict.workflow.schedule.cron.specificMinute}
-                </Label>
-                <Select
-                  disabled={minute.type !== 'specific'}
-                  value={minute.type === 'specific' ? minute.value : '0'}
-                  onValueChange={(value) =>
-                    updateField(minute, setMinute, 'specific', value)
-                  }
-                >
-                  <SelectTrigger className='w-20'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MINUTES.map((m) => (
-                      <SelectItem key={`minute-${m}`} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Hours */}
-          <div className='border-border/20 flex max-w-80 flex-col space-y-3 rounded-md border p-2'>
-            <div className='flex items-center justify-between'>
-              <Label>{dict.workflow.schedule.cron.hours}</Label>
-              <Badge variant='secondary'>{hour.value}</Badge>
-            </div>
-            <RadioGroup
-              value={hour.type}
-              onValueChange={(value) => updateField(hour, setHour, value)}
-              className='flex flex-col space-y-1'
-              disabled={isDisabled}
-            >
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='every' id='hour-every' />
-                <Label htmlFor='hour-every'>
-                  {dict.workflow.schedule.cron.everyHour}
-                </Label>
-              </div>
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='specific' id='hour-specific' />
-                <Label htmlFor='hour-specific'>
-                  {dict.workflow.schedule.cron.specificHour}
-                </Label>
-                <Select
-                  disabled={hour.type !== 'specific'}
-                  value={hour.type === 'specific' ? hour.value : '0'}
-                  onValueChange={(value) =>
-                    updateField(hour, setHour, 'specific', value)
-                  }
-                >
-                  <SelectTrigger className='w-20'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HOURS.map((h) => (
-                      <SelectItem key={`hour-${h}`} value={h}>
-                        {h}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Days of Month */}
-          <div className='border-border/20 flex max-w-80 flex-col space-y-3 rounded-md border p-2'>
-            <div className='flex items-center justify-between'>
-              <Label>{dict.workflow.schedule.cron.dayOfMonth}</Label>
-              <Badge variant='secondary'>{dayOfMonth.value}</Badge>
-            </div>
-            <RadioGroup
-              value={dayOfMonth.type}
-              onValueChange={(value) =>
-                updateField(dayOfMonth, setDayOfMonth, value)
-              }
-              className='flex flex-col space-y-1'
-              disabled={isDisabled}
-            >
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='every' id='dom-every' />
-                <Label htmlFor='dom-every'>
-                  {dict.workflow.schedule.cron.everyDay}
-                </Label>
-              </div>
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='specific' id='dom-specific' />
-                <Label htmlFor='dom-specific'>
-                  {dict.workflow.schedule.cron.specificDay}
-                </Label>
-                <Select
-                  disabled={dayOfMonth.type !== 'specific'}
-                  value={
-                    dayOfMonth.type === 'specific' ? dayOfMonth.value : '1'
-                  }
-                  onValueChange={(value) =>
-                    updateField(dayOfMonth, setDayOfMonth, 'specific', value)
-                  }
-                >
-                  <SelectTrigger className='w-20'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS_OF_MONTH.map((d) => (
-                      <SelectItem key={`dom-${d}`} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Months */}
-          <div className='border-border/20 flex max-w-80 flex-col space-y-3 rounded-md border p-2'>
-            <div className='flex items-center justify-between'>
-              <Label>{dict.workflow.schedule.cron.month}</Label>
-              <Badge variant='secondary'>{month.value}</Badge>
-            </div>
-            <RadioGroup
-              value={month.type}
-              onValueChange={(value) => updateField(month, setMonth, value)}
-              className='flex flex-col space-y-1'
-              disabled={isDisabled}
-            >
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='every' id='month-every' />
-                <Label htmlFor='month-every'>
-                  {dict.workflow.schedule.cron.everyMonth}
-                </Label>
-              </div>
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='specific' id='month-specific' />
-                <Label htmlFor='month-specific'>
-                  {dict.workflow.schedule.cron.specificMonth}
-                </Label>
-                <Select
-                  disabled={month.type !== 'specific'}
-                  value={month.type === 'specific' ? month.value : '1'}
-                  onValueChange={(value) =>
-                    updateField(month, setMonth, 'specific', value)
-                  }
-                >
-                  <SelectTrigger className='w-28'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((m) => (
-                      <SelectItem key={`month-${m.value}`} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Days of Week */}
-          <div className='border-border/20 flex max-w-80 flex-col space-y-3 rounded-md border p-2'>
-            <div className='flex items-center justify-between'>
-              <Label>{dict.workflow.schedule.cron.dayOfWeek}</Label>
-              <Badge variant='secondary'>{dayOfWeek.value}</Badge>
-            </div>
-            <RadioGroup
-              value={dayOfWeek.type}
-              onValueChange={(value) =>
-                updateField(dayOfWeek, setDayOfWeek, value)
-              }
-              className='flex flex-col space-y-1'
-              disabled={isDisabled}
-            >
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='every' id='dow-every' />
-                <Label htmlFor='dow-every'>
-                  {dict.workflow.schedule.cron.everyWeekday}
-                </Label>
-              </div>
-              <div className='flex items-center space-x-2'>
-                <RadioGroupItem value='specific' id='dow-specific' />
-                <Label htmlFor='dow-specific'>
-                  {dict.workflow.schedule.cron.specificWeekday}
-                </Label>
-                <Select
-                  disabled={dayOfWeek.type !== 'specific'}
-                  value={dayOfWeek.type === 'specific' ? dayOfWeek.value : '1'}
-                  onValueChange={(value) =>
-                    updateField(dayOfWeek, setDayOfWeek, 'specific', value)
-                  }
-                >
-                  <SelectTrigger className='w-28'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS_OF_WEEK.map((d) => (
-                      <SelectItem key={`dow-${d.value}`} value={d.value}>
-                        {d.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </RadioGroup>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <div className='flex flex-col space-y-2'>
-        <div className='flex flex-row items-center justify-between'>
-          <Label>{dict.workflow.schedule.cron.generatedCron}</Label>
-          <div className='flex flex-row items-center gap-2'>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    onClick={handleCopy}
-                    disabled={isDisabled}
+              <RadioGroup
+                value={minute.type}
+                onValueChange={(value) => updateField(minute, setMinute, value)}
+                className='flex flex-col space-y-1'
+                disabled={isDisabled}
+              >
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='every' id='minute-every' />
+                  <Label htmlFor='minute-every'>
+                    {dict.workflow.schedule.cron.everyMinute}
+                  </Label>
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='specific' id='minute-specific' />
+                  <Label htmlFor='minute-specific'>
+                    {dict.workflow.schedule.cron.specificMinute}
+                  </Label>
+                  <Select
+                    disabled={minute.type !== 'specific'}
+                    value={minute.type === 'specific' ? minute.value : '0'}
+                    onValueChange={(value) =>
+                      updateField(minute, setMinute, 'specific', value)
+                    }
                   >
-                    <TbCopy
-                      className={cn('h-4 w-4', copied ? 'text-accent' : '')}
-                    />
+                    <SelectTrigger className='w-20'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MINUTES.map((m) => (
+                        <SelectItem key={`minute-${m}`} value={m}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Hours */}
+            <div
+              className={`
+                flex max-w-80 flex-col space-y-3 rounded-md border
+                border-border/20 p-2
+              `}
+            >
+              <div className='flex items-center justify-between'>
+                <Label>{dict.workflow.schedule.cron.hours}</Label>
+                <Badge variant='secondary'>{hour.value}</Badge>
+              </div>
+              <RadioGroup
+                value={hour.type}
+                onValueChange={(value) => updateField(hour, setHour, value)}
+                className='flex flex-col space-y-1'
+                disabled={isDisabled}
+              >
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='every' id='hour-every' />
+                  <Label htmlFor='hour-every'>
+                    {dict.workflow.schedule.cron.everyHour}
+                  </Label>
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='specific' id='hour-specific' />
+                  <Label htmlFor='hour-specific'>
+                    {dict.workflow.schedule.cron.specificHour}
+                  </Label>
+                  <Select
+                    disabled={hour.type !== 'specific'}
+                    value={hour.type === 'specific' ? hour.value : '0'}
+                    onValueChange={(value) =>
+                      updateField(hour, setHour, 'specific', value)
+                    }
+                  >
+                    <SelectTrigger className='w-20'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HOURS.map((h) => (
+                        <SelectItem key={`hour-${h}`} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Days of Month */}
+            <div
+              className={`
+                flex max-w-80 flex-col space-y-3 rounded-md border
+                border-border/20 p-2
+              `}
+            >
+              <div className='flex items-center justify-between'>
+                <Label>{dict.workflow.schedule.cron.dayOfMonth}</Label>
+                <Badge variant='secondary'>{dayOfMonth.value}</Badge>
+              </div>
+              <RadioGroup
+                value={dayOfMonth.type}
+                onValueChange={(value) =>
+                  updateField(dayOfMonth, setDayOfMonth, value)
+                }
+                className='flex flex-col space-y-1'
+                disabled={isDisabled}
+              >
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='every' id='dom-every' />
+                  <Label htmlFor='dom-every'>
+                    {dict.workflow.schedule.cron.everyDay}
+                  </Label>
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='specific' id='dom-specific' />
+                  <Label htmlFor='dom-specific'>
+                    {dict.workflow.schedule.cron.specificDay}
+                  </Label>
+                  <Select
+                    disabled={dayOfMonth.type !== 'specific'}
+                    value={
+                      dayOfMonth.type === 'specific' ? dayOfMonth.value : '1'
+                    }
+                    onValueChange={(value) =>
+                      updateField(dayOfMonth, setDayOfMonth, 'specific', value)
+                    }
+                  >
+                    <SelectTrigger className='w-20'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DAYS_OF_MONTH.map((d) => (
+                        <SelectItem key={`dom-${d}`} value={d}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Months */}
+            <div
+              className={`
+                flex max-w-80 flex-col space-y-3 rounded-md border
+                border-border/20 p-2
+              `}
+            >
+              <div className='flex items-center justify-between'>
+                <Label>{dict.workflow.schedule.cron.month}</Label>
+                <Badge variant='secondary'>{month.value}</Badge>
+              </div>
+              <RadioGroup
+                value={month.type}
+                onValueChange={(value) => updateField(month, setMonth, value)}
+                className='flex flex-col space-y-1'
+                disabled={isDisabled}
+              >
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='every' id='month-every' />
+                  <Label htmlFor='month-every'>
+                    {dict.workflow.schedule.cron.everyMonth}
+                  </Label>
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='specific' id='month-specific' />
+                  <Label htmlFor='month-specific'>
+                    {dict.workflow.schedule.cron.specificMonth}
+                  </Label>
+                  <Select
+                    disabled={month.type !== 'specific'}
+                    value={month.type === 'specific' ? month.value : '1'}
+                    onValueChange={(value) =>
+                      updateField(month, setMonth, 'specific', value)
+                    }
+                  >
+                    <SelectTrigger className='w-28'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTHS.map((m) => (
+                        <SelectItem key={`month-${m.value}`} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Days of Week */}
+            <div
+              className={`
+                flex max-w-80 flex-col space-y-3 rounded-md border
+                border-border/20 p-2
+              `}
+            >
+              <div className='flex items-center justify-between'>
+                <Label>{dict.workflow.schedule.cron.dayOfWeek}</Label>
+                <Badge variant='secondary'>{dayOfWeek.value}</Badge>
+              </div>
+              <RadioGroup
+                value={dayOfWeek.type}
+                onValueChange={(value) =>
+                  updateField(dayOfWeek, setDayOfWeek, value)
+                }
+                className='flex flex-col space-y-1'
+                disabled={isDisabled}
+              >
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='every' id='dow-every' />
+                  <Label htmlFor='dow-every'>
+                    {dict.workflow.schedule.cron.everyWeekday}
+                  </Label>
+                </div>
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem value='specific' id='dow-specific' />
+                  <Label htmlFor='dow-specific'>
+                    {dict.workflow.schedule.cron.specificWeekday}
+                  </Label>
+                  <Select
+                    disabled={dayOfWeek.type !== 'specific'}
+                    value={
+                      dayOfWeek.type === 'specific' ? dayOfWeek.value : '1'
+                    }
+                    onValueChange={(value) =>
+                      updateField(dayOfWeek, setDayOfWeek, 'specific', value)
+                    }
+                  >
+                    <SelectTrigger className='w-28'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DAYS_OF_WEEK.map((d) => (
+                        <SelectItem key={`dow-${d.value}`} value={d.value}>
+                          {d.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </RadioGroup>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className='flex flex-col space-y-2'>
+          <div className='flex flex-row items-center justify-between'>
+            <Label>{dict.workflow.schedule.cron.generatedCron}</Label>
+            <div className='flex flex-row items-center gap-2'>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      onClick={handleCopy}
+                      disabled={isDisabled}
+                    >
+                      <TbCopy
+                        className={cn('size-4', copied ? 'text-accent' : '')}
+                      />
+                      <span className='sr-only'>
+                        {dict.workflow.schedule.cron.copyCron}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {copied
+                        ? dict.workflow.schedule.cron.copied
+                        : dict.workflow.schedule.cron.copyToClipboard}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='ghost' size='icon' className='size-6'>
+                    <TbInfoCircle className='size-4' />
                     <span className='sr-only'>
-                      {dict.workflow.schedule.cron.copyCron}
+                      {dict.workflow.schedule.cron.cronSyntaxHelp}
                     </span>
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {copied
-                      ? dict.workflow.schedule.cron.copied
-                      : dict.workflow.schedule.cron.copyToClipboard}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant='ghost' size='icon' className='h-6 w-6'>
-                  <TbInfoCircle className='h-4 w-4' />
-                  <span className='sr-only'>
-                    {dict.workflow.schedule.cron.cronSyntaxHelp}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className='w-80'>
-                <div className='space-y-2'>
-                  <h4 className='font-medium'>
-                    {dict.workflow.schedule.cron.cronSyntax}
-                  </h4>
-                  <p className='text-muted-foreground text-sm'>
-                    {dict.workflow.schedule.cron.cronSyntaxDescription}
-                  </p>
-                  <div className='grid grid-cols-5 gap-1 font-mono text-xs'>
-                    <div className='text-center'>minute</div>
-                    <div className='text-center'>hour</div>
-                    <div className='text-center'>day</div>
-                    <div className='text-center'>month</div>
-                    <div className='text-center'>weekday</div>
-                    <div className='text-center'>(0-59)</div>
-                    <div className='text-center'>(0-23)</div>
-                    <div className='text-center'>(1-31)</div>
-                    <div className='text-center'>(1-12)</div>
-                    <div className='text-center'>(0-6)</div>
+                </PopoverTrigger>
+                <PopoverContent className='w-80'>
+                  <div className='space-y-2'>
+                    <h4 className='font-medium'>
+                      {dict.workflow.schedule.cron.cronSyntax}
+                    </h4>
+                    <p className='text-sm text-muted-foreground'>
+                      {dict.workflow.schedule.cron.cronSyntaxDescription}
+                    </p>
+                    <div className='grid grid-cols-5 gap-1 font-mono text-xs'>
+                      <div className='text-center'>minute</div>
+                      <div className='text-center'>hour</div>
+                      <div className='text-center'>day</div>
+                      <div className='text-center'>month</div>
+                      <div className='text-center'>weekday</div>
+                      <div className='text-center'>(0-59)</div>
+                      <div className='text-center'>(0-23)</div>
+                      <div className='text-center'>(1-31)</div>
+                      <div className='text-center'>(1-12)</div>
+                      <div className='text-center'>(0-6)</div>
+                    </div>
+                    <p className='mt-2 text-xs text-muted-foreground'>
+                      {dict.workflow.schedule.cron.cronSyntaxNote}
+                    </p>
                   </div>
-                  <p className='text-muted-foreground mt-2 text-xs'>
-                    {dict.workflow.schedule.cron.cronSyntaxNote}
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className='relative flex-col items-center gap-2'>
+            <Input
+              value={cronExpression}
+              onChange={(e) => handleCronExpressionChange(e.target.value)}
+              className={cn(
+                'pr-10 font-mono',
+                !isValid
+                  ? `
+                    border-destructive
+                    focus-visible:ring-destructive
+                  `
+                  : `
+                    border-accent
+                    focus-visible:ring-accent
+                  `
+              )}
+              aria-invalid={!isValid}
+              disabled={isDisabled}
+            />
+            {!isValid && (
+              <p className='mt-1 text-sm text-destructive'>
+                {dict.workflow.schedule.cron.invalidCron}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className='relative flex-col items-center gap-2'>
-          <Input
-            value={cronExpression}
-            onChange={(e) => handleCronExpressionChange(e.target.value)}
-            className={cn(
-              'pr-10 font-mono',
-              !isValid
-                ? 'border-destructive focus-visible:ring-destructive'
-                : 'border-accent focus-visible:ring-accent'
-            )}
-            aria-invalid={!isValid}
-            disabled={isDisabled}
-          />
-          {!isValid && (
-            <p className='text-destructive mt-1 text-sm'>
+        <div className='mt-6 flex flex-col space-y-2'>
+          <Label>{dict.workflow.schedule.cron.nextExecutionTimes}</Label>
+          {nextDates.length > 0 ? (
+            <ul className='space-y-2'>
+              {nextDates.map((date) => (
+                <li
+                  key={`next-execution-${date.getTime()}`}
+                  className='rounded-md bg-muted p-2 text-sm'
+                >
+                  {format(date, 'PPpp')}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className='pl-1 text-sm text-muted-foreground'>
               {dict.workflow.schedule.cron.invalidCron}
             </p>
           )}
         </div>
       </div>
-
-      <div className='mt-6 flex flex-col space-y-2'>
-        <Label>{dict.workflow.schedule.cron.nextExecutionTimes}</Label>
-        {nextDates.length > 0 ? (
-          <ul className='space-y-2'>
-            {nextDates.map((date, index) => (
-              <li key={index} className='bg-muted rounded-md p-2 text-sm'>
-                {format(date, 'PPpp')}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className='text-muted-foreground pl-1 text-sm'>
-            {dict.workflow.schedule.cron.invalidCron}
-          </p>
-        )}
-      </div>
-    </div>
+    </SafeComponent>
   );
 };
 

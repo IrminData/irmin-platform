@@ -1,7 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import React from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
@@ -31,8 +30,8 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnections } from '@/hooks/useConnections';
 import { useRepositories } from '@/hooks/useRepositories';
 
-import { ObjectSchema } from '@/types/core/ObjectSchema';
-import { PipelineStage } from '@/types/core/Workflow';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { PipelineStage } from '@/types/core/Workflow';
 
 const defaultStage: PipelineStage = {
   type: 'action',
@@ -172,7 +171,7 @@ function Stage({
   });
 
   return (
-    <div className='border-foreground/20 space-y-4 rounded-lg border p-4'>
+    <div className='space-y-4 rounded-lg border border-foreground/20 p-4'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
           <Button
@@ -180,31 +179,31 @@ function Stage({
             variant='ghost'
             size='icon'
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className='h-6 w-6'
+            className='size-6'
           >
             {isCollapsed ? (
-              <TbChevronRight className='h-4 w-4' />
+              <TbChevronRight className='size-4' />
             ) : (
-              <TbChevronDown className='h-4 w-4' />
+              <TbChevronDown className='size-4' />
             )}
           </Button>
           <h3 className='flex items-center gap-2 text-lg font-semibold'>
             {dict.workflow.pipeline.stage} {index + 1}
-            <span className='text-muted-foreground text-sm'>
+            <span className='text-sm text-muted-foreground'>
               {stage.type === 'action' && (
-                <span className='text-muted-foreground text-xs'>
+                <span className='text-xs text-muted-foreground'>
                   {dict.workflow.action}
                   {stage.description ? `: ${stage.description}` : ''}
                 </span>
               )}
               {stage.type === 'connection' && (
-                <span className='text-muted-foreground text-xs'>
+                <span className='text-xs text-muted-foreground'>
                   {dict.connections.connection}
                   {stage.description ? `: ${stage.description}` : ''}
                 </span>
               )}
               {stage.type === 'repository' && (
-                <span className='text-muted-foreground text-xs'>
+                <span className='text-xs text-muted-foreground'>
                   {dict.repository.repository}
                   {stage.description ? `: ${stage.description}` : ''}
                 </span>
@@ -415,7 +414,7 @@ function Stage({
                   value={stage.connection_id}
                   onValueChange={(value) => {
                     if (!value) return;
-                    fetchConnectionSchemas(value);
+                    void fetchConnectionSchemas(value);
                     setStage((prevStage) => ({
                       ...prevStage,
                       connection_id: value,
@@ -707,4 +706,4 @@ function Stage({
   );
 }
 
-export default React.memo(Stage);
+export default memo(Stage);

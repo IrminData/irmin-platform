@@ -1,7 +1,7 @@
 import { isBlobText } from '@/utils/isBlobText';
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
-import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
+import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Convert any type of content to text

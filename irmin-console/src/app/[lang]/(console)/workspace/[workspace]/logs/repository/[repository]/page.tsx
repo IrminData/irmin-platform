@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useRepository } from '@/hooks/useRepository';
 
-import { RepositoryLogsLayoutParams } from './layout';
+import type { RepositoryLogsLayoutParams } from './layout';
 
 /**
  * Repository Audit Logs page

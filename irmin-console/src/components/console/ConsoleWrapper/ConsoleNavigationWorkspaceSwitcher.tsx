@@ -15,7 +15,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { Workspace } from '@/types/core/Workspace';
+import type { Workspace } from '@/types/core/Workspace';
 
 /**
  * Workspace switcher UI for the console navigation sidebar

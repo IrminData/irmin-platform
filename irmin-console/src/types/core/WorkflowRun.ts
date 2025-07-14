@@ -1,6 +1,6 @@
-import { ScheduleTrigger } from '@/types/core/Schedule';
-import { User } from '@/types/core/User';
-import { WorkflowStatus } from '@/types/core/Workflow';
+import type { ScheduleTrigger } from '@/types/core/Schedule';
+import type { User } from '@/types/core/User';
+import type { WorkflowStatus } from '@/types/core/Workflow';
 
 /**
  * Represents a workflow run.

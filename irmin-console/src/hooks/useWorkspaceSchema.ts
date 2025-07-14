@@ -7,7 +7,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
 /**
  * Hook to fetch the workspace schema
@@ -47,7 +47,7 @@ export function useWorkspaceSchema() {
   useEffect(() => {
     if (fetchedSchemaForWorkspaceRef.current === workspaceSlug) return;
     fetchedSchemaForWorkspaceRef.current = workspaceSlug;
-    fetchWorkspaceSchema();
+    void fetchWorkspaceSchema();
   }, [fetchWorkspaceSchema, workspaceSlug]);
 
   return {

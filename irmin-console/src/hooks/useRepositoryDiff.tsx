@@ -1,16 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import {
+  repositoryCommitsQueryKey,
+  repositoryDiffQueryKey,
+} from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { Diff, MergeStrategy } from '@/types/core/Diff';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-import { repositoryCommitsQueryKey } from './useRepositoryCommits';
+import type { Diff, MergeStrategy } from '@/types/core/Diff';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export type MergeRefsInput = {
   base: string;
@@ -19,13 +21,6 @@ export type MergeRefsInput = {
   strategy: MergeStrategy;
   squash: boolean;
 };
-
-export const repositoryDiffQueryKey = (
-  workspaceSlug: string,
-  repositorySlug: string,
-  base: string,
-  compare: string
-) => ['repository-diff', workspaceSlug, repositorySlug, base, compare] as const;
 
 export function useRepositoryDiff(
   repositorySlug: string,
@@ -78,7 +73,7 @@ export function useRepositoryDiff(
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryDiffQueryKey(
           workspaceSlug,
           repositorySlug,
@@ -86,7 +81,7 @@ export function useRepositoryDiff(
           compare ?? ''
         ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryCommitsQueryKey(
           workspaceSlug,
           repositorySlug,
@@ -94,7 +89,7 @@ export function useRepositoryDiff(
           ''
         ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryCommitsQueryKey(
           workspaceSlug,
           repositorySlug,

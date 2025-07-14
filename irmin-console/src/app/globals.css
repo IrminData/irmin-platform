@@ -1,0 +1,22 @@
+/**
+ * GLOBAL APP STYLES
+ *
+ * This file imports the core Tailwind CSS library, Tailwind plugins,
+ * the theme configuration, and the base, utilities, and components CSS files.
+ */
+
+/* Import the Tailwind CSS library. This MUST come first.
+ * It sets up the @layer directives and processes the theme.
+ */
+@import 'tailwindcss';
+
+/* Import the tw-animate-css library. */
+@import 'tw-animate-css';
+
+/* Import the theme configuration. */
+@import '../styles/theme.css';
+
+/* Import the base, utilities, and components CSS files. */
+@import '../styles/base.css';
+@import '../styles/utilities.css';
+@import '../styles/components.css';

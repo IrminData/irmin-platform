@@ -2,10 +2,10 @@
 
 import React, { useMemo } from 'react';
 
-import { Controls, Edge, Node, ReactFlow } from '@xyflow/react';
-import { useTheme } from 'next-themes';
-
+import type { Edge, Node } from '@xyflow/react';
+import { Controls, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useTheme } from 'next-themes';
 
 /**
  * Interface representing a tree node.
@@ -39,7 +39,7 @@ const generateFlowData = (tree: TreeNode): { nodes: Node[]; edges: Edge[] } => {
   const traverseTree = (
     node: TreeNode,
     parentId: string | null = null,
-    level: number = 0
+    level = 0
   ) => {
     const nodeId = `${node.id}`;
     nodeMap.set(nodeId, node);

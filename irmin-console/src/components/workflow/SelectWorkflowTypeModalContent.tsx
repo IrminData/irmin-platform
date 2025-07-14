@@ -11,13 +11,13 @@ import {
   TbPlayerPlay,
 } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { WorkflowableType } from '@/types/core/Workflow';
+import type { WorkflowableType } from '@/types/core/Workflow';
 
 /**
  * Select the workflow type modal content and direct to the next step
@@ -86,9 +86,9 @@ export default function SelectWorkflowTypeModalContent() {
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
       <div className='flex flex-col gap-4 py-4'>
-        {workflowTypeOptions.map((option, key) => (
+        {workflowTypeOptions.map((option) => (
           <Button
-            key={`${option.type}-${key}`}
+            key={option.type}
             onClick={() => setWorkflowableType(option.type)}
             size='lg'
             variant={workflowableType === option.type ? 'accent' : 'gray'}
@@ -98,8 +98,13 @@ export default function SelectWorkflowTypeModalContent() {
           </Button>
         ))}
       </div>
-      <div className='grow'></div>
-      <div className='mt-auto border-t pt-4 dark:border-gray-800'>
+      <div className='grow' />
+      <div
+        className={`
+          mt-auto border-t pt-4
+          dark:border-gray-800
+        `}
+      >
         <Button
           className='mb-6 inline-block w-full'
           variant='gradient'

@@ -22,10 +22,10 @@ import {
   TbX,
 } from 'react-icons/tb';
 
-import { Dictionary } from '@/lib/dict';
+import type { Dictionary } from '@/lib/dict';
 
-import Button from '@/components/ui/button';
-import QueryError from '@/components/ui/error/QueryError';
+import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import TagBadge from '@/components/ui/TagBadge';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -39,12 +39,10 @@ import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
 import { convertSearchResultToConsoleItem } from '@/utils/search';
 
-import { SearchFilters, SearchResult } from '@/types/core/Search';
-import { Tag } from '@/types/core/Tag';
-import {
-  ConsoleSearchItem,
-  ConsoleSearchItemType,
-} from '@/types/internal/ConsoleSearch';
+import type { SearchFilters, SearchResult } from '@/types/core/Search';
+import type { Tag } from '@/types/core/Tag';
+import type { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
+import { ConsoleSearchItemType } from '@/types/internal/ConsoleSearch';
 
 import SearchResultsSkeleton from './SearchResultsSkeleton';
 
@@ -329,19 +327,36 @@ export default function SearchPageComponent() {
     ({ tags }: { tags: Tag[] }) => {
       return (
         <div className='flex flex-wrap gap-2'>
-          {tags.map((tag) => (
+          {tags.map((tag, index) => (
             <div
               key={tag.id}
+              role='button'
+              tabIndex={index}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleTagToggle(tag.id);
+                }
+              }}
               onClick={() => handleTagToggle(tag.id)}
-              className='cursor-pointer transition-all hover:scale-105'
+              className={`
+                cursor-pointer transition-all
+                hover:scale-105
+              `}
             >
               <TagBadge
                 tag={tag}
                 size='sm'
                 className={
                   filters.tags?.includes(tag.id)
-                    ? 'border-blue-300 bg-blue-100 text-blue-800 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'opacity-70 hover:opacity-100'
+                    ? `
+                      border-blue-300 bg-blue-100 text-blue-800
+                      dark:border-blue-700 dark:bg-blue-900/30
+                      dark:text-blue-300
+                    `
+                    : `
+                      opacity-70
+                      hover:opacity-100
+                    `
                 }
               />
             </div>
@@ -357,10 +372,20 @@ export default function SearchPageComponent() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-medium text-gray-900 dark:text-white'>
+          <h1
+            className={`
+              text-2xl font-medium text-gray-900
+              dark:text-white
+            `}
+          >
             {dict.common.search}
           </h1>
-          <p className='mt-1 text-gray-600 dark:text-gray-300'>
+          <p
+            className={`
+              mt-1 text-gray-600
+              dark:text-gray-300
+            `}
+          >
             {dict.search.searchDescription}
           </p>
         </div>
@@ -368,14 +393,23 @@ export default function SearchPageComponent() {
 
       {/* Search Input */}
       <div className='relative'>
-        <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
-          <TbSearch className='h-5 w-5 text-gray-400' />
+        <div
+          className={`
+            pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3
+          `}
+        >
+          <TbSearch className='size-5 text-gray-400' />
         </div>
         <input
           type='text'
           value={filters.query || ''}
           onChange={(e) => handleFilterChange({ query: e.target.value })}
-          className='block w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+          className={`
+            block w-full rounded-lg border border-gray-300 bg-white py-3 pr-4
+            pl-10
+            focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+            dark:border-gray-600 dark:bg-gray-800 dark:text-white
+          `}
           placeholder={dict.search.searchPlaceholder}
         />
       </div>
@@ -390,7 +424,10 @@ export default function SearchPageComponent() {
         >
           {dict.common.filters}
           <TbChevronDown
-            className={`transition-transform ${showFilters ? 'rotate-180' : ''}`}
+            className={`
+              transition-transform
+              ${showFilters ? 'rotate-180' : ''}
+            `}
             size={16}
           />
         </Button>
@@ -412,10 +449,20 @@ export default function SearchPageComponent() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className='space-y-6 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800'>
+        <div
+          className={`
+            space-y-6 rounded-lg border border-gray-200 bg-white p-6
+            dark:border-gray-700 dark:bg-gray-800
+          `}
+        >
           {/* Types Filter */}
           <div>
-            <label className='mb-3 block text-sm text-gray-700 dark:text-gray-300'>
+            <label
+              className={`
+                mb-3 block text-sm text-gray-700
+                dark:text-gray-300
+              `}
+            >
               {dict.search.contentTypes}
             </label>
             <div className='flex flex-wrap gap-2'>
@@ -438,19 +485,44 @@ export default function SearchPageComponent() {
           {/* Tags Filter */}
           {isTagsLoading ? (
             <div>
-              <label className='mb-3 block text-sm text-gray-700 dark:text-gray-300'>
+              <label
+                className={`
+                  mb-3 block text-sm text-gray-700
+                  dark:text-gray-300
+                `}
+              >
                 {dict.workspace.tags}
               </label>
               <div className='flex flex-wrap gap-2'>
-                <div className='h-8 w-20 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700'></div>
-                <div className='h-8 w-16 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700'></div>
-                <div className='h-8 w-24 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700'></div>
+                <div
+                  className={`
+                    h-8 w-20 animate-pulse rounded-md bg-gray-200
+                    dark:bg-gray-700
+                  `}
+                />
+                <div
+                  className={`
+                    h-8 w-16 animate-pulse rounded-md bg-gray-200
+                    dark:bg-gray-700
+                  `}
+                />
+                <div
+                  className={`
+                    h-8 w-24 animate-pulse rounded-md bg-gray-200
+                    dark:bg-gray-700
+                  `}
+                />
               </div>
             </div>
           ) : workspaceTagsQuery.data?.data &&
             workspaceTagsQuery.data.data.length > 0 ? (
             <div>
-              <label className='mb-3 block text-sm text-gray-700 dark:text-gray-300'>
+              <label
+                className={`
+                  mb-3 block text-sm text-gray-700
+                  dark:text-gray-300
+                `}
+              >
                 {dict.workspace.tags}
               </label>
               <TagSelection tags={workspaceTagsQuery.data.data} />
@@ -458,16 +530,31 @@ export default function SearchPageComponent() {
           ) : workspaceTagsQuery.data?.data &&
             workspaceTagsQuery.data.data.length === 0 ? (
             <div>
-              <label className='mb-3 block text-sm text-gray-700 dark:text-gray-300'>
+              <label
+                className={`
+                  mb-3 block text-sm text-gray-700
+                  dark:text-gray-300
+                `}
+              >
                 {dict.workspace.tags}
               </label>
-              <p className='text-sm text-gray-500 dark:text-gray-400'>
+              <p
+                className={`
+                  text-sm text-gray-500
+                  dark:text-gray-400
+                `}
+              >
                 {dict.list.noItemsFound}
               </p>
             </div>
           ) : workspaceTagsQuery.error ? (
             <div>
-              <label className='mb-3 block text-sm text-gray-700 dark:text-gray-300'>
+              <label
+                className={`
+                  mb-3 block text-sm text-gray-700
+                  dark:text-gray-300
+                `}
+              >
                 {dict.workspace.tags}
               </label>
               <QueryError
@@ -481,14 +568,29 @@ export default function SearchPageComponent() {
           ) : null}
 
           {/* Date Range Filter */}
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div
+            className={`
+              grid grid-cols-1 gap-4
+              md:grid-cols-2
+            `}
+          >
             <div>
-              <label className='mb-2 block text-sm text-gray-700 dark:text-gray-300'>
+              <label
+                className={`
+                  mb-2 block text-sm text-gray-700
+                  dark:text-gray-300
+                `}
+              >
                 {dict.search.fromDate}
               </label>
               <div className='relative'>
-                <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
-                  <TbCalendar className='h-5 w-5 text-gray-400' />
+                <div
+                  className={`
+                    pointer-events-none absolute inset-y-0 left-0 flex
+                    items-center pl-3
+                  `}
+                >
+                  <TbCalendar className='size-5 text-gray-400' />
                 </div>
                 <input
                   type='date'
@@ -496,17 +598,32 @@ export default function SearchPageComponent() {
                   onChange={(e) =>
                     handleFilterChange({ date_from: e.target.value })
                   }
-                  className='block w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
+                  className={`
+                    block w-full rounded-lg border border-gray-300 bg-white py-2
+                    pr-4 pl-10
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                    dark:border-gray-600 dark:bg-gray-700 dark:text-white
+                  `}
                 />
               </div>
             </div>
             <div>
-              <label className='mb-2 block text-sm text-gray-700 dark:text-gray-300'>
+              <label
+                className={`
+                  mb-2 block text-sm text-gray-700
+                  dark:text-gray-300
+                `}
+              >
                 {dict.search.toDate}
               </label>
               <div className='relative'>
-                <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
-                  <TbCalendar className='h-5 w-5 text-gray-400' />
+                <div
+                  className={`
+                    pointer-events-none absolute inset-y-0 left-0 flex
+                    items-center pl-3
+                  `}
+                >
+                  <TbCalendar className='size-5 text-gray-400' />
                 </div>
                 <input
                   type='date'
@@ -514,7 +631,12 @@ export default function SearchPageComponent() {
                   onChange={(e) =>
                     handleFilterChange({ date_to: e.target.value })
                   }
-                  className='block w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
+                  className={`
+                    block w-full rounded-lg border border-gray-300 bg-white py-2
+                    pr-4 pl-10
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                    dark:border-gray-600 dark:bg-gray-700 dark:text-white
+                  `}
                 />
               </div>
             </div>
@@ -522,7 +644,12 @@ export default function SearchPageComponent() {
 
           {/* Results per page */}
           <div>
-            <label className='mb-2 block text-sm text-gray-700 dark:text-gray-300'>
+            <label
+              className={`
+                mb-2 block text-sm text-gray-700
+                dark:text-gray-300
+              `}
+            >
               {dict.search.resultsPerPage}
             </label>
             <select
@@ -530,7 +657,12 @@ export default function SearchPageComponent() {
               onChange={(e) =>
                 handleFilterChange({ limit: parseInt(e.target.value) })
               }
-              className='block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
+              className={`
+                block w-full rounded-lg border border-gray-300 bg-white px-3
+                py-2
+                focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                dark:border-gray-600 dark:bg-gray-700 dark:text-white
+              `}
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -545,7 +677,12 @@ export default function SearchPageComponent() {
       <div className='space-y-6'>
         {/* Results Count */}
         {filters.query && isInitialized && (
-          <div className='text-sm text-gray-600 dark:text-gray-400'>
+          <div
+            className={`
+              text-sm text-gray-600
+              dark:text-gray-400
+            `}
+          >
             {isLoading && accumulatedResults.length === 0 ? (
               dict.search.searchingText
             ) : (
@@ -582,7 +719,12 @@ export default function SearchPageComponent() {
           <div className='space-y-8'>
             {Object.entries(groupedResults).map(([type, items]) => (
               <div key={type} className='space-y-4'>
-                <div className='flex items-center gap-2 text-lg font-medium text-gray-900 dark:text-white'>
+                <div
+                  className={`
+                    flex items-center gap-2 text-lg font-medium text-gray-900
+                    dark:text-white
+                  `}
+                >
                   {getIconForType(type as ConsoleSearchItemType)}
                   <span>
                     {type === 'workflow' && dict.workflow.workflows}
@@ -596,24 +738,45 @@ export default function SearchPageComponent() {
                     {type === 'binary-object' && dict.repository.objects.binary}
                     {type === 'group-object' && dict.repository.objects.group}
                   </span>
-                  <span className='text-sm text-gray-500 dark:text-gray-400'>
+                  <span
+                    className={`
+                      text-sm text-gray-500
+                      dark:text-gray-400
+                    `}
+                  >
                     ({items.length})
                   </span>
                 </div>
                 <div className='grid gap-4'>
-                  {items.map((item, idx) => (
+                  {items.map((item) => (
                     <Link
-                      key={`${type}-${idx}`}
+                      key={`${type}-${item.link}-${item.title}`}
                       href={item.link}
-                      className='block rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700'
+                      className={`
+                        block rounded-lg border border-gray-200 bg-white p-4
+                        transition-colors
+                        hover:bg-gray-50
+                        dark:border-gray-700 dark:bg-gray-800
+                        dark:hover:bg-gray-700
+                      `}
                     >
                       <div className='flex items-start gap-3'>
                         {getIconForType(item.type)}
                         <div className='min-w-0 flex-1'>
-                          <h3 className='truncate text-lg text-gray-900 dark:text-white'>
+                          <h3
+                            className={`
+                              truncate text-lg text-gray-900
+                              dark:text-white
+                            `}
+                          >
                             {item.title}
                           </h3>
-                          <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
+                          <p
+                            className={`
+                              mt-1 text-sm text-gray-600
+                              dark:text-gray-400
+                            `}
+                          >
                             {item.description}
                           </p>
                         </div>
@@ -647,13 +810,28 @@ export default function SearchPageComponent() {
           accumulatedResults.length === 0 &&
           isInitialized && (
             <div className='py-12 text-center'>
-              <div className='mb-4 text-gray-400 dark:text-gray-500'>
+              <div
+                className={`
+                  mb-4 text-gray-400
+                  dark:text-gray-500
+                `}
+              >
                 <TbSearch size={48} className='mx-auto' />
               </div>
-              <h3 className='mb-2 text-lg text-gray-900 dark:text-white'>
+              <h3
+                className={`
+                  mb-2 text-lg text-gray-900
+                  dark:text-white
+                `}
+              >
                 {dict.search.noResultsFound}
               </h3>
-              <p className='text-gray-600 dark:text-gray-400'>
+              <p
+                className={`
+                  text-gray-600
+                  dark:text-gray-400
+                `}
+              >
                 {dict.search.tryAdjustingFilters}
               </p>
             </div>
@@ -662,13 +840,28 @@ export default function SearchPageComponent() {
         {/* Empty State */}
         {!filters.query && isInitialized && (
           <div className='py-12 text-center'>
-            <div className='mb-4 text-gray-400 dark:text-gray-500'>
+            <div
+              className={`
+                mb-4 text-gray-400
+                dark:text-gray-500
+              `}
+            >
               <TbSearch size={48} className='mx-auto' />
             </div>
-            <h3 className='mb-2 text-lg text-gray-900 dark:text-white'>
+            <h3
+              className={`
+                mb-2 text-lg text-gray-900
+                dark:text-white
+              `}
+            >
               {dict.search.startSearching}
             </h3>
-            <p className='text-gray-600 dark:text-gray-400'>
+            <p
+              className={`
+                text-gray-600
+                dark:text-gray-400
+              `}
+            >
               {dict.search.startSearchingDescription}
             </p>
           </div>

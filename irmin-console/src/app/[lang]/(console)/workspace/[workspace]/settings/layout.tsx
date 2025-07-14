@@ -1,8 +1,8 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 import WorkspaceSettingsLayoutWrapper from '@/components/workspace/WorkspaceSettingsLayoutWrapper';
 
-import { WorkspaceLayoutParams } from '../layout';
+import type { WorkspaceLayoutParams } from '../layout';
 
 /**
  * SEO metadata for the Workspace Settings layout

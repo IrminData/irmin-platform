@@ -6,7 +6,7 @@ import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -14,7 +14,7 @@ import { useLocale } from '@/context/LocaleContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useEditorItems } from '@/hooks/useEditorItems';
 
-import { EditorItem } from '@/types/core/EditorItems';
+import type { EditorItem } from '@/types/core/EditorItems';
 
 /**
  * File selector component
@@ -95,8 +95,20 @@ const FileSelector = ({
           return (
             <div key={item.path} className='my-1'>
               <div
-                className='flex cursor-pointer items-center justify-normal rounded-md p-1 text-sm hover:bg-gray-200 dark:hover:bg-gray-800'
+                className={`
+                  flex cursor-pointer items-center justify-normal rounded-md p-1
+                  text-sm
+                  hover:bg-gray-200
+                  dark:hover:bg-gray-800
+                `}
                 onClick={() => handleItemClick(item)}
+                role='button'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleItemClick(item);
+                  }
+                }}
               >
                 {openFolders[item.name] ? (
                   <TbChevronDown
@@ -113,7 +125,10 @@ const FileSelector = ({
                   <FiFolder />
                 </span>
                 <span
-                  className='ml-2 hover:underline'
+                  className={`
+                    ml-2
+                    hover:underline
+                  `}
                   aria-label={`Open ${item.name} folder`}
                 >
                   {item.name}
@@ -132,18 +147,38 @@ const FileSelector = ({
           return (
             <div
               key={item.path}
-              className={`my-1 ml-6 flex cursor-pointer items-center justify-normal rounded-md p-1 text-sm ${
-                isSelected
-                  ? 'bg-gray-200 dark:bg-gray-800'
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-800'
-              }`}
+              className={`
+                my-1 ml-6 flex cursor-pointer items-center justify-normal
+                rounded-md p-1 text-sm
+                ${
+                  isSelected
+                    ? `
+                      bg-gray-200
+                      dark:bg-gray-800
+                    `
+                    : `
+                      hover:bg-gray-200
+                      dark:hover:bg-gray-800
+                    `
+                }
+              `}
               onClick={() => handleItemClick(item)}
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleItemClick(item);
+                }
+              }}
             >
               <span className='ml-2'>
                 <FiFile />
               </span>
               <span
-                className='ml-2 hover:underline'
+                className={`
+                  ml-2
+                  hover:underline
+                `}
                 aria-label={`Select file ${item.name}`}
               >
                 {item.name}
@@ -168,7 +203,10 @@ const FileSelector = ({
   return (
     <div
       id='file-selector'
-      className='relative mb-2 max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
+      className={`
+        relative mb-2 max-h-48 overflow-y-scroll border-b pb-4
+        dark:border-b-gray-800
+      `}
     >
       {currentSelectedFile && currentSelectedFile.length > 0 && (
         <ButtonWithTooltip

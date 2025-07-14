@@ -1,6 +1,6 @@
-import { Tag } from '@/types/core/Tag';
-import { User } from '@/types/core/User';
-import { JSONValue } from '@/types/internal/GenericJSON';
+import type { Tag } from '@/types/core/Tag';
+import type { User } from '@/types/core/User';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Represents a stored query in the system.

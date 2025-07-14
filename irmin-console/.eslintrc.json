@@ -1,22 +1,17 @@
 {
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "eslint-plugin-react-compiler"],
-  "extends": [
-    "next/core-web-vitals",
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@tanstack/query/recommended",
-    "prettier"
-  ],
-  "rules": {
-    "react-compiler/react-compiler": "error",
-    "no-irregular-whitespace": "off",
-    "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      { "argsIgnorePattern": "^_" }
-    ],
-    "no-console": "off",
-    "@typescript-eslint/no-explicit-any": "warn"
-  }
+  "ignorePatterns": [
+    "node_modules/**",
+    ".next/**",
+    "dist/**",
+    "build/**",
+    "public/**",
+    "*.config.js",
+    "*.config.ts",
+    "*.config.mjs",
+    "playwright/**",
+    "tests/**",
+    "test-results/**",
+    "playwright-report/**",
+    "tmp/**"
+  ]
 }

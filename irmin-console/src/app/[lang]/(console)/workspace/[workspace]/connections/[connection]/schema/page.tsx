@@ -4,14 +4,16 @@ import ConnectionSchemaSection from '@/components/connection/ConnectionSchemaSec
 
 import { isInvalidRouteProp } from '@/utils/isInvalidRouteProp';
 
-import { SingleConnectionLayoutParams } from '../layout';
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
+
+import type { SingleConnectionLayoutParams } from '../layout';
 
 /**
  * Page for the Connection Schema
  */
 export default async function ConnectionSchemaPage(props: {
   params: Promise<SingleConnectionLayoutParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const params = await props.params;
 
@@ -27,8 +29,8 @@ export default async function ConnectionSchemaPage(props: {
 
   return (
     <ConnectionSchemaSection
-      focusedPath={path}
       operationMethod={operationMethod}
+      focusedPath={path}
     />
   );
 }

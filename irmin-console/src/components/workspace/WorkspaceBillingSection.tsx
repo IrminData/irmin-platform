@@ -1,7 +1,7 @@
 'use client';
 
-import Button from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { Button } from '@/components/ui/button';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -17,7 +17,12 @@ const WorkspaceBillingSection = () => {
 
   return (
     <ContentWrapper wrapperClassName='py-8'>
-      <h2 className='mb-8 text-xl lg:text-2xl'>
+      <h2
+        className={`
+          mb-8 text-xl
+          lg:text-2xl
+        `}
+      >
         {dict.workspace.billingSettings}
       </h2>
       <p className='mb-8 font-normal text-gray-500'>

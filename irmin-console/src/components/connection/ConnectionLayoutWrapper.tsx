@@ -140,16 +140,37 @@ export default function ConnectionLayoutWrapper({
   return (
     <>
       <div className='relative container mx-auto max-w-7xl'>
-        <div className='mx-auto my-4 flex w-full flex-col px-2 md:px-4 lg:flex-row lg:items-center'>
+        <div
+          className={`
+            mx-auto my-4 flex w-full flex-col px-2
+            md:px-4
+            lg:flex-row lg:items-center
+          `}
+        >
           <div className='flex flex-col gap-2 py-4'>
-            <div className='flex flex-row items-center divide-x divide-gray-300 dark:divide-gray-700'>
+            <div
+              className={`
+                flex flex-row items-center divide-x divide-gray-300
+                dark:divide-gray-700
+              `}
+            >
               <div className='flex flex-row items-center gap-2 pr-2'>
-                <span className='text-xs text-gray-400 md:text-sm'>
+                <span
+                  className={`
+                    text-xs text-gray-400
+                    md:text-sm
+                  `}
+                >
                   {dict.connections.connection}
                 </span>
                 <Badge>{connection.connector.name}</Badge>
               </div>
-              <span className='px-2 text-xs text-gray-400 md:text-sm'>
+              <span
+                className={`
+                  px-2 text-xs text-gray-400
+                  md:text-sm
+                `}
+              >
                 {dict.list.owner}:{' '}
                 {`${connection.owner.first_name} ${connection.owner.last_name}`}
                 {connection.owner.company
@@ -159,7 +180,12 @@ export default function ConnectionLayoutWrapper({
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
-              <h1 className='text-foreground text-lg font-normal md:text-2xl'>
+              <h1
+                className={`
+                  text-lg font-normal text-foreground
+                  md:text-2xl
+                `}
+              >
                 {connection.name}
               </h1>
               {connection.tags && connection.tags.length > 0 && (
@@ -170,7 +196,12 @@ export default function ConnectionLayoutWrapper({
                 />
               )}
             </div>
-            <p className='max-w-lg text-xs text-gray-400 lg:text-sm'>
+            <p
+              className={`
+                max-w-lg text-xs text-gray-400
+                lg:text-sm
+              `}
+            >
               {connection.description}
             </p>
           </div>

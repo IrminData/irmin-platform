@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useMemo } from 'react';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import ActionWorkflow from '@/components/workflow/Workflowable/ActionWorkflow';
 import ExportWorkflow from '@/components/workflow/Workflowable/ExportWorkflow';
 import ImportWorkflow from '@/components/workflow/Workflowable/ImportWorkflow';
@@ -67,7 +67,12 @@ function ConfigureWorkflowable({
           />
         )}
       </div>
-      <div className='mt-auto border-t pt-4 dark:border-gray-800'>
+      <div
+        className={`
+          mt-auto border-t pt-4
+          dark:border-gray-800
+        `}
+      >
         <Button
           className='mb-6 inline-block w-full'
           variant='gradient'

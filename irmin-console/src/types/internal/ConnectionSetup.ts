@@ -1,5 +1,5 @@
-import { Connector } from '@/types/core/Connector';
-import {
+import type { Connector } from '@/types/core/Connector';
+import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
@@ -13,13 +13,13 @@ export interface ConnectionSetup {
   /** Connection description */
   description: string;
   /** Which connector to use */
-  connector: undefined | Connector;
+  connector: Connector | undefined;
   /** Connection details fields */
-  connectionDetailsFields: undefined | DynamicFields;
+  connectionDetailsFields: DynamicFields | undefined;
   /** Connection settings fields */
-  connectionSettingsFields: undefined | DynamicFields;
+  connectionSettingsFields: DynamicFields | undefined;
   /** Connection details with user input */
-  connectionDetails: undefined | DynamicFieldValues;
+  connectionDetails: DynamicFieldValues | undefined;
   /** Connection settings with user input */
-  connectionSettings: undefined | DynamicFieldValues;
+  connectionSettings: DynamicFieldValues | undefined;
 }

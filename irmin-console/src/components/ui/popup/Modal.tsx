@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
+import type React from 'react';
+import { memo } from 'react';
 
 import { IoClose } from 'react-icons/io5';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -41,11 +42,19 @@ const Modal = ({
   return (
     <div
       id='irmin-modal'
-      className='animate-fadeIn bg-background/30 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[2px]'
+      className={`
+        fixed inset-0 z-50 flex animate-in items-center justify-center
+        bg-background/30 backdrop-blur-[2px] fade-in
+      `}
     >
       <div className='w-[500px] max-w-[90vw] pt-[40px]'>
-        <div className='border-border bg-popover rounded-lg border shadow-lg'>
-          <div className='flex flex-row items-center justify-between border-b px-4 pt-4 pb-2 dark:border-b-gray-800'>
+        <div className='rounded-lg border border-border bg-popover shadow-lg'>
+          <div
+            className={`
+              flex flex-row items-center justify-between border-b px-4 pt-4 pb-2
+              dark:border-b-gray-800
+            `}
+          >
             <h2 className='text-lg font-normal'>{title}</h2>
             <ButtonWithTooltip
               size='icon'
@@ -57,7 +66,11 @@ const Modal = ({
               icon={<IoClose size={24} />}
             />
           </div>
-          <div className='relative max-h-[calc(100vh-150px)] overflow-scroll px-4 pt-4'>
+          <div
+            className={`
+              relative max-h-[calc(100vh-150px)] overflow-scroll px-4 pt-4
+            `}
+          >
             {children}
           </div>
         </div>

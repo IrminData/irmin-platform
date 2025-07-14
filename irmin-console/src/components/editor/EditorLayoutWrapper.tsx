@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
+import SafeComponent from '@/components/ui/error/SafeComponent';
+
 import { QueryProvider } from '@/context/QueryContext';
 
 import FileNavigator from './FileNavigator';
@@ -23,42 +25,70 @@ export default function EditorLayoutWrapper({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div
-      id='editor-layout-wrapper'
-      className='flex h-full flex-row content-stretch items-stretch overflow-hidden'
+    <SafeComponent
+      level='section'
+      title='Editor Interface Error'
+      description='Failed to load editor interface'
     >
       <div
-        className={`bg-background absolute z-10 h-full w-full overflow-y-scroll border-r dark:border-r-gray-800 ${
-          !sidebarOpen ? 'max-w-10' : 'max-w-72'
-        } lg:static lg:max-w-72 lg:min-w-72`}
+        id='editor-layout-wrapper'
+        className={`
+          flex h-full flex-row content-stretch items-stretch overflow-hidden
+        `}
       >
-        <button
-          id='editor-sidebar-toggle-mobile'
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`text-foreground absolute z-20 w-10 bg-gray-100 px-1 py-1 text-center opacity-60 transition-all hover:opacity-100 focus:outline-hidden lg:hidden dark:bg-gray-800 ${sidebarOpen ? 'right-0' : ''}`}
-          aria-label='Toggle editor sidebar'
-        >
-          {sidebarOpen ? (
-            <TbChevronLeft size={24} />
-          ) : (
-            <TbChevronRight size={24} />
-          )}
-        </button>
         <div
-          id='editor-sidebar'
-          className={`flex h-full max-h-full w-full flex-col gap-4 transition-all lg:visible lg:ml-0 ${!sidebarOpen ? 'invisible -ml-72' : 'visible ml-0'}`}
+          className={`
+            absolute z-10 size-full overflow-y-scroll border-r bg-background
+            dark:border-r-gray-800
+            ${!sidebarOpen ? 'max-w-10' : 'max-w-72'}
+            lg:static lg:max-w-72 lg:min-w-72
+          `}
         >
-          <FileNavigator />
+          <button
+            id='editor-sidebar-toggle-mobile'
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`
+              absolute z-20 w-10 bg-gray-100 p-1 text-center text-foreground
+              opacity-60
+              transition-all
+              hover:opacity-100
+              focus:outline-hidden
+              lg:hidden
+              dark:bg-gray-800${sidebarOpen ? `right-0` : ''}
+            `}
+            aria-label='Toggle editor sidebar'
+          >
+            {sidebarOpen ? (
+              <TbChevronLeft size={24} />
+            ) : (
+              <TbChevronRight size={24} />
+            )}
+          </button>
+          <div
+            id='editor-sidebar'
+            className={`
+              flex size-full max-h-full flex-col gap-4 transition-all
+              lg:visible lg:ml-0
+              ${!sidebarOpen ? `invisible -ml-72` : `visible ml-0`}
+            `}
+          >
+            <FileNavigator />
+          </div>
+        </div>
+        <div
+          className={`
+            ml-10 flex-1 shrink overflow-hidden
+            lg:ml-0
+          `}
+        >
+          <div
+            className='flex size-full flex-col bg-background'
+            id='editor-page-content'
+          >
+            <QueryProvider>{children}</QueryProvider>
+          </div>
         </div>
       </div>
-      <div className='ml-10 flex-1 shrink overflow-hidden lg:ml-0'>
-        <div
-          className='bg-background flex h-full w-full flex-col'
-          id='editor-page-content'
-        >
-          <QueryProvider>{children}</QueryProvider>
-        </div>
-      </div>
-    </div>
+    </SafeComponent>
   );
 }

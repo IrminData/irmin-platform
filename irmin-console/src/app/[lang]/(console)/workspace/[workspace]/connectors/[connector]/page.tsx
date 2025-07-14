@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
 
 import ConnectorSection from '@/components/connector/ConnectorSection';
 

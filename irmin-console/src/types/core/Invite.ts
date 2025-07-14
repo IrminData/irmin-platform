@@ -1,7 +1,7 @@
-import { User } from '@/types/core/User';
-import { Workspace } from '@/types/core/Workspace';
+import type { User } from '@/types/core/User';
+import type { Workspace } from '@/types/core/Workspace';
 
-import { Role } from './Role';
+import type { Role } from './Role';
 
 /**
  * Represents an invitation.

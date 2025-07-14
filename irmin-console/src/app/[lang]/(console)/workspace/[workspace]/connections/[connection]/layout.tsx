@@ -1,8 +1,8 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 import { notFound } from 'next/navigation';
 
-import { Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
 
 import ConnectionLayoutWrapper from '@/components/connection/ConnectionLayoutWrapper';
 

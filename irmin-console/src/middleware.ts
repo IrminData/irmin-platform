@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-import { defaultLocale, languages, Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
+import { defaultLocale, detectLocaleFromURL, languages } from '@/lib/dict';
 
 // Environment variables for environment authentication
 const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
@@ -146,11 +148,10 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
-  // Get locale from the URL
-  const pathnameHasLocale = locales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  );
-  // Get the locale from cookies or headers
+  // Get locale from the URL using the detectLocaleFromURL function
+  const urlLocale = detectLocaleFromURL(req.url);
+
+  // Get the locale from cookies or headers as fallback
   let locale = getLocaleFromCookies(req);
   if (!locale) {
     locale = getLocaleFromHeader(req);
@@ -158,22 +159,16 @@ export default clerkMiddleware(async (auth, req) => {
 
   const response = NextResponse.next();
 
+  // If URL has a locale, use it and update the cookie
+  if (urlLocale) {
+    setLocaleCookie(response, urlLocale);
+    return response;
+  }
+
   // Redirect to the correct locale if not found in the URL
-  if (!pathnameHasLocale) {
-    req.nextUrl.pathname = `/${locale}${pathname}`;
-    setLocaleCookie(response, locale);
-    return NextResponse.redirect(req.nextUrl);
-  }
-
-  // If user manually switches locale (e.g., `/en` or `/fi` directly in the URL)
-  const manualSwitchLocale = locales.find((locale) =>
-    pathname.startsWith(`/${locale}`)
-  );
-  if (manualSwitchLocale) {
-    setLocaleCookie(response, manualSwitchLocale);
-  }
-
-  return response;
+  req.nextUrl.pathname = `/${locale}${pathname}`;
+  setLocaleCookie(response, locale);
+  return NextResponse.redirect(req.nextUrl);
 });
 
 /**

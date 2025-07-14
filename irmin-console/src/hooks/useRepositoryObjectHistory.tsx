@@ -1,24 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { repositoryObjectHistoryQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
-
-export const repositoryObjectHistoryQueryKey = (
-  workspaceSlug: string,
-  repositorySlug: string,
-  branch: string,
-  path?: string
-) =>
-  [
-    'repository-object-history',
-    workspaceSlug,
-    repositorySlug,
-    branch,
-    path,
-  ] as const;
 
 export function useRepositoryObjectHistory(
   repositorySlug: string,

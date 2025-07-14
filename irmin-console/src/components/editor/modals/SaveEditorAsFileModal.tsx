@@ -7,8 +7,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
 import PathSelector from '@/components/editor/PathSelector';
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -21,7 +21,7 @@ import {
   itemCanBeCreated,
 } from '@/utils/editorItems';
 
-import { EditorItem } from '@/types/core/EditorItems';
+import type { EditorItem } from '@/types/core/EditorItems';
 
 type FormData = {
   name: string;
@@ -210,7 +210,7 @@ export default function SaveEditorAsFileModal({
           }}
         />
       )}
-      {error && <div className='text-destructive py-2'>{error}</div>}
+      {error && <div className='py-2 text-destructive'>{error}</div>}
       <Button
         variant='default'
         size='sm'

@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react';
 
-import Button from '@/components/ui/button';
-import QueryError from '@/components/ui/error/QueryError';
+import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -20,6 +21,18 @@ import CommitList from './commits/CommitList';
  * Section to display the commits of a repository on the selected branch.
  */
 export default function RepositoryCommitsSection() {
+  return (
+    <SafeComponent
+      level='section'
+      title='Repository Commits Error'
+      description='The repository commits section encountered an error. Please try refreshing the page.'
+    >
+      <RepositoryCommitsSectionContent />
+    </SafeComponent>
+  );
+}
+
+function RepositoryCommitsSectionContent() {
   const { dict } = useLocale();
   const { repository, currentRef } = useRepositoryContext();
   const { isResourceAllowed } = useResourceAllowed();
@@ -38,8 +51,18 @@ export default function RepositoryCommitsSection() {
 
   if (!canViewCommits) {
     return (
-      <div className='bg-card w-full rounded-lg border border-gray-200 px-2 py-8 dark:border-gray-800'>
-        <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
+      <div
+        className={`
+          w-full rounded-lg border border-gray-200 bg-card px-2 py-8
+          dark:border-gray-800
+        `}
+      >
+        <p
+          className={`
+            mx-auto mb-2 max-w-lg text-center text-lg text-card-foreground
+            lg:text-2xl
+          `}
+        >
           {dict.common.insufficientPermissions}
         </p>
       </div>
@@ -48,7 +71,12 @@ export default function RepositoryCommitsSection() {
 
   if (commitsQuery.error) {
     return (
-      <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+      <div
+        className={`
+          relative container mx-auto max-w-7xl px-2
+          md:px-4
+        `}
+      >
         <QueryError
           error={commitsQuery.error}
           onRetry={() => commitsQuery.refetch()}
@@ -59,7 +87,12 @@ export default function RepositoryCommitsSection() {
   }
 
   return (
-    <div className='relative container mx-auto max-w-7xl px-2 md:px-4'>
+    <div
+      className={`
+        relative container mx-auto max-w-7xl px-2
+        md:px-4
+      `}
+    >
       <div className='flex w-full flex-col gap-4'>
         <CommitList
           commits={commits}

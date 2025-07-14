@@ -18,7 +18,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useRepositories } from '@/hooks/useRepositories';
 
-import { ActionInputData } from '@/types/core/Workflow';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 interface ActionInputEditorProps {
   initialData?: ActionInputData[];
@@ -114,11 +114,11 @@ function ActionInputEditor({
       {/* Input Files Array */}
       {inputFiles.map((inputFile, index) => (
         <div
-          key={index}
-          className='border-foreground/10 flex flex-col border-t py-4'
+          key={`${inputFile.repository}-${inputFile.repository_ref}-${inputFile.repository_path}`}
+          className='flex flex-col border-t border-foreground/10 py-4'
         >
           <div className='mb-4 flex items-center justify-between'>
-            <h4 className='text-md pl-1 font-semibold'>
+            <h4 className='pl-1 text-base font-semibold'>
               {dict.workflow.scriptInputFiles.inputFile} {index + 1}
             </h4>
             <Button

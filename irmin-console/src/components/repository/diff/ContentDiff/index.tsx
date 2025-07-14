@@ -3,15 +3,15 @@
 import { memo, useCallback, useMemo } from 'react';
 
 import ObjectViewer from '@/components/repository/objects/ObjectViewer';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { convertToText, getContentType } from '@/utils/content';
 import { downloadFile } from '@/utils/downloadFile';
 
-import { ChangeItem } from '@/types/core/Diff';
-import { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
+import type { ChangeItem } from '@/types/core/Diff';
+import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
 
 import TextDiff from './TextDiff';
 
@@ -94,8 +94,18 @@ const ContentDiff = ({
 
   if (baseContent instanceof Blob || compareContent instanceof Blob) {
     return (
-      <div className='flex flex-col gap-2 lg:flex-row'>
-        <div className='flex max-h-96 w-full flex-col lg:w-1/2'>
+      <div
+        className={`
+          flex flex-col gap-2
+          lg:flex-row
+        `}
+      >
+        <div
+          className={`
+            flex max-h-96 w-full flex-col
+            lg:w-1/2
+          `}
+        >
           <div className='flex w-full flex-row items-center gap-2 p-2'>
             <p className='text-sm'>
               {`${dict.repository.compare.baseContent} (${getContentType(baseContent)})`}
@@ -115,7 +125,12 @@ const ContentDiff = ({
             <ObjectViewer object={item.object} objectContent={baseContent} />
           </div>
         </div>
-        <div className='flex max-h-96 w-full flex-col lg:w-1/2'>
+        <div
+          className={`
+            flex max-h-96 w-full flex-col
+            lg:w-1/2
+          `}
+        >
           <div className='flex w-full flex-row items-center gap-2 p-2'>
             <p className='text-sm'>
               {`${dict.repository.compare.comparedContent} (${getContentType(compareContent)})`}
@@ -140,7 +155,13 @@ const ContentDiff = ({
   }
 
   return (
-    <p className='mx-auto mb-2 max-w-lg text-center text-lg text-gray-600 lg:text-2xl dark:text-gray-300'>
+    <p
+      className={`
+        mx-auto mb-2 max-w-lg text-center text-lg text-gray-600
+        lg:text-2xl
+        dark:text-gray-300
+      `}
+    >
       {dict.repository.objects.unsupportedContentType}
     </p>
   );

@@ -73,11 +73,13 @@ export function getDictionary(lang: string): Dictionary {
  */
 export function detectLocaleFromURL(url: string): Locale | null {
   const parsedUrl = new URL(url);
-  const pathSegments = parsedUrl.pathname.split('/');
-  const detectedLocale = pathSegments[1] as Locale;
+  const pathname = parsedUrl.pathname;
 
-  if (languages.some((lang) => lang.code === detectedLocale)) {
-    return detectedLocale;
+  // Check if the pathname starts with a locale followed by a slash or is exactly a locale
+  for (const lang of languages) {
+    if (pathname.startsWith(`/${lang.code}/`) || pathname === `/${lang.code}`) {
+      return lang.code;
+    }
   }
 
   return null;

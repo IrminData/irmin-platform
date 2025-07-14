@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { memo } from 'react';
 
 import { TbTrash } from 'react-icons/tb';
 
@@ -28,9 +28,9 @@ function PolicyDeleteButton({ policyId }: { policyId: string }) {
 
   return (
     <Button variant='ghost' size='icon' onClick={handleDelete}>
-      <TbTrash className='h-4 w-4' />
+      <TbTrash className='size-4' />
     </Button>
   );
 }
 
-export default React.memo(PolicyDeleteButton);
+export default memo(PolicyDeleteButton);

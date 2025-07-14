@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { PipelineStage } from '@/types/core/Workflow';
+import type { PipelineStage } from '@/types/core/Workflow';
 
 import Stage from './Stage';
 
@@ -114,30 +114,39 @@ function PipelineStageEditor({
     <form onSubmit={handleSubmit} className='space-y-4'>
       <div className='space-y-4'>
         {stages.length === 0 && (
-          <p className='text-foreground/50 py-8 text-center text-xl lg:text-3xl'>
+          <p
+            className={`
+              py-8 text-center text-xl text-foreground/50
+              lg:text-3xl
+            `}
+          >
             {dict.workflow.pipeline.noStages}
           </p>
         )}
-        {stages.map((stage, index) => (
-          <div key={index}>
+        {stages.map((stage) => (
+          <div key={stage.order_sequence}>
             <Stage
-              index={index}
+              index={stage.order_sequence}
               updateStage={(stage) => {
                 setStages((prevStages) => {
                   const newStages = [...prevStages];
-                  newStages[index] = stage;
+                  newStages[stage.order_sequence] = stage;
                   return newStages;
                 });
               }}
               moveStageUp={
-                index > 0 ? () => moveStage(index, index - 1) : undefined
-              }
-              moveStageDown={
-                index < stages.length - 1
-                  ? () => moveStage(index, index + 1)
+                stage.order_sequence > 0
+                  ? () =>
+                      moveStage(stage.order_sequence, stage.order_sequence - 1)
                   : undefined
               }
-              removeStage={() => removeStage(index)}
+              moveStageDown={
+                stage.order_sequence < stages.length - 1
+                  ? () =>
+                      moveStage(stage.order_sequence, stage.order_sequence + 1)
+                  : undefined
+              }
+              removeStage={() => removeStage(stage.order_sequence)}
               initialStage={stage}
               readOnly={readOnly}
               defaultCollapsed={defaultCollapsed}
@@ -166,4 +175,4 @@ function PipelineStageEditor({
   );
 }
 
-export default React.memo(PipelineStageEditor);
+export default memo(PipelineStageEditor);

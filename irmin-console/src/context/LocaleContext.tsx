@@ -1,16 +1,12 @@
 'use client';
 
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from 'react';
+import type { ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo } from 'react';
 
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
-import { defaultLocale, dictionaries, Dictionary, Locale } from '@/lib/dict';
+import type { Dictionary, Locale } from '@/lib/dict';
+import { defaultLocale, dictionaries } from '@/lib/dict';
 
 import { setCookie } from '@/utils/cookie';
 

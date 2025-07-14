@@ -6,7 +6,7 @@ import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight, TbChevronUp } from 'react-icons/tb';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { Input } from '@/components/ui/input';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -14,7 +14,7 @@ import { useLocale } from '@/context/LocaleContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 
-import { Object } from '@/types/core/Object';
+import type { Object } from '@/types/core/Object';
 
 interface RepositoryPathSelectorProps {
   rootObject?: Object;
@@ -40,8 +40,8 @@ interface RepositoryPathSelectorProps {
  */
 const formatPath = (
   path: string,
-  isDirectory: boolean = false,
-  groupOnly: boolean = false
+  isDirectory = false,
+  groupOnly = false
 ): string => {
   // Remove leading slashes and normalize separators
   let formatted = path.replace(/^\/+/, '').replace(/\\/g, '/');
@@ -94,14 +94,29 @@ const findObjectByPath = (root: Object, path: string): Object | undefined => {
 };
 
 const SkeletonInput = () => (
-  <div className='h-10 w-full animate-pulse rounded-md bg-gray-200 dark:bg-gray-800' />
+  <div
+    className={`
+      h-10 w-full animate-pulse rounded-md bg-gray-200
+      dark:bg-gray-800
+    `}
+  />
 );
 
 const SkeletonTreeItem = ({ depth = 0 }: { depth?: number }) => (
   <div className='my-1' style={{ paddingLeft: `${depth * 1.5}rem` }}>
     <div className='flex items-center gap-2'>
-      <div className='h-4 w-4 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
-      <div className='h-4 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+      <div
+        className={`
+          size-4 animate-pulse rounded bg-gray-200
+          dark:bg-gray-800
+        `}
+      />
+      <div
+        className={`
+          h-4 w-32 animate-pulse rounded bg-gray-200
+          dark:bg-gray-800
+        `}
+      />
     </div>
   </div>
 );
@@ -282,9 +297,18 @@ const RepositoryPathSelector = ({
     if (item.type === 'group') {
       return (
         <div key={item.path} className='my-1'>
-          <div className='flex items-center justify-normal rounded-md p-1 text-sm'>
+          <div
+            className={`flex items-center justify-normal rounded-md p-1 text-sm`}
+          >
             <div
               className='flex cursor-pointer items-center'
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  toggleFolder(item);
+                }
+              }}
               onClick={() => toggleFolder(item)}
             >
               {openFolders[item.path] ? (
@@ -303,8 +327,32 @@ const RepositoryPathSelector = ({
               </span>
             </div>
             <span
-              className={`ml-2 ${canSelect ? 'cursor-pointer hover:bg-gray-200 hover:underline dark:hover:bg-gray-800' : ''}`}
-              onClick={() => canSelect && handleItemClick(item)}
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  if (canSelect) {
+                    handleItemClick(item);
+                  }
+                }
+              }}
+              className={`
+                ml-2
+                ${
+                  canSelect
+                    ? `
+                      cursor-pointer
+                      hover:bg-gray-200 hover:underline
+                      dark:hover:bg-gray-800
+                    `
+                    : ''
+                }
+              `}
+              onClick={() => {
+                if (canSelect) {
+                  handleItemClick(item);
+                }
+              }}
               aria-label={`Open ${item.path} group`}
             >
               {item.path || dict.fileNavigator.rootDirectory}
@@ -324,22 +372,64 @@ const RepositoryPathSelector = ({
     return (
       <div
         key={item.path}
-        className={`my-1 ml-6 flex items-center justify-normal rounded-md p-1 text-sm ${
-          canSelect
-            ? `cursor-pointer ${
-                item.path === selectedPath
-                  ? 'bg-gray-200 dark:bg-gray-800'
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-800'
-              }`
-            : 'opacity-50'
-        }`}
-        onClick={() => canSelect && handleItemClick(item)}
+        className={`
+          my-1 ml-6 flex items-center justify-normal rounded-md p-1 text-sm
+          ${
+            canSelect
+              ? `
+                cursor-pointer
+                ${
+                  item.path === selectedPath
+                    ? `
+                      bg-gray-200
+                      dark:bg-gray-800
+                    `
+                    : `
+                      hover:bg-gray-200
+                      dark:hover:bg-gray-800
+                    `
+                }
+              `
+              : 'opacity-50'
+          }
+        `}
+        role='button'
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (canSelect) {
+              handleItemClick(item);
+            }
+          }
+        }}
+        onClick={() => {
+          if (canSelect) {
+            handleItemClick(item);
+          }
+        }}
       >
         <span className='ml-2'>
           <FiFile />
         </span>
         <span
-          className={`ml-2 ${canSelect ? 'hover:underline' : ''}`}
+          role='button'
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              if (canSelect) {
+                handleItemClick(item);
+              }
+            }
+          }}
+          onClick={() => {
+            if (canSelect) {
+              handleItemClick(item);
+            }
+          }}
+          className={`
+            ml-2
+            ${canSelect ? 'hover:underline' : ''}
+          `}
           aria-label={`Select path ${item.path}`}
         >
           {item.path}
@@ -353,17 +443,36 @@ const RepositoryPathSelector = ({
       <div className='relative mb-2'>
         <div className='mb-2 flex items-center gap-2'>
           <SkeletonInput />
-          <div className='h-10 w-10 shrink-0 animate-pulse rounded-md bg-gray-200 dark:bg-gray-800' />
+          <div
+            className={`
+              size-10 shrink-0 animate-pulse rounded-md bg-gray-200
+              dark:bg-gray-800
+            `}
+          />
         </div>
         {isExpanded && (
-          <div className='relative max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'>
+          <div
+            className={`
+              relative max-h-48 overflow-y-scroll border-b pb-4
+              dark:border-b-gray-800
+            `}
+          >
             <div className='my-1'>
-              <div className='flex items-center justify-normal rounded-md p-1 text-sm'>
+              <div
+                className={`
+                  flex items-center justify-normal rounded-md p-1 text-sm
+                `}
+              >
                 <span className='ml-2'>
                   <FaFolderTree className='text-gray-400' />
                 </span>
                 <span className='ml-2'>
-                  <div className='h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div
+                    className={`
+                      h-4 w-24 animate-pulse rounded bg-gray-200
+                      dark:bg-gray-800
+                    `}
+                  />
                 </span>
               </div>
               <SkeletonTree />
@@ -386,7 +495,10 @@ const RepositoryPathSelector = ({
           value={inputPath}
           onChange={handlePathInput}
           placeholder={dict.repository.objects.enterPath}
-          className={`w-full ${!isValidPath ? 'border-red-500' : ''}`}
+          className={`
+            w-full
+            ${!isValidPath ? 'border-red-500' : ''}
+          `}
           disabled={loading}
         />
         <ButtonWithTooltip
@@ -407,7 +519,12 @@ const RepositoryPathSelector = ({
       )}
 
       {!existingOnly && inputPath && !isValidPath && (
-        <div className='mb-2 text-sm text-gray-500 dark:text-gray-400'>
+        <div
+          className={`
+            mb-2 text-sm text-gray-500
+            dark:text-gray-400
+          `}
+        >
           {dict.repository.objects.newObjectWillBeCreated}
         </div>
       )}
@@ -431,7 +548,10 @@ const RepositoryPathSelector = ({
       {isExpanded && (
         <div
           id='file-selector'
-          className='relative max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
+          className={`
+            relative max-h-48 overflow-y-scroll border-b pb-4
+            dark:border-b-gray-800
+          `}
         >
           <div className='my-1'>
             {rootObject && (
@@ -439,17 +559,41 @@ const RepositoryPathSelector = ({
                 {rootObject.type === 'group' && (
                   <div className='my-1'>
                     <div
-                      className={`flex items-center justify-normal rounded-md p-1 text-sm ${
-                        matchesTypeConstraints(
-                          rootObject,
-                          groupOnly,
-                          binaryOnly,
-                          structuredOnly,
-                          nonGroupOnly
-                        )
-                          ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800'
-                          : ''
-                      }`}
+                      role='button'
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          if (
+                            matchesTypeConstraints(
+                              rootObject,
+                              groupOnly,
+                              binaryOnly,
+                              structuredOnly,
+                              nonGroupOnly
+                            )
+                          ) {
+                            handleItemClick(rootObject);
+                          }
+                        }
+                      }}
+                      className={`
+                        flex items-center justify-normal rounded-md p-1 text-sm
+                        ${
+                          matchesTypeConstraints(
+                            rootObject,
+                            groupOnly,
+                            binaryOnly,
+                            structuredOnly,
+                            nonGroupOnly
+                          )
+                            ? `
+                              cursor-pointer
+                              hover:bg-gray-200
+                              dark:hover:bg-gray-800
+                            `
+                            : ''
+                        }
+                      `}
                       onClick={() =>
                         matchesTypeConstraints(
                           rootObject,
@@ -464,17 +608,20 @@ const RepositoryPathSelector = ({
                         <FiFolder />
                       </span>
                       <span
-                        className={`ml-2 ${
-                          matchesTypeConstraints(
-                            rootObject,
-                            groupOnly,
-                            binaryOnly,
-                            structuredOnly,
-                            nonGroupOnly
-                          )
-                            ? 'hover:underline'
-                            : ''
-                        }`}
+                        className={`
+                          ml-2
+                          ${
+                            matchesTypeConstraints(
+                              rootObject,
+                              groupOnly,
+                              binaryOnly,
+                              structuredOnly,
+                              nonGroupOnly
+                            )
+                              ? 'hover:underline'
+                              : ''
+                          }
+                        `}
                         aria-label={`Select root directory`}
                       >
                         {dict.fileNavigator.rootDirectory}

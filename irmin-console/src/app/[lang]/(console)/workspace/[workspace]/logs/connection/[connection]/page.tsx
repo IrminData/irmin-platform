@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useConnection } from '@/hooks/useConnection';
 
-import { ConnectionLogsLayoutParams } from './layout';
+import type { ConnectionLogsLayoutParams } from './layout';
 
 /**
  * Connection Audit Logs page

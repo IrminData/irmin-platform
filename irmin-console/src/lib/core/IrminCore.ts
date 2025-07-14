@@ -1,8 +1,9 @@
-import { defaultLocale, Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
+import { defaultLocale } from '@/lib/dict';
 
 import removeCircularJSON from '@/utils/removeCircularJSON';
 
-import {
+import type {
   IrminAPIBinaryResponse,
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
@@ -29,9 +30,6 @@ import UserService from './resources/UserService';
 import WorkflowRunService from './resources/WorkflowRunService';
 import WorkflowService from './resources/WorkflowService';
 import WorkspaceService from './resources/WorkspaceService';
-
-const logNetworkRequests =
-  process.env.NEXT_PUBLIC_LOG_NETWORK_REQUESTS === 'true';
 
 /**
  * All Core API Services centralised in one place.
@@ -145,10 +143,6 @@ class IrminCore {
 
     const requestURL = `${api_base}${url}`;
 
-    if (logNetworkRequests) {
-      console.log('IrminCore fetch request: ', requestURL, requestOptions);
-    }
-
     // Fetch Core Irmin API
     const response = await fetch(requestURL, requestOptions);
 
@@ -183,7 +177,7 @@ class IrminCore {
       try {
         // Clone response to safely parse JSON without consuming the original stream
         const errorData = await response.clone().json();
-        if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
+        if (errorData?.errors && Array.isArray(errorData.errors)) {
           errorMessage = errorData.errors.join('\n');
         }
       } catch (e) {
@@ -195,9 +189,6 @@ class IrminCore {
 
     // Parse the response as JSON
     const data = await response.json();
-
-    if (logNetworkRequests)
-      console.log(`${url} response: `, JSON.stringify(data, null, 2));
 
     // Fallback check if no allowedStatusCodes were provided
     if (

@@ -1,4 +1,4 @@
-import { JSONValue } from '@/types/internal/GenericJSON';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Check if the data is a simple array of objects.

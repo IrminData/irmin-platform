@@ -6,7 +6,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useIrminSQL } from '@/hooks/useIrminSQL';
 
-import { QueryResult } from '@/types/core/StoredQuery';
+import type { QueryResult } from '@/types/core/StoredQuery';
 
 import { useLocale } from './LocaleContext';
 

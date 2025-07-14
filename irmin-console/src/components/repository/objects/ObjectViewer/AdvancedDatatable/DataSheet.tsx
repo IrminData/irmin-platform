@@ -1,10 +1,11 @@
-import { ForwardedRef, forwardRef, memo, useEffect, useState } from 'react';
+import type { ForwardedRef } from 'react';
+import { forwardRef, memo, useEffect, useState } from 'react';
 
-import { Column, DataSheetGrid, DataSheetGridRef } from 'react-datasheet-grid';
-
+import type { Column, DataSheetGridRef } from 'react-datasheet-grid';
+import { DataSheetGrid } from 'react-datasheet-grid';
 import 'react-datasheet-grid/dist/style.css';
 
-import { TableRow } from '@/types/internal/Datatable';
+import type { TableRow } from '@/types/internal/Datatable';
 
 /**
  * DataSheet component for displaying data in a table.

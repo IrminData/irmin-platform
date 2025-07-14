@@ -1,5 +1,5 @@
-import { Role } from './Role';
-import { User } from './User';
+import type { Role } from './Role';
+import type { User } from './User';
 
 export enum PolicyEffect {
   Allow = 'allow',
@@ -97,7 +97,7 @@ export interface UserPolicySummary {
   policies: Policy[];
 }
 
-export interface PolicyResourceOption {
+interface PolicyResourceOption {
   id: string;
   label: string;
 }

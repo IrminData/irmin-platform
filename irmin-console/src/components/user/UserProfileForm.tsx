@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
-import { SubmitHandler, useForm } from 'react-hook-form';
+import type { SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -64,7 +65,7 @@ export default function UserProfileForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       <div className='mb-4 flex justify-center'>
-        <Avatar className='h-24 w-24'>
+        <Avatar className='size-24'>
           <AvatarImage
             src={previewUrl || profile?.profile_picture || undefined}
             alt='Profile picture'
@@ -90,10 +91,20 @@ export default function UserProfileForm() {
               setPreviewUrl(URL.createObjectURL(file));
             }
           }}
-          className='file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:mr-4 file:rounded-full file:border-0 file:px-4 file:py-2 file:text-sm file:font-semibold'
+          className={`
+            file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4
+            file:py-2 file:text-sm file:font-semibold
+            file:text-primary-foreground
+            hover:file:bg-primary/90
+          `}
         />
       </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+      <div
+        className={`
+          grid grid-cols-1 gap-4
+          md:grid-cols-2
+        `}
+      >
         <div className='space-y-2'>
           <Label htmlFor='first_name' className='text-sm'>
             {dict.users.firstName}

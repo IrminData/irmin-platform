@@ -4,7 +4,7 @@ import { forwardRef } from 'react';
 
 import dynamic from 'next/dynamic';
 
-import { MDXEditorMethods } from '@mdxeditor/editor';
+import type { MDXEditorMethods } from '@mdxeditor/editor';
 
 import type { InitialisedMDXEditorProps } from '@/components/ui/markdown-editor/initialisedMDXEditor';
 

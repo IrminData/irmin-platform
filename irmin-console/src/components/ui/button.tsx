@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { type ButtonHTMLAttributes, forwardRef } from 'react';
 
 import Link from 'next/link';
 
@@ -9,33 +9,57 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/utils/tw';
 
-import ButtonWithTooltip from './ButtonWithTooltip';
-
 const buttonVariants = cva(
-  'inline-flex border-none appearance-none cursor-pointer items-center justify-center whitespace-nowrap rounded-md text-sm font-normal transition-all focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  `
+    inline-flex cursor-pointer appearance-none items-center justify-center
+    rounded-md border-none text-sm font-normal whitespace-nowrap transition-all
+    focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden
+    disabled:pointer-events-none disabled:opacity-50
+  `,
   {
     variants: {
       variant: {
-        default:
-          'bg-primary text-primary-foreground shadow-xs hover:bg-primary/80',
-        destructive:
-          'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/80',
-        outline:
-          'border border-solid border-accent-foreground/50 text-foreground/90 shadow-xs hover:bg-background hover:text-foreground',
-        secondary:
-          'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
-        accent: 'bg-accent text-accent-foreground shadow-xs hover:bg-accent/80',
-        gray: 'bg-card text-card-foreground shadow-xs hover:bg-card/80',
+        default: `
+          bg-primary text-primary-foreground shadow-xs
+          hover:bg-primary/80
+        `,
+        destructive: `
+          bg-destructive text-destructive-foreground shadow-xs
+          hover:bg-destructive/80
+        `,
+        outline: `
+          border border-solid border-accent-foreground/50 text-foreground/90
+          shadow-xs
+          hover:bg-background hover:text-foreground
+        `,
+        secondary: `
+          bg-secondary text-secondary-foreground shadow-xs
+          hover:bg-secondary/80
+        `,
+        accent: `
+          bg-accent text-accent-foreground shadow-xs
+          hover:bg-accent/80
+        `,
+        gray: `
+          bg-card text-card-foreground shadow-xs
+          hover:bg-card/80
+        `,
         ghost: 'hover:bg-accent/20',
-        link: 'text-foreground underline-offset-4 hover:underline hover:text-foreground/90',
-        gradient:
-          'bg-linear-to-r from-irmin_green-700 to-irmin_green-600 text-white shadow-xs hover:opacity-80',
+        link: `
+          text-foreground underline-offset-4
+          hover:text-foreground/90 hover:underline
+        `,
+        gradient: `
+          bg-linear-to-r from-irmin-green-700 to-irmin-green-600 text-white
+          shadow-xs
+          hover:opacity-80
+        `,
       },
       size: {
         sm: 'h-9 rounded-md px-2 text-xs',
         default: 'h-10 px-3 py-2',
         lg: 'h-12 rounded-md px-4',
-        icon: 'h-9 w-9',
+        icon: 'size-9',
       },
       iconFirst: {
         true: 'flex-row',
@@ -56,7 +80,7 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   icon?: React.ReactNode;
@@ -68,7 +92,7 @@ export interface ButtonProps
   prefetch?: boolean | null;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
@@ -93,7 +117,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <>
         {loading ? (
           <>
-            <span className='mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-t-2 border-gray-200 border-t-current'></span>
+            <span
+              className={`
+                mr-2 inline-block size-4 animate-spin rounded-full border-2
+                border-t-2 border-gray-200 border-t-current
+              `}
+            />
             {size !== 'icon' && <span>{loadingText}</span>}
           </>
         ) : (
@@ -133,6 +162,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-export { Button, buttonVariants, ButtonWithTooltip };
-
-export default Button;
+export { Button, buttonVariants };

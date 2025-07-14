@@ -1,28 +1,23 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { connectorConfigurationQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
-import { ConnectorConfigurationValidationResult } from '@/types/core/Connector';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import {
+import type { ConnectorConfigurationValidationResult } from '@/types/core/Connector';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
-export const connectorConfigurationQueryKey = (
-  type: 'details' | 'settings',
-  connectorID?: string,
-  details?: DynamicFieldValues,
-  settings?: DynamicFieldValues
-) => ['connector', connectorID, type, details, settings] as const;
-
-type ValidateConnectorConfigurationInput = {
+interface ValidateConnectorConfigurationInput {
   details?: DynamicFieldValues;
   settings?: DynamicFieldValues;
-};
+}
 
 export function useConnectionConfiguration(
   type: 'details' | 'settings',
@@ -32,10 +27,12 @@ export function useConnectionConfiguration(
 ) {
   const { getToken } = useIAM();
   const { locale } = useLocale();
+  const queryClient = useQueryClient();
+  const { irminAlert } = usePopup();
 
-  // Query for fetching configuration fields for a connection
   const connectionConfigurationQuery = useQuery<
-    IrminAPIResponse<DynamicFields>
+    IrminAPIResponse<DynamicFields>,
+    Error
   >({
     queryKey: connectorConfigurationQueryKey(
       type,
@@ -44,21 +41,16 @@ export function useConnectionConfiguration(
       settings
     ),
     queryFn: async () => {
-      if (!connectorID) throw new Error('Connector ID is required');
-      if (!type) throw new Error('Type is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const res = await core.connectorService.fetchConnectorConfigurationFields(
-        {
-          connectorId: connectorID,
-          configurationType: type,
-          currentDetails: details,
-          currentSettings: settings,
-        }
-      );
-      return res;
+      return await core.connectorService.fetchConnectorConfigurationFields({
+        connectorId: connectorID ?? '',
+        configurationType: type,
+        currentDetails: details,
+        currentSettings: settings,
+      });
     },
-    enabled: !!connectorID && !!type,
+    enabled: !!connectorID,
   });
 
   // Mutation for validating a connector configuration
@@ -77,6 +69,37 @@ export function useConnectionConfiguration(
         settings: input.settings,
       });
       return res;
+    },
+    onMutate: async () => {
+      // Cancel any outgoing refetches to prevent race conditions
+      await queryClient.cancelQueries({
+        queryKey: connectorConfigurationQueryKey(type, connectorID),
+      });
+    },
+    onError: (error) => {
+      irminAlert(
+        'error',
+        error.message ?? 'Error validating connector configuration'
+      );
+    },
+    onSuccess: (res) => {
+      if (res.data?.ok) {
+        irminAlert(
+          'success',
+          res.message ?? 'Configuration validated successfully'
+        );
+      } else {
+        // Handle validation errors
+        const errorMessage =
+          res.data?.errors?.join(', ') ?? 'Configuration validation failed';
+        irminAlert('error', errorMessage);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      void queryClient.invalidateQueries({
+        queryKey: connectorConfigurationQueryKey(type, connectorID),
+      });
     },
   });
 

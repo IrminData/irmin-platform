@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workflowsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -10,18 +10,10 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { generateTempId } from '@/utils/generateTempId';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import {
-  Workflow,
-  WorkflowableType,
-  WorkflowStatus,
-} from '@/types/core/Workflow';
-import { WorkflowRequest } from '@/types/internal/WorkflowInput';
-
-export const workflowsQueryKey = (
-  workspaceSlug: string,
-  type?: WorkflowableType
-) => ['workflows', workspaceSlug, type];
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Workflow, WorkflowableType } from '@/types/core/Workflow';
+import { WorkflowStatus } from '@/types/core/Workflow';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 export function useWorkflows(type?: WorkflowableType) {
   const { getToken } = useIAM();
@@ -216,10 +208,10 @@ export function useWorkflows(type?: WorkflowableType) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug, type),
       });
     },

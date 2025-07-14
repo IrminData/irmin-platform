@@ -1,24 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { repositoryObjectSchemaQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
-
-export const repositoryObjectSchemaQueryKey = (
-  workspaceSlug: string,
-  repositorySlug: string,
-  ref: string,
-  path?: string
-) =>
-  [
-    'repository-object-schema',
-    workspaceSlug,
-    repositorySlug,
-    ref,
-    path,
-  ] as const;
 
 export const useRepositoryObjectSchema = (
   repositorySlug: string,
@@ -34,7 +21,7 @@ export const useRepositoryObjectSchema = (
       workspaceSlug,
       repositorySlug,
       ref ?? '',
-      path
+      path ?? ''
     ),
     queryFn: async () => {
       const token = await getToken();

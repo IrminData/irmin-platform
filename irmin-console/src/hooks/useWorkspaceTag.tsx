@@ -1,20 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workspaceTagsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { workspaceTagsQueryKey } from '@/hooks/useWorkspaceTags';
-
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { TagWithAssets } from '@/types/core/Tag';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { TagWithAssets } from '@/types/core/Tag';
 
 export function useWorkspaceTag(tagID?: string) {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
+  const queryClient = useQueryClient();
 
   const workspaceTagQuery = useQuery<IrminAPIResponse<TagWithAssets>, Error>({
     queryKey: workspaceTagsQueryKey(workspaceSlug, tagID),
@@ -29,6 +29,20 @@ export function useWorkspaceTag(tagID?: string) {
         tagId: tagID,
       });
       return tag;
+    },
+    initialData: () => {
+      const workspaceTags = queryClient.getQueryData<
+        IrminAPIResponse<TagWithAssets[]>
+      >(workspaceTagsQueryKey(workspaceSlug));
+      return workspaceTags?.data?.find((t: TagWithAssets) => t.tag.id === tagID)
+        ? {
+            data: workspaceTags.data.find(
+              (t: TagWithAssets) => t.tag.id === tagID
+            ),
+            success: true,
+            message: 'Cached data',
+          }
+        : undefined;
     },
     enabled: !!tagID,
   });

@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { LogEvent } from '@/types/core/Log';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { LogEvent } from '@/types/core/Log';
 
 /**
  * Log API service

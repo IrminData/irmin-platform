@@ -1,14 +1,13 @@
 'use client';
 
-import { notFound } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation';
 
 import RepositorySection from '@/components/repository/RepositorySection';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useRepositoryObject } from '@/hooks/useRepositoryObject';
 
-import { RepositoryRouteParams } from '../layout';
+import type { RepositoryRouteParams } from '../layout';
 
 /**
  * Page to view a repository object from a specific path at a specific ref

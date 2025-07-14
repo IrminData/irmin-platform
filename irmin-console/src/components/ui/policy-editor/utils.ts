@@ -1,10 +1,7 @@
-import { Dictionary } from '@/lib/dict';
+import type { Dictionary } from '@/lib/dict';
 
-import {
-  PolicyAction,
-  PolicyPrincipal,
-  PolicyResource,
-} from '@/types/core/Policy';
+import type { PolicyResource } from '@/types/core/Policy';
+import { PolicyAction, PolicyPrincipal } from '@/types/core/Policy';
 
 export const formatResourceName = (resource: PolicyResource): string => {
   return resource

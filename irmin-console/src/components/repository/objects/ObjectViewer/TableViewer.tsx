@@ -7,7 +7,7 @@ import { TbSearch } from 'react-icons/tb';
 
 import AdvancedDatatable from '@/components/repository/objects/ObjectViewer/AdvancedDatatable';
 import JSONViewer from '@/components/repository/objects/ObjectViewer/JSONViewer';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -15,8 +15,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { checkIfSimpleArrayOfObjects } from '@/utils/checkIfSimpleArrayOfObjects';
 import { downloadCSV } from '@/utils/csv';
 
-import { TableCellValue } from '@/types/internal/Datatable';
-import { JSONValue } from '@/types/internal/GenericJSON';
+import type { TableCellValue } from '@/types/internal/Datatable';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Show the content of JSON data in a table if it's an array of simple objects.
@@ -46,7 +46,7 @@ const TableViewer = ({
 
   const [filterText, setFilterText] = useState('');
   const [filteredItems, setFilteredItems] = useState<
-    Array<Record<string, TableCellValue>>
+    Record<string, TableCellValue>[]
   >([]);
 
   const isSimpleArrayOfObjects = useMemo(
@@ -61,7 +61,7 @@ const TableViewer = ({
     const timer = setTimeout(() => {
       if (filterText && filterText.length > 0) {
         const newData =
-          (data as Array<Record<string, TableCellValue>>).filter((item) => {
+          (data as Record<string, TableCellValue>[]).filter((item) => {
             return Object.keys(item).some((key) => {
               const value =
                 key in item ? item[key as keyof typeof item] : undefined;
@@ -76,7 +76,7 @@ const TableViewer = ({
           }) ?? [];
         setFilteredItems(newData);
       } else {
-        setFilteredItems(data as Array<Record<string, TableCellValue>>);
+        setFilteredItems(data as Record<string, TableCellValue>[]);
       }
     }, 300);
 
@@ -89,41 +89,75 @@ const TableViewer = ({
     <>
       {/* Title, metadata, and actions */}
       <div className='flex items-center justify-start px-4 py-1 text-xs'>
-        <p className='ml-0 hidden text-gray-400 lg:inline'>{title}</p>
-        <p className='text-irmin_blue dark:text-irmin_green inline text-[8px] md:ml-auto md:pl-2 lg:text-xs'>
-          {metadata && metadata.rowsReturned && metadata.timeTaken
+        <p
+          className={`
+            ml-0 hidden text-gray-400
+            lg:inline
+          `}
+        >
+          {title}
+        </p>
+        <p
+          className={`
+            inline text-[8px] text-irmin-blue-500
+            md:ml-auto md:pl-2
+            lg:text-xs
+            dark:text-irmin-green-500
+          `}
+        >
+          {metadata?.rowsReturned && metadata.timeTaken
             ? `
           ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}ms
         `
             : ``}
         </p>
-        <div className='grow'></div>
+        <div className='grow' />
         <div className='ml-auto flex flex-row items-center gap-2'>
           {isSimpleArrayOfObjects && data && (
             <Button
               icon={<AiOutlineDownload />}
               variant='link'
               size='sm'
-              className='hidden lg:inline-flex'
+              className={`
+                hidden
+                lg:inline-flex
+              `}
               onClick={() =>
-                downloadCSV(
-                  data as Array<Record<string, TableCellValue>>,
-                  title
-                )
+                downloadCSV(data as Record<string, TableCellValue>[], title)
               }
             >
               {dict.query.exportTable}
             </Button>
           )}
           {isSimpleArrayOfObjects && (
-            <div className='relative flex h-8 w-48 flex-row items-center rounded-full border border-gray-200 dark:border-gray-800'>
-              <div className='pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3'>
+            <div
+              className={`
+                relative flex h-8 w-48 flex-row items-center rounded-full border
+                border-gray-200
+                dark:border-gray-800
+              `}
+            >
+              <div
+                className={`
+                  pointer-events-none absolute inset-y-0 start-0 flex
+                  items-center ps-3
+                `}
+              >
                 <TbSearch className='text-gray-500' />
               </div>
               <input
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className='dark:bg-irmin_black/50 block w-full rounded-full bg-gray-50/50 px-4 py-3 ps-10 text-xs text-gray-900 placeholder:invisible placeholder:opacity-40 group-focus-within:placeholder:visible focus:outline-hidden md:placeholder:visible lg:text-sm dark:text-white'
+                className={`
+                  block w-full rounded-full bg-gray-50/50 px-4 py-3 ps-10
+                  text-xs text-gray-900
+                  placeholder:invisible placeholder:opacity-40
+                  group-focus-within:placeholder:visible
+                  focus:outline-hidden
+                  md:placeholder:visible
+                  lg:text-sm
+                  dark:bg-irmin-black-500/50 dark:text-white
+                `}
                 placeholder={dict.query.search}
               />
             </div>
@@ -131,7 +165,9 @@ const TableViewer = ({
         </div>
       </div>
       {/* Content */}
-      <div className='flex h-0 flex-1 flex-col overflow-hidden overflow-y-scroll'>
+      <div
+        className={`flex h-0 flex-1 flex-col overflow-hidden overflow-y-scroll`}
+      >
         {loading ? (
           <LoadingSkeleton className='h-96' />
         ) : isSimpleArrayOfObjects ? (

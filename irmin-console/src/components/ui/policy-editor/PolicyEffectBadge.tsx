@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { TbShieldCheck, TbShieldX } from 'react-icons/tb';
 
@@ -13,9 +13,9 @@ const PolicyEffectBadge = ({ effect }: { effect: PolicyEffect }) => {
   return (
     <>
       {effect === PolicyEffect.Allow ? (
-        <TbShieldCheck className='text-accent h-4 w-4' />
+        <TbShieldCheck className='size-4 text-accent' />
       ) : (
-        <TbShieldX className='text-destructive h-4 w-4' />
+        <TbShieldX className='size-4 text-destructive' />
       )}
       <Badge
         variant={effect === PolicyEffect.Allow ? 'default' : 'destructive'}
@@ -29,4 +29,4 @@ const PolicyEffectBadge = ({ effect }: { effect: PolicyEffect }) => {
   );
 };
 
-export default React.memo(PolicyEffectBadge);
+export default memo(PolicyEffectBadge);

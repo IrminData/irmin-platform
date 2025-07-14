@@ -1,7 +1,7 @@
-import { Dictionary } from '@/lib/dict';
+import type { Dictionary } from '@/lib/dict';
 
-import { EditorItem, IrminFileLanguage } from '@/types/core/EditorItems';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+import type { EditorItem, IrminFileLanguage } from '@/types/core/EditorItems';
+import type { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
  * Format the file or folder name
@@ -45,7 +45,7 @@ export const getNameFromPath = (path: string): string => {
  * @param editorItems - The editor items to flatten
  * @returns The flattened editor items
  */
-export const flattenEditorItems = (editorItems: EditorItem[]) => {
+const flattenEditorItems = (editorItems: EditorItem[]) => {
   // Flatten the editorItems object
   const flatEditorItems: EditorItem[] = [];
   for (const item of editorItems) {

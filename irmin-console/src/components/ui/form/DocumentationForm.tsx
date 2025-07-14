@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { Controller, useForm, UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import MDXEditor from '@/components/ui/markdown-editor/MDXEditor';
 
@@ -46,7 +47,7 @@ const DocumentationForm = ({
     <form
       onSubmit={disabled ? undefined : handleSubmit(onSubmit)}
       id='mdx-documentation-editor'
-      className='bg-background h-full max-h-full min-h-80 w-full overflow-y-scroll'
+      className='size-full max-h-full min-h-80 overflow-y-scroll bg-background'
     >
       <Controller
         name='documentation'

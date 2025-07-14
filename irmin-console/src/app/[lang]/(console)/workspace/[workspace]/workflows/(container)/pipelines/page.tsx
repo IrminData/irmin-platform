@@ -1,6 +1,8 @@
 import PipelineWorkflowsSection from '@/components/workflow/PipelineWorkflowsSection';
 
-import { WorkspaceLayoutParams } from '../../../layout';
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
+
+import type { WorkspaceLayoutParams } from '../../../layout';
 
 /**
  * Pipeline Workflows page in the workspace
@@ -15,7 +17,7 @@ import { WorkspaceLayoutParams } from '../../../layout';
  */
 export default async function PipelineWorkflowsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;

@@ -1,6 +1,8 @@
 import ConnectionsSection from '@/components/connection/ConnectionsSection';
 
-import { WorkspaceLayoutParams } from '../layout';
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
+
+import type { WorkspaceLayoutParams } from '../layout';
 
 /**
  * Connections page in the workspace
@@ -15,7 +17,7 @@ import { WorkspaceLayoutParams } from '../layout';
  */
 export default async function ConnectionsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;

@@ -21,6 +21,7 @@ export function setCookie(name: string, value: string, days: number) {
  * @returns The value of the cookie or null if not found
  * {@link https://www.w3schools.com/js/js_cookies.asp | W3Schools}
  */
+// eslint-disable-next-line import-x/no-unused-modules
 export function getCookie(name: string): string | null {
   const nameEQ = `${name}=`;
   const ca = document.cookie.split(';');

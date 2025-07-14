@@ -1,4 +1,4 @@
-import { Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
 
 import WebsiteError from '@/components/WebsiteError';
 

@@ -5,7 +5,7 @@ import {
 } from 'react-icons/ai';
 import { FaEdit, FaPlus, FaUserCheck, FaUserTimes } from 'react-icons/fa';
 
-import { LogEventType } from '@/types/core/Log';
+import type { LogEventType } from '@/types/core/Log';
 
 /**
  * Component to display an icon for a log event according to its type.

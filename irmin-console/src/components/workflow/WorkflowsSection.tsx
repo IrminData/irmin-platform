@@ -5,8 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
-import QueryError from '@/components/ui/error/QueryError';
+import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -16,7 +17,7 @@ import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { Workflow } from '@/types/core/Workflow';
+import type { Workflow } from '@/types/core/Workflow';
 
 import SelectWorkflowTypeModalContent from './SelectWorkflowTypeModalContent';
 import WorkflowList from './WorkflowList';
@@ -86,57 +87,88 @@ export default function WorkflowsSection({
   }, [setCreateParam]);
 
   return (
-    <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-      <div className='my-4 flex flex-row items-center justify-between gap-4'>
-        <h2 className='font-display text-foreground/90 text-3xl font-bold sm:text-4xl lg:text-5xl'>
-          {dict.workflow.workflows}
-        </h2>
-        <Button
-          variant='gradient'
-          size='lg'
-          onClick={() => openModal()}
-          icon={<IoAdd size={25} />}
-          disabled={
-            !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
-          }
-        >
-          {dict.workflow.create.createNewWorkflow}
-        </Button>
-      </div>
-      <SideModal
-        isOpen={
-          isOpen &&
-          isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
-        }
-        closeModal={closeModal}
-        title={dict.workflow.create.createNewWorkflow}
-      >
-        <SelectWorkflowTypeModalContent />
-      </SideModal>
-      <div className='py-4'>
-        <div className='mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2 text-gray-900 focus:outline-hidden dark:bg-gray-800 dark:text-gray-200'>
-          <TbSearch />
-          <input
-            type='text'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className='w-full bg-transparent p-2 focus:outline-hidden'
-            placeholder={dict.list.searchPlaceholder}
-          />
+    <SafeComponent
+      level='section'
+      title='Workflows Interface Error'
+      description='Failed to load workflows interface'
+    >
+      <div className='relative container mx-auto max-w-7xl px-4 py-8'>
+        <div className='my-4 flex flex-row items-center justify-between gap-4'>
+          <h2
+            className={`
+              font-display text-3xl font-bold text-foreground/90
+              sm:text-4xl
+              lg:text-5xl
+            `}
+          >
+            {dict.workflow.workflows}
+          </h2>
+          <Button
+            variant='gradient'
+            size='lg'
+            onClick={() => openModal()}
+            icon={<IoAdd size={25} />}
+            disabled={
+              !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+            }
+          >
+            {dict.workflow.create.createNewWorkflow}
+          </Button>
         </div>
-        {workflowsQuery.error ? (
-          <QueryError
-            error={workflowsQuery.error}
-            onRetry={() => workflowsQuery.refetch()}
-            title={dict.common.somethingWentWrong}
-          />
-        ) : (
-          <WorkflowList
-            loading={workflowsQuery.isLoading}
-            workflows={filteredItems}
-          />
-        )}
+        <SideModal
+          isOpen={
+            isOpen &&
+            isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+          }
+          closeModal={closeModal}
+          title={dict.workflow.create.createNewWorkflow}
+        >
+          <SelectWorkflowTypeModalContent />
+        </SideModal>
+        <div className='py-4'>
+          <div
+            className={`
+              mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2
+              text-gray-900
+              focus:outline-hidden
+              dark:bg-gray-800 dark:text-gray-200
+            `}
+          >
+            <TbSearch />
+            <input
+              type='text'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`
+                w-full bg-transparent p-2
+                focus:outline-hidden
+              `}
+              placeholder={dict.list.searchPlaceholder}
+            />
+          </div>
+          {workflowsQuery.error ? (
+            <QueryError
+              error={workflowsQuery.error}
+              onRetry={() => workflowsQuery.refetch()}
+              title={dict.common.somethingWentWrong}
+            />
+          ) : (
+            <WorkflowList
+              loading={workflowsQuery.isLoading}
+              workflows={filteredItems}
+              emptyStateAction={
+                isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+                  ? {
+                      label: dict.workflow.create.createNewWorkflow,
+                      onClick: openModal,
+                      variant: 'gradient',
+                    }
+                  : undefined
+              }
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </SafeComponent>
   );
 }

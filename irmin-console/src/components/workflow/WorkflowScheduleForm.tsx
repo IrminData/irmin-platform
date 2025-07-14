@@ -22,20 +22,19 @@ import { useWorkflows } from '@/hooks/useWorkflows';
 
 import deepEqual from '@/utils/deepEqual';
 
-import {
-  RepositoryEvent,
+import type {
   RepositoryTrigger,
   ScheduleTrigger,
   TimeTrigger,
-  WorkflowRunEvent,
   WorkflowRunTrigger,
   WorkflowSchedule,
 } from '@/types/core/Schedule';
+import { RepositoryEvent, WorkflowRunEvent } from '@/types/core/Schedule';
 
 interface FormTrigger {
   id: string;
-  type: 'time' | 'repository-event' | 'workflow-run-event';
-  timeFormat?: 'rrule' | 'cron';
+  type: 'repository-event' | 'time' | 'workflow-run-event';
+  timeFormat?: 'cron' | 'rrule';
   rrule?: string;
   cron?: string;
   event?: RepositoryEvent | WorkflowRunEvent;
@@ -187,7 +186,7 @@ function WorkflowScheduleForm({
   const onSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      handleUpdateSchedule(formDataAsSchedule);
+      void handleUpdateSchedule(formDataAsSchedule);
     },
     [handleUpdateSchedule, formDataAsSchedule]
   );
@@ -199,8 +198,8 @@ function WorkflowScheduleForm({
   useEffect(() => {
     if (disableSaveButton) {
       if (!deepEqual(previousScheduleRef.current, formDataAsSchedule)) {
-        handleUpdateSchedule(formDataAsSchedule);
         previousScheduleRef.current = formDataAsSchedule;
+        void handleUpdateSchedule(formDataAsSchedule);
       }
     }
   }, [disableSaveButton, formDataAsSchedule, handleUpdateSchedule]);
@@ -316,10 +315,10 @@ function WorkflowScheduleForm({
       {triggers.map((trigger, index) => (
         <div
           key={trigger.id}
-          className='border-foreground/10 flex flex-col border-t py-4'
+          className='flex flex-col border-t border-foreground/10 py-4'
         >
           <div className='mb-4 flex items-center justify-between'>
-            <h4 className='text-md pl-1 font-semibold'>
+            <h4 className='pl-1 text-base font-semibold'>
               {dict.workflow.schedule.trigger} {index + 1}
             </h4>
             <Button
@@ -373,7 +372,7 @@ function WorkflowScheduleForm({
                       updateTriggerField(
                         index,
                         'timeFormat',
-                        value as 'rrule' | 'cron'
+                        value as 'cron' | 'rrule'
                       )
                     }
                     disabled={isUpdatingSchedule}

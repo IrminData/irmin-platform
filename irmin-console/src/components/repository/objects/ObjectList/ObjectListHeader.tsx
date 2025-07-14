@@ -5,7 +5,7 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { TbChevronLeft, TbHome } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -43,24 +43,35 @@ function ObjectListHeader({
 
   return (
     <div
-      className={`bg-background flex items-center justify-start gap-2 rounded-lg border-b border-gray-200 px-1 py-2 dark:border-gray-800`}
+      className={`
+        flex items-center justify-start gap-2 rounded-lg border-b
+        border-gray-200 bg-background px-1 py-2
+        dark:border-gray-800
+      `}
     >
       {currentPath !== '' && (
         <Button variant='ghost' onClick={navigateUp}>
-          <TbChevronLeft className='mr-2 h-4 w-4' />
+          <TbChevronLeft className='mr-2 size-4' />
           {dict.common.back}
         </Button>
       )}
       <div className='flex items-center space-x-2 rounded-md font-mono text-xs'>
         {currentPath !== '' && (
           <Button variant='ghost' size='sm' onClick={() => navigateToGroup('')}>
-            <TbHome className='mr-2 h-4 w-4' />
+            <TbHome className='mr-2 size-4' />
             {dict.fileNavigator.root}
           </Button>
         )}
         {pathParts.map((part, index) => (
-          <React.Fragment key={index}>
-            <span className='text-gray-500 dark:text-gray-400'>/</span>
+          <React.Fragment key={part}>
+            <span
+              className={`
+                text-gray-500
+                dark:text-gray-400
+              `}
+            >
+              /
+            </span>
             <Button
               variant='ghost'
               size='sm'
@@ -78,7 +89,7 @@ function ObjectListHeader({
         placeholder={dict.repository.objects.filterObjects}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className='bg-background ml-auto max-w-sm text-sm'
+        className='ml-auto max-w-sm bg-background text-sm'
       />
     </div>
   );

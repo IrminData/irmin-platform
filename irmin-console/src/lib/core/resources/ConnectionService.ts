@@ -1,9 +1,9 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { Connection } from '@/types/core/Connection';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { ObjectSchema } from '@/types/core/ObjectSchema';
-import { DynamicFieldValues } from '@/types/internal/DynamicField';
+import type { Connection } from '@/types/core/Connection';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 /**
  * Interface for creating a new connection

@@ -1,10 +1,10 @@
-import { Tag } from './Tag';
-import { User } from './User';
+import type { Tag } from './Tag';
+import type { User } from './User';
 
 /**
  * Represents the garbage collection rules for a branch.
  */
-export interface BranchGarbageCollectionRules {
+interface BranchGarbageCollectionRules {
   /** ID of the branch */
   branch_id: string;
   /** Number of days to retain data */
@@ -14,7 +14,7 @@ export interface BranchGarbageCollectionRules {
 /**
  * Represents the garbage collection rules for a repository.
  */
-export interface GarbageCollectionRules {
+interface GarbageCollectionRules {
   /** (optional) Default number of retention days */
   default_retention_days?: number;
   /** (optional) List of garbage collection rules for branches */

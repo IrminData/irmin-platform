@@ -24,30 +24,42 @@ const SignInSection = () => {
   return (
     <div
       id='sign-in-section'
-      className='mx-auto flex h-full flex-col justify-center gap-8 px-4 py-16 md:mb-0 md:py-28'
+      className={`
+        mx-auto flex h-full flex-col justify-center gap-8 px-4 py-16
+        md:mb-0 md:py-28
+      `}
     >
       <div className='flex w-full flex-row justify-between gap-4 px-4'>
         <Link
           href={websiteUrl}
-          className='transition-all hover:opacity-80'
+          className={`
+            transition-all
+            hover:opacity-80
+          `}
           aria-label='Go to website'
         >
           <Image
-            className='h-9 min-h-5 w-auto dark:hidden'
+            className={`
+              h-9 min-h-5 w-auto
+              dark:hidden
+            `}
             src='/irmin-logo.svg'
             alt='Irmin logo'
             width={200}
             height={100}
           />
           <Image
-            className='hidden h-9 min-h-5 w-auto dark:block'
+            className={`
+              hidden h-9 min-h-5 w-auto
+              dark:block
+            `}
             src='/irmin-logo-light.svg'
             alt='Irmin logo'
             width={200}
             height={100}
           />
         </Link>
-        <div className='ml-auto'></div>
+        <div className='ml-auto' />
         <LanguageSwitcher />
         <ThemeSwitch />
       </div>

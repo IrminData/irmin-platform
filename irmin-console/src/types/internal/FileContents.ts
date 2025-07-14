@@ -1,4 +1,4 @@
-import { IrminFileLanguage } from '@/types/core/EditorItems';
+import type { IrminFileLanguage } from '@/types/core/EditorItems';
 
 /**
  * Internal type for managing file contents and file state in the editor

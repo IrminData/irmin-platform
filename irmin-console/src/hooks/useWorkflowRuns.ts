@@ -3,28 +3,23 @@ import { useCallback, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workflowRunsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import {
+import type {
   IrminAPIPaginationMetadata,
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
-import { WorkflowRun } from '@/types/core/WorkflowRun';
+import type { WorkflowRun } from '@/types/core/WorkflowRun';
 
 interface WorkflowRunsResponse
   extends Omit<IrminAPIResponse<WorkflowRun[]>, 'pagination'> {
   pagination?: IrminAPIPaginationMetadata;
 }
-
-export const workflowRunsQueryKey = (
-  workspaceSlug: string,
-  workflowID: string,
-  page: number
-) => ['workflow-runs', workspaceSlug, workflowID, page] as const;
 
 /**
  * Custom hook to manage fetching and pagination of workflow runs
@@ -72,7 +67,7 @@ const useWorkflowRuns = (workflowID: string) => {
     onSuccess: (res) => {
       irminAlert('success', res.message ?? 'Workflow run created successfully');
       setCurrentPage(1);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowRunsQueryKey(workspaceSlug, workflowID, 1),
       });
     },

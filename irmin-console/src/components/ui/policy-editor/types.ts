@@ -1,4 +1,4 @@
-import {
+import type {
   Policy,
   PolicyAction,
   PolicyEffect,
@@ -6,8 +6,8 @@ import {
   PolicyResource,
   PolicyResourceOptions,
 } from '@/types/core/Policy';
-import { Role } from '@/types/core/Role';
-import { User } from '@/types/core/User';
+import type { Role } from '@/types/core/Role';
+import type { User } from '@/types/core/User';
 
 export interface PolicyEditorProps {
   /** Policies to display */

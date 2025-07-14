@@ -16,7 +16,7 @@ import {
   TbUpload,
 } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -29,10 +29,11 @@ import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
-import { Object } from '@/types/core/Object';
-import { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { Object } from '@/types/core/Object';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { Tag, TagEntityType } from '@/types/core/Tag';
+import type { Tag } from '@/types/core/Tag';
+import { TagEntityType } from '@/types/core/Tag';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
@@ -357,9 +358,17 @@ export default function ObjectDetails({
   if (!selectedObject) return <></>;
 
   return (
-    <div className='border-card bg-background mb-4 flex w-max min-w-80 flex-col overflow-scroll rounded-lg border text-xs'>
+    <div
+      className={`
+        mb-4 flex w-max min-w-80 flex-col overflow-scroll rounded-lg border
+        border-card bg-background text-xs
+      `}
+    >
       <div
-        className={`flex items-center justify-between border-b border-gray-200 p-2 py-4 dark:border-gray-800`}
+        className={`
+          flex items-center justify-between border-b border-gray-200 p-2 py-4
+          dark:border-gray-800
+        `}
       >
         <p className='text-sm'>{selectedObject.name}</p>
         {closeDetails && (
@@ -367,14 +376,19 @@ export default function ObjectDetails({
             variant='ghost'
             size='sm'
             onClick={closeDetails}
-            icon={<IoClose className='h-6 w-6' />}
-            className='h-5 px-0 py-0'
+            icon={<IoClose className='size-6' />}
+            className='h-5 p-0'
           />
         )}
       </div>
       <div className='flex flex-col gap-2 p-2'>
         {canViewTags && (
-          <div className='border-b border-gray-200 pb-4 dark:border-gray-800'>
+          <div
+            className={`
+              border-b border-gray-200 pb-4
+              dark:border-gray-800
+            `}
+          >
             <WorkspaceTagSelector
               selectedTags={selectedTags}
               onTagsChange={handleUpdateTags}
@@ -430,7 +444,12 @@ export default function ObjectDetails({
               </div>
             </>
           )}
-        <hr className='border-gray-200 dark:border-gray-800' />
+        <hr
+          className={`
+            border-gray-200
+            dark:border-gray-800
+          `}
+        />
         <div className='flex w-full flex-col gap-1'>
           {/** Buttons for all possible actions for the object */}
           {selectedObject.type === 'group' && setCurrentPath ? (

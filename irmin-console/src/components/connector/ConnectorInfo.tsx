@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Connector } from '@/types/core/Connector';
+import type { Connector } from '@/types/core/Connector';
 
 interface ConnectorInfoProps {
   connector: Connector;
@@ -28,14 +28,21 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
   return (
     <div className='flex flex-col space-y-4 p-6'>
       <div className='mb-4 flex items-center space-x-4'>
-        <Avatar className='h-16 w-16 rounded-none'>
+        <Avatar className='size-16 rounded-none'>
           <AvatarImage src={connector.logo_url} alt={connector.name} />
           <AvatarFallback>
             {connector.name.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h2 className='text-xl lg:text-2xl'>{connector.name}</h2>
+          <h2
+            className={`
+              text-xl
+              lg:text-2xl
+            `}
+          >
+            {connector.name}
+          </h2>
           <p className='text-sm text-gray-500'>{connector.description}</p>
         </div>
       </div>
@@ -58,9 +65,12 @@ export function ConnectorInfo({ connector }: ConnectorInfoProps) {
             </span>
             <a
               href={`mailto:${connector.author_email}`}
-              className='flex items-center hover:underline'
+              className={`
+                flex items-center
+                hover:underline
+              `}
             >
-              <TbMail className='mr-1 h-4 w-4' />
+              <TbMail className='mr-1 size-4' />
               {connector.author_email}
             </a>
           </div>

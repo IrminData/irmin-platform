@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import SchemaFieldMapper from '@/components/SchemaFieldMapper';
 import { getFilteredSchema } from '@/components/SchemaFieldMapper/utils';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -15,7 +15,7 @@ import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkflow } from '@/hooks/useWorkflow';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import {
+import type {
   ExportWorkflow,
   FieldMapping,
   ImportWorkflow,
@@ -27,8 +27,8 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
   const { isResourceAllowed } = useResourceAllowed();
 
   const workflow = workflowQuery.data?.data as
-    | ImportWorkflow
     | ExportWorkflow
+    | ImportWorkflow
     | undefined;
 
   const [mappings, setMappings] = useState<FieldMapping[]>(
@@ -142,7 +142,12 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
 
   return (
     <div className='mx-auto max-w-7xl p-4'>
-      <div className='flex justify-end gap-2 border-b pb-4 dark:border-gray-800'>
+      <div
+        className={`
+          flex justify-end gap-2 border-b pb-4
+          dark:border-gray-800
+        `}
+      >
         <Button
           onClick={handleReset}
           variant='outline'

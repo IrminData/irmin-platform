@@ -1,8 +1,8 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { Branch } from '@/types/core/Branch';
-import { Diff } from '@/types/core/Diff';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Branch } from '@/types/core/Branch';
+import type { Diff } from '@/types/core/Diff';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Interface for creating a branch

@@ -4,13 +4,14 @@ import { useState } from 'react';
 
 import { MdFolder } from 'react-icons/md';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
-import ObjectSchemaViewer from './';
+// eslint-disable-next-line import-x/no-cycle
+import ObjectSchemaViewer from '.';
 
 /**
  * Component to visualise a group schema object
@@ -40,31 +41,77 @@ export function GroupItemViewer({
 
   return (
     <div
-      className={`bg-popover/10 rounded-md border p-2 dark:border-gray-800 ${isFocused ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}
+      className={`
+        rounded-md border bg-popover/10 p-2
+        dark:border-gray-800
+        ${
+          isFocused
+            ? `
+              ring-2 ring-blue-500
+              dark:ring-blue-400
+            `
+            : ''
+        }
+      `}
     >
       <div className='flex items-start gap-3'>
-        <MdFolder className='mt-1 h-6 w-6 flex-shrink-0 text-yellow-500 dark:text-yellow-300' />
-        <div className='min-w-0 flex-grow'>
-          <div className='flex flex-col justify-between gap-2 sm:flex-row sm:items-center'>
-            <h3 className='truncate font-medium text-gray-900 dark:text-gray-100'>
+        <MdFolder
+          className={`
+            mt-1 size-6 shrink-0 text-yellow-500
+            dark:text-yellow-300
+          `}
+        />
+        <div className='min-w-0 grow'>
+          <div
+            className={`
+              flex flex-col justify-between gap-2
+              sm:flex-row sm:items-center
+            `}
+          >
+            <h3
+              className={`
+                truncate font-medium text-gray-900
+                dark:text-gray-100
+              `}
+            >
               {item.name}
             </h3>
             {item.last_modified && (
-              <span className='text-xs text-gray-500 dark:text-gray-400'>
+              <span
+                className={`
+                  text-xs text-gray-500
+                  dark:text-gray-400
+                `}
+              >
                 {dict.common.lastModified}:{' '}
                 {new Date(item.last_modified).toLocaleDateString(locale)}
               </span>
             )}
           </div>
-          <p className='truncate text-sm text-gray-500 dark:text-gray-400'>
+          <p
+            className={`
+              truncate text-sm text-gray-500
+              dark:text-gray-400
+            `}
+          >
             {item.path}
           </p>
           {item.description && (
-            <p className='mt-1 text-sm text-gray-600 dark:text-gray-300'>
+            <p
+              className={`
+                mt-1 text-sm text-gray-600
+                dark:text-gray-300
+              `}
+            >
               {item.description}
             </p>
           )}
-          <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400'>
+          <div
+            className={`
+              mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500
+              dark:text-gray-400
+            `}
+          >
             <span>
               {dict.repository.objects.type}: {dict.repository.objects.group}
             </span>
@@ -84,9 +131,9 @@ export function GroupItemViewer({
           </Button>
           {expanded && (
             <div className='mt-3 space-y-3 pl-2'>
-              {item.children.map((child, i) => (
+              {item.children.map((child) => (
                 <ObjectSchemaViewer
-                  key={i}
+                  key={child.path}
                   schema={child}
                   depth={depth + 1}
                   isExpanded={isExpanded}

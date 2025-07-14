@@ -1,8 +1,8 @@
 'use client';
 
-import { Dictionary } from '@/lib/dict';
+import type { Dictionary } from '@/lib/dict';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 /**
  * Content for the workspace deletion confirmation modal

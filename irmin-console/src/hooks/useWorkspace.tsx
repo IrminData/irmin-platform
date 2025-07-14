@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workspaceQueryKey, workspacesQueryKey } from '@/lib/queryKeys';
 
 import WorkspaceDeletionConfirmationModal from '@/components/workspace/WorkspaceDeletionConfirmationModal';
 
@@ -12,14 +13,10 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Workspace } from '@/types/core/Workspace';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Workspace } from '@/types/core/Workspace';
 
-import { workspacesQueryKey } from './useWorkspaces';
-
-export const workspaceQueryKey = (slug: string) => ['workspace', slug] as const;
-
-type UpdateWorkspaceInput = Pick<Workspace, 'name' | 'description'>;
+type UpdateWorkspaceInput = Pick<Workspace, 'description' | 'name'>;
 
 export function useWorkspace(slug: string) {
   const { getToken } = useIAM();
@@ -39,6 +36,19 @@ export function useWorkspace(slug: string) {
         workspaceSlug: slug,
       });
       return workspace;
+    },
+    initialData: () => {
+      const workspaces =
+        queryClient.getQueryData<IrminAPIResponse<Workspace[]>>(
+          workspacesQueryKey
+        );
+      return workspaces?.data?.find((w: Workspace) => w.slug === slug)
+        ? {
+            data: workspaces.data.find((w: Workspace) => w.slug === slug),
+            success: true,
+            message: 'Cached data',
+          }
+        : undefined;
     },
     enabled: !!slug,
   });
@@ -161,8 +171,10 @@ export function useWorkspace(slug: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: workspaceQueryKey(slug!) });
-      queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceQueryKey(slug!),
+      });
+      void queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
     },
   });
 
@@ -175,8 +187,10 @@ export function useWorkspace(slug: string) {
       return core.workspaceService.deleteWorkspace({ workspace: slug });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: workspaceQueryKey(slug!) });
-      queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceQueryKey(slug!),
+      });
+      void queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
       irminAlert('success', res.message ?? 'Workspace deleted successfully');
       router.push(`/${locale}/workspace`);
     },
@@ -218,7 +232,9 @@ export function useWorkspace(slug: string) {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: workspaceQueryKey(slug!) });
+      void queryClient.invalidateQueries({
+        queryKey: workspaceQueryKey(slug!),
+      });
       irminAlert(
         'success',
         res.message ?? 'Workspace transferred successfully'

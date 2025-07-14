@@ -1,10 +1,12 @@
 import RepositoryObjectHistorySection from '@/components/repository/RepositoryObjectHistorySection';
 
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
+
 /**
  * Page to view a repository object from a specific path at a specific ref
  */
 export default async function RepositoryObjectHistoryPage(props: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const searchParams = await props.searchParams;
   const path = (searchParams.path as string) ?? '';

@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { TbX } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -34,15 +34,15 @@ export default function MultiplePathsSelector({
   }, [onPathsChange, paths]);
 
   const removePath = useCallback(
-    (index: number) => {
-      onPathsChange(paths.filter((_, i) => i !== index));
+    (path: string) => {
+      onPathsChange(paths.filter((p) => p !== path));
     },
     [onPathsChange, paths]
   );
 
   const updatePath = useCallback(
-    (index: number, newPath: string) => {
-      onPathsChange(paths.map((p, i) => (i === index ? newPath : p)));
+    (path: string, newPath: string) => {
+      onPathsChange(paths.map((p) => (p === path ? newPath : p)));
     },
     [onPathsChange, paths]
   );
@@ -64,10 +64,10 @@ export default function MultiplePathsSelector({
         </div>
       )}
 
-      {paths?.map((path, index) => (
-        <div key={index} className='flex items-start gap-2'>
+      {paths?.map((path) => (
+        <div key={path} className='flex items-start gap-2'>
           <div className='flex-1'>
-            {renderPathSelector(path, (newPath) => updatePath(index, newPath))}
+            {renderPathSelector(path, (newPath) => updatePath(path, newPath))}
           </div>
           {paths && paths.length > 1 && (
             <Button
@@ -75,10 +75,10 @@ export default function MultiplePathsSelector({
               variant='destructive'
               size='icon'
               icon={<TbX />}
-              onClick={() => removePath(index)}
+              onClick={() => removePath(path)}
               className='mt-1'
               title={dict.workflow.removePath}
-            ></Button>
+            />
           )}
         </div>
       ))}

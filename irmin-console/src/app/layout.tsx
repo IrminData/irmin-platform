@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
 
-import { Big_Shoulders_Display, Inter } from 'next/font/google';
+import {
+  Big_Shoulders_Display,
+  Inter,
+  PT_Serif,
+  Space_Mono,
+} from 'next/font/google';
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import '@/styles/main.css';
-import '@/styles/theme.css';
+import { defaultLocale, findLocale } from '@/lib/dict';
 
 import { IAMProvider } from '@/context/IAMContext';
 import { LocaleProvider } from '@/context/LocaleContext';
@@ -15,10 +19,20 @@ import { PostHogProvider } from '@/context/PostHogProvider';
 import ReactQueryProvider from '@/context/ReactQueryProvider';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const interSans = Inter({ subsets: ['latin'], variable: '--font-inter-sans' });
 const bigShouldersDisplay = Big_Shoulders_Display({
   subsets: ['latin'],
   variable: '--font-big-shoulders-display',
+});
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-space-mono',
+});
+const ptSerif = PT_Serif({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-pt-serif',
 });
 
 /**
@@ -39,14 +53,27 @@ export const metadata: Metadata = {
  * Wraps the app with varopis global context providers, like auth, locale, analytics, and theme providers.
  * Initializes the font variables for the app and includes global styles.
  */
-export default async function RootLayout(props: { children: React.ReactNode }) {
-  const { children } = props;
+export default async function RootLayout(props: {
+  children: React.ReactNode;
+  params: { lang?: string };
+}) {
+  const { children, params } = props;
+
+  // Extract locale from params, fallback to defaultLocale
+  const locale = params.lang ? findLocale(params.lang) : defaultLocale;
 
   return (
-    <html suppressHydrationWarning>
+    <html suppressHydrationWarning lang={locale}>
       <head />
       <body
-        className={`${inter.variable} ${bigShouldersDisplay.variable} scrollbar-hide`}
+        className={`
+          ${interSans.variable}
+          ${bigShouldersDisplay.variable}
+          ${spaceMono.variable}
+          ${ptSerif.variable}
+          scrollbar-hide overscroll-none bg-background text-foreground
+          antialiased
+        `}
       >
         <PostHogProvider>
           <ClerkProvider dynamic>

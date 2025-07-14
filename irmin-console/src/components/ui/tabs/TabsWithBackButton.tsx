@@ -1,8 +1,9 @@
 import { TbChevronLeft } from 'react-icons/tb';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 
-import { TabsType } from '@/types/internal/Tabs';
+import type { TabDetails } from '@/types/internal/Tabs';
 
 /**
  * Tabs UI with a back button for navigation.
@@ -18,10 +19,15 @@ const TabsWithBackButton = ({
   backHref?: string;
   onBackClick?: () => void;
   backTooltip: string;
-  tabs: TabsType;
+  tabs: TabDetails[];
 }) => {
   return (
-    <div className='scrollbar-hide mb-6 flex w-full justify-start gap-2 overflow-y-scroll px-4'>
+    <div
+      className={`
+        scrollbar-hide mb-6 flex w-full justify-start gap-2 overflow-y-scroll
+        px-4
+      `}
+    >
       <ButtonWithTooltip
         size='lg'
         variant='gray'
@@ -32,14 +38,24 @@ const TabsWithBackButton = ({
         tooltip={backTooltip}
         aria-label={backTooltip}
       />
-      <div className='flex w-full flex-row border-gray-200 md:border-b dark:border-gray-800'>
+      <div
+        className={`
+          flex w-full flex-row border-gray-200
+          md:border-b
+          dark:border-gray-800
+        `}
+      >
         {tabs
-          .map((tab, idx) => {
+          .map((tab) => {
             if (tab.hidden) return null;
             return (
               <Button
-                key={`tab-${idx}`}
-                className={`rounded-b-none border shadow-none hover:no-underline ${tab.active ? 'border-accent border-0 border-b-2 border-solid' : ''}`}
+                key={tab.name}
+                className={`
+                  rounded-b-none border shadow-none
+                  hover:no-underline
+                  ${tab.active ? 'border-0 border-b-2 border-solid border-accent' : ''}
+                `}
                 size='lg'
                 variant={'ghost'}
                 href={tab.link}

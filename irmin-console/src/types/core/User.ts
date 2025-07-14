@@ -1,4 +1,4 @@
-import { Role } from '@/types/core/Role';
+import type { Role } from '@/types/core/Role';
 
 /**
  * Represents a user.

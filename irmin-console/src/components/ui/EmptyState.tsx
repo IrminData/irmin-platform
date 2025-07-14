@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import type { FC, ReactNode } from 'react';
 
 import { TbInbox } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+
+import type { EmptyStateAction } from '@/types/internal/ListProps';
 
 interface EmptyStateProps {
   /**
@@ -18,23 +20,11 @@ interface EmptyStateProps {
   /**
    * Custom icon to display (default is inbox icon)
    */
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   /**
    * Action button configuration
    */
-  action?: {
-    label: string;
-    onClick?: () => void;
-    href?: string;
-    variant?:
-      | 'default'
-      | 'gradient'
-      | 'secondary'
-      | 'outline'
-      | 'ghost'
-      | 'link'
-      | 'gray';
-  };
+  action?: EmptyStateAction;
   /**
    * Additional CSS classes
    */
@@ -42,7 +32,7 @@ interface EmptyStateProps {
   /**
    * Size variant
    */
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'lg' | 'md' | 'sm';
 }
 
 /**
@@ -52,7 +42,7 @@ interface EmptyStateProps {
  * This component provides a consistent, sleek empty state across the application.
  * It includes an icon, title, description, and optional action button.
  */
-const EmptyState: React.FC<EmptyStateProps> = ({
+export const EmptyState: FC<EmptyStateProps> = ({
   title,
   description,
   icon,
@@ -86,19 +76,31 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center text-center ${sizeClasses[size]} ${className}`}
+      className={`
+        flex flex-col items-center justify-center text-center
+        ${sizeClasses[size]}
+        ${className}
+      `}
     >
       {/* Icon */}
       <div
-        className={`${iconSizeClasses[size]} mb-4 text-gray-400 dark:text-gray-500`}
+        className={`
+          ${iconSizeClasses[size]}
+          mb-4 text-gray-400
+          dark:text-gray-500
+        `}
       >
-        {icon || <TbInbox className='h-full w-full' />}
+        {icon || <TbInbox className='size-full' />}
       </div>
 
       {/* Title */}
       {title && (
         <h3
-          className={`mb-2 font-semibold text-gray-700 dark:text-gray-300 ${titleSizeClasses[size]}`}
+          className={`
+            mb-2 font-semibold text-gray-700
+            dark:text-gray-300
+            ${titleSizeClasses[size]}
+          `}
         >
           {title}
         </h3>
@@ -107,7 +109,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       {/* Description */}
       {description && (
         <p
-          className={`mb-6 max-w-md text-gray-500 dark:text-gray-400 ${descriptionSizeClasses[size]}`}
+          className={`
+            mb-6 max-w-md text-gray-500
+            dark:text-gray-400
+            ${descriptionSizeClasses[size]}
+          `}
         >
           {description}
         </p>
@@ -127,5 +133,3 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     </div>
   );
 };
-
-export default EmptyState;

@@ -3,7 +3,7 @@
 import { forwardRef, useCallback, useMemo } from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import Input from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { DynamicField } from '@/types/internal/DynamicField';
+import type { DynamicField } from '@/types/internal/DynamicField';
 
 // Define a custom type for select options
 type SelectOption = {

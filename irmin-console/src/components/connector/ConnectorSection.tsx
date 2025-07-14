@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 
 import { TbChevronLeft } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
-import QueryError from '@/components/ui/error/QueryError';
+import { Button } from '@/components/ui/button';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -28,7 +28,12 @@ const ConnectorSection = ({ connectorID }: { connectorID: string }) => {
 
   return (
     <div className='relative container mx-auto max-w-7xl'>
-      <div className='flex flex-col px-2 py-12 md:px-4'>
+      <div
+        className={`
+          flex flex-col px-2 py-12
+          md:px-4
+        `}
+      >
         <Button
           size='icon'
           variant='gray'

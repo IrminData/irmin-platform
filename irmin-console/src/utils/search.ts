@@ -1,10 +1,8 @@
-import { Dictionary } from '@/lib/dict';
+import type { Dictionary } from '@/lib/dict';
 
-import { SearchResult } from '@/types/core/Search';
-import {
-  ConsoleSearchItem,
-  ConsoleSearchItemType,
-} from '@/types/internal/ConsoleSearch';
+import type { SearchResult } from '@/types/core/Search';
+import type { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
+import { ConsoleSearchItemType } from '@/types/internal/ConsoleSearch';
 
 /**
  * Convert API SearchResult to ConsoleSearchItem format

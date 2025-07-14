@@ -1,15 +1,16 @@
 'use client';
 
-import { FormHTMLAttributes, useCallback } from 'react';
+import type { FormHTMLAttributes } from 'react';
+import { useCallback } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import DynamicFormField from '@/components/ui/DynamicFormField';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import {
+import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';

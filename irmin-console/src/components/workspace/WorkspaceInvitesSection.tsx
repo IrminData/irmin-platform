@@ -4,11 +4,12 @@ import { useCallback } from 'react';
 
 import { IoExit, IoMailOpenOutline } from 'react-icons/io5';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
-import EmptyState from '@/components/ui/EmptyState';
-import QueryError from '@/components/ui/error/QueryError';
-import TableSkeleton from '@/components/ui/loading/TableSkeleton';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { QueryError } from '@/components/ui/error/QueryError';
+import { TableSkeleton } from '@/components/ui/loading/TableSkeleton';
 import {
   Select,
   SelectContent,
@@ -31,7 +32,7 @@ import { usePopup } from '@/context/PopupContext';
 import { useInvites } from '@/hooks/useInvites';
 import { useRoles } from '@/hooks/useRoles';
 
-import WorkspaceSendInviteModalContent from './WorkspaceSendInviteModalContent';
+import { WorkspaceSendInviteModalContent } from './WorkspaceSendInviteModalContent';
 
 /**
  * Workspace Invites section
@@ -70,7 +71,12 @@ const WorkspaceInvitesSection = () => {
     return (
       <ContentWrapper wrapperClassName='max-w-7xl py-4'>
         <div className='mb-4 flex flex-row items-center justify-end px-2'>
-          <div className='h-8 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800'></div>
+          <div
+            className={`
+              h-8 w-24 animate-pulse rounded bg-gray-200
+              dark:bg-gray-800
+            `}
+          />
         </div>
         <TableSkeleton rows={5} columns={3} />
       </ContentWrapper>
@@ -128,27 +134,55 @@ const WorkspaceInvitesSection = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+              <TableHead
+                className={`
+                  hidden p-2 text-left text-sm font-normal
+                  md:table-cell
+                `}
+              >
                 {dict.users.email}
               </TableHead>
-              <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+              <TableHead
+                className={`
+                  px-4 py-2 text-left text-xs font-normal
+                  md:text-sm
+                `}
+              >
                 {dict.users.role}
               </TableHead>
-              <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+              <TableHead
+                className={`
+                  px-4 py-2 text-center text-xs font-normal
+                  md:text-right md:text-sm
+                `}
+              >
                 {/* Actions */}
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invites.map((invite, idx) => (
+            {invites.map((invite) => (
               <TableRow
-                key={`workspace-invite-${invite.id}-${idx}`}
-                className='h-14 border-b dark:border-gray-800'
+                key={`workspace-invite-${invite.id}`}
+                className={`
+                  h-14 border-b
+                  dark:border-gray-800
+                `}
               >
-                <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                <TableCell
+                  className={`
+                    px-4 py-2 text-sm text-gray-700
+                    dark:text-gray-400
+                  `}
+                >
                   {invite.email}
                 </TableCell>
-                <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
+                <TableCell
+                  className={`
+                    px-4 py-2 text-xs text-gray-700
+                    dark:text-gray-400
+                  `}
+                >
                   <Select
                     value={invite.role.id}
                     onValueChange={(value) => {
@@ -173,7 +207,11 @@ const WorkspaceInvitesSection = () => {
                   </Select>
                 </TableCell>
                 <TableCell className='px-4 py-2 text-right'>
-                  <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                  <div
+                    className={`
+                      flex w-full flex-row justify-end gap-2 align-middle
+                    `}
+                  >
                     <ButtonWithTooltip
                       size='icon'
                       variant='secondary'

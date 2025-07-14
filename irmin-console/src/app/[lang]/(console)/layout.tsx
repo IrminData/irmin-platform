@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { Locale } from '@/lib/dict';
+import type { Locale } from '@/lib/dict';
 
 import ConsoleWrapper from '@/components/console/ConsoleWrapper';
 

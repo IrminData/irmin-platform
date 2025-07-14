@@ -1,0 +1,24 @@
+/*
+ ============================================================================
+ Layer: utilities
+ Purpose: Single-purpose helper classes.
+ ============================================================================
+*/
+@layer utilities {
+  /* --- Scrollbar Hiding --- */
+  .scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Webkit */
+  }
+
+  .scrollbar-show {
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+  }
+  .scrollbar-show::-webkit-scrollbar {
+    display: auto;
+  }
+}

@@ -1,10 +1,6 @@
 'use client';
 
-import { TbAlertCircle, TbRefresh } from 'react-icons/tb';
-
-import { Button } from '@/components/ui/button';
-
-import { useLocale } from '@/context/LocaleContext';
+import { CommonErrorDisplay } from './CommonErrorDisplay';
 
 interface QueryErrorProps {
   error: Error | null;
@@ -12,14 +8,15 @@ interface QueryErrorProps {
   title?: string;
   description?: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'lg' | 'md' | 'sm';
   showRefresh?: boolean;
 }
 
 /**
  * Universal error component for displaying query errors
+ * Now using the modern error display for consistency
  */
-export function QueryError({
+export const QueryError = ({
   error,
   onRetry,
   title,
@@ -27,60 +24,22 @@ export function QueryError({
   className = '',
   size = 'md',
   showRefresh = true,
-}: QueryErrorProps) {
-  const { dict } = useLocale();
-
-  const sizeClasses = {
-    sm: 'p-4 gap-2',
-    md: 'p-6 gap-3',
-    lg: 'p-8 gap-4',
-  };
-
-  const iconSizes = {
-    sm: 20,
-    md: 24,
-    lg: 28,
-  };
-
-  const textSizes = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg',
-  };
+}: QueryErrorProps) => {
+  const variant =
+    size === 'sm' ? 'component' : size === 'lg' ? 'section' : 'component';
 
   return (
-    <div
-      className={`flex flex-col items-center justify-center text-center ${sizeClasses[size]} ${className}`}
-    >
-      <div className='text-destructive mb-2'>
-        <TbAlertCircle size={iconSizes[size]} />
-      </div>
-
-      <h3 className={`text-foreground font-semibold ${textSizes[size]}`}>
-        {title || dict.common.error}
-      </h3>
-
-      {(description || error?.message) && (
-        <p
-          className={`text-foreground/70 max-w-md ${size === 'sm' ? 'text-xs' : 'text-sm'}`}
-        >
-          {description || error?.message || dict.common.somethingWentWrong}
-        </p>
-      )}
-
-      {showRefresh && onRetry && (
-        <Button
-          variant='outline'
-          size={size === 'sm' ? 'sm' : 'default'}
-          onClick={onRetry}
-          className='mt-3'
-          icon={<TbRefresh size={16} />}
-        >
-          {dict.common.tryAgain}
-        </Button>
-      )}
-    </div>
+    <CommonErrorDisplay
+      error={error}
+      title={title}
+      description={description}
+      variant={variant}
+      showDetails={false}
+      showReload={showRefresh}
+      showHome={false}
+      showReport={false}
+      onRetry={onRetry}
+      className={className}
+    />
   );
-}
-
-export default QueryError;
+};

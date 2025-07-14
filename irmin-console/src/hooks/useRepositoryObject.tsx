@@ -1,20 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { repositoryObjectQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-export const repositoryObjectQueryKey = (
-  workspaceSlug: string,
-  repositorySlug: string,
-  ref: string,
-  path: string
-) => ['repository-object', workspaceSlug, repositorySlug, ref, path] as const;
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export const useRepositoryObject = (
   repositorySlug: string,
@@ -60,17 +54,16 @@ export const useRepositoryObject = (
         ref,
       });
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object',
+    onSuccess: (res, { path, ref }) => {
+      void queryClient.invalidateQueries({
+        queryKey: repositoryObjectQueryKey(
           workspaceSlug,
           repositorySlug,
           ref,
-          path,
-        ],
+          path
+        ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-content',
           workspaceSlug,
@@ -79,7 +72,7 @@ export const useRepositoryObject = (
           path,
         ],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-schema',
           workspaceSlug,
@@ -120,11 +113,16 @@ export const useRepositoryObject = (
         ref,
       });
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: ['repository-object', workspaceSlug, repositorySlug, ref],
+    onSuccess: (res, { oldPath, ref }) => {
+      void queryClient.invalidateQueries({
+        queryKey: repositoryObjectQueryKey(
+          workspaceSlug,
+          repositorySlug,
+          ref,
+          oldPath
+        ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-content',
           workspaceSlug,
@@ -132,7 +130,7 @@ export const useRepositoryObject = (
           ref,
         ],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-schema',
           workspaceSlug,
@@ -172,11 +170,16 @@ export const useRepositoryObject = (
         ref,
       });
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: ['repository-object', workspaceSlug, repositorySlug, ref],
+    onSuccess: (res, { oldPath, ref }) => {
+      void queryClient.invalidateQueries({
+        queryKey: repositoryObjectQueryKey(
+          workspaceSlug,
+          repositorySlug,
+          ref,
+          oldPath
+        ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-content',
           workspaceSlug,
@@ -184,7 +187,7 @@ export const useRepositoryObject = (
           ref,
         ],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-schema',
           workspaceSlug,
@@ -224,24 +227,31 @@ export const useRepositoryObject = (
         files,
       });
     },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: ['repository-object', workspaceSlug, repositorySlug, ref],
+    onSuccess: (res, { path, ref }) => {
+      void queryClient.invalidateQueries({
+        queryKey: repositoryObjectQueryKey(
+          workspaceSlug,
+          repositorySlug,
+          ref,
+          path
+        ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-content',
           workspaceSlug,
           repositorySlug,
           ref,
+          path,
         ],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-schema',
           workspaceSlug,
           repositorySlug,
           ref,
+          path,
         ],
       });
       irminAlert('success', res.message ?? 'Object uploaded successfully');

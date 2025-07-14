@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { TbArrowLeft } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';

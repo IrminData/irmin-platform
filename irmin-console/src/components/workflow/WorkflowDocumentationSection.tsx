@@ -2,10 +2,9 @@
 
 import { useCallback } from 'react';
 
-import Button from '@/components/ui/button';
-import DocumentationForm, {
-  DocumentationFormValues,
-} from '@/components/ui/form/DocumentationForm';
+import { Button } from '@/components/ui/button';
+import type { DocumentationFormValues } from '@/components/ui/form/DocumentationForm';
+import DocumentationForm from '@/components/ui/form/DocumentationForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';

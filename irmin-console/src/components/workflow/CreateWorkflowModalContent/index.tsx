@@ -4,7 +4,7 @@ import { memo } from 'react';
 
 import { CreateWorkflowProvider } from '@/context/CreateWorkflowContext';
 
-import { WorkflowRequest } from '@/types/internal/WorkflowInput';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 import ConfigureFieldMappings from './ConfigureFieldMappings';
 import ConfigureWorkflow from './ConfigureWorkflow';

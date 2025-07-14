@@ -1,13 +1,13 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { Commit } from '@/types/core/Commit';
-import {
+import type { Commit } from '@/types/core/Commit';
+import type {
   IrminAPIBinaryResponse,
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
-import { Object as RepoObject } from '@/types/core/Object';
-import { ObjectSchema } from '@/types/core/ObjectSchema';
-import { JSONValue } from '@/types/internal/GenericJSON';
+import type { Object as RepoObject } from '@/types/core/Object';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Interface for moving/copying repository objects

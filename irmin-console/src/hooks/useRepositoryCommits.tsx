@@ -3,13 +3,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { repositoryCommitsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { Commit } from '@/types/core/Commit';
-import {
+import type { Commit } from '@/types/core/Commit';
+import type {
   IrminAPIPaginationMetadata,
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
@@ -17,14 +18,6 @@ import {
 interface CommitsResponse extends IrminAPIResponse<Commit[]> {
   pagination?: IrminAPIPaginationMetadata;
 }
-
-export const repositoryCommitsQueryKey = (
-  workspaceSlug: string,
-  repositorySlug: string,
-  branch?: string,
-  after?: string
-) =>
-  ['repository-commits', workspaceSlug, repositorySlug, branch, after] as const;
 
 /**
  * Custom hook to manage fetching and pagination of repository commits
@@ -94,8 +87,13 @@ export function useRepositoryCommits(repositorySlug: string, branch?: string) {
     setAfter('');
     setHasMore(false);
     setAccumulatedCommits([]);
-    queryClient.invalidateQueries({
-      queryKey: [workspaceSlug, repositorySlug, branch],
+    void queryClient.invalidateQueries({
+      queryKey: repositoryCommitsQueryKey(
+        workspaceSlug,
+        repositorySlug,
+        branch,
+        ''
+      ),
     });
   }, [queryClient, workspaceSlug, repositorySlug, branch]);
 

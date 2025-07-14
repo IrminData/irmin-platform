@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { usePolicy } from '@/hooks/usePolicy';
 
-import { PolicyLogsLayoutParams } from './layout';
+import type { PolicyLogsLayoutParams } from './layout';
 
 /**
  * Policy Audit Logs page

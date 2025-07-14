@@ -1,6 +1,6 @@
 import WorkflowSettingsSection from '@/components/workflow/WorkflowSettingsSection';
 
-import { SingleWorkflowLayoutParams } from '../layout';
+import type { SingleWorkflowLayoutParams } from '../layout';
 
 /**
  * Page for the Workflow settings

@@ -1,21 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { editorItemQueryKey, editorItemsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { EditorItem } from '@/types/core/EditorItems';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { ActionInputData } from '@/types/core/Workflow';
-
-export const editorItemsQueryKey = (workspaceSlug: string) =>
-  ['editorItems', workspaceSlug] as const;
-
-export const editorItemQueryKey = (workspaceSlug: string, path: string) =>
-  ['editorItem', workspaceSlug, path] as const;
+import type { EditorItem } from '@/types/core/EditorItems';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { ActionInputData } from '@/types/core/Workflow';
 
 export function useEditorItems(path?: string) {
   const { getToken } = useIAM();
@@ -60,10 +55,10 @@ export function useEditorItems(path?: string) {
       });
     },
     onSuccess: (res, item) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: editorItemQueryKey(workspaceSlug, item.path),
       });
       irminAlert('success', res.message ?? 'Editor item moved successfully.');
@@ -84,7 +79,7 @@ export function useEditorItems(path?: string) {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Editor item copied successfully.');
@@ -196,7 +191,7 @@ export function useEditorItems(path?: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
     },
@@ -213,10 +208,10 @@ export function useEditorItems(path?: string) {
       });
     },
     onSuccess: (res, item) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: editorItemQueryKey(workspaceSlug, item.path),
       });
       irminAlert('success', res.message ?? 'Editor item saved successfully.');
@@ -365,7 +360,7 @@ export function useEditorItems(path?: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
     },

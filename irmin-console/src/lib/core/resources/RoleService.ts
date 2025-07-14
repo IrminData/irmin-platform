@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Role } from '@/types/core/Role';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Role } from '@/types/core/Role';
 
 /**
  * Irmin Role API service

@@ -2,8 +2,8 @@
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -15,7 +15,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Role } from '@/types/core/Role';
+import type { Role } from '@/types/core/Role';
 
 interface InviteFormValues {
   email: string;
@@ -30,7 +30,7 @@ interface InviteFormValues {
  * @param props.handleInvite - Function to send the invite
  * @param props.roles - List of available roles
  */
-const WorkspaceSendInviteModalContent = ({
+export const WorkspaceSendInviteModalContent = ({
   roles,
   handleInvite,
   onClose,
@@ -77,7 +77,7 @@ const WorkspaceSendInviteModalContent = ({
             )}
           />
           {errors.email && (
-            <p className='text-destructive mt-1'>{errors.email.message}</p>
+            <p className='mt-1 text-destructive'>{errors.email.message}</p>
           )}
         </div>
         <div className='flex flex-col gap-2'>
@@ -111,7 +111,7 @@ const WorkspaceSendInviteModalContent = ({
             />
           </div>
           {errors.roleId && (
-            <p className='text-destructive mt-1'>{errors.roleId.message}</p>
+            <p className='mt-1 text-destructive'>{errors.roleId.message}</p>
           )}
         </div>
         <div className='flex flex-row gap-2'>
@@ -131,5 +131,3 @@ const WorkspaceSendInviteModalContent = ({
     </>
   );
 };
-
-export default WorkspaceSendInviteModalContent;

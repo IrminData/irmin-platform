@@ -1,6 +1,6 @@
 import WorkflowFieldMapperSection from '@/components/workflow/WorkflowFieldMapperSection';
 
-import { SingleWorkflowLayoutParams } from '../layout';
+import type { SingleWorkflowLayoutParams } from '../layout';
 
 /**
  * Page for the Workflow field mapper

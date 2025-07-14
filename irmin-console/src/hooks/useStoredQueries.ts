@@ -1,22 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { storedQueriesQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { StoredQuery } from '@/types/core/StoredQuery';
+import type { StoredQuery } from '@/types/core/StoredQuery';
 
-export type StoredQueryCreateInput = Pick<
-  StoredQuery,
-  'name' | 'description' | 'sql'
->;
+type StoredQueryCreateInput = Pick<StoredQuery, 'description' | 'name' | 'sql'>;
 
-export type StoredQueryUpdateInput = Pick<
+type StoredQueryUpdateInput = Pick<
   StoredQuery,
-  'id' | 'name' | 'description' | 'sql'
+  'description' | 'id' | 'name' | 'sql'
 >;
 
 export function useStoredQueries() {
@@ -27,7 +25,7 @@ export function useStoredQueries() {
   const queryClient = useQueryClient();
 
   const storedQueriesQuery = useQuery({
-    queryKey: ['stored-queries', workspaceSlug],
+    queryKey: storedQueriesQueryKey(workspaceSlug),
     queryFn: async () => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
@@ -49,8 +47,8 @@ export function useStoredQueries() {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: ['stored-queries', workspaceSlug],
+      void queryClient.invalidateQueries({
+        queryKey: storedQueriesQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Query created successfully');
     },
@@ -73,8 +71,8 @@ export function useStoredQueries() {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: ['stored-queries', workspaceSlug],
+      void queryClient.invalidateQueries({
+        queryKey: storedQueriesQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Query updated successfully');
     },
@@ -94,8 +92,8 @@ export function useStoredQueries() {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: ['stored-queries', workspaceSlug],
+      void queryClient.invalidateQueries({
+        queryKey: storedQueriesQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Query deleted successfully');
     },
@@ -122,8 +120,8 @@ export function useStoredQueries() {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: ['stored-queries', workspaceSlug],
+      void queryClient.invalidateQueries({
+        queryKey: storedQueriesQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Query transferred successfully');
     },

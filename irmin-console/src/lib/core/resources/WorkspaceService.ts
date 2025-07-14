@@ -1,9 +1,9 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { ObjectSchema } from '@/types/core/ObjectSchema';
-import { Workspace } from '@/types/core/Workspace';
-import { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { Workspace } from '@/types/core/Workspace';
+import type { ItemUpdateProps } from '@/types/internal/ItemUpdateProps';
 
 /**
  * Interface for creating a workspace

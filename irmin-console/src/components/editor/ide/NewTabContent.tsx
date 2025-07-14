@@ -11,7 +11,11 @@ const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
   const { dict } = useLocale();
   return (
     <div className='h-screen w-full'>
-      <div className='my-12 flex w-full flex-wrap items-center justify-center gap-8'>
+      <div
+        className={`
+          my-12 flex w-full flex-wrap items-center justify-center gap-8
+        `}
+      >
         <LinkCard
           onClick={addNewTab}
           title={dict.editor.newScriptTitle}

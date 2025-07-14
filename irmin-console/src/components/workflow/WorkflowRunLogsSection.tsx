@@ -50,9 +50,20 @@ export default function WorkflowRunLogsSection({
   const workflowRun = workflowRunQuery.data.data;
 
   return (
-    <div className='flex flex-col gap-8 px-2 md:px-4'>
+    <div
+      className={`
+        flex flex-col gap-8 px-2
+        md:px-4
+      `}
+    >
       <div className='container mx-auto max-w-7xl'>
-        <div className='bg-card text-card-foreground flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg p-4 text-sm lg:text-lg'>
+        <div
+          className={`
+            flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4
+            rounded-lg bg-card p-4 text-sm text-card-foreground
+            lg:text-lg
+          `}
+        >
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.workflow.run}</p>
             <p className='text-base'>{workflowRun.id}</p>
@@ -79,7 +90,7 @@ export default function WorkflowRunLogsSection({
             {workflowRun.triggered_by && (
               <p className='text-base'>{workflowRun.triggered_by.type}</p>
             )}
-            {/* TODO: Add more information on what triggered the workflow to run */}
+            {/* TODO: Add more information on what triggered the workflow to run - consider showing trigger details like schedule cron expression, webhook payload, or manual trigger reason */}
           </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.list.status}</p>
@@ -89,13 +100,23 @@ export default function WorkflowRunLogsSection({
             />
           </div>
           <div className='flex flex-col gap-1'>
-            <p className='flex items-center text-sm lg:text-base'>
+            <p
+              className={`
+                flex items-center text-sm
+                lg:text-base
+              `}
+            >
               <TbClock className='mr-1' />
               {formatDistanceToNow(new Date(workflowRun.started_at ?? ''), {
                 addSuffix: true,
               })}
             </p>
-            <p className='flex items-center text-sm lg:text-base'>
+            <p
+              className={`
+                flex items-center text-sm
+                lg:text-base
+              `}
+            >
               <TbHourglassLow className='mr-1' />
               {workflowRun.finished_at
                 ? formatDurationForUI(
@@ -114,7 +135,12 @@ export default function WorkflowRunLogsSection({
           <LogFeed logs={workflowRun.logs ?? []} />
         </div>
       ) : (
-        <p className='text-center text-lg text-gray-600 dark:text-gray-400'>
+        <p
+          className={`
+            text-center text-lg text-gray-600
+            dark:text-gray-400
+          `}
+        >
           {dict.logs.noLogsFound}
         </p>
       )}

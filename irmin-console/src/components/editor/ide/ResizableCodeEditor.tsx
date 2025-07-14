@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import type React from 'react';
+import { useCallback, useRef } from 'react';
 
-import { IrminFileLanguage } from '@/types/core/EditorItems';
+import type { IrminFileLanguage } from '@/types/core/EditorItems';
 
 import CodeMirrorEditor from './CodeMirrorEditor';
 
@@ -60,7 +61,11 @@ const ResizableCodeEditor = ({
       style={{ maxHeight: editorHeight }}
       ref={editorRef}
       id='code-editor'
-      className='dark:bg-irmin_black flex h-full flex-col bg-gray-200 text-xs lg:text-sm'
+      className={`
+        flex h-full flex-col bg-gray-200 text-xs
+        lg:text-sm
+        dark:bg-irmin-black-500
+      `}
     >
       <CodeMirrorEditor
         language={language}
@@ -68,10 +73,16 @@ const ResizableCodeEditor = ({
         editorHeight={editorHeight}
         updateEditorContent={updateTabContent}
       />
-      <div
-        className='resizer dark:bg-irmin_blue h-1 cursor-ns-resize bg-gray-200'
+      <button
+        type='button'
+        aria-label='Resize editor'
+        className={`
+          h-1 cursor-ns-resize appearance-none border-0 bg-gray-200 p-0
+          outline-none
+          dark:bg-irmin-blue-500
+        `}
         onMouseDown={handleMouseDown}
-      ></div>
+      />
     </div>
   );
 };

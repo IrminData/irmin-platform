@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { Repository } from '@/types/core/Repository';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Repository } from '@/types/core/Repository';
 
 /**
  * Interface for creating a repository

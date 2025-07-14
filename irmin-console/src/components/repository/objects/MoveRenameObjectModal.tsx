@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -13,7 +13,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { constructObjectUrlPath } from '@/utils/constructObjectUrlPath';
 
-import { Object } from '@/types/core/Object';
+import type { Object } from '@/types/core/Object';
 
 interface MoveRenameFormValues {
   path: string;
@@ -160,7 +160,7 @@ export default function MoveRenameObjectModal({
           {dict.repository.objects.currentPath}: {selectedObject.path}
         </p>
       </div>
-      {error && <div className='text-destructive py-2'>{error}</div>}
+      {error && <div className='py-2 text-destructive'>{error}</div>}
       <div className='pb-3'>
         <Button
           variant='default'

@@ -1,4 +1,4 @@
-import { JSONValue } from '@/types/internal/GenericJSON';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
  * Interface for the pagination metadata from Irmin Core API
@@ -19,21 +19,13 @@ export interface IrminAPIPaginationMetadata {
 }
 
 /**
- * Type for the metadata from Irmin Core API.
- * Paginated or non-paginated metadata.
- */
-export type IrminAPIResponseMetadata = {
-  [key: string]: unknown;
-};
-
-/**
  * Type for the response from Irmin Core API
  */
 export type IrminAPIResponse<T = unknown> = {
   /** Pagination metadata */
   pagination?: IrminAPIPaginationMetadata;
-  /** Metadata from the API response */
-  metadata?: IrminAPIResponseMetadata;
+  /** Additional metadata from the API response (not used for pagination) */
+  metadata?: { [key: string]: unknown };
   /** Message from the API response */
   message?: string;
   /** Errors from the API response */
@@ -45,4 +37,4 @@ export type IrminAPIResponse<T = unknown> = {
 /**
  * Type for the binary response from Core Irmin API
  */
-export type IrminAPIBinaryResponse = JSONValue | Blob;
+export type IrminAPIBinaryResponse = Blob | JSONValue;

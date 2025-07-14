@@ -1,11 +1,11 @@
 'use client';
 
-import Button from '@/components/ui/button';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
 /**
- * Error UI for the console
+ * Modern error UI for the console
  */
 function ConsoleErrorSection({
   error,
@@ -14,33 +14,43 @@ function ConsoleErrorSection({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const { dict, locale } = useLocale();
+  const { dict } = useLocale();
+
+  // Prepare translations for CommonErrorDisplay
+  const translations = {
+    somethingWentWrong: dict.common.somethingWentWrong,
+    error: dict.common.error,
+    weEncounteredError: dict.common.weEncounteredError,
+    tryAgain: dict.common.tryAgain,
+    goBackHome: dict.common.goBackHome,
+    reportIssue: 'Report Issue',
+    hideDetails: 'Hide Details',
+    showDetails: 'Show Details',
+    errorDetails: 'Error Details',
+    copied: 'Copied',
+    copy: 'Copy',
+    stackTrace: 'Stack Trace',
+  };
+
   return (
-    <div className='relative z-10 container mx-auto px-4 py-16 text-center'>
-      <div className='py-16'>
-        <span className='bg-irmin_green mb-4 inline-block rounded-full px-2 py-px text-xs leading-5 font-medium text-white shadow-xs'>
-          {dict.common.error}
-        </span>
-        <h2 className='mb-4 text-4xl leading-tight font-bold tracking-tighter md:text-5xl'>
-          {dict.common.ohNo} {dict.common.somethingWentWrong}
-        </h2>
-        <p className='text-foreground mb-6 text-lg md:text-xl'>
-          {dict.common.weEncounteredError} {error.message}.{' '}
-          {dict.common.tryAgainOrContactSupport}
-        </p>
-        <div className='flex justify-center'>
-          <div className='mx-2'>
-            <Button variant='default' href={`/${locale}/workspace`}>
-              {dict.common.goBackConsole}
-            </Button>
-          </div>
-          <div className='mx-2'>
-            <Button variant='outline' onClick={reset}>
-              {dict.common.tryAgain}
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div
+      className={`
+        flex min-h-[60vh] items-center justify-center bg-background p-4
+      `}
+    >
+      <CommonErrorDisplay
+        error={error}
+        title={dict.common.somethingWentWrong}
+        description={dict.common.weEncounteredError}
+        variant='page'
+        showDetails={true}
+        showReload={true}
+        showHome={true}
+        showReport={true}
+        onRetry={reset}
+        className='w-full max-w-2xl'
+        translations={translations}
+      />
     </div>
   );
 }

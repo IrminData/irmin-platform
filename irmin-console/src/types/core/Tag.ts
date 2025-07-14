@@ -1,8 +1,8 @@
-import { Connection } from './Connection';
-import { Object } from './Object';
-import { Repository } from './Repository';
-import { StoredQuery } from './StoredQuery';
-import { Workflow } from './Workflow';
+import type { Connection } from './Connection';
+import type { Object } from './Object';
+import type { Repository } from './Repository';
+import type { StoredQuery } from './StoredQuery';
+import type { Workflow } from './Workflow';
 
 /**
  * Represents a workspace tag object for labeling entities.
@@ -21,7 +21,7 @@ export interface Tag {
 /**
  * Represents all assets associated with a specific tag
  */
-export interface TaggedAssets {
+interface TaggedAssets {
   /** Queries tagged with this tag */
   queries: StoredQuery[];
   /** Repositories tagged with this tag */

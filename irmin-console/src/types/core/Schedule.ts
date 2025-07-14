@@ -4,9 +4,9 @@
  * Represents the different trigger configurations that can activate a workflow to run.
  */
 export type ScheduleTrigger =
+  | RepositoryTrigger
   | TimeTrigger
-  | WorkflowRunTrigger
-  | RepositoryTrigger;
+  | WorkflowRunTrigger;
 
 /**
  * Time trigger type, which represents a time-based trigger using cron syntax.

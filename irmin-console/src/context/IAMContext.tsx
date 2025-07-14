@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -16,10 +17,12 @@ import { useAuth, useUser } from '@clerk/nextjs';
 
 import IrminCore from '@/lib/core';
 
+import AuthenticationErrorHandler from '@/components/ui/error/AuthenticationErrorHandler';
+
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { User } from '@/types/core/User';
+import type { User } from '@/types/core/User';
 
 /**
  * IAM context shape
@@ -31,7 +34,7 @@ interface IAMContextValue {
    * @returns promise resolving to the current token string
    */
   getToken: () => Promise<string>;
-  /** user’s Irmin profile */
+  /** user's Irmin profile */
   profile: User | undefined;
   /** update profile in Irmin */
   updateProfile: (
@@ -58,7 +61,7 @@ const IAMContext = createContext<IAMContextValue>({
   signOut: async () => false,
 });
 
-export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
+export const IAMProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
@@ -75,28 +78,57 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [profile, setProfile] = useState<User>();
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<Error | undefined>();
 
   // internally cache token and expiry
   const tokenRef = useRef<string | null>(null);
   const expiryRef = useRef<number>(0);
   const initSessionRef = useRef<string | null>(null);
 
-  // hold any in-flight fetch promise
-  const tokenPromiseRef = useRef<Promise<string> | null>(null);
+  // token refresh state management
+  const isRefreshingRef = useRef<boolean>(false);
+  const refreshPromiseRef = useRef<Promise<string> | null>(null);
+  const refreshQueueRef = useRef<
+    {
+      resolve: (token: string) => void;
+      reject: (error: Error) => void;
+    }[]
+  >([]);
 
   /**
    * Clears all IAM state and cached token
    */
   const resetIAM = useCallback(() => {
     setProfile(undefined);
+    setAuthError(undefined);
     tokenRef.current = null;
     expiryRef.current = 0;
     initSessionRef.current = null;
+    isRefreshingRef.current = false;
+    refreshPromiseRef.current = null;
+    refreshQueueRef.current = [];
   }, []);
 
   /**
+   * Processes the token refresh queue by resolving or rejecting all pending requests
+   */
+  const processRefreshQueue = useCallback(
+    (token: string | null, error: Error | null) => {
+      const queue = refreshQueueRef.current;
+      refreshQueueRef.current = [];
+
+      if (error) {
+        queue.forEach(({ reject }) => reject(error));
+      } else if (token) {
+        queue.forEach(({ resolve }) => resolve(token));
+      }
+    },
+    []
+  );
+
+  /**
    * Returns a valid token, only calling Clerk if the cached one is expired.
-   * Ensures concurrent calls share the same in-flight promise.
+   * Implements proper queue mechanism to prevent race conditions.
    *
    * @returns current JWT token
    */
@@ -109,37 +141,51 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
       return tokenRef.current;
     }
 
-    // if a fetch is already underway, reuse it
-    if (tokenPromiseRef.current) {
-      return tokenPromiseRef.current;
+    // if already refreshing, queue this request
+    if (isRefreshingRef.current && refreshPromiseRef.current) {
+      return new Promise<string>((resolve, reject) => {
+        refreshQueueRef.current.push({ resolve, reject });
+      });
     }
 
-    // otherwise start a new fetch
-    tokenPromiseRef.current = (async () => {
-      const newToken = await getClerkToken({ template: 'irmin-core' });
-      if (!newToken) {
-        console.warn('Failed to get token from Clerk');
-        return tokenRef.current || '';
+    // start a new refresh
+    isRefreshingRef.current = true;
+    refreshPromiseRef.current = (async () => {
+      try {
+        const newToken = await getClerkToken({ template: 'irmin-core' });
+        if (!newToken) {
+          const error = new Error('Failed to get token from Clerk');
+          console.warn(error.message);
+          processRefreshQueue(null, error);
+          throw error;
+        }
+
+        tokenRef.current = newToken;
+
+        // use exp claim (in seconds) if available
+        if (sessionClaims?.exp) {
+          expiryRef.current = sessionClaims.exp * 1000;
+        } else {
+          // fallback TTL
+          expiryRef.current = now + 60 * 1000;
+        }
+
+        processRefreshQueue(newToken, null);
+        return newToken;
+      } catch (error) {
+        const err =
+          error instanceof Error ? error : new Error('Token refresh failed');
+        setAuthError(err);
+        processRefreshQueue(null, err);
+        throw err;
+      } finally {
+        isRefreshingRef.current = false;
+        refreshPromiseRef.current = null;
       }
+    })();
 
-      tokenRef.current = newToken;
-
-      // use exp claim (in seconds) if available
-      if (sessionClaims?.exp) {
-        expiryRef.current = sessionClaims.exp * 1000;
-      } else {
-        // fallback TTL
-        expiryRef.current = now + 60 * 1000;
-      }
-
-      return newToken;
-    })().finally(() => {
-      // clear pending promise ref whether success or error
-      tokenPromiseRef.current = null;
-    });
-
-    return tokenPromiseRef.current;
-  }, [sessionClaims, getClerkToken]);
+    return refreshPromiseRef.current;
+  }, [sessionClaims, getClerkToken, processRefreshQueue]);
 
   /**
    * Fetch the Irmin profile once per session, and prime the token cache.
@@ -170,6 +216,9 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (err) {
       console.error('Error fetching profile', err);
+      const error =
+        err instanceof Error ? err : new Error('Profile fetch failed');
+      setAuthError(error);
       resetIAM();
     } finally {
       setIsLoading(false);
@@ -185,7 +234,7 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
   ]);
 
   useEffect(() => {
-    fetchProfile();
+    void fetchProfile();
   }, [fetchProfile]);
 
   /**
@@ -250,7 +299,13 @@ export const IAMProvider = ({ children }: { children: React.ReactNode }) => {
     [getToken, profile, updateProfile, isLoading, signOut]
   );
 
-  return <IAMContext.Provider value={value}>{children}</IAMContext.Provider>;
+  return (
+    <IAMContext.Provider value={value}>
+      <AuthenticationErrorHandler error={authError}>
+        {children}
+      </AuthenticationErrorHandler>
+    </IAMContext.Provider>
+  );
 };
 
 /**

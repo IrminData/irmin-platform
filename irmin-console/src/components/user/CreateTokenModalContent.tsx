@@ -2,8 +2,8 @@
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';

@@ -1,6 +1,8 @@
 import ImportWorkflowsSection from '@/components/workflow/ImportWorkflowsSection';
 
-import { WorkspaceLayoutParams } from '../../../layout';
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
+
+import type { WorkspaceLayoutParams } from '../../../layout';
 
 /**
  * Import Workflows page in the workspace
@@ -15,7 +17,7 @@ import { WorkspaceLayoutParams } from '../../../layout';
  */
 export default async function ImportWorkflowsPage(props: {
   params: Promise<WorkspaceLayoutParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const searchParams = await props.searchParams;
   const openSideModal = searchParams.create !== undefined;

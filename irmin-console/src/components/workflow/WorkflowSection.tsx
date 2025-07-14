@@ -26,7 +26,7 @@ import useWorkflowRuns from '@/hooks/useWorkflowRuns';
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { GridRow } from '@/types/internal/ListProps';
+import type { GridRow } from '@/types/internal/ListProps';
 
 /**
  * Workflow section component to show basic information about a workflow
@@ -75,18 +75,28 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
 
   const runRows: GridRow[] = useMemo(
     () =>
-      workflowRunsQuery.data?.data?.map((run, i) => ({
+      workflowRunsQuery.data?.data?.map((run) => ({
         columns: [
-          <Tooltip.Root key={`run-${i}`}>
+          <Tooltip.Root key={`run-${run.id}`}>
             <Tooltip.Trigger>
               <div className='inline-flex cursor-pointer flex-col gap-2'>
-                <p className='flex items-center text-xs lg:text-sm'>
+                <p
+                  className={`
+                    flex items-center text-xs
+                    lg:text-sm
+                  `}
+                >
                   <TbClock className='mr-1' />
                   {formatDistanceToNow(new Date(run.started_at ?? ''), {
                     addSuffix: true,
                   })}
                 </p>
-                <p className='flex items-center text-xs lg:text-sm'>
+                <p
+                  className={`
+                    flex items-center text-xs
+                    lg:text-sm
+                  `}
+                >
                   <TbHourglassLow className='mr-1' />
                   {run.finished_at
                     ? formatDurationForUI(
@@ -102,21 +112,36 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
             <Tooltip.Content
               side='top'
               align='center'
-              className='tooltip-content bg-background rounded p-2'
+              className='rounded bg-background p-2'
             >
-              <p className='text-xs lg:text-sm'>
+              <p
+                className={`
+                  text-xs
+                  lg:text-sm
+                `}
+              >
                 {dict.workflow.startedAt}
                 {': '}
                 {new Date(run.started_at ?? '').toLocaleString(locale)}
               </p>
-              <p className='text-xs lg:text-sm'>
+              <p
+                className={`
+                  text-xs
+                  lg:text-sm
+                `}
+              >
                 {dict.workflow.finishedAt}
                 {': '}
                 {run.finished_at
                   ? new Date(run.finished_at).toLocaleString(locale)
                   : '-'}
               </p>
-              <p className='text-xs lg:text-sm'>
+              <p
+                className={`
+                  text-xs
+                  lg:text-sm
+                `}
+              >
                 {dict.workflow.duration}
                 {': '}
                 {run.finished_at
@@ -130,28 +155,58 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
               </p>
               <p className='text-xs opacity-60'>{dict.workflow.triggeredBy}</p>
               {run.triggered_by_user && (
-                <p className='text-xs lg:text-sm'>
+                <p
+                  className={`
+                    text-xs
+                    lg:text-sm
+                  `}
+                >
                   {run.triggered_by_user.email}
                 </p>
               )}
               {run.triggered_by && (
-                <p className='text-xs lg:text-sm'>{run.triggered_by.type}</p>
+                <p
+                  className={`
+                    text-xs
+                    lg:text-sm
+                  `}
+                >
+                  {run.triggered_by.type}
+                </p>
               )}
-              {/* TODO: Add more information on what triggered the workflow to run */}
+              {/* TODO: Add more information on what triggered the workflow to run - consider showing trigger details like schedule cron expression, webhook payload, or manual trigger reason */}
               <Tooltip.Arrow />
             </Tooltip.Content>
           </Tooltip.Root>,
-          <div key={`run-${i}-owner`} className='inline-flex flex-col gap-2'>
+          <div
+            key={`run-${run.id}-owner`}
+            className='inline-flex flex-col gap-2'
+          >
             {run.triggered_by_user && (
-              <p className='text-xs lg:text-sm'>
+              <p
+                className={`
+                  text-xs
+                  lg:text-sm
+                `}
+              >
                 {run.triggered_by_user.email}
               </p>
             )}
             {run.triggered_by && (
-              <p className='text-xs lg:text-sm'>{run.triggered_by.type}</p>
+              <p
+                className={`
+                  text-xs
+                  lg:text-sm
+                `}
+              >
+                {run.triggered_by.type}
+              </p>
             )}
           </div>,
-          <div key={`run-${i}-status`} className='inline-flex flex-col gap-2'>
+          <div
+            key={`run-${run.id}-status`}
+            className='inline-flex flex-col gap-2'
+          >
             <StatusBadge
               status={run.status}
               label={run.status ?? dict.workflow.noStatus}
@@ -198,22 +253,27 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
     <div className='relative container mx-auto max-w-7xl'>
       <div className='my-4 flex flex-col gap-4 p-4'>
         {workflowQuery.isLoading && (
-          <div className='flex h-full w-full items-center justify-center gap-4'>
-            <LoadingSkeleton className='h-10 w-10' />
-            <LoadingSkeleton className='h-10 w-10' />
-            <LoadingSkeleton className='h-10 w-10' />
-            <LoadingSkeleton className='h-10 w-10' />
+          <div className='flex size-full items-center justify-center gap-4'>
+            <LoadingSkeleton className='size-10' />
+            <LoadingSkeleton className='size-10' />
+            <LoadingSkeleton className='size-10' />
+            <LoadingSkeleton className='size-10' />
           </div>
         )}
         {workflow && (
-          <div className='bg-card text-foreground flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4 rounded-lg p-4 text-sm lg:text-lg'>
+          <div
+            className={`
+              flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4
+              rounded-lg bg-card p-4 text-sm text-foreground
+              lg:text-lg
+            `}
+          >
             <div className='flex flex-col gap-1'>
               <p className='text-sm opacity-60'>
                 {dict.workflow.schedule.workflowSchedule}
               </p>
               <p className='text-base'>
-                {workflow.schedule &&
-                workflow.schedule.triggers &&
+                {workflow.schedule?.triggers &&
                 workflow.schedule.triggers.length > 0
                   ? dict.workflow.scheduled
                   : dict.workflow.notScheduled}
@@ -227,7 +287,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 <Link
                   href={`${workspaceUrl}/editor?path=${workflow.workflowable.executable}`}
                   target='_blank'
-                  className='transition-all hover:underline hover:opacity-40'
+                  className={`
+                    transition-all
+                    hover:underline hover:opacity-40
+                  `}
                 >
                   <p className='text-base'>
                     {workflow.workflowable.executable}
@@ -242,7 +305,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                     {dict.workflow.scriptResultDestinationRepository}
                   </p>
                   <Link
-                    className='transition-all duration-200 hover:underline'
+                    className={`
+                      transition-all duration-200
+                      hover:underline
+                    `}
                     target='_blank'
                     href={`${workspaceUrl}/repositories/${workflow.workflowable.results_repository}?ref=${workflow.workflowable.results_repository_branch}`}
                   >
@@ -284,10 +350,13 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   <p className='text-sm opacity-60'>
                     {dict.workflow.scriptInputData}
                   </p>
-                  {workflow.workflowable.input?.map((input, id) => (
+                  {workflow.workflowable.input?.map((input) => (
                     <Link
-                      key={id}
-                      className='transition-all duration-200 hover:underline'
+                      key={`${input.repository}/${input.repository_path}@${input.repository_ref}`}
+                      className={`
+                        transition-all duration-200
+                        hover:underline
+                      `}
                       target='_blank'
                       href={`${workspaceUrl}/repositories/${input.repository}/object?path=${input.repository_path}&ref=${input.repository_ref}`}
                     >
@@ -304,7 +373,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {dict.workflow.importSourceConnection}
                 </p>
                 <Link
-                  className='transition-all duration-200 hover:underline'
+                  className={`
+                    transition-all duration-200
+                    hover:underline
+                  `}
                   href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
                 >
                   <p className='text-base'>
@@ -333,7 +405,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {dict.workflow.importDestinationRepository}
                 </p>
                 <Link
-                  className='transition-all duration-200 hover:underline'
+                  className={`
+                    transition-all duration-200
+                    hover:underline
+                  `}
                   href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.repository_branch}`}
                 >
                   <p className='text-base'>
@@ -370,7 +445,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {dict.workflow.exportDestinationConnection}
                 </p>
                 <Link
-                  className='transition-all duration-200 hover:underline'
+                  className={`
+                    transition-all duration-200
+                    hover:underline
+                  `}
                   href={`${workspaceUrl}/connections/${workflow.workflowable.connection_id}`}
                 >
                   <p className='text-base'>
@@ -397,7 +475,10 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {dict.workflow.exportSourceRepository}
                 </p>
                 <Link
-                  className='transition-all duration-200 hover:underline'
+                  className={`
+                    transition-all duration-200
+                    hover:underline
+                  `}
                   href={`${workspaceUrl}/repositories/${workflow.workflowable.repository}?ref=${workflow.workflowable.repository_branch}`}
                 >
                   <p className='text-base'>

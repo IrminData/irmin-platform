@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';

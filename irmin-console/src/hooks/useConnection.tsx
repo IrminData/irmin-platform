@@ -3,25 +3,19 @@ import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { connectionQueryKey, connectionsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { Connection } from '@/types/core/Connection';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-import { connectionsQueryKey } from './useConnections';
-
-export const connectionQueryKey = (
-  workspaceSlug: string,
-  connectionID: string
-) => ['connection', workspaceSlug, connectionID] as const;
+import type { Connection } from '@/types/core/Connection';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 type UpdateConnectionInput = Pick<
   Connection,
-  'name' | 'description' | 'documentation'
+  'description' | 'documentation' | 'name'
 >;
 
 type UpdateConnectionConfigurationInput = Pick<
@@ -47,6 +41,20 @@ export function useConnection(connectionID: string) {
         connectionID,
       });
       return connection;
+    },
+    initialData: () => {
+      const connections = queryClient.getQueryData<
+        IrminAPIResponse<Connection[]>
+      >(connectionsQueryKey(workspaceSlug));
+      return connections?.data?.find((c: Connection) => c.id === connectionID)
+        ? {
+            data: connections.data.find(
+              (c: Connection) => c.id === connectionID
+            ),
+            success: true,
+            message: 'Cached data',
+          }
+        : undefined;
     },
     enabled: !!connectionID,
   });
@@ -134,10 +142,10 @@ export function useConnection(connectionID: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionQueryKey(workspaceSlug, connectionID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionsQueryKey(workspaceSlug),
       });
     },
@@ -281,10 +289,10 @@ export function useConnection(connectionID: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionQueryKey(workspaceSlug, connectionID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionsQueryKey(workspaceSlug),
       });
     },
@@ -415,10 +423,10 @@ export function useConnection(connectionID: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionQueryKey(workspaceSlug, connectionID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionsQueryKey(workspaceSlug),
       });
     },
@@ -438,10 +446,10 @@ export function useConnection(connectionID: string) {
       return res;
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionQueryKey(workspaceSlug, connectionID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionsQueryKey(workspaceSlug),
       });
       irminAlert(

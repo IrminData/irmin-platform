@@ -1,5 +1,5 @@
 /**
- * Tab type used by different Tabs components in the UI
+ * Single tab object to be used across various tabs components in the UI
  */
 export interface TabDetails {
   /** The slug of the tab */
@@ -17,8 +17,3 @@ export interface TabDetails {
   /** Whether the tab is active */
   active?: boolean;
 }
-
-/**
- * Array of {@link TabDetails} type
- */
-export type TabsType = TabDetails[];

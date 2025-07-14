@@ -4,8 +4,8 @@ import { useCallback } from 'react';
 
 import FileSelector from '@/components/editor/FileSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -21,8 +21,8 @@ import { useLocale } from '@/context/LocaleContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useRepositories } from '@/hooks/useRepositories';
 
-import { Action, ActionInputData } from '@/types/core/Workflow';
-import { WorkflowRequest } from '@/types/internal/WorkflowInput';
+import type { Action, ActionInputData } from '@/types/core/Workflow';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 interface ActionWorkflowProps {
   workflowable: Action;

@@ -1,0 +1,49 @@
+/*
+ ============================================================================
+ Layer: base
+ Purpose: Raw element styling and CSS variable definitions.
+ ============================================================================
+*/
+@layer base {
+  /* --- Global Styles & Typography --- */
+  body {
+    @apply bg-background text-foreground font-sans tracking-normal antialiased;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-semibold tracking-tight;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    @apply font-mono;
+    font-size: 0.875em;
+  }
+
+  blockquote {
+    @apply font-serif italic;
+  }
+
+  /* --- Form Element Base Styles --- */
+  select {
+    @apply border-border rounded-[0.2rem] border outline-none appearance-none bg-no-repeat;
+
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAQCAYAAAAMJL+VAAAABGdBTUEAALGPC/xhBQAAAQtJREFUOBG1lEEOgjAQRalbGj2OG9caOACn4ALGtfEuHACiazceR1PWOH/CNA3aMiTaBDpt/7zPdBKy7M/DCL9pGkvxxVp7KsvyJftL5rZt1865M+Ucq6pyyF3hNcI7Cuu+728QYn/JQA5yKaempxuZmQngOwEaYx55nu+1lQh8GIatMGi+01NwBcEmhxBqK4nAPZJ78K0KKFAJmR3oPp8+Iwgob0Oa6+TLoeCvRx+mTUYf/FVBGTPRwDkfLxnaSrRwcH0FWhNOmrkWYbE2XEicqgSa1J0LQ+aPCuQgZiLnwewbGuz5MGoAhcIkCQcjaTBjMgtXGURMVHC1wcQEy0J+Zlj8bKAnY1/UzDe2dbAVqfXn6wAAAABJRU5ErkJggg==');
+    background-size: 0.7rem;
+    background-position: right 0.7rem center;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    @apply appearance-auto;
+  }
+}

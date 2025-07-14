@@ -9,7 +9,7 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useStoredQueries } from '@/hooks/useStoredQueries';
 
-import { QueryLogsLayoutParams } from './layout';
+import type { QueryLogsLayoutParams } from './layout';
 
 /**
  * Stored Query Audit Logs page

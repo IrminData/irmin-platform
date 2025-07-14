@@ -1,6 +1,7 @@
 'use client';
 
-import * as React from 'react';
+import type { ButtonHTMLAttributes, ComponentType, KeyboardEvent } from 'react';
+import { forwardRef, useId, useState } from 'react';
 
 import {
   TbCheck,
@@ -34,8 +35,7 @@ import { cn } from '@/utils/tw';
 /**
  * Props for MultiSelect component
  */
-interface MultiSelectProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MultiSelectProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
    * An array of option objects to be displayed in the multi-select component.
    * Each option object has a label, value, and an optional icon.
@@ -46,7 +46,7 @@ interface MultiSelectProps
     /** The unique value associated with the option. */
     value: string;
     /** Optional icon component to display alongside the option. */
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: ComponentType<{ className?: string }>;
   }[];
 
   /**
@@ -96,10 +96,7 @@ interface MultiSelectProps
   loading?: boolean;
 }
 
-export const MultiSelect = React.forwardRef<
-  HTMLButtonElement,
-  MultiSelectProps
->(
+export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
   (
     {
       options,
@@ -117,14 +114,12 @@ export const MultiSelect = React.forwardRef<
   ) => {
     const { dict } = useLocale();
     const [selectedValues, setSelectedValues] =
-      React.useState<string[]>(defaultValue);
-    const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-    const [isAnimating, setIsAnimating] = React.useState(false);
-    const popoverId = React.useId();
+      useState<string[]>(defaultValue);
+    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const popoverId = useId();
 
-    const handleInputKeyDown = (
-      event: React.KeyboardEvent<HTMLInputElement>
-    ) => {
+    const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter') {
         setIsPopoverOpen(true);
       } else if (event.key === 'Backspace' && !event.currentTarget.value) {
@@ -184,7 +179,21 @@ export const MultiSelect = React.forwardRef<
             onClick={handleTogglePopover}
             disabled={loading || props.disabled}
             className={cn(
-              "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+              `
+                flex w-full items-center justify-between gap-2 rounded-md border
+                border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap
+                shadow-xs transition-[color,box-shadow] outline-none
+                focus-visible:border-ring focus-visible:ring-[3px]
+                focus-visible:ring-ring/50
+                disabled:cursor-not-allowed disabled:opacity-50
+                aria-invalid:border-destructive aria-invalid:ring-destructive/20
+                data-[placeholder]:text-muted-foreground
+                dark:bg-input/30 dark:hover:bg-input/50
+                dark:aria-invalid:ring-destructive/40
+                [&_svg]:pointer-events-none [&_svg]:shrink-0
+                [&_svg:not([class*='size-'])]:size-4
+                [&_svg:not([class*='text-'])]:text-muted-foreground
+              `,
               loading && 'cursor-wait',
               className
             )}
@@ -200,24 +209,31 @@ export const MultiSelect = React.forwardRef<
                       <span
                         key={value}
                         className={cn(
-                          'bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded border border-transparent px-1.5 py-0.5 text-xs font-medium',
+                          `
+                            inline-flex items-center gap-1 rounded border
+                            border-transparent bg-secondary px-1.5 py-0.5
+                            text-xs font-medium text-secondary-foreground
+                          `,
                           isAnimating ? 'animate-bounce' : ''
                         )}
                         style={{ animationDuration: `${animation}s` }}
                       >
                         {IconComponent && (
-                          <IconComponent className='h-3 w-3 shrink-0' />
+                          <IconComponent className='size-3 shrink-0' />
                         )}
                         {option?.label}
                         <button
                           type='button'
-                          className='hover:bg-secondary-foreground/20 ml-1 rounded-sm'
+                          className={`
+                            ml-1 rounded-sm
+                            hover:bg-secondary-foreground/20
+                          `}
                           onClick={(event) => {
                             event.stopPropagation();
                             toggleOption(value);
                           }}
                         >
-                          <TbX className='h-3 w-3' />
+                          <TbX className='size-3' />
                         </button>
                       </span>
                     );
@@ -225,7 +241,11 @@ export const MultiSelect = React.forwardRef<
                   {selectedValues.length > maxCount && (
                     <span
                       className={cn(
-                        'bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded border border-transparent px-1.5 py-0.5 text-xs font-medium',
+                        `
+                          inline-flex items-center gap-1 rounded border
+                          border-transparent bg-secondary px-1.5 py-0.5 text-xs
+                          font-medium text-secondary-foreground
+                        `,
                         isAnimating ? 'animate-bounce' : ''
                       )}
                       style={{ animationDuration: `${animation}s` }}
@@ -233,13 +253,16 @@ export const MultiSelect = React.forwardRef<
                       +{selectedValues.length - maxCount}
                       <button
                         type='button'
-                        className='hover:bg-secondary-foreground/20 ml-1 rounded-sm'
+                        className={`
+                          ml-1 rounded-sm
+                          hover:bg-secondary-foreground/20
+                        `}
                         onClick={(event) => {
                           event.stopPropagation();
                           clearExtraOptions();
                         }}
                       >
-                        <TbX className='h-3 w-3' />
+                        <TbX className='size-3' />
                       </button>
                     </span>
                   )}
@@ -248,20 +271,23 @@ export const MultiSelect = React.forwardRef<
                   {!loading && (
                     <button
                       type='button'
-                      className='hover:bg-accent rounded-sm p-1'
+                      className={`
+                        rounded-sm p-1
+                        hover:bg-accent
+                      `}
                       onClick={(event) => {
                         event.stopPropagation();
                         handleClear();
                       }}
                     >
-                      <TbX className='h-3 w-3' />
+                      <TbX className='size-3' />
                     </button>
                   )}
                   <Separator orientation='vertical' className='h-4' />
                   {loading ? (
-                    <TbLoader2 className='h-4 w-4 animate-spin opacity-50' />
+                    <TbLoader2 className='size-4 animate-spin opacity-50' />
                   ) : (
-                    <TbChevronDown className='h-4 w-4 opacity-50' />
+                    <TbChevronDown className='size-4 opacity-50' />
                   )}
                 </div>
               </div>
@@ -273,9 +299,9 @@ export const MultiSelect = React.forwardRef<
                     : placeholder || dict.common.noOptionsMessage}
                 </span>
                 {loading ? (
-                  <TbLoader2 className='h-4 w-4 animate-spin opacity-50' />
+                  <TbLoader2 className='size-4 animate-spin opacity-50' />
                 ) : (
-                  <TbChevronDown className='h-4 w-4 opacity-50' />
+                  <TbChevronDown className='size-4 opacity-50' />
                 )}
               </div>
             )}
@@ -283,7 +309,7 @@ export const MultiSelect = React.forwardRef<
         </PopoverTrigger>
         <PopoverContent
           id={popoverId}
-          className='w-[var(--radix-select-trigger-width)] p-0'
+          className='w-(--radix-select-trigger-width) p-0'
           align='start'
         >
           <Command>
@@ -297,13 +323,19 @@ export const MultiSelect = React.forwardRef<
                 <CommandItem onSelect={toggleAll} className='cursor-pointer'>
                   <div
                     className={cn(
-                      'border-border mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
+                      `
+                        mr-2 flex size-4 items-center justify-center rounded-sm
+                        border border-border
+                      `,
                       selectedValues.length === options.length
                         ? 'bg-muted text-muted-foreground'
-                        : 'opacity-50 [&_svg]:invisible'
+                        : `
+                          opacity-50
+                          [&_svg]:invisible
+                        `
                     )}
                   >
-                    <TbCheck className='h-4 w-4' />
+                    <TbCheck className='size-4' />
                   </div>
                   {dict.common.selectAll || 'Select All'}
                 </CommandItem>
@@ -317,16 +349,24 @@ export const MultiSelect = React.forwardRef<
                     >
                       <div
                         className={cn(
-                          'border-border mr-2 flex h-4 w-4 items-center justify-center rounded-sm border',
+                          `
+                            mr-2 flex size-4 items-center justify-center
+                            rounded-sm border border-border
+                          `,
                           isSelected
                             ? 'bg-muted text-muted-foreground'
-                            : 'opacity-50 [&_svg]:invisible'
+                            : `
+                              opacity-50
+                              [&_svg]:invisible
+                            `
                         )}
                       >
-                        <TbCheck className='h-4 w-4' />
+                        <TbCheck className='size-4' />
                       </div>
                       {option.icon && (
-                        <option.icon className='text-muted-foreground mr-2 h-4 w-4' />
+                        <option.icon
+                          className={`mr-2 size-4 text-muted-foreground`}
+                        />
                       )}
                       <span>{option.label}</span>
                     </CommandItem>
@@ -363,12 +403,15 @@ export const MultiSelect = React.forwardRef<
           <button
             type='button'
             className={cn(
-              'hover:bg-accent mt-2 rounded-sm p-1 transition-colors',
+              `
+                mt-2 rounded-sm p-1 transition-colors
+                hover:bg-accent
+              `,
               isAnimating ? 'text-primary' : 'text-muted-foreground'
             )}
             onClick={() => setIsAnimating(!isAnimating)}
           >
-            <TbSparkles className='h-3 w-3' />
+            <TbSparkles className='size-3' />
           </button>
         )}
       </Popover>

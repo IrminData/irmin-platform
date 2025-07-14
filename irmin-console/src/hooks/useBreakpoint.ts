@@ -1,6 +1,7 @@
 import { useMediaQuery } from 'react-responsive';
 
-import { BreakpointKey, breakpoints } from '@/utils/tw';
+import type { BreakpointKey } from '@/utils/tw';
+import { breakpoints } from '@/utils/tw';
 
 /**
  * Hook to determine if the screen is at least a certain breakpoint

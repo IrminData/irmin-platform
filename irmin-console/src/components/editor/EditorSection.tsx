@@ -35,7 +35,7 @@ export default function EditorSection() {
           inputFiles={scriptInputFiles}
           setInputFiles={setScriptInputFiles}
           onRun={async () => {
-            if (!currentEditor || !currentEditor.path) return;
+            if (!currentEditor?.path) return;
             if (scriptExecutionInProgress) return;
             // Make sure the script is saved before executing
             if (enableSaveButton || !currentEditor.created) {

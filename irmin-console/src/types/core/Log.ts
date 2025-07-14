@@ -1,24 +1,24 @@
-import { Connection } from '@/types/core/Connection';
-import { Object } from '@/types/core/Object';
-import { Policy } from '@/types/core/Policy';
-import { Repository } from '@/types/core/Repository';
-import { StoredQuery } from '@/types/core/StoredQuery';
-import { User } from '@/types/core/User';
-import { Workflow } from '@/types/core/Workflow';
-import { WorkflowRun } from '@/types/core/WorkflowRun';
-import { Workspace } from '@/types/core/Workspace';
+import type { Connection } from '@/types/core/Connection';
+import type { Object } from '@/types/core/Object';
+import type { Policy } from '@/types/core/Policy';
+import type { Repository } from '@/types/core/Repository';
+import type { StoredQuery } from '@/types/core/StoredQuery';
+import type { User } from '@/types/core/User';
+import type { Workflow } from '@/types/core/Workflow';
+import type { WorkflowRun } from '@/types/core/WorkflowRun';
+import type { Workspace } from '@/types/core/Workspace';
 
 /**
  * Represents the log event types.
  */
 export type LogEventType =
   | 'CREATE'
-  | 'UPDATE'
   | 'DELETE'
-  | 'LOGIN'
-  | 'LOGOUT'
   | 'ERROR'
   | 'INFO'
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'UPDATE'
   | 'WARNING';
 
 /**

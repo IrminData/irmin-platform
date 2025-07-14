@@ -1,6 +1,6 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
+import type { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
 
 /**
  * SEO metadata for the Logs pages

@@ -1,6 +1,6 @@
 import { IoClose } from 'react-icons/io5';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 
 /**
  * Side modal UI component with steps
@@ -40,17 +40,39 @@ export default function SideModal({
 }) {
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs ${isOpen ? '' : 'hidden'}`}
+      className={`
+        fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs
+        ${isOpen ? '' : `hidden`}
+      `}
     >
-      <div className='relative h-full w-full'>
+      <div className='relative size-full'>
         <div
-          className={`bg-background absolute top-0 right-0 bottom-0 h-full w-full max-w-5xl border-l shadow-lg transition-transform duration-200 dark:border-gray-800 ${
-            isOpen ? 'animate-slideIn' : 'animate-slideOut'
-          }`}
+          className={`
+            absolute top-0 right-0 bottom-0 size-full max-w-5xl border-l
+            bg-background shadow-lg transition-transform
+            duration-200
+            dark:border-gray-800${
+              isOpen
+                ? 'animate-in fade-in slide-in-from-right'
+                : 'animate-out fade-out slide-out-to-right'
+            }
+          `}
         >
           <div className='flex h-full flex-col justify-start'>
-            <div className='z-10 mb-2 flex w-full items-center justify-between gap-4 px-4 pt-16'>
-              <h3 className='text-lg lg:text-xl'>{title}</h3>
+            <div
+              className={`
+                z-10 mb-2 flex w-full items-center justify-between gap-4 px-4
+                pt-16
+              `}
+            >
+              <h3
+                className={`
+                  text-lg
+                  lg:text-xl
+                `}
+              >
+                {title}
+              </h3>
               <ButtonWithTooltip
                 size='icon'
                 variant='ghost'
@@ -62,29 +84,52 @@ export default function SideModal({
               />
             </div>
             {steps && currentStep && steps.length > 1 && (
-              <div className='flex items-center justify-start gap-3 space-x-4 px-6 py-4'>
+              <div
+                className={`
+                  flex items-center justify-start gap-3 space-x-4 px-6 py-4
+                `}
+              >
                 {steps.map((step, index) => (
                   <div
-                    className={`flex flex-col items-center justify-center gap-2 text-center sm:flex-row sm:text-left ${
-                      index === steps.length - 1 ? '' : 'mr-0'
-                    }`}
+                    className={`
+                      flex flex-col items-center justify-center gap-2
+                      text-center
+                      sm:flex-row sm:text-left
+                      ${index === steps.length - 1 ? '' : 'mr-0'}
+                    `}
                     key={step}
                   >
                     <div
-                      className={`flex aspect-square w-8 items-center justify-center rounded-full text-sm text-white lg:text-lg ${
-                        currentStep >= index + 1
-                          ? 'bg-accent'
-                          : 'bg-gray-300 dark:bg-gray-600'
-                      }`}
+                      className={`
+                        flex aspect-square w-8 items-center justify-center
+                        rounded-full text-sm text-white
+                        lg:text-lg
+                        ${
+                          currentStep >= index + 1
+                            ? 'bg-accent'
+                            : `
+                              bg-gray-300
+                              dark:bg-gray-600
+                            `
+                        }
+                      `}
                     >
                       {index + 1}
                     </div>
                     <span
-                      className={`mt-2 shrink text-xs sm:mt-0 lg:text-sm ${
-                        currentStep >= index + 1
-                          ? 'text-accent'
-                          : 'text-gray-700 dark:text-gray-300'
-                      }`}
+                      className={`
+                        mt-2 shrink text-xs
+                        sm:mt-0
+                        lg:text-sm
+                        ${
+                          currentStep >= index + 1
+                            ? 'text-accent'
+                            : `
+                              text-gray-700
+                              dark:text-gray-300
+                            `
+                        }
+                      `}
                     >
                       {step}
                     </span>
@@ -92,7 +137,12 @@ export default function SideModal({
                 ))}
               </div>
             )}
-            <hr className='border-t shadow-xs dark:border-gray-800' />
+            <hr
+              className={`
+                border-t shadow-xs
+                dark:border-gray-800
+              `}
+            />
             <div className='grow overflow-y-scroll pb-12'>{children}</div>
           </div>
         </div>

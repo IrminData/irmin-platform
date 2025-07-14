@@ -104,10 +104,15 @@ export function WorkspaceTagSelector({
   return (
     <div className='flex flex-row items-center gap-2'>
       {/* Selected Tags Display */}
-      <div className='border-border bg-background flex w-full flex-wrap gap-2 rounded-lg border p-3'>
+      <div
+        className={`
+          flex w-full flex-wrap gap-2 rounded-lg border border-border
+          bg-background p-3
+        `}
+      >
         {selectedTags.length === 0 ? (
-          <div className='text-muted-foreground flex items-center text-sm'>
-            <TbTag className='mr-2 h-4 w-4' />
+          <div className='flex items-center text-sm text-muted-foreground'>
+            <TbTag className='mr-2 size-4' />
             {dict.workspace.tags}
           </div>
         ) : (
@@ -147,7 +152,12 @@ export function WorkspaceTagSelector({
             <div className='p-2'>
               {/* Search Input */}
               <div className='relative mb-2'>
-                <TbSearch className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+                <TbSearch
+                  className={`
+                    absolute top-1/2 left-3 size-4 -translate-y-1/2 transform
+                    text-muted-foreground
+                  `}
+                />
                 <Input
                   placeholder={dict.common.search}
                   value={searchQuery}
@@ -165,10 +175,14 @@ export function WorkspaceTagSelector({
                         key={tag.id}
                         disabled={loading || disabled}
                         onClick={() => handleSelectTag(tag)}
-                        className='hover:bg-accent flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors'
+                        className={`
+                          flex w-full items-center gap-2 rounded-md p-2
+                          text-left transition-colors
+                          hover:bg-accent
+                        `}
                       >
                         <div
-                          className='h-3 w-3 flex-shrink-0 rounded-full'
+                          className='size-3 shrink-0 rounded-full'
                           style={{ backgroundColor: tag.color }}
                         />
                         <span className='text-sm'>{tag.name}</span>
@@ -176,20 +190,26 @@ export function WorkspaceTagSelector({
                     ))}
                   </div>
                 ) : (
-                  <div className='text-muted-foreground py-4 text-center text-sm'>
+                  <div
+                    className={`py-4 text-center text-sm text-muted-foreground`}
+                  >
                     {dict.list.noItemsFound}
                   </div>
                 )}
               </div>
 
               {/* Create New Tag Button */}
-              <div className='border-border mt-2 border-t pt-2'>
+              <div className='mt-2 border-t border-border pt-2'>
                 <button
                   disabled={loading || disabled}
                   onClick={() => setShowCreateTag(true)}
-                  className='hover:bg-accent flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors'
+                  className={`
+                    flex w-full items-center gap-2 rounded-md p-2 text-left
+                    text-sm transition-colors
+                    hover:bg-accent
+                  `}
                 >
-                  <TbPlus className='h-4 w-4' />
+                  <TbPlus className='size-4' />
                   {dict.common.create}
                 </button>
               </div>

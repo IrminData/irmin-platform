@@ -1,6 +1,6 @@
-import { Connector } from '@/types/core/Connector';
-import { Tag } from '@/types/core/Tag';
-import { User } from '@/types/core/User';
+import type { Connector } from '@/types/core/Connector';
+import type { Tag } from '@/types/core/Tag';
+import type { User } from '@/types/core/User';
 
 /**
  * Represents a map of custom field values.

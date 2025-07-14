@@ -29,7 +29,7 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
+import type { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
 const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 

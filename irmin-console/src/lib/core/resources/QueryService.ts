@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { QueryResult, StoredQuery } from '@/types/core/StoredQuery';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { QueryResult, StoredQuery } from '@/types/core/StoredQuery';
 
 /**
  * Interface for creating a query

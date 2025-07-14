@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 
-import Button from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { Button } from '@/components/ui/button';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';

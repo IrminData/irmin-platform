@@ -1,23 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workflowQueryKey, workflowsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { WorkflowSchedule } from '@/types/core/Schedule';
-import { Workflow, Workflowable, WorkflowStatus } from '@/types/core/Workflow';
-
-import { workflowsQueryKey } from './useWorkflows';
-
-export const workflowQueryKey = (workspaceSlug: string, workflowID: string) => [
-  'workflow',
-  workspaceSlug,
-  workflowID,
-];
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { WorkflowSchedule } from '@/types/core/Schedule';
+import type { Workflow, Workflowable } from '@/types/core/Workflow';
+import { WorkflowStatus } from '@/types/core/Workflow';
 
 type UpdateWorkflowInput = {
   name: string;
@@ -41,6 +35,18 @@ export function useWorkflow(workflowID: string) {
         workflowID,
       });
       return workflow;
+    },
+    initialData: () => {
+      const workflows = queryClient.getQueryData<IrminAPIResponse<Workflow[]>>(
+        workflowsQueryKey(workspaceSlug)
+      );
+      return workflows?.data?.find((w: Workflow) => w.id === workflowID)
+        ? {
+            data: workflows.data.find((w: Workflow) => w.id === workflowID),
+            success: true,
+            message: 'Cached data',
+          }
+        : undefined;
     },
   });
 
@@ -125,10 +131,10 @@ export function useWorkflow(workflowID: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
     },
@@ -260,10 +266,10 @@ export function useWorkflow(workflowID: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
     },
@@ -285,10 +291,10 @@ export function useWorkflow(workflowID: string) {
       return response;
     },
     onSuccess: (res: IrminAPIResponse<Workflow>) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
       irminAlert(
@@ -318,10 +324,10 @@ export function useWorkflow(workflowID: string) {
       return response;
     },
     onSuccess: (res: IrminAPIResponse<Workflow>) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Workflowable updated successfully');
@@ -348,10 +354,10 @@ export function useWorkflow(workflowID: string) {
       return response;
     },
     onSuccess: (res: IrminAPIResponse<Workflow>) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Workflow transfered successfully');
@@ -462,10 +468,10 @@ export function useWorkflow(workflowID: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: workflowsQueryKey(workspaceSlug),
       });
     },
@@ -572,10 +578,10 @@ export function useWorkflow(workflowID: string) {
       },
       onSettled: () => {
         // Always refetch after error or success to ensure consistency
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: workflowQueryKey(workspaceSlug, workflowID),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: workflowsQueryKey(workspaceSlug),
         });
       },

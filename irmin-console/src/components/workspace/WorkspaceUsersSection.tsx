@@ -1,14 +1,12 @@
 'use client';
 
-import React from 'react';
-
 import { IoExit, IoKey } from 'react-icons/io5';
 import { TbBook } from 'react-icons/tb';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
-import QueryError from '@/components/ui/error/QueryError';
-import TableSkeleton from '@/components/ui/loading/TableSkeleton';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { QueryError } from '@/components/ui/error/QueryError';
+import { TableSkeleton } from '@/components/ui/loading/TableSkeleton';
 import { MultiSelect } from '@/components/ui/multi-select';
 import {
   Table,
@@ -74,50 +72,121 @@ const WorkspaceUsersSection = () => {
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       <Table className='min-w-full'>
         <TableHeader>
-          <TableRow className='border-b dark:border-gray-800'>
-            <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+          <TableRow
+            className={`
+              border-b
+              dark:border-gray-800
+            `}
+          >
+            <TableHead
+              className={`
+                px-4 py-2 text-left text-xs font-normal
+                md:text-sm
+              `}
+            >
               {dict.common.name}
             </TableHead>
-            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+            <TableHead
+              className={`
+                hidden p-2 text-left text-sm font-normal
+                md:table-cell
+              `}
+            >
               {dict.users.email}
             </TableHead>
-            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+            <TableHead
+              className={`
+                hidden p-2 text-left text-sm font-normal
+                md:table-cell
+              `}
+            >
               {dict.users.phone}
             </TableHead>
-            <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+            <TableHead
+              className={`
+                hidden p-2 text-left text-sm font-normal
+                md:table-cell
+              `}
+            >
               {dict.users.company}
             </TableHead>
-            <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+            <TableHead
+              className={`
+                px-4 py-2 text-left text-xs font-normal
+                md:text-sm
+              `}
+            >
               {dict.users.role}
             </TableHead>
-            <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+            <TableHead
+              className={`
+                px-4 py-2 text-center text-xs font-normal
+                md:text-right md:text-sm
+              `}
+            >
               {/* Actions */}
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {usersQuery.data?.data?.map((user, idx) => (
+          {usersQuery.data?.data?.map((user) => (
             <TableRow
-              key={`workspace-user-${user.id}-${idx}`}
-              className='h-14 border-b dark:border-gray-800'
+              key={`workspace-user-${user.id}`}
+              className={`
+                h-14 border-b
+                dark:border-gray-800
+              `}
             >
-              <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+              <TableCell
+                className={`
+                  px-4 py-2 text-sm text-gray-700
+                  dark:text-gray-400
+                `}
+              >
                 {user.first_name} {user.last_name}
                 {/* Mobile screen details */}
-                <span className='block text-xs opacity-70 md:hidden'>
+                <span
+                  className={`
+                    block text-xs opacity-70
+                    md:hidden
+                  `}
+                >
                   {user.email} | {user.phone} | {user.company}
                 </span>
               </TableCell>
-              <TableCell className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+              <TableCell
+                className={`
+                  hidden p-2 text-sm text-gray-700
+                  md:table-cell
+                  dark:text-gray-400
+                `}
+              >
                 {user.email}
               </TableCell>
-              <TableCell className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+              <TableCell
+                className={`
+                  hidden p-2 text-sm text-gray-700
+                  md:table-cell
+                  dark:text-gray-400
+                `}
+              >
                 {user.phone}
               </TableCell>
-              <TableCell className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+              <TableCell
+                className={`
+                  hidden p-2 text-sm text-gray-700
+                  md:table-cell
+                  dark:text-gray-400
+                `}
+              >
                 {user.company}
               </TableCell>
-              <TableCell className='px-4 py-2 text-xs text-gray-700 dark:text-gray-400'>
+              <TableCell
+                className={`
+                  px-4 py-2 text-xs text-gray-700
+                  dark:text-gray-400
+                `}
+              >
                 {workspaceQuery?.data?.data?.owner?.id === user.id ? (
                   dict.list.owner
                 ) : (
@@ -143,7 +212,11 @@ const WorkspaceUsersSection = () => {
                 )}
               </TableCell>
               <TableCell className='px-4 py-2 text-right'>
-                <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                <div
+                  className={`
+                    flex w-full flex-row justify-end gap-2 align-middle
+                  `}
+                >
                   <ButtonWithTooltip
                     size='icon'
                     variant='secondary'

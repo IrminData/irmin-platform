@@ -14,4 +14,4 @@ export interface Commit {
   previous_hash?: string;
 }
 
-export type PathType = 'object' | 'common_prefix' | 'reset';
+export type PathType = 'common_prefix' | 'object' | 'reset';

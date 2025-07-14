@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -237,7 +237,7 @@ export default function UploadObjectModal({
           )}
         />
       </div>
-      {error && <div className='text-destructive py-2'>{error}</div>}
+      {error && <div className='py-2 text-destructive'>{error}</div>}
       <div className='pb-3'>
         <Button
           variant='default'

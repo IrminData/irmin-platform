@@ -1,9 +1,4 @@
-import { Tag } from '@/types/core/Tag';
-
-/**
- * Represents the type of the object: "group", "structured", or "binary".
- */
-export type ObjectType = 'group' | 'structured' | 'binary';
+import type { Tag } from '@/types/core/Tag';
 
 /**
  * Represents an object stored in the repository.
@@ -15,8 +10,8 @@ export interface Object {
   name: string;
   /** Path of the object */
   path: string;
-  /** Type of the object */
-  type: ObjectType;
+  /** Type of the object, where "group" is a folder, "structured" is a tabular file we can parse or query (e.g. CSV, JSON, Parquet, etc.) and "binary" is a file that we can't parse or query (e.g. image, video, audio, etc.) */
+  type: 'binary' | 'group' | 'structured';
   /** Slug of the repository that contains the object */
   repository_slug: string;
   /** The branch or other reference that contains the object */

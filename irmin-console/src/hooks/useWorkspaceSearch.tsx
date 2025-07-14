@@ -1,17 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workspaceSearchQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { SearchFilters, SearchResponse } from '@/types/core/Search';
-
-export const workspaceSearchQueryKey = (
-  workspaceSlug: string,
-  params: SearchFilters
-) => ['workspaceSearch', workspaceSlug, params] as const;
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { SearchFilters, SearchResponse } from '@/types/core/Search';
 
 export function useWorkspaceSearch(
   params: SearchFilters,

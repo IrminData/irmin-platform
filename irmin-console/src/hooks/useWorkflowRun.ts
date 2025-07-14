@@ -1,19 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { workflowRunQueryKey, workflowRunsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { WorkflowRun } from '@/types/core/WorkflowRun';
-
-export const workflowRunQueryKey = (
-  workspaceSlug: string,
-  workflowID: string,
-  runID: string
-) => ['workflow-run', workspaceSlug, workflowID, runID] as const;
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { WorkflowRun } from '@/types/core/WorkflowRun';
 
 /**
  * Custom hook to manage fetching a workflow run
@@ -26,6 +21,7 @@ const useWorkflowRun = (workflowID: string, runID: string) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
+  const queryClient = useQueryClient();
 
   const workflowRunQuery = useQuery<IrminAPIResponse<WorkflowRun>, Error>({
     queryKey: workflowRunQueryKey(workspaceSlug, workflowID, runID),
@@ -39,6 +35,23 @@ const useWorkflowRun = (workflowID: string, runID: string) => {
           runID,
         });
       return res;
+    },
+    initialData: () => {
+      // Try to find the workflow run in any of the paginated results
+      const allWorkflowRunQueries = queryClient.getQueriesData({
+        queryKey: workflowRunsQueryKey(workspaceSlug, workflowID),
+      });
+
+      for (const [, queryData] of allWorkflowRunQueries) {
+        const workflowRuns = queryData as IrminAPIResponse<WorkflowRun[]>;
+        const foundRun = workflowRuns?.data?.find(
+          (wr: WorkflowRun) => wr.id === runID
+        );
+        if (foundRun) {
+          return { data: foundRun, success: true, message: 'Cached data' };
+        }
+      }
+      return undefined;
     },
   });
 

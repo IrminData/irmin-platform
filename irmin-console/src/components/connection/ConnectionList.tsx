@@ -11,8 +11,12 @@ import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { Connection } from '@/types/core/Connection';
-import { GridRow } from '@/types/internal/ListProps';
+import type { Connection } from '@/types/core/Connection';
+import type {
+  EmptyStateAction,
+  GridRow,
+  TableRowAction,
+} from '@/types/internal/ListProps';
 
 /**
  * Table UI to display a list of Connections
@@ -22,9 +26,11 @@ import { GridRow } from '@/types/internal/ListProps';
 const ConnectionList = ({
   loading,
   connections: items,
+  emptyStateAction,
 }: {
   loading?: boolean;
   connections: Connection[];
+  emptyStateAction?: EmptyStateAction;
 }) => {
   const { dict } = useLocale();
 
@@ -38,8 +44,8 @@ const ConnectionList = ({
 
   const rows: GridRow[] = useMemo(
     () =>
-      items.map((item, i) => {
-        const actions = [
+      items.map((item) => {
+        const actions: TableRowAction[] = [
           {
             label: dict.list.view,
             primary: true,
@@ -60,22 +66,27 @@ const ConnectionList = ({
         return {
           columns: [
             <div
-              key={`name-and-owner-${i}`}
+              key={`name-and-owner-${item.id}`}
               className='inline-flex flex-col gap-1'
             >
               <p className='text-base'>{item.name}</p>
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
+              <span
+                className={`
+                  text-sm text-gray-600
+                  dark:text-gray-400
+                `}
+              >
                 {dict.list.owner}: {item.owner.email}
               </span>
             </div>,
             <div
-              key={`connector-${i}`}
+              key={`connector-${item.id}`}
               className='inline-flex flex-row items-center gap-2'
             >
               <Image
                 src={item.connector.logo_url}
                 alt={item.connector.name}
-                className='h-8 w-8 object-contain'
+                className='size-8 object-contain'
                 width={32}
                 height={32}
               />
@@ -94,7 +105,12 @@ const ConnectionList = ({
           ],
           actions,
           details: (
-            <div className='flex max-w-sm flex-col text-gray-600 dark:text-gray-400'>
+            <div
+              className={`
+                flex max-w-sm flex-col text-gray-600
+                dark:text-gray-400
+              `}
+            >
               <p className='pb-4 text-sm'>{item.description}</p>
             </div>
           ),
@@ -109,6 +125,7 @@ const ConnectionList = ({
       headers={[dict.common.name, dict.connectors.connector, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
+      emptyStateAction={emptyStateAction}
     />
   );
 };

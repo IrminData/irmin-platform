@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
-import QueryError from '@/components/ui/error/QueryError';
-import TableSkeleton from '@/components/ui/loading/TableSkeleton';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { QueryError } from '@/components/ui/error/QueryError';
+import { TableSkeleton } from '@/components/ui/loading/TableSkeleton';
 import {
   Table,
   TableBody,
@@ -24,8 +25,7 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
-import { PolicyResource } from '@/types/core/Policy';
-import { PolicyAction } from '@/types/core/Policy';
+import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
 
 import { WorkspaceTagModal } from './WorkspaceTagModal';
@@ -125,7 +125,12 @@ const WorkspaceTagsSection = () => {
     return (
       <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
         <div className='flex items-center justify-end px-4'>
-          <div className='h-10 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-800'></div>
+          <div
+            className={`
+              h-10 w-28 animate-pulse rounded bg-gray-200
+              dark:bg-gray-800
+            `}
+          />
         </div>
         <ContentWrapper>
           <TableSkeleton rows={5} columns={3} />
@@ -169,42 +174,85 @@ const WorkspaceTagsSection = () => {
       <ContentWrapper>
         <Table className='min-w-full'>
           <TableHeader>
-            <TableRow className='border-b dark:border-gray-800'>
-              <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+            <TableRow
+              className={`
+                border-b
+                dark:border-gray-800
+              `}
+            >
+              <TableHead
+                className={`
+                  px-4 py-2 text-left text-xs font-normal
+                  md:text-sm
+                `}
+              >
                 {dict.common.name}
               </TableHead>
-              <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+              <TableHead
+                className={`
+                  hidden p-2 text-left text-sm font-normal
+                  md:table-cell
+                `}
+              >
                 {dict.common.description}
               </TableHead>
-              <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+              <TableHead
+                className={`
+                  px-4 py-2 text-center text-xs font-normal
+                  md:text-right md:text-sm
+                `}
+              >
                 {dict.common.actions}
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {workspaceTagsQuery.data?.data?.map((tag, idx) => (
+            {workspaceTagsQuery.data?.data?.map((tag) => (
               <TableRow
-                key={`workspace-tag-${tag.id}-${idx}`}
-                className='h-14 border-b dark:border-gray-800'
+                key={`workspace-tag-${tag.id}`}
+                className={`
+                  h-14 border-b
+                  dark:border-gray-800
+                `}
               >
-                <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                <TableCell
+                  className={`
+                    px-4 py-2 text-sm text-gray-700
+                    dark:text-gray-400
+                  `}
+                >
                   <div className='flex items-center gap-2'>
                     <div
-                      className='h-8 w-8 rounded-full border border-gray-300'
+                      className='size-8 rounded-full border border-gray-300'
                       style={{ backgroundColor: tag.color }}
                     />
                     <p className='text-base font-medium'>{tag.name}</p>
                   </div>
                   {/* Mobile screen details */}
-                  <span className='block text-xs opacity-70 md:hidden'>
+                  <span
+                    className={`
+                      block text-xs opacity-70
+                      md:hidden
+                    `}
+                  >
                     {tag.description}
                   </span>
                 </TableCell>
-                <TableCell className='hidden px-2 py-2 text-sm text-gray-700 md:table-cell dark:text-gray-400'>
+                <TableCell
+                  className={`
+                    hidden p-2 text-sm text-gray-700
+                    md:table-cell
+                    dark:text-gray-400
+                  `}
+                >
                   {tag.description}
                 </TableCell>
                 <TableCell className='px-4 py-2 text-right'>
-                  <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                  <div
+                    className={`
+                      flex w-full flex-row justify-end gap-2 align-middle
+                    `}
+                  >
                     <ButtonWithTooltip
                       size='icon'
                       variant='secondary'

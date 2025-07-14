@@ -1,12 +1,12 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { APIToken } from '@/types/core/APIToken';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { APIToken } from '@/types/core/APIToken';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Interface for creating API credentials
  */
-interface CreateCredentialRequest {
+export interface CreateCredentialRequest {
   name: string;
   expiry: number; // Seconds until expiry
 }
@@ -57,23 +57,14 @@ class CredentialService {
    * @param props.expiry - The expiry time in seconds.
    * @returns IrminAPIResponse containing the created APIToken.
    */
-  async createSystemToken({
-    name,
-    expiry,
-  }: {
-    name: string;
-    expiry: number;
-  }): Promise<IrminAPIResponse<APIToken>> {
+  async createSystemToken(
+    req: CreateCredentialRequest
+  ): Promise<IrminAPIResponse<APIToken>> {
     try {
-      const requestBody: CreateCredentialRequest = {
-        name,
-        expiry,
-      };
-
       const response = (await this.irminCore.fetchAPI(`/v1/credentials`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(req),
       })) as IrminAPIResponse<APIToken>;
       return response;
     } catch (error) {
@@ -90,13 +81,13 @@ class CredentialService {
    * @returns IrminAPIResponse containing the result of the revocation.
    */
   async revokeSystemToken({
-    token,
+    tokenID,
   }: {
-    token: string;
+    tokenID: string;
   }): Promise<IrminAPIResponse> {
     try {
       const response = await this.irminCore.fetchAPI(
-        `/v1/credentials/${token}`,
+        `/v1/credentials/${tokenID}`,
         { method: 'DELETE' }
       );
       return response;

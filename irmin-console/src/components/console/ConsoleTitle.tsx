@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 import Image from 'next/image';
 
@@ -26,21 +26,34 @@ const ConsoleTitle: React.FC<{
   return (
     <div
       className={cn(
-        'text-foreground/90 px-4 pt-12 pb-4 text-center text-2xl font-bold sm:text-3xl md:text-left lg:text-5xl',
+        `
+          px-4 pt-12 pb-4 text-center text-2xl font-bold text-foreground/90
+          sm:text-3xl
+          md:text-left
+          lg:text-5xl
+        `,
         className
       )}
     >
       {showLogo && (
         <>
           <Image
-            className='block h-8 w-auto md:hidden dark:hidden'
+            className={`
+              block h-8 w-auto
+              md:hidden
+              dark:hidden
+            `}
             src='/irmin-logo.svg'
             alt='Irmin logo'
             width={100}
             height={100}
           />
           <Image
-            className='hidden h-8 w-auto md:hidden dark:block dark:md:hidden'
+            className={`
+              hidden h-8 w-auto
+              md:hidden
+              dark:block dark:md:hidden
+            `}
             src='/irmin-logo-light.svg'
             alt='Irmin logo'
             width={100}

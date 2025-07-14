@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { WorkflowRun } from '@/types/core/WorkflowRun';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { WorkflowRun } from '@/types/core/WorkflowRun';
 
 /**
  * Workflow Run API service

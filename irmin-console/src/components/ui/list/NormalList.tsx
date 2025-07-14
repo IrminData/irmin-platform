@@ -1,16 +1,46 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { Fragment, memo, useMemo, useState } from 'react';
 
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
-import EmptyState from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ListProps } from '@/types/internal/ListProps';
+import type { ListProps } from '@/types/internal/ListProps';
+
+const LoadingRow = ({ totalColumns }: { totalColumns: number }) => {
+  return (
+    <tr
+      className={`
+        border-b border-gray-200
+        dark:border-gray-800
+      `}
+    >
+      <td colSpan={totalColumns} className='p-2'>
+        <LoadingSkeleton className='my-2 h-14 w-full' />
+      </td>
+    </tr>
+  );
+};
+
+const ListLoadingSkeleton = ({ totalColumns }: { totalColumns: number }) => {
+  return (
+    <>
+      <LoadingRow totalColumns={totalColumns} />
+      <LoadingRow totalColumns={totalColumns} />
+      <LoadingRow totalColumns={totalColumns} />
+      <LoadingRow totalColumns={totalColumns} />
+      <LoadingRow totalColumns={totalColumns} />
+      <LoadingRow totalColumns={totalColumns} />
+      <LoadingRow totalColumns={totalColumns} />
+      <LoadingRow totalColumns={totalColumns} />
+    </>
+  );
+};
 
 /**
  * Normal list UI component
@@ -34,6 +64,7 @@ const NormalList: React.FC<ListProps> = ({
   hideHeaders = false,
   loading = false,
   noActions = false,
+  emptyStateAction,
 }) => {
   const { dict } = useLocale();
   const [openDetails, setOpenDetails] = useState<number[]>([]);
@@ -44,13 +75,40 @@ const NormalList: React.FC<ListProps> = ({
     [noActions, headers]
   );
 
+  // Unique keys for each repetitive element
+  const headerKeys = headers.map((_, index) => `list-header-${index}`);
+  const rowKeys = rows.map((_, index) => `list-row-${index}`);
+  const rowColumnKeys = rows.map((row, index) =>
+    row.columns.map((_, colIndex) => `list-row-${index}-column-${colIndex}`)
+  );
+  const rowActionKeys = rows.map(
+    (row, index) =>
+      row.actions?.map(
+        (_, actionIndex) => `list-row-${index}-action-${actionIndex}`
+      ) ?? []
+  );
+  const detailsKeys = rows
+    .map((row, index) => (row.details ? `list-row-${index}-details` : null))
+    .filter((key) => key !== null);
+
   return (
-    <div className='scrollbar-hide h-full w-full overflow-auto' id='list'>
-      <table className='bg-popover/10 w-full max-w-full border-collapse rounded-lg border p-2 text-sm shadow-xs transition-all dark:border-gray-800'>
+    <div className='scrollbar-hide size-full overflow-auto' id='list'>
+      <table
+        className={`
+          w-full max-w-full border-collapse rounded-lg border bg-popover/10 p-2
+          text-sm shadow-xs transition-all
+          dark:border-gray-800
+        `}
+      >
         {/* Table head */}
         {!hideHeaders && (
           <thead>
-            <tr className='border-b border-gray-200 bg-gray-100 dark:border-gray-800'>
+            <tr
+              className={`
+                border-b border-gray-200 bg-gray-100
+                dark:border-gray-800
+              `}
+            >
               {headers.map((header, index) => {
                 // If we have NO actions, the last header cell is aligned right
                 // If we do have actions, all these headers are left-aligned
@@ -60,8 +118,12 @@ const NormalList: React.FC<ListProps> = ({
 
                 return (
                   <th
-                    key={`list-header-${index}`}
-                    className={`dark:bg-irmin_black-700 p-2 align-middle text-xs font-normal ${textAlignment}`}
+                    key={headerKeys[index]}
+                    className={`
+                      p-2 align-middle text-xs font-normal
+                      dark:bg-irmin-black-700
+                      ${textAlignment}
+                    `}
                   >
                     <span className='opacity-60'>{header}</span>
                   </th>
@@ -73,117 +135,111 @@ const NormalList: React.FC<ListProps> = ({
 
         <tbody>
           {/* Loading skeleton rows */}
-          {loading
-            ? [...Array(8)].map((_, index) => (
-                <tr
-                  key={`normal-list-loading-skeleton-row-${index}`}
-                  className='border-b border-gray-200 dark:border-gray-800'
-                >
-                  <td colSpan={totalColumns} className='p-2'>
-                    <LoadingSkeleton
-                      key={`normal-list-loading-skeleton-${index}`}
-                      className='my-2 h-14 w-full'
-                    />
-                  </td>
-                </tr>
-              ))
-            : // Render data rows
-              rows.map((row, rowIndex) => {
-                // Sort actions if needed
-                let sortedActions: typeof row.actions = [];
-                if (row.actions && row.actions.length > 0 && !noActions) {
-                  sortedActions = row.actions.slice().sort((a, b) => {
-                    if (a.primary && !b.primary) return 1;
-                    if (!a.primary && b.primary) return -1;
-                    return 0;
-                  });
-                }
+          {loading ? (
+            <ListLoadingSkeleton totalColumns={totalColumns} />
+          ) : (
+            // Render data rows
+            rows.map((row, rowIndex) => {
+              // Sort actions if needed
+              let sortedActions: typeof row.actions = [];
+              if (row.actions && row.actions.length > 0 && !noActions) {
+                sortedActions = row.actions.slice().sort((a, b) => {
+                  if (a.primary && !b.primary) return 1;
+                  if (!a.primary && b.primary) return -1;
+                  return 0;
+                });
+              }
 
-                return (
-                  <React.Fragment key={`list-row-${rowIndex}`}>
-                    {/* Main row */}
-                    <tr className='border-b border-gray-200 dark:border-gray-800'>
-                      {row.columns.map((column, colIndex) => (
-                        <td
-                          key={`list-row-${rowIndex}-column-${colIndex}`}
-                          className='p-2 align-middle'
-                        >
-                          {column}
-                        </td>
-                      ))}
+              return (
+                <Fragment key={rowKeys[rowIndex]}>
+                  {/* Main row */}
+                  <tr
+                    className={`
+                      border-b border-gray-200
+                      dark:border-gray-800
+                    `}
+                  >
+                    {row.columns.map((column, colIndex) => (
+                      <td
+                        key={rowColumnKeys[rowIndex][colIndex]}
+                        className='p-2 align-middle'
+                      >
+                        {column}
+                      </td>
+                    ))}
 
-                      {!noActions && (
-                        <td className='p-2 text-right align-middle'>
-                          {/* If there are actions, display them; otherwise empty cell to keep alignment */}
-                          {row.actions && row.actions.length > 0 && (
-                            <div className='flex items-center justify-end space-x-2'>
-                              {sortedActions.map((action, actionIndex) => (
-                                <Button
-                                  size='default'
-                                  key={`list-row-${rowIndex}-actions-${actionIndex}`}
-                                  variant={action.primary ? 'gray' : 'link'}
-                                  aria-label={action.label}
-                                  href={action.href}
-                                  onClick={action.onClick}
-                                  className={`w-max ${action.primary ? 'min-w-24' : ''}`}
-                                >
-                                  {action.label}
-                                </Button>
-                              ))}
+                    {!noActions && (
+                      <td className='p-2 text-right align-middle'>
+                        {/* If there are actions, display them; otherwise empty cell to keep alignment */}
+                        {row.actions && row.actions.length > 0 && (
+                          <div
+                            className={`flex items-center justify-end space-x-2`}
+                          >
+                            {sortedActions.map((action, actionIndex) => (
+                              <Button
+                                size='default'
+                                key={rowActionKeys[rowIndex][actionIndex]}
+                                variant={action.primary ? 'gray' : 'link'}
+                                aria-label={action.label}
+                                href={action.href}
+                                onClick={action.onClick}
+                                className={`
+                                  w-max
+                                  ${action.primary ? 'min-w-24' : ''}
+                                `}
+                              >
+                                {action.label}
+                              </Button>
+                            ))}
 
-                              {/* If details exist, add toggle button */}
-                              {row.details && (
-                                <Button
-                                  size='lg'
-                                  variant='link'
-                                  className='mt-1 ml-2 px-0'
-                                  onClick={() => {
-                                    if (openDetails.includes(rowIndex)) {
-                                      setOpenDetails(
-                                        openDetails.filter(
-                                          (id) => id !== rowIndex
-                                        )
-                                      );
-                                    } else {
-                                      setOpenDetails([
-                                        ...openDetails,
-                                        rowIndex,
-                                      ]);
-                                    }
-                                  }}
-                                  aria-label={
-                                    openDetails.includes(rowIndex)
-                                      ? 'Hide details'
-                                      : 'Show details'
+                            {/* If details exist, add toggle button */}
+                            {row.details && (
+                              <Button
+                                size='lg'
+                                variant='link'
+                                className='mt-1 ml-2 px-0'
+                                onClick={() => {
+                                  if (openDetails.includes(rowIndex)) {
+                                    setOpenDetails(
+                                      openDetails.filter(
+                                        (id) => id !== rowIndex
+                                      )
+                                    );
+                                  } else {
+                                    setOpenDetails([...openDetails, rowIndex]);
                                   }
-                                >
-                                  {openDetails.includes(rowIndex) ? (
-                                    <TbChevronUp className='h-5 w-5' />
-                                  ) : (
-                                    <TbChevronDown className='h-5 w-5' />
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                      )}
-                    </tr>
-
-                    {/* Details row (shown if toggled) */}
-                    {row.details && openDetails.includes(rowIndex) && (
-                      <tr key={`list-row-${rowIndex}-details`}>
-                        <td
-                          colSpan={totalColumns}
-                          className='px-2 py-2 shadow-inner'
-                        >
-                          {row.details}
-                        </td>
-                      </tr>
+                                }}
+                                aria-label={
+                                  openDetails.includes(rowIndex)
+                                    ? 'Hide details'
+                                    : 'Show details'
+                                }
+                              >
+                                {openDetails.includes(rowIndex) ? (
+                                  <TbChevronUp className='size-5' />
+                                ) : (
+                                  <TbChevronDown className='size-5' />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </td>
                     )}
-                  </React.Fragment>
-                );
-              })}
+                  </tr>
+
+                  {/* Details row (shown if toggled) */}
+                  {row.details && openDetails.includes(rowIndex) && (
+                    <tr key={detailsKeys[rowIndex]}>
+                      <td colSpan={totalColumns} className='p-2 shadow-inner'>
+                        {row.details}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })
+          )}
 
           {/* No items found row */}
           {!loading && rows.length === 0 && (
@@ -194,6 +250,7 @@ const NormalList: React.FC<ListProps> = ({
                   description={dict.list.emptyState.generic.description}
                   size='sm'
                   className='py-12'
+                  action={emptyStateAction}
                 />
               </td>
             </tr>
@@ -204,4 +261,4 @@ const NormalList: React.FC<ListProps> = ({
   );
 };
 
-export default React.memo(NormalList);
+export default memo(NormalList);

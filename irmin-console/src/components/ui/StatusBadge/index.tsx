@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import type { HTMLAttributes } from 'react';
 
 import { cva, type VariantProps } from 'class-variance-authority';
 
@@ -8,22 +8,25 @@ import { cn } from '@/utils/tw';
 
 // Define the variant styles for the StatusBadge component using class-variance-authority (cva)
 const statusBadgeVariants = cva(
-  'flex h-full max-h-8 w-20 items-center justify-center rounded-full shadow-xs p-1 text-center text-white text-xs',
+  `
+    flex h-full max-h-8 w-20 items-center justify-center rounded-full p-1
+    text-center text-xs text-white shadow-xs
+  `,
   {
     variants: {
       status: {
         '': 'bg-gray-400',
-        private: 'bg-irmin_teal-400',
-        public: 'bg-irmin_teal',
-        connected: 'bg-irmin_teal-600',
+        private: 'bg-irmin-teal-400',
+        public: 'bg-irmin-teal-500',
+        connected: 'bg-irmin-teal-600',
         cancelled: 'bg-gray-200 text-gray-800',
         error: 'bg-destructive',
         complete: 'bg-accent/80 text-accent-foreground',
-        running: 'bg-irmin_blue-500',
+        running: 'bg-irmin-blue-500',
         paused: 'bg-gray-400',
         pending: 'bg-gray-400',
         initiating: 'bg-gray-400',
-        default: 'bg-irmin_green text-black',
+        default: 'bg-irmin-green-500 text-black',
       },
     },
     defaultVariants: {
@@ -34,18 +37,18 @@ const statusBadgeVariants = cva(
 
 // Define the prop types for the StatusBadge component using TypeScript
 interface StatusBadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof statusBadgeVariants> {
   label: string;
 }
 
 // Create the StatusBadge component with the new structure and variant-based styles
-const StatusBadge: React.FC<StatusBadgeProps> = ({
+const StatusBadge = ({
   status,
   label,
   className,
   ...props
-}) => {
+}: StatusBadgeProps) => {
   // Capitalise the first letter of the label
   const capitalisedLabel = label.charAt(0).toUpperCase() + label.slice(1);
 
@@ -56,5 +59,4 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   );
 };
 
-export { statusBadgeVariants };
 export default StatusBadge;

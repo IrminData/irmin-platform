@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
+import type { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
 
 import { IoDocumentText } from 'react-icons/io5';
 import { TbSchema } from 'react-icons/tb';

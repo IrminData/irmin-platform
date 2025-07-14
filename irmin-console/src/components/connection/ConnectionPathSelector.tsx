@@ -1,12 +1,12 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight, TbChevronUp } from 'react-icons/tb';
 
-import { ButtonWithTooltip } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { Input } from '@/components/ui/input';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -14,7 +14,7 @@ import { useLocale } from '@/context/LocaleContext';
 import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnectionSchema } from '@/hooks/useConnectionSchema';
 
-import { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
 /**
  * Format a path according to the connection path rules:
@@ -25,8 +25,8 @@ import { ObjectSchema } from '@/types/core/ObjectSchema';
  */
 const formatPath = (
   path: string,
-  isDirectory: boolean = false,
-  groupOnly: boolean = false
+  isDirectory = false,
+  groupOnly = false
 ): string => {
   // Remove leading slashes and normalize separators
   let formatted = path.replace(/^\/+/, '').replace(/\\/g, '/');
@@ -82,14 +82,29 @@ const findObjectByPath = (
 };
 
 const SkeletonInput = () => (
-  <div className='h-10 w-full animate-pulse rounded-md bg-gray-200 dark:bg-gray-800' />
+  <div
+    className={`
+      h-10 w-full animate-pulse rounded-md bg-gray-200
+      dark:bg-gray-800
+    `}
+  />
 );
 
 const SkeletonTreeItem = ({ depth = 0 }: { depth?: number }) => (
   <div className='my-1' style={{ paddingLeft: `${depth * 1.5}rem` }}>
     <div className='flex items-center gap-2'>
-      <div className='h-4 w-4 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
-      <div className='h-4 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+      <div
+        className={`
+          size-4 animate-pulse rounded bg-gray-200
+          dark:bg-gray-800
+        `}
+      />
+      <div
+        className={`
+          h-4 w-32 animate-pulse rounded bg-gray-200
+          dark:bg-gray-800
+        `}
+      />
     </div>
   </div>
 );
@@ -163,20 +178,11 @@ const ConnectionPathSelector = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [isValidPath, setIsValidPath] = useState<boolean>(true);
 
-  const { connectionSchemaQuery } = useConnectionSchema(
-    connectionId,
-    operationMethod
-  );
+  const { connectionSchemaQuery } = useConnectionSchema(connectionId);
 
-  const loading = useMemo(
-    () => connectionSchemaQuery.isLoading || loadingProp,
-    [connectionSchemaQuery.isLoading, loadingProp]
-  );
+  const loading = connectionSchemaQuery.isLoading || loadingProp;
 
-  const rootSchema = useMemo(
-    () => connectionSchemaQuery.data?.data ?? initialRootSchema,
-    [connectionSchemaQuery.data?.data, initialRootSchema]
-  );
+  const rootSchema = connectionSchemaQuery.data?.data ?? initialRootSchema;
 
   // Keep input in sync with selected path
   useEffect(() => {
@@ -284,9 +290,19 @@ const ConnectionPathSelector = ({
     if (item.type === 'group') {
       return (
         <div key={item.path} className='my-1'>
-          <div className='flex items-center justify-normal rounded-md p-1 text-sm'>
+          <div
+            className={`flex items-center justify-normal rounded-md p-1 text-sm`}
+          >
             <div
               className='flex cursor-pointer items-center'
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleFolder(item);
+                }
+              }}
               onClick={() => toggleFolder(item)}
             >
               {openFolders[item.path] ? (
@@ -305,8 +321,33 @@ const ConnectionPathSelector = ({
               </span>
             </div>
             <span
-              className={`ml-2 ${canSelect ? 'cursor-pointer hover:bg-gray-200 hover:underline dark:hover:bg-gray-800' : ''}`}
-              onClick={() => canSelect && handleItemClick(item)}
+              className={`
+                ml-2
+                ${
+                  canSelect
+                    ? `
+                      cursor-pointer
+                      hover:bg-gray-200 hover:underline
+                      dark:hover:bg-gray-800
+                    `
+                    : ''
+                }
+              `}
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (canSelect) {
+                    handleItemClick(item);
+                  }
+                }
+              }}
+              onClick={() => {
+                if (canSelect) {
+                  handleItemClick(item);
+                }
+              }}
               aria-label={`Open ${item.path} group`}
             >
               {item.path || dict.fileNavigator.rootDirectory}
@@ -326,22 +367,51 @@ const ConnectionPathSelector = ({
     return (
       <div
         key={item.path}
-        className={`my-1 ml-6 flex items-center justify-normal rounded-md p-1 text-sm ${
-          canSelect
-            ? `cursor-pointer ${
-                item.path === selectedPath
-                  ? 'bg-gray-200 dark:bg-gray-800'
-                  : 'hover:bg-gray-200 dark:hover:bg-gray-800'
-              }`
-            : 'opacity-50'
-        }`}
-        onClick={() => canSelect && handleItemClick(item)}
+        className={`
+          my-1 ml-6 flex items-center justify-normal rounded-md p-1 text-sm
+          ${
+            canSelect
+              ? `
+                cursor-pointer
+                ${
+                  item.path === selectedPath
+                    ? `
+                      bg-gray-200
+                      dark:bg-gray-800
+                    `
+                    : `
+                      hover:bg-gray-200
+                      dark:hover:bg-gray-800
+                    `
+                }
+              `
+              : 'opacity-50'
+          }
+        `}
+        role='button'
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (canSelect) {
+              handleItemClick(item);
+            }
+          }
+        }}
+        onClick={() => {
+          if (canSelect) {
+            handleItemClick(item);
+          }
+        }}
       >
         <span className='ml-2'>
           <FiFile />
         </span>
         <span
-          className={`ml-2 ${canSelect ? 'hover:underline' : ''}`}
+          className={`
+            ml-2
+            ${canSelect ? 'hover:underline' : ''}
+          `}
           aria-label={`Select path ${item.path}`}
         >
           {item.path}
@@ -355,17 +425,36 @@ const ConnectionPathSelector = ({
       <div className='relative mb-2'>
         <div className='mb-2 flex items-center gap-2'>
           <SkeletonInput />
-          <div className='h-10 w-10 shrink-0 animate-pulse rounded-md bg-gray-200 dark:bg-gray-800' />
+          <div
+            className={`
+              size-10 shrink-0 animate-pulse rounded-md bg-gray-200
+              dark:bg-gray-800
+            `}
+          />
         </div>
         {isExpanded && (
-          <div className='relative max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'>
+          <div
+            className={`
+              relative max-h-48 overflow-y-scroll border-b pb-4
+              dark:border-b-gray-800
+            `}
+          >
             <div className='my-1'>
-              <div className='flex items-center justify-normal rounded-md p-1 text-sm'>
+              <div
+                className={`
+                  flex items-center justify-normal rounded-md p-1 text-sm
+                `}
+              >
                 <span className='ml-2'>
                   <FaFolderTree className='text-gray-400' />
                 </span>
                 <span className='ml-2'>
-                  <div className='h-4 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800' />
+                  <div
+                    className={`
+                      h-4 w-24 animate-pulse rounded bg-gray-200
+                      dark:bg-gray-800
+                    `}
+                  />
                 </span>
               </div>
               <SkeletonTree />
@@ -388,7 +477,10 @@ const ConnectionPathSelector = ({
           value={inputPath}
           onChange={handlePathInput}
           placeholder={dict.repository.objects.enterPath}
-          className={`w-full ${!isValidPath ? 'border-red-500' : ''}`}
+          className={`
+            w-full
+            ${!isValidPath ? 'border-red-500' : ''}
+          `}
           disabled={loading}
         />
         <ButtonWithTooltip
@@ -409,7 +501,12 @@ const ConnectionPathSelector = ({
       )}
 
       {!existingOnly && inputPath && !isValidPath && (
-        <div className='mb-2 text-sm text-gray-500 dark:text-gray-400'>
+        <div
+          className={`
+            mb-2 text-sm text-gray-500
+            dark:text-gray-400
+          `}
+        >
           {dict.repository.objects.newObjectWillBeCreated}
         </div>
       )}
@@ -433,7 +530,10 @@ const ConnectionPathSelector = ({
       {isExpanded && (
         <div
           id='file-selector'
-          className='relative max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
+          className={`
+            relative max-h-48 overflow-y-scroll border-b pb-4
+            dark:border-b-gray-800
+          `}
         >
           <div className='my-1'>
             {rootSchema && (
@@ -441,17 +541,42 @@ const ConnectionPathSelector = ({
                 {rootSchema.type === 'group' && (
                   <div className='my-1'>
                     <div
-                      className={`flex items-center justify-normal rounded-md p-1 text-sm ${
-                        matchesTypeConstraints(
-                          rootSchema,
-                          groupOnly,
-                          binaryOnly,
-                          structuredOnly,
-                          nonGroupOnly
-                        )
-                          ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800'
-                          : ''
-                      }`}
+                      className={`
+                        flex items-center justify-normal rounded-md p-1 text-sm
+                        ${
+                          matchesTypeConstraints(
+                            rootSchema,
+                            groupOnly,
+                            binaryOnly,
+                            structuredOnly,
+                            nonGroupOnly
+                          )
+                            ? `
+                              cursor-pointer
+                              hover:bg-gray-200
+                              dark:hover:bg-gray-800
+                            `
+                            : ''
+                        }
+                      `}
+                      role='button'
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          if (
+                            matchesTypeConstraints(
+                              rootSchema,
+                              groupOnly,
+                              binaryOnly,
+                              structuredOnly,
+                              nonGroupOnly
+                            )
+                          ) {
+                            handleItemClick(rootSchema);
+                          }
+                        }
+                      }}
                       onClick={() =>
                         matchesTypeConstraints(
                           rootSchema,
@@ -466,17 +591,20 @@ const ConnectionPathSelector = ({
                         <FiFolder />
                       </span>
                       <span
-                        className={`ml-2 ${
-                          matchesTypeConstraints(
-                            rootSchema,
-                            groupOnly,
-                            binaryOnly,
-                            structuredOnly,
-                            nonGroupOnly
-                          )
-                            ? 'hover:underline'
-                            : ''
-                        }`}
+                        className={`
+                          ml-2
+                          ${
+                            matchesTypeConstraints(
+                              rootSchema,
+                              groupOnly,
+                              binaryOnly,
+                              structuredOnly,
+                              nonGroupOnly
+                            )
+                              ? 'hover:underline'
+                              : ''
+                          }
+                        `}
                         aria-label={`Select root directory`}
                       >
                         {dict.fileNavigator.rootDirectory}

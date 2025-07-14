@@ -40,11 +40,13 @@ export default function AcceptInviteSection({
     return (
       <div className='container mx-auto my-8 max-w-3xl'>
         <div
-          className='rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700'
+          className={`
+            rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700
+          `}
           role='alert'
         >
           <div className='flex gap-4'>
-            <TbX className='h-6 w-6 text-red-400' />
+            <TbX className='size-6 text-red-400' />
             <div>
               <p className='font-bold'>Invalid Invitation</p>
               <p className='text-sm'>
@@ -63,39 +65,51 @@ export default function AcceptInviteSection({
   return (
     <div
       id='sign-in-section'
-      className='mx-auto flex h-full flex-col justify-center gap-8 px-4 py-16 md:mb-0 md:py-28'
+      className={`
+        mx-auto flex h-full flex-col justify-center gap-8 px-4 py-16
+        md:mb-0 md:py-28
+      `}
     >
       <div className='flex w-full flex-row justify-between gap-4 px-4'>
         <Link
           href={websiteUrl}
-          className='transition-all hover:opacity-80'
+          className={`
+            transition-all
+            hover:opacity-80
+          `}
           aria-label='Go to website'
         >
           <Image
-            className='h-9 min-h-5 w-auto dark:hidden'
+            className={`
+              h-9 min-h-5 w-auto
+              dark:hidden
+            `}
             src='/irmin-logo.svg'
             alt='Irmin logo'
             width={200}
             height={100}
           />
           <Image
-            className='hidden h-9 min-h-5 w-auto dark:block'
+            className={`
+              hidden h-9 min-h-5 w-auto
+              dark:block
+            `}
             src='/irmin-logo-light.svg'
             alt='Irmin logo'
             width={200}
             height={100}
           />
         </Link>
-        <div className='ml-auto'></div>
+        <div className='ml-auto' />
         <LanguageSwitcher />
         <ThemeSwitch />
       </div>
-      <div className='bg-background w-screen max-w-sm space-y-4 rounded p-4'>
+      <div className='w-screen max-w-sm space-y-4 rounded bg-background p-4'>
         <div>
-          <h2 className='text-foreground text-2xl font-semibold'>
+          <h2 className='text-2xl font-semibold text-foreground'>
             {dict.invite.workspaceInvitation}
           </h2>
-          <p className='text-muted-foreground mt-1 text-sm'>
+          <p className='mt-1 text-sm text-muted-foreground'>
             {dict.invite.workspaceInvitationDescription}
           </p>
         </div>
@@ -126,21 +140,25 @@ export default function AcceptInviteSection({
             disabled={declineInviteMutation.isPending}
             className='w-full'
           >
-            <TbX className='mr-2 h-4 w-4' /> {dict.invite.declineInvitation}
+            <TbX className='mr-2 size-4' /> {dict.invite.declineInvitation}
           </Button>
           <Button
             onClick={() => acceptInviteMutation.mutate(invite.id)}
             disabled={acceptInviteMutation.isPending}
             className='w-full'
           >
-            <TbCheck className='mr-2 h-4 w-4' /> {dict.invite.acceptInvitation}
+            <TbCheck className='mr-2 size-4' /> {dict.invite.acceptInvitation}
           </Button>
         </div>
 
         {acceptInviteMutation.error && (
-          <div className='rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700'>
+          <div
+            className={`
+              rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700
+            `}
+          >
             <div className='flex gap-4'>
-              <TbX className='h-6 w-6 text-red-400' />
+              <TbX className='size-6 text-red-400' />
               <div>
                 <p className='font-bold'>{dict.common.ohNo}:</p>
                 <p className='text-sm'>{acceptInviteMutation.error.message}</p>
@@ -150,9 +168,13 @@ export default function AcceptInviteSection({
         )}
 
         {declineInviteMutation.error && (
-          <div className='rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700'>
+          <div
+            className={`
+              rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700
+            `}
+          >
             <div className='flex gap-4'>
-              <TbX className='h-6 w-6 text-red-400' />
+              <TbX className='size-6 text-red-400' />
             </div>
             <div>
               <p className='font-bold'>{dict.common.ohNo}:</p>

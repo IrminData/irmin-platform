@@ -1,8 +1,8 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { Commit } from '@/types/core/Commit';
-import { Diff, MergeStrategy } from '@/types/core/Diff';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Commit } from '@/types/core/Commit';
+import type { Diff, MergeStrategy } from '@/types/core/Diff';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Interface for merging refs

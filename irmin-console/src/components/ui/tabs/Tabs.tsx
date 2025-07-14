@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
-import { TabsType } from '@/types/internal/Tabs';
+import type { TabDetails } from '@/types/internal/Tabs';
 
 /**
  * Large tabs UI component
@@ -15,7 +15,7 @@ import { TabsType } from '@/types/internal/Tabs';
  *
  * This component is used to display large tabs with content
  */
-export default function Tabs({ tabs }: { tabs: TabsType }) {
+export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState(tabs[0].slug ?? '');
@@ -33,7 +33,7 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
     }
 
     // Find the tab with the longest matching prefix
-    let closestMatchTab: TabsType[number] | undefined;
+    let closestMatchTab: TabDetails | undefined;
     let maxPrefixLength = 0;
 
     tabs.forEach((tab) => {
@@ -60,11 +60,21 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
 
   return (
     <>
-      <div className='mt-4 mb-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2 md:border-b dark:border-gray-800'>
-        {tabs.map((tab, idx) => (
+      <div
+        className={`
+          my-4 flex w-full flex-wrap justify-start gap-2 border-gray-200 px-2
+          md:border-b
+          dark:border-gray-800
+        `}
+      >
+        {tabs.map((tab) => (
           <Button
-            key={`tab-${idx}-${tab.slug}`}
-            className={`border-accent border-0 shadow-none hover:no-underline ${activeTab === tab.slug ? 'rounded-b-none border-b-2' : ''}`}
+            key={tab.name}
+            className={`
+              border-0 border-accent shadow-none
+              hover:no-underline
+              ${activeTab === tab.slug ? `rounded-b-none border-b-2` : ''}
+            `}
             size='sm'
             variant={'outline'}
             aria-label={`Switch to ${tab.name} tab`}
@@ -79,7 +89,14 @@ export default function Tabs({ tabs }: { tabs: TabsType }) {
         ))}
       </div>
       {renderTabContent() && (
-        <div className='px-2 lg:px-4'>{renderTabContent()}</div>
+        <div
+          className={`
+            px-2
+            lg:px-4
+          `}
+        >
+          {renderTabContent()}
+        </div>
       )}
     </>
   );

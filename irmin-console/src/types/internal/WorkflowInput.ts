@@ -1,5 +1,5 @@
-import { WorkflowSchedule } from '@/types/core/Schedule';
-import { Workflowable, WorkflowableType } from '@/types/core/Workflow';
+import type { WorkflowSchedule } from '@/types/core/Schedule';
+import type { Workflowable, WorkflowableType } from '@/types/core/Workflow';
 
 /**
  * Interface for creating a workflow

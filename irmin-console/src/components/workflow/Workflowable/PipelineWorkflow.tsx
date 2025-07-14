@@ -8,8 +8,8 @@ import PipelineStageEditor from '@/components/workflow/PipelineStageEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { Pipeline, PipelineStage } from '@/types/core/Workflow';
-import { WorkflowRequest } from '@/types/internal/WorkflowInput';
+import type { Pipeline, PipelineStage } from '@/types/core/Workflow';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 interface PipelineWorkflowProps {
   workflowable: Pipeline;

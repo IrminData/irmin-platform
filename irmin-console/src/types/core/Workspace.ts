@@ -1,4 +1,4 @@
-import { User } from '@/types/core/User';
+import type { User } from '@/types/core/User';
 
 /**
  * Represents a workspace.

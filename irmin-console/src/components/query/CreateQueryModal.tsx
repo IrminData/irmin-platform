@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -52,9 +52,10 @@ export default function CreateSavedQueryModal({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={`transition-filter flex flex-col gap-4 pb-8 duration-200 ${
-        isSubmitting ? 'pointer-events-none blur-xs' : ''
-      }`}
+      className={`
+        flex flex-col gap-4 pb-8 duration-200
+        ${isSubmitting ? 'pointer-events-none blur-xs' : ''}
+      `}
     >
       <div className='flex flex-col gap-2'>
         <Label>{dict.common.name}</Label>

@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { User } from '@/types/core/User';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { User } from '@/types/core/User';
 
 /**
  * Interface for updating user roles

@@ -1,7 +1,7 @@
-import { Tag } from '@/types/core/Tag';
-import { User } from '@/types/core/User';
+import type { Tag } from '@/types/core/Tag';
+import type { User } from '@/types/core/User';
 
-import { WorkflowSchedule } from './Schedule';
+import type { WorkflowSchedule } from './Schedule';
 
 /**
  * Field mapping object
@@ -20,12 +20,12 @@ export interface FieldMapping {
 /**
  * Types of workflows that can exist
  */
-export type WorkflowableType = 'import' | 'action' | 'export' | 'pipeline';
+export type WorkflowableType = 'action' | 'export' | 'import' | 'pipeline';
 
 /**
  * Executable workflowable object
  */
-export type Workflowable = Import | Export | Action | Pipeline;
+export type Workflowable = Action | Export | Import | Pipeline;
 
 /**
  * Base Workflow object that all workflows extend
@@ -89,9 +89,9 @@ export type PipelineWorkflow = WorkflowBase & {
  * Workflow object
  */
 export type Workflow =
-  | ImportWorkflow
-  | ExportWorkflow
   | ActionWorkflow
+  | ExportWorkflow
+  | ImportWorkflow
   | PipelineWorkflow;
 
 /**
@@ -203,7 +203,7 @@ export type PipelineStage = {
 /**
  * Pipeline Stage that executes an action
  */
-export interface PipelineStageAction {
+interface PipelineStageAction {
   type: 'action';
   /** Path to the Action Script to be executed */
   executable: string;
@@ -212,7 +212,7 @@ export interface PipelineStageAction {
 /**
  * Pipeline Stage that uses a connection
  */
-export interface PipelineStageConnection {
+interface PipelineStageConnection {
   type: 'connection';
   /** Connection to use */
   connection_id: string;
@@ -225,7 +225,7 @@ export interface PipelineStageConnection {
 /**
  * Pipeline Stage that uses a repository
  */
-export interface PipelineStageRepository {
+interface PipelineStageRepository {
   type: 'repository';
   /** Slug of the repository to use */
   repository: string;

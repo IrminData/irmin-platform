@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { inviteInboxQueryKey, invitesQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -9,12 +10,8 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { generateTempId } from '@/utils/generateTempId';
 
-import { Invite } from '@/types/core/Invite';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-export const inviteInboxQueryKey = ['invite-inbox'] as const;
-export const invitesQueryKey = (workspaceSlug: string) =>
-  ['invites', workspaceSlug] as const;
+import type { Invite } from '@/types/core/Invite';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 type ChangeInviteRoleInput = {
   id: string;
@@ -118,7 +115,7 @@ export function useInvites() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: invitesQueryKey(workspaceSlug),
       });
     },
@@ -140,7 +137,7 @@ export function useInvites() {
       return res;
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: invitesQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Invite role changed successfully');
@@ -162,7 +159,7 @@ export function useInvites() {
       return res;
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: invitesQueryKey(workspaceSlug),
       });
       irminAlert('success', res.message ?? 'Invite resent successfully');
@@ -299,7 +296,7 @@ export function useInvites() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: invitesQueryKey(workspaceSlug),
       });
     },

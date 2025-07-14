@@ -1,17 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { usersQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { User } from '@/types/core/User';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { User } from '@/types/core/User';
 
-export const usersQueryKey = (workspaceSlug: string) =>
-  ['users', workspaceSlug] as const;
 type ChangeUserRoleInput = {
   id: string;
   roles: string[];
@@ -49,7 +48,9 @@ export function useUsers() {
       return res;
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: usersQueryKey(workspaceSlug) });
+      void queryClient.invalidateQueries({
+        queryKey: usersQueryKey(workspaceSlug),
+      });
       irminAlert('success', res.message ?? 'User deleted successfully');
     },
     onError: (error) => {
@@ -77,7 +78,9 @@ export function useUsers() {
       return res;
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: usersQueryKey(workspaceSlug) });
+      void queryClient.invalidateQueries({
+        queryKey: usersQueryKey(workspaceSlug),
+      });
       irminAlert('success', res.message ?? 'User role changed successfully');
     },
     onError: (error) => {

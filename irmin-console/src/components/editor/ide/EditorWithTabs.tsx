@@ -3,7 +3,7 @@
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 import { TbRun } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -12,10 +12,8 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 
 import { getNameFromPath } from '@/utils/editorItems';
 
-import {
-  IrminFileLanguage,
-  irminFileLanguages,
-} from '@/types/core/EditorItems';
+import type { IrminFileLanguage } from '@/types/core/EditorItems';
+import { irminFileLanguages } from '@/types/core/EditorItems';
 
 import NewTabContent from './NewTabContent';
 import ResizableCodeEditor from './ResizableCodeEditor';
@@ -55,25 +53,41 @@ const EditorWithTabs = () => {
   return (
     <>
       {openFileTabs.length > 0 && (
-        <div className='mb-0 flex items-center justify-between gap-1 border-b border-gray-200 pr-2 pb-0 dark:border-gray-800'>
-          <div className='scrollbar-hide flex h-full items-center overflow-x-auto'>
+        <div
+          className={`
+            mb-0 flex items-center justify-between gap-1 border-b
+            border-gray-200 pr-2 pb-0
+            dark:border-gray-800
+          `}
+        >
+          <div
+            className={`scrollbar-hide flex h-full items-center overflow-x-auto`}
+          >
             {openFileTabs.map((tab, index) => (
               <div
-                key={index}
-                className={`flex h-full w-40 items-center justify-between ${
-                  activeTab === index ? 'border-accent border-b-2' : ''
-                } `}
+                key={tab}
+                className={`
+                  flex h-full w-40 items-center justify-between
+                  ${activeTab === index ? 'border-b-2 border-accent' : ''}
+                `}
               >
                 <button
                   type='button'
-                  className={`scrollbar-hide max-w-32 min-w-20 overflow-x-scroll px-2 py-1 text-sm whitespace-nowrap hover:no-underline`}
+                  className={`
+                    scrollbar-hide max-w-32 min-w-20 overflow-x-scroll px-2 py-1
+                    text-sm whitespace-nowrap
+                    hover:no-underline
+                  `}
                   onClick={() => setActiveTab(index)}
                 >
                   {tab ? getNameFromPath(tab) : 'Untitled'}
                 </button>
                 <button
                   type='button'
-                  className={`cursor-pointer border-none px-1 py-1 hover:opacity-70`}
+                  className={`
+                    cursor-pointer border-none p-1
+                    hover:opacity-70
+                  `}
                   onClick={() => closeTab(tab)}
                 >
                   <IoClose size={12} />
@@ -82,7 +96,10 @@ const EditorWithTabs = () => {
             ))}
             <button
               type='button'
-              className={`cursor-pointer border-none px-1 py-1 hover:opacity-70`}
+              className={`
+                cursor-pointer border-none p-1
+                hover:opacity-70
+              `}
               onClick={() => openNewTab()}
               aria-label='Add new tab'
             >
@@ -111,7 +128,7 @@ const EditorWithTabs = () => {
             <Button
               size='sm'
               variant='secondary'
-              className='px-2 py-2 text-xs'
+              className='p-2 text-xs'
               aria-label='Save file as workflow'
               disabled={!currentEditor}
               href={`${workspaceUrl}/workflows/actions?create?executable=${currentEditor?.path}`}
@@ -123,7 +140,7 @@ const EditorWithTabs = () => {
               disabled={!enableSaveButton}
               size='sm'
               variant='default'
-              className='px-2 py-2 text-xs'
+              className='p-2 text-xs'
               aria-label='Save file'
               onClick={() => saveActiveTabAsFile()}
             >
@@ -133,7 +150,13 @@ const EditorWithTabs = () => {
         </div>
       )}
       {openFileTabs.length > 0 && currentEditor && (
-        <div className='scrollbar-hide w-full overflow-x-scroll border-b border-gray-200 px-2 py-1 dark:border-gray-800'>
+        <div
+          className={`
+            scrollbar-hide w-full overflow-x-scroll border-b border-gray-200
+            px-2 py-1
+            dark:border-gray-800
+          `}
+        >
           <p className='text-xs opacity-60'>{currentEditor.path}</p>
         </div>
       )}

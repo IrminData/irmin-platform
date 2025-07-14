@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { Invite } from '@/types/core/Invite';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Invite } from '@/types/core/Invite';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Interface for sending an invite

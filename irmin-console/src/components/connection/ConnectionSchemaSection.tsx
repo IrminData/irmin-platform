@@ -13,7 +13,6 @@ import { useConnectionSchema } from '@/hooks/useConnectionSchema';
  *
  * @param props - The props for the component
  * @param props.focusedPath - (optional) The path to focus on
- * @param props.operationMethod - (optional) The operation method the schema is for
  */
 const ConnectionSchemaSection = ({
   focusedPath,
@@ -26,7 +25,7 @@ const ConnectionSchemaSection = ({
   const { dict } = useLocale();
   const { connectionSchemaQuery } = useConnectionSchema(
     connectionID,
-    operationMethod ?? 'pull'
+    operationMethod
   );
 
   if (connectionSchemaQuery.isLoading) {
@@ -48,7 +47,7 @@ const ConnectionSchemaSection = ({
   }
   return (
     <div className='relative container mx-auto max-w-7xl px-4'>
-      <div className='bg-background min-h-96 w-full overflow-y-scroll rounded'>
+      <div className='min-h-96 w-full overflow-y-scroll rounded bg-background'>
         <SchemaViewer
           schema={connectionSchemaQuery.data.data}
           isExpanded={true}

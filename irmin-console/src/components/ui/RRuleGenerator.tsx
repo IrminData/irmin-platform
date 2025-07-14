@@ -284,7 +284,12 @@ export default function RRuleGenerator({
           value='custom'
           className='mt-4 flex flex-wrap space-y-4 space-x-4'
         >
-          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+          <div
+            className={`
+              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              border-border/20 p-2
+            `}
+          >
             <div className='flex items-center justify-between'>
               <Label>{dict.workflow.schedule.rrule.startDate}</Label>
             </div>
@@ -296,7 +301,12 @@ export default function RRuleGenerator({
             />
           </div>
 
-          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+          <div
+            className={`
+              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              border-border/20 p-2
+            `}
+          >
             <div className='flex items-center justify-between'>
               <Label>{dict.workflow.schedule.rrule.frequency}</Label>
               <Badge variant='secondary'>
@@ -325,7 +335,12 @@ export default function RRuleGenerator({
             </Select>
           </div>
 
-          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+          <div
+            className={`
+              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              border-border/20 p-2
+            `}
+          >
             <div className='flex items-center justify-between'>
               <Label>{dict.workflow.schedule.rrule.interval}</Label>
               <Badge variant='secondary'>{interval}</Badge>
@@ -339,7 +354,12 @@ export default function RRuleGenerator({
             />
           </div>
 
-          <div className='border-border/20 flex w-full max-w-80 flex-col space-y-3 rounded-md border p-2'>
+          <div
+            className={`
+              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              border-border/20 p-2
+            `}
+          >
             <div className='flex items-center justify-between'>
               <Label>{dict.workflow.schedule.rrule.weekdays}</Label>
               <Badge variant='secondary'>
@@ -381,7 +401,7 @@ export default function RRuleGenerator({
                     disabled={isDisabled}
                   >
                     <TbCopy
-                      className={cn('h-4 w-4', copied ? 'text-accent' : '')}
+                      className={cn('size-4', copied ? 'text-accent' : '')}
                     />
                     <span className='sr-only'>
                       {dict.workflow.schedule.rrule.copyRRule}
@@ -399,8 +419,8 @@ export default function RRuleGenerator({
             </TooltipProvider>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant='ghost' size='icon' className='h-6 w-6'>
-                  <TbInfoCircle className='h-4 w-4' />
+                <Button variant='ghost' size='icon' className='size-6'>
+                  <TbInfoCircle className='size-4' />
                   <span className='sr-only'>
                     {dict.workflow.schedule.rrule.rruleSyntaxHelp}
                   </span>
@@ -411,10 +431,10 @@ export default function RRuleGenerator({
                   <h4 className='font-medium'>
                     {dict.workflow.schedule.rrule.rruleSyntax}
                   </h4>
-                  <p className='text-muted-foreground text-sm'>
+                  <p className='text-sm text-muted-foreground'>
                     {dict.workflow.schedule.rrule.rruleSyntaxDescription}
                   </p>
-                  <ul className='text-muted-foreground list-disc pl-4 text-sm'>
+                  <ul className='list-disc pl-4 text-sm text-muted-foreground'>
                     <li>
                       {dict.workflow.schedule.rrule.rruleSyntaxOptions.freq}
                     </li>
@@ -441,7 +461,10 @@ export default function RRuleGenerator({
           <Input
             value={generatedRule}
             readOnly
-            className='border-accent focus-visible:ring-accent pr-10 font-mono'
+            className={`
+              border-accent pr-10 font-mono
+              focus-visible:ring-accent
+            `}
             disabled={isDisabled}
           />
         </div>
@@ -451,14 +474,17 @@ export default function RRuleGenerator({
         <Label>{dict.workflow.schedule.rrule.nextExecutionTimes}</Label>
         {nextDates.length > 0 ? (
           <ul className='space-y-2'>
-            {nextDates.map((date, index) => (
-              <li key={index} className='bg-muted rounded-md p-2 text-sm'>
+            {nextDates.map((date) => (
+              <li
+                key={`next-execution-${date.getTime()}`}
+                className='rounded-md bg-muted p-2 text-sm'
+              >
                 {format(date, 'PPpp')}
               </li>
             ))}
           </ul>
         ) : (
-          <p className='text-muted-foreground pl-1 text-sm'>
+          <p className='pl-1 text-sm text-muted-foreground'>
             {dict.workflow.schedule.rrule.invalidRRule}
           </p>
         )}

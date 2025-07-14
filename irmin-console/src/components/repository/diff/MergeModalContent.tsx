@@ -4,9 +4,9 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import Input from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -18,9 +18,9 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { MergeRefsInput } from '@/hooks/useRepositoryDiff';
+import type { MergeRefsInput } from '@/hooks/useRepositoryDiff';
 
-import { MergeStrategy } from '@/types/core/Diff';
+import type { MergeStrategy } from '@/types/core/Diff';
 
 /**
  * Modal content to merge refs.

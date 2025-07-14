@@ -1,4 +1,4 @@
-import { User } from '@/types/core/User';
+import type { User } from '@/types/core/User';
 
 const getInitials = (name: string) => {
   const initials = name
@@ -25,7 +25,11 @@ const ProfileImagePlaceholder = ({
 }) => {
   return (
     <div
-      className={`bg-accent/20 text-accent relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium ${className ? className : 'h-10 w-10'}`}
+      className={`
+        relative inline-flex items-center justify-center overflow-hidden
+        rounded-full bg-accent/20 font-medium text-accent
+        ${className ? className : `size-10`}
+      `}
       id='profile-image-placeholder'
     >
       <span>

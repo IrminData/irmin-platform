@@ -1,6 +1,7 @@
 'use client';
 
-import { CSSProperties, memo, useMemo } from 'react';
+import type { CSSProperties } from 'react';
+import { memo, useMemo } from 'react';
 
 import dynamic from 'next/dynamic';
 
@@ -16,12 +17,12 @@ import {
   vscodeLight,
   vscodeLightInit,
 } from '@uiw/codemirror-theme-vscode';
-import { ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 import { useTheme } from 'next-themes';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { IrminFileLanguage } from '@/types/core/EditorItems';
+import type { IrminFileLanguage } from '@/types/core/EditorItems';
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
@@ -34,13 +35,13 @@ const CodeMirrorEditor = ({
   updateEditorContent,
   containerStyles,
   ...editorProps
-}: {
+}: ReactCodeMirrorProps & {
   language: IrminFileLanguage;
   content: string;
   editorHeight?: string;
   containerStyles?: CSSProperties;
   updateEditorContent: (value: string) => void;
-} & ReactCodeMirrorProps) => {
+}) => {
   const { dict } = useLocale();
   const { resolvedTheme } = useTheme();
 
@@ -82,7 +83,10 @@ const CodeMirrorEditor = ({
         maxHeight: editorHeight ?? '100%',
         ...containerStyles,
       }}
-      className='codemirror-editor relative h-full w-full overflow-scroll bg-white dark:bg-gray-950'
+      className={`
+        codemirror-editor relative size-full overflow-scroll bg-white
+        dark:bg-gray-950
+      `}
     >
       <CodeMirror
         value={content}

@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react';
 
-import Button from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { Button } from '@/components/ui/button';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -21,6 +22,22 @@ import { PolicyResource } from '@/types/core/Policy';
  * It allows one to manage the policies and create new ones.
  */
 const RepositoryPoliciesSection = ({ type }: { type?: PolicyResource }) => {
+  return (
+    <SafeComponent
+      level='section'
+      title='Repository Policies Error'
+      description='The repository policies section encountered an error. Please try refreshing the page.'
+    >
+      <RepositoryPoliciesSectionContent type={type} />
+    </SafeComponent>
+  );
+};
+
+const RepositoryPoliciesSectionContent = ({
+  type,
+}: {
+  type?: PolicyResource;
+}) => {
   const { dict } = useLocale();
   const { repository } = useRepositoryContext();
 

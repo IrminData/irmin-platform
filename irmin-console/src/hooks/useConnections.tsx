@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { connectionsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -9,15 +10,12 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { generateTempId } from '@/utils/generateTempId';
 
-import { Connection } from '@/types/core/Connection';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-export const connectionsQueryKey = (workspaceSlug: string) =>
-  ['connections', workspaceSlug] as const;
+import type { Connection } from '@/types/core/Connection';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 type CreateConnectionMutation = Pick<
   Connection,
-  'name' | 'description' | 'documentation' | 'details' | 'settings'
+  'description' | 'details' | 'documentation' | 'name' | 'settings'
 > & {
   connectorID: string;
 };
@@ -103,6 +101,7 @@ export function useConnections() {
               id: input.connectorID,
               name: 'Loading...',
               description: '',
+              structure_version: '1.0.0',
               version: '1.0.0',
               author: '',
               logo_url: '',
@@ -176,7 +175,7 @@ export function useConnections() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: connectionsQueryKey(workspaceSlug),
       });
     },

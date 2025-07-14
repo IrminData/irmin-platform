@@ -1,7 +1,7 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { Commit, PathType } from '@/types/core/Commit';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { Commit, PathType } from '@/types/core/Commit';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 /**
  * Interface for creating a commit

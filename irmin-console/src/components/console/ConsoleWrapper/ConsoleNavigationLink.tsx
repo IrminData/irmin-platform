@@ -1,8 +1,8 @@
-import { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 
 import Link from 'next/link';
 
-import { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
+import type { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
 /**
  * Navigation link for the console
@@ -35,9 +35,13 @@ export default function ConsoleNavigationLink({
     return (
       <li id='console-navigation-link'>
         <Link
-          className={`hover:bg-primary/20 flex items-center justify-between rounded-md p-3 py-3 ${
-            link.active ? 'bg-primary/10' : ''
-          } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
+          className={`
+            flex items-center justify-between rounded-md p-3 py-3
+            hover:bg-primary/20
+            ${link.active ? 'bg-primary/10' : ''}
+            overflow-hidden transition-all
+            ${isMenuFolded ? 'w-12' : 'w-full'}
+          `}
           href={link.href}
           onClick={() => setIsMenuOpen(false)}
           {...(link.props as ComponentPropsWithoutRef<'a'>)}
@@ -53,9 +57,13 @@ export default function ConsoleNavigationLink({
     return (
       <li id='console-navigation-link'>
         <button
-          className={`hover:bg-primary/20 flex items-center justify-between rounded-md p-3 py-3 ${
-            link.active ? 'bg-primary/10' : ''
-          } overflow-hidden transition-all ${isMenuFolded ? 'w-12' : 'w-full'}`}
+          className={`
+            flex items-center justify-between rounded-md p-3 py-3
+            hover:bg-primary/20
+            ${link.active ? 'bg-primary/10' : ''}
+            overflow-hidden transition-all
+            ${isMenuFolded ? 'w-12' : 'w-full'}
+          `}
           onClick={() => {
             setIsMenuOpen(false);
             if (link.action) link.action();

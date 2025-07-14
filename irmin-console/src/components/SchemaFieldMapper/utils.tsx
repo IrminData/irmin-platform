@@ -5,7 +5,7 @@ import type { FieldMapping } from '@/types/core/Workflow';
 
 import type { Field, FileGroup } from './types';
 
-export const extractFieldsFromSchema = (schema: ObjectSchema): Field[] => {
+const extractFieldsFromSchema = (schema: ObjectSchema): Field[] => {
   const fields: Field[] = [];
 
   const processSchema = (obj: ObjectSchema) => {
@@ -99,13 +99,32 @@ export const getFileIcon = (fileType: string) => {
   switch (fileType) {
     case 'group':
       return (
-        <TbFolder className='h-5 w-5 text-yellow-500 dark:text-yellow-400' />
+        <TbFolder
+          className={`
+            size-5 text-yellow-500
+            dark:text-yellow-400
+          `}
+        />
       );
     case 'structured':
-      return <TbTable className='h-5 w-5 text-blue-500 dark:text-blue-400' />;
+      return (
+        <TbTable
+          className={`
+            size-5 text-blue-500
+            dark:text-blue-400
+          `}
+        />
+      );
     case 'binary':
     default:
-      return <TbFile className='h-5 w-5 text-gray-500 dark:text-gray-400' />;
+      return (
+        <TbFile
+          className={`
+            size-5 text-gray-500
+            dark:text-gray-400
+          `}
+        />
+      );
   }
 };
 
@@ -122,7 +141,7 @@ export const isFieldMapped = (
 /**
  * Find an object in the schema tree by path
  */
-export const findObjectByPath = (
+const findObjectByPath = (
   root: ObjectSchema,
   path: string
 ): ObjectSchema | undefined => {

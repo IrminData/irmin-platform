@@ -18,7 +18,7 @@ import {
   PolicyResource,
 } from '@/types/core/Policy';
 
-import {
+import type {
   PolicyFormData,
   UsePolicyFormProps,
   UsePolicyFormReturn,

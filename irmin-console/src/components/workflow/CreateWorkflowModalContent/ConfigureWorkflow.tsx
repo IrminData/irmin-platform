@@ -2,8 +2,8 @@
 
 import { memo, useCallback, useRef } from 'react';
 
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
@@ -75,7 +75,7 @@ function ConfigureWorkflow({
             }
           />
         </div>
-        <div className='border-foreground/20 rounded-md border px-2 py-4'>
+        <div className='rounded-md border border-foreground/20 px-2 py-4'>
           <WorkflowScheduleForm
             initialData={initialWorkflowSchedule.current}
             disableSaveButton={true}
@@ -88,8 +88,13 @@ function ConfigureWorkflow({
           />
         </div>
       </div>
-      <div className='grow'></div>
-      <div className='mt-auto border-t pt-4 dark:border-gray-800'>
+      <div className='grow' />
+      <div
+        className={`
+          mt-auto border-t pt-4
+          dark:border-gray-800
+        `}
+      >
         <Button
           className='mb-6 inline-block w-full'
           variant='gradient'

@@ -1,47 +1,37 @@
 import { useCallback, useRef, useState } from 'react';
 
-import {
-  useQuery,
-  useQueryClient,
-  UseQueryOptions,
-} from '@tanstack/react-query';
+import type { UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { logEventsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import {
+import type {
   IrminAPIPaginationMetadata,
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
-import { LogEvent } from '@/types/core/Log';
+import type { LogEvent } from '@/types/core/Log';
 
 /**
  * Types of entities for which logs can be fetched
  */
 export type LogsForType =
-  | 'workspace'
-  | 'workflow'
-  | 'repository'
   | 'connection'
-  | 'user'
-  | 'stored_query'
   | 'policy'
-  | 'repository_object';
+  | 'repository_object'
+  | 'repository'
+  | 'stored_query'
+  | 'user'
+  | 'workflow'
+  | 'workspace';
 
 interface LogEventsResponse extends IrminAPIResponse<LogEvent[]> {
   pagination?: IrminAPIPaginationMetadata;
 }
-
-export const logEventsQueryKey = (
-  workspaceSlug: string,
-  logsForType: LogsForType,
-  logsFor: string,
-  page: number,
-  search?: string
-) => ['log-events', workspaceSlug, logsForType, logsFor, page, search] as const;
 
 /**
  * Fetch paginated log events for a workspace, workflow, repository, connection, or user.
@@ -183,7 +173,7 @@ export const useLogEvents = (
   );
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ['log-events', workspaceSlug, logsForType, logsFor],
     });
   }, [queryClient, workspaceSlug, logsForType, logsFor]);

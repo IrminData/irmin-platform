@@ -1,15 +1,15 @@
-import { Commit } from '@/types/core/Commit';
-import { Object } from '@/types/core/Object';
+import type { Commit } from '@/types/core/Commit';
+import type { Object } from '@/types/core/Object';
 
 /**
- * Represents the type of change in a diff.
+ * Represents the type of change in a diff, eg. what kind of change was made to the object
  */
-export type ChangeType = 'added' | 'removed' | 'changed' | 'conflict' | 'moved';
+type ChangeType = 'added' | 'changed' | 'conflict' | 'moved' | 'removed';
 
 /**
- * Represents possible merge strategies.
+ * Represents possible merge strategies, eg. how to resolve conflicts when merging two branches
  */
-export type MergeStrategy = 'default' | 'source-wins' | 'dest-wins';
+export type MergeStrategy = 'default' | 'dest-wins' | 'source-wins';
 
 /**
  * Represents a single change in a diff.

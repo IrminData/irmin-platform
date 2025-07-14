@@ -6,7 +6,9 @@ import { GoGitCommit } from 'react-icons/go';
 import { GrRevert } from 'react-icons/gr';
 import { TbRefresh } from 'react-icons/tb';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -24,6 +26,18 @@ import ImmutableWarning from './ImmutableWarning';
  * Section to view and commit uncommitted changes in a repository.
  */
 export default function RepositoryUncommittedChangesSection() {
+  return (
+    <SafeComponent
+      level='section'
+      title='Repository Uncommitted Changes Error'
+      description='The repository uncommitted changes section encountered an error. Please try refreshing the page.'
+    >
+      <RepositoryUncommittedChangesSectionContent />
+    </SafeComponent>
+  );
+}
+
+function RepositoryUncommittedChangesSectionContent() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
   const { repository, currentRef } = useRepositoryContext();
@@ -82,23 +96,54 @@ export default function RepositoryUncommittedChangesSection() {
 
   if (repository.is_immutable)
     return (
-      <div className='relative container mx-auto max-w-7xl px-2 py-12 pt-4 md:px-4'>
+      <div
+        className={`
+          relative container mx-auto max-w-7xl px-2 py-12 pt-4
+          md:px-4
+        `}
+      >
         <ImmutableWarning />
       </div>
     );
 
   return (
-    <div className='relative container mx-auto max-w-7xl px-2 pt-4 pb-12 md:px-4'>
-      <div className='mb-8 flex w-full flex-wrap items-center justify-between gap-4 lg:flex-row'>
+    <div
+      className={`
+        relative container mx-auto max-w-7xl px-2 pt-4 pb-12
+        md:px-4
+      `}
+    >
+      <div
+        className={`
+          mb-8 flex w-full flex-wrap items-center justify-between gap-4
+          lg:flex-row
+        `}
+      >
         {/* Title */}
-        <h3 className='text-sm text-gray-900 lg:text-base dark:text-gray-100'>
+        <h3
+          className={`
+            text-sm text-gray-900
+            lg:text-base
+            dark:text-gray-100
+          `}
+        >
           {dict.repository.commit.showingUncommittedChangesFor}{' '}
-          <span className='text-irmin_blue dark:text-irmin_green font-semibold'>
+          <span
+            className={`
+              font-semibold text-irmin-blue-500
+              dark:text-irmin-green-500
+            `}
+          >
             {currentRef}
           </span>
         </h3>
         {/* Actions */}
-        <div className='flex w-max min-w-48 flex-row items-center gap-4 lg:justify-end'>
+        <div
+          className={`
+            flex w-max min-w-48 flex-row items-center gap-4
+            lg:justify-end
+          `}
+        >
           <ButtonWithTooltip
             size='icon'
             icon={<TbRefresh size={18} />}

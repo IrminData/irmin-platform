@@ -1,13 +1,15 @@
 import WorkflowScheduleSection from '@/components/workflow/WorkflowScheduleSection';
 
-import { SingleWorkflowLayoutParams } from '../layout';
+import type { PageSearchParams } from '@/types/internal/PageSearchParams';
+
+import type { SingleWorkflowLayoutParams } from '../layout';
 
 /**
  * Page for the Workflow schedule settings
  */
 export default async function WorkflowSchedulePage(props: {
   params: Promise<SingleWorkflowLayoutParams>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const params = await props.params;
 

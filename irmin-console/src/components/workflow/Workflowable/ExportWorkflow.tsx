@@ -2,8 +2,8 @@
 
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
-import Button from '@/components/ui/button';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -20,8 +20,8 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useConnections } from '@/hooks/useConnections';
 import { useRepositories } from '@/hooks/useRepositories';
 
-import { Export } from '@/types/core/Workflow';
-import { WorkflowRequest } from '@/types/internal/WorkflowInput';
+import type { Export } from '@/types/core/Workflow';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 interface ExportWorkflowProps {
   workflowable: Export;

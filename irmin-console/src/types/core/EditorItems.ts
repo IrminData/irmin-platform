@@ -1,13 +1,13 @@
-import { JSONValue } from '../internal/GenericJSON';
+import type { JSONValue } from '../internal/GenericJSON';
 
 export type IrminFileLanguage =
-  | 'js'
   | 'go'
+  | 'js'
+  | 'json'
+  | 'md'
   | 'py'
   | 'sql'
-  | 'md'
-  | 'txt'
-  | 'json';
+  | 'txt';
 
 export const irminFileLanguages: {
   label: string;
@@ -69,7 +69,7 @@ export interface EditorItem {
  */
 export interface ScriptResult {
   /** Parsed structured result files */
-  structured_results?: Record<string, Array<Record<string, JSONValue>>>;
+  structured_results?: Record<string, Record<string, JSONValue>[]>;
   /** Indicates if there were errors */
   has_errors?: boolean;
   /** Duration of the script execution */

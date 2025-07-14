@@ -2,7 +2,7 @@ import WorkflowPoliciesSection from '@/components/workflow/WorkflowPoliciesSecti
 
 import { PolicyResource } from '@/types/core/Policy';
 
-import { SingleWorkflowLayoutParams } from '../layout';
+import type { SingleWorkflowLayoutParams } from '../layout';
 
 /**
  * Page for the Workflow policies

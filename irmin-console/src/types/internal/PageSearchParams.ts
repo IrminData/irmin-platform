@@ -6,4 +6,4 @@
  *
  * {@link https://nextjs.org/docs/app/api-reference/functions/use-search-params#layouts}
  */
-export type PageSearchParams = { [key: string]: string | string[] | undefined };
+export type PageSearchParams = { [key: string]: string[] | string | undefined };

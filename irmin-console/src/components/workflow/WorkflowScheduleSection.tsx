@@ -4,15 +4,15 @@ import { useCallback } from 'react';
 
 import { FaPause, FaPlay } from 'react-icons/fa6';
 
-import Button from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
+import { Button } from '@/components/ui/button';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkflow } from '@/hooks/useWorkflow';
 
-import { WorkflowSchedule } from '@/types/core/Schedule';
+import type { WorkflowSchedule } from '@/types/core/Schedule';
 
 /**
  * Workflow Schedule section component

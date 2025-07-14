@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import type React from 'react';
+import { useCallback, useState } from 'react';
 
 import { CiMenuKebab } from 'react-icons/ci';
 import { FaTimes } from 'react-icons/fa';
 import { FiFileText, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -15,7 +16,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+import type { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
  * File navigator component
@@ -127,12 +128,18 @@ const FileNavigator = () => {
         return (
           <div key={item.current.name} className='my-1'>
             <div
-              className={`flex items-center justify-normal rounded-md p-1 text-sm`}
+              className={`
+                flex items-center justify-normal rounded-md p-1 text-sm
+              `}
             >
               {item.current.type === 'folder' ? (
                 openFolders[item.current.name] ? (
                   <TbChevronDown
-                    className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                    className={`
+                      inline-block cursor-pointer
+                      hover:bg-gray-100
+                      dark:hover:bg-gray-800
+                    `}
                     aria-label={`Close folder ${item.current.name} in the file navigator`}
                     onClick={() => {
                       if (!loading) {
@@ -142,7 +149,11 @@ const FileNavigator = () => {
                   />
                 ) : (
                   <TbChevronRight
-                    className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                    className={`
+                      inline-block cursor-pointer
+                      hover:bg-gray-100
+                      dark:hover:bg-gray-800
+                    `}
                     aria-label={`Open folder ${item.current.name} in the file navigator`}
                     onClick={() => {
                       if (!loading) {
@@ -156,7 +167,10 @@ const FileNavigator = () => {
                 {item.current.type === 'folder' ? <FiFolder /> : <FiFileText />}
               </span>
               <span
-                className='ml-2 cursor-pointer hover:underline'
+                className={`
+                  ml-2 cursor-pointer
+                  hover:underline
+                `}
                 aria-label={`Open ${item.current.name} ${item.current.type}`}
                 onClick={() => {
                   if (!loading) {
@@ -168,11 +182,22 @@ const FileNavigator = () => {
                     handleContextMenu(e, item);
                   }
                 }}
+                role='button'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleItemClick(item);
+                  }
+                }}
               >
                 {item.current.name}
               </span>
               <button
-                className='ml-auto cursor-pointer rounded-full py-1 hover:bg-gray-100 dark:hover:bg-gray-700'
+                className={`
+                  ml-auto cursor-pointer rounded-full py-1
+                  hover:bg-gray-100
+                  dark:hover:bg-gray-700
+                `}
                 aria-label={`Open context menu for ${item.current.name}`}
                 onClick={(e) => {
                   handleContextMenu(e, item);
@@ -200,10 +225,26 @@ const FileNavigator = () => {
   );
 
   return (
-    <div id='file-navigator' className={`${loading ? 'blur-xs' : ''} relative`}>
-      <div className='mb-0 flex flex-row justify-stretch gap-0 border-b bg-gray-100 p-0 dark:border-gray-700 dark:bg-gray-800'>
+    <div
+      id='file-navigator'
+      className={`
+        ${loading ? 'blur-xs' : ''}
+        relative
+      `}
+    >
+      <div
+        className={`
+          mb-0 flex flex-row justify-stretch gap-0 border-b bg-gray-100 p-0
+          dark:border-gray-700 dark:bg-gray-800
+        `}
+      >
         <Button
-          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs dark:hover:bg-gray-700'
+          className={`
+            w-[40%] rounded-none p-2 text-xs shadow-none
+            hover:bg-gray-200
+            lg:w-1/2 lg:text-xs
+            dark:hover:bg-gray-700
+          `}
           variant='ghost'
           size='sm'
           onClick={addNewFile}
@@ -217,7 +258,12 @@ const FileNavigator = () => {
           {dict.fileNavigator.createFile}
         </Button>
         <Button
-          className='w-[40%] rounded-none px-2 py-2 text-xs shadow-none hover:bg-gray-200 lg:w-1/2 lg:text-xs dark:hover:bg-gray-700'
+          className={`
+            w-[40%] rounded-none p-2 text-xs shadow-none
+            hover:bg-gray-200
+            lg:w-1/2 lg:text-xs
+            dark:hover:bg-gray-700
+          `}
           variant='ghost'
           size='sm'
           onClick={addNewFolder}
@@ -231,23 +277,40 @@ const FileNavigator = () => {
           {dict.fileNavigator.createFolder}
         </Button>
       </div>
-      <div className='max-h-60 overflow-auto border-t px-3 py-4 xl:max-h-96 dark:border-gray-700'>
+      <div
+        className={`
+          max-h-60 overflow-auto border-t px-3 py-4
+          xl:max-h-96
+          dark:border-gray-700
+        `}
+      >
         {renderItems(items)}
       </div>
       {contextMenu && !loading && contextMenu.visible && (
         <ul
           id='file-navigator-context-menu'
-          className='bg-popover absolute right-2 left-2 rounded-lg border px-4 py-2 dark:border-gray-700'
+          className={`
+            absolute right-2 left-2 rounded-lg border bg-popover px-4 py-2
+            dark:border-gray-700
+          `}
           style={{ top: `${contextMenu.top}px` }}
         >
           <button
-            className='float-end cursor-pointer p-1 transition-all hover:opacity-40'
+            className={`
+              float-end cursor-pointer p-1 transition-all
+              hover:opacity-40
+            `}
             aria-label='Close context menu'
             onClick={closeContextMenu}
           >
             <FaTimes size={16} />
           </button>
-          <li className='border-b p-1 pb-2 text-xs dark:border-gray-800'>
+          <li
+            className={`
+              border-b p-1 pb-2 text-xs
+              dark:border-gray-800
+            `}
+          >
             {contextMenu.item.current?.name ?? contextMenu.item.original?.name}
           </li>
           {contextMenu.item?.current?.type === 'file' &&
@@ -256,8 +319,12 @@ const FileNavigator = () => {
               PolicyAction.Read
             ) && (
               <>
-                <li
-                  className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
+                <button
+                  className={`
+                    w-full cursor-pointer rounded p-1 text-left text-sm
+                    hover:bg-gray-100
+                    dark:hover:bg-gray-700
+                  `}
                   onClick={() => {
                     if (contextMenu.item.current?.type === 'file') {
                       closeContextMenu();
@@ -266,7 +333,7 @@ const FileNavigator = () => {
                   }}
                 >
                   {dict.fileNavigator.open}
-                </li>
+                </button>
               </>
             )}
           {isResourceAllowed(
@@ -274,39 +341,51 @@ const FileNavigator = () => {
             PolicyAction.Update
           ) && (
             <>
-              <li
-                className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
+              <button
+                className={`
+                  w-full cursor-pointer rounded p-1 text-left text-sm
+                  hover:bg-gray-100
+                  dark:hover:bg-gray-700
+                `}
                 onClick={() => {
                   closeContextMenu();
                   renameOrMoveItem(contextMenu.item);
                 }}
               >
                 {dict.fileNavigator.move}
-              </li>
-              <li
-                className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
+              </button>
+              <button
+                className={`
+                  w-full cursor-pointer rounded p-1 text-left text-sm
+                  hover:bg-gray-100
+                  dark:hover:bg-gray-700
+                `}
                 onClick={() => {
                   closeContextMenu();
                   renameOrMoveItem(contextMenu.item);
                 }}
               >
                 {dict.fileNavigator.rename}
-              </li>
+              </button>
             </>
           )}
           {isResourceAllowed(
             PolicyResource.EditorScript,
             PolicyAction.Delete
           ) && (
-            <li
-              className='cursor-pointer rounded p-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700'
+            <button
+              className={`
+                w-full cursor-pointer rounded p-1 text-left text-sm
+                hover:bg-gray-100
+                dark:hover:bg-gray-700
+              `}
               onClick={() => {
                 closeContextMenu();
                 deleteItem(contextMenu.item);
               }}
             >
               {dict.list.delete}
-            </li>
+            </button>
           )}
         </ul>
       )}

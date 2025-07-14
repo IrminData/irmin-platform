@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import type React from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   TbChevronDown,
@@ -32,7 +33,7 @@ import { PolicyPrincipal, PolicyResource } from '@/types/core/Policy';
 
 import PolicyDeleteButton from './PolicyDeleteButton';
 import PolicyEffectBadge from './PolicyEffectBadge';
-import { PolicyTableProps } from './types';
+import type { PolicyTableProps } from './types';
 import {
   formatActionName,
   formatPrincipalName,
@@ -40,8 +41,8 @@ import {
 } from './utils';
 
 type SortableColumn =
-  | 'effect'
   | 'action'
+  | 'effect'
   | 'principal'
   | 'resource'
   | 'resourceId';
@@ -132,16 +133,16 @@ export default function PolicyTable({
 
   const getSortIcon = (column: SortableColumn) => {
     if (sortState.column !== column) {
-      return <TbSelector className='text-muted-foreground h-4 w-4' />;
+      return <TbSelector className='size-4 text-muted-foreground' />;
     }
 
     if (sortState.direction === 'asc') {
-      return <TbChevronUp className='h-4 w-4' />;
+      return <TbChevronUp className='size-4' />;
     } else if (sortState.direction === 'desc') {
-      return <TbChevronDown className='h-4 w-4' />;
+      return <TbChevronDown className='size-4' />;
     }
 
-    return <TbSelector className='text-muted-foreground h-4 w-4' />;
+    return <TbSelector className='size-4 text-muted-foreground' />;
   };
 
   const SortableHeader = ({
@@ -152,7 +153,18 @@ export default function PolicyTable({
     children: React.ReactNode;
   }) => (
     <div
-      className='hover:text-foreground flex cursor-pointer items-center gap-2 transition-colors select-none'
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleSort(column);
+        }
+      }}
+      className={`
+        flex cursor-pointer items-center gap-2 transition-colors select-none
+        hover:text-foreground
+      `}
       onClick={() => handleSort(column)}
     >
       {children}
@@ -233,7 +245,7 @@ export default function PolicyTable({
                   <Tooltip>
                     <TooltipTrigger onClick={(e) => e.stopPropagation()}>
                       <TbInfoCircle
-                        className='text-muted-foreground cursor-help'
+                        className='cursor-help text-muted-foreground'
                         size={16}
                       />
                     </TooltipTrigger>
@@ -253,7 +265,7 @@ export default function PolicyTable({
                   <Tooltip>
                     <TooltipTrigger onClick={(e) => e.stopPropagation()}>
                       <TbInfoCircle
-                        className='text-muted-foreground cursor-help'
+                        className='cursor-help text-muted-foreground'
                         size={16}
                       />
                     </TooltipTrigger>
@@ -273,7 +285,7 @@ export default function PolicyTable({
                   <Tooltip>
                     <TooltipTrigger onClick={(e) => e.stopPropagation()}>
                       <TbInfoCircle
-                        className='text-muted-foreground cursor-help'
+                        className='cursor-help text-muted-foreground'
                         size={16}
                       />
                     </TooltipTrigger>
@@ -294,7 +306,7 @@ export default function PolicyTable({
                     <Tooltip>
                       <TooltipTrigger onClick={(e) => e.stopPropagation()}>
                         <TbInfoCircle
-                          className='text-muted-foreground cursor-help'
+                          className='cursor-help text-muted-foreground'
                           size={16}
                         />
                       </TooltipTrigger>
@@ -316,7 +328,7 @@ export default function PolicyTable({
                     <Tooltip>
                       <TooltipTrigger onClick={(e) => e.stopPropagation()}>
                         <TbInfoCircle
-                          className='text-muted-foreground cursor-help'
+                          className='cursor-help text-muted-foreground'
                           size={16}
                         />
                       </TooltipTrigger>
@@ -346,12 +358,12 @@ export default function PolicyTable({
             <TableCell>
               {formatPrincipalName(dict, policy.principal)}
               {policy.principal === PolicyPrincipal.Role && (
-                <span className='text-muted-foreground pl-2 text-sm'>
+                <span className='pl-2 text-sm text-muted-foreground'>
                   ({policy.role?.role})
                 </span>
               )}
               {policy.principal === PolicyPrincipal.WorkspaceUser && (
-                <span className='text-muted-foreground pl-2 text-sm'>
+                <span className='pl-2 text-sm text-muted-foreground'>
                   ({policy.user?.email})
                 </span>
               )}
@@ -361,7 +373,7 @@ export default function PolicyTable({
             )}
             {showResourceIdColumn && (
               <TableCell>
-                <code className='bg-muted rounded px-1 py-0.5 text-xs'>
+                <code className='rounded bg-muted px-1 py-0.5 text-xs'>
                   {formatResourceId(policy.resource, policy.resourceId)}
                 </code>
               </TableCell>
@@ -375,7 +387,7 @@ export default function PolicyTable({
                       size='icon'
                       onClick={() => onEditClick(policy)}
                     >
-                      <TbEdit className='h-4 w-4' />
+                      <TbEdit className='size-4' />
                     </Button>
                   )}
                   {allowDelete && <PolicyDeleteButton policyId={policy.id} />}

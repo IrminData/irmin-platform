@@ -1,4 +1,4 @@
-import { EditorItem } from '@/types/core/EditorItems';
+import type { EditorItem } from '@/types/core/EditorItems';
 
 /**
  * File navigator file item properties

@@ -1,34 +1,46 @@
 import { useRouter } from 'next/navigation';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { inviteInboxQueryKey, inviteQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { Invite } from '@/types/core/Invite';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-export const inviteQueryKey = (inviteID: string) =>
-  ['invite', inviteID] as const;
+import type { Invite } from '@/types/core/Invite';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export function useInvite(inviteID: string) {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Query for fetching a single invite by ID
-  const inviteQuery = useQuery<IrminAPIResponse<Invite>>({
-    queryKey: inviteQueryKey(inviteID!),
+  const inviteQuery = useQuery<IrminAPIResponse<Invite>, Error>({
+    queryKey: inviteQueryKey(inviteID),
     queryFn: async () => {
-      if (!inviteID) throw new Error('Invite ID is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const invite = await core.inviteService.fetchInvite({ inviteID });
-      return invite;
+      return await core.inviteService.fetchInvite({
+        inviteID,
+      });
+    },
+    initialData: () => {
+      const invites =
+        queryClient.getQueryData<IrminAPIResponse<Invite[]>>(
+          inviteInboxQueryKey
+        );
+      return invites?.data?.find((i: Invite) => i.id === inviteID)
+        ? {
+            data: invites.data.find((i: Invite) => i.id === inviteID),
+            success: true,
+            message: 'Cached data',
+          }
+        : undefined;
     },
     enabled: !!inviteID,
   });

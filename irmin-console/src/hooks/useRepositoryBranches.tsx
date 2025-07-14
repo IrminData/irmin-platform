@@ -1,20 +1,15 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { repositoryBranchesQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { Branch } from '@/types/core/Branch';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-export const repositoryBranchesQueryKey = (
-  workspaceSlug: string,
-  slug: string
-) => ['repositoryBranches', workspaceSlug, slug] as const;
+import type { Branch } from '@/types/core/Branch';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export function useRepositoryBranches(repositorySlug: string) {
   const { getToken } = useIAM();
@@ -51,7 +46,7 @@ export function useRepositoryBranches(repositorySlug: string) {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryBranchesQueryKey(workspaceSlug, repositorySlug),
       });
       irminAlert('success', res.message ?? 'Branch created successfully');
@@ -73,7 +68,7 @@ export function useRepositoryBranches(repositorySlug: string) {
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryBranchesQueryKey(workspaceSlug, repositorySlug),
       });
       irminAlert('success', res.message ?? 'Branch deleted successfully');

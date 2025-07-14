@@ -10,15 +10,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+const ObjectListTableRowSkeleton = () => {
+  return (
+    <TableRow>
+      <TableCell>
+        <LoadingSkeleton className='h-4 w-[250px]' />
+      </TableCell>
+    </TableRow>
+  );
+};
+
 /**
- * Skeleton for the repository object table
+ * Skeleton for the repository object list table
  */
-function TableSkeleton() {
+function ObjectListTableSkeleton() {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className='w-[300px]'>
+          <TableHead>
             <LoadingSkeleton className='h-4 w-[100px]' />
           </TableHead>
           <TableHead>
@@ -30,22 +40,14 @@ function TableSkeleton() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {[...Array(5)].map((_, index) => (
-          <TableRow key={index}>
-            <TableCell>
-              <LoadingSkeleton className='h-4 w-[250px]' />
-            </TableCell>
-            <TableCell>
-              <LoadingSkeleton className='h-4 w-[100px]' />
-            </TableCell>
-            <TableCell>
-              <LoadingSkeleton className='h-4 w-[100px]' />
-            </TableCell>
-          </TableRow>
-        ))}
+        <ObjectListTableRowSkeleton />
+        <ObjectListTableRowSkeleton />
+        <ObjectListTableRowSkeleton />
+        <ObjectListTableRowSkeleton />
+        <ObjectListTableRowSkeleton />
       </TableBody>
     </Table>
   );
 }
 
-export default memo(TableSkeleton);
+export default memo(ObjectListTableSkeleton);

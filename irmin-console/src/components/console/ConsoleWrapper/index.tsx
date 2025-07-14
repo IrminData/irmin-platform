@@ -1,6 +1,7 @@
 'use client';
 
-import { ComponentPropsWithoutRef, useState } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
+import { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,7 +10,8 @@ import { useParams } from 'next/navigation';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 import ConsoleSearch from '@/components/search/ConsoleSearch';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/ui/error/ErrorBoundary';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import ThemeSwitch from '@/components/ui/ThemeSwitch';
@@ -43,6 +45,18 @@ export default function ConsoleWrapper({
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <ErrorBoundary
+      level='page'
+      title='Console Error'
+      description='The console encountered an error. Please try refreshing or contact support if the problem persists.'
+    >
+      <ConsoleWrapperContent>{children}</ConsoleWrapperContent>
+    </ErrorBoundary>
+  );
+}
+
+function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   const { dict } = useLocale();
   const params = useParams<{ workspace?: string }>();
   const { loadingPermissions, ...links } = useConsoleNavigationLinks();
@@ -69,36 +83,63 @@ export default function ConsoleWrapper({
         {/* Console navigation sidebar */}
         <div
           id='console-sidebar-wrapper'
-          className={`scrollbar-hide bg-background h-screen overflow-x-hidden overflow-y-scroll border-r transition-all duration-300 dark:border-gray-800 ${
-            isMenuOpen ? 'absolute z-10 block' : 'hidden lg:relative lg:block'
-          } ${foldMenu ? 'w-20' : 'w-60'}`}
+          className={`
+            scrollbar-hide h-screen overflow-x-hidden overflow-y-scroll border-r
+            bg-background transition-all duration-300
+            dark:border-gray-800
+            ${
+              isMenuOpen
+                ? 'absolute z-10 block'
+                : `
+                  hidden
+                  lg:relative lg:block
+                `
+            }
+            ${foldMenu ? 'w-20' : 'w-60'}
+          `}
         >
           <div
             id='console-sidebar'
-            className={`relative flex h-full w-full flex-col justify-between`}
+            className={`relative flex size-full flex-col justify-between`}
           >
             <div
               id='console-sidebar-main-content'
-              className={`mt-12 flex flex-col justify-start ${foldMenu ? 'mt-24 gap-0' : 'gap-6'} lg:mt-1`}
+              className={`
+                mt-12 flex flex-col justify-start
+                ${foldMenu ? `mt-24 gap-0` : `gap-6`}
+                lg:mt-1
+              `}
             >
               {/* Logo, notifications and fold button */}
               <div
                 id='console-sidebar-header'
-                className='z-40 flex w-full items-center justify-start gap-4 px-4 pt-2 md:pl-6'
+                className={`
+                  z-40 flex w-full items-center justify-start gap-4 px-4 pt-2
+                  md:pl-6
+                `}
               >
                 <div
-                  className={`block transition-all duration-300 ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}`}
+                  className={`
+                    block transition-all duration-300
+                    ${foldMenu ? `hidden opacity-0` : `opacity-100`}
+                  `}
                 >
                   <Link href='/' aria-label='Go to website home page'>
                     <Image
-                      className={'block h-[24px] dark:hidden'}
+                      className={`
+                        block h-[24px]
+                        dark:hidden
+                      `}
                       src='/irmin-logo.svg'
                       alt='Irmin logo'
                       width={100}
                       height={100}
                     />
                     <Image
-                      className={'hidden h-[24px] dark:block'}
+                      className={`
+                        hidden h-[24px]
+                        dark:block
+                      `}
                       src='/irmin-logo-light.svg'
                       alt='Irmin logo'
                       width={100}
@@ -112,9 +153,11 @@ export default function ConsoleWrapper({
                   </div>
                 )}
                 <Button
-                  className={`absolute top-[12px] hidden lg:block ${
-                    !foldMenu ? 'right-0' : 'left-6'
-                  }`}
+                  className={`
+                    absolute top-[12px] hidden
+                    lg:block
+                    ${!foldMenu ? 'right-0' : 'left-6'}
+                  `}
                   aria-label='Fold the side navigation'
                   onClick={() => setIsMenuFolded(!foldMenu)}
                   size={'icon'}
@@ -131,7 +174,10 @@ export default function ConsoleWrapper({
               {/* Profile and workspace switcher */}
               <div
                 id='console-sidebar-profile-and-workspace'
-                className={`transition-all ${foldMenu ? 'hidden w-0' : 'block w-full'}`}
+                className={`
+                  transition-all
+                  ${foldMenu ? 'hidden w-0' : `block w-full`}
+                `}
               >
                 <div className='w-full min-w-36 px-4'>
                   <ConsoleNavigationProfile />
@@ -143,22 +189,24 @@ export default function ConsoleWrapper({
                 </div>
               </div>
 
-              {foldMenu && <div className='mb-12'></div>}
+              {foldMenu && <div className='mb-12' />}
 
               {/* No workspace links */}
               {!currentWorkspace && (
                 <div id='console-sidebar-links-no-workspace'>
                   <p
-                    className={`text-accent mb-2 w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
-                      foldMenu ? 'hidden opacity-0' : 'opacity-100'
-                    }`}
+                    className={`
+                      mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
+                      transition-all duration-300
+                      ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
+                    `}
                   >
                     {dict.consoleNavigation.irminConsole}
                   </p>
                   <ul className='px-4'>
-                    {links.noWorkspace.map((link, index) => (
+                    {links.noWorkspace.map((link) => (
                       <ConsoleNavigationLink
-                        key={`Console-nav-noWorkspace-${index}`}
+                        key={`console-nav-noWorkspace-${link.title}`}
                         link={link}
                         isMenuFolded={foldMenu}
                         hasWorkspace={currentWorkspace !== undefined}
@@ -179,9 +227,11 @@ export default function ConsoleWrapper({
               {currentWorkspace && (
                 <div id='console-sidebar-links-workspace'>
                   <p
-                    className={`text-accent mb-2 w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
-                      foldMenu ? 'hidden opacity-0' : 'opacity-100'
-                    }`}
+                    className={`
+                      mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
+                      transition-all duration-300
+                      ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
+                    `}
                   >
                     {dict.consoleNavigation.workspace}
                   </p>
@@ -194,9 +244,9 @@ export default function ConsoleWrapper({
                     </div>
                   )}
                   <ul className='px-4'>
-                    {links.hasWorkspace.map((link, index) => (
+                    {links.hasWorkspace.map((link) => (
                       <ConsoleNavigationLink
-                        key={`Console-nav-hasWorkspace-${index}`}
+                        key={`console-nav-hasWorkspace-${link.title}`}
                         link={link}
                         isMenuFolded={foldMenu}
                         hasWorkspace={currentWorkspace !== undefined}
@@ -210,16 +260,18 @@ export default function ConsoleWrapper({
               {/* Settings links */}
               <div id='console-sidebar-links-settings'>
                 <p
-                  className={`text-accent mb-2 w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
-                    foldMenu ? 'hidden opacity-0' : 'opacity-100'
-                  }`}
+                  className={`
+                    mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
+                    transition-all duration-300
+                    ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
+                  `}
                 >
                   {dict.consoleNavigation.settings}
                 </p>
                 <ul className='px-4'>
-                  {links.settings.map((link, index) => (
+                  {links.settings.map((link) => (
                     <ConsoleNavigationLink
-                      key={`Console-nav-hasWorkspace-${index}`}
+                      key={`console-nav-hasWorkspace-${link.title}`}
                       link={link}
                       isMenuFolded={foldMenu}
                       hasWorkspace={currentWorkspace !== undefined}
@@ -229,7 +281,7 @@ export default function ConsoleWrapper({
                 </ul>
               </div>
             </div>
-            <div className='grow'></div>
+            <div className='grow' />
             {foldMenu && (
               <div className='mx-auto mt-auto mb-8'>
                 <ThemeSwitch />
@@ -237,7 +289,10 @@ export default function ConsoleWrapper({
             )}
             <div
               id='console-sidebar-footer'
-              className={`mt-auto transition-all ${foldMenu ? 'hidden w-0' : 'block w-full'}`}
+              className={`
+                mt-auto transition-all
+                ${foldMenu ? 'hidden w-0' : `block w-full`}
+              `}
             >
               <div className='px-6'>
                 <LanguageSwitcher />
@@ -247,17 +302,23 @@ export default function ConsoleWrapper({
                 id='console-sidebar-useful-links'
               >
                 <p
-                  className={`text-accent w-max pl-8 text-xs font-medium uppercase transition-all duration-300 ${
-                    foldMenu ? 'hidden opacity-0' : 'opacity-100'
-                  }`}
+                  className={`
+                    w-max pl-8 text-xs font-medium text-accent uppercase
+                    transition-all duration-300
+                    ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
+                  `}
                 >
                   {dict.consoleNavigation.usefulLinks}
                 </p>
                 <div className='flex flex-col p-4 pl-8'>
-                  {links.useful.map((link, index) => (
+                  {links.useful.map((link) => (
                     <Link
-                      key={`Console-nav-useful-${index}`}
-                      className='mb-2 text-left text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-100'
+                      key={`console-nav-useful-${link.title}`}
+                      className={`
+                        mb-2 text-left text-gray-500 transition-colors
+                        hover:text-gray-700
+                        dark:text-gray-400 dark:hover:text-gray-100
+                      `}
                       href={link.href ?? ''}
                       onClick={() => setIsMenuOpen(false)}
                       aria-label={link.title}
@@ -277,37 +338,79 @@ export default function ConsoleWrapper({
         {/* Console content to the right of the sidebar */}
         <div
           id='console-content-wrapper'
-          className={`flex h-screen flex-1 flex-col gap-0 transition-all duration-300 ${isMenuOpen ? 'w-screen blur-xs lg:blur-none' : ''} max-w-full overflow-scroll`}
+          className={`
+            flex h-screen flex-1 flex-col gap-0 transition-all duration-300
+            ${
+              isMenuOpen
+                ? `
+                  w-screen blur-xs
+                  lg:blur-none
+                `
+                : ''
+            }
+            max-w-full overflow-scroll
+          `}
         >
           {/* Top menu bar */}
           <div
             id='console-top-bar'
-            className={`bg-background z-20 w-full border-b dark:border-gray-800 ${isMenuOpen ? 'pl-0' : 'pl-12 lg:pl-0'}`}
+            className={`
+              z-20 w-full border-b bg-background
+              dark:border-gray-800
+              ${
+                isMenuOpen
+                  ? `pl-0`
+                  : `
+                    pl-12
+                    lg:pl-0
+                  `
+              }
+            `}
           >
-            <div className='group flex h-14 w-full items-center px-2 py-1 xl:px-4'>
+            <div
+              className={`
+                group flex h-14 w-full items-center px-2 py-1
+                xl:px-4
+              `}
+            >
               <div
-                className={`py-2 pr-4 group-focus-within:hidden ${foldMenu ? 'lg:block' : 'lg:hidden'}`}
+                className={`
+                  py-2 pr-4
+                  group-focus-within:hidden
+                  ${foldMenu ? `lg:block` : `lg:hidden`}
+                `}
               >
                 <Image
-                  className={
-                    'block h-full max-h-4 object-contain md:max-h-6 dark:hidden'
-                  }
+                  className={`
+                    block h-full max-h-4 object-contain
+                    md:max-h-6
+                    dark:hidden
+                  `}
                   src='/irmin-logo.svg'
                   alt='Irmin logo'
                   width={100}
                   height={26}
                 />
                 <Image
-                  className={
-                    'hidden h-full max-h-4 object-contain md:max-h-6 dark:block'
-                  }
+                  className={`
+                    hidden h-full max-h-4 object-contain
+                    md:max-h-6
+                    dark:block
+                  `}
                   src='/irmin-logo-light.svg'
                   alt='Irmin logo'
                   width={100}
                   height={26}
                 />
               </div>
-              <div className='ml-auto w-full max-w-24 transition-all focus-within:max-w-full md:max-w-sm lg:max-w-md'>
+              <div
+                className={`
+                  ml-auto w-full max-w-24 transition-all
+                  focus-within:max-w-full
+                  md:max-w-sm
+                  lg:max-w-md
+                `}
+              >
                 <ConsoleSearch />
               </div>
             </div>
@@ -315,7 +418,9 @@ export default function ConsoleWrapper({
           {/* Console content */}
           <div
             id='console-content'
-            className='bg-background relative min-h-[calc(100vh-4rem)] overflow-y-scroll'
+            className={`
+              relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-background
+            `}
           >
             {children}
           </div>
@@ -324,32 +429,43 @@ export default function ConsoleWrapper({
       {/* Console navigation toggle on mobile */}
       <div
         id='console-navigation-toggle-mobile'
-        className='fixed top-[8px] left-4 z-50 block lg:hidden'
+        className={`
+          fixed top-[8px] left-4 z-50 block
+          lg:hidden
+        `}
       >
         <Button
-          className='relative aspect-square h-10 w-10'
+          className='relative aspect-square size-10'
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           size='icon'
           variant='link'
         >
           <div
-            className={`absolute top-1/2 left-4 block w-5 -translate-x-1/2 -translate-y-1/2 transform`}
+            className={`
+              absolute top-1/2 left-4 block w-5 -translate-1/2 transform
+            `}
           >
             <span
-              className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
-                isMenuOpen ? 'rotate-45' : '-translate-y-1.5'
-              }`}
-            ></span>
+              className={`
+                absolute block h-0.5 w-7 transform bg-current transition
+                duration-500 ease-in-out
+                ${isMenuOpen ? 'rotate-45' : '-translate-y-1.5'}
+              `}
+            />
             <span
-              className={`absolute block h-0.5 w-5 transform bg-current transition duration-500 ease-in-out ${
-                isMenuOpen ? 'opacity-0' : ''
-              }`}
-            ></span>
+              className={`
+                absolute block h-0.5 w-5 transform bg-current transition
+                duration-500 ease-in-out
+                ${isMenuOpen ? 'opacity-0' : ''}
+              `}
+            />
             <span
-              className={`absolute block h-0.5 w-7 transform bg-current transition duration-500 ease-in-out ${
-                isMenuOpen ? '-rotate-45' : 'translate-y-1.5'
-              }`}
-            ></span>
+              className={`
+                absolute block h-0.5 w-7 transform bg-current transition
+                duration-500 ease-in-out
+                ${isMenuOpen ? '-rotate-45' : 'translate-y-1.5'}
+              `}
+            />
           </div>
         </Button>
       </div>

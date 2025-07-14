@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -12,8 +12,12 @@ import useBaseUrl from '@/hooks/useBaseUrl';
 import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { ActionWorkflow } from '@/types/core/Workflow';
-import { GridRow } from '@/types/internal/ListProps';
+import type { ActionWorkflow } from '@/types/core/Workflow';
+import type {
+  EmptyStateAction,
+  GridRow,
+  TableRowAction,
+} from '@/types/internal/ListProps';
 
 /**
  * Table UI to display a list of Action Workflows
@@ -23,9 +27,11 @@ import { GridRow } from '@/types/internal/ListProps';
 const ActionWorkflowList = ({
   loading,
   actionWorkflows: items,
+  emptyStateAction,
 }: {
   loading: boolean;
   actionWorkflows: ActionWorkflow[];
+  emptyStateAction?: EmptyStateAction;
 }) => {
   const { dict } = useLocale();
   const { isResourceAllowed } = useResourceAllowed();
@@ -41,7 +47,7 @@ const ActionWorkflowList = ({
   const rows: GridRow[] = useMemo(
     () =>
       items
-        .map((item, i) => {
+        .map((item) => {
           if (
             !isResourceAllowed(
               PolicyResource.Workflow,
@@ -52,7 +58,7 @@ const ActionWorkflowList = ({
             return null;
           }
 
-          const tableActions = [
+          const tableActions: (TableRowAction & { hidden?: boolean })[] = [
             {
               label: dict.list.view,
               primary: true,
@@ -81,17 +87,22 @@ const ActionWorkflowList = ({
           return {
             columns: [
               <div
-                key={`name-and-owner-${i}`}
+                key={`name-and-owner-${item.id}`}
                 className='inline-flex flex-col gap-1'
               >
                 <p className='text-base'>{item.name}</p>
-                <span className='text-sm text-gray-600 dark:text-gray-400'>
+                <span
+                  className={`
+                    text-sm text-gray-600
+                    dark:text-gray-400
+                  `}
+                >
                   {dict.list.owner}: {item.owner.email}
                   {item.owner.company ? ` (${item.owner.company})` : ''}
                 </span>
               </div>,
               <div
-                key={`status-${i}`}
+                key={`status-${item.id}`}
                 className='inline-flex flex-row items-center gap-2'
               >
                 <StatusBadge
@@ -99,8 +110,7 @@ const ActionWorkflowList = ({
                   label={item.status ?? dict.workflow.noStatus}
                 />
                 <div className='flex flex-col'>
-                  {item.schedule &&
-                  item.schedule.triggers &&
+                  {item.schedule?.triggers &&
                   item.schedule.triggers.length > 0 ? (
                     <span className='text-xs text-gray-400'>
                       {dict.workflow.scheduled}
@@ -125,7 +135,12 @@ const ActionWorkflowList = ({
             ],
             actions: tableActions.filter((action) => !action.hidden),
             details: (
-              <div className='flex max-w-sm flex-col text-gray-600 dark:text-gray-400'>
+              <div
+                className={`
+                  flex max-w-sm flex-col text-gray-600
+                  dark:text-gray-400
+                `}
+              >
                 <p className='pb-4 text-sm'>{item.description}</p>
               </div>
             ),
@@ -141,8 +156,9 @@ const ActionWorkflowList = ({
       headers={[dict.common.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
+      emptyStateAction={emptyStateAction}
     />
   );
 };
 
-export default React.memo(ActionWorkflowList);
+export default memo(ActionWorkflowList);

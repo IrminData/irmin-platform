@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 
 import { useTheme } from 'next-themes';
 
-import { JSONValue } from '@/types/internal/GenericJSON';
+import type { JSONValue } from '@/types/internal/GenericJSON';
 
 const ReactJsonView = dynamic(() => import('@microlink/react-json-view'), {
   ssr: false,

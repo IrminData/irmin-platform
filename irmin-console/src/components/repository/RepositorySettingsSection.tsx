@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import SettingsForm, { FieldConfig } from '@/components/ui/form/SettingsForm';
+import SafeComponent from '@/components/ui/error/SafeComponent';
+import type { FieldConfig } from '@/components/ui/form/SettingsForm';
+import SettingsForm from '@/components/ui/form/SettingsForm';
 import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -17,7 +19,8 @@ import { useResourceAllowed } from '@/hooks/useResourceAllowed';
 import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
 
 import { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { Tag, TagEntityType } from '@/types/core/Tag';
+import type { Tag } from '@/types/core/Tag';
+import { TagEntityType } from '@/types/core/Tag';
 
 import ImmutableWarning from './ImmutableWarning';
 
@@ -30,6 +33,18 @@ import ImmutableWarning from './ImmutableWarning';
  * @returns The repository settings section component
  */
 const RepositorySettingsSection = () => {
+  return (
+    <SafeComponent
+      level='section'
+      title='Repository Settings Error'
+      description='The repository settings section encountered an error. Please try refreshing the page.'
+    >
+      <RepositorySettingsSectionContent />
+    </SafeComponent>
+  );
+};
+
+const RepositorySettingsSectionContent = () => {
   const { dict } = useLocale();
   const { irminConfirm } = usePopup();
   const { workspaceQuery, workspaceSlug } = useWorkspaceContext();
@@ -252,7 +267,12 @@ const RepositorySettingsSection = () => {
         additionalContentRight={
           <>
             {canViewTags && (
-              <div className='border-b border-gray-200 pb-4 dark:border-gray-800'>
+              <div
+                className={`
+                  border-b border-gray-200 pb-4
+                  dark:border-gray-800
+                `}
+              >
                 <WorkspaceTagSelector
                   selectedTags={selectedTags}
                   onTagsChange={handleUpdateTags}

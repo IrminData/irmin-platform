@@ -1,30 +1,19 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import {
+  repositoryCommitsQueryKey,
+  repositoryObjectHistoryQueryKey,
+  repositoryUncommittedChangesQueryKey,
+} from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { Diff } from '@/types/core/Diff';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-import { repositoryCommitsQueryKey } from './useRepositoryCommits';
-import { repositoryObjectHistoryQueryKey } from './useRepositoryObjectHistory';
-
-export const repositoryUncommittedChangesQueryKey = (
-  workspaceSlug: string,
-  repositorySlug: string,
-  branch: string
-) =>
-  [
-    'repository-uncommitted-changes',
-    workspaceSlug,
-    repositorySlug,
-    branch,
-  ] as const;
+import type { Diff } from '@/types/core/Diff';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export function useRepositoryUncommittedChanges(
   repositorySlug: string,
@@ -69,25 +58,26 @@ export function useRepositoryUncommittedChanges(
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryCommitsQueryKey(
           workspaceSlug,
           repositorySlug,
           branch
         ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryUncommittedChangesQueryKey(
           workspaceSlug,
           repositorySlug,
           branch
         ),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryObjectHistoryQueryKey(
           workspaceSlug,
           repositorySlug,
-          branch
+          branch,
+          '/'
         ),
       });
       irminAlert('success', res.message ?? 'Commit created successfully');
@@ -111,7 +101,7 @@ export function useRepositoryUncommittedChanges(
       });
     },
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: repositoryUncommittedChangesQueryKey(
           workspaceSlug,
           repositorySlug,

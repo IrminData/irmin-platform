@@ -8,7 +8,7 @@ import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { EditorItem } from '@/types/core/EditorItems';
+import type { EditorItem } from '@/types/core/EditorItems';
 
 /**
  * Path selector component
@@ -109,17 +109,42 @@ const PathSelector = ({
         return (
           <div key={item.path} className='my-1'>
             <div
-              className={`flex items-center justify-normal rounded-md p-1 text-sm ${item.path === selectedPath ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
+              className={`
+                flex items-center justify-normal rounded-md p-1 text-sm
+                ${
+                  item.path === selectedPath
+                    ? `
+                      bg-gray-200
+                      dark:bg-gray-800
+                    `
+                    : ''
+                }
+              `}
               onClick={() => handleItemClick(item)}
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleItemClick(item);
+                }
+              }}
             >
               {openFolders[item.name] ? (
                 <TbChevronDown
-                  className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                  className={`
+                    inline-block cursor-pointer
+                    hover:bg-gray-100
+                    dark:hover:bg-gray-800
+                  `}
                   aria-label={`Close folder ${item.name} in the file navigator`}
                 />
               ) : (
                 <TbChevronRight
-                  className='inline-block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                  className={`
+                    inline-block cursor-pointer
+                    hover:bg-gray-100
+                    dark:hover:bg-gray-800
+                  `}
                   aria-label={`Open folder ${item.name} in the file navigator`}
                 />
               )}
@@ -127,7 +152,10 @@ const PathSelector = ({
                 <FiFolder />
               </span>
               <span
-                className='ml-2 cursor-pointer hover:underline'
+                className={`
+                  ml-2 cursor-pointer
+                  hover:underline
+                `}
                 aria-label={`Open ${item.name}`}
               >
                 {item.name}
@@ -151,17 +179,42 @@ const PathSelector = ({
   return (
     <div
       id='path-selector'
-      className='relative mb-2 max-h-48 overflow-y-scroll border-b pb-4 dark:border-b-gray-800'
+      className={`
+        relative mb-2 max-h-48 overflow-y-scroll border-b pb-4
+        dark:border-b-gray-800
+      `}
     >
       <div className='my-1'>
         <div
-          className={`flex items-center justify-normal rounded-md p-1 text-sm ${rootSelected ? 'bg-gray-200 dark:bg-gray-800' : ''}`}
+          className={`
+            flex items-center justify-normal rounded-md p-1 text-sm
+            ${
+              rootSelected
+                ? `
+                  bg-gray-200
+                  dark:bg-gray-800
+                `
+                : ''
+            }
+          `}
           onClick={() => handleItemClick()}
+          role='button'
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleItemClick();
+            }
+          }}
         >
           <span className='ml-2'>
             <FaFolderTree />
           </span>
-          <span className='ml-2 cursor-pointer hover:underline'>
+          <span
+            className={`
+              ml-2 cursor-pointer
+              hover:underline
+            `}
+          >
             {dict.fileNavigator.rootDirectory}
           </span>
         </div>

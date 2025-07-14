@@ -2,10 +2,8 @@ import { useMemo } from 'react';
 
 import { usePathname, useSearchParams } from 'next/navigation';
 
-import {
-  constructBaseUrl,
-  ConstructBaseUrlProps,
-} from '@/utils/constructBaseUrl';
+import type { ConstructBaseUrlProps } from '@/utils/constructBaseUrl';
+import { constructBaseUrl } from '@/utils/constructBaseUrl';
 
 /**
  * Hook to construct a base URL using the currently active URL.

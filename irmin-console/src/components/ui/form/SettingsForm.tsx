@@ -1,16 +1,11 @@
 'use client';
 
-import {
-  Controller,
-  DefaultValues,
-  FieldValues,
-  Path,
-  useForm,
-} from 'react-hook-form';
+import type { DefaultValues, FieldValues, Path } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
-import Button from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
-import Input from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -31,7 +26,7 @@ export interface FieldConfig<T extends FieldValues> {
   /** The label for the field */
   label: string;
   /** The type of the field */
-  type: 'text' | 'textarea' | 'select';
+  type: 'select' | 'text' | 'textarea';
   /** The placeholder for the field */
   placeholder?: string;
   /** The options for the field if it's a select field */
@@ -106,11 +101,8 @@ export default function SettingsForm<T extends FieldValues>({
         onSubmit={handleSubmit(onSubmit)}
         className='flex flex-1 flex-col gap-4'
       >
-        {fieldConfiguration.map((field, idx) => (
-          <div
-            key={`field-${idx}-${field.name}`}
-            className='flex flex-col gap-2'
-          >
+        {fieldConfiguration.map((field) => (
+          <div key={`field-${field.name}`} className='flex flex-col gap-2'>
             <Label>{field.label}</Label>
             <Controller
               name={field.name}
@@ -182,10 +174,20 @@ export default function SettingsForm<T extends FieldValues>({
           {additionalContentRight}
           {deleteItem && (
             <div>
-              <p className='text-destructive text-sm font-normal capitalize md:text-xl'>
+              <p
+                className={`
+                  text-sm font-normal text-destructive capitalize
+                  md:text-xl
+                `}
+              >
                 {dict.common.dangerZone}
               </p>
-              <p className='mt-2 max-w-sm text-xs md:text-sm'>
+              <p
+                className={`
+                  mt-2 max-w-sm text-xs
+                  md:text-sm
+                `}
+              >
                 {dangerZoneMessage}
               </p>
               <div className='flex gap-2'>

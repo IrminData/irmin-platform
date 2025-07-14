@@ -9,6 +9,7 @@ import { getToken } from '@/lib/getToken';
 /**
  * Initialize the IrminCore instance for the current user and locale on the server side.
  */
+// eslint-disable-next-line import-x/no-unused-modules
 export async function initCore(apiToken?: string): Promise<IrminCore> {
   // Get the locale from the cookie or the Accept-Language header
   const cookieStore = await cookies();

@@ -1,151 +1,173 @@
-@import 'tailwindcss';
+/**
+ * TAILWIND THEME CONFIGURATION
+ *
+ * This file defines the shape of the design system.
+ *
+ * It includes custom variants, theme extensions, and Shadcn UI compatibility.
+ */
 
-@config '../../tailwind.config.ts';
+/* Enable dark mode variant */
+@custom-variant dark (&:where(.dark, .dark *));
 
-/* 
-  ============================================================================
-  Application Theme Configuration
-  ============================================================================
-*/
+/* Base theme variables */
+:root {
+  /* Additional theme variables for light mode */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.051 0.015 255.8);
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+  --primary: oklch(0.291 0.123 258.3);
+  --primary-foreground: oklch(0.939 0.015 232.7);
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
+  --card: oklch(0.965 0.008 265.4);
+  --card-foreground: oklch(0.095 0.034 257.3);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.051 0.015 255.8);
+
+  --secondary: oklch(0.905 0.016 230.2);
+  --secondary-foreground: oklch(0 0 0);
+
+  --muted: oklch(0.939 0.015 232.7);
+  --muted-foreground: oklch(0.457 0 0);
+
+  --accent: oklch(0.621 0.128 159.8);
+  --accent-foreground: oklch(0.952 0.004 162.7);
+
+  --destructive: oklch(0.669 0.225 29.6);
+  --destructive-foreground: oklch(0.982 0.005 265.4);
+
+  --border: oklch(0.785 0.03 230.1);
+  --input: oklch(0.801 0.014 232.7);
+  --ring: oklch(0.291 0.123 258.3);
+
+  --chart-1: oklch(0.716 0.102 159.8);
+  --chart-2: oklch(0.758 0.087 159.8);
+  --chart-3: oklch(0.816 0.067 159.8);
+  --chart-4: oklch(0.845 0.057 159.8);
+  --chart-5: oklch(0.878 0.046 159.8);
+
+  /* Additional theme variables */
+  --radius: 0.5rem;
 }
 
-/**
-* Configurations for color palette and base theme variables
-*/
-@layer base {
-  :root {
-    /* Irmin Color Palette */
-    --irmin-black-100: 197 90% 83%;
-    --irmin-black-200: 197 92% 62%;
-    --irmin-black-300: 197 95% 42%;
-    --irmin-black-400: 197 94% 24%;
-    --irmin-black-500: 197 94% 6%; /* DEFAULT */
-    --irmin-black-600: 197 100% 4%;
-    --irmin-black-700: 197 100% 3%;
-    --irmin-black-800: 197 100% 2%;
-    --irmin-black-900: 197 100% 1%;
+/* Dark mode theme variables */
+.dark {
+  /* Shadcn UI theme variables in dark mode */
+  --background: oklch(0.111 0.033 257.3);
+  --foreground: oklch(0.905 0.016 230.2);
 
-    --irmin-blue-100: 197 100% 90%;
-    --irmin-blue-200: 197 65% 81%;
-    --irmin-blue-300: 197 49% 68%;
-    --irmin-blue-400: 197 29% 44%;
-    --irmin-blue-500: 197 67% 27%; /* DEFAULT */
-    --irmin-blue-600: 197 67% 20%;
-    --irmin-blue-700: 197 67% 14%;
-    --irmin-blue-800: 197 67% 10%;
-    --irmin-blue-900: 197 67% 4%;
+  --primary: oklch(0.291 0.123 258.3);
+  --primary-foreground: oklch(0.939 0.015 232.7);
 
-    --irmin-teal-100: 197 18% 90%;
-    --irmin-teal-200: 197 18% 80%;
-    --irmin-teal-300: 197 18% 70%;
-    --irmin-teal-400: 197 18% 60%;
-    --irmin-teal-500: 197 18% 50%; /* DEFAULT */
-    --irmin-teal-600: 197 18% 40%;
-    --irmin-teal-700: 197 18% 30%;
-    --irmin-teal-800: 197 18% 20%;
-    --irmin-teal-900: 197 18% 10%;
+  --card: oklch(0.146 0.068 257.3);
+  --card-foreground: oklch(0.965 0.008 265.4);
 
-    --irmin-green-100: 137 20% 94%;
-    --irmin-green-200: 137 20% 88%;
-    --irmin-green-300: 137 20% 82%;
-    --irmin-green-400: 137 20% 76%;
-    --irmin-green-500: 137 20% 70%; /* DEFAULT */
-    --irmin-green-600: 137 20% 60%;
-    --irmin-green-700: 137 20% 45%;
-    --irmin-green-800: 137 20% 35%;
-    --irmin-green-900: 137 20% 20%;
+  --popover: oklch(0.051 0.018 257.3);
+  --popover-foreground: oklch(0.905 0.016 230.2);
 
-    /* Base Theme Variables */
-    --background: 0 0% 100%;
-    --foreground: 193.33 69.23% 2.55%;
+  --secondary: oklch(0.111 0.053 258.3);
+  --secondary-foreground: oklch(1 0 0);
 
-    --primary: 196.96 66.67% 27.06%;
-    --primary-foreground: 200 24.32% 92.75%;
+  --muted: oklch(0.147 0 0);
+  --muted-foreground: oklch(0.556 0 0);
 
-    --card: 210 20% 96%;
-    --card-foreground: 197 98% 5%;
+  --accent: oklch(0.621 0.128 159.8);
+  --accent-foreground: oklch(0.952 0.004 162.7);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 193.33 69.23% 2.55%;
+  --destructive: oklch(0.669 0.225 29.6);
+  --destructive-foreground: oklch(0.982 0.005 265.4);
 
-    --secondary: 197.14 25% 89.02%;
-    --secondary-foreground: 0 0% 0%;
+  --border: oklch(0.161 0.093 258.3);
+  --input: oklch(0.201 0.024 232.7);
+  --ring: oklch(0.291 0.123 258.3);
 
-    --muted: 200 24.32% 92.75%;
-    --muted-foreground: 0 0% 40%;
+  --chart-1: oklch(0.716 0.102 159.8);
+  --chart-2: oklch(0.615 0.087 159.8);
+  --chart-3: oklch(0.478 0.067 159.8);
+  --chart-4: oklch(0.409 0.057 159.8);
+  --chart-5: oklch(0.337 0.046 159.8);
+}
 
-    --accent: 137 20% 60%;
-    --accent-foreground: 140 3% 95%;
+/* Tailwind v4 Theme Configuration */
+@theme {
+  /* Custom Irmin Color Palette */
+  --color-irmin-black-100: oklch(0.8851 0.0521 230.2);
+  --color-irmin-black-200: oklch(0.6636 0.099 230.18);
+  --color-irmin-black-300: oklch(0.4561 0.15 230.16);
+  --color-irmin-black-400: oklch(0.2653 0.148 260.15);
+  --color-irmin-black-500: oklch(0.1113 0.033 257.3);
+  --color-irmin-black-600: oklch(0.0808 0.035 257.31);
+  --color-irmin-black-700: oklch(0.0659 0.026 257.31);
+  --color-irmin-black-800: oklch(0.0509 0.018 257.32);
+  --color-irmin-black-900: oklch(0.0359 0.009 257.32);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+  --color-irmin-blue-100: oklch(0.923 0.043 230.2);
+  --color-irmin-blue-200: oklch(0.8468 0.051 240.18);
+  --color-irmin-blue-300: oklch(0.7131 0.07 245.16);
+  --color-irmin-blue-400: oklch(0.4653 0.068 255.15);
+  --color-irmin-blue-500: oklch(0.2913 0.123 258.3);
+  --color-irmin-blue-600: oklch(0.2113 0.123 258.3);
+  --color-irmin-blue-700: oklch(0.1513 0.083 258.3);
+  --color-irmin-blue-800: oklch(0.1113 0.053 258.3);
+  --color-irmin-blue-900: oklch(0.0513 0.023 258.3);
 
-    --border: 196.67 24.32% 76%;
-    --input: 200 10.91% 78.43%;
-    --ring: 196.96 66.67% 27.06%;
+  --color-irmin-teal-100: oklch(0.913 0.011 225.2);
+  --color-irmin-teal-200: oklch(0.813 0.021 225.18);
+  --color-irmin-teal-300: oklch(0.713 0.031 225.16);
+  --color-irmin-teal-400: oklch(0.613 0.041 225.15);
+  --color-irmin-teal-500: oklch(0.513 0.051 225.3);
+  --color-irmin-teal-600: oklch(0.413 0.061 225.3);
+  --color-irmin-teal-700: oklch(0.313 0.071 225.3);
+  --color-irmin-teal-800: oklch(0.213 0.081 225.3);
+  --color-irmin-teal-900: oklch(0.113 0.091 225.3);
 
-    --chart-1: 137.42 20.26% 70%;
-    --chart-2: 136.15 20% 74.51%;
-    --chart-3: 138 20% 80.39%;
-    --chart-4: 137.65 20% 83.33%;
-    --chart-5: 137.14 20.59% 86.67%;
+  --color-irmin-green-100: oklch(0.946 0.021 159.8);
+  --color-irmin-green-200: oklch(0.889 0.041 159.8);
+  --color-irmin-green-300: oklch(0.831 0.062 159.8);
+  --color-irmin-green-400: oklch(0.773 0.082 159.8);
+  --color-irmin-green-500: oklch(0.715 0.103 159.8);
+  --color-irmin-green-600: oklch(0.621 0.128 159.8);
+  --color-irmin-green-700: oklch(0.478 0.145 159.8);
+  --color-irmin-green-800: oklch(0.384 0.145 159.8);
+  --color-irmin-green-900: oklch(0.241 0.115 159.8);
 
-    --radius: 0.5rem;
-  }
+  /* Font variables */
+  --font-display: var(--font-big-shoulders-display);
+  --font-sans: var(--font-inter-sans);
+  --font-mono: var(--font-space-mono);
+  --font-serif: var(--font-pt-serif);
 
-  .dark {
-    /* Base Theme Variables in Dark mode */
-    --background: 197 94% 6%;
-    --foreground: 197.14 25% 89.02%;
-
-    --primary: 196.96 66.67% 27.06%;
-    --primary-foreground: 200 24.32% 92.75%;
-
-    --card: 197 98% 10%;
-    --card-foreground: 210 20% 96%;
-
-    --popover: 197 100% 2%;
-    --popover-foreground: 197.14 25% 89.02%;
-
-    --secondary: 196.88 66.67% 9.41%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 0 0% 9.8%;
-    --muted-foreground: 0 0% 50.2%;
-
-    --accent: 137 20% 60%;
-    --accent-foreground: 140 3% 95%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 197 66% 15%;
-    --input: 200 9.89% 17.84%;
-    --ring: 196.96 66.67% 27.06%;
-
-    --chart-1: 137.42 20.26% 70%;
-    --chart-2: 136.15 12.62% 59.61%;
-    --chart-3: 138 8.62% 45.49%;
-    --chart-4: 137.65 8.63% 38.63%;
-    --chart-5: 137.14 8.75% 31.37%;
-
-    --radius: 0.5rem;
-  }
+  /* Shadcn UI theme variables */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--color-background);
+  --color-sidebar-foreground: var(--color-foreground);
+  --color-sidebar-primary: var(--color-primary);
+  --color-sidebar-primary-foreground: var(--color-primary-foreground);
+  --color-sidebar-accent: var(--color-accent);
+  --color-sidebar-accent-foreground: var(--color-accent-foreground);
+  --color-sidebar-border: var(--color-border);
+  --color-sidebar-ring: var(--color-ring);
 }

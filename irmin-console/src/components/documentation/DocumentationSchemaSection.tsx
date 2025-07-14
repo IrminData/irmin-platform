@@ -12,7 +12,7 @@ import { useConnections } from '@/hooks/useConnections';
 import { useRepositories } from '@/hooks/useRepositories';
 import { useWorkflows } from '@/hooks/useWorkflows';
 
-import { TreeNode } from './TreeChart';
+import type { TreeNode } from './TreeChart';
 
 const TreeChart = dynamic(() => import('./TreeChart'), {
   loading: () => <LoadingSkeleton />,

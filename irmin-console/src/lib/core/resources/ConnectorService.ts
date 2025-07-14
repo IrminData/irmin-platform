@@ -1,11 +1,11 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import {
+import type {
   Connector,
   ConnectorConfigurationValidationResult,
 } from '@/types/core/Connector';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import {
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';

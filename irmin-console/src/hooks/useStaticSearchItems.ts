@@ -1,22 +1,20 @@
 import { useMemo } from 'react';
 
-import { Dictionary } from '@/lib/dict';
+import type { Dictionary } from '@/lib/dict';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 
-import { Workspace } from '@/types/core/Workspace';
-import {
-  ConsoleSearchItem,
-  ConsoleSearchItemType,
-} from '@/types/internal/ConsoleSearch';
+import type { Workspace } from '@/types/core/Workspace';
+import type { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
+import { ConsoleSearchItemType } from '@/types/internal/ConsoleSearch';
 
 /**
  * Helper function to check if search terms match a text
  * Splits search query into terms and checks if all terms are found in the text
  */
-export function matchesSearchTerms(searchQuery: string, text: string): boolean {
+function matchesSearchTerms(searchQuery: string, text: string): boolean {
   if (!searchQuery || !text) return false;
 
   // Normalize both strings: lowercase and remove special characters

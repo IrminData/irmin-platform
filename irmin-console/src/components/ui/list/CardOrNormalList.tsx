@@ -1,9 +1,9 @@
-import React from 'react';
+import { memo } from 'react';
 
 import CardList from '@/components/ui/list/CardList';
 import NormalList from '@/components/ui/list/NormalList';
 
-import { ListProps } from '@/types/internal/ListProps';
+import type { ListProps } from '@/types/internal/ListProps';
 
 /**
  * List showing cards on mobile and normal list on larger screens
@@ -13,14 +13,26 @@ import { ListProps } from '@/types/internal/ListProps';
 const CardOrNormalList = (props: ListProps) => {
   return (
     <div id='card-or-normal-list'>
-      <div className='block sm:hidden' id='card-list-on-small-screen'>
+      <div
+        className={`
+          block
+          sm:hidden
+        `}
+        id='card-list-on-small-screen'
+      >
         <CardList {...props} />
       </div>
-      <div className='hidden sm:block' id='card-list-on-large-screen'>
+      <div
+        className={`
+          hidden
+          sm:block
+        `}
+        id='card-list-on-large-screen'
+      >
         <NormalList {...props} />
       </div>
     </div>
   );
 };
 
-export default React.memo(CardOrNormalList);
+export default memo(CardOrNormalList);

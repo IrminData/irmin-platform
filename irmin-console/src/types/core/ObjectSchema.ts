@@ -10,12 +10,12 @@ export type ObjectSchema = {
   last_modified?: string;
   /** (optional) A brief description of the object */
   description?: string;
-} & (SchemaObjectStructuredItem | SchemaObjectBinaryItem | SchemaObjectGroup);
+} & (SchemaObjectBinaryItem | SchemaObjectGroup | SchemaObjectStructuredItem);
 
 /**
  * Schema Object properties for structured items, like tables, which can be described using JSON Schema.
  */
-export type SchemaObjectStructuredItem = {
+type SchemaObjectStructuredItem = {
   /** Indicates that the object is a structured item */
   type: 'structured';
   /** Defines the schema of the structured object (like a table, json object, etc.) */
@@ -29,7 +29,7 @@ export type SchemaObjectStructuredItem = {
 /**
  * Schema Object properties for binary items, like images, which can not be described using JSON Schema.
  */
-export type SchemaObjectBinaryItem = {
+type SchemaObjectBinaryItem = {
   /** Indicates that the object is a binary item */
   type: 'binary';
   /** (optional) size of the object in bytes */
@@ -41,7 +41,7 @@ export type SchemaObjectBinaryItem = {
 /**
  * Schema Object properties for groups of objects, like a folder, which can contain other objects.
  */
-export type SchemaObjectGroup = {
+type SchemaObjectGroup = {
   /** Indicates that the object is a group of items */
   type: 'group';
   /** List of children objects in the group */
@@ -53,7 +53,7 @@ export type SchemaObjectGroup = {
 /**
  * Object describing what kind of children can a given schema have
  */
-export type GroupSchemaRestrictions = {
+type GroupSchemaRestrictions = {
   /** Property to determine whether the schema can have structured children */
   no_structured?: boolean;
   /** Property to determine whether the schema can have binary children */
@@ -88,7 +88,7 @@ export type GroupSchemaRestrictions = {
  */
 export interface JSONSchema {
   /** Specifies the JSON Schema data type (e.g., 'object', 'array', 'string'). */
-  type: 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
+  type: 'array' | 'boolean' | 'null' | 'number' | 'object' | 'string';
   /** Defines the fields and respective schemas when the type is 'object'. */
   properties?: Record<string, JSONSchema>;
   /** Lists the required fields within the object. */
@@ -98,11 +98,11 @@ export interface JSONSchema {
   /** A brief description of the schema. */
   description?: string;
   /** Default value for the schema property. */
-  default?: string | number | boolean | null;
+  default?: boolean | number | string | null;
   /** Possible values for the field, if constrained. */
-  enum?: (string | number | boolean | null)[];
+  enum?: (boolean | number | string | null)[];
   /** Defines whether additional properties are allowed (when `type` is 'object'). */
-  additionalProperties?: boolean | JSONSchema;
+  additionalProperties?: JSONSchema | boolean;
   /** Constrains the expected format, such as 'email', 'date', 'uri', etc. */
   format?: string;
   /** For numeric values, defines the minimum value. */

@@ -94,10 +94,16 @@ export function WorkspaceTagModal({
               key={paletteColor}
               type='button'
               className={cn(
-                'h-12 w-full rounded-md border-2 transition-all hover:scale-110',
+                `
+                  h-12 w-full rounded-md border-2 transition-all
+                  hover:scale-110
+                `,
                 (customColor || color) === paletteColor
-                  ? 'border-foreground ring-ring ring-2 ring-offset-2'
-                  : 'border-border hover:border-foreground/50'
+                  ? 'border-foreground ring-2 ring-ring ring-offset-2'
+                  : `
+                    border-border
+                    hover:border-foreground/50
+                  `
               )}
               style={{ backgroundColor: paletteColor }}
               onClick={() => {
@@ -114,7 +120,7 @@ export function WorkspaceTagModal({
             type='color'
             value={customColor || color}
             onChange={(e) => setCustomColor(e.target.value)}
-            className='h-12 w-12 cursor-pointer border-none p-1'
+            className='size-12 cursor-pointer border-none p-1'
           />
           <Input
             value={customColor || color}

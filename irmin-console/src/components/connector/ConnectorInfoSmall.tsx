@@ -1,12 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import useBaseUrl from '@/hooks/useBaseUrl';
 
-import { Connector } from '@/types/core/Connector';
+import type { Connector } from '@/types/core/Connector';
 
 /**
  * Smaller component to display the information of a connector.
@@ -28,7 +28,7 @@ const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
 
   return (
     <div className='flex items-center space-x-4'>
-      <Avatar className='h-16 w-16 rounded-none'>
+      <Avatar className='size-16 rounded-none'>
         <AvatarImage src={connector.logo_url} alt={connector.name} />
         <AvatarFallback>
           {connector.name.slice(0, 2).toUpperCase()}
@@ -39,7 +39,14 @@ const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
           <Badge variant='default'>{connector.primary_category}</Badge>
         )}
         <div className='flex items-center gap-2'>
-          <h2 className='text-lg lg:text-xl'>{connector.name}</h2>
+          <h2
+            className={`
+              text-lg
+              lg:text-xl
+            `}
+          >
+            {connector.name}
+          </h2>
           <Button
             variant='gray'
             size='sm'

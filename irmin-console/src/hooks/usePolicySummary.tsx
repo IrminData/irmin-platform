@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { policySummaryQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { UserPolicySummary } from '@/types/core/Policy';
-
-export const policySummaryQueryKey = (workspaceSlug: string) =>
-  ['policy-summary', workspaceSlug] as const;
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { UserPolicySummary } from '@/types/core/Policy';
 
 export function usePolicySummary(workspaceSlug?: string) {
   const { getToken } = useIAM();

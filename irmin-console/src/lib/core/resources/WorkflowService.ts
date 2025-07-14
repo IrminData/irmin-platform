@@ -1,13 +1,13 @@
-import IrminCore from '@/lib/core';
+import type IrminCore from '@/lib/core';
 
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import { WorkflowSchedule } from '@/types/core/Schedule';
-import {
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+import type { WorkflowSchedule } from '@/types/core/Schedule';
+import type {
   Workflow,
   Workflowable,
   WorkflowableType,
 } from '@/types/core/Workflow';
-import { WorkflowRequest } from '@/types/internal/WorkflowInput';
+import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
 /**
  * Interface for updating basic workflow info

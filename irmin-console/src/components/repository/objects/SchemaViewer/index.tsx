@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import { memo } from 'react';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
 import { BinaryItemViewer } from './BinaryItemViewer';
+// eslint-disable-next-line import-x/no-cycle
 import { GroupItemViewer } from './GroupItemViewer';
 import { StructuredItemViewer } from './StructuredItemViewer';
 
@@ -66,4 +67,4 @@ function ObjectSchemaViewer({
   }
 }
 
-export default React.memo(ObjectSchemaViewer);
+export default memo(ObjectSchemaViewer);

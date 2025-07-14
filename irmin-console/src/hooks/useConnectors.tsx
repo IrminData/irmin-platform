@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import { connectorsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { Connector } from '@/types/core/Connector';
-import { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-
-export const connectorsQueryKey = ['connectors'] as const;
+import type { Connector } from '@/types/core/Connector';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 export function useConnectors() {
   const { getToken } = useIAM();

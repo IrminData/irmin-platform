@@ -4,9 +4,10 @@ import { useCallback } from 'react';
 
 import { TbTrash } from 'react-icons/tb';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
-import ContentWrapper from '@/components/ui/ContentWrapper';
-import EmptyState from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Table,
   TableBody,
@@ -35,7 +36,7 @@ export default function TokensSection() {
   const {
     credentialsQuery,
     createCredentialMutation,
-    revokeCredentialMutation,
+    deleteCredentialMutation,
   } = useCredentials();
 
   /**
@@ -87,32 +88,69 @@ export default function TokensSection() {
       ) : (
         <Table className='min-w-full'>
           <TableHeader>
-            <TableRow className='border-b dark:border-gray-800'>
-              <TableHead className='px-4 py-2 text-left text-xs font-normal md:text-sm'>
+            <TableRow
+              className={`
+                border-b
+                dark:border-gray-800
+              `}
+            >
+              <TableHead
+                className={`
+                  px-4 py-2 text-left text-xs font-normal
+                  md:text-sm
+                `}
+              >
                 {dict.common.description}
               </TableHead>
-              <TableHead className='hidden px-2 py-2 text-left text-sm font-normal md:table-cell'>
+              <TableHead
+                className={`
+                  hidden p-2 text-left text-sm font-normal
+                  md:table-cell
+                `}
+              >
                 {dict.tokens.expiresAt}
               </TableHead>
-              <TableHead className='px-4 py-2 text-center text-xs font-normal md:text-right md:text-sm'>
+              <TableHead
+                className={`
+                  px-4 py-2 text-center text-xs font-normal
+                  md:text-right md:text-sm
+                `}
+              >
                 {/* Actions */}
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {credentialsQuery.data?.data?.map((token, idx) => (
+            {credentialsQuery.data?.data?.map((token) => (
               <TableRow
-                key={`user-api-token-${token.id}-${idx}`}
-                className='h-14 border-b dark:border-gray-800'
+                key={`user-api-token-${token.id}`}
+                className={`
+                  h-14 border-b
+                  dark:border-gray-800
+                `}
               >
-                <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                <TableCell
+                  className={`
+                    px-4 py-2 text-sm text-gray-700
+                    dark:text-gray-400
+                  `}
+                >
                   {token.name}
                 </TableCell>
-                <TableCell className='px-4 py-2 text-sm text-gray-700 dark:text-gray-400'>
+                <TableCell
+                  className={`
+                    px-4 py-2 text-sm text-gray-700
+                    dark:text-gray-400
+                  `}
+                >
                   {new Date(token.expiry).toLocaleDateString(locale)}
                 </TableCell>
                 <TableCell className='px-4 py-2 text-right'>
-                  <div className='flex w-full flex-row justify-end gap-2 align-middle'>
+                  <div
+                    className={`
+                      flex w-full flex-row justify-end gap-2 align-middle
+                    `}
+                  >
                     <ButtonWithTooltip
                       size='icon'
                       variant='secondary'
@@ -120,7 +158,7 @@ export default function TokensSection() {
                       icon={<TbTrash size={14} />}
                       tooltip={dict.tokens.revokeToken}
                       onClick={() =>
-                        revokeCredentialMutation.mutateAsync(token.id)
+                        void deleteCredentialMutation.mutateAsync(token.id)
                       }
                     />
                   </div>

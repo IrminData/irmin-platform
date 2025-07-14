@@ -5,7 +5,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { GoGitMerge } from 'react-icons/go';
 import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
 
-import Button, { ButtonWithTooltip } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -151,91 +153,134 @@ export default function RepositoryCompareSection() {
 
   if (!canViewDiff) {
     return (
-      <div className='bg-card w-full rounded-lg border border-gray-200 px-2 py-8 dark:border-gray-800'>
-        <p className='text-card-foreground mx-auto mb-2 max-w-lg text-center text-lg lg:text-2xl'>
-          {dict.common.insufficientPermissions}
-        </p>
-      </div>
+      <SafeComponent
+        level='section'
+        title='Repository Access Error'
+        description='Failed to access repository diff due to permissions'
+      >
+        <div
+          className={`
+            w-full rounded-lg border border-gray-200 bg-card px-2 py-8
+            dark:border-gray-800
+          `}
+        >
+          <p
+            className={`
+              mx-auto mb-2 max-w-lg text-center text-lg text-card-foreground
+              lg:text-2xl
+            `}
+          >
+            {dict.common.insufficientPermissions}
+          </p>
+        </div>
+      </SafeComponent>
     );
   }
 
   return (
-    <div className='relative container mx-auto flex max-w-7xl flex-col gap-4 px-2 pt-4 pb-12 md:px-4'>
-      <div className='flex w-full flex-wrap items-center justify-between gap-4 lg:flex-row'>
-        {/* Select branches being compared */}
-        <div className='flex w-max flex-wrap items-center justify-start gap-4 lg:flex-row lg:gap-2'>
-          <div className='min-w-60'>
-            <BranchSelector
-              branches={repositoryBranchesQuery.data?.data ?? []}
-              loading={repositoryBranchesQuery.isLoading}
-              label={dict.repository.compare.baseBranch}
-              currentRef={baseRef}
-              onSelect={(branch) => {
-                setBaseRef(branch.value);
-              }}
-            />
-          </div>
-          <ButtonWithTooltip
-            size='icon'
-            variant='ghost'
-            icon={<TbArrowLeft size={18} />}
-            onClick={() => {
-              setBaseRef(compareRef);
-              setCompareRef(baseRef);
-            }}
-            tooltip={dict.repository.compare.switchDirection}
-          />
-          <div className='min-w-60'>
-            <BranchSelector
-              branches={repositoryBranchesQuery.data?.data ?? []}
-              loading={repositoryBranchesQuery.isLoading}
-              label={dict.repository.compare.compareBranch}
-              currentRef={compareRef}
-              onSelect={(branch) => {
-                setCompareRef(branch.value);
-              }}
-            />
-          </div>
-        </div>
-        {/* Actions */}
-        <div className='flex w-max min-w-48 flex-row items-center gap-4 lg:justify-end'>
-          <ButtonWithTooltip
-            size='icon'
-            variant='secondary'
-            icon={<TbRefresh size={18} />}
-            onClick={() => {
-              diffQuery.refetch();
-            }}
-            tooltip={dict.common.refresh}
-            disabled={diffQuery.isLoading}
-          />
-          <Button
-            className='w-full max-w-28'
-            variant='default'
-            size='sm'
-            icon={<GoGitMerge size={18} />}
-            onClick={() => {
-              handleMerge();
-            }}
-            disabled={!canMerge || !notImmutable}
+    <SafeComponent
+      level='section'
+      title='Repository Compare Error'
+      description='Failed to load repository comparison interface'
+    >
+      <div
+        className={`
+          relative container mx-auto flex max-w-7xl flex-col gap-4 px-2 pt-4
+          pb-12
+          md:px-4
+        `}
+      >
+        <div
+          className={`
+            flex w-full flex-wrap items-center justify-between gap-4
+            lg:flex-row
+          `}
+        >
+          {/* Select branches being compared */}
+          <div
+            className={`
+              flex w-max flex-wrap items-center justify-start gap-4
+              lg:flex-row lg:gap-2
+            `}
           >
-            {dict.repository.compare.merge}
-          </Button>
+            <div className='min-w-60'>
+              <BranchSelector
+                branches={repositoryBranchesQuery.data?.data ?? []}
+                loading={repositoryBranchesQuery.isLoading}
+                label={dict.repository.compare.baseBranch}
+                currentRef={baseRef}
+                onSelect={(branch) => {
+                  setBaseRef(branch.value);
+                }}
+              />
+            </div>
+            <ButtonWithTooltip
+              size='icon'
+              variant='ghost'
+              icon={<TbArrowLeft size={18} />}
+              onClick={() => {
+                setBaseRef(compareRef);
+                setCompareRef(baseRef);
+              }}
+              tooltip={dict.repository.compare.switchDirection}
+            />
+            <div className='min-w-60'>
+              <BranchSelector
+                branches={repositoryBranchesQuery.data?.data ?? []}
+                loading={repositoryBranchesQuery.isLoading}
+                label={dict.repository.compare.compareBranch}
+                currentRef={compareRef}
+                onSelect={(branch) => {
+                  setCompareRef(branch.value);
+                }}
+              />
+            </div>
+          </div>
+          {/* Actions */}
+          <div
+            className={`
+              flex w-max min-w-48 flex-row items-center gap-4
+              lg:justify-end
+            `}
+          >
+            <ButtonWithTooltip
+              size='icon'
+              variant='secondary'
+              icon={<TbRefresh size={18} />}
+              onClick={() => {
+                diffQuery.refetch();
+              }}
+              tooltip={dict.common.refresh}
+              disabled={diffQuery.isLoading}
+            />
+            <Button
+              className='w-full max-w-28'
+              variant='default'
+              size='sm'
+              icon={<GoGitMerge size={18} />}
+              onClick={() => {
+                handleMerge();
+              }}
+              disabled={!canMerge || !notImmutable}
+            >
+              {dict.repository.compare.merge}
+            </Button>
+          </div>
         </div>
+        {diffQuery.isLoading && <LoadingSkeleton className='h-96' />}
+        {!diffQuery.isLoading && !notImmutable && <ImmutableWarning />}
+        {!diffQuery.isLoading && !canMerge && <NoDiffWarning />}
+        {!diffQuery.isLoading &&
+          canMerge &&
+          notImmutable &&
+          diffQuery.data?.data && (
+            <DiffView
+              diff={diffQuery.data.data}
+              baseRef={baseRef}
+              compareRef={compareRef}
+            />
+          )}
       </div>
-      {diffQuery.isLoading && <LoadingSkeleton className='h-96' />}
-      {!diffQuery.isLoading && !notImmutable && <ImmutableWarning />}
-      {!diffQuery.isLoading && !canMerge && <NoDiffWarning />}
-      {!diffQuery.isLoading &&
-        canMerge &&
-        notImmutable &&
-        diffQuery.data?.data && (
-          <DiffView
-            diff={diffQuery.data.data}
-            baseRef={baseRef}
-            compareRef={compareRef}
-          />
-        )}
-    </div>
+    </SafeComponent>
   );
 }
