@@ -1,11 +1,6 @@
 import type { Metadata } from 'next';
 
-import {
-  Big_Shoulders_Display,
-  Inter,
-  PT_Serif,
-  Space_Mono,
-} from 'next/font/google';
+import { Big_Shoulders, Inter, PT_Serif, Space_Mono } from 'next/font/google';
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -20,7 +15,7 @@ import ReactQueryProvider from '@/context/ReactQueryProvider';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
 const interSans = Inter({ subsets: ['latin'], variable: '--font-inter-sans' });
-const bigShouldersDisplay = Big_Shoulders_Display({
+const bigShouldersDisplay = Big_Shoulders({
   subsets: ['latin'],
   variable: '--font-big-shoulders-display',
 });
