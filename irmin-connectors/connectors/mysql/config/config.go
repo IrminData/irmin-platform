@@ -17,8 +17,8 @@ func GetConnectorInfo() models.ConnectorDetails {
 		APIBaseURL:       "/mysql",
 		LogoURL:          "/public/mysql.png",
 		Capabilities: []irminmodels.ConnectorCapability{
-			irminmodels.ConnectorCapabilityPullFullSync,
-			irminmodels.ConnectorCapabilityPushFullSync,
+			irminmodels.ConnectorCapabilityPull,
+			irminmodels.ConnectorCapabilityPush,
 			irminmodels.ConnectorCapabilityPushPatch,
 			irminmodels.ConnectorCapabilityEventWebhook,
 		},

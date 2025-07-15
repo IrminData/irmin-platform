@@ -17,8 +17,8 @@ func GetConnectorInfo() models.ConnectorDetails {
 		APIBaseURL:       "/postgres",
 		LogoURL:          "/public/postgres.png",
 		Capabilities: []irminmodels.ConnectorCapability{
-			irminmodels.ConnectorCapabilityPullFullSync,
-			irminmodels.ConnectorCapabilityPushFullSync,
+			irminmodels.ConnectorCapabilityPull,
+			irminmodels.ConnectorCapabilityPush,
 			irminmodels.ConnectorCapabilityPushPatch,
 			irminmodels.ConnectorCapabilityEventWebhook,
 		},
