@@ -16,16 +16,16 @@ import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useConnections } from '@/hooks/useConnections';
-import { useRepositories } from '@/hooks/useRepositories';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkflow } from '@/hooks/useWorkflow';
-import useWorkflowRuns from '@/hooks/useWorkflowRuns';
+import {
+  useConnections,
+  useRepositories,
+  useWorkflow,
+  useWorkflowRuns,
+} from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { GridRow } from '@/types/internal/ListProps';
 
 /**
@@ -42,18 +42,12 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
   const { connectionsQuery } = useConnections();
 
   const canViewWorkflow = useMemo(
-    () =>
-      isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read, workflowID),
+    () => isResourceAllowed('workflow', 'read', workflowID),
     [isResourceAllowed, workflowID]
   );
 
   const canViewRuns = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.WorkflowRun,
-        PolicyAction.Read,
-        workflowID
-      ),
+    () => isResourceAllowed('workflow_run', 'read', workflowID),
     [isResourceAllowed, workflowID]
   );
 
@@ -207,10 +201,11 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
             key={`run-${run.id}-status`}
             className='inline-flex flex-col gap-2'
           >
-            <StatusBadge
-              status={run.status}
-              label={run.status ?? dict.workflow.noStatus}
-            />
+            {run.status === '' || !run.status ? (
+              <StatusBadge status='default' label={dict.workflow.noStatus} />
+            ) : (
+              <StatusBadge status={run.status} label={run.status} />
+            )}
           </div>,
         ],
         actions: [

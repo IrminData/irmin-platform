@@ -10,7 +10,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryDiffContent } from '@/hooks/useRepositoryDiffContent';
+import { useRepositoryDiffContent } from '@/hooks/api';
 
 import type { Diff } from '@/types/core/Diff';
 

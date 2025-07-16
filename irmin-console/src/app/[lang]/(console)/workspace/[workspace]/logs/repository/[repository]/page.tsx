@@ -7,7 +7,7 @@ import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useRepository } from '@/hooks/useRepository';
+import { useRepository } from '@/hooks/api';
 
 import type { RepositoryLogsLayoutParams } from './layout';
 

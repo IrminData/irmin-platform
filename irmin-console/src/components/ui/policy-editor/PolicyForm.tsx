@@ -24,7 +24,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import {
+import type {
   PolicyAction,
   PolicyEffect,
   PolicyPrincipal,
@@ -86,12 +86,8 @@ export default function PolicyForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={PolicyEffect.Allow}>
-                {dict.policy.effectAllow}
-              </SelectItem>
-              <SelectItem value={PolicyEffect.Deny}>
-                {dict.policy.effectDeny}
-              </SelectItem>
+              <SelectItem value={'allow'}>{dict.policy.effectAllow}</SelectItem>
+              <SelectItem value={'deny'}>{dict.policy.effectDeny}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -122,16 +118,14 @@ export default function PolicyForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={PolicyAction.Create}>
+              <SelectItem value={'create'}>
                 {dict.policy.actionCreate}
               </SelectItem>
-              <SelectItem value={PolicyAction.Read}>
-                {dict.policy.actionRead}
-              </SelectItem>
-              <SelectItem value={PolicyAction.Update}>
+              <SelectItem value={'read'}>{dict.policy.actionRead}</SelectItem>
+              <SelectItem value={'update'}>
                 {dict.policy.actionUpdate}
               </SelectItem>
-              <SelectItem value={PolicyAction.Delete}>
+              <SelectItem value={'delete'}>
                 {dict.policy.actionDelete}
               </SelectItem>
             </SelectContent>
@@ -164,11 +158,60 @@ export default function PolicyForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.values(PolicyResource).map((resource) => (
-                <SelectItem key={resource} value={resource}>
-                  {String(formatResourceName(resource))}
-                </SelectItem>
-              ))}
+              <SelectItem value={'workspace'}>
+                {String(formatResourceName('workspace'))}
+              </SelectItem>
+              <SelectItem value={'editor_script'}>
+                {String(formatResourceName('editor_script'))}
+              </SelectItem>
+              <SelectItem value={'query'}>
+                {String(formatResourceName('query'))}
+              </SelectItem>
+              <SelectItem value={'workflow'}>
+                {String(formatResourceName('workflow'))}
+              </SelectItem>
+              <SelectItem value={'workflow_run'}>
+                {String(formatResourceName('workflow_run'))}
+              </SelectItem>
+              <SelectItem value={'connection'}>
+                {String(formatResourceName('connection'))}
+              </SelectItem>
+              <SelectItem value={'repository'}>
+                {String(formatResourceName('repository'))}
+              </SelectItem>
+              <SelectItem value={'repository_branch'}>
+                {String(formatResourceName('repository_branch'))}
+              </SelectItem>
+              <SelectItem value={'repository_tag'}>
+                {String(formatResourceName('repository_tag'))}
+              </SelectItem>
+              <SelectItem value={'repository_commit'}>
+                {String(formatResourceName('repository_commit'))}
+              </SelectItem>
+              <SelectItem value={'repository_object'}>
+                {String(formatResourceName('repository_object'))}
+              </SelectItem>
+              <SelectItem value={'workspace_tag'}>
+                {String(formatResourceName('workspace_tag'))}
+              </SelectItem>
+              <SelectItem value={'user'}>
+                {String(formatResourceName('user'))}
+              </SelectItem>
+              <SelectItem value={'policy'}>
+                {String(formatResourceName('policy'))}
+              </SelectItem>
+              <SelectItem value={'invite'}>
+                {String(formatResourceName('invite'))}
+              </SelectItem>
+              <SelectItem value={'audit_log'}>
+                {String(formatResourceName('audit_log'))}
+              </SelectItem>
+              <SelectItem value={'documentation'}>
+                {String(formatResourceName('documentation'))}
+              </SelectItem>
+              <SelectItem value={'billing'}>
+                {String(formatResourceName('billing'))}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -196,36 +239,36 @@ export default function PolicyForm({
               <SelectValue placeholder={dict.policy.allResources} />
             </SelectTrigger>
             <SelectContent>
-              {formData.resource === PolicyResource.Query &&
+              {formData.resource === 'query' &&
                 policyResourceOptions.queries.map((query) => (
                   <SelectItem key={query.id} value={query.id}>
                     {query.label}
                   </SelectItem>
                 ))}
-              {(formData.resource === PolicyResource.Workflow ||
-                formData.resource === PolicyResource.WorkflowRun) &&
+              {(formData.resource === 'workflow' ||
+                formData.resource === 'workflow_run') &&
                 policyResourceOptions.workflows.map((workflow) => (
                   <SelectItem key={workflow.id} value={workflow.id}>
                     {workflow.label}
                   </SelectItem>
                 ))}
-              {formData.resource === PolicyResource.Connection &&
+              {formData.resource === 'connection' &&
                 policyResourceOptions.connections.map((connection) => (
                   <SelectItem key={connection.id} value={connection.id}>
                     {connection.label}
                   </SelectItem>
                 ))}
-              {(formData.resource === PolicyResource.Repository ||
-                formData.resource === PolicyResource.RepositoryBranch ||
-                formData.resource === PolicyResource.RepositoryTag ||
-                formData.resource === PolicyResource.RepositoryCommit ||
-                formData.resource === PolicyResource.RepositoryObject) &&
+              {(formData.resource === 'repository' ||
+                formData.resource === 'repository_branch' ||
+                formData.resource === 'repository_tag' ||
+                formData.resource === 'repository_commit' ||
+                formData.resource === 'repository_object') &&
                 policyResourceOptions.repositories.map((repository) => (
                   <SelectItem key={repository.id} value={repository.id}>
                     {repository.label}
                   </SelectItem>
                 ))}
-              {formData.resource === PolicyResource.User &&
+              {formData.resource === 'user' &&
                 policyResourceOptions.users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.label}
@@ -255,12 +298,8 @@ export default function PolicyForm({
                 ...prev,
                 principal: value as PolicyPrincipal,
                 // Clear roleId and userId when principal changes
-                roleId:
-                  value === PolicyPrincipal.Role ? prev.roleId : undefined,
-                userId:
-                  value === PolicyPrincipal.WorkspaceUser
-                    ? prev.userId
-                    : undefined,
+                roleId: value === 'role' ? prev.roleId : undefined,
+                userId: value === 'workspace_user' ? prev.userId : undefined,
               }))
             }
           >
@@ -268,20 +307,20 @@ export default function PolicyForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={PolicyPrincipal.WorkspaceUser}>
+              <SelectItem value={'workspace_user'}>
                 {dict.policy.principalWorkspaceUser}
               </SelectItem>
-              <SelectItem value={PolicyPrincipal.Role}>
+              <SelectItem value={'role'}>
                 {dict.policy.principalRole}
               </SelectItem>
-              <SelectItem value={PolicyPrincipal.Everyone}>
+              <SelectItem value={'everyone'}>
                 {dict.policy.principalEveryone}
               </SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {formData.principal === PolicyPrincipal.Role && (
+        {formData.principal === 'role' && (
           <div className='flex flex-col gap-2'>
             <Label htmlFor='roleId'>{dict.policy.principalRole}</Label>
             <Select
@@ -304,7 +343,7 @@ export default function PolicyForm({
           </div>
         )}
 
-        {formData.principal === PolicyPrincipal.WorkspaceUser && (
+        {formData.principal === 'workspace_user' && (
           <div className='flex flex-col gap-2'>
             <Label htmlFor='userId'>{dict.policy.principalWorkspaceUser}</Label>
             <Select

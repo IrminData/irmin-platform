@@ -33,7 +33,7 @@ const COLOR_PALETTE = [
 
 interface WorkspaceTagModalProps {
   initialTag?: Partial<Tag>;
-  onSubmit: (tag: Tag) => void;
+  onSubmit: (_tag: Tag) => void;
   onCancel?: () => void;
 }
 

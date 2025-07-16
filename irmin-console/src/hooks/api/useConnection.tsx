@@ -13,6 +13,11 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import type { Connection } from '@/types/core/Connection';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
+import {
+  deleteMutationHandlers,
+  updateMutationHandlers,
+} from './mutations/utils';
+
 type UpdateConnectionInput = Pick<
   Connection,
   'description' | 'documentation' | 'name'
@@ -60,111 +65,64 @@ export function useConnection(connectionID: string) {
   });
 
   // Mutation for deleting a connection
-  const deleteConnectionMutation = useMutation({
-    mutationFn: async () => {
-      if (!connectionID) throw new Error('Connection ID is required');
-      const token = await getToken();
-      const core = new IrminCore(locale, token);
-      const res = await core.connectionService.deleteConnection({
-        workspace: workspaceSlug,
-        connectionID,
-      });
-      return res;
-    },
-    onMutate: async () => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({
-        queryKey: connectionQueryKey(workspaceSlug, connectionID),
-      });
-      await queryClient.cancelQueries({
-        queryKey: connectionsQueryKey(workspaceSlug),
-      });
-
-      // Snapshot the previous values
-      const previousConnection = queryClient.getQueryData<
-        IrminAPIResponse<Connection>
-      >(connectionQueryKey(workspaceSlug, connectionID));
-      const previousConnections = queryClient.getQueryData<
-        IrminAPIResponse<Connection[]>
-      >(connectionsQueryKey(workspaceSlug));
-
-      // Optimistically remove from connections list cache
-      queryClient.setQueryData<IrminAPIResponse<Connection[]>>(
-        connectionsQueryKey(workspaceSlug),
-        (old: IrminAPIResponse<Connection[]> | undefined) => {
-          if (!old?.data) return old;
-
-          const filteredConnections = old.data.filter(
-            (connection: Connection) => connection.id !== connectionID
+  const deleteConnectionMutation = useMutation<IrminAPIResponse, Error, string>(
+    {
+      mutationFn: async (connId: string) => {
+        const token = await getToken();
+        const core = new IrminCore(locale, token);
+        const res = await core.connectionService.deleteConnection({
+          workspace: workspaceSlug,
+          connectionID: connId,
+        });
+        return res;
+      },
+      ...deleteMutationHandlers<Connection>(queryClient, {
+        cacheConfig: {
+          primaryQueryKey: connectionsQueryKey(workspaceSlug),
+          getItemId: (connection) => connection.id,
+        },
+        singleItemQueryKey: connectionQueryKey(
+          workspaceSlug,
+          connectionID || ''
+        ),
+        onSuccess: (res) => {
+          irminAlert(
+            'success',
+            res.message ?? 'Connection deleted successfully'
           );
-
-          return {
-            ...old,
-            data: filteredConnections,
-          };
-        }
-      );
-
-      // Clear single connection cache
-      queryClient.removeQueries({
-        queryKey: connectionQueryKey(workspaceSlug, connectionID),
-      });
-
-      // Return context for rollback
-      return { previousConnection, previousConnections };
-    },
-    onError: (
-      error,
-      variables: void,
-      context?: {
-        previousConnection?: IrminAPIResponse<Connection>;
-        previousConnections?: IrminAPIResponse<Connection[]>;
-      }
-    ) => {
-      // Rollback on error
-      if (context?.previousConnection) {
-        queryClient.setQueryData(
-          connectionQueryKey(workspaceSlug, connectionID),
-          context.previousConnection
-        );
-      }
-      if (context?.previousConnections) {
-        queryClient.setQueryData(
-          connectionsQueryKey(workspaceSlug),
-          context.previousConnections
-        );
-      }
-      irminAlert('error', error.message ?? 'Error deleting the connection');
-    },
-    onSuccess: (res: IrminAPIResponse) => {
-      // The optimistic update is already done, just show success message
-      irminAlert('success', res.message ?? 'Connection deleted successfully');
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: connectionQueryKey(workspaceSlug, connectionID),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: connectionsQueryKey(workspaceSlug),
-      });
-    },
-  });
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Error deleting the connection');
+        },
+      }),
+    }
+  );
 
   // Handler for deleting a connection
   const { mutate: deleteConnection } = deleteConnectionMutation;
   const handleDeleteConnection = useCallback(async () => {
+    if (!connectionID) return;
     const confirmed = await irminConfirm(
       'warning',
       `${dict.common.areYouSureYouWantToDelete} (${connectionQuery.data?.data?.name})`
     );
     if (confirmed) {
-      deleteConnection();
+      deleteConnection(connectionID);
     }
-  }, [dict, irminConfirm, connectionQuery.data?.data, deleteConnection]);
+  }, [
+    dict,
+    irminConfirm,
+    connectionQuery.data?.data,
+    deleteConnection,
+    connectionID,
+  ]);
 
   // Mutation for updating a connection
-  const updateConnectionMutation = useMutation({
+  const updateConnectionMutation = useMutation<
+    IrminAPIResponse<Connection>,
+    Error,
+    UpdateConnectionInput
+  >({
     mutationFn: async (input: UpdateConnectionInput) => {
       if (!connectionID) throw new Error('Connection ID is required');
       const token = await getToken();
@@ -178,124 +136,19 @@ export function useConnection(connectionID: string) {
       });
       return res;
     },
-    onMutate: async (input: UpdateConnectionInput) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({
-        queryKey: connectionQueryKey(workspaceSlug, connectionID),
-      });
-      await queryClient.cancelQueries({
-        queryKey: connectionsQueryKey(workspaceSlug),
-      });
-
-      // Snapshot the previous values
-      const previousConnection = queryClient.getQueryData<
-        IrminAPIResponse<Connection>
-      >(connectionQueryKey(workspaceSlug, connectionID));
-      const previousConnections = queryClient.getQueryData<
-        IrminAPIResponse<Connection[]>
-      >(connectionsQueryKey(workspaceSlug));
-
-      // Optimistically update the single connection cache
-      queryClient.setQueryData<IrminAPIResponse<Connection>>(
-        connectionQueryKey(workspaceSlug, connectionID),
-        (old: IrminAPIResponse<Connection> | undefined) => {
-          if (!old?.data) return old;
-
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              ...input,
-            },
-          };
-        }
-      );
-
-      // Optimistically update the connections list cache
-      queryClient.setQueryData<IrminAPIResponse<Connection[]>>(
-        connectionsQueryKey(workspaceSlug),
-        (old: IrminAPIResponse<Connection[]> | undefined) => {
-          if (!old?.data) return old;
-
-          const updatedConnections = old.data.map((connection: Connection) =>
-            connection.id === connectionID
-              ? { ...connection, ...input }
-              : connection
-          );
-
-          return {
-            ...old,
-            data: updatedConnections,
-          };
-        }
-      );
-
-      // Return context for rollback
-      return { previousConnection, previousConnections };
-    },
-    onError: (
-      error,
-      input: UpdateConnectionInput,
-      context?: {
-        previousConnection?: IrminAPIResponse<Connection>;
-        previousConnections?: IrminAPIResponse<Connection[]>;
-      }
-    ) => {
-      // Rollback on error
-      if (context?.previousConnection) {
-        queryClient.setQueryData(
-          connectionQueryKey(workspaceSlug, connectionID),
-          context.previousConnection
-        );
-      }
-      if (context?.previousConnections) {
-        queryClient.setQueryData(
-          connectionsQueryKey(workspaceSlug),
-          context.previousConnections
-        );
-      }
-      irminAlert('error', error.message ?? 'Error updating the connection');
-    },
-    onSuccess: (
-      res: IrminAPIResponse<Connection>,
-      _input: UpdateConnectionInput
-    ) => {
-      // Update the cache with the real data from the server
-      if (res.data) {
-        queryClient.setQueryData<IrminAPIResponse<Connection>>(
-          connectionQueryKey(workspaceSlug, connectionID),
-          res
-        );
-
-        // Update the connections list
-        queryClient.setQueryData<IrminAPIResponse<Connection[]>>(
-          connectionsQueryKey(workspaceSlug),
-          (old: IrminAPIResponse<Connection[]> | undefined) => {
-            if (!old?.data) return old;
-
-            const updatedConnections = old.data.map((connection: Connection) =>
-              connection.id === connectionID ? res.data! : connection
-            );
-
-            return {
-              ...old,
-              data: updatedConnections,
-            };
-          }
-        );
-      }
-
-      irminAlert('success', res.message ?? 'Connection updated successfully');
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: connectionQueryKey(workspaceSlug, connectionID),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: connectionsQueryKey(workspaceSlug),
-      });
-    },
+    ...updateMutationHandlers<Connection, UpdateConnectionInput>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: connectionsQueryKey(workspaceSlug),
+        getItemId: (connection) => connection.id,
+      },
+      singleItemQueryKey: connectionQueryKey(workspaceSlug, connectionID || ''),
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Connection updated successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Error updating the connection');
+      },
+    }),
   });
 
   // Mutation for updating a connection configuration
@@ -420,15 +273,6 @@ export function useConnection(connectionID: string) {
       }
 
       irminAlert('success', res.message ?? 'Connection updated successfully');
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: connectionQueryKey(workspaceSlug, connectionID),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: connectionsQueryKey(workspaceSlug),
-      });
     },
   });
 

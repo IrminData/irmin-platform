@@ -14,13 +14,13 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import type { Diff, MergeStrategy } from '@/types/core/Diff';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
-export type MergeRefsInput = {
+export interface MergeRefsInput {
   base: string;
   compare: string;
   description: string;
   strategy: MergeStrategy;
   squash: boolean;
-};
+}
 
 export function useRepositoryDiff(
   repositorySlug: string,
@@ -73,6 +73,7 @@ export function useRepositoryDiff(
       });
     },
     onSuccess: (res) => {
+      // Invalidate diff and commits for both base and compare refs
       void queryClient.invalidateQueries({
         queryKey: repositoryDiffQueryKey(
           workspaceSlug,
@@ -100,7 +101,6 @@ export function useRepositoryDiff(
       irminAlert('success', res.message ?? 'Successfully merged');
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Error merging refs');
     },
   });

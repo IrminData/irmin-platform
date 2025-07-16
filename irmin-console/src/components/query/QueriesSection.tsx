@@ -30,16 +30,15 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useStoredQueries } from '@/hooks/useStoredQueries';
-import { useWorkspaceSchema } from '@/hooks/useWorkspaceSchema';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import {
+  useStoredQueries,
+  useWorkspaceSchema,
+  useWorkspaceTags,
+} from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { StoredQuery } from '@/types/core/StoredQuery';
 import type { Tag } from '@/types/core/Tag';
-import { TagEntityType } from '@/types/core/Tag';
 
 import CreateSavedQueryModal from './CreateQueryModal';
 import UpdateQueryModal from './UpdateQueryModal';
@@ -90,23 +89,15 @@ export default function QueriesSection() {
 
   const canViewTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
-      isResourceAllowed(
-        PolicyResource.Query,
-        PolicyAction.Read,
-        selectedQuery?.id
-      ),
+      isResourceAllowed('workspace_tag', 'read') &&
+      isResourceAllowed('query', 'read', selectedQuery?.id),
     [isResourceAllowed, selectedQuery?.id]
   );
 
   const canChangeTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
-      isResourceAllowed(
-        PolicyResource.Query,
-        PolicyAction.Update,
-        selectedQuery?.id
-      ),
+      isResourceAllowed('workspace_tag', 'create') &&
+      isResourceAllowed('query', 'update', selectedQuery?.id),
     [isResourceAllowed, selectedQuery?.id]
   );
 
@@ -152,14 +143,14 @@ export default function QueriesSection() {
           ...tagsToAdd.map((tag) =>
             addTagToEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Query,
+              entityType: 'queries',
               entityId: selectedQuery.id,
             })
           ),
           ...tagsToRemove.map((tag) =>
             removeTagFromEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Query,
+              entityType: 'queries',
               entityId: selectedQuery.id,
             })
           ),

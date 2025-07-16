@@ -12,10 +12,10 @@ import { useLocale } from '@/context/LocaleContext';
 interface MultiplePathsSelectorProps {
   label: string;
   paths: string[] | undefined;
-  onPathsChange: (paths: string[]) => void;
+  onPathsChange: (_paths: string[]) => void;
   renderPathSelector: (
-    path: string,
-    onPathChange: (path: string) => void
+    _path: string,
+    _onPathChange: (_path: string) => void
   ) => React.ReactNode;
   addButtonText?: string;
 }

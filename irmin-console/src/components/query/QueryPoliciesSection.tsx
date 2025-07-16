@@ -10,10 +10,8 @@ import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { usePolicies } from '@/hooks/usePolicies';
-
-import { PolicyResource } from '@/types/core/Policy';
+import { usePolicies } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 /**
  * Query Policies section
@@ -23,7 +21,7 @@ import { PolicyResource } from '@/types/core/Policy';
 const QueryPoliciesSection = ({ queryID }: { queryID?: string }) => {
   const { dict } = useLocale();
   const { policiesQuery } = usePolicies({
-    resource: PolicyResource.Query,
+    resource: 'query',
   });
   // Filter policies to only include policies for this query or global query policies
   const filteredPolicies = useMemo(() => {
@@ -61,7 +59,7 @@ const QueryPoliciesSection = ({ queryID }: { queryID?: string }) => {
         policiesError={policiesQuery.error}
         title={dict.policy.title}
         description={dict.policy.description}
-        defaultResourceType={PolicyResource.Query}
+        defaultResourceType={'query'}
         defaultResourceId={queryID}
         showResourceColumn={true}
         showResourceIdColumn={true}

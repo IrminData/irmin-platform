@@ -14,7 +14,7 @@ import Tabs from '@/components/ui/tabs/Tabs';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
+import { useBaseUrl } from '@/hooks/utils';
 
 /**
  * Layout for the Workflow pages in the Console

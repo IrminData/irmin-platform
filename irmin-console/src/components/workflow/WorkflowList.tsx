@@ -9,10 +9,8 @@ import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Workflow } from '@/types/core/Workflow';
 import type {
   EmptyStateAction,
@@ -49,13 +47,7 @@ const WorkflowList = ({
     () =>
       items
         .map((item) => {
-          if (
-            !isResourceAllowed(
-              PolicyResource.Workflow,
-              PolicyAction.Read,
-              item.id
-            )
-          ) {
+          if (!isResourceAllowed('workflow', 'read', item.id)) {
             return null;
           }
 
@@ -69,20 +61,13 @@ const WorkflowList = ({
               label: dict.list.edit,
               primary: false,
               href: `${workspaceUrl}/workflows/${item.id}/settings`,
-              hidden: !isResourceAllowed(
-                PolicyResource.Workflow,
-                PolicyAction.Update,
-                item.id
-              ),
+              hidden: !isResourceAllowed('workflow', 'update', item.id),
             },
             {
               label: dict.common.logs,
               primary: false,
               href: `${workspaceUrl}/logs/workflow/${item.id}`,
-              hidden: !isResourceAllowed(
-                PolicyResource.AuditLog,
-                PolicyAction.Read
-              ),
+              hidden: !isResourceAllowed('audit_log', 'read'),
             },
           ];
           return {
@@ -110,10 +95,14 @@ const WorkflowList = ({
                 key={`status-${item.id}`}
                 className='inline-flex flex-row items-center gap-2'
               >
-                <StatusBadge
-                  status={item.status}
-                  label={item.status ?? dict.workflow.noStatus}
-                />
+                {item.status === '' || !item.status ? (
+                  <StatusBadge
+                    status='default'
+                    label={dict.workflow.noStatus}
+                  />
+                ) : (
+                  <StatusBadge status={item.status} label={item.status} />
+                )}
                 <div className='flex flex-col'>
                   {item.schedule?.triggers &&
                   item.schedule.triggers.length > 0 ? (

@@ -13,9 +13,8 @@ import { Button } from '@/components/ui/button';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
 
 /**
@@ -251,9 +250,7 @@ const FileNavigator = () => {
           icon={<FiFileText size={12} />}
           aria-label='Create a new file'
           loading={loading}
-          disabled={
-            !isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Create)
-          }
+          disabled={!isResourceAllowed('editor_script', 'create')}
         >
           {dict.fileNavigator.createFile}
         </Button>
@@ -270,9 +267,7 @@ const FileNavigator = () => {
           icon={<FiFolder size={12} />}
           aria-label='Create a new folder'
           loading={loading}
-          disabled={
-            !isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Create)
-          }
+          disabled={!isResourceAllowed('editor_script', 'create')}
         >
           {dict.fileNavigator.createFolder}
         </Button>
@@ -314,10 +309,7 @@ const FileNavigator = () => {
             {contextMenu.item.current?.name ?? contextMenu.item.original?.name}
           </li>
           {contextMenu.item?.current?.type === 'file' &&
-            isResourceAllowed(
-              PolicyResource.EditorScript,
-              PolicyAction.Read
-            ) && (
+            isResourceAllowed('editor_script', 'read') && (
               <>
                 <button
                   className={`
@@ -336,10 +328,7 @@ const FileNavigator = () => {
                 </button>
               </>
             )}
-          {isResourceAllowed(
-            PolicyResource.EditorScript,
-            PolicyAction.Update
-          ) && (
+          {isResourceAllowed('editor_script', 'update') && (
             <>
               <button
                 className={`
@@ -369,10 +358,7 @@ const FileNavigator = () => {
               </button>
             </>
           )}
-          {isResourceAllowed(
-            PolicyResource.EditorScript,
-            PolicyAction.Delete
-          ) && (
+          {isResourceAllowed('editor_script', 'delete') && (
             <button
               className={`
                 w-full cursor-pointer rounded p-1 text-left text-sm

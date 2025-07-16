@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
+import { useBaseUrl } from '@/hooks/utils';
 
 import { getNameFromPath } from '@/utils/editorItems';
 

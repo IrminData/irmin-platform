@@ -16,9 +16,8 @@ import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useConnections } from '@/hooks/useConnections';
-import { useRepositories } from '@/hooks/useRepositories';
+import { useConnections, useRepositories } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { Import } from '@/types/core/Workflow';
 import type { WorkflowRequest } from '@/types/internal/WorkflowInput';

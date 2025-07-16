@@ -10,10 +10,10 @@ import PolicyEditor from '@/components/ui/policy-editor';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { usePolicies } from '@/hooks/usePolicies';
+import { usePolicies } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
-import { PolicyResource } from '@/types/core/Policy';
+import type { PolicyResource } from '@/types/core/Policy';
 
 /**
  * Repository Policies section
@@ -42,7 +42,7 @@ const RepositoryPoliciesSectionContent = ({
   const { repository } = useRepositoryContext();
 
   const { policiesQuery } = usePolicies({
-    resource: type ?? PolicyResource.Repository,
+    resource: type ?? 'repository',
   });
 
   /** The base URL for the repository, eg. /en/workspace/workspace-slug/repositories/repository-slug */
@@ -67,37 +67,31 @@ const RepositoryPoliciesSectionContent = ({
       <div className='mx-auto flex w-full max-w-7xl px-2'>
         <div className='flex w-full flex-wrap items-center gap-2'>
           <Button
-            variant={type === PolicyResource.Repository ? 'gray' : 'ghost'}
+            variant={type === 'repository' ? 'gray' : 'ghost'}
             href={`${baseUrl}/policies`}
           >
             {dict.repository.repository}
           </Button>
           <Button
-            variant={
-              type === PolicyResource.RepositoryBranch ? 'gray' : 'ghost'
-            }
+            variant={type === 'repository_branch' ? 'gray' : 'ghost'}
             href={`${baseUrl}/policies/branches`}
           >
             {dict.repository.branches.branches}
           </Button>
           <Button
-            variant={type === PolicyResource.RepositoryTag ? 'gray' : 'ghost'}
+            variant={type === 'repository_tag' ? 'gray' : 'ghost'}
             href={`${baseUrl}/policies/tags`}
           >
             {dict.repository.tags.tags}
           </Button>
           <Button
-            variant={
-              type === PolicyResource.RepositoryObject ? 'gray' : 'ghost'
-            }
+            variant={type === 'repository_object' ? 'gray' : 'ghost'}
             href={`${baseUrl}/policies/objects`}
           >
             {dict.repository.objects.objects}
           </Button>
           <Button
-            variant={
-              type === PolicyResource.RepositoryCommit ? 'gray' : 'ghost'
-            }
+            variant={type === 'repository_commit' ? 'gray' : 'ghost'}
             href={`${baseUrl}/policies/commits`}
           >
             {dict.repository.commit.commits}
@@ -111,7 +105,7 @@ const RepositoryPoliciesSectionContent = ({
           policiesError={policiesQuery.error}
           title={dict.policy.title}
           description={dict.policy.description}
-          defaultResourceType={type ?? PolicyResource.Repository}
+          defaultResourceType={type ?? 'repository'}
           defaultResourceId={repository.id}
           showResourceColumn={true}
           showResourceIdColumn={true}

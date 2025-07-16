@@ -11,9 +11,8 @@ import PaginationControls from '@/components/ui/PaginationControls';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import type { LogsForType } from '@/hooks/useLogEvents';
-import { useLogEvents } from '@/hooks/useLogEvents';
+import { type LogsForType, useLogEvents } from '@/hooks/api/useLogEvents';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { Connection } from '@/types/core/Connection';
 import type { Object } from '@/types/core/Object';

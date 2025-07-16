@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
-import { useConnection } from '@/hooks/useConnection';
+import { useConnection } from '@/hooks/api';
 
 /**
  * Connection context properties

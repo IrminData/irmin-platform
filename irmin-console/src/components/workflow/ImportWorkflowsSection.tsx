@@ -10,11 +10,9 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
-import { useWorkflows } from '@/hooks/useWorkflows';
+import { useWorkflows } from '@/hooks/api';
+import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { ImportWorkflow } from '@/types/core/Workflow';
 
 import CreateWorkflowModalContent from './CreateWorkflowModalContent';
@@ -103,18 +101,13 @@ export default function ImportWorkflowsSection({
           size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
-          disabled={
-            !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
-          }
+          disabled={!isResourceAllowed('workflow', 'create')}
         >
           {dict.workflow.create.createNewImportWorkflow}
         </Button>
       </div>
       <SideModal
-        isOpen={
-          isOpen &&
-          isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
-        }
+        isOpen={isOpen && isResourceAllowed('workflow', 'create')}
         closeModal={closeModal}
         currentStep={currentStep}
         steps={[
@@ -125,10 +118,7 @@ export default function ImportWorkflowsSection({
         title={dict.workflow.create.createNewImportWorkflow}
       >
         <CreateWorkflowModalContent
-          isOpen={
-            isOpen &&
-            isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
-          }
+          isOpen={isOpen && isResourceAllowed('workflow', 'create')}
           closeModal={closeModal}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
@@ -181,7 +171,7 @@ export default function ImportWorkflowsSection({
           loading={workflowsQuery.isLoading}
           importWorkflows={filteredItems}
           emptyStateAction={
-            isResourceAllowed(PolicyResource.Workflow, PolicyAction.Create)
+            isResourceAllowed('workflow', 'create')
               ? {
                   label: dict.workflow.create.createNewImportWorkflow,
                   onClick: openModal,

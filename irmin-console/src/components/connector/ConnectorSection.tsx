@@ -11,7 +11,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConnector } from '@/hooks/useConnector';
+import { useConnector } from '@/hooks/api';
 
 import { ConnectorInfo } from './ConnectorInfo';
 

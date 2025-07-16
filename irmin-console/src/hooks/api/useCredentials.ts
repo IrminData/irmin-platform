@@ -11,6 +11,11 @@ import { usePopup } from '@/context/PopupContext';
 import type { APIToken } from '@/types/core/APIToken';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
+import {
+  createMutationHandlers,
+  deleteMutationHandlers,
+} from './mutations/utils';
+
 export function useCredentials() {
   const { getToken } = useIAM();
   const { locale } = useLocale();
@@ -35,14 +40,21 @@ export function useCredentials() {
           tokenID,
         });
       },
-      onSuccess: (res) => {
-        void queryClient.invalidateQueries({ queryKey: credentialsQueryKey });
-        irminAlert('success', res.message ?? 'Credential deleted successfully');
-      },
-      onError: (error) => {
-        console.error(error);
-        irminAlert('error', error.message ?? 'Error deleting credential');
-      },
+      ...deleteMutationHandlers<APIToken>(queryClient, {
+        cacheConfig: {
+          primaryQueryKey: credentialsQueryKey,
+          getItemId: (token) => token.id,
+        },
+        onSuccess: (res) => {
+          irminAlert(
+            'success',
+            res.message ?? 'Credential deleted successfully'
+          );
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Error deleting credential');
+        },
+      }),
     }
   );
 
@@ -56,14 +68,39 @@ export function useCredentials() {
       const core = new IrminCore(locale, token);
       return await core.credentialService.createSystemToken(data);
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({ queryKey: credentialsQueryKey });
-      irminAlert('success', res.message ?? 'Credential created successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error creating credential');
-    },
+    ...createMutationHandlers<APIToken, CreateCredentialRequest>(
+      queryClient,
+      'credentials',
+      {
+        cacheConfig: {
+          primaryQueryKey: credentialsQueryKey,
+          getItemId: (token) => token.id,
+          createOptimisticItem: (
+            input: CreateCredentialRequest,
+            tempId: string
+          ) => ({
+            id: tempId,
+            name: input.name,
+            scope: 'read',
+            token: 'temp-token-will-be-replaced',
+            expires_at: null,
+            expiry: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            last_used_at: null,
+          }),
+        },
+        onSuccess: (res) => {
+          irminAlert(
+            'success',
+            res.message ?? 'Credential created successfully'
+          );
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Error creating credential');
+        },
+      }
+    ),
   });
 
   return {

@@ -18,12 +18,11 @@ import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
 import type { ScriptResult } from '@/types/core/EditorItems';
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { ActionInputData } from '@/types/core/Workflow';
 
 /**
@@ -52,7 +51,7 @@ const ScriptResults = ({
   onSave?: () => Promise<void>;
   onRun?: () => Promise<void>;
   inputFiles?: ActionInputData[];
-  setInputFiles?: (files: ActionInputData[]) => void;
+  setInputFiles?: (_files: ActionInputData[]) => void;
 }) => {
   const { dict } = useLocale();
   const { isResourceAllowed } = useResourceAllowed();
@@ -67,12 +66,12 @@ const ScriptResults = ({
   const [processingRun, setProcessingRun] = useState(false);
 
   const canSave = useMemo(
-    () => isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Update),
+    () => isResourceAllowed('editor_script', 'update'),
     [isResourceAllowed]
   );
 
   const canRun = useMemo(
-    () => isResourceAllowed(PolicyResource.EditorScript, PolicyAction.Create),
+    () => isResourceAllowed('editor_script', 'create'),
     [isResourceAllowed]
   );
 

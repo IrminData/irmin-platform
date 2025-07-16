@@ -39,6 +39,36 @@ export const useRepositoryObject = (
     },
   });
 
+  // Helper function to invalidate object-related queries
+  const invalidateObjectQueries = (path: string, ref: string) => {
+    void queryClient.invalidateQueries({
+      queryKey: repositoryObjectQueryKey(
+        workspaceSlug,
+        repositorySlug,
+        ref,
+        path
+      ),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: [
+        'repository-object-content',
+        workspaceSlug,
+        repositorySlug,
+        ref,
+        path,
+      ],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: [
+        'repository-object-schema',
+        workspaceSlug,
+        repositorySlug,
+        ref,
+        path,
+      ],
+    });
+  };
+
   const deleteObjectMutation = useMutation<
     IrminAPIResponse,
     Error,
@@ -55,36 +85,10 @@ export const useRepositoryObject = (
       });
     },
     onSuccess: (res, { path, ref }) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryObjectQueryKey(
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          path
-        ),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-content',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          path,
-        ],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-schema',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          path,
-        ],
-      });
+      invalidateObjectQueries(path, ref);
       irminAlert('success', res.message ?? 'Object deleted successfully');
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Failed to delete object');
     },
   });
@@ -94,15 +98,7 @@ export const useRepositoryObject = (
     Error,
     { oldPath: string; newPath: string; ref: string }
   >({
-    mutationFn: async ({
-      oldPath,
-      newPath,
-      ref,
-    }: {
-      oldPath: string;
-      newPath: string;
-      ref: string;
-    }) => {
+    mutationFn: async ({ oldPath, newPath, ref }) => {
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
       return irminCore.objectService.moveObject({
@@ -114,14 +110,8 @@ export const useRepositoryObject = (
       });
     },
     onSuccess: (res, { oldPath, ref }) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryObjectQueryKey(
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          oldPath
-        ),
-      });
+      invalidateObjectQueries(oldPath, ref);
+      // Also invalidate broader queries for the ref
       void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-content',
@@ -141,7 +131,6 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Object moved successfully');
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Failed to move object');
     },
   });
@@ -151,15 +140,7 @@ export const useRepositoryObject = (
     Error,
     { oldPath: string; newPath: string; ref: string }
   >({
-    mutationFn: async ({
-      oldPath,
-      newPath,
-      ref,
-    }: {
-      oldPath: string;
-      newPath: string;
-      ref: string;
-    }) => {
+    mutationFn: async ({ oldPath, newPath, ref }) => {
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
       return irminCore.objectService.copyObject({
@@ -171,14 +152,8 @@ export const useRepositoryObject = (
       });
     },
     onSuccess: (res, { oldPath, ref }) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryObjectQueryKey(
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          oldPath
-        ),
-      });
+      invalidateObjectQueries(oldPath, ref);
+      // Also invalidate broader queries for the ref
       void queryClient.invalidateQueries({
         queryKey: [
           'repository-object-content',
@@ -198,7 +173,6 @@ export const useRepositoryObject = (
       irminAlert('success', res.message ?? 'Object copied successfully');
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Failed to copy object');
     },
   });
@@ -208,15 +182,7 @@ export const useRepositoryObject = (
     Error,
     { path: string; ref: string; files: FileList }
   >({
-    mutationFn: async ({
-      path,
-      ref,
-      files,
-    }: {
-      path: string;
-      ref: string;
-      files: FileList;
-    }) => {
+    mutationFn: async ({ path, ref, files }) => {
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
       return irminCore.objectService.uploadObject({
@@ -228,36 +194,10 @@ export const useRepositoryObject = (
       });
     },
     onSuccess: (res, { path, ref }) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryObjectQueryKey(
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          path
-        ),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-content',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          path,
-        ],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-schema',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-          path,
-        ],
-      });
+      invalidateObjectQueries(path, ref);
       irminAlert('success', res.message ?? 'Object uploaded successfully');
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Failed to upload object');
     },
   });

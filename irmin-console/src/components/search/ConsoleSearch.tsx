@@ -23,11 +23,11 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useWorkspaceSearch } from '@/hooks/api';
 import {
   filterStaticSearchItems,
   useStaticSearchItems,
-} from '@/hooks/useStaticSearchItems';
-import { useWorkspaceSearch } from '@/hooks/useWorkspaceSearch';
+} from '@/hooks/utils/useStaticSearchItems';
 
 import { convertSearchResultToConsoleItem } from '@/utils/search';
 
@@ -225,23 +225,23 @@ export default function ConsoleSearch() {
 
   const getIconForType = useCallback((type: ConsoleSearchItemType) => {
     switch (type) {
-      case ConsoleSearchItemType.User:
+      case 'user':
         return <TbUser size={12} />;
-      case ConsoleSearchItemType.Repository:
+      case 'repository':
         return <TbDatabase size={12} />;
-      case ConsoleSearchItemType.StructuredObject:
+      case 'structured-object':
         return <TbTable size={12} />;
-      case ConsoleSearchItemType.BinaryObject:
+      case 'binary-object':
         return <TbFile size={12} />;
-      case ConsoleSearchItemType.GroupObject:
+      case 'group-object':
         return <TbFolder size={12} />;
-      case ConsoleSearchItemType.Connection:
+      case 'connection':
         return <GoWorkflow size={12} />;
-      case ConsoleSearchItemType.Workflow:
+      case 'workflow':
         return <TbRun size={12} />;
-      case ConsoleSearchItemType.Workspace:
+      case 'workspace':
         return <TbDashboard size={12} />;
-      case ConsoleSearchItemType.Irmin:
+      case 'irmin':
       default:
         return <TbTools size={12} />;
     }

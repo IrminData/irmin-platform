@@ -7,7 +7,7 @@ import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useStoredQueries } from '@/hooks/useStoredQueries';
+import { useStoredQueries } from '@/hooks/api';
 
 import type { QueryLogsLayoutParams } from './layout';
 

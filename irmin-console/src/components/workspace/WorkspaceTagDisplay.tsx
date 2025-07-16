@@ -6,10 +6,8 @@ import { useRouter } from 'next/navigation';
 
 import TagBadge from '@/components/ui/TagBadge';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
 
 interface WorkspaceTagDisplayProps {
@@ -48,7 +46,7 @@ const WorkspaceTagDisplay = ({
   // Filter tags to only include tags that the user has permission to read
   const allowedTags = useMemo(() => {
     return tags.filter((tag) =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read, tag.id)
+      isResourceAllowed('workspace_tag', 'read', tag.id)
     );
   }, [tags, isResourceAllowed]);
 

@@ -18,7 +18,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import type { MergeRefsInput } from '@/hooks/useRepositoryDiff';
+import type { MergeRefsInput } from '@/hooks/api/useRepositoryDiff';
 
 import type { MergeStrategy } from '@/types/core/Diff';
 

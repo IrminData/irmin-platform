@@ -20,7 +20,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { useCredentials } from '@/hooks/useCredentials';
+import { useCredentials } from '@/hooks/api';
 
 import APITokenDisplay from './APITokenDisplay';
 import CreateTokenModalContent from './CreateTokenModalContent';

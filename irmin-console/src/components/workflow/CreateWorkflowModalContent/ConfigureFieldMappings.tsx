@@ -11,8 +11,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConnectionSchema } from '@/hooks/useConnectionSchema';
-import { useRepositoryObjectSchema } from '@/hooks/useRepositoryObjectSchema';
+import { useConnectionSchema, useRepositoryObjectSchema } from '@/hooks/api';
 
 import type { Export, FieldMapping, Import } from '@/types/core/Workflow';
 

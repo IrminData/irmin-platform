@@ -2,7 +2,6 @@ import type { Dictionary } from '@/lib/dict';
 
 import type { SearchResult } from '@/types/core/Search';
 import type { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
-import { ConsoleSearchItemType } from '@/types/internal/ConsoleSearch';
 
 /**
  * Convert API SearchResult to ConsoleSearchItem format
@@ -22,7 +21,7 @@ export function convertSearchResultToConsoleItem(
           title: result.repository.name,
           description: result.repository.description || '-',
           link: `/${locale}/workspace/${workspaceSlug}/repositories/${result.repository.slug}`,
-          type: ConsoleSearchItemType.Repository,
+          type: 'repository',
         };
       }
       break;
@@ -37,10 +36,10 @@ export function convertSearchResultToConsoleItem(
           link: `/${locale}/workspace/${workspaceSlug}/repositories/${result.repository_object.repository_slug}/object?path=${urlEncodedPath}&ref=${result.repository_object.ref}`,
           type:
             result.repository_object.type === 'structured'
-              ? ConsoleSearchItemType.StructuredObject
+              ? 'structured-object'
               : result.repository_object.type === 'binary'
-                ? ConsoleSearchItemType.BinaryObject
-                : ConsoleSearchItemType.GroupObject,
+                ? 'binary-object'
+                : 'group-object',
         };
       }
       break;
@@ -50,7 +49,7 @@ export function convertSearchResultToConsoleItem(
           title: result.workflow.name,
           description: result.workflow.description || '-',
           link: `/${locale}/workspace/${workspaceSlug}/workflows/${result.workflow.id}`,
-          type: ConsoleSearchItemType.Workflow,
+          type: 'workflow',
         };
       }
       break;
@@ -60,7 +59,7 @@ export function convertSearchResultToConsoleItem(
           title: result.connection.name,
           description: result.connection.description || '-',
           link: `/${locale}/workspace/${workspaceSlug}/connections/${result.connection.id}`,
-          type: ConsoleSearchItemType.Connection,
+          type: 'connection',
         };
       }
       break;
@@ -72,7 +71,7 @@ export function convertSearchResultToConsoleItem(
             result.user.email,
           description: result.user.email,
           link: `/${locale}/workspace/${workspaceSlug}/settings/users`,
-          type: ConsoleSearchItemType.User,
+          type: 'user',
         };
       }
       break;

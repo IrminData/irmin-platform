@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useConnectionSchema } from '@/hooks/useConnectionSchema';
+import { useConnectionSchema } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 

@@ -10,10 +10,8 @@ import DocumentationForm from '@/components/ui/form/DocumentationForm';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepository } from '@/hooks/useRepository';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useRepository } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Repository Documentation section component for displaying and updating the documentation.
@@ -49,25 +47,13 @@ const RepositoryDocumentationSectionContent = () => {
     <DocumentationForm
       initialDocumentation={repository.documentation ?? ''}
       onSubmit={handleSaveDocumentation}
-      disabled={
-        !isResourceAllowed(
-          PolicyResource.Repository,
-          PolicyAction.Update,
-          repository.id
-        )
-      }
+      disabled={!isResourceAllowed('repository', 'update', repository.id)}
     >
       <Button
         size='default'
         variant='default'
         type='submit'
-        disabled={
-          !isResourceAllowed(
-            PolicyResource.Repository,
-            PolicyAction.Update,
-            repository.id
-          )
-        }
+        disabled={!isResourceAllowed('repository', 'update', repository.id)}
       >
         {dict.common.save}
       </Button>

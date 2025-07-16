@@ -1,44 +1,31 @@
 import type { Role } from './Role';
 import type { User } from './User';
 
-export enum PolicyEffect {
-  Allow = 'allow',
-  Deny = 'deny',
-}
+export type PolicyEffect = 'allow' | 'deny';
 
-export enum PolicyAction {
-  Create = 'create',
-  Read = 'read',
-  Update = 'update',
-  Delete = 'delete',
-}
+export type PolicyAction = 'create' | 'read' | 'update' | 'delete';
 
-export enum PolicyResource {
-  Workspace = 'workspace',
-  EditorScript = 'editor_script',
-  Query = 'query',
-  Workflow = 'workflow',
-  WorkflowRun = 'workflow_run',
-  Connection = 'connection',
-  Repository = 'repository',
-  RepositoryBranch = 'repository_branch',
-  RepositoryTag = 'repository_tag',
-  RepositoryCommit = 'repository_commit',
-  RepositoryObject = 'repository_object',
-  WorkspaceTag = 'workspace_tag',
-  User = 'user',
-  Policy = 'policy',
-  Invite = 'invite',
-  AuditLog = 'audit_log',
-  Documentation = 'documentation',
-  Billing = 'billing',
-}
+export type PolicyResource =
+  | 'workspace'
+  | 'editor_script'
+  | 'query'
+  | 'workflow'
+  | 'workflow_run'
+  | 'connection'
+  | 'repository'
+  | 'repository_branch'
+  | 'repository_tag'
+  | 'repository_commit'
+  | 'repository_object'
+  | 'workspace_tag'
+  | 'user'
+  | 'policy'
+  | 'invite'
+  | 'audit_log'
+  | 'documentation'
+  | 'billing';
 
-export enum PolicyPrincipal {
-  WorkspaceUser = 'workspace_user',
-  Role = 'role',
-  Everyone = 'everyone',
-}
+export type PolicyPrincipal = 'workspace_user' | 'role' | 'everyone';
 
 export interface Policy {
   /** Unique identifier for the policy */

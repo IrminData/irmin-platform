@@ -10,7 +10,7 @@ import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkflow } from '@/hooks/useWorkflow';
+import { useWorkflow } from '@/hooks/api';
 
 import type { WorkflowSchedule } from '@/types/core/Schedule';
 

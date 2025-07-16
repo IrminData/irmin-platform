@@ -51,8 +51,7 @@ export function useInvite(inviteID: string) {
       if (!inviteID) throw new Error('Invite ID is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const res = await core.inviteService.acceptInvite({ inviteID });
-      return res;
+      return await core.inviteService.acceptInvite({ inviteID });
     },
     onSuccess: (res) => {
       irminAlert('success', res.message ?? 'Invite accepted successfully');
@@ -72,8 +71,7 @@ export function useInvite(inviteID: string) {
       if (!inviteID) throw new Error('Invite ID is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const res = await core.inviteService.declineInvite({ inviteID });
-      return res;
+      return await core.inviteService.declineInvite({ inviteID });
     },
     onSuccess: (res) => {
       irminAlert('success', res.message ?? 'Invite declined successfully');

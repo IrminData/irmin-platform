@@ -5,18 +5,14 @@ import PolicyForm from '@/components/ui/policy-editor/PolicyForm';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { usePolicies } from '@/hooks/usePolicies';
-import { usePolicyResourceOptions } from '@/hooks/usePolicyResourceOptions';
-import { useRoles } from '@/hooks/useRoles';
-import { useUsers } from '@/hooks/useUsers';
-
 import {
-  type Policy,
-  PolicyAction,
-  PolicyEffect,
-  PolicyPrincipal,
-  PolicyResource,
-} from '@/types/core/Policy';
+  usePolicies,
+  usePolicyResourceOptions,
+  useRoles,
+  useUsers,
+} from '@/hooks/api';
+
+import type { Policy } from '@/types/core/Policy';
 
 import type {
   PolicyFormData,
@@ -46,14 +42,9 @@ export function usePolicyForm({
         resource: formData.resource,
         principal: formData.principal,
         resourceId: formData.resourceId || '',
-        roleId:
-          formData.principal === PolicyPrincipal.Role
-            ? formData.roleId
-            : undefined,
+        roleId: formData.principal === 'role' ? formData.roleId : undefined,
         userId:
-          formData.principal === PolicyPrincipal.WorkspaceUser
-            ? formData.userId
-            : undefined,
+          formData.principal === 'workspace_user' ? formData.userId : undefined,
       };
 
       createPolicyMutation.mutate(createData, {
@@ -74,14 +65,9 @@ export function usePolicyForm({
         resource: formData.resource,
         principal: formData.principal,
         resourceId: formData.resourceId || undefined,
-        roleId:
-          formData.principal === PolicyPrincipal.Role
-            ? formData.roleId
-            : undefined,
+        roleId: formData.principal === 'role' ? formData.roleId : undefined,
         userId:
-          formData.principal === PolicyPrincipal.WorkspaceUser
-            ? formData.userId
-            : undefined,
+          formData.principal === 'workspace_user' ? formData.userId : undefined,
       };
 
       updatePolicyMutation.mutate(updateData, {
@@ -95,11 +81,11 @@ export function usePolicyForm({
 
   const showCreateForm = useCallback(() => {
     const initialValues: PolicyFormData = {
-      effect: PolicyEffect.Allow,
-      action: PolicyAction.Read,
-      resource: defaultResourceType || PolicyResource.Workspace,
+      effect: 'allow',
+      action: 'read',
+      resource: defaultResourceType || 'workspace',
       resourceId: defaultResourceId,
-      principal: defaultPrincipalType || PolicyPrincipal.Role,
+      principal: defaultPrincipalType || 'role',
       roleId: defaultRoleId,
       userId: defaultUserId,
     };

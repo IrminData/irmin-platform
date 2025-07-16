@@ -55,6 +55,7 @@ export function useEditorItems(path?: string) {
       });
     },
     onSuccess: (res, item) => {
+      // Invalidate both the list and the specific item
       void queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
@@ -189,12 +190,6 @@ export function useEditorItems(path?: string) {
       // The optimistic update is already done, just show success message
       irminAlert('success', res.message ?? 'Editor item deleted successfully.');
     },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: editorItemsQueryKey(workspaceSlug),
-      });
-    },
   });
 
   const saveEditorItemMutation = useMutation({
@@ -208,6 +203,7 @@ export function useEditorItems(path?: string) {
       });
     },
     onSuccess: (res, item) => {
+      // Invalidate both the list and the specific item content
       void queryClient.invalidateQueries({
         queryKey: editorItemsQueryKey(workspaceSlug),
       });
@@ -357,12 +353,6 @@ export function useEditorItems(path?: string) {
         'success',
         res.message ?? 'Editor folder created successfully.'
       );
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: editorItemsQueryKey(workspaceSlug),
-      });
     },
   });
 

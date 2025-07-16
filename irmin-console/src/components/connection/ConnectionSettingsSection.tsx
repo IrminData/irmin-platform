@@ -14,13 +14,10 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useUsers } from '@/hooks/useUsers';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import { useUsers, useWorkspaceTags } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
-import { TagEntityType } from '@/types/core/Tag';
 
 interface ConnectionFormValues {
   name: string;
@@ -76,12 +73,13 @@ const ConnectionSettingsSection = () => {
   );
 
   const handleDeleteConnection = useCallback(async () => {
+    if (!connectionQuery.data?.data?.id) return;
     const confirmed = await irminConfirm(
       'warning',
       `${dict.common.areYouSureYouWantToDelete} (${connectionQuery.data?.data?.name})`
     );
     if (!confirmed) return;
-    await deleteConnectionMutation.mutateAsync();
+    await deleteConnectionMutation.mutateAsync(connectionQuery.data?.data?.id);
     router.push(`/workspace/${workspaceSlug}/connections`);
   }, [
     deleteConnectionMutation,
@@ -90,6 +88,7 @@ const ConnectionSettingsSection = () => {
     dict,
     router,
     workspaceSlug,
+    connectionQuery.data?.data?.id,
   ]);
 
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
@@ -97,23 +96,15 @@ const ConnectionSettingsSection = () => {
 
   const canViewTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
-      isResourceAllowed(
-        PolicyResource.Connection,
-        PolicyAction.Read,
-        connectionQuery.data?.data?.id
-      ),
+      isResourceAllowed('workspace_tag', 'read') &&
+      isResourceAllowed('connection', 'read', connectionQuery.data?.data?.id),
     [isResourceAllowed, connectionQuery.data?.data?.id]
   );
 
   const canChangeTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
-      isResourceAllowed(
-        PolicyResource.Connection,
-        PolicyAction.Update,
-        connectionQuery.data?.data?.id
-      ),
+      isResourceAllowed('workspace_tag', 'create') &&
+      isResourceAllowed('connection', 'update', connectionQuery.data?.data?.id),
     [isResourceAllowed, connectionQuery.data?.data?.id]
   );
 
@@ -159,14 +150,14 @@ const ConnectionSettingsSection = () => {
           ...tagsToAdd.map((tag) =>
             addTagToEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Connection,
+              entityType: 'connections',
               entityId: connectionId,
             })
           ),
           ...tagsToRemove.map((tag) =>
             removeTagFromEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Connection,
+              entityType: 'connections',
               entityId: connectionId,
             })
           ),
@@ -259,19 +250,9 @@ const ConnectionSettingsSection = () => {
         submitButtonLabel={dict.connections.settings.saveChanges}
         deleteButtonLabel={dict.connections.settings.delete}
         dangerZoneMessage={dict.connections.settings.deletionNote}
-        disabled={
-          !isResourceAllowed(
-            PolicyResource.Connection,
-            PolicyAction.Update,
-            connection.id
-          )
-        }
+        disabled={!isResourceAllowed('connection', 'update', connection.id)}
         deleteButtonDisabled={
-          !isResourceAllowed(
-            PolicyResource.Connection,
-            PolicyAction.Delete,
-            connection.id
-          )
+          !isResourceAllowed('connection', 'delete', connection.id)
         }
         additionalContentRight={
           <>

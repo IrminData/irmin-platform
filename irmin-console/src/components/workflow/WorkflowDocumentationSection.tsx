@@ -9,10 +9,8 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkflow } from '@/hooks/useWorkflow';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useWorkflow } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Workflow Documentation section component for displaying and updating the documentation.
@@ -63,25 +61,13 @@ const WorkflowDocumentationSection = ({
     <DocumentationForm
       initialDocumentation={workflow.documentation ?? ''}
       onSubmit={handleSaveDocumentation}
-      disabled={
-        !isResourceAllowed(
-          PolicyResource.Workflow,
-          PolicyAction.Update,
-          workflowID
-        )
-      }
+      disabled={!isResourceAllowed('workflow', 'update', workflowID)}
     >
       <Button
         size='sm'
         variant='default'
         type='submit'
-        disabled={
-          !isResourceAllowed(
-            PolicyResource.Workflow,
-            PolicyAction.Update,
-            workflowID
-          )
-        }
+        disabled={!isResourceAllowed('workflow', 'update', workflowID)}
       >
         {dict.common.save}
       </Button>

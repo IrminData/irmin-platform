@@ -1,17 +1,16 @@
 /**
- * Enum for the types of console search items
+ * The types of console search items
  */
-export enum ConsoleSearchItemType {
-  Workflow = 'workflow',
-  Connection = 'connection',
-  Repository = 'repository',
-  StructuredObject = 'structured-object',
-  BinaryObject = 'binary-object',
-  GroupObject = 'group-object',
-  User = 'user',
-  Workspace = 'workspace',
-  Irmin = 'irmin',
-}
+export type ConsoleSearchItemType =
+  | 'workflow'
+  | 'connection'
+  | 'repository'
+  | 'structured-object'
+  | 'binary-object'
+  | 'group-object'
+  | 'user'
+  | 'workspace'
+  | 'irmin';
 
 /**
  * Interface for a console search item

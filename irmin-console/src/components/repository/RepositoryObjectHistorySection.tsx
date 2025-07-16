@@ -8,10 +8,8 @@ import SafeComponent from '@/components/ui/error/SafeComponent';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryObjectHistory } from '@/hooks/useRepositoryObjectHistory';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useRepositoryObjectHistory } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 export default function RepositoryObjectHistorySection({
   path,
@@ -40,12 +38,7 @@ function RepositoryObjectHistorySectionContent({ path }: { path: string }) {
   );
 
   const canViewHistory = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryCommit,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_commit', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 

@@ -7,9 +7,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Connection Documentation section component for displaying and updating the documentation.
@@ -43,25 +41,13 @@ const ConnectionDocumentationSection = () => {
           documentation: data.documentation,
         });
       }}
-      disabled={
-        !isResourceAllowed(
-          PolicyResource.Connection,
-          PolicyAction.Update,
-          connection.id
-        )
-      }
+      disabled={!isResourceAllowed('connection', 'update', connection.id)}
     >
       <Button
         size='sm'
         variant='default'
         type='submit'
-        disabled={
-          !isResourceAllowed(
-            PolicyResource.Connection,
-            PolicyAction.Update,
-            connection.id
-          )
-        }
+        disabled={!isResourceAllowed('connection', 'update', connection.id)}
       >
         {dict.common.save}
       </Button>

@@ -17,7 +17,7 @@ import type { WorkflowRun } from '@/types/core/WorkflowRun';
  * @param runID - unique identifier of the workflow run
  * @returns the workflow run
  */
-const useWorkflowRun = (workflowID: string, runID: string) => {
+export const useWorkflowRun = (workflowID: string, runID: string) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
@@ -60,5 +60,3 @@ const useWorkflowRun = (workflowID: string, runID: string) => {
     workflowRunQuery,
   };
 };
-
-export default useWorkflowRun;

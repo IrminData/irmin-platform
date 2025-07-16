@@ -26,12 +26,9 @@ import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkflow } from '@/hooks/useWorkflow';
-import useWorkflowRuns from '@/hooks/useWorkflowRuns';
+import { useWorkflow, useWorkflowRuns } from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { TabDetails } from '@/types/internal/Tabs';
 
 /**
@@ -74,9 +71,7 @@ export default function WorkflowLayoutWrapper({
 
   // Make sure the user is allowed to access the workflow
   useEffect(() => {
-    if (
-      !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read, workflowID)
-    ) {
+    if (!isResourceAllowed('workflow', 'read', workflowID)) {
       // Redirect to the workspace workflows page if the user is not allowed to access the workflow
       router.push(`${workspaceUrl}/workflows`);
     }
@@ -133,11 +128,7 @@ export default function WorkflowLayoutWrapper({
       link: `${baseUrl}/workflowable`,
       active: pathname === `${baseUrl}/workflowable`,
       icon: <TbAdjustments size={14} />,
-      hidden: !isResourceAllowed(
-        PolicyResource.Workflow,
-        PolicyAction.Update,
-        workflowID
-      ),
+      hidden: !isResourceAllowed('workflow', 'update', workflowID),
     },
     {
       name: dict.schemaFieldMapper.title,
@@ -146,11 +137,7 @@ export default function WorkflowLayoutWrapper({
       icon: <TbJumpRope size={14} />,
       hidden:
         (workflow.type !== 'import' && workflow.type !== 'export') ||
-        !isResourceAllowed(
-          PolicyResource.Workflow,
-          PolicyAction.Update,
-          workflowID
-        ),
+        !isResourceAllowed('workflow', 'update', workflowID),
     },
     {
       name: dict.workflow.tabs.schedule,
@@ -169,23 +156,21 @@ export default function WorkflowLayoutWrapper({
       link: `${baseUrl}/policies`,
       active: pathname === `${baseUrl}/policies`,
       icon: <TbShield size={14} />,
-      hidden: !isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
+      hidden: !isResourceAllowed('policy', 'read'),
     },
     {
       name: dict.workflow.tabs.data,
       link: `${workspaceUrl}/repositories/${repositorySlug}?ref=${repositoryBranch}`,
       active: false,
       icon: <TbDatabase size={14} />,
-      hidden:
-        !repositorySlug ||
-        !isResourceAllowed(PolicyResource.Repository, PolicyAction.Read),
+      hidden: !repositorySlug || !isResourceAllowed('repository', 'read'),
     },
     {
       name: dict.common.logs,
       link: `${workspaceUrl}/logs/workflow/${workflow?.id}`,
       active: false,
       icon: <TbBook size={14} />,
-      hidden: !isResourceAllowed(PolicyResource.AuditLog, PolicyAction.Read),
+      hidden: !isResourceAllowed('audit_log', 'read'),
     },
     {
       name: dict.consoleNavigation.settings,
@@ -252,10 +237,19 @@ export default function WorkflowLayoutWrapper({
                 {workflow.name}
               </h1>
               {workflow ? (
-                <StatusBadge
-                  status={workflow.status}
-                  label={workflow.status ?? dict.workflow.noStatus}
-                />
+                <>
+                  {workflow.status === '' || !workflow.status ? (
+                    <StatusBadge
+                      status='default'
+                      label={dict.workflow.noStatus}
+                    />
+                  ) : (
+                    <StatusBadge
+                      status={workflow.status}
+                      label={workflow.status ?? dict.workflow.noStatus}
+                    />
+                  )}
+                </>
               ) : (
                 <></>
               )}
@@ -285,11 +279,7 @@ export default function WorkflowLayoutWrapper({
               icon={<TbPlayerPlay size={14} />}
               loading={createWorkflowRunMutation.isPending}
               disabled={
-                !isResourceAllowed(
-                  PolicyResource.WorkflowRun,
-                  PolicyAction.Create,
-                  workflowID
-                )
+                !isResourceAllowed('workflow_run', 'create', workflowID)
               }
             >
               {dict.workflow.triggerRun}

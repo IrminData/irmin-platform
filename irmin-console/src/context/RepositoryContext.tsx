@@ -11,7 +11,7 @@ import {
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
+import { useRepositoryBranches } from '@/hooks/api';
 
 import { constructBaseUrl } from '@/utils/constructBaseUrl';
 import { createQueryString } from '@/utils/queryParams';
@@ -26,8 +26,8 @@ interface RepositoryContextProps {
   repository: Repository;
   immutable: boolean;
   currentRef?: string;
-  updateCurrentRef: (ref?: string, disableRedirect?: boolean) => string;
-  viewRef: (ref: string) => void;
+  updateCurrentRef: (_ref?: string, _disableRedirect?: boolean) => string;
+  viewRef: (_ref: string) => void;
   defaultRef?: string;
 }
 

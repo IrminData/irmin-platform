@@ -29,8 +29,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { useInvites } from '@/hooks/useInvites';
-import { useRoles } from '@/hooks/useRoles';
+import { useInvites, useRoles } from '@/hooks/api';
 
 import { WorkspaceSendInviteModalContent } from './WorkspaceSendInviteModalContent';
 

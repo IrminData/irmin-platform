@@ -11,6 +11,12 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { Tag, TagEntityType } from '@/types/core/Tag';
 
+import {
+  createMutationHandlers,
+  deleteMutationHandlers,
+  updateMutationHandlers,
+} from './mutations/utils';
+
 interface TagCreateRequest {
   name: string;
   color: string;
@@ -22,10 +28,6 @@ interface TagUpdateRequest {
   name: string;
   color: string;
   description: string;
-}
-
-interface TagDeleteRequest {
-  id: string;
 }
 
 interface TagAddToEntityRequest {
@@ -73,15 +75,30 @@ export const useWorkspaceTags = () => {
         description: data.description,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: workspaceTagsQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'Tag created successfully');
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to create tag');
-    },
+    ...createMutationHandlers<Tag, TagCreateRequest>(
+      queryClient,
+      'workspace-tags',
+      {
+        cacheConfig: {
+          primaryQueryKey: workspaceTagsQueryKey(workspaceSlug),
+          getItemId: (tag) => tag.id,
+          createOptimisticItem: (input: TagCreateRequest, tempId: string) => ({
+            id: tempId,
+            name: input.name,
+            color: input.color,
+            description: input.description,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }),
+        },
+        onSuccess: (res) => {
+          irminAlert('success', res.message ?? 'Tag created successfully');
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Failed to create tag');
+        },
+      }
+    ),
   });
 
   const updateWorkspaceTagMutation = useMutation<
@@ -100,39 +117,45 @@ export const useWorkspaceTags = () => {
         description: data.description,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: workspaceTagsQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'Tag updated successfully');
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to update tag');
-    },
+    ...updateMutationHandlers<Tag, TagUpdateRequest>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: workspaceTagsQueryKey(workspaceSlug),
+        getItemId: (tag) => tag.id,
+      },
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Tag updated successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Failed to update tag');
+      },
+    }),
   });
 
   const deleteWorkspaceTagMutation = useMutation<
     IrminAPIResponse,
     Error,
-    TagDeleteRequest
+    string
   >({
-    mutationFn: async (data) => {
+    mutationFn: async (tagId: string) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
       return await core.tagService.deleteWorkspaceTag({
         workspace: workspaceSlug,
-        tagId: data.id,
+        tagId,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: workspaceTagsQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'Tag deleted successfully');
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to delete tag');
-    },
+    ...deleteMutationHandlers<Tag>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: workspaceTagsQueryKey(workspaceSlug),
+        getItemId: (tag) => tag.id,
+      },
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Tag deleted successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Failed to delete tag');
+      },
+    }),
   });
 
   const addTagToEntityMutation = useMutation<

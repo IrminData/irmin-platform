@@ -36,8 +36,8 @@ export const WorkspaceSendInviteModalContent = ({
   onClose,
 }: {
   roles: Role[];
-  handleInvite: (data: InviteFormValues) => void;
-  onClose: (open: boolean) => void;
+  handleInvite: (_data: InviteFormValues) => void;
+  onClose: (_open: boolean) => void;
 }) => {
   const { dict } = useLocale();
 

@@ -11,12 +11,12 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
-import { useRepositoryCommits } from '@/hooks/useRepositoryCommits';
-import { useRepositoryTags } from '@/hooks/useRepositoryTags';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import {
+  useRepositoryBranches,
+  useRepositoryCommits,
+  useRepositoryTags,
+} from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import CreateTagModalContent from './tags/CreateTagModalContent';
 import TagList from './tags/TagList';
@@ -47,32 +47,17 @@ function RepositoryTagsSectionContent() {
     useRepositoryTags(repository.slug);
 
   const canViewTags = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryTag,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_tag', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 
   const canCreateTag = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryTag,
-        PolicyAction.Update,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_tag', 'update', repository.id),
     [isResourceAllowed, repository.id]
   );
 
   const canDeleteTag = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryTag,
-        PolicyAction.Delete,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_tag', 'delete', repository.id),
     [isResourceAllowed, repository.id]
   );
 

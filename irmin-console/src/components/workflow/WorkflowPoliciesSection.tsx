@@ -8,10 +8,8 @@ import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { usePolicies } from '@/hooks/usePolicies';
-
-import { PolicyResource } from '@/types/core/Policy';
+import { usePolicies } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 /**
  * Workflow Policies section
@@ -24,12 +22,12 @@ const WorkflowPoliciesSection = ({
   type,
 }: {
   workflowID: string;
-  type?: PolicyResource;
+  type?: 'workflow' | 'workflow_run';
 }) => {
   const { dict } = useLocale();
 
   const { policiesQuery } = usePolicies({
-    resource: type ?? PolicyResource.Workflow,
+    resource: type ?? 'workflow',
   });
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
@@ -54,13 +52,13 @@ const WorkflowPoliciesSection = ({
       <div className='mx-auto flex w-full max-w-7xl px-2'>
         <div className='flex w-full flex-wrap items-center gap-2'>
           <Button
-            variant={type === PolicyResource.Workflow ? 'gray' : 'ghost'}
+            variant={type === 'workflow' ? 'gray' : 'ghost'}
             href={`${baseUrl}/policies`}
           >
             {dict.workflow.workflow}
           </Button>
           <Button
-            variant={type === PolicyResource.WorkflowRun ? 'gray' : 'ghost'}
+            variant={type === 'workflow_run' ? 'gray' : 'ghost'}
             href={`${baseUrl}/policies/runs`}
           >
             {dict.workflow.run}
@@ -74,7 +72,7 @@ const WorkflowPoliciesSection = ({
           policiesError={policiesQuery.error}
           title={dict.policy.title}
           description={dict.policy.description}
-          defaultResourceType={type ?? PolicyResource.Workflow}
+          defaultResourceType={type ?? 'workflow'}
           defaultResourceId={workflowID}
           showResourceColumn={true}
           showResourceIdColumn={true}

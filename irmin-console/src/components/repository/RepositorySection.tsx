@@ -30,13 +30,10 @@ import { useQuery } from '@/context/QueryContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useRepositoryObject } from '@/hooks/useRepositoryObject';
-import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useRepositoryObject, useRepositoryObjectContent } from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import type { Object } from '@/types/core/Object';
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
@@ -117,47 +114,24 @@ function RepositorySectionContent({
   const [queryChanged, setQueryChanged] = useState(false);
 
   const canViewRepository = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.Repository,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 
   const canUpload = useMemo(
     () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Create,
-        repository.id
-      ) &&
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Update,
-        repository.id
-      ),
+      isResourceAllowed('repository_object', 'create', repository.id) &&
+      isResourceAllowed('repository_object', 'update', repository.id),
     [isResourceAllowed, repository.id]
   );
 
   const canDownload = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 
   const canQuery = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 

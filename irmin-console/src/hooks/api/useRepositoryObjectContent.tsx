@@ -75,7 +75,6 @@ export const useRepositoryObjectContent = (
       }
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Failed to download object');
     },
   });

@@ -16,13 +16,13 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useRepositories } from '@/hooks/useRepositories';
+import { useRepositories } from '@/hooks/api';
 
 import type { ActionInputData } from '@/types/core/Workflow';
 
 interface ActionInputEditorProps {
   initialData?: ActionInputData[];
-  onChange: (inputFiles: ActionInputData[]) => void;
+  onChange: (_inputFiles: ActionInputData[]) => void;
   disableSaveButton?: boolean;
 }
 

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { Connector } from '@/types/core/Connector';
 

@@ -23,7 +23,7 @@ const WorkspaceCard = ({
   handleClick,
 }: {
   workspace: Workspace;
-  handleClick: (slug: string) => void;
+  handleClick: (_slug: string) => void;
 }) => {
   const { dict } = useLocale();
   const openWorkspace = useCallback(() => {

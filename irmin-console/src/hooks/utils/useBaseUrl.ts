@@ -10,7 +10,7 @@ import { constructBaseUrl } from '@/utils/constructBaseUrl';
  *
  * @param props - Base URL construction properties {@link ConstructBaseUrlProps}
  */
-export default function useBaseUrl(props: ConstructBaseUrlProps) {
+export function useBaseUrl(props: ConstructBaseUrlProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 

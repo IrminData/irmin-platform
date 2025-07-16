@@ -19,9 +19,7 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useConnections } from '@/hooks/useConnections';
-import { useRepositories } from '@/hooks/useRepositories';
-import { useWorkflows } from '@/hooks/useWorkflows';
+import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
 
 import MDXViewer from './MDXViewer';
 
@@ -375,10 +373,17 @@ export default function DocumentationSection() {
                               <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
-                              <StatusBadge
-                                status={item.status}
-                                label={item.status ?? dict.workflow.noStatus}
-                              />
+                              {item.status === '' || !item.status ? (
+                                <StatusBadge
+                                  status='default'
+                                  label={dict.workflow.noStatus}
+                                />
+                              ) : (
+                                <StatusBadge
+                                  status={item.status}
+                                  label={item.status}
+                                />
+                              )}
                             </div>
                             <p
                               className={`
@@ -466,10 +471,17 @@ export default function DocumentationSection() {
                               <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
-                              <StatusBadge
-                                status={item.status}
-                                label={item.status ?? dict.workflow.noStatus}
-                              />
+                              {item.status === '' || !item.status ? (
+                                <StatusBadge
+                                  status='default'
+                                  label={dict.workflow.noStatus}
+                                />
+                              ) : (
+                                <StatusBadge
+                                  status={item.status}
+                                  label={item.status}
+                                />
+                              )}
                             </div>
                             <p
                               className={`
@@ -557,10 +569,17 @@ export default function DocumentationSection() {
                               <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
-                              <StatusBadge
-                                status={item.status}
-                                label={item.status ?? dict.workflow.noStatus}
-                              />
+                              {item.status === '' || !item.status ? (
+                                <StatusBadge
+                                  status='default'
+                                  label={dict.workflow.noStatus}
+                                />
+                              ) : (
+                                <StatusBadge
+                                  status={item.status}
+                                  label={item.status}
+                                />
+                              )}
                             </div>
                             <p
                               className={`
@@ -649,10 +668,17 @@ export default function DocumentationSection() {
                               <h3 className='text-xl text-foreground'>
                                 {item.name}
                               </h3>
-                              <StatusBadge
-                                status={item.status}
-                                label={item.status ?? dict.workflow.noStatus}
-                              />
+                              {item.status === '' || !item.status ? (
+                                <StatusBadge
+                                  status='default'
+                                  label={dict.workflow.noStatus}
+                                />
+                              ) : (
+                                <StatusBadge
+                                  status={item.status}
+                                  label={item.status}
+                                />
+                              )}
                             </div>
                             <p
                               className={`

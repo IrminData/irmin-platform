@@ -4,7 +4,7 @@ import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { LogEvent } from '@/types/core/Log';
 

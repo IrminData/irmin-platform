@@ -15,7 +15,7 @@ import WorkspaceCard from '@/components/workspace/WorkspaceCard';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { useWorkspaces } from '@/hooks/api';
 
 import type { Workspace } from '@/types/core/Workspace';
 

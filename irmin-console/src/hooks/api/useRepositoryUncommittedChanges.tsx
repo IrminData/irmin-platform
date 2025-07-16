@@ -58,6 +58,7 @@ export function useRepositoryUncommittedChanges(
       });
     },
     onSuccess: (res) => {
+      // These are special operations that need to invalidate multiple related queries
       void queryClient.invalidateQueries({
         queryKey: repositoryCommitsQueryKey(
           workspaceSlug,
@@ -83,7 +84,6 @@ export function useRepositoryUncommittedChanges(
       irminAlert('success', res.message ?? 'Commit created successfully');
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Error creating commit');
     },
   });
@@ -111,7 +111,6 @@ export function useRepositoryUncommittedChanges(
       irminAlert('success', res.message ?? 'Changes reverted successfully');
     },
     onError: (error) => {
-      console.error(error);
       irminAlert('error', error.message ?? 'Error reverting changes');
     },
   });

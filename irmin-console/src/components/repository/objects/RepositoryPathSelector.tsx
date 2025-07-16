@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useRepositoryObject } from '@/hooks/useRepositoryObject';
+import { useRepositoryObject } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { Object } from '@/types/core/Object';
 

@@ -17,8 +17,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useRepositories } from '@/hooks/useRepositories';
-import { useWorkflows } from '@/hooks/useWorkflows';
+import { useRepositories, useWorkflows } from '@/hooks/api';
 
 import deepEqual from '@/utils/deepEqual';
 
@@ -59,7 +58,7 @@ function WorkflowScheduleForm({
   hideTitle = false,
 }: {
   initialData?: WorkflowSchedule;
-  updateSchedule: (schedule: WorkflowSchedule) => Promise<void>;
+  updateSchedule: (_schedule: WorkflowSchedule) => Promise<void>;
   disableSaveButton?: boolean;
   hideTitle?: boolean;
 }) {
@@ -231,11 +230,11 @@ function WorkflowScheduleForm({
           updatedTrigger.rrule = '';
           updatedTrigger.cron = '';
         } else if (newType === 'repository-event') {
-          updatedTrigger.event = RepositoryEvent.PostCommit;
+          updatedTrigger.event = 'post-commit';
           updatedTrigger.repository = '';
           updatedTrigger.ref = '';
         } else if (newType === 'workflow-run-event') {
-          updatedTrigger.event = WorkflowRunEvent.PostWorkflowRun;
+          updatedTrigger.event = 'post-workflow-run';
           updatedTrigger.workflow = '';
         }
         newTriggers[index] = updatedTrigger;
@@ -438,11 +437,40 @@ function WorkflowScheduleForm({
                       <SelectValue>{trigger.event}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(RepositoryEvent).map((event) => (
-                        <SelectItem key={event} value={event}>
-                          {event}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value={'pre-commit'}>
+                        {'pre-commit'}
+                      </SelectItem>
+                      <SelectItem value={'post-commit'}>
+                        {'post-commit'}
+                      </SelectItem>
+                      <SelectItem value={'pre-merge'}>{'pre-merge'}</SelectItem>
+                      <SelectItem value={'post-merge'}>
+                        {'post-merge'}
+                      </SelectItem>
+                      <SelectItem value={'pre-create-branch'}>
+                        {'pre-create-branch'}
+                      </SelectItem>
+                      <SelectItem value={'post-create-branch'}>
+                        {'post-create-branch'}
+                      </SelectItem>
+                      <SelectItem value={'pre-delete-branch'}>
+                        {'pre-delete-branch'}
+                      </SelectItem>
+                      <SelectItem value={'post-delete-branch'}>
+                        {'post-delete-branch'}
+                      </SelectItem>
+                      <SelectItem value={'pre-create-tag'}>
+                        {'pre-create-tag'}
+                      </SelectItem>
+                      <SelectItem value={'post-create-tag'}>
+                        {'post-create-tag'}
+                      </SelectItem>
+                      <SelectItem value={'pre-delete-tag'}>
+                        {'pre-delete-tag'}
+                      </SelectItem>
+                      <SelectItem value={'post-delete-tag'}>
+                        {'post-delete-tag'}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -521,11 +549,12 @@ function WorkflowScheduleForm({
                       <SelectValue>{trigger.event}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(WorkflowRunEvent).map((event) => (
-                        <SelectItem key={event} value={event}>
-                          {event}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value={'pre-workflow-run'}>
+                        {'pre-workflow-run'}
+                      </SelectItem>
+                      <SelectItem value={'post-workflow-run'}>
+                        {'post-workflow-run'}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

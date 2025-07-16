@@ -10,10 +10,8 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryCommits } from '@/hooks/useRepositoryCommits';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useRepositoryCommits } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import CommitList from './commits/CommitList';
 
@@ -40,12 +38,7 @@ function RepositoryCommitsSectionContent() {
     useRepositoryCommits(repository.slug, currentRef);
 
   const canViewCommits = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryCommit,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_commit', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 

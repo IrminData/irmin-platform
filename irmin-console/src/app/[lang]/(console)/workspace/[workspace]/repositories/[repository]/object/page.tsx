@@ -5,7 +5,7 @@ import { notFound, useSearchParams } from 'next/navigation';
 import RepositorySection from '@/components/repository/RepositorySection';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
-import { useRepositoryObject } from '@/hooks/useRepositoryObject';
+import { useRepositoryObject } from '@/hooks/api';
 
 import type { RepositoryRouteParams } from '../layout';
 

@@ -9,7 +9,7 @@ import {
 
 import { useSearchParams } from 'next/navigation';
 
-import { useWorkflows } from '@/hooks/useWorkflows';
+import { useWorkflows } from '@/hooks/api';
 
 import type {
   Action,

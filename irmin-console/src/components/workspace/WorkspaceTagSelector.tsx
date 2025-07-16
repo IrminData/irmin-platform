@@ -17,8 +17,8 @@ import TagBadge from '@/components/ui/TagBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import { useWorkspaceTags } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { Tag } from '@/types/core/Tag';
 
@@ -26,7 +26,7 @@ import { WorkspaceTagModal } from './WorkspaceTagModal';
 
 interface TagSelectorProps {
   selectedTags: Tag[];
-  onTagsChange: (tags: Tag[]) => Promise<Tag[]>;
+  onTagsChange: (_tags: Tag[]) => Promise<Tag[]>;
   loading: boolean;
   disabled: boolean;
 }

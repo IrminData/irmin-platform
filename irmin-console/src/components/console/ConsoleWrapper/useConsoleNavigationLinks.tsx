@@ -25,10 +25,8 @@ import {
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { ConsoleNavigationLinkType } from '@/types/internal/ConsoleNavigation';
 
 const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
@@ -78,55 +76,43 @@ const useConsoleNavigationLinks = (): {
           title: dict.repository.repositories,
           href: `${workspaceUrl}/repositories`,
           icon: <TbDatabase />,
-          hide: !isResourceAllowed(
-            PolicyResource.Repository,
-            PolicyAction.Read
-          ),
+          hide: !isResourceAllowed('repository', 'read'),
         },
         {
           title: dict.connections.connections,
           href: `${workspaceUrl}/connections`,
           icon: <GoWorkflow />,
-          hide: !isResourceAllowed(
-            PolicyResource.Connection,
-            PolicyAction.Read
-          ),
+          hide: !isResourceAllowed('connection', 'read'),
         },
         {
           title: dict.workflow.workflows,
           href: `${workspaceUrl}/workflows`,
           icon: <TbRun />,
-          hide: !isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read),
+          hide: !isResourceAllowed('workflow', 'read'),
         },
         {
           title: dict.consoleNavigation.editor,
           href: `${workspaceUrl}/editor`,
           icon: <TbFile />,
-          hide: !isResourceAllowed(
-            PolicyResource.EditorScript,
-            PolicyAction.Read
-          ),
+          hide: !isResourceAllowed('editor_script', 'read'),
         },
         {
           title: dict.consoleNavigation.queries,
           href: `${workspaceUrl}/queries`,
           icon: <TbSql />,
-          hide: !isResourceAllowed(PolicyResource.Query, PolicyAction.Read),
+          hide: !isResourceAllowed('query', 'read'),
         },
         {
           title: dict.common.logs,
           href: `${workspaceUrl}/logs`,
           icon: <TbLogs />,
-          hide: !isResourceAllowed(PolicyResource.AuditLog, PolicyAction.Read),
+          hide: !isResourceAllowed('audit_log', 'read'),
         },
         {
           title: dict.documentation.documentation,
           href: `${workspaceUrl}/documentation`,
           icon: <TbSchema />,
-          hide: !isResourceAllowed(
-            PolicyResource.Documentation,
-            PolicyAction.Read
-          ),
+          hide: !isResourceAllowed('documentation', 'read'),
         },
       ].map((link) => ({
         ...link,
@@ -163,7 +149,7 @@ const useConsoleNavigationLinks = (): {
         icon: <TbSettings />,
         active: isActiveLink(`${workspaceUrl}/settings`),
         workspaceOnly: true,
-        hide: !isResourceAllowed(PolicyResource.Workspace, PolicyAction.Read),
+        hide: !isResourceAllowed('workspace', 'read'),
       },
       {
         title: dict.consoleNavigation.myProfile,

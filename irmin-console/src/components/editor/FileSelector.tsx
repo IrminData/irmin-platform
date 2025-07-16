@@ -11,8 +11,8 @@ import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useEditorItems } from '@/hooks/useEditorItems';
+import { useEditorItems } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { EditorItem } from '@/types/core/EditorItems';
 

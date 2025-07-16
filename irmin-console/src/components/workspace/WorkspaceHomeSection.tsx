@@ -10,7 +10,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
+import { useBaseUrl } from '@/hooks/utils';
 
 /**
  * Home page section for the workspace.

@@ -7,7 +7,7 @@ import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 /**
  * Interface for creating a branch
  */
-interface CreateBranchRequest {
+export interface CreateBranchRequest {
   name: string;
   from: string;
   is_immutable?: boolean;
@@ -145,32 +145,22 @@ class RepositoryBranchService {
   async createBranch({
     workspace,
     repository,
-    name,
-    from,
-    isImmutable,
+    request,
   }: {
     workspace: string;
     repository: string;
-    name: string;
-    from: string;
-    isImmutable?: boolean;
-  }) {
+    request: CreateBranchRequest;
+  }): Promise<IrminAPIResponse<Branch>> {
     try {
-      const requestBody: CreateBranchRequest = {
-        name,
-        from,
-        is_immutable: isImmutable,
-      };
-
       const res = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/branches`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify(request),
         }
       );
-      return res;
+      return res as IrminAPIResponse<Branch>;
     } catch (error) {
       console.error((error as Error).message, 'Failed to create branch');
       throw error;
@@ -191,27 +181,20 @@ class RepositoryBranchService {
     workspace,
     repository,
     branch,
-    name,
-    isImmutable,
+    request,
   }: {
     workspace: string;
     repository: string;
     branch: string;
-    name?: string;
-    isImmutable?: boolean;
+    request: UpdateBranchRequest;
   }) {
     try {
-      const requestBody: UpdateBranchRequest = {};
-
-      if (name !== undefined) requestBody.name = name;
-      if (isImmutable !== undefined) requestBody.is_immutable = isImmutable;
-
       const res = await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/repositories/${repository}/branches/${branch}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify(request),
         }
       );
       return res;

@@ -9,7 +9,7 @@ import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { Repository } from '@/types/core/Repository';
 import type {

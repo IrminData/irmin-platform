@@ -10,6 +10,12 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { StoredQuery } from '@/types/core/StoredQuery';
 
+import {
+  createMutationHandlers,
+  deleteMutationHandlers,
+  updateMutationHandlers,
+} from './mutations/utils';
+
 type StoredQueryCreateInput = Pick<StoredQuery, 'description' | 'name' | 'sql'>;
 
 type StoredQueryUpdateInput = Pick<
@@ -46,16 +52,42 @@ export function useStoredQueries() {
         sql: query.sql,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: storedQueriesQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'Query created successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Failed to create query');
-    },
+    ...createMutationHandlers<StoredQuery, StoredQueryCreateInput>(
+      queryClient,
+      'stored-queries',
+      {
+        cacheConfig: {
+          primaryQueryKey: storedQueriesQueryKey(workspaceSlug),
+          getItemId: (query) => query.id,
+          createOptimisticItem: (
+            input: StoredQueryCreateInput,
+            tempId: string
+          ) => ({
+            id: tempId,
+            name: input.name,
+            description: input.description,
+            sql: input.sql,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            owner: {
+              id: 'temp-owner',
+              first_name: 'Current',
+              last_name: 'User',
+              email: '',
+              phone: '',
+              company: '',
+              profile_picture: '',
+            },
+          }),
+        },
+        onSuccess: (res) => {
+          irminAlert('success', res.message ?? 'Query created successfully');
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Failed to create query');
+        },
+      }
+    ),
   });
 
   const updateStoredQueryMutation = useMutation({
@@ -70,16 +102,21 @@ export function useStoredQueries() {
         sql: query.sql,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: storedQueriesQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'Query updated successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Failed to update query');
-    },
+    ...updateMutationHandlers<StoredQuery, StoredQueryUpdateInput>(
+      queryClient,
+      {
+        cacheConfig: {
+          primaryQueryKey: storedQueriesQueryKey(workspaceSlug),
+          getItemId: (query) => query.id,
+        },
+        onSuccess: (res) => {
+          irminAlert('success', res.message ?? 'Query updated successfully');
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Failed to update query');
+        },
+      }
+    ),
   });
 
   const deleteStoredQueryMutation = useMutation({
@@ -91,16 +128,18 @@ export function useStoredQueries() {
         queryID,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: storedQueriesQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'Query deleted successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Failed to delete query');
-    },
+    ...deleteMutationHandlers<StoredQuery>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: storedQueriesQueryKey(workspaceSlug),
+        getItemId: (query) => query.id,
+      },
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Query deleted successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Failed to delete query');
+      },
+    }),
   });
 
   const transferStoredQueryMutation = useMutation({

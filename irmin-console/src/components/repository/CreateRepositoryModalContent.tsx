@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useRepositories } from '@/hooks/useRepositories';
+import { useRepositories } from '@/hooks/api';
 
 /**
  * Modal content to create a new repository.

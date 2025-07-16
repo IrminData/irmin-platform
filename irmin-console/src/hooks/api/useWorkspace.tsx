@@ -16,6 +16,11 @@ import { usePopup } from '@/context/PopupContext';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { Workspace } from '@/types/core/Workspace';
 
+import {
+  deleteMutationHandlers,
+  updateMutationHandlers,
+} from './mutations/utils';
+
 type UpdateWorkspaceInput = Pick<Workspace, 'description' | 'name'>;
 
 export function useWorkspace(slug: string) {
@@ -68,136 +73,45 @@ export function useWorkspace(slug: string) {
         data: input,
       });
     },
-    onMutate: async (input: UpdateWorkspaceInput) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: workspaceQueryKey(slug!) });
-      await queryClient.cancelQueries({ queryKey: workspacesQueryKey });
-
-      // Snapshot the previous values
-      const previousWorkspace = queryClient.getQueryData<
-        IrminAPIResponse<Workspace>
-      >(workspaceQueryKey(slug!));
-      const previousWorkspaces =
-        queryClient.getQueryData<IrminAPIResponse<Workspace[]>>(
-          workspacesQueryKey
-        );
-
-      // Optimistically update the single workspace cache
-      queryClient.setQueryData<IrminAPIResponse<Workspace>>(
-        workspaceQueryKey(slug!),
-        (old: IrminAPIResponse<Workspace> | undefined) => {
-          if (!old?.data) return old;
-
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              ...input,
-            },
-          };
-        }
-      );
-
-      // Optimistically update the workspaces list cache
-      queryClient.setQueryData<IrminAPIResponse<Workspace[]>>(
-        workspacesQueryKey,
-        (old: IrminAPIResponse<Workspace[]> | undefined) => {
-          if (!old?.data) return old;
-
-          const updatedWorkspaces = old.data.map((workspace: Workspace) =>
-            workspace.slug === slug ? { ...workspace, ...input } : workspace
-          );
-
-          return {
-            ...old,
-            data: updatedWorkspaces,
-          };
-        }
-      );
-
-      // Return context for rollback
-      return { previousWorkspace, previousWorkspaces };
-    },
-    onError: (error, input: UpdateWorkspaceInput, context: unknown) => {
-      // Rollback on error
-      const ctx = context as
-        | {
-            previousWorkspace?: IrminAPIResponse<Workspace>;
-            previousWorkspaces?: IrminAPIResponse<Workspace[]>;
-          }
-        | undefined;
-      if (ctx?.previousWorkspace) {
-        queryClient.setQueryData(
-          workspaceQueryKey(slug!),
-          ctx.previousWorkspace
-        );
-      }
-      if (ctx?.previousWorkspaces) {
-        queryClient.setQueryData(workspacesQueryKey, ctx.previousWorkspaces);
-      }
-      console.error('Failed to update workspace:', error);
-      irminAlert('error', error.message ?? 'Failed to update workspace');
-    },
-    onSuccess: (
-      res: IrminAPIResponse<Workspace>,
-      _input: UpdateWorkspaceInput
-    ) => {
-      // Update the cache with the real data from the server
-      queryClient.setQueryData<IrminAPIResponse<Workspace>>(
-        workspaceQueryKey(slug!),
-        res
-      );
-
-      // Update the workspaces list if we have the real data
-      if (res.data) {
-        queryClient.setQueryData<IrminAPIResponse<Workspace[]>>(
-          workspacesQueryKey,
-          (old: IrminAPIResponse<Workspace[]> | undefined) => {
-            if (!old?.data) return old;
-
-            const updatedWorkspaces = old.data.map((workspace: Workspace) =>
-              workspace.slug === slug ? res.data! : workspace
-            );
-
-            return {
-              ...old,
-              data: updatedWorkspaces,
-            };
-          }
-        );
-      }
-
-      irminAlert('success', res.message ?? 'Workspace updated successfully');
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: workspaceQueryKey(slug!),
-      });
-      void queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
-    },
+    ...updateMutationHandlers<Workspace, UpdateWorkspaceInput>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: workspacesQueryKey,
+        relatedQueryKeys: [workspaceQueryKey(slug!)],
+        getItemId: (workspace) => workspace.slug,
+      },
+      singleItemQueryKey: workspaceQueryKey(slug!),
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Workspace updated successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Failed to update workspace');
+      },
+    }),
   });
 
   // Mutation for deleting a workspace (only if slug is provided)
-  const deleteMutation = useMutation<IrminAPIResponse, Error, void>({
-    mutationFn: async () => {
-      if (!slug) throw new Error('Workspace slug is required');
+  const deleteMutation = useMutation<IrminAPIResponse, Error, string>({
+    mutationFn: async (workspaceSlug: string) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      return core.workspaceService.deleteWorkspace({ workspace: slug });
-    },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: workspaceQueryKey(slug!),
+      return core.workspaceService.deleteWorkspace({
+        workspace: workspaceSlug,
       });
-      void queryClient.invalidateQueries({ queryKey: workspacesQueryKey });
-      irminAlert('success', res.message ?? 'Workspace deleted successfully');
-      router.push(`/${locale}/workspace`);
     },
-    onError: (error) => {
-      console.error('Failed to delete workspace:', error);
-      irminAlert('error', error.message ?? 'Failed to delete workspace');
-    },
+    ...deleteMutationHandlers<Workspace>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: workspacesQueryKey,
+        getItemId: (workspace) => workspace.slug,
+      },
+      singleItemQueryKey: workspaceQueryKey(slug!),
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Workspace deleted successfully');
+        router.push(`/${locale}/workspace`);
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Failed to delete workspace');
+      },
+    }),
   });
 
   // Function to confirm deletion of a workspace
@@ -214,11 +128,18 @@ export function useWorkspace(slug: string) {
         dict={dict}
         close={irminModal.close}
         handleDelete={async () => {
-          deleteWorkspace();
+          deleteWorkspace(slug!);
         }}
       />
     );
-  }, [dict, irminModal, isDeletePending, isDeleteSuccess, deleteWorkspace]);
+  }, [
+    dict,
+    irminModal,
+    isDeletePending,
+    isDeleteSuccess,
+    deleteWorkspace,
+    slug,
+  ]);
 
   // Mutation for transferring a workspace
   const transferMutation = useMutation<IrminAPIResponse, Error, string>({

@@ -10,10 +10,8 @@ import WorkflowList from '@/components/workflow/WorkflowList';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkflows } from '@/hooks/useWorkflows';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useWorkflows } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Connection Settings section component
@@ -25,17 +23,12 @@ const ConnectionSection = () => {
   const { workflowsQuery } = useWorkflows();
 
   const canViewConnection = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.Connection,
-        PolicyAction.Read,
-        connectionID
-      ),
+    () => isResourceAllowed('connection', 'read', connectionID),
     [isResourceAllowed, connectionID]
   );
 
   const canViewWorkflows = useMemo(
-    () => isResourceAllowed(PolicyResource.Workflow, PolicyAction.Read),
+    () => isResourceAllowed('workflow', 'read'),
     [isResourceAllowed]
   );
 

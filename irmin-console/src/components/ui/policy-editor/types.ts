@@ -52,7 +52,7 @@ export interface UsePolicyFormProps {
 
 export interface UsePolicyFormReturn {
   showCreateForm: () => void;
-  showEditForm: (policy: Policy) => void;
+  showEditForm: (_policy: Policy) => void;
   isCreating: boolean;
   isUpdating: boolean;
   isLoading: boolean;
@@ -64,7 +64,7 @@ export interface PolicyTableProps {
   showResourceIdColumn?: boolean;
   allowEdit?: boolean;
   allowDelete?: boolean;
-  onEditClick: (policy: Policy) => void;
+  onEditClick: (_policy: Policy) => void;
 }
 
 export interface PolicyFormProps {
@@ -73,7 +73,7 @@ export interface PolicyFormProps {
   /** Initial form data values */
   initialValues: PolicyFormData;
   /** Callback when form is submitted with form data */
-  onSubmit: (formData: PolicyFormData) => void;
+  onSubmit: (_formData: PolicyFormData) => void;
   /** Callback when form is cancelled */
   onCancel: () => void;
   /** Whether the form is loading */

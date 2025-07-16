@@ -16,7 +16,7 @@ import { setCookie } from '@/utils/cookie';
 const LocaleContext = createContext<{
   locale: Locale;
   dict: Dictionary;
-  switchLocale: (newLocale: Locale) => void;
+  switchLocale: (_newLocale: Locale) => void;
 }>({
   locale: defaultLocale,
   dict: {} as Dictionary,

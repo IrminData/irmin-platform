@@ -28,7 +28,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useEditorItems } from '@/hooks/useEditorItems';
+import { useEditorItems } from '@/hooks/api';
 
 import {
   getItemByPath,
@@ -55,28 +55,28 @@ interface EditorContextType {
   currentEditor: FileContents | undefined;
   enableSaveButton: boolean;
   // State Setters
-  setActiveTab: (index: number) => void;
-  setEditorHeight: (height: string) => void;
+  setActiveTab: (_index: number) => void;
+  setEditorHeight: (_height: string) => void;
   // Editor Actions
   openNewTab: () => void;
-  openFile: (file: FileNavigatorItem) => void;
-  closeTab: (tab: string) => void;
-  updateCurrentTabContent: (content: string) => void;
+  openFile: (_file: FileNavigatorItem) => void;
+  closeTab: (_tab: string) => void;
+  updateCurrentTabContent: (_content: string) => void;
   saveActiveTabAsFile: () => void;
-  changeLanguage: (language: IrminFileLanguage) => void;
+  changeLanguage: (_language: IrminFileLanguage) => void;
   // Item Actions
   addNewFile: () => void;
   addNewFolder: () => void;
-  renameOrMoveItem: (item: FileNavigatorItem) => void;
-  copyItem: (item: FileNavigatorItem) => void;
-  deleteItem: (item: FileNavigatorItem) => void;
+  renameOrMoveItem: (_item: FileNavigatorItem) => void;
+  copyItem: (_item: FileNavigatorItem) => void;
+  deleteItem: (_item: FileNavigatorItem) => void;
   // Script Execution
   scriptExecutionInProgress: boolean;
   scriptExecutionResult: ScriptResult | null;
-  executeScript: (path: string) => void;
+  executeScript: (_path: string) => void;
   // Script Input Files
   scriptInputFiles: ActionInputData[];
-  setScriptInputFiles: (files: ActionInputData[]) => void;
+  setScriptInputFiles: (_files: ActionInputData[]) => void;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);

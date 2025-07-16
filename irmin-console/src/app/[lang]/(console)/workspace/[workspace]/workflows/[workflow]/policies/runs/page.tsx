@@ -1,7 +1,5 @@
 import WorkflowPoliciesSection from '@/components/workflow/WorkflowPoliciesSection';
 
-import { PolicyResource } from '@/types/core/Policy';
-
 import type { SingleWorkflowLayoutParams } from '../../layout';
 
 /**
@@ -14,7 +12,7 @@ export default async function WorkflowRunPoliciesPage(props: {
   return (
     <WorkflowPoliciesSection
       workflowID={params.workflow}
-      type={PolicyResource.WorkflowRun}
+      type={'workflow_run'}
     />
   );
 }

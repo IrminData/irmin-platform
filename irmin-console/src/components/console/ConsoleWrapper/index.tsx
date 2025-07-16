@@ -18,8 +18,8 @@ import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useBreakpoint } from '@/hooks/useBreakpoint';
-import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { useWorkspaces } from '@/hooks/api';
+import { useBreakpoint } from '@/hooks/utils';
 
 import ConsoleNavigationLink from './ConsoleNavigationLink';
 import ConsoleNavigationProfile from './ConsoleNavigationProfile';

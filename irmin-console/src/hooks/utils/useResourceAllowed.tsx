@@ -2,10 +2,9 @@ import { useCallback } from 'react';
 
 import { useParams } from 'next/navigation';
 
-import type { PolicyAction, PolicyResource } from '@/types/core/Policy';
-import { PolicyEffect } from '@/types/core/Policy';
+import { usePolicySummary } from '@/hooks/api';
 
-import { usePolicySummary } from './usePolicySummary';
+import type { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 export const useResourceAllowed = () => {
   const params = useParams<{ workspace?: string }>();
@@ -36,8 +35,7 @@ export const useResourceAllowed = () => {
       // Check for specific resource policies first
       const specificAllowPolicies = resourcePolicies.filter(
         (policy) =>
-          policy.resourceId === resourceId &&
-          policy.effect === PolicyEffect.Allow
+          policy.resourceId === resourceId && policy.effect === 'allow'
       );
 
       // If there's a specific allow policy, it takes priority
@@ -45,9 +43,7 @@ export const useResourceAllowed = () => {
 
       // Check for specific deny policies
       const specificDenyPolicies = resourcePolicies.filter(
-        (policy) =>
-          policy.resourceId === resourceId &&
-          policy.effect === PolicyEffect.Deny
+        (policy) => policy.resourceId === resourceId && policy.effect === 'deny'
       );
 
       // If there's a specific deny policy, return false
@@ -59,10 +55,10 @@ export const useResourceAllowed = () => {
       );
 
       const genericDenyPolicies = genericPolicies.filter(
-        (policy) => policy.effect === PolicyEffect.Deny
+        (policy) => policy.effect === 'deny'
       );
       const genericAllowPolicies = genericPolicies.filter(
-        (policy) => policy.effect === PolicyEffect.Allow
+        (policy) => policy.effect === 'allow'
       );
 
       // If there are generic deny policies, return false

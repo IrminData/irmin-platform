@@ -18,8 +18,8 @@ import ActionInputEditor from '@/components/workflow/ActionInputEditor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useRepositories } from '@/hooks/useRepositories';
+import { useRepositories } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { Action, ActionInputData } from '@/types/core/Workflow';
 import type { WorkflowRequest } from '@/types/internal/WorkflowInput';

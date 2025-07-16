@@ -22,10 +22,7 @@ import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Component to wrap the single Connection pages in.
@@ -59,13 +56,7 @@ export default function ConnectionLayoutWrapper({
 
   // Make sure the user is allowed to access the connection
   useEffect(() => {
-    if (
-      !isResourceAllowed(
-        PolicyResource.Connection,
-        PolicyAction.Read,
-        connectionID
-      )
-    ) {
+    if (!isResourceAllowed('connection', 'read', connectionID)) {
       // Redirect to the workspace connections page if the user is not allowed to access the connection
       router.push(`${workspaceUrl}/connections`);
     }
@@ -102,14 +93,14 @@ export default function ConnectionLayoutWrapper({
         link: `${baseUrl}/policies`,
         active: pathname === `${baseUrl}/policies`,
         icon: <TbShield size={14} />,
-        hidden: !isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
+        hidden: !isResourceAllowed('policy', 'read'),
       },
       {
         name: dict.common.logs,
         link: `${workspaceUrl}/logs/connection/${connectionID}`,
         active: false,
         icon: <TbBook size={14} />,
-        hidden: !isResourceAllowed(PolicyResource.AuditLog, PolicyAction.Read),
+        hidden: !isResourceAllowed('audit_log', 'read'),
       },
       {
         name: dict.consoleNavigation.settings,

@@ -14,11 +14,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
-import { useRepositoryDiff } from '@/hooks/useRepositoryDiff';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useRepositoryBranches, useRepositoryDiff } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import BranchSelector from './branches/BranchSelector';
 import DiffView from './diff/DiffVIew';
@@ -46,12 +43,7 @@ export default function RepositoryCompareSection() {
   );
 
   const canViewDiff = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryCommit,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_commit', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 
@@ -62,31 +54,11 @@ export default function RepositoryCompareSection() {
     if (baseRef === compareRef) return false;
     // Can't merge if user doesn't have permission
     if (
-      !isResourceAllowed(
-        PolicyResource.RepositoryBranch,
-        PolicyAction.Update,
-        repository.id
-      ) ||
-      !isResourceAllowed(
-        PolicyResource.RepositoryCommit,
-        PolicyAction.Create,
-        repository.id
-      ) ||
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Create,
-        repository.id
-      ) ||
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Update,
-        repository.id
-      ) ||
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Update,
-        repository.id
-      )
+      !isResourceAllowed('repository_branch', 'update', repository.id) ||
+      !isResourceAllowed('repository_commit', 'create', repository.id) ||
+      !isResourceAllowed('repository_object', 'create', repository.id) ||
+      !isResourceAllowed('repository_object', 'update', repository.id) ||
+      !isResourceAllowed('repository_object', 'update', repository.id)
     )
       return false;
     // Otherwise, can merge

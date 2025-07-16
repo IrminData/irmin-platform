@@ -1,7 +1,5 @@
 import WorkflowPoliciesSection from '@/components/workflow/WorkflowPoliciesSection';
 
-import { PolicyResource } from '@/types/core/Policy';
-
 import type { SingleWorkflowLayoutParams } from '../layout';
 
 /**
@@ -12,9 +10,6 @@ export default async function WorkflowPoliciesPage(props: {
 }) {
   const params = await props.params;
   return (
-    <WorkflowPoliciesSection
-      workflowID={params.workflow}
-      type={PolicyResource.Workflow}
-    />
+    <WorkflowPoliciesSection workflowID={params.workflow} type={'workflow'} />
   );
 }

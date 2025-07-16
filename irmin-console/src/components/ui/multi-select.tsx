@@ -53,7 +53,7 @@ interface MultiSelectProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * Callback function triggered when the selected values change.
    * Receives an array of the new selected values.
    */
-  onValueChange: (value: string[]) => void;
+  onValueChange: (_value: string[]) => void;
 
   /** The default selected values when the component mounts. */
   defaultValue?: string[];

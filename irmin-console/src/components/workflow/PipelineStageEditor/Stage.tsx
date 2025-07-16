@@ -26,9 +26,8 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useConnections } from '@/hooks/useConnections';
-import { useRepositories } from '@/hooks/useRepositories';
+import { useConnections, useRepositories } from '@/hooks/api';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 import type { PipelineStage } from '@/types/core/Workflow';
@@ -68,7 +67,7 @@ function Stage({
 }: {
   index: number;
   initialStage?: PipelineStage;
-  updateStage: (stage: PipelineStage) => void;
+  updateStage: (_stage: PipelineStage) => void;
   moveStageUp?: () => void;
   moveStageDown?: () => void;
   removeStage?: () => void;

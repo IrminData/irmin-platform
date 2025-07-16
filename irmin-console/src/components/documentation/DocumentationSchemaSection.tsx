@@ -8,9 +8,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useConnections } from '@/hooks/useConnections';
-import { useRepositories } from '@/hooks/useRepositories';
-import { useWorkflows } from '@/hooks/useWorkflows';
+import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
 
 import type { TreeNode } from './TreeChart';
 

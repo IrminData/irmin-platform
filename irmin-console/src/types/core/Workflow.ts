@@ -97,16 +97,15 @@ export type Workflow =
 /**
  * Workflow status options
  */
-export enum WorkflowStatus {
-  Empty = '',
-  Paused = 'paused',
-  Pending = 'pending',
-  Initiating = 'initiating',
-  Running = 'running',
-  Complete = 'complete',
-  Error = 'error',
-  Cancelled = 'cancelled',
-}
+export type WorkflowStatus =
+  | ''
+  | 'paused'
+  | 'pending'
+  | 'initiating'
+  | 'running'
+  | 'complete'
+  | 'error'
+  | 'cancelled';
 
 /**
  * Import object - workflowable for the Workflow

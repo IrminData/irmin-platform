@@ -40,7 +40,7 @@ interface SettingsFormProps<T extends FieldValues> {
   /** The initial values for the form */
   initialValues: DefaultValues<T>;
   /** The function to call when the form is submitted */
-  onSubmit: (data: T) => void;
+  onSubmit: (_data: T) => void;
   /** Whether the form is submitting */
   submitting?: boolean;
   /** The configuration for each field in the form */

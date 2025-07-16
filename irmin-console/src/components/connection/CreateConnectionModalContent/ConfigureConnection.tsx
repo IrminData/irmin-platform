@@ -10,7 +10,7 @@ import DynamicForm from '@/components/ui/form/DynamicForm';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { useConnections } from '@/hooks/useConnections';
+import { useConnections } from '@/hooks/api';
 
 import type { CustomFieldValues } from '@/types/core/Connection';
 import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';

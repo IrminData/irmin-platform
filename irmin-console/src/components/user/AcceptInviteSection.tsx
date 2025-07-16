@@ -13,7 +13,7 @@ import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useInvite } from '@/hooks/useInvite';
+import { useInvite } from '@/hooks/api';
 
 const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 

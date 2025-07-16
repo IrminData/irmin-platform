@@ -30,12 +30,11 @@ import TagBadge from '@/components/ui/TagBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { useWorkspaceSearch, useWorkspaceTags } from '@/hooks/api';
 import {
   filterStaticSearchItems,
   useStaticSearchItems,
-} from '@/hooks/useStaticSearchItems';
-import { useWorkspaceSearch } from '@/hooks/useWorkspaceSearch';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+} from '@/hooks/utils/useStaticSearchItems';
 
 import { convertSearchResultToConsoleItem } from '@/utils/search';
 
@@ -284,23 +283,23 @@ export default function SearchPageComponent() {
 
   const getIconForType = useCallback((type: ConsoleSearchItemType) => {
     switch (type) {
-      case ConsoleSearchItemType.User:
+      case 'user':
         return <TbUser size={16} />;
-      case ConsoleSearchItemType.Repository:
+      case 'repository':
         return <TbDatabase size={16} />;
-      case ConsoleSearchItemType.StructuredObject:
+      case 'structured-object':
         return <TbTable size={16} />;
-      case ConsoleSearchItemType.BinaryObject:
+      case 'binary-object':
         return <TbFile size={16} />;
-      case ConsoleSearchItemType.GroupObject:
+      case 'group-object':
         return <TbFolder size={16} />;
-      case ConsoleSearchItemType.Connection:
+      case 'connection':
         return <GoWorkflow size={16} />;
-      case ConsoleSearchItemType.Workflow:
+      case 'workflow':
         return <TbRun size={16} />;
-      case ConsoleSearchItemType.Workspace:
+      case 'workspace':
         return <TbDashboard size={16} />;
-      case ConsoleSearchItemType.Irmin:
+      case 'irmin':
         return <TbTools size={16} />;
       default:
         return <TbTools size={16} />;
@@ -317,7 +316,7 @@ export default function SearchPageComponent() {
 
   // Calculate how many workspace results we have (excluding static results)
   const workspaceResultsCount = accumulatedResults.filter(
-    (result) => result.type !== ConsoleSearchItemType.Irmin
+    (result) => result.type !== 'irmin'
   ).length;
 
   const hasMoreResults = totalWorkspaceResults > workspaceResultsCount;

@@ -11,6 +11,11 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { User } from '@/types/core/User';
 
+import {
+  deleteMutationHandlers,
+  updateMutationHandlers,
+} from './mutations/utils';
+
 type ChangeUserRoleInput = {
   id: string;
   roles: string[];
@@ -37,7 +42,7 @@ export function useUsers() {
   });
 
   // Mutation for deleting a user
-  const deleteUserMutation = useMutation({
+  const deleteUserMutation = useMutation<IrminAPIResponse, Error, string>({
     mutationFn: async (userID: string) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
@@ -47,18 +52,18 @@ export function useUsers() {
       });
       return res;
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: usersQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'User deleted successfully');
-    },
-    onError: (error) => {
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Error deleting the user'
-      );
-    },
+    ...deleteMutationHandlers<User>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: usersQueryKey(workspaceSlug),
+        getItemId: (user) => user.id,
+      },
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'User deleted successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Error deleting the user');
+      },
+    }),
   });
 
   // Mutation for changing a user's role
@@ -77,18 +82,18 @@ export function useUsers() {
       });
       return res;
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: usersQueryKey(workspaceSlug),
-      });
-      irminAlert('success', res.message ?? 'User role changed successfully');
-    },
-    onError: (error) => {
-      irminAlert(
-        'error',
-        (error as Error)?.message ?? 'Error changing the user role'
-      );
-    },
+    ...updateMutationHandlers<User, ChangeUserRoleInput>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: usersQueryKey(workspaceSlug),
+        getItemId: (user) => user.id,
+      },
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'User role changed successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Error changing the user role');
+      },
+    }),
   });
 
   return {

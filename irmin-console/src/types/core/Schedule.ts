@@ -22,20 +22,19 @@ export interface TimeTrigger {
 /**
  * Repository related events that can trigger a workflow run.
  */
-export enum RepositoryEvent {
-  PreCommit = 'pre-commit',
-  PostCommit = 'post-commit',
-  PreMerge = 'pre-merge',
-  PostMerge = 'post-merge',
-  PreCreateBranch = 'pre-create-branch',
-  PostCreateBranch = 'post-create-branch',
-  PreDeleteBranch = 'pre-delete-branch',
-  PostDeleteBranch = 'post-delete-branch',
-  PreCreateTag = 'pre-create-tag',
-  PostCreateTag = 'post-create-tag',
-  PreDeleteTag = 'pre-delete-tag',
-  PostDeleteTag = 'post-delete-tag',
-}
+export type RepositoryEvent =
+  | 'pre-commit'
+  | 'post-commit'
+  | 'pre-merge'
+  | 'post-merge'
+  | 'pre-create-branch'
+  | 'post-create-branch'
+  | 'pre-delete-branch'
+  | 'post-delete-branch'
+  | 'pre-create-tag'
+  | 'post-create-tag'
+  | 'pre-delete-tag'
+  | 'post-delete-tag';
 
 /**
  * Trigger type for repository events
@@ -53,10 +52,7 @@ export interface RepositoryTrigger {
 /**
  * Workflow run related events that can trigger a new workflow run.
  */
-export enum WorkflowRunEvent {
-  PreWorkflowRun = 'pre-workflow-run',
-  PostWorkflowRun = 'post-workflow-run',
-}
+export type WorkflowRunEvent = 'pre-workflow-run' | 'post-workflow-run';
 
 /**
  * Trigger type for workflow run events

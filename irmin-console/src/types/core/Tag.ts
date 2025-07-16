@@ -49,10 +49,9 @@ export interface TagWithAssets {
 /**
  * Represents the type of entity that a tag can be applied to
  */
-export enum TagEntityType {
-  Repository = 'repositories',
-  Query = 'queries',
-  Workflow = 'workflows',
-  Connection = 'connections',
-  RepositoryObject = 'repository_objects',
-}
+export type TagEntityType =
+  | 'repositories'
+  | 'queries'
+  | 'workflows'
+  | 'connections'
+  | 'repository_objects';

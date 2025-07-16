@@ -11,12 +11,10 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConnections } from '@/hooks/useConnections';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
+import { useConnections } from '@/hooks/api';
+import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { Connection } from '@/types/core/Connection';
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import ConnectionList from './ConnectionList';
 import CreateConnectionModalContent from './CreateConnectionModalContent';
@@ -101,18 +99,13 @@ export default function ConnectionsSection({
           size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
-          disabled={
-            !isResourceAllowed(PolicyResource.Connection, PolicyAction.Create)
-          }
+          disabled={!isResourceAllowed('connection', 'create')}
         >
           {dict.connections.create.createNewConnection}
         </Button>
       </div>
       <SideModal
-        isOpen={
-          isOpen &&
-          isResourceAllowed(PolicyResource.Connection, PolicyAction.Create)
-        }
+        isOpen={isOpen && isResourceAllowed('connection', 'create')}
         closeModal={closeModal}
         currentStep={currentStep}
         steps={[
@@ -162,7 +155,7 @@ export default function ConnectionsSection({
             loading={connectionsQuery.isLoading}
             connections={filteredItems}
             emptyStateAction={
-              isResourceAllowed(PolicyResource.Connection, PolicyAction.Create)
+              isResourceAllowed('connection', 'create')
                 ? {
                     label: dict.connections.create.createNewConnection,
                     onClick: openModal,

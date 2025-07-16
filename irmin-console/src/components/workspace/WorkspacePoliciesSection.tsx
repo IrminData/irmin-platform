@@ -5,7 +5,7 @@ import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { usePolicies } from '@/hooks/usePolicies';
+import { usePolicies } from '@/hooks/api';
 
 /**
  * Workspace Policies section

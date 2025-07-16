@@ -16,6 +16,8 @@ import type {
 } from '@/types/core/IrminAPIResponse';
 import type { WorkflowRun } from '@/types/core/WorkflowRun';
 
+import { createMutationHandlers } from './mutations/utils';
+
 interface WorkflowRunsResponse
   extends Omit<IrminAPIResponse<WorkflowRun[]>, 'pagination'> {
   pagination?: IrminAPIPaginationMetadata;
@@ -27,7 +29,7 @@ interface WorkflowRunsResponse
  * @param workflowID - unique identifier of the workflow
  * @returns pagination state and control functions
  */
-const useWorkflowRuns = (workflowID: string) => {
+export const useWorkflowRuns = (workflowID: string) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
@@ -64,17 +66,41 @@ const useWorkflowRuns = (workflowID: string) => {
       });
       return res;
     },
-    onSuccess: (res) => {
-      irminAlert('success', res.message ?? 'Workflow run created successfully');
-      setCurrentPage(1);
-      void queryClient.invalidateQueries({
-        queryKey: workflowRunsQueryKey(workspaceSlug, workflowID, 1),
-      });
-    },
-    onError: (error) => {
-      console.error('Failed to create workflow run', error);
-      irminAlert('error', error.message ?? 'Failed to create workflow run');
-    },
+    ...createMutationHandlers<WorkflowRun, void>(queryClient, 'workflow-runs', {
+      cacheConfig: {
+        primaryQueryKey: workflowRunsQueryKey(workspaceSlug, workflowID, 1),
+        getItemId: (run) => run.id,
+        createOptimisticItem: (_input: void, tempId: string) => ({
+          id: tempId,
+          status: 'pending',
+          started_at: new Date().toISOString(),
+          ended_at: null,
+          duration: null,
+          trigger: 'manual',
+          workflow: {
+            id: workflowID,
+            name: 'Loading...',
+            description: '',
+            documentation: '',
+            type: 'manual',
+            status: 'active',
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          workflow_id: workflowID,
+        }),
+      },
+      onSuccess: (res) => {
+        irminAlert(
+          'success',
+          res.message ?? 'Workflow run created successfully'
+        );
+        setCurrentPage(1);
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Failed to create workflow run');
+      },
+    }),
   });
 
   const goToPage = useCallback(
@@ -104,5 +130,3 @@ const useWorkflowRuns = (workflowID: string) => {
     createWorkflowRunMutation,
   };
 };
-
-export default useWorkflowRuns;

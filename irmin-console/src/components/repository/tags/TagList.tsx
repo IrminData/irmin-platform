@@ -7,18 +7,17 @@ import NormalList from '@/components/ui/list/NormalList';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import type { GitTag } from '@/types/core/GitTag';
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { EmptyStateAction, GridRow } from '@/types/internal/ListProps';
 
 interface TagListProps {
   repositoryID: string;
   currentRef: string | undefined;
   tags: GitTag[];
-  handleViewRef: (ref: string) => void;
-  handleDeleteTag?: (tag: string) => void;
+  handleViewRef: (_ref: string) => void;
+  handleDeleteTag?: (_tag: string) => void;
   loading: boolean;
   emptyStateAction?: EmptyStateAction;
 }
@@ -89,11 +88,7 @@ export default function TagList({
           {
             label: dict.list.delete,
             primary: false,
-            hide: !isResourceAllowed(
-              PolicyResource.RepositoryTag,
-              PolicyAction.Delete,
-              repositoryID
-            ),
+            hide: !isResourceAllowed('repository_tag', 'delete', repositoryID),
             onClick: () => {
               if (handleDeleteTag) {
                 handleDeleteTag(tag.name);

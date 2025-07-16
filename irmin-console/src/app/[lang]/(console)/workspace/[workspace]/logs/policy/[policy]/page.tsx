@@ -7,7 +7,7 @@ import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { usePolicy } from '@/hooks/usePolicy';
+import { usePolicy } from '@/hooks/api';
 
 import type { PolicyLogsLayoutParams } from './layout';
 

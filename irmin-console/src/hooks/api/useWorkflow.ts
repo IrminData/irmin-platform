@@ -10,8 +10,16 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { WorkflowSchedule } from '@/types/core/Schedule';
-import type { Workflow, Workflowable } from '@/types/core/Workflow';
-import { WorkflowStatus } from '@/types/core/Workflow';
+import type {
+  Workflow,
+  Workflowable,
+  WorkflowStatus,
+} from '@/types/core/Workflow';
+
+import {
+  deleteMutationHandlers,
+  updateMutationHandlers,
+} from './mutations/utils';
 
 type UpdateWorkflowInput = {
   name: string;
@@ -50,94 +58,34 @@ export function useWorkflow(workflowID: string) {
     },
   });
 
-  const deleteWorkflowMutation = useMutation<IrminAPIResponse, Error>({
-    mutationFn: async () => {
+  const deleteWorkflowMutation = useMutation<IrminAPIResponse, Error, string>({
+    mutationFn: async (workflowIdToDelete: string) => {
       const token = await getToken();
       const core = new IrminCore(locale, token);
       const response = await core.workflowService.deleteWorkflow({
         workspace: workspaceSlug,
-        workflowID,
+        workflowID: workflowIdToDelete,
       });
       return response;
     },
-    onMutate: async () => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({
-        queryKey: workflowQueryKey(workspaceSlug, workflowID),
-      });
-      await queryClient.cancelQueries({
-        queryKey: workflowsQueryKey(workspaceSlug),
-      });
-
-      // Snapshot the previous values
-      const previousWorkflow = queryClient.getQueryData<
-        IrminAPIResponse<Workflow>
-      >(workflowQueryKey(workspaceSlug, workflowID));
-      const previousWorkflows = queryClient.getQueryData<
-        IrminAPIResponse<Workflow[]>
-      >(workflowsQueryKey(workspaceSlug));
-
-      // Optimistically remove from workflows list cache
-      queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
-        workflowsQueryKey(workspaceSlug),
-        (old: IrminAPIResponse<Workflow[]> | undefined) => {
-          if (!old?.data) return old;
-
-          const filteredWorkflows = old.data.filter(
-            (workflow: Workflow) => workflow.id !== workflowID
-          );
-
-          return {
-            ...old,
-            data: filteredWorkflows,
-          };
-        }
-      );
-
-      // Clear single workflow cache
-      queryClient.removeQueries({
-        queryKey: workflowQueryKey(workspaceSlug, workflowID),
-      });
-
-      // Return context for rollback
-      return { previousWorkflow, previousWorkflows };
-    },
-    onError: (error, variables: void, context: unknown) => {
-      // Rollback on error
-      const ctx = context as
-        | {
-            previousWorkflow?: IrminAPIResponse<Workflow>;
-            previousWorkflows?: IrminAPIResponse<Workflow[]>;
-          }
-        | undefined;
-      if (ctx?.previousWorkflow) {
-        queryClient.setQueryData(
-          workflowQueryKey(workspaceSlug, workflowID),
-          ctx.previousWorkflow
-        );
-      }
-      if (ctx?.previousWorkflows) {
-        queryClient.setQueryData(
-          workflowsQueryKey(workspaceSlug),
-          ctx.previousWorkflows
-        );
-      }
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error deleting workflow');
-    },
-    onSuccess: (res: IrminAPIResponse) => {
-      // The optimistic update is already done, just show success message
-      irminAlert('success', res.message ?? 'Workflow deleted successfully');
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: workflowQueryKey(workspaceSlug, workflowID),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: workflowsQueryKey(workspaceSlug),
-      });
-    },
+    ...deleteMutationHandlers<Workflow>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: workflowsQueryKey(workspaceSlug),
+        relatedQueryKeys: [['workflows', workspaceSlug]],
+        getItemId: (workflow) => workflow.id,
+      },
+      singleItemQueryKey: workflowQueryKey(workspaceSlug, workflowID),
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Workflow deleted successfully');
+        // Invalidate workflow queries to ensure consistency
+        queryClient.invalidateQueries({
+          queryKey: ['workflows', workspaceSlug],
+        });
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Error deleting workflow');
+      },
+    }),
   });
 
   const updateWorkflowMutation = useMutation<
@@ -157,122 +105,24 @@ export function useWorkflow(workflowID: string) {
       });
       return response;
     },
-    onMutate: async (data: UpdateWorkflowInput) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({
-        queryKey: workflowQueryKey(workspaceSlug, workflowID),
-      });
-      await queryClient.cancelQueries({
-        queryKey: workflowsQueryKey(workspaceSlug),
-      });
-
-      // Snapshot the previous values
-      const previousWorkflow = queryClient.getQueryData<
-        IrminAPIResponse<Workflow>
-      >(workflowQueryKey(workspaceSlug, workflowID));
-      const previousWorkflows = queryClient.getQueryData<
-        IrminAPIResponse<Workflow[]>
-      >(workflowsQueryKey(workspaceSlug));
-
-      // Optimistically update the single workflow cache
-      queryClient.setQueryData<IrminAPIResponse<Workflow>>(
-        workflowQueryKey(workspaceSlug, workflowID),
-        (old: IrminAPIResponse<Workflow> | undefined) => {
-          if (!old?.data) return old;
-
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              ...data,
-            },
-          };
-        }
-      );
-
-      // Optimistically update the workflows list cache
-      queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
-        workflowsQueryKey(workspaceSlug),
-        (old: IrminAPIResponse<Workflow[]> | undefined) => {
-          if (!old?.data) return old;
-
-          const updatedWorkflows = old.data.map((workflow: Workflow) =>
-            workflow.id === workflowID ? { ...workflow, ...data } : workflow
-          );
-
-          return {
-            ...old,
-            data: updatedWorkflows,
-          };
-        }
-      );
-
-      // Return context for rollback
-      return { previousWorkflow, previousWorkflows };
-    },
-    onError: (error, data: UpdateWorkflowInput, context: unknown) => {
-      // Rollback on error
-      const ctx = context as
-        | {
-            previousWorkflow?: IrminAPIResponse<Workflow>;
-            previousWorkflows?: IrminAPIResponse<Workflow[]>;
-          }
-        | undefined;
-      if (ctx?.previousWorkflow) {
-        queryClient.setQueryData(
-          workflowQueryKey(workspaceSlug, workflowID),
-          ctx.previousWorkflow
-        );
-      }
-      if (ctx?.previousWorkflows) {
-        queryClient.setQueryData(
-          workflowsQueryKey(workspaceSlug),
-          ctx.previousWorkflows
-        );
-      }
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error updating workflow');
-    },
-    onSuccess: (
-      res: IrminAPIResponse<Workflow>,
-      _data: UpdateWorkflowInput
-    ) => {
-      // Update the cache with the real data from the server if available
-      if (res.data) {
-        queryClient.setQueryData<IrminAPIResponse<Workflow>>(
-          workflowQueryKey(workspaceSlug, workflowID),
-          res
-        );
-
-        // Update the workflows list
-        queryClient.setQueryData<IrminAPIResponse<Workflow[]>>(
-          workflowsQueryKey(workspaceSlug),
-          (old: IrminAPIResponse<Workflow[]> | undefined) => {
-            if (!old?.data) return old;
-
-            const updatedWorkflows = old.data.map((workflow: Workflow) =>
-              workflow.id === workflowID ? res.data! : workflow
-            );
-
-            return {
-              ...old,
-              data: updatedWorkflows,
-            };
-          }
-        );
-      }
-
-      irminAlert('success', res.message ?? 'Workflow updated successfully');
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      void queryClient.invalidateQueries({
-        queryKey: workflowQueryKey(workspaceSlug, workflowID),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: workflowsQueryKey(workspaceSlug),
-      });
-    },
+    ...updateMutationHandlers<Workflow, UpdateWorkflowInput>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: workflowsQueryKey(workspaceSlug),
+        relatedQueryKeys: [['workflows', workspaceSlug]],
+        getItemId: (workflow) => workflow.id,
+      },
+      singleItemQueryKey: workflowQueryKey(workspaceSlug, workflowID),
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Workflow updated successfully');
+        // Invalidate workflow queries to ensure consistency
+        queryClient.invalidateQueries({
+          queryKey: ['workflows', workspaceSlug],
+        });
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Error updating workflow');
+      },
+    }),
   });
 
   const updateWorkflowScheduleMutation = useMutation<
@@ -405,7 +255,7 @@ export function useWorkflow(workflowID: string) {
             ...old,
             data: {
               ...old.data,
-              status: WorkflowStatus.Paused, // Paused status
+              status: 'paused' as WorkflowStatus,
             },
           };
         }
@@ -419,7 +269,7 @@ export function useWorkflow(workflowID: string) {
 
           const updatedWorkflows = old.data.map((workflow: Workflow) =>
             workflow.id === workflowID
-              ? { ...workflow, status: WorkflowStatus.Paused }
+              ? { ...workflow, status: 'paused' as WorkflowStatus }
               : workflow
           );
 
@@ -467,12 +317,12 @@ export function useWorkflow(workflowID: string) {
       irminAlert('success', res.message ?? 'Workflow paused successfully');
     },
     onSettled: () => {
-      // Always refetch after error or success to ensure consistency
+      // Invalidate all workflow queries with this workspace prefix to ensure filtered views are consistent
       void queryClient.invalidateQueries({
-        queryKey: workflowQueryKey(workspaceSlug, workflowID),
+        queryKey: ['workflows', workspaceSlug],
       });
       void queryClient.invalidateQueries({
-        queryKey: workflowsQueryKey(workspaceSlug),
+        queryKey: workflowQueryKey(workspaceSlug, workflowID),
       });
     },
   });
@@ -515,7 +365,7 @@ export function useWorkflow(workflowID: string) {
               ...old,
               data: {
                 ...old.data,
-                status: WorkflowStatus.Running, // Running status
+                status: 'running' as WorkflowStatus,
               },
             };
           }
@@ -529,7 +379,7 @@ export function useWorkflow(workflowID: string) {
 
             const updatedWorkflows = old.data.map((workflow: Workflow) =>
               workflow.id === workflowID
-                ? { ...workflow, status: WorkflowStatus.Running }
+                ? { ...workflow, status: 'running' as WorkflowStatus }
                 : workflow
             );
 
@@ -577,12 +427,12 @@ export function useWorkflow(workflowID: string) {
         irminAlert('success', res.message ?? 'Workflow resumed successfully');
       },
       onSettled: () => {
-        // Always refetch after error or success to ensure consistency
+        // Invalidate all workflow queries with this workspace prefix to ensure filtered views are consistent
         void queryClient.invalidateQueries({
-          queryKey: workflowQueryKey(workspaceSlug, workflowID),
+          queryKey: ['workflows', workspaceSlug],
         });
         void queryClient.invalidateQueries({
-          queryKey: workflowsQueryKey(workspaceSlug),
+          queryKey: workflowQueryKey(workspaceSlug, workflowID),
         });
       },
     }

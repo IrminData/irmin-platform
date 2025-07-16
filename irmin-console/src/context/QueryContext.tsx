@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useState } from 'react';
 
 import { usePopup } from '@/context/PopupContext';
 
-import { useIrminSQL } from '@/hooks/useIrminSQL';
+import { useIrminSQL } from '@/hooks/utils';
 
 import type { QueryResult } from '@/types/core/StoredQuery';
 
@@ -16,7 +16,7 @@ import { useLocale } from './LocaleContext';
 interface QueryContextProps {
   loading: boolean;
   result: QueryResult | null;
-  executeSql: (content: string) => Promise<void>;
+  executeSql: (_content: string) => Promise<void>;
   cleanup: () => void;
 }
 

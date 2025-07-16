@@ -34,7 +34,7 @@ export default function DynamicForm({
   loading = false,
 }: {
   fields: DynamicFields;
-  onSubmit: (data: DynamicFieldValues) => void;
+  onSubmit: (_data: DynamicFieldValues) => void;
   submitButtonText: string;
   formProps?: FormHTMLAttributes<HTMLFormElement>;
   loading?: boolean;

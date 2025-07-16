@@ -21,12 +21,9 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkspaceTag } from '@/hooks/useWorkspaceTag';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import { useWorkspaceTag, useWorkspaceTags } from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
 
 import { WorkspaceTagModal } from './WorkspaceTagModal';
@@ -66,14 +63,11 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
     );
 
     if (confirmed && tag) {
-      deleteWorkspaceTagMutation.mutate(
-        { id: tag.id },
-        {
-          onSuccess: () => {
-            router.push('../');
-          },
-        }
-      );
+      deleteWorkspaceTagMutation.mutate(tag.id, {
+        onSuccess: () => {
+          router.push('../');
+        },
+      });
     }
   }, [
     irminConfirm,
@@ -163,13 +157,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             icon={<TbPencil size={16} />}
             tooltip={dict.common.edit}
             onClick={openEditModal}
-            disabled={
-              !isResourceAllowed(
-                PolicyResource.WorkspaceTag,
-                PolicyAction.Update,
-                tag.id
-              )
-            }
+            disabled={!isResourceAllowed('workspace_tag', 'update', tag.id)}
             loading={updateWorkspaceTagMutation.isPending}
           >
             {dict.common.edit}
@@ -179,13 +167,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             icon={<TbTrash size={16} />}
             tooltip={dict.common.delete}
             onClick={handleDeleteTag}
-            disabled={
-              !isResourceAllowed(
-                PolicyResource.WorkspaceTag,
-                PolicyAction.Delete,
-                tag.id
-              )
-            }
+            disabled={!isResourceAllowed('workspace_tag', 'delete', tag.id)}
             loading={deleteWorkspaceTagMutation.isPending}
           >
             {dict.common.delete}

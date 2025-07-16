@@ -13,14 +13,10 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useUsers } from '@/hooks/useUsers';
-import { useWorkflow } from '@/hooks/useWorkflow';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import { useUsers, useWorkflow, useWorkspaceTags } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
-import { TagEntityType } from '@/types/core/Tag';
 
 interface WorkflowFormValues {
   name: string;
@@ -90,7 +86,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
       `${dict.common.areYouSureYouWantToDelete} (${workflowQuery.data?.data?.name})`
     );
     if (!confirmed) return;
-    await deleteWorkflowMutation.mutateAsync();
+    await deleteWorkflowMutation.mutateAsync(workflowID);
     router.push(`/workspace/${workspaceSlug}/workflows`);
   }, [
     deleteWorkflowMutation,
@@ -99,6 +95,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
     dict,
     router,
     workspaceSlug,
+    workflowID,
   ]);
 
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
@@ -106,23 +103,15 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
 
   const canViewTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
-      isResourceAllowed(
-        PolicyResource.Workflow,
-        PolicyAction.Read,
-        workflowQuery.data?.data?.id
-      ),
+      isResourceAllowed('workspace_tag', 'read') &&
+      isResourceAllowed('workflow', 'read', workflowQuery.data?.data?.id),
     [isResourceAllowed, workflowQuery.data?.data?.id]
   );
 
   const canChangeTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
-      isResourceAllowed(
-        PolicyResource.Workflow,
-        PolicyAction.Update,
-        workflowQuery.data?.data?.id
-      ),
+      isResourceAllowed('workspace_tag', 'create') &&
+      isResourceAllowed('workflow', 'update', workflowQuery.data?.data?.id),
     [isResourceAllowed, workflowQuery.data?.data?.id]
   );
 
@@ -170,14 +159,14 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
           ...tagsToAdd.map((tag) =>
             addTagToEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Workflow,
+              entityType: 'workflows',
               entityId: workflowId,
             })
           ),
           ...tagsToRemove.map((tag) =>
             removeTagFromEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Workflow,
+              entityType: 'workflows',
               entityId: workflowId,
             })
           ),
@@ -271,19 +260,9 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
         submitButtonLabel={dict.workflow.settings.saveChanges}
         deleteButtonLabel={dict.workflow.settings.delete}
         dangerZoneMessage={dict.workflow.settings.deletionNote}
-        disabled={
-          !isResourceAllowed(
-            PolicyResource.Workflow,
-            PolicyAction.Update,
-            workflow.id
-          )
-        }
+        disabled={!isResourceAllowed('workflow', 'update', workflow.id)}
         deleteButtonDisabled={
-          !isResourceAllowed(
-            PolicyResource.Workflow,
-            PolicyAction.Delete,
-            workflow.id
-          )
+          !isResourceAllowed('workflow', 'delete', workflow.id)
         }
         additionalContentRight={
           <>

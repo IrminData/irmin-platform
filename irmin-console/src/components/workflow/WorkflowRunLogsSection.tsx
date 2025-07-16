@@ -10,7 +10,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import useWorkflowRun from '@/hooks/useWorkflowRun';
+import { useWorkflowRun } from '@/hooks/api';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
 
@@ -94,10 +94,14 @@ export default function WorkflowRunLogsSection({
           </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.list.status}</p>
-            <StatusBadge
-              status={workflowRun.status}
-              label={workflowRun.status ?? dict.workflow.noStatus}
-            />
+            {workflowRun.status === '' || !workflowRun.status ? (
+              <StatusBadge status='default' label={dict.workflow.noStatus} />
+            ) : (
+              <StatusBadge
+                status={workflowRun.status}
+                label={workflowRun.status ?? dict.workflow.noStatus}
+              />
+            )}
           </div>
           <div className='flex flex-col gap-1'>
             <p

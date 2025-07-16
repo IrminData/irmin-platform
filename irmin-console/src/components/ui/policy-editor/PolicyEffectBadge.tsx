@@ -6,24 +6,22 @@ import { Badge } from '@/components/ui/badge';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { PolicyEffect } from '@/types/core/Policy';
+import type { PolicyEffect } from '@/types/core/Policy';
 
 const PolicyEffectBadge = ({ effect }: { effect: PolicyEffect }) => {
   const { dict } = useLocale();
   return (
     <>
-      {effect === PolicyEffect.Allow ? (
+      {effect === 'allow' ? (
         <TbShieldCheck className='size-4 text-accent' />
       ) : (
         <TbShieldX className='size-4 text-destructive' />
       )}
       <Badge
-        variant={effect === PolicyEffect.Allow ? 'default' : 'destructive'}
+        variant={effect === 'allow' ? 'default' : 'destructive'}
         className='px-2 text-sm'
       >
-        {effect === PolicyEffect.Allow
-          ? dict.policy.effectAllow
-          : dict.policy.effectDeny}
+        {effect === 'allow' ? dict.policy.effectAllow : dict.policy.effectDeny}
       </Badge>
     </>
   );

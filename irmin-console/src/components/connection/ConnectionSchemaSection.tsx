@@ -6,7 +6,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConnectionSchema } from '@/hooks/useConnectionSchema';
+import { useConnectionSchema } from '@/hooks/api';
 
 /**
  * Connection Schema section component

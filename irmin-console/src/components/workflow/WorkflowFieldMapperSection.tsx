@@ -9,12 +9,13 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConnectionSchema } from '@/hooks/useConnectionSchema';
-import { useRepositoryObjectSchema } from '@/hooks/useRepositoryObjectSchema';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkflow } from '@/hooks/useWorkflow';
+import {
+  useConnectionSchema,
+  useRepositoryObjectSchema,
+  useWorkflow,
+} from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type {
   ExportWorkflow,
   FieldMapping,
@@ -55,12 +56,7 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
   );
 
   const isAllowed = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.Workflow,
-        PolicyAction.Update,
-        workflowID
-      ),
+    () => isResourceAllowed('workflow', 'update', workflowID),
     [isResourceAllowed, workflowID]
   );
 

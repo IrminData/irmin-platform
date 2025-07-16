@@ -14,13 +14,10 @@ import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useRepository } from '@/hooks/useRepository';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import { useRepository, useWorkspaceTags } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
-import { TagEntityType } from '@/types/core/Tag';
 
 import ImmutableWarning from './ImmutableWarning';
 
@@ -95,7 +92,7 @@ const RepositorySettingsSectionContent = () => {
       `${dict.common.areYouSureYouWantToDelete} (${repository.name})`
     );
     if (!confirmed) return;
-    await deleteRepositoryMutation.mutateAsync();
+    await deleteRepositoryMutation.mutateAsync(repository.slug);
     router.push(`/workspace/${workspaceSlug}/repositories`);
   }, [
     repository,
@@ -111,22 +108,14 @@ const RepositorySettingsSectionContent = () => {
 
   const canViewTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
-      isResourceAllowed(
-        PolicyResource.Repository,
-        PolicyAction.Read,
-        repository.id
-      ),
+      isResourceAllowed('workspace_tag', 'read') &&
+      isResourceAllowed('repository', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canChangeTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
-      isResourceAllowed(
-        PolicyResource.Repository,
-        PolicyAction.Update,
-        repository.id
-      ),
+      isResourceAllowed('workspace_tag', 'create') &&
+      isResourceAllowed('repository', 'update', repository.id),
     [isResourceAllowed, repository.id]
   );
   const [selectedTags, setSelectedTags] = useState<Tag[]>(
@@ -165,14 +154,14 @@ const RepositorySettingsSectionContent = () => {
           ...tagsToAdd.map((tag) =>
             addTagToEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Repository,
+              entityType: 'repositories',
               entityId: repository.id,
             })
           ),
           ...tagsToRemove.map((tag) =>
             removeTagFromEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.Repository,
+              entityType: 'repositories',
               entityId: repository.id,
             })
           ),
@@ -250,19 +239,9 @@ const RepositorySettingsSectionContent = () => {
         submitButtonLabel={dict.common.save}
         deleteButtonLabel={dict.repository.settings.deleteRepository}
         dangerZoneMessage={dict.repository.settings.deletionNote}
-        disabled={
-          !isResourceAllowed(
-            PolicyResource.Repository,
-            PolicyAction.Update,
-            repository.id
-          )
-        }
+        disabled={!isResourceAllowed('repository', 'update', repository.id)}
         deleteButtonDisabled={
-          !isResourceAllowed(
-            PolicyResource.Repository,
-            PolicyAction.Delete,
-            repository.id
-          )
+          !isResourceAllowed('repository', 'delete', repository.id)
         }
         additionalContentRight={
           <>

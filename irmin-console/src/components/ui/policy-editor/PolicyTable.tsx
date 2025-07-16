@@ -27,9 +27,9 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { usePolicyResourceOptions } from '@/hooks/usePolicyResourceOptions';
+import { usePolicyResourceOptions } from '@/hooks/api';
 
-import { PolicyPrincipal, PolicyResource } from '@/types/core/Policy';
+import type { PolicyResource } from '@/types/core/Policy';
 
 import PolicyDeleteButton from './PolicyDeleteButton';
 import PolicyEffectBadge from './PolicyEffectBadge';
@@ -179,24 +179,21 @@ export default function PolicyTable({
     if (!resourceId) {
       return dict.policy.allResources;
     }
-    if (resourceType === PolicyResource.Query) {
+    if (resourceType === 'query') {
       return (
         policyResourceOptionsQuery.data?.data?.queries.find(
           (option) => option.id === resourceId
         )?.label ?? resourceId
       );
     }
-    if (
-      resourceType === PolicyResource.Workflow ||
-      resourceType === PolicyResource.WorkflowRun
-    ) {
+    if (resourceType === 'workflow' || resourceType === 'workflow_run') {
       return (
         policyResourceOptionsQuery.data?.data?.workflows.find(
           (option) => option.id === resourceId
         )?.label ?? resourceId
       );
     }
-    if (resourceType === PolicyResource.Connection) {
+    if (resourceType === 'connection') {
       return (
         policyResourceOptionsQuery.data?.data?.connections.find(
           (option) => option.id === resourceId
@@ -204,11 +201,11 @@ export default function PolicyTable({
       );
     }
     if (
-      resourceType === PolicyResource.Repository ||
-      resourceType === PolicyResource.RepositoryBranch ||
-      resourceType === PolicyResource.RepositoryTag ||
-      resourceType === PolicyResource.RepositoryCommit ||
-      resourceType === PolicyResource.RepositoryObject
+      resourceType === 'repository' ||
+      resourceType === 'repository_branch' ||
+      resourceType === 'repository_tag' ||
+      resourceType === 'repository_commit' ||
+      resourceType === 'repository_object'
     ) {
       return (
         policyResourceOptionsQuery.data?.data?.repositories.find(
@@ -216,14 +213,14 @@ export default function PolicyTable({
         )?.label ?? resourceId
       );
     }
-    if (resourceType === PolicyResource.User) {
+    if (resourceType === 'user') {
       return (
         policyResourceOptionsQuery.data?.data?.users.find(
           (option) => option.id === resourceId
         )?.label ?? resourceId
       );
     }
-    if (resourceType === PolicyResource.WorkspaceTag) {
+    if (resourceType === 'workspace_tag') {
       return (
         policyResourceOptionsQuery.data?.data?.tags.find(
           (option) => option.id === resourceId
@@ -357,12 +354,12 @@ export default function PolicyTable({
             <TableCell>{formatActionName(dict, policy.action)}</TableCell>
             <TableCell>
               {formatPrincipalName(dict, policy.principal)}
-              {policy.principal === PolicyPrincipal.Role && (
+              {policy.principal === 'role' && (
                 <span className='pl-2 text-sm text-muted-foreground'>
                   ({policy.role?.role})
                 </span>
               )}
-              {policy.principal === PolicyPrincipal.WorkspaceUser && (
+              {policy.principal === 'workspace_user' && (
                 <span className='pl-2 text-sm text-muted-foreground'>
                   ({policy.user?.email})
                 </span>

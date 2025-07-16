@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
-import { useWorkspace } from '@/hooks/useWorkspace';
+import { useWorkspace } from '@/hooks/api/useWorkspace';
 
 /**
  * Workspace context properties

@@ -8,10 +8,8 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryObjectSchema } from '@/hooks/useRepositoryObjectSchema';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useRepositoryObjectSchema } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import SchemaViewer from './objects/SchemaViewer';
 
@@ -55,12 +53,7 @@ function RepositorySchemaSectionContent({
   );
 
   const canViewSchema = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 

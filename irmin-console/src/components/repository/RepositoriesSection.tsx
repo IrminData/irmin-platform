@@ -11,11 +11,9 @@ import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useRepositories } from '@/hooks/useRepositories';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useToggleCreateParam } from '@/hooks/useToggleCreateParam';
+import { useRepositories } from '@/hooks/api';
+import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Repository } from '@/types/core/Repository';
 
 import CreateRepositoryModalContent from './CreateRepositoryModalContent';
@@ -100,18 +98,13 @@ export default function RepositoriesSection({
           size='lg'
           onClick={() => openModal()}
           icon={<IoAdd size={25} />}
-          disabled={
-            !isResourceAllowed(PolicyResource.Repository, PolicyAction.Create)
-          }
+          disabled={!isResourceAllowed('repository', 'create')}
         >
           {dict.repository.createNewRepository}
         </Button>
       </div>
       <SideModal
-        isOpen={
-          isOpen &&
-          isResourceAllowed(PolicyResource.Repository, PolicyAction.Create)
-        }
+        isOpen={isOpen && isResourceAllowed('repository', 'create')}
         closeModal={closeModal}
         title={dict.repository.createNewRepository}
       >
@@ -149,7 +142,7 @@ export default function RepositoriesSection({
             loading={repositoriesQuery.isLoading}
             repositories={filteredItems}
             emptyStateAction={
-              isResourceAllowed(PolicyResource.Repository, PolicyAction.Create)
+              isResourceAllowed('repository', 'create')
                 ? {
                     label: dict.repository.createNewRepository,
                     onClick: openModal,

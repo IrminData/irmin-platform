@@ -7,7 +7,7 @@ import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkflow } from '@/hooks/useWorkflow';
+import { useWorkflow } from '@/hooks/api';
 
 import type { WorkflowLogsLayoutParams } from './layout';
 

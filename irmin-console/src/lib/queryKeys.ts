@@ -4,7 +4,7 @@
  * This file contains all query keys used throughout the application.
  * Import these keys in your hooks and components for consistent query management.
  */
-import type { LogsForType } from '@/hooks/useLogEvents';
+import type { LogsForType } from '@/hooks/api/useLogEvents';
 
 import type { SearchFilters } from '@/types/core/Search';
 import type { DynamicFieldValues } from '@/types/internal/DynamicField';

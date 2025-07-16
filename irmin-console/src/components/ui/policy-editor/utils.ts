@@ -1,7 +1,10 @@
 import type { Dictionary } from '@/lib/dict';
 
-import type { PolicyResource } from '@/types/core/Policy';
-import { PolicyAction, PolicyPrincipal } from '@/types/core/Policy';
+import type {
+  PolicyAction,
+  PolicyPrincipal,
+  PolicyResource,
+} from '@/types/core/Policy';
 
 export const formatResourceName = (resource: PolicyResource): string => {
   return resource
@@ -15,13 +18,13 @@ export const formatActionName = (
 ): string => {
   let actionStr: string;
   switch (action) {
-    case PolicyAction.Create:
+    case 'create':
       return dict.policy.actionCreate;
-    case PolicyAction.Read:
+    case 'read':
       return dict.policy.actionRead;
-    case PolicyAction.Update:
+    case 'update':
       return dict.policy.actionUpdate;
-    case PolicyAction.Delete:
+    case 'delete':
       return dict.policy.actionDelete;
     default:
       actionStr = String(action);
@@ -35,11 +38,11 @@ export const formatPrincipalName = (
 ): string => {
   let principalStr: string;
   switch (principal) {
-    case PolicyPrincipal.WorkspaceUser:
+    case 'workspace_user':
       return dict.policy.principalWorkspaceUser;
-    case PolicyPrincipal.Role:
+    case 'role':
       return dict.policy.principalRole;
-    case PolicyPrincipal.Everyone:
+    case 'everyone':
       return dict.policy.principalEveryone;
     default:
       principalStr = String(principal);

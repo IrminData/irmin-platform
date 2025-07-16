@@ -23,17 +23,16 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useRepositoryObject } from '@/hooks/useRepositoryObject';
-import { useRepositoryObjectContent } from '@/hooks/useRepositoryObjectContent';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import {
+  useRepositoryObject,
+  useRepositoryObjectContent,
+  useWorkspaceTags,
+} from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import type { Object } from '@/types/core/Object';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
-import { TagEntityType } from '@/types/core/Tag';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
 import UploadObjectModal from './UploadObjectModal';
@@ -59,7 +58,7 @@ export default function ObjectDetails({
   hideViewButton = false,
   hideSchemaButton = false,
 }: {
-  setCurrentPath?: (path: string) => void;
+  setCurrentPath?: (_path: string) => void;
   selectedObject?: Object;
   selectedObjectSchema?: ObjectSchema;
   closeDetails?: () => void;
@@ -92,91 +91,45 @@ export default function ObjectDetails({
 
   // Permission checks
   const canView = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canViewSchema = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canUpload = useMemo(
     () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Create,
-        repository.id
-      ) &&
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Update,
-        repository.id
-      ),
+      isResourceAllowed('repository_object', 'create', repository.id) &&
+      isResourceAllowed('repository_object', 'update', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canChangeHistory = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canDownload = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canMoveOrRename = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Update,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'update', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canDelete = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Delete,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_object', 'delete', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canViewTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Read) &&
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Read,
-        repository.id
-      ),
+      isResourceAllowed('workspace_tag', 'read') &&
+      isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
   const canChangeTags = useMemo(
     () =>
-      isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create) &&
-      isResourceAllowed(
-        PolicyResource.RepositoryObject,
-        PolicyAction.Update,
-        repository.id
-      ),
+      isResourceAllowed('workspace_tag', 'create') &&
+      isResourceAllowed('repository_object', 'update', repository.id),
     [isResourceAllowed, repository.id]
   );
 
@@ -329,14 +282,14 @@ export default function ObjectDetails({
           ...tagsToAdd.map((tag) =>
             addTagToEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.RepositoryObject,
+              entityType: 'repository_objects',
               entityId: selectedObject.id,
             })
           ),
           ...tagsToRemove.map((tag) =>
             removeTagFromEntityMutation.mutateAsync({
               id: tag.id,
-              entityType: TagEntityType.RepositoryObject,
+              entityType: 'repository_objects',
               entityId: selectedObject.id,
             })
           ),

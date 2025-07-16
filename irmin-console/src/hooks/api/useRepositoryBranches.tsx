@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
+import type { CreateBranchRequest } from '@/lib/core/resources/RepositoryBranchService';
 import { repositoryBranchesQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
@@ -10,6 +11,11 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { Branch } from '@/types/core/Branch';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+
+import {
+  createMutationHandlers,
+  deleteMutationHandlers,
+} from './mutations/utils';
 
 export function useRepositoryBranches(repositorySlug: string) {
   const { getToken } = useIAM();
@@ -31,9 +37,9 @@ export function useRepositoryBranches(repositorySlug: string) {
   });
 
   const createBranchMutation = useMutation<
-    IrminAPIResponse,
+    IrminAPIResponse<Branch>,
     Error,
-    { name: string; from: string }
+    CreateBranchRequest
   >({
     mutationFn: async (data) => {
       const token = await getToken();
@@ -41,20 +47,40 @@ export function useRepositoryBranches(repositorySlug: string) {
       return await core.repositoryBranchService.createBranch({
         workspace: workspaceSlug,
         repository: repositorySlug,
-        name: data.name,
-        from: data.from,
+        request: data,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryBranchesQueryKey(workspaceSlug, repositorySlug),
-      });
-      irminAlert('success', res.message ?? 'Branch created successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error creating branch');
-    },
+    ...createMutationHandlers<Branch, CreateBranchRequest>(
+      queryClient,
+      'repository-branches',
+      {
+        cacheConfig: {
+          primaryQueryKey: repositoryBranchesQueryKey(
+            workspaceSlug,
+            repositorySlug
+          ),
+          getItemId: (branch) => branch.name,
+          createOptimisticItem: (input, _tempId: string) => ({
+            name: input.name,
+            from: input.from,
+            default: false,
+            is_immutable: false,
+            commit: {
+              hash: 'temp-commit',
+              message: 'Loading...',
+              author: 'Current User',
+              timestamp: new Date().toISOString(),
+            },
+          }),
+        },
+        onSuccess: (res) => {
+          irminAlert('success', res.message ?? 'Branch created successfully');
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Error creating branch');
+        },
+      }
+    ),
   });
 
   const deleteBranchMutation = useMutation<IrminAPIResponse, Error, string>({
@@ -67,16 +93,21 @@ export function useRepositoryBranches(repositorySlug: string) {
         branch,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryBranchesQueryKey(workspaceSlug, repositorySlug),
-      });
-      irminAlert('success', res.message ?? 'Branch deleted successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error deleting branch');
-    },
+    ...deleteMutationHandlers<Branch>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: repositoryBranchesQueryKey(
+          workspaceSlug,
+          repositorySlug
+        ),
+        getItemId: (branch) => branch.name,
+      },
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Branch deleted successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Error deleting branch');
+      },
+    }),
   });
 
   return {

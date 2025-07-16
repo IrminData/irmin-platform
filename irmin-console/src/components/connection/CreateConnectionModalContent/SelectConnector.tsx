@@ -14,7 +14,7 @@ import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { useConnectors } from '@/hooks/useConnectors';
+import { useConnectors } from '@/hooks/api';
 
 import type { Connector, ConnectorCategory } from '@/types/core/Connector';
 import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';

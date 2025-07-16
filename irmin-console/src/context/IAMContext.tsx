@@ -38,12 +38,12 @@ interface IAMContextValue {
   profile: User | undefined;
   /** update profile in Irmin */
   updateProfile: (
-    first_name: string,
-    last_name: string,
-    email: string,
-    phone: string,
-    company: string,
-    profile_picture?: FileList
+    _first_name: string,
+    _last_name: string,
+    _email: string,
+    _phone: string,
+    _company: string,
+    _profile_picture?: FileList
   ) => Promise<boolean>;
   /** loading state for auth/profile */
   isLoading: boolean;
@@ -90,8 +90,8 @@ export const IAMProvider = ({ children }: { children: ReactNode }) => {
   const refreshPromiseRef = useRef<Promise<string> | null>(null);
   const refreshQueueRef = useRef<
     {
-      resolve: (token: string) => void;
-      reject: (error: Error) => void;
+      resolve: (_token: string) => void;
+      reject: (_error: Error) => void;
     }[]
   >([]);
 

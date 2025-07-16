@@ -12,10 +12,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryBranches } from '@/hooks/useRepositoryBranches';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useRepositoryBranches } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import BranchList from './branches/BranchList';
 import CreateBranchModalContent from './branches/CreateBranchModalContent';
@@ -48,37 +46,19 @@ function RepositoryBranchesSectionContent() {
   } = useRepositoryBranches(repository.slug);
 
   const canViewBranches = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryBranch,
-        PolicyAction.Read,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_branch', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
 
   const canCreateBranch = useMemo(
     () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryBranch,
-        PolicyAction.Update,
-        repository.id
-      ) &&
-      isResourceAllowed(
-        PolicyResource.RepositoryBranch,
-        PolicyAction.Create,
-        repository.id
-      ),
+      isResourceAllowed('repository_branch', 'update', repository.id) &&
+      isResourceAllowed('repository_branch', 'create', repository.id),
     [isResourceAllowed, repository.id]
   );
 
   const canDeleteBranch = useMemo(
-    () =>
-      isResourceAllowed(
-        PolicyResource.RepositoryBranch,
-        PolicyAction.Delete,
-        repository.id
-      ),
+    () => isResourceAllowed('repository_branch', 'delete', repository.id),
     [isResourceAllowed, repository.id]
   );
 

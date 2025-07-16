@@ -63,24 +63,17 @@ export function useConnectionConfiguration(
       if (!connectorID) throw new Error('Connector ID is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const res = await core.connectorService.validateConnectorConfiguration({
+      return await core.connectorService.validateConnectorConfiguration({
         connectorId: connectorID,
         details: input.details,
         settings: input.settings,
       });
-      return res;
     },
     onMutate: async () => {
       // Cancel any outgoing refetches to prevent race conditions
       await queryClient.cancelQueries({
         queryKey: connectorConfigurationQueryKey(type, connectorID),
       });
-    },
-    onError: (error) => {
-      irminAlert(
-        'error',
-        error.message ?? 'Error validating connector configuration'
-      );
     },
     onSuccess: (res) => {
       if (res.data?.ok) {
@@ -95,8 +88,14 @@ export function useConnectionConfiguration(
         irminAlert('error', errorMessage);
       }
     },
+    onError: (error) => {
+      irminAlert(
+        'error',
+        error.message ?? 'Error validating connector configuration'
+      );
+    },
     onSettled: () => {
-      // Always refetch after error or success to ensure consistency
+      // Always refetch after validation to ensure consistency
       void queryClient.invalidateQueries({
         queryKey: connectorConfigurationQueryKey(type, connectorID),
       });

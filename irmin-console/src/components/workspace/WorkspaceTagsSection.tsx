@@ -21,11 +21,9 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkspaceTags } from '@/hooks/useWorkspaceTags';
+import { useWorkspaceTags } from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { Tag } from '@/types/core/Tag';
 
 import { WorkspaceTagModal } from './WorkspaceTagModal';
@@ -78,7 +76,7 @@ const WorkspaceTagsSection = () => {
 
       if (confirmed) {
         setDeletingTag(tagId);
-        await deleteWorkspaceTagMutation.mutateAsync({ id: tagId });
+        await deleteWorkspaceTagMutation.mutateAsync(tagId);
         setDeletingTag(null);
       }
     },
@@ -162,9 +160,7 @@ const WorkspaceTagsSection = () => {
           tooltip={dict.common.create}
           variant='default'
           onClick={openCreateModal}
-          disabled={
-            !isResourceAllowed(PolicyResource.WorkspaceTag, PolicyAction.Create)
-          }
+          disabled={!isResourceAllowed('workspace_tag', 'create')}
           loading={createWorkspaceTagMutation.isPending}
           className='w-28'
         >
@@ -261,11 +257,7 @@ const WorkspaceTagsSection = () => {
                       icon={<TbPencil size={14} />}
                       tooltip={dict.common.edit}
                       disabled={
-                        !isResourceAllowed(
-                          PolicyResource.WorkspaceTag,
-                          PolicyAction.Update,
-                          tag.id
-                        )
+                        !isResourceAllowed('workspace_tag', 'update', tag.id)
                       }
                       loading={
                         updatingTag === tag.id &&
@@ -280,11 +272,7 @@ const WorkspaceTagsSection = () => {
                       icon={<TbTrash size={14} />}
                       tooltip={dict.common.delete}
                       disabled={
-                        !isResourceAllowed(
-                          PolicyResource.WorkspaceTag,
-                          PolicyAction.Delete,
-                          tag.id
-                        )
+                        !isResourceAllowed('workspace_tag', 'delete', tag.id)
                       }
                       loading={
                         deletingTag === tag.id &&

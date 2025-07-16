@@ -7,10 +7,9 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-import { useWorkflow } from '@/hooks/useWorkflow';
+import { useWorkflow } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type {
   Action,
   Export,
@@ -27,7 +26,7 @@ import PipelineWorkflow from './Workflowable/PipelineWorkflow';
 
 type WorkflowableUpdater =
   | WorkflowRequest
-  | ((prevState: WorkflowRequest) => WorkflowRequest);
+  | ((_prevState: WorkflowRequest) => WorkflowRequest);
 
 /**
  * Workflow Pipeline section component
@@ -128,11 +127,7 @@ const WorkflowWorkflowableSection = ({
     return <></>;
   }
 
-  const canUpdate = isResourceAllowed(
-    PolicyResource.Workflow,
-    PolicyAction.Update,
-    workflowID
-  );
+  const canUpdate = isResourceAllowed('workflow', 'update', workflowID);
 
   // Create a mock workflow data structure for components that need the full workflow
   const mockWorkflowData = {

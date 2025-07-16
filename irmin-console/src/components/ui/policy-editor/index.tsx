@@ -9,9 +9,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import PolicyTable from './PolicyTable';
 import type { PolicyEditorProps } from './types';
@@ -38,22 +36,22 @@ export default function PolicyEditor({
   const { isResourceAllowed } = useResourceAllowed();
 
   const canCreate = useMemo(
-    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Create),
+    () => isResourceAllowed('policy', 'create'),
     [isResourceAllowed]
   );
 
   const canEdit = useMemo(
-    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Update),
+    () => isResourceAllowed('policy', 'update'),
     [isResourceAllowed]
   );
 
   const canDelete = useMemo(
-    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Delete),
+    () => isResourceAllowed('policy', 'delete'),
     [isResourceAllowed]
   );
 
   const canView = useMemo(
-    () => isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
+    () => isResourceAllowed('policy', 'read'),
     [isResourceAllowed]
   );
 

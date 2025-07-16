@@ -4,11 +4,10 @@ import type { Dictionary } from '@/lib/dict';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useWorkspaces } from '@/hooks/useWorkspaces';
+import { useWorkspaces } from '@/hooks/api';
 
 import type { Workspace } from '@/types/core/Workspace';
 import type { ConsoleSearchItem } from '@/types/internal/ConsoleSearch';
-import { ConsoleSearchItemType } from '@/types/internal/ConsoleSearch';
 
 /**
  * Helper function to check if search terms match a text
@@ -82,55 +81,55 @@ function generateStaticSearchItems({
       description:
         dict.consoleNavigation.staticSearchItems.description.irminWebsite,
       link: `/${locale}`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     },
     {
       title: dict.common.contactUs,
       description:
         dict.consoleNavigation.staticSearchItems.description.contactUs,
       link: `/${locale}/contact`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     },
     {
       title: dict.consoleNavigation.staticSearchItems.guides,
       description: dict.consoleNavigation.staticSearchItems.description.guides,
       link: `/${locale}/guides`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     },
     {
       title: dict.consoleNavigation.staticSearchItems.documentation,
       description:
         dict.consoleNavigation.staticSearchItems.description.documentation,
       link: `/${locale}/docs`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     },
     {
       title: dict.consoleNavigation.staticSearchItems.termsAndPrivacy,
       description:
         dict.consoleNavigation.staticSearchItems.description.termsAndPrivacy,
       link: `/${locale}/terms-and-privacy`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     },
     {
       title: dict.consoleNavigation.staticSearchItems.myProfile,
       description:
         dict.consoleNavigation.staticSearchItems.description.myProfile,
       link: `/${locale}/profile`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     },
     {
       title: dict.consoleNavigation.staticSearchItems.manageWorkspaces,
       description:
         dict.consoleNavigation.staticSearchItems.description.manageWorkspaces,
       link: `/${locale}/workspace`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     },
     {
       title: dict.consoleNavigation.staticSearchItems.createWorkspace,
       description:
         dict.consoleNavigation.staticSearchItems.description.createWorkspace,
       link: `/${locale}/workspace`,
-      type: ConsoleSearchItemType.Irmin,
+      type: 'irmin',
     }
   );
 
@@ -141,7 +140,7 @@ function generateStaticSearchItems({
         title: ws.name,
         description: ws.description || '',
         link: `/${locale}/workspace/${ws.slug}`,
-        type: ConsoleSearchItemType.Workspace,
+        type: 'workspace',
       });
     });
   }
@@ -153,7 +152,7 @@ function generateStaticSearchItems({
         title: dict.logs.workspaceLogs,
         description: dict.consoleNavigation.staticSearchItems.description.logs,
         link: `/${locale}/workspace/${workspace}/logs`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.consoleNavigation.staticSearchItems.workspaceDocumentation,
@@ -161,14 +160,14 @@ function generateStaticSearchItems({
           dict.consoleNavigation.staticSearchItems.description
             .workspaceDocumentation,
         link: `/${locale}/workspace/${workspace}/documentation`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.consoleNavigation.staticSearchItems.editor,
         description:
           dict.consoleNavigation.staticSearchItems.description.editor,
         link: `/${locale}/workspace/${workspace}/editor`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.consoleNavigation.staticSearchItems.workspaceSettings,
@@ -176,77 +175,77 @@ function generateStaticSearchItems({
           dict.consoleNavigation.staticSearchItems.description
             .workspaceSettings,
         link: `/${locale}/workspace/${workspace}/settings`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.workflow.workflows,
         description:
           dict.consoleNavigation.staticSearchItems.description.workflows,
         link: `/${locale}/workspace/${workspace}/workflows`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.workflow.actionWorkflows,
         description:
           dict.consoleNavigation.staticSearchItems.description.actions,
         link: `/${locale}/workspace/${workspace}/workflows/actions`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.workflow.importWorkflows,
         description:
           dict.consoleNavigation.staticSearchItems.description.imports,
         link: `/${locale}/workspace/${workspace}/workflows/imports`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.workflow.exportWorkflows,
         description:
           dict.consoleNavigation.staticSearchItems.description.exports,
         link: `/${locale}/workspace/${workspace}/workflows/exports`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.workflow.pipelineWorkflows,
         description:
           dict.consoleNavigation.staticSearchItems.description.pipelines,
         link: `/${locale}/workspace/${workspace}/workflows/pipelines`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.consoleNavigation.staticSearchItems.createWorkflow,
         description:
           dict.consoleNavigation.staticSearchItems.description.createWorkflow,
         link: `/${locale}/workspace/${workspace}/workflows?create`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.connections.connections,
         description:
           dict.consoleNavigation.staticSearchItems.description.connections,
         link: `/${locale}/workspace/${workspace}/connections`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.consoleNavigation.staticSearchItems.createConnection,
         description:
           dict.consoleNavigation.staticSearchItems.description.createConnection,
         link: `/${locale}/workspace/${workspace}/connections?create`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.repository.repositories,
         description:
           dict.consoleNavigation.staticSearchItems.description.repositories,
         link: `/${locale}/workspace/${workspace}/repositories`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       },
       {
         title: dict.consoleNavigation.staticSearchItems.createRepository,
         description:
           dict.consoleNavigation.staticSearchItems.description.createRepository,
         link: `/${locale}/workspace/${workspace}/repositories?create`,
-        type: ConsoleSearchItemType.Irmin,
+        type: 'irmin',
       }
     );
   }

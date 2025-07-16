@@ -84,7 +84,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     null
   );
   const [confirmResolver, setConfirmResolver] = useState<
-    ((value: boolean) => void) | null
+    ((_value: boolean) => void) | null
   >(null);
   const handleConfirmSelection = useCallback(
     (confirmed: boolean) => {

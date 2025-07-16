@@ -11,6 +11,11 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import type { GitTag } from '@/types/core/GitTag';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
+import {
+  createMutationHandlers,
+  deleteMutationHandlers,
+} from './mutations/utils';
+
 export function useRepositoryTags(repositorySlug: string) {
   const { getToken } = useIAM();
   const { locale } = useLocale();
@@ -31,7 +36,7 @@ export function useRepositoryTags(repositorySlug: string) {
   });
 
   const createTagMutation = useMutation<
-    IrminAPIResponse,
+    IrminAPIResponse<GitTag>,
     Error,
     { name: string; ref: string }
   >({
@@ -45,16 +50,35 @@ export function useRepositoryTags(repositorySlug: string) {
         ref: data.ref,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryTagsQueryKey(workspaceSlug, repositorySlug),
-      });
-      irminAlert('success', res.message ?? 'Tag created successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error creating tag');
-    },
+    ...createMutationHandlers<GitTag, { name: string; ref: string }>(
+      queryClient,
+      'repository-tags',
+      {
+        cacheConfig: {
+          primaryQueryKey: repositoryTagsQueryKey(
+            workspaceSlug,
+            repositorySlug
+          ),
+          getItemId: (tag) => tag.name,
+          createOptimisticItem: (input) => ({
+            name: input.name,
+            ref: input.ref,
+            commit: {
+              hash: 'temp-commit',
+              message: 'Loading...',
+              author: 'Current User',
+              timestamp: new Date().toISOString(),
+            },
+          }),
+        },
+        onSuccess: (res) => {
+          irminAlert('success', res.message ?? 'Tag created successfully');
+        },
+        onError: (error) => {
+          irminAlert('error', error.message ?? 'Error creating tag');
+        },
+      }
+    ),
   });
 
   const deleteTagMutation = useMutation<IrminAPIResponse, Error, string>({
@@ -67,16 +91,18 @@ export function useRepositoryTags(repositorySlug: string) {
         tag,
       });
     },
-    onSuccess: (res) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryTagsQueryKey(workspaceSlug, repositorySlug),
-      });
-      irminAlert('success', res.message ?? 'Tag deleted successfully');
-    },
-    onError: (error) => {
-      console.error(error);
-      irminAlert('error', error.message ?? 'Error deleting tag');
-    },
+    ...deleteMutationHandlers<GitTag>(queryClient, {
+      cacheConfig: {
+        primaryQueryKey: repositoryTagsQueryKey(workspaceSlug, repositorySlug),
+        getItemId: (tag) => tag.name,
+      },
+      onSuccess: (res) => {
+        irminAlert('success', res.message ?? 'Tag deleted successfully');
+      },
+      onError: (error) => {
+        irminAlert('error', error.message ?? 'Error deleting tag');
+      },
+    }),
   });
 
   return {

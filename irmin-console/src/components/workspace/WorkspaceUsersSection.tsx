@@ -20,8 +20,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useRoles } from '@/hooks/useRoles';
-import { useUsers } from '@/hooks/useUsers';
+import { useRoles, useUsers } from '@/hooks/api';
 
 /**
  * Workspace users section

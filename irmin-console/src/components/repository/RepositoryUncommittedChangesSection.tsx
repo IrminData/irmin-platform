@@ -15,7 +15,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 
-import { useRepositoryUncommittedChanges } from '@/hooks/useRepositoryUncommittedChanges';
+import { useRepositoryUncommittedChanges } from '@/hooks/api';
 
 import CommitChangesModalContent from './commits/CommitChangesModalContent';
 import NoUncommittedChangesWarning from './commits/NoUncommittedChangesWarning';

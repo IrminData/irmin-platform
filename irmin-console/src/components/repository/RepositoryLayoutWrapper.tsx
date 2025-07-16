@@ -8,11 +8,8 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { RepositoryProvider } from '@/context/RepositoryContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useRepository } from '@/hooks/useRepository';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useRepository } from '@/hooks/api';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import RepositoryHeader from './RepositoryHeader';
 
@@ -47,11 +44,7 @@ export default function RepositoryLayoutWrapper({
   // Make sure the user is allowed to access the repository
   useEffect(() => {
     if (
-      !isResourceAllowed(
-        PolicyResource.Repository,
-        PolicyAction.Read,
-        repositoryQuery.data?.data?.id
-      )
+      !isResourceAllowed('repository', 'read', repositoryQuery.data?.data?.id)
     ) {
       // Redirect to the workspace repositories page if the user is not allowed to access the repository
       router.push(`${workspaceUrl}/repositories`);

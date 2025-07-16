@@ -19,10 +19,7 @@ import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import useBaseUrl from '@/hooks/useBaseUrl';
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
-
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Component to wrap the Workspace Settings pages in.
@@ -56,45 +53,42 @@ export default function WorkspaceSettingsLayoutWrapper({
         link: `${workspaceUrl}/settings`,
         active: pathname === `${workspaceUrl}/settings`,
         icon: <TbSettings size={14} />,
-        hide: !isResourceAllowed(PolicyResource.Workspace, PolicyAction.Read),
+        hide: !isResourceAllowed('workspace', 'read'),
       },
       {
         name: dict.workspace.users,
         link: `${workspaceUrl}/settings/users`,
         active: pathname === `${workspaceUrl}/settings/users`,
         icon: <TbUser size={14} />,
-        hide: !isResourceAllowed(PolicyResource.User, PolicyAction.Read),
+        hide: !isResourceAllowed('user', 'read'),
       },
       {
         name: dict.workspace.policies,
         link: `${workspaceUrl}/settings/policies`,
         active: pathname === `${workspaceUrl}/settings/policies`,
         icon: <TbShield size={14} />,
-        hide: !isResourceAllowed(PolicyResource.Policy, PolicyAction.Read),
+        hide: !isResourceAllowed('policy', 'read'),
       },
       {
         name: dict.workspace.invites,
         link: `${workspaceUrl}/settings/invites`,
         active: pathname === `${workspaceUrl}/settings/invites`,
         icon: <TbMail size={14} />,
-        hide: !isResourceAllowed(PolicyResource.Invite, PolicyAction.Read),
+        hide: !isResourceAllowed('invite', 'read'),
       },
       {
         name: dict.workspace.tags,
         link: `${workspaceUrl}/settings/tags`,
         active: pathname === `${workspaceUrl}/settings/tags`,
         icon: <TbTag size={14} />,
-        hide: !isResourceAllowed(
-          PolicyResource.WorkspaceTag,
-          PolicyAction.Read
-        ),
+        hide: !isResourceAllowed('workspace_tag', 'read'),
       },
       {
         name: dict.workspace.billing,
         link: `${workspaceUrl}/settings/billing`,
         active: pathname === `${workspaceUrl}/settings/billing`,
         icon: <TbInvoice size={14} />,
-        hide: !isResourceAllowed(PolicyResource.Billing, PolicyAction.Read),
+        hide: !isResourceAllowed('billing', 'read'),
       },
     ],
     [pathname, dict, workspaceUrl, isResourceAllowed]

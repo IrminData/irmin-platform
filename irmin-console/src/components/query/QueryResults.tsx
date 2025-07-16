@@ -12,11 +12,10 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useResourceAllowed } from '@/hooks/useResourceAllowed';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import { nsDurationToMs } from '@/utils/nsDurationToMs';
 
-import { PolicyAction, PolicyResource } from '@/types/core/Policy';
 import type { QueryResult } from '@/types/core/StoredQuery';
 
 /**
@@ -59,12 +58,12 @@ const QueryResults = ({
   const logs = useMemo(() => result?.logs ?? [], [result?.logs]);
 
   const canSave = useMemo(
-    () => isResourceAllowed(PolicyResource.Query, PolicyAction.Update),
+    () => isResourceAllowed('query', 'update'),
     [isResourceAllowed]
   );
 
   const canRun = useMemo(
-    () => isResourceAllowed(PolicyResource.Query, PolicyAction.Create),
+    () => isResourceAllowed('query', 'create'),
     [isResourceAllowed]
   );
 

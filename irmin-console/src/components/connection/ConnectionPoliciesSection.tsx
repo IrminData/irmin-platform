@@ -7,9 +7,7 @@ import PolicyEditor from '@/components/ui/policy-editor';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { usePolicies } from '@/hooks/usePolicies';
-
-import { PolicyResource } from '@/types/core/Policy';
+import { usePolicies } from '@/hooks/api';
 
 /**
  * Connection Policies section
@@ -25,7 +23,7 @@ const ConnectionPoliciesSection = ({
   const { dict } = useLocale();
 
   const { policiesQuery } = usePolicies({
-    resource: PolicyResource.Connection,
+    resource: 'connection',
   });
 
   // Filter policies to only include policies for this connection or global connection policies
@@ -45,7 +43,7 @@ const ConnectionPoliciesSection = ({
         policiesError={policiesQuery.error}
         title={dict.policy.title}
         description={dict.policy.description}
-        defaultResourceType={PolicyResource.Connection}
+        defaultResourceType={'connection'}
         defaultResourceId={connectionID}
         showResourceColumn={true}
         showResourceIdColumn={true}

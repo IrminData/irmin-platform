@@ -12,7 +12,7 @@ import Stage from './Stage';
 
 type PipelineStageEditorProps = {
   initialStages?: PipelineStage[];
-  onSubmit?: (stages: PipelineStage[]) => void;
+  onSubmit?: (_stages: PipelineStage[]) => void;
   readOnly?: boolean;
   hideSaveButton?: boolean;
   defaultCollapsed?: boolean;

@@ -24,7 +24,7 @@ const CreateTokenModalContent = ({
   onCreate,
   onClose,
 }: {
-  onCreate: (validFor: number, name: string) => Promise<void>;
+  onCreate: (_validFor: number, _name: string) => Promise<void>;
   onClose: () => void;
 }) => {
   const { dict } = useLocale();

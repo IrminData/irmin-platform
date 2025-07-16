@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
-import { usePolicies } from '@/hooks/usePolicies';
+import { usePolicies } from '@/hooks/api';
 
 function PolicyDeleteButton({ policyId }: { policyId: string }) {
   const { dict } = useLocale();
