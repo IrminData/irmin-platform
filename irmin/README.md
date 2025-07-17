@@ -109,8 +109,9 @@ TOKEN=... # Token to authenticate system requests to the API
 
 PREFORK_ENABLED=true # Enable prefork
 HELMET_ENABLED=true # Enable helmet
+IDEMPOTENCY_ENABLED=true # Enable idempotency
 CORS_ENABLED=true # Enable CORS
-CORS_ORIGINS=https://console.irmin.dev,https://connectors.irmin.dev # Allowed origins for CORS
+ALLOWED_ORIGINS=https://console.irmin.dev,https://connectors.irmin.dev # Allowed origins for CORS
 
 ORCHESTRATOR_ENABLED=true # Enable the orchestrator
 

@@ -23,6 +23,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
+	"github.com/gofiber/fiber/v3/middleware/idempotency"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 )
 
@@ -142,6 +143,10 @@ func setupFiberApp(env *utils.CoreAPIEnv) *fiber.App {
 		app.Use(helmet.New())
 	}
 
+	if env.IdempotencyEnabled {
+		app.Use(idempotency.New())
+	}
+
 	if env.CorsEnabled {
 		app.Use(setupCORS(env))
 	}
@@ -181,7 +186,7 @@ func setupCache() fiber.Handler {
 
 // setupCORS configures and returns the CORS middleware.
 func setupCORS(env *utils.CoreAPIEnv) fiber.Handler {
-	allowedOrigins := strings.Split(env.CorsOrigins, ",")
+	allowedOrigins := strings.Split(env.AllowedOrigins, ",")
 	for i, origin := range allowedOrigins {
 		allowedOrigins[i] = strings.TrimSpace(origin)
 	}

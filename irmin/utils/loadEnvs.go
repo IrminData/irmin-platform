@@ -17,7 +17,8 @@ type CoreAPIEnv struct {
 	CorsEnabled                  bool   // Flag to enable CORS
 	PreforkEnabled               bool   // Flag to enable prefork
 	HelmetEnabled                bool   // Flag to enable helmet
-	CorsOrigins                  string // Allowed origins for CORS
+	IdempotencyEnabled           bool   // Flag to enable idempotency
+	AllowedOrigins               string // Allowed origins for CORS
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs
 	DatabaseConnectionString     string // Postgres DB connection string
@@ -138,6 +139,14 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
+	idempotencyEnabledStr, err := getEnv("IDEMPOTENCY_ENABLED", false, "false")
+	if err != nil {
+		return nil, err
+	}
+	idempotencyEnabled, err := strconv.ParseBool(idempotencyEnabledStr)
+	if err != nil {
+		return nil, err
+	}
 	corsEnabledStr, err := getEnv("CORS_ENABLED", false, "false")
 	if err != nil {
 		return nil, err
@@ -146,7 +155,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
-	corsOrigins, err := getEnv("CORS_ORIGINS", false, "https://localhost:3000")
+	allowedOrigins, err := getEnv("ALLOWED_ORIGINS", false, "https://localhost:3000")
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +320,8 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		CorsEnabled:                  corsEnabled,
 		PreforkEnabled:               preforkEnabled,
 		HelmetEnabled:                helmetEnabled,
-		CorsOrigins:                  corsOrigins,
+		IdempotencyEnabled:           idempotencyEnabled,
+		AllowedOrigins:               allowedOrigins,
 		OrchestratorEnabled:          orchestratorEnabled,
 		SqidAlphabet:                 sqidAlphabet,
 		DatabaseConnectionString:     databaseConnectionString,
