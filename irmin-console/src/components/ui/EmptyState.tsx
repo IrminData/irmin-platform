@@ -51,9 +51,9 @@ export const EmptyState: FC<EmptyStateProps> = ({
   size = 'md',
 }) => {
   const sizeClasses: Record<string, string> = {
-    sm: 'py-8 px-4',
-    md: 'py-12 px-6',
-    lg: 'py-16 px-8',
+    sm: 'py-4 px-2',
+    md: 'py-8 px-4',
+    lg: 'py-12 px-6',
   };
 
   const iconSizeClasses: Record<string, string> = {

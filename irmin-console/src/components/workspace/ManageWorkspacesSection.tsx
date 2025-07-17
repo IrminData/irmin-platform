@@ -5,7 +5,6 @@ import { useCallback } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import DisplayTitle from '@/components/ui/display-title';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
@@ -74,9 +73,6 @@ const ManageWorkspacesSection = () => {
         <div className='pattern-bg h-full'>
           <div className='relative container mx-auto max-w-7xl'>
             <div className='flex flex-col'>
-              <DisplayTitle>
-                {dict.workspaceSwitcher.manageWorkspaces}
-              </DisplayTitle>
               <div className='flex flex-col gap-4 px-4 pb-28'>
                 <QueryError
                   error={workspacesQuery.error}
@@ -110,10 +106,6 @@ const ManageWorkspacesSection = () => {
                 flex min-h-[60vh] flex-col items-center justify-center px-4
               `}
             >
-              <DisplayTitle className='mb-8'>
-                {dict.workspaceSwitcher.manageWorkspaces}
-              </DisplayTitle>
-
               <div className='w-full max-w-lg'>
                 <EmptyState
                   title={dict.workspaceSwitcher.createFirstWorkspace}
@@ -121,78 +113,73 @@ const ManageWorkspacesSection = () => {
                     dict.workspaceSwitcher.createFirstWorkspaceDescription
                   }
                   size='lg'
-                  className='mb-8'
+                  className='mb-4'
                 />
 
-                {/* Big creation form */}
-                <div
-                  className={`
-                    rounded-xl border bg-background p-6 text-foreground
-                    shadow-md
-                  `}
-                >
-                  <h2 className='mb-4 text-xl font-semibold'>
-                    {dict.workspaceSwitcher.createNewWorkspace}
-                  </h2>
-                  <form
-                    onSubmit={handleSubmit(handleCreateWorkspace)}
-                    className={`
-                      ${createMutation.isPending && 'blur-xs'}
-                    `}
-                  >
-                    <Controller
-                      name='newWorkspaceName'
-                      control={control}
-                      rules={{ required: dict.common.fieldRequired }}
-                      render={({ field }) => (
-                        <Input
-                          type='text'
-                          placeholder={dict.workspace.workspaceName}
-                          required
-                          className='mb-4'
-                          disabled={createMutation.isPending}
-                          {...field}
-                        />
-                      )}
-                    />
-                    <Controller
-                      name='newWorkspaceDescription'
-                      control={control}
-                      rules={{
-                        maxLength: {
-                          value: 255,
-                          message: dict.common.fieldInvalid,
-                        },
-                      }}
-                      render={({ field }) => (
-                        <Input
-                          type='text'
-                          placeholder={dict.workspace.workspaceDescription}
-                          maxLength={255}
-                          longtext={{
-                            rows: 3,
-                          }}
-                          className='mb-4'
-                          disabled={createMutation.isPending}
-                          {...field}
-                        />
-                      )}
-                    />
+                {/* Workspace creation form */}
+                <div className='w-full max-w-2xl'>
+                  <div className='rounded-xl bg-card p-6 ring-1 ring-border/20'>
+                    <h2 className='mb-6 text-lg font-semibold'>
+                      {dict.workspaceSwitcher.createNewWorkspace}
+                    </h2>
+                    <form
+                      onSubmit={handleSubmit(handleCreateWorkspace)}
+                      className={`
+                        space-y-4
+                        ${createMutation.isPending && `blur-xs`}
+                      `}
+                    >
+                      <Controller
+                        name='newWorkspaceName'
+                        control={control}
+                        rules={{ required: dict.common.fieldRequired }}
+                        render={({ field }) => (
+                          <Input
+                            type='text'
+                            placeholder={dict.workspace.workspaceName}
+                            required
+                            disabled={createMutation.isPending}
+                            className='border-border/50 bg-background/50'
+                            {...field}
+                          />
+                        )}
+                      />
+                      <Controller
+                        name='newWorkspaceDescription'
+                        control={control}
+                        rules={{
+                          maxLength: {
+                            value: 255,
+                            message: dict.common.fieldInvalid,
+                          },
+                        }}
+                        render={({ field }) => (
+                          <Input
+                            type='text'
+                            placeholder={dict.workspace.workspaceDescription}
+                            maxLength={255}
+                            disabled={createMutation.isPending}
+                            className='border-border/50 bg-background/50'
+                            {...field}
+                          />
+                        )}
+                      />
+                      <Button
+                        variant='gradient'
+                        size='lg'
+                        className='w-full'
+                        type='submit'
+                        loading={createMutation.isPending}
+                      >
+                        {dict.workspaceSwitcher.createNewWorkspace}
+                      </Button>
+                    </form>
                     {createMutation.error && (
-                      <p className='mb-4 text-destructive'>
+                      <p className='mt-4 text-sm text-destructive'>
                         {(createMutation.error as Error).message}
                       </p>
                     )}
-                    <Button
-                      variant='gradient'
-                      size='lg'
-                      className='h-12 w-full text-base'
-                      type='submit'
-                      loading={createMutation.isPending}
-                    >
-                      {dict.workspaceSwitcher.createNewWorkspace}
-                    </Button>
-                  </form>
+                  </div>
                 </div>
               </div>
             </div>
