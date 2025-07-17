@@ -293,12 +293,6 @@ func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error) {
 		return nil, newDatabaseErr
 	}
 
-	// Ensure notification trigger exists
-	if ensureNotificationTriggerErr := database.EnsureNotificationTrigger(context.Background()); ensureNotificationTriggerErr != nil {
-		database.Close()
-		return nil, fmt.Errorf("failed to ensure notification trigger: %w", ensureNotificationTriggerErr)
-	}
-
 	return database, nil
 }
 
@@ -356,6 +350,11 @@ func (d *Database) Migrate() error {
 	// Create search indexes for better performance
 	if err := d.CreateSearchIndexes(); err != nil {
 		return fmt.Errorf("failed to create search indexes: %w", err)
+	}
+
+	// Ensure notification trigger exists after all tables are created
+	if err := d.EnsureNotificationTrigger(context.Background()); err != nil {
+		return fmt.Errorf("failed to ensure notification trigger: %w", err)
 	}
 
 	return nil

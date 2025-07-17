@@ -256,10 +256,10 @@ func (c *Client) UpdateRepository(
 
 	// Create garbage collection rules.
 	garbageCollectionRules := lakefs.GarbageCollectionRules{}
-	if *gcDefaultRetentionDays > 0 {
+	if gcDefaultRetentionDays != nil && *gcDefaultRetentionDays > 0 {
 		garbageCollectionRules.DefaultRetentionDays = *gcDefaultRetentionDays
 	}
-	if *gcDefaultBranchRetentionDays > 0 {
+	if gcDefaultBranchRetentionDays != nil && *gcDefaultBranchRetentionDays > 0 {
 		garbageCollectionRules.Branches = []lakefs.BranchGarbageCollectionRules{
 			{
 				BranchID:      lakefsRepository.DefaultBranch,
@@ -267,7 +267,7 @@ func (c *Client) UpdateRepository(
 			},
 		}
 	}
-	if *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
+	if gcDefaultBranchRetentionDays != nil && gcDefaultRetentionDays != nil && *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
 		// Update garbage collection rules.
 		err = c.LakeFSClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
 		if err != nil {

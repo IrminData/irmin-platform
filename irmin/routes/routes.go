@@ -13,6 +13,7 @@ import (
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 )
 
 const (
@@ -56,10 +57,17 @@ func RegisterAPIRoutes(
 		permissionService,
 	)
 
-	// Public routes
-	app.Get("/", apiControllers.Index)
-	app.Get("/health", apiControllers.Health)
+	// Simple index route
+	app.Get("/", func(c fiber.Ctx) error {
+		return c.SendString("Irmin API")
+	})
 
+	// Health check routes
+	app.Get(healthcheck.DefaultLivenessEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
+	app.Get(healthcheck.DefaultReadinessEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
+	app.Get(healthcheck.DefaultStartupEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
+
+	// Secure API routes
 	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)
 
 	// System routes
