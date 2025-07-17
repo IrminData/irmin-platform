@@ -215,9 +215,15 @@ func (v *Validator) ValidateDynamic(data any) *ValidationResultError {
 	}
 
 	// Check if it's an array or slice
-	if dataType.Kind() == reflect.Slice || dataType.Kind() == reflect.Array || dataType.Kind() == reflect.Map {
+	if dataType.Kind() == reflect.Slice || dataType.Kind() == reflect.Array {
 		// For arrays/slices, validate each element individually (equivalent to "dive" validation)
 		return v.validateArray(dataValue)
+	}
+
+	// Check if it's a map
+	if dataType.Kind() == reflect.Map {
+		// For maps, validate each value individually
+		return v.validateMap(dataValue)
 	}
 
 	// Check if data is just a string, which is valid
@@ -291,6 +297,66 @@ func (v *Validator) validateArray(arrayValue reflect.Value) *ValidationResultErr
 		UserMessage: userMessage,
 		FieldErrors: allFieldErrors,
 		RawErrors:   errors.New("array validation failed"),
+	}
+}
+
+// validateMap validates each value in a map.
+// This provides the equivalent functionality of the "dive" validation tag for maps.
+func (v *Validator) validateMap(mapValue reflect.Value) *ValidationResultError {
+	// Track all validation errors
+	allFieldErrors := make(map[string]string)
+	var allUserMessages []string
+	hasErrors := false
+
+	// Iterate over map keys
+	for _, key := range mapValue.MapKeys() {
+		value := mapValue.MapIndex(key).Interface()
+		validationResult := v.ValidateEnhanced(value)
+
+		if validationResult.HasErrors() {
+			hasErrors = true
+
+			// Add field errors with key prefix
+			keyStr := fmt.Sprintf("%v", key.Interface())
+			for field, message := range validationResult.GetFieldErrors() {
+				allFieldErrors[fmt.Sprintf("[%s].%s", keyStr, field)] = message
+			}
+
+			// Add user message with key
+			if validationResult.GetUserMessage() != "" {
+				allUserMessages = append(
+					allUserMessages,
+					fmt.Sprintf("Key %s: %s", keyStr, validationResult.GetUserMessage()),
+				)
+			}
+		}
+	}
+
+	if !hasErrors {
+		return &ValidationResultError{
+			IsValid:     true,
+			UserMessage: "",
+			FieldErrors: make(map[string]string),
+			RawErrors:   nil,
+		}
+	}
+
+	// Combine all error messages
+	var userMessage string
+	switch len(allUserMessages) {
+	case 0:
+		userMessage = "Map validation failed"
+	case 1:
+		userMessage = allUserMessages[0]
+	default:
+		userMessage = fmt.Sprintf("Multiple validation errors: %v", allUserMessages)
+	}
+
+	return &ValidationResultError{
+		IsValid:     false,
+		UserMessage: userMessage,
+		FieldErrors: allFieldErrors,
+		RawErrors:   errors.New("map validation failed"),
 	}
 }
 
