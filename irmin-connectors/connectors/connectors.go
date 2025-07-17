@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	mysqlconnector "irmin-connectors/connectors/mysql"
 	postgresconnector "irmin-connectors/connectors/postgres"
+	sftpconnector "irmin-connectors/connectors/sftp"
 	"irmin-connectors/db"
 	"irmin-connectors/models"
 	"log/slog"
@@ -15,6 +16,7 @@ func SetupConnectorRoutes(app *models.ConnectorsApp) {
 	// Setup routes for each connector
 	postgresconnector.SetupRoutes(app)
 	mysqlconnector.SetupRoutes(app)
+	sftpconnector.SetupRoutes(app)
 	// ... Add new connectors here ...
 }
 
@@ -56,6 +58,7 @@ func RegisterAllConnectors(
 	}{
 		{"PostgreSQL", "postgres"},
 		{"MySQL", "mysql"},
+		{"SFTP", "sftp"},
 		// ... Add new connectors here ...
 	}
 
