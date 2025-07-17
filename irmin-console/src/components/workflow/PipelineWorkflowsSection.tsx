@@ -6,6 +6,7 @@ import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
+import DisplayTitle from '@/components/ui/display-title';
 import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -108,15 +109,7 @@ function PipelineWorkflowsSection({
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
-        <h2
-          className={`
-            font-display text-3xl font-bold text-foreground/90
-            sm:text-4xl
-            lg:text-5xl
-          `}
-        >
-          {dict.workflow.pipelineWorkflows}
-        </h2>
+        <DisplayTitle>{dict.workflow.pipelineWorkflows}</DisplayTitle>
         <Button
           variant='gradient'
           size='lg'

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 import { TbKey, TbSettings } from 'react-icons/tb';
 
+import DisplayTitle from '@/components/ui/display-title';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -52,15 +53,7 @@ export default function ProfileLayoutWrapper({
             md:px-4
           `}
         >
-          <h1
-            className={`
-              font-display text-3xl font-bold text-foreground/90
-              sm:text-4xl
-              lg:text-5xl
-            `}
-          >
-            {dict.consoleNavigation.myProfile}
-          </h1>
+          <DisplayTitle>{dict.consoleNavigation.myProfile}</DisplayTitle>
         </div>
         <TabsWithBackButton
           backHref={`/${locale}/workspace`}

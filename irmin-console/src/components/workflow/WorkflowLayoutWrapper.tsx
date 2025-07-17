@@ -19,6 +19,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import DisplayTitle from '@/components/ui/display-title';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
@@ -228,14 +229,7 @@ export default function WorkflowLayoutWrapper({
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
-              <h1
-                className={`
-                  text-lg font-normal text-foreground
-                  md:text-2xl
-                `}
-              >
-                {workflow.name}
-              </h1>
+              <DisplayTitle>{workflow.name}</DisplayTitle>
               {workflow ? (
                 <>
                   {workflow.status === '' || !workflow.status ? (

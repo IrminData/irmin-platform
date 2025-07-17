@@ -16,6 +16,7 @@ import {
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
+import DisplayTitle from '@/components/ui/display-title';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
@@ -185,14 +186,7 @@ export default function RepositoryHeader() {
             </span>
           </div>
           <div className='flex flex-wrap items-center gap-2'>
-            <h1
-              className={`
-                text-lg font-normal text-foreground
-                md:text-2xl
-              `}
-            >
-              {repository.name}
-            </h1>
+            <DisplayTitle>{repository.name}</DisplayTitle>
             <StatusBadge status={'private'} label={'Private'} />
             {/* Display tags if they exist */}
             {repository.tags && repository.tags.length > 0 && (

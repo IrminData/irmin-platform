@@ -6,6 +6,7 @@ import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
+import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SideModal from '@/components/ui/popup/SideModal';
 
@@ -85,15 +86,7 @@ export default function ConnectionsSection({
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
-        <h2
-          className={`
-            font-display text-3xl font-bold text-foreground/90
-            sm:text-4xl
-            lg:text-5xl
-          `}
-        >
-          {dict.connections.connections}
-        </h2>
+        <DisplayTitle>{dict.connections.connections}</DisplayTitle>
         <Button
           variant='gradient'
           size='lg'

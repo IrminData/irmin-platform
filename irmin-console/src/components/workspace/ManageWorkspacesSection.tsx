@@ -4,8 +4,8 @@ import { useCallback } from 'react';
 
 import { Controller, useForm } from 'react-hook-form';
 
-import ConsoleTitle from '@/components/console/ConsoleTitle';
 import { Button } from '@/components/ui/button';
+import DisplayTitle from '@/components/ui/display-title';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
@@ -74,7 +74,9 @@ const ManageWorkspacesSection = () => {
         <div className='pattern-bg h-full'>
           <div className='relative container mx-auto max-w-7xl'>
             <div className='flex flex-col'>
-              <ConsoleTitle title={dict.workspaceSwitcher.manageWorkspaces} />
+              <DisplayTitle>
+                {dict.workspaceSwitcher.manageWorkspaces}
+              </DisplayTitle>
               <div className='flex flex-col gap-4 px-4 pb-28'>
                 <QueryError
                   error={workspacesQuery.error}
@@ -108,10 +110,9 @@ const ManageWorkspacesSection = () => {
                 flex min-h-[60vh] flex-col items-center justify-center px-4
               `}
             >
-              <ConsoleTitle
-                title={dict.workspaceSwitcher.manageWorkspaces}
-                className='mb-8'
-              />
+              <DisplayTitle className='mb-8'>
+                {dict.workspaceSwitcher.manageWorkspaces}
+              </DisplayTitle>
 
               <div className='w-full max-w-lg'>
                 <EmptyState

@@ -15,6 +15,7 @@ import {
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
+import DisplayTitle from '@/components/ui/display-title';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
@@ -171,14 +172,7 @@ export default function ConnectionLayoutWrapper({
               </span>
             </div>
             <div className='flex flex-wrap items-center gap-2'>
-              <h1
-                className={`
-                  text-lg font-normal text-foreground
-                  md:text-2xl
-                `}
-              >
-                {connection.name}
-              </h1>
+              <DisplayTitle>{connection.name}</DisplayTitle>
               {connection.tags && connection.tags.length > 0 && (
                 <WorkspaceTagDisplay
                   tags={connection.tags}

@@ -8,9 +8,9 @@ import { usePDF } from 'react-to-pdf';
 
 import { BsFilePdf } from 'react-icons/bs';
 
-import ConsoleTitle from '@/components/console/ConsoleTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
 import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -192,7 +192,7 @@ export default function DocumentationSection() {
                 `}
               >
                 <Badge>{dict.documentation.workspace}</Badge>
-                <ConsoleTitle title={workspace?.name ?? '-'} className='p-0' />
+                <DisplayTitle>{workspace?.name ?? '-'}</DisplayTitle>
                 <p className='m-0 p-0 text-sm'>
                   {workspace?.description ?? ''}
                 </p>
@@ -202,7 +202,7 @@ export default function DocumentationSection() {
                   <div className='flex flex-col py-6'>
                     <h2
                       className={`
-                        font-display text-2xl font-bold
+                        text-2xl font-bold
                         lg:text-4xl
                       `}
                     >
@@ -269,7 +269,7 @@ export default function DocumentationSection() {
                   <div className='flex flex-col py-6'>
                     <h2
                       className={`
-                        font-display text-2xl font-bold
+                        text-2xl font-bold
                         lg:text-4xl
                       `}
                     >
@@ -352,7 +352,7 @@ export default function DocumentationSection() {
                   >
                     <h2
                       className={`
-                        font-display text-2xl font-bold
+                        text-2xl font-bold
                         lg:text-4xl
                       `}
                     >
@@ -450,7 +450,7 @@ export default function DocumentationSection() {
                   <div className='flex flex-col py-6'>
                     <h2
                       className={`
-                        font-display text-2xl font-bold
+                        text-2xl font-bold
                         lg:text-4xl
                       `}
                     >
@@ -548,7 +548,7 @@ export default function DocumentationSection() {
                   <div className='flex flex-col py-6'>
                     <h2
                       className={`
-                        font-display text-2xl font-bold
+                        text-2xl font-bold
                         lg:text-4xl
                       `}
                     >
@@ -647,7 +647,7 @@ export default function DocumentationSection() {
                   <div className='flex flex-col py-6'>
                     <h2
                       className={`
-                        font-display text-2xl font-bold
+                        text-2xl font-bold
                         lg:text-4xl
                       `}
                     >

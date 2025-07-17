@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { Big_Shoulders, Inter, PT_Serif, Space_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -14,20 +14,23 @@ import { PostHogProvider } from '@/context/PostHogProvider';
 import ReactQueryProvider from '@/context/ReactQueryProvider';
 import { ThemeProvider } from '@/context/ThemeProvider';
 
-const interSans = Inter({ subsets: ['latin'], variable: '--font-inter-sans' });
-const bigShouldersDisplay = Big_Shoulders({
-  subsets: ['latin'],
-  variable: '--font-big-shoulders-display',
+import './globals.css';
+
+const geistSans = localFont({
+  src: '../../public/fonts/Geist/Geist-VariableFont_wght.ttf',
+  variable: '--geist-sans',
 });
-const spaceMono = Space_Mono({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-space-mono',
+const geistMono = localFont({
+  src: '../../public/fonts/Geist_Mono/GeistMono-VariableFont_wght.ttf',
+  variable: '--geist-mono',
 });
-const ptSerif = PT_Serif({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-pt-serif',
+const bigShouldersDisplay = localFont({
+  src: '../../public/fonts/Big_Shoulders/BigShoulders-VariableFont_opsz,wght.ttf',
+  variable: '--big-shoulders-display',
+});
+const loraSerif = localFont({
+  src: '../../public/fonts/Lora/Lora-VariableFont_wght.ttf',
+  variable: '--lora-serif',
 });
 
 /**
@@ -62,10 +65,10 @@ export default async function RootLayout(props: {
       <head />
       <body
         className={`
-          ${interSans.variable}
+          ${geistSans.variable}
           ${bigShouldersDisplay.variable}
-          ${spaceMono.variable}
-          ${ptSerif.variable}
+          ${geistMono.variable}
+          ${loraSerif.variable}
           scrollbar-hide overscroll-none bg-background text-foreground
           antialiased
         `}

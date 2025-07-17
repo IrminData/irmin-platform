@@ -89,7 +89,13 @@
 }
 
 /* Tailwind v4 Theme Configuration */
-@theme {
+@theme inline {
+  /* Fonts */
+  --font-main: var(--geist-sans);
+  --font-mono: var(--geist-mono);
+  --font-serif: var(--lora-serif);
+  --font-display: var(--big-shoulders-display);
+
   /* Custom Irmin Color Palette */
   --color-irmin-black-100: oklch(0.8851 0.0521 230.2);
   --color-irmin-black-200: oklch(0.6636 0.099 230.18);
@@ -130,12 +136,6 @@
   --color-irmin-green-700: oklch(0.478 0.145 159.8);
   --color-irmin-green-800: oklch(0.384 0.145 159.8);
   --color-irmin-green-900: oklch(0.241 0.115 159.8);
-
-  /* Font variables */
-  --font-display: var(--font-big-shoulders-display);
-  --font-sans: var(--font-inter-sans);
-  --font-mono: var(--font-space-mono);
-  --font-serif: var(--font-pt-serif);
 
   /* Shadcn UI theme variables */
   --color-background: var(--background);

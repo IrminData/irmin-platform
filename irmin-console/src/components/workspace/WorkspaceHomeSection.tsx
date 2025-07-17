@@ -3,6 +3,7 @@
 import { GoWorkflow } from 'react-icons/go';
 import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
 
+import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
 import LinkCard from '@/components/ui/LinkCard';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -47,15 +48,9 @@ const WorkspaceHomeSection = () => {
         <div className='flex flex-col gap-8 px-4'>
           <div className='flex w-full flex-col gap-4'>
             {workspaceQuery?.data?.data?.name ? (
-              <h2
-                className={`
-                  text-center font-display text-3xl font-bold text-foreground/90
-                  sm:text-4xl
-                  lg:text-5xl
-                `}
-              >
+              <DisplayTitle className='text-center'>
                 {workspaceQuery?.data?.data?.name ?? ''}
-              </h2>
+              </DisplayTitle>
             ) : (
               <div className='mx-auto w-1/2 max-w-80'>
                 <LoadingSkeleton className='mx-auto h-14 w-full' />

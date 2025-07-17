@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { TbChevronLeft, TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
+import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
 import PaginationControls from '@/components/ui/PaginationControls';
 
@@ -107,15 +108,7 @@ export default function LogsSection({
             />
           )}
           <div>
-            <h2
-              className={`
-                font-display text-3xl font-bold text-foreground/90
-                sm:text-4xl
-                lg:text-5xl
-              `}
-            >
-              {title}
-            </h2>
+            <DisplayTitle>{title}</DisplayTitle>
             {workflow && (
               <h3
                 className={`

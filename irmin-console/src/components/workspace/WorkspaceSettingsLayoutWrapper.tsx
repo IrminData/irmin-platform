@@ -13,6 +13,7 @@ import {
   TbUser,
 } from 'react-icons/tb';
 
+import DisplayTitle from '@/components/ui/display-title';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
@@ -111,15 +112,9 @@ export default function WorkspaceSettingsLayoutWrapper({
             md:px-4
           `}
         >
-          <h1
-            className={`
-              font-display text-3xl font-bold text-foreground/90
-              sm:text-4xl
-              lg:text-5xl
-            `}
-          >
+          <DisplayTitle>
             {dict.consoleNavigation.workspaceSettings}
-          </h1>
+          </DisplayTitle>
           <p
             className={`
               max-w-lg text-base text-gray-400
