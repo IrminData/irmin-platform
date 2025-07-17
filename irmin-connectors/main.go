@@ -23,7 +23,10 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
+	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 	"github.com/gofiber/fiber/v3/middleware/static"
 )
@@ -42,100 +45,145 @@ const (
 	// ConnectionTimeout is the timeout for TCP connection attempts.
 	ConnectionTimeout = 100 * time.Millisecond
 
-	// CacheExpirationSeconds is the duration for which the cache is valid.
-	CacheExpirationSeconds = 10
+	// CacheExpirationDuration is the duration for which responses are cached.
+	CacheExpirationDuration = 10 * time.Second
 
-	// BodyLimitBytes is the maximum body size in bytes.
-	BodyLimitBytes = 5 * 1024 * 1024 * 1024 // 5 GB
+	// MaxRequestBodySize is the maximum body size in bytes (5 GB).
+	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
 )
 
-// NewConnectorsApp creates a new application instance with all dependencies and a Fiber app.
-func NewConnectorsApp(runMigrations bool) (*models.ConnectorsApp, error) {
-	env, err := utils.LoadEnv()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load environment variables: %w", err)
-	}
+// setupDatabase initializes and configures the database based on command line flags.
+func setupDatabase() (*db.Database, error) {
+	migrate := flag.Bool("migrate", false, "Run database migrations")
+	flag.Parse()
 
-	database, err := db.InitialiseDB(runMigrations)
+	database, err := db.InitialiseDB(*migrate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	// Initialize a new Fiber app
+	return database, nil
+}
+
+// setupFiberApp creates and configures a new Fiber application.
+func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:   "Irmin Connectors",
-		BodyLimit: BodyLimitBytes,
+		BodyLimit: MaxRequestBodySize,
+		ErrorHandler: func(c fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		},
 	})
 
-	// Return request ID in the response headers
+	// 1. Recover: Must be first. It needs to wrap every other handler
+	// to catch any panics that might occur anywhere in the chain.
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+	}))
+
+	// 2. CORS: Must be very early. It needs to handle preflight OPTIONS
+	// requests immediately, before they hit other middleware like logging,
+	// caching, or authentication.
+	if env.CorsEnabled {
+		app.Use(setupCORS(env))
+	}
+
+	// 3. Request ID: Assigns a unique ID to the request. This should be
+	// early so that the logger and any subsequent tracing can use the ID.
 	app.Use(requestid.New())
 
-	// Compress responses
-	app.Use(compress.New(
-		compress.Config{
-			Level: compress.LevelBestSpeed,
-		},
-	))
+	// 4. Logger: Logs information about the request. It benefits from the
+	// request ID being set and can log the final status of the request
+	// after all other handlers have run.
+	app.Use(logger.New(logger.Config{
+		Format: "${pid} ${locals:requestid} ${status} - ${method} ${path}\n",
+	}))
 
-	// Cache responses for 10 seconds for GET, HEAD, and OPTIONS methods.
-	// Cache key is generated based on the request path, query parameters, and authorization header.
-	app.Use(cache.New(
-		cache.Config{
-			Expiration: CacheExpirationSeconds * time.Second,
-			Methods: []string{
-				http.MethodGet,
-				http.MethodHead,
-				http.MethodOptions,
-			},
-			KeyGenerator: func(c fiber.Ctx) string {
-				queriesMap := c.Queries()
-				var keys []string
-				for key := range queriesMap {
-					keys = append(keys, key)
-				}
-				sort.Strings(keys)
-				queries := ""
-				for _, key := range keys {
-					value := queriesMap[key]
-					if queries == "" {
-						queries = key + "=" + value
-					} else {
-						queries += "&" + key + "=" + value
-					}
-				}
-				return c.Path() + queries + c.Get("authorization")
-			},
-		},
-	))
-
-	// Enable helmet
+	// 5. Helmet: Adds security-related HTTP headers. It's a good general
+	// security measure to have in place before processing the request further.
 	if env.HelmetEnabled {
 		app.Use(helmet.New())
 	}
 
-	// Enable CORS if configured
-	if env.CorsEnabled {
-		log.Println("CORS is enabled")
-		// Split the allowed origins into a slice
-		allowedOrigins := strings.Split(env.CorsOrigins, ",")
-		// Trim whitespace from each origin
-		for i, origin := range allowedOrigins {
-			allowedOrigins[i] = strings.TrimSpace(origin)
-		}
-		log.Println("Allowed origins:", allowedOrigins)
-		// Enable CORS with default settings
-		app.Use(cors.New(cors.Config{
-			AllowOrigins:     allowedOrigins,
-			AllowCredentials: true,
-		}))
-	}
+	// 6. Cache: This is a "gatekeeper". If a valid cached response exists
+	// for a GET request, it will be served immediately, and no further
+	// handlers (like your main business logic) will be executed.
+	// This provides a significant performance boost.
+	app.Use(setupCache())
 
+	// 7. Compress: This is a "response modifier". It should be last.
+	// It acts on the final response body generated by your route handlers
+	// just before it's sent to the client. Placing it here ensures you don't
+	// waste CPU cycles compressing something that might have been served
+	// from cache.
+	app.Use(compress.New(compress.Config{Level: compress.LevelBestSpeed}))
+
+	return app
+}
+
+// setupCache configures and returns the cache middleware.
+func setupCache() fiber.Handler {
+	return cache.New(cache.Config{
+		Expiration: CacheExpirationDuration,
+		Methods: []string{
+			http.MethodGet,
+			http.MethodHead,
+			http.MethodOptions,
+		},
+		KeyGenerator: func(c fiber.Ctx) string {
+			queriesMap := c.Queries()
+			var keys []string
+			for key := range queriesMap {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			queries := ""
+			for _, key := range keys {
+				value := queriesMap[key]
+				if queries == "" {
+					queries = key + "=" + value
+				} else {
+					queries += "&" + key + "=" + value
+				}
+			}
+			return c.Path() + queries + c.Get("authorization")
+		},
+	})
+}
+
+// setupCORS configures and returns the CORS middleware.
+func setupCORS(env *utils.ConnectorsEnv) fiber.Handler {
+	allowedOrigins := strings.Split(env.CorsOrigins, ",")
+	for i, origin := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(origin)
+	}
+	log.Println("Allowed origins:", allowedOrigins)
+
+	return cors.New(cors.Config{
+		AllowOrigins:     allowedOrigins,
+		AllowCredentials: true,
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Accept",
+			"Authorization",
+			"X-Requested-With",
+			"Accept-Language",
+			"Referer",
+			"Cache-Control",
+		},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+	})
+}
+
+// setupConnectorsApp creates a new application instance with all dependencies.
+func setupConnectorsApp(env *utils.ConnectorsEnv, database *db.Database, app *fiber.App) *models.ConnectorsApp {
 	return &models.ConnectorsApp{
 		App:    app,
 		DB:     database,
 		Env:    env,
 		Logger: slog.Default(),
-	}, nil
+	}
 }
 
 // initializeConnectors registers all connectors and starts the listeners for all subscriptions.
@@ -201,50 +249,84 @@ func waitForServerReady(ctx context.Context, port string, maxAttempts int) bool 
 	return false
 }
 
-func main() {
-	// Define flags.
-	skipRegistrations := flag.Bool("skip-registrations", false, "Skip connector registrations")
-	migrate := flag.Bool("migrate", false, "Run database migrations")
-	flag.Parse()
-
-	// Create context for startup timeout (reasonable time limit) - do this early so it can be used throughout
-	startupCtx, startupCancel := context.WithTimeout(context.Background(), StartupTimeoutSeconds*time.Second)
-
-	app, err := NewConnectorsApp(*migrate)
-	if err != nil {
-		startupCancel()
-		log.Fatalf("Failed to initialize application: %v", err)
-	}
-
-	// Register the API routes
-	app.App.Get("/public/*", static.New("./public"))
-	connectors.SetupConnectorRoutes(app)
-
-	// Channel for server errors
+// startServer starts the Fiber server in a goroutine.
+func startServer(app *fiber.App, env *utils.ConnectorsEnv) chan error {
 	serverErr := make(chan error, 1)
 
-	// Start the server
 	go func() {
-		log.Printf("Server starting on port %s...", app.Env.Port)
+		log.Printf("Server starting on port %s...", env.Port)
 
 		// Try to start the server
-		appListenErr := app.App.Listen(":"+app.Env.Port, fiber.ListenConfig{
-			EnablePrefork: app.Env.PreforkEnabled,
+		appListenErr := app.Listen(":"+env.Port, fiber.ListenConfig{
+			EnablePrefork: env.PreforkEnabled,
 		})
 
 		// If Listen returns, it's either due to an error or graceful shutdown
 		serverErr <- appListenErr
 	}()
 
-	// Setup graceful shutdown
+	return serverErr
+}
+
+// setupGracefulShutdown sets up graceful shutdown handling.
+func setupGracefulShutdown() chan os.Signal {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	return quit
+}
+
+func main() {
+	// Define flags
+	skipRegistrations := flag.Bool("skip-registrations", false, "Skip connector registrations")
+
+	// Load environment variables
+	env, err := utils.LoadEnv()
+	if err != nil {
+		log.Fatalf("failed to load environment variables: %v", err)
+	}
+
+	// Setup database
+	database, err := setupDatabase()
+	if err != nil {
+		log.Fatalf("failed to setup database: %v", err)
+	}
+
+	// Setup Fiber app
+	app := setupFiberApp(env)
+
+	// Simple index route
+	app.Get("/", func(c fiber.Ctx) error {
+		return c.SendString("Irmin Connectors")
+	})
+
+	// Health check routes
+	app.Get(healthcheck.DefaultLivenessEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
+	app.Get(healthcheck.DefaultReadinessEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
+	app.Get(healthcheck.DefaultStartupEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
+
+	// Setup static file serving
+	app.Get("/public/*", static.New("./public"))
+
+	// Setup connectors app
+	connectorsApp := setupConnectorsApp(env, database, app)
+
+	// Register the API routes
+	connectors.SetupConnectorRoutes(connectorsApp)
+
+	// Create context for startup timeout
+	startupCtx, startupCancel := context.WithTimeout(context.Background(), StartupTimeoutSeconds*time.Second)
+
+	// Start the server
+	serverErr := startServer(app, env)
+
+	// Setup graceful shutdown
+	quit := setupGracefulShutdown()
 
 	// Wait for server to be ready or fail
 	serverReady := make(chan bool, 1)
 	go func() {
 		// Wait for server to actually accept connections
-		ready := waitForServerReady(startupCtx, app.Env.Port, MaxStartupAttempts)
+		ready := waitForServerReady(startupCtx, env.Port, MaxStartupAttempts)
 		serverReady <- ready
 	}()
 
@@ -262,10 +344,10 @@ func main() {
 
 		// Server is confirmed ready - startup phase is complete
 		startupCancel()
-		log.Printf("Server successfully started and ready on port %s", app.Env.Port)
+		log.Printf("Server successfully started and ready on port %s", env.Port)
 
 		// Initialize connectors after server is ready
-		if initConnErr := initializeConnectors(app, *skipRegistrations); initConnErr != nil {
+		if initConnErr := initializeConnectors(connectorsApp, *skipRegistrations); initConnErr != nil {
 			log.Printf("Error initializing connectors: %v", initConnErr)
 			// Don't exit here, just log the error and continue
 		}
@@ -281,7 +363,7 @@ func main() {
 			log.Println("Shutting down server...")
 
 			// Shutdown with timeout
-			if appShutdownErr := app.App.Shutdown(); appShutdownErr != nil {
+			if appShutdownErr := app.Shutdown(); appShutdownErr != nil {
 				log.Printf("Server forced to shutdown: %v", appShutdownErr)
 			}
 
