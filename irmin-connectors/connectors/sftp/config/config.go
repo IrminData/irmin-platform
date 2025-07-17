@@ -35,22 +35,22 @@ type Config struct {
 	ValidationRules []ValidationRule `json:"validation_rules"`
 
 	// Default values
-	Defaults map[string]interface{} `json:"defaults"`
+	Defaults map[string]any `json:"defaults"`
 }
 
 // FieldDefinition describes a configuration field.
 type FieldDefinition struct {
-	Name         string                 `json:"name"`
-	Type         string                 `json:"type"`
-	Label        string                 `json:"label"`
-	Description  string                 `json:"description"`
-	Required     bool                   `json:"required"`
-	Sensitive    bool                   `json:"sensitive,omitempty"`
-	Default      interface{}            `json:"default,omitempty"`
-	Placeholder  string                 `json:"placeholder,omitempty"`
-	Options      []FieldOption          `json:"options,omitempty"`
-	Validation   map[string]interface{} `json:"validation,omitempty"`
-	Dependencies []string               `json:"dependencies,omitempty"`
+	Name         string         `json:"name"`
+	Type         string         `json:"type"`
+	Label        string         `json:"label"`
+	Description  string         `json:"description"`
+	Required     bool           `json:"required"`
+	Sensitive    bool           `json:"sensitive,omitempty"`
+	Default      any            `json:"default,omitempty"`
+	Placeholder  string         `json:"placeholder,omitempty"`
+	Options      []FieldOption  `json:"options,omitempty"`
+	Validation   map[string]any `json:"validation,omitempty"`
+	Dependencies []string       `json:"dependencies,omitempty"`
 }
 
 // FieldOption represents an option for select fields.
@@ -61,10 +61,10 @@ type FieldOption struct {
 
 // ValidationRule defines validation logic for fields.
 type ValidationRule struct {
-	Field     string                 `json:"field"`
-	Rules     []string               `json:"rules"`
-	Message   string                 `json:"message"`
-	Condition map[string]interface{} `json:"condition,omitempty"`
+	Field     string         `json:"field"`
+	Rules     []string       `json:"rules"`
+	Message   string         `json:"message"`
+	Condition map[string]any `json:"condition,omitempty"`
 }
 
 // GetDefaultConfig returns the default configuration for the SFTP connector.
@@ -140,7 +140,7 @@ func GetDefaultConfig() *Config {
 				Description: "SFTP server hostname or IP address",
 				Required:    true,
 				Placeholder: "sftp.example.com",
-				Validation: map[string]interface{}{
+				Validation: map[string]any{
 					"min_length": 1,
 					"max_length": DefaultMaxHostnameLen,
 				},
@@ -152,7 +152,7 @@ func GetDefaultConfig() *Config {
 				Description: "SFTP server port",
 				Required:    false,
 				Default:     DefaultPort,
-				Validation: map[string]interface{}{
+				Validation: map[string]any{
 					"min": 1,
 					"max": MaxPortNumber,
 				},
@@ -164,7 +164,7 @@ func GetDefaultConfig() *Config {
 				Description: "Username for authentication",
 				Required:    true,
 				Placeholder: "user",
-				Validation: map[string]interface{}{
+				Validation: map[string]any{
 					"min_length": 1,
 					"max_length": DefaultMaxUsernameLen,
 				},
@@ -221,7 +221,7 @@ func GetDefaultConfig() *Config {
 				Message: "Port must be a number between 1 and 65535",
 			},
 		},
-		Defaults: map[string]interface{}{
+		Defaults: map[string]any{
 			"port":                DefaultPort,
 			"remote_path":         "/",
 			"preserve_timestamps": true,

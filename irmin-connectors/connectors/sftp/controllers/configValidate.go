@@ -27,7 +27,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 	}
 
 	// Parse settings JSON
-	var settings map[string]interface{}
+	var settings map[string]any
 	if settingsStr, exists := fields["settings"]; exists && settingsStr != "" {
 		if settingsErr := json.Unmarshal([]byte(settingsStr), &settings); settingsErr != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -37,7 +37,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 	}
 
 	// Parse details JSON
-	var details map[string]interface{}
+	var details map[string]any
 	if detailsStr, exists := fields["details"]; exists && detailsStr != "" {
 		if detailsErr := json.Unmarshal([]byte(detailsStr), &details); detailsErr != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -100,7 +100,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 }
 
 // validateRequiredFields validates that all required fields are present.
-func (cs *Controllers) validateRequiredFields(details map[string]interface{}) error {
+func (cs *Controllers) validateRequiredFields(details map[string]any) error {
 	requiredFields := []string{"host", "username"}
 
 	for _, field := range requiredFields {
@@ -113,7 +113,7 @@ func (cs *Controllers) validateRequiredFields(details map[string]interface{}) er
 }
 
 // validateAuthenticationMethod ensures either password or private key is provided.
-func (cs *Controllers) validateAuthenticationMethod(details map[string]interface{}) error {
+func (cs *Controllers) validateAuthenticationMethod(details map[string]any) error {
 	password, hasPassword := details["password"]
 	privateKey, hasPrivateKey := details["private_key"]
 
@@ -144,7 +144,7 @@ func (cs *Controllers) validateAuthenticationMethod(details map[string]interface
 }
 
 // Helper functions to extract values from map with type conversion.
-func getStringFromMap(m map[string]interface{}, key string) string {
+func getStringFromMap(m map[string]any, key string) string {
 	if val, exists := m[key]; exists && val != nil {
 		if str, ok := val.(string); ok {
 			return str
@@ -153,7 +153,7 @@ func getStringFromMap(m map[string]interface{}, key string) string {
 	return ""
 }
 
-func getIntFromMap(m map[string]interface{}, key string, defaultValue int) int {
+func getIntFromMap(m map[string]any, key string, defaultValue int) int {
 	val, exists := m[key]
 	if !exists || val == nil {
 		return defaultValue
