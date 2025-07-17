@@ -12,10 +12,6 @@
     line-height: 1.6;
   }
 
-  h1 {
-    @apply font-display font-semibold tracking-tight;
-  }
-
   code,
   pre,
   kbd,

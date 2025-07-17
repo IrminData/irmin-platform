@@ -49,9 +49,9 @@ export default function SideModal({
         <div
           className={`
             absolute top-0 right-0 bottom-0 size-full max-w-5xl border-l
-            bg-background shadow-lg transition-transform
-            duration-200
-            dark:border-gray-800${
+            bg-background shadow-lg transition-transform duration-200
+            dark:border-gray-800
+            ${
               isOpen
                 ? 'animate-in fade-in slide-in-from-right'
                 : 'animate-out fade-out slide-out-to-right'
