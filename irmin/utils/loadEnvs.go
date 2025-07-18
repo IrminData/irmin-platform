@@ -81,21 +81,40 @@ func validateJWTAlgorithm(algorithm string) error {
 	return nil
 }
 
-// LoadRootEnv loads environment variables from the .env file in the project root.
+// LoadRootEnv loads environment variables from the .env file in the project root if it exists.
+// In production environments like Railway, this file may not exist and that's normal.
 func LoadRootEnv() error {
 	rootDir, findErr := FindProjectRoot()
 	if findErr != nil {
-		return fmt.Errorf("failed to find project root: %w", findErr)
+		// In production containers, we might not have the full project structure
+		// Just continue without loading .env file
+		return nil
 	}
+
 	// Change working directory to rootDir
 	if chdirErr := os.Chdir(rootDir); chdirErr != nil {
-		return fmt.Errorf("failed to change working directory: %w", chdirErr)
+		// If we can't change directory, just continue
+		// Environment variables are likely provided by the platform
+		return nil
 	}
-	// Explicitly load the .env file from the project root
+
+	// Try to load the .env file from the project root
 	envPath := filepath.Join(rootDir, ".env")
-	if loadErr := godotenv.Load(envPath); loadErr != nil {
-		return fmt.Errorf("failed to load .env file from %s: %w", envPath, loadErr)
+
+	// Check if .env file exists before trying to load it
+	if _, err := os.Stat(envPath); os.IsNotExist(err) {
+		// .env file doesn't exist - this is normal in production
+		// Environment variables should be provided by the platform (Railway, Docker, etc.)
+		return nil
 	}
+
+	// File exists, try to load it
+	if loadErr := godotenv.Load(envPath); loadErr != nil {
+		// Log the error but don't fail - platform might provide env vars
+		fmt.Printf("Warning: failed to load .env file from %s: %v\n", envPath, loadErr)
+		return nil
+	}
+
 	return nil
 }
 
