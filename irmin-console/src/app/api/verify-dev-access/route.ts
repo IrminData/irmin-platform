@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const appPassword = process.env.ENV_PASSWORD;
-const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
+const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
 const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
 // Validate that password is set when auth is required in production environments

@@ -7,7 +7,7 @@ import type { Locale } from '@/lib/dict';
 import { defaultLocale, detectLocaleFromURL, languages } from '@/lib/dict';
 
 // Environment variables for environment authentication
-const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
+const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
 const appPassword = process.env.ENV_PASSWORD;
 
 // Validate that password is set when auth is required

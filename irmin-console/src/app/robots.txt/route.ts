@@ -29,7 +29,7 @@ export async function GET() {
     Sitemap: ${app_base}/sitemap.xml
     `;
 
-  const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'true';
+  const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
   if (requireAuth === 'true') {
     txt = `
     User-agent: *

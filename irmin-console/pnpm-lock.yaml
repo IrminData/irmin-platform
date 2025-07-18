@@ -132,8 +132,8 @@ importers:
         specifier: ^0.525.0
         version: 0.525.0(react@19.1.0)
       markdown-to-jsx:
-        specifier: ^7.7.10
-        version: 7.7.10(react@19.1.0)
+        specifier: ^7.7.12
+        version: 7.7.12(react@19.1.0)
       next:
         specifier: 15.4.1
         version: 15.4.1(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.54.1)(babel-plugin-react-compiler@19.1.0-rc.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -250,8 +250,8 @@ importers:
         specifier: ^4.4.4
         version: 4.4.4(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.37.0(eslint@9.31.0(jiti@2.4.2))(typescript@5.8.3))(eslint@9.31.0(jiti@2.4.2)))(eslint@9.31.0(jiti@2.4.2))
       eslint-plugin-better-tailwindcss:
-        specifier: ^3.6.1
-        version: 3.6.2(eslint@9.31.0(jiti@2.4.2))(tailwindcss@4.1.11)
+        specifier: ^3.6.3
+        version: 3.6.3(eslint@9.31.0(jiti@2.4.2))(tailwindcss@4.1.11)
       eslint-plugin-import-x:
         specifier: ^4.16.1
         version: 4.16.1(@typescript-eslint/utils@8.37.0(eslint@9.31.0(jiti@2.4.2))(typescript@5.8.3))(eslint@9.31.0(jiti@2.4.2))
@@ -3575,8 +3575,8 @@ packages:
       eslint-plugin-import-x:
         optional: true
 
-  eslint-plugin-better-tailwindcss@3.6.2:
-    resolution: {integrity: sha512-wx76kveaZGH9DwR6YMKixGKLaaiyAd97RVHMbzDiIOZL5ZR0Cmwkk2pqazrIi5K3CwnJeCDKPBuafZmd9ewrxw==}
+  eslint-plugin-better-tailwindcss@3.6.3:
+    resolution: {integrity: sha512-Xe1BMDIgINeQb1Xf7NLZHvi1S8V+4TXCnjheardPQsz6do38OAlqRSm0Uiq+biYzxNVofbJCkWNndW/3twjSkA==}
     engines: {node: ^20.11.0 || >=21.2.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
@@ -4331,8 +4331,8 @@ packages:
   markdown-table@3.0.4:
     resolution: {integrity: sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw==}
 
-  markdown-to-jsx@7.7.10:
-    resolution: {integrity: sha512-au62yyLyJukhC2P1TYi3uBi/RScGYai69uT72D8a048QH8rRj+yhND3C21GdZHE+6emtsf6Yqemcf//K+EIWDg==}
+  markdown-to-jsx@7.7.12:
+    resolution: {integrity: sha512-Y5xNBqoaTooSLkmlg2P0fdbh53gp4MqW7zhvcweGCPUWvWI5BecWRYI8vPlzT8D7OULxsQg2qoRW9EsJlBWasQ==}
     engines: {node: '>= 10'}
     peerDependencies:
       react: '>= 0.14.0'
@@ -9869,7 +9869,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-better-tailwindcss@3.6.2(eslint@9.31.0(jiti@2.4.2))(tailwindcss@4.1.11):
+  eslint-plugin-better-tailwindcss@3.6.3(eslint@9.31.0(jiti@2.4.2))(tailwindcss@4.1.11):
     dependencies:
       '@eslint/css-tree': 3.6.1
       enhanced-resolve: 5.18.2
@@ -10658,7 +10658,7 @@ snapshots:
 
   markdown-table@3.0.4: {}
 
-  markdown-to-jsx@7.7.10(react@19.1.0):
+  markdown-to-jsx@7.7.12(react@19.1.0):
     dependencies:
       react: 19.1.0
 
