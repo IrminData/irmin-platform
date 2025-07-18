@@ -33,9 +33,9 @@ type CoreAPIEnv struct {
 	LakeFSURL                    string // URL of the LakeFS instance to connect to
 	LakeFSAccessKey              string // Access key for the LakeFS instance
 	LakeFSSecretKey              string // Secret key for the LakeFS instance
+	LakeFSS3Bucket               string // Bucket name where LakeFS stores repositories
+	IrminS3Bucket                string // Bucket name where Irmin stores non-repository objects
 	S3Endpoint                   string // Endpoint of the S3-compatible object store
-	S3Bucket                     string // Bucket name of the S3-compatible object store
-	S3Folder                     string // Base folder name of the S3-compatible object store
 	S3Region                     string // Region of the S3-compatible object store
 	S3AccessKeyID                string // Access key ID for the S3-compatible object store
 	S3AccessSecret               string // Secret access key for the S3-compatible object store
@@ -241,16 +241,17 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	if err != nil {
 		return nil, err
 	}
+	lakefsS3Bucket, err := getEnv("LAKE_FS_S3_BUCKET", false, "")
+	if err != nil {
+		return nil, err
+	}
+
+	irminS3Bucket, err := getEnv("IRMIN_S3_BUCKET", false, "")
+	if err != nil {
+		return nil, err
+	}
 
 	s3Endpoint, err := getEnv("S3_ENDPOINT", true, "")
-	if err != nil {
-		return nil, err
-	}
-	s3Bucket, err := getEnv("S3_BUCKET", false, "")
-	if err != nil {
-		return nil, err
-	}
-	s3Folder, err := getEnv("S3_FOLDER", true, "")
 	if err != nil {
 		return nil, err
 	}
@@ -336,9 +337,9 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		LakeFSURL:                    lakefsURL,
 		LakeFSAccessKey:              lakefsAccessKey,
 		LakeFSSecretKey:              lakefsSecretKey,
+		LakeFSS3Bucket:               lakefsS3Bucket,
+		IrminS3Bucket:                irminS3Bucket,
 		S3Endpoint:                   s3Endpoint,
-		S3Bucket:                     s3Bucket,
-		S3Folder:                     s3Folder,
 		S3Region:                     s3Region,
 		S3AccessKeyID:                s3AccessKeyID,
 		S3AccessSecret:               s3AccessSecret,

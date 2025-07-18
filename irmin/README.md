@@ -135,10 +135,11 @@ NOVU_SECRET_KEY=abc123 # Novu secret key
 LAKE_FS_URL=https://lake.irmin.dev # URL of the Lake FS instance for versioning
 LAKE_FS_ACCESS_KEY_ID=... # Access key ID for the Lake FS instance
 LAKE_FS_SECRET_ACCESS_KEY=... # Secret access key for the Lake FS instance
+LAKE_FS_S3_BUCKET=lakefs # Bucket name used by Lake FS for storing repositories
+
+IRMIN_S3_BUCKET=irmin # Bucket name used by Irmin for storing non-repository objects
 
 S3_ENDPOINT=https://ams3.digitaloceanspaces.com # Endpoint of the S3-compatible object store
-S3_BUCKET=irmin-object-store # Bucket name of the S3-compatible object store
-S3_FOLDER=... # Base folder name of the S3-compatible object store
 S3_REGION=us-east-1 # Region of the S3-compatible object store
 S3_ACCESS_KEY_ID=... # Access key ID for the S3-compatible object store
 S3_ACCESS_SECRET=... # Secret access key for the S3-compatible object store

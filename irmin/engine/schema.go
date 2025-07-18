@@ -143,7 +143,7 @@ func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {

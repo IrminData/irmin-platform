@@ -11,7 +11,7 @@ import (
 
 func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Run the LakeFS calls concurrently.
 	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
@@ -63,7 +63,7 @@ func (c *Client) ListBranches(ctx context.Context, workspace, repository string)
 
 func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminmodels.Branch, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS calls concurrently.
 	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
@@ -114,7 +114,7 @@ func (c *Client) CreateBranch(
 	isImmutable bool,
 ) (*irminmodels.Branch, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Check if "from" is a branch and find the latest commit ID.
 	fromBranch, getBranchErr := c.LakeFSClient.GetBranch(lakeFSRepositoryName, from)
@@ -165,7 +165,7 @@ func (c *Client) UpdateBranch(
 	isImmutable bool,
 ) (*irminmodels.Branch, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS calls concurrently.
 	branchFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Branch, error) {
@@ -210,7 +210,7 @@ func (c *Client) UpdateBranch(
 
 func (c *Client) DeleteBranch(workspace, repository, branch string) error {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Ensure the branch exists.
 	_, err := c.LakeFSClient.GetBranch(lakeFSRepositoryName, branch)

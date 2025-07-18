@@ -25,7 +25,7 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 		}
 
 		// Get the LakeFS repository name.
-		lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+		lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 		// If the ref is not provided in the query, get the repository's default branch.
 		if ref == "" {

@@ -49,13 +49,17 @@ func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 	defer bucket.Close()
 
 	// Format the workspace's base path prefix
-	pathPrefix := "editor/" + workspace.Slug + "/"
-	if path != "" {
-		pathPrefix += path + "/"
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
+	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+	if !strings.HasSuffix(editorPathPrefix, "/") {
+		editorPathPrefix += "/"
 	}
 
+	// Construct the full S3 key for the file
+	key := editorPathPrefix + path
+
 	// Get the editor items at the specified path
-	items, listObjectsErr := bucket.ListObjects(ctx, pathPrefix)
+	items, listObjectsErr := bucket.ListObjects(ctx, key)
 	if listObjectsErr != nil {
 		api.Logger.Error("Error listing editor items", "error", listObjectsErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -120,9 +124,16 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 	}
 	defer bucket.Close()
 
+	// Format the workspace's base path prefix
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
+	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+	if !strings.HasSuffix(editorPathPrefix, "/") {
+		editorPathPrefix += "/"
+	}
+
 	// Construct the full S3 key for the file
-	key := "editor/" + workspace.Slug + "/" + path
-	if req.Type == "folder" {
+	key := editorPathPrefix + path
+	if req.Type == "folder" && !strings.HasSuffix(key, "/") {
 		key += "/"
 	}
 
@@ -182,8 +193,15 @@ func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error {
 	}
 	defer bucket.Close()
 
+	// Format the workspace's base path prefix
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
+	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+	if !strings.HasSuffix(editorPathPrefix, "/") {
+		editorPathPrefix += "/"
+	}
+
 	// Construct full S3 key prefix for deletion
-	keyPrefix := "editor/" + workspace.Slug + "/" + path
+	keyPrefix := editorPathPrefix + path
 
 	// Delete all objects under the prefix
 	deletePathErr := bucket.DeletePath(c.Context(), keyPrefix)
@@ -267,9 +285,16 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 
 	ctx := c.Context()
 
+	// Format the workspace's base path prefix
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
+	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+	if !strings.HasSuffix(editorPathPrefix, "/") {
+		editorPathPrefix += "/"
+	}
+
 	// Build full S3 key prefixes for source and destination
-	sourcePrefix := "editor/" + workspace.Slug + "/" + path
-	destinationPrefix := "editor/" + workspace.Slug + "/" + destinationPath
+	sourcePrefix := editorPathPrefix + path
+	destinationPrefix := editorPathPrefix + destinationPath
 
 	// Move or copy the source to the destination
 	duplicatePathErr := bucket.DuplicatePath(ctx, sourcePrefix, destinationPrefix, isMove)
@@ -344,8 +369,15 @@ func (api *APIControllers) EditorItemContent(c fiber.Ctx) error {
 	}
 	defer bucket.Close()
 
+	// Format the workspace's base path prefix
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
+	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+	if !strings.HasSuffix(editorPathPrefix, "/") {
+		editorPathPrefix += "/"
+	}
+
 	// Construct the full S3 key for the file
-	key := "editor/" + workspace.Slug + "/" + path
+	key := editorPathPrefix + path
 
 	// Retrieve the file from S3
 	content, readPathErr := bucket.ReadPath(c.Context(), key)

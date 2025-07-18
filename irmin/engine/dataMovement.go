@@ -155,7 +155,7 @@ func (c *Client) uploadFiles(
 		success []lakefs.ObjectMetadata
 	)
 
-	repoName := utils.GetLakeFSRepositoryName(workspace, repository)
+	repoName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 	uploadCh := make(chan *lakefs.ObjectMetadata, len(files))
 	upErrCh := make(chan error, len(files))
 
@@ -421,7 +421,7 @@ func (c *Client) DataExport(
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
 ) ([]string, []error) {
-	repoName := utils.GetLakeFSRepositoryName(workspaceSlug, repositorySlug)
+	repoName := utils.ConstructLakeFSRepositoryName(workspaceSlug, repositorySlug)
 
 	// Fetch all objects and their contents
 	objects, files, repositoryPaths, fetchErrors := c.fetchObjectsFromPaths(repoName, branch, requestedRepositoryPaths)

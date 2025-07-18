@@ -15,7 +15,7 @@ func (c *Client) CompareRefs(
 	workspace, repository, baseRef, compareRef string,
 ) (*irminmodels.Diff, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS API calls concurrently.
 	mergeBaseFuture := utils.AsyncWithContext(ctx, func() (*lakefs.MergeBase, error) {
@@ -107,7 +107,7 @@ func (c *Client) GetUncommittedChanges(
 	workspace, repository, branch string,
 ) (*irminmodels.Diff, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	diff, err := c.LakeFSClient.ListAllBranchDiffs(lakeFSRepositoryName, branch)
 	if err != nil {
@@ -146,7 +146,7 @@ func (c *Client) MergeRefs(
 	squash, allowEmpty bool,
 ) (*irminmodels.Commit, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Construct the merge request.
 	mergeRequest := &lakefs.Merge{

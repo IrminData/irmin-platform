@@ -10,7 +10,7 @@ import (
 
 func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Fetch tags
 	lakefsTags, err := c.LakeFSClient.ListAllTags(lakeFSRepositoryName, "")
@@ -32,7 +32,7 @@ func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, e
 
 func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Get tag details.
 	lakefsTag, err := c.LakeFSClient.GetTag(lakeFSRepositoryName, tag)
@@ -51,7 +51,7 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag,
 
 func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodels.GitTag, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Create tag.
 	tagCreateRequest := lakefs.TagCreateRequest{
@@ -75,7 +75,7 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodel
 
 func (c *Client) DeleteTag(workspace, repository, tag string) error {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Delete the tag.
 	err := c.LakeFSClient.DeleteTag(lakeFSRepositoryName, tag)

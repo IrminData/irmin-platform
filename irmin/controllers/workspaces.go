@@ -9,6 +9,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
+	"strings"
 
 	"irmin-api/db"
 
@@ -150,8 +151,12 @@ func (api *APIControllers) createWorkspaceInTransaction(
 
 		// Create a bucket folder for the editor files of the workspace
 		// This is done after the database operations, so that the operations would be atomic
-		key := "editor/" + newWorkspace.Slug + "/"
-		if writePathErr := bucket.WritePath(ctx, key, ""); writePathErr != nil {
+		editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, newWorkspace.Slug)
+		editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+		if !strings.HasSuffix(editorPathPrefix, "/") {
+			editorPathPrefix += "/"
+		}
+		if writePathErr := bucket.WritePath(ctx, editorPathPrefix, ""); writePathErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating workspace editor items folder object", "error", writePathErr)
 			return writePathErr
 		}
@@ -327,9 +332,15 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	}
 	defer bucket.Close()
 
+	// Format the workspace's base path prefix
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
+	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+	if !strings.HasSuffix(editorPathPrefix, "/") {
+		editorPathPrefix += "/"
+	}
+
 	// Delete the workspace editor items folder.
-	key := "editor/" + workspace.Slug + "/"
-	deletePathErr := bucket.DeletePath(c.Context(), key)
+	deletePathErr := bucket.DeletePath(c.Context(), editorPathPrefix)
 	if deletePathErr != nil {
 		api.Logger.Error("Error deleting workspace editor items folder", "error", deletePathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

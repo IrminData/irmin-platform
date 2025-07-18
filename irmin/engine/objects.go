@@ -198,7 +198,7 @@ func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {
@@ -225,7 +225,7 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {
@@ -252,7 +252,7 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {
@@ -299,7 +299,7 @@ func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {
@@ -329,7 +329,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {
@@ -391,7 +391,7 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {
@@ -447,7 +447,7 @@ func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]ir
 	}
 
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the ref is not provided, use the default branch.
 	if ref == "" {

@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -77,7 +78,14 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	downloadCtx, cancelDownload := context.WithTimeout(ctx, FileDownloadTimeout)
 	defer cancelDownload()
 
-	if downloadFolderErr := bucket.DownloadFolder(downloadCtx, fmt.Sprintf("editor/%s/", workspaceSlug), workspaceTempDir); downloadFolderErr != nil {
+	// Format the workspace's base path prefix
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(s.env.IrminS3Bucket, workspaceSlug)
+	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+	if !strings.HasSuffix(editorPathPrefix, "/") {
+		editorPathPrefix += "/"
+	}
+
+	if downloadFolderErr := bucket.DownloadFolder(downloadCtx, editorPathPrefix, workspaceTempDir); downloadFolderErr != nil {
 		return result, downloadFolderErr
 	}
 

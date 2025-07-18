@@ -35,7 +35,7 @@ type Repository struct {
 
 func (c *Client) ListRepositories(workspace string) ([]Repository, error) {
 	// Construct repository prefix.
-	lakeFSRepositoryPrefix := utils.GetLakeFSRepositoryPrefix(workspace)
+	lakeFSRepositoryPrefix := utils.ConstructLakeFSRepositoryPrefix(workspace)
 
 	// Fetch repositories with the given prefix.
 	lakefsRepositories, err := c.LakeFSClient.ListAllRepositories(lakeFSRepositoryPrefix, "")
@@ -85,7 +85,7 @@ func convertGarbageCollectionRules(
 
 func (c *Client) GetRepository(ctx context.Context, workspace, repository string) (*Repository, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Run LakeFS calls concurrently.
 	repoFuture := utils.AsyncWithContext(ctx, func() (*lakefs.Repository, error) {
@@ -127,10 +127,13 @@ func (c *Client) CreateRepository(
 	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
 ) (*Repository, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, name)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, name)
 
 	// Construct repository storage namespace.
-	lakeFSRepositoryStorageNamespace := utils.GetLakeFSRepositoryStorageNamespace(workspace, name)
+	lakeFSRepositoryStorageNamespace, err := utils.ConstructLakeFSRepositoryStorageNamespace(workspace, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to construct repository storage namespace: %w", err)
+	}
 
 	// Select default branch.
 	if defaultBranch == "" {
@@ -246,7 +249,7 @@ func (c *Client) UpdateRepository(
 	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
 ) (*Repository, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Get repository details.
 	lakefsRepository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
@@ -267,7 +270,8 @@ func (c *Client) UpdateRepository(
 			},
 		}
 	}
-	if gcDefaultBranchRetentionDays != nil && gcDefaultRetentionDays != nil && *gcDefaultBranchRetentionDays > 0 && *gcDefaultRetentionDays > 0 {
+	if gcDefaultBranchRetentionDays != nil && gcDefaultRetentionDays != nil && *gcDefaultBranchRetentionDays > 0 &&
+		*gcDefaultRetentionDays > 0 {
 		// Update garbage collection rules.
 		err = c.LakeFSClient.SetGarbageCollectionRules(lakeFSRepositoryName, garbageCollectionRules)
 		if err != nil {
@@ -297,7 +301,7 @@ func (c *Client) UpdateRepository(
 
 func (c *Client) DeleteRepository(ctx context.Context, workspace, repository string, keepObjects bool) error {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Get repository details and check if it exists.
 	lakefsRepository, getRepositoryErr := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
@@ -323,11 +327,9 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 		}
 		defer bucket.Close()
 		// Construct the repository storage namespace
-		folderPath := strings.TrimSuffix(lakefsRepository.StorageNamespace, "/")
-		folderPath = strings.TrimPrefix(folderPath, "s3://")
-		folderPath = fmt.Sprintf("%s/%s", c.Env.S3Folder, folderPath)
+		lakefsStorageNamespace := strings.TrimPrefix(lakefsRepository.StorageNamespace, "s3://")
 		// Delete repository storage namespace
-		deletePathErr := bucket.DeletePath(ctx, folderPath)
+		deletePathErr := bucket.DeletePath(ctx, lakefsStorageNamespace)
 		if deletePathErr != nil {
 			return fmt.Errorf("failed to delete repository storage namespace: %w", deletePathErr)
 		}

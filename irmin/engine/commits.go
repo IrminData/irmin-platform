@@ -15,7 +15,7 @@ func (c *Client) ListCommits(
 	limit *int,
 ) ([]irminmodels.Commit, *lakefs.Pagination, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// If the "ref" query param is not provided, get the repository's default branch.
 	if ref == "" {
@@ -78,7 +78,7 @@ func (c *Client) ListCommits(
 
 func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Commit, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Get commit details.
 	lakeFSCommit, getCommitErr := c.LakeFSClient.GetCommit(lakeFSRepositoryName, hash)
@@ -111,7 +111,7 @@ func (c *Client) CommitChanges(
 	allowEmpty bool,
 ) (*irminmodels.Commit, error) {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Commit changes in the repository.
 	lakeFSCommit, createCommitErr := c.LakeFSClient.CreateCommit(
@@ -153,7 +153,7 @@ func (c *Client) CommitChanges(
 
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error {
 	// Construct repository name.
-	lakeFSRepositoryName := utils.GetLakeFSRepositoryName(workspace, repository)
+	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
 	// Reset the branch.
 	resetType := lakefs.PathTypeReset

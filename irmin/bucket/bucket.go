@@ -28,7 +28,7 @@ type Client struct {
 func CreateClient(env *utils.CoreAPIEnv) (*Client, error) {
 	// Define the S3 bucket client configuration
 	config := fiberS3.Config{
-		Bucket:   env.S3Bucket,
+		Bucket:   "",
 		Endpoint: env.S3Endpoint,
 		Region:   env.S3Region,
 		Credentials: fiberS3.Credentials{
@@ -42,7 +42,7 @@ func CreateClient(env *utils.CoreAPIEnv) (*Client, error) {
 
 	return &Client{
 		Storage:  *store,
-		Bucket:   env.S3Bucket,
+		Bucket:   "",
 		Endpoint: env.S3Endpoint,
 		Region:   env.S3Region,
 	}, nil
