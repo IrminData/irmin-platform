@@ -124,10 +124,7 @@ const ManageWorkspacesSection = () => {
                     </h2>
                     <form
                       onSubmit={handleSubmit(handleCreateWorkspace)}
-                      className={`
-                        space-y-4
-                        ${createMutation.isPending && `blur-xs`}
-                      `}
+                      className='space-y-4'
                     >
                       <Controller
                         name='newWorkspaceName'
@@ -207,11 +204,7 @@ const ManageWorkspacesSection = () => {
                     {dict.workspaceSwitcher.selectWorkspace}
                   </h2>
                   {!workspacesQuery.isLoading ? (
-                    <div
-                      className={`
-                        ${createMutation.isPending && 'blur-xs'}
-                      `}
-                    >
+                    <div>
                       <div
                         className={`
                           grid grid-cols-1 gap-4
@@ -253,10 +246,7 @@ const ManageWorkspacesSection = () => {
                     </h2>
                     <form
                       onSubmit={handleSubmit(handleCreateWorkspace)}
-                      className={`
-                        space-y-4
-                        ${createMutation.isPending && `blur-xs`}
-                      `}
+                      className='space-y-4'
                     >
                       <Controller
                         name='newWorkspaceName'

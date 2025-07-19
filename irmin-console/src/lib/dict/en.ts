@@ -881,6 +881,10 @@ const en = {
         description:
           'Start by uploading files or create a workflow to populate this repository.',
       },
+      editor: {
+        title: 'No files or folders',
+        description: 'Create your first file or folder to get started',
+      },
       generic: {
         title: 'No items found',
         description:

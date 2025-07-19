@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
 
@@ -14,6 +14,17 @@ interface AuthenticationErrorHandlerProps {
   error?: Error;
   children: React.ReactNode;
 }
+
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  '/',
+  '/sign-in',
+  '/sign-up',
+  '/invite',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+];
 
 /**
  * Authentication error handler for Clerk authentication
@@ -28,7 +39,22 @@ function AuthenticationErrorHandler({
 }: AuthenticationErrorHandlerProps) {
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { irminAlert } = usePopup();
+
+  // Check if current route is public (exact matches with optional language prefix)
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => {
+    // Exact match without language prefix
+    if (pathname === route || pathname === `${route}/`) {
+      return true;
+    }
+
+    // Exact match with language prefix (e.g., /en/sign-in, /es/sign-in/)
+    // Special handling for root route to avoid double slash
+    const routePattern = route === '/' ? '' : route;
+    const langPrefixPattern = new RegExp(`^/[a-z]{2}${routePattern}(?:/)?$`);
+    return langPrefixPattern.test(pathname);
+  });
 
   useEffect(() => {
     if (error) {
@@ -76,13 +102,13 @@ function AuthenticationErrorHandler({
     );
   }
 
-  // Handle authentication errors
-  if (error || (!isSignedIn && isLoaded)) {
+  // Handle authentication errors - only block protected routes
+  if (error || (!isSignedIn && isLoaded && !isPublicRoute)) {
     const isAuthError =
       error?.message?.toLowerCase().includes('auth') ||
       error?.message?.toLowerCase().includes('sign') ||
       error?.message?.toLowerCase().includes('token') ||
-      !isSignedIn;
+      (!isSignedIn && !isPublicRoute);
 
     if (isAuthError) {
       return (

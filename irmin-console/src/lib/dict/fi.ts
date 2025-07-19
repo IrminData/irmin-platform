@@ -865,6 +865,10 @@ const fi = {
         description:
           'Aloita lataamalla tiedostoja tai luo työnkulku täyttääksesi tämän repositorion.',
       },
+      editor: {
+        title: 'Ei tiedostoja tai kansioita',
+        description: 'Luo ensimmäinen tiedosto tai kansio aloittaaksesi.',
+      },
       generic: {
         title: 'Kohteita ei löytynyt',
         description:

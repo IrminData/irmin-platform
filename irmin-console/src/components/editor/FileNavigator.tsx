@@ -9,6 +9,7 @@ import { FiFileText, FiFolder } from 'react-icons/fi';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 import { useEditor } from '@/context/EditorContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -16,6 +17,8 @@ import { useLocale } from '@/context/LocaleContext';
 import { useResourceAllowed } from '@/hooks/utils';
 
 import type { FileNavigatorItem } from '@/types/internal/FileNavigatorItem';
+
+import FileNavigatorLoadingSkeleton from './FileNavigatorLoadingSkeleton';
 
 /**
  * File navigator component
@@ -224,13 +227,7 @@ const FileNavigator = () => {
   );
 
   return (
-    <div
-      id='file-navigator'
-      className={`
-        ${loading ? 'blur-xs' : ''}
-        relative
-      `}
-    >
+    <div id='file-navigator' className='relative'>
       <div
         className={`
           mb-0 flex flex-row justify-stretch gap-0 border-b bg-gray-100 p-0
@@ -249,8 +246,7 @@ const FileNavigator = () => {
           onClick={addNewFile}
           icon={<FiFileText size={12} />}
           aria-label='Create a new file'
-          loading={loading}
-          disabled={!isResourceAllowed('editor_script', 'create')}
+          disabled={!isResourceAllowed('editor_script', 'create') || loading}
         >
           {dict.fileNavigator.createFile}
         </Button>
@@ -266,8 +262,7 @@ const FileNavigator = () => {
           onClick={addNewFolder}
           icon={<FiFolder size={12} />}
           aria-label='Create a new folder'
-          loading={loading}
-          disabled={!isResourceAllowed('editor_script', 'create')}
+          disabled={!isResourceAllowed('editor_script', 'create') || loading}
         >
           {dict.fileNavigator.createFolder}
         </Button>
@@ -279,7 +274,27 @@ const FileNavigator = () => {
           dark:border-gray-700
         `}
       >
-        {renderItems(items)}
+        {loading ? (
+          <FileNavigatorLoadingSkeleton items={6} />
+        ) : items.length === 0 ? (
+          <EmptyState
+            title={dict.list.emptyState.editor.title}
+            description={dict.list.emptyState.editor.description}
+            icon={<FiFolder className='size-full' />}
+            action={
+              isResourceAllowed('editor_script', 'create')
+                ? {
+                    label: dict.fileNavigator.createFile,
+                    onClick: addNewFile,
+                    variant: 'gradient',
+                  }
+                : undefined
+            }
+            size='sm'
+          />
+        ) : (
+          renderItems(items)
+        )}
       </div>
       {contextMenu && !loading && contextMenu.visible && (
         <ul
