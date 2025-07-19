@@ -4,7 +4,10 @@
  Purpose: Reusable component classes and third-party overrides.
  ============================================================================
 */
-/* --- Background Pattern --- */
+
+/* ============================================================================
+   BACKGROUND PATTERNS
+   ============================================================================ */
 .pattern-bg {
   @apply bg-cover bg-fixed bg-center bg-no-repeat;
   background-image: url('/ui-assets/elements/pattern-white.svg');
@@ -13,7 +16,9 @@
   background-image: url('/ui-assets/elements/pattern-dark.svg');
 }
 
-/* --- DataSheetGrid --- */
+/* ============================================================================
+   DATA SHEET GRID
+   ============================================================================ */
 .data-sheet-grid {
   font-size: 12px;
   --dsg-border-color: #e5e7eb;
@@ -41,13 +46,15 @@
 }
 .data-sheet-grid .dsg-input {
   font-size: 12px;
-  @apply px-1.5; /* Replaced padding with utility */
+  @apply px-1.5;
 }
 .data-sheet-grid .dsg-corner-indicator {
   opacity: 0.5;
 }
 
-/* --- CodeMirror Editor --- */
+/* ============================================================================
+   CODEMIRROR EDITOR
+   ============================================================================ */
 .cm-editor {
   all: unset !important;
 }
@@ -58,10 +65,13 @@
   height: 100%;
 }
 
-/* --- MDX Editor & Viewer --- */
+/* ============================================================================
+   MDX EDITOR & VIEWER
+   ============================================================================ */
+
+/* --- Base Styles --- */
 .mdxeditor,
 .mdx-viewer {
-  /* Base styles for MDX components */
   font-family: 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
@@ -71,6 +81,8 @@
 .dark .mdx-viewer {
   color: #ccc;
 }
+
+/* --- MDX Editor Specific --- */
 .mdxeditor .mdxeditor-toolbar {
   background-color: hsl(var(--card));
   border-radius: 0;
@@ -78,11 +90,16 @@
 .dark .mdxeditor .mdxeditor-toolbar * {
   filter: invert(0.98) !important;
 }
+
+/* --- MDX Viewer Specific --- */
 .mdx-viewer {
   background-color: transparent !important;
 }
+.mdx-viewer .prose {
+  @apply max-w-none;
+}
 
-/* MDX Typography */
+/* --- Typography Styles --- */
 .mdxeditor h1,
 .mdxeditor h2,
 .mdxeditor h3,
@@ -104,6 +121,15 @@
     line-height: 1;
     letter-spacing: -0.05em;
   }
+}
+
+.mdx-viewer .prose h1,
+.mdx-viewer .prose h2,
+.mdx-viewer .prose h3,
+.mdx-viewer .prose h4,
+.mdx-viewer .prose h5,
+.mdx-viewer .prose h6 {
+  @apply text-foreground font-semibold;
 }
 
 .mdxeditor h1,
@@ -154,6 +180,7 @@
   }
 }
 
+/* --- Paragraph Styles --- */
 .mdxeditor p,
 .mdx-viewer p {
   font-size: 1em;
@@ -164,6 +191,11 @@
   }
 }
 
+.mdx-viewer .prose p {
+  @apply text-muted-foreground leading-relaxed;
+}
+
+/* --- Link Styles --- */
 .mdxeditor a,
 .mdx-viewer a {
   color: #1a73e8;
@@ -174,6 +206,11 @@
   text-decoration: underline;
 }
 
+.mdx-viewer .prose a {
+  @apply text-primary hover:text-primary/80 underline transition-colors;
+}
+
+/* --- List Styles --- */
 .mdxeditor ul,
 .mdxeditor ol,
 .mdx-viewer ul,
@@ -192,6 +229,12 @@
   list-style-type: decimal;
 }
 
+.mdx-viewer .prose ul,
+.mdx-viewer .prose ol {
+  @apply text-muted-foreground space-y-1;
+}
+
+/* --- Blockquote Styles --- */
 .mdxeditor blockquote,
 .mdx-viewer blockquote {
   border-left: 4px solid #ccc;
@@ -200,12 +243,21 @@
   margin: 1em 0;
 }
 
+.mdx-viewer .prose blockquote {
+  @apply border-l-4 border-primary/30 bg-muted/20 pl-4 py-2 italic text-muted-foreground;
+}
+
+/* --- Code Styles --- */
 .mdxeditor code,
 .mdx-viewer code {
   font-family: 'Courier New', Courier, monospace;
   background-color: #f5f5f5;
   padding: 0.2em 0.4em;
   border-radius: 3px;
+}
+
+.mdx-viewer .prose code {
+  @apply bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded text-xs font-mono;
 }
 
 .mdxeditor pre,
@@ -217,6 +269,11 @@
   border-radius: 3px;
 }
 
+.mdx-viewer .prose pre {
+  @apply bg-muted/30 border border-border/30 rounded-lg p-4 overflow-x-auto;
+}
+
+/* --- Table Styles --- */
 .mdxeditor table,
 .mdx-viewer table {
   width: 100%;
@@ -238,7 +295,7 @@
   background-color: #f9f9f9;
 }
 
-/* Dark mode styles for MDX */
+/* --- Dark Mode Styles --- */
 .dark .mdxeditor h1,
 .dark .mdxeditor h2,
 .dark .mdxeditor h3,
@@ -282,7 +339,9 @@
   background-color: #333;
 }
 
-/* --- ReactFlow --- */
+/* ============================================================================
+   REACT FLOW
+   ============================================================================ */
 .react-flow {
   background: transparent !important;
 }
@@ -296,7 +355,9 @@
   padding: 0 !important;
 }
 
-/* --- ReactDocViewer --- */
+/* ============================================================================
+   REACT DOC VIEWER
+   ============================================================================ */
 #react-doc-viewer {
   background: transparent;
 }
