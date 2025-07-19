@@ -19,7 +19,7 @@ func TestSeedDefaultTags(t *testing.T) {
 	}
 
 	// Test seeding default tags
-	err = lib.SeedDefaultTags(ts.DB, workspace.ID)
+	err = lib.SeedDefaultTags(ts.DB.DB, workspace.ID)
 	if err != nil {
 		t.Errorf("SeedDefaultTags failed: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestSeedDefaultTags(t *testing.T) {
 	}
 
 	// Test that calling SeedDefaultTags again doesn't create duplicates
-	err = lib.SeedDefaultTags(ts.DB, workspace.ID)
+	err = lib.SeedDefaultTags(ts.DB.DB, workspace.ID)
 	if err != nil {
 		t.Errorf("Second call to SeedDefaultTags failed: %v", err)
 	}

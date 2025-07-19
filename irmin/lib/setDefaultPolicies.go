@@ -2,6 +2,8 @@ package lib
 
 import (
 	"irmin-api/db"
+
+	"gorm.io/gorm"
 )
 
 // getAllResources returns a list of all available resources except billing.
@@ -30,10 +32,10 @@ func getAllResources() []db.PolicyResource {
 
 // createPoliciesBatch creates multiple policies in a single database operation.
 func createPoliciesBatch(
-	d *db.Database,
+	dbConn *gorm.DB,
 	policies []db.Policy,
 ) error {
-	return d.Create(&policies).Error
+	return dbConn.Create(&policies).Error
 }
 
 // preparePoliciesForResources prepares a batch of policies for a list of resources with specified actions.
@@ -70,7 +72,7 @@ func prepareReadPoliciesForResources(
 }
 
 // setOwnerPolicies sets all policies for the owner role.
-func setOwnerPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
+func setOwnerPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 	resources := getAllResources()
 	actions := []db.PolicyAction{
 		db.PolicyActionCreate,
@@ -80,24 +82,24 @@ func setOwnerPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 	}
 
 	policies := preparePoliciesForResources(resources, actions, roleID, workspaceID)
-	return createPoliciesBatch(d, policies)
+	return createPoliciesBatch(dbConn, policies)
 }
 
 // setAdminPolicies sets all policies for the admin role.
-func setAdminPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
+func setAdminPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 	// Admin has the same permissions as owner
-	return setOwnerPolicies(d, roleID, workspaceID)
+	return setOwnerPolicies(dbConn, roleID, workspaceID)
 }
 
 // setViewerPolicies sets all policies for the viewer role.
-func setViewerPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
+func setViewerPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 	// Viewers can read all resources
 	policies := prepareReadPoliciesForResources(getAllResources(), roleID, workspaceID)
-	return createPoliciesBatch(d, policies)
+	return createPoliciesBatch(dbConn, policies)
 }
 
 // setBillingPolicies sets all policies for the billing role.
-func setBillingPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
+func setBillingPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 	// Billing role has full access to billing resource and read-only access to workspace and user
 	billingResources := []db.PolicyResource{
 		db.PolicyResourceBilling,
@@ -124,11 +126,11 @@ func setBillingPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 	combinedPolicies := make([]db.Policy, 0, len(billingPolicies)+len(readOnlyPolicies))
 	combinedPolicies = append(combinedPolicies, billingPolicies...)
 	combinedPolicies = append(combinedPolicies, readOnlyPolicies...)
-	return createPoliciesBatch(d, combinedPolicies)
+	return createPoliciesBatch(dbConn, combinedPolicies)
 }
 
 // setWorkspaceWidePolicies sets policies that apply to everyone in the workspace.
-func setWorkspaceWidePolicies(d *db.Database, workspaceID uint) error {
+func setWorkspaceWidePolicies(dbConn *gorm.DB, workspaceID uint) error {
 	policies := []db.Policy{{
 		Effect:      db.PolicyEffectAllow,
 		Action:      db.PolicyActionRead,
@@ -138,11 +140,11 @@ func setWorkspaceWidePolicies(d *db.Database, workspaceID uint) error {
 		RoleID:      nil,
 		WorkspaceID: workspaceID,
 	}}
-	return createPoliciesBatch(d, policies)
+	return createPoliciesBatch(dbConn, policies)
 }
 
 // setEditorPolicies sets all policies for the editor role.
-func setEditorPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
+func setEditorPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 	// Editor has full access to workflows and repositories, but limited access to other resources
 	workflowResources := []db.PolicyResource{
 		db.PolicyResourceWorkflow,
@@ -189,7 +191,7 @@ func setEditorPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 	combinedPolicies = append(combinedPolicies, workflowPolicies...)
 	combinedPolicies = append(combinedPolicies, repositoryPolicies...)
 	combinedPolicies = append(combinedPolicies, readOnlyPolicies...)
-	return createPoliciesBatch(d, combinedPolicies)
+	return createPoliciesBatch(dbConn, combinedPolicies)
 }
 
 // SetDefaultPolicies creates a set of default policies for a newly created workspace.
@@ -197,16 +199,16 @@ func setEditorPolicies(d *db.Database, roleID *uint, workspaceID uint) error {
 // If any policies already exist for the workspace, this function will do nothing.
 //
 // Parameters:
-//   - d: the database instance.
+//   - dbConn: the database connection to use (can be a transaction).
 //   - workspaceID: the ID of the workspace for which to create default policies.
 //   - overridePolicies: if true, the default policies will be overridden. If false, the default policies will only be created if no policies already exist for the workspace.
 //
 // Returns:
 //   - error: if any database operation fails.
-func SetDefaultPolicies(d *db.Database, workspaceID uint, overridePolicies bool) error {
+func SetDefaultPolicies(dbConn *gorm.DB, workspaceID uint, overridePolicies bool) error {
 	// Check if any policies exist for this workspace
 	var count int64
-	if workspacePoliciesCountErr := d.Model(&db.Policy{}).Where("workspace_id = ?", workspaceID).Count(&count).Error; workspacePoliciesCountErr != nil {
+	if workspacePoliciesCountErr := dbConn.Model(&db.Policy{}).Where("workspace_id = ?", workspaceID).Count(&count).Error; workspacePoliciesCountErr != nil {
 		return workspacePoliciesCountErr
 	}
 	if count > 0 && !overridePolicies {
@@ -216,19 +218,19 @@ func SetDefaultPolicies(d *db.Database, workspaceID uint, overridePolicies bool)
 
 	// If overridePolicies is true, delete all existing policies for this workspace
 	if overridePolicies && count > 0 {
-		if deleteErr := d.Where("workspace_id = ?", workspaceID).Delete(&db.Policy{}).Error; deleteErr != nil {
+		if deleteErr := dbConn.Where("workspace_id = ?", workspaceID).Delete(&db.Policy{}).Error; deleteErr != nil {
 			return deleteErr
 		}
 	}
 
 	// Set workspace-wide policies that apply to everyone
-	if err := setWorkspaceWidePolicies(d, workspaceID); err != nil {
+	if err := setWorkspaceWidePolicies(dbConn, workspaceID); err != nil {
 		return err
 	}
 
 	// Retrieve all roles
 	var roles []db.Role
-	if rolesErr := d.Find(&roles).Error; rolesErr != nil {
+	if rolesErr := dbConn.Find(&roles).Error; rolesErr != nil {
 		return rolesErr
 	}
 
@@ -237,15 +239,15 @@ func SetDefaultPolicies(d *db.Database, workspaceID uint, overridePolicies bool)
 		var err error
 		switch role.Role {
 		case "owner":
-			err = setOwnerPolicies(d, &role.ID, workspaceID)
+			err = setOwnerPolicies(dbConn, &role.ID, workspaceID)
 		case "admin":
-			err = setAdminPolicies(d, &role.ID, workspaceID)
+			err = setAdminPolicies(dbConn, &role.ID, workspaceID)
 		case "editor":
-			err = setEditorPolicies(d, &role.ID, workspaceID)
+			err = setEditorPolicies(dbConn, &role.ID, workspaceID)
 		case "viewer":
-			err = setViewerPolicies(d, &role.ID, workspaceID)
+			err = setViewerPolicies(dbConn, &role.ID, workspaceID)
 		case "billing":
-			err = setBillingPolicies(d, &role.ID, workspaceID)
+			err = setBillingPolicies(dbConn, &role.ID, workspaceID)
 		case "guest":
 			// Guest role has no permissions by default
 			continue

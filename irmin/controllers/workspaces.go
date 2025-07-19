@@ -136,14 +136,14 @@ func (api *APIControllers) createWorkspaceInTransaction(
 		}
 
 		// Set default policies for the workspace
-		setDefaultPoliciesErr := lib.SetDefaultPolicies(api.DB, newWorkspace.ID, false)
+		setDefaultPoliciesErr := lib.SetDefaultPolicies(tx, newWorkspace.ID, false)
 		if setDefaultPoliciesErr != nil {
 			api.Logger.ErrorContext(ctx, "Error setting default policies", "error", setDefaultPoliciesErr)
 			return setDefaultPoliciesErr
 		}
 
 		// Seed default tags for the workspace
-		seedDefaultTagsErr := lib.SeedDefaultTags(api.DB, newWorkspace.ID)
+		seedDefaultTagsErr := lib.SeedDefaultTags(tx, newWorkspace.ID)
 		if seedDefaultTagsErr != nil {
 			api.Logger.ErrorContext(ctx, "Error seeding default tags", "error", seedDefaultTagsErr)
 			return seedDefaultTagsErr

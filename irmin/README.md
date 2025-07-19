@@ -98,6 +98,16 @@ The linter is configured to be strict but practical, with a focus on code qualit
 - Best practices
 - And many more
 
+## Docker
+
+1. Build the image:
+
+	docker build -t irmin .
+
+2. Run the container, injecting your local .env file for configuration:
+
+	docker run -p 8080:8080 --env-file .env irmin
+
 ## Environment Variables
 
 Create a `.env` file in the root directory of the project and add the following environment variables:

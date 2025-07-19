@@ -3,17 +3,20 @@ package engine
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"irmin-api/bucket"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
-	"os"
 	"strings"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
+
+//go:embed default-lakefs-actions.yaml
+var defaultLakeFSActionsYAML []byte
 
 // Repository represents a returned by the data engine.
 type Repository struct {
@@ -201,11 +204,7 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
 	lakefsRepository *lakefs.Repository,
 ) (*lakefs.ObjectMetadata, error) {
 	// Read the default lakefs actions file
-	defaultActionsBytes, err := os.ReadFile("engine/default-lakefs-actions.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to read default lakefs actions file: %w", err)
-	}
-	defaultActions := string(defaultActionsBytes)
+	defaultActions := string(defaultLakeFSActionsYAML)
 
 	// Find replace the webhook_url in the default actions
 	lakefsWebhookURL := fmt.Sprintf("%s/api/v1/system/webhook?type=lakefs", c.Env.URL)
@@ -224,7 +223,7 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
 	}
 
 	// Commit the action file
-	_, err = c.LakeFSClient.CreateCommit(
+	_, createCommitErr := c.LakeFSClient.CreateCommit(
 		lakefsRepository.ID,
 		lakefsRepository.DefaultBranch,
 		"",
@@ -237,8 +236,8 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
 			AllowEmpty: false,
 		},
 	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create commit: %w", err)
+	if createCommitErr != nil {
+		return nil, fmt.Errorf("failed to create commit: %w", createCommitErr)
 	}
 
 	return actionFile, nil

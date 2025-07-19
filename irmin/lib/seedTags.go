@@ -8,7 +8,7 @@ import (
 )
 
 // SeedDefaultTags seeds a workspace with default tags.
-func SeedDefaultTags(d *db.Database, workspaceID uint) error {
+func SeedDefaultTags(dbConn *gorm.DB, workspaceID uint) error {
 	// defaultTags holds the list of default tags we want to create for each workspace.
 	defaultTags := []db.Tag{
 		{
@@ -88,21 +88,21 @@ func SeedDefaultTags(d *db.Database, workspaceID uint) error {
 	for _, def := range defaultTags {
 		var existing db.Tag
 		// Attempt to find an existing Tag by its name and workspace.
-		findErr := d.Where("name = ? AND workspace_id = ?", def.Name, workspaceID).First(&existing).Error
+		findErr := dbConn.Where("name = ? AND workspace_id = ?", def.Name, workspaceID).First(&existing).Error
 		switch {
 		case findErr != nil && !errors.Is(findErr, gorm.ErrRecordNotFound):
 			// An unexpected error occurred when querying.
 			return findErr
 		case errors.Is(findErr, gorm.ErrRecordNotFound):
 			// Tag not found; create it now.
-			if createErr := d.Create(&def).Error; createErr != nil {
+			if createErr := dbConn.Create(&def).Error; createErr != nil {
 				return createErr
 			}
 		default:
 			// Tag exists, update its details
 			existing.Color = def.Color
 			existing.Description = def.Description
-			if saveErr := d.Save(&existing).Error; saveErr != nil {
+			if saveErr := dbConn.Save(&existing).Error; saveErr != nil {
 				return saveErr
 			}
 		}

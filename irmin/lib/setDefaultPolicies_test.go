@@ -27,7 +27,7 @@ func TestSetDefaultPolicies(t *testing.T) {
 	}
 
 	// Set the default policies
-	err = lib.SetDefaultPolicies(ts.DB, workspace.ID, true)
+	err = lib.SetDefaultPolicies(ts.DB.DB, workspace.ID, true)
 	if err != nil {
 		t.Fatalf("Failed to set default policies: %v", err)
 	}

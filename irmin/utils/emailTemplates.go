@@ -3,7 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"os"
+	"irmin-api/templates"
 	"path/filepath"
 	"text/template"
 )
@@ -56,27 +56,23 @@ func (etm *EmailTemplateManager) LoadTemplate(templateName string) (*EmailTempla
 		return template, nil
 	}
 
-	// Construct template paths
-	htmlPath := filepath.Join(etm.templatesPath, "email", "invitations", fmt.Sprintf("%s.html", templateName))
-	textPath := filepath.Join(etm.templatesPath, "email", "invitations", fmt.Sprintf("%s.txt", templateName))
+	var htmlContent, textContent []byte
 
-	// Load HTML template
-	htmlContent, err := os.ReadFile(htmlPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read HTML template %s: %w", htmlPath, err)
+	// Use embedded templates for workspace-invitation
+	if templateName == "workspace-invitation" {
+		htmlContent = templates.WorkspaceInvitationHTML
+		textContent = templates.WorkspaceInvitationTXT
+	} else {
+		return nil, fmt.Errorf("template %s not found", templateName)
 	}
 
+	// Parse HTML template
 	htmlTemplate, err := template.New(fmt.Sprintf("%s.html", templateName)).Parse(string(htmlContent))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML template %s: %w", templateName, err)
 	}
 
-	// Load text template
-	textContent, err := os.ReadFile(textPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read text template %s: %w", textPath, err)
-	}
-
+	// Parse text template
 	textTemplate, err := template.New(fmt.Sprintf("%s.txt", templateName)).Parse(string(textContent))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse text template %s: %w", templateName, err)
@@ -113,36 +109,10 @@ func (et *EmailTemplate) RenderText(data any) (string, error) {
 	return buffer.String(), nil
 }
 
-// GetAvailableTemplates returns a list of available email templates in the templates directory.
+// GetAvailableTemplates returns a list of available email templates.
 func (etm *EmailTemplateManager) GetAvailableTemplates() ([]string, error) {
-	invitationTemplatesPath := filepath.Join(etm.templatesPath, "email", "invitations")
-
-	files, err := os.ReadDir(invitationTemplatesPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read templates directory: %w", err)
-	}
-
-	var templates []string
-	templateSet := make(map[string]bool)
-
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-
-		name := file.Name()
-		ext := filepath.Ext(name)
-
-		if ext == ".html" || ext == ".txt" {
-			templateName := name[:len(name)-len(ext)]
-			if !templateSet[templateName] {
-				templates = append(templates, templateName)
-				templateSet[templateName] = true
-			}
-		}
-	}
-
-	return templates, nil
+	// Return the list of embedded templates
+	return []string{"workspace-invitation"}, nil
 }
 
 // PreloadAllTemplates loads all available templates into memory for faster access.

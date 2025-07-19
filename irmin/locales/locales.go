@@ -1,13 +1,18 @@
 package locales
 
 import (
+	_ "embed"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
+
+//go:embed en.json
+var enLocaleData []byte
+
+//go:embed fi.json
+var fiLocaleData []byte
 
 // Dictionary represents a map of translation keys to their localized strings.
 type Dictionary map[string]string
@@ -25,19 +30,11 @@ func New() (*LocaleManager, error) {
 		finnish: make(Dictionary),
 	}
 
-	enData, readEnErr := os.ReadFile(filepath.Join("locales", "en.json"))
-	if readEnErr != nil {
-		return nil, readEnErr
-	}
-	if unmarshalEnErr := json.Unmarshal(enData, &lm.english); unmarshalEnErr != nil {
+	if unmarshalEnErr := json.Unmarshal(enLocaleData, &lm.english); unmarshalEnErr != nil {
 		return nil, unmarshalEnErr
 	}
 
-	fiData, readFiErr := os.ReadFile(filepath.Join("locales", "fi.json"))
-	if readFiErr != nil {
-		return nil, readFiErr
-	}
-	if unmarshalFiErr := json.Unmarshal(fiData, &lm.finnish); unmarshalFiErr != nil {
+	if unmarshalFiErr := json.Unmarshal(fiLocaleData, &lm.finnish); unmarshalFiErr != nil {
 		return nil, unmarshalFiErr
 	}
 

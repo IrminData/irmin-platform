@@ -48,7 +48,7 @@ func setupDefaultTags(d *db.Database) error {
 
 	// Seed default tags for every workspace
 	for _, workspace := range workspaces {
-		seedDefaultTagsErr := lib.SeedDefaultTags(d, workspace.ID)
+		seedDefaultTagsErr := lib.SeedDefaultTags(d.DB, workspace.ID)
 		if seedDefaultTagsErr != nil {
 			return seedDefaultTagsErr
 		}
@@ -71,7 +71,7 @@ func setupRolesAndPolicies(d *db.Database, overridePolicies *bool) error {
 
 	// Set default policies for every workspace
 	for _, workspace := range workspaces {
-		setDefaultPoliciesErr := lib.SetDefaultPolicies(d, workspace.ID, *overridePolicies)
+		setDefaultPoliciesErr := lib.SetDefaultPolicies(d.DB, workspace.ID, *overridePolicies)
 		if setDefaultPoliciesErr != nil {
 			return setDefaultPoliciesErr
 		}

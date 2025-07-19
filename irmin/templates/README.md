@@ -1,6 +1,6 @@
 # Email Templates
 
-This directory contains email templates used throughout the Irmin application. The templates are organized by category and provide both HTML and text versions for better email client compatibility.
+This directory contains email templates used throughout the Irmin application. The templates are embedded directly into the Go binary using `go:embed` for better performance and deployment simplicity.
 
 ## Directory Structure
 
@@ -10,6 +10,7 @@ templates/
 │   └── invitations/
 │       ├── workspace-invitation.html
 │       └── workspace-invitation.txt
+├── embedded.go
 └── README.md
 ```
 
@@ -19,6 +20,24 @@ templates/
 
 #### Invitations (`email/invitations/`)
 - **workspace-invitation**: Template for workspace invitation emails sent when users are invited to join a workspace
+
+## Template Embedding
+
+Templates are embedded at compile time using Go's `embed` package:
+
+```go
+//go:embed email/invitations/workspace-invitation.html
+var WorkspaceInvitationHTML []byte
+
+//go:embed email/invitations/workspace-invitation.txt
+var WorkspaceInvitationTXT []byte
+```
+
+This approach provides several benefits:
+- **No runtime file dependencies** - Templates are part of the binary
+- **Faster startup** - No file I/O operations needed
+- **Simpler deployment** - Single binary contains everything
+- **No "file not found" errors** - Templates guaranteed to exist
 
 ## Template Format
 
@@ -45,7 +64,7 @@ All email templates use Go's `text/template` syntax. The following variables are
 // Initialize template manager
 templateManager := utils.NewEmailTemplateManager("")
 
-// Load a specific template
+// Load a specific template (now uses embedded data)
 template, err := templateManager.LoadTemplate("workspace-invitation")
 if err != nil {
     // Handle error
@@ -71,13 +90,13 @@ textContent, err := template.RenderText(data)
 ### Template Management
 
 ```go
-// Get list of available templates
+// Get list of available templates (returns embedded template names)
 templates, err := templateManager.GetAvailableTemplates()
 
-// Preload all templates for better performance
-err := templateManager.PreloadAllTemplates()
+// Templates are automatically available at startup
+// No preloading needed since they're embedded
 
-// Clear template cache (useful for development)
+// Clear template cache (for development/testing)
 templateManager.ClearCache()
 
 // Get currently loaded templates
@@ -89,9 +108,40 @@ loaded := templateManager.GetLoadedTemplates()
 To add a new email template:
 
 1. Create both `.html` and `.txt` files in the appropriate category folder
-2. Use Go template syntax for variables (e.g., `{{.VariableName}}`)
-3. Ensure both versions contain the same information for consistency
-4. Test the template using the provided test utilities
+2. Add corresponding `//go:embed` directives in `embedded.go`
+3. Update the template loading logic in `utils/emailTemplates.go` to handle the new template
+4. Use Go template syntax for variables (e.g., `{{.VariableName}}`)
+5. Ensure both versions contain the same information for consistency
+6. Test the template using the provided test utilities
+
+### Example: Adding a new template
+
+1. Create files:
+   - `email/notifications/password-reset.html`
+   - `email/notifications/password-reset.txt`
+
+2. Add to `embedded.go`:
+   ```go
+   //go:embed email/notifications/password-reset.html
+   var PasswordResetHTML []byte
+   
+   //go:embed email/notifications/password-reset.txt
+   var PasswordResetTXT []byte
+   ```
+
+3. Update template loading logic in `utils/emailTemplates.go`:
+   ```go
+   switch templateName {
+   case "workspace-invitation":
+       htmlContent = templates.WorkspaceInvitationHTML
+       textContent = templates.WorkspaceInvitationTXT
+   case "password-reset":
+       htmlContent = templates.PasswordResetHTML
+       textContent = templates.PasswordResetTXT
+   default:
+       return nil, fmt.Errorf("template %s not found", templateName)
+   }
+   ```
 
 ### HTML Template Guidelines
 
@@ -118,17 +168,18 @@ go test ./utils/ -v -run TestEmailTemplate
 
 ## Template Security
 
-- Templates are loaded from the filesystem at runtime
+- Templates are embedded at compile time and cannot be modified at runtime
 - Template data should be properly sanitized before rendering
 - Avoid including sensitive information in template files
-- Use environment-specific template directories when needed
+- All templates are part of the binary and cannot be externally modified
 
 ## Performance Considerations
 
-- Templates are cached after first load for better performance
-- Use `PreloadAllTemplates()` during application startup for production
-- Clear cache during development to see template changes immediately
-- Consider template compilation for high-volume email sending
+- **Compile-time embedding**: Templates are loaded once during compilation
+- **Zero runtime I/O**: No file system operations needed
+- **Instant availability**: Templates ready immediately at startup
+- **Memory efficient**: Templates loaded only when first accessed
+- **No cache warming needed**: Templates available instantly
 
 ## Examples
 
@@ -149,16 +200,16 @@ The text version provides the same information in a clean, readable format for t
 
 ### Common Issues
 
-1. **Template not found**: Verify the template files exist and have correct naming
+1. **Template not found**: Verify the template is added to `embedded.go` and template loading logic
 2. **Rendering errors**: Check template syntax and variable names
 3. **Missing variables**: Ensure all template variables are provided in the data struct
-4. **File permissions**: Verify the application has read access to template files
+4. **Build errors**: Verify `//go:embed` paths are correct relative to `embedded.go`
 
 ### Debug Information
 
 Enable debug logging to see template loading and rendering details:
 
 ```go
-logger.Debug("Loading template", "name", templateName)
+logger.Debug("Loading embedded template", "name", templateName)
 logger.Debug("Template rendered", "size", len(content))
 ```
