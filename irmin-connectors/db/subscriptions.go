@@ -22,7 +22,7 @@ type Subscription struct {
 // GetAllSubscriptions retrieves all Subscription records from the database.
 func (d *Database) GetAllSubscriptions() ([]Subscription, error) {
 	var subscriptions []Subscription
-	if err := d.db.Find(&subscriptions).Error; err != nil {
+	if err := d.Find(&subscriptions).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch subscriptions: %w", err)
 	}
 	return subscriptions, nil
@@ -30,7 +30,7 @@ func (d *Database) GetAllSubscriptions() ([]Subscription, error) {
 
 // CreateSubscription inserts a new Subscription record into the database.
 func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription, error) {
-	if err := d.db.Create(subscription).Error; err != nil {
+	if err := d.Create(subscription).Error; err != nil {
 		return nil, fmt.Errorf("failed to create subscription record: %w", err)
 	}
 	return subscription, nil
@@ -38,7 +38,7 @@ func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription
 
 // DeleteSubscriptionsByOperationID removes all subscriptions associated with the specified operation ID.
 func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error {
-	if err := d.db.Where("operation_id = ?", operationID).Delete(&Subscription{}).Error; err != nil {
+	if err := d.Where("operation_id = ?", operationID).Delete(&Subscription{}).Error; err != nil {
 		return fmt.Errorf("failed to delete subscriptions: %w", err)
 	}
 	return nil
@@ -46,7 +46,7 @@ func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error {
 
 // DeleteSubscriptionsByConnectorRegistrationID removes all subscriptions associated with the specified connector registration ID.
 func (d *Database) DeleteSubscriptionsByConnectorRegistrationID(connectorRegistrationID uint) error {
-	if err := d.db.Where("connector_registration_id = ?", connectorRegistrationID).Delete(&Subscription{}).Error; err != nil {
+	if err := d.Where("connector_registration_id = ?", connectorRegistrationID).Delete(&Subscription{}).Error; err != nil {
 		return fmt.Errorf("failed to delete subscriptions: %w", err)
 	}
 	return nil

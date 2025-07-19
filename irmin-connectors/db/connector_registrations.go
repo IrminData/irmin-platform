@@ -17,7 +17,7 @@ type ConnectorRegistration struct {
 
 // CreateConnectorRegistration inserts a new ConnectorRegistration record into the database.
 func (d *Database) CreateConnectorRegistration(registration *ConnectorRegistration) (*ConnectorRegistration, error) {
-	if err := d.db.Create(registration).Error; err != nil {
+	if err := d.Create(registration).Error; err != nil {
 		return nil, fmt.Errorf("failed to create connector registration record: %w", err)
 	}
 	return registration, nil
@@ -26,7 +26,7 @@ func (d *Database) CreateConnectorRegistration(registration *ConnectorRegistrati
 // GetAllConnectorRegistrations retrieves all ConnectorRegistration records from the database.
 func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, error) {
 	var registrations []ConnectorRegistration
-	if err := d.db.Find(&registrations).Error; err != nil {
+	if err := d.Find(&registrations).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch connector registrations: %w", err)
 	}
 	return registrations, nil
@@ -35,7 +35,7 @@ func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, erro
 // GetConnectorRegistrationByID retrieves a ConnectorRegistration record from the database by ID.
 func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration, error) {
 	var registration ConnectorRegistration
-	if err := d.db.First(&registration, id).Error; err != nil {
+	if err := d.First(&registration, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch connector registration: %w", err)
 	}
 	return &registration, nil
@@ -44,7 +44,7 @@ func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration
 // GetConnectorRegistrationByConnectorName retrieves a ConnectorRegistration record from the database by the name of the connector.
 func (d *Database) GetConnectorRegistrationByConnectorName(name string) ([]ConnectorRegistration, error) {
 	var registrations []ConnectorRegistration
-	if err := d.db.Where("connector_name = ?", name).Find(&registrations).Error; err != nil {
+	if err := d.Where("connector_name = ?", name).Find(&registrations).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch connector registration: %w", err)
 	}
 	return registrations, nil
@@ -52,7 +52,7 @@ func (d *Database) GetConnectorRegistrationByConnectorName(name string) ([]Conne
 
 // DeleteConnectorRegistration removes the record with the specified ID from the database.
 func (d *Database) DeleteConnectorRegistration(id uint) error {
-	if err := d.db.Delete(&ConnectorRegistration{}, id).Error; err != nil {
+	if err := d.Delete(&ConnectorRegistration{}, id).Error; err != nil {
 		return fmt.Errorf("failed to delete connector registration: %w", err)
 	}
 	return nil

@@ -4,23 +4,20 @@
 
 A collection of deployable connectors for Irmin that enable universal interaction with external services, data sources, and export targets in a simple, standardized, stateless and safe fashion.
 
-## 📚 Documentation Quick Links
-
-- **[Concepts and Processes](concepts-and-processes.md)** - Understanding how connectors work
-- **[How to Create Connectors](how-to-create-connectors.md)** - Developer guide for building new connectors
-- **[Planned Connectors](planned-connectors.md)** - Roadmap and upcoming integrations
-- **[Future Improvements](future-improvements.md)** - Enhancement plans and architecture evolution
-
 ### Available Connectors
 
 - **[PostgreSQL](connectors/postgres/README.md)** - Database connector for PostgreSQL.
 - **[MySQL](connectors/mysql/README.md)** - Database connector for MySQL.
+- **[SFTP](connectors/sftp/README.md)** - File transfer protocol connector for SFTP.
 
 ## What are Irmin Connectors?
 
 Irmin Connectors are a collection of API services that allow the Irmin platform to interact with virtually any external system. Connectors define standardized interfaces that enable seamless data import, export, and synchronization across diverse platforms and services.
 
-For detailed information about how connectors work, the registration process, data transmission, and core concepts, see our [Concepts and Processes](concepts-and-processes.md) documentation.
+### Documentation Quick Links
+
+- **[Concepts and Processes](concepts-and-processes.md)** - Understanding how connectors work
+- **[How to Create Connectors](how-to-create-connectors.md)** - Developer guide for building new connectors
 
 ## Technology Stack
 
@@ -98,7 +95,9 @@ go build -o out
 **With flags**
 
 ```bash
-go run main.go -skip-registrations  # Skip connector registrations
+go run main.go -migrate               # Run database migrations on startup
+go run main.go -skip-registrations    # Skip connector registrations
+go run main.go -migrate -skip-registrations  # Combine both flags
 ```
 
 ### Code Quality
@@ -115,65 +114,12 @@ golangci-lint run
 golangci-lint run --fix
 ```
 
-## Documentation
+## Docker
 
-### Architecture and Concepts
+1. Build the image:
 
-- [Concepts and Processes](concepts-and-processes.md) - Core concepts, architecture, and how connectors work
+	docker build -t irmin-connectors .
 
-### For Developers
+2. Run the container, injecting your local .env file for configuration:
 
-- [How to Create Connectors](how-to-create-connectors.md) - Complete guide for building new connectors
-- [PostgreSQL Connector](connectors/postgres/README.md) - Detailed PostgreSQL connector documentation
-- [Future Improvements](future-improvements.md) - Planned enhancements and roadmap
-
-### For Users
-
-- [Planned Connectors](planned-connectors.md) - Roadmap of upcoming connectors
-- API documentation available at runtime on `/docs` endpoint
-
-## Contributing
-
-We welcome contributions from the community! Whether you want to:
-
-- **Add a New Connector**: Follow our [connector creation guide](how-to-create-connectors.md)
-- **Fix Bugs**: Check our issues for bug reports
-- **Improve Documentation**: Help make our docs even better
-- **Enhance Performance**: Optimize existing connectors
-- **Add Features**: Implement new capabilities
-
-### Contribution Process
-
-1. **Fork the Repository**: Create your own fork of the project
-2. **Create a Feature Branch**: Work on your changes in a dedicated branch
-3. **Follow Standards**: Ensure your code meets our quality standards
-4. **Write Tests**: Add appropriate tests for new functionality
-5. **Submit a Pull Request**: We'll review and provide feedback
-
-### Development Guidelines
-
-- **Code Quality**: All code must pass linting and formatting checks
-- **Testing**: Maintain or improve test coverage
-- **Documentation**: Update documentation for any changes
-- **Security**: Follow security best practices for credential handling
-- **Performance**: Consider performance implications of changes
-
-## Support and Community
-
-### Getting Help
-
-- **Documentation**: Start with our comprehensive docs
-- **Issues**: Report bugs or request features via GitHub issues
-- **Discussions**: Join community discussions for questions and ideas
-
-### Roadmap and Updates
-
-Stay updated with:
-
-- **Release Notes**: Regular updates on new features and improvements
-- **Roadmap**: Check our planned connectors and improvements
-- **Community Feedback**: Your input helps shape our development priorities
-
----
-
-**Ready to connect your data?** Start by exploring our available connectors or dive into creating your own with our comprehensive development guides.
+	docker run -p 8080:8080 --env-file .env irmin-connectors

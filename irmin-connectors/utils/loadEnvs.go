@@ -38,25 +38,16 @@ func getEnv(key string, required bool, defaultVal string) (string, error) {
 	return val, nil
 }
 
-// LoadRootEnv loads environment variables from the .env file in the project root.
-func LoadRootEnv() error {
-	rootDir, err := FindProjectRoot()
-	if err != nil {
-		return fmt.Errorf("failed to find project root: %w", err)
-	}
-	// Change to the root directory
-	err = os.Chdir(rootDir)
-	if err != nil {
-		return fmt.Errorf("failed to change to root directory: %w", err)
+// loadRootEnv loads environment variables from the .env file in the project root if it exists.
+// In production environments like Railway, this file may not exist and that's normal.
+func loadRootEnv() {
+	rootDir, findErr := FindProjectRoot()
+	if findErr != nil {
+		return
 	}
 
-	// Load the .env file
 	envPath := filepath.Join(rootDir, ".env")
-	err = godotenv.Load(envPath)
-	if err != nil {
-		return fmt.Errorf("failed to load .env file: %w", err)
-	}
-	return nil
+	_ = godotenv.Load(envPath)
 }
 
 // LoadEnv loads environment variables from the .env file in the project root,
@@ -64,9 +55,7 @@ func LoadRootEnv() error {
 // a ConnectorsEnv struct with the loaded environment variables.
 func LoadEnv() (*ConnectorsEnv, error) {
 	// Load environment variables from .env file
-	if err := LoadRootEnv(); err != nil {
-		return nil, err
-	}
+	loadRootEnv()
 
 	port, err := getEnv("PORT", false, "8080")
 	if err != nil {
