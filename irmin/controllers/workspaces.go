@@ -115,6 +115,7 @@ func (api *APIControllers) createWorkspaceInTransaction(
 			Slug:        utils.Slugify(req.Name),
 			Description: req.Description,
 			OwnerID:     user.ID,
+			Owner:       *user,
 		}
 		if createWorkspaceErr := tx.Create(&newWorkspace).Error; createWorkspaceErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating workspace", "error", createWorkspaceErr)
