@@ -37,6 +37,9 @@ WORKDIR /app
 # Copy only the compiled binary from the builder stage.
 COPY --from=builder /app/main .
 
+# Copy the public directory for static file serving
+COPY --from=builder /app/public ./public
+
 # Expose the port your application listens on.
 EXPOSE 8080
 
