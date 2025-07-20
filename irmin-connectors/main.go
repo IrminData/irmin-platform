@@ -300,9 +300,9 @@ func main() {
 	})
 
 	// Health check routes
-	app.Get(healthcheck.DefaultLivenessEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
-	app.Get(healthcheck.DefaultReadinessEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
-	app.Get(healthcheck.DefaultStartupEndpoint, healthcheck.NewHealthChecker(healthcheck.Config{}))
+	app.Get(healthcheck.LivenessEndpoint, healthcheck.New(healthcheck.Config{}))
+	app.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{}))
+	app.Get(healthcheck.StartupEndpoint, healthcheck.New(healthcheck.Config{}))
 
 	// Setup static file serving
 	app.Get("/public/*", static.New("./public"))

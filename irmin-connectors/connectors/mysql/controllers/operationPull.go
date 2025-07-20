@@ -2,7 +2,6 @@ package mysqlcontrollers
 
 import (
 	"bytes"
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -31,8 +30,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	}
 
 	// prepare context and initialise client
-	ctx := c.Context()
-	client, databaseName, err := mysqlclient.InitMySQLClient(ctx, cs.Logger, operation)
+	client, databaseName, err := mysqlclient.InitMySQLClient(c, cs.Logger, operation)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialise MySQL client: " + err.Error(),
@@ -63,7 +61,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	// determine mode by path
 	if path == "" {
 		// return every table
-		resultPaths, resultContents, getErr := getAllTablesAsFiles(ctx, client)
+		resultPaths, resultContents, getErr := getAllTablesAsFiles(c, client)
 		if getErr != nil {
 			cs.Logger.Error("failed to get all tables", "error", getErr)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -75,7 +73,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 		}
 	} else {
 		// return a single table
-		resultPath, resultContent, getErr := getTableAsFile(ctx, client, path)
+		resultPath, resultContent, getErr := getTableAsFile(c, client, path)
 		if getErr != nil {
 			cs.Logger.Error("failed to get table", "error", getErr)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -103,11 +101,11 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 // getAllTablesAsFiles writes every table in "public" as JSON files.
 // It returns a list of file paths, the file contents, and an error if one occurs.
 func getAllTablesAsFiles(
-	ctx context.Context,
+	c fiber.Ctx,
 	client *mysqlclient.MySQLClient,
 ) ([]string, [][]byte, error) {
 	// Get list of tables
-	tables, err := client.GetTables(ctx)
+	tables, err := client.GetTables(c)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get tables: %w", err)
 	}
@@ -118,7 +116,7 @@ func getAllTablesAsFiles(
 
 	// Process each table
 	for i, table := range tables {
-		resultPath, resultContent, getErr := getTableAsFile(ctx, client, table)
+		resultPath, resultContent, getErr := getTableAsFile(c, client, table)
 		if getErr != nil {
 			return nil, nil, fmt.Errorf("failed to process table %s: %w", table, getErr)
 		}
@@ -132,7 +130,7 @@ func getAllTablesAsFiles(
 // getTableAsFile creates a JSON file for a given table.
 // It returns the file path, the file content, and an error if one occurs.
 func getTableAsFile(
-	ctx context.Context,
+	c fiber.Ctx,
 	client *mysqlclient.MySQLClient,
 	table string,
 ) (string, []byte, error) {
@@ -141,7 +139,7 @@ func getTableAsFile(
 
 	// Query table data
 	query := fmt.Sprintf("SELECT * FROM %s", escapeIdentifier(table))
-	rows, err := client.Query(ctx, query)
+	rows, err := client.Query(c, query)
 	if err != nil {
 		return fileName, nil, fmt.Errorf("query failed: %w", err)
 	}

@@ -1,7 +1,6 @@
 package mysqlcontrollers
 
 import (
-	"context"
 	"fmt"
 	mysqlclient "irmin-connectors/connectors/mysql/client"
 	"irmin-connectors/models"
@@ -13,8 +12,6 @@ import (
 
 // ConfigValidate handles the configuration validation endpoint.
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
-	// Prepare a context for database ops, plus a slice to store errors.
-	ctx := c.Context()
 	var errors []string
 
 	// Default states
@@ -58,7 +55,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 		} else {
 			var connErrors []string
 			canConnect, connectionDetailsValid, connectionSettingsValid, connErrors = validateServerConnection(
-				ctx, host, port, user, password, defaultDB, database,
+				c, host, port, user, password, defaultDB, database,
 			)
 			errors = append(errors, connErrors...)
 		}
@@ -88,7 +85,7 @@ func validateConnectionDetails(host, portStr, user string) []string {
 }
 
 func validateDatabaseConnection(
-	ctx context.Context,
+	c fiber.Ctx,
 	mc *mysqlclient.MySQLClient,
 	database string,
 ) (bool, []string) {
@@ -104,7 +101,7 @@ func validateDatabaseConnection(
 	}
 	defer dbClient.Close()
 
-	if err = dbClient.ValidateCredentials(ctx); err != nil {
+	if err = dbClient.ValidateCredentials(c); err != nil {
 		errors = append(errors, fmt.Sprintf("Unable to validate credentials for database '%s': %v", database, err))
 		return false, errors
 	}
@@ -112,7 +109,7 @@ func validateDatabaseConnection(
 }
 
 func validateServerConnection(
-	ctx context.Context,
+	c fiber.Ctx,
 	host string,
 	port int,
 	user string,
@@ -132,7 +129,7 @@ func validateServerConnection(
 	}
 	defer mc.Close()
 
-	if err = mc.ValidateCredentials(ctx); err != nil {
+	if err = mc.ValidateCredentials(c); err != nil {
 		errors = append(errors, fmt.Sprintf("Invalid server credentials or unable to connect: %v", err))
 		return canConnect, connectionDetailsValid, connectionSettingsValid, errors
 	}
@@ -142,7 +139,7 @@ func validateServerConnection(
 
 	// Validate database connection if specified
 	var dbErrors []string
-	connectionSettingsValid, dbErrors = validateDatabaseConnection(ctx, mc, database)
+	connectionSettingsValid, dbErrors = validateDatabaseConnection(c, mc, database)
 	errors = append(errors, dbErrors...)
 
 	return canConnect, connectionDetailsValid, connectionSettingsValid, errors

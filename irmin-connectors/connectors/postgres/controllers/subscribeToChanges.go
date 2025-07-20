@@ -19,11 +19,8 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 		})
 	}
 
-	// Prepare a context for database operations
-	ctx := c.Context()
-
 	// Initialise the Postgres client
-	dbClient, database, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
+	dbClient, database, err := postgresclient.InitPostgresClient(c, cs.Logger, operation)
 	if err != nil || database == nil || dbClient == nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialise Postgres client: " + err.Error(),

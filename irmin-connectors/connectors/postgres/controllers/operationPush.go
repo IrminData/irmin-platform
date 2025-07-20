@@ -1,7 +1,6 @@
 package postgrescontrollers
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/json"
@@ -34,8 +33,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	}
 
 	// Initialise Postgres client
-	ctx := c.Context()
-	client, databaseName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
+	client, databaseName, err := postgresclient.InitPostgresClient(c, cs.Logger, operation)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to initialise Postgres client: " + err.Error(),
@@ -52,7 +50,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	}
 
 	// Get available tables
-	tables, err := client.GetTables(ctx)
+	tables, err := client.GetTables(c)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch tables: " + err.Error(),
@@ -82,7 +80,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 			continue
 		}
 
-		err = cs.processTableData(ctx, client, tableName, files[filePath], tables)
+		err = cs.processTableData(c, client, tableName, files[filePath], tables)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "failed to process table data: " + err.Error(),
@@ -123,14 +121,14 @@ func handleUploadedFile(c fiber.Ctx) (map[string][]byte, error) {
 
 // processTableData processes a single table's data and executes the database operations.
 func (cs *Controllers) processTableData(
-	ctx context.Context,
+	c fiber.Ctx,
 	client *postgresclient.PostgresClient,
 	tableName string,
 	fileData []byte,
 	tables []string,
 ) error {
 	if !slices.Contains(tables, tableName) {
-		cs.Logger.InfoContext(ctx, "Table does not exist", "table", tableName)
+		cs.Logger.InfoContext(c, "Table does not exist", "table", tableName)
 		return nil
 	}
 
@@ -146,7 +144,7 @@ func (cs *Controllers) processTableData(
 	columns := getSortedColumns(records[0])
 	insertSQL := buildInsertStatement(tableName, columns)
 
-	return executeTransaction(ctx, client, tableName, records, columns, insertSQL)
+	return executeTransaction(c, client, tableName, records, columns, insertSQL)
 }
 
 // getSortedColumns returns a sorted slice of column names from a record.
@@ -174,11 +172,11 @@ func buildInsertStatement(tableName string, columns []string) string {
 }
 
 // executeDelete executes the DELETE and TRUNCATE operations within a transaction.
-func executeDelete(ctx context.Context, tx *postgresclient.Tx, tableName string) error {
+func executeDelete(c fiber.Ctx, tx *postgresclient.Tx, tableName string) error {
 	// First try TRUNCATE
-	if _, truncateErr := tx.Exec(ctx, fmt.Sprintf(`TRUNCATE TABLE "%s" CASCADE`, tableName)); truncateErr != nil {
+	if _, truncateErr := tx.Exec(c, fmt.Sprintf(`TRUNCATE TABLE "%s" CASCADE`, tableName)); truncateErr != nil {
 		// If TRUNCATE fails, fall back to DELETE
-		if _, deleteErr := tx.Exec(ctx, fmt.Sprintf(`DELETE FROM "%s"`, tableName)); deleteErr != nil {
+		if _, deleteErr := tx.Exec(c, fmt.Sprintf(`DELETE FROM "%s"`, tableName)); deleteErr != nil {
 			return fmt.Errorf("failed to delete/truncate rows: %w", deleteErr)
 		}
 	}
@@ -187,7 +185,7 @@ func executeDelete(ctx context.Context, tx *postgresclient.Tx, tableName string)
 
 // executeInserts executes the INSERT operations within a transaction.
 func executeInserts(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *postgresclient.Tx,
 	records []map[string]any,
 	columns []string,
@@ -198,7 +196,7 @@ func executeInserts(
 		for i, col := range columns {
 			args[i] = record[col]
 		}
-		if _, err := tx.Exec(ctx, insertSQL, args...); err != nil {
+		if _, err := tx.Exec(c, insertSQL, args...); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
 		}
 	}
@@ -207,28 +205,28 @@ func executeInserts(
 
 // executeTransactionStep executes a single attempt of the transaction.
 func executeTransactionStep(
-	ctx context.Context,
+	c fiber.Ctx,
 	client *postgresclient.PostgresClient,
 	tableName string,
 	records []map[string]any,
 	columns []string,
 	insertSQL string,
 ) error {
-	tx, err := client.BeginTransaction(ctx)
+	tx, err := client.BeginTransaction(c)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	// defer all constraints until commit
-	if _, err = tx.Exec(ctx, "SET CONSTRAINTS ALL DEFERRED"); err != nil {
+	if _, err = tx.Exec(c, "SET CONSTRAINTS ALL DEFERRED"); err != nil {
 		// best-effort, continue even if this fails
 		_ = err
 	}
 
 	// delete existing rows
-	err = executeDelete(ctx, tx, tableName)
+	err = executeDelete(c, tx, tableName)
 	if err != nil {
-		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+		if rollbackErr := tx.Rollback(c); rollbackErr != nil {
 			// Log the rollback error but don't return it
 			_ = rollbackErr
 		}
@@ -236,9 +234,9 @@ func executeTransactionStep(
 	}
 
 	// insert each new record
-	err = executeInserts(ctx, tx, records, columns, insertSQL)
+	err = executeInserts(c, tx, records, columns, insertSQL)
 	if err != nil {
-		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+		if rollbackErr := tx.Rollback(c); rollbackErr != nil {
 			// Log the rollback error but don't return it
 			_ = rollbackErr
 		}
@@ -246,7 +244,7 @@ func executeTransactionStep(
 	}
 
 	// commit transaction
-	err = tx.Commit(ctx)
+	err = tx.Commit(c)
 	if err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -256,7 +254,7 @@ func executeTransactionStep(
 
 // executeTransaction executes the delete+insert transaction with retries.
 func executeTransaction(
-	ctx context.Context,
+	c fiber.Ctx,
 	client *postgresclient.PostgresClient,
 	tableName string,
 	records []map[string]any,
@@ -265,7 +263,7 @@ func executeTransaction(
 ) error {
 	var lastErr error
 	for attempt := 1; attempt <= utils.MaxRetries; attempt++ {
-		err := executeTransactionStep(ctx, client, tableName, records, columns, insertSQL)
+		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL)
 		if err == nil {
 			return nil
 		}

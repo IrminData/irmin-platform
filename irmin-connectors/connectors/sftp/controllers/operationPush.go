@@ -23,8 +23,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	}
 
 	// Initialize SFTP client
-	ctx := c.Context()
-	client, err := sftpclient.InitSftpClient(ctx, cs.Logger, operation)
+	client, err := sftpclient.InitSftpClient(c, cs.Logger, operation)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize SFTP client: " + err.Error(),

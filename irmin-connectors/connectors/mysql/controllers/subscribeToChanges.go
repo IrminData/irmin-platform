@@ -19,11 +19,8 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 		})
 	}
 
-	// Prepare a context for database operations
-	ctx := c.Context()
-
 	// Initialise the MySQL client
-	dbClient, database, err := mysqlclient.InitMySQLClient(ctx, cs.Logger, operation)
+	dbClient, database, err := mysqlclient.InitMySQLClient(c, cs.Logger, operation)
 	if err != nil || database == nil || dbClient == nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialise MySQL client: " + err.Error(),

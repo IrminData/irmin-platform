@@ -1,13 +1,13 @@
 module irmin-connectors
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.3
 
 require (
 	github.com/IrminData/irmin-sdk-go v0.0.0-20250718121618-0c24201a1d49
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/gofiber/fiber/v3 v3.0.0-beta.4
+	github.com/gofiber/fiber/v3 v3.0.0-beta.5
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/pkg/sftp v1.13.9
@@ -22,7 +22,6 @@ require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
@@ -52,7 +51,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.64.0 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
-	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect

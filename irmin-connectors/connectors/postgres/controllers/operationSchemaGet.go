@@ -25,11 +25,8 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		})
 	}
 
-	// Get the context
-	ctx := c.Context()
-
 	// Initialise Postgres client
-	client, dbName, err := postgresclient.InitPostgresClient(ctx, cs.Logger, operation)
+	client, dbName, err := postgresclient.InitPostgresClient(c, cs.Logger, operation)
 	if err != nil || client == nil || dbName == nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialise Postgres client: " + err.Error(),
@@ -38,7 +35,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	defer client.Close()
 
 	// List tables
-	tables, err := client.GetTables(ctx)
+	tables, err := client.GetTables(c)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch tables: " + err.Error(),
@@ -49,7 +46,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	children := make([]irminmodels.ObjectSchema, 0, len(tables))
 	for _, tbl := range tables {
 		var cols []postgresclient.ColumnInfo
-		cols, err = client.GetTableStructure(ctx, tbl)
+		cols, err = client.GetTableStructure(c, tbl)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": fmt.Sprintf("Failed to fetch structure for table '%s': %v", tbl, err),

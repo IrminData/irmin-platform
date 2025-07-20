@@ -26,8 +26,8 @@ github.com/go-playground/validator/v10 v10.27.0 h1:w8+XrWVMhGkxOaaowyKH35gFydVHO
 github.com/go-playground/validator/v10 v10.27.0/go.mod h1:I5QpIEbmr8On7W0TktmJAumgzX4CA1XNl4ZmDuVHKKo=
 github.com/go-sql-driver/mysql v1.9.3 h1:U/N249h2WzJ3Ukj8SowVFjdtZKfu9vlLZxjPXV1aweo=
 github.com/go-sql-driver/mysql v1.9.3/go.mod h1:qn46aNg1333BRMNU69Lq93t8du/dwxI64Gl8i5p1WMU=
-github.com/gofiber/fiber/v3 v3.0.0-beta.4 h1:KzDSavvhG7m81NIsmnu5l3ZDbVS4feCidl4xlIfu6V0=
-github.com/gofiber/fiber/v3 v3.0.0-beta.4/go.mod h1:/WFUoHRkZEsGHyy2+fYcdqi109IVOFbVwxv1n1RU+kk=
+github.com/gofiber/fiber/v3 v3.0.0-beta.5 h1:MSGbiQZEYiYOqti2Ip2zMRkN4VvZw7Vo7dwZBa1Qjk8=
+github.com/gofiber/fiber/v3 v3.0.0-beta.5/go.mod h1:XmI2Agulde26YcQrA2n8X499I1p98/zfCNbNObVUeP8=
 github.com/gofiber/schema v1.6.0 h1:rAgVDFwhndtC+hgV7Vu5ItQCn7eC2mBA4Eu1/ZTiEYY=
 github.com/gofiber/schema v1.6.0/go.mod h1:WNZWpQx8LlPSK7ZaX0OqOh+nQo/eW2OevsXs1VZfs/s=
 github.com/gofiber/utils/v2 v2.0.0-beta.13 h1:dlpbGFLveQ9OduL2UHw4dtu4lXE+Gb3bHMc+8Yxp/dk=

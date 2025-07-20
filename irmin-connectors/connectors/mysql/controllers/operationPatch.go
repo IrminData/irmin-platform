@@ -1,7 +1,6 @@
 package mysqlcontrollers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,8 +26,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 	}
 
 	// Initialise the MySQL client
-	ctx := c.Context()
-	dbClient, database, err := mysqlclient.InitMySQLClient(ctx, cs.Logger, operation)
+	dbClient, database, err := mysqlclient.InitMySQLClient(c, cs.Logger, operation)
 	if err != nil || database == nil || dbClient == nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialise MySQL client: " + err.Error(),
@@ -78,7 +76,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 		_, tableName, rowIdentifier, columnName := utils.ExtractPathComponents(op.Path)
 
 		// Execute the operation in its own transaction
-		if err = executePatchOperation(ctx, dbClient, op, tableName, rowIdentifier, columnName); err != nil {
+		if err = executePatchOperation(c, dbClient, op, tableName, rowIdentifier, columnName); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
@@ -93,13 +91,13 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 
 // executePatchOperation executes a single patch operation within its own transaction.
 func executePatchOperation(
-	ctx context.Context,
+	c fiber.Ctx,
 	dbClient *mysqlclient.MySQLClient,
 	op irminmodels.PatchOperation,
 	tableName, rowIdentifier, columnName string,
 ) error {
 	// Start a transaction for this operation
-	tx, err := dbClient.BeginTransaction(ctx)
+	tx, err := dbClient.BeginTransaction(c)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -122,15 +120,15 @@ func executePatchOperation(
 	var opErr error
 	switch op.Op {
 	case "add":
-		opErr = handleAddOperation(ctx, tx, tableName, op.Value)
+		opErr = handleAddOperation(c, tx, tableName, op.Value)
 	case "remove":
-		opErr = handleRemoveOperation(ctx, tx, tableName, rowIdentifier)
+		opErr = handleRemoveOperation(c, tx, tableName, rowIdentifier)
 	case "replace":
-		opErr = handleReplaceOperation(ctx, tx, tableName, rowIdentifier, columnName, op.Value)
+		opErr = handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, op.Value)
 	case "move":
-		opErr = handleMoveOperation(ctx, tx, op, tableName, rowIdentifier, columnName)
+		opErr = handleMoveOperation(c, tx, op, tableName, rowIdentifier, columnName)
 	case "copy":
-		opErr = handleCopyOperation(ctx, tx, op, tableName, rowIdentifier, columnName)
+		opErr = handleCopyOperation(c, tx, op, tableName, rowIdentifier, columnName)
 	default:
 		return fmt.Errorf("invalid operation type: %s", op.Op)
 	}
@@ -149,7 +147,7 @@ func executePatchOperation(
 }
 
 // handleAddOperation handles the "add" patch operation.
-func handleAddOperation(ctx context.Context, tx *mysqlclient.Tx, tableName string, value any) error {
+func handleAddOperation(c fiber.Ctx, tx *mysqlclient.Tx, tableName string, value any) error {
 	// Make sure the value is an object
 	newRow, ok := value.(map[string]any)
 	if !ok {
@@ -181,7 +179,7 @@ func handleAddOperation(ctx context.Context, tx *mysqlclient.Tx, tableName strin
 	}
 
 	// Execute the INSERT
-	if _, execErr := tx.Exec(ctx, insertSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(c, insertSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to insert row: %w", execErr)
 	}
 
@@ -189,9 +187,9 @@ func handleAddOperation(ctx context.Context, tx *mysqlclient.Tx, tableName strin
 }
 
 // handleRemoveOperation handles the "remove" patch operation.
-func handleRemoveOperation(ctx context.Context, tx *mysqlclient.Tx, tableName string, rowIdentifier any) error {
+func handleRemoveOperation(c fiber.Ctx, tx *mysqlclient.Tx, tableName string, rowIdentifier any) error {
 	// Get primary key columns for this table
-	primaryKeys, err := getPrimaryKeyColumns(ctx, tx, tableName)
+	primaryKeys, err := getPrimaryKeyColumns(c, tx, tableName)
 	if err != nil {
 		return fmt.Errorf("failed to get primary key columns: %w", err)
 	}
@@ -203,7 +201,7 @@ func handleRemoveOperation(ctx context.Context, tx *mysqlclient.Tx, tableName st
 	}
 
 	deleteSQL := fmt.Sprintf("DELETE FROM %s WHERE %s", escapeIdentifier(tableName), whereClause)
-	if _, execErr := tx.Exec(ctx, deleteSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(c, deleteSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to remove row: %w", execErr)
 	}
 	return nil
@@ -211,7 +209,7 @@ func handleRemoveOperation(ctx context.Context, tx *mysqlclient.Tx, tableName st
 
 // handleReplaceOperation handles the "replace" patch operation.
 func handleReplaceOperation(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	tableName string,
 	rowIdentifier any,
@@ -219,7 +217,7 @@ func handleReplaceOperation(
 	value any,
 ) error {
 	// Get primary key columns for this table
-	primaryKeys, err := getPrimaryKeyColumns(ctx, tx, tableName)
+	primaryKeys, err := getPrimaryKeyColumns(c, tx, tableName)
 	if err != nil {
 		return fmt.Errorf("failed to get primary key columns: %w", err)
 	}
@@ -239,7 +237,7 @@ func handleReplaceOperation(
 			whereClause,
 		)
 		args := append([]any{value}, whereArgs...)
-		if _, execErr := tx.Exec(ctx, updateSQL, args...); execErr != nil {
+		if _, execErr := tx.Exec(c, updateSQL, args...); execErr != nil {
 			return fmt.Errorf("failed to replace column value: %w", execErr)
 		}
 		return nil
@@ -273,7 +271,7 @@ func handleReplaceOperation(
 	// Append the WHERE arguments
 	args = append(args, whereArgs...)
 
-	if _, execErr := tx.Exec(ctx, updateSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(c, updateSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to replace row: %w", execErr)
 	}
 
@@ -282,7 +280,7 @@ func handleReplaceOperation(
 
 // handleMoveOperation handles the "move" patch operation.
 func handleMoveOperation(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	op irminmodels.PatchOperation,
 	tableName string,
@@ -303,7 +301,7 @@ func handleMoveOperation(
 	switch {
 	case sourceIsColumn && destIsColumn:
 		return handleColumnToColumnMove(
-			ctx,
+			c,
 			tx,
 			fromTable,
 			fromRowID,
@@ -313,7 +311,7 @@ func handleMoveOperation(
 			columnName,
 		)
 	case !sourceIsColumn && !destIsColumn:
-		return handleRowToRowMove(ctx, tx, fromTable, fromRowID, tableName, rowIdentifier)
+		return handleRowToRowMove(c, tx, fromTable, fromRowID, tableName, rowIdentifier)
 	default:
 		return errors.New("unsupported move: cannot move row to a single column or vice versa")
 	}
@@ -321,7 +319,7 @@ func handleMoveOperation(
 
 // handleColumnToColumnMove handles moving a value from one column to another.
 func handleColumnToColumnMove(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	fromTable string,
 	fromRowID any,
@@ -331,13 +329,13 @@ func handleColumnToColumnMove(
 	toColumnName string,
 ) error {
 	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
 	if fromPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
 	}
 
 	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
 	if toPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
 	}
@@ -359,7 +357,7 @@ func handleColumnToColumnMove(
 		escapeIdentifier(fromColumnName), escapeIdentifier(fromTable), fromWhereClause,
 	)
 	var columnValue any
-	if queryRowErr := tx.QueryRow(ctx, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
+	if queryRowErr := tx.QueryRow(c, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
 		return fmt.Errorf("failed to retrieve source column for move: %w", queryRowErr)
 	}
 
@@ -368,7 +366,7 @@ func handleColumnToColumnMove(
 		"UPDATE %s SET %s = NULL WHERE %s",
 		escapeIdentifier(fromTable), escapeIdentifier(fromColumnName), fromWhereClause,
 	)
-	if _, execErr := tx.Exec(ctx, updateSourceSQL, fromWhereArgs...); execErr != nil {
+	if _, execErr := tx.Exec(c, updateSourceSQL, fromWhereArgs...); execErr != nil {
 		return fmt.Errorf("failed to clear source column in move: %w", execErr)
 	}
 
@@ -378,7 +376,7 @@ func handleColumnToColumnMove(
 		escapeIdentifier(toTable), escapeIdentifier(toColumnName), toWhereClause,
 	)
 	args := append([]any{columnValue}, toWhereArgs...)
-	if _, execErr := tx.Exec(ctx, updateDestSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(c, updateDestSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to write destination column in move: %w", execErr)
 	}
 
@@ -387,7 +385,7 @@ func handleColumnToColumnMove(
 
 // handleRowToRowMove handles moving an entire row from one table to another.
 func handleRowToRowMove(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	fromTable string,
 	fromRowID any,
@@ -395,13 +393,13 @@ func handleRowToRowMove(
 	toRowID any,
 ) error {
 	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
 	if fromPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
 	}
 
 	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
 	if toPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
 	}
@@ -414,7 +412,7 @@ func handleRowToRowMove(
 
 	// 1) SELECT * from the source row
 	selectSQL := fmt.Sprintf("SELECT * FROM %s WHERE %s", escapeIdentifier(fromTable), fromWhereClause)
-	rows, queryErr := tx.Query(ctx, selectSQL, fromWhereArgs...)
+	rows, queryErr := tx.Query(c, selectSQL, fromWhereArgs...)
 	if queryErr != nil {
 		return fmt.Errorf("failed to retrieve source row for move: %w", queryErr)
 	}
@@ -454,7 +452,7 @@ func handleRowToRowMove(
 
 	// 2) DELETE the source row
 	deleteSQL := fmt.Sprintf("DELETE FROM %s WHERE %s", escapeIdentifier(fromTable), fromWhereClause)
-	if _, execErr := tx.Exec(ctx, deleteSQL, fromWhereArgs...); execErr != nil {
+	if _, execErr := tx.Exec(c, deleteSQL, fromWhereArgs...); execErr != nil {
 		return fmt.Errorf("failed to remove source row in move: %w", execErr)
 	}
 
@@ -493,7 +491,7 @@ func handleRowToRowMove(
 		strings.Join(insertColumns, ", "),
 		strings.Join(placeholders, ", "),
 	)
-	if _, execErr := tx.Exec(ctx, insertSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(c, insertSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to insert row into destination table in move: %w", execErr)
 	}
 
@@ -502,7 +500,7 @@ func handleRowToRowMove(
 
 // handleCopyOperation handles the "copy" patch operation.
 func handleCopyOperation(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	op irminmodels.PatchOperation,
 	tableName string,
@@ -521,7 +519,7 @@ func handleCopyOperation(
 	switch {
 	case sourceIsColumn && destIsColumn:
 		return handleColumnToColumnCopy(
-			ctx,
+			c,
 			tx,
 			fromTable,
 			fromRowID,
@@ -531,7 +529,7 @@ func handleCopyOperation(
 			columnName,
 		)
 	case !sourceIsColumn && !destIsColumn:
-		return handleRowToRowCopy(ctx, tx, fromTable, fromRowID, tableName, rowIdentifier)
+		return handleRowToRowCopy(c, tx, fromTable, fromRowID, tableName, rowIdentifier)
 	default:
 		return errors.New("unsupported copy: cannot copy row to a single column or vice versa")
 	}
@@ -539,7 +537,7 @@ func handleCopyOperation(
 
 // handleColumnToColumnCopy handles copying a value from one column to another.
 func handleColumnToColumnCopy(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	fromTable string,
 	fromRowID any,
@@ -549,13 +547,13 @@ func handleColumnToColumnCopy(
 	toColumnName string,
 ) error {
 	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
 	if fromPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
 	}
 
 	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
 	if toPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
 	}
@@ -577,7 +575,7 @@ func handleColumnToColumnCopy(
 		escapeIdentifier(fromColumnName), escapeIdentifier(fromTable), fromWhereClause,
 	)
 	var columnValue any
-	if queryRowErr := tx.QueryRow(ctx, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
+	if queryRowErr := tx.QueryRow(c, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
 		return fmt.Errorf("failed to retrieve source column for copy: %w", queryRowErr)
 	}
 
@@ -587,7 +585,7 @@ func handleColumnToColumnCopy(
 		escapeIdentifier(toTable), escapeIdentifier(toColumnName), toWhereClause,
 	)
 	args := append([]any{columnValue}, toWhereArgs...)
-	if _, execErr := tx.Exec(ctx, updateDestSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(c, updateDestSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to write destination column in copy: %w", execErr)
 	}
 
@@ -596,7 +594,7 @@ func handleColumnToColumnCopy(
 
 // handleRowToRowCopy handles copying an entire row from one table to another.
 func handleRowToRowCopy(
-	ctx context.Context,
+	c fiber.Ctx,
 	tx *mysqlclient.Tx,
 	fromTable string,
 	fromRowID any,
@@ -604,13 +602,13 @@ func handleRowToRowCopy(
 	toRowID any,
 ) error {
 	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, fromTable)
+	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
 	if fromPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
 	}
 
 	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(ctx, tx, toTable)
+	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
 	if toPrimaryKeysErr != nil {
 		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
 	}
@@ -623,7 +621,7 @@ func handleRowToRowCopy(
 
 	// 1) SELECT * from the source row
 	selectSQL := fmt.Sprintf("SELECT * FROM %s WHERE %s", escapeIdentifier(fromTable), fromWhereClause)
-	rows, queryErr := tx.Query(ctx, selectSQL, fromWhereArgs...)
+	rows, queryErr := tx.Query(c, selectSQL, fromWhereArgs...)
 	if queryErr != nil {
 		return fmt.Errorf("failed to retrieve source row for copy: %w", queryErr)
 	}
@@ -694,7 +692,7 @@ func handleRowToRowCopy(
 		strings.Join(insertColumns, ", "),
 		strings.Join(placeholders, ", "),
 	)
-	if _, execErr := tx.Exec(ctx, insertSQL, args...); execErr != nil {
+	if _, execErr := tx.Exec(c, insertSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to insert row into destination table in copy: %w", execErr)
 	}
 
