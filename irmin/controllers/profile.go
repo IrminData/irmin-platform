@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"encoding/json"
 	"irmin-api/db"
 	"irmin-api/formatter"
@@ -100,34 +99,32 @@ func (api *APIControllers) updateUserFields(irminUser *db.User, req *irmincore.U
 }
 
 // updateClerkUserData coordinates all Clerk user updates.
-func (api *APIControllers) updateClerkUserData(ctx context.Context, irminUser *db.User) error {
+func (api *APIControllers) updateClerkUserData(c fiber.Ctx, irminUser *db.User) error {
 	// Set up Clerk client
 	clerk.SetKey(api.Env.ClerkSecretKey)
 
 	// Get user from Clerk
-	clerkUser, getUserErr := user.Get(ctx, irminUser.ClerkID)
+	clerkUser, getUserErr := user.Get(c, irminUser.ClerkID)
 	if getUserErr != nil {
 		return getUserErr
 	}
 
 	// Update email and phone in Clerk
-	primaryEmailID, updateEmailErr := api.updateClerkEmail(ctx, clerkUser, irminUser)
+	primaryEmailID, updateEmailErr := api.updateClerkEmail(c, clerkUser, irminUser)
 	if updateEmailErr != nil {
 		return updateEmailErr
 	}
 
-	primaryPhoneID, updatePhoneErr := api.updateClerkPhone(ctx, clerkUser, irminUser)
+	primaryPhoneID, updatePhoneErr := api.updateClerkPhone(c, clerkUser, irminUser)
 	if updatePhoneErr != nil {
 		return updatePhoneErr
 	}
 
 	// Update profile in Clerk
-	return api.updateClerkProfile(ctx, irminUser, primaryEmailID, primaryPhoneID)
+	return api.updateClerkProfile(c, irminUser, primaryEmailID, primaryPhoneID)
 }
 
 func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
-	ctx := c.Context()
-
 	// Get the dictionary and user from the request context
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	irminUser, irminUserOk := c.Locals("user").(*db.User)
@@ -146,7 +143,7 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 	}
 
 	// Update user in a single atomic transaction that handles both profile picture and fields
-	if updateErr := api.updateCompleteProfileInTransaction(ctx, irminUser, req, form); updateErr != nil {
+	if updateErr := api.updateCompleteProfileInTransaction(c, irminUser, req, form); updateErr != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -169,7 +166,7 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 
 // updateCompleteProfileInTransaction handles the atomic update of both profile fields and profile picture.
 func (api *APIControllers) updateCompleteProfileInTransaction(
-	ctx context.Context,
+	c fiber.Ctx,
 	irminUser *db.User,
 	req *irmincore.UpdateProfileRequest,
 	form *multipart.Form,
@@ -181,7 +178,7 @@ func (api *APIControllers) updateCompleteProfileInTransaction(
 			profilePictureFiles := form.File["profile_picture"]
 			if len(profilePictureFiles) > 0 {
 				profilePictureFile := profilePictureFiles[0]
-				if updateErr := api.updateProfilePictureInClerk(ctx, irminUser, profilePictureFile); updateErr != nil {
+				if updateErr := api.updateProfilePictureInClerk(c, irminUser, profilePictureFile); updateErr != nil {
 					api.Logger.Error("Error updating profile picture in Clerk", "error", updateErr)
 					return updateErr
 				}
@@ -198,7 +195,7 @@ func (api *APIControllers) updateCompleteProfileInTransaction(
 		}
 
 		// Update Clerk user data (email, phone, profile info)
-		if updateErr := api.updateClerkUserData(ctx, irminUser); updateErr != nil {
+		if updateErr := api.updateClerkUserData(c, irminUser); updateErr != nil {
 			api.Logger.Error("Error updating user data in Clerk", "error", updateErr)
 			return updateErr
 		}
@@ -211,7 +208,7 @@ func (api *APIControllers) updateCompleteProfileInTransaction(
 
 // updateProfilePictureInClerk handles updating the user's profile picture in Clerk only (no database transaction).
 func (api *APIControllers) updateProfilePictureInClerk(
-	ctx context.Context,
+	c fiber.Ctx,
 	irminUser *db.User,
 	newProfilePicture *multipart.FileHeader,
 ) error {
@@ -222,7 +219,7 @@ func (api *APIControllers) updateProfilePictureInClerk(
 	defer newProfilePictureSrc.Close()
 
 	// Update profile picture in Clerk
-	clerkUser, err := user.UpdateProfileImage(ctx, irminUser.ClerkID, &user.UpdateProfileImageParams{
+	clerkUser, err := user.UpdateProfileImage(c, irminUser.ClerkID, &user.UpdateProfileImageParams{
 		File: newProfilePictureSrc,
 	})
 	if err != nil {
@@ -237,7 +234,7 @@ func (api *APIControllers) updateProfilePictureInClerk(
 
 // updateClerkEmail handles updating or creating a user's email in Clerk.
 func (api *APIControllers) updateClerkEmail(
-	ctx context.Context,
+	c fiber.Ctx,
 	clerkUser *clerk.User,
 	irminUser *db.User,
 ) (string, error) {
@@ -250,7 +247,7 @@ func (api *APIControllers) updateClerkEmail(
 	}
 	if primaryEmailID == "" {
 		verified := true // In the future, we need to actually verify the email.
-		newClerkEmail, err := emailaddress.Create(ctx, &emailaddress.CreateParams{
+		newClerkEmail, err := emailaddress.Create(c, &emailaddress.CreateParams{
 			UserID:       &irminUser.ClerkID,
 			EmailAddress: &irminUser.Email,
 			Verified:     &verified,
@@ -265,7 +262,7 @@ func (api *APIControllers) updateClerkEmail(
 
 // updateClerkPhone handles updating or creating a user's phone in Clerk.
 func (api *APIControllers) updateClerkPhone(
-	ctx context.Context,
+	c fiber.Ctx,
 	clerkUser *clerk.User,
 	irminUser *db.User,
 ) (string, error) {
@@ -278,7 +275,7 @@ func (api *APIControllers) updateClerkPhone(
 	}
 	if primaryPhoneID == "" {
 		verified := true // In the future, we need to actually verify the phone number.
-		newClerkPhone, err := phonenumber.Create(ctx, &phonenumber.CreateParams{
+		newClerkPhone, err := phonenumber.Create(c, &phonenumber.CreateParams{
 			UserID:      &irminUser.ClerkID,
 			PhoneNumber: &irminUser.Phone,
 			Verified:    &verified,
@@ -293,11 +290,11 @@ func (api *APIControllers) updateClerkPhone(
 
 // updateClerkProfile handles updating the user's profile information in Clerk.
 func (api *APIControllers) updateClerkProfile(
-	ctx context.Context,
+	c fiber.Ctx,
 	irminUser *db.User,
 	primaryEmailID, primaryPhoneID string,
 ) error {
-	_, err := user.Update(ctx, irminUser.ClerkID, &user.UpdateParams{
+	_, err := user.Update(c, irminUser.ClerkID, &user.UpdateParams{
 		FirstName:             &irminUser.FirstName,
 		LastName:              &irminUser.LastName,
 		PrimaryEmailAddressID: &primaryEmailID,

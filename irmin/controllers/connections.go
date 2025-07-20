@@ -398,7 +398,7 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 	// Get the schema of the connection
 	scm := lib.NewSchemaCacheManager(api.Env, api.Logger, api.DB)
 	schema, getConnectionSchemaErr := scm.GetConnectionSchema(
-		c.Context(),
+		c,
 		connection,
 		operationMethod,
 		locale,

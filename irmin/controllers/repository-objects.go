@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -88,7 +87,7 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 
 	// Get the object from the data engine
 	object, err := lib.GetObject(
-		c.Context(),
+		c,
 		params.locale,
 		api.DB,
 		api.Logger,
@@ -209,7 +208,7 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		}
 	}
 
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
@@ -295,7 +294,7 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		})
 	}
 
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(objectLocalParams.dict, "error_occurred")},
@@ -386,7 +385,7 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -455,13 +454,13 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 
 // deleteObjectInTransaction handles the transactional deletion of objects from both Data Engine and database.
 func (api *APIControllers) deleteObjectInTransaction(
-	ctx context.Context,
+	c fiber.Ctx,
 	objectLocalParams *objectLocalParams,
 ) error {
 	// Initialize Data Engine client outside transaction
-	dataEngine, err := engine.NewClient(ctx, objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
-		api.Logger.ErrorContext(ctx, "error creating data engine client", "error", err)
+		api.Logger.Error("error creating data engine client", "error", err)
 		return err
 	}
 
@@ -495,7 +494,7 @@ func (api *APIControllers) deleteObjectInTransaction(
 
 	// If transaction failed, log the error
 	if transactionErr != nil {
-		api.Logger.ErrorContext(ctx, "Transaction failed for object deletion", "error", transactionErr)
+		api.Logger.ErrorContext(c, "Transaction failed for object deletion", "error", transactionErr)
 		return transactionErr
 	}
 
@@ -511,7 +510,7 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 	}
 
 	// Use database transaction to ensure atomicity
-	transactionErr := api.deleteObjectInTransaction(c.Context(), objectLocalParams)
+	transactionErr := api.deleteObjectInTransaction(c, objectLocalParams)
 	if transactionErr != nil {
 		api.Logger.Error("Transaction failed for object deletion", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -547,7 +546,7 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -595,7 +594,7 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -619,7 +618,7 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 
 	// Parse the file content
 	parsedResults, parseStructuredFileErr := lib.ParseStructuredFiles(
-		c.Context(),
+		c,
 		map[string][]byte{objectLocalParams.object.Path: content},
 		api.Env,
 		api.Logger,
@@ -652,7 +651,7 @@ func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -711,7 +710,7 @@ func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), objectLocalParams.locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -749,7 +748,7 @@ func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 	// Get the schema of the object in the repository at ref
 	scm := lib.NewSchemaCacheManager(api.Env, api.Logger, api.DB)
 	schema, getObjectSchemaErr := scm.GetObjectSchema(
-		c.Context(),
+		c,
 		objectLocalParams.workspace,
 		objectLocalParams.repository,
 		objectLocalParams.object,

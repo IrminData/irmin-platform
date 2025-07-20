@@ -25,9 +25,6 @@ func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Create a context for the request
-	ctx := c.Context()
-
 	// Get the path from the query parameters
 	params, parseQueryParamsErr := utils.ParseQueryParams(c, nil, []string{"path"})
 	if parseQueryParamsErr != nil {
@@ -59,7 +56,7 @@ func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 	key := editorPathPrefix + path
 
 	// Get the editor items at the specified path
-	items, listObjectsErr := bucket.ListObjects(ctx, key)
+	items, listObjectsErr := bucket.ListObjects(c, key)
 	if listObjectsErr != nil {
 		api.Logger.Error("Error listing editor items", "error", listObjectsErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -138,7 +135,7 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 	}
 
 	// Upload the content to S3
-	writePathErr := bucket.WritePath(c.Context(), key, content)
+	writePathErr := bucket.WritePath(c, key, content)
 	if writePathErr != nil {
 		api.Logger.Error("Error uploading object", "error", writePathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -204,7 +201,7 @@ func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error {
 	keyPrefix := editorPathPrefix + path
 
 	// Delete all objects under the prefix
-	deletePathErr := bucket.DeletePath(c.Context(), keyPrefix)
+	deletePathErr := bucket.DeletePath(c, keyPrefix)
 	if deletePathErr != nil {
 		api.Logger.Error("Error deleting editor items", "error", deletePathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -283,8 +280,6 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 	}
 	defer bucket.Close()
 
-	ctx := c.Context()
-
 	// Format the workspace's base path prefix
 	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
 	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
@@ -297,7 +292,7 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 	destinationPrefix := editorPathPrefix + destinationPath
 
 	// Move or copy the source to the destination
-	duplicatePathErr := bucket.DuplicatePath(ctx, sourcePrefix, destinationPrefix, isMove)
+	duplicatePathErr := bucket.DuplicatePath(c, sourcePrefix, destinationPrefix, isMove)
 	if duplicatePathErr != nil {
 		api.Logger.Error("Error transferring editor items", "error", duplicatePathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -380,7 +375,7 @@ func (api *APIControllers) EditorItemContent(c fiber.Ctx) error {
 	key := editorPathPrefix + path
 
 	// Retrieve the file from S3
-	content, readPathErr := bucket.ReadPath(c.Context(), key)
+	content, readPathErr := bucket.ReadPath(c, key)
 	if readPathErr != nil {
 		api.Logger.Error("Error reading object", "error", readPathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -431,7 +426,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 	// Check if we have input data repositories and paths
 	if len(req.Input) > 0 {
 		// Initialize Data Engine client
-		dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+		dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 		if createDataEngineClientErr != nil {
 			api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -480,7 +475,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 	// Execute the file in the compute sandbox
 	computeSandbox := sandbox.NewComputeSandbox(api.Env, api.DB, api.Logger)
 	computeResult, executeEditorItemErr := computeSandbox.ExecuteEditorItem(
-		c.Context(),
+		c,
 		inputFiles,
 		*user,
 		path,
@@ -497,7 +492,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 
 	// Parse the structured result files if any
 	parsedResults, parseStructuredFileErr := lib.ParseStructuredFiles(
-		c.Context(),
+		c,
 		computeResult.ResultFiles,
 		api.Env,
 		api.Logger,

@@ -30,7 +30,7 @@ func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

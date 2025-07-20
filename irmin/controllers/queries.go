@@ -348,7 +348,7 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -403,7 +403,7 @@ func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

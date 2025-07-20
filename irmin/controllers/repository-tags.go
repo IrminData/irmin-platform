@@ -30,7 +30,7 @@ func (api *APIControllers) RepositoryTagsIndex(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -76,7 +76,7 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -134,7 +134,7 @@ func (api *APIControllers) RepositoryTagsDestroy(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

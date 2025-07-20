@@ -30,7 +30,7 @@ func (api *APIMiddlewares) RepositoryMiddleware(c fiber.Ctx) error {
 
 	// Get the repository by its slug and workspace ID.
 	repository, err := lib.GetRepository(
-		c.Context(),
+		c,
 		locale,
 		api.DB,
 		api.Logger,

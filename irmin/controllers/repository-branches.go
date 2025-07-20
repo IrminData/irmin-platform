@@ -26,7 +26,7 @@ func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -35,7 +35,7 @@ func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
 	}
 
 	// Get the branch from the data engine.
-	branches, err := dataEngine.ListBranches(c.Context(), workspace.Slug, repository.Slug)
+	branches, err := dataEngine.ListBranches(c, workspace.Slug, repository.Slug)
 	if err != nil {
 		api.Logger.Error("Error retrieving branches from Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
@@ -86,7 +86,7 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 	isImmutable := req.IsImmutable
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -168,7 +168,7 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -178,7 +178,7 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 
 	// Update the branch in the data engine.
 	branch, err = dataEngine.UpdateBranch(
-		c.Context(),
+		c,
 		workspace.Slug,
 		repository.Slug,
 		branch.Name,
@@ -228,7 +228,7 @@ func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -271,7 +271,7 @@ func (api *APIControllers) RepositoryGetUncommittedChanges(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

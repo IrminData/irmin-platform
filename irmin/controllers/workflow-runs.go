@@ -33,12 +33,9 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Get the request context.
-	ctx := c.Context()
-
 	// Create a new workflow run.
 	var run *db.WorkflowRun
-	transactionErr := api.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	transactionErr := api.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
 		var err error
 		run, err = lib.CreateWorkflowRun(tx, workflow, user, nil)
 		if err != nil {

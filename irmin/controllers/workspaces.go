@@ -188,7 +188,7 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 	}
 
 	// Use database transaction to ensure atomicity
-	newWorkspace, transactionErr := api.createWorkspaceInTransaction(c.Context(), req, user)
+	newWorkspace, transactionErr := api.createWorkspaceInTransaction(c, req, user)
 	if transactionErr != nil {
 		api.Logger.Error("Transaction failed for workspace creation", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -341,7 +341,7 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	}
 
 	// Delete the workspace editor items folder.
-	deletePathErr := bucket.DeletePath(c.Context(), editorPathPrefix)
+	deletePathErr := bucket.DeletePath(c, editorPathPrefix)
 	if deletePathErr != nil {
 		api.Logger.Error("Error deleting workspace editor items folder", "error", deletePathErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

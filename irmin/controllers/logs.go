@@ -195,7 +195,7 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 	}
 
 	// Format the log events
-	formattedEvents, err := api.formatLogEventsResponse(c.Context(), filteredEvents)
+	formattedEvents, err := api.formatLogEventsResponse(c, filteredEvents)
 	if err != nil {
 		api.Logger.Error("Error formatting log events", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

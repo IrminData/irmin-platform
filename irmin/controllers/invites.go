@@ -334,7 +334,7 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	}
 
 	// Create the invitation with enhanced error handling
-	inviteResult, transactionErr := api.sendInviteInTransaction(c.Context(), req, role, user, workspace, locale)
+	inviteResult, transactionErr := api.sendInviteInTransaction(c, req, role, user, workspace, locale)
 	if transactionErr != nil {
 		api.Logger.Error("Transaction failed for invite creation", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -577,7 +577,7 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	}
 
 	// Use database transaction to ensure atomicity
-	transactionErr := api.deleteInviteInTransaction(c.Context(), invite)
+	transactionErr := api.deleteInviteInTransaction(c, invite)
 	if transactionErr != nil {
 		api.Logger.Error("Transaction failed for invite deletion", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -609,7 +609,7 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	}
 
 	// Use database transaction to ensure atomicity
-	transactionErr := api.resendInviteInTransaction(c.Context(), invite, locale)
+	transactionErr := api.resendInviteInTransaction(c, invite, locale)
 	if transactionErr != nil {
 		api.Logger.Error("Transaction failed for invite resend", "error", transactionErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

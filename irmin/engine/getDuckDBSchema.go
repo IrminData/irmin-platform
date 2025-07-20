@@ -93,9 +93,10 @@ func parseField(name, typ string, required bool) SchemaField {
 	return SchemaField{Name: name, Type: typ, Required: required}
 }
 
-// getDuckDBSchema runs DuckDB introspection on a JSON file and returns a schema with required flags.
+// getDuckDBSchema runs DuckDB introspection on a structured file and returns a schema with required flags.
+// Supports multiple formats including JSON, CSV, Parquet, Avro, ORC, Excel, and more.
 // Steps:
-//   - create a temp view via read_json_auto placeholder
+//   - create a temp view using the appropriate DuckDB read function for the file format
 //   - query information_schema.columns for column_name, data_type, is_nullable
 //   - parse each into SchemaField, setting Required = is_nullable == "NO"
 //     and recursively parse STRUCT fields.

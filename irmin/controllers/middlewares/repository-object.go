@@ -39,7 +39,7 @@ func (api *APIMiddlewares) RepositoryObjectMiddleware(c fiber.Ctx) error {
 
 	// Get the requested object.
 	repositoryObjectDB, err := lib.GetObject(
-		c.Context(),
+		c,
 		locale,
 		api.DB,
 		api.Logger,

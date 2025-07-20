@@ -80,8 +80,6 @@ func (api *APIMiddlewares) setCachedAuth(token string, user *db.User) {
 
 // AuthMiddleware handles the user authentication for the API, tokens and user details syncing with Clerk.
 func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
-	ctx := c.Context()
-
 	// Get the locale from the context
 	locale, localeOk := c.Locals("locale").(string)
 	if !localeOk {
@@ -126,7 +124,7 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 	}
 
 	// Sync user with Clerk and Novu (atomic, under lock)
-	irminUser, err = api.syncUserWithClerkAndNovu(ctx, irminUser, clerkID, locale)
+	irminUser, err = api.syncUserWithClerkAndNovu(c, irminUser, clerkID, locale)
 	if err != nil {
 		api.Logger.Error("Error syncing user with Clerk/Novu", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
@@ -187,13 +185,13 @@ func (api *APIMiddlewares) validateAndGetUserFromToken(token string) (*db.User, 
 
 // syncUserWithClerkAndNovu synchronizes user data with Clerk and Novu atomically under a lock.
 func (api *APIMiddlewares) syncUserWithClerkAndNovu(
-	ctx context.Context,
+	c fiber.Ctx,
 	irminUser *db.User,
 	clerkID string,
 	locale string,
 ) (*db.User, error) {
 	// Get the user details from Clerk
-	clerkUser, primaryEmail, primaryPhone, err := api.getUserFromClerk(ctx, clerkID)
+	clerkUser, primaryEmail, primaryPhone, err := api.getUserFromClerk(c, clerkID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user details from Clerk: %w", err)
 	}
@@ -232,11 +230,11 @@ func (api *APIMiddlewares) syncUserWithClerkAndNovu(
 		subscriber, novuErr := lib.EnsureNovuSubscriber(novuCtx, api.SQIDManager, api.Env, locale, irminUser)
 		switch {
 		case novuErr != nil:
-			api.Logger.ErrorContext(ctx, "Error ensuring Novu subscriber", "error", novuErr)
+			api.Logger.ErrorContext(c, "Error ensuring Novu subscriber", "error", novuErr)
 		case subscriber != nil && subscriber.ID != nil:
 			irminUser.NovuSubscriberID = *subscriber.ID
 		case subscriber != nil && subscriber.ID == nil:
-			api.Logger.ErrorContext(ctx, "Novu subscriber created but ID is nil", "subscriber", subscriber)
+			api.Logger.ErrorContext(c, "Novu subscriber created but ID is nil", "subscriber", subscriber)
 		}
 	}
 
@@ -249,12 +247,12 @@ func (api *APIMiddlewares) syncUserWithClerkAndNovu(
 }
 
 // getUserFromClerk gets the user from Clerk and returns the user, primary email and primary phone number.
-func (api *APIMiddlewares) getUserFromClerk(ctx context.Context, clerkID string) (*clerk.User, string, string, error) {
+func (api *APIMiddlewares) getUserFromClerk(c fiber.Ctx, clerkID string) (*clerk.User, string, string, error) {
 	// Set the API key with your Clerk Secret Key.
 	clerk.SetKey(api.Env.ClerkSecretKey)
 
 	// Get the user details from Clerk.
-	clerkUser, getUserFromClerkErr := user.Get(ctx, clerkID)
+	clerkUser, getUserFromClerkErr := user.Get(c, clerkID)
 	if getUserFromClerkErr != nil {
 		return nil, "", "", getUserFromClerkErr
 	}

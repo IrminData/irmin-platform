@@ -37,7 +37,7 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	compareRef := params["compare_ref"]
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -46,7 +46,7 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	}
 
 	// Compare the refs
-	diff, err := dataEngine.CompareRefs(c.Context(), workspace.Slug, repository.Slug, baseRef, compareRef)
+	diff, err := dataEngine.CompareRefs(c, workspace.Slug, repository.Slug, baseRef, compareRef)
 	if err != nil {
 		api.Logger.Error("Error comparing refs", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -91,7 +91,7 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 	allowEmpty := req.AllowEmpty
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

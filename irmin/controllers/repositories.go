@@ -310,7 +310,7 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(
-		c.Context(),
+		c,
 		locale,
 		api.Logger,
 		api.Env,
@@ -339,7 +339,7 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		// If we have a data engine repository, try to delete it
 		if dataEngineRepository != nil {
 			go func() {
-				if cleanupErr := dataEngine.DeleteRepository(c.Context(), workspace.Slug, repositorySlug, false); cleanupErr != nil {
+				if cleanupErr := dataEngine.DeleteRepository(c, workspace.Slug, repositorySlug, false); cleanupErr != nil {
 					api.Logger.Error(
 						"Failed to cleanup Data Engine repository",
 						"error",
@@ -428,7 +428,7 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(
-		c.Context(),
+		c,
 		repositoryLocalParams.locale,
 		api.Logger,
 		api.Env,
@@ -442,7 +442,7 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 
 	// Use database transaction to ensure atomicity
 	transactionErr := api.deleteRepositoryInTransaction(
-		c.Context(),
+		c,
 		dataEngine,
 		repositoryLocalParams.repository,
 		repositoryLocalParams.workspace,
@@ -517,7 +517,7 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(
-		c.Context(),
+		c,
 		repositoryLocalParams.locale,
 		api.Logger,
 		api.Env,

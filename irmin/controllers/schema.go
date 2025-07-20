@@ -18,11 +18,11 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	}
 
 	// Fetch connections and repositories concurrently
-	connectionsFuture := utils.AsyncWithContext(c.Context(), func() ([]db.Connection, error) {
+	connectionsFuture := utils.AsyncWithContext(c, func() ([]db.Connection, error) {
 		return api.DB.GetConnectionsByWorkspaceID(workspace.ID)
 	})
 
-	repositoriesFuture := utils.AsyncWithContext(c.Context(), func() ([]db.Repository, error) {
+	repositoriesFuture := utils.AsyncWithContext(c, func() ([]db.Repository, error) {
 		return api.DB.GetRepositoriesInWorkspace(workspace.ID)
 	})
 
@@ -50,8 +50,8 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	connectionSchemaFutures := make([]utils.FutureResult[*irminmodels.ObjectSchema], len(connections))
 	for i, connection := range connections {
 		conn := connection // Create a new variable to avoid closure issues
-		connectionSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
-			return scm.GetConnectionSchema(c.Context(), &conn, "pull", locale, false)
+		connectionSchemaFutures[i] = utils.AsyncWithContext(c, func() (*irminmodels.ObjectSchema, error) {
+			return scm.GetConnectionSchema(c, &conn, "pull", locale, false)
 		})
 	}
 
@@ -59,9 +59,9 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	rootGroupSchemaFutures := make([]utils.FutureResult[*irminmodels.ObjectSchema], len(repositories))
 	for i, repository := range repositories {
 		repo := repository // Create a new variable to avoid closure issues
-		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c.Context(), func() (*irminmodels.ObjectSchema, error) {
+		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c, func() (*irminmodels.ObjectSchema, error) {
 			return scm.GetObjectSchema(
-				c.Context(),
+				c,
 				workspace,
 				&repo,
 				&db.RepositoryObject{

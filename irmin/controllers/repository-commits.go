@@ -37,7 +37,7 @@ func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 	pagination := parseCursorPaginationParams(params)
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -116,7 +116,7 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -175,7 +175,7 @@ func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -215,7 +215,7 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
 		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

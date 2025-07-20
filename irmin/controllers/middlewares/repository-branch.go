@@ -30,7 +30,7 @@ func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c.Context(), locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
 	if err != nil {
 		api.Logger.Error("error creating data engine client", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -39,7 +39,7 @@ func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the branch from the data engine.
-	dataEngineBranch, err := dataEngine.GetBranch(c.Context(), workspace.Slug, repository.Slug, branchName)
+	dataEngineBranch, err := dataEngine.GetBranch(c, workspace.Slug, repository.Slug, branchName)
 	if err != nil {
 		api.Logger.Error("Error retrieving branch from Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
