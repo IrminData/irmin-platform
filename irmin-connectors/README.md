@@ -28,6 +28,7 @@ Irmin Connectors are a collection of API services that allow the Irmin platform 
 - **Database**: PostgreSQL for reliable data storage
 - **Authentication**: JWT-based token systems
 - **Logging**: Structured logging with configurable levels
+- **Templates**: Embedded HTML templates for connector detail pages
 
 ### Development Tools
 

@@ -66,7 +66,7 @@ These endpoints are called during active operations and require an operation tok
 
 #### Public Endpoints
 
-- **`GET /{connector-slug}/details`** - Public information about the connector
+- **`GET /{connector-slug}/details`** - Public information about the connector (uses HTML templates)
 
 ### 4. Authentication
 
@@ -129,7 +129,100 @@ Connectors should treat all data as files:
 
 This provides a consistent interface regardless of the underlying data source.
 
-### 8. Implementation Steps
+### 8. Connector Detail Pages and Templates
+
+Each connector should provide a public details page that explains its capabilities and configuration. These pages use a templating system for consistency and maintainability.
+
+#### Template System
+
+The connector project uses embedded HTML templates located in the `templates/` directory:
+
+```
+templates/
+├── connector-details/
+│   ├── mysql.html
+│   ├── postgres.html
+│   └── sftp.html
+├── embedded.go
+└── templates.go
+```
+
+#### Adding a Details Page Template
+
+1. **Create the HTML template:**
+   ```html
+   <!-- templates/connector-details/your-connector.html -->
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <title>{{.Title}}</title>
+       <!-- Include inline CSS for styling -->
+   </head>
+   <body>
+       <img src="{{.LogoPath}}" alt="{{.LogoAlt}}">
+       <h1>{{.Title}}</h1>
+       <p>{{.Description}}</p>
+       <!-- Additional content -->
+   </body>
+   </html>
+   ```
+
+2. **Add to embedded.go:**
+   ```go
+   //go:embed connector-details/your-connector.html
+   var YourConnectorDetailsHTML []byte
+   ```
+
+3. **Update the template manager** in `templates/templates.go` to include your connector:
+   ```go
+   case "your-connector":
+       htmlContent = YourConnectorDetailsHTML
+   ```
+
+4. **Implement the details page controller:**
+   ```go
+   func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
+       templateManager := templates.NewConnectorTemplateManager()
+       template, err := templateManager.LoadTemplate("your-connector")
+       if err != nil {
+           return c.Status(fiber.StatusInternalServerError).SendString("Error loading template")
+       }
+
+       data := templates.ConnectorDetailsData{
+           Title:       "IRMIN Your Connector - Details",
+           Description: "Description of your connector's capabilities...",
+           LogoPath:    "/public/your-connector.png",
+           LogoAlt:     "Your Connector Logo",
+           EventListeningDescription: "Description of event capabilities...",
+           DocsPath:    "/your-connector/docs",
+       }
+
+       htmlContent, err := template.RenderHTML(data)
+       if err != nil {
+           return c.Status(fiber.StatusInternalServerError).SendString("Error rendering template")
+       }
+
+       c.Set("Content-Type", "text/html")
+       return c.Status(fiber.StatusOK).SendString(htmlContent)
+   }
+   ```
+
+#### Template Data Structure
+
+All templates use the `ConnectorDetailsData` structure:
+
+```go
+type ConnectorDetailsData struct {
+    Title                    string  // Page title
+    Description              string  // Connector description
+    LogoPath                 string  // Path to connector logo
+    LogoAlt                  string  // Alt text for logo
+    EventListeningDescription string  // Event capabilities description
+    DocsPath                 string  // Link to documentation
+}
+```
+
+### 9. Implementation Steps
 
 1. **Copy an existing connector** (e.g., postgres) as a template
 2. **Modify the models** to match your external system's requirements
@@ -140,7 +233,7 @@ This provides a consistent interface regardless of the underlying data source.
 7. **Add your connector to connectors.go** in all required functions
 8. **Test thoroughly** with various configurations and data types
 
-### 9. Best Practices
+### 10. Best Practices
 
 - **Security**: Never store credentials permanently, only during operations
 - **Error Handling**: Provide clear, actionable error messages
@@ -149,7 +242,7 @@ This provides a consistent interface regardless of the underlying data source.
 - **Logging**: Add comprehensive logging for debugging and monitoring
 - **Documentation**: Document all configuration fields and their purposes
 
-### 10. Example Implementation Pattern
+### 11. Example Implementation Pattern
 
 ```go
 // routes.go
@@ -168,7 +261,7 @@ func SetupRoutes(app *models.ConnectorsApp) {
 }
 ```
 
-### 11. Testing Your Connector
+### 12. Testing Your Connector
 
 Before submitting:
 1. Test connector registration with Irmin API
@@ -177,6 +270,3 @@ Before submitting:
 4. Validate error handling scenarios
 5. Check authentication mechanisms work properly
 
-## Need Help?
-
-If you're stuck or have questions about implementing a connector, feel free to open an issue or reach out to the team. We're here to help make connector development as smooth as possible!

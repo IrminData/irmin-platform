@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo img {
+            max-width: 200px;
+            height: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #34495e;
+            border-bottom: 2px solid #336791;
+            padding-bottom: 10px;
+        }
+        ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #336791;
+            margin: 20px 0;
+        }
+        .docs-link {
+            display: inline-block;
+            background-color: #336791;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .docs-link:hover {
+            background-color: #2a5373;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="{{.LogoPath}}" alt="{{.LogoAlt}}">
+        </div>
+        
+        <h1>{{.Title}}</h1>
+        
+        <div class="section">
+            <p>{{.Description}}</p>
+        </div>
+        
+        <div class="section">
+            <h2>Connection Setup</h2>
+            <p>Steps for establishing the connection:</p>
+            <ul>
+                <li><strong>Credential Validation:</strong> The provided host, port, user, and password are validated to ensure the proper setup before any operation.</li>
+                <li><strong>Database Selection:</strong> An optional database field allows operators to specify which database to target.</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>Data Operations</h2>
+            <p>Data movement operations are implemented as follows:</p>
+            <ul>
+                <li><strong>Push:</strong> Existing data in a target table is cleared and replaced in a single transaction by truncating the table and inserting new rows.</li>
+                <li><strong>Pull:</strong> Data can be fetched for entire tables or individual rows, returning the results as downloadable JSON files.</li>
+                <li><strong>Patch:</strong> Both row-level and column-level modifications are performed using atomic transactions to ensure data consistency.</li>
+            </ul>
+        </div>
+        
+        <div class="highlight">
+            <strong>Event Listening:</strong> {{.EventListeningDescription}}
+        </div>
+        
+        <a href="{{.DocsPath}}" class="docs-link">Read connector documentation</a>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo img {
+            max-width: 200px;
+            height: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e67e22;
+            padding-bottom: 10px;
+        }
+        ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #e67e22;
+            margin: 20px 0;
+        }
+        .note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .docs-link {
+            display: inline-block;
+            background-color: #e67e22;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .docs-link:hover {
+            background-color: #d35400;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="{{.LogoPath}}" alt="{{.LogoAlt}}">
+        </div>
+        
+        <h1>{{.Title}}</h1>
+        
+        <div class="section">
+            <p>{{.Description}}</p>
+        </div>
+        
+        <div class="section">
+            <h2>Connection Setup</h2>
+            <p>Steps for establishing the connection:</p>
+            <ul>
+                <li><strong>Credential Validation:</strong> The provided host, port, username, and authentication credentials (password or SSH key) are validated to ensure proper setup before any operation.</li>
+                <li><strong>Path Configuration:</strong> An optional remote_path field allows operators to specify the target directory on the SFTP server.</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>File Transfer Operations</h2>
+            <p>File transfer operations are implemented as follows:</p>
+            <ul>
+                <li><strong>Push:</strong> Local files are securely transferred to the remote SFTP server, with support for various file types including text, binary, and archive files.</li>
+                <li><strong>Pull:</strong> Files can be downloaded from the SFTP server based on specified patterns or individual file selection.</li>
+                <li><strong>File Patterns:</strong> Supports pattern-based file selection for bulk operations using standard file globbing patterns.</li>
+            </ul>
+        </div>
+        
+        <div class="highlight">
+            <strong>Authentication Methods:</strong> {{.EventListeningDescription}}
+        </div>
+        
+        <div class="note">
+            <strong>Note:</strong> SFTP is a file transfer protocol and does not support real-time event listening or subscriptions like database connectors.
+        </div>
+        
+        <a href="{{.DocsPath}}" class="docs-link">Read connector documentation</a>
+    </div>
+</body>
+</html> 
