@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { ConnectionCreationSkeleton } from '@/components/ui/loading/ConnectionCreationSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -76,7 +76,7 @@ export default function DefineSettings({
   );
 
   if (connectionConfigurationQuery.isLoading) {
-    return <LoadingSpinner />;
+    return <ConnectionCreationSkeleton variant='form' />;
   }
 
   if (connectionConfigurationQuery.isError) {
@@ -88,12 +88,12 @@ export default function DefineSettings({
   }
 
   return (
-    <div className='p-4 pb-6'>
+    <div className='space-y-6'>
       {/* Display Connector Information */}
       {connectionData.connector && (
         <div
           className={`
-            flex flex-col justify-center border-b py-4
+            flex flex-col justify-center border-b pb-4
             dark:border-gray-800
           `}
         >
@@ -120,12 +120,7 @@ export default function DefineSettings({
       />
 
       {/* Go Back Button */}
-      <Button
-        className='mb-6 inline-block w-full'
-        variant='ghost'
-        size='sm'
-        onClick={goBack}
-      >
+      <Button className='w-full' variant='ghost' size='sm' onClick={goBack}>
         {dict.connections.create.goBack}
       </Button>
     </div>

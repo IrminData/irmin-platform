@@ -61,14 +61,15 @@ export default function SideModal({
           <div className='flex h-full flex-col justify-start'>
             <div
               className={`
-                z-10 mb-2 flex w-full items-center justify-between gap-4 px-4
-                pt-16
+                sticky top-0 z-10 mb-4 flex w-full items-center justify-between
+                gap-4 border-b bg-background px-6 py-4
+                dark:border-gray-800
               `}
             >
               <h3
                 className={`
-                  text-lg
-                  lg:text-xl
+                  text-xl font-semibold
+                  lg:text-2xl
                 `}
               >
                 {title}
@@ -76,74 +77,87 @@ export default function SideModal({
               <ButtonWithTooltip
                 size='icon'
                 variant='ghost'
-                className='rounded-full'
+                className={`
+                  rounded-full
+                  hover:bg-gray-100
+                  dark:hover:bg-gray-800
+                `}
                 onClick={() => closeModal()}
                 aria-label={closeLabel}
                 tooltip={closeLabel}
-                icon={<IoClose size={24} />}
+                icon={<IoClose size={20} />}
               />
             </div>
             {steps && currentStep && steps.length > 1 && (
               <div
                 className={`
-                  flex items-center justify-start gap-3 space-x-4 px-6 py-4
+                  mx-6 mb-6 rounded-lg bg-gray-50 p-4
+                  dark:bg-gray-900
                 `}
               >
-                {steps.map((step, index) => (
-                  <div
-                    className={`
-                      flex flex-col items-center justify-center gap-2
-                      text-center
-                      sm:flex-row sm:text-left
-                      ${index === steps.length - 1 ? '' : 'mr-0'}
-                    `}
-                    key={step}
-                  >
+                <div className='flex items-center justify-between'>
+                  {steps.map((step, index) => (
                     <div
                       className={`
-                        flex aspect-square w-8 items-center justify-center
-                        rounded-full text-sm text-white
-                        lg:text-lg
-                        ${
-                          currentStep >= index + 1
-                            ? 'bg-accent'
-                            : `
-                              bg-gray-300
-                              dark:bg-gray-600
-                            `
-                        }
+                        flex flex-1 items-center
+                        ${index < steps.length - 1 ? 'mr-4' : ''}
                       `}
+                      key={step}
                     >
-                      {index + 1}
+                      <div className='flex items-center'>
+                        <div
+                          className={`
+                            flex size-8 items-center justify-center rounded-full
+                            text-sm font-semibold text-white
+                            ${
+                              currentStep >= index + 1
+                                ? 'bg-accent shadow-md'
+                                : `
+                                  bg-gray-300
+                                  dark:bg-gray-600
+                                `
+                            }
+                          `}
+                        >
+                          {index + 1}
+                        </div>
+                        <span
+                          className={`
+                            ml-3 text-sm font-medium
+                            ${
+                              currentStep >= index + 1
+                                ? 'text-accent'
+                                : `
+                                  text-gray-600
+                                  dark:text-gray-400
+                                `
+                            }
+                          `}
+                        >
+                          {step}
+                        </span>
+                      </div>
+                      {index < steps.length - 1 && (
+                        <div
+                          className={`
+                            ml-4 flex-1 border-t-2
+                            ${
+                              currentStep > index + 1
+                                ? 'border-accent'
+                                : `
+                                  border-gray-300
+                                  dark:border-gray-600
+                                `
+                            }
+                          `}
+                        />
+                      )}
                     </div>
-                    <span
-                      className={`
-                        mt-2 shrink text-xs
-                        sm:mt-0
-                        lg:text-sm
-                        ${
-                          currentStep >= index + 1
-                            ? 'text-accent'
-                            : `
-                              text-gray-700
-                              dark:text-gray-300
-                            `
-                        }
-                      `}
-                    >
-                      {step}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
-            <hr
-              className={`
-                border-t shadow-xs
-                dark:border-gray-800
-              `}
-            />
-            <div className='grow overflow-y-scroll pb-12'>{children}</div>
+            <div className='flex-1 overflow-y-auto px-6 pb-6'>{children}</div>
           </div>
         </div>
       </div>

@@ -88,11 +88,11 @@ export default function ConfigureConnection({
   };
 
   return (
-    <div className='p-4 pb-6'>
+    <div className='space-y-6'>
       {connectionData.connector && (
         <div
           className={`
-            flex flex-col justify-center border-b py-4
+            flex flex-col justify-center border-b pb-4
             dark:border-gray-800
           `}
         >
@@ -119,12 +119,7 @@ export default function ConfigureConnection({
       />
 
       {/* Go Back Button */}
-      <Button
-        className='mb-6 inline-block w-full'
-        variant='ghost'
-        size='sm'
-        onClick={goBack}
-      >
+      <Button className='w-full' variant='ghost' size='sm' onClick={goBack}>
         {dict.connections.create.goBack}
       </Button>
     </div>

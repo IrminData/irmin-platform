@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '**.railway.app',
+        port: '',
+      },
+      {
+        protocol: 'https',
         hostname: 'img.clerk.com',
         port: '',
       },

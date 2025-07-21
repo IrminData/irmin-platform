@@ -9,7 +9,7 @@ import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { ConnectionCreationSkeleton } from '@/components/ui/loading/ConnectionCreationSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -87,15 +87,15 @@ export default function SelectConnector({
   }, [selectedConnector, irminAlert, goNext, setConnectionData]);
 
   if (connectorsQuery.isLoading) {
-    return <LoadingSpinner />;
+    return <ConnectionCreationSkeleton variant='connectors' />;
   }
 
   return (
-    <form onSubmit={handleContinue} className='flex w-full flex-col px-4 pb-6'>
+    <form onSubmit={handleContinue} className='flex w-full flex-col space-y-6'>
       {selectedConnector && (
         <div
           className={`
-            flex flex-col justify-center border-b py-4
+            flex flex-col justify-center border-b pb-4
             dark:border-gray-800
           `}
         >
@@ -108,7 +108,7 @@ export default function SelectConnector({
       {/* Category Filter */}
       <div
         className={`
-          flex w-full flex-wrap gap-2 border-b py-4
+          flex w-full flex-wrap gap-2 border-b pb-4
           dark:border-gray-800
         `}
       >
@@ -124,7 +124,7 @@ export default function SelectConnector({
         ))}
       </div>
       {/* Connector Selection */}
-      <div className='flex flex-wrap gap-2 py-4'>
+      <div className='flex flex-wrap gap-2'>
         {filteredConnectors.map((connector) => (
           <button
             type='button'
@@ -165,7 +165,7 @@ export default function SelectConnector({
       </div>
       <div
         className={`
-          mt-auto border-t pt-4
+          border-t pt-4
           dark:border-gray-800
         `}
       >
@@ -179,7 +179,7 @@ export default function SelectConnector({
           {dict.connections.create.confirmConnectorSelection}
         </Button>
       </div>
-      <div className='flex items-center justify-between pt-4'>
+      <div className='flex items-center justify-between'>
         <Button
           variant='secondary'
           size='sm'

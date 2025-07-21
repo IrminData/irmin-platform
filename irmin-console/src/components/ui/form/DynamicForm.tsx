@@ -53,8 +53,43 @@ export default function DynamicForm({
     }, {} as DynamicFieldValues),
   });
 
+  // Sort fields to ensure consistent ordering
+  const sortedFields = useCallback(() => {
+    const entries = Object.entries(fields);
+
+    // Sort by field importance: required fields first, then by type priority
+    const getFieldPriority = (field: DynamicFields[string]) => {
+      const typePriority: Record<string, number> = {
+        text: 1,
+        email: 2,
+        password: 3,
+        integer: 4,
+        float: 5,
+        select: 6,
+        radio: 7,
+        checkbox: 8,
+        date: 9,
+        datetime: 10,
+        time: 11,
+        textarea: 12,
+        file: 13,
+      };
+
+      const typeScore = typePriority[field.type] || 100;
+      const requiredScore = field.required ? 0 : 1000;
+
+      return requiredScore + typeScore;
+    };
+
+    return entries.sort((a, b) => {
+      const priorityA = getFieldPriority(a[1]);
+      const priorityB = getFieldPriority(b[1]);
+      return priorityA - priorityB;
+    });
+  }, [fields]);
+
   const renderFields = useCallback(() => {
-    return Object.entries(fields).map(([key, field]) => (
+    return sortedFields().map(([key, field]) => (
       <div key={key}>
         <Controller
           name={key}
@@ -75,18 +110,47 @@ export default function DynamicForm({
                     message: `Maximum value is ${field.max}`,
                   }
                 : undefined,
-            validate: field.required_with
-              ? (value) => {
-                  const otherValues = getValues(field.required_with!);
-                  const anyOtherFieldFilled = Object.values(otherValues).some(
-                    (val) => !!val
-                  );
-                  if (anyOtherFieldFilled && !value) {
-                    return `${field.label} is required`;
+            validate: {
+              requiredWith: field.required_with
+                ? (value) => {
+                    const otherValues = getValues(field.required_with!);
+                    const anyOtherFieldFilled = Object.values(otherValues).some(
+                      (val) => !!val
+                    );
+                    if (anyOtherFieldFilled && !value) {
+                      return `${field.label} is required when other related fields are filled`;
+                    }
+                    return true;
                   }
-                  return true;
-                }
-              : undefined,
+                : undefined,
+              email:
+                field.type === 'email'
+                  ? (value) => {
+                      if (!value) return true; // Allow empty unless required
+                      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                      return (
+                        emailRegex.test(value) ||
+                        'Please enter a valid email address'
+                      );
+                    }
+                  : undefined,
+              integer:
+                field.type === 'integer'
+                  ? (value) => {
+                      if (!value) return true;
+                      const isInteger = Number.isInteger(Number(value));
+                      return isInteger || 'Please enter a valid integer';
+                    }
+                  : undefined,
+              float:
+                field.type === 'float'
+                  ? (value) => {
+                      if (!value) return true;
+                      const isNumber = !isNaN(Number(value));
+                      return isNumber || 'Please enter a valid number';
+                    }
+                  : undefined,
+            },
           }}
           render={({ field: fieldProps, fieldState }) => (
             <>
@@ -101,7 +165,7 @@ export default function DynamicForm({
         />
       </div>
     ));
-  }, [control, getValues, fields]);
+  }, [control, getValues, sortedFields]);
 
   return (
     <form

@@ -1,10 +1,11 @@
+import { useState } from 'react';
+
+import { ConnectorInfoModal } from '@/components/connector/ConnectorInfoModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
-
-import { useBaseUrl } from '@/hooks/utils';
 
 import type { Connector } from '@/types/core/Connector';
 
@@ -17,14 +18,7 @@ import type { Connector } from '@/types/core/Connector';
  */
 const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
   const { dict } = useLocale();
-
-  // The base URL for the workspace, eg. /en/workspace/workspace-slug
-  const workspaceUrl = useBaseUrl({
-    pathname: '',
-    segment: 'workspace',
-    includeSegment: true,
-    segmentsAfter: 1,
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className='flex items-center space-x-4'>
@@ -47,16 +41,17 @@ const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
           >
             {connector.name}
           </h2>
-          <Button
-            variant='gray'
-            size='sm'
-            href={`${workspaceUrl}/connectors/${connector.id}`}
-          >
+          <Button variant='gray' size='sm' onClick={() => setIsModalOpen(true)}>
             {dict.common.readMore}
           </Button>
         </div>
         <p className='text-sm text-gray-500'>{connector.description}</p>
       </div>
+      <ConnectorInfoModal
+        connector={connector}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };
