@@ -42,7 +42,7 @@ export default function SideModal({
     <div
       className={`
         fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs
-        ${isOpen ? '' : `hidden`}
+        ${!isOpen && 'hidden'}
       `}
     >
       <div className='relative size-full'>
@@ -100,7 +100,7 @@ export default function SideModal({
                     <div
                       className={`
                         flex flex-1 items-center
-                        ${index < steps.length - 1 ? 'mr-4' : ''}
+                        ${index >= steps.length - 1 && 'mr-4'}
                       `}
                       key={step}
                     >

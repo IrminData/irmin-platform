@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 
-import { ConnectorInfoModal } from '@/components/connector/ConnectorInfoModal';
+import ConnectorInfoModal from '@/components/connector/ConnectorInfoModal';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -25,9 +25,11 @@ export default function ConnectionConnectorPage() {
   // Close modal and navigate back when modal is closed
   const handleModalClose = () => {
     setIsModalOpen(false);
-    
+
     // Navigate to parent connection page to ensure users stay within the application
-    router.push(`/${params.lang}/workspace/${params.workspace}/connections/${params.connection}`);
+    router.push(
+      `/${params.lang}/workspace/${params.workspace}/connections/${params.connection}`
+    );
   };
 
   if (connectionQuery.isLoading) return <LoadingSpinner />;

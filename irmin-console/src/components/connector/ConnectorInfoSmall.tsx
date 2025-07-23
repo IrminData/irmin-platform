@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { ConnectorInfoModal } from '@/components/connector/ConnectorInfoModal';
+import ConnectorInfoModal from '@/components/connector/ConnectorInfoModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

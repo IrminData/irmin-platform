@@ -111,45 +111,42 @@ export default function DynamicForm({
                   }
                 : undefined,
             validate: {
-              requiredWith: field.required_with
-                ? (value) => {
-                    const otherValues = getValues(field.required_with!);
-                    const anyOtherFieldFilled = Object.values(otherValues).some(
-                      (val) => !!val
-                    );
-                    if (anyOtherFieldFilled && !value) {
-                      return `${field.label} is required when other related fields are filled`;
-                    }
-                    return true;
+              ...(field.required_with && {
+                requiredWith: (value) => {
+                  const otherValues = getValues(field.required_with!);
+                  const anyOtherFieldFilled = Object.values(otherValues).some(
+                    (val) => !!val
+                  );
+                  if (anyOtherFieldFilled && !value) {
+                    return `${field.label} is required when other related fields are filled`;
                   }
-                : undefined,
-              email:
-                field.type === 'email'
-                  ? (value) => {
-                      if (!value) return true; // Allow empty unless required
-                      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                      return (
-                        emailRegex.test(value) ||
-                        'Please enter a valid email address'
-                      );
-                    }
-                  : undefined,
-              integer:
-                field.type === 'integer'
-                  ? (value) => {
-                      if (!value) return true;
-                      const isInteger = Number.isInteger(Number(value));
-                      return isInteger || 'Please enter a valid integer';
-                    }
-                  : undefined,
-              float:
-                field.type === 'float'
-                  ? (value) => {
-                      if (!value) return true;
-                      const isNumber = !isNaN(Number(value));
-                      return isNumber || 'Please enter a valid number';
-                    }
-                  : undefined,
+                  return true;
+                },
+              }),
+              ...(field.type === 'email' && {
+                email: (value) => {
+                  if (!value) return true; // Allow empty unless required
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  return (
+                    emailRegex.test(String(value)) ||
+                    'Please enter a valid email address'
+                  );
+                },
+              }),
+              ...(field.type === 'integer' && {
+                integer: (value) => {
+                  if (!value) return true;
+                  const isInteger = Number.isInteger(Number(value));
+                  return isInteger || 'Please enter a valid integer';
+                },
+              }),
+              ...(field.type === 'float' && {
+                float: (value) => {
+                  if (!value) return true;
+                  const isNumber = !isNaN(Number(value));
+                  return isNumber || 'Please enter a valid number';
+                },
+              }),
             },
           }}
           render={({ field: fieldProps, fieldState }) => (

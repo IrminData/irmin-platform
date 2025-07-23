@@ -22,7 +22,7 @@ interface ConnectorInfoModalProps {
 /**
  * Modal component to display detailed connector information
  */
-export function ConnectorInfoModal({
+function ConnectorInfoModal({
   connector,
   isOpen,
   onClose,
@@ -62,9 +62,7 @@ export function ConnectorInfoModal({
             bg-background p-6
           `}
         >
-          <h2 className='text-xl font-semibold'>
-            {dict.connectors.connectorInfo || 'Connector Information'}
-          </h2>
+          <h2 className='text-xl font-semibold'>{dict.connectors.connector}</h2>
           <ButtonWithTooltip
             size='icon'
             variant='ghost'
@@ -198,3 +196,5 @@ export function ConnectorInfoModal({
     </div>
   );
 }
+
+export default ConnectorInfoModal;

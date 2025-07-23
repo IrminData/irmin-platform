@@ -135,12 +135,11 @@ export default function SelectConnector({
               hover:opacity-80
               dark:bg-gray-800 dark:text-gray-200
               ${
-                selectedConnector?.id === connector.id
-                  ? `
-                    outline outline-gray-800
-                    dark:outline-gray-200
-                  `
-                  : ''
+                selectedConnector?.id === connector.id &&
+                `
+                  outline outline-gray-800
+                  dark:outline-gray-200
+                `
               }
             `}
             key={`connector-${connector.id}`}
