@@ -214,7 +214,15 @@ func (d *Database) executeSearchByType(
 	case "users":
 		return d.searchUsersWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
 	case "repository_objects":
-		return d.searchRepositoryObjectsWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+		return d.searchRepositoryObjectsWithCursor(
+			ctx,
+			workspaceID,
+			searchQuery,
+			filters,
+			parsedQuery,
+			pagination,
+			limit,
+		)
 	case "invites":
 		return d.searchInvitesWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
 	default:
