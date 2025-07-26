@@ -132,7 +132,7 @@ export const ConnectionCreationSkeleton = ({
         >
           {Array.from({ length: 4 }, (_, i) => (
             <div
-              key={i}
+              key={`category-filter-${i}`}
               className={`
                 h-8 w-20 animate-pulse rounded bg-gray-200
                 dark:bg-gray-800
@@ -144,7 +144,7 @@ export const ConnectionCreationSkeleton = ({
         {/* Connectors Grid Skeleton */}
         <div className='flex flex-wrap gap-2'>
           {Array.from({ length: 6 }, (_, i) => (
-            <SkeletonConnectorCard key={i} />
+            <SkeletonConnectorCard key={`connector-card-${i}`} />
           ))}
         </div>
 
@@ -177,7 +177,7 @@ export const ConnectionCreationSkeleton = ({
       >
         {Array.from({ length: 5 }, (_, i) => (
           <div
-            key={i}
+            key={`category-filter-alt-${i}`}
             className={`
               h-8 w-16 animate-pulse rounded bg-gray-200
               dark:bg-gray-800

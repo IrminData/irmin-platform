@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, memo, useMemo, useState } from 'react';
+import { Fragment, memo, useCallback, useMemo, useState } from 'react';
 
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 
@@ -10,7 +10,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import type { ListProps } from '@/types/internal/ListProps';
+import type { GridRow, ListProps } from '@/types/internal/ListProps';
 
 const LoadingRow = ({ totalColumns }: { totalColumns: number }) => {
   return (
@@ -75,20 +75,38 @@ const NormalList: React.FC<ListProps> = ({
     [noActions, headers]
   );
 
+  // Generate stable keys for rows based on content hash
+  const generateRowKey = useCallback((row: GridRow, index: number) => {
+    // Try to create a more stable key from row content
+    const firstColumnText = row.columns[0]?.props?.children?.toString?.() || '';
+    const contentHash =
+      firstColumnText.slice(0, 10).replace(/\s/g, '') || `row-${index}`;
+    return `list-row-${contentHash}-${index}`;
+  }, []);
+
   // Unique keys for each repetitive element
-  const headerKeys = headers.map((_, index) => `list-header-${index}`);
-  const rowKeys = rows.map((_, index) => `list-row-${index}`);
-  const rowColumnKeys = rows.map((row, index) =>
-    row.columns.map((_, colIndex) => `list-row-${index}-column-${colIndex}`)
+  const headerKeys = headers.map(
+    (header, index) => `list-header-${header.replace(/\s/g, '')}-${index}`
   );
-  const rowActionKeys = rows.map(
-    (row, index) =>
+  const rowKeys = rows.map((row, index) => generateRowKey(row, index));
+  const rowColumnKeys = rows.map((row, index) => {
+    const rowKey = generateRowKey(row, index);
+    return row.columns.map((_, colIndex) => `${rowKey}-column-${colIndex}`);
+  });
+  const rowActionKeys = rows.map((row, index) => {
+    const rowKey = generateRowKey(row, index);
+    return (
       row.actions?.map(
-        (_, actionIndex) => `list-row-${index}-action-${actionIndex}`
+        (action, actionIndex) =>
+          `${rowKey}-action-${action.label.replace(/\s/g, '')}-${actionIndex}`
       ) ?? []
-  );
+    );
+  });
   const detailsKeys = rows
-    .map((row, index) => (row.details ? `list-row-${index}-details` : null))
+    .map((row, index) => {
+      const rowKey = generateRowKey(row, index);
+      return row.details ? `${rowKey}-details` : null;
+    })
     .filter((key) => key !== null);
 
   return (

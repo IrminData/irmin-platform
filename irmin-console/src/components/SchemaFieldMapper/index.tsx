@@ -89,7 +89,7 @@ const SchemaFieldMapper = ({
     if (mappings.length > 0) {
       setHasManualMappings(true);
     }
-  }, [mappings]);
+  }, [mappings.length]);
 
   const toggleFileExpansion = useCallback((filePath: string) => {
     setExpandedFiles((prev) => {
