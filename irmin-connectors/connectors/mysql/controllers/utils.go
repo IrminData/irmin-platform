@@ -7,9 +7,6 @@ import (
 	"strings"
 
 	mysqlclient "irmin-connectors/connectors/mysql/client"
-	"irmin-connectors/utils"
-
-	"github.com/gofiber/fiber/v3"
 )
 
 // escapeIdentifier escapes MySQL identifiers (table names, column names) to prevent SQL injection.
@@ -139,26 +136,6 @@ func buildWhereClause(primaryKeys []string, rowIdentifier any) (string, []any, e
 	return whereClause, args, nil
 }
 
-// processPath processes the path field from the form data and returns the target table path.
-// It safely handles nil databaseName pointer.
-func processPath(c fiber.Ctx, databaseName *string) (string, error) {
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		return "", fmt.Errorf("invalid form data: %w", err)
-	}
-
-	path := strings.TrimSuffix(fields["path"], ".json")
-	path = strings.Trim(path, "/")
-
-	// Safe dereference of databaseName pointer
-	if databaseName != nil {
-		path = strings.TrimPrefix(path, *databaseName)
-	}
-
-	path = strings.Trim(path, "/")
-	return path, nil
-}
-
 // processTableName extracts the table name from a file path.
 // It safely handles nil databaseName pointer.
 func processTableName(filePath string, databaseName *string) string {
@@ -172,4 +149,19 @@ func processTableName(filePath string, databaseName *string) string {
 
 	tableName = strings.Trim(tableName, "/")
 	return tableName
+}
+
+// processRawPath processes a raw path string using database-specific logic.
+// This is used by providers in the new architecture where form parsing is done by the common framework.
+func processRawPath(rawPath string, databaseName *string) string {
+	path := strings.TrimSuffix(rawPath, ".json")
+	path = strings.Trim(path, "/")
+
+	// Safe dereference of databaseName pointer
+	if databaseName != nil {
+		path = strings.TrimPrefix(path, *databaseName)
+	}
+
+	path = strings.Trim(path, "/")
+	return path
 }

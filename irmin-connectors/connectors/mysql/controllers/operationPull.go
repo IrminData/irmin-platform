@@ -1,122 +1,66 @@
 package mysqlcontrollers
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"strings"
-
+	"irmin-connectors/connectors/common"
 	mysqlclient "irmin-connectors/connectors/mysql/client"
 	"irmin-connectors/db"
-	"irmin-connectors/utils"
+	"log/slog"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
-// OperationPull fetches data from MySQL based on the request path.
-// It can return:
-// - all tables as a multipart/mixed response,
-// - a single table as a JSON attachment,
-// - a single row (by "id") as a JSON attachment.
-func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
-	}
-
-	// prepare context and initialise client
-	client, databaseName, err := mysqlclient.InitMySQLClient(c, cs.Logger, operation)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialise MySQL client: " + err.Error(),
-		})
-	}
-	defer client.Close()
-
-	// parse "path" field from form
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-	path := strings.TrimSuffix(fields["path"], ".json")
-	path = strings.Trim(path, "/")
-
-	// Safe dereference of databaseName pointer
-	if databaseName != nil {
-		path = strings.TrimPrefix(path, *databaseName)
-	}
-
-	path = strings.Trim(path, "/")
-
-	// prepare the object to store the result files
-	resultFiles := make(map[string][]byte)
-
-	// determine mode by path
-	if path == "" {
-		// return every table
-		resultPaths, resultContents, getErr := getAllTablesAsFiles(c, client)
-		if getErr != nil {
-			cs.Logger.Error("failed to get all tables", "error", getErr)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to get all tables: " + getErr.Error(),
-			})
-		}
-		for i, resultPath := range resultPaths {
-			resultFiles[resultPath] = resultContents[i]
-		}
-	} else {
-		// return a single table
-		resultPath, resultContent, getErr := getTableAsFile(c, client, path)
-		if getErr != nil {
-			cs.Logger.Error("failed to get table", "error", getErr)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to get table: " + getErr.Error(),
-			})
-		}
-		resultFiles[resultPath] = resultContent
-	}
-
-	// Create a zip archive of the result files
-	zipBytes, err := irminutils.ZipFiles(resultFiles)
-	if err != nil {
-		cs.Logger.Error("failed to create zip archive", "error", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create zip archive",
-		})
-	}
-
-	// return the result files as a zip archive stream
-	c.Response().Header.Set("Content-Type", "application/zip")
-	c.Response().Header.Set("Content-Disposition", "attachment; filename=result.zip")
-	return c.Status(fiber.StatusOK).SendStream(bytes.NewReader(zipBytes))
+// MySQLPullProvider implements the PullOperationProvider interface for MySQL.
+type MySQLPullProvider struct {
+	databaseName *string
 }
 
-// getAllTablesAsFiles writes every table in "public" as JSON files.
-// It returns a list of file paths, the file contents, and an error if one occurs.
-func getAllTablesAsFiles(
+// InitializeClient initializes the MySQL client for pull operations.
+func (p *MySQLPullProvider) InitializeClient(
 	c fiber.Ctx,
-	client *mysqlclient.MySQLClient,
-) ([]string, [][]byte, error) {
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error) {
+	client, databaseName, err := mysqlclient.InitMySQLClient(c, logger, operation)
+	if err != nil {
+		return nil, nil, func() {}, err
+	}
+
+	// Store database name for use in path processing
+	p.databaseName = databaseName
+
+	cleanup := func() {
+		if closeErr := client.Close(); closeErr != nil {
+			logger.Error("Failed to close MySQL client", "error", closeErr)
+		}
+	}
+
+	return client, databaseName, cleanup, nil
+}
+
+// GetAllFiles retrieves all tables as JSON files.
+func (p *MySQLPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error) {
+	mysqlClient, ok := client.(*mysqlclient.MySQLClient)
+	if !ok {
+		return nil, nil, errors.New("invalid client type for MySQL pull provider")
+	}
+
 	// Get list of tables
-	tables, err := client.GetTables(c)
+	tables, err := mysqlClient.GetTables(c)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get tables: %w", err)
 	}
 
-	// initialise lists
+	// Initialize lists
 	filenames := make([]string, len(tables))
 	contents := make([][]byte, len(tables))
 
 	// Process each table
 	for i, table := range tables {
-		resultPath, resultContent, getErr := getTableAsFile(c, client, table)
+		resultPath, resultContent, getErr := p.GetFileByPath(c, client, table)
 		if getErr != nil {
 			return nil, nil, fmt.Errorf("failed to process table %s: %w", table, getErr)
 		}
@@ -127,19 +71,22 @@ func getAllTablesAsFiles(
 	return filenames, contents, nil
 }
 
-// getTableAsFile creates a JSON file for a given table.
-// It returns the file path, the file content, and an error if one occurs.
-func getTableAsFile(
-	c fiber.Ctx,
-	client *mysqlclient.MySQLClient,
-	table string,
-) (string, []byte, error) {
-	// create file name
-	fileName := fmt.Sprintf("%s.json", table)
+// GetFileByPath retrieves a specific table as a JSON file.
+func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error) {
+	mysqlClient, ok := client.(*mysqlclient.MySQLClient)
+	if !ok {
+		return "", nil, errors.New("invalid client type for MySQL pull provider")
+	}
+
+	// Database-specific path processing with proper database name
+	path := processRawPath(rawPath, p.databaseName)
+
+	// Create file name
+	fileName := fmt.Sprintf("%s.json", path)
 
 	// Query table data
-	query := fmt.Sprintf("SELECT * FROM %s", escapeIdentifier(table))
-	rows, err := client.Query(c, query)
+	query := fmt.Sprintf("SELECT * FROM %s", escapeIdentifier(path))
+	rows, err := mysqlClient.Query(c, query)
 	if err != nil {
 		return fileName, nil, fmt.Errorf("query failed: %w", err)
 	}
@@ -164,6 +111,12 @@ func getTableAsFile(
 	}
 
 	return fileName, data, nil
+}
+
+// OperationPull handles the "pull" operation using the common framework.
+func (cs *Controllers) OperationPull(c fiber.Ctx) error {
+	provider := &MySQLPullProvider{}
+	return common.HandleOperationPull(c, provider, cs.Logger)
 }
 
 // buildRecordsFromRows converts rows into a slice of maps.

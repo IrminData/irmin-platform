@@ -1,56 +1,61 @@
 package postgrescontrollers
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 
+	"irmin-connectors/connectors/common"
 	postgresclient "irmin-connectors/connectors/postgres/client"
+	"irmin-connectors/connectors/postgres/config"
 	"irmin-connectors/db"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
-// OperationSchemaGet retrieves the database schema and returns
-// an Irmin-compatible ObjectSchema grouping each table as a JSON array.
-//
-// It expects an operation token in the form, and on success writes
-// a JSON response with Content-Type: application/json.
-func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
-	}
+// PostgreSQLSchemaProvider implements the SchemaOperationProvider interface for PostgreSQL databases.
+type PostgreSQLSchemaProvider struct{}
 
-	// Initialise Postgres client
-	client, dbName, err := postgresclient.InitPostgresClient(c, cs.Logger, operation)
-	if err != nil || client == nil || dbName == nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialise Postgres client: " + err.Error(),
-		})
+// InitializeClient initializes the PostgreSQL client for schema operations.
+func (p *PostgreSQLSchemaProvider) InitializeClient(
+	c fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error) {
+	client, dbName, err := postgresclient.InitPostgresClient(c, logger, operation)
+	if err != nil {
+		return nil, nil, func() {}, err
 	}
-	defer client.Close()
+	return client, dbName, func() {
+		client.Close()
+	}, nil
+}
+
+// GetSchema retrieves the PostgreSQL database schema and returns an Irmin-compatible ObjectSchema.
+func (p *PostgreSQLSchemaProvider) GetSchema(
+	c fiber.Ctx,
+	client any,
+	_ string,
+	databaseName *string,
+) (*irminmodels.ObjectSchema, error) {
+	postgresClient, ok := client.(*postgresclient.PostgresClient)
+	if !ok {
+		return nil, errors.New("invalid client type for PostgreSQL")
+	}
 
 	// List tables
-	tables, err := client.GetTables(c)
+	tables, err := postgresClient.GetTables(c)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch tables: " + err.Error(),
-		})
+		return nil, fmt.Errorf("failed to fetch tables: %w", err)
 	}
 
 	// Build a child ObjectSchema for each table
 	children := make([]irminmodels.ObjectSchema, 0, len(tables))
 	for _, tbl := range tables {
-		var cols []postgresclient.ColumnInfo
-		cols, err = client.GetTableStructure(c, tbl)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": fmt.Sprintf("Failed to fetch structure for table '%s': %v", tbl, err),
-			})
+		cols, colErr := postgresClient.GetTableStructure(c, tbl)
+		if colErr != nil {
+			return nil, fmt.Errorf("failed to fetch structure for table '%s': %w", tbl, colErr)
 		}
 
 		// Map each column to a JSONSchema property
@@ -58,7 +63,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		required := []string{}
 		for _, col := range cols {
 			props[col.ColumnName] = irminmodels.JSONSchema{
-				Type: col.DataType, // ideally map PG types → JSON Schema types
+				Type: col.DataType, // ideally map PostgreSQL types → JSON Schema types
 			}
 			if !col.IsNullable {
 				required = append(required, col.ColumnName)
@@ -81,7 +86,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		ct := "application/json"
 		children = append(children, irminmodels.ObjectSchema{
 			Name:        tbl + ".json",
-			Path:        *dbName + "/" + tbl + ".json",
+			Path:        *databaseName + "/" + tbl + ".json",
 			Type:        irminmodels.ObjectTypeStructured,
 			ContentType: &ct,
 			Schema:      &arraySchema,
@@ -91,20 +96,28 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	// Assemble group schema
 	group := irminmodels.ObjectSchema{
 		Type: irminmodels.ObjectTypeGroup,
-		Name: *dbName,
-		Path: *dbName,
+		Name: *databaseName,
+		Path: *databaseName,
 		Restrictions: &irminmodels.GroupSchemaRestrictions{
 			OnlyStructured: func(b bool) *bool { return &b }(true),
 		},
 		Children: children,
 	}
 
-	// Write JSON response
-	c.Set("Content-Type", "application/json")
-	if err = json.NewEncoder(c.Response().BodyWriter()).Encode(group); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to encode schema: " + err.Error(),
-		})
-	}
-	return nil
+	return &group, nil
+}
+
+// GetSupportedOperationTypes returns the list of supported operation types for PostgreSQL.
+func (p *PostgreSQLSchemaProvider) GetSupportedOperationTypes() []string {
+	return common.CapabilitiesToOperationTypes(config.GetConnectorInfo().Capabilities)
+}
+
+// OperationSchemaGet retrieves the database schema and returns
+// an Irmin-compatible ObjectSchema grouping each table as a JSON array.
+//
+// It expects an operation token in the form, and on success writes
+// a JSON response with Content-Type: application/json.
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
+	provider := &PostgreSQLSchemaProvider{}
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
 }

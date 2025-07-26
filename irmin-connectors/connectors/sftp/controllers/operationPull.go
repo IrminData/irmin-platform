@@ -1,139 +1,130 @@
 package sftpcontrollers
 
 import (
-	"bytes"
+	"errors"
+	"fmt"
+	"irmin-connectors/connectors/common"
 	sftpclient "irmin-connectors/connectors/sftp/client"
 	"irmin-connectors/db"
-	"irmin-connectors/utils"
+	"log/slog"
 	"path/filepath"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
-// OperationPull downloads files from SFTP server based on the request path.
-// It can return:
-// - all files in the remote directory as a ZIP archive,
-// - a single file as a ZIP archive,
-// - a directory structure as a ZIP archive.
-func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
-	}
+// SFTPPullProvider implements the PullOperationProvider interface for SFTP.
+type SFTPPullProvider struct{}
 
-	// Initialize SFTP client
-	client, err := sftpclient.InitSftpClient(c, cs.Logger, operation)
+// InitializeClient initializes the SFTP client for pull operations.
+func (p *SFTPPullProvider) InitializeClient(
+	c fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error) {
+	client, err := sftpclient.InitSftpClient(c, logger, operation)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize SFTP client: " + err.Error(),
-		})
+		return nil, nil, func() {}, fmt.Errorf("failed to initialize SFTP client: %w", err)
 	}
 
 	// Connect to SFTP server
 	err = client.Connect()
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to connect to SFTP server: " + err.Error(),
-		})
-	}
-	defer client.Close()
-
-	// Parse "path" field from form
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return nil, nil, func() {}, fmt.Errorf("failed to connect to SFTP server: %w", err)
 	}
 
-	path := "/"
-	if pathValue, exists := fields["path"]; exists && pathValue != "" {
-		path = normalizePath(pathValue)
+	cleanup := func() {
+		if closeErr := client.Close(); closeErr != nil {
+			logger.Error("Failed to close SFTP client", "error", closeErr)
+		}
 	}
 
-	cs.Logger.Info("Starting file download from SFTP server",
-		"operation_id", operation.ID,
-		"path", path)
-
-	// Create performance tracker
-	tracker := sftpclient.NewPerformanceTracker("pull_operation", client.GetMetrics())
-
-	// Download files from SFTP server
-	resultFiles, err := cs.downloadFromSFTP(client, path, tracker)
-	if err != nil {
-		tracker.Finish(false, err.Error())
-		cs.Logger.Error("Failed to download from SFTP server", "error", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to download files: " + err.Error(),
-		})
-	}
-
-	// Create a ZIP archive of the result files
-	zipBytes, err := irminutils.ZipFiles(resultFiles)
-	if err != nil {
-		tracker.Finish(false, "Failed to create ZIP archive: "+err.Error())
-		cs.Logger.Error("Failed to create ZIP archive", "error", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create ZIP archive",
-		})
-	}
-
-	// Complete performance tracking
-	tracker.Finish(true, "")
-
-	cs.Logger.Info("File download completed successfully", "operation_id", operation.ID)
-
-	// Return the result files as a ZIP archive stream
-	c.Response().Header.Set("Content-Type", "application/zip")
-	c.Response().Header.Set("Content-Disposition", "attachment; filename=sftp_pull_result.zip")
-	return c.Status(fiber.StatusOK).SendStream(bytes.NewReader(zipBytes))
+	// SFTP doesn't have a "database name" concept, so return nil
+	return client, nil, cleanup, nil
 }
 
-// downloadFromSFTP downloads files from SFTP server based on path.
-func (cs *Controllers) downloadFromSFTP(
-	client *sftpclient.SftpClient,
-	path string,
-	tracker *sftpclient.PerformanceTracker,
-) (map[string][]byte, error) {
+// GetAllFiles downloads all files from the root directory.
+func (p *SFTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error) {
+	sftpClient, ok := client.(*sftpclient.SftpClient)
+	if !ok {
+		return nil, nil, errors.New("invalid client type for SFTP pull provider")
+	}
+
+	// For SFTP, "all files" means all files in the root directory
+	path := "/"
+	return p.downloadFromPath(sftpClient, path)
+}
+
+// GetFileByPath downloads a specific file by path.
+func (p *SFTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, rawPath string) (string, []byte, error) {
+	sftpClient, ok := client.(*sftpclient.SftpClient)
+	if !ok {
+		return "", nil, errors.New("invalid client type for SFTP pull provider")
+	}
+
+	// SFTP-specific path processing - normalize for file system
+	path := normalizePath(rawPath)
+
+	// Check if path exists and whether it's a file or directory
+	fileInfo, err := sftpClient.GetFileInfo(path)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get file info for %s: %w", path, err)
+	}
+
+	if fileInfo.IsDir {
+		// For directories, we can't return them as a single "file"
+		// Return an error since a directory can't be a single file
+		return "", nil, fmt.Errorf("path %s is a directory, not a file", path)
+	}
+
+	// Download single file
+	fileContent, err := sftpClient.DownloadFile(path)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to download file %s: %w", path, err)
+	}
+
+	fileName := filepath.Base(path)
+	return fileName, fileContent, nil
+}
+
+// downloadFromPath downloads files from SFTP server based on path.
+func (p *SFTPPullProvider) downloadFromPath(client *sftpclient.SftpClient, path string) ([]string, [][]byte, error) {
 	// Check if path exists and whether it's a file or directory
 	fileInfo, err := client.GetFileInfo(path)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to get file info for %s: %w", path, err)
 	}
-
-	resultFiles := make(map[string][]byte)
 
 	if fileInfo.IsDir {
 		// Download entire directory
 		dirFiles, dirErr := client.DownloadDirectory(path)
 		if dirErr != nil {
-			return nil, dirErr
+			return nil, nil, fmt.Errorf("failed to download directory %s: %w", path, dirErr)
 		}
-		resultFiles = dirFiles
 
-		// Track metrics for directory download
-		for _, content := range dirFiles {
-			tracker.AddBytes(int64(len(content)))
-			tracker.AddFiles(1)
-		}
-	} else {
-		// Download single file
-		fileContent, fileErr := client.DownloadFile(path)
-		if fileErr != nil {
-			return nil, fileErr
-		}
-		// Use filename for single file download
-		fileName := filepath.Base(path)
-		resultFiles[fileName] = fileContent
+		// Convert map to slices
+		filePaths := make([]string, 0, len(dirFiles))
+		fileContents := make([][]byte, 0, len(dirFiles))
 
-		// Track metrics for single file download
-		tracker.AddBytes(int64(len(fileContent)))
-		tracker.AddFiles(1)
+		for filePath, content := range dirFiles {
+			filePaths = append(filePaths, filePath)
+			fileContents = append(fileContents, content)
+		}
+
+		return filePaths, fileContents, nil
 	}
 
-	return resultFiles, nil
+	// Download single file
+	fileContent, err := client.DownloadFile(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to download file %s: %w", path, err)
+	}
+
+	fileName := filepath.Base(path)
+	return []string{fileName}, [][]byte{fileContent}, nil
+}
+
+// OperationPull handles the "pull" operation using the common framework.
+func (cs *Controllers) OperationPull(c fiber.Ctx) error {
+	provider := &SFTPPullProvider{}
+	return common.HandleOperationPull(c, provider, cs.Logger)
 }

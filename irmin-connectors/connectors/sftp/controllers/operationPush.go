@@ -1,102 +1,66 @@
 package sftpcontrollers
 
 import (
-	"io"
+	"errors"
+	"fmt"
+	"irmin-connectors/connectors/common"
 	sftpclient "irmin-connectors/connectors/sftp/client"
 	"irmin-connectors/db"
-	"irmin-connectors/utils"
+	"log/slog"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
-// OperationPush uploads files to SFTP server.
-// It reads a ZIP file from the request, extracts it, and uploads the files
-// to the SFTP server maintaining the directory structure.
-func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
-	}
+// SFTPPushProvider implements the PushOperationProvider interface for SFTP.
+type SFTPPushProvider struct{}
 
-	// Initialize SFTP client
-	client, err := sftpclient.InitSftpClient(c, cs.Logger, operation)
+// InitializeClient initializes the SFTP client for push operations.
+func (p *SFTPPushProvider) InitializeClient(
+	c fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error) {
+	client, err := sftpclient.InitSftpClient(c, logger, operation)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialize SFTP client: " + err.Error(),
-		})
+		return nil, nil, func() {}, fmt.Errorf("failed to initialize SFTP client: %w", err)
 	}
 
 	// Connect to SFTP server
 	err = client.Connect()
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to connect to SFTP server: " + err.Error(),
-		})
-	}
-	defer client.Close()
-
-	// Parse path parameter for target directory
-	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return nil, nil, func() {}, fmt.Errorf("failed to connect to SFTP server: %w", err)
 	}
 
+	cleanup := func() {
+		if closeErr := client.Close(); closeErr != nil {
+			logger.Error("Failed to close SFTP client", "error", closeErr)
+		}
+	}
+
+	// SFTP doesn't have a "database name" concept, so return nil
+	return client, nil, cleanup, nil
+}
+
+// ProcessFiles processes the extracted files and uploads them to the SFTP server.
+func (p *SFTPPushProvider) ProcessFiles(
+	_ fiber.Ctx,
+	client any,
+	files map[string][]byte,
+	rawPath string,
+) error {
+	sftpClient, ok := client.(*sftpclient.SftpClient)
+	if !ok {
+		return errors.New("invalid client type for SFTP push provider")
+	}
+
+	// SFTP-specific path processing
 	targetPath := "/"
-	if pathValue, exists := fields["path"]; exists && pathValue != "" {
-		targetPath = normalizePath(pathValue)
-	}
-
-	cs.Logger.Info("Starting file upload to SFTP server",
-		"operation_id", operation.ID,
-		"target_path", targetPath)
-
-	// Handle uploaded file
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No file uploaded: " + err.Error(),
-		})
-	}
-
-	// Open the uploaded file
-	file, err := fileHeader.Open()
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to open uploaded file: " + err.Error(),
-		})
-	}
-	defer file.Close()
-
-	// Read file content
-	fileContent, err := io.ReadAll(file)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to read uploaded file: " + err.Error(),
-		})
-	}
-
-	// Extract ZIP file
-	files, err := irminutils.UnzipFiles(fileContent)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Failed to extract ZIP file: " + err.Error(),
-		})
-	}
-
-	if len(files) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "ZIP file contains no files",
-		})
+	if rawPath != "" {
+		targetPath = normalizePath(rawPath)
 	}
 
 	// Create performance tracker
-	tracker := sftpclient.NewPerformanceTracker("push_operation", client.GetMetrics())
+	tracker := sftpclient.NewPerformanceTracker("push_operation", sftpClient.GetMetrics())
 
 	// Track the files to be uploaded
 	for _, fileData := range files {
@@ -105,36 +69,20 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	}
 
 	// Upload files to SFTP server
-	err = client.UploadDirectory(files, targetPath)
+	err := sftpClient.UploadDirectory(files, targetPath)
 	if err != nil {
 		tracker.Finish(false, err.Error())
-		cs.Logger.Error("Failed to upload files to SFTP server", "error", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to upload files: " + err.Error(),
-		})
+		return fmt.Errorf("failed to upload files: %w", err)
 	}
 
 	// Complete performance tracking
 	tracker.Finish(true, "")
 
-	// Calculate upload statistics
-	uploadedFiles := len(files)
-	totalSize := int64(0)
-	for _, fileData := range files {
-		totalSize += int64(len(fileData))
-	}
+	return nil
+}
 
-	cs.Logger.Info("Successfully uploaded files",
-		"operation_id", operation.ID,
-		"uploaded_files", uploadedFiles,
-		"total_size", totalSize,
-		"target_path", targetPath)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":        "Files uploaded successfully",
-		"uploaded_files": uploadedFiles,
-		"total_size":     totalSize,
-		"target_path":    targetPath,
-		"status":         "completed",
-	})
+// OperationPush handles the "push" operation using the common framework.
+func (cs *Controllers) OperationPush(c fiber.Ctx) error {
+	provider := &SFTPPushProvider{}
+	return common.HandleOperationPush(c, provider, cs.Logger)
 }

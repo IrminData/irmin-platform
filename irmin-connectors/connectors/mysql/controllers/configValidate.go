@@ -3,124 +3,57 @@ package mysqlcontrollers
 import (
 	"fmt"
 	mysqlclient "irmin-connectors/connectors/mysql/client"
-	"irmin-connectors/models"
+	mysqlconfig "irmin-connectors/connectors/mysql/config"
 	"irmin-connectors/utils"
-	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 // ConfigValidate handles the configuration validation endpoint.
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
-	var errors []string
-
-	// Default states
-	canConnect := false
-	connectionDetailsValid := false
-	connectionSettingsValid := false
-
-	// Get connection settings and details from the request
-	fields, err := utils.ParseFormFields(
-		c,
-		nil,
-		[]string{
-			"details[host]",
-			"details[port]",
-			"details[user]",
-			"details[password]",
-			"details[default_db]",
-			"settings[database]",
-		},
-	)
-	if err != nil {
-		errors = append(errors, err.Error())
-	}
-
-	host := fields["details[host]"]
-	portStr := fields["details[port]"]
-	user := fields["details[user]"]
-	password := fields["details[password]"]
-	defaultDB := fields["details[default_db]"]
-	database := fields["settings[database]"]
-
-	// Validate connection details
-	errors = append(errors, validateConnectionDetails(host, portStr, user)...)
-
-	// If no blocking errors so far, try to connect to the server
-	if len(errors) == 0 {
-		var port int
-		port, err = strconv.Atoi(portStr)
-		if err != nil {
-			errors = append(errors, fmt.Sprintf("Invalid port number: %v", err))
-		} else {
-			var connErrors []string
-			canConnect, connectionDetailsValid, connectionSettingsValid, connErrors = validateServerConnection(
-				c, host, port, user, password, defaultDB, database,
-			)
-			errors = append(errors, connErrors...)
-		}
-	}
-
-	// Final "ok" means no errors were accumulated
-	ok := (len(errors) == 0) && canConnect && connectionDetailsValid && connectionSettingsValid
-
-	// Build and send the final response
-	response := models.ValidationResponse{
-		Ok:                      ok,
-		CanConnect:              canConnect,
-		ConnectionDetailsValid:  connectionDetailsValid,
-		ConnectionSettingsValid: connectionSettingsValid,
-		Errors:                  errors,
-	}
-
-	return c.Status(fiber.StatusOK).JSON(response)
+	return cs.HandleConfigValidation(c, cs)
 }
 
-func validateConnectionDetails(host, portStr, user string) []string {
+// GetRequiredFormFields implements the ConfigValidationProvider interface.
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string) {
+	return mysqlconfig.GetRequiredFields(), mysqlconfig.GetOptionalFields()
+}
+
+// ValidateFields implements the ConfigValidationProvider interface.
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string {
 	var errors []string
-	if host == "" || portStr == "" || user == "" {
+
+	// Extract values using utility functions with defaults
+	host := utils.GetStringFromMap(details, "host", "")
+	port := utils.GetIntFromMap(details, "port", mysqlconfig.DefaultMySQLPort)
+	user := utils.GetStringFromMap(details, "user", "")
+
+	// Validate connection details
+	if host == "" || port <= 0 || user == "" {
 		errors = append(errors, "Missing required connection details: host, port, or user.")
 	}
+
 	return errors
 }
 
-func validateDatabaseConnection(
-	c fiber.Ctx,
-	mc *mysqlclient.MySQLClient,
-	database string,
-) (bool, []string) {
-	var errors []string
-	if database == "" {
-		return false, errors
-	}
-
-	dbClient, err := mc.WithDatabase(database)
-	if err != nil {
-		errors = append(errors, fmt.Sprintf("Error connecting to database '%s': %v", database, err))
-		return false, errors
-	}
-	defer dbClient.Close()
-
-	if err = dbClient.ValidateCredentials(c); err != nil {
-		errors = append(errors, fmt.Sprintf("Unable to validate credentials for database '%s': %v", database, err))
-		return false, errors
-	}
-	return true, errors
-}
-
-func validateServerConnection(
-	c fiber.Ctx,
-	host string,
-	port int,
-	user string,
-	password string,
-	defaultDB string,
-	database string,
+// TestConnection implements the ConfigValidationProvider interface.
+func (cs *Controllers) TestConnection(
+	ctx fiber.Ctx,
+	details map[string]any,
+	settings map[string]any,
 ) (bool, bool, bool, []string) {
 	var errors []string
 	canConnect := false
 	connectionDetailsValid := false
 	connectionSettingsValid := false
+
+	// Extract values using utility functions with defaults
+	host := utils.GetStringFromMap(details, "host", "")
+	port := utils.GetIntFromMap(details, "port", mysqlconfig.DefaultMySQLPort)
+	user := utils.GetStringFromMap(details, "user", "")
+	password := utils.GetStringFromMap(details, "password", "")
+	defaultDB := utils.GetStringFromMap(details, "default_db", "")
+	database := utils.GetStringFromMap(settings, "database", "")
 
 	mc, err := mysqlclient.NewMySQLClient(host, port, user, password, defaultDB)
 	if err != nil {
@@ -129,7 +62,7 @@ func validateServerConnection(
 	}
 	defer mc.Close()
 
-	if err = mc.ValidateCredentials(c); err != nil {
+	if err = mc.ValidateCredentials(ctx); err != nil {
 		errors = append(errors, fmt.Sprintf("Invalid server credentials or unable to connect: %v", err))
 		return canConnect, connectionDetailsValid, connectionSettingsValid, errors
 	}
@@ -138,9 +71,33 @@ func validateServerConnection(
 	connectionDetailsValid = true
 
 	// Validate database connection if specified
-	var dbErrors []string
-	connectionSettingsValid, dbErrors = validateDatabaseConnection(c, mc, database)
-	errors = append(errors, dbErrors...)
+	if database != "" {
+		var dbErrors []string
+		connectionSettingsValid, dbErrors = cs.validateDatabaseConnection(ctx, mc, database)
+		errors = append(errors, dbErrors...)
+	}
 
 	return canConnect, connectionDetailsValid, connectionSettingsValid, errors
+}
+
+// validateDatabaseConnection is a helper method for testing database-specific connections.
+func (cs *Controllers) validateDatabaseConnection(
+	ctx fiber.Ctx,
+	mc *mysqlclient.MySQLClient,
+	database string,
+) (bool, []string) {
+	var errors []string
+
+	dbClient, err := mc.WithDatabase(database)
+	if err != nil {
+		errors = append(errors, fmt.Sprintf("Error connecting to database '%s': %v", database, err))
+		return false, errors
+	}
+	defer dbClient.Close()
+
+	if err = dbClient.ValidateCredentials(ctx); err != nil {
+		errors = append(errors, fmt.Sprintf("Unable to validate credentials for database '%s': %v", database, err))
+		return false, errors
+	}
+	return true, errors
 }

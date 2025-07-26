@@ -1,74 +1,63 @@
 package mysqlcontrollers
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 
+	"irmin-connectors/connectors/common"
 	mysqlclient "irmin-connectors/connectors/mysql/client"
+	"irmin-connectors/connectors/mysql/config"
 	"irmin-connectors/db"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
-// OperationSchemaGet retrieves the database schema and returns
-// an Irmin-compatible ObjectSchema grouping each table as a JSON array.
-//
-// It expects an operation token in the form, and on success writes
-// a JSON response with Content-Type: application/json.
-func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
+// MySQLSchemaProvider implements the SchemaOperationProvider interface for MySQL databases.
+type MySQLSchemaProvider struct{}
+
+// InitializeClient initializes the MySQL client for schema operations.
+func (p *MySQLSchemaProvider) InitializeClient(
+	c fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error) {
+	client, dbName, err := mysqlclient.InitMySQLClient(c, logger, operation)
+	if err != nil {
+		return nil, nil, func() {}, err
+	}
+	return client, dbName, func() {
+		if closeErr := client.Close(); closeErr != nil {
+			logger.Error("failed to close MySQL client", "error", closeErr)
+		}
+	}, nil
+}
+
+// GetSchema retrieves the MySQL database schema and returns an Irmin-compatible ObjectSchema.
+func (p *MySQLSchemaProvider) GetSchema(
+	c fiber.Ctx,
+	client any,
+	_ string,
+	databaseName *string,
+) (*irminmodels.ObjectSchema, error) {
+	mysqlClient, ok := client.(*mysqlclient.MySQLClient)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
+		return nil, errors.New("invalid client type for MySQL")
 	}
-
-	// Get the operation type from the URL parameter
-	operationType := c.Params("operation")
-	if operationType == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Operation type is required",
-		})
-	}
-
-	// Validate operation type
-	switch operationType {
-	case "pull", "push", "patch":
-		// Valid operation types
-	default:
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid operation type. Supported types: pull, push, patch",
-		})
-	}
-
-	// Initialise MySQL client
-	client, dbName, err := mysqlclient.InitMySQLClient(c, cs.Logger, operation)
-	if err != nil || client == nil || dbName == nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialise MySQL client: " + err.Error(),
-		})
-	}
-	defer client.Close()
 
 	// List tables
-	tables, err := client.GetTables(c)
+	tables, err := mysqlClient.GetTables(c)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch tables: " + err.Error(),
-		})
+		return nil, fmt.Errorf("failed to fetch tables: %w", err)
 	}
 
 	// Build a child ObjectSchema for each table
 	children := make([]irminmodels.ObjectSchema, 0, len(tables))
 	for _, tbl := range tables {
-		var cols []mysqlclient.ColumnInfo
-		cols, err = client.GetTableStructure(c, tbl)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": fmt.Sprintf("Failed to fetch structure for table '%s': %v", tbl, err),
-			})
+		cols, colErr := mysqlClient.GetTableStructure(c, tbl)
+		if colErr != nil {
+			return nil, fmt.Errorf("failed to fetch structure for table '%s': %w", tbl, colErr)
 		}
 
 		// Map each column to a JSONSchema property
@@ -99,7 +88,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		ct := "application/json"
 		children = append(children, irminmodels.ObjectSchema{
 			Name:        tbl + ".json",
-			Path:        *dbName + "/" + tbl + ".json",
+			Path:        *databaseName + "/" + tbl + ".json",
 			Type:        irminmodels.ObjectTypeStructured,
 			ContentType: &ct,
 			Schema:      &arraySchema,
@@ -109,20 +98,28 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	// Assemble group schema
 	group := irminmodels.ObjectSchema{
 		Type: irminmodels.ObjectTypeGroup,
-		Name: *dbName,
-		Path: *dbName,
+		Name: *databaseName,
+		Path: *databaseName,
 		Restrictions: &irminmodels.GroupSchemaRestrictions{
 			OnlyStructured: func(b bool) *bool { return &b }(true),
 		},
 		Children: children,
 	}
 
-	// Write JSON response
-	c.Set("Content-Type", "application/json")
-	if err = json.NewEncoder(c.Response().BodyWriter()).Encode(group); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to encode schema: " + err.Error(),
-		})
-	}
-	return nil
+	return &group, nil
+}
+
+// GetSupportedOperationTypes returns the list of supported operation types for MySQL.
+func (p *MySQLSchemaProvider) GetSupportedOperationTypes() []string {
+	return common.CapabilitiesToOperationTypes(config.GetConnectorInfo().Capabilities)
+}
+
+// OperationSchemaGet retrieves the database schema and returns
+// an Irmin-compatible ObjectSchema grouping each table as a JSON array.
+//
+// It expects an operation token in the form, and on success writes
+// a JSON response with Content-Type: application/json.
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
+	provider := &MySQLSchemaProvider{}
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
 }

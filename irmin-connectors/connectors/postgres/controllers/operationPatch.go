@@ -1,131 +1,93 @@
 package postgrescontrollers
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"irmin-connectors/connectors/common"
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
-	"irmin-connectors/utils"
-	"net/http"
+	"log/slog"
 	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )
 
-// OperationPatch handles the "patch" operation.
-func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
-	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
-	}
+// PostgresPatchProvider implements the PatchOperationProvider interface for PostgreSQL.
+type PostgresPatchProvider struct{}
 
-	// Initialise the Postgres client
-	dbClient, database, err := postgresclient.InitPostgresClient(c, cs.Logger, operation)
+// InitializeClient initializes the PostgreSQL client for patch operations.
+func (p *PostgresPatchProvider) InitializeClient(
+	c fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, func(), error) {
+	dbClient, database, err := postgresclient.InitPostgresClient(c, logger, operation)
 	if err != nil || database == nil || dbClient == nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to initialise Postgres client: " + err.Error(),
-		})
+		return nil, func() {}, err
 	}
-	defer dbClient.Close()
 
-	// Retrieve the patch file from the form
-	fileHeader, err := c.FormFile("patches")
-	if errors.Is(err, http.ErrMissingFile) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "No JSON patch file uploaded with form field 'patches'",
-		})
+	cleanup := func() {
+		dbClient.Close()
 	}
+
+	return dbClient, cleanup, nil
+}
+
+// ExecutePatchOperation executes a single patch operation within its own transaction.
+func (p *PostgresPatchProvider) ExecutePatchOperation(
+	c fiber.Ctx,
+	client any,
+	op irminmodels.PatchOperation,
+	tableName, rowIdentifier, columnName string,
+) error {
+	dbClient, ok := client.(*postgresclient.PostgresClient)
+	if !ok {
+		return errors.New("invalid client type for PostgreSQL patch provider")
+	}
+
+	// Start a transaction to ensure that each operation is atomic
+	tx, txErr := dbClient.BeginTransaction(c)
+	if txErr != nil {
+		return txErr
+	}
+	defer func() {
+		if rollbackErr := tx.Rollback(c); rollbackErr != nil {
+			// Log the error but don't return it since we're in a defer
+			// The transaction might have already been committed
+			_ = rollbackErr
+		}
+	}()
+
+	// Handle the operation based on its type
+	var err error
+	switch op.Op {
+	case "add":
+		err = handleAddOperation(c, tx, tableName, op.Value)
+	case "remove":
+		err = handleRemoveOperation(c, tx, tableName, rowIdentifier)
+	case "replace":
+		err = handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, op.Value)
+	default:
+		return errors.New("invalid operation type: " + op.Op + " (move/copy operations not implemented yet)")
+	}
+
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to retrieve form file: " + err.Error(),
-		})
-	}
-	file, err := fileHeader.Open()
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to open form file: " + err.Error(),
-		})
-	}
-	defer file.Close()
-
-	// Read the entire file into memory
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to read uploaded file: " + err.Error(),
-		})
+		return err
 	}
 
-	// Unmarshal the JSON into a slice of maps
-	var operations []irminmodels.PatchOperation
-	if err = json.Unmarshal(fileBytes, &operations); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to parse JSON data: " + err.Error(),
-		})
+	// Commit the transaction if everything succeeded
+	if err = tx.Commit(c); err != nil {
+		return err
 	}
 
-	// Apply each patch operation to the database
-	for _, op := range operations {
-		// Extract details from the operation path
-		_, tableName, rowIdentifier, columnName := utils.ExtractPathComponents(op.Path)
+	return nil
+}
 
-		// Start a transaction to ensure that each operation is atomic
-		tx, txErr := dbClient.BeginTransaction(c)
-		if txErr != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to begin transaction: " + txErr.Error(),
-			})
-		}
-		defer func() {
-			if rollbackErr := tx.Rollback(c); rollbackErr != nil {
-				// Log the error but don't return it since we're in a defer
-				// The transaction might have already been committed
-				_ = rollbackErr
-			}
-		}()
-
-		// Handle the operation based on its type
-		switch op.Op {
-		case "add":
-			err = handleAddOperation(c, tx, tableName, op.Value)
-		case "remove":
-			err = handleRemoveOperation(c, tx, tableName, rowIdentifier)
-		case "replace":
-			err = handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, op.Value)
-		case "move":
-			err = handleMoveOperation(c, tx, op, tableName, rowIdentifier, columnName)
-		case "copy":
-			err = handleCopyOperation(c, tx, op, tableName, rowIdentifier, columnName)
-		default:
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid operation type: " + op.Op,
-			})
-		}
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-
-		// Commit the transaction if everything succeeded
-		if err = tx.Commit(c); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to commit transaction: " + err.Error(),
-			})
-		}
-	}
-
-	// Send a success response
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Patch operations applied successfully",
-	})
+// OperationPatch handles the "patch" operation using the common framework.
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
+	provider := &PostgresPatchProvider{}
+	return common.HandleOperationPatch(c, provider, cs.Logger)
 }
 
 // handleAddOperation handles the "add" patch operation.
@@ -257,401 +219,6 @@ func handleReplaceOperation(
 
 	if _, execErr := tx.Exec(c, updateSQL, args...); execErr != nil {
 		return fmt.Errorf("failed to replace row: %w", execErr)
-	}
-
-	return nil
-}
-
-// handleMoveOperation handles the "move" patch operation.
-func handleMoveOperation(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	op irminmodels.PatchOperation,
-	tableName string,
-	rowIdentifier any,
-	columnName string,
-) error {
-	if op.From == nil || *op.From == "" {
-		return errors.New("missing 'from' path in move operation")
-	}
-
-	// Parse the 'from' path
-	_, fromTable, fromRowID, fromColumnName := utils.ExtractPathComponents(*op.From)
-
-	// We'll determine if we're dealing with column-level or row-level move
-	sourceIsColumn := (fromColumnName != "")
-	destIsColumn := (columnName != "")
-
-	switch {
-	case sourceIsColumn && destIsColumn:
-		return handleColumnToColumnMove(
-			c,
-			tx,
-			fromTable,
-			fromRowID,
-			fromColumnName,
-			tableName,
-			rowIdentifier,
-			columnName,
-		)
-	case !sourceIsColumn && !destIsColumn:
-		return handleRowToRowMove(c, tx, fromTable, fromRowID, tableName, rowIdentifier)
-	default:
-		return errors.New("unsupported move: cannot move row to a single column or vice versa")
-	}
-}
-
-// handleColumnToColumnMove handles moving a value from one column to another.
-func handleColumnToColumnMove(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	fromTable string,
-	fromRowID any,
-	fromColumnName string,
-	toTable string,
-	toRowID any,
-	toColumnName string,
-) error {
-	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
-	if fromPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
-	}
-
-	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
-	if toPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
-	}
-
-	// Build WHERE clauses
-	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
-	if fromWhereClauseErr != nil {
-		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
-	}
-
-	toWhereClause, toWhereArgs, toWhereClauseErr := buildWhereClause(toPrimaryKeys, toRowID)
-	if toWhereClauseErr != nil {
-		return fmt.Errorf("failed to build TO WHERE clause: %w", toWhereClauseErr)
-	}
-
-	// 1) SELECT the existing value from the source column
-	selectSQL := fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s`,
-		quoteIdentifier(fromColumnName), quoteIdentifier(fromTable), fromWhereClause,
-	)
-	var columnValue any
-	if queryRowErr := tx.QueryRow(c, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
-		return fmt.Errorf("failed to retrieve source column for move: %w", queryRowErr)
-	}
-
-	// 2) Set the source column to NULL
-	updateSourceSQL := fmt.Sprintf(
-		`UPDATE %s SET %s = NULL WHERE %s`,
-		quoteIdentifier(fromTable), quoteIdentifier(fromColumnName), fromWhereClause,
-	)
-	if _, execErr := tx.Exec(c, updateSourceSQL, fromWhereArgs...); execErr != nil {
-		return fmt.Errorf("failed to clear source column in move: %w", execErr)
-	}
-
-	// 3) Write the retrieved value into the destination column
-	updateDestSQL := fmt.Sprintf(
-		`UPDATE %s SET %s = $1 WHERE %s`,
-		quoteIdentifier(toTable), quoteIdentifier(toColumnName), toWhereClause,
-	)
-	args := append([]any{columnValue}, toWhereArgs...)
-	if _, execErr := tx.Exec(c, updateDestSQL, args...); execErr != nil {
-		return fmt.Errorf("failed to write destination column in move: %w", execErr)
-	}
-
-	return nil
-}
-
-// handleRowToRowMove handles moving an entire row from one table to another.
-func handleRowToRowMove(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	fromTable string,
-	fromRowID any,
-	toTable string,
-	toRowID any,
-) error {
-	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
-	if fromPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
-	}
-
-	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
-	if toPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
-	}
-
-	// Build WHERE clause for source
-	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
-	if fromWhereClauseErr != nil {
-		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
-	}
-
-	// 1) SELECT * from the source row
-	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE %s`, quoteIdentifier(fromTable), fromWhereClause)
-	rows, queryErr := tx.Query(c, selectSQL, fromWhereArgs...)
-	if queryErr != nil {
-		return fmt.Errorf("failed to retrieve source row for move: %w", queryErr)
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return fmt.Errorf("no row found with id=%v in table %s", fromRowID, fromTable)
-	}
-
-	// Extract column info
-	fieldDescriptions := rows.FieldDescriptions()
-	values, valuesErr := rows.Values()
-	if valuesErr != nil {
-		return fmt.Errorf("failed to read row data: %w", valuesErr)
-	}
-
-	// Build a map[columnName -> value]
-	rowData := make(map[string]any, len(fieldDescriptions))
-	for i, fd := range fieldDescriptions {
-		rowData[fd.Name] = values[i]
-	}
-
-	// 2) DELETE the source row
-	deleteSQL := fmt.Sprintf(`DELETE FROM %s WHERE %s`, quoteIdentifier(fromTable), fromWhereClause)
-	if _, execErr := tx.Exec(c, deleteSQL, fromWhereArgs...); execErr != nil {
-		return fmt.Errorf("failed to remove source row in move: %w", execErr)
-	}
-
-	// 3) INSERT the row into the destination table
-	// Update primary key columns with new values
-	if len(toPrimaryKeys) == 1 {
-		rowData[toPrimaryKeys[0]] = toRowID
-	} else {
-		// Handle composite primary keys
-		toRowIDStr, ok := toRowID.(string)
-		if !ok {
-			return errors.New("composite primary key requires string identifier")
-		}
-		parts := strings.Split(toRowIDStr, ":")
-		if len(parts) != len(toPrimaryKeys) {
-			return fmt.Errorf("identifier parts (%d) don't match primary key columns (%d)", len(parts), len(toPrimaryKeys))
-		}
-		for i, key := range toPrimaryKeys {
-			rowData[key] = parts[i]
-		}
-	}
-
-	columns := make([]string, 0, len(rowData))
-	placeholders := make([]string, 0, len(rowData))
-	args := make([]any, 0, len(rowData))
-
-	paramIndex := 1
-	for col, val := range rowData {
-		columns = append(columns, quoteIdentifier(col))
-		placeholders = append(placeholders, fmt.Sprintf("$%d", paramIndex))
-		args = append(args, val)
-		paramIndex++
-	}
-
-	insertSQL := fmt.Sprintf(
-		`INSERT INTO %s (%s) VALUES (%s)`,
-		quoteIdentifier(toTable),
-		strings.Join(columns, ", "),
-		strings.Join(placeholders, ", "),
-	)
-	if _, execErr := tx.Exec(c, insertSQL, args...); execErr != nil {
-		return fmt.Errorf("failed to insert row into destination table in move: %w", execErr)
-	}
-
-	return nil
-}
-
-// handleCopyOperation handles the "copy" patch operation.
-func handleCopyOperation(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	op irminmodels.PatchOperation,
-	tableName string,
-	rowIdentifier any,
-	columnName string,
-) error {
-	if op.From == nil || *op.From == "" {
-		return errors.New("missing 'from' path in copy operation")
-	}
-
-	_, fromTable, fromRowID, fromColumnName := utils.ExtractPathComponents(*op.From)
-
-	sourceIsColumn := (fromColumnName != "")
-	destIsColumn := (columnName != "")
-
-	switch {
-	case sourceIsColumn && destIsColumn:
-		return handleColumnToColumnCopy(
-			c,
-			tx,
-			fromTable,
-			fromRowID,
-			fromColumnName,
-			tableName,
-			rowIdentifier,
-			columnName,
-		)
-	case !sourceIsColumn && !destIsColumn:
-		return handleRowToRowCopy(c, tx, fromTable, fromRowID, tableName, rowIdentifier)
-	default:
-		return errors.New("unsupported copy: cannot copy row to a single column or vice versa")
-	}
-}
-
-// handleColumnToColumnCopy handles copying a value from one column to another.
-func handleColumnToColumnCopy(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	fromTable string,
-	fromRowID any,
-	fromColumnName string,
-	toTable string,
-	toRowID any,
-	toColumnName string,
-) error {
-	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
-	if fromPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
-	}
-
-	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
-	if toPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
-	}
-
-	// Build WHERE clauses
-	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
-	if fromWhereClauseErr != nil {
-		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
-	}
-
-	toWhereClause, toWhereArgs, toWhereClauseErr := buildWhereClause(toPrimaryKeys, toRowID)
-	if toWhereClauseErr != nil {
-		return fmt.Errorf("failed to build TO WHERE clause: %w", toWhereClauseErr)
-	}
-
-	// 1) SELECT the existing value from the source column
-	selectSQL := fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s`,
-		quoteIdentifier(fromColumnName), quoteIdentifier(fromTable), fromWhereClause,
-	)
-	var columnValue any
-	if queryRowErr := tx.QueryRow(c, selectSQL, fromWhereArgs...).Scan(&columnValue); queryRowErr != nil {
-		return fmt.Errorf("failed to retrieve source column for copy: %w", queryRowErr)
-	}
-
-	// 2) Write the retrieved value into the destination column
-	updateDestSQL := fmt.Sprintf(
-		`UPDATE %s SET %s = $1 WHERE %s`,
-		quoteIdentifier(toTable), quoteIdentifier(toColumnName), toWhereClause,
-	)
-	args := append([]any{columnValue}, toWhereArgs...)
-	if _, execErr := tx.Exec(c, updateDestSQL, args...); execErr != nil {
-		return fmt.Errorf("failed to write destination column in copy: %w", execErr)
-	}
-
-	return nil
-}
-
-// handleRowToRowCopy handles copying an entire row from one table to another.
-func handleRowToRowCopy(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	fromTable string,
-	fromRowID any,
-	toTable string,
-	toRowID any,
-) error {
-	// Get primary key columns for source table
-	fromPrimaryKeys, fromPrimaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
-	if fromPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for source table: %w", fromPrimaryKeysErr)
-	}
-
-	// Get primary key columns for destination table
-	toPrimaryKeys, toPrimaryKeysErr := getPrimaryKeyColumns(c, tx, toTable)
-	if toPrimaryKeysErr != nil {
-		return fmt.Errorf("failed to get primary key columns for destination table: %w", toPrimaryKeysErr)
-	}
-
-	// Build WHERE clause for source
-	fromWhereClause, fromWhereArgs, fromWhereClauseErr := buildWhereClause(fromPrimaryKeys, fromRowID)
-	if fromWhereClauseErr != nil {
-		return fmt.Errorf("failed to build FROM WHERE clause: %w", fromWhereClauseErr)
-	}
-
-	// 1) SELECT * from the source row
-	selectSQL := fmt.Sprintf(`SELECT * FROM %s WHERE %s`, quoteIdentifier(fromTable), fromWhereClause)
-	rows, queryErr := tx.Query(c, selectSQL, fromWhereArgs...)
-	if queryErr != nil {
-		return fmt.Errorf("failed to retrieve source row for copy: %w", queryErr)
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return fmt.Errorf("no row found with id=%v in table %s", fromRowID, fromTable)
-	}
-
-	fieldDescriptions := rows.FieldDescriptions()
-	values, valuesErr := rows.Values()
-	if valuesErr != nil {
-		return fmt.Errorf("failed to read row data: %w", valuesErr)
-	}
-
-	rowData := make(map[string]any, len(fieldDescriptions))
-	for i, fd := range fieldDescriptions {
-		rowData[fd.Name] = values[i]
-	}
-
-	// 2) INSERT the row into the destination table
-	// Update primary key columns with new values
-	if len(toPrimaryKeys) == 1 {
-		rowData[toPrimaryKeys[0]] = toRowID
-	} else {
-		// Handle composite primary keys
-		toRowIDStr, ok := toRowID.(string)
-		if !ok {
-			return errors.New("composite primary key requires string identifier")
-		}
-		parts := strings.Split(toRowIDStr, ":")
-		if len(parts) != len(toPrimaryKeys) {
-			return fmt.Errorf("identifier parts (%d) don't match primary key columns (%d)", len(parts), len(toPrimaryKeys))
-		}
-		for i, key := range toPrimaryKeys {
-			rowData[key] = parts[i]
-		}
-	}
-
-	columns := make([]string, 0, len(rowData))
-	placeholders := make([]string, 0, len(rowData))
-	args := make([]any, 0, len(rowData))
-
-	paramIndex := 1
-	for col, val := range rowData {
-		columns = append(columns, quoteIdentifier(col))
-		placeholders = append(placeholders, fmt.Sprintf("$%d", paramIndex))
-		args = append(args, val)
-		paramIndex++
-	}
-
-	insertSQL := fmt.Sprintf(
-		`INSERT INTO %s (%s) VALUES (%s)`,
-		quoteIdentifier(toTable),
-		strings.Join(columns, ", "),
-		strings.Join(placeholders, ", "),
-	)
-	if _, execErr := tx.Exec(c, insertSQL, args...); execErr != nil {
-		return fmt.Errorf("failed to insert row into destination table in copy: %w", execErr)
 	}
 
 	return nil

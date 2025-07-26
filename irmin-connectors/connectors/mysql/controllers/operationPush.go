@@ -6,63 +6,67 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"irmin-connectors/connectors/common"
 	mysqlclient "irmin-connectors/connectors/mysql/client"
 	"irmin-connectors/db"
 	"irmin-connectors/utils"
+	"log/slog"
 	"slices"
 	"sort"
 	"strings"
 	"time"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v3"
 )
 
-// OperationPush handles the push operation for MySQL.
-// It reads a zip file from the request, unzips it, and then reads each JSON file within it.
-// It then executes a transaction to delete existing rows and insert the new records.
-func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	// Get the operation from the context
-	operation, ok := c.Locals("operation").(*db.Operation)
+// MySQLPushProvider implements the PushOperationProvider interface for MySQL.
+type MySQLPushProvider struct {
+	databaseName *string
+}
+
+// InitializeClient initializes the MySQL client for push operations.
+func (p *MySQLPushProvider) InitializeClient(
+	c fiber.Ctx,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error) {
+	client, databaseName, err := mysqlclient.InitMySQLClient(c, logger, operation)
+	if err != nil {
+		return nil, nil, func() {}, fmt.Errorf("failed to initialise MySQL client: %w", err)
+	}
+
+	// Store database name for use in path processing
+	p.databaseName = databaseName
+
+	cleanup := func() {
+		if closeErr := client.Close(); closeErr != nil {
+			logger.Error("Failed to close MySQL client", "error", closeErr)
+		}
+	}
+
+	return client, databaseName, cleanup, nil
+}
+
+// ProcessFiles processes the extracted files and inserts them into MySQL tables.
+func (p *MySQLPushProvider) ProcessFiles(
+	c fiber.Ctx,
+	client any,
+	files map[string][]byte,
+	rawPath string,
+) error {
+	mysqlClient, ok := client.(*mysqlclient.MySQLClient)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Invalid operation type in context",
-		})
+		return errors.New("invalid client type for MySQL push provider")
 	}
 
-	// Initialise MySQL client
-	client, databaseName, err := mysqlclient.InitMySQLClient(c, cs.Logger, operation)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to initialise MySQL client: " + err.Error(),
-		})
-	}
-	defer client.Close()
-
-	// Process path
-	path, err := processPath(c, databaseName)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+	// Use the existing database-specific path processing utility with proper database name
+	targetPath := processRawPath(rawPath, p.databaseName)
 
 	// Get available tables
-	tables, err := client.GetTables(c)
+	tables, err := mysqlClient.GetTables(c)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch tables: " + err.Error(),
-		})
-	}
-
-	// Handle uploaded file
-	files, err := handleUploadedFile(c)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return fmt.Errorf("failed to fetch tables: %w", err)
 	}
 
 	// Process each file
@@ -73,54 +77,30 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	sort.Strings(keys)
 
 	for _, filePath := range keys {
-		tableName := processTableName(filePath, databaseName)
+		tableName := processTableName(filePath, nil) // databaseName not needed here
 
 		// Skip if we're targeting a specific path and this isn't it
-		if path != "" && tableName != path {
+		if targetPath != "" && tableName != targetPath {
 			continue
 		}
 
-		err = cs.processTableData(c, client, tableName, files[filePath], tables)
+		err = processTableData(c, mysqlClient, tableName, files[filePath], tables)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "failed to process table data: " + err.Error(),
-			})
+			return fmt.Errorf("failed to process table data: %w", err)
 		}
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Successfully pushed data",
-	})
+	return nil
 }
 
-// handleUploadedFile processes the uploaded file and returns the unzipped files.
-func handleUploadedFile(c fiber.Ctx) (map[string][]byte, error) {
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve form file: %w", err)
-	}
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		return nil, fmt.Errorf("failed to open form file: %w", err)
-	}
-	defer file.Close()
-
-	bytesData, err := io.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read uploaded file: %w", err)
-	}
-
-	files, err := irminutils.UnzipFiles(bytesData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unzip file: %w", err)
-	}
-
-	return files, nil
+// OperationPush handles the "push" operation using the common framework.
+func (cs *Controllers) OperationPush(c fiber.Ctx) error {
+	provider := &MySQLPushProvider{}
+	return common.HandleOperationPush(c, provider, cs.Logger)
 }
 
 // processTableData processes a single table's data and executes the database operations.
-func (cs *Controllers) processTableData(
+func processTableData(
 	c fiber.Ctx,
 	client *mysqlclient.MySQLClient,
 	tableName string,
@@ -128,7 +108,7 @@ func (cs *Controllers) processTableData(
 	tables []string,
 ) error {
 	if !slices.Contains(tables, tableName) {
-		cs.Logger.InfoContext(c, "Table does not exist", "table", tableName)
+		// Table doesn't exist, skip it
 		return nil
 	}
 
