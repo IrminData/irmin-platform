@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -20,6 +21,12 @@ type CursorPagination struct {
 	Before *string // Cursor for reverse pagination
 	First  *int    // Number of items to fetch forward
 	Last   *int    // Number of items to fetch backward
+}
+
+// searchResult represents the result of a search operation.
+type searchResult struct {
+	results []SearchResult
+	err     error
 }
 
 // SearchWithCursor performs search with cursor-based pagination for better performance on large datasets.
@@ -37,8 +44,9 @@ func (d *Database) SearchWithCursor(
 		filters.Limits.DatabaseTimeout = time.Duration(DefaultCursorDatabaseTimeout) * time.Second
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, filters.Limits.DatabaseTimeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, filters.Limits.DatabaseTimeout)
 	defer cancel()
+	ctx = timeoutCtx
 
 	// Validate pagination parameters
 	if pagination.First != nil && pagination.Last != nil {
@@ -116,14 +124,24 @@ func (d *Database) performAllSearchesConcurrentWithCursor(
 	pagination CursorPagination,
 	limit int,
 ) ([]SearchResult, error) {
-	type searchResult struct {
-		results []SearchResult
-		err     error
+	// Create channels for enabled search types
+	channels := d.createSearchChannels(filters.Types)
+	if len(channels) == 0 {
+		return []SearchResult{}, nil
 	}
 
-	// Create channels for each search type
+	// Start concurrent searches
+	var wg sync.WaitGroup
+	d.startConcurrentSearches(ctx, &wg, channels, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+
+	// Collect and return results
+	return d.collectSearchResults(ctx, channels)
+}
+
+// createSearchChannels creates channels for each enabled search type.
+func (d *Database) createSearchChannels(searchTypes []string) map[string]chan searchResult {
 	channels := make(map[string]chan searchResult)
-	searchTypes := []string{
+	allSearchTypes := []string{
 		"workflows",
 		"repositories",
 		"connections",
@@ -133,107 +151,106 @@ func (d *Database) performAllSearchesConcurrentWithCursor(
 		"invites",
 	}
 
-	for _, searchType := range searchTypes {
-		if shouldSearchType(irminmodels.WorkspaceSearchResultType(searchType), filters.Types) {
+	for _, searchType := range allSearchTypes {
+		if shouldSearchType(irminmodels.WorkspaceSearchResultType(searchType), searchTypes) {
 			channels[searchType] = make(chan searchResult, 1)
 		}
 	}
 
-	// Start concurrent searches
+	return channels
+}
+
+// startConcurrentSearches launches goroutines for each search type.
+func (d *Database) startConcurrentSearches(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	channels map[string]chan searchResult,
+	workspaceID uint,
+	searchQuery string,
+	filters SearchFilters,
+	parsedQuery *SearchQuery,
+	pagination CursorPagination,
+	limit int,
+) {
 	for searchType, ch := range channels {
+		wg.Add(1)
 		go func(st string, c chan searchResult) {
-			var results []SearchResult
-			var err error
+			defer wg.Done()
+			defer close(c)
 
-			switch st {
-			case "workflows":
-				results, err = d.searchWorkflowsWithCursor(
-					ctx,
-					workspaceID,
-					searchQuery,
-					filters,
-					parsedQuery,
-					pagination,
-					limit,
-				)
-			case "repositories":
-				results, err = d.searchRepositoriesWithCursor(
-					ctx,
-					workspaceID,
-					searchQuery,
-					filters,
-					parsedQuery,
-					pagination,
-					limit,
-				)
-			case "connections":
-				results, err = d.searchConnectionsWithCursor(
-					ctx,
-					workspaceID,
-					searchQuery,
-					filters,
-					parsedQuery,
-					pagination,
-					limit,
-				)
-			case "queries":
-				results, err = d.searchStoredQueriesWithCursor(
-					ctx,
-					workspaceID,
-					searchQuery,
-					filters,
-					parsedQuery,
-					pagination,
-					limit,
-				)
-			case "users":
-				results, err = d.searchUsersWithCursor(
-					ctx,
-					workspaceID,
-					searchQuery,
-					filters,
-					parsedQuery,
-					pagination,
-					limit,
-				)
-			case "repository_objects":
-				results, err = d.searchRepositoryObjectsWithCursor(
-					ctx,
-					workspaceID,
-					searchQuery,
-					filters,
-					parsedQuery,
-					pagination,
-					limit,
-				)
-			case "invites":
-				results, err = d.searchInvitesWithCursor(
-					ctx,
-					workspaceID,
-					searchQuery,
-					filters,
-					parsedQuery,
-					pagination,
-					limit,
-				)
+			results, err := d.executeSearchByType(
+				ctx, st, workspaceID, searchQuery, filters, parsedQuery, pagination, limit,
+			)
+
+			select {
+			case c <- searchResult{results: results, err: err}:
+			case <-ctx.Done():
+				return
 			}
-
-			c <- searchResult{results: results, err: err}
 		}(searchType, ch)
 	}
+}
 
-	// Collect results
+// executeSearchByType performs search for a specific entity type.
+func (d *Database) executeSearchByType(
+	ctx context.Context,
+	searchType string,
+	workspaceID uint,
+	searchQuery string,
+	filters SearchFilters,
+	parsedQuery *SearchQuery,
+	pagination CursorPagination,
+	limit int,
+) ([]SearchResult, error) {
+	switch searchType {
+	case "workflows":
+		return d.searchWorkflowsWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+	case "repositories":
+		return d.searchRepositoriesWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+	case "connections":
+		return d.searchConnectionsWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+	case "queries":
+		return d.searchStoredQueriesWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+	case "users":
+		return d.searchUsersWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+	case "repository_objects":
+		return d.searchRepositoryObjectsWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+	case "invites":
+		return d.searchInvitesWithCursor(ctx, workspaceID, searchQuery, filters, parsedQuery, pagination, limit)
+	default:
+		return nil, fmt.Errorf("unknown search type: %s", searchType)
+	}
+}
+
+// collectSearchResults gathers results from all search channels.
+func (d *Database) collectSearchResults(
+	ctx context.Context,
+	channels map[string]chan searchResult,
+) ([]SearchResult, error) {
+	var mu sync.Mutex
 	var allResults []SearchResult
+	var searchError error
+
 	for _, ch := range channels {
 		select {
-		case result := <-ch:
-			if result.err != nil {
-				return nil, result.err
+		case result, ok := <-ch:
+			if !ok {
+				continue
 			}
-			allResults = append(allResults, result.results...)
+			mu.Lock()
+			if result.err != nil && searchError == nil {
+				searchError = result.err
+			} else if result.err == nil {
+				allResults = append(allResults, result.results...)
+			}
+			mu.Unlock()
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		}
+	}
+
+	if searchError != nil {
+		return nil, searchError
 	}
 
 	return allResults, nil
@@ -626,7 +643,7 @@ func (d *Database) genericSearchWithCursor(
 		return nil, err
 	}
 
-	// Convert to []interface{}
+	// Convert to []SearchResult
 	entitiesSlice := entitiesValue.Elem()
 	var results []SearchResult
 	for i := range entitiesSlice.Len() {
