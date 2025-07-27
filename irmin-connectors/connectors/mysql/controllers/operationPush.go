@@ -77,7 +77,7 @@ func (p *MySQLPushProvider) ProcessFiles(
 	sort.Strings(keys)
 
 	for _, filePath := range keys {
-		tableName := processTableName(filePath, nil) // databaseName not needed here
+		tableName := processTableName(filePath, p.databaseName)
 
 		// Skip if we're targeting a specific path and this isn't it
 		if targetPath != "" && tableName != targetPath {

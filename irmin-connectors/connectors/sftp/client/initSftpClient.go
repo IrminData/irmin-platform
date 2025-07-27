@@ -3,10 +3,9 @@ package sftpclient
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	sftpmodels "irmin-connectors/connectors/sftp/models"
 	"irmin-connectors/db"
 	"log/slog"
-	"strconv"
 	"time"
 )
 
@@ -22,66 +21,53 @@ func InitSftpClient(
 	operation *db.Operation,
 ) (*SftpClient, error) {
 	// Extract operation connection details and settings
-	var details map[string]string
-	if err := json.Unmarshal(operation.Details, &details); err != nil {
+	var detailsMap map[string]any
+	if err := json.Unmarshal(operation.Details, &detailsMap); err != nil {
 		logger.ErrorContext(ctx, "failed to unmarshal details",
 			"error", err)
 		return nil, err
 	}
 
-	var settings map[string]string
-	if err := json.Unmarshal(operation.Settings, &settings); err != nil {
+	var settingsMap map[string]any
+	if err := json.Unmarshal(operation.Settings, &settingsMap); err != nil {
 		logger.ErrorContext(ctx, "failed to unmarshal settings",
 			"error", err)
 		return nil, err
 	}
 
-	// Extract connection details
-	host := details["host"]
-	portStr := details["port"]
-	username := details["username"]
-	password := details["password"]
-	privateKey := details["private_key"]
-	privateKeyPassphrase := details["private_key_passphrase"]
-	hostKeyFingerprint := details["host_key_fingerprint"]
+	// Parse connection details using model
+	connectionDetails, err := sftpmodels.NewConnectionDetailsFromMap(detailsMap)
+	if err != nil {
+		logger.ErrorContext(ctx, "failed to parse connection details",
+			"error", err)
+		return nil, err
+	}
 
-	// Parse port (default to 22 if not specified)
-	port := 22
-	if portStr != "" {
-		var err error
-		port, err = strconv.Atoi(portStr)
-		if err != nil {
-			logger.ErrorContext(ctx, "failed to parse port",
-				"error", err, "port", portStr)
-			return nil, err
+	// Parse connection settings using model (optional for SFTP)
+	connectionSettings, settingsErr := sftpmodels.NewConnectionSettingsFromMap(settingsMap)
+	if settingsErr != nil {
+		logger.InfoContext(ctx, "using default connection settings",
+			"reason", settingsErr.Error())
+		// Use default settings if parsing fails
+		connectionSettings = &sftpmodels.ConnectionSettings{
+			RemotePath:         "/",
+			FilePatterns:       []string{"*"},
+			PreserveTimestamps: false,
+			OverwriteExisting:  false,
+			CreateDirectories:  true,
+			TransferMode:       "binary",
 		}
-	}
-
-	// Check for missing required fields
-	if host == "" || username == "" {
-		err := errors.New("missing required connection details: host and username are required")
-		logger.ErrorContext(ctx, "missing required connection details",
-			"error", err)
-		return nil, err
-	}
-
-	// Validate authentication method
-	if password == "" && privateKey == "" {
-		err := errors.New("either password or private_key must be provided for authentication")
-		logger.ErrorContext(ctx, "no authentication method provided",
-			"error", err)
-		return nil, err
 	}
 
 	// Create connection configuration
 	config := &ConnectionConfig{
-		Host:                 host,
-		Port:                 port,
-		Username:             username,
-		Password:             password,
-		PrivateKey:           privateKey,
-		PrivateKeyPassphrase: privateKeyPassphrase,
-		HostKeyFingerprint:   hostKeyFingerprint,
+		Host:                 connectionDetails.Host,
+		Port:                 connectionDetails.Port,
+		Username:             connectionDetails.Username,
+		Password:             connectionDetails.Password,
+		PrivateKey:           connectionDetails.PrivateKey,
+		PrivateKeyPassphrase: connectionDetails.PrivateKeyPassphrase,
+		HostKeyFingerprint:   connectionDetails.HostKeyFingerprint,
 		Timeout:              DefaultTimeoutSeconds * time.Second, // Default timeout
 	}
 
@@ -94,10 +80,12 @@ func InitSftpClient(
 	}
 
 	logger.InfoContext(ctx, "SFTP client initialized successfully",
-		"host", host,
-		"port", port,
-		"username", username,
-		"auth_method", getAuthMethod(password, privateKey))
+		"host", connectionDetails.Host,
+		"port", connectionDetails.Port,
+		"username", connectionDetails.Username,
+		"auth_method", getAuthMethod(connectionDetails.Password, connectionDetails.PrivateKey),
+		"remote_path", connectionSettings.RemotePath,
+		"transfer_mode", connectionSettings.TransferMode)
 
 	return client, nil
 }

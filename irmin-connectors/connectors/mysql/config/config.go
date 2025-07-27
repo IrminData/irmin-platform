@@ -68,9 +68,9 @@ func initializeFieldDefinitions() (map[string]models.DynamicField, map[string]mo
 			Min:      1,
 			Max:      utils.MaxPortNumber,
 		},
-		"user": {
+		"username": {
 			Type:     "text",
-			Label:    "User",
+			Label:    "Username",
 			Example:  "root",
 			Required: true,
 			HelpText: "The user name for connecting to the MySQL database.",

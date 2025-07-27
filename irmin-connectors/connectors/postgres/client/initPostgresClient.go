@@ -3,10 +3,9 @@ package postgresclient
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	postgresmodels "irmin-connectors/connectors/postgres/models"
 	"irmin-connectors/db"
 	"log/slog"
-	"strconv"
 )
 
 // InitPostgresClient initializes a PostgresClient instance based on the data provided in the operation.
@@ -16,43 +15,44 @@ func InitPostgresClient(
 	operation *db.Operation,
 ) (*PostgresClient, *string, error) {
 	// Extract operation connection details and settings
-	var details map[string]string
-	if err := json.Unmarshal(operation.Details, &details); err != nil {
+	var detailsMap map[string]any
+	if err := json.Unmarshal(operation.Details, &detailsMap); err != nil {
 		logger.ErrorContext(ctx, "failed to unmarshal details",
 			"error", err)
 		return nil, nil, err
 	}
-	var settings map[string]string
-	if err := json.Unmarshal(operation.Settings, &settings); err != nil {
+	var settingsMap map[string]any
+	if err := json.Unmarshal(operation.Settings, &settingsMap); err != nil {
 		logger.ErrorContext(ctx, "failed to unmarshal settings",
 			"error", err)
 		return nil, nil, err
 	}
 
-	// Extract connection details and settings
-	host := details["host"]
-	port, err := strconv.Atoi(details["port"])
-	user := details["user"]
-	password := details["password"]
-	defaultDB := details["default_db"]
-	sslMode := details["ssl_mode"] == "true"
-	database := settings["database"]
+	// Parse connection details using model
+	connectionDetails, err := postgresmodels.NewConnectionDetailsFromMap(detailsMap)
 	if err != nil {
-		logger.ErrorContext(ctx, "failed to extract connection details",
+		logger.ErrorContext(ctx, "failed to parse connection details",
 			"error", err)
 		return nil, nil, err
 	}
 
-	// Check for missing required fields
-	if host == "" || port == 0 || user == "" || password == "" || defaultDB == "" || database == "" {
-		err = errors.New("missing required connection details or settings")
-		logger.ErrorContext(ctx, "missing required connection details or settings",
+	// Parse connection settings using model
+	connectionSettings, err := postgresmodels.NewConnectionSettingsFromMap(settingsMap)
+	if err != nil {
+		logger.ErrorContext(ctx, "failed to parse connection settings",
 			"error", err)
 		return nil, nil, err
 	}
 
 	// Establish a connection to the PostgreSQL server
-	pgClient, err := NewPostgresClient(host, port, user, password, defaultDB, sslMode)
+	pgClient, err := NewPostgresClient(
+		connectionDetails.Host,
+		connectionDetails.Port,
+		connectionDetails.Username,
+		connectionDetails.Password,
+		connectionDetails.DefaultDB,
+		connectionDetails.SSLMode,
+	)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create Postgres client",
 			"error", err)
@@ -61,7 +61,7 @@ func InitPostgresClient(
 	defer pgClient.Close() // Close the client at the end of the function
 
 	// Connect to the specified database
-	dbClient, err := pgClient.WithDatabase(database)
+	dbClient, err := pgClient.WithDatabase(connectionSettings.Database)
 	if err != nil {
 		pgClient.Close() // Close the initial client before returning
 		logger.ErrorContext(ctx, "failed to connect to database",
@@ -79,5 +79,5 @@ func InitPostgresClient(
 	}
 
 	// Return the valid client without closing it prematurely
-	return dbClient, &database, nil
+	return dbClient, &connectionSettings.Database, nil
 }
