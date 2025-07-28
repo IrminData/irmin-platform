@@ -6,12 +6,12 @@ import (
 	"irmin-connectors/connectors/common"
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	"irmin-connectors/db"
+	"irmin-connectors/utils"
 	"log/slog"
 	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
-	"irmin-connectors/utils"
 )
 
 // PostgresPatchProvider implements the PatchOperationProvider interface for PostgreSQL.
@@ -41,12 +41,23 @@ func (p *PostgresPatchProvider) ExecutePatchOperation(
 	client any,
 	op irminmodels.PatchOperation,
 	tableName, rowIdentifier, columnName string,
+	_ /* fromDB */, fromTable, fromRow, fromColumn string,
 ) error {
 	dbClient, ok := client.(*postgresclient.PostgresClient)
 	if !ok {
 		return errors.New("invalid client type for PostgreSQL patch provider")
 	}
+	return executePatchOperation(c, dbClient, op, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
+}
 
+// executePatchOperation executes a single patch operation within its own transaction.
+func executePatchOperation(
+	c fiber.Ctx,
+	dbClient *postgresclient.PostgresClient,
+	op irminmodels.PatchOperation,
+	tableName, rowIdentifier, columnName string,
+	fromTable, fromRow, fromColumn string,
+) error {
 	// Start a transaction to ensure that each operation is atomic
 	tx, txErr := dbClient.BeginTransaction(c)
 	if txErr != nil {
@@ -69,10 +80,10 @@ func (p *PostgresPatchProvider) ExecutePatchOperation(
 		err = handleRemoveOperation(c, tx, tableName, rowIdentifier)
 	case "replace":
 		err = handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, op.Value)
-	case "copy":
-		err = handleCopyOperation(c, tx, tableName, rowIdentifier, columnName, op)
 	case "move":
-		err = handleMoveOperation(c, tx, tableName, rowIdentifier, columnName, op)
+		err = handleMoveOperation(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
+	case "copy":
+		err = handleCopyOperation(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
 	default:
 		return errors.New("invalid operation type: " + op.Op)
 	}
@@ -171,14 +182,18 @@ func handleReplaceOperation(
 		return fmt.Errorf("failed to get primary key columns: %w", primaryKeysErr)
 	}
 
-	// Build WHERE clause with dynamic primary keys
-	whereClause, whereArgs, whereClauseErr := buildWhereClause(primaryKeys, rowIdentifier)
-	if whereClauseErr != nil {
-		return fmt.Errorf("failed to build WHERE clause: %w", whereClauseErr)
-	}
-
 	if columnName != "" {
-		// Single column replace
+		// Single column replace: $1 is used for the new value, so WHERE clause starts at $2
+		const setClauseParamCount = 1
+		whereClause, whereArgs, whereClauseErr := buildWhereClauseWithOffset(
+			primaryKeys,
+			rowIdentifier,
+			setClauseParamCount+1,
+		)
+		if whereClauseErr != nil {
+			return fmt.Errorf("failed to build WHERE clause: %w", whereClauseErr)
+		}
+
 		updateSQL := fmt.Sprintf(
 			`UPDATE %s SET %s = $1 WHERE %s`,
 			quoteIdentifier(tableName),
@@ -196,6 +211,12 @@ func handleReplaceOperation(
 	updatedRow, ok := value.(map[string]any)
 	if !ok {
 		return errors.New("expected patch value to be an object")
+	}
+
+	// Build WHERE clause with parameter indices starting after SET clause parameters
+	whereClause, whereArgs, whereClauseErr := buildWhereClauseWithOffset(primaryKeys, rowIdentifier, len(updatedRow)+1)
+	if whereClauseErr != nil {
+		return fmt.Errorf("failed to build WHERE clause: %w", whereClauseErr)
 	}
 
 	// Build an UPDATE statement for every column in the JSON
@@ -229,246 +250,343 @@ func handleReplaceOperation(
 	return nil
 }
 
-// handleCopyOperation handles the "copy" patch operation.
-func handleCopyOperation(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	tableName string,
-	rowIdentifier any,
-	columnName string,
-	op irminmodels.PatchOperation,
-) error {
-	// Extract source path components
-	if op.From == nil {
-		return errors.New("copy operation requires 'from' field")
-	}
-	_, sourceTableName, sourceRowIdentifier, sourceColumnName := utils.ExtractPathComponents(*op.From)
-
-	if columnName != "" && sourceColumnName != "" {
-		// Column-level copy
-		return handleColumnCopy(c, tx, tableName, rowIdentifier, columnName, sourceTableName, sourceRowIdentifier, sourceColumnName)
-	} else {
-		// Row-level copy
-		return handleRowCopy(c, tx, tableName, rowIdentifier, sourceTableName, sourceRowIdentifier)
-	}
-}
-
 // handleMoveOperation handles the "move" patch operation.
+// It copies data from the source location to the destination, then removes it from the source.
 func handleMoveOperation(
 	c fiber.Ctx,
 	tx *postgresclient.Tx,
-	tableName string,
-	rowIdentifier any,
-	columnName string,
-	op irminmodels.PatchOperation,
+	tableName, rowIdentifier, columnName string,
+	fromTable, fromRow, fromColumn string,
 ) error {
-	// Extract source path components
-	if op.From == nil {
-		return errors.New("move operation requires 'from' field")
+	// First copy the data
+	if err := handleCopyOperation(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn); err != nil {
+		return fmt.Errorf("failed to copy data during move operation: %w", err)
 	}
-	_, sourceTableName, sourceRowIdentifier, sourceColumnName := utils.ExtractPathComponents(*op.From)
 
-	if columnName != "" && sourceColumnName != "" {
-		// Column-level move: copy then set source to NULL
-		if err := handleColumnCopy(c, tx, tableName, rowIdentifier, columnName, sourceTableName, sourceRowIdentifier, sourceColumnName); err != nil {
-			return err
+	// Then remove from source
+	if fromColumn != "" {
+		// Column-level move: set the source column to NULL
+		if err := handleReplaceOperation(c, tx, fromTable, fromRow, fromColumn, nil); err != nil {
+			return fmt.Errorf("failed to remove source data during move operation: %w", err)
 		}
-		// Set source column to NULL
-		return handleReplaceOperation(c, tx, sourceTableName, sourceRowIdentifier, sourceColumnName, nil)
 	} else {
-		// Row-level move: copy then remove source
-		if err := handleRowCopy(c, tx, tableName, rowIdentifier, sourceTableName, sourceRowIdentifier); err != nil {
-			return err
+		// Row-level move: delete the entire source row
+		if err := handleRemoveOperation(c, tx, fromTable, fromRow); err != nil {
+			return fmt.Errorf("failed to remove source row during move operation: %w", err)
 		}
-		// Remove source row
-		return handleRemoveOperation(c, tx, sourceTableName, sourceRowIdentifier)
-	}
-}
-
-// handleColumnCopy copies a single column value from source to destination using dynamic primary keys.
-func handleColumnCopy(
-	c fiber.Ctx,
-	tx *postgresclient.Tx,
-	destTableName string,
-	destRowIdentifier any,
-	destColumnName string,
-	sourceTableName string,
-	sourceRowIdentifier any,
-	sourceColumnName string,
-) error {
-	// Get primary key columns for source table
-	sourcePrimaryKeys, err := getPrimaryKeyColumns(c, tx, sourceTableName)
-	if err != nil {
-		return fmt.Errorf("failed to get source table primary key columns: %w", err)
-	}
-
-	// Build WHERE clause for source row using dynamic primary keys
-	sourceWhereClause, sourceWhereArgs, err := buildWhereClause(sourcePrimaryKeys, sourceRowIdentifier)
-	if err != nil {
-		return fmt.Errorf("failed to build source WHERE clause: %w", err)
-	}
-
-	// Get the value from source column
-	selectSQL := fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s`,
-		quoteIdentifier(sourceColumnName),
-		quoteIdentifier(sourceTableName),
-		sourceWhereClause,
-	)
-
-	var sourceValue any
-	if err := tx.QueryRow(c, selectSQL, sourceWhereArgs...).Scan(&sourceValue); err != nil {
-		return fmt.Errorf("failed to read source column value: %w", err)
-	}
-
-	// Get primary key columns for destination table
-	destPrimaryKeys, err := getPrimaryKeyColumns(c, tx, destTableName)
-	if err != nil {
-		return fmt.Errorf("failed to get destination table primary key columns: %w", err)
-	}
-
-	// Build WHERE clause for destination row using dynamic primary keys
-	destWhereClause, destWhereArgs, err := buildWhereClause(destPrimaryKeys, destRowIdentifier)
-	if err != nil {
-		return fmt.Errorf("failed to build destination WHERE clause: %w", err)
-	}
-
-	// Update the destination column
-	updateSQL := fmt.Sprintf(
-		`UPDATE %s SET %s = $1 WHERE %s`,
-		quoteIdentifier(destTableName),
-		quoteIdentifier(destColumnName),
-		destWhereClause,
-	)
-	args := append([]any{sourceValue}, destWhereArgs...)
-
-	if _, err := tx.Exec(c, updateSQL, args...); err != nil {
-		return fmt.Errorf("failed to update destination column: %w", err)
 	}
 
 	return nil
 }
 
-// handleRowCopy copies an entire row from source to destination using dynamic primary keys.
+// handleCopyOperation handles the "copy" patch operation.
+// It copies data from the source location to the destination without removing the source.
+func handleCopyOperation(
+	c fiber.Ctx,
+	tx *postgresclient.Tx,
+	tableName, rowIdentifier, columnName string,
+	fromTable, fromRow, fromColumn string,
+) error {
+	if fromColumn != "" && columnName != "" {
+		// Column-to-column copy
+		return handleColumnCopy(c, tx, tableName, rowIdentifier, columnName, fromTable, fromRow, fromColumn)
+	}
+	if fromColumn == "" && columnName == "" {
+		// Row-to-row copy
+		return handleRowCopy(c, tx, tableName, rowIdentifier, fromTable, fromRow)
+	}
+	return errors.New(
+		"copy operation requires both source and destination to be at the same level (column-to-column or row-to-row)",
+	)
+}
+
+// handleColumnCopy copies a single column value from source to destination.
+func handleColumnCopy(
+	c fiber.Ctx,
+	tx *postgresclient.Tx,
+	tableName, rowIdentifier, columnName string,
+	fromTable, fromRow, fromColumn string,
+) error {
+	// Get primary key columns for the source table
+	primaryKeys, primaryKeysErr := getPrimaryKeyColumns(c, tx, fromTable)
+	if primaryKeysErr != nil {
+		return fmt.Errorf("failed to get primary key columns for source table: %w", primaryKeysErr)
+	}
+
+	// Build WHERE clause with dynamic primary keys
+	whereClause, whereArgs, whereClauseErr := buildWhereClause(primaryKeys, fromRow)
+	if whereClauseErr != nil {
+		return fmt.Errorf("failed to build WHERE clause for source row: %w", whereClauseErr)
+	}
+
+	// Get the value from the source column
+	selectSQL := fmt.Sprintf(
+		`SELECT %s FROM %s WHERE %s`,
+		quoteIdentifier(fromColumn),
+		quoteIdentifier(fromTable),
+		whereClause,
+	)
+
+	var value any
+	if err := tx.QueryRow(c, selectSQL, whereArgs...).Scan(&value); err != nil {
+		return fmt.Errorf("failed to read source column value: %w", err)
+	}
+
+	// Update the destination column
+	return handleReplaceOperation(c, tx, tableName, rowIdentifier, columnName, value)
+}
+
+// handleUpsertOperation handles inserting or updating a row (UPSERT).
+// If the row exists (based on primary key), it updates; otherwise it inserts.
+func handleUpsertOperation(
+	c fiber.Ctx,
+	tx *postgresclient.Tx,
+	tableName string,
+	value any,
+	primaryKeys []string,
+) error {
+	// Make sure the value is an object
+	newRow, ok := value.(map[string]any)
+	if !ok {
+		return errors.New("expected patch value to be an object")
+	}
+
+	// Build a list of columns from the new row
+	var columns []string
+	for col := range newRow {
+		columns = append(columns, col)
+	}
+
+	// Build placeholders for INSERT
+	colsPlaceholder := make([]string, len(columns))
+	for i := range columns {
+		colsPlaceholder[i] = fmt.Sprintf("$%d", i+1)
+	}
+
+	// Build the SET clause for UPDATE (exclude primary key columns from updates)
+	var updateClauses []string
+	for _, col := range columns {
+		isPrimaryKey := false
+		for _, pk := range primaryKeys {
+			if pk == col {
+				isPrimaryKey = true
+				break
+			}
+		}
+		if !isPrimaryKey {
+			updateClauses = append(
+				updateClauses,
+				fmt.Sprintf("%s = EXCLUDED.%s", quoteIdentifier(col), quoteIdentifier(col)),
+			)
+		}
+	}
+
+	// Build conflict target (primary key columns)
+	conflictTarget := strings.Join(quoteIdentifiers(primaryKeys), ", ")
+
+	// Build the UPSERT statement
+	var upsertSQL string
+	if len(updateClauses) > 0 {
+		upsertSQL = fmt.Sprintf(
+			`INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s`,
+			quoteIdentifier(tableName),
+			strings.Join(quoteIdentifiers(columns), ", "),
+			strings.Join(colsPlaceholder, ", "),
+			conflictTarget,
+			strings.Join(updateClauses, ", "),
+		)
+	} else {
+		// If all columns are primary keys, just do nothing on conflict
+		upsertSQL = fmt.Sprintf(
+			`INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO NOTHING`,
+			quoteIdentifier(tableName),
+			strings.Join(quoteIdentifiers(columns), ", "),
+			strings.Join(colsPlaceholder, ", "),
+			conflictTarget,
+		)
+	}
+
+	// Prepare the arguments
+	args := make([]any, len(columns))
+	for i, col := range columns {
+		args[i] = newRow[col]
+	}
+
+	// Execute the UPSERT
+	if _, err := tx.Exec(c, upsertSQL, args...); err != nil {
+		return fmt.Errorf("failed to upsert row: %w", err)
+	}
+
+	return nil
+}
+
+// handleRowCopy copies an entire row from source to destination.
 func handleRowCopy(
 	c fiber.Ctx,
 	tx *postgresclient.Tx,
-	destTableName string,
-	destRowIdentifier any,
-	sourceTableName string,
-	sourceRowIdentifier any,
+	tableName, rowIdentifier string,
+	fromTable, fromRow string,
 ) error {
-	// Get primary key columns for source table
-	sourcePrimaryKeys, err := getPrimaryKeyColumns(c, tx, sourceTableName)
+	// Get primary key columns for both tables
+	sourcePrimaryKeys, err := getPrimaryKeyColumns(c, tx, fromTable)
 	if err != nil {
-		return fmt.Errorf("failed to get source table primary key columns: %w", err)
+		return fmt.Errorf("failed to get primary key columns for source table: %w", err)
 	}
 
-	// Build WHERE clause for source row using dynamic primary keys
-	sourceWhereClause, sourceWhereArgs, err := buildWhereClause(sourcePrimaryKeys, sourceRowIdentifier)
+	destPrimaryKeys, err := getPrimaryKeyColumns(c, tx, tableName)
 	if err != nil {
-		return fmt.Errorf("failed to build source WHERE clause: %w", err)
+		return fmt.Errorf("failed to get primary key columns for destination table: %w", err)
 	}
 
-	// Get all column names for the source table (excluding primary keys for destination)
-	getColumnsSQL := `
+	// Get table columns
+	columns, err := getTableColumns(c, tx, fromTable)
+	if err != nil {
+		return fmt.Errorf("failed to get table columns: %w", err)
+	}
+
+	// Read source row data
+	values, err := readSourceRowData(c, tx, fromTable, fromRow, sourcePrimaryKeys, columns)
+	if err != nil {
+		return fmt.Errorf("failed to read source row: %w", err)
+	}
+
+	// Build destination row data with updated primary keys
+	newRowData, err := buildDestinationRowData(columns, values, destPrimaryKeys, rowIdentifier)
+	if err != nil {
+		return fmt.Errorf("failed to build destination row data: %w", err)
+	}
+
+	// Upsert the row (insert or update if exists)
+	return handleUpsertOperation(c, tx, tableName, newRowData, destPrimaryKeys)
+}
+
+// getTableColumns retrieves all column names for a table.
+func getTableColumns(c fiber.Ctx, tx *postgresclient.Tx, tableName string) ([]string, error) {
+	columnsSQL := `
 		SELECT column_name 
 		FROM information_schema.columns 
-		WHERE table_name = $1 AND table_schema = current_schema()
+		WHERE table_name = $1 
+		AND table_schema = current_schema()
 		ORDER BY ordinal_position
 	`
 
-	rows, err := tx.Query(c, getColumnsSQL, sourceTableName)
+	rows, err := tx.Query(c, columnsSQL, tableName)
 	if err != nil {
-		return fmt.Errorf("failed to get column names: %w", err)
+		return nil, fmt.Errorf("failed to get table columns: %w", err)
 	}
 	defer rows.Close()
 
 	var columns []string
 	for rows.Next() {
-		var columnName string
-		if err := rows.Scan(&columnName); err != nil {
-			return fmt.Errorf("failed to scan column name: %w", err)
+		var column string
+		if scanErr := rows.Scan(&column); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan column name: %w", scanErr)
 		}
-		columns = append(columns, columnName)
+		columns = append(columns, column)
+	}
+
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("error during rows iteration: %w", rowsErr)
 	}
 
 	if len(columns) == 0 {
-		return errors.New("no columns found in source table")
+		return nil, errors.New("no columns found in source table")
 	}
 
-	// Select all data from source row
+	return columns, nil
+}
+
+// readSourceRowData reads the source row data for all columns.
+func readSourceRowData(
+	c fiber.Ctx,
+	tx *postgresclient.Tx,
+	fromTable, fromRow string,
+	primaryKeys, columns []string,
+) ([]any, error) {
+	// Build WHERE clause with dynamic primary keys for source row
+	whereClause, whereArgs, err := buildWhereClause(primaryKeys, fromRow)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build WHERE clause for source row: %w", err)
+	}
+
+	// Read the source row data
+	quotedColumns := quoteIdentifiers(columns)
 	selectSQL := fmt.Sprintf(
 		`SELECT %s FROM %s WHERE %s`,
-		strings.Join(quoteIdentifiers(columns), ", "),
-		quoteIdentifier(sourceTableName),
-		sourceWhereClause,
+		strings.Join(quotedColumns, ", "),
+		quoteIdentifier(fromTable),
+		whereClause,
 	)
 
-	sourceRow := tx.QueryRow(c, selectSQL, sourceWhereArgs...)
-	
-	// Prepare scan destinations
+	sourceRow, err := tx.Query(c, selectSQL, whereArgs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read source row: %w", err)
+	}
+	defer sourceRow.Close()
+
+	if !sourceRow.Next() {
+		return nil, errors.New("source row not found")
+	}
+
+	// Scan the source row values
 	values := make([]any, len(columns))
-	scanArgs := make([]any, len(columns))
+	valuePtrs := make([]any, len(columns))
 	for i := range values {
-		scanArgs[i] = &values[i]
+		valuePtrs[i] = &values[i]
 	}
 
-	if err := sourceRow.Scan(scanArgs...); err != nil {
-		return fmt.Errorf("failed to scan source row: %w", err)
+	if scanErr := sourceRow.Scan(valuePtrs...); scanErr != nil {
+		return nil, fmt.Errorf("failed to scan source row values: %w", scanErr)
 	}
 
-	// Get primary key columns for destination table
-	destPrimaryKeys, err := getPrimaryKeyColumns(c, tx, destTableName)
+	if rowsErr := sourceRow.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("error during source row iteration: %w", rowsErr)
+	}
+
+	return values, nil
+}
+
+// parsePrimaryKeyValues parses the row identifier into individual primary key values.
+// Uses URL encoding to handle values that contain colon characters.
+func parsePrimaryKeyValues(primaryKeys []string, rowIdentifier string) ([]string, error) {
+	return utils.DecodeCompositeKey(rowIdentifier, len(primaryKeys))
+}
+
+// buildDestinationRowData creates a new row map with updated primary key values.
+func buildDestinationRowData(
+	columns []string,
+	values []any,
+	destPrimaryKeys []string,
+	rowIdentifier string,
+) (map[string]any, error) {
+	// Parse destination row identifier for composite primary keys
+	destPrimaryKeyValues, err := parsePrimaryKeyValues(destPrimaryKeys, rowIdentifier)
 	if err != nil {
-		return fmt.Errorf("failed to get destination table primary key columns: %w", err)
+		return nil, err
 	}
 
-	// Build WHERE clause for destination row using dynamic primary keys
-	destWhereClause, destWhereArgs, err := buildWhereClause(destPrimaryKeys, destRowIdentifier)
-	if err != nil {
-		return fmt.Errorf("failed to build destination WHERE clause: %w", err)
+	// Create a map of destination primary key columns to their new values
+	destPrimaryKeyMap := make(map[string]string)
+	for i, key := range destPrimaryKeys {
+		destPrimaryKeyMap[key] = destPrimaryKeyValues[i]
 	}
 
-	// Build UPDATE statement for all non-primary key columns
-	var setClauses []string
-	var updateArgs []any
-	paramIndex := 1
+	// Create a map for the new row and update the primary key columns
+	newRowData := make(map[string]any)
 
-	for i, col := range columns {
-		// Skip primary key columns to avoid conflicts
-		isPrimaryKey := false
-		for _, pk := range destPrimaryKeys {
-			if col == pk {
-				isPrimaryKey = true
-				break
+	// Copy all column values, replacing primary key values with destination values
+	for i, column := range columns {
+		if newStringValue, isPrimaryKey := destPrimaryKeyMap[column]; isPrimaryKey {
+			// Convert the new string value to match the original type
+			convertedValue, convertErr := utils.ConvertStringToType(newStringValue, values[i])
+			if convertErr != nil {
+				return nil, fmt.Errorf("failed to convert primary key value for column %s: %w", column, convertErr)
 			}
-		}
-		
-		if !isPrimaryKey {
-			setClauses = append(setClauses, fmt.Sprintf(`%s = $%d`, quoteIdentifier(col), paramIndex))
-			updateArgs = append(updateArgs, values[i])
-			paramIndex++
+			newRowData[column] = convertedValue
+		} else {
+			newRowData[column] = values[i]
 		}
 	}
 
-	if len(setClauses) == 0 {
-		return errors.New("no non-primary key columns to update")
-	}
-
-	updateSQL := fmt.Sprintf(
-		`UPDATE %s SET %s WHERE %s`,
-		quoteIdentifier(destTableName),
-		strings.Join(setClauses, ", "),
-		destWhereClause,
-	)
-
-	// Append WHERE arguments
-	updateArgs = append(updateArgs, destWhereArgs...)
-
-	if _, err := tx.Exec(c, updateSQL, updateArgs...); err != nil {
-		return fmt.Errorf("failed to update destination row: %w", err)
-	}
-
-	return nil
+	return newRowData, nil
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	postgresclient "irmin-connectors/connectors/postgres/client"
+	"irmin-connectors/utils"
 )
 
 // quoteIdentifier quotes a PostgreSQL identifier to prevent SQL injection.
@@ -24,13 +25,15 @@ func quoteIdentifiers(cols []string) []string {
 	return out
 }
 
-// getPrimaryKeyColumns returns the primary key columns for a given table in PostgreSQL.
+// getPrimaryKeyColumns returns the primary key columns for a given table.
 func getPrimaryKeyColumns(ctx context.Context, tx *postgresclient.Tx, tableName string) ([]string, error) {
 	query := `
 		SELECT a.attname
 		FROM pg_index i
-		JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-		WHERE i.indrelid = $1::regclass AND i.indisprimary
+		JOIN pg_attribute a ON a.attrelid = i.indrelid
+		AND a.attnum = ANY(i.indkey)
+		WHERE i.indrelid = $1::regclass
+		AND i.indisprimary
 		ORDER BY array_position(i.indkey, a.attnum)
 	`
 
@@ -53,14 +56,16 @@ func getPrimaryKeyColumns(ctx context.Context, tx *postgresclient.Tx, tableName 
 		return nil, fmt.Errorf("error reading rows: %w", rowsErr)
 	}
 
-	// If no primary key, try to find any unique constraint
+	// If no primary key, try to find any unique key
 	if len(columns) == 0 {
 		uniqueQuery := `
 			SELECT a.attname
-			FROM pg_index i
-			JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
-			WHERE i.indrelid = $1::regclass AND i.indisunique AND NOT i.indisprimary
-			ORDER BY i.indexrelid, array_position(i.indkey, a.attnum)
+			FROM pg_constraint c
+			JOIN pg_attribute a ON a.attrelid = c.conrelid
+			AND a.attnum = ANY(c.conkey)
+			WHERE c.conrelid = $1::regclass
+			AND c.contype = 'u'
+			ORDER BY c.conname, array_position(c.conkey, a.attnum)
 		`
 
 		uniqueRows, uniqueErr := tx.Query(ctx, uniqueQuery, tableName)
@@ -82,10 +87,10 @@ func getPrimaryKeyColumns(ctx context.Context, tx *postgresclient.Tx, tableName 
 		}
 	}
 
-	// If still no unique identifier found, we cannot perform operations that require row identification
+	// If still no unique identifier found, we cannot create meaningful operations
 	if len(columns) == 0 {
 		return nil, fmt.Errorf(
-			"table %s has no primary key or unique constraint - cannot perform operations that require row identification",
+			"table %s has no primary key or unique key - cannot perform operations that require row identification",
 			tableName,
 		)
 	}
@@ -95,35 +100,49 @@ func getPrimaryKeyColumns(ctx context.Context, tx *postgresclient.Tx, tableName 
 
 // buildWhereClause builds a WHERE clause for the given primary key columns and row identifier.
 func buildWhereClause(primaryKeys []string, rowIdentifier any) (string, []any, error) {
+	return buildWhereClauseWithOffset(primaryKeys, rowIdentifier, 1)
+}
+
+// buildWhereClauseWithOffset builds a WHERE clause with a custom starting parameter index.
+// This allows avoiding parameter conflicts when combining with other SQL clauses.
+func buildWhereClauseWithOffset(primaryKeys []string, rowIdentifier any, startIndex int) (string, []any, error) {
 	if len(primaryKeys) == 0 {
 		return "", nil, errors.New("no primary key columns provided")
 	}
 
 	if len(primaryKeys) == 1 {
-		// Single primary key
-		whereClause := fmt.Sprintf("%s = $1", quoteIdentifier(primaryKeys[0]))
-		return whereClause, []any{rowIdentifier}, nil
+		// Single primary key - decode any URL encoding
+		var value string
+		if strValue, ok := rowIdentifier.(string); ok {
+			decoded, err := utils.DecodeCompositeKey(strValue, 1)
+			if err != nil {
+				return "", nil, fmt.Errorf("failed to decode primary key value: %w", err)
+			}
+			value = decoded[0]
+		} else {
+			value = fmt.Sprintf("%v", rowIdentifier)
+		}
+
+		whereClause := fmt.Sprintf("%s = $%d", quoteIdentifier(primaryKeys[0]), startIndex)
+		return whereClause, []any{value}, nil
 	}
 
-	// Composite primary key - expect string format like "value1:value2:value3"
+	// Composite primary key - use DecodeCompositeKey for proper parsing
 	rowIDStr, ok := rowIdentifier.(string)
 	if !ok {
 		return "", nil, errors.New("composite primary key requires string identifier in format 'value1:value2:...'")
 	}
 
-	parts := strings.Split(rowIDStr, ":")
-	if len(parts) != len(primaryKeys) {
-		return "", nil, fmt.Errorf(
-			"identifier parts (%d) don't match primary key columns (%d)",
-			len(parts), len(primaryKeys),
-		)
+	parts, err := utils.DecodeCompositeKey(rowIDStr, len(primaryKeys))
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to decode composite primary key: %w", err)
 	}
 
 	var conditions []string
 	var args []any
 
 	for i, key := range primaryKeys {
-		conditions = append(conditions, fmt.Sprintf("%s = $%d", quoteIdentifier(key), i+1))
+		conditions = append(conditions, fmt.Sprintf("%s = $%d", quoteIdentifier(key), startIndex+i))
 		args = append(args, parts[i])
 	}
 

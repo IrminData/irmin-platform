@@ -24,6 +24,7 @@ type PatchOperationProvider interface {
 		client any,
 		op irminmodels.PatchOperation,
 		tableName, rowIdentifier, columnName string,
+		fromDB, fromTable, fromRow, fromColumn string,
 	) error
 }
 
@@ -88,8 +89,19 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 		// Extract details from the operation path
 		_, tableName, rowIdentifier, columnName := utils.ExtractPathComponents(op.Path)
 
-		// Execute the operation using the provider
-		if err = provider.ExecutePatchOperation(c, client, op, tableName, rowIdentifier, columnName); err != nil {
+		// For move and copy operations, extract source location details
+		var fromDB, fromTable, fromRow, fromColumn string
+		if op.Op == "move" || op.Op == "copy" {
+			if op.From == nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": "move and copy operations require a 'from' field",
+				})
+			}
+			fromDB, fromTable, fromRow, fromColumn = utils.ExtractPathComponents(*op.From)
+		}
+
+		// Execute the operation using the provider - now with additional source location info
+		if err = provider.ExecutePatchOperation(c, client, op, tableName, rowIdentifier, columnName, fromDB, fromTable, fromRow, fromColumn); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
@@ -120,6 +132,7 @@ func (p *NotSupportedPatchProvider) ExecutePatchOperation(
 	_ any,
 	_ irminmodels.PatchOperation,
 	_, _, _ string,
+	_, _, _, _ string,
 ) error {
 	return errors.New("patch operations are not supported by this connector")
 }
