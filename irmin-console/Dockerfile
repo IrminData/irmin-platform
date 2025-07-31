@@ -10,8 +10,19 @@ WORKDIR /app
 ENV GENERATE_SOURCEMAP=false
 ENV NODE_OPTIONS=--max-old-space-size=3000
 
+# Set environment variable placeholders (variable name = variable name)
+ENV NEXT_PUBLIC_BASE_URL=NEXT_PUBLIC_BASE_URL
+ENV NEXT_PUBLIC_WEBSITE_URL=NEXT_PUBLIC_WEBSITE_URL
+ENV NEXT_PUBLIC_REVALIDATE=NEXT_PUBLIC_REVALIDATE
+ENV NEXT_PUBLIC_API_URL=NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SENTRY_DSN=NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_POSTHOG_KEY=NEXT_PUBLIC_POSTHOG_KEY
+ENV NEXT_PUBLIC_POSTHOG_HOST=NEXT_PUBLIC_POSTHOG_HOST
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_NOVU_APP_ID=NEXT_PUBLIC_NOVU_APP_ID
+
 # Install dependencies based on the preferred package manager
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN \
     if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; \
     else echo "Lockfile not found." && exit 1; \
@@ -47,13 +58,17 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy entrypoint script
+COPY entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+
 USER nextjs
 
 EXPOSE 3000
 
 ENV PORT=3000
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
 ENV HOSTNAME="0.0.0.0"
+
+# Use entrypoint script
+ENTRYPOINT ["entrypoint.sh"]
 CMD ["node", "server.js"]
