@@ -8,6 +8,7 @@ import (
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 func (c *Client) CompareRefs(
@@ -62,7 +63,7 @@ func (c *Client) CompareRefs(
 	// Construct Irmin diff object.
 	irminChangeItems := make([]irminmodels.ChangeItem, len(diff))
 	for i, diffItem := range diff {
-		objectDetails := utils.ParseObjectDetailsFromPath(diffItem.Path)
+		objectDetails := irminutils.ParseObjectDetailsFromPath(diffItem.Path)
 		irminChangeItems[i] = irminmodels.ChangeItem{
 			Type: irminmodels.ChangeType(diffItem.Type),
 			Size: int(diffItem.SizeBytes),
@@ -117,7 +118,7 @@ func (c *Client) GetUncommittedChanges(
 	// Construct Irmin diff object.
 	irminChangeItems := make([]irminmodels.ChangeItem, len(diff))
 	for i, diffItem := range diff {
-		objectDetails := utils.ParseObjectDetailsFromPath(diffItem.Path)
+		objectDetails := irminutils.ParseObjectDetailsFromPath(diffItem.Path)
 		irminChangeItems[i] = irminmodels.ChangeItem{
 			Type: irminmodels.ChangeType(diffItem.Type),
 			Size: int(diffItem.SizeBytes),

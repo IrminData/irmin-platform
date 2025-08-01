@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/duckdb"
-	"irmin-api/utils"
 	"os"
 	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 // FieldMappingResult represents the result of applying field mappings,
@@ -49,7 +49,7 @@ func (c *Client) ApplyFieldMappings(
 	}
 
 	// Parse file details and get read options
-	objectDetails := utils.ParseObjectDetailsFromPath(originalFilePath)
+	objectDetails := irminutils.ParseObjectDetailsFromPath(originalFilePath)
 	readOpts, err := c.getReadOptions(&objectDetails, originalFilePath)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (c *Client) ApplyFieldMappings(
 	for destinationPath, destMappings := range mappingsByDestination {
 		selectClause := c.buildSelectClauseForDestination(destMappings)
 
-		destObjectDetails := utils.ParseObjectDetailsFromPath(destinationPath)
+		destObjectDetails := irminutils.ParseObjectDetailsFromPath(destinationPath)
 		destReadOpts, readOptsErr := c.getReadOptions(&destObjectDetails, destinationPath)
 		if readOptsErr != nil {
 			return nil, fmt.Errorf("failed to get read options for destination %s: %w", destinationPath, readOptsErr)
@@ -151,7 +151,7 @@ func (c *Client) validateApplyFieldMappingsInput(
 
 // getReadOptions determines the appropriate DuckDB read options for the file format.
 func (c *Client) getReadOptions(
-	objectDetails *utils.ObjectDetails,
+	objectDetails *irminutils.ObjectDetails,
 	originalFilePath string,
 ) (*duckdb.ReadOptions, error) {
 	readOpts, err := duckdb.GetDuckDBReadOptions(objectDetails.ContentType)

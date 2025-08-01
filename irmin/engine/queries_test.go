@@ -1,10 +1,10 @@
 package engine_test
 
 import (
-	"irmin-api/utils"
 	"testing"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/zeebo/assert"
 )
 
@@ -67,7 +67,7 @@ func TestUnsupportedContentTypes(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create object details with unsupported content type
-			objectDetails := utils.ObjectDetails{
+			objectDetails := irminutils.ObjectDetails{
 				Name:        "test_file",
 				FullPath:    "test/path/file",
 				Type:        irminmodels.ObjectTypeBinary,
@@ -117,7 +117,7 @@ func TestFileExtensionToContentTypeMapping(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.fileName, func(t *testing.T) {
-			objectDetails := utils.ParseObjectDetailsFromPath(tc.fileName)
+			objectDetails := irminutils.ParseObjectDetailsFromPath(tc.fileName)
 
 			// Verify that the content type is correctly determined
 			assert.Equal(t, tc.expectedContentType, objectDetails.ContentType)
@@ -205,7 +205,7 @@ func TestSpecialCharactersInFilenames(t *testing.T) {
 
 	for _, fileName := range testCases {
 		t.Run(fileName, func(t *testing.T) {
-			objectDetails := utils.ParseObjectDetailsFromPath(fileName)
+			objectDetails := irminutils.ParseObjectDetailsFromPath(fileName)
 
 			// Verify that files with special characters are handled properly
 			assert.NotEqual(t, "", objectDetails.Name)

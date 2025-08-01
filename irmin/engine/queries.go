@@ -10,6 +10,7 @@ import (
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.ParsedIrminQuery, error) {
@@ -37,7 +38,7 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 		}
 
 		// Parse the object details from the path.
-		objectPathDetails := utils.ParseObjectDetailsFromPath(object)
+		objectPathDetails := irminutils.ParseObjectDetailsFromPath(object)
 		if objectPathDetails.Type == irminmodels.ObjectTypeBinary {
 			return "", errors.New("binary objects can't be queried")
 		}

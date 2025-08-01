@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"irmin-api/utils"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 // MergeStrategy defines how to handle conflicts when merging data.
@@ -54,7 +54,7 @@ func (c *QueryClient) MergeFiles(
 	}
 
 	// Get destination format from the destination path - check this early
-	destObjectDetails := utils.ParseObjectDetailsFromPath(destinationPath)
+	destObjectDetails := irminutils.ParseObjectDetailsFromPath(destinationPath)
 	destReadOpts, err := GetDuckDBReadOptions(destObjectDetails.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported destination format for %q: %w", destinationPath, err)
@@ -136,7 +136,7 @@ func (c *QueryClient) createTempSourceFiles(sourceFiles map[string][]byte) (map[
 
 // createSingleTempFile creates a single temporary file for the given source.
 func (c *QueryClient) createSingleTempFile(sourcePath string, content []byte) (string, func(), error) {
-	objectDetails := utils.ParseObjectDetailsFromPath(sourcePath)
+	objectDetails := irminutils.ParseObjectDetailsFromPath(sourcePath)
 
 	tempFile, createTempFileErr := os.CreateTemp("", "duckdb-merge-*"+objectDetails.Name)
 	if createTempFileErr != nil {
@@ -186,7 +186,7 @@ type ColumnSchema struct {
 
 // analyzeFileSchema analyzes a single file's schema and returns column information.
 func (c *QueryClient) analyzeFileSchema(sourcePath, tempPath string) ([]ColumnSchema, error) {
-	objectDetails := utils.ParseObjectDetailsFromPath(sourcePath)
+	objectDetails := irminutils.ParseObjectDetailsFromPath(sourcePath)
 	readOpts, err := GetDuckDBReadOptions(objectDetails.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get read options for %s: %w", sourcePath, err)
@@ -360,7 +360,7 @@ func (c *QueryClient) buildSelectQueries(tempFiles map[string]string, schema []C
 	var selectQueries []string
 
 	for sourcePath, tempPath := range tempFiles {
-		objectDetails := utils.ParseObjectDetailsFromPath(sourcePath)
+		objectDetails := irminutils.ParseObjectDetailsFromPath(sourcePath)
 		readOpts, err := GetDuckDBReadOptions(objectDetails.ContentType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get read options for %s: %w", sourcePath, err)

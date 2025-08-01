@@ -9,6 +9,7 @@ import (
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 // processChildren processes immediate children of a group object and returns them as Irmin objects.
@@ -91,7 +92,7 @@ func processDirectories(
 func processFiles(files map[string]lakefs.ObjectMetadata) []irminmodels.Object {
 	var children []irminmodels.Object
 	for name, meta := range files {
-		objectDetails := utils.ParseObjectDetailsFromPath(meta.Path)
+		objectDetails := irminutils.ParseObjectDetailsFromPath(meta.Path)
 		lastModified := time.Unix(meta.Mtime, 0).Format(time.RFC3339)
 		children = append(children, irminmodels.Object{
 			Name:                  name,
@@ -111,7 +112,7 @@ func processFiles(files map[string]lakefs.ObjectMetadata) []irminmodels.Object {
 // getObjectMetadata retrieves metadata for an object.
 func getObjectMetadata(
 	path string,
-	objectPathDetails utils.ObjectDetails,
+	objectPathDetails irminutils.ObjectDetails,
 	lakeFSRepositoryName, ref string,
 	lakefsClient lakefs.Client,
 ) (*lakefs.ObjectMetadata, error) {
@@ -147,7 +148,7 @@ func getObject(
 	path = strings.TrimPrefix(path, "/")
 
 	// Parse object details
-	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
+	objectPathDetails := irminutils.ParseObjectDetailsFromPath(path)
 
 	// Get object metadata
 	objectMetadata, err := getObjectMetadata(path, objectPathDetails, lakeFSRepositoryName, ref, lakefsClient)
@@ -192,7 +193,7 @@ func getObject(
 
 func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.Object, error) {
 	// Check if the object is a system path
-	objectName := utils.ParseObjectDetailsFromPath(path).Name
+	objectName := irminutils.ParseObjectDetailsFromPath(path).Name
 	if IsSystemPath(objectName) {
 		return nil, fmt.Errorf("access to system path %s is not allowed", objectName)
 	}
@@ -273,7 +274,7 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 	}
 
 	// Parse the object details from the path.
-	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
+	objectPathDetails := irminutils.ParseObjectDetailsFromPath(path)
 
 	// Construct the resulting object
 	lastModified := time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
@@ -365,7 +366,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 	}
 
 	// Parse the object details from the path.
-	objectPathDetails := utils.ParseObjectDetailsFromPath(newPath)
+	objectPathDetails := irminutils.ParseObjectDetailsFromPath(newPath)
 
 	// Construct the resulting object
 	lastModified := time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
@@ -421,7 +422,7 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 	}
 
 	// Parse the object details from the path.
-	objectPathDetails := utils.ParseObjectDetailsFromPath(newPath)
+	objectPathDetails := irminutils.ParseObjectDetailsFromPath(newPath)
 
 	// Construct the resulting object
 	lastModified := time.Unix(objectMetadata.Mtime, 0).Format(time.RFC3339)
@@ -459,7 +460,7 @@ func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]ir
 	}
 
 	// Parse the object details from the path.
-	objectPathDetails := utils.ParseObjectDetailsFromPath(path)
+	objectPathDetails := irminutils.ParseObjectDetailsFromPath(path)
 
 	// Fetch commits
 	var lakefsCommits []lakefs.Commit
