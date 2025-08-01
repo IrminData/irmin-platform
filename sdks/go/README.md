@@ -9,6 +9,7 @@ A comprehensive Go SDK for the Irmin platform, providing type-safe access to the
 - **✅ Validation**: Client-side request validation with enhanced security features
 - **🆔 SQID Management**: Unique identifier generation and validation
 - **🔗 Connector Client**: Manage data source connections and operations
+- **📊 DuckDB Client**: In-memory data processing with SQL analytics for CSV, JSON, Parquet and more
 - **🛠️ Utilities**: Helper functions for common tasks (JSON schema generation, file handling, etc.)
 
 ## Installation
@@ -66,6 +67,50 @@ if err != nil {
 }
 
 fmt.Printf("Connector: %s\n", info.Name)
+```
+
+### In-Memory Data Processing with DuckDB
+
+```go
+import (
+    "fmt"
+    "log"
+    "log/slog"
+    "github.com/IrminData/irmin-sdk-go/duckdb"
+)
+
+// Create DuckDB client for in-memory analytics
+logger := slog.Default()
+duckClient, err := duckdb.NewInMemoryClient(logger)
+if err != nil {
+    log.Fatal(err)
+}
+defer duckClient.Close()
+
+// Load CSV data from bytes
+csvData := []byte(`name,age,city
+John,30,New York
+Jane,25,Los Angeles`)
+
+err = duckClient.LoadFileFromBytes(csvData, "users.csv", "users")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Run SQL analytics
+results, err := duckClient.QueryToMap(`
+    SELECT city, COUNT(*) as count, AVG(age) as avg_age 
+    FROM users 
+    GROUP BY city
+`)
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, row := range results {
+    fmt.Printf("City: %s, Count: %v, Avg Age: %.1f\n", 
+        row["city"], row["count"], row["avg_age"])
+}
 ```
 
 ### Using Data Models
@@ -211,6 +256,58 @@ err = connectorClient.Push("connector-id", pushConfig, data)
 err = connectorClient.Subscribe("connector-id", subscribeConfig)
 ```
 
+## DuckDB In-Memory Analytics
+
+The DuckDB client provides powerful in-memory data processing capabilities:
+
+### Key Features
+- **Multiple Format Support**: CSV, JSON, Parquet, Avro, ORC, Delta, Iceberg
+- **SQL Analytics**: Full SQL interface for data analysis and aggregation
+- **Data Merging**: Combine multiple data sources with different strategies
+- **In-Memory Processing**: No external storage dependencies
+
+### Basic Usage
+
+```go
+import (
+    "fmt"
+    "log/slog"
+    "github.com/IrminData/irmin-sdk-go/duckdb"
+)
+
+// Create client
+logger := slog.Default()
+client, err := duckdb.NewInMemoryClient(logger)
+defer client.Close()
+
+// Load data from Go structures
+data := []map[string]any{
+    {"product": "Widget A", "price": 19.99, "category": "Tools"},
+    {"product": "Widget B", "price": 29.99, "category": "Electronics"},
+}
+err = client.CreateTableFromData("products", data)
+
+// Load binary file content
+csvBytes := []byte("name,age\nJohn,30\nJane,25")
+err = client.LoadFileFromBytes(csvBytes, "users.csv", "users")
+
+// Merge multiple data sources
+sourceFiles := map[string][]byte{
+    "data1.csv": csvContent1,
+    "data2.json": jsonContent2,
+}
+result, err := client.MergeFiles(sourceFiles, "merged", duckdb.MergeStrategyUnion)
+
+// Run complex analytics
+results, err := client.QueryToMap(`
+    SELECT category, COUNT(*) as count, AVG(price) as avg_price 
+    FROM products 
+    GROUP BY category
+`)
+```
+
+📚 **[Full DuckDB Documentation →](./duckdb/README.md)**
+
 ## Utilities
 
 The SDK includes helpful utilities:
@@ -278,6 +375,7 @@ go test ./...
 go test ./validator -v
 go test ./core-api -v
 go test ./connector -v
+go test ./duckdb -v
 ```
 
 ## Contributing
@@ -288,4 +386,5 @@ The SDK is organized into focused packages:
 - `validator/` - Validation logic
 - `sqids/` - SQID management
 - `connector/` - Connector client
+- `duckdb/` - In-memory data processing and analytics
 - `utils/` - Utility functions
