@@ -52,6 +52,7 @@ func (cs *Controllers) TestConnection(
 
 	// Create PostgreSQL client using model fields
 	pc, err := postgresclient.NewPostgresClient(
+		ctx,
 		connectionDetails.Host,
 		connectionDetails.Port,
 		connectionDetails.Username,
@@ -96,7 +97,7 @@ func (cs *Controllers) validateDatabaseConnection(
 ) (bool, []string) {
 	var errors []string
 
-	dbClient, err := pc.WithDatabase(database)
+	dbClient, err := pc.WithDatabase(ctx, database)
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Error connecting to database '%s': %v", database, err))
 		return false, errors

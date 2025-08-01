@@ -153,6 +153,7 @@ func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Sub
 
 	// Establish a connection to the PostgreSQL server
 	pgClient, err := postgresclient.NewPostgresClient(
+		ctx,
 		details["host"],
 		port,
 		details["user"],
@@ -166,7 +167,7 @@ func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Sub
 	defer pgClient.Close()
 
 	// Connect to the specified database
-	dbClient, err := pgClient.WithDatabase(settings["database"])
+	dbClient, err := pgClient.WithDatabase(ctx, settings["database"])
 	if err != nil {
 		return fmt.Errorf("failed to connect to database '%s': %w", settings["database"], err)
 	}

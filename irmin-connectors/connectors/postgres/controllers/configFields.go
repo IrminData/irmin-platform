@@ -85,7 +85,7 @@ func (cs *Controllers) getSettingsFields(
 	}
 
 	// Create a client WITHOUT specifying a database (so we can fetch them)
-	pc, err := postgresclient.NewPostgresClient(host, port, user, password, defaultDB, sslMode)
+	pc, err := postgresclient.NewPostgresClient(c, host, port, user, password, defaultDB, sslMode)
 	if err != nil {
 		cs.Logger.Error("Error initialising Postgres client",
 			"error", err)

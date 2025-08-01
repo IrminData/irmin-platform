@@ -26,7 +26,13 @@ type PostgresClient struct {
 // NewPostgresClient connects to Postgres without specifying a database.
 // This is useful for listing available databases or validating credentials without
 // "locking" into a specific dbName.
-func NewPostgresClient(host string, port int, user, password, defaultDB string, sslMode bool) (*PostgresClient, error) {
+func NewPostgresClient(
+	ctx context.Context,
+	host string,
+	port int,
+	user, password, defaultDB string,
+	sslMode bool,
+) (*PostgresClient, error) {
 	if host == "" || port == 0 || user == "" {
 		return nil, errors.New("missing required connection details: host, port, user")
 	}
@@ -50,13 +56,13 @@ func NewPostgresClient(host string, port int, user, password, defaultDB string, 
 	}
 
 	// Initialise a connection pool
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Postgres pool: %w", err)
 	}
 
 	// Test connectivity
-	if err = pool.Ping(context.Background()); err != nil {
+	if err = pool.Ping(ctx); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("unable to connect to Postgres: %w", err)
 	}
@@ -74,7 +80,7 @@ func NewPostgresClient(host string, port int, user, password, defaultDB string, 
 
 // WithDatabase creates a new client instance *connected to a specific database*.
 // This is handy once you decide which database you want to use (e.g. after listing them).
-func (pc *PostgresClient) WithDatabase(dbName string) (*PostgresClient, error) {
+func (pc *PostgresClient) WithDatabase(ctx context.Context, dbName string) (*PostgresClient, error) {
 	var dsn string
 	if pc.sslMode {
 		dsn = fmt.Sprintf(
@@ -93,12 +99,12 @@ func (pc *PostgresClient) WithDatabase(dbName string) (*PostgresClient, error) {
 		return nil, fmt.Errorf("failed to parse Postgres DSN with db=%s: %w", dbName, err)
 	}
 
-	newPool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	newPool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Postgres pool for db=%s: %w", dbName, err)
 	}
 
-	if err = newPool.Ping(context.Background()); err != nil {
+	if err = newPool.Ping(ctx); err != nil {
 		newPool.Close()
 		return nil, fmt.Errorf("unable to connect to Postgres db=%s: %w", dbName, err)
 	}

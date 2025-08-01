@@ -53,11 +53,11 @@ const (
 )
 
 // setupDatabase initializes and configures the database based on command line flags.
-func setupDatabase() (*db.Database, error) {
+func setupDatabase(ctx context.Context) (*db.Database, error) {
 	migrate := flag.Bool("migrate", false, "Run database migrations")
 	flag.Parse()
 
-	database, err := db.InitialiseDB(*migrate)
+	database, err := db.InitialiseDB(ctx, *migrate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
@@ -286,7 +286,8 @@ func main() {
 	}
 
 	// Setup database
-	database, err := setupDatabase()
+	databaseContext := context.Background()
+	database, err := setupDatabase(databaseContext)
 	if err != nil {
 		log.Fatalf("failed to setup database: %v", err)
 	}

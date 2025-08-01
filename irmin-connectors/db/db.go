@@ -38,7 +38,7 @@ const (
 
 // InitialiseDB establishes a Postgres database connection, performs any necessary migrations,
 // and returns an error if something goes wrong.
-func InitialiseDB(runMigrations bool) (*Database, error) {
+func InitialiseDB(ctx context.Context, runMigrations bool) (*Database, error) {
 	env, err := utils.LoadEnv()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load environment variables: %w", err)
@@ -58,13 +58,13 @@ func InitialiseDB(runMigrations bool) (*Database, error) {
 	poolConfig.ConnConfig.ConnectTimeout = appConnectTimeout
 
 	// 2. Create the single pgxpool
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create shared pgx connection pool: %w", err)
 	}
 
 	// Ping to verify connection before proceeding
-	if pingErr := pool.Ping(context.Background()); pingErr != nil {
+	if pingErr := pool.Ping(ctx); pingErr != nil {
 		pool.Close()
 		return nil, fmt.Errorf("failed to ping database via pgxpool: %w", pingErr)
 	}

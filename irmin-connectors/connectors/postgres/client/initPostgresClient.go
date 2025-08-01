@@ -46,6 +46,7 @@ func InitPostgresClient(
 
 	// Establish a connection to the PostgreSQL server
 	pgClient, err := NewPostgresClient(
+		ctx,
 		connectionDetails.Host,
 		connectionDetails.Port,
 		connectionDetails.Username,
@@ -61,7 +62,7 @@ func InitPostgresClient(
 	defer pgClient.Close() // Close the client at the end of the function
 
 	// Connect to the specified database
-	dbClient, err := pgClient.WithDatabase(connectionSettings.Database)
+	dbClient, err := pgClient.WithDatabase(ctx, connectionSettings.Database)
 	if err != nil {
 		pgClient.Close() // Close the initial client before returning
 		logger.ErrorContext(ctx, "failed to connect to database",
