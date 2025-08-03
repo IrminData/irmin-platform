@@ -9,8 +9,8 @@ import (
 
 // CreateRepositoryTagRequest represents the JSON request body for creating a repository tag.
 type CreateRepositoryTagRequest struct {
-	Name string `json:"name" validate:"required"`
-	Ref  string `json:"ref"  validate:"required"`
+	Name string `json:"name" validate:"required" example:"v1.0.0"`
+	Ref  string `json:"ref"  validate:"required" example:"main"`
 }
 
 func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, *irminmodels.IrminAPIResponse, error) {

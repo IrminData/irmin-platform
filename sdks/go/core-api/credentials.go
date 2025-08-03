@@ -9,8 +9,8 @@ import (
 
 // CreateCredentialRequest represents the JSON request body for creating API credentials.
 type CreateCredentialRequest struct {
-	Name   string `json:"name"   validate:"required,max=100"`
-	Expiry int    `json:"expiry" validate:"required"` // Seconds until expiry
+	Name   string `json:"name"   validate:"required,max=100" example:"API Token"`
+	Expiry int    `json:"expiry" validate:"required"         example:"3600"` // Seconds until expiry
 }
 
 func (c *Client) ListTokens() ([]irminmodels.APIToken, *irminmodels.IrminAPIResponse, error) {

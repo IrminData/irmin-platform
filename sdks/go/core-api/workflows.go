@@ -9,22 +9,22 @@ import (
 
 // UpdateWorkflowRequest represents the JSON request body for updating basic workflow info.
 type UpdateWorkflowRequest struct {
-	Name          string `json:"name,omitempty"          validate:"omitempty,max=100"`
-	Description   string `json:"description,omitempty"   validate:"omitempty,max=500"`
-	Documentation string `json:"documentation,omitempty" validate:"validdocumentation"`
+	Name          string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
+	Description   string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
+	Documentation string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
 }
 
 // TransferWorkflowOwnershipRequest represents the JSON request body for transferring workflow ownership.
 type TransferWorkflowOwnershipRequest struct {
-	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users"`
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
 // WorkflowRequest represents the JSON request body for creating a workflow.
 type WorkflowRequest struct {
-	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline"`
-	Name          string                       `json:"name"                    validate:"required,max=100"`
-	Description   string                       `json:"description,omitempty"   validate:"omitempty,max=500"`
-	Documentation string                       `json:"documentation,omitempty" validate:"validdocumentation"`
+	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline" example:"import"`
+	Name          string                       `json:"name"                    validate:"required,max=100"                             example:"Customer Analytics"`
+	Description   string                       `json:"description,omitempty"   validate:"omitempty,max=500"                            example:"Customer data analysis and reporting"`
+	Documentation string                       `json:"documentation,omitempty" validate:"validdocumentation"                           example:"# Customer Analytics Workflow"`
 
 	// Workflowable configuration
 	Workflowable irminmodels.Workflowable `json:"workflowable"`

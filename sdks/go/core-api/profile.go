@@ -11,11 +11,11 @@ import (
 
 // UpdateProfileRequest represents the JSON request body for updating profile.
 type UpdateProfileRequest struct {
-	FirstName string `json:"first_name,omitempty" validate:"max=50"`
-	LastName  string `json:"last_name,omitempty"  validate:"max=50"`
-	Email     string `json:"email,omitempty"      validate:"email"`
-	Phone     string `json:"phone,omitempty"      validate:"validphone"`
-	Company   string `json:"company,omitempty"    validate:"max=100"`
+	FirstName string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
+	LastName  string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
+	Email     string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
+	Phone     string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
+	Company   string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
 }
 
 func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {

@@ -6,20 +6,20 @@ import (
 
 // ConnectorInfo holds metadata about a connector returned from the connector's /info endpoint.
 type ConnectorInfo struct {
-	Name             string   `json:"name"`
-	Description      string   `json:"description"`
-	Version          string   `json:"version"`
-	StructureVersion string   `json:"structure_version"`
-	Author           string   `json:"author"`
-	APIBaseURL       string   `json:"api_base_url"`
-	LogoURL          string   `json:"logo_url"`
-	Capabilities     []string `json:"capabilities"`
-	Locales          []string `json:"locales"`
-	PrimaryCategory  string   `json:"primary_category"`
-	Categories       []string `json:"categories"`
-	AuthorEmail      string   `json:"author_email"`
-	Documentation    string   `json:"documentation"`
-	ReadMoreURL      string   `json:"read_more_url"`
+	Name             string   `json:"name"              example:"My Connector"`
+	Description      string   `json:"description"       example:"My Connector Description"`
+	Version          string   `json:"version"           example:"1.0.0"`
+	StructureVersion string   `json:"structure_version" example:"1.0.0"`
+	Author           string   `json:"author"            example:"John Doe"`
+	APIBaseURL       string   `json:"api_base_url"      example:"https://api.example.com"`
+	LogoURL          string   `json:"logo_url"          example:"https://example.com/logo.png"`
+	Capabilities     []string `json:"capabilities"      example:"read,write"`
+	Locales          []string `json:"locales"           example:"en,fr"`
+	PrimaryCategory  string   `json:"primary_category"  example:"database"`
+	Categories       []string `json:"categories"        example:"database,api"`
+	AuthorEmail      string   `json:"author_email"      example:"john.doe@example.com"`
+	Documentation    string   `json:"documentation"     example:"https://example.com/documentation"`
+	ReadMoreURL      string   `json:"read_more_url"     example:"https://example.com/read-more"`
 }
 
 // GetInfo fetches the connector's information from the /info endpoint.

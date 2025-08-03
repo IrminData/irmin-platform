@@ -9,27 +9,27 @@ import (
 
 // CreateConnectionRequest represents the JSON request body for creating connections.
 type CreateConnectionRequest struct {
-	Name          string         `json:"name"                    validate:"required,max=100"`
-	Connector     string         `json:"connector"               validate:"required,validsqid=connectors"`
-	Description   string         `json:"description,omitempty"   validate:"max=500"`
-	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"`
-	Details       map[string]any `json:"details"`
-	Settings      map[string]any `json:"settings"`
+	Name          string         `json:"name"                    validate:"required,max=100"              example:"Production MySQL Database"`
+	Connector     string         `json:"connector"               validate:"required,validsqid=connectors" example:"conn_5p8q2n7m9x4k"`
+	Description   string         `json:"description,omitempty"   validate:"max=500"                       example:"Primary MySQL database for production customer data"`
+	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"            example:"# Production Database"`
+	Details       map[string]any `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
+	Settings      map[string]any `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
 }
 
 // UpdateConnectionRequest represents the JSON request body for updating connections.
 type UpdateConnectionRequest struct {
-	Name          string         `json:"name,omitempty"          validate:"max=100"`
-	Connector     string         `json:"connector,omitempty"     validate:"validsqid=connectors"`
-	Description   string         `json:"description,omitempty"   validate:"max=500"`
-	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"`
-	Details       map[string]any `json:"details,omitempty"`
-	Settings      map[string]any `json:"settings,omitempty"`
+	Name          string         `json:"name,omitempty"          validate:"max=100"              example:"Production MySQL Database"`
+	Connector     string         `json:"connector,omitempty"     validate:"validsqid=connectors" example:"conn_5p8q2n7m9x4k"`
+	Description   string         `json:"description,omitempty"   validate:"max=500"              example:"Primary MySQL database for production customer data"`
+	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"   example:"# Production Database"`
+	Details       map[string]any `json:"details,omitempty"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
+	Settings      map[string]any `json:"settings,omitempty"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
 }
 
 // TransferConnectionOwnershipRequest represents the JSON request body for transferring connection ownership.
 type TransferConnectionOwnershipRequest struct {
-	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users"`
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
 func (c *Client) ListConnections(workspace string) ([]irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {

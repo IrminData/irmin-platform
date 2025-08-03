@@ -9,28 +9,28 @@ import (
 
 // CreateRepositoryRequest represents the JSON request body for creating a repository.
 type CreateRepositoryRequest struct {
-	Name                              string `json:"name"                                            validate:"required,max=100"`
-	Description                       string `json:"description,omitempty"                           validate:"max=500"`
-	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation"`
-	DefaultBranch                     string `json:"default_branch,omitempty"                        validate:"validslug"`
-	IsImmutable                       bool   `json:"is_immutable,omitempty"`
-	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"        validate:"max=3650"`
-	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty" validate:"max=3650"`
+	Name                              string `json:"name"                                            validate:"required,max=100"   example:"Customer Analytics"`
+	Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
+	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
+	DefaultBranch                     string `json:"default_branch,omitempty"                        validate:"validslug"          example:"main"`
+	IsImmutable                       bool   `json:"is_immutable,omitempty"                                                        example:"false"`
+	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"        validate:"max=3650"           example:"30"`
+	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty" validate:"max=3650"           example:"30"`
 }
 
 // UpdateRepositoryRequest represents the JSON request body for updating a repository.
 type UpdateRepositoryRequest struct {
-	Name                              string `json:"name,omitempty"                                  validate:"max=100"`
-	Description                       string `json:"description,omitempty"                           validate:"max=500"`
-	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation"`
-	IsImmutable                       *bool  `json:"is_immutable,omitempty"`
-	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"        validate:"max=3650"`
-	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty" validate:"max=3650"`
+	Name                              string `json:"name,omitempty"                                  validate:"max=100"            example:"Customer Analytics"`
+	Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
+	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
+	IsImmutable                       *bool  `json:"is_immutable,omitempty"                                                        example:"false"`
+	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"        validate:"max=3650"           example:"30"`
+	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty" validate:"max=3650"           example:"30"`
 }
 
 // TransferRepositoryOwnershipRequest represents the JSON request body for transferring repository ownership.
 type TransferRepositoryOwnershipRequest struct {
-	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users"`
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
 func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {

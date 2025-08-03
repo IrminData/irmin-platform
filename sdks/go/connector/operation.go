@@ -8,14 +8,14 @@ import (
 
 // Operation represents a record of an initiated operation tied to a connector.
 type Operation struct {
-	ID                      uint              `json:"ID"`
-	CreatedAt               string            `json:"CreatedAt"`
-	UpdatedAt               string            `json:"UpdatedAt"`
-	DeletedAt               *string           `json:"DeletedAt,omitempty"`
-	Details                 map[string]string `json:"details"`
-	Settings                map[string]string `json:"settings"`
-	Token                   string            `json:"token"`
-	ConnectorRegistrationID uint              `json:"connectorRegistrationID"`
+	ID                      uint              `json:"ID"                      example:"1"`
+	CreatedAt               string            `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
+	UpdatedAt               string            `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
+	DeletedAt               *string           `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
+	Details                 map[string]string `json:"details"`  // Configuration (details) of the operation, formatted like {"database":"my_database","table":"my_table"}
+	Settings                map[string]string `json:"settings"` // Configuration (settings) of the operation, formatted like {"database":"my_database","table":"my_table"}
+	Token                   string            `json:"token"                   example:"1234567890"`
+	ConnectorRegistrationID uint              `json:"connectorRegistrationID" example:"1"`
 }
 
 // OperationStatus represents the response for an operation status check.

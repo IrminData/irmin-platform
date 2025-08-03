@@ -9,14 +9,14 @@ import (
 
 // ConnectorRequest represents the JSON request body for creating/updating connectors.
 type ConnectorRequest struct {
-	URL         string `json:"url"          validate:"required,validurl"`
-	SystemToken string `json:"system_token" validate:"required,max=100"`
+	URL         string `json:"url"          validate:"required,validurl" example:"https://example.com/connector"`
+	SystemToken string `json:"system_token" validate:"required,max=100"  example:"system_token_123"`
 }
 
 // ConnectorConfigurationRequest represents the JSON request body for connector configuration operations.
 type ConnectorConfigurationRequest struct {
-	Details  map[string]any `json:"details"`
-	Settings map[string]any `json:"settings"`
+	Details  map[string]any `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
+	Settings map[string]any `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
 }
 
 func (c *Client) ListConnectors() ([]irminmodels.Connector, *irminmodels.IrminAPIResponse, error) {

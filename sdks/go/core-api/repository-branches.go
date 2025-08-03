@@ -9,15 +9,15 @@ import (
 
 // CreateBranchRequest represents the JSON request body for creating a branch.
 type CreateBranchRequest struct {
-	Name        string `json:"name"                   validate:"required"`
-	From        string `json:"from"                   validate:"required"`
-	IsImmutable bool   `json:"is_immutable,omitempty"`
+	Name        string `json:"name"                   validate:"required" example:"feature/add-customer-data"`
+	From        string `json:"from"                   validate:"required" example:"main"`
+	IsImmutable bool   `json:"is_immutable,omitempty"                     example:"false"`
 }
 
 // UpdateBranchRequest represents the JSON request body for updating a branch.
 type UpdateBranchRequest struct {
-	Name        string `json:"name,omitempty"`
-	IsImmutable *bool  `json:"is_immutable,omitempty"`
+	Name        string `json:"name,omitempty"         example:"feature/add-customer-data"`
+	IsImmutable *bool  `json:"is_immutable,omitempty" example:"false"`
 }
 
 func (c *Client) ListBranches(

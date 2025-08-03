@@ -9,19 +9,19 @@ import (
 
 // CreateWorkspaceRequest represents the JSON request body for creating a workspace.
 type CreateWorkspaceRequest struct {
-	Name        string `json:"name"                  validate:"required,max=100"`
-	Description string `json:"description,omitempty" validate:"max=500"`
+	Name        string `json:"name"                  validate:"required,max=100" example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500"          example:"Customer data analysis and reporting"`
 }
 
 // UpdateWorkspaceRequest represents the JSON request body for updating a workspace.
 type UpdateWorkspaceRequest struct {
-	Name        string `json:"name,omitempty"        validate:"max=100"`
-	Description string `json:"description,omitempty" validate:"max=500"`
+	Name        string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
 }
 
 // TransferOwnershipRequest represents the JSON request body for transferring workspace ownership.
 type TransferOwnershipRequest struct {
-	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users"`
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
 func (c *Client) ListWorkspaces() ([]irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {

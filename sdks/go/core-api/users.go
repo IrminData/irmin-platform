@@ -9,7 +9,7 @@ import (
 
 // UpdateUserRolesRequest represents the JSON request body for updating user roles.
 type UpdateUserRolesRequest struct {
-	Roles []string `json:"roles" validate:"required,dive,validsqid=roles"`
+	Roles []string `json:"roles" validate:"required,dive,validsqid=roles" example:"role_2a8m5x9n4p7s,role_1a2m3x4n5p6s"`
 }
 
 func (c *Client) ListUsers(workspace string) ([]irminmodels.User, *irminmodels.IrminAPIResponse, error) {

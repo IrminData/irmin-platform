@@ -10,7 +10,7 @@ import (
 
 // MoveObjectRequest represents the JSON request body for moving/copying repository objects.
 type MoveObjectRequest struct {
-	NewPath string `json:"new_path" validate:"required"`
+	NewPath string `json:"new_path" validate:"required" example:"path/to/new/location"`
 }
 
 // GetObjectAtPath fetches the object at the given path and ref.

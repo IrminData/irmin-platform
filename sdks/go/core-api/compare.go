@@ -9,12 +9,12 @@ import (
 
 // MergeRefsRequest represents the JSON request body for merging refs.
 type MergeRefsRequest struct {
-	BaseRef     string `json:"base_ref"              validate:"required"`
-	CompareRef  string `json:"compare_ref"           validate:"required"`
-	Description string `json:"description,omitempty"`
-	Strategy    string `json:"strategy"              validate:"required,oneof=default dest-wins source-wins"`
-	Squash      bool   `json:"squash,omitempty"`
-	AllowEmpty  bool   `json:"allow_empty,omitempty"`
+	BaseRef     string `json:"base_ref"              validate:"required"                                     example:"main"`
+	CompareRef  string `json:"compare_ref"           validate:"required"                                     example:"feature/add-customer-data"`
+	Description string `json:"description,omitempty"                                                         example:"Merge feature branch into main"`
+	Strategy    string `json:"strategy"              validate:"required,oneof=default dest-wins source-wins" example:"default"`
+	Squash      bool   `json:"squash,omitempty"                                                              example:"false"`
+	AllowEmpty  bool   `json:"allow_empty,omitempty"                                                         example:"false"`
 }
 
 // CompareRefs compares two refs in a repository and returns the differences.

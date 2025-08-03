@@ -9,26 +9,26 @@ import (
 
 // CreateQueryRequest represents the JSON request body for creating a query.
 type CreateQueryRequest struct {
-	Name        string `json:"name"                  validate:"required,max=100"`
-	Description string `json:"description,omitempty" validate:"max=500"`
-	SQL         string `json:"sql,omitempty"         validate:"validsql"`
+	Name        string `json:"name"                  validate:"required,max=100" example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500"          example:"Customer data analysis and reporting"`
+	SQL         string `json:"sql,omitempty"         validate:"validsql"         example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
 }
 
 // UpdateQueryRequest represents the JSON request body for updating a query.
 type UpdateQueryRequest struct {
-	Name        string `json:"name,omitempty"        validate:"max=100"`
-	Description string `json:"description,omitempty" validate:"max=500"`
-	SQL         string `json:"sql,omitempty"         validate:"validsql"`
+	Name        string `json:"name,omitempty"        validate:"max=100"  example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500"  example:"Customer data analysis and reporting"`
+	SQL         string `json:"sql,omitempty"         validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
 }
 
 // TransferQueryOwnershipRequest represents the JSON request body for transferring query ownership.
 type TransferQueryOwnershipRequest struct {
-	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users"`
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
 // ExecuteSQLRequest represents the JSON request body for executing SQL.
 type ExecuteSQLRequest struct {
-	SQL string `json:"sql,omitempty" validate:"validsql"`
+	SQL string `json:"sql,omitempty" validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
 }
 
 func (c *Client) ListStoredQueries(workspace string) ([]irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error) {

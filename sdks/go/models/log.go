@@ -16,10 +16,10 @@ const (
 )
 
 type LogEvent struct {
-	ID          string       `json:"id"                     validate:"required,validsqid=logs"`
-	Type        LogEventType `json:"type"                   validate:"required,oneof=CREATE UPDATE DELETE LOGIN LOGOUT ERROR INFO WARNING"`
-	Description string       `json:"description"            validate:"required,max=500"`
-	CreatedAt   time.Time    `json:"created_at"             validate:"required"`
+	ID          string       `json:"id"                     validate:"required,validsqid=logs"                                             example:"log_1a2b3c4d"`
+	Type        LogEventType `json:"type"                   validate:"required,oneof=CREATE UPDATE DELETE LOGIN LOGOUT ERROR INFO WARNING" example:"CREATE"`
+	Description string       `json:"description"            validate:"required,max=500"                                                    example:"User created a new object"`
+	CreatedAt   time.Time    `json:"created_at"             validate:"required"                                                            example:"2025-01-15T10:30:00Z"`
 	Workspace   *Workspace   `json:"workspace,omitempty"`
 	User        *User        `json:"user,omitempty"`
 	WorkflowRun *WorkflowRun `json:"workflow_run,omitempty"`
