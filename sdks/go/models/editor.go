@@ -20,9 +20,9 @@ type EditorItem struct {
 }
 
 type ScriptResult struct {
-	StructuredResults map[string][]map[string]any `json:"structured_results,omitempty"` // Parsed resulting structured files, formatted like {"customers.json":[{"name":"John","age":30}]}
-	HasErrors         bool                        `json:"has_errors,omitempty"         example:"false"`
-	Duration          time.Duration               `json:"duration,omitempty"           example:"1s"`
+	StructuredResults map[string][]map[string]any `json:"structured_results,omitempty"`                 // Parsed resulting structured files, formatted like {"customers.json":[{"name":"John","age":30}]}
+	HasErrors         bool                        `json:"has_errors,omitempty"         example:"false"` // Whether the script execution encountered errors
+	Duration          time.Duration               `json:"duration,omitempty"           example:"1000"`  // Time between two instants as an int64 nanosecond count
 	StartedAt         time.Time                   `json:"started_at,omitempty"         example:"2025-01-15T10:30:00Z"`
 	FinishedAt        time.Time                   `json:"finished_at,omitempty"        example:"2025-01-15T10:30:00Z"`
 	Logs              []string                    `json:"logs,omitempty"               example:"Execution started,Execution completed" validate:"dive"`

@@ -40,9 +40,9 @@ type JSONSchema struct {
 	Required             []string              `json:"required,omitempty"             validate:"dive"                                                           example:"name,email"`
 	Items                *JSONSchema           `json:"items,omitempty"`
 	Description          *string               `json:"description,omitempty"                                                                                    example:"Customer information schema"`
-	Default              any                   `json:"default,omitempty"                                                                                        example:"{}"                          swaggertype:"object"`
-	Enum                 []any                 `json:"enum,omitempty"                                                                                           example:"active,inactive,pending"     swaggertype:"array,string"`
-	AdditionalProperties any                   `json:"additionalProperties,omitempty"                                                                           example:"false"                       swaggertype:"boolean"`
+	Default              any                   `json:"default,omitempty"`
+	Enum                 []any                 `json:"enum,omitempty"                                                                                                                                 swaggertype:"array,string"`
+	AdditionalProperties any                   `json:"additionalProperties,omitempty"                                                                                                                 swaggertype:"boolean"`
 	Format               *string               `json:"format,omitempty"                                                                                         example:"email"`
 	Minimum              *float64              `json:"minimum,omitempty"                                                                                        example:"0"`
 	Maximum              *float64              `json:"maximum,omitempty"                                                                                        example:"100"`
