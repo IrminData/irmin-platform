@@ -1,0 +1,2255 @@
+definitions:
+  db.ConnectorRegistration:
+    properties:
+      connectorName:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      irminID:
+        type: string
+      systemToken:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  db.Operation:
+    properties:
+      connectorRegistration:
+        $ref: '#/definitions/db.ConnectorRegistration'
+      connectorRegistrationID:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      details:
+        items:
+          type: integer
+        type: array
+      id:
+        type: integer
+      settings:
+        items:
+          type: integer
+        type: array
+      token:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  db.Subscription:
+    properties:
+      connectorRegistration:
+        $ref: '#/definitions/db.ConnectorRegistration'
+      connectorRegistrationID:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      operation:
+        $ref: '#/definitions/db.Operation'
+      operationID:
+        type: integer
+      updatedAt:
+        type: string
+      webhookAccessToken:
+        type: string
+      webhookUrl:
+        type: string
+    type: object
+  fiber.Map:
+    additionalProperties: {}
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  irminconnectorclient.OperationStatus:
+    properties:
+      details:
+        additionalProperties:
+          type: string
+        type: object
+      operation_id:
+        type: integer
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+      subscriptions:
+        items:
+          $ref: '#/definitions/irminconnectorclient.Subscription'
+        type: array
+    type: object
+  irminconnectorclient.Subscription:
+    properties:
+      CreatedAt:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      DeletedAt:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      ID:
+        example: 1
+        type: integer
+      UpdatedAt:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      connectorRegistrationID:
+        example: 1
+        type: integer
+      operationID:
+        example: 1
+        type: integer
+      webhookAccessToken:
+        example: "1234567890"
+        type: string
+      webhookUrl:
+        example: https://example.com/webhook
+        type: string
+    type: object
+  irminmodels.ConnectorCapability:
+    enum:
+    - pull
+    - push
+    - push_patch
+    - event_webhook
+    type: string
+    x-enum-varnames:
+    - ConnectorCapabilityPull
+    - ConnectorCapabilityPush
+    - ConnectorCapabilityPushPatch
+    - ConnectorCapabilityEventWebhook
+  irminmodels.ConnectorCategory:
+    enum:
+    - database
+    - crm
+    - erp
+    - warehouse
+    - marketing
+    - analytics
+    - storage
+    - messaging
+    - payment
+    - social
+    - calendar
+    - project_management
+    - ecommerce
+    - iot
+    - monitoring
+    - other
+    type: string
+    x-enum-varnames:
+    - ConnectorCategoryDatabase
+    - ConnectorCategoryCRM
+    - ConnectorCategoryERP
+    - ConnectorCategoryWarehouse
+    - ConnectorCategoryMarketing
+    - ConnectorCategoryAnalytics
+    - ConnectorCategoryStorage
+    - ConnectorCategoryMessaging
+    - ConnectorCategoryPayment
+    - ConnectorCategorySocial
+    - ConnectorCategoryCalendar
+    - ConnectorCategoryProjectManagement
+    - ConnectorCategoryECommerce
+    - ConnectorCategoryIoT
+    - ConnectorCategoryMonitoring
+    - ConnectorCategoryOther
+  irminmodels.ConnectorConfigurationValidationResult:
+    properties:
+      can_connect:
+        description: Indicates if the connector can connect to the external system
+        example: true
+        type: boolean
+      connection_details_valid:
+        description: Indicates if the connection details are valid
+        example: true
+        type: boolean
+      connection_settings_valid:
+        description: Indicates if the connection settings are valid
+        example: true
+        type: boolean
+      errors:
+        description: (Optional) Array of validation errors
+        example:
+        - Invalid host address
+        - Authentication failed
+        items:
+          type: string
+        type: array
+      ok:
+        description: Indicates if the configuration is valid
+        example: true
+        type: boolean
+    type: object
+  irminmodels.DynamicField:
+    properties:
+      default:
+        example: Default value
+        type: string
+      example:
+        example: Example value
+        maxLength: 100
+        type: string
+      help_text:
+        example: This is a help text
+        maxLength: 200
+        type: string
+      label:
+        example: Name
+        maxLength: 100
+        type: string
+      max:
+        example: 100
+        type: number
+      min:
+        example: 1
+        type: number
+      multiple:
+        example: false
+        type: boolean
+      options:
+        items:
+          $ref: '#/definitions/irminmodels.SelectOption'
+        type: array
+      required:
+        example: true
+        type: boolean
+      required_with:
+        example:
+        - field1
+        - field2
+        items:
+          type: string
+        type: array
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.FieldType'
+        enum:
+        - text
+        - textarea
+        - password
+        - email
+        - checkbox
+        - integer
+        - float
+        - select
+        - radio
+        - file
+        - date
+        - time
+        - datetime
+        example: text
+    required:
+    - label
+    - type
+    type: object
+  irminmodels.FieldType:
+    enum:
+    - text
+    - textarea
+    - password
+    - email
+    - checkbox
+    - integer
+    - float
+    - select
+    - radio
+    - file
+    - date
+    - time
+    - datetime
+    type: string
+    x-enum-varnames:
+    - FieldTypeText
+    - FieldTypeTextarea
+    - FieldTypePassword
+    - FieldTypeEmail
+    - FieldTypeCheckbox
+    - FieldTypeInteger
+    - FieldTypeFloat
+    - FieldTypeSelect
+    - FieldTypeRadio
+    - FieldTypeFile
+    - FieldTypeDate
+    - FieldTypeTime
+    - FieldTypeDatetime
+  irminmodels.GroupSchemaRestrictions:
+    properties:
+      allowed_content_types:
+        example:
+        - application/json
+        - text/csv
+        items:
+          type: string
+        type: array
+      max_count:
+        example: 1000
+        type: integer
+      max_size:
+        example: 104857600
+        type: integer
+      min_count:
+        example: 1
+        type: integer
+      min_size:
+        example: 1024
+        type: integer
+      name_pattern:
+        example: '*.json'
+        type: string
+      no_binary:
+        example: true
+        type: boolean
+      no_groups:
+        example: false
+        type: boolean
+      no_structured:
+        example: false
+        type: boolean
+      only_binary:
+        example: false
+        type: boolean
+      only_groups:
+        example: false
+        type: boolean
+      only_structured:
+        example: true
+        type: boolean
+      restricted_content_types:
+        example:
+        - application/octet-stream
+        - image/*
+        items:
+          type: string
+        type: array
+    type: object
+  irminmodels.IrminAPIPaginationMetadata:
+    properties:
+      has_more:
+        description: HasMore indicates if there are more items available
+        example: true
+        type: boolean
+      next:
+        description: Next is the next page number or token, if applicable
+        example: "3"
+        type: string
+      page:
+        description: Current page number
+        example: 2
+        minimum: 1
+        type: integer
+      per_page:
+        description: Number of items per page
+        example: 20
+        minimum: 1
+        type: integer
+      total:
+        description: Total is the total number of items available
+        example: 150
+        minimum: 0
+        type: integer
+      total_pages:
+        description: Total number of pages available
+        example: 8
+        minimum: 1
+        type: integer
+    type: object
+  irminmodels.IrminAPIResponse:
+    properties:
+      data: {}
+      errors:
+        example:
+        - Field validation failed
+        - Invalid input format
+        items:
+          type: string
+        type: array
+      message:
+        example: Operation completed successfully
+        maxLength: 140
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      pagination:
+        $ref: '#/definitions/irminmodels.IrminAPIPaginationMetadata'
+    type: object
+  irminmodels.JSONSchema:
+    properties:
+      additionalProperties:
+        type: boolean
+      default: {}
+      description:
+        example: Customer information schema
+        type: string
+      enum:
+        items:
+          type: string
+        type: array
+      format:
+        example: email
+        type: string
+      items:
+        $ref: '#/definitions/irminmodels.JSONSchema'
+      maxLength:
+        example: 255
+        type: integer
+      maximum:
+        example: 100
+        type: number
+      minLength:
+        example: 1
+        type: integer
+      minimum:
+        example: 0
+        type: number
+      pattern:
+        example: email-pattern
+        type: string
+      properties:
+        additionalProperties:
+          $ref: '#/definitions/irminmodels.JSONSchema'
+        description: Properties of the schema, formatted like {"name":{"type":"string"},"age":{"type":"integer"}}
+        type: object
+      required:
+        example:
+        - name
+        - email
+        items:
+          type: string
+        type: array
+      type:
+        description: e.g. "object", "array", etc.
+        enum:
+        - object
+        - array
+        - string
+        - number
+        - integer
+        - boolean
+        - "null"
+        example: object
+        type: string
+    required:
+    - type
+    type: object
+  irminmodels.ObjectSchema:
+    properties:
+      children:
+        description: Group schema
+        items:
+          $ref: '#/definitions/irminmodels.ObjectSchema'
+        type: array
+      content_type:
+        example: application/json
+        type: string
+      description:
+        example: Customer data in JSON format with contact information
+        type: string
+      last_modified:
+        example: "2025-12-01T14:22:30Z"
+        type: string
+      name:
+        example: customers.json
+        maxLength: 255
+        type: string
+      path:
+        example: /data/customers/customers.json
+        type: string
+      restrictions:
+        $ref: '#/definitions/irminmodels.GroupSchemaRestrictions'
+      schema:
+        allOf:
+        - $ref: '#/definitions/irminmodels.JSONSchema'
+        description: Structured schema
+      size:
+        description: Structured or Binary schema
+        example: 1048576
+        type: integer
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.ObjectType'
+        enum:
+        - group
+        - structured
+        - binary
+        example: structured
+    required:
+    - name
+    - path
+    - type
+    type: object
+  irminmodels.ObjectType:
+    enum:
+    - group
+    - structured
+    - binary
+    type: string
+    x-enum-varnames:
+    - ObjectTypeGroup
+    - ObjectTypeStructured
+    - ObjectTypeBinary
+  irminmodels.SelectOption:
+    properties:
+      key:
+        example: key1
+        maxLength: 50
+        type: string
+      value:
+        example: Value 1
+        maxLength: 100
+        type: string
+    required:
+    - key
+    - value
+    type: object
+  models.ConnectorDetails:
+    properties:
+      api_base_url:
+        example: https://connectors.irmin.co/mysql
+        type: string
+      author:
+        example: Irmin Team
+        type: string
+      author_email:
+        example: hello@irmin.co
+        type: string
+      capabilities:
+        example:
+        - pull
+        - push
+        items:
+          $ref: '#/definitions/irminmodels.ConnectorCapability'
+          enum:
+          - pull
+          - push
+          - push_patch
+          - event_webhook
+        type: array
+      categories:
+        example:
+        - database
+        - crm
+        - erp
+        - warehouse
+        - marketing
+        - analytics
+        - storage
+        - messaging
+        - payment
+        - social
+        - calendar
+        - project_management
+        - ecommerce
+        - iot
+        - monitoring
+        - other
+        items:
+          $ref: '#/definitions/irminmodels.ConnectorCategory'
+        type: array
+      description:
+        example: Connect to MySQL databases for data extraction and synchronization
+        type: string
+      locales:
+        example:
+        - en
+        - fi
+        items:
+          type: string
+        type: array
+      logo_url:
+        example: https://cdn.irmin.co/connectors/mysql.png
+        type: string
+      name:
+        example: MySQL Database Connector
+        type: string
+      primary_category:
+        allOf:
+        - $ref: '#/definitions/irminmodels.ConnectorCategory'
+        example: database
+      read_more_url:
+        example: https://docs.irmin.co/connectors/mysql
+        type: string
+      structure_version:
+        example: 1.0.0
+        type: string
+      version:
+        example: 1.2.3
+        type: string
+    type: object
+host: connectors.irmin.co
+info:
+  contact:
+    email: hello@irmin.co
+    name: Irmin Team
+    url: https://irmin.co
+  description: Collection of connectors for Irmin to interact with external services
+  termsOfService: http://irmin.co/terms
+  title: Irmin Connectors
+  version: 1.0.0
+paths:
+  /mysql/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Get dynamic configuration fields for the MySQL connector based
+        on the configuration key (details or settings). For settings, dynamically
+        fetches available databases from the MySQL server.
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: MySQL server hostname (required for settings key to fetch databases)
+        in: formData
+        name: details[host]
+        type: string
+      - description: MySQL server port (required for settings key to fetch databases)
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username (required for settings key to fetch databases)
+        in: formData
+        name: details[user]
+        type: string
+      - description: Password (required for settings key to fetch databases)
+        in: formData
+        name: details[password]
+        type: string
+      - description: Default database (required for settings key to fetch databases)
+        in: formData
+        name: details[default_db]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields retrieved successfully
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request - invalid configuration key or missing connection
+            details
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get MySQL connector configuration fields
+      tags:
+      - mysql
+  /mysql/configuration/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Validate MySQL connection details and settings by testing the actual
+        connection to the MySQL server and specified database
+      parameters:
+      - description: MySQL server hostname or IP address
+        in: formData
+        name: details[host]
+        required: true
+        type: string
+      - description: 'MySQL server port (default: 3306)'
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username for MySQL authentication
+        in: formData
+        name: details[user]
+        required: true
+        type: string
+      - description: Password for MySQL authentication
+        in: formData
+        name: details[password]
+        required: true
+        type: string
+      - description: Default database for initial connection
+        in: formData
+        name: details[default_db]
+        type: string
+      - description: Target database name to validate connection
+        in: formData
+        name: settings[database]
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration validation result
+          schema:
+            $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+        "400":
+          description: Bad request - invalid configuration data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate MySQL connector configuration
+      tags:
+      - mysql
+  /mysql/details:
+    get:
+      consumes:
+      - application/json
+      description: Get an HTML page with detailed information about the MySQL connector
+        including capabilities, authentication methods, and usage examples
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: MySQL connector details page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get MySQL connector details page
+      tags:
+      - mysql
+  /mysql/info:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about the MySQL connector including capabilities,
+        configuration fields, and API endpoints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: MySQL connector information retrieved successfully
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get MySQL connector information
+      tags:
+      - mysql
+  /mysql/operation/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel an ongoing MySQL operation using the operation token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation cancelled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Cancel MySQL operation
+      tags:
+      - mysql
+  /mysql/operation/init:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Initialize a new MySQL operation with connection details and settings,
+        returning an operation token for subsequent requests
+      parameters:
+      - description: MySQL server hostname or IP address
+        in: formData
+        name: details[host]
+        required: true
+        type: string
+      - description: 'MySQL server port (default: 3306)'
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username for MySQL authentication
+        in: formData
+        name: details[user]
+        required: true
+        type: string
+      - description: Password for MySQL authentication
+        in: formData
+        name: details[password]
+        required: true
+        type: string
+      - description: Default database for initial connection
+        in: formData
+        name: details[default_db]
+        type: string
+      - description: Target database name for operations
+        in: formData
+        name: settings[database]
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation initialized successfully with operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Initialize MySQL operation
+      tags:
+      - mysql
+  /mysql/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Apply granular updates to MySQL database records using JSON patch
+        operations
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: JSON patch file containing update operations
+        in: formData
+        name: patch
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data patched successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or patch format
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Patch data in MySQL database
+      tags:
+      - mysql
+  /mysql/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Extract data from MySQL database tables using the operation token
+        and specified path (table name)
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Table name to extract data from
+        in: formData
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pulled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or table name
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Table not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Pull data from MySQL database
+      tags:
+      - mysql
+  /mysql/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Insert data into MySQL database tables using the operation token
+        and JSON file containing table data
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: JSON file containing table data to insert
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pushed successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or file format
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Push data to MySQL database
+      tags:
+      - mysql
+  /mysql/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: Get the database schema for MySQL operations, returning an Irmin-compatible
+        ObjectSchema grouping each table as a JSON array based on the operation type
+        (pull or push)
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        - push
+        in: path
+        name: operation
+        required: true
+        type: string
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema retrieved successfully
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request - invalid operation type or token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get MySQL operation schema
+      tags:
+      - mysql
+  /mysql/operation/status:
+    post:
+      consumes:
+      - application/json
+      description: Get the current status of a MySQL operation using the operation
+        token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation status retrieved successfully
+          schema:
+            $ref: '#/definitions/irminconnectorclient.OperationStatus'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get MySQL operation status
+      tags:
+      - mysql
+  /mysql/operation/subscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Set up real-time monitoring of MySQL database changes using binary
+        log tracking and webhook notifications
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Webhook URL to receive change notifications
+        in: formData
+        name: webhook_url
+        required: true
+        type: string
+      - description: Access token for webhook authentication
+        in: formData
+        name: webhook_access_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription created successfully
+          schema:
+            $ref: '#/definitions/db.Subscription'
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Subscribe to MySQL database changes
+      tags:
+      - mysql
+  /postgres/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Get dynamic configuration fields for the PostgreSQL connector based
+        on the configuration key (details or settings). For settings, dynamically
+        fetches available databases from the PostgreSQL server.
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: PostgreSQL server hostname (required for settings key to fetch
+          databases)
+        in: formData
+        name: details[host]
+        type: string
+      - description: PostgreSQL server port (required for settings key to fetch databases)
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username (required for settings key to fetch databases)
+        in: formData
+        name: details[user]
+        type: string
+      - description: Password (required for settings key to fetch databases)
+        in: formData
+        name: details[password]
+        type: string
+      - description: Default database (required for settings key to fetch databases)
+        in: formData
+        name: details[default_db]
+        type: string
+      - description: SSL mode enabled (required for settings key to fetch databases)
+        in: formData
+        name: details[ssl_mode]
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields retrieved successfully
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request - invalid configuration key or missing connection
+            details
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get PostgreSQL connector configuration fields
+      tags:
+      - postgres
+  /postgres/configuration/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Validate PostgreSQL connection details and settings by testing
+        the actual connection to the PostgreSQL server and specified database
+      parameters:
+      - description: PostgreSQL server hostname or IP address
+        in: formData
+        name: details[host]
+        required: true
+        type: string
+      - description: 'PostgreSQL server port (default: 5432)'
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username for PostgreSQL authentication
+        in: formData
+        name: details[user]
+        required: true
+        type: string
+      - description: Password for PostgreSQL authentication
+        in: formData
+        name: details[password]
+        required: true
+        type: string
+      - description: Default database for initial connection
+        in: formData
+        name: details[default_db]
+        type: string
+      - description: Enable SSL mode for secure connections
+        in: formData
+        name: details[ssl_mode]
+        type: boolean
+      - description: Target database name to validate connection
+        in: formData
+        name: settings[database]
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration validation result
+          schema:
+            $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+        "400":
+          description: Bad request - invalid configuration data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate PostgreSQL connector configuration
+      tags:
+      - postgres
+  /postgres/details:
+    get:
+      consumes:
+      - application/json
+      description: Get an HTML page with detailed information about the PostgreSQL
+        connector including capabilities, authentication methods, and usage examples
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: PostgreSQL connector details page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get PostgreSQL connector details page
+      tags:
+      - postgres
+  /postgres/info:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about the PostgreSQL connector including
+        capabilities, configuration fields, and API endpoints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: PostgreSQL connector information retrieved successfully
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get PostgreSQL connector information
+      tags:
+      - postgres
+  /postgres/operation/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel an ongoing PostgreSQL operation using the operation token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation cancelled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Cancel PostgreSQL operation
+      tags:
+      - postgres
+  /postgres/operation/init:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Initialize a new PostgreSQL operation with connection details and
+        settings, returning an operation token for subsequent requests
+      parameters:
+      - description: PostgreSQL server hostname or IP address
+        in: formData
+        name: details[host]
+        required: true
+        type: string
+      - description: 'PostgreSQL server port (default: 5432)'
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username for PostgreSQL authentication
+        in: formData
+        name: details[user]
+        required: true
+        type: string
+      - description: Password for PostgreSQL authentication
+        in: formData
+        name: details[password]
+        required: true
+        type: string
+      - description: Default database for initial connection
+        in: formData
+        name: details[default_db]
+        type: string
+      - description: Enable SSL mode for secure connections
+        in: formData
+        name: details[ssl_mode]
+        type: boolean
+      - description: Target database name for operations
+        in: formData
+        name: settings[database]
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation initialized successfully with operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Initialize PostgreSQL operation
+      tags:
+      - postgres
+  /postgres/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Apply granular updates to PostgreSQL database records using JSON
+        patch operations
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: JSON patch file containing update operations
+        in: formData
+        name: patch
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data patched successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or patch format
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Patch data in PostgreSQL database
+      tags:
+      - postgres
+  /postgres/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Extract data from PostgreSQL database tables using the operation
+        token and specified path (table name)
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Table name to extract data from
+        in: formData
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pulled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or table name
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Table not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Pull data from PostgreSQL database
+      tags:
+      - postgres
+  /postgres/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Insert data into PostgreSQL database tables using the operation
+        token and JSON file containing table data
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: JSON file containing table data to insert
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pushed successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or file format
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Push data to PostgreSQL database
+      tags:
+      - postgres
+  /postgres/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: Get the database schema for PostgreSQL operations, returning an
+        Irmin-compatible ObjectSchema grouping each table as a JSON array based on
+        the operation type (pull or push)
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        - push
+        in: path
+        name: operation
+        required: true
+        type: string
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema retrieved successfully
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request - invalid operation type or token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Get PostgreSQL operation schema
+      tags:
+      - postgres
+  /postgres/operation/status:
+    post:
+      consumes:
+      - application/json
+      description: Get the current status of a PostgreSQL operation using the operation
+        token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation status retrieved successfully
+          schema:
+            $ref: '#/definitions/irminconnectorclient.OperationStatus'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get PostgreSQL operation status
+      tags:
+      - postgres
+  /postgres/operation/subscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Set up real-time monitoring of PostgreSQL database changes using
+        notification triggers and webhook notifications
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Webhook URL to receive change notifications
+        in: formData
+        name: webhook_url
+        required: true
+        type: string
+      - description: Access token for webhook authentication
+        in: formData
+        name: webhook_access_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription created successfully
+          schema:
+            $ref: '#/definitions/db.Subscription'
+        "400":
+          description: Bad request - invalid parameters
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Subscribe to PostgreSQL database changes
+      tags:
+      - postgres
+  /sftp/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Get dynamic configuration fields for the SFTP connector based on
+        the configuration key (details or settings)
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields retrieved successfully
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request - invalid configuration key
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get SFTP connector configuration fields
+      tags:
+      - sftp
+  /sftp/configuration/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Validate SFTP connection settings and credentials by testing the
+        actual connection
+      parameters:
+      - description: SFTP server hostname or IP address
+        in: formData
+        name: details[host]
+        required: true
+        type: string
+      - description: 'SFTP server port (default: 22)'
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username for SFTP authentication
+        in: formData
+        name: details[username]
+        required: true
+        type: string
+      - description: Password for SFTP authentication (if not using private key)
+        in: formData
+        name: details[password]
+        type: string
+      - description: Private key for SFTP authentication (if not using password)
+        in: formData
+        name: details[private_key]
+        type: string
+      - description: Passphrase for encrypted private key
+        in: formData
+        name: details[private_key_passphrase]
+        type: string
+      - description: Expected host key fingerprint for security verification
+        in: formData
+        name: details[host_key_fingerprint]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration validation result
+          schema:
+            $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+        "400":
+          description: Bad request - invalid configuration data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate SFTP connector configuration
+      tags:
+      - sftp
+  /sftp/details:
+    get:
+      consumes:
+      - application/json
+      description: Get an HTML page with detailed information about the SFTP connector
+        including capabilities, authentication methods, and usage examples
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: SFTP connector details page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get SFTP connector details page
+      tags:
+      - sftp
+  /sftp/info:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about the SFTP connector including capabilities,
+        configuration fields, and API endpoints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SFTP connector information retrieved successfully
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get SFTP connector information
+      tags:
+      - sftp
+  /sftp/operation/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel an ongoing SFTP operation using the operation token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation cancelled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Cancel SFTP operation
+      tags:
+      - sftp
+  /sftp/operation/init:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Initialize a new SFTP operation with connection details and settings,
+        returning an operation token for subsequent requests
+      parameters:
+      - description: SFTP server hostname or IP address
+        in: formData
+        name: details[host]
+        required: true
+        type: string
+      - description: 'SFTP server port (default: 22)'
+        in: formData
+        name: details[port]
+        type: integer
+      - description: Username for SFTP authentication
+        in: formData
+        name: details[username]
+        required: true
+        type: string
+      - description: Password for SFTP authentication (if not using private key)
+        in: formData
+        name: details[password]
+        type: string
+      - description: Private key for SFTP authentication (if not using password)
+        in: formData
+        name: details[private_key]
+        type: string
+      - description: Passphrase for encrypted private key
+        in: formData
+        name: details[private_key_passphrase]
+        type: string
+      - description: Expected host key fingerprint for security verification
+        in: formData
+        name: details[host_key_fingerprint]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation initialized successfully with operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Initialize SFTP operation
+      tags:
+      - sftp
+  /sftp/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: SFTP connector does not support patch operations as SFTP files
+        are replaced entirely rather than patched with JSON updates
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Patch file (not supported for SFTP)
+        in: formData
+        name: patch
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - SFTP does not support patch operations
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Patch operation (not supported)
+      tags:
+      - sftp
+  /sftp/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Download files from an SFTP server using the operation token and
+        specified path
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Path to file or directory on SFTP server to download
+        in: formData
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Files pulled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or path
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: File or directory not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Pull files from SFTP server
+      tags:
+      - sftp
+  /sftp/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload files to an SFTP server using the operation token and file
+        data
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: File to upload to SFTP server
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Target path on SFTP server (defaults to root directory)
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File uploaded successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or file
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Push files to SFTP server
+      tags:
+      - sftp
+  /sftp/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: Get the schema and directory structure for SFTP file operations
+        based on the operation type (pull or push)
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        - push
+        in: path
+        name: operation
+        required: true
+        type: string
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema retrieved successfully
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request - invalid operation type or token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Get SFTP operation schema
+      tags:
+      - sftp
+  /sftp/operation/status:
+    post:
+      consumes:
+      - application/json
+      description: Get the current status of an SFTP operation using the operation
+        token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation status retrieved successfully
+          schema:
+            $ref: '#/definitions/irminconnectorclient.OperationStatus'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get SFTP operation status
+      tags:
+      - sftp
+  /sftp/operation/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: SFTP connector does not support real-time subscriptions as SFTP
+        is a file transfer protocol without webhook capabilities
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Webhook URL (not supported for SFTP)
+        in: formData
+        name: webhook
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - SFTP does not support subscriptions
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Subscribe to changes (not supported)
+      tags:
+      - sftp
+  /swagger:
+    get:
+      consumes:
+      - application/json
+      description: Interactive API documentation interface using Swagger UI
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: Swagger UI HTML page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      summary: Swagger UI interface
+      tags:
+      - documentation
+  /swagger.json:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the OpenAPI 3.0 specification in JSON format for this
+        API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OpenAPI 3.0 specification in JSON format
+          schema:
+            type: object
+        "404":
+          description: Swagger specification file not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      summary: Get Swagger JSON specification
+      tags:
+      - documentation
+schemes:
+- https
+securityDefinitions:
+  OperationTokenAuth:
+    description: Operation token with Bearer prefix - received from operation/init
+      and used for data operation endpoints
+    in: header
+    name: Authorization
+    type: apiKey
+  SystemTokenAuth:
+    description: System token with Bearer prefix - used for connector registration
+      and initialization endpoints
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

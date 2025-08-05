@@ -5,14 +5,34 @@ import (
 	"irmin-connectors/connectors/common"
 	postgresclient "irmin-connectors/connectors/postgres/client"
 	postgresconfig "irmin-connectors/connectors/postgres/config"
-	"irmin-connectors/models"
 	"irmin-connectors/utils"
 	"maps"
+
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 
 	"github.com/gofiber/fiber/v3"
 )
 
-// ConfigFields handles the configuration fields endpoint.
+// ConfigFields godoc
+// @Summary Get PostgreSQL connector configuration fields
+// @Description Get dynamic configuration fields for the PostgreSQL connector based on the configuration key (details or settings). For settings, dynamically fetches available databases from the PostgreSQL server.
+// @Tags postgres
+// @Security SystemTokenAuth
+// @Accept json
+// @Accept multipart/form-data
+// @Produce json
+// @Param key path string true "Configuration key" Enums(details, settings)
+// @Param details[host] formData string false "PostgreSQL server hostname (required for settings key to fetch databases)"
+// @Param details[port] formData integer false "PostgreSQL server port (required for settings key to fetch databases)"
+// @Param details[user] formData string false "Username (required for settings key to fetch databases)"
+// @Param details[password] formData string false "Password (required for settings key to fetch databases)"
+// @Param details[default_db] formData string false "Default database (required for settings key to fetch databases)"
+// @Param details[ssl_mode] formData boolean false "SSL mode enabled (required for settings key to fetch databases)"
+// @Success 200 {object} map[string]irminmodels.DynamicField "Configuration fields retrieved successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid configuration key or missing connection details"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /postgres/configuration/{key}/fields [post]
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error {
 	return cs.HandleConfigFields(c, cs)
 }
@@ -22,7 +42,7 @@ func (cs *Controllers) GetDynamicFields(
 	c fiber.Ctx,
 	key string,
 	fields map[string]string,
-) (map[string]models.DynamicField, error) {
+) (map[string]irminmodels.DynamicField, error) {
 	switch key {
 	case "details":
 		return cs.getDetailsFields(), nil
@@ -34,7 +54,7 @@ func (cs *Controllers) GetDynamicFields(
 }
 
 // getDetailsFields returns the connection details configuration fields.
-func (cs *Controllers) getDetailsFields() map[string]models.DynamicField {
+func (cs *Controllers) getDetailsFields() map[string]irminmodels.DynamicField {
 	return postgresconfig.GetDetailsFieldDefinitions()
 }
 
@@ -42,9 +62,9 @@ func (cs *Controllers) getDetailsFields() map[string]models.DynamicField {
 func (cs *Controllers) getSettingsFields(
 	c fiber.Ctx,
 	fields map[string]string,
-) (map[string]models.DynamicField, error) {
+) (map[string]irminmodels.DynamicField, error) {
 	// Start with base settings field definitions from config
-	settingsFields := make(map[string]models.DynamicField)
+	settingsFields := make(map[string]irminmodels.DynamicField)
 	maps.Copy(settingsFields, postgresconfig.GetSettingsFieldDefinitions())
 
 	// Convert form fields to map[string]any for utility function usage
@@ -116,7 +136,7 @@ func (cs *Controllers) getSettingsFields(
 	dbOptions := common.CreateSelectOptions(dbs)
 
 	// Override the database field with dynamic options
-	settingsFields["database"] = models.DynamicField{
+	settingsFields["database"] = irminmodels.DynamicField{
 		Type:     "select",
 		Label:    "Database Name",
 		Example:  "my_database",

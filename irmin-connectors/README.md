@@ -124,3 +124,97 @@ golangci-lint run --fix
 2. Run the container, injecting your local .env file for configuration:
 
 	docker run -p 8080:8080 --env-file .env irmin-connectors
+
+## API Documentation (Swagger)
+
+This project uses [swaggo/swag](https://github.com/swaggo/swag) to automatically generate OpenAPI/Swagger documentation from Go annotations.
+
+### Quick Start
+
+**Generate documentation**:
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+go run github.com/swaggo/swag/cmd/swag@latest init --parseDependency
+```
+
+**View documentation**: `http://localhost:8080/swagger`
+
+### Basic Annotation Examples
+
+```go
+// GetUser godoc
+// @Summary Get user by ID
+// @Tags users
+// @Security SystemTokenAuth
+// @Param id path string true "User ID"
+// @Param search query string false "Search term"
+// @Param active query bool false "Filter by active status"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.User}
+// @Failure 400 {object} irminmodels.IrminAPIResponse
+// @Router /users/{id} [get]
+
+// CreateUser godoc
+// @Summary Create a new user
+// @Tags users
+// @Security SystemTokenAuth
+// @Accept json
+// @Produce json
+// @Param body body CreateUserRequest true "User creation data"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.User}
+// @Failure 400 {object} irminmodels.IrminAPIResponse
+// @Router /users [post]
+
+// UpdateUser godoc
+// @Summary Update user
+// @Tags users
+// @Security SystemTokenAuth
+// @Param id path string true "User ID"
+// @Param name formData string false "User name"
+// @Param email formData string false "User email"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.User}
+// @Router /users/{id} [patch]
+```
+
+**Parameter types**:
+- `path` - URL path parameter
+- `query` - Query string parameter  
+- `formData` - Form field
+- `body` - JSON request body (requires `@Accept json`)
+
+**Response types**:
+- Single object: `{object} Model`
+- Array: `{object} irminmodels.IrminAPIResponse{data=[]Model}`
+- Composed: `{object} irminmodels.IrminAPIResponse{data=Model}`
+
+### Annotating Request/Response Structs
+
+Define structs with proper tags for better documentation:
+
+```go
+type CreateUserRequest struct {
+    Name     string                 `json:"name" example:"John Doe" validate:"required"`
+    Email    string                 `json:"email" example:"john@example.com" validate:"required,email"`
+    Roles    []string               `json:"roles" example:"admin,user,viewer" validate:"required,dive,oneof=admin user viewer"`
+    Active   bool                   `json:"active" example:"true"`
+    Metadata map[string]any         `json:"metadata,omitempty" example:"{\"department\":\"engineering\"}"`
+    Settings map[string]any         `json:"settings"` // Values for the user's settings as JSON object, like {"notifications":true, "theme":"dark"}
+}
+
+type User struct {
+    ID       string    `json:"id" example:"user_123"`
+    Name     string    `json:"name" example:"John Doe"`
+    Email    string    `json:"email" example:"john@example.com"`
+    Roles    []string  `json:"roles" example:"admin,user,viewer"`
+    Active   bool      `json:"active" example:"true"`
+    Created  time.Time `json:"created" example:"2023-01-01T00:00:00Z"`
+}
+```
+
+**Useful struct tags**:
+- `json:"field_name"` - JSON field name
+- `example:"value"` - Example value in Swagger UI
+- `validate:"required"` - Mark field as required
+- `enums:"val1,val2,val3"` - Enum values
+- `swaggerignore:"true"` - Exclude field from docs
+
+For detailed documentation and advanced features, see [swaggo/swag](https://github.com/swaggo/swag).

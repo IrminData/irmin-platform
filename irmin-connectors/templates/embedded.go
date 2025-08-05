@@ -12,3 +12,6 @@ var PostgresDetailsHTML []byte
 
 //go:embed connector-details/sftp.html
 var SFTPDetailsHTML []byte
+
+//go:embed swagger/swagger-ui.html
+var SwaggerUIHTML []byte

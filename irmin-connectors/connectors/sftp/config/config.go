@@ -3,6 +3,7 @@ package config
 import (
 	"irmin-connectors/connectors/common"
 	"irmin-connectors/models"
+	"strconv"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -19,13 +20,13 @@ const (
 )
 
 // GetDetailsFieldDefinitions returns all detail fields with their metadata.
-func GetDetailsFieldDefinitions() map[string]models.DynamicField {
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField {
 	details, _ := initializeFieldDefinitions()
 	return details
 }
 
 // GetSettingsFieldDefinitions returns all settings fields with their metadata.
-func GetSettingsFieldDefinitions() map[string]models.DynamicField {
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField {
 	_, settings := initializeFieldDefinitions()
 	return settings
 }
@@ -54,8 +55,8 @@ func GetSettingsFields() []string {
 	return common.GetSettingsFieldNames(settings)
 }
 
-func initializeFieldDefinitions() (map[string]models.DynamicField, map[string]models.DynamicField) {
-	detailsFieldDefinitions := map[string]models.DynamicField{
+func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[string]irminmodels.DynamicField) {
+	detailsFieldDefinitions := map[string]irminmodels.DynamicField{
 		"host": {
 			Type:     "text",
 			Label:    "Host",
@@ -68,7 +69,7 @@ func initializeFieldDefinitions() (map[string]models.DynamicField, map[string]mo
 			Label:    "Port",
 			HelpText: "SFTP server port",
 			Required: false,
-			Default:  DefaultPort,
+			Default:  strconv.Itoa(DefaultPort),
 			Min:      1,
 			Max:      MaxPortNumber,
 		},
@@ -107,7 +108,7 @@ func initializeFieldDefinitions() (map[string]models.DynamicField, map[string]mo
 		},
 	}
 
-	settingsFieldDefinitions := map[string]models.DynamicField{
+	settingsFieldDefinitions := map[string]irminmodels.DynamicField{
 		"remote_path": {
 			Type:     "text",
 			Label:    "Remote Path",
@@ -121,7 +122,7 @@ func initializeFieldDefinitions() (map[string]models.DynamicField, map[string]mo
 			Label:    "File Patterns",
 			HelpText: "File patterns to include/exclude (e.g., *.txt, *.pdf)",
 			Required: false,
-			Default:  []string{"*"},
+			Default:  "[*]",
 		},
 		"preserve_timestamps": {
 			Type:     "select",

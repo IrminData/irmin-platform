@@ -100,7 +100,21 @@ func executePatchOperation(
 	return nil
 }
 
-// OperationPatch handles the "patch" operation using the common framework.
+// OperationPatch godoc
+// @Summary Patch data in PostgreSQL database
+// @Description Apply granular updates to PostgreSQL database records using JSON patch operations
+// @Tags postgres
+// @Security OperationTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Param patch formData file true "JSON patch file containing update operations"
+// @Success 200 {object} fiber.Map "Data patched successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid operation token or patch format"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "Operation not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /postgres/operation/patch [post]
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 	provider := &PostgresPatchProvider{}
 	return common.HandleOperationPatch(c, provider, cs.Logger)

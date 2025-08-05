@@ -7,7 +7,15 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// DetailsPage serves static HTML content with additional information about the MySQL connector.
+// DetailsPage godoc
+// @Summary Get MySQL connector details page
+// @Description Get an HTML page with detailed information about the MySQL connector including capabilities, authentication methods, and usage examples
+// @Tags mysql
+// @Accept json
+// @Produce text/html
+// @Success 200 {string} string "MySQL connector details page"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /mysql/details [get]
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	return common.RenderConnectorDetailsPage(
 		c,

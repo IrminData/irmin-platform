@@ -9,7 +9,25 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// ConfigValidate handles the configuration validation endpoint.
+// ConfigValidate godoc
+// @Summary Validate PostgreSQL connector configuration
+// @Description Validate PostgreSQL connection details and settings by testing the actual connection to the PostgreSQL server and specified database
+// @Tags postgres
+// @Security SystemTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param details[host] formData string true "PostgreSQL server hostname or IP address"
+// @Param details[port] formData integer false "PostgreSQL server port (default: 5432)"
+// @Param details[user] formData string true "Username for PostgreSQL authentication"
+// @Param details[password] formData string true "Password for PostgreSQL authentication"
+// @Param details[default_db] formData string false "Default database for initial connection"
+// @Param details[ssl_mode] formData boolean false "Enable SSL mode for secure connections"
+// @Param settings[database] formData string true "Target database name to validate connection"
+// @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result"
+// @Failure 400 {object} fiber.Map "Bad request - invalid configuration data"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /postgres/configuration/validate [post]
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 	return cs.HandleConfigValidation(c, cs)
 }

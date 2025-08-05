@@ -9,7 +9,24 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// ConfigValidate handles the configuration validation endpoint.
+// ConfigValidate godoc
+// @Summary Validate MySQL connector configuration
+// @Description Validate MySQL connection details and settings by testing the actual connection to the MySQL server and specified database
+// @Tags mysql
+// @Security SystemTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param details[host] formData string true "MySQL server hostname or IP address"
+// @Param details[port] formData integer false "MySQL server port (default: 3306)"
+// @Param details[user] formData string true "Username for MySQL authentication"
+// @Param details[password] formData string true "Password for MySQL authentication"
+// @Param details[default_db] formData string false "Default database for initial connection"
+// @Param settings[database] formData string true "Target database name to validate connection"
+// @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result"
+// @Failure 400 {object} fiber.Map "Bad request - invalid configuration data"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /mysql/configuration/validate [post]
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 	return cs.HandleConfigValidation(c, cs)
 }

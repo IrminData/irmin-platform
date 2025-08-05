@@ -2,18 +2,22 @@ package common
 
 import (
 	"errors"
-	"irmin-connectors/models"
+
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 // ConfigFieldProvider defines the interface for providing configuration fields.
 type ConfigFieldProvider interface {
-	GetDynamicFields(ctx fiber.Ctx, key string, fields map[string]string) (map[string]models.DynamicField, error)
+	GetDynamicFields(ctx fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
 }
 
 // BuildDetailsFromFields creates a details map from form fields using the provided field definitions.
-func BuildDetailsFromFields(fields map[string]string, definitions map[string]models.DynamicField) map[string]string {
+func BuildDetailsFromFields(
+	fields map[string]string,
+	definitions map[string]irminmodels.DynamicField,
+) map[string]string {
 	details := make(map[string]string)
 	for fieldName := range definitions {
 		details[fieldName] = fields["details["+fieldName+"]"]
@@ -22,7 +26,10 @@ func BuildDetailsFromFields(fields map[string]string, definitions map[string]mod
 }
 
 // BuildSettingsFromFields creates a settings map from form fields using the provided field definitions.
-func BuildSettingsFromFields(fields map[string]string, definitions map[string]models.DynamicField) map[string]string {
+func BuildSettingsFromFields(
+	fields map[string]string,
+	definitions map[string]irminmodels.DynamicField,
+) map[string]string {
 	settings := make(map[string]string)
 	for fieldName := range definitions {
 		settings[fieldName] = fields["settings["+fieldName+"]"]
@@ -31,7 +38,7 @@ func BuildSettingsFromFields(fields map[string]string, definitions map[string]mo
 }
 
 // GetRequiredFieldNames returns field names that are marked as required from both details and settings definitions.
-func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]models.DynamicField) []string {
+func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string {
 	var required []string
 	for fieldName, fieldDef := range detailsDefs {
 		if fieldDef.Required {
@@ -47,7 +54,7 @@ func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]models.DynamicFi
 }
 
 // GetOptionalFieldNames returns field names that are marked as optional from both details and settings definitions.
-func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]models.DynamicField) []string {
+func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string {
 	var optional []string
 
 	// Add optional detail fields
@@ -68,7 +75,7 @@ func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]models.DynamicFi
 }
 
 // GetDetailsFieldNames returns all detail field names from the provided definitions.
-func GetDetailsFieldNames(detailsDefs map[string]models.DynamicField) []string {
+func GetDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string {
 	var fields []string
 	for fieldName := range detailsDefs {
 		fields = append(fields, "details["+fieldName+"]")
@@ -77,7 +84,7 @@ func GetDetailsFieldNames(detailsDefs map[string]models.DynamicField) []string {
 }
 
 // GetSettingsFieldNames returns all settings field names from the provided definitions.
-func GetSettingsFieldNames(settingsDefs map[string]models.DynamicField) []string {
+func GetSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string {
 	var fields []string
 	for fieldName := range settingsDefs {
 		fields = append(fields, "settings["+fieldName+"]")
@@ -132,10 +139,10 @@ func (cs *Controllers) HandleConfigFields(c fiber.Ctx, provider ConfigFieldProvi
 }
 
 // CreateSelectOptions creates select options from a slice of strings.
-func CreateSelectOptions(values []string) []models.SelectOption {
-	options := make([]models.SelectOption, len(values))
+func CreateSelectOptions(values []string) []irminmodels.SelectOption {
+	options := make([]irminmodels.SelectOption, len(values))
 	for i, value := range values {
-		options[i] = models.SelectOption{
+		options[i] = irminmodels.SelectOption{
 			Key:   value,
 			Value: value,
 		}
@@ -144,10 +151,10 @@ func CreateSelectOptions(values []string) []models.SelectOption {
 }
 
 // CreateSelectOptionsWithLabels creates select options with custom labels.
-func CreateSelectOptionsWithLabels(keyValuePairs map[string]string) []models.SelectOption {
-	options := make([]models.SelectOption, 0, len(keyValuePairs))
+func CreateSelectOptionsWithLabels(keyValuePairs map[string]string) []irminmodels.SelectOption {
+	options := make([]irminmodels.SelectOption, 0, len(keyValuePairs))
 	for key, value := range keyValuePairs {
-		options = append(options, models.SelectOption{
+		options = append(options, irminmodels.SelectOption{
 			Key:   key,
 			Value: value,
 		})

@@ -1,8 +1,9 @@
 package common
 
 import (
-	"irmin-connectors/models"
 	"irmin-connectors/utils"
+
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -65,8 +66,8 @@ func (cs *Controllers) HandleConfigValidation(c fiber.Ctx, provider ConfigValida
 	ok := (len(errors) == 0) && canConnect && connectionDetailsValid && connectionSettingsValid
 
 	// Build and send the standardized response
-	response := models.ValidationResponse{
-		Ok:                      ok,
+	response := irminmodels.ConnectorConfigurationValidationResult{
+		OK:                      ok,
 		CanConnect:              canConnect,
 		ConnectionDetailsValid:  connectionDetailsValid,
 		ConnectionSettingsValid: connectionSettingsValid,

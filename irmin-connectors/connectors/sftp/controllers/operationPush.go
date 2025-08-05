@@ -81,7 +81,22 @@ func (p *SFTPPushProvider) ProcessFiles(
 	return nil
 }
 
-// OperationPush handles the "push" operation using the common framework.
+// OperationPush godoc
+// @Summary Push files to SFTP server
+// @Description Upload files to an SFTP server using the operation token and file data
+// @Tags sftp
+// @Security OperationTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Param file formData file true "File to upload to SFTP server"
+// @Param path formData string false "Target path on SFTP server (defaults to root directory)"
+// @Success 200 {object} fiber.Map "File uploaded successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "Operation not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /sftp/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &SFTPPushProvider{}
 	return common.HandleOperationPush(c, provider, cs.Logger)

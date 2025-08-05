@@ -113,7 +113,21 @@ func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath strin
 	return fileName, data, nil
 }
 
-// OperationPull handles the "pull" operation using the common framework.
+// OperationPull godoc
+// @Summary Pull data from MySQL database
+// @Description Extract data from MySQL database tables using the operation token and specified path (table name)
+// @Tags mysql
+// @Security SystemTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Param path formData string true "Table name to extract data from"
+// @Success 200 {object} fiber.Map "Data pulled successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid operation token or table name"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "Table not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /mysql/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	provider := &MySQLPullProvider{}
 	return common.HandleOperationPull(c, provider, cs.Logger)

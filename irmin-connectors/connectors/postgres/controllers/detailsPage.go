@@ -7,7 +7,15 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// DetailsPage serves static HTML content with additional information about the PostgreSQL connector.
+// DetailsPage godoc
+// @Summary Get PostgreSQL connector details page
+// @Description Get an HTML page with detailed information about the PostgreSQL connector including capabilities, authentication methods, and usage examples
+// @Tags postgres
+// @Accept json
+// @Produce text/html
+// @Success 200 {string} string "PostgreSQL connector details page"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /postgres/details [get]
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	return common.RenderConnectorDetailsPage(
 		c,

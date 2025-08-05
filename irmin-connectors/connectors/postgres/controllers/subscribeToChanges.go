@@ -8,7 +8,22 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// SubscribeToChanges subscribes to changes for a given operation.
+// SubscribeToChanges godoc
+// @Summary Subscribe to PostgreSQL database changes
+// @Description Set up real-time monitoring of PostgreSQL database changes using notification triggers and webhook notifications
+// @Tags postgres
+// @Security OperationTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Param webhook_url formData string true "Webhook URL to receive change notifications"
+// @Param webhook_access_token formData string true "Access token for webhook authentication"
+// @Success 200 {object} db.Subscription "Subscription created successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid parameters"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "Operation not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /postgres/operation/subscribe [post]
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error {
 	// Get the connector registration and operation from the context
 	registration, registrationOk := c.Locals("registration").(*db.ConnectorRegistration)

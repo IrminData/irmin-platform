@@ -14,7 +14,25 @@ const (
 	DefaultTestTimeoutSeconds = 30
 )
 
-// ConfigValidate validates SFTP connection settings and credentials.
+// ConfigValidate godoc
+// @Summary Validate SFTP connector configuration
+// @Description Validate SFTP connection settings and credentials by testing the actual connection
+// @Tags sftp
+// @Security SystemTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param details[host] formData string true "SFTP server hostname or IP address"
+// @Param details[port] formData integer false "SFTP server port (default: 22)"
+// @Param details[username] formData string true "Username for SFTP authentication"
+// @Param details[password] formData string false "Password for SFTP authentication (if not using private key)"
+// @Param details[private_key] formData string false "Private key for SFTP authentication (if not using password)"
+// @Param details[private_key_passphrase] formData string false "Passphrase for encrypted private key"
+// @Param details[host_key_fingerprint] formData string false "Expected host key fingerprint for security verification"
+// @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result"
+// @Failure 400 {object} fiber.Map "Bad request - invalid configuration data"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /sftp/configuration/validate [post]
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error {
 	return cs.HandleConfigValidation(c, cs)
 }

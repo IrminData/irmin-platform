@@ -7,7 +7,15 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// DetailsPage serves static HTML content with additional information about the SFTP connector.
+// DetailsPage godoc
+// @Summary Get SFTP connector details page
+// @Description Get an HTML page with detailed information about the SFTP connector including capabilities, authentication methods, and usage examples
+// @Tags sftp
+// @Accept json
+// @Produce text/html
+// @Success 200 {string} string "SFTP connector details page"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /sftp/details [get]
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	return common.RenderConnectorDetailsPage(
 		c,

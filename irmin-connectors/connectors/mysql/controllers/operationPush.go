@@ -93,7 +93,21 @@ func (p *MySQLPushProvider) ProcessFiles(
 	return nil
 }
 
-// OperationPush handles the "push" operation using the common framework.
+// OperationPush godoc
+// @Summary Push data to MySQL database
+// @Description Insert data into MySQL database tables using the operation token and JSON file containing table data
+// @Tags mysql
+// @Security SystemTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Param file formData file true "JSON file containing table data to insert"
+// @Success 200 {object} fiber.Map "Data pushed successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file format"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "Operation not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /mysql/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &MySQLPushProvider{}
 	return common.HandleOperationPush(c, provider, cs.Logger)

@@ -123,7 +123,21 @@ func (p *SFTPPullProvider) downloadFromPath(client *sftpclient.SftpClient, path 
 	return []string{fileName}, [][]byte{fileContent}, nil
 }
 
-// OperationPull handles the "pull" operation using the common framework.
+// OperationPull godoc
+// @Summary Pull files from SFTP server
+// @Description Download files from an SFTP server using the operation token and specified path
+// @Tags sftp
+// @Security OperationTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Param path formData string true "Path to file or directory on SFTP server to download"
+// @Success 200 {object} fiber.Map "Files pulled successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid operation token or path"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "File or directory not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /sftp/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	provider := &SFTPPullProvider{}
 	return common.HandleOperationPull(c, provider, cs.Logger)

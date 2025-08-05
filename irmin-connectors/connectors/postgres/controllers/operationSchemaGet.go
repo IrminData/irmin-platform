@@ -112,11 +112,21 @@ func (p *PostgreSQLSchemaProvider) GetSupportedOperationTypes() []string {
 	return common.CapabilitiesToOperationTypes(config.GetConnectorInfo().Capabilities)
 }
 
-// OperationSchemaGet retrieves the database schema and returns
-// an Irmin-compatible ObjectSchema grouping each table as a JSON array.
-//
-// It expects an operation token in the form, and on success writes
-// a JSON response with Content-Type: application/json.
+// OperationSchemaGet godoc
+// @Summary Get PostgreSQL operation schema
+// @Description Get the database schema for PostgreSQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push)
+// @Tags postgres
+// @Security OperationTokenAuth
+// @Accept json
+// @Produce json
+// @Param operation path string true "Operation type" Enums(pull, push)
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid operation type or token"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "Operation not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /postgres/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	provider := &PostgreSQLSchemaProvider{}
 	return common.HandleOperationSchemaGet(c, provider, cs.Logger)

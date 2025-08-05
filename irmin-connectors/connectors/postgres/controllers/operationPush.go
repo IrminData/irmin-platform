@@ -91,7 +91,21 @@ func (p *PostgresPushProvider) ProcessFiles(
 	return nil
 }
 
-// OperationPush handles the "push" operation using the common framework.
+// OperationPush godoc
+// @Summary Push data to PostgreSQL database
+// @Description Insert data into PostgreSQL database tables using the operation token and JSON file containing table data
+// @Tags postgres
+// @Security OperationTokenAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param operation_token formData string true "Operation token received from operation/init"
+// @Param file formData file true "JSON file containing table data to insert"
+// @Success 200 {object} fiber.Map "Data pushed successfully"
+// @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file format"
+// @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} fiber.Map "Operation not found"
+// @Failure 500 {object} fiber.Map "Internal server error"
+// @Router /postgres/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &PostgresPushProvider{}
 	return common.HandleOperationPush(c, provider, cs.Logger)
