@@ -68,14 +68,9 @@ const (
 
 // ConnectorConfigurationValidationResult represents the validation result of a connector configuration.
 type ConnectorConfigurationValidationResult struct {
-	// Indicates if the configuration is valid
-	OK bool `json:"ok"                        example:"true"`
-	// Indicates if the connector can connect to the external system
-	CanConnect bool `json:"can_connect"               example:"true"`
-	// Indicates if the connection details are valid
-	ConnectionDetailsValid bool `json:"connection_details_valid"  example:"true"`
-	// Indicates if the connection settings are valid
-	ConnectionSettingsValid bool `json:"connection_settings_valid" example:"true"`
-	// (Optional) Array of validation errors
-	Errors []string `json:"errors,omitempty"          example:"Invalid host address,Authentication failed" validate:"dive"`
+	OK                      bool     `json:"ok"                        example:"true"`                                                       // Indicates if the configuration is valid
+	CanConnect              bool     `json:"can_connect"               example:"true"`                                                       // Indicates if the connector can connect to the external system
+	ConnectionDetailsValid  bool     `json:"connection_details_valid"  example:"true"`                                                       // Indicates if the connection details are valid
+	ConnectionSettingsValid bool     `json:"connection_settings_valid" example:"true"`                                                       // Indicates if the connection settings are valid
+	Errors                  []string `json:"errors,omitempty"          example:"Invalid host address,Authentication failed" validate:"dive"` // (Optional) Array of validation errors
 }

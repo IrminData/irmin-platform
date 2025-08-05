@@ -23,13 +23,13 @@ const (
 type DynamicField struct {
 	Type         FieldType      `json:"type"                    validate:"required,oneof=text textarea password email checkbox integer float select radio file date time datetime" example:"text"`
 	Label        string         `json:"label"                   validate:"required,max=100"                                                                                        example:"Name"`
-	Min          any            `json:"min,omitempty"                                                                                                                              example:"1"`
-	Max          any            `json:"max,omitempty"                                                                                                                              example:"100"`
+	Min          float64        `json:"min,omitempty"                                                                                                                              example:"1"`
+	Max          float64        `json:"max,omitempty"                                                                                                                              example:"100"`
 	Multiple     bool           `json:"multiple,omitempty"                                                                                                                         example:"false"`
 	Options      []SelectOption `json:"options,omitempty"       validate:"dive"`
 	HelpText     string         `json:"help_text,omitempty"     validate:"max=200"                                                                                                 example:"This is a help text"`
 	Example      string         `json:"example,omitempty"       validate:"max=100"                                                                                                 example:"Example value"`
-	Default      any            `json:"default,omitempty"                                                                                                                          example:"Default value"`
+	Default      string         `json:"default,omitempty"                                                                                                                          example:"Default value"`
 	Required     bool           `json:"required,omitempty"                                                                                                                         example:"true"`
 	RequiredWith []string       `json:"required_with,omitempty" validate:"dive"                                                                                                    example:"field1,field2"`
 }
