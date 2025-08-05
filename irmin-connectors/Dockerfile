@@ -1,47 +1,50 @@
-# Stage 1: Build a static binary
-# Use the Alpine variant of the Go image for a smaller build environment.
-FROM golang:1.24-alpine AS builder
+# Stage 1: Build
+# Use the standard Go image with glibc for DuckDB compatibility
+FROM golang:1.24 AS builder
 
-# It's good practice to install git, as Go modules may fetch dependencies
-# from Git repositories. build-base is for the C compiler if any dependency
-# needed it, but we will disable CGO anyway.
-RUN apk add --no-cache build-base git
+# Install C/C++ build tools needed for CGO
+RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy dependency manifests first.
-# This leverages Docker's layer caching to avoid re-downloading dependencies
-# on every build unless go.mod or go.sum has changed.
+# Leverage layer caching for dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of your application's source code.
+# Copy the rest of the source code
 COPY . .
 
-# Build a fully static, self-contained binary.
-# - CGO_ENABLED=0 disables CGO, removing any dependency on system C libraries (like glibc).
-# - -ldflags="-w -s" strips debug information, significantly reducing the binary size.
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /app/main .
+# Build the Go binary with CGO enabled.
+# The -ldflags strips debug info, making the binary smaller.
+RUN CGO_ENABLED=1 go build -ldflags="-w -s" -o /app/main .
 
+# Stage 2: Runtime
+# Use a standard, minimal base image. Ubuntu is a solid choice.
+FROM ubuntu:22.04
 
-# Stage 2: Create the final, minimal image
-# Use Alpine for built-in SSL certificates and debugging capabilities
-FROM alpine:latest
+# Create a non-root user and group for the application for security
+RUN addgroup --system app && adduser --system --ingroup app app
 
-# Install CA certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates
+# Install only the necessary packages:
+# - ca-certificates: For making secure HTTPS/TLS connections.
+# Then, clean up the apt cache to keep the image small.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set the working directory.
 WORKDIR /app
 
-# Copy only the compiled binary from the builder stage.
+# Copy the compiled binary from the build stage
 COPY --from=builder /app/main .
 
 # Copy the public directory for static file serving
 COPY --from=builder /app/public ./public
 
-# Expose the port your application listens on.
+# Switch to the non-root user
+USER app
+
+# Expose port 8080 for networking
 EXPOSE 8080
 
-# Set the command to run your application.
+# Set the default command to run your application
 CMD ["./main"]

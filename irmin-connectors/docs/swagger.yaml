@@ -471,7 +471,9 @@ definitions:
         example: /data/customers/customers.json
         type: string
       restrictions:
-        $ref: '#/definitions/irminmodels.GroupSchemaRestrictions'
+        allOf:
+        - $ref: '#/definitions/irminmodels.GroupSchemaRestrictions'
+        description: Restrictions are not required, but are available for group schemas
       schema:
         allOf:
         - $ref: '#/definitions/irminmodels.JSONSchema'

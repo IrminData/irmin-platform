@@ -3117,7 +3117,12 @@ const docTemplate = `{
                     "example": "/data/customers/customers.json"
                 },
                 "restrictions": {
-                    "$ref": "#/definitions/irminmodels.GroupSchemaRestrictions"
+                    "description": "Restrictions are not required, but are available for group schemas",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.GroupSchemaRestrictions"
+                        }
+                    ]
                 },
                 "schema": {
                     "description": "Structured schema",
