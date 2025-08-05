@@ -25,10 +25,10 @@ type Client struct {
 }
 
 // CreateClient creates a new S3 client.
-func CreateClient(env *utils.CoreAPIEnv) (*Client, error) {
+func CreateClient(env *utils.CoreAPIEnv, bucketName string) (*Client, error) {
 	// Define the S3 bucket client configuration
 	config := fiberS3.Config{
-		Bucket:   "",
+		Bucket:   bucketName,
 		Endpoint: env.S3Endpoint,
 		Region:   env.S3Region,
 		Credentials: fiberS3.Credentials{
@@ -42,14 +42,15 @@ func CreateClient(env *utils.CoreAPIEnv) (*Client, error) {
 
 	return &Client{
 		Storage:  *store,
-		Bucket:   "",
+		Bucket:   bucketName,
 		Endpoint: env.S3Endpoint,
 		Region:   env.S3Region,
+		Env:      env,
 	}, nil
 }
 
 func (bucket *Client) ListObjects(ctx context.Context, keyPrefix string) ([]types.Object, error) {
-	objects, listObjectsErr := bucket.Conn().ListObjects(ctx, &s3.ListObjectsInput{
+	objects, listObjectsErr := bucket.Conn().ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: &bucket.Bucket,
 		Prefix: &keyPrefix,
 	})

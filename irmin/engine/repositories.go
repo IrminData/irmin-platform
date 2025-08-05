@@ -320,7 +320,7 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 	// Delete repository storage namespace if keepObjects is false
 	if !keepObjects {
 		// Create bucket client
-		bucket, createBucketErr := bucket.CreateClient(c.Env)
+		bucket, createBucketErr := bucket.CreateClient(c.Env, c.Env.LakeFSS3Bucket)
 		if createBucketErr != nil {
 			return fmt.Errorf("failed to create bucket client: %w", createBucketErr)
 		}

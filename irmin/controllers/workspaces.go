@@ -111,7 +111,7 @@ func (api *APIControllers) createWorkspaceInTransaction(
 	var newWorkspace *db.Workspace
 
 	// Create a bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(ctx, "failed to create bucket client", "error", createBucketClientErr)
 		return nil, createBucketClientErr
@@ -163,7 +163,7 @@ func (api *APIControllers) createWorkspaceInTransaction(
 
 		// Create a bucket folder for the editor files of the workspace
 		// This is done after the database operations, so that the operations would be atomic
-		editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, newWorkspace.Slug)
+		editorPathPrefix := utils.ConstructEditorStorageNamespace(newWorkspace.Slug)
 		editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
 		if !strings.HasSuffix(editorPathPrefix, "/") {
 			editorPathPrefix += "/"
@@ -393,7 +393,7 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	}
 
 	// Create bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
 	if createBucketClientErr != nil {
 		api.Logger.Error("failed to create bucket client", "error", createBucketClientErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -403,7 +403,7 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	defer bucket.Close()
 
 	// Format the workspace's base path prefix
-	editorPathPrefix := utils.ConstructEditorStorageNamespace(api.Env.IrminS3Bucket, workspace.Slug)
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(workspace.Slug)
 	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
 	if !strings.HasSuffix(editorPathPrefix, "/") {
 		editorPathPrefix += "/"

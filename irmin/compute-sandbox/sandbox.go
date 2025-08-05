@@ -49,7 +49,7 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	}
 
 	// Initialize bucket client
-	bucket, err := bucket.CreateClient(s.env)
+	bucket, err := bucket.CreateClient(s.env, s.env.IrminS3Bucket)
 	if err != nil {
 		return result, err
 	}
@@ -79,7 +79,7 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	defer cancelDownload()
 
 	// Format the workspace's base path prefix
-	editorPathPrefix := utils.ConstructEditorStorageNamespace(s.env.IrminS3Bucket, workspaceSlug)
+	editorPathPrefix := utils.ConstructEditorStorageNamespace(workspaceSlug)
 	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
 	if !strings.HasSuffix(editorPathPrefix, "/") {
 		editorPathPrefix += "/"
