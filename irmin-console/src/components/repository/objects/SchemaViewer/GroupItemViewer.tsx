@@ -116,7 +116,7 @@ export function GroupItemViewer({
               {dict.repository.objects.type}: {dict.repository.objects.group}
             </span>
             <span>
-              {dict.repository.objects.children}: {item.children.length}
+              {dict.repository.objects.children}: {item.children?.length ?? 0}
             </span>
           </div>
           <Button
@@ -127,11 +127,11 @@ export function GroupItemViewer({
           >
             {expanded
               ? dict.repository.objects.hideChildren
-              : `${dict.repository.objects.showChildren} (${item.children.length})`}
+              : `${dict.repository.objects.showChildren} (${item.children?.length ?? 0})`}
           </Button>
           {expanded && (
             <div className='mt-3 space-y-3 pl-2'>
-              {item.children.map((child) => (
+              {item.children?.map((child) => (
                 <ObjectSchemaViewer
                   key={child.path}
                   schema={child}
