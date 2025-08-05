@@ -104,7 +104,7 @@ func (api *APIControllers) ConnectorsShow(c fiber.Ctx) error {
 // @Summary Register a new connector
 // @Description Register a new connector with the system (system authentication required)
 // @Tags connectors
-// @Security ApiKeyAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param request body irmincore.ConnectorRequest true "Connector registration parameters"
@@ -221,7 +221,7 @@ func (api *APIControllers) updateConnectorFromInfo(
 // @Summary Update connector
 // @Description Update an existing connector's information (system authentication required)
 // @Tags connectors
-// @Security ApiKeyAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param connector_slug path string true "Connector slug"
@@ -307,7 +307,7 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 // @Summary Delete connector
 // @Description Delete an existing connector from the system (system authentication required)
 // @Tags connectors
-// @Security ApiKeyAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param connector_slug path string true "Connector slug"

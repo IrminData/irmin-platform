@@ -14,7 +14,7 @@ import (
 // @Summary System webhook endpoint
 // @Description Handle webhook events from internal services (LakeFS, orchestrator dispatch events)
 // @Tags system
-// @Security SystemAuth
+// @Security SystemTokenAuth
 // @Accept json
 // @Produce json
 // @Param type query string true "Webhook type (lakefs, dispatch)"

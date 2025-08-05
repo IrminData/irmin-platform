@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.3
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250804082631-710c629dee96
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250805164615-7d5e874a9d14
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.86.0
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.5

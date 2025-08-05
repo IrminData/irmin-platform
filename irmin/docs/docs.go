@@ -77,7 +77,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Register a new connector with the system (system authentication required)",
@@ -217,7 +217,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Delete an existing connector from the system (system authentication required)",
@@ -276,7 +276,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Update an existing connector's information (system authentication required)",
@@ -1164,7 +1164,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "SystemAuth": []
+                        "SystemTokenAuth": []
                     }
                 ],
                 "description": "Handle webhook events from internal services (LakeFS, orchestrator dispatch events)",
@@ -12902,7 +12902,13 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "ApiKeyAuth": {
-            "description": "JWT token with Bearer prefix",
+            "description": "User's JWT token with Bearer prefix provided by Clerk on login",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "SystemTokenAuth": {
+            "description": "System API token used for internal operations",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

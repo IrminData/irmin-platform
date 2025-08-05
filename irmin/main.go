@@ -16,7 +16,12 @@ package main
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
-// @description JWT token with Bearer prefix
+// @description User's JWT token with Bearer prefix provided by Clerk on login
+
+// @securityDefinitions.apikey SystemTokenAuth
+// @in header
+// @name Authorization
+// @description System API token used for internal operations
 
 import (
 	"context"

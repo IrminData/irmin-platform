@@ -2508,7 +2508,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
-      - ApiKeyAuth: []
+      - SystemTokenAuth: []
       summary: Register a new connector
       tags:
       - connectors
@@ -2548,7 +2548,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
-      - ApiKeyAuth: []
+      - SystemTokenAuth: []
       summary: Delete connector
       tags:
       - connectors
@@ -2641,7 +2641,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
-      - ApiKeyAuth: []
+      - SystemTokenAuth: []
       summary: Update connector
       tags:
       - connectors
@@ -3177,7 +3177,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
-      - SystemAuth: []
+      - SystemTokenAuth: []
       summary: System webhook endpoint
       tags:
       - system
@@ -8483,7 +8483,12 @@ schemes:
 - https
 securityDefinitions:
   ApiKeyAuth:
-    description: JWT token with Bearer prefix
+    description: User's JWT token with Bearer prefix provided by Clerk on login
+    in: header
+    name: Authorization
+    type: apiKey
+  SystemTokenAuth:
+    description: System API token used for internal operations
     in: header
     name: Authorization
     type: apiKey
