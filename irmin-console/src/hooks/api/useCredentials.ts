@@ -81,13 +81,10 @@ export function useCredentials() {
           ) => ({
             id: tempId,
             name: input.name,
-            scope: 'read',
             token: 'temp-token-will-be-replaced',
-            expires_at: null,
             expiry: new Date().toISOString(),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            last_used_at: null,
           }),
         },
         onSuccess: (res) => {

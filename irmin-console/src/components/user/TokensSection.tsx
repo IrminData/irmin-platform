@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { TableSkeleton } from '@/components/ui/loading/TableSkeleton';
 import {
   Table,
   TableBody,
@@ -74,7 +75,13 @@ export default function TokensSection() {
             <APITokenDisplay token={createCredentialMutation.data.data.token} />
           </div>
         )}
-      {credentialsQuery.data?.data?.length === 0 ? (
+      {credentialsQuery.isLoading ? (
+        <TableSkeleton rows={6} columns={4} />
+      ) : (
+        <></>
+      )}
+      {credentialsQuery.data?.data?.length === 0 &&
+      !credentialsQuery.isLoading ? (
         <EmptyState
           title={dict.list.emptyState.tokens.title}
           description={dict.list.emptyState.tokens.description}
@@ -86,6 +93,9 @@ export default function TokensSection() {
           className='py-16'
         />
       ) : (
+        <></>
+      )}
+      {credentialsQuery.data?.data?.length && !credentialsQuery.isLoading ? (
         <Table className='min-w-full'>
           <TableHeader>
             <TableRow
@@ -167,6 +177,8 @@ export default function TokensSection() {
             ))}
           </TableBody>
         </Table>
+      ) : (
+        <></>
       )}
     </ContentWrapper>
   );
