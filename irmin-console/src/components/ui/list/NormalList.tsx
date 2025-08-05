@@ -56,16 +56,21 @@ const ListLoadingSkeleton = ({ totalColumns }: { totalColumns: number }) => {
  * @param props.hideHeaders - Whether to hide the headers
  * @param props.loading - Whether the list is in a loading state
  * @param props.noActions - Whether to hide the actions column
+ * @param props.emptyStateTitle - The title of the empty state when there are no rows
+ * @param props.emptyStateDescription - The description of the empty state when there are no rows
+ * @param props.emptyStateAction - The action to show in the empty state when there are no rows
  * @returns The JSX element
  */
-const NormalList: React.FC<ListProps> = ({
+const NormalList = ({
   rows,
   headers,
   hideHeaders = false,
   loading = false,
   noActions = false,
+  emptyStateTitle,
+  emptyStateDescription,
   emptyStateAction,
-}) => {
+}: ListProps) => {
   const { dict } = useLocale();
   const [openDetails, setOpenDetails] = useState<number[]>([]);
 
@@ -264,8 +269,11 @@ const NormalList: React.FC<ListProps> = ({
             <tr>
               <td colSpan={totalColumns} className='p-0 align-middle'>
                 <EmptyState
-                  title={dict.list.emptyState.generic.title}
-                  description={dict.list.emptyState.generic.description}
+                  title={emptyStateTitle ?? dict.list.emptyState.generic.title}
+                  description={
+                    emptyStateDescription ??
+                    dict.list.emptyState.generic.description
+                  }
                   size='sm'
                   className='py-12'
                   action={emptyStateAction}

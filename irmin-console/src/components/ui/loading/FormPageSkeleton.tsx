@@ -62,8 +62,8 @@ const SkeletonSecondaryAction = () => (
  */
 const FormPageSkeleton = () => {
   return (
-    <div className='relative container mx-auto max-w-2xl px-4 py-28'>
-      <div className='rounded-lg border bg-card p-8 shadow-sm'>
+    <div className='relative container mx-auto max-w-lg px-4 py-24'>
+      <div className='rounded-lg border bg-card p-4 shadow-sm'>
         {/* Form title */}
         <div className='mb-8 text-center'>
           <div
@@ -82,7 +82,6 @@ const FormPageSkeleton = () => {
 
         {/* Form fields */}
         <div className='space-y-6'>
-          <SkeletonField />
           <SkeletonField />
           <SkeletonField />
           <SkeletonField />

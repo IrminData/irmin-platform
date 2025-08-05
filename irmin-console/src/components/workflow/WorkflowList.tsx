@@ -145,6 +145,8 @@ const WorkflowList = ({
       headers={[dict.common.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
+      emptyStateTitle={dict.list.emptyState.workflows.title}
+      emptyStateDescription={dict.list.emptyState.workflows.description}
       emptyStateAction={emptyStateAction}
     />
   );

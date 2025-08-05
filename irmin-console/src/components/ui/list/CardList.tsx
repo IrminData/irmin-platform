@@ -53,11 +53,22 @@ const CardListLoadingSkeleton = () => {
  * It can be used to display a list of items with headers and actions.
  *
  * The component is responsive and can be used in any layout.
+ *
+ * @param props - The component props
+ * @param props.rows - The list of rows to display
+ * @param props.loading - Whether the list is in a loading state
+ * @param props.noActions - Whether to hide the actions column
+ * @param props.emptyStateTitle - The title of the empty state when there are no rows
+ * @param props.emptyStateDescription - The description of the empty state when there are no rows
+ * @param props.emptyStateAction - The action to show in the empty state when there are no rows
+ * @returns The JSX element
  */
 const CardList = ({
   rows,
   loading = false,
   noActions = false,
+  emptyStateTitle,
+  emptyStateDescription,
   emptyStateAction,
 }: ListProps) => {
   const { dict } = useLocale();
@@ -188,8 +199,10 @@ const CardList = ({
       {!loading && rows.length === 0 && (
         <div className='col-span-full'>
           <EmptyState
-            title={dict.list.emptyState.generic.title}
-            description={dict.list.emptyState.generic.description}
+            title={emptyStateTitle ?? dict.list.emptyState.generic.title}
+            description={
+              emptyStateDescription ?? dict.list.emptyState.generic.description
+            }
             size='sm'
             className='py-8'
             action={emptyStateAction}

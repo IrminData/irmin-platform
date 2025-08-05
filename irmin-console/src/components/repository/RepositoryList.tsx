@@ -145,6 +145,8 @@ const RepositoryList = ({
       headers={[dict.common.name, dict.list.status, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
+      emptyStateTitle={dict.list.emptyState.repositories.title}
+      emptyStateDescription={dict.list.emptyState.repositories.description}
       emptyStateAction={emptyStateAction}
     />
   );

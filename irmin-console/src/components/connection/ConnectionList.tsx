@@ -125,6 +125,8 @@ const ConnectionList = ({
       headers={[dict.common.name, dict.connectors.connector, dict.list.actions]}
       rows={rows}
       hideHeaders={false}
+      emptyStateTitle={dict.list.emptyState.connections.title}
+      emptyStateDescription={dict.list.emptyState.connections.description}
       emptyStateAction={emptyStateAction}
     />
   );

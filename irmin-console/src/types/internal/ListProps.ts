@@ -62,6 +62,10 @@ export type ListProps = {
   hideHeaders?: boolean;
   /** Whether to hide the actions of the list */
   noActions?: boolean;
+  /** Title of the empty state when there are no rows */
+  emptyStateTitle?: string;
+  /** Description of the empty state when there are no rows */
+  emptyStateDescription?: string;
   /** Action to show in the empty state when there are no rows */
   emptyStateAction?: EmptyStateAction;
 };
