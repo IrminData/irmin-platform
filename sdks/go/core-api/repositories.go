@@ -14,8 +14,8 @@ type CreateRepositoryRequest struct {
 	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
 	DefaultBranch                     string `json:"default_branch,omitempty"                        validate:"validslug"          example:"main"`
 	IsImmutable                       bool   `json:"is_immutable,omitempty"                                                        example:"false"`
-	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"        validate:"max=3650"           example:"30"`
-	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty" validate:"max=3650"           example:"30"`
+	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
+	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
 }
 
 // UpdateRepositoryRequest represents the JSON request body for updating a repository.
@@ -24,8 +24,8 @@ type UpdateRepositoryRequest struct {
 	Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
 	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
 	IsImmutable                       *bool  `json:"is_immutable,omitempty"                                                        example:"false"`
-	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"        validate:"max=3650"           example:"30"`
-	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty" validate:"max=3650"           example:"30"`
+	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
+	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
 }
 
 // TransferRepositoryOwnershipRequest represents the JSON request body for transferring repository ownership.

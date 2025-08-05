@@ -13,7 +13,7 @@ type ObjectSchema struct {
 	ContentType *string `json:"content_type,omitempty"  validate:"required_if=Type binary,required_if=Type structured" example:"application/json"`
 	// Group schema
 	Children     []ObjectSchema           `json:"children,omitempty"      validate:"dive,required_if=Type group"`
-	Restrictions *GroupSchemaRestrictions `json:"restrictions,omitempty"  validate:"required_if=Type group"`
+	Restrictions *GroupSchemaRestrictions `json:"restrictions,omitempty"` // Restrictions are not required, but are available for group schemas
 }
 
 // GroupSchemaRestrictions defines restrictions on group schemas.
