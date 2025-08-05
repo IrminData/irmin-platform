@@ -14,6 +14,22 @@ import (
 	"gorm.io/gorm"
 )
 
+// CompareRefs godoc
+// @Summary Compare two repository references
+// @Description Compare two refs (branches, tags, or commits) in a repository to show differences
+// @Tags compare
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param base_ref query string true "Base reference (branch, tag, or commit hash)"
+// @Param compare_ref query string true "Compare reference (branch, tag, or commit hash)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Diff} "Comparison result retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/compare [get]
 func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -59,6 +75,21 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	})
 }
 
+// MergeRefs godoc
+// @Summary Merge two repository references
+// @Description Merge a compare reference into a base reference in a repository
+// @Tags compare
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param request body irmincore.MergeRefsRequest true "Merge request parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Commit} "Merge completed successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/merge [post]
 func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

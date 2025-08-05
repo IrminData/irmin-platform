@@ -20,6 +20,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// ProfileShow godoc
+// @Summary Get user profile
+// @Description Get the current authenticated user's profile information
+// @Tags profile
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.User} "User profile retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /profile [get]
 func (api *APIControllers) ProfileShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -124,6 +135,24 @@ func (api *APIControllers) updateClerkUserData(c fiber.Ctx, irminUser *db.User) 
 	return api.updateClerkProfile(c, irminUser, primaryEmailID, primaryPhoneID)
 }
 
+// ProfileUpdate godoc
+// @Summary Update user profile
+// @Description Update the current authenticated user's profile information
+// @Tags profile
+// @Security ApiKeyAuth
+// @Accept multipart/form-data
+// @Accept json
+// @Produce json
+// @Param firstName formData string false "User's first name"
+// @Param lastName formData string false "User's last name"
+// @Param primaryEmailAddress formData string false "Primary email address"
+// @Param primaryPhoneNumber formData string false "Primary phone number"
+// @Param avatar formData file false "Profile avatar image"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.User} "Profile updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid input data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /profile [patch]
 func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

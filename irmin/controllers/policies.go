@@ -18,7 +18,26 @@ import (
 	"gorm.io/gorm"
 )
 
-// PoliciesIndex returns a list of all policies for a workspace.
+// PoliciesIndex godoc
+// @Summary List workspace policies
+// @Description Get all policies for a workspace with optional filtering
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param effect query string false "Filter by policy effect (allow, deny)"
+// @Param resource query string false "Filter by resource type"
+// @Param resource_id query string false "Filter by specific resource ID (SQID)"
+// @Param action query string false "Filter by action type"
+// @Param principal query string false "Filter by principal type"
+// @Param role_id query string false "Filter by role ID (SQID)"
+// @Param user_id query string false "Filter by user ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Policy} "Policies retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies [get]
 func (api *APIControllers) PoliciesIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -226,7 +245,21 @@ func (api *APIControllers) handleOptionalPolicyFields(
 	return nil
 }
 
-// PoliciesStore creates a new policy for a workspace.
+// PoliciesStore godoc
+// @Summary Create policy
+// @Description Create a new policy for a workspace
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param request body irmincore.CreatePolicyRequest true "Policy creation parameters"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Policy} "Policy created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body or policy combination"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 409 {object} irminmodels.IrminAPIResponse "Conflict - policy already exists"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies [post]
 func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -336,7 +369,20 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 	})
 }
 
-// PoliciesShow returns a single policy.
+// PoliciesShow godoc
+// @Summary Get policy details
+// @Description Get details of a specific policy by its ID
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param policy_id path string true "Policy ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Policy} "Policy retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Policy not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies/{policy_id} [get]
 func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -365,7 +411,22 @@ func (api *APIControllers) PoliciesShow(c fiber.Ctx) error {
 	})
 }
 
-// PoliciesUpdate updates an existing policy.
+// PoliciesUpdate godoc
+// @Summary Update policy
+// @Description Update an existing policy's properties
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param policy_id path string true "Policy ID (SQID)"
+// @Param request body irmincore.UpdatePolicyRequest true "Policy update parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Policy} "Policy updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Policy not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies/{policy_id} [patch]
 func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -476,7 +537,20 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 	})
 }
 
-// PoliciesDestroy deletes a policy.
+// PoliciesDestroy godoc
+// @Summary Delete policy
+// @Description Delete an existing policy from the workspace
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param policy_id path string true "Policy ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Policy deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Policy not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies/{policy_id} [delete]
 func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -586,7 +660,18 @@ func (api *APIControllers) fetchPolicyResourceData(workspaceID uint) (
 	return queries, workflows, connections, repositories, tags, users, nil
 }
 
-// PoliciesResourceOptions returns all possible policy resource options for a given workspace.
+// PoliciesResourceOptions godoc
+// @Summary Get policy resource options
+// @Description Get all available policy resource options for policy creation in the workspace
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Policy resource options retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies/resource-options [get]
 func (api *APIControllers) PoliciesResourceOptions(c fiber.Ctx) error {
 	_, dict, _, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -678,7 +763,18 @@ func (api *APIControllers) getApplicablePoliciesForRole(workspace *db.Workspace,
 	return deduplicatedPolicies, nil
 }
 
-// PoliciesRoleSummary returns a list of policies that apply to each role.
+// PoliciesRoleSummary godoc
+// @Summary Get role policy summary
+// @Description Get a summary of all policies that apply to each role in the workspace
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.RolePolicySummary} "Role policy summary retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies/role-summary [get]
 func (api *APIControllers) PoliciesRoleSummary(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
@@ -932,7 +1028,18 @@ func (api *APIControllers) deduplicatePolicies(policies []db.Policy) []db.Policy
 	return result
 }
 
-// PoliciesMySummary returns a list of policies that apply to the current user.
+// PoliciesMySummary godoc
+// @Summary Get my policy summary
+// @Description Get a summary of all policies that apply to the current authenticated user
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.UserPolicySummary} "User policy summary retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies/my-summary [get]
 func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
@@ -1017,7 +1124,23 @@ func (api *APIControllers) PoliciesMySummary(c fiber.Ctx) error {
 	})
 }
 
-// CheckPermission checks if the current user can perform a specific action on a resource.
+// CheckPermission godoc
+// @Summary Check user permission
+// @Description Check if the current user has permission to perform a specific action on a resource
+// @Tags policies
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param resource query string true "Resource type to check permission for"
+// @Param action query string true "Action to check permission for"
+// @Param resource_id query string false "Specific resource ID (SQID) to check permission for"
+// @Success 200 "Permission granted"
+// @Failure 400 "Bad request - invalid query parameters"
+// @Failure 401 "Unauthorized - invalid or missing authentication"
+// @Failure 403 "Forbidden - permission denied"
+// @Failure 500 "Internal server error"
+// @Router /workspaces/{workspace_slug}/policies/check-permission [get]
 func (api *APIControllers) CheckPermission(c fiber.Ctx) error {
 	_, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)

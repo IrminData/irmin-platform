@@ -14,6 +14,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// UsersIndex godoc
+// @Summary List workspace users
+// @Description Get all users in the workspace with their roles and permissions (filtered by user permissions)
+// @Tags users
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.User} "Users retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/users [get]
+//
 //nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
@@ -67,6 +81,21 @@ func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 	})
 }
 
+// UsersShow godoc
+// @Summary Get workspace user details
+// @Description Get details of a specific user in the workspace including their roles
+// @Tags users
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param user_id path string true "User ID (SQID encoded)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.User} "User details retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "User not found in workspace"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/users/{user_id} [get]
 func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -95,6 +124,21 @@ func (api *APIControllers) UsersShow(c fiber.Ctx) error {
 	})
 }
 
+// UsersDestroy godoc
+// @Summary Remove user from workspace
+// @Description Remove a user from the workspace (cannot remove self or workspace owner)
+// @Tags users
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param user_id path string true "User ID (SQID encoded)"
+// @Success 204 {object} irminmodels.IrminAPIResponse "User removed from workspace successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - cannot remove self or workspace owner"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "User not found in workspace"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/users/{user_id} [delete]
 func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -147,6 +191,23 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 	})
 }
 
+// UsersUpdate godoc
+// @Summary Update user roles in workspace
+// @Description Update the roles assigned to a user within the workspace
+// @Tags users
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param user_id path string true "User ID (SQID encoded)"
+// @Param body body irmincore.UpdateUserRolesRequest true "User roles update request"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.User} "User roles updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid roles data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "User not found in workspace"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/users/{user_id} [patch]
 func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {

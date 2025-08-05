@@ -48,6 +48,17 @@ func (api *APIControllers) validateWorkspaceParams(c fiber.Ctx) (
 	return locale, dict, user, workspace, nil
 }
 
+// WorkspacesIndex godoc
+// @Summary List user workspaces
+// @Description Get all workspaces that the authenticated user is a member of
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Workspace} "Workspaces retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces [get]
 func (api *APIControllers) WorkspacesIndex(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -172,6 +183,20 @@ func (api *APIControllers) createWorkspaceInTransaction(
 	return newWorkspace, nil
 }
 
+// WorkspacesStore godoc
+// @Summary Create workspace
+// @Description Create a new workspace with default settings, policies, and tags (user becomes owner)
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param body body irmincore.CreateWorkspaceRequest true "Workspace creation request"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workspace} "Workspace created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid workspace data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 409 {object} irminmodels.IrminAPIResponse "Workspace slug already exists"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces [post]
 func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -220,6 +245,20 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 	})
 }
 
+// WorkspacesShow godoc
+// @Summary Get workspace details
+// @Description Get details of a specific workspace that the user has access to
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workspace} "Workspace details retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - user not a member of workspace"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug} [get]
 func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 	_, dict, _, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -242,6 +281,22 @@ func (api *APIControllers) WorkspacesShow(c fiber.Ctx) error {
 	})
 }
 
+// WorkspacesUpdate godoc
+// @Summary Update workspace
+// @Description Update workspace properties (name, description) - slug cannot be changed
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param body body irmincore.UpdateWorkspaceRequest true "Workspace update request"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workspace} "Workspace updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid workspace data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug} [patch]
 func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -299,6 +354,20 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 	})
 }
 
+// WorkspacesDestroy godoc
+// @Summary Delete workspace
+// @Description Delete a workspace and all its data (only workspace owner can delete)
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Workspace deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - only workspace owner can delete"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug} [delete]
 func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -372,6 +441,22 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 	})
 }
 
+// TransferWorkspaceOwnership godoc
+// @Summary Transfer workspace ownership
+// @Description Transfer ownership of a workspace to another user (only current owner can transfer)
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param body body irmincore.TransferOwnershipRequest true "Ownership transfer request"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workspace} "Ownership transferred successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid new owner or not a workspace member"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - only workspace owner can transfer ownership"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/transfer-ownership [post]
 func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -487,6 +572,20 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 	})
 }
 
+// LeaveWorkspace godoc
+// @Summary Leave workspace
+// @Description Remove yourself from a workspace (cannot leave if you're the owner or last member)
+// @Tags workspaces
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Successfully left workspace"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - cannot leave as owner or last member"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/leave [post]
 func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error {
 	// Get the dictionary, workspace, and user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

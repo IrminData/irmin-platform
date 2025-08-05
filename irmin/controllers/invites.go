@@ -19,6 +19,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// WorkspaceInvitesIndex godoc
+// @Summary List workspace invites
+// @Description Get all invites in the specified workspace that the user has permission to read
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Invite} "Invites retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/invites [get]
+//
 //nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
 func (api *APIControllers) WorkspaceInvitesIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
@@ -272,6 +286,21 @@ func (api *APIControllers) validateSendInviteRequest(
 	return nil
 }
 
+// SendInvite godoc
+// @Summary Send workspace invite
+// @Description Send an invitation to join the workspace to the specified email address
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param request body irmincore.SendInviteRequest true "Invite parameters"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=object} "Invite sent successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 409 {object} irminmodels.IrminAPIResponse "Conflict - user already in workspace or already invited"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/invites [post]
 func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	locale, localeOk := c.Locals("locale").(string)
@@ -378,6 +407,20 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	})
 }
 
+// InvitesShow godoc
+// @Summary Get invite details
+// @Description Get details of a specific invite by its ID
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param invite_id path string true "Invite ID (SQID)"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Invite} "Invite retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Invite not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/invites/{invite_id} [get]
 func (api *APIControllers) InvitesShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
@@ -400,6 +443,22 @@ func (api *APIControllers) InvitesShow(c fiber.Ctx) error {
 	})
 }
 
+// InvitesUpdate godoc
+// @Summary Update invite
+// @Description Update an existing invite's role assignment
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param invite_id path string true "Invite ID (SQID)"
+// @Param request body irmincore.UpdateInviteRequest true "Invite update parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Invite} "Invite updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Invite not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/invites/{invite_id} [patch]
 func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
@@ -568,6 +627,20 @@ func (api *APIControllers) resendInviteInTransaction(
 	return transactionErr
 }
 
+// InvitesDestroy godoc
+// @Summary Delete invite
+// @Description Delete an existing invite and revoke it in Clerk
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param invite_id path string true "Invite ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Invite deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Invite not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/invites/{invite_id} [delete]
 func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
@@ -599,6 +672,20 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 	})
 }
 
+// ResendInvite godoc
+// @Summary Resend invite
+// @Description Resend an existing invite with a new expiration date
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param invite_id path string true "Invite ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Invite} "Invite resent successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Invite not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/invites/{invite_id}/resend [post]
 func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -641,6 +728,17 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 	})
 }
 
+// IndexMyInvites godoc
+// @Summary List my invites
+// @Description Get all invites sent to the current authenticated user's email address
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Invite} "User invites retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /invites/my [get]
 func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -678,6 +776,20 @@ func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error {
 	})
 }
 
+// AcceptInvite godoc
+// @Summary Accept invite
+// @Description Accept an invite and join the workspace with the specified role
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param invite_id path string true "Invite ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Invite accepted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - user not allowed to accept this invite"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Invite not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /invites/{invite_id}/accept [post]
 func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)
@@ -740,6 +852,20 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 	})
 }
 
+// DeclineInvite godoc
+// @Summary Decline invite
+// @Description Decline an invite to join a workspace
+// @Tags invites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param invite_id path string true "Invite ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Invite declined successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - user not allowed to decline this invite"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Invite not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /invites/{invite_id}/decline [post]
 func (api *APIControllers) DeclineInvite(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	invite, inviteOk := c.Locals("invite").(*db.Invite)

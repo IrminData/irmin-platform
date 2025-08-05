@@ -135,7 +135,24 @@ func (api *APIControllers) buildLogsResponse(
 	}
 }
 
-// LogsIndex handles retrieving log events for a workspace.
+// LogsIndex godoc
+// @Summary List audit logs
+// @Description Get audit log events for a workspace with optional filtering and pagination
+// @Tags logs
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param search query string false "Search term to filter log descriptions"
+// @Param per_page query int false "Number of items per page" default(10)
+// @Param page query int false "Page number" default(1)
+// @Param asset_type query string false "Filter by asset type (connection, repository, workflow, etc.)"
+// @Param asset_id query string false "Filter by specific asset ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.LogEvent,pagination=irminmodels.IrminAPIPaginationMetadata} "Log events retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/logs [get]
 func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 	logsLocalParams, err := api.validateLogsParams(c)
 	if err != nil {

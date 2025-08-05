@@ -14,6 +14,17 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// CredentialsIndex godoc
+// @Summary List API tokens
+// @Description Get all API tokens for the current authenticated user
+// @Tags credentials
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.APIToken} "API tokens retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /credentials [get]
 func (api *APIControllers) CredentialsIndex(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -50,6 +61,19 @@ func (api *APIControllers) CredentialsIndex(c fiber.Ctx) error {
 	})
 }
 
+// CredentialsStore godoc
+// @Summary Create API token
+// @Description Create a new API token for the current authenticated user
+// @Tags credentials
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param request body irmincore.CreateCredentialRequest true "API token creation parameters"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.APIToken} "API token created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /credentials [post]
 func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -116,6 +140,21 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 	})
 }
 
+// CredentialsDestroy godoc
+// @Summary Delete API token
+// @Description Delete an API token by its ID
+// @Tags credentials
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param credential path string true "API token ID (SQID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "API token deleted successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid token ID"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - token does not belong to user or is hidden"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "API token not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /credentials/{credential} [delete]
 func (api *APIControllers) CredentialsDestroy(c fiber.Ctx) error {
 	// Get the dictionary and user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

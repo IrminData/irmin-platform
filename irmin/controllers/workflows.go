@@ -18,7 +18,21 @@ import (
 	"gorm.io/gorm"
 )
 
-// WorkflowsIndex shows all workflows for a workspace.
+// WorkflowsIndex godoc
+// @Summary List workspace workflows
+// @Description Get all workflows in the workspace with optional type filtering and permission-based access
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param type query string false "Filter by workflow type (import, export, action, pipeline)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Workflow} "Workflows retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid type parameter"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows [get]
 func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -100,7 +114,21 @@ func (api *APIControllers) WorkflowsIndex(c fiber.Ctx) error {
 	})
 }
 
-// WorkflowsShow shows a workflow.
+// WorkflowsShow godoc
+// @Summary Get workflow details
+// @Description Get details of a specific workflow including its configuration, schedule, and workflowable settings
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Workflow details retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug} [get]
 func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -129,7 +157,23 @@ func (api *APIControllers) WorkflowsShow(c fiber.Ctx) error {
 	})
 }
 
-// WorkflowsUpdate updates a workflow.
+// WorkflowsUpdate godoc
+// @Summary Update workflow properties
+// @Description Update basic workflow properties (name, description, documentation)
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Param body body irmincore.UpdateWorkflowRequest true "Workflow update request"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Workflow updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid workflow data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug} [patch]
 func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -195,7 +239,21 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 	})
 }
 
-// WorkflowsStore creates a new workflow.
+// WorkflowsStore godoc
+// @Summary Create workflow
+// @Description Create a new workflow with specified type (import, export, action, or pipeline) and schedule
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param body body irmincore.WorkflowRequest true "Workflow creation request with workflowable configuration"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Workflow created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid workflow configuration"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows [post]
 func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -295,7 +353,23 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 	})
 }
 
-// WorkflowableUpdate updates the workflowable of a workflow.
+// WorkflowableUpdate godoc
+// @Summary Update workflow configuration
+// @Description Update the workflowable configuration (import/export/action/pipeline settings) of a workflow
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Param body body irminmodels.Workflowable true "Workflowable configuration update"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Workflow configuration updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid workflowable configuration or type change"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/workflowable [patch]
 func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -419,7 +493,23 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 	})
 }
 
-// ScheduleUpdate updates the schedule of a workflow.
+// ScheduleUpdate godoc
+// @Summary Update workflow schedule
+// @Description Update the scheduling configuration and triggers for a workflow
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Param body body irminmodels.Schedule true "Schedule configuration update"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Workflow schedule updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid schedule configuration"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/schedule [patch]
 func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -505,7 +595,21 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 	})
 }
 
-// WorkflowsDestroy destroys a workflow.
+// WorkflowsDestroy godoc
+// @Summary Delete workflow
+// @Description Delete a workflow and all its related data (schedule, workflowable, runs)
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Workflow deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug} [delete]
 func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -545,7 +649,23 @@ func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 	})
 }
 
-// TransferWorkflowOwnership transfers the ownership of a workflow.
+// TransferWorkflowOwnership godoc
+// @Summary Transfer workflow ownership
+// @Description Transfer ownership of a workflow to another user in the workspace
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Param body body irmincore.TransferWorkflowOwnershipRequest true "Ownership transfer request"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Ownership transferred successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid new owner or not a workspace member"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/transfer-ownership [post]
 func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -626,7 +746,21 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 	})
 }
 
-// PauseWorkflow pauses a workflow.
+// PauseWorkflow godoc
+// @Summary Pause workflow
+// @Description Pause a workflow to stop scheduled executions (can be resumed later)
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Workflow paused successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/pause [post]
 func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -677,7 +811,22 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 	})
 }
 
-// StartWorkflow starts a workflow.
+// StartWorkflow godoc
+// @Summary Start workflow
+// @Description Start/resume a paused workflow to enable scheduled executions
+// @Tags workflows
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Workflow} "Workflow started successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - workflow is already running"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/start [post]
 func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {

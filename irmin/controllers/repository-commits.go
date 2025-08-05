@@ -14,6 +14,24 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// RepositoryCommitsIndex godoc
+// @Summary List repository commits
+// @Description Get all commits in a repository with optional filtering and pagination
+// @Tags repository-commits
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param ref query string false "Reference (branch, tag, or commit) to list commits from"
+// @Param per_page query int false "Number of items per page"
+// @Param after query string false "Cursor for pagination (commit ID)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Commit,pagination=irminmodels.IrminAPIPaginationMetadata} "Commits retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/commits [get]
 func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -99,6 +117,22 @@ func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryCommitsStore godoc
+// @Summary Create commit
+// @Description Create a new commit with the current changes in a branch
+// @Tags repository-commits
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param request body irmincore.CreateCommitRequest true "Commit creation parameters"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Commit} "Commit created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/commits [post]
 func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -156,6 +190,22 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryCommitsShow godoc
+// @Summary Get commit details
+// @Description Get details of a specific commit by its hash
+// @Tags repository-commits
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param hash path string true "Commit hash"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Commit} "Commit retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid commit hash"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Commit or repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/commits/{hash} [get]
 func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -198,6 +248,22 @@ func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryRevertUncommittedChanges godoc
+// @Summary Revert uncommitted changes
+// @Description Revert uncommitted changes in a specific branch and path
+// @Tags repository-commits
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param request body irmincore.RevertUncommittedChangesRequest true "Revert operation parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Changes reverted successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/revert-uncommitted-changes [post]
 func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

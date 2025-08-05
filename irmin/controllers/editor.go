@@ -18,6 +18,20 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// EditorIndex godoc
+// @Summary List editor items
+// @Description Get all editor items at the specified path in the workspace
+// @Tags editor
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param path query string false "Path to list items from" default("")
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]object} "Editor items retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/editor [get]
 func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
@@ -78,6 +92,21 @@ func (api *APIControllers) EditorIndex(c fiber.Ctx) error {
 	})
 }
 
+// EditorItemStore godoc
+// @Summary Create or update editor item
+// @Description Create a new editor item or update an existing one at the specified path
+// @Tags editor
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param path query string true "Path where to create/update the item"
+// @Param request body irmincore.CreateEditorItemRequest true "Editor item content and type"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Editor item saved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body or path"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/editor [post]
 func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -157,6 +186,20 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 	})
 }
 
+// EditorItemDestroy godoc
+// @Summary Delete editor item
+// @Description Delete an editor item or folder at the specified path
+// @Tags editor
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param path query string true "Path of the item to delete"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Editor item deleted successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid or missing path"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/editor [delete]
 func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -324,14 +367,58 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 	})
 }
 
+// MoveEditorItem godoc
+// @Summary Move editor item
+// @Description Move an editor item from one path to another within the workspace
+// @Tags editor
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param path query string true "Source path of the item to move"
+// @Param request body irmincore.MoveEditorItemRequest true "Destination path"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Editor item moved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid paths"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/editor/move [post]
 func (api *APIControllers) MoveEditorItem(c fiber.Ctx) error {
 	return api.handleEditorItemTransfer(c, true)
 }
 
+// CopyEditorItem godoc
+// @Summary Copy editor item
+// @Description Copy an editor item from one path to another within the workspace
+// @Tags editor
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param path query string true "Source path of the item to copy"
+// @Param request body irmincore.MoveEditorItemRequest true "Destination path"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Editor item copied successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid paths"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/editor/copy [post]
 func (api *APIControllers) CopyEditorItem(c fiber.Ctx) error {
 	return api.handleEditorItemTransfer(c, false)
 }
 
+// EditorItemContent godoc
+// @Summary Get editor item content
+// @Description Get the content of a specific editor item
+// @Tags editor
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param path query string true "Path of the item to retrieve"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=string} "Editor item content retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid or missing path"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/editor/content [get]
 func (api *APIControllers) EditorItemContent(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
@@ -389,6 +476,21 @@ func (api *APIControllers) EditorItemContent(c fiber.Ctx) error {
 	})
 }
 
+// EditorItemExecute godoc
+// @Summary Execute editor item
+// @Description Execute an editor item (script) in the compute sandbox with optional input data
+// @Tags editor
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param path query string true "Path of the item to execute"
+// @Param request body irmincore.ExecuteEditorItemRequest false "Optional input data from repositories"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.ScriptResult} "Editor item executed successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid path or input data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/editor/execute [post]
 func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

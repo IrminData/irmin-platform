@@ -1,6 +1,6 @@
-# Email Templates
+# Templates
 
-This directory contains email templates used throughout the Irmin application. The templates are embedded directly into the Go binary using `go:embed` for better performance and deployment simplicity.
+This directory contains templates used throughout the Irmin application. The templates are embedded directly into the Go binary using `go:embed` for better performance and deployment simplicity.
 
 ## Directory Structure
 
@@ -10,6 +10,8 @@ templates/
 │   └── invitations/
 │       ├── workspace-invitation.html
 │       └── workspace-invitation.txt
+├── swagger/
+│   └── swagger-ui.html
 ├── embedded.go
 └── README.md
 ```
@@ -21,6 +23,11 @@ templates/
 #### Invitations (`email/invitations/`)
 - **workspace-invitation**: Template for workspace invitation emails sent when users are invited to join a workspace
 
+### API Documentation Templates (`swagger/`)
+
+#### Swagger UI (`swagger/`)
+- **swagger-ui.html**: Template for the Swagger UI interface used to display API documentation
+
 ## Template Embedding
 
 Templates are embedded at compile time using Go's `embed` package:
@@ -31,6 +38,9 @@ var WorkspaceInvitationHTML []byte
 
 //go:embed email/invitations/workspace-invitation.txt
 var WorkspaceInvitationTXT []byte
+
+//go:embed swagger/swagger-ui.html
+var SwaggerUIHTML []byte
 ```
 
 This approach provides several benefits:
@@ -41,9 +51,16 @@ This approach provides several benefits:
 
 ## Template Format
 
+### Email Templates
+
 Each email template should have both HTML and text versions:
 - `.html` - Rich HTML version with styling for modern email clients
 - `.txt` - Plain text version for compatibility and accessibility
+
+### API Documentation Templates
+
+The swagger UI template is a standalone HTML file that provides the Swagger UI interface:
+- **swagger-ui.html** - Complete HTML page with embedded CSS and JavaScript for the Swagger UI
 
 ### Template Variables
 

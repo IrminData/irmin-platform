@@ -61,6 +61,20 @@ func (api *APIControllers) validateRepositoryParams(c fiber.Ctx) (
 	}, nil
 }
 
+// RepositoriesIndex godoc
+// @Summary List repositories
+// @Description Get all repositories in the workspace that the user has permission to read
+// @Tags repositories
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Repository} "Repositories retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories [get]
+//
 //nolint:dupl // This is not a duplicate of anything, it's just similar to other index endpoints
 func (api *APIControllers) RepositoriesIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
@@ -267,6 +281,20 @@ func (api *APIControllers) deleteRepositoryInTransaction(
 	return transactionErr
 }
 
+// RepositoriesStore godoc
+// @Summary Create repository
+// @Description Create a new repository in the workspace
+// @Tags repositories
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param request body irmincore.CreateRepositoryRequest true "Repository creation parameters"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Repository} "Repository created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body or repository already exists"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories [post]
 func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	locale, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -394,6 +422,20 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 	})
 }
 
+// RepositoriesShow godoc
+// @Summary Get repository details
+// @Description Get details of a specific repository by its slug
+// @Tags repositories
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Repository} "Repository retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug} [get]
 func (api *APIControllers) RepositoriesShow(c fiber.Ctx) error {
 	repositoryLocalParams, err := api.validateRepositoryParams(c)
 	if err != nil {
@@ -419,6 +461,20 @@ func (api *APIControllers) RepositoriesShow(c fiber.Ctx) error {
 	})
 }
 
+// RepositoriesDestroy godoc
+// @Summary Delete repository
+// @Description Delete an existing repository and all its data from the workspace
+// @Tags repositories
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Repository deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug} [delete]
 func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 	repositoryLocalParams, err := api.validateRepositoryParams(c)
 	if err != nil {
@@ -480,6 +536,22 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 	})
 }
 
+// RepositoriesUpdate godoc
+// @Summary Update repository
+// @Description Update an existing repository's properties and settings
+// @Tags repositories
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param request body irmincore.UpdateRepositoryRequest true "Repository update parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Repository} "Repository updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug} [patch]
 func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	repositoryLocalParams, err := api.validateRepositoryParams(c)
 	if err != nil {
@@ -583,6 +655,22 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 	})
 }
 
+// TransferRepositoryOwnership godoc
+// @Summary Transfer repository ownership
+// @Description Transfer ownership of a repository to another user in the workspace
+// @Tags repositories
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param request body irmincore.TransferRepositoryOwnershipRequest true "Ownership transfer parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Repository} "Repository ownership transferred successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body or new owner"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/transfer-ownership [post]
 func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 	repositoryLocalParams, err := api.validateRepositoryParams(c)
 	if err != nil {

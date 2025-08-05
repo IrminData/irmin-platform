@@ -67,6 +67,10 @@ func RegisterAPIRoutes(
 	app.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{}))
 	app.Get(healthcheck.StartupEndpoint, healthcheck.New(healthcheck.Config{}))
 
+	// Swagger documentation endpoints
+	app.Get("/swagger/swagger.json", apiControllers.SwaggerJSON)
+	app.Get("/swagger", apiControllers.SwaggerUI)
+
 	// Secure API routes
 	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)
 

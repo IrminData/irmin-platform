@@ -14,6 +14,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// RepositoryBranchesIndex godoc
+// @Summary List repository branches
+// @Description Get all branches in a specific repository
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Branch} "Branches retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches [get]
 func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -66,6 +80,22 @@ func (api *APIControllers) RepositoryBranchesIndex(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryBranchesStore godoc
+// @Summary Create repository branch
+// @Description Create a new branch in the repository
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param request body irmincore.CreateBranchRequest true "Branch creation parameters"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Branch} "Branch created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches [post]
 func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -119,6 +149,21 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryBranchesShow godoc
+// @Summary Get branch details
+// @Description Get details of a specific branch in the repository
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param branch_name path string true "Branch name"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Branch} "Branch retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Branch or repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name} [get]
 func (api *APIControllers) RepositoryBranchesShow(c fiber.Ctx) error {
 	branch, branchOk := c.Locals("branch").(*irminmodels.Branch)
 	if !branchOk {
@@ -130,6 +175,23 @@ func (api *APIControllers) RepositoryBranchesShow(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryBranchesUpdate godoc
+// @Summary Update branch
+// @Description Update an existing branch's properties
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param branch_name path string true "Branch name"
+// @Param request body irmincore.UpdateBranchRequest true "Branch update parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Branch} "Branch updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Branch or repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name} [patch]
 func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -208,6 +270,21 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryBranchesDestroy godoc
+// @Summary Delete branch
+// @Description Delete an existing branch from the repository
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param branch_name path string true "Branch name"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Branch deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Branch or repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name} [delete]
 func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -260,6 +337,21 @@ func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 	})
 }
 
+// RepositoryGetUncommittedChanges godoc
+// @Summary Get uncommitted changes
+// @Description Get all uncommitted changes in a specific branch
+// @Tags repository-branches
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param branch_name path string true "Branch name"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Diff} "Uncommitted changes retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Branch or repository not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/branches/{branch_name}/uncommitted-changes [get]
 func (api *APIControllers) RepositoryGetUncommittedChanges(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

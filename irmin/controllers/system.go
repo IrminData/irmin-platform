@@ -10,7 +10,20 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// SystemWebhook handles the webhook events from internal services, like LakeFS.
+// SystemWebhook godoc
+// @Summary System webhook endpoint
+// @Description Handle webhook events from internal services (LakeFS, orchestrator dispatch events)
+// @Tags system
+// @Security SystemAuth
+// @Accept json
+// @Produce json
+// @Param type query string true "Webhook type (lakefs, dispatch)"
+// @Param body body object true "Webhook payload (varies by type)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Webhook processed successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid webhook type or payload"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid system authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /system/webhook [post]
 func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
 	isSystem, isSystemOk := c.Locals("is_system").(bool)
 	if !isSystemOk {

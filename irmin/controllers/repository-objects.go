@@ -76,7 +76,24 @@ func (api *APIControllers) validateObjectParams(c fiber.Ctx) (
 	}, nil
 }
 
-// RepositoryObjectsIndex handles retrieving an object from a repository.
+// RepositoryObjectsIndex godoc
+// @Summary Get repository object
+// @Description Get details of a specific object or directory in a repository at a given reference
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to get object from" default("main")
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object} "Object retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path} [get]
 func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 	params, err := api.validateObjectParams(c)
 	if err != nil {
@@ -163,7 +180,25 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 	})
 }
 
-// RepositoryUploadObject handles uploading an object to a repository.
+// RepositoryUploadObject godoc
+// @Summary Upload object to repository
+// @Description Upload a file to a specific path in a repository at a given reference
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to upload to" default("main")
+// @Param file formData file true "File to upload"
+// @Param metadata formData string false "Optional metadata as JSON string"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object} "Object uploaded successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid file or parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/upload [post]
 func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -270,7 +305,25 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 	})
 }
 
-// RepositoryMoveObject handles moving an object to a new path in a repository.
+// RepositoryMoveObject godoc
+// @Summary Move repository object
+// @Description Move an object to a new path within the same repository at a given reference
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Current object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to move in" default("main")
+// @Param body body irmincore.MoveObjectRequest true "Move object request with new path"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object} "Object moved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid new path or parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/move [patch]
 func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -360,7 +413,25 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 	})
 }
 
-// RepositoryCopyObject handles copying an object to a new path in a repository.
+// RepositoryCopyObject godoc
+// @Summary Copy repository object
+// @Description Copy an object to a new path within the same repository at a given reference
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Source object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to copy in" default("main")
+// @Param body body irmincore.MoveObjectRequest true "Copy object request with new path"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Object} "Object copied successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid new path or parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/copy [post]
 func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -501,7 +572,24 @@ func (api *APIControllers) deleteObjectInTransaction(
 	return nil
 }
 
-// RepositoryObjectsDestroy handles deleting an object from a repository.
+// RepositoryObjectsDestroy godoc
+// @Summary Delete repository object
+// @Description Delete an object from a repository at a given reference (includes atomic transaction)
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object path within the repository to delete"
+// @Param ref query string false "Reference (branch, tag, or commit) to delete from" default("main")
+// @Success 200 {object} irminmodels.IrminAPIResponse "Object deleted successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path} [delete]
 func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -537,7 +625,24 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 	})
 }
 
-// RepositoryObjectsContent handles retrieving the content of an object.
+// RepositoryObjectsContent godoc
+// @Summary Download repository object content
+// @Description Download the raw content of an object from a repository at a given reference
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce application/octet-stream
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to download from" default("main")
+// @Success 200 {file} file "Object content as file download"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/content [get]
 func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -578,7 +683,24 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 	)
 }
 
-// RepositoryObjectsStructuredContent handles retrieving the structured content of an object.
+// RepositoryObjectsStructuredContent godoc
+// @Summary Get structured object content
+// @Description Get the parsed structured content of a data file (CSV, JSON, etc.) from a repository
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object path within the repository (must be structured data file)"
+// @Param ref query string false "Reference (branch, tag, or commit) to get content from" default("main")
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Structured content retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - object is not structured data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/structured [get]
 func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -643,7 +765,24 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 	})
 }
 
-// RepositoryObjectsDownload handles downloading either a single object or all descendants of a group, zipping them, and sending as a download.
+// RepositoryObjectsDownload godoc
+// @Summary Download repository objects as ZIP
+// @Description Download a single object or entire directory structure as a ZIP file from a repository
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce application/zip
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object or directory path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to download from" default("main")
+// @Success 200 {file} file "ZIP file containing requested objects"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/download [get]
 func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -701,7 +840,24 @@ func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
 }
 
-// RepositoryObjectsHistory handles retrieving the commit history of an object.
+// RepositoryObjectsHistory godoc
+// @Summary Get object commit history
+// @Description Get the commit history for a specific object in a repository
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to get history from" default("main")
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Commit} "Object history retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/history [get]
 func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {
@@ -737,7 +893,24 @@ func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 	})
 }
 
-// RepositoryObjectsSchema handles retrieving the schema of an object.
+// RepositoryObjectsSchema godoc
+// @Summary Get object schema
+// @Description Get the schema definition for a structured data object in a repository
+// @Tags repository-objects
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param repository_slug path string true "Repository slug"
+// @Param object_path path string true "Object path within the repository"
+// @Param ref query string false "Reference (branch, tag, or commit) to get schema from" default("main")
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Object schema retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/schema [get]
 func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 	objectLocalParams, err := api.validateObjectParams(c)
 	if err != nil {

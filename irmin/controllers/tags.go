@@ -20,7 +20,19 @@ const (
 	operationRemove = "remove"
 )
 
-// TagsIndex retrieves all available tags.
+// TagsIndex godoc
+// @Summary List workspace tags
+// @Description Get all tags available in the workspace that can be applied to resources
+// @Tags tags
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Tag} "Tags retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/tags [get]
 func (api *APIControllers) TagsIndex(c fiber.Ctx) error {
 	_, dict, _, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -51,7 +63,22 @@ func (api *APIControllers) TagsIndex(c fiber.Ctx) error {
 	})
 }
 
-// TagsStore creates a new tag.
+// TagsStore godoc
+// @Summary Create workspace tag
+// @Description Create a new tag in the workspace that can be applied to various resources
+// @Tags tags
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param body body irmincore.CreateTagRequest true "Tag creation request"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.Tag} "Tag created successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid tag data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 409 {object} irminmodels.IrminAPIResponse "Tag name already exists"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/tags [post]
 func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -108,7 +135,20 @@ func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 	})
 }
 
-// TagsShow retrieves a specific tag.
+// TagsShow godoc
+// @Summary Get tag with associated resources
+// @Description Get details of a specific tag including all resources it's applied to (filtered by permissions)
+// @Tags tags
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param tag_id path string true "Tag ID (SQID encoded)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.TagWithAssets} "Tag with associated resources retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Tag not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/tags/{tag_id} [get]
 func (api *APIControllers) TagsShow(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -364,7 +404,23 @@ func (api *APIControllers) filterTaggedRepositoryObjects(
 	return filteredRepositoryObjects, nil
 }
 
-// TagsUpdate updates a tag.
+// TagsUpdate godoc
+// @Summary Update workspace tag
+// @Description Update properties of an existing tag (name, color, description)
+// @Tags tags
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param tag_id path string true "Tag ID (SQID encoded)"
+// @Param body body irmincore.UpdateTagRequest true "Tag update request"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Tag} "Tag updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid tag data"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Tag not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/tags/{tag_id} [patch]
 func (api *APIControllers) TagsUpdate(c fiber.Ctx) error {
 	_, dict, user, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -428,7 +484,21 @@ func (api *APIControllers) TagsUpdate(c fiber.Ctx) error {
 	})
 }
 
-// TagsDestroy deletes a tag.
+// TagsDestroy godoc
+// @Summary Delete workspace tag
+// @Description Delete a tag and remove it from all associated resources
+// @Tags tags
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param tag_id path string true "Tag ID (SQID encoded)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Tag deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Tag not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/tags/{tag_id} [delete]
 func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
 	_, dict, user, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -586,12 +656,46 @@ func (api *APIControllers) handleTagEntityOperation(c fiber.Ctx, operation strin
 	})
 }
 
-// AddTagToEntity adds a tag to a specific entity.
+// AddTagToEntity godoc
+// @Summary Add tag to resource
+// @Description Apply a tag to a specific resource (repository, query, workflow, connection, or object)
+// @Tags tags
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param tag_id path string true "Tag ID (SQID encoded)"
+// @Param entity_type path string true "Resource type (repositories, queries, workflows, connections, objects)"
+// @Param entity_id path string true "Resource ID (SQID encoded)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Tag added to resource successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid resource type or ID"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Tag or resource not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/tags/{tag_id}/{entity_type}/{entity_id} [post]
 func (api *APIControllers) AddTagToEntity(c fiber.Ctx) error {
 	return api.handleTagEntityOperation(c, operationAdd)
 }
 
-// RemoveTagFromEntity removes a tag from a specific entity.
+// RemoveTagFromEntity godoc
+// @Summary Remove tag from resource
+// @Description Remove a tag from a specific resource (repository, query, workflow, connection, or object)
+// @Tags tags
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param tag_id path string true "Tag ID (SQID encoded)"
+// @Param entity_type path string true "Resource type (repositories, queries, workflows, connections, objects)"
+// @Param entity_id path string true "Resource ID (SQID encoded)"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Tag removed from resource successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid resource type or ID"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Tag or resource not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/tags/{tag_id}/{entity_type}/{entity_id} [delete]
 func (api *APIControllers) RemoveTagFromEntity(c fiber.Ctx) error {
 	return api.handleTagEntityOperation(c, operationRemove)
 }

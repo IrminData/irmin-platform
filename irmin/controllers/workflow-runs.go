@@ -13,6 +13,21 @@ import (
 	"gorm.io/gorm"
 )
 
+// TriggerWorkflowRun godoc
+// @Summary Trigger workflow execution
+// @Description Create and start a new workflow run for the specified workflow
+// @Tags workflow-runs
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Success 201 {object} irminmodels.IrminAPIResponse{data=irminmodels.WorkflowRun} "Workflow run created and started successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/runs [post]
 func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 	// Get the dictionary, workflow and the user from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -76,6 +91,24 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 	})
 }
 
+// WorkflowRunsIndex godoc
+// @Summary List workflow runs
+// @Description Get all runs for a specific workflow with pagination and permission filtering
+// @Tags workflow-runs
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Param page query int false "Page number for pagination" default(1)
+// @Param per_page query int false "Number of items per page" default(10)
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata} "Workflow runs retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid pagination parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/runs [get]
 func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 	// Get the dictionary, workflow, user and workspace from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -164,6 +197,23 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 	})
 }
 
+// WorkflowRunsShow godoc
+// @Summary Get workflow run details
+// @Description Get details of a specific workflow run including status and execution logs
+// @Tags workflow-runs
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Param run path string true "Workflow run ID (SQID encoded)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.WorkflowRun} "Workflow run details retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid run ID"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow run not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/runs/{run} [get]
 func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
@@ -223,6 +273,23 @@ func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 	})
 }
 
+// WorkflowRunsDestroy godoc
+// @Summary Cancel workflow run
+// @Description Cancel a running workflow execution (sets status to cancelled)
+// @Tags workflow-runs
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param workflow_slug path string true "Workflow slug"
+// @Param run path string true "Workflow run ID (SQID encoded)"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.WorkflowRun} "Workflow run cancelled successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid run ID"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workflow run not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/{workflow_slug}/runs/{run} [delete]
 func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)

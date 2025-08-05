@@ -9,6 +9,17 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// RolesIndex godoc
+// @Summary List system roles
+// @Description Get all available system roles that can be assigned to users
+// @Tags roles
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Role} "Roles retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /roles [get]
 func (api *APIControllers) RolesIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	if !dictOk {

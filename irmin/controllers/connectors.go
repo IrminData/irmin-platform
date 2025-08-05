@@ -14,6 +14,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// ConnectorsIndex godoc
+// @Summary List all connectors
+// @Description Get a list of all available connectors in the system
+// @Tags connectors
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.Connector} "Connectors retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /connectors [get]
 func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	if !dictOk {
@@ -48,6 +59,19 @@ func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
 	})
 }
 
+// ConnectorsShow godoc
+// @Summary Get connector details
+// @Description Get details of a specific connector by its slug
+// @Tags connectors
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param connector_slug path string true "Connector slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Connector} "Connector retrieved successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connector not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /connectors/{connector_slug} [get]
 func (api *APIControllers) ConnectorsShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	connector, connectorOk := c.Locals("connector").(*db.Connector)
@@ -76,6 +100,20 @@ func (api *APIControllers) ConnectorsShow(c fiber.Ctx) error {
 	})
 }
 
+// ConnectorsStore godoc
+// @Summary Register a new connector
+// @Description Register a new connector with the system (system authentication required)
+// @Tags connectors
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param request body irmincore.ConnectorRequest true "Connector registration parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Connector} "Connector registered successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - system authentication required"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /connectors [post]
 func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 	isSystem, isSystemOk := c.Locals("is_system").(bool)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -179,6 +217,22 @@ func (api *APIControllers) updateConnectorFromInfo(
 	connector.ReadMoreURL = connectorInfo.ReadMoreURL
 }
 
+// ConnectorsUpdate godoc
+// @Summary Update connector
+// @Description Update an existing connector's information (system authentication required)
+// @Tags connectors
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param connector_slug path string true "Connector slug"
+// @Param request body irmincore.ConnectorRequest true "Connector update parameters"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Connector} "Connector updated successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - system authentication required"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connector not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /connectors/{connector_slug} [patch]
 func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	isSystem, isSystemOk := c.Locals("is_system").(bool)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -249,6 +303,20 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	})
 }
 
+// ConnectorsDestroy godoc
+// @Summary Delete connector
+// @Description Delete an existing connector from the system (system authentication required)
+// @Tags connectors
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param connector_slug path string true "Connector slug"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Connector deleted successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - system authentication required"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connector not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /connectors/{connector_slug} [delete]
 func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 	isSystem, isSystemOk := c.Locals("is_system").(bool)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -281,6 +349,22 @@ func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 	})
 }
 
+// ShowConnectorConfigurationFields godoc
+// @Summary Get connector configuration fields
+// @Description Get the dynamic configuration fields for a specific connector and configuration type
+// @Tags connectors
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param connector_slug path string true "Connector slug"
+// @Param type path string true "Configuration type (details, settings)"
+// @Param request body irmincore.ConnectorConfigurationRequest true "Current configuration data"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]object} "Configuration fields retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body or configuration type"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connector not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /connectors/{connector_slug}/config-fields/{type} [post]
 func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -333,6 +417,21 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 	})
 }
 
+// ValidateConnectorConfiguration godoc
+// @Summary Validate connector configuration
+// @Description Validate the configuration parameters for a specific connector
+// @Tags connectors
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param connector_slug path string true "Connector slug"
+// @Param request body irmincore.ConnectorConfigurationRequest true "Configuration data to validate"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Configuration validation result"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connector not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /connectors/{connector_slug}/validate-config [post]
 func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)

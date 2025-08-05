@@ -20,7 +20,28 @@ const (
 	defaultOffset = 0
 )
 
-// WorkspaceSearch handles workspace-wide search requests.
+// WorkspaceSearch godoc
+// @Summary Search workspace
+// @Description Search across all resources in a workspace with filtering, pagination, and permission-based results
+// @Tags search
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param q query string false "Search query string"
+// @Param types query string false "Comma-separated list of resource types to search (workflow,repository,connection,query,user,repository_object,invite)"
+// @Param tags query string false "Comma-separated list of tag IDs (SQID encoded)"
+// @Param owner query string false "Owner user ID (SQID encoded)"
+// @Param date_from query string false "Start date filter (ISO 8601 format)"
+// @Param date_to query string false "End date filter (ISO 8601 format)"
+// @Param limit query int false "Number of results per page (max 100)" default(20)
+// @Param offset query int false "Number of results to skip" default(0)
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.SearchResponse} "Search results with pagination and filtering"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid search parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/search [get]
 func (api *APIControllers) WorkspaceSearch(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
