@@ -12,8 +12,8 @@ const SkeletonCard = () => (
   >
     <div
       className={`
-        aspect-square h-16 w-16 rounded-full bg-gray-200
-        lg:h-20 lg:w-20
+        aspect-square size-16 rounded-full bg-gray-200
+        lg:size-20
         dark:bg-gray-800
       `}
     />

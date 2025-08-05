@@ -22,8 +22,8 @@ export default function IrminUserButton() {
       <div
         id='irmin-user-button-loading'
         className={`
-          h-8 w-8 overflow-hidden rounded-full
-          xl:h-10 xl:w-10
+          size-8 overflow-hidden rounded-full
+          xl:size-10
         `}
       >
         <LoadingSkeleton className='size-8' />
