@@ -29,11 +29,9 @@ type logsLocalParams struct {
 }
 
 type logsQueryParams struct {
-	search    string
-	perPage   int
-	page      int
-	assetType string
-	assetID   string
+	search  string
+	perPage int
+	page    int
 }
 
 func (api *APIControllers) validateLogsParams(c fiber.Ctx) (*logsLocalParams, error) {
@@ -47,15 +45,17 @@ func (api *APIControllers) validateLogsParams(c fiber.Ctx) (*logsLocalParams, er
 }
 
 func (api *APIControllers) parseLogsQueryParams(c fiber.Ctx) (*logsQueryParams, error) {
-	params, err := utils.ParseQueryParams(c, nil, []string{"search", "per_page", "page", "asset_type", "asset_id"})
+	params, err := utils.ParseQueryParams(c, nil, []string{
+		"search", "per_page", "page",
+		"repository", "user_id", "workflow_id", "connection_id",
+		"stored_query_id", "policy_id", "repository_object_id",
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	queryParams := &logsQueryParams{
-		search:    params["search"],
-		assetType: params["asset_type"],
-		assetID:   params["asset_id"],
+		search: params["search"],
 	}
 
 	// Parse pagination parameters
@@ -146,8 +146,13 @@ func (api *APIControllers) buildLogsResponse(
 // @Param search query string false "Search term to filter log descriptions"
 // @Param per_page query int false "Number of items per page" default(10)
 // @Param page query int false "Page number" default(1)
-// @Param asset_type query string false "Filter by asset type (connection, repository, workflow, etc.)"
-// @Param asset_id query string false "Filter by specific asset ID (SQID)"
+// @Param repository query string false "Filter by repository slug"
+// @Param user_id query string false "Filter by user ID (SQID)"
+// @Param workflow_id query string false "Filter by workflow ID (SQID)"
+// @Param connection_id query string false "Filter by connection ID (SQID)"
+// @Param stored_query_id query string false "Filter by stored query ID (SQID)"
+// @Param policy_id query string false "Filter by policy ID (SQID)"
+// @Param repository_object_id query string false "Filter by repository object ID (SQID)"
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.LogEvent,pagination=irminmodels.IrminAPIPaginationMetadata} "Log events retrieved successfully"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
@@ -171,12 +176,35 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 
 	// Get asset parameters if provided
 	var assetParams *assetParams
-	if queryParams.assetType != "" && queryParams.assetID != "" {
+
+	// Build parameter map from query parameters
+	paramMap := make(map[string]string)
+	if repository := c.Query("repository"); repository != "" {
+		paramMap["repository"] = repository
+	}
+	if userID := c.Query("user_id"); userID != "" {
+		paramMap["user_id"] = userID
+	}
+	if workflowID := c.Query("workflow_id"); workflowID != "" {
+		paramMap["workflow_id"] = workflowID
+	}
+	if connectionID := c.Query("connection_id"); connectionID != "" {
+		paramMap["connection_id"] = connectionID
+	}
+	if storedQueryID := c.Query("stored_query_id"); storedQueryID != "" {
+		paramMap["stored_query_id"] = storedQueryID
+	}
+	if policyID := c.Query("policy_id"); policyID != "" {
+		paramMap["policy_id"] = policyID
+	}
+	if repositoryObjectID := c.Query("repository_object_id"); repositoryObjectID != "" {
+		paramMap["repository_object_id"] = repositoryObjectID
+	}
+
+	// Get asset parameters if any filter is provided
+	if len(paramMap) > 0 {
 		var getAssetParamsErr error
-		assetParams, getAssetParamsErr = api.getAssetParams(map[string]string{
-			"asset_type": queryParams.assetType,
-			"asset_id":   queryParams.assetID,
-		}, logsLocalParams.workspace)
+		assetParams, getAssetParamsErr = api.getAssetParams(paramMap, logsLocalParams.workspace)
 		if getAssetParamsErr != nil {
 			api.Logger.Error("Error getting asset parameters", "error", getAssetParamsErr)
 			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{

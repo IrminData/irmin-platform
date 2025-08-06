@@ -3245,14 +3245,44 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by asset type (connection, repository, workflow, etc.)",
-                        "name": "asset_type",
+                        "description": "Filter by repository slug",
+                        "name": "repository",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Filter by specific asset ID (SQID)",
-                        "name": "asset_id",
+                        "description": "Filter by user ID (SQID)",
+                        "name": "user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by workflow ID (SQID)",
+                        "name": "workflow_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by connection ID (SQID)",
+                        "name": "connection_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by stored query ID (SQID)",
+                        "name": "stored_query_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by policy ID (SQID)",
+                        "name": "policy_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by repository object ID (SQID)",
+                        "name": "repository_object_id",
                         "in": "query"
                     }
                 ],

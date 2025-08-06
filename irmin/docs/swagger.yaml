@@ -4436,13 +4436,33 @@ paths:
         in: query
         name: page
         type: integer
-      - description: Filter by asset type (connection, repository, workflow, etc.)
+      - description: Filter by repository slug
         in: query
-        name: asset_type
+        name: repository
         type: string
-      - description: Filter by specific asset ID (SQID)
+      - description: Filter by user ID (SQID)
         in: query
-        name: asset_id
+        name: user_id
+        type: string
+      - description: Filter by workflow ID (SQID)
+        in: query
+        name: workflow_id
+        type: string
+      - description: Filter by connection ID (SQID)
+        in: query
+        name: connection_id
+        type: string
+      - description: Filter by stored query ID (SQID)
+        in: query
+        name: stored_query_id
+        type: string
+      - description: Filter by policy ID (SQID)
+        in: query
+        name: policy_id
+        type: string
+      - description: Filter by repository object ID (SQID)
+        in: query
+        name: repository_object_id
         type: string
       produces:
       - application/json
