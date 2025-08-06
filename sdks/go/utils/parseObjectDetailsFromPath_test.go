@@ -13,6 +13,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 		input               string
 		expectedName        string
 		expectedFullPath    string
+		expectedParentPath  *string
 		expectedType        irminmodels.ObjectType
 		expectedContentType string
 	}{
@@ -22,6 +23,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/data/file.json",
 			expectedName:        "file.json",
 			expectedFullPath:    "data/file.json",
+			expectedParentPath:  stringPtr("data/"),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/json",
 		},
@@ -30,6 +32,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "data.csv",
 			expectedName:        "data.csv",
 			expectedFullPath:    "data.csv",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "text/csv",
 		},
@@ -38,6 +41,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/analytics/data.parquet",
 			expectedName:        "data.parquet",
 			expectedFullPath:    "analytics/data.parquet",
+			expectedParentPath:  stringPtr("analytics/"),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/vnd.apache.parquet",
 		},
@@ -46,6 +50,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "spreadsheet.xlsx",
 			expectedName:        "spreadsheet.xlsx",
 			expectedFullPath:    "spreadsheet.xlsx",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 		},
@@ -54,6 +59,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/schemas/user.avro",
 			expectedName:        "user.avro",
 			expectedFullPath:    "schemas/user.avro",
+			expectedParentPath:  stringPtr("schemas/"),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/vnd.apache.avro",
 		},
@@ -62,6 +68,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "config.yaml",
 			expectedName:        "config.yaml",
 			expectedFullPath:    "config.yaml",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/x-yaml",
 		},
@@ -72,6 +79,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/docs/readme.txt",
 			expectedName:        "readme.txt",
 			expectedFullPath:    "docs/readme.txt",
+			expectedParentPath:  stringPtr("docs/"),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "text/plain",
 		},
@@ -80,6 +88,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "document.pdf",
 			expectedName:        "document.pdf",
 			expectedFullPath:    "document.pdf",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "application/pdf",
 		},
@@ -88,6 +97,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/images/logo.png",
 			expectedName:        "logo.png",
 			expectedFullPath:    "images/logo.png",
+			expectedParentPath:  stringPtr("images/"),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "image/png",
 		},
@@ -96,6 +106,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "app.js",
 			expectedName:        "app.js",
 			expectedFullPath:    "app.js",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "application/javascript",
 		},
@@ -104,6 +115,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "file.unknown",
 			expectedName:        "file.unknown",
 			expectedFullPath:    "file.unknown",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "application/octet-stream",
 		},
@@ -114,6 +126,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/path/to/group",
 			expectedName:        "group",
 			expectedFullPath:    "path/to/group/",
+			expectedParentPath:  stringPtr("path/to/"),
 			expectedType:        irminmodels.ObjectTypeGroup,
 			expectedContentType: "",
 		},
@@ -122,6 +135,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "folder",
 			expectedName:        "folder",
 			expectedFullPath:    "folder/",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeGroup,
 			expectedContentType: "",
 		},
@@ -130,6 +144,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "",
 			expectedName:        "",
 			expectedFullPath:    "",
+			expectedParentPath:  nil,
 			expectedType:        irminmodels.ObjectTypeGroup,
 			expectedContentType: "",
 		},
@@ -138,6 +153,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/",
 			expectedName:        "",
 			expectedFullPath:    "",
+			expectedParentPath:  nil,
 			expectedType:        irminmodels.ObjectTypeGroup,
 			expectedContentType: "",
 		},
@@ -146,6 +162,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/data/folder/",
 			expectedName:        "",
 			expectedFullPath:    "",
+			expectedParentPath:  nil,
 			expectedType:        irminmodels.ObjectTypeGroup,
 			expectedContentType: "",
 		},
@@ -156,6 +173,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               ".env.json",
 			expectedName:        ".env.json",
 			expectedFullPath:    ".env.json",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/json",
 		},
@@ -164,6 +182,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "data.backup.csv",
 			expectedName:        "data.backup.csv",
 			expectedFullPath:    "data.backup.csv",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "text/csv",
 		},
@@ -172,6 +191,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "file.JSON",
 			expectedName:        "file.JSON",
 			expectedFullPath:    "file.JSON",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/json",
 		},
@@ -180,6 +200,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "/very/deep/nested/path/file.parquet",
 			expectedName:        "file.parquet",
 			expectedFullPath:    "very/deep/nested/path/file.parquet",
+			expectedParentPath:  stringPtr("very/deep/nested/path/"),
 			expectedType:        irminmodels.ObjectTypeStructured,
 			expectedContentType: "application/vnd.apache.parquet",
 		},
@@ -190,6 +211,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "video.mp4",
 			expectedName:        "video.mp4",
 			expectedFullPath:    "video.mp4",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "video/mp4",
 		},
@@ -198,6 +220,7 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "song.mp3",
 			expectedName:        "song.mp3",
 			expectedFullPath:    "song.mp3",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "audio/mpeg",
 		},
@@ -206,8 +229,47 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 			input:               "backup.zip",
 			expectedName:        "backup.zip",
 			expectedFullPath:    "backup.zip",
+			expectedParentPath:  stringPtr(""),
 			expectedType:        irminmodels.ObjectTypeBinary,
 			expectedContentType: "application/zip",
+		},
+
+		// Edge cases for newly fixed issues
+		{
+			name:                "Hidden directory",
+			input:               ".config",
+			expectedName:        ".config",
+			expectedFullPath:    ".config/",
+			expectedParentPath:  stringPtr(""),
+			expectedType:        irminmodels.ObjectTypeGroup,
+			expectedContentType: "",
+		},
+		{
+			name:                "File ending with dot",
+			input:               "file.",
+			expectedName:        "file.",
+			expectedFullPath:    "file./",
+			expectedParentPath:  stringPtr(""),
+			expectedType:        irminmodels.ObjectTypeGroup,
+			expectedContentType: "",
+		},
+		{
+			name:                "Path with double slashes",
+			input:               "folder//file.json",
+			expectedName:        "file.json",
+			expectedFullPath:    "folder/file.json",
+			expectedParentPath:  stringPtr("folder/"),
+			expectedType:        irminmodels.ObjectTypeStructured,
+			expectedContentType: "application/json",
+		},
+		{
+			name:                "Nested file with proper parent",
+			input:               "folder/subfolder/file.csv",
+			expectedName:        "file.csv",
+			expectedFullPath:    "folder/subfolder/file.csv",
+			expectedParentPath:  stringPtr("folder/subfolder/"),
+			expectedType:        irminmodels.ObjectTypeStructured,
+			expectedContentType: "text/csv",
 		},
 	}
 
@@ -250,8 +312,30 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 					tt.expectedContentType,
 				)
 			}
+
+			// Validate parent path
+			if (result.ParentPath == nil) != (tt.expectedParentPath == nil) {
+				t.Errorf(
+					"ParseObjectDetailsFromPath(%q).ParentPath nil mismatch: got %v, expected %v",
+					tt.input,
+					result.ParentPath == nil,
+					tt.expectedParentPath == nil,
+				)
+			} else if result.ParentPath != nil && tt.expectedParentPath != nil && *result.ParentPath != *tt.expectedParentPath {
+				t.Errorf(
+					"ParseObjectDetailsFromPath(%q).ParentPath = %q, expected %q",
+					tt.input,
+					*result.ParentPath,
+					*tt.expectedParentPath,
+				)
+			}
 		})
 	}
+}
+
+// stringPtr returns a pointer to a string
+func stringPtr(s string) *string {
+	return &s
 }
 
 func TestParseObjectDetailsFromPathAllStructuredTypes(t *testing.T) {

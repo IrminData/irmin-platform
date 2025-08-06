@@ -11,6 +11,7 @@ import (
 type ObjectDetails struct {
 	Name        string                 // The object name.
 	FullPath    string                 // The cleaned full path.
+	ParentPath  *string                // The parent directory object's path. Nil if the object is the root object.
 	Type        irminmodels.ObjectType // The object's type.
 	ContentType string                 // The MIME type of the object.
 }
@@ -80,8 +81,12 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 		".mp4":  "video/mp4",              // MP4
 	}
 
-	// Clean the path: remove extra slashes.
+	// Clean the path: normalize by removing extra slashes and trim leading slash.
 	cleanPath := strings.TrimPrefix(inputPath, "/")
+	// Normalize path by removing duplicate slashes
+	for strings.Contains(cleanPath, "//") {
+		cleanPath = strings.ReplaceAll(cleanPath, "//", "/")
+	}
 
 	// Handle empty path (or root path) explicitly.
 	if cleanPath == "" || strings.HasSuffix(cleanPath, "/") {
@@ -96,6 +101,26 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 	// Use the path package to obtain the base name and directory.
 	name := path.Base(cleanPath)
 
+	// Find the parent directory path.
+	var parentPath *string
+	if cleanPath != "/" && cleanPath != "" {
+		newParentPath := strings.TrimSuffix(cleanPath, "/")
+		newParentPath = strings.TrimSuffix(newParentPath, name)
+		// Remove trailing slash temporarily
+		newParentPath = strings.TrimSuffix(newParentPath, "/")
+		if newParentPath == "/" || newParentPath == "" {
+			// Root parent path should be empty string
+			newParentPath = ""
+		} else {
+			// Non-root parent paths should have trailing slash since they are directories
+			newParentPath += "/"
+		}
+		parentPath = &newParentPath
+	} else {
+		// For the root object, the parent path is nil.
+		parentPath = nil
+	}
+
 	// Determine the file extension in lower-case.
 	lowerName := strings.ToLower(name)
 	ext := path.Ext(lowerName)
@@ -105,11 +130,14 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 
 	var objectType irminmodels.ObjectType
 
+	// Determine if this should be treated as a group (directory)
+	isGroup := isGroup(name, ext)
+
 	// If the extension is found in contentTypes, mark as structured.
 	switch {
 	case isStructured:
 		objectType = irminmodels.ObjectTypeStructured
-	case !strings.Contains(name, "."):
+	case isGroup:
 		objectType = irminmodels.ObjectTypeGroup
 		contentType = ""
 		cleanPath += "/" // Add a trailing slash since groups are bucket object prefixes.
@@ -129,7 +157,29 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 	return ObjectDetails{
 		Name:        name,
 		FullPath:    cleanPath,
+		ParentPath:  parentPath,
 		Type:        objectType,
 		ContentType: contentType,
 	}
+}
+
+// isGroup determines if a name should be treated as a group (directory)
+func isGroup(name, ext string) bool {
+	// Files ending with just a dot (like "file.") are groups
+	if strings.HasSuffix(name, ".") && len(ext) == 1 {
+		return true
+	}
+
+	// Empty extension means it's a directory/group
+	if ext == "" {
+		return true
+	}
+
+	// Hidden files/directories starting with . and having ext == name are groups
+	// e.g., ".config" where ext = ".config" and name = ".config"
+	if strings.HasPrefix(name, ".") && ext == name {
+		return true
+	}
+
+	return false
 }
