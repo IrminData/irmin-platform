@@ -204,11 +204,9 @@ definitions:
         type: string
       garbage_default_branch_retention_days:
         example: 30
-        maximum: 3650
         type: integer
       garbage_default_retention_days:
         example: 30
-        maximum: 3650
         type: integer
       is_immutable:
         example: false
@@ -524,11 +522,9 @@ definitions:
         type: string
       garbage_default_branch_retention_days:
         example: 30
-        maximum: 3650
         type: integer
       garbage_default_retention_days:
         example: 30
-        maximum: 3650
         type: integer
       is_immutable:
         example: false
@@ -1394,7 +1390,9 @@ definitions:
         example: /data/customers/customers.json
         type: string
       restrictions:
-        $ref: '#/definitions/irminmodels.GroupSchemaRestrictions'
+        allOf:
+        - $ref: '#/definitions/irminmodels.GroupSchemaRestrictions'
+        description: Restrictions are not required, but are available for group schemas
       schema:
         allOf:
         - $ref: '#/definitions/irminmodels.JSONSchema'

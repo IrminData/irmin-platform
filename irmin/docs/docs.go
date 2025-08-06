@@ -9934,12 +9934,10 @@ const docTemplate = `{
                 },
                 "garbage_default_branch_retention_days": {
                     "type": "integer",
-                    "maximum": 3650,
                     "example": 30
                 },
                 "garbage_default_retention_days": {
                     "type": "integer",
-                    "maximum": 3650,
                     "example": 30
                 },
                 "is_immutable": {
@@ -10377,12 +10375,10 @@ const docTemplate = `{
                 },
                 "garbage_default_branch_retention_days": {
                     "type": "integer",
-                    "maximum": 3650,
                     "example": 30
                 },
                 "garbage_default_retention_days": {
                     "type": "integer",
-                    "maximum": 3650,
                     "example": 30
                 },
                 "is_immutable": {
@@ -11539,7 +11535,12 @@ const docTemplate = `{
                     "example": "/data/customers/customers.json"
                 },
                 "restrictions": {
-                    "$ref": "#/definitions/irminmodels.GroupSchemaRestrictions"
+                    "description": "Restrictions are not required, but are available for group schemas",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.GroupSchemaRestrictions"
+                        }
+                    ]
                 },
                 "schema": {
                     "description": "Structured schema",

@@ -394,6 +394,14 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Reload the repository with Owner and Tags relationships preloaded
+	if preloadErr := api.DB.Preload("Owner").Preload("Tags").First(&repository, repository.ID).Error; preloadErr != nil {
+		api.Logger.Error("Error preloading repository owner and tags", "error", preloadErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
 	// Format the repository response
 	repositoryResponse, formatRepositoryResponseErr := formatter.FormatRepositoryResponse(
 		repository,
@@ -713,6 +721,14 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 	repository.OwnerID = uint(newOwnerID)
 	if updateRepositoryErr := api.DB.Save(&repository).Error; updateRepositoryErr != nil {
 		api.Logger.Error("Error updating repository", "error", updateRepositoryErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
+		})
+	}
+
+	// Reload the repository with new Owner and Tags relationships preloaded
+	if preloadErr := api.DB.Preload("Owner").Preload("Tags").First(&repository, repository.ID).Error; preloadErr != nil {
+		api.Logger.Error("Error preloading repository owner and tags after ownership transfer", "error", preloadErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(repositoryLocalParams.dict, "error_occurred")},
 		})
