@@ -1,7 +1,7 @@
 import type { Connection } from '@/types/core/Connection';
 import type { Invite } from '@/types/core/Invite';
-import type { Object } from '@/types/core/Object';
 import type { Repository } from '@/types/core/Repository';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { StoredQuery } from '@/types/core/StoredQuery';
 import type { User } from '@/types/core/User';
 import type { Workflow } from '@/types/core/Workflow';
@@ -17,7 +17,7 @@ export interface SearchResult {
 
   // Typed entity fields - only one will be populated based on Type
   repository?: Repository;
-  repository_object?: Object;
+  repository_object?: RepositoryObject;
   workflow?: Workflow;
   connection?: Connection;
   query?: StoredQuery;

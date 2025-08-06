@@ -16,9 +16,9 @@ import { type LogsForType, useLogEvents } from '@/hooks/api/useLogEvents';
 import { useBaseUrl } from '@/hooks/utils';
 
 import type { Connection } from '@/types/core/Connection';
-import type { Object } from '@/types/core/Object';
 import type { Policy } from '@/types/core/Policy';
 import type { Repository } from '@/types/core/Repository';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { StoredQuery } from '@/types/core/StoredQuery';
 import type { User } from '@/types/core/User';
 import type { Workflow } from '@/types/core/Workflow';
@@ -60,7 +60,7 @@ export default function LogsSection({
   connection?: Connection;
   storedQuery?: StoredQuery;
   policy?: Policy;
-  repositoryObject?: Object;
+  repositoryObject?: RepositoryObject;
   user?: User;
 }) {
   const router = useRouter();

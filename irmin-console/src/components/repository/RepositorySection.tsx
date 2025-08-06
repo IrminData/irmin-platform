@@ -33,7 +33,7 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import { useRepositoryObject, useRepositoryObjectContent } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import type { Object } from '@/types/core/Object';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
@@ -52,7 +52,7 @@ export default function RepositorySection({
   initialSelectedObject,
   initialObjectContentViewerOpen = false,
 }: {
-  initialSelectedObject?: Object;
+  initialSelectedObject?: RepositoryObject;
   initialObjectContentViewerOpen?: boolean;
 }) {
   return (
@@ -73,7 +73,7 @@ function RepositorySectionContent({
   initialSelectedObject,
   initialObjectContentViewerOpen = false,
 }: {
-  initialSelectedObject?: Object;
+  initialSelectedObject?: RepositoryObject;
   initialObjectContentViewerOpen?: boolean;
 }) {
   const { irminModal } = usePopup();
@@ -89,9 +89,9 @@ function RepositorySectionContent({
   const { executeSql, loading: queryLoading, result: queryResult } = useQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
 
-  const [selectedObject, setSelectedObject] = useState<Object | undefined>(
-    initialSelectedObject
-  );
+  const [selectedObject, setSelectedObject] = useState<
+    RepositoryObject | undefined
+  >(initialSelectedObject);
 
   const { repositoryObjectQuery, uploadObjectMutation } = useRepositoryObject(
     repository.slug,

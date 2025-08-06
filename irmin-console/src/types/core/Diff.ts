@@ -1,5 +1,5 @@
 import type { Commit } from '@/types/core/Commit';
-import type { Object } from '@/types/core/Object';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
 /**
  * Represents the type of change in a diff, eg. what kind of change was made to the object
@@ -16,7 +16,7 @@ export type MergeStrategy = 'default' | 'dest-wins' | 'source-wins';
  */
 export interface ChangeItem {
   /** Object affected by the change */
-  object: Object;
+  object: RepositoryObject;
   /** Type of the change (e.g., added, removed, changed, etc.) */
   type: ChangeType;
   /** Size of the change */

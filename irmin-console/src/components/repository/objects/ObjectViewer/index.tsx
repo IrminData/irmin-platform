@@ -5,7 +5,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { checkIfSimpleArrayOfObjects } from '@/utils/checkIfSimpleArrayOfObjects';
 
 import type { IrminAPIBinaryResponse } from '@/types/core/IrminAPIResponse';
-import type { Object } from '@/types/core/Object';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { JSONValue } from '@/types/internal/GenericJSON';
 
 import BlobViewer from './BlobViewer';
@@ -23,7 +23,7 @@ const ObjectViewer = ({
   object,
   objectContent,
 }: {
-  object: Object;
+  object: RepositoryObject;
   objectContent: IrminAPIBinaryResponse | null;
 }) => {
   const { dict } = useLocale();

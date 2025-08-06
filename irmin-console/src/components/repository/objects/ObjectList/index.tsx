@@ -27,7 +27,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import type { Object } from '@/types/core/Object';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
 import ObjectListHeader from './ObjectListHeader';
 import ObjectListTableSkeleton from './ObjectListTableSkeleton';
@@ -46,7 +46,7 @@ const normalizePath = (path: string): string =>
  * @param obj - The object to flatten
  * @returns An array of objects, including the original object and all its children
  */
-const flattenObjects = (obj: Object): Object[] => {
+const flattenObjects = (obj: RepositoryObject): RepositoryObject[] => {
   const children = obj.children || [];
   const flattenedChildren = children.flatMap(flattenObjects);
   return [obj, ...flattenedChildren];
@@ -67,10 +67,13 @@ export default function ObjectList({
   setCurrentPath,
   repositoryObjectQuery,
 }: {
-  selectObject: (object: Object) => void;
+  selectObject: (object: RepositoryObject) => void;
   currentPath: string;
   setCurrentPath: (path: string) => void;
-  repositoryObjectQuery: UseQueryResult<IrminAPIResponse<Object>, Error>;
+  repositoryObjectQuery: UseQueryResult<
+    IrminAPIResponse<RepositoryObject>,
+    Error
+  >;
 }) {
   const { locale, dict } = useLocale();
 
@@ -92,7 +95,7 @@ export default function ObjectList({
     const lowerSearch = searchTerm.toLowerCase();
 
     // helper to test name/path against search
-    const matchesSearch = (obj: Object) =>
+    const matchesSearch = (obj: RepositoryObject) =>
       obj.name.toLowerCase().includes(lowerSearch) ||
       normalizePath(obj.path).toLowerCase().includes(lowerSearch);
 
@@ -150,7 +153,7 @@ export default function ObjectList({
     []
   );
 
-  const getIcon = useCallback((type: Object['type']) => {
+  const getIcon = useCallback((type: RepositoryObject['type']) => {
     switch (type) {
       case 'group':
         return (

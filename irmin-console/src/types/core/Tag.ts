@@ -1,6 +1,6 @@
 import type { Connection } from './Connection';
-import type { Object } from './Object';
 import type { Repository } from './Repository';
+import type { RepositoryObject } from './RepositoryObject';
 import type { StoredQuery } from './StoredQuery';
 import type { Workflow } from './Workflow';
 
@@ -31,7 +31,7 @@ interface TaggedAssets {
   /** Connections tagged with this tag */
   connections: Connection[];
   /** Repository objects tagged with this tag */
-  repository_objects: Object[];
+  repository_objects: RepositoryObject[];
 }
 
 /**

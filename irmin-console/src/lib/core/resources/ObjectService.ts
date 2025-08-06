@@ -5,8 +5,8 @@ import type {
   IrminAPIBinaryResponse,
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
-import type { Object as RepoObject } from '@/types/core/Object';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { JSONValue } from '@/types/internal/GenericJSON';
 
 /**
@@ -65,13 +65,13 @@ class ObjectService {
     repository: string;
     path: string;
     ref?: string;
-  }): Promise<IrminAPIResponse<RepoObject>> {
+  }): Promise<IrminAPIResponse<RepositoryObject>> {
     try {
       let url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?&path=${encodeURIComponent(path)}`;
       if (ref) url += `&ref=${encodeURIComponent(ref)}`;
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'GET',
-      })) as IrminAPIResponse<RepoObject>;
+      })) as IrminAPIResponse<RepositoryObject>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch object error');
@@ -290,7 +290,7 @@ class ObjectService {
     path: string;
     metadata?: { [key: string]: string };
     files?: FileList;
-  }): Promise<IrminAPIResponse<RepoObject>> {
+  }): Promise<IrminAPIResponse<RepositoryObject>> {
     try {
       const formData = new FormData();
       if (files) {
@@ -305,7 +305,7 @@ class ObjectService {
       const response = (await this.irminCore.fetchAPI(url, {
         method: 'POST',
         body: formData,
-      })) as IrminAPIResponse<RepoObject>;
+      })) as IrminAPIResponse<RepositoryObject>;
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Upload object error');
@@ -336,7 +336,7 @@ class ObjectService {
     ref: string;
     path: string;
     newPath: string;
-  }): Promise<IrminAPIResponse<RepoObject>> {
+  }): Promise<IrminAPIResponse<RepositoryObject>> {
     try {
       const params = new URLSearchParams();
       params.append('ref', ref);
@@ -352,7 +352,7 @@ class ObjectService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
-      })) as IrminAPIResponse<RepoObject>;
+      })) as IrminAPIResponse<RepositoryObject>;
 
       return response;
     } catch (error) {
@@ -384,7 +384,7 @@ class ObjectService {
     ref: string;
     path: string;
     newPath: string;
-  }): Promise<IrminAPIResponse<RepoObject>> {
+  }): Promise<IrminAPIResponse<RepositoryObject>> {
     try {
       const params = new URLSearchParams();
       params.append('ref', ref);
@@ -400,7 +400,7 @@ class ObjectService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
-      })) as IrminAPIResponse<RepoObject>;
+      })) as IrminAPIResponse<RepositoryObject>;
 
       return response;
     } catch (error) {

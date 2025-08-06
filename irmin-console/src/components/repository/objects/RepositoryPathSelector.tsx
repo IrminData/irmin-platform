@@ -14,10 +14,10 @@ import { useLocale } from '@/context/LocaleContext';
 import { useRepositoryObject } from '@/hooks/api';
 import { useBaseUrl } from '@/hooks/utils';
 
-import type { Object } from '@/types/core/Object';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
 interface RepositoryPathSelectorProps {
-  rootObject?: Object;
+  rootObject?: RepositoryObject;
   repositorySlug: string;
   ref: string;
   defaultPath?: string;
@@ -66,7 +66,7 @@ const formatPath = (
  * Check if an object matches the type constraints
  */
 const matchesTypeConstraints = (
-  obj: Object,
+  obj: RepositoryObject,
   groupOnly?: boolean,
   binaryOnly?: boolean,
   structuredOnly?: boolean,
@@ -82,7 +82,10 @@ const matchesTypeConstraints = (
 /**
  * Find an object in the tree by path
  */
-const findObjectByPath = (root: Object, path: string): Object | undefined => {
+const findObjectByPath = (
+  root: RepositoryObject,
+  path: string
+): RepositoryObject | undefined => {
   if (root.path === path) return root;
   if (root.children) {
     for (const child of root.children) {
@@ -226,7 +229,7 @@ const RepositoryPathSelector = ({
   /**
    * Toggle a folder in the path selector
    */
-  const toggleFolder = useCallback((item: Object) => {
+  const toggleFolder = useCallback((item: RepositoryObject) => {
     if (item.path && item.type === 'group') {
       setOpenFolders((prev) => ({
         ...prev,
@@ -239,7 +242,7 @@ const RepositoryPathSelector = ({
    * Handle clicking an item (folder or file) in the path selector
    */
   const handleItemClick = useCallback(
-    (item: Object) => {
+    (item: RepositoryObject) => {
       if (
         !matchesTypeConstraints(
           item,
@@ -284,7 +287,7 @@ const RepositoryPathSelector = ({
     segmentsAfter: 1,
   });
 
-  const renderItem = (item: Object) => {
+  const renderItem = (item: RepositoryObject) => {
     // Check if this item can be selected based on type constraints
     const canSelect = matchesTypeConstraints(
       item,

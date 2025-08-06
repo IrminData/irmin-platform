@@ -13,7 +13,7 @@ import { usePopup } from '@/context/PopupContext';
 
 import { constructObjectUrlPath } from '@/utils/constructObjectUrlPath';
 
-import type { Object } from '@/types/core/Object';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
 interface MoveRenameFormValues {
   path: string;
@@ -32,7 +32,7 @@ export default function MoveRenameObjectModal({
   selectedObject,
 }: {
   moveObject: (oldPath: string, newPath: string) => Promise<void>;
-  selectedObject: Object;
+  selectedObject: RepositoryObject;
 }) {
   const { dict } = useLocale();
   const { irminModal } = usePopup();

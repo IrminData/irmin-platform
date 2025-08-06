@@ -7,7 +7,7 @@ import '@cyntler/react-doc-viewer/dist/index.css';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import type { Object } from '@/types/core/Object';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
 const allowedMimeTypes = [
   'image/bmp',
@@ -38,7 +38,13 @@ const allowedMimeTypes = [
  * @param props - The props
  * @param props.blob - The Blob object to preview
  */
-const BlobViewer = ({ blob, object }: { blob: Blob; object: Object }) => {
+const BlobViewer = ({
+  blob,
+  object,
+}: {
+  blob: Blob;
+  object: RepositoryObject;
+}) => {
   const { dict } = useLocale();
   const [url, setUrl] = useState<string | null>(null);
 

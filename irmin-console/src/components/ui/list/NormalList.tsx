@@ -36,8 +36,6 @@ const ListLoadingSkeleton = ({ totalColumns }: { totalColumns: number }) => {
       <LoadingRow totalColumns={totalColumns} />
       <LoadingRow totalColumns={totalColumns} />
       <LoadingRow totalColumns={totalColumns} />
-      <LoadingRow totalColumns={totalColumns} />
-      <LoadingRow totalColumns={totalColumns} />
     </>
   );
 };

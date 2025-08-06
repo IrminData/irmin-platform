@@ -3,7 +3,7 @@ import type { Tag } from '@/types/core/Tag';
 /**
  * Represents an object stored in the repository.
  */
-export interface Object {
+export interface RepositoryObject {
   /** Unique identifier of the object */
   id: string;
   /** Name of the object */
@@ -31,5 +31,5 @@ export interface Object {
   /** (optional) Tags associated with this object */
   tags?: Tag[];
   /** (optional) If the object is a group, this will contain the children objects */
-  children?: Object[];
+  children?: RepositoryObject[];
 }

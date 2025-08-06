@@ -30,8 +30,8 @@ import {
 } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
-import type { Object } from '@/types/core/Object';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
 import type { Tag } from '@/types/core/Tag';
 
 import MoveRenameObjectModal from './MoveRenameObjectModal';
@@ -59,7 +59,7 @@ export default function ObjectDetails({
   hideSchemaButton = false,
 }: {
   setCurrentPath?: (_path: string) => void;
-  selectedObject?: Object;
+  selectedObject?: RepositoryObject;
   selectedObjectSchema?: ObjectSchema;
   closeDetails?: () => void;
   viewObject?: () => void;
