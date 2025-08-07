@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
 import { repositoryObjectQueryKey } from '@/lib/queryKeys';
@@ -10,6 +10,8 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
+import { useInvalidateObjectQueries } from './useInvalidateObjectQueries';
+
 export const useRepositoryObject = (
   repositorySlug: string,
   ref?: string,
@@ -18,8 +20,11 @@ export const useRepositoryObject = (
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
-  const queryClient = useQueryClient();
   const { irminAlert } = usePopup();
+
+  const { invalidateObjectQueries } =
+    useInvalidateObjectQueries(repositorySlug);
+
   const repositoryObjectQuery = useQuery({
     queryKey: repositoryObjectQueryKey(
       workspaceSlug,
@@ -38,36 +43,6 @@ export const useRepositoryObject = (
       });
     },
   });
-
-  // Helper function to invalidate object-related queries
-  const invalidateObjectQueries = (path: string, ref: string) => {
-    void queryClient.invalidateQueries({
-      queryKey: repositoryObjectQueryKey(
-        workspaceSlug,
-        repositorySlug,
-        ref,
-        path
-      ),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: [
-        'repository-object-content',
-        workspaceSlug,
-        repositorySlug,
-        ref,
-        path,
-      ],
-    });
-    void queryClient.invalidateQueries({
-      queryKey: [
-        'repository-object-schema',
-        workspaceSlug,
-        repositorySlug,
-        ref,
-        path,
-      ],
-    });
-  };
 
   const deleteObjectMutation = useMutation<
     IrminAPIResponse,
@@ -109,25 +84,10 @@ export const useRepositoryObject = (
         ref,
       });
     },
-    onSuccess: (res, { oldPath, ref }) => {
+    onSuccess: (res, { oldPath, newPath, ref }) => {
+      // Invalidate queries for both the old and new paths
       invalidateObjectQueries(oldPath, ref);
-      // Also invalidate broader queries for the ref
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-content',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-        ],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-schema',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-        ],
-      });
+      invalidateObjectQueries(newPath, ref);
       irminAlert('success', res.message ?? 'Object moved successfully');
     },
     onError: (error) => {
@@ -151,25 +111,10 @@ export const useRepositoryObject = (
         ref,
       });
     },
-    onSuccess: (res, { oldPath, ref }) => {
+    onSuccess: (res, { oldPath, newPath, ref }) => {
+      // Invalidate queries for both the old and new paths
       invalidateObjectQueries(oldPath, ref);
-      // Also invalidate broader queries for the ref
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-content',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-        ],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: [
-          'repository-object-schema',
-          workspaceSlug,
-          repositorySlug,
-          ref,
-        ],
-      });
+      invalidateObjectQueries(newPath, ref);
       irminAlert('success', res.message ?? 'Object copied successfully');
     },
     onError: (error) => {

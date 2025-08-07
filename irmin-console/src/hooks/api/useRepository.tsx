@@ -135,12 +135,27 @@ export function useRepository(slug: string) {
       });
     },
     onSuccess: (res: IrminAPIResponse<Repository>) => {
-      void queryClient.invalidateQueries({
-        queryKey: repositoryQueryKey(workspaceSlug, slug),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: repositoriesQueryKey(workspaceSlug),
-      });
+      // Update both the single repository and repositories list cache optimistically
+      if (res.data) {
+        // Update single repository cache
+        queryClient.setQueryData(repositoryQueryKey(workspaceSlug, slug), res);
+
+        // Update repositories list cache
+        queryClient.setQueryData<IrminAPIResponse<Repository[]>>(
+          repositoriesQueryKey(workspaceSlug),
+          (old) => {
+            if (!old?.data) return old;
+
+            return {
+              ...old,
+              data: old.data.map((repo) =>
+                repo.slug === slug ? res.data! : repo
+              ),
+            };
+          }
+        );
+      }
+
       irminAlert(
         'success',
         res.message ?? 'Repository transferred successfully'
