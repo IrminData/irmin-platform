@@ -30,6 +30,7 @@ import (
 	"irmin-connectors/connectors"
 	"irmin-connectors/db"
 	"irmin-connectors/models"
+	"irmin-connectors/swagger"
 	"irmin-connectors/utils"
 	"log"
 	"log/slog"
@@ -331,8 +332,8 @@ func main() {
 	app.Get(healthcheck.StartupEndpoint, healthcheck.New(healthcheck.Config{}))
 
 	// Swagger documentation endpoints
-	app.Get("/swagger/swagger.json", SwaggerJSON)
-	app.Get("/swagger", SwaggerUI)
+	app.Get("/swagger/swagger.json", swagger.SwaggerJSON)
+	app.Get("/swagger", swagger.SwaggerUI)
 
 	// Setup static file serving
 	app.Get("/public/*", static.New("./public"))

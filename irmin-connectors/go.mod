@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.3
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250805211335-627bba72238a
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250806124032-4b7bcb33a277
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofiber/fiber/v3 v3.0.0-beta.5
 	github.com/jackc/pgx/v5 v5.7.5
