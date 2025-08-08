@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -185,6 +186,14 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 	})
 
+	// Invalidate workspace users list for all users
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/users", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusNoContent, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "member_removed_from_workspace"),
@@ -277,6 +286,14 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate workspace users list for all users
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/users", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_member_updated"),

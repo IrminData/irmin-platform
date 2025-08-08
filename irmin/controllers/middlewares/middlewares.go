@@ -11,6 +11,7 @@ import (
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
+	"github.com/gofiber/fiber/v3"
 )
 
 type APIMiddlewares struct {
@@ -23,8 +24,8 @@ type APIMiddlewares struct {
 	permissionService *lib.PermissionService
 	userMutex         sync.RWMutex // Protects user operations to prevent race conditions
 	validator         *irminvalidator.Validator
-	authCache         *AuthCache     // Cache for authentication results
-	responseCache     *ResponseCache // Cache for API responses
+	authCache         *AuthCache // Cache for authentication results
+	cacheStorage      fiber.Storage
 }
 
 func NewAPIMiddlewares(
@@ -35,6 +36,7 @@ func NewAPIMiddlewares(
 	sqidManager *irminsqids.SQIDManager,
 	localeManager *locales.LocaleManager,
 	permissionService *lib.PermissionService,
+	cacheStorage fiber.Storage,
 ) *APIMiddlewares {
 	return &APIMiddlewares{
 		DB:                db,
@@ -46,6 +48,6 @@ func NewAPIMiddlewares(
 		permissionService: permissionService,
 		validator:         irminvalidator.NewValidator(sqidManager),
 		authCache:         &AuthCache{cache: make(map[string]*AuthCacheEntry)},
-		responseCache:     &ResponseCache{cache: make(map[string]*ResponseCacheEntry)},
+		cacheStorage:      cacheStorage,
 	}
 }

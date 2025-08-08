@@ -9,17 +9,10 @@ import (
 	"irmin-api/orchestrator"
 	"irmin-api/utils"
 	"log/slog"
-	"time"
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
-)
-
-const (
-	// Cache durations for response caching.
-	shortResponseCacheTTL  = 2 * time.Minute
-	mediumResponseCacheTTL = 3 * time.Minute
 )
 
 // RegisterAPIRoutes registers all API routes for the application.
@@ -34,6 +27,7 @@ func RegisterAPIRoutes(
 	sqidManager *irminsqids.SQIDManager,
 	localeManager *locales.LocaleManager,
 	permissionService *lib.PermissionService,
+	cacheStorage fiber.Storage,
 ) {
 	// Initialize controllers
 	apiControllers := controllers.NewAPIControllers(
@@ -44,6 +38,7 @@ func RegisterAPIRoutes(
 		sqidManager,
 		localeManager,
 		permissionService,
+		cacheStorage,
 	)
 
 	// Initialize middlewares
@@ -55,6 +50,7 @@ func RegisterAPIRoutes(
 		sqidManager,
 		localeManager,
 		permissionService,
+		cacheStorage,
 	)
 
 	// Simple index route
@@ -227,7 +223,6 @@ func RegisterAPIRoutes(
 	queries := workspace.Group("/queries")
 	queries.Get(
 		"/",
-		apiMiddlewares.ResponseCacheMiddleware(shortResponseCacheTTL),
 		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.QueriesIndex,
 	)
@@ -307,7 +302,6 @@ func RegisterAPIRoutes(
 	connections := workspace.Group("/connections")
 	connections.Get(
 		"/",
-		apiMiddlewares.ResponseCacheMiddleware(mediumResponseCacheTTL),
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.ConnectionsIndex,
 	)
@@ -380,7 +374,6 @@ func RegisterAPIRoutes(
 	// Workflow routes
 	workflows := workspace.Group("/workflows")
 	workflows.Get("/",
-		apiMiddlewares.ResponseCacheMiddleware(mediumResponseCacheTTL),
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.WorkflowsIndex)
 	workflows.Post(
@@ -452,7 +445,6 @@ func RegisterAPIRoutes(
 	repositories := workspace.Group("/repositories")
 	repositories.Get(
 		"/",
-		apiMiddlewares.ResponseCacheMiddleware(mediumResponseCacheTTL),
 		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.RepositoriesIndex,
 	)

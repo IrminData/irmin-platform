@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
@@ -166,6 +167,20 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
 	})
+
+	// Invalidate commits and objects listings for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/commits", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "merge_commit_created"),

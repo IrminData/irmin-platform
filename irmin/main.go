@@ -26,6 +26,7 @@ package main
 import (
 	"context"
 	"flag"
+	"irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
@@ -35,14 +36,11 @@ import (
 	"irmin-api/utils"
 	"log"
 	"log/slog"
-	"net/http"
-	"sort"
 	"strings"
 	"time"
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/helmet"
@@ -57,8 +55,6 @@ import (
 const (
 	// MaxRequestBodySize is the maximum size of request body in bytes (5 GB).
 	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
-	// CacheExpirationDuration is the duration for which responses are cached.
-	CacheExpirationDuration = 5 * time.Minute
 	// CachePreflightDuration is the duration for which preflight requests are cached.
 	CachePreflightDuration = 24 * time.Hour
 )
@@ -155,7 +151,7 @@ func setupDatabase(env *utils.CoreAPIEnv) (*db.Database, error) {
 }
 
 // setupFiberApp creates and configures a new Fiber application.
-func setupFiberApp(env *utils.CoreAPIEnv) *fiber.App {
+func setupFiberApp(env *utils.CoreAPIEnv, appCacheMiddleware fiber.Handler) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:   "Irmin API",
 		BodyLimit: MaxRequestBodySize,
@@ -198,7 +194,7 @@ func setupFiberApp(env *utils.CoreAPIEnv) *fiber.App {
 	// for a GET request, it will be served immediately, and no further
 	// handlers (like idempotency or your main business logic) will be executed.
 	// This provides a significant performance boost.
-	app.Use(setupCache())
+	app.Use(appCacheMiddleware)
 
 	// 7. Idempotency: Another "gatekeeper", primarily for POST/PATCH requests.
 	// It prevents duplicate operations. It should come after caching but before
@@ -215,36 +211,6 @@ func setupFiberApp(env *utils.CoreAPIEnv) *fiber.App {
 	app.Use(compress.New(compress.Config{Level: compress.LevelBestSpeed}))
 
 	return app
-}
-
-// setupCache configures and returns the cache middleware.
-func setupCache() fiber.Handler {
-	return cache.New(cache.Config{
-		Expiration: CacheExpirationDuration,
-		Methods: []string{
-			http.MethodGet,
-			http.MethodHead,
-			http.MethodOptions,
-		},
-		KeyGenerator: func(c fiber.Ctx) string {
-			queriesMap := c.Queries()
-			var keys []string
-			for key := range queriesMap {
-				keys = append(keys, key)
-			}
-			sort.Strings(keys)
-			queries := ""
-			for _, key := range keys {
-				value := queriesMap[key]
-				if queries == "" {
-					queries = key + "=" + value
-				} else {
-					queries += "&" + key + "=" + value
-				}
-			}
-			return c.Path() + queries + c.Get("authorization")
-		},
-	})
 }
 
 // setupCORS configures and returns the CORS middleware.
@@ -333,8 +299,12 @@ func main() {
 		log.Fatalf("failed to setup database: %v", err)
 	}
 
+	// Initialize cache storage and middleware
+	cacheStorage := cache.NewDefaultStorage()
+	appCacheMiddleware := cache.NewAppCacheMiddleware(cacheStorage)
+
 	// Setup Fiber app
-	app := setupFiberApp(env)
+	app := setupFiberApp(env, appCacheMiddleware)
 
 	// Setup services
 	orchestrator, sqidManager, localeManager, permissionService, err := setupServices(env, database)
@@ -352,6 +322,7 @@ func main() {
 		sqidManager,
 		localeManager,
 		permissionService,
+		cacheStorage,
 	)
 
 	// Start server

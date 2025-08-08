@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"irmin-api/bucket"
+	irmincache "irmin-api/cache"
 	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
 	"irmin-api/engine"
@@ -180,6 +181,14 @@ func (api *APIControllers) EditorItemStore(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 	})
 
+	// Invalidate editor listings and content for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/editor", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return a success response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "editor_item_saved"),
@@ -259,6 +268,14 @@ func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate editor listings and content for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/editor", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return a success response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -356,6 +373,14 @@ func (api *APIControllers) handleEditorItemTransfer(c fiber.Ctx, isMove bool) er
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate editor listings and content for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/editor", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return a success response
 	messageKey := "editor_item_moved"

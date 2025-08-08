@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/formatter"
@@ -151,6 +152,14 @@ func (api *APIControllers) QueriesStore(c fiber.Ctx) error {
 		StoredQueryID: &query.ID,
 	})
 
+	// Invalidate caches for queries listing and items (all users in workspace)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/queries", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Send the response
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: formattedQuery,
@@ -267,6 +276,17 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error {
 		StoredQueryID: &query.ID,
 	})
 
+	// Invalidate caches for queries in this workspace (all users)
+	workspace, ok := c.Locals("workspace").(*db.Workspace)
+	if ok {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			api.cacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/queries", workspace.Slug),
+		); invalidationErr != nil {
+			api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		}
+	}
+
 	// Send the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "query_updated"),
@@ -315,6 +335,17 @@ func (api *APIControllers) QueriesDestroy(c fiber.Ctx) error {
 		WorkspaceID:   &query.WorkspaceID,
 		StoredQueryID: &query.ID,
 	})
+
+	// Invalidate caches for queries in this workspace (all users)
+	workspace, ok := c.Locals("workspace").(*db.Workspace)
+	if ok {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			api.cacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/queries", workspace.Slug),
+		); invalidationErr != nil {
+			api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		}
+	}
 
 	// Send the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -410,6 +441,14 @@ func (api *APIControllers) TransferQueryOwnership(c fiber.Ctx) error {
 		WorkspaceID:   &query.WorkspaceID,
 		StoredQueryID: &query.ID,
 	})
+
+	// Invalidate caches for queries in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/queries", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Send the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

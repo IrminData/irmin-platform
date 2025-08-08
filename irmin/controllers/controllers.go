@@ -25,6 +25,7 @@ type APIControllers struct {
 	lm                *locales.LocaleManager
 	permissionService *lib.PermissionService
 	validator         *irminvalidator.Validator
+	cacheStorage      fiber.Storage
 }
 
 func NewAPIControllers(
@@ -35,6 +36,7 @@ func NewAPIControllers(
 	sqidManager *irminsqids.SQIDManager,
 	localeManager *locales.LocaleManager,
 	permissionService *lib.PermissionService,
+	cacheStorage fiber.Storage,
 ) *APIControllers {
 	return &APIControllers{
 		DB:                db,
@@ -45,6 +47,7 @@ func NewAPIControllers(
 		lm:                localeManager,
 		permissionService: permissionService,
 		validator:         irminvalidator.NewValidator(sqidManager),
+		cacheStorage:      cacheStorage,
 	}
 }
 

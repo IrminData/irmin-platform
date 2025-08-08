@@ -8,6 +8,8 @@ import (
 	"irmin-api/locales"
 	"irmin-api/utils"
 
+	irmincache "irmin-api/cache"
+
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -166,6 +168,15 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 	})
 
+	// Invalidate caches that may be affected by this action
+	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/connections", workspace.Slug),
+	)
+	if invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
+
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connection_created"),
@@ -259,8 +270,9 @@ func (api *APIControllers) updateConnectionFields(
 func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
-	if !dictOk || !userOk || !connectionOk {
+	if !dictOk || !userOk || !workspaceOk || !connectionOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -303,8 +315,17 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 		Type:        db.LogEventTypeUpdate,
 		Description: fmt.Sprintf("Connection %s updated", connection.Name),
 		UserID:      &user.ID,
-		WorkspaceID: &connection.WorkspaceID,
+		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate caches that may be affected by this action
+	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/connections", workspace.Slug),
+	)
+	if invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
 
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -330,8 +351,9 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
-	if !dictOk || !userOk || !connectionOk {
+	if !dictOk || !userOk || !workspaceOk || !connectionOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -359,8 +381,17 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 		Type:        db.LogEventTypeDelete,
 		Description: fmt.Sprintf("Connection %s deleted", connection.Name),
 		UserID:      &user.ID,
-		WorkspaceID: &connection.WorkspaceID,
+		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate caches that may be affected by this action
+	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/connections", workspace.Slug),
+	)
+	if invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
 
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -454,6 +485,15 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate caches that may be affected by this action
+	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/connections", workspace.Slug),
+	)
+	if invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
 
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

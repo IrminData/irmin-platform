@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lakefs"
@@ -183,6 +184,14 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 	})
 
+	// Invalidate commits list for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/commits", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the created commit
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "commit_created"),
@@ -312,6 +321,20 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
 	})
+
+	// Invalidate commits and objects listings for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/commits", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return the created commit
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

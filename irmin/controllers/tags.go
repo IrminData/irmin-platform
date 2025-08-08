@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -129,6 +130,14 @@ func (api *APIControllers) TagsStore(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate tags endpoints for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/tags", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: formattedTag,
@@ -479,6 +488,17 @@ func (api *APIControllers) TagsUpdate(c fiber.Ctx) error {
 		UserID:      &user.ID,
 	})
 
+	// Invalidate tags endpoints for this workspace (all users)
+	workspace, _ := c.Locals("workspace").(*db.Workspace)
+	if workspace != nil {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			api.cacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/tags", workspace.Slug),
+		); invalidationErr != nil {
+			api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		}
+	}
+
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: formattedTag,
 	})
@@ -530,6 +550,17 @@ func (api *APIControllers) TagsDestroy(c fiber.Ctx) error {
 		Description: fmt.Sprintf("Tag %s deleted", tagWithAssets.Tag.Name),
 		UserID:      &user.ID,
 	})
+
+	// Invalidate tags endpoints for this workspace (all users)
+	workspace, _ := c.Locals("workspace").(*db.Workspace)
+	if workspace != nil {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			api.cacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/tags", workspace.Slug),
+		); invalidationErr != nil {
+			api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		}
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "tag_deleted"),
@@ -645,6 +676,14 @@ func (api *APIControllers) handleTagEntityOperation(c fiber.Ctx, operation strin
 		Description: fmt.Sprintf("Tag %s %s", action, entityType),
 		UserID:      &user.ID,
 	})
+
+	// Invalidate tags endpoints for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/tags", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	messageKey := "tag_added"
 	if operation == operationRemove {

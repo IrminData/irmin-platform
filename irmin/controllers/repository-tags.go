@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
@@ -134,6 +135,14 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 		UserID:       &user.ID,
 	})
 
+	// Invalidate tags list and tag details (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/tags", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the created tag
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Data: tag,
@@ -221,6 +230,14 @@ func (api *APIControllers) RepositoryTagsDestroy(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 		UserID:       &user.ID,
 	})
+
+	// Invalidate tags list and tag details (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/tags", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return a success message
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -363,6 +364,14 @@ func (api *APIControllers) PoliciesStore(c fiber.Ctx) error {
 		PolicyID:    &newPolicy.ID,
 	})
 
+	// Invalidate policies endpoints for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/policies", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "policy_created"),
 		Data:    policyResponse,
@@ -531,6 +540,14 @@ func (api *APIControllers) PoliciesUpdate(c fiber.Ctx) error {
 		PolicyID:    &policy.ID,
 	})
 
+	// Invalidate policies endpoints for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/policies", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "policy_updated"),
 		Data:    policyResponse,
@@ -582,6 +599,14 @@ func (api *APIControllers) PoliciesDestroy(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 		PolicyID:    &policy.ID,
 	})
+
+	// Invalidate policies endpoints for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/policies", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "policy_deleted"),

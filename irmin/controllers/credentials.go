@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -133,6 +134,11 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 		UserID:      &user.ID,
 	})
 
+	// Invalidate user-specific cache for credentials list
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/credentials"); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
+
 	// Return the API token.
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "api_token_created"),
@@ -216,6 +222,11 @@ func (api *APIControllers) CredentialsDestroy(c fiber.Ctx) error {
 		Description: fmt.Sprintf("API token %s deleted", apiToken.Name),
 		UserID:      &user.ID,
 	})
+
+	// Invalidate user-specific cache for credentials list
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/credentials"); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
 
 	// Return a success message.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

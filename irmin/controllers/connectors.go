@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
@@ -189,6 +190,11 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 		})
 	}
 
+	// Invalidate caches affected by this action (all users)
+	if err := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); err != nil {
+		api.Logger.Error("Error invalidating cache", "error", err)
+	}
+
 	// Return the connector info
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connector_refreshed"),
@@ -296,6 +302,11 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 		})
 	}
 
+	// Invalidate caches affected by this action (all users)
+	if err := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); err != nil {
+		api.Logger.Error("Error invalidating cache", "error", err)
+	}
+
 	// Return the connector info
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "connector_refreshed"),
@@ -341,6 +352,11 @@ func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
+	}
+
+	// Invalidate caches affected by this action (all users)
+	if err := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); err != nil {
+		api.Logger.Error("Error invalidating cache", "error", err)
 	}
 
 	// Return the success response

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -84,6 +85,14 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 		WorkflowID:  &workflow.ID,
 	})
+
+	// Invalidate workflows area for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return the formatted workflow run.
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
@@ -372,6 +381,14 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 		WorkflowID:  &workflow.ID,
 	})
+
+	// Invalidate workflows area for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return the formatted workflow run.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

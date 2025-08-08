@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -232,6 +233,14 @@ func (api *APIControllers) WorkflowsUpdate(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_updated"),
@@ -346,6 +355,14 @@ func (api *APIControllers) WorkflowsStore(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 		WorkflowID:  &workflow.ID,
 	})
+
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_created"),
@@ -487,6 +504,14 @@ func (api *APIControllers) WorkflowableUpdate(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_updated"),
 		Data:    workflowResponse,
@@ -588,6 +613,14 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "schedule_updated"),
@@ -642,6 +675,14 @@ func (api *APIControllers) WorkflowsDestroy(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 		WorkflowID:  &workflow.ID,
 	})
+
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -739,6 +780,14 @@ func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error {
 		WorkflowID:  &workflow.ID,
 	})
 
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the response.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_ownership_transferred"),
@@ -804,6 +853,14 @@ func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 		WorkflowID:  &workflow.ID,
 	})
+
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_stopped"),
@@ -877,6 +934,14 @@ func (api *APIControllers) StartWorkflow(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 		WorkflowID:  &workflow.ID,
 	})
+
+	// Invalidate caches for workflows in this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workflow_started"),

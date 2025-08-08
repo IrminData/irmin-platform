@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
@@ -142,6 +143,14 @@ func (api *APIControllers) RepositoryBranchesStore(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 	})
 
+	// Invalidate branches list and branch details (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/branches", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the created branch
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "branch_created"),
@@ -263,6 +272,14 @@ func (api *APIControllers) RepositoryBranchesUpdate(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 	})
 
+	// Invalidate branches list and branch details (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/branches", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the updated branch
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "branch_updated"),
@@ -330,6 +347,14 @@ func (api *APIControllers) RepositoryBranchesDestroy(c fiber.Ctx) error {
 		WorkspaceID:  &workspace.ID,
 		RepositoryID: &repository.ID,
 	})
+
+	// Invalidate branches list and branch details (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/branches", workspace.Slug, repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return a success message
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

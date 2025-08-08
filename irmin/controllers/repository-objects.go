@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/formatter"
@@ -287,6 +288,14 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		})
 	}
 
+	// Invalidate objects listing for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the object from the database.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "object_uploaded"),
@@ -428,6 +437,14 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		})
 	}
 
+	// Invalidate objects listing for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "object_moved"),
 		Data:    repositoryObjectResponse,
@@ -548,6 +565,14 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		})
 	}
 
+	// Invalidate objects listing for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "object_copied"),
 		Data:    repositoryObjectResponse,
@@ -658,6 +683,14 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 		RepositoryID:       &params.repository.ID,
 		RepositoryObjectID: &object.ID,
 	})
+
+	// Invalidate objects listing for this repository (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories/%s/objects", params.workspace.Slug, params.repository.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(params.dict, "object_deleted"),

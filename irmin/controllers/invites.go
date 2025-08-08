@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
@@ -400,6 +401,14 @@ func (api *APIControllers) SendInvite(c fiber.Ctx) error {
 	responseMessage := api.prepareResponseMessage(dict, inviteResult)
 	responseData := api.buildResponseData(inviteResponse, inviteResult)
 
+	// Invalidate invites list for this workspace (all users)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/invites", workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: responseMessage,
@@ -532,6 +541,17 @@ func (api *APIControllers) InvitesUpdate(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &invite.WorkspaceID,
 	})
+
+	// Invalidate invites list for this workspace (all users)
+	workspace, ok := c.Locals("workspace").(*db.Workspace)
+	if ok {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			api.cacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/invites", workspace.Slug),
+		); invalidationErr != nil {
+			api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		}
+	}
 
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -666,6 +686,17 @@ func (api *APIControllers) InvitesDestroy(c fiber.Ctx) error {
 		WorkspaceID: &invite.WorkspaceID,
 	})
 
+	// Invalidate invites list for this workspace (all users)
+	workspace, ok := c.Locals("workspace").(*db.Workspace)
+	if ok {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			api.cacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/invites", workspace.Slug),
+		); invalidationErr != nil {
+			api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		}
+	}
+
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "invite_deleted"),
@@ -720,6 +751,17 @@ func (api *APIControllers) ResendInvite(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &invite.WorkspaceID,
 	})
+
+	// Invalidate invites list for this workspace (all users)
+	workspace, ok := c.Locals("workspace").(*db.Workspace)
+	if ok {
+		if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+			api.cacheStorage,
+			fmt.Sprintf("/api/v1/workspaces/%s/invites", workspace.Slug),
+		); invalidationErr != nil {
+			api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+		}
+	}
 
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -846,6 +888,20 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error {
 		WorkspaceID: &invite.WorkspaceID,
 	})
 
+	// Invalidate workspace users list (all users), my invites (current user), and workspaces list (current user)
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/users", invite.Workspace.Slug),
+	); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if invalidationErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/invites"); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if invalidationErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/workspaces"); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "invite_accepted"),
@@ -899,6 +955,11 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &invite.WorkspaceID,
 	})
+
+	// Invalidate my invites (current user)
+	if invalidationErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/invites"); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return the response
 	return utils.WriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

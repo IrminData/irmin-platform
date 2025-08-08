@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/bucket"
+	irmincache "irmin-api/cache"
 	"irmin-api/formatter"
 	"irmin-api/lib"
 	"irmin-api/locales"
@@ -238,6 +239,11 @@ func (api *APIControllers) WorkspacesStore(c fiber.Ctx) error {
 		WorkspaceID: &newWorkspace.ID,
 	})
 
+	// Invalidate current user's workspaces list
+	if invalidationErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/workspaces"); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the new workspace.
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_created"),
@@ -347,6 +353,11 @@ func (api *APIControllers) WorkspacesUpdate(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 	})
 
+	// Invalidate workspace details for all users
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, fmt.Sprintf("/api/v1/workspaces/%s", workspace.Slug)); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the updated workspace.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_updated"),
@@ -434,6 +445,14 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate workspace lists and details
+	if invalidationErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/workspaces"); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, fmt.Sprintf("/api/v1/workspaces/%s", workspace.Slug)); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return a success message.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -565,6 +584,11 @@ func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 		WorkspaceID: &workspace.ID,
 	})
 
+	// Invalidate workspace details for all users
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, fmt.Sprintf("/api/v1/workspaces/%s", workspace.Slug)); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+
 	// Return the updated workspace.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "workspace_ownership_transferred"),
@@ -634,6 +658,14 @@ func (api *APIControllers) LeaveWorkspace(c fiber.Ctx) error {
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
+
+	// Invalidate current user's workspace list and workspace users for all
+	if invalidationErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/workspaces"); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
+	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, fmt.Sprintf("/api/v1/workspaces/%s/users", workspace.Slug)); invalidationErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
+	}
 
 	// Return a success message.
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

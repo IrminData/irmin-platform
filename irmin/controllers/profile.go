@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
@@ -185,6 +186,11 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
+	}
+
+	// Invalidate user-specific profile caches (profile endpoint and any subpaths)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/profile"); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

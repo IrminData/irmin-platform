@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/formatter"
@@ -423,6 +424,14 @@ func (api *APIControllers) RepositoriesStore(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 	})
 
+	// Invalidate caches affected by this action (all users)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories", workspace.Slug),
+	); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
+
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusCreated, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(dict, "repository_created"),
@@ -537,6 +546,14 @@ func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error {
 		WorkspaceID:  &repositoryLocalParams.workspace.ID,
 		RepositoryID: &repositoryLocalParams.repository.ID,
 	})
+
+	// Invalidate caches affected by this action (all users)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories", repositoryLocalParams.workspace.Slug),
+	); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
 
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -656,6 +673,14 @@ func (api *APIControllers) RepositoriesUpdate(c fiber.Ctx) error {
 		UserID:       &repositoryLocalParams.user.ID,
 	})
 
+	// Invalidate caches affected by this action (all users)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories", repositoryLocalParams.workspace.Slug),
+	); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
+
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Message: api.lm.T(repositoryLocalParams.dict, "repository_updated"),
@@ -754,6 +779,14 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error {
 		RepositoryID: &repository.ID,
 		UserID:       &repositoryLocalParams.user.ID,
 	})
+
+	// Invalidate caches affected by this action (all users)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
+		api.cacheStorage,
+		fmt.Sprintf("/api/v1/workspaces/%s/repositories", repositoryLocalParams.workspace.Slug),
+	); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
+	}
 
 	// Return the response
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
