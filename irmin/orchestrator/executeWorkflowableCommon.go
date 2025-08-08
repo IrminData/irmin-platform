@@ -158,7 +158,7 @@ func (o *Orchestrator) saveDirectoryObjectToDB(
 		return
 	}
 	// Save the directory object to the database
-	_, saveObjectErr := lib.SaveObject(o.db, engineObject, repositoryBranch, repository.ID)
+	_, saveObjectErr := lib.SaveObject(o.db, o.logger, o.env, engineObject, repositoryBranch, repository.ID)
 	if saveObjectErr != nil {
 		o.logger.ErrorContext(ctx, "Error saving root object to database", "error", saveObjectErr)
 	}

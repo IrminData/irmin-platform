@@ -38,8 +38,34 @@ func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*R
 	args := make([]any, 0)
 
 	if path != nil {
-		conditions = append(conditions, "path = ?")
-		args = append(args, *path)
+		// Support canonical lookup of group paths with or without trailing slash
+		input := *path
+		if input == "" {
+			conditions = append(conditions, "path = ?")
+			args = append(args, input)
+		} else {
+			alt := strings.TrimSuffix(input, "/")
+			withSlash := alt + "/"
+			// Build IN clause with distinct values
+			switch input {
+			case withSlash:
+				// Already has trailing slash; also include without
+				conditions = append(conditions, "path IN (?, ?)")
+				args = append(args, input, alt)
+				// Prefer exact input (with slash) first using parameterized ORDER BY
+				query = query.Order(gorm.Expr("CASE WHEN path = ? THEN 0 WHEN path = ? THEN 1 ELSE 2 END", input, alt))
+			case alt:
+				// No trailing slash; include with
+				conditions = append(conditions, "path IN (?, ?)")
+				args = append(args, input, withSlash)
+				// Prefer canonical group path (with trailing slash) when both exist using parameterized ORDER BY
+				query = query.Order(gorm.Expr("CASE WHEN path = ? THEN 0 WHEN path = ? THEN 1 ELSE 2 END", withSlash, input))
+			default:
+				// Fallback exact match
+				conditions = append(conditions, "path = ?")
+				args = append(args, input)
+			}
+		}
 	}
 
 	if repositoryID != nil {
@@ -160,11 +186,9 @@ func deleteChildrenRecursively(tx *gorm.DB, parentID uint) error {
 		}
 	}
 
-	// Remove tag associations for all direct children using a JOIN for better performance
-	if err := tx.Table("repository_object_tags").
-		Joins("JOIN repository_objects ON repository_object_tags.repository_object_id = repository_objects.id").
-		Where("repository_objects.parent_id = ?", parentID).
-		Delete(&RepositoryObjectTag{}).Error; err != nil {
+	// Remove tag associations for all direct children using a subquery (compatible with Postgres DELETE)
+	subQuery := tx.Model(&RepositoryObject{}).Select("id").Where("parent_id = ?", parentID)
+	if err := tx.Where("repository_object_id IN (?)", subQuery).Delete(&RepositoryObjectTag{}).Error; err != nil {
 		return err
 	}
 

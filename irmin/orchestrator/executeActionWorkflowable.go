@@ -130,6 +130,8 @@ func (o *Orchestrator) executeActionWorkflowable(
 			go func() {
 				_, saveObjectErr := lib.SaveObject(
 					o.db,
+					o.logger,
+					o.env,
 					newObject,
 					*workflowable.ResultsRepositoryBranch,
 					*workflowable.ResultsRepositoryID,

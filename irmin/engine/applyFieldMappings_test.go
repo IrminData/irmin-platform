@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"irmin-api/engine"
 	"irmin-api/lib"
+	"irmin-api/utils"
 	"strings"
 	"testing"
 
@@ -194,7 +195,7 @@ func TestApplyFieldMappingsComplexScenario(t *testing.T) {
 			SourcePath:       "employees.csv",
 			SourceField:      &nameField,
 			DestinationPath:  "people.csv",
-			DestinationField: stringPtr("name"), // Rename field
+			DestinationField: utils.StringPtr("name"), // Rename field
 		},
 		{
 			SourcePath:       "employees.csv",
@@ -213,7 +214,7 @@ func TestApplyFieldMappingsComplexScenario(t *testing.T) {
 			SourcePath:       "employees.csv",
 			SourceField:      &deptField,
 			DestinationPath:  "organization.csv",
-			DestinationField: stringPtr("department"), // Rename field
+			DestinationField: utils.StringPtr("department"), // Rename field
 		},
 		{
 			SourcePath:       "employees.csv",
@@ -454,9 +455,4 @@ func TestApplyFieldMappingsPerformance(t *testing.T) {
 	peopleStr := string(peopleContent)
 	assert.True(t, strings.Contains(peopleStr, "User1"))
 	assert.True(t, strings.Contains(peopleStr, "User1000"))
-}
-
-// Helper function to create string pointer.
-func stringPtr(s string) *string {
-	return &s
 }

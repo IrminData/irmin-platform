@@ -7,6 +7,7 @@ import (
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -51,14 +52,15 @@ func (api *APIMiddlewares) RepositoryObjectMiddleware(c fiber.Ctx) error {
 		false,
 	)
 	if err != nil {
-		api.Logger.Error("Error getting object", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
+		api.Logger.Warn("Failed to get repository object", "error", err)
 	}
+
+	// Parse object details from the path
+	detailsFromPath := irminutils.ParseObjectDetailsFromPath(path)
 
 	// Set the object in the context for subsequent handlers.
 	c.Locals("object", repositoryObjectDB)
+	c.Locals("object_path", detailsFromPath.FullPath)
 	c.Locals("object_ref", ref)
 
 	return c.Next()

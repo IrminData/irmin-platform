@@ -56,6 +56,7 @@
   "tag_added": "Tag added",
   "tag_removed": "Tag removed",
   "invalid_entity_type": "Invalid entity type",
+  "object_not_found": "Object not found",
   "object_uploaded": "Object uploaded",
   "object_deleted": "Object deleted",
   "object_moved": "Object moved",

@@ -300,7 +300,14 @@ func (o *Orchestrator) handleRepositoryStage(
 			}
 			// Save the object to the database in a go routine
 			go func() {
-				_, saveObjectErr := lib.SaveObject(o.db, newObject, *stage.RepositoryBranch, *stage.RepositoryID)
+				_, saveObjectErr := lib.SaveObject(
+					o.db,
+					o.logger,
+					o.env,
+					newObject,
+					*stage.RepositoryBranch,
+					*stage.RepositoryID,
+				)
 				if saveObjectErr != nil {
 					o.logger.ErrorContext(ctx, "Error saving object to database", "error", saveObjectErr)
 				}

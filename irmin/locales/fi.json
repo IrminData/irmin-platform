@@ -56,6 +56,7 @@
   "tag_added": "Tunniste lisätty",
   "tag_removed": "Tunniste poistettu",
   "invalid_entity_type": "Virheellinen kohteen tyyppi",
+  "object_not_found": "Objektia ei löytynyt",
   "object_uploaded": "Objekti ladattu",
   "object_deleted": "Objekti poistettu",
   "object_moved": "Objekti siirretty",

@@ -2,6 +2,7 @@ package orchestrator_test
 
 import (
 	"irmin-api/db"
+	"irmin-api/utils"
 	"testing"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -347,7 +348,7 @@ func TestPipelineWorkflowableExecution(t *testing.T) {
 			Write:               true,
 			PipelineID:          &pipelineWorkflowable.ID,
 			ConnectionID:        &connection.ID,
-			ConnectionWritePath: stringPtr("/external/output_data"),
+			ConnectionWritePath: utils.StringPtr("/external/output_data"),
 		},
 		{
 			OrderSequence:       4,
@@ -413,9 +414,4 @@ func TestPipelineWorkflowableExecution(t *testing.T) {
 	assert.Equal(t, "/output/processed_data.csv", *stage4.RepositoryWritePath)
 
 	t.Logf("Successfully verified pipeline workflow structure with %d stages", len(retrievedPipeline.Stages))
-}
-
-// stringPtr is a helper function to create string pointers.
-func stringPtr(s string) *string {
-	return &s
 }

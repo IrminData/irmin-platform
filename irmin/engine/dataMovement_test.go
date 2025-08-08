@@ -5,6 +5,7 @@ import (
 	"irmin-api/duckdb"
 	"irmin-api/engine"
 	"irmin-api/lib"
+	"irmin-api/utils"
 	"strings"
 	"testing"
 
@@ -66,7 +67,7 @@ func TestApplyFieldMappingsDirectly(t *testing.T) {
 			SourcePath:       "employees.csv",
 			SourceField:      &nameField,
 			DestinationPath:  "people.csv",
-			DestinationField: stringPtr("name"),
+			DestinationField: utils.StringPtr("name"),
 		},
 		{
 			SourcePath:       "employees.csv",

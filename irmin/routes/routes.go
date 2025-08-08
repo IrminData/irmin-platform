@@ -80,57 +80,52 @@ func RegisterAPIRoutes(
 
 	// Profile routes
 	v1.Get("/profile", apiControllers.ProfileShow)
-	v1.Patch("/profile", apiMiddlewares.InvalidateUsersCache(), apiControllers.ProfileUpdate)
+	v1.Patch("/profile", apiControllers.ProfileUpdate)
 
 	// Roles
 	v1.Get("/roles", apiControllers.RolesIndex)
 
 	// Connector routes
 	v1.Get("/connectors", apiControllers.ConnectorsIndex)
-	v1.Post("/connectors", apiMiddlewares.InvalidateConnectorsCache(), apiControllers.ConnectorsStore)
+	v1.Post("/connectors", apiControllers.ConnectorsStore)
 	connector := v1.Group("/connectors/:connector", apiMiddlewares.ConnectorMiddleware)
 	connector.Get("/", apiControllers.ConnectorsShow)
-	connector.Patch("/", apiMiddlewares.InvalidateConnectorsCache(), apiControllers.ConnectorsUpdate)
-	connector.Delete("/", apiMiddlewares.InvalidateConnectorsCache(), apiControllers.ConnectorsDestroy)
+	connector.Patch("/", apiControllers.ConnectorsUpdate)
+	connector.Delete("/", apiControllers.ConnectorsDestroy)
 	connector.Post("/fields/:type", apiControllers.ShowConnectorConfigurationFields)
 	connector.Post("/validate", apiControllers.ValidateConnectorConfiguration)
 
 	// Credentials routes
 	v1.Get("/credentials", apiControllers.CredentialsIndex)
-	v1.Post("/credentials", apiMiddlewares.InvalidateCredentialsCache(), apiControllers.CredentialsStore)
+	v1.Post("/credentials", apiControllers.CredentialsStore)
 	v1.Delete(
 		"/credentials/:credential",
-		apiMiddlewares.InvalidateCredentialsCache(),
 		apiControllers.CredentialsDestroy,
 	)
 
 	// Workspace routes
 	v1.Get("/workspaces", apiControllers.WorkspacesIndex)
-	v1.Post("/workspaces", apiMiddlewares.InvalidateWorkspacesCache(), apiControllers.WorkspacesStore)
+	v1.Post("/workspaces", apiControllers.WorkspacesStore)
 	workspace := v1.Group("/workspaces/:workspace", apiMiddlewares.WorkspaceMiddleware)
 	workspace.Get("/", apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionRead), apiControllers.WorkspacesShow)
 	workspace.Patch(
 		"/",
 		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkspacesCache(),
 		apiControllers.WorkspacesUpdate,
 	)
 	workspace.Delete(
 		"/",
 		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateWorkspacesCache(),
 		apiControllers.WorkspacesDestroy,
 	)
 	workspace.Post(
 		"/transfer-ownership",
 		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkspacesCache(),
 		apiControllers.TransferWorkspaceOwnership,
 	)
 	workspace.Post(
 		"/leave",
 		apiMiddlewares.WorkspacePermissionMiddleware(db.PolicyActionRead),
-		apiMiddlewares.InvalidateWorkspacesCache(),
 		apiControllers.LeaveWorkspace,
 	)
 
@@ -152,7 +147,6 @@ func RegisterAPIRoutes(
 	workspace.Post(
 		"/policies",
 		apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidatePoliciesCache(),
 		apiControllers.PoliciesStore,
 	)
 	workspace.Get(
@@ -169,13 +163,11 @@ func RegisterAPIRoutes(
 	policy.Patch(
 		"/",
 		apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidatePoliciesCache(),
 		apiControllers.PoliciesUpdate,
 	)
 	policy.Delete(
 		"/",
 		apiMiddlewares.PolicyPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidatePoliciesCache(),
 		apiControllers.PoliciesDestroy,
 	)
 
@@ -205,7 +197,6 @@ func RegisterAPIRoutes(
 	workspace.Post(
 		"/tags",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateTagsCache(),
 		apiControllers.TagsStore,
 	)
 	workspaceTag := workspace.Group("/tags/:tag", apiMiddlewares.TagMiddleware)
@@ -213,25 +204,21 @@ func RegisterAPIRoutes(
 	workspaceTag.Patch(
 		"/",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateTagsCache(),
 		apiControllers.TagsUpdate,
 	)
 	workspaceTag.Delete(
 		"/",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateTagsCache(),
 		apiControllers.TagsDestroy,
 	)
 	workspaceTag.Post(
 		"/entities/:entity_type/:entity_id",
 		apiMiddlewares.WorkspaceTagEntityPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateTagsCache(),
 		apiControllers.AddTagToEntity,
 	)
 	workspaceTag.Delete(
 		"/entities/:entity_type/:entity_id",
 		apiMiddlewares.WorkspaceTagEntityPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateTagsCache(),
 		apiControllers.RemoveTagFromEntity,
 	)
 
@@ -247,7 +234,6 @@ func RegisterAPIRoutes(
 	queries.Post(
 		"/",
 		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateQueriesCache(),
 		apiControllers.QueriesStore,
 	)
 	query := queries.Group("/:stored_query", apiMiddlewares.QueryMiddleware)
@@ -255,20 +241,17 @@ func RegisterAPIRoutes(
 	query.Patch(
 		"/",
 		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateQueriesCache(),
 		apiControllers.QueriesUpdate,
 	)
 	query.Delete(
 		"/",
 		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateQueriesCache(),
 		apiControllers.QueriesDestroy,
 	)
 	query.Post("/execute", apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionRead), apiControllers.ExecuteQuery)
 	query.Post(
 		"/transfer-ownership",
 		apiMiddlewares.QueryPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateQueriesCache(),
 		apiControllers.TransferQueryOwnership,
 	)
 
@@ -280,13 +263,11 @@ func RegisterAPIRoutes(
 	user.Patch(
 		"/",
 		apiMiddlewares.UserPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateUsersCache(),
 		apiControllers.UsersUpdate,
 	)
 	user.Delete(
 		"/",
 		apiMiddlewares.UserPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateUsersCache(),
 		apiControllers.UsersDestroy,
 	)
 
@@ -299,7 +280,6 @@ func RegisterAPIRoutes(
 	workspace.Post(
 		"/invites",
 		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateInvitesCache(),
 		apiControllers.SendInvite,
 	)
 	v1.Get("/invites", apiControllers.IndexMyInvites)
@@ -308,23 +288,20 @@ func RegisterAPIRoutes(
 	invite.Patch(
 		"/",
 		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateInvitesCache(),
 		apiControllers.InvitesUpdate,
 	)
 	invite.Delete(
 		"/",
 		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateInvitesCache(),
 		apiControllers.InvitesDestroy,
 	)
 	invite.Post(
 		"/resend",
 		apiMiddlewares.InvitePermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateInvitesCache(),
 		apiControllers.ResendInvite,
 	)
-	invite.Post("/accept", apiMiddlewares.InvalidateInvitesCache(), apiControllers.AcceptInvite)
-	invite.Post("/decline", apiMiddlewares.InvalidateInvitesCache(), apiControllers.DeclineInvite)
+	invite.Post("/accept", apiControllers.AcceptInvite)
+	invite.Post("/decline", apiControllers.DeclineInvite)
 
 	// Connection routes
 	connections := workspace.Group("/connections")
@@ -337,7 +314,6 @@ func RegisterAPIRoutes(
 	connections.Post(
 		"/",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateConnectionsCache(),
 		apiControllers.ConnectionsStore,
 	)
 	connection := connections.Group("/:connection", apiMiddlewares.ConnectionMiddleware)
@@ -349,19 +325,16 @@ func RegisterAPIRoutes(
 	connection.Patch(
 		"/",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateConnectionsCache(),
 		apiControllers.ConnectionsUpdate,
 	)
 	connection.Delete(
 		"/",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateConnectionsCache(),
 		apiControllers.ConnectionsDestroy,
 	)
 	connection.Post(
 		"/transfer-ownership",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateConnectionsCache(),
 		apiControllers.TransferConnectionOwnership,
 	)
 	connection.Get(
@@ -376,25 +349,21 @@ func RegisterAPIRoutes(
 	editor.Post(
 		"/",
 		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateEditorCache(),
 		apiControllers.EditorItemStore,
 	)
 	editor.Delete(
 		"/",
 		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateEditorCache(),
 		apiControllers.EditorItemDestroy,
 	)
 	editor.Post(
 		"/move",
 		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateEditorCache(),
 		apiControllers.MoveEditorItem,
 	)
 	editor.Post(
 		"/copy",
 		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateEditorCache(),
 		apiControllers.CopyEditorItem,
 	)
 	editor.Get(
@@ -417,7 +386,6 @@ func RegisterAPIRoutes(
 	workflows.Post(
 		"/",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.WorkflowsStore,
 	)
 	workflow := workflows.Group("/:workflow", apiMiddlewares.WorkflowMiddleware)
@@ -425,43 +393,36 @@ func RegisterAPIRoutes(
 	workflow.Patch(
 		"/",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.WorkflowsUpdate,
 	)
 	workflow.Patch(
 		"/workflowable",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.WorkflowableUpdate,
 	)
 	workflow.Patch(
 		"/schedule",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.ScheduleUpdate,
 	)
 	workflow.Delete(
 		"/",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.WorkflowsDestroy,
 	)
 	workflow.Post(
 		"/transfer-ownership",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.TransferWorkflowOwnership,
 	)
 	workflow.Post(
 		"/pause",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.PauseWorkflow,
 	)
 	workflow.Post(
 		"/start",
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateWorkflowsCache(),
 		apiControllers.StartWorkflow,
 	)
 
@@ -469,7 +430,6 @@ func RegisterAPIRoutes(
 	workflow.Post(
 		"/runs",
 		apiMiddlewares.WorkflowRunPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateWorkflowRunsCache(),
 		apiControllers.TriggerWorkflowRun,
 	)
 	workflow.Get(
@@ -485,7 +445,6 @@ func RegisterAPIRoutes(
 	workflow.Delete(
 		"/runs/:run",
 		apiMiddlewares.WorkflowRunPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateWorkflowRunsCache(),
 		apiControllers.WorkflowRunsDestroy,
 	)
 
@@ -500,7 +459,6 @@ func RegisterAPIRoutes(
 	repositories.Post(
 		"/",
 		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateRepositoriesCache(),
 		apiControllers.RepositoriesStore,
 	)
 	repository := repositories.Group("/:repository", apiMiddlewares.RepositoryMiddleware)
@@ -512,19 +470,16 @@ func RegisterAPIRoutes(
 	repository.Patch(
 		"/",
 		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateRepositoriesCache(),
 		apiControllers.RepositoriesUpdate,
 	)
 	repository.Delete(
 		"/",
 		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateRepositoriesCache(),
 		apiControllers.RepositoriesDestroy,
 	)
 	repository.Post(
 		"/transfer-ownership",
 		apiMiddlewares.RepositoryPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateRepositoriesCache(),
 		apiControllers.TransferRepositoryOwnership,
 	)
 
@@ -537,7 +492,6 @@ func RegisterAPIRoutes(
 	repository.Post(
 		"/merge",
 		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateRepositoryCommitsCache(),
 		apiControllers.MergeRefs,
 	)
 
@@ -551,25 +505,21 @@ func RegisterAPIRoutes(
 	objects.Post(
 		"/",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateRepositoryObjectsCache(),
 		apiControllers.RepositoryUploadObject,
 	)
 	objects.Delete(
 		"/",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateRepositoryObjectsCache(),
 		apiControllers.RepositoryObjectsDestroy,
 	)
 	objects.Post(
 		"/move",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateRepositoryObjectsCache(),
 		apiControllers.RepositoryMoveObject,
 	)
 	objects.Post(
 		"/copy",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateRepositoryObjectsCache(),
 		apiControllers.RepositoryCopyObject,
 	)
 	objects.Get(
@@ -608,7 +558,6 @@ func RegisterAPIRoutes(
 	branches.Post(
 		"/",
 		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateRepositoryBranchesCache(),
 		apiControllers.RepositoryBranchesStore,
 	)
 	branch := branches.Group("/:branch", apiMiddlewares.RepositoryBranchMiddleware)
@@ -625,13 +574,11 @@ func RegisterAPIRoutes(
 	branch.Patch(
 		"/",
 		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateRepositoryBranchesCache(),
 		apiControllers.RepositoryBranchesUpdate,
 	)
 	branch.Delete(
 		"/",
 		apiMiddlewares.RepositoryBranchPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateRepositoryBranchesCache(),
 		apiControllers.RepositoryBranchesDestroy,
 	)
 
@@ -645,7 +592,6 @@ func RegisterAPIRoutes(
 	tags.Post(
 		"/",
 		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateRepositoryTagsCache(),
 		apiControllers.RepositoryTagsStore,
 	)
 	tag := tags.Group("/:tag", apiMiddlewares.RepositoryTagMiddleware)
@@ -657,7 +603,6 @@ func RegisterAPIRoutes(
 	tag.Delete(
 		"/",
 		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionDelete),
-		apiMiddlewares.InvalidateRepositoryTagsCache(),
 		apiControllers.RepositoryTagsDestroy,
 	)
 
@@ -671,13 +616,11 @@ func RegisterAPIRoutes(
 	commits.Post(
 		"/",
 		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionCreate),
-		apiMiddlewares.InvalidateRepositoryCommitsCache(),
 		apiControllers.RepositoryCommitsStore,
 	)
 	commits.Post(
 		"/revert",
 		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionUpdate),
-		apiMiddlewares.InvalidateRepositoryCommitsCache(),
 		apiControllers.RepositoryRevertUncommittedChanges,
 	)
 	commits.Get(
