@@ -2,6 +2,7 @@
   "error_occurred": "Tapahtui virhe",
   "access_denied": "Pääsy kielletty",
   "invalid_request": "Virheellinen pyyntö",
+  "not_found": "Ei löytynyt",
   "insufficient_permissions": "Riittämättömät oikeudet",
   "profile_updated": "Profiili päivitetty",
   "new_owner_invalid": "Uusi omistaja on virheellinen",

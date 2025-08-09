@@ -1,4 +1,4 @@
-package middlewares
+package services
 
 import (
 	"irmin-api/db"
@@ -14,21 +14,21 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-type APIMiddlewares struct {
+type APIServices struct {
 	DB                *db.Database
 	Logger            *slog.Logger
 	Env               *utils.CoreAPIEnv
 	Orchestrator      *orchestrator.Orchestrator
 	SQIDManager       *irminsqids.SQIDManager
-	lm                *locales.LocaleManager
-	permissionService *lib.PermissionService
-	userMutex         sync.RWMutex // Protects user operations to prevent race conditions
-	validator         *irminvalidator.Validator
-	authCache         *AuthCache // Cache for authentication results
-	cacheStorage      fiber.Storage
+	LocaleManager     *locales.LocaleManager
+	PermissionService *lib.PermissionService
+	Validator         *irminvalidator.Validator
+	CacheStorage      fiber.Storage
+	userSyncMutex     sync.RWMutex // Protects user operations to prevent race conditions
+	authCache         *AuthCache
 }
 
-func NewAPIMiddlewares(
+func NewAPIServices(
 	db *db.Database,
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
@@ -37,17 +37,19 @@ func NewAPIMiddlewares(
 	localeManager *locales.LocaleManager,
 	permissionService *lib.PermissionService,
 	cacheStorage fiber.Storage,
-) *APIMiddlewares {
-	return &APIMiddlewares{
+) *APIServices {
+	authCache := &AuthCache{cache: make(map[string]*AuthCacheEntry)}
+	return &APIServices{
 		DB:                db,
 		Logger:            logger,
 		Env:               env,
 		Orchestrator:      orchestrator,
 		SQIDManager:       sqidManager,
-		lm:                localeManager,
-		permissionService: permissionService,
-		validator:         irminvalidator.NewValidator(sqidManager),
-		authCache:         &AuthCache{cache: make(map[string]*AuthCacheEntry)},
-		cacheStorage:      cacheStorage,
+		LocaleManager:     localeManager,
+		PermissionService: permissionService,
+		Validator:         irminvalidator.NewValidator(sqidManager),
+		CacheStorage:      cacheStorage,
+		userSyncMutex:     sync.RWMutex{},
+		authCache:         authCache,
 	}
 }

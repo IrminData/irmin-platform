@@ -2,15 +2,10 @@ package routes
 
 import (
 	"irmin-api/controllers"
-	"irmin-api/controllers/middlewares"
 	"irmin-api/db"
-	"irmin-api/lib"
-	"irmin-api/locales"
-	"irmin-api/orchestrator"
-	"irmin-api/utils"
-	"log/slog"
+	"irmin-api/middlewares"
+	"irmin-api/services"
 
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
 )
@@ -20,37 +15,16 @@ import (
 //nolint:funlen // This is a long function, but it's not complex. We just have a lot of routes.
 func RegisterAPIRoutes(
 	app *fiber.App,
-	d *db.Database,
-	logger *slog.Logger,
-	env *utils.CoreAPIEnv,
-	orchestrator *orchestrator.Orchestrator,
-	sqidManager *irminsqids.SQIDManager,
-	localeManager *locales.LocaleManager,
-	permissionService *lib.PermissionService,
-	cacheStorage fiber.Storage,
+	apiServices *services.APIServices,
 ) {
 	// Initialize controllers
 	apiControllers := controllers.NewAPIControllers(
-		d,
-		logger,
-		env,
-		orchestrator,
-		sqidManager,
-		localeManager,
-		permissionService,
-		cacheStorage,
+		apiServices,
 	)
 
 	// Initialize middlewares
 	apiMiddlewares := middlewares.NewAPIMiddlewares(
-		d,
-		logger,
-		env,
-		orchestrator,
-		sqidManager,
-		localeManager,
-		permissionService,
-		cacheStorage,
+		apiServices,
 	)
 
 	// Simple index route

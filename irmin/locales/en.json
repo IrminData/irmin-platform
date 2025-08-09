@@ -2,6 +2,7 @@
   "error_occurred": "Error occurred",
   "access_denied": "Access denied",
   "invalid_request": "Invalid request",
+  "not_found": "Not found",
   "insufficient_permissions": "Insufficient permissions",
   "profile_updated": "Profile updated",
   "new_owner_invalid": "New owner is invalid",

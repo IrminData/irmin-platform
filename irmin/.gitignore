@@ -16,6 +16,7 @@
 
 # Binaries built with `go build`
 out
+mcp/server
 tmp
 irmin-api
 

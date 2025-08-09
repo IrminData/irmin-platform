@@ -7,18 +7,13 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/locales"
 	"irmin-api/utils"
+	"strings"
 
 	"mime/multipart"
-	"strings"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	"github.com/clerk/clerk-sdk-go/v2"
-	"github.com/clerk/clerk-sdk-go/v2/emailaddress"
-	"github.com/clerk/clerk-sdk-go/v2/phonenumber"
-	"github.com/clerk/clerk-sdk-go/v2/user"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 // ProfileShow godoc
@@ -90,52 +85,6 @@ func (api *APIControllers) parseProfileUpdateRequest(
 	return &req, nil, nil
 }
 
-// updateUserFields updates the user fields based on the request.
-func (api *APIControllers) updateUserFields(irminUser *db.User, req *irmincore.UpdateProfileRequest) {
-	// Only update fields that were provided
-	if req.FirstName != "" {
-		irminUser.FirstName = req.FirstName
-	}
-	if req.LastName != "" {
-		irminUser.LastName = req.LastName
-	}
-	if req.Email != "" {
-		irminUser.Email = req.Email
-	}
-	if req.Phone != "" {
-		irminUser.Phone = req.Phone
-	}
-	if req.Company != "" {
-		irminUser.Company = req.Company
-	}
-}
-
-// updateClerkUserData coordinates all Clerk user updates.
-func (api *APIControllers) updateClerkUserData(c fiber.Ctx, irminUser *db.User) error {
-	// Set up Clerk client
-	clerk.SetKey(api.Env.ClerkSecretKey)
-
-	// Get user from Clerk
-	clerkUser, getUserErr := user.Get(c, irminUser.ClerkID)
-	if getUserErr != nil {
-		return getUserErr
-	}
-
-	// Update email and phone in Clerk
-	primaryEmailID, updateEmailErr := api.updateClerkEmail(c, clerkUser, irminUser)
-	if updateEmailErr != nil {
-		return updateEmailErr
-	}
-
-	primaryPhoneID, updatePhoneErr := api.updateClerkPhone(c, clerkUser, irminUser)
-	if updatePhoneErr != nil {
-		return updatePhoneErr
-	}
-
-	// Update profile in Clerk
-	return api.updateClerkProfile(c, irminUser, primaryEmailID, primaryPhoneID)
-}
-
 // ProfileUpdate godoc
 // @Summary Update user profile
 // @Description Update the current authenticated user's profile information
@@ -173,14 +122,15 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 	}
 
 	// Update user in a single atomic transaction that handles both profile picture and fields
-	if updateErr := api.updateCompleteProfileInTransaction(c, irminUser, req, form); updateErr != nil {
+	updatedUser, updateErr := api.Services.UpdateProfile(c, irminUser, req, form)
+	if updateErr != nil {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Format and return response
-	userResponse, formatUserResponseErr := formatter.FormatUserResponse(irminUser, api.SQIDManager)
+	userResponse, formatUserResponseErr := formatter.FormatUserResponse(updatedUser, api.SQIDManager)
 	if formatUserResponseErr != nil {
 		api.Logger.Error("Error formatting user response", "error", formatUserResponseErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -197,143 +147,4 @@ func (api *APIControllers) ProfileUpdate(c fiber.Ctx) error {
 		Message: api.lm.T(dict, "profile_updated"),
 		Data:    userResponse,
 	})
-}
-
-// updateCompleteProfileInTransaction handles the atomic update of both profile fields and profile picture.
-func (api *APIControllers) updateCompleteProfileInTransaction(
-	c fiber.Ctx,
-	irminUser *db.User,
-	req *irmincore.UpdateProfileRequest,
-	form *multipart.Form,
-) error {
-	// Use database transaction to ensure atomicity for all profile updates
-	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		// Handle profile picture update if it's a multipart form
-		if form != nil {
-			profilePictureFiles := form.File["profile_picture"]
-			if len(profilePictureFiles) > 0 {
-				profilePictureFile := profilePictureFiles[0]
-				if updateErr := api.updateProfilePictureInClerk(c, irminUser, profilePictureFile); updateErr != nil {
-					api.Logger.Error("Error updating profile picture in Clerk", "error", updateErr)
-					return updateErr
-				}
-			}
-		}
-
-		// Update user fields in memory
-		api.updateUserFields(irminUser, req)
-
-		// Update user in database
-		if saveErr := tx.Save(&irminUser).Error; saveErr != nil {
-			api.Logger.Error("Error updating user in database", "error", saveErr)
-			return saveErr
-		}
-
-		// Update Clerk user data (email, phone, profile info)
-		if updateErr := api.updateClerkUserData(c, irminUser); updateErr != nil {
-			api.Logger.Error("Error updating user data in Clerk", "error", updateErr)
-			return updateErr
-		}
-
-		return nil
-	})
-
-	return transactionErr
-}
-
-// updateProfilePictureInClerk handles updating the user's profile picture in Clerk only (no database transaction).
-func (api *APIControllers) updateProfilePictureInClerk(
-	c fiber.Ctx,
-	irminUser *db.User,
-	newProfilePicture *multipart.FileHeader,
-) error {
-	newProfilePictureSrc, err := newProfilePicture.Open()
-	if err != nil {
-		return err
-	}
-	defer newProfilePictureSrc.Close()
-
-	// Update profile picture in Clerk
-	clerkUser, err := user.UpdateProfileImage(c, irminUser.ClerkID, &user.UpdateProfileImageParams{
-		File: newProfilePictureSrc,
-	})
-	if err != nil {
-		return err
-	}
-
-	// Update user in memory (will be saved to database by the calling transaction)
-	irminUser.ProfilePicture = *clerkUser.ImageURL
-
-	return nil
-}
-
-// updateClerkEmail handles updating or creating a user's email in Clerk.
-func (api *APIControllers) updateClerkEmail(
-	c fiber.Ctx,
-	clerkUser *clerk.User,
-	irminUser *db.User,
-) (string, error) {
-	var primaryEmailID string
-	for _, email := range clerkUser.EmailAddresses {
-		if email.EmailAddress == irminUser.Email {
-			primaryEmailID = email.ID
-			break
-		}
-	}
-	if primaryEmailID == "" {
-		verified := true // In the future, we need to actually verify the email.
-		newClerkEmail, err := emailaddress.Create(c, &emailaddress.CreateParams{
-			UserID:       &irminUser.ClerkID,
-			EmailAddress: &irminUser.Email,
-			Verified:     &verified,
-		})
-		if err != nil {
-			return "", err
-		}
-		primaryEmailID = newClerkEmail.ID
-	}
-	return primaryEmailID, nil
-}
-
-// updateClerkPhone handles updating or creating a user's phone in Clerk.
-func (api *APIControllers) updateClerkPhone(
-	c fiber.Ctx,
-	clerkUser *clerk.User,
-	irminUser *db.User,
-) (string, error) {
-	var primaryPhoneID string
-	for _, phone := range clerkUser.PhoneNumbers {
-		if phone.PhoneNumber == irminUser.Phone {
-			primaryPhoneID = phone.ID
-			break
-		}
-	}
-	if primaryPhoneID == "" {
-		verified := true // In the future, we need to actually verify the phone number.
-		newClerkPhone, err := phonenumber.Create(c, &phonenumber.CreateParams{
-			UserID:      &irminUser.ClerkID,
-			PhoneNumber: &irminUser.Phone,
-			Verified:    &verified,
-		})
-		if err != nil {
-			return "", err
-		}
-		primaryPhoneID = newClerkPhone.ID
-	}
-	return primaryPhoneID, nil
-}
-
-// updateClerkProfile handles updating the user's profile information in Clerk.
-func (api *APIControllers) updateClerkProfile(
-	c fiber.Ctx,
-	irminUser *db.User,
-	primaryEmailID, primaryPhoneID string,
-) error {
-	_, err := user.Update(c, irminUser.ClerkID, &user.UpdateParams{
-		FirstName:             &irminUser.FirstName,
-		LastName:              &irminUser.LastName,
-		PrimaryEmailAddressID: &primaryEmailID,
-		PrimaryPhoneNumberID:  &primaryPhoneID,
-	})
-	return err
 }

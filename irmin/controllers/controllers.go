@@ -7,6 +7,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
+	"irmin-api/services"
 	"irmin-api/utils"
 	"log/slog"
 
@@ -17,6 +18,7 @@ import (
 )
 
 type APIControllers struct {
+	Services          *services.APIServices
 	DB                *db.Database
 	Logger            *slog.Logger
 	Env               *utils.CoreAPIEnv
@@ -29,25 +31,19 @@ type APIControllers struct {
 }
 
 func NewAPIControllers(
-	db *db.Database,
-	logger *slog.Logger,
-	env *utils.CoreAPIEnv,
-	orchestrator *orchestrator.Orchestrator,
-	sqidManager *irminsqids.SQIDManager,
-	localeManager *locales.LocaleManager,
-	permissionService *lib.PermissionService,
-	cacheStorage fiber.Storage,
+	apiServices *services.APIServices,
 ) *APIControllers {
 	return &APIControllers{
-		DB:                db,
-		Logger:            logger,
-		Env:               env,
-		Orchestrator:      orchestrator,
-		SQIDManager:       sqidManager,
-		lm:                localeManager,
-		permissionService: permissionService,
-		validator:         irminvalidator.NewValidator(sqidManager),
-		cacheStorage:      cacheStorage,
+		Services:          apiServices,
+		DB:                apiServices.DB,
+		Logger:            apiServices.Logger,
+		Env:               apiServices.Env,
+		Orchestrator:      apiServices.Orchestrator,
+		SQIDManager:       apiServices.SQIDManager,
+		lm:                apiServices.LocaleManager,
+		permissionService: apiServices.PermissionService,
+		validator:         apiServices.Validator,
+		cacheStorage:      apiServices.CacheStorage,
 	}
 }
 
