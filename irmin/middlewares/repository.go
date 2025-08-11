@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"errors"
 	"irmin-api/db"
-	"irmin-api/lib"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -14,33 +15,29 @@ import (
 func (api *APIMiddlewares) RepositoryMiddleware(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !localeOk || !dictOk || !workspaceOk {
+	if !localeOk || !dictOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	// Parse the repository slug from the request URL.
 	repositorySlug := c.Params("repository")
-	if repositorySlug == "" {
-		api.Logger.Error("No repository selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
 
-	// Get the repository by its slug and workspace ID.
-	repository, err := lib.GetRepository(
-		c,
-		locale,
-		api.DB,
-		api.Logger,
-		api.Env,
-		workspace,
-		repositorySlug,
-		false,
-	)
+	// Get the repository by its slug and workspace.
+	repository, err := api.Services.GetRepositoryBySlug(c, locale, user, workspace, repositorySlug)
 	if err != nil {
 		api.Logger.Error("Error retrieving repository", "error", err)
+		if errors.Is(err, services.ErrInvalidRequest) {
+			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "error_occurred")},
+			})
+		}
+		if errors.Is(err, services.ErrAccessDenied) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "error_occurred")},
+			})
+		}
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})

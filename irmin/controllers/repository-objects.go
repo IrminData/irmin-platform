@@ -6,18 +6,13 @@ import (
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
-	"irmin-api/engine"
 	"irmin-api/formatter"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
-	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 type objectLocalParams struct {
@@ -110,49 +105,6 @@ func (api *APIControllers) RepositoryObjectsIndex(c fiber.Ctx) error {
 		})
 	}
 
-	// Check if object is a group
-	if object.Type == irminmodels.ObjectTypeGroup {
-		// Check that the user has read access to the object
-		allowed, allowedErr := api.permissionService.IsAllowed(
-			params.user,
-			params.workspace,
-			db.PolicyResourceRepositoryObject,
-			&object.RepositoryID,
-			db.PolicyActionRead,
-		)
-		if allowedErr != nil {
-			api.Logger.Error("Error checking if user has read access to object", "error", allowedErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(params.dict, "error_occurred")},
-			})
-		}
-		if !allowed {
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(params.dict, "not_allowed")},
-			})
-		}
-	} else {
-		// It is a group, so we need to check if the user has read access to the object
-		// Filter objects based on user permissions
-		filteredObjectChildren, filterErr := lib.IsAllowedFilter(
-			api.permissionService,
-			params.user,
-			params.workspace,
-			db.PolicyResourceRepositoryObject,
-			db.PolicyActionRead,
-			object.Children,
-			func(o db.RepositoryObject) uint { return o.RepositoryID },
-		)
-		if filterErr != nil {
-			api.Logger.Error("Error filtering objects by permissions", "error", filterErr)
-			return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(params.dict, "error_occurred")},
-			})
-		}
-
-		object.Children = filteredObjectChildren
-	}
-
 	// Structure the response
 	objectResponse, formatErr := formatter.FormatRepositoryObjectResponse(object, api.SQIDManager)
 	if formatErr != nil {
@@ -231,17 +183,13 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		}
 	}
 
-	dataEngine, err := engine.NewClient(c, params.locale, api.Logger, api.Env)
-	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
 	// Upload the object to the path in the repository at ref
-	newObject, err := dataEngine.UploadObject(
-		params.workspace.Slug,
-		params.repository.Slug,
+	newObject, err := api.Services.UploadRepositoryObject(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
 		params.objectPath,
 		params.objectRef,
 		file,
@@ -253,34 +201,8 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		})
 	}
 
-	// Save the updates to the database
-	repositoryObject, err := lib.SaveObject(
-		api.DB,
-		api.Logger,
-		api.Env,
-		newObject,
-		params.objectRef,
-		params.repository.ID,
-	)
-	if err != nil {
-		api.Logger.Error("Error saving object to database", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:               db.LogEventTypeUpdate,
-		Description:        fmt.Sprintf("Object %s uploaded to branch %s", newObject.Path, params.objectRef),
-		UserID:             &params.user.ID,
-		WorkspaceID:        &params.workspace.ID,
-		RepositoryID:       &params.repository.ID,
-		RepositoryObjectID: &repositoryObject.ID,
-	})
-
 	// Format the object for the response.
-	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(repositoryObject, api.SQIDManager)
+	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
 	if err != nil {
 		api.Logger.Error("Error formatting repository object", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -322,6 +244,8 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/move [patch]
+//
+//nolint:dupl // This is not a duplicate, it's a different endpoint, which functions in a similar way.
 func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 	params, validateLocalParamsErr := api.validateObjectParams(c)
 	if validateLocalParamsErr != nil {
@@ -346,27 +270,15 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		})
 	}
 
-	// Validate required fields
-	if req.NewPath == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
-	}
-
-	dataEngine, err := engine.NewClient(c, params.locale, api.Logger, api.Env)
-	if err != nil {
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
 	// Move the object to the new path in the repository at ref
-	newObject, err := dataEngine.MoveObject(
+	newObject, err := api.Services.MoveRepositoryObject(
+		c,
 		params.workspace.Slug,
-		params.repository.Slug,
-		params.objectPath,
-		params.objectRef,
-		req.NewPath,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
+		req,
 	)
 	if err != nil {
 		api.Logger.Error("Error moving object in Data Engine", "error", err)
@@ -375,61 +287,8 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 		})
 	}
 
-	// Use a single transaction to ensure atomicity of cache updates for move
-	var repositoryObject *db.RepositoryObject
-	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		// First, remove the old object from cache within the tx
-		deleteOldObjectErr := api.DB.DeleteObjects(tx,
-			&params.objectPath,
-			&params.repository.ID,
-			&params.objectRef,
-		)
-		if deleteOldObjectErr != nil {
-			api.Logger.Error("Error deleting old object from cache during move", "error", deleteOldObjectErr)
-			return deleteOldObjectErr
-		}
-
-		// Save the new object to the database using the same tx
-		txDB := &db.Database{DB: tx}
-		var saveErr error
-		repositoryObject, saveErr = lib.SaveObject(
-			txDB,
-			api.Logger,
-			api.Env,
-			newObject,
-			params.objectRef,
-			params.repository.ID,
-		)
-		if saveErr != nil {
-			api.Logger.Error("Error saving moved object to database (tx)", "error", saveErr)
-			return saveErr
-		}
-		return nil
-	})
-	if transactionErr != nil {
-		api.Logger.Error("Error performing atomic move cache update", "error", transactionErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type: db.LogEventTypeUpdate,
-		Description: fmt.Sprintf(
-			"Object %s moved to %s on branch %s",
-			params.objectPath,
-			newObject.Path,
-			params.objectRef,
-		),
-		UserID:             &params.user.ID,
-		WorkspaceID:        &params.workspace.ID,
-		RepositoryID:       &params.repository.ID,
-		RepositoryObjectID: &repositoryObject.ID,
-	})
-
 	// Format the object for the response.
-	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(repositoryObject, api.SQIDManager)
+	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
 	if err != nil {
 		api.Logger.Error("Error formatting repository object", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -470,6 +329,8 @@ func (api *APIControllers) RepositoryMoveObject(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Object not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/copy [post]
+//
+//nolint:dupl // This is not a duplicate, it's a different endpoint, which functions in a similar way.
 func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 	params, validateLocalParamsErr := api.validateObjectParams(c)
 	if validateLocalParamsErr != nil {
@@ -494,29 +355,15 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		})
 	}
 
-	// Validate required fields
-	if req.NewPath == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
-	}
-
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, params.locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
 	// Copy the object to the new path in the repository at ref
-	newObject, err := dataEngine.CopyObject(
+	newObject, err := api.Services.CopyRepositoryObject(
+		c,
 		params.workspace.Slug,
-		params.repository.Slug,
-		params.objectPath,
-		params.objectRef,
-		req.NewPath,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
+		req,
 	)
 	if err != nil {
 		api.Logger.Error("Error copying object in Data Engine", "error", err)
@@ -525,39 +372,8 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		})
 	}
 
-	// Save the updates to the database
-	repositoryObject, err := lib.SaveObject(
-		api.DB,
-		api.Logger,
-		api.Env,
-		newObject,
-		params.objectRef,
-		params.repository.ID,
-	)
-	if err != nil {
-		api.Logger.Error("Error saving object to database", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type: db.LogEventTypeUpdate,
-		Description: fmt.Sprintf(
-			"Object %s copied to %s on branch %s",
-			params.objectPath,
-			newObject.Path,
-			params.objectRef,
-		),
-		UserID:             &params.user.ID,
-		WorkspaceID:        &params.workspace.ID,
-		RepositoryID:       &params.repository.ID,
-		RepositoryObjectID: &repositoryObject.ID,
-	})
-
 	// Format the object for the response.
-	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(repositoryObject, api.SQIDManager)
+	repositoryObjectResponse, err := formatter.FormatRepositoryObjectResponse(newObject, api.SQIDManager)
 	if err != nil {
 		api.Logger.Error("Error formatting repository object", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -577,55 +393,6 @@ func (api *APIControllers) RepositoryCopyObject(c fiber.Ctx) error {
 		Message: api.lm.T(params.dict, "object_copied"),
 		Data:    repositoryObjectResponse,
 	})
-}
-
-// deleteObjectInTransaction handles the transactional deletion of objects from both Data Engine and database.
-func (api *APIControllers) deleteObjectInTransaction(
-	c fiber.Ctx,
-	objectLocalParams *objectLocalParams,
-) error {
-	// Initialize Data Engine client outside transaction
-	dataEngine, err := engine.NewClient(c, objectLocalParams.locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return err
-	}
-
-	// Use database transaction to ensure atomicity
-	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		// Delete from the Data Engine first
-		deleteEngineObjectErr := dataEngine.DeleteObject(
-			objectLocalParams.workspace.Slug,
-			objectLocalParams.repository.Slug,
-			objectLocalParams.objectPath,
-			objectLocalParams.objectRef,
-		)
-		if deleteEngineObjectErr != nil {
-			api.Logger.Error("Error deleting object from Data Engine", "error", deleteEngineObjectErr)
-			return deleteEngineObjectErr
-		}
-
-		// Delete the object cache from the database after successful engine deletion
-		deleteDatabaseObjectErr := api.DB.DeleteObjects(tx,
-			&objectLocalParams.objectPath,
-			&objectLocalParams.repository.ID,
-			&objectLocalParams.objectRef,
-		)
-		if deleteDatabaseObjectErr != nil {
-			api.Logger.Error("Error deleting object from database", "error", deleteDatabaseObjectErr)
-			return deleteDatabaseObjectErr
-		}
-
-		return nil
-	})
-
-	// If transaction failed, log the error
-	if transactionErr != nil {
-		api.Logger.ErrorContext(c, "Transaction failed for object deletion", "error", transactionErr)
-		return transactionErr
-	}
-
-	return nil
 }
 
 // RepositoryObjectsDestroy godoc
@@ -661,28 +428,21 @@ func (api *APIControllers) RepositoryObjectsDestroy(c fiber.Ctx) error {
 		})
 	}
 
-	// Use database transaction to ensure atomicity
-	transactionErr := api.deleteObjectInTransaction(c, params)
-	if transactionErr != nil {
-		api.Logger.Error("Transaction failed for object deletion", "error", transactionErr)
+	// Delete the object from the repository at ref
+	err := api.Services.DeleteRepositoryObject(
+		c,
+		params.workspace.Slug,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
+	)
+	if err != nil {
+		api.Logger.Error("Error deleting object in Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(params.dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type: db.LogEventTypeDelete,
-		Description: fmt.Sprintf(
-			"Object %s deleted from branch %s",
-			params.objectPath,
-			params.objectRef,
-		),
-		UserID:             &params.user.ID,
-		WorkspaceID:        &params.workspace.ID,
-		RepositoryID:       &params.repository.ID,
-		RepositoryObjectID: &object.ID,
-	})
 
 	// Invalidate objects listing for this repository (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -730,21 +490,14 @@ func (api *APIControllers) RepositoryObjectsContent(c fiber.Ctx) error {
 		})
 	}
 
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, params.locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
 	// Get the content of the object in the repository at ref
-	content, getObjectContentErr := dataEngine.GetObjectContent(
-		params.workspace.Slug,
-		params.repository.Slug,
-		params.objectPath,
-		params.objectRef,
+	content, getObjectContentErr := api.Services.GetRepositoryObjectContent(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
 	)
 	if getObjectContentErr != nil {
 		api.Logger.Error("Error retrieving object content from Data Engine", "error", getObjectContentErr)
@@ -796,52 +549,21 @@ func (api *APIControllers) RepositoryObjectsStructuredContent(c fiber.Ctx) error
 		})
 	}
 
-	// Make sure the object is a structured file
-	if object.Type != irminmodels.ObjectTypeStructured {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "invalid_request")},
-		})
-	}
-
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, params.locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	// Get the content of the object in the repository at ref
-	content, getObjectContentErr := dataEngine.GetObjectContent(
-		params.workspace.Slug,
-		params.repository.Slug,
-		params.objectPath,
-		params.objectRef,
-	)
-	if getObjectContentErr != nil {
-		api.Logger.Error("Error retrieving object content from Data Engine", "error", getObjectContentErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	// Parse the file content
-	parsedResults, parseStructuredFileErr := lib.ParseStructuredFiles(
+	// Get the structured content of the object in the repository at ref
+	parsedResults, getObjectStructuredContentErr := api.Services.GetRepositoryObjectStructuredContent(
 		c,
-		map[string][]byte{params.objectPath: content},
-		api.Env,
-		api.Logger,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
 	)
-	if parseStructuredFileErr != nil {
-		api.Logger.Error("Error parsing structured files", "error", parseStructuredFileErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	// If there are no results, return a 404
-	if len(parsedResults) == 0 {
+	if getObjectStructuredContentErr != nil {
+		api.Logger.Error(
+			"Error retrieving object structured content from Data Engine",
+			"error",
+			getObjectStructuredContentErr,
+		)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(params.dict, "error_occurred")},
 		})
@@ -886,53 +608,22 @@ func (api *APIControllers) RepositoryObjectsDownload(c fiber.Ctx) error {
 		})
 	}
 
-	dataEngine, err := engine.NewClient(c, params.locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	files := make(map[string][]byte)
-
-	var processErr error
-	if object.Type == irminmodels.ObjectTypeGroup {
-		processErr = api.processGroupObjectDownload(
-			object,
-			params.workspace,
-			params.repository,
-			params.objectRef,
-			dataEngine,
-			files,
-		)
-	} else {
-		processErr = api.processSingleObjectDownload(object, params.workspace, params.repository, params.objectRef, dataEngine, files)
-	}
-
-	if processErr != nil {
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	zipContent, err := irminutils.ZipFiles(files)
-	if err != nil {
-		api.Logger.Error("Error creating zip file", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
-	timestamp := time.Now().UnixMilli()
-	zipName := fmt.Sprintf(
-		"%s-%s-%s-%s-%d.zip",
-		params.workspace.Slug,
-		params.repository.Slug,
-		object.Name,
-		params.objectRef,
-		timestamp,
+	// Build the zip file of the object
+	zipContent, zipName, err := api.Services.ZipRepositoryObject(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
 	)
+	if err != nil {
+		api.Logger.Error("Error zipping object", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(params.dict, "error_occurred")},
+		})
+	}
+
 	return utils.WriteFileDownloadResponse(c, fiber.StatusOK, zipName, "application/zip", zipContent)
 }
 
@@ -969,21 +660,14 @@ func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 		})
 	}
 
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, params.locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(params.dict, "error_occurred")},
-		})
-	}
-
 	// Get the commit history of the object in the repository at ref
-	commits, getObjectChangesErr := dataEngine.GetObjectChanges(
-		params.workspace.Slug,
-		params.repository.Slug,
-		params.objectPath,
-		params.objectRef,
+	commits, getObjectChangesErr := api.Services.GetRepositoryObjectHistory(
+		c,
+		params.locale,
+		params.user,
+		params.workspace,
+		params.repository,
+		object,
 	)
 	if getObjectChangesErr != nil {
 		api.Logger.Error("Error retrieving object history from Data Engine", "error", getObjectChangesErr)
@@ -1008,7 +692,7 @@ func (api *APIControllers) RepositoryObjectsHistory(c fiber.Ctx) error {
 // @Param repository_slug path string true "Repository slug"
 // @Param object_path path string true "Object path within the repository"
 // @Param ref query string false "Reference (branch, tag, or commit) to get schema from" default("main")
-// @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Object schema retrieved successfully"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.ObjectSchema} "Object schema retrieved successfully"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid parameters"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
@@ -1031,18 +715,17 @@ func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 	}
 
 	// Get the schema of the object in the repository at ref
-	scm := lib.NewSchemaCacheManager(api.Env, api.Logger, api.DB)
-	schema, getObjectSchemaErr := scm.GetObjectSchema(
+	schema, getObjectSchemaErr := api.Services.GetRepositoryObjectSchema(
 		c,
+		params.locale,
+		params.user,
 		params.workspace,
 		params.repository,
 		object,
 		params.objectRef,
-		params.locale,
-		false,
 	)
 	if getObjectSchemaErr != nil {
-		api.Logger.Error("Error retrieving object schema", "error", getObjectSchemaErr)
+		api.Logger.Error("Error retrieving object schema from Data Engine", "error", getObjectSchemaErr)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(params.dict, "error_occurred")},
 		})
@@ -1051,53 +734,4 @@ func (api *APIControllers) RepositoryObjectsSchema(c fiber.Ctx) error {
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: schema,
 	})
-}
-
-// processGroupObject recursively processes a group object and its children, storing file contents in the provided map.
-func (api *APIControllers) processGroupObjectDownload(
-	group *db.RepositoryObject,
-	workspace *db.Workspace,
-	repository *db.Repository,
-	objectRef string,
-	dataEngine *engine.Client,
-	files map[string][]byte,
-) error {
-	if group == nil {
-		return errors.New("group object is nil")
-	}
-	if group.Type != irminmodels.ObjectTypeGroup {
-		return fmt.Errorf("object %q is not a group", group.Name)
-	}
-
-	for i := range group.Children {
-		child := &group.Children[i]
-		if child.Type == irminmodels.ObjectTypeGroup {
-			if err := api.processGroupObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
-				return err
-			}
-		} else {
-			if err := api.processSingleObjectDownload(child, workspace, repository, objectRef, dataEngine, files); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// processSingleObject fetches and stores the content of a single object.
-func (api *APIControllers) processSingleObjectDownload(
-	object *db.RepositoryObject,
-	workspace *db.Workspace,
-	repository *db.Repository,
-	objectRef string,
-	dataEngine *engine.Client,
-	files map[string][]byte,
-) error {
-	content, err := dataEngine.GetObjectContent(workspace.Slug, repository.Slug, object.Path, objectRef)
-	if err != nil {
-		api.Logger.Error("Error retrieving object content", "error", err)
-		return err
-	}
-	files[object.Path] = content
-	return nil
 }

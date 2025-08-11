@@ -1,18 +1,17 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
-	"irmin-api/lib"
+	"irmin-api/services"
 	"irmin-api/utils"
-	"strings"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 // UsersIndex godoc
@@ -29,7 +28,7 @@ import (
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/users [get]
 //
-//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other index functions
+//nolint:dupl // This is not a duplicate, it's a different endpoint, which functions in a similar way.
 func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {
@@ -37,27 +36,10 @@ func (api *APIControllers) UsersIndex(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Get all users in the workspace.
-	workspaceUsers, getUsersErr := api.DB.GetUsersInWorkspace(workspace.ID)
-	if getUsersErr != nil {
-		api.Logger.Error("Error fetching users", "error", getUsersErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Filter users based on user permissions
-	filteredUsers, err := lib.IsAllowedFilter(
-		api.permissionService,
-		user,
-		workspace,
-		db.PolicyResourceUser,
-		db.PolicyActionRead,
-		workspaceUsers,
-		func(u db.WorkspaceUser) uint { return u.UserID },
-	)
+	// Get workspace users using the service
+	filteredUsers, err := api.Services.ListWorkspaceUsers(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error filtering users by permissions", "error", err)
+		api.Logger.Error("Error listing workspace users", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -153,38 +135,24 @@ func (api *APIControllers) UsersDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Make sure the deleted user is not the user making the request
-	if user.ID == workspaceMember.UserID {
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "cannot_remove_self_from_workspace")},
-		})
-	}
-
-	// Make sure the deleted user is not the workspace owner
-	if workspace.OwnerID == workspaceMember.UserID {
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "cannot_remove_owner_from_workspace")},
-		})
-	}
-
-	// Remove the user from the workspace
-	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		return api.DB.RemoveUserFromWorkspace(tx, workspaceMember.UserID, workspace.ID)
-	})
-	if txErr != nil {
-		api.Logger.Error("Error removing user from workspace", "error", txErr)
+	// Remove user from workspace using the service
+	err = api.Services.RemoveUserFromWorkspace(c, user, workspace, workspaceMember)
+	if err != nil {
+		api.Logger.Error("Error removing user from workspace", "error", err)
+		if errors.Is(err, services.ErrCannotRemoveSelfFromWorkspace) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "cannot_remove_self_from_workspace")},
+			})
+		}
+		if errors.Is(err, services.ErrCannotRemoveOwnerFromWorkspace) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "cannot_remove_owner_from_workspace")},
+			})
+		}
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("User %s removed from workspace", workspaceMember.User.Email),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
 
 	// Invalidate workspace users list for all users
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -236,31 +204,10 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Parse and validate roles
-	newRoles := parseAndValidateRoles(api, req.Roles)
-
-	// Update user roles
-	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		var updateRolesErr error
-		workspaceMember, updateRolesErr = api.DB.UpdateWorkspaceUserRoles(
-			tx,
-			workspaceMember.UserID,
-			workspace.ID,
-			newRoles,
-		)
-		return updateRolesErr
-	})
-	if txErr != nil {
-		api.Logger.Error("Error updating workspace user roles", "error", txErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Refetch updated user
-	workspaceMember, err = api.DB.GetWorkspaceUser(workspace.ID, workspaceMember.UserID)
+	// Update workspace user roles using the service
+	workspaceMember, err = api.Services.UpdateWorkspaceUserRoles(c, user, workspace, workspaceMember, req)
 	if err != nil {
-		api.Logger.Error("Error fetching workspace user", "error", err)
+		api.Logger.Error("Error updating workspace user roles", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -275,18 +222,6 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type: db.LogEventTypeUpdate,
-		Description: fmt.Sprintf(
-			"User %s roles updated to %s",
-			workspaceMember.User.Email,
-			strings.Join(req.Roles, ","),
-		),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
-
 	// Invalidate workspace users list for all users
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
 		api.cacheStorage,
@@ -299,20 +234,4 @@ func (api *APIControllers) UsersUpdate(c fiber.Ctx) error {
 		Message: api.lm.T(dict, "workspace_member_updated"),
 		Data:    userResponse,
 	})
-}
-
-// parseAndValidateRoles converts string roles to UserWorkspaceRole slice.
-func parseAndValidateRoles(api *APIControllers, requestedRoles []string) []uint {
-	var newRoles []uint
-
-	for _, role := range requestedRoles {
-		roleID, err := api.SQIDManager.Decode("roles", role)
-		if err != nil {
-			api.Logger.Error("Error decoding role", "error", err)
-		} else {
-			newRoles = append(newRoles, uint(roleID))
-		}
-	}
-
-	return newRoles
 }

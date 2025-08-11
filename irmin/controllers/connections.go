@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -13,7 +12,6 @@ import (
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 // ConnectionsIndex godoc
@@ -38,27 +36,10 @@ func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Get all connections in the workspace.
-	connections, getConnectionsByWorkspaceIDErr := api.DB.GetConnectionsByWorkspaceID(workspace.ID)
-	if getConnectionsByWorkspaceIDErr != nil {
-		api.Logger.Error("Error fetching connections", "error", getConnectionsByWorkspaceIDErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Filter connections based on user permissions
-	filteredConnections, err := lib.IsAllowedFilter(
-		api.permissionService,
-		user,
-		workspace,
-		db.PolicyResourceConnection,
-		db.PolicyActionRead,
-		connections,
-		func(c db.Connection) uint { return c.ID },
-	)
+	// Get the connections
+	connections, err := api.Services.ListConnections(c, user, workspace)
 	if err != nil {
-		api.Logger.Error("Error filtering connections by permissions", "error", err)
+		api.Logger.Error("Error listing connections", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -66,7 +47,7 @@ func (api *APIControllers) ConnectionsIndex(c fiber.Ctx) error {
 
 	// Structure the response.
 	connectionsResponse, formatErr := formatter.FormatIndexResponse(
-		filteredConnections,
+		connections,
 		formatter.FormatConnectionResponse,
 		api.SQIDManager,
 	)
@@ -111,41 +92,10 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Validate and decode the connector SQID
-	connectorID, err := api.SQIDManager.Decode("connectors", req.Connector)
-	if err != nil {
-		api.Logger.Error("Error decoding SQID", "sqid", req.Connector, "type", "connectors", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Convert any maps to string maps for compatibility with database models
-	detailsStr := utils.ConvertToStringMap(req.Details)
-	settingsStr := utils.ConvertToStringMap(req.Settings)
-
 	// Create the connection
-	connection := &db.Connection{
-		Name:          req.Name,
-		Description:   req.Description,
-		Documentation: req.Documentation,
-		Details:       detailsStr,
-		Settings:      settingsStr,
-		ConnectorID:   uint(connectorID),
-		OwnerID:       user.ID,
-		WorkspaceID:   workspace.ID,
-	}
-	if createConnectionErr := api.DB.Create(&connection).Error; createConnectionErr != nil {
-		api.Logger.Error("Error creating connection", "error", createConnectionErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Fetch the newly created connection
-	connection, getConnectionByIDErr := api.DB.GetConnectionByID(connection.ID)
-	if getConnectionByIDErr != nil {
-		api.Logger.Error("Error fetching connection", "error", getConnectionByIDErr)
+	connection, err := api.Services.CreateConnection(c, user, workspace, req)
+	if err != nil {
+		api.Logger.Error("Error creating connection", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -159,14 +109,6 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("Connection %s created", connection.Name),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
 
 	// Invalidate caches that may be affected by this action
 	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -220,37 +162,6 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 	})
 }
 
-// updateConnectionFields updates the connection fields based on the request.
-func (api *APIControllers) updateConnectionFields(
-	connection *db.Connection,
-	req irmincore.UpdateConnectionRequest,
-) error {
-	// Only update fields that were provided
-	if req.Name != "" {
-		connection.Name = req.Name
-	}
-	if req.Description != "" {
-		connection.Description = req.Description
-	}
-	if req.Documentation != "" {
-		connection.Documentation = req.Documentation
-	}
-	if len(req.Details) > 0 {
-		connection.Details = utils.ConvertToStringMap(req.Details)
-	}
-	if len(req.Settings) > 0 {
-		connection.Settings = utils.ConvertToStringMap(req.Settings)
-	}
-	if req.Connector != "" {
-		connectorID, err := api.SQIDManager.Decode("connectors", req.Connector)
-		if err != nil {
-			return fmt.Errorf("error decoding connector sqid: %w", err)
-		}
-		connection.ConnectorID = uint(connectorID)
-	}
-	return nil
-}
-
 // ConnectionsUpdate godoc
 // @Summary Update connection
 // @Description Update an existing connection's details
@@ -267,6 +178,8 @@ func (api *APIControllers) updateConnectionFields(
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/connections/{connection_slug} [patch]
+//
+//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other update functions
 func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -282,17 +195,10 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Update the connection fields
-	if err := api.updateConnectionFields(connection, req); err != nil {
-		api.Logger.Error("Error updating connection fields", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
 	// Update the connection
-	if updateConnectionErr := api.DB.Save(&connection).Error; updateConnectionErr != nil {
-		api.Logger.Error("Error updating connection", "error", updateConnectionErr)
+	connection, err := api.Services.UpdateConnection(c, user, workspace, connection, req)
+	if err != nil {
+		api.Logger.Error("Error updating connection", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -309,14 +215,6 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeUpdate,
-		Description: fmt.Sprintf("Connection %s updated", connection.Name),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
 
 	// Invalidate caches that may be affected by this action
 	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -357,32 +255,14 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// TODO: Verify that the connection is not used in any workflows before deletion
-	// This should include:
-	// - Check if connection is referenced in any active workflows
-	// - Check if connection is referenced in any scheduled workflows
-	// - Check if connection is referenced in any workflow templates
-	// - Optionally provide a force delete option that removes workflow references
-	// - Return appropriate error message if connection is in use
-
 	// Delete the connection
-	deleteConnectionErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		return api.DB.DeleteConnection(tx, connection.ID)
-	})
-	if deleteConnectionErr != nil {
-		api.Logger.Error("Error deleting connection", "error", deleteConnectionErr)
+	err := api.Services.DeleteConnection(c, user, workspace, connection)
+	if err != nil {
+		api.Logger.Error("Error deleting connection", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("Connection %s deleted", connection.Name),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
 
 	// Invalidate caches that may be affected by this action
 	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -415,6 +295,8 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/connections/{connection_slug}/transfer-ownership [post]
+//
+//nolint:dupl // this function is not a duplicate, but follows the same pattern as the other update and ownership transfer functions
 func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
@@ -430,33 +312,10 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Validate and decode the new owner SQID
-	newOwnerID, err := api.SQIDManager.Decode("users", req.NewOwnerID)
+	// Transfer the connection ownership
+	connection, err := api.Services.TransferConnectionOwnership(c, user, workspace, connection, req)
 	if err != nil {
-		api.Logger.Error("Error decoding SQID", "sqid", req.NewOwnerID, "type", "users", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Make sure the new owner is valid and a member of the workspace
-	inWorkspace, isUserInWorkspaceErr := api.DB.IsUserInWorkspace(uint(newOwnerID), workspace.ID)
-	if isUserInWorkspaceErr != nil {
-		api.Logger.Error("Error checking if user is in workspace", "error", isUserInWorkspaceErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
-		})
-	}
-	if !inWorkspace {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "new_owner_invalid")},
-		})
-	}
-
-	// Update the connection
-	connection.OwnerID = uint(newOwnerID)
-	if updateConnectionErr := api.DB.Save(&connection).Error; updateConnectionErr != nil {
-		api.Logger.Error("Error updating connection", "error", updateConnectionErr)
+		api.Logger.Error("Error transferring connection ownership", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -473,18 +332,6 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type: db.LogEventTypeUpdate,
-		Description: fmt.Sprintf(
-			"Connection %s ownership transferred to %s",
-			connection.Name,
-			connection.Owner.Email,
-		),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
 
 	// Invalidate caches that may be affected by this action
 	invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -521,8 +368,10 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	connection, connectionOk := c.Locals("connection").(*db.Connection)
-	if !localeOk || !dictOk || !connectionOk {
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !connectionOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -534,19 +383,15 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
-	operationMethod := query["operation_method"]
-	if operationMethod == "" {
-		operationMethod = "pull"
-	}
 
 	// Get the schema of the connection
-	scm := lib.NewSchemaCacheManager(api.Env, api.Logger, api.DB)
-	schema, getConnectionSchemaErr := scm.GetConnectionSchema(
+	schema, getConnectionSchemaErr := api.Services.GetConnectionSchema(
 		c,
-		connection,
-		operationMethod,
 		locale,
-		false,
+		user,
+		workspace,
+		connection,
+		query["operation_method"],
 	)
 	if getConnectionSchemaErr != nil {
 		api.Logger.Error("Error getting connection schema", "error", getConnectionSchemaErr)

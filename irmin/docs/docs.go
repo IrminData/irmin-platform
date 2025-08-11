@@ -2233,7 +2233,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Editor item saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.EditorItem"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -2438,7 +2450,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Editor item copied successfully",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.EditorItem"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -2591,7 +2615,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Editor item moved successfully",
                         "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.EditorItem"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -2663,7 +2699,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/irminmodels.QueryResult"
                                         }
                                     }
                                 }
@@ -2807,7 +2843,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/irminmodels.Invite"
                                         }
                                     }
                                 }
@@ -4408,7 +4444,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/irminmodels.QueryResult"
                                         }
                                     }
                                 }
@@ -6569,7 +6605,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/irminmodels.ObjectSchema"
                                         }
                                     }
                                 }
@@ -11027,6 +11063,68 @@ const docTemplate = `{
                 }
             }
         },
+        "irminmodels.EditorItem": {
+            "type": "object",
+            "required": [
+                "last_modified",
+                "name",
+                "path",
+                "type"
+            ],
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.EditorItem"
+                    }
+                },
+                "content": {
+                    "type": "string",
+                    "example": "This is the content of the file"
+                },
+                "language": {
+                    "description": "js, py, go, etc.",
+                    "type": "string",
+                    "example": "js"
+                },
+                "last_modified": {
+                    "type": "string",
+                    "example": "2025-01-15T10:30:00Z"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "file.txt"
+                },
+                "path": {
+                    "type": "string",
+                    "example": "/path/to/file.txt"
+                },
+                "type": {
+                    "enum": [
+                        "file",
+                        "folder"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.EditorItemType"
+                        }
+                    ],
+                    "example": "file"
+                }
+            }
+        },
+        "irminmodels.EditorItemType": {
+            "type": "string",
+            "enum": [
+                "file",
+                "folder"
+            ],
+            "x-enum-varnames": [
+                "EditorItemTypeFile",
+                "EditorItemTypeFolder"
+            ]
+        },
         "irminmodels.FieldMapping": {
             "type": "object",
             "required": [
@@ -11904,6 +12002,65 @@ const docTemplate = `{
                 "PolicyResourceBilling",
                 "PolicyResourceWorkspaceTag"
             ]
+        },
+        "irminmodels.QueryResult": {
+            "type": "object",
+            "properties": {
+                "columns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "region",
+                        "category",
+                        "total_sales"
+                    ]
+                },
+                "data": {
+                    "description": "Example: [{\"region\":\"North\",\"category\":\"Electronics\",\"total_sales\":125000.50}]",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    }
+                },
+                "duration": {
+                    "description": "Time between two instants as an int64 nanosecond count",
+                    "minimum": 0,
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/time.Duration"
+                        }
+                    ],
+                    "example": 1500000000
+                },
+                "finished_at": {
+                    "type": "string",
+                    "example": "2025-12-01T14:22:31.600Z"
+                },
+                "has_errors": {
+                    "description": "Whether the query execution encountered errors",
+                    "type": "boolean",
+                    "example": false
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "Query started",
+                        "Scanning 50",
+                        "000 rows",
+                        "Query completed successfully"
+                    ]
+                },
+                "started_at": {
+                    "type": "string",
+                    "example": "2025-12-01T14:22:30.100Z"
+                }
+            }
         },
         "irminmodels.Repository": {
             "type": "object",
@@ -12917,11 +13074,23 @@ const docTemplate = `{
                 1000000,
                 1000000000,
                 60000000000,
+                3600000000000,
+                1,
+                1000,
+                1000000,
+                1000000000,
+                60000000000,
                 3600000000000
             ],
             "x-enum-varnames": [
                 "minDuration",
                 "maxDuration",
+                "Nanosecond",
+                "Microsecond",
+                "Millisecond",
+                "Second",
+                "Minute",
+                "Hour",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",

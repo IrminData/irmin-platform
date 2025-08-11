@@ -4,9 +4,6 @@ import (
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
-	"irmin-api/engine"
-	"irmin-api/lakefs"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -55,45 +52,19 @@ func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 	// Parse pagination parameters
 	pagination := parseCursorPaginationParams(params)
 
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Get the commits from the data engine.
-	var commits []irminmodels.Commit
-	var lakefsPagination *lakefs.Pagination
-	var listCommitsErr error
-	commits, lakefsPagination, listCommitsErr = dataEngine.ListCommits(
-		workspace.Slug,
-		repository.Slug,
+	// Get the commits using the service
+	filteredCommits, lakefsPagination, err := api.Services.ListRepositoryCommits(
+		c,
+		locale,
+		user,
+		workspace,
+		repository,
 		params["ref"],
 		pagination.after,
 		&pagination.perPage,
 	)
-	if listCommitsErr != nil {
-		api.Logger.Error("Error retrieving commits from Data Engine", "error", listCommitsErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Filter commits based on user permissions
-	filteredCommits, err := lib.IsAllowedFilter(
-		api.permissionService,
-		user,
-		workspace,
-		db.PolicyResourceRepository,
-		db.PolicyActionRead,
-		commits,
-		func(_ irminmodels.Commit) uint { return repository.ID },
-	)
 	if err != nil {
-		api.Logger.Error("Error filtering commits by permissions", "error", err)
+		api.Logger.Error("Error listing repository commits", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -134,6 +105,8 @@ func (api *APIControllers) RepositoryCommitsIndex(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Repository not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/commits [post]
+//
+//nolint:dupl // This is not a duplicate, it's a different endpoint, which functions in a similar way.
 func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
@@ -150,39 +123,14 @@ func (api *APIControllers) RepositoryCommitsStore(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+	// Create the commit using the service
+	commit, err := api.Services.CreateRepositoryCommit(c, locale, user, workspace, repository, req)
+	if err != nil {
+		api.Logger.Error("Error creating repository commit", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Commit the changes in the data engine.
-	commit, commitChangesErr := dataEngine.CommitChanges(
-		workspace.Slug,
-		repository.Slug,
-		req.Branch,
-		req.Message,
-		user.Email,
-		true,
-	)
-	if commitChangesErr != nil {
-		api.Logger.Error("Error committing changes in Data Engine", "error", commitChangesErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:         db.LogEventTypeCreate,
-		Description:  fmt.Sprintf("Commit %s created on branch %s", commit.Hash, req.Branch),
-		UserID:       &user.ID,
-		WorkspaceID:  &workspace.ID,
-		RepositoryID: &repository.ID,
-	})
 
 	// Invalidate commits list for this repository (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -220,7 +168,8 @@ func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -233,20 +182,11 @@ func (api *APIControllers) RepositoryCommitsShow(c fiber.Ctx) error {
 		})
 	}
 
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+	// Get the commit using the service
+	commit, err := api.Services.GetRepositoryCommit(c, locale, user, workspace, repository, hash)
+	if err != nil {
+		api.Logger.Error("Error getting repository commit", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Get the commit from the data engine.
-	commit, getCommitErr := dataEngine.GetCommit(workspace.Slug, repository.Slug, hash)
-	if getCommitErr != nil {
-		api.Logger.Error("Error retrieving commit from Data Engine", "error", getCommitErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
@@ -289,38 +229,14 @@ func (api *APIControllers) RepositoryRevertUncommittedChanges(c fiber.Ctx) error
 		return validationErr
 	}
 
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
+	// Revert uncommitted changes using the service
+	err := api.Services.RevertRepositoryUncommittedChanges(c, locale, user, workspace, repository, req)
+	if err != nil {
+		api.Logger.Error("Error reverting repository uncommitted changes", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Revert the uncommitted changes in the data engine.
-	revertUncommittedChangesErr := dataEngine.RevertUncommitedChanges(
-		workspace.Slug,
-		repository.Slug,
-		req.Branch,
-		req.Path,
-		req.PathType,
-	)
-	if revertUncommittedChangesErr != nil {
-		api.Logger.Error("Error reverting uncommitted changes in Data Engine", "error", revertUncommittedChangesErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:         db.LogEventTypeInfo,
-		Description:  fmt.Sprintf("Uncommitted changes reverted on branch %s", req.Branch),
-		UserID:       &user.ID,
-		WorkspaceID:  &workspace.ID,
-		RepositoryID: &repository.ID,
-	})
 
 	// Invalidate commits and objects listings for this repository (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(

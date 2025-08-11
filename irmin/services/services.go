@@ -15,17 +15,18 @@ import (
 )
 
 type APIServices struct {
-	DB                *db.Database
-	Logger            *slog.Logger
-	Env               *utils.CoreAPIEnv
-	Orchestrator      *orchestrator.Orchestrator
-	SQIDManager       *irminsqids.SQIDManager
-	LocaleManager     *locales.LocaleManager
-	PermissionService *lib.PermissionService
-	Validator         *irminvalidator.Validator
-	CacheStorage      fiber.Storage
-	userSyncMutex     sync.RWMutex // Protects user operations to prevent race conditions
-	authCache         *AuthCache
+	DB                 *db.Database
+	Logger             *slog.Logger
+	Env                *utils.CoreAPIEnv
+	Orchestrator       *orchestrator.Orchestrator
+	SQIDManager        *irminsqids.SQIDManager
+	LocaleManager      *locales.LocaleManager
+	PermissionService  *lib.PermissionService
+	Validator          *irminvalidator.Validator
+	CacheStorage       fiber.Storage
+	userSyncMutex      sync.RWMutex // Protects user operations to prevent race conditions
+	authCache          *AuthCache
+	schemaCacheManager *lib.SchemaCacheManager
 }
 
 func NewAPIServices(
@@ -39,17 +40,19 @@ func NewAPIServices(
 	cacheStorage fiber.Storage,
 ) *APIServices {
 	authCache := &AuthCache{cache: make(map[string]*AuthCacheEntry)}
+	schemaCacheManager := lib.NewSchemaCacheManager(env, logger, db)
 	return &APIServices{
-		DB:                db,
-		Logger:            logger,
-		Env:               env,
-		Orchestrator:      orchestrator,
-		SQIDManager:       sqidManager,
-		LocaleManager:     localeManager,
-		PermissionService: permissionService,
-		Validator:         irminvalidator.NewValidator(sqidManager),
-		CacheStorage:      cacheStorage,
-		userSyncMutex:     sync.RWMutex{},
-		authCache:         authCache,
+		DB:                 db,
+		Logger:             logger,
+		Env:                env,
+		Orchestrator:       orchestrator,
+		SQIDManager:        sqidManager,
+		LocaleManager:      localeManager,
+		PermissionService:  permissionService,
+		Validator:          irminvalidator.NewValidator(sqidManager),
+		CacheStorage:       cacheStorage,
+		userSyncMutex:      sync.RWMutex{},
+		authCache:          authCache,
+		schemaCacheManager: schemaCacheManager,
 	}
 }

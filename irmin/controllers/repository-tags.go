@@ -4,8 +4,6 @@ import (
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
-	"irmin-api/engine"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -32,31 +30,24 @@ import (
 func (api *APIControllers) RepositoryTagsIndex(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
 
-	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
 		api.Logger.Error("Error getting locals for RepositoryTagsIndex",
 			"localeOk", localeOk,
 			"dictOk", dictOk,
 			"workspaceOk", workspaceOk,
-			"repositoryOk", repositoryOk)
+			"repositoryOk", repositoryOk,
+			"userOk", userOk)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Get the tag from the data engine.
-	tags, listTagsErr := dataEngine.ListTags(workspace.Slug, repository.Slug)
-	if listTagsErr != nil {
-		api.Logger.Error("Error retrieving tags from Data Engine", "error", listTagsErr)
+	// Get the tags from the service
+	tags, err := api.Services.ListRepositoryTags(c, locale, user, workspace, repository)
+	if err != nil {
+		api.Logger.Error("Error retrieving tags", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -108,32 +99,14 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Create the tag in the data engine.
-	tag, createTagErr := dataEngine.CreateTag(workspace.Slug, repository.Slug, req.Name, req.Ref)
-	if createTagErr != nil {
-		api.Logger.Error("Error creating tag in Data Engine", "error", createTagErr)
+	// Create the tag using the service
+	tag, err := api.Services.CreateRepositoryTag(c, locale, user, workspace, repository, req)
+	if err != nil {
+		api.Logger.Error("Error creating tag", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:         db.LogEventTypeCreate,
-		Description:  fmt.Sprintf("Tag %s created to track %s", tag.Name, tag.Ref),
-		WorkspaceID:  &workspace.ID,
-		RepositoryID: &repository.ID,
-		UserID:       &user.ID,
-	})
 
 	// Invalidate tags list and tag details (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
@@ -165,13 +138,13 @@ func (api *APIControllers) RepositoryTagsStore(c fiber.Ctx) error {
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/repositories/{repository_slug}/tags/{tag_name} [get]
 func (api *APIControllers) RepositoryTagsShow(c fiber.Ctx) error {
-	tag, tagOk := c.Locals("tag").(*irminmodels.GitTag)
-	if !tagOk {
+	repositoryTag, repositoryTagOk := c.Locals("repository-tag").(*irminmodels.GitTag)
+	if !repositoryTagOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
-		Data: tag,
+		Data: repositoryTag,
 	})
 }
 
@@ -197,39 +170,22 @@ func (api *APIControllers) RepositoryTagsDestroy(c fiber.Ctx) error {
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	tag, tagOk := c.Locals("tag").(*irminmodels.GitTag)
+	repositoryTag, repositoryTagOk := c.Locals("repository-tag").(*irminmodels.GitTag)
 
-	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !tagOk {
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk || !repositoryTagOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
-	if createDataEngineClientErr != nil {
-		api.Logger.Error("error creating data engine client", "error", createDataEngineClientErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Delete the tag from the data engine.
-	if deleteTagErr := dataEngine.DeleteTag(workspace.Slug, repository.Slug, tag.Name); deleteTagErr != nil {
-		api.Logger.Error("Error deleting tag in Data Engine", "error", deleteTagErr)
+	// Delete the tag using the service
+	err := api.Services.DeleteRepositoryTag(c, locale, user, workspace, repository, repositoryTag)
+	if err != nil {
+		api.Logger.Error("Error deleting tag", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:         db.LogEventTypeDelete,
-		Description:  fmt.Sprintf("Tag %s deleted", tag.Name),
-		WorkspaceID:  &workspace.ID,
-		RepositoryID: &repository.ID,
-		UserID:       &user.ID,
-	})
 
 	// Invalidate tags list and tag details (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(

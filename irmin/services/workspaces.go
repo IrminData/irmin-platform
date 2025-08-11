@@ -14,14 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Workspace-related sentinel errors used for consistent HTTP mapping in controllers
-var (
-	ErrWorkspaceNotMember             = errors.New("user not a member of the workspace")
-	ErrWorkspaceNotOwner              = errors.New("user is not the owner of the workspace")
-	ErrWorkspaceOwnerCannotLeave      = errors.New("user is the owner of the workspace")
-	ErrWorkspaceLastMemberCannotLeave = errors.New("user is the last user in the workspace")
-)
-
 func (api *APIServices) GetWorkspace(ctx context.Context, user *db.User, workspaceSlug string) (*db.Workspace, error) {
 	// Get the workspace by its slug.
 	workspace, err := api.DB.GetWorkspaceBySlug(workspaceSlug)
@@ -284,14 +276,14 @@ func (api *APIServices) TransferWorkspaceOwnership(
 			[]uint{ownerRole.ID},
 		)
 		if updateOwnerRoleErr != nil {
-			api.Logger.Error("Error updating owner role", "error", updateOwnerRoleErr)
+			api.Logger.ErrorContext(ctx, "Error updating owner role", "error", updateOwnerRoleErr)
 			return updateOwnerRoleErr
 		}
 
 		// Update the workspace owner ID.
 		workspace.OwnerID = uint(newOwnerID)
 		if updateWorkspaceErr := tx.Save(&workspace).Error; updateWorkspaceErr != nil {
-			api.Logger.Error("Error updating workspace", "error", updateWorkspaceErr)
+			api.Logger.ErrorContext(ctx, "Error updating workspace", "error", updateWorkspaceErr)
 			return updateWorkspaceErr
 		}
 

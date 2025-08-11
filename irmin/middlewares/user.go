@@ -12,8 +12,9 @@ import (
 // UserMiddleware parses the user SQID from the request URL and sets the user in the context.
 func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !workspaceOk {
+	if !dictOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -26,20 +27,11 @@ func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error {
 		})
 	}
 
-	// Decode the user ID.
-	userID, err := api.SQIDManager.Decode("users", userSqid)
+	// Get the workspace member
+	workspaceMember, err := api.Services.GetWorkspaceUser(c, user, workspace, userSqid)
 	if err != nil {
-		api.Logger.Error("Error decoding user sqid", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Find the workspace user by their ID and the workspace ID.
-	workspaceMember, err := api.DB.GetWorkspaceUser(workspace.ID, uint(userID))
-	if err != nil {
-		api.Logger.Error("Error retrieving user", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+		api.Logger.Error("Error getting workspace member", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}

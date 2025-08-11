@@ -162,34 +162,38 @@ func RegisterAPIRoutes(
 	workspace.Get(
 		"/tags",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.TagsIndex,
+		apiControllers.WorkspaceTagsIndex,
 	)
 	workspace.Post(
 		"/tags",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionCreate),
-		apiControllers.TagsStore,
+		apiControllers.WorkspaceTagsStore,
 	)
-	workspaceTag := workspace.Group("/tags/:tag", apiMiddlewares.TagMiddleware)
-	workspaceTag.Get("/", apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionRead), apiControllers.TagsShow)
+	workspaceTag := workspace.Group("/tags/:workspace-tag", apiMiddlewares.WorkspaceTagMiddleware)
+	workspaceTag.Get(
+		"/",
+		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.WorkspaceTagsShow,
+	)
 	workspaceTag.Patch(
 		"/",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.TagsUpdate,
+		apiControllers.WorkspaceTagsUpdate,
 	)
 	workspaceTag.Delete(
 		"/",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionDelete),
-		apiControllers.TagsDestroy,
+		apiControllers.WorkspaceTagsDestroy,
 	)
 	workspaceTag.Post(
 		"/entities/:entity_type/:entity_id",
 		apiMiddlewares.WorkspaceTagEntityPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.AddTagToEntity,
+		apiControllers.WorkspaceAddTagToEntity,
 	)
 	workspaceTag.Delete(
 		"/entities/:entity_type/:entity_id",
 		apiMiddlewares.WorkspaceTagEntityPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.RemoveTagFromEntity,
+		apiControllers.WorkspaceRemoveTagFromEntity,
 	)
 
 	// Query routes
@@ -560,7 +564,7 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.RepositoryTagsStore,
 	)
-	tag := tags.Group("/:tag", apiMiddlewares.RepositoryTagMiddleware)
+	tag := tags.Group("/:repository-tag", apiMiddlewares.RepositoryTagMiddleware)
 	tag.Get(
 		"/",
 		apiMiddlewares.RepositoryTagPermissionMiddleware(db.PolicyActionRead),
@@ -586,7 +590,7 @@ func RegisterAPIRoutes(
 	)
 	commits.Post(
 		"/revert",
-		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionUpdate),
+		apiMiddlewares.RepositoryCommitPermissionMiddleware(db.PolicyActionDelete),
 		apiControllers.RepositoryRevertUncommittedChanges,
 	)
 	commits.Get(

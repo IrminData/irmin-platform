@@ -1,0 +1,38 @@
+package services
+
+import "errors"
+
+// Sentinel errors used for consistent HTTP mapping in controllers
+var (
+	ErrNotFound                               = errors.New("not found")
+	ErrInvalidRequest                         = errors.New("invalid request")
+	ErrAccessDenied                           = errors.New("access denied")
+	ErrSystemUserRequired                     = errors.New("system user required")
+	ErrWorkspaceNotMember                     = errors.New("user not a member of the workspace")
+	ErrWorkspaceNotOwner                      = errors.New("user is not the owner of the workspace")
+	ErrWorkspaceOwnerCannotLeave              = errors.New("user is the owner of the workspace")
+	ErrWorkspaceLastMemberCannotLeave         = errors.New("user is the last user in the workspace")
+	ErrNewOwnerInvalid                        = errors.New("new owner is invalid")
+	ErrURLAndSystemTokenRequiredForConnectors = errors.New("URL and system token are required for connectors")
+	ErrAPITokenNotBelongToUser                = errors.New("API token does not belong to user")
+	ErrAPITokenIsHidden                       = errors.New("API token is hidden")
+	ErrEditorItemPathRequired                 = errors.New("editor item path is required")
+	ErrEditorItemDestinationPathRequired      = errors.New("editor item destination path is required")
+	ErrUserAlreadyInWorkspace                 = errors.New("user already in the workspace")
+	ErrUserAlreadyInvitedToWorkspace          = errors.New("user already invited to the workspace")
+	ErrInvalidRole                            = errors.New("invalid role")
+	ErrInviteExpired                          = errors.New("invite expired")
+	ErrInviteNotAllowed                       = errors.New("invite not allowed")
+	ErrInviteAlreadyAcceptedOrDeclined        = errors.New("invite already accepted or declined")
+	ErrPolicyAlreadyExists                    = errors.New("policy already exists")
+	ErrRepositoryAlreadyExists                = errors.New("repository already exists")
+	ErrCannotRemoveSelfFromWorkspace          = errors.New("cannot remove self from workspace")
+	ErrCannotRemoveOwnerFromWorkspace         = errors.New("cannot remove owner from workspace")
+	ErrInvalidWebhookType                     = errors.New("invalid webhook type")
+	ErrTagNameRequired                        = errors.New("tag name is required")
+	ErrInvalidWorkflowType                    = errors.New("invalid workflow type")
+	ErrWorkflowRunNotFound                    = errors.New("workflow run not found")
+	ErrInvalidPath                            = errors.New("invalid path")
+	ErrWorkflowAlreadyPaused                  = errors.New("workflow already paused")
+	ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
+)

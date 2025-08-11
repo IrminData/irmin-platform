@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"irmin-api/db"
-	"irmin-api/engine"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -16,7 +15,8 @@ func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+	user, userOk := c.Locals("user").(*db.User)
+	if !localeOk || !dictOk || !workspaceOk || !repositoryOk || !userOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -29,26 +29,17 @@ func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 		})
 	}
 
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	// Get the branch
+	branch, err := api.Services.GetRepositoryBranch(c, locale, user, workspace, repository, branchName)
 	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Get the branch from the data engine.
-	dataEngineBranch, err := dataEngine.GetBranch(c, workspace.Slug, repository.Slug, branchName)
-	if err != nil {
-		api.Logger.Error("Error retrieving branch from Data Engine", "error", err)
+		api.Logger.Error("Error retrieving branch", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Set the branch in the context for subsequent handlers.
-	c.Locals("branch", dataEngineBranch)
+	c.Locals("branch", branch)
 
 	return c.Next()
 }

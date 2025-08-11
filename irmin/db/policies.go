@@ -47,37 +47,37 @@ const (
 	// PolicyResourceWorkspace represents a workspace resource.
 	PolicyResourceWorkspace PolicyResource = "workspace"
 	// PolicyResourceEditorScript represents script editor resource.
-	PolicyResourceEditorScript PolicyResource = "editor_script"
+	PolicyResourceEditorScript PolicyResource = "editor_script" // Editor scripts are not stored in the database, so policies are not script specific.
 	// PolicyResourceQuery represents a query resource.
 	PolicyResourceQuery PolicyResource = "query"
 	// PolicyResourceWorkflow represents a workflow resource.
 	PolicyResourceWorkflow PolicyResource = "workflow"
 	// PolicyResourceWorkflowRun represents a workflow run resource.
-	PolicyResourceWorkflowRun PolicyResource = "workflow_run"
+	PolicyResourceWorkflowRun PolicyResource = "workflow_run" // Workflow runs are identified by the workflow ID, so policies are not run specific.
 	// PolicyResourceConnection represents a connection resource.
 	PolicyResourceConnection PolicyResource = "connection"
 	// PolicyResourceRepository represents a repository resource.
 	PolicyResourceRepository PolicyResource = "repository"
 	// PolicyResourceRepositoryBranch represents a repository branch resource.
-	PolicyResourceRepositoryBranch PolicyResource = "repository_branch"
+	PolicyResourceRepositoryBranch PolicyResource = "repository_branch" // Repository branches are identified by the repository ID, so policies are not branch specific.
 	// PolicyResourceRepositoryTag represents a repository tag resource.
-	PolicyResourceRepositoryTag PolicyResource = "repository_tag"
+	PolicyResourceRepositoryTag PolicyResource = "repository_tag" // Repository tags are identified by the repository ID, so policies are not tag specific.
 	// PolicyResourceRepositoryCommit represents a repository commit resource.
-	PolicyResourceRepositoryCommit PolicyResource = "repository_commit"
+	PolicyResourceRepositoryCommit PolicyResource = "repository_commit" // Repository commits are identified by the repository ID, so policies are not commit specific.
 	// PolicyResourceRepositoryObject represents a repository object resource.
 	PolicyResourceRepositoryObject PolicyResource = "repository_object"
 	// PolicyResourceUser represents a user resource.
 	PolicyResourceUser PolicyResource = "user"
 	// PolicyResourcePolicy represents a policy resource.
-	PolicyResourcePolicy PolicyResource = "policy"
+	PolicyResourcePolicy PolicyResource = "policy" // Policies for policies are not policy specific.
 	// PolicyResourceInvite represents an invite resource.
 	PolicyResourceInvite PolicyResource = "invite"
 	// PolicyResourceAuditLog represents an audit log resource.
-	PolicyResourceAuditLog PolicyResource = "audit_log"
+	PolicyResourceAuditLog PolicyResource = "audit_log" // Audit logs are identified by the workspace ID, so policies are not log event specific.
 	// PolicyResourceDocumentation represents a documentation resource.
-	PolicyResourceDocumentation PolicyResource = "documentation"
+	PolicyResourceDocumentation PolicyResource = "documentation" // Documentation is not stored in the database, so policies are not documentation specific.
 	// PolicyResourceBilling represents billing and subscription management resource.
-	PolicyResourceBilling PolicyResource = "billing"
+	PolicyResourceBilling PolicyResource = "billing" // Billing is not stored in the database, so policies are not billing specific.
 	// PolicyResourceWorkspaceTag represents a workspace tag resource.
 	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
 )

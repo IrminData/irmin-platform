@@ -22,12 +22,15 @@ type Invite struct {
 	WorkspaceID uint       `json:"workspace_id"  gorm:"index"`
 }
 
-func (d *Database) GetInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
+func (d *Database) GetActiveInvitesByWorkspace(workspaceID uint) ([]Invite, error) {
 	var invites []Invite
 	result := d.Preload("InvitedBy").
 		Preload("Workspace").
 		Preload("Role").
 		Where("workspace_id = ?", workspaceID).
+		Where("expires_at > ?", time.Now()).
+		Where("accepted_at IS NULL").
+		Where("declined_at IS NULL").
 		Order("created_at desc").
 		Find(&invites)
 	if result.Error != nil {
@@ -42,6 +45,9 @@ func (d *Database) GetInvitesByEmail(email string) ([]Invite, error) {
 		Preload("Workspace").
 		Preload("Role").
 		Where("email = ?", email).
+		Where("expires_at > ?", time.Now()).
+		Where("accepted_at IS NULL").
+		Where("declined_at IS NULL").
 		Order("created_at desc").
 		Find(&invites)
 	if result.Error != nil {

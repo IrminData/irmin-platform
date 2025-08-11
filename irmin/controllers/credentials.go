@@ -1,14 +1,13 @@
 package controllers
 
 import (
-	"fmt"
+	"errors"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
-	"irmin-api/lib"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
-	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -35,9 +34,9 @@ func (api *APIControllers) CredentialsIndex(c fiber.Ctx) error {
 	}
 
 	// Get the API tokens for the user.
-	tokens, getAPITokensByUserIDErr := api.DB.GetAPITokensByUserID(user.ID)
-	if getAPITokensByUserIDErr != nil {
-		api.Logger.Error("Error retrieving API tokens", "error", getAPITokensByUserIDErr)
+	tokens, err := api.Services.ListAPITokens(c, user)
+	if err != nil {
+		api.Logger.Error("Error retrieving API tokens", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -89,35 +88,23 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Generate a random 64-character token.
-	token, generateRandomStringErr := utils.GenerateRandomString()
-	if generateRandomStringErr != nil {
-		api.Logger.Error("Error generating random string", "error", generateRandomStringErr)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Expiry is seconds until expiry, so add it to the current time.
-	expiresAt := time.Now().Add(time.Duration(req.Expiry) * time.Second).UTC()
-
 	// Create the API token.
-	apiToken := &db.APIToken{
-		Name:      req.Name,
-		Token:     fmt.Sprintf("cred_%s", token),
-		ExpiresAt: expiresAt,
-		UserID:    user.ID,
-		Hidden:    false,
-	}
-	if createAPITokenErr := api.DB.Create(&apiToken).Error; createAPITokenErr != nil {
-		api.Logger.Error("Error creating API token", "error", createAPITokenErr)
+	apiToken, err := api.Services.CreateAPIToken(c, user, req)
+	if err != nil {
+		api.Logger.Error("Error creating API token", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Conver the API token to an API token response.
-	sqid, _ := api.SQIDManager.Encode("api_tokens", uint64(apiToken.ID))
+	sqid, encodeSQIDErr := api.SQIDManager.Encode("api_tokens", uint64(apiToken.ID))
+	if encodeSQIDErr != nil {
+		api.Logger.Error("Error encoding SQID", "error", encodeSQIDErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
 	apiTokenResponse := irminmodels.APIToken{
 		ID:        sqid,
 		CreatedAt: apiToken.CreatedAt,
@@ -126,13 +113,6 @@ func (api *APIControllers) CredentialsStore(c fiber.Ctx) error {
 		Token:     &apiToken.Token,
 		ExpiresAt: apiToken.ExpiresAt,
 	}
-
-	// Log the event.
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("API token %s created for the user", apiToken.Name),
-		UserID:      &user.ID,
-	})
 
 	// Invalidate user-specific cache for credentials list
 	if invalidateCacheErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/credentials"); invalidateCacheErr != nil {
@@ -187,41 +167,23 @@ func (api *APIControllers) CredentialsDestroy(c fiber.Ctx) error {
 		})
 	}
 
-	// Get the API token to ensure it exists and belongs to the user.
-	apiToken, getAPITokenErr := api.DB.GetAPIToken(uint(id))
-	if getAPITokenErr != nil {
-		api.Logger.Error("Error retrieving API token", "error", getAPITokenErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-	if apiToken.UserID != user.ID {
-		api.Logger.Error("API token does not belong to user")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-	if apiToken.Hidden {
-		api.Logger.Error("API token is hidden")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
 	// Delete the API token.
-	if deleteAPITokenErr := api.DB.DeleteAPIToken(uint(id)); deleteAPITokenErr != nil {
-		api.Logger.Error("Error deleting API token", "error", deleteAPITokenErr)
+	if err := api.Services.DeleteAPIToken(c, user, uint(id)); err != nil {
+		api.Logger.Error("Error deleting API token", "error", err)
+		if errors.Is(err, services.ErrAPITokenNotBelongToUser) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "access_denied")},
+			})
+		}
+		if errors.Is(err, services.ErrAPITokenIsHidden) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "access_denied")},
+			})
+		}
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Log the event.
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("API token %s deleted", apiToken.Name),
-		UserID:      &user.ID,
-	})
 
 	// Invalidate user-specific cache for credentials list
 	if invalidateCacheErr := irmincache.InvalidatePathPrefixForCurrentUser(c, api.cacheStorage, "/api/v1/credentials"); invalidateCacheErr != nil {

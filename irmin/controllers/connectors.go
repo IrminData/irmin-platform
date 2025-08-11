@@ -6,13 +6,12 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
-	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 // ConnectorsIndex godoc
@@ -32,10 +31,10 @@ func (api *APIControllers) ConnectorsIndex(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Get all connectors from the database
-	connectors, getAllConnectorsErr := api.DB.GetAllConnectors()
-	if getAllConnectorsErr != nil {
-		api.Logger.Error("Error retrieving connectors", "error", getAllConnectorsErr, "connectors", connectors)
+	// Get all connectors
+	connectors, err := api.Services.ListConnectors(c)
+	if err != nil {
+		api.Logger.Error("Error retrieving connectors", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -123,59 +122,21 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Only system requests can create connectors
-	if !isSystem {
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{"access_denied"},
-		})
-	}
-
 	// Parse JSON request body
 	var req irmincore.ConnectorRequest
 	if validationErr := api.validateAndBindRequestWithResponse(c, &req, dict); validationErr != nil {
 		return validationErr
 	}
 
-	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(req.URL, req.SystemToken, locale)
-
-	// Request the info endpoint of the connector
-	connectorInfo, getInfoErr := connectorClient.GetInfo()
-	if getInfoErr != nil {
-		api.Logger.Error("Error fetching connector info", "error", getInfoErr, "url", req.URL)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Check if the connector is already registered
-	var connector *db.Connector
-	var getConnectorErr error
-
-	// First, try to find the connector by the self-reported URL
-	if connectorInfo.APIBaseURL != "" {
-		connector, getConnectorErr = api.DB.GetConnectorByAPIBaseURL(connectorInfo.APIBaseURL)
-		if getConnectorErr != nil && !errors.Is(getConnectorErr, gorm.ErrRecordNotFound) {
-			api.Logger.Warn("Error getting connector by self-reported API base URL", "error", getConnectorErr)
+	// Create the connector
+	connector, err := api.Services.CreateConnector(c, locale, isSystem, req)
+	if err != nil {
+		api.Logger.Error("Error creating connector", "error", err)
+		if errors.Is(err, services.ErrSystemUserRequired) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "access_denied")},
+			})
 		}
-	}
-
-	// If not found, try with the request URL
-	if connector == nil {
-		connector, getConnectorErr = api.DB.GetConnectorByAPIBaseURL(req.URL)
-		if getConnectorErr != nil && !errors.Is(getConnectorErr, gorm.ErrRecordNotFound) {
-			api.Logger.Warn("Error getting connector by request URL", "error", getConnectorErr)
-		}
-	}
-
-	if connector == nil {
-		connector = &db.Connector{}
-	}
-
-	api.updateConnectorFromInfo(connector, req, *connectorInfo)
-	saveConnectorErr := api.DB.Save(&connector).Error
-	if saveConnectorErr != nil {
-		api.Logger.Error("Error updating connector", "error", saveConnectorErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -191,8 +152,8 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 	}
 
 	// Invalidate caches affected by this action (all users)
-	if err := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); err != nil {
-		api.Logger.Error("Error invalidating cache", "error", err)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
 	}
 
 	// Return the connector info
@@ -200,27 +161,6 @@ func (api *APIControllers) ConnectorsStore(c fiber.Ctx) error {
 		Message: api.lm.T(dict, "connector_refreshed"),
 		Data:    connectorResponse,
 	})
-}
-
-func (api *APIControllers) updateConnectorFromInfo(
-	connector *db.Connector,
-	req irmincore.ConnectorRequest,
-	connectorInfo irminconnectorclient.ConnectorInfo,
-) {
-	connector.APIBaseURL = connectorInfo.APIBaseURL
-	connector.SystemToken = req.SystemToken
-	connector.Name = connectorInfo.Name
-	connector.Description = connectorInfo.Description
-	connector.Version = connectorInfo.Version
-	connector.StructureVersion = connectorInfo.StructureVersion
-	connector.Author = connectorInfo.Author
-	connector.LogoURL = connectorInfo.LogoURL
-	connector.Capabilities = connectorInfo.Capabilities
-	connector.Locales = connectorInfo.Locales
-	connector.PrimaryCategory = connectorInfo.PrimaryCategory
-	connector.Categories = connectorInfo.Categories
-	connector.AuthorEmail = connectorInfo.AuthorEmail
-	connector.ReadMoreURL = connectorInfo.ReadMoreURL
 }
 
 // ConnectorsUpdate godoc
@@ -248,13 +188,6 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Only system requests can update connectors
-	if !isSystem {
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{"access_denied"},
-		})
-	}
-
 	// Parse JSON request body
 	var req irmincore.ConnectorRequest
 	if err := c.Bind().JSON(&req); err != nil {
@@ -264,30 +197,15 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 		})
 	}
 
-	// Validate required fields
-	if req.URL == "" || req.SystemToken == "" {
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
-
-	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(req.URL, req.SystemToken, locale)
-
-	// Request the info endpoint of the connector
-	connectorInfo, getInfoErr := connectorClient.GetInfo()
-	if getInfoErr != nil {
-		api.Logger.Error("Error fetching connector info", "error", getInfoErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
 	// Update the connector
-	api.updateConnectorFromInfo(connector, req, *connectorInfo)
-	saveConnectorErr := api.DB.Save(connector).Error
-	if saveConnectorErr != nil {
-		api.Logger.Error("Error updating connector", "error", saveConnectorErr)
+	connector, err := api.Services.UpdateConnector(c, locale, isSystem, connector, req)
+	if err != nil {
+		api.Logger.Error("Error updating connector", "error", err)
+		if errors.Is(err, services.ErrSystemUserRequired) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "access_denied")},
+			})
+		}
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -303,8 +221,8 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error {
 	}
 
 	// Invalidate caches affected by this action (all users)
-	if err := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); err != nil {
-		api.Logger.Error("Error invalidating cache", "error", err)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
 	}
 
 	// Return the connector info
@@ -336,27 +254,22 @@ func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Only system requests can delete connectors
-	if !isSystem {
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{"access_denied"},
-		})
-	}
-
-	// Delete the connector from the database
-	deleteConnectorErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		return api.DB.DeleteConnector(tx, connector.ID)
-	})
-	if deleteConnectorErr != nil {
-		api.Logger.Error("Error deleting connector", "error", deleteConnectorErr)
+	// Delete the connector
+	if err := api.Services.DeleteConnector(c, connector, isSystem); err != nil {
+		api.Logger.Error("Error deleting connector", "error", err)
+		if errors.Is(err, services.ErrSystemUserRequired) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "access_denied")},
+			})
+		}
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
 	// Invalidate caches affected by this action (all users)
-	if err := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); err != nil {
-		api.Logger.Error("Error invalidating cache", "error", err)
+	if invalidateCacheErr := irmincache.InvalidatePathPrefixForAllUsers(api.cacheStorage, "/api/v1/connectors"); invalidateCacheErr != nil {
+		api.Logger.Error("Error invalidating cache", "error", invalidateCacheErr)
 	}
 
 	// Return the success response
@@ -407,21 +320,16 @@ func (api *APIControllers) ShowConnectorConfigurationFields(c fiber.Ctx) error {
 		})
 	}
 
-	// Convert any maps to string maps for compatibility with connector client
-	detailsStr := utils.ConvertToStringMap(req.Details)
-	settingsStr := utils.ConvertToStringMap(req.Settings)
-
-	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
-
-	// Get the connection settings
-	configurationFields, getConfigFieldsErr := connectorClient.GetConfigFields(
+	// Get the configuration fields
+	configurationFields, err := api.Services.GetConnectorConfigurationFields(
+		c,
+		locale,
+		connector,
 		configurationType,
-		detailsStr,
-		settingsStr,
+		req,
 	)
-	if getConfigFieldsErr != nil {
-		api.Logger.Error("Error fetching connection configuration fields", "error", getConfigFieldsErr)
+	if err != nil {
+		api.Logger.Error("Error fetching connection configuration fields", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
@@ -465,17 +373,10 @@ func (api *APIControllers) ValidateConnectorConfiguration(c fiber.Ctx) error {
 		})
 	}
 
-	// Convert any maps to string maps for compatibility with connector client
-	detailsStr := utils.ConvertToStringMap(req.Details)
-	settingsStr := utils.ConvertToStringMap(req.Settings)
-
-	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
-
-	// Test the connection
-	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(detailsStr, settingsStr)
-	if validateConfigFieldsErr != nil && testResponse == nil {
-		api.Logger.Error("Error testing connection", "error", validateConfigFieldsErr)
+	// Validate the configuration
+	testResponse, err := api.Services.ValidateConnectorConfiguration(c, locale, connector, req)
+	if err != nil {
+		api.Logger.Error("Error validating connector configuration", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})

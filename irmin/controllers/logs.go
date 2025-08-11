@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/formatter"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
@@ -78,15 +77,19 @@ func (api *APIControllers) parseLogsQueryParams(c fiber.Ctx) (*logsQueryParams, 
 }
 
 func (api *APIControllers) getLogEventsWithPagination(
+	c context.Context,
 	workspace *db.Workspace,
+	user *db.User,
 	queryParams *logsQueryParams,
 	assetParams *assetParams,
 ) ([]db.LogEvent, int64, error) {
 	offset := (queryParams.page - 1) * queryParams.perPage
 
 	if assetParams != nil {
-		return api.getLogEventsForAsset(
+		return api.Services.ListLogEventsForWorkspaceAndAsset(
+			c,
 			workspace,
+			user,
 			assetParams.assetType,
 			assetParams.assetID,
 			queryParams.search,
@@ -96,25 +99,14 @@ func (api *APIControllers) getLogEventsWithPagination(
 	}
 
 	// Get all log events for the workspace
-	dbQuery := api.DB.Model(&db.LogEvent{}).Where("workspace_id = ?", workspace.ID)
-	if queryParams.search != "" {
-		dbQuery = dbQuery.Where("description ILIKE ?", "%"+queryParams.search+"%")
-	}
-
-	var total int64
-	if err := dbQuery.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	var events []db.LogEvent
-	err := dbQuery.
-		Preload("User").
-		Order("created_at DESC").
-		Limit(queryParams.perPage).
-		Offset(offset).
-		Find(&events).Error
-
-	return events, total, err
+	return api.Services.ListLogEventsForWorkspace(
+		c,
+		workspace,
+		user,
+		queryParams.search,
+		queryParams.perPage,
+		offset,
+	)
 }
 
 func (api *APIControllers) buildLogsResponse(
@@ -213,8 +205,14 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 		}
 	}
 
-	// Get log events
-	events, total, err := api.getLogEventsWithPagination(logsLocalParams.workspace, queryParams, assetParams)
+	// Get log events (permissions are filtered in the service)
+	events, total, err := api.getLogEventsWithPagination(
+		c,
+		logsLocalParams.workspace,
+		logsLocalParams.user,
+		queryParams,
+		assetParams,
+	)
 	if err != nil {
 		api.Logger.Error("Error fetching log events", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -222,25 +220,8 @@ func (api *APIControllers) LogsIndex(c fiber.Ctx) error {
 		})
 	}
 
-	// Filter log events based on user permissions
-	filteredEvents, err := lib.IsAllowedFilter(
-		api.permissionService,
-		logsLocalParams.user,
-		logsLocalParams.workspace,
-		db.PolicyResourceAuditLog,
-		db.PolicyActionRead,
-		events,
-		func(e db.LogEvent) uint { return e.ID },
-	)
-	if err != nil {
-		api.Logger.Error("Error filtering log events by permissions", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(logsLocalParams.dict, "error_occurred")},
-		})
-	}
-
 	// Format the log events
-	formattedEvents, err := api.formatLogEventsResponse(c, filteredEvents)
+	formattedEvents, err := api.formatLogEventsResponse(c, events)
 	if err != nil {
 		api.Logger.Error("Error formatting log events", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -311,25 +292,6 @@ func (api *APIControllers) getAssetParams(params map[string]string, workspace *d
 	default:
 		return nil, errors.New("no asset type found")
 	}
-}
-
-// getLogEventsForAsset retrieves log events for a specific asset.
-func (api *APIControllers) getLogEventsForAsset(
-	workspace *db.Workspace,
-	assetType string,
-	assetID uint,
-	search string,
-	perPage int,
-	offset int,
-) ([]db.LogEvent, int64, error) {
-	return api.DB.GetLogEventsByWorkspaceAndAsset(
-		workspace.ID,
-		assetType,
-		assetID,
-		search,
-		perPage,
-		offset,
-	)
 }
 
 // formatLogEventsResponse formats log events for the response.

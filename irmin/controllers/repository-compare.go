@@ -4,15 +4,12 @@ import (
 	"fmt"
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
-	"irmin-api/engine"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 // CompareRefs godoc
@@ -34,9 +31,10 @@ import (
 func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -53,17 +51,8 @@ func (api *APIControllers) CompareRefs(c fiber.Ctx) error {
 	baseRef := params["base_ref"]
 	compareRef := params["compare_ref"]
 
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Compare the refs
-	diff, err := dataEngine.CompareRefs(c, workspace.Slug, repository.Slug, baseRef, compareRef)
+	// Get the diff between the refs
+	diff, err := api.Services.CompareRepositoryRefs(c, locale, user, workspace, repository, baseRef, compareRef)
 	if err != nil {
 		api.Logger.Error("Error comparing refs", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
@@ -107,66 +96,14 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error {
 		return validationErr
 	}
 
-	// Get the base and compare refs
-	baseRef := req.BaseRef
-	compareRef := req.CompareRef
-
-	// Get the description and strategy
-	description := req.Description
-	strategy := req.Strategy
-	if strategy == "default" {
-		strategy = ""
-	}
-
-	// Get squash and allow_empty flags
-	squash := req.Squash
-	allowEmpty := req.AllowEmpty
-
-	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
-	if err != nil {
-		api.Logger.Error("error creating data engine client", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
 	// Merge the refs
-	mergeCommit, err := dataEngine.MergeRefs(
-		workspace.Slug,
-		repository.Slug,
-		baseRef,
-		compareRef,
-		description,
-		user.Email,
-		strategy,
-		squash,
-		allowEmpty,
-	)
-
+	mergeCommit, err := api.Services.MergeRepositoryRefs(c, locale, user, workspace, repository, req)
 	if err != nil {
 		api.Logger.Error("Error merging refs", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-
-	// Delete the cached objects for the target branch
-	dbDeleteErr := api.DB.Transaction(func(tx *gorm.DB) error {
-		return api.DB.DeleteObjects(tx, nil, &repository.ID, &baseRef)
-	})
-	if dbDeleteErr != nil {
-		api.Logger.Error("Error deleting cached objects for branch", "error", dbDeleteErr)
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:         db.LogEventTypeUpdate,
-		Description:  fmt.Sprintf("Merged %s into %s", compareRef, baseRef),
-		UserID:       &user.ID,
-		WorkspaceID:  &workspace.ID,
-		RepositoryID: &repository.ID,
-	})
 
 	// Invalidate commits and objects listings for this repository (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(

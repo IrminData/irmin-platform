@@ -34,7 +34,7 @@ func (api *APIMiddlewares) ConnectorMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the connector from the database
-	connector, err := api.DB.GetConnector(uint(connectorID))
+	connector, err := api.Services.GetConnector(c, uint(connectorID))
 	if err != nil {
 		api.Logger.Error("Error retrieving connector", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

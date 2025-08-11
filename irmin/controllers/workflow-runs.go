@@ -5,13 +5,11 @@ import (
 	irmincache "irmin-api/cache"
 	"irmin-api/db"
 	"irmin-api/formatter"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
 
 // TriggerWorkflowRun godoc
@@ -35,7 +33,6 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
 	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-
 	if !dictOk || !workflowOk || !userOk || !workspaceOk {
 		api.Logger.Error(
 			"Error getting workflow, user or workspace from context",
@@ -49,47 +46,28 @@ func (api *APIControllers) TriggerWorkflowRun(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Create a new workflow run.
-	var run *db.WorkflowRun
-	transactionErr := api.DB.WithContext(c).Transaction(func(tx *gorm.DB) error {
-		var err error
-		run, err = lib.CreateWorkflowRun(tx, workflow, user, nil)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if transactionErr != nil {
-		api.Logger.Error("Error creating workflow run", "error", transactionErr)
+	// Create the workflow run
+	run, err := api.Services.CreateWorkflowRun(c, user, workspace, workflow)
+	if err != nil {
+		api.Logger.Error("Error creating workflow run", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Message: api.lm.T(dict, "error_occurred"),
 		})
 	}
-
-	// We don't need to actually execute the workflow here, as the orchestrator will do that.
 
 	// Format the workflow run for the response.
 	formattedRun, formatErr := formatter.FormatWorkflowRunResponse(run, api.SQIDManager)
 	if formatErr != nil {
-		api.Logger.Error("Error formatting workflow run", "error", formatErr)
+		api.Logger.ErrorContext(c, "Error formatting workflow run", "error", formatErr)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Message: api.lm.T(dict, "error_occurred"),
 		})
 	}
 
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("Workflow run %s created", formattedRun.ID),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-		WorkflowID:  &workflow.ID,
-	})
-
-	// Invalidate workflows area for this workspace (all users)
+	// Invalidate workflow runs area for this workflow (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(
 		api.cacheStorage,
-		fmt.Sprintf("/api/v1/workspaces/%s/workflows", workspace.Slug),
+		fmt.Sprintf("/api/v1/workspaces/%s/workflows/%s/runs", workspace.Slug, formattedRun.WorkflowID),
 	); invalidationErr != nil {
 		api.Logger.Error("Error invalidating cache", "error", invalidationErr)
 	}
@@ -154,38 +132,24 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 	pagination := parsePaginationParams(params)
 
 	// Get the workflow runs for the workflow.
-	runs, count, getWorkflowRunsErr := api.DB.GetWorkflowRunsByWorkflowID(
-		workflow.ID,
+	runs, count, err := api.Services.ListWorkflowRuns(
+		c,
+		user,
+		workspace,
+		workflow,
 		pagination.perPage,
 		pagination.offset,
 	)
-	if getWorkflowRunsErr != nil {
-		api.Logger.Error("error getting workflow runs", "error", getWorkflowRunsErr)
+	if err != nil {
+		api.Logger.Error("error getting workflow runs", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Message: api.lm.T(dict, "error_occurred"),
 		})
 	}
 
-	// Filter workflow runs based on user permissions
-	filteredRuns, err := lib.IsAllowedFilter(
-		api.permissionService,
-		user,
-		workspace,
-		db.PolicyResourceWorkflowRun,
-		db.PolicyActionRead,
-		runs,
-		func(r db.WorkflowRun) uint { return r.WorkflowID },
-	)
-	if err != nil {
-		api.Logger.Error("Error filtering workflow runs by permissions", "error", err)
-		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
 	// Format the workflow runs for the response.
 	formattedRuns, formatErr := formatter.FormatIndexResponse(
-		filteredRuns,
+		runs,
 		formatter.FormatWorkflowRunResponse,
 		api.SQIDManager,
 	)
@@ -226,9 +190,19 @@ func (api *APIControllers) WorkflowRunsIndex(c fiber.Ctx) error {
 func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workflow, workflowOk := c.Locals("workflow").(*db.Workflow)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 
-	if !dictOk || !workflowOk {
-		api.Logger.Error("Error getting workflow from context", "workflowOk", workflowOk)
+	if !dictOk || !workflowOk || !userOk || !workspaceOk {
+		api.Logger.Error(
+			"Error getting workflow, user or workspace from context",
+			"workflowOk",
+			workflowOk,
+			"userOk",
+			userOk,
+			"workspaceOk",
+			workspaceOk,
+		)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -241,29 +215,12 @@ func (api *APIControllers) WorkflowRunsShow(c fiber.Ctx) error {
 		})
 	}
 
-	// Decode the workflow run ID.
-	workflowRunID, decodeSqidErr := api.SQIDManager.Decode("workflow-runs", runSqid)
-	if decodeSqidErr != nil {
-		api.Logger.Error("Error decoding invite sqid", "error", decodeSqidErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Find the workflow run by its ID.
-	workflowRun, getWorkflowRunErr := api.DB.GetWorkflowRunByID(uint(workflowRunID))
-	if getWorkflowRunErr != nil {
-		api.Logger.Error("Error retrieving workflow run", "error", getWorkflowRunErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Make sure the workflow run belongs to the workflow.
-	if workflowRun.WorkflowID != workflow.ID {
-		api.Logger.Error("Workflow run does not belong to workflow")
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
+	// Get the workflow run.
+	workflowRun, err := api.Services.GetWorkflowRun(c, user, workspace, workflow, runSqid)
+	if err != nil {
+		api.Logger.Error("Error getting workflow run", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Message: api.lm.T(dict, "error_occurred"),
 		})
 	}
 
@@ -320,49 +277,15 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 
 	// Parse the run sqid from the request URL.
 	runSqid := c.Params("run")
-	if runSqid == "" {
-		api.Logger.Error("No workflow run selected")
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
 
-	// Decode the workflow run ID.
-	workflowRunID, decodeSqidErr := api.SQIDManager.Decode("workflow-runs", runSqid)
-	if decodeSqidErr != nil {
-		api.Logger.Error("Error decoding workflow run sqid", "error", decodeSqidErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Find the workflow run by its ID.
-	workflowRun, getWorkflowRunErr := api.DB.GetWorkflowRunByID(uint(workflowRunID))
-	if getWorkflowRunErr != nil {
-		api.Logger.Error("Error retrieving workflow run", "error", getWorkflowRunErr)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Make sure the workflow run belongs to the workflow.
-	if workflowRun.WorkflowID != workflow.ID {
-		api.Logger.Error("Workflow run does not belong to workflow")
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
-	// Change the workflow run status to cancelled.
-	workflowRun.Status = irminmodels.WorkflowStatusCancelled
-	if saveErr := api.DB.Save(&workflowRun).Error; saveErr != nil {
-		api.Logger.Error("Error cancelling workflow run", "error", saveErr)
+	// Cancel the workflow run.
+	workflowRun, err := api.Services.CancelWorkflowRun(c, user, workspace, workflow, runSqid)
+	if err != nil {
+		api.Logger.Error("Error cancelling workflow run", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Message: api.lm.T(dict, "error_occurred"),
 		})
 	}
-
-	// The orchestrator will notice the cancelled status and stop the workflow execution.
 
 	// Format the workflow run for the response.
 	formattedRun, formatErr := formatter.FormatWorkflowRunResponse(workflowRun, api.SQIDManager)
@@ -372,15 +295,6 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 			Message: api.lm.T(dict, "error_occurred"),
 		})
 	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeWarning,
-		Description: fmt.Sprintf("Workflow run %s cancelled", formattedRun.ID),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-		WorkflowID:  &workflow.ID,
-	})
 
 	// Invalidate workflows area for this workspace (all users)
 	if invalidationErr := irmincache.InvalidatePathPrefixForAllUsers(

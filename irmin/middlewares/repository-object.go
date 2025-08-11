@@ -2,12 +2,10 @@ package middlewares
 
 import (
 	"irmin-api/db"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -15,9 +13,10 @@ import (
 func (api *APIMiddlewares) RepositoryObjectMiddleware(c fiber.Ctx) error {
 	locale, localeOk := c.Locals("locale").(string)
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
 	repository, repositoryOk := c.Locals("repository").(*db.Repository)
-	if !localeOk || !dictOk || !workspaceOk || !repositoryOk {
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !repositoryOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -29,34 +28,20 @@ func (api *APIMiddlewares) RepositoryObjectMiddleware(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
-	ref := repository.DefaultBranch
-	if params["ref"] != "" {
-		ref = params["ref"]
-	}
-	path := ""
-	if params["path"] != "" {
-		path = params["path"]
-	}
 
-	// Get the requested object.
-	repositoryObjectDB, err := lib.GetObject(
+	// Get the object from the service
+	repositoryObjectDB, detailsFromPath, ref, err := api.Services.GetRepositoryObject(
 		c,
 		locale,
-		api.DB,
-		api.Logger,
-		api.Env,
+		user,
 		workspace,
 		repository,
-		path,
-		ref,
-		false,
+		params["path"],
+		params["ref"],
 	)
 	if err != nil {
-		api.Logger.Warn("Failed to get repository object", "error", err)
+		api.Logger.Error("Error getting repository object", "error", err)
 	}
-
-	// Parse object details from the path
-	detailsFromPath := irminutils.ParseObjectDetailsFromPath(path)
 
 	// Set the object in the context for subsequent handlers.
 	c.Locals("object", repositoryObjectDB)

@@ -997,6 +997,50 @@ definitions:
     - items
     - repository
     type: object
+  irminmodels.EditorItem:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/irminmodels.EditorItem'
+        type: array
+      content:
+        example: This is the content of the file
+        type: string
+      language:
+        description: js, py, go, etc.
+        example: js
+        type: string
+      last_modified:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      name:
+        example: file.txt
+        maxLength: 255
+        type: string
+      path:
+        example: /path/to/file.txt
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.EditorItemType'
+        enum:
+        - file
+        - folder
+        example: file
+    required:
+    - last_modified
+    - name
+    - path
+    - type
+    type: object
+  irminmodels.EditorItemType:
+    enum:
+    - file
+    - folder
+    type: string
+    x-enum-varnames:
+    - EditorItemTypeFile
+    - EditorItemTypeFolder
   irminmodels.FieldMapping:
     properties:
       destination_field:
@@ -1668,6 +1712,48 @@ definitions:
     - PolicyResourceDocumentation
     - PolicyResourceBilling
     - PolicyResourceWorkspaceTag
+  irminmodels.QueryResult:
+    properties:
+      columns:
+        example:
+        - region
+        - category
+        - total_sales
+        items:
+          type: string
+        type: array
+      data:
+        description: 'Example: [{"region":"North","category":"Electronics","total_sales":125000.50}]'
+        items:
+          additionalProperties: {}
+          type: object
+        type: array
+      duration:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: Time between two instants as an int64 nanosecond count
+        example: 1500000000
+        minimum: 0
+      finished_at:
+        example: "2025-12-01T14:22:31.600Z"
+        type: string
+      has_errors:
+        description: Whether the query execution encountered errors
+        example: false
+        type: boolean
+      logs:
+        example:
+        - Query started
+        - Scanning 50
+        - 000 rows
+        - Query completed successfully
+        items:
+          type: string
+        type: array
+      started_at:
+        example: "2025-12-01T14:22:30.100Z"
+        type: string
+    type: object
   irminmodels.Repository:
     properties:
       created_at:
@@ -2411,11 +2497,23 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
     format: int64
     type: integer
     x-enum-varnames:
     - minDuration
     - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
     - Nanosecond
     - Microsecond
     - Millisecond
@@ -3842,7 +3940,12 @@ paths:
         "200":
           description: Editor item saved successfully
           schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.EditorItem'
+              type: object
         "400":
           description: Bad request - invalid request body or path
           schema:
@@ -3933,7 +4036,12 @@ paths:
         "200":
           description: Editor item copied successfully
           schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.EditorItem'
+              type: object
         "400":
           description: Bad request - invalid paths
           schema:
@@ -4030,7 +4138,12 @@ paths:
         "200":
           description: Editor item moved successfully
           schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.EditorItem'
+              type: object
         "400":
           description: Bad request - invalid paths
           schema:
@@ -4075,7 +4188,7 @@ paths:
             - $ref: '#/definitions/irminmodels.IrminAPIResponse'
             - properties:
                 data:
-                  type: object
+                  $ref: '#/definitions/irminmodels.QueryResult'
               type: object
         "400":
           description: Bad request - invalid request body or SQL
@@ -4164,7 +4277,7 @@ paths:
             - $ref: '#/definitions/irminmodels.IrminAPIResponse'
             - properties:
                 data:
-                  type: object
+                  $ref: '#/definitions/irminmodels.Invite'
               type: object
         "400":
           description: Bad request - invalid request body
@@ -5162,7 +5275,7 @@ paths:
             - $ref: '#/definitions/irminmodels.IrminAPIResponse'
             - properties:
                 data:
-                  type: object
+                  $ref: '#/definitions/irminmodels.QueryResult'
               type: object
         "401":
           description: Unauthorized - invalid or missing authentication
@@ -6527,7 +6640,7 @@ paths:
             - $ref: '#/definitions/irminmodels.IrminAPIResponse'
             - properties:
                 data:
-                  type: object
+                  $ref: '#/definitions/irminmodels.ObjectSchema'
               type: object
         "400":
           description: Bad request - invalid parameters

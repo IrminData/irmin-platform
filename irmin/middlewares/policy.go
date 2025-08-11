@@ -13,39 +13,25 @@ import (
 func (api *APIMiddlewares) PolicyMiddleware(c fiber.Ctx) error {
 	// Get the dictionary and workspace from the request context
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	if !dictOk || !workspaceOk {
+	if !dictOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Parse the policy ID from the request URL
-	policyID, decodeErr := api.SQIDManager.Decode("policies", c.Params("policy"))
-	if decodeErr != nil {
-		api.Logger.Error("Error decoding policy ID", "error", decodeErr)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "invalid_request")},
-		})
-	}
+	// Get the policy sqid from the request URL
+	policySQID := c.Params("policy")
 
-	// Get the policy by ID
-	var policy db.Policy
-	if findErr := api.DB.First(&policy, policyID).Error; findErr != nil {
-		api.Logger.Error("Error retrieving policy", "error", findErr)
+	// Get the policy
+	policy, err := api.Services.GetPolicy(c, user, workspace, policySQID)
+	if err != nil {
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "invalid_request")},
 		})
 	}
 
-	// Verify the policy belongs to the workspace
-	if policy.WorkspaceID != workspace.ID {
-		api.Logger.Error("Policy does not belong to workspace")
-		return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "access_denied")},
-		})
-	}
-
 	// Set the policy in the context for subsequent handlers
-	c.Locals("policy", &policy)
+	c.Locals("policy", policy)
 
 	return c.Next()
 }

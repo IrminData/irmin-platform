@@ -321,6 +321,8 @@ func (api *APIControllers) WorkspacesDestroy(c fiber.Ctx) error {
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/transfer-ownership [post]
+//
+//nolint:dupl // This is similar to other transfer endpoints
 func (api *APIControllers) TransferWorkspaceOwnership(c fiber.Ctx) error {
 	_, dict, user, workspace, err := api.validateWorkspaceParams(c)
 	if err != nil {

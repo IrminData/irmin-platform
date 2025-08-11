@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
-	"irmin-api/lakefs"
-	"irmin-api/orchestrator"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -48,40 +45,12 @@ func (api *APIControllers) SystemWebhook(c fiber.Ctx) error {
 		})
 	}
 
-	// Switch based on the type
-	switch query["type"] {
-	case "lakefs":
-		// Handle the lakefs webhook events
-
-		// Parse the LakeFS webhook event
-		var webhookEvent lakefs.WebhookEvent
-		if unmarshalErr := json.Unmarshal(c.Body(), &webhookEvent); unmarshalErr != nil {
-			api.Logger.Error("Error unmarshalling LakeFS webhook event", "error", unmarshalErr)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{"Error unmarshalling LakeFS webhook event"},
-			})
-		}
-
-		// Add the event to the orchestrator
-		api.Orchestrator.AddLakefsEvent(&webhookEvent)
-	case "dispatch":
-		// Handle the dispatch events from the orchestrator
-
-		// Parse the dispatch event
-		var dispatchEvent orchestrator.DispatchEvent
-		if unmarshalErr := json.Unmarshal(c.Body(), &dispatchEvent); unmarshalErr != nil {
-			api.Logger.Error("Error unmarshalling dispatch event", "error", unmarshalErr)
-			return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-				Errors: []string{"Error unmarshalling dispatch event"},
-			})
-		}
-
-		// Add the event to the orchestrator
-		api.Orchestrator.AddDispatchedEvent(&dispatchEvent)
-	default:
-		api.Logger.Error("Invalid webhook type")
+	// Process the system webhook
+	err := api.Services.ProcessSystemWebhook(c, query["type"], c.Body(), isSystem)
+	if err != nil {
+		api.Logger.Error("Error processing system webhook", "error", err)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{"Invalid webhook type"},
+			Errors: []string{"Error processing system webhook"},
 		})
 	}
 

@@ -1,8 +1,10 @@
 package middlewares
 
 import (
+	"errors"
 	"irmin-api/db"
 	"irmin-api/locales"
+	"irmin-api/services"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -13,7 +15,8 @@ import (
 func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error {
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	user, userOk := c.Locals("user").(*db.User)
-	if !dictOk || !userOk {
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	if !dictOk || !userOk || !workspaceOk {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -26,40 +29,36 @@ func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error {
 		})
 	}
 
-	// Decode the invite ID.
-	inviteID, err := api.SQIDManager.Decode("invites", inviteSqid)
-	if err != nil {
-		api.Logger.Error("Error decoding invite sqid", "error", err)
-		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
-			Errors: []string{api.lm.T(dict, "error_occurred")},
-		})
-	}
-
 	// Find the invite by its ID.
-	invite, err := api.DB.GetInviteByID(uint(inviteID))
+	invite, err := api.Services.GetInviteByID(c, user, workspace, inviteSqid)
 	if err != nil {
 		api.Logger.Error("Error retrieving invite", "error", err)
-		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+		if errors.Is(err, services.ErrNotFound) {
+			return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invite_not_found")},
+			})
+		}
+		if errors.Is(err, services.ErrInviteExpired) {
+			return utils.WriteResponse(c, fiber.StatusGone, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invite_expired")},
+			})
+		}
+		if errors.Is(err, services.ErrInviteAlreadyAcceptedOrDeclined) {
+			return utils.WriteResponse(c, fiber.StatusGone, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invite_already_accepted_or_declined")},
+			})
+		}
+		if errors.Is(err, services.ErrInviteNotAllowed) {
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "invite_not_allowed")},
+			})
+		}
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
 
-	// Make sure the invite is either to the workspace user has access to or to the user.
-	hasAccess := invite.Email == user.Email
-	for _, workspaceUser := range user.Workspaces {
-		if workspaceUser.WorkspaceID == invite.WorkspaceID {
-			hasAccess = true
-			break
-		}
-	}
-
-	if hasAccess {
-		// Set the invite in the context for subsequent handlers.
-		c.Locals("invite", invite)
-		return c.Next()
-	}
-
-	return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-		Errors: []string{api.lm.T(dict, "access_denied")},
-	})
+	// Set the invite in the context for subsequent handlers.
+	c.Locals("invite", invite)
+	return c.Next()
 }
