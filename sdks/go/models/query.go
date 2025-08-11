@@ -15,7 +15,7 @@ type StoredQuery struct {
 
 type QueryResult struct {
 	Columns    []string         `json:"columns,omitempty"     validate:"dive"  example:"region,category,total_sales"`
-	Data       []map[string]any `json:"data,omitempty"                         example:"[{'region':'North','category':'Electronics','total_sales':125000.50}]"`
+	Data       []map[string]any `json:"data,omitempty"`                                              // Example: [{"region":"North","category":"Electronics","total_sales":125000.50}]
 	HasErrors  bool             `json:"has_errors,omitempty"                   example:"false"`      // Whether the query execution encountered errors
 	Duration   time.Duration    `json:"duration,omitempty"    validate:"min=0" example:"1500000000"` // Time between two instants as an int64 nanosecond count
 	StartedAt  time.Time        `json:"started_at,omitempty"                   example:"2025-12-01T14:22:30.100Z"`
