@@ -13,6 +13,12 @@ type MoveObjectRequest struct {
 	NewPath string `json:"new_path" validate:"required" example:"path/to/new/location"`
 }
 
+// UploadObjectFromURLRequest represents the JSON request body for uploading objects from URLs.
+type UploadObjectFromURLRequest struct {
+	URL     string            `json:"url"     validate:"required"  example:"https://example.com/file.json"`
+	Headers map[string]string `json:"headers" validate:"omitempty" example:"Authorization: Bearer <token>"`
+}
+
 // GetObjectAtPath fetches the object at the given path and ref.
 func (c *Client) GetObjectAtPath(
 	workspace, repository, path, ref string,
@@ -109,6 +115,30 @@ func (c *Client) UploadObject(
 		return nil, nil, fmt.Errorf("upload object error: %w", err)
 	}
 
+	return &object, apiResp, nil
+}
+
+// UploadObjectFromURL uploads an object from a URL to the given path and ref.
+func (c *Client) UploadObjectFromURL(
+	workspace, repository, ref, path string,
+	req UploadObjectFromURLRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
+	var object irminmodels.Object
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method: http.MethodPost,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/repositories/%s/objects/upload-from-url?ref=%s&path=%s",
+			workspace,
+			repository,
+			ref,
+			path,
+		),
+		ContentType: "application/json",
+		Body:        req,
+	}, &object)
+	if err != nil {
+		return nil, nil, fmt.Errorf("upload object from URL error: %w", err)
+	}
 	return &object, apiResp, nil
 }
 

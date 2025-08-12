@@ -333,6 +333,46 @@ func TestParseObjectDetailsFromPath(t *testing.T) {
 	}
 }
 
+// TestProblematicMimeTypes tests MIME type detection for formats that may not be well-recognized
+func TestProblematicMimeTypes(t *testing.T) {
+	problematicFiles := []struct {
+		filename           string
+		expectedMimePrefix string // We'll check if the result starts with this or is a known good type
+	}{
+		{"file.heic", "image/"}, // Apple HEIC format
+		{"file.heif", "image/"}, // Apple HEIF format
+		{"file.avif", "image/"}, // AV1 Image File Format
+		{"file.ico", "image/"},  // Windows icon
+		{"file.opus", "audio/"}, // Opus audio
+		{"file.flac", "audio/"}, // FLAC audio
+		{"file.webp", "image/"}, // WebP image
+		{"file.tiff", "image/"}, // TIFF image
+		{"file.bmp", "image/"},  // Bitmap image
+		{"file.svg", "image/"},  // SVG vector image
+		{"file.woff", "font/"},  // Web font
+		{"file.woff2", "font/"}, // Web font v2
+		{"file.otf", "font/"},   // OpenType font
+		{"file.ttf", "font/"},   // TrueType font
+	}
+
+	t.Log("Current MIME type detection results:")
+	for _, tt := range problematicFiles {
+		t.Run(tt.filename, func(t *testing.T) {
+			autoDetected := irminutils.AutoDetectMimeType(tt.filename)
+			objectDetails := irminutils.ParseObjectDetailsFromPath(tt.filename)
+
+			t.Logf("File: %-12s | AutoDetect: %-30s | ParseObject: %s",
+				tt.filename, autoDetected, objectDetails.ContentType)
+
+			// Check if we're getting application/octet-stream (the problem)
+			if objectDetails.ContentType == "application/octet-stream" {
+				t.Errorf("File %s getting fallback MIME type, should have proper %s type",
+					tt.filename, tt.expectedMimePrefix)
+			}
+		})
+	}
+}
+
 // stringPtr returns a pointer to a string
 func stringPtr(s string) *string {
 	return &s
