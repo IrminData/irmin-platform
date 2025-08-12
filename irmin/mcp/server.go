@@ -72,11 +72,19 @@ func RegisterFiber(
 	app *fiber.App,
 	apiServices *services.APIServices,
 ) {
-	server := sdkmcp.NewServer(&sdkmcp.Implementation{Name: "irmin-mcp"}, nil)
+	server := sdkmcp.NewServer(&sdkmcp.Implementation{
+		Name:    "irmin-mcp",
+		Title:   "Irmin MCP for data management",
+		Version: "1.0.0",
+	}, nil)
 
 	// Register resources and tools from dedicated packages
-	mcpresources.RegisterAll(server, apiServices, userFromContext)
-	mcptools.RegisterAll(server, apiServices, userFromContext)
+	mcpResources := mcpresources.NewMCPResources(server, apiServices, userFromContext)
+	mcpResources.RegisterAll()
+
+	// Register the MCP tools
+	mcpTools := mcptools.NewMCPTools(server, apiServices, userFromContext)
+	mcpTools.RegisterAll()
 
 	// Wrap the MCP HTTP handler into a Fiber handler with auth
 	httpHandler := sdkmcp.NewStreamableHTTPHandler(func(*http.Request) *sdkmcp.Server { return server }, nil)

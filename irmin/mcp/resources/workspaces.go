@@ -6,32 +6,26 @@ import (
 	"errors"
 	"fmt"
 
-	"irmin-api/db"
 	"irmin-api/formatter"
-	"irmin-api/services"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // RegisterWorkspaces registers the workspaces resource.
-func RegisterWorkspaces(
-	server *sdkmcp.Server,
-	apiServices *services.APIServices,
-	getUser func(ctx context.Context) (*db.User, bool),
-) {
-	server.AddResource(&sdkmcp.Resource{
+func (mcpResources *MCPResources) RegisterWorkspaces() {
+	mcpResources.server.AddResource(&sdkmcp.Resource{
 		Name:        "workspaces",
 		Description: "List of workspaces accessible to the authenticated user",
 		MIMEType:    "application/json",
 		URI:         "irmin://workspaces",
 	}, func(ctx context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
-		user, ok := getUser(ctx)
+		user, ok := mcpResources.getUser(ctx)
 		if !ok || user == nil || user.ID == 0 {
 			return nil, errors.New("unauthorized")
 		}
 
 		// Use the service to get workspaces
-		workspaces, err := apiServices.ListWorkspaces(user)
+		workspaces, err := mcpResources.apiServices.ListWorkspaces(user)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load workspaces: %w", err)
 		}
@@ -40,10 +34,10 @@ func RegisterWorkspaces(
 		workspacesResponse, formatErr := formatter.FormatIndexResponse(
 			workspaces,
 			formatter.FormatWorkspaceResponse,
-			apiServices.SQIDManager,
+			mcpResources.apiServices.SQIDManager,
 		)
 		if formatErr != nil {
-			apiServices.Logger.Error("Error formatting workspaces", "error", formatErr)
+			mcpResources.apiServices.Logger.Error("Error formatting workspaces", "error", formatErr)
 			return nil, formatErr
 		}
 
