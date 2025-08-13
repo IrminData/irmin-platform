@@ -11,6 +11,49 @@ import (
 	"gorm.io/gorm"
 )
 
+// GetConnection gets a connection by its SQID.
+//
+//nolint:dupl // This is not a duplicate, it's a different service, which functions in a similar way to other services.
+func (api *APIServices) GetConnection(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	connectionSqid string,
+) (*db.Connection, error) {
+	// Decode the ID
+	connectionID, err := api.SQIDManager.Decode("connections", connectionSqid)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error decoding connection SQID", "error", err)
+		return nil, err
+	}
+
+	// Make sure this is allowed
+	resourceID := uint(connectionID)
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceConnection,
+		&resourceID,
+		db.PolicyActionRead,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return nil, err
+	}
+	if !isAllowed {
+		return nil, ErrAccessDenied
+	}
+
+	// Get the connection
+	connection, err := api.DB.GetConnectionByID(uint(connectionID))
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error getting connection", "error", err)
+		return nil, err
+	}
+
+	return connection, nil
+}
+
 // ListConnections lists all connections in a workspace available to the user.
 //
 //nolint:dupl // This is not a duplicate, it's a different service, which functions in a similar way to other services.
