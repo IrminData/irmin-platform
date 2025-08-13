@@ -138,59 +138,8 @@ func (api *APIServices) UploadRepositoryObject(
 	file io.Reader,
 ) (*db.RepositoryObject, error) {
 	// Make sure this is allowed
-	isAllowed, err := api.PermissionService.IsAllowed(
-		user,
-		workspace,
-		db.PolicyResourceRepositoryObject,
-		nil,
-		db.PolicyActionCreate,
-	)
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+	if err := api.ensureCreateAndModifyPermissions(c, user, workspace, repository); err != nil {
 		return nil, err
-	}
-	if !isAllowed {
-		api.Logger.ErrorContext(
-			c,
-			"User is not allowed to upload repository object",
-			"user",
-			user.Email,
-			"workspace",
-			workspace.Slug,
-			"repository",
-			repository.Slug,
-			"objectPath",
-			objectPath,
-			"objectRef",
-			objectRef,
-		)
-		return nil, ErrAccessDenied
-	}
-
-	// Make sure that the user has permissions to modify the repository
-	isAllowed, err = api.PermissionService.IsAllowed(
-		user,
-		workspace,
-		db.PolicyResourceRepository,
-		&repository.ID,
-		db.PolicyActionUpdate,
-	)
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
-		return nil, err
-	}
-	if !isAllowed {
-		api.Logger.ErrorContext(
-			c,
-			"User is not allowed to modify repository",
-			"user",
-			user.Email,
-			"workspace",
-			workspace.Slug,
-			"repository",
-			repository.Slug,
-		)
-		return nil, ErrAccessDenied
 	}
 
 	// Initialize Data Engine client
@@ -238,6 +187,131 @@ func (api *APIServices) UploadRepositoryObject(
 	})
 
 	return repositoryObject, nil
+}
+
+func (api *APIServices) UploadRepositoryObjectFromURL(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	objectPath string,
+	objectRef string,
+	url string,
+	headers map[string]string,
+) (*db.RepositoryObject, error) {
+	// Make sure this is allowed
+	if err := api.ensureCreateAndModifyPermissions(c, user, workspace, repository); err != nil {
+		return nil, err
+	}
+
+	// Validate required fields
+	if url == "" {
+		return nil, ErrInvalidPath
+	}
+
+	// Download with SSRF protections
+	safeBody, err := lib.DownloadFileFromURL(c, url, headers)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error downloading file from URL", "error", err)
+		return nil, err
+	}
+	defer safeBody.Close()
+
+	// Initialize Data Engine client
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	if err != nil {
+		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
+		return nil, err
+	}
+
+	// Upload the file to the data engine
+	newObject, err := dataEngine.UploadObject(
+		workspace.Slug,
+		repository.Slug,
+		objectPath,
+		objectRef,
+		safeBody,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error uploading file to Data Engine", "error", err)
+		return nil, err
+	}
+
+	// Save the object to the database
+	repositoryObject, err := lib.SaveObject(
+		api.DB,
+		api.Logger,
+		api.Env,
+		newObject,
+		objectRef,
+		repository.ID,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error saving object to database", "error", err)
+		return nil, err
+	}
+
+	return repositoryObject, nil
+}
+
+// ensureCreateAndModifyPermissions validates that the user can create objects and modify the repository.
+func (api *APIServices) ensureCreateAndModifyPermissions(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+) error {
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepositoryObject,
+		nil,
+		db.PolicyActionCreate,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return err
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to upload repository object",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"repository",
+			repository.Slug,
+		)
+		return ErrAccessDenied
+	}
+
+	isAllowed, err = api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceRepository,
+		&repository.ID,
+		db.PolicyActionUpdate,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return err
+	}
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to modify repository",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"repository",
+			repository.Slug,
+		)
+		return ErrAccessDenied
+	}
+	return nil
 }
 
 func (api *APIServices) MoveRepositoryObject(

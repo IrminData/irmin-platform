@@ -477,6 +477,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.RepositoryUploadObject,
 	)
+	objects.Post(
+		"/upload-from-url",
+		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.RepositoryUploadObjectFromURL,
+	)
 	objects.Delete(
 		"/",
 		apiMiddlewares.RepositoryObjectPermissionMiddleware(db.PolicyActionDelete),

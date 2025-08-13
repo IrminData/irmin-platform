@@ -50,6 +50,11 @@ func (api *APIServices) ListRepositoryCommits(
 		return nil, nil, ErrAccessDenied
 	}
 
+	// If the ref is not provided, use the default branch
+	if ref == "" {
+		ref = repository.DefaultBranch
+	}
+
 	// Initialize Data Engine client
 	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
 	if createDataEngineClientErr != nil {
@@ -107,6 +112,11 @@ func (api *APIServices) CreateRepositoryCommit(
 			req.Branch,
 		)
 		return nil, ErrAccessDenied
+	}
+
+	// If the branch is not provided, use the default branch
+	if req.Branch == "" {
+		req.Branch = repository.DefaultBranch
 	}
 
 	// Initialize Data Engine client
@@ -229,6 +239,21 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(
 			req.Branch,
 		)
 		return ErrAccessDenied
+	}
+
+	// If the branch is not provided, use the default branch
+	if req.Branch == "" {
+		req.Branch = repository.DefaultBranch
+	}
+
+	// if the path is not provided, use the root path
+	if req.Path == "" {
+		req.Path = "/"
+	}
+
+	// if the path type is not provided, use the file path type
+	if req.PathType == "" {
+		req.PathType = "reset"
 	}
 
 	// Initialize Data Engine client

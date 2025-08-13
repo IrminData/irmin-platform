@@ -35,4 +35,5 @@ var (
 	ErrInvalidPath                            = errors.New("invalid path")
 	ErrWorkflowAlreadyPaused                  = errors.New("workflow already paused")
 	ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
+	ErrBranchAlreadyExists                    = errors.New("branch already exists")
 )

@@ -158,8 +158,14 @@ func (api *APIServices) CreateRepositoryBranch(
 		return nil, err
 	}
 
+	// Determine the branch to create from
+	fromBranch := req.From
+	if fromBranch == "" {
+		fromBranch = repository.DefaultBranch
+	}
+
 	// Create the branch in the data engine
-	branch, err := dataEngine.CreateBranch(workspace.Slug, repository.Slug, req.Name, req.From, req.IsImmutable)
+	branch, err := dataEngine.CreateBranch(workspace.Slug, repository.Slug, req.Name, fromBranch, req.IsImmutable)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error creating branch in Data Engine", "error", err)
 		return nil, err

@@ -26,7 +26,4 @@ func NewMCPResources(
 // RegisterAll registers all resources in this package.
 func (mcpResources *MCPResources) RegisterAll() {
 	mcpResources.RegisterProfile()
-	mcpResources.RegisterWorkspaces()
-	mcpResources.RegisterRepositories()
-	mcpResources.RegisterQueries()
 }
