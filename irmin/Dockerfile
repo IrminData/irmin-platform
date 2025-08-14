@@ -1,6 +1,6 @@
 # Stage 1: Build
-# Use the standard Go image with glibc for DuckDB compatibility
-FROM golang:1.24 AS builder
+# Use a Debian Bookworm-based Go image to pin glibc version and avoid runtime mismatches
+FROM golang:1.24-bookworm AS builder
 
 # Install C/C++ build tools needed for CGO
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
@@ -19,8 +19,8 @@ COPY . .
 RUN CGO_ENABLED=1 go build -ldflags="-w -s" -o /app/main .
 
 # Stage 2: Runtime
-# Use a standard, minimal base image. Ubuntu is a solid choice.
-FROM ubuntu:22.04
+# Use Debian Bookworm (same glibc family as builder) to ensure compatibility
+FROM debian:bookworm-slim
 
 # Create a non-root user and group for the application for security
 RUN addgroup --system app && adduser --system --ingroup app app
@@ -30,8 +30,15 @@ RUN addgroup --system app && adduser --system --ingroup app app
 # - ca-certificates: For making secure HTTPS/TLS connections.
 # Then, clean up the apt cache to keep the image small.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends docker-cli ca-certificates && \
+    apt-get install -y --no-install-recommends docker.io ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+
+# Prepare a writable home directory for the non-root user to avoid tools defaulting to /nonexistent
+RUN mkdir -p /home/app && chown -R app:app /home/app
+ENV HOME=/home/app \
+    XDG_CACHE_HOME=/home/app/.cache \
+    GOPATH=/home/app/go \
+    GOMODCACHE=/home/app/go/pkg/mod
 
 WORKDIR /app
 

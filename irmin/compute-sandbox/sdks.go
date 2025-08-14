@@ -5,6 +5,14 @@ import (
 	"os/exec"
 )
 
+// newGoCmd constructs a "go" command with context and working directory.
+// It inherits environment variables from the process (Dockerfile sets HOME/GOPATH/GOMODCACHE).
+func (s *ComputeSandbox) newGoCmd(ctx context.Context, workingDir string, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "go", args...)
+	cmd.Dir = workingDir
+	return cmd
+}
+
 // installGoSDK installs the Go SDK for the given workspace.
 func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, projectName string) error {
 	// Check for context cancellation before starting
@@ -16,8 +24,7 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, pro
 	initCtx, cancelInitCtx := context.WithTimeout(ctx, DockerCommandTimeout)
 	defer cancelInitCtx()
 
-	cmd := exec.CommandContext(initCtx, "go", "mod", "init", projectName)
-	cmd.Dir = workspaceTempDir
+	cmd := s.newGoCmd(initCtx, workspaceTempDir, "mod", "init", projectName)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -31,8 +38,7 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, pro
 	versionCtx, cancelVersionCtx := context.WithTimeout(ctx, DockerCommandTimeout)
 	defer cancelVersionCtx()
 
-	cmd = exec.CommandContext(versionCtx, "go", "mod", "edit", "-go="+LatestGoVersion)
-	cmd.Dir = workspaceTempDir
+	cmd = s.newGoCmd(versionCtx, workspaceTempDir, "mod", "edit", "-go="+LatestGoVersion)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -56,8 +62,7 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, pro
 		}
 
 		getCtx, cancelGetCtx := context.WithTimeout(ctx, DockerCommandTimeout)
-		cmd = exec.CommandContext(getCtx, "go", "get", pkg)
-		cmd.Dir = workspaceTempDir
+		cmd = s.newGoCmd(getCtx, workspaceTempDir, "get", pkg)
 		if err := cmd.Run(); err != nil {
 			cancelGetCtx()
 			return err
