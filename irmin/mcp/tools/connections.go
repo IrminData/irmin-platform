@@ -14,6 +14,11 @@ type listConnectionsArgs struct {
 	WorkspaceSlug string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to list connections in"`
 }
 
+type getConnectionArgs struct {
+	WorkspaceSlug string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to get the connection from"`
+	ConnectionID  string `json:"connection_id"  jsonschema:"required,The ID (SQID) of the connection to get"`
+}
+
 type createConnectionArgs struct {
 	WorkspaceSlug string         `json:"workspace_slug"          jsonschema:"required,The slug of the workspace to create the connection in"`
 	Name          string         `json:"name"                    jsonschema:"required,The name of the connection"`
@@ -38,6 +43,7 @@ type updateConnectionArgs struct {
 // RegisterConnectionTools registers all connection-related tools.
 func (mcpTools *MCPTools) RegisterConnectionTools() {
 	mcpTools.registerListConnectionsTool()
+	mcpTools.registerGetConnectionTool()
 	mcpTools.registerCreateConnectionTool()
 	mcpTools.registerUpdateConnectionTool()
 }
@@ -82,6 +88,44 @@ func (mcpTools *MCPTools) registerListConnectionsTool() {
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format connections", "error", ferr)
 				return nil, fmt.Errorf("failed to format connections response: %w", ferr)
+			}
+
+			return helpers.MCPSuccess(formatted)
+		},
+	)
+}
+
+// registerGetConnectionTool registers the get_connection tool for getting a connection by ID
+func (mcpTools *MCPTools) registerGetConnectionTool() {
+	sdkmcp.AddTool(
+		mcpTools.server,
+		&sdkmcp.Tool{Name: "get_connection", Description: "Get a connection by ID"},
+		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getConnectionArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+			// Validate user
+			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
+			if err != nil {
+				return nil, err
+			}
+
+			// Get the workspace first
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), nil
+			}
+
+			// Get the connection
+			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, params.Arguments.ConnectionID)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get connection", "error", err)
+				return helpers.MCPError("Failed to get connection"), nil
+			}
+
+			// Format the response using the same formatter as the API
+			formatted, ferr := formatter.FormatConnectionResponse(connection, mcpTools.apiServices.SQIDManager)
+			if ferr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to format connection response", "error", ferr)
+				return nil, fmt.Errorf("failed to format connection response: %w", ferr)
 			}
 
 			return helpers.MCPSuccess(formatted)

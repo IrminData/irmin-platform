@@ -16,6 +16,11 @@ type listRepositoriesArgs struct {
 	WorkspaceSlug string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to list repositories in"`
 }
 
+type getRepositoryArgs struct {
+	WorkspaceSlug  string `json:"workspace_slug"  jsonschema:"required,The slug of the workspace"`
+	RepositorySlug string `json:"repository_slug" jsonschema:"required,The slug of the repository to get"`
+}
+
 type createRepositoryArgs struct {
 	WorkspaceSlug string                            `json:"workspace_slug" jsonschema:"required,The slug of the workspace to create the repository in"`
 	Repository    irmincore.CreateRepositoryRequest `json:"repository"     jsonschema:"required,Repository creation parameters"`
@@ -30,6 +35,7 @@ type updateRepositoryArgs struct {
 // RegisterRepositoryTools registers all repository-related tools.
 func (mcpTools *MCPTools) RegisterRepositoryTools() {
 	mcpTools.registerListRepositoriesTool()
+	mcpTools.registerGetRepositoryTool()
 	mcpTools.registerCreateRepositoryTool()
 	mcpTools.registerUpdateRepositoryTool()
 }
@@ -73,6 +79,50 @@ func (mcpTools *MCPTools) registerListRepositoriesTool() {
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format repositories", "error", ferr)
 				return nil, fmt.Errorf("failed to format repositories response: %w", ferr)
+			}
+
+			return helpers.MCPSuccess(formatted)
+		},
+	)
+}
+
+// registerGetRepositoryTool registers the get_repository tool for getting a repository by slug
+func (mcpTools *MCPTools) registerGetRepositoryTool() {
+	sdkmcp.AddTool(
+		mcpTools.server,
+		&sdkmcp.Tool{Name: "get_repository", Description: "Get a repository by slug"},
+		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getRepositoryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+			// Validate user
+			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
+			if err != nil {
+				return nil, err
+			}
+
+			// Get the workspace first
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), nil
+			}
+
+			// Get the repository
+			repository, err := mcpTools.apiServices.GetRepositoryBySlug(
+				ctx,
+				"en",
+				user,
+				workspace,
+				params.Arguments.RepositorySlug,
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
+				return helpers.MCPError("Failed to get repository"), nil
+			}
+
+			// Format the response using the same formatter as the API
+			formatted, ferr := formatter.FormatRepositoryResponse(repository, mcpTools.apiServices.SQIDManager)
+			if ferr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to format repository response", "error", ferr)
+				return nil, fmt.Errorf("failed to format repository response: %w", ferr)
 			}
 
 			return helpers.MCPSuccess(formatted)

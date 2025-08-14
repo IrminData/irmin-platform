@@ -114,8 +114,34 @@ func ParseScheduleFromRequest(
 		return nil, err
 	}
 
+	// Convert schedule model to database schedule
+	schedule, err := ScheduleModelToDBSchedule(&scheduleReq, d, workspace, sqidManager)
+	if err != nil {
+		return nil, err
+	}
+
+	return schedule, nil
+}
+
+// ScheduleModelToDBSchedule converts a schedule model to a database schedule
+func ScheduleModelToDBSchedule(
+	scheduleReq *irminmodels.Schedule,
+	d *db.Database,
+	workspace db.Workspace,
+	sqidManager *irminsqids.SQIDManager,
+) (*db.Schedule, error) {
+	if scheduleReq == nil {
+		// Return default schedule if no schedule data provided
+		return &db.Schedule{
+			MaxRetries:  defaultMaxRetries,
+			MaxRuntime:  defaultMaxRuntime,
+			MinInterval: defaultMinInterval,
+			Triggers:    []db.WorkflowTrigger{},
+		}, nil
+	}
+
 	// Parse optional fields
-	schedule := parseOptionalFields(&scheduleReq)
+	schedule := parseOptionalFields(scheduleReq)
 
 	// Parse triggers
 	for _, trigger := range scheduleReq.Triggers {
