@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"irmin-connectors/db"
 	"irmin-connectors/models"
 	"irmin-connectors/utils"
@@ -44,18 +45,17 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 	}
 
 	// Find relevant connector registration
-	connectorRegistrations, err := cs.DB.GetConnectorRegistrationByConnectorName(info.Name)
+	connectorRegistration, err := cs.DB.GetConnectorRegistrationByConnectorName(info.Name)
 	if err != nil {
+		if errors.Is(err, db.ErrConnectorRegistrationNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Connector registration not found",
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to find connector registration",
+			"error": "Failed to fetch connector registration from database",
 		})
 	}
-	if len(connectorRegistrations) == 0 {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Connector registration not found",
-		})
-	}
-	connectorRegistration := connectorRegistrations[0]
 
 	// Create a new operation token
 	operationToken, err := utils.GenerateToken(utils.DefaultTokenLength)

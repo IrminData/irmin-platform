@@ -332,8 +332,8 @@ func main() {
 	app.Get(healthcheck.StartupEndpoint, healthcheck.New(healthcheck.Config{}))
 
 	// Swagger documentation endpoints
-	app.Get("/swagger/swagger.json", swagger.SwaggerJSON)
-	app.Get("/swagger", swagger.SwaggerUI)
+	app.Get("/swagger/swagger.json", swagger.JSON)
+	app.Get("/swagger", swagger.UI)
 
 	// Setup static file serving
 	app.Get("/public/*", static.New("./public"))

@@ -44,38 +44,38 @@ func SetupConnectorRoutes(config ConnectorRouteConfig) {
 	connectorRoutes := config.App.App.Group("/" + config.ConnectorSlug)
 
 	// Setup base routes that all connectors must have (system token required)
-	connectorRoutes.Get("/info", config.Controller.Info, config.Controller.ValidateSystemTokenMiddleware)
+	connectorRoutes.Get("/info", config.Controller.ValidateSystemTokenMiddleware, config.Controller.Info)
 	connectorRoutes.Post(
 		"/configuration/:key/fields",
-		config.Controller.ConfigFields,
 		config.Controller.ValidateSystemTokenMiddleware,
+		config.Controller.ConfigFields,
 	)
 	connectorRoutes.Post(
 		"/configuration/validate",
-		config.Controller.ConfigValidate,
 		config.Controller.ValidateSystemTokenMiddleware,
+		config.Controller.ConfigValidate,
 	)
 	connectorRoutes.Post(
 		"/operation/init",
-		config.Controller.OperationInit,
 		config.Controller.ValidateSystemTokenMiddleware,
+		config.Controller.OperationInit,
 	)
 	connectorRoutes.Post(
 		"/operation/cancel",
-		config.Controller.OperationCancel,
 		config.Controller.ValidateSystemTokenMiddleware,
+		config.Controller.OperationCancel,
 	)
 	connectorRoutes.Post(
 		"/operation/status",
-		config.Controller.OperationStatus,
 		config.Controller.ValidateSystemTokenMiddleware,
+		config.Controller.OperationStatus,
 	)
 
 	// Setup operation routes that require operation token
 	connectorRoutes.Post(
 		"/operation/schema/:operation",
-		config.Controller.OperationSchemaGet,
 		config.Controller.ValidateOperationTokenMiddleware,
+		config.Controller.OperationSchemaGet,
 	)
 
 	// Setup capability-based routes (operation token required)
@@ -94,19 +94,19 @@ func setupCapabilityRoutes(
 	for _, capability := range capabilities {
 		switch capability {
 		case irminmodels.ConnectorCapabilityPull:
-			routes.Post("/operation/pull", controller.OperationPull, controller.ValidateOperationTokenMiddleware)
+			routes.Post("/operation/pull", controller.ValidateOperationTokenMiddleware, controller.OperationPull)
 
 		case irminmodels.ConnectorCapabilityPush:
-			routes.Post("/operation/push", controller.OperationPush, controller.ValidateOperationTokenMiddleware)
+			routes.Post("/operation/push", controller.ValidateOperationTokenMiddleware, controller.OperationPush)
 
 		case irminmodels.ConnectorCapabilityPushPatch:
-			routes.Post("/operation/patch", controller.OperationPatch, controller.ValidateOperationTokenMiddleware)
+			routes.Post("/operation/patch", controller.ValidateOperationTokenMiddleware, controller.OperationPatch)
 
 		case irminmodels.ConnectorCapabilityEventWebhook:
 			routes.Post(
 				"/operation/subscribe",
-				controller.SubscribeToChanges,
 				controller.ValidateOperationTokenMiddleware,
+				controller.SubscribeToChanges,
 			)
 		}
 	}

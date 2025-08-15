@@ -21,7 +21,7 @@ func ValidateConnectorSystemToken(
 	token = strings.TrimPrefix(token, "Bearer ")
 
 	// Fetch matching registerations by connector name
-	registrations, err := d.GetConnectorRegistrationByConnectorName(connectorName)
+	registrations, err := d.GetConnectorRegistrationsByConnectorName(connectorName)
 	if err != nil {
 		logger.Error("Error fetching connectors from the database",
 			"error", err,

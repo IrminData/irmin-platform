@@ -48,7 +48,7 @@ func (d *Database) GetOperationByID(id uint) (*Operation, error) {
 // GetOperationsByConnectorRegistrationID retrieves all Operation records from the database by associated connector registration ID.
 func (d *Database) GetOperationsByConnectorRegistrationID(id uint) ([]Operation, error) {
 	var operations []Operation
-	if err := d.Where("connector_registration_id = ?", id).Find(&operations).Error; err != nil {
+	if err := d.Where("connector_registration_id = ?", id).Where("deleted_at IS NULL").Find(&operations).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch operations: %w", err)
 	}
 	return operations, nil

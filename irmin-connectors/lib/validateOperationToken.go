@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"errors"
 	"irmin-connectors/db"
 	"log/slog"
 	"strings"
@@ -20,19 +21,18 @@ func ValidateOperationToken(
 	token = strings.TrimPrefix(token, "Bearer ")
 
 	// Fetch matching registerations by connector name
-	registrations, err := d.GetConnectorRegistrationByConnectorName(connectorName)
+	registration, err := d.GetConnectorRegistrationByConnectorName(connectorName)
 	if err != nil {
+		if errors.Is(err, db.ErrConnectorRegistrationNotFound) {
+			logger.Warn("No connector registration found",
+				"connector_name", connectorName)
+			return false, nil, nil
+		}
 		logger.Error("Error fetching connectors from the database",
 			"error", err,
 			"connector_name", connectorName)
 		return false, nil, nil
 	}
-	if len(registrations) == 0 {
-		logger.Warn("No connector registration found",
-			"connector_name", connectorName)
-		return false, nil, nil
-	}
-	registration := registrations[0]
 
 	// Fetch operations for the connector registration
 	operations, err := d.GetOperationsByConnectorRegistrationID(registration.ID)
@@ -56,7 +56,7 @@ func ValidateOperationToken(
 	if !validToken {
 		logger.Warn("Invalid operation token provided",
 			"connector_name", connectorName)
-		return false, &registration, nil
+		return false, registration, nil
 	}
-	return true, &registration, matchedOperation
+	return true, registration, matchedOperation
 }

@@ -12,7 +12,7 @@ func UpdateConnectorInDB(
 	irminID, token, connectorName string,
 ) error {
 	// Remove current connector registrations from the database
-	regs, err := d.GetConnectorRegistrationByConnectorName(connectorName)
+	regs, err := d.GetConnectorRegistrationsByConnectorName(connectorName)
 	if err != nil {
 		logger.Error("Error fetching connector registration",
 			"error", err,

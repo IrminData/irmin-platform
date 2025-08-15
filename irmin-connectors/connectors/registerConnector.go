@@ -1,6 +1,7 @@
 package connectors
 
 import (
+	"errors"
 	"fmt"
 	"irmin-connectors/db"
 	"irmin-connectors/lib"
@@ -32,13 +33,14 @@ func registerConnector(
 	connectorURL := fmt.Sprintf("%s/%s", baseURL, connectorSlug)
 
 	// Fetch matching connector registrations from the database
-	connectorRegistrations, err := database.GetConnectorRegistrationByConnectorName(connectorName)
+	connectorRegistration, err := database.GetConnectorRegistrationByConnectorName(connectorName)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching connector registration: %w", err)
-	}
-	var connectorRegistration *db.ConnectorRegistration
-	if len(connectorRegistrations) > 0 {
-		connectorRegistration = &connectorRegistrations[0]
+		if errors.Is(err, db.ErrConnectorRegistrationNotFound) {
+			// No registration found, proceed with creating a new one
+			connectorRegistration = nil
+		} else {
+			return nil, fmt.Errorf("error fetching connector registration: %w", err)
+		}
 	}
 
 	// Check if the connector is already registered

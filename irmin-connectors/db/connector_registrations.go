@@ -1,10 +1,14 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
 )
+
+// ErrConnectorRegistrationNotFound is returned when no connector registration is found
+var ErrConnectorRegistrationNotFound = errors.New("connector registration not found")
 
 // ConnectorRegistration represents a record associating a system token with a connector.
 type ConnectorRegistration struct {
@@ -42,10 +46,22 @@ func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration
 }
 
 // GetConnectorRegistrationByConnectorName retrieves a ConnectorRegistration record from the database by the name of the connector.
-func (d *Database) GetConnectorRegistrationByConnectorName(name string) ([]ConnectorRegistration, error) {
-	var registrations []ConnectorRegistration
-	if err := d.Where("connector_name = ?", name).Find(&registrations).Error; err != nil {
+func (d *Database) GetConnectorRegistrationByConnectorName(name string) (*ConnectorRegistration, error) {
+	var registration ConnectorRegistration
+	if err := d.Where("connector_name = ?", name).Where("deleted_at IS NULL").First(&registration).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrConnectorRegistrationNotFound
+		}
 		return nil, fmt.Errorf("failed to fetch connector registration: %w", err)
+	}
+	return &registration, nil
+}
+
+// GetConnectorRegistrationsByConnectorName retrieves all ConnectorRegistration records from the database by the name of the connector.
+func (d *Database) GetConnectorRegistrationsByConnectorName(name string) ([]ConnectorRegistration, error) {
+	var registrations []ConnectorRegistration
+	if err := d.Where("connector_name = ?", name).Where("deleted_at IS NULL").Find(&registrations).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch connector registrations: %w", err)
 	}
 	return registrations, nil
 }
