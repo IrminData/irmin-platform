@@ -162,7 +162,7 @@ func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "create_workflow",
-			Description: "Create a new workflow, with workflowable and schedule configuration.",
+			Description: "Create a new workflow, with workflowable and schedule configuration. It's recommended to read the documentation for workflows first, use `list_docs` tool for more information.",
 		},
 		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createWorkflowArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
 			// Validate user

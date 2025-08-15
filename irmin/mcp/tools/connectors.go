@@ -10,16 +10,16 @@ import (
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type ConfigurationFieldsType string
+type configurationFieldsType string
 
 const (
-	ConfigurationFieldsTypeDetails  ConfigurationFieldsType = "details"
-	ConfigurationFieldsTypeSettings ConfigurationFieldsType = "settings"
+	configurationFieldsTypeDetails  configurationFieldsType = "details"
+	configurationFieldsTypeSettings configurationFieldsType = "settings"
 )
 
 type showRequiredConnectorConfigurationFieldsArgs struct {
 	ConnectorID          string                                  `json:"connector_id"          jsonschema:"required,The ID (SQID) of the connector to show the required configuration fields for"`
-	ConfigurationType    ConfigurationFieldsType                 `json:"configuration_type"    jsonschema:"required,The type of configuration fields to show. Details fields are used to establish initial connection and authenticate with the connector, while settings fields are used to configure the connection after it is established."`
+	ConfigurationType    configurationFieldsType                 `json:"configuration_type"    jsonschema:"required,The type of configuration fields to show. Details fields are used to establish initial connection and authenticate with the connector, while settings fields are used to configure the connection after it is established."`
 	CurrentConfiguration irmincore.ConnectorConfigurationRequest `json:"current_configuration" jsonschema:"required,The current configuration field values for the connector, used to for example fetch the options for a dropdown fields."`
 }
 
@@ -86,6 +86,12 @@ func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool()
 			connector, err := mcpTools.apiServices.GetConnector(ctx, uint(connectorID))
 			if err != nil {
 				return nil, err
+			}
+
+			// Validate the configuration type
+			if params.Arguments.ConfigurationType != configurationFieldsTypeDetails &&
+				params.Arguments.ConfigurationType != configurationFieldsTypeSettings {
+				return helpers.MCPError("Invalid configuration type"), nil
 			}
 
 			// Get the configuration fields

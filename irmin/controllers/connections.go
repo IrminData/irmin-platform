@@ -134,7 +134,7 @@ func (api *APIControllers) ConnectionsStore(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
-// @Param connection_slug path string true "Connection slug"
+// @Param connection_slug path string true "Connection ID"
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Connection} "Connection retrieved successfully"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
@@ -170,7 +170,7 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
-// @Param connection_slug path string true "Connection slug"
+// @Param connection_slug path string true "Connection ID"
 // @Param request body irmincore.UpdateConnectionRequest true "Connection update parameters"
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Connection} "Connection updated successfully"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body"
@@ -240,7 +240,7 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
-// @Param connection_slug path string true "Connection slug"
+// @Param connection_slug path string true "Connection ID"
 // @Success 200 {object} irminmodels.IrminAPIResponse "Connection deleted successfully"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
@@ -287,7 +287,7 @@ func (api *APIControllers) ConnectionsDestroy(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
-// @Param connection_slug path string true "Connection slug"
+// @Param connection_slug path string true "Connection ID"
 // @Param request body irmincore.TransferConnectionOwnershipRequest true "Ownership transfer parameters"
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.Connection} "Connection ownership transferred successfully"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid request body or new owner"
@@ -357,7 +357,7 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
-// @Param connection_slug path string true "Connection slug"
+// @Param connection_slug path string true "Connection ID"
 // @Param operation_method query string false "Operation method (pull, push)" default(pull)
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Connection schema retrieved successfully"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"

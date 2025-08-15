@@ -3589,7 +3589,7 @@ paths:
         name: workspace_slug
         required: true
         type: string
-      - description: Connection slug
+      - description: Connection ID
         in: path
         name: connection_slug
         required: true
@@ -3628,7 +3628,7 @@ paths:
         name: workspace_slug
         required: true
         type: string
-      - description: Connection slug
+      - description: Connection ID
         in: path
         name: connection_slug
         required: true
@@ -3672,7 +3672,7 @@ paths:
         name: workspace_slug
         required: true
         type: string
-      - description: Connection slug
+      - description: Connection ID
         in: path
         name: connection_slug
         required: true
@@ -3728,7 +3728,7 @@ paths:
         name: workspace_slug
         required: true
         type: string
-      - description: Connection slug
+      - description: Connection ID
         in: path
         name: connection_slug
         required: true
@@ -3782,7 +3782,7 @@ paths:
         name: workspace_slug
         required: true
         type: string
-      - description: Connection slug
+      - description: Connection ID
         in: path
         name: connection_slug
         required: true

@@ -134,7 +134,10 @@ func (mcpTools *MCPTools) registerGetRepositoryTool() {
 func (mcpTools *MCPTools) registerCreateRepositoryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "create_repository", Description: "Create a new repository in a workspace"},
+		&sdkmcp.Tool{
+			Name:        "create_repository",
+			Description: "Create a new repository in a workspace. It's recommended to read the documentation for repositories first, use `list_docs` tool for more information.",
+		},
 		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createRepositoryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)

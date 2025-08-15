@@ -92,7 +92,10 @@ func (mcpTools *MCPTools) registerListQueriesTool() {
 func (mcpTools *MCPTools) registerCreateQueryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "create_query", Description: "Create a new stored query in a workspace"},
+		&sdkmcp.Tool{
+			Name:        "create_query",
+			Description: "Create a new stored query in a workspace. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
+		},
 		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createQueryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
@@ -135,7 +138,10 @@ func (mcpTools *MCPTools) registerCreateQueryTool() {
 func (mcpTools *MCPTools) registerUpdateQueryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "update_query", Description: "Update an existing stored query"},
+		&sdkmcp.Tool{
+			Name:        "update_query",
+			Description: "Update an existing stored query. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
+		},
 		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[updateQueryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
 			user, ok := mcpTools.getUser(ctx)
 			if !ok || user == nil || user.ID == 0 {
@@ -190,7 +196,10 @@ func (mcpTools *MCPTools) registerUpdateQueryTool() {
 func (mcpTools *MCPTools) registerExecuteSQLTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
-		&sdkmcp.Tool{Name: "execute_sql", Description: "Execute an arbitrary SQL query on the workspace data"},
+		&sdkmcp.Tool{
+			Name:        "execute_sql",
+			Description: "Execute an arbitrary SQL query on the workspace data. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
+		},
 		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[executeSQLArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
 			user, ok := mcpTools.getUser(ctx)
 			if !ok || user == nil || user.ID == 0 {

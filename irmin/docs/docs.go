@@ -1742,7 +1742,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Connection slug",
+                        "description": "Connection ID",
                         "name": "connection_slug",
                         "in": "path",
                         "required": true
@@ -1814,7 +1814,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Connection slug",
+                        "description": "Connection ID",
                         "name": "connection_slug",
                         "in": "path",
                         "required": true
@@ -1874,7 +1874,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Connection slug",
+                        "description": "Connection ID",
                         "name": "connection_slug",
                         "in": "path",
                         "required": true
@@ -1963,7 +1963,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Connection slug",
+                        "description": "Connection ID",
                         "name": "connection_slug",
                         "in": "path",
                         "required": true
@@ -2050,7 +2050,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Connection slug",
+                        "description": "Connection ID",
                         "name": "connection_slug",
                         "in": "path",
                         "required": true

@@ -40,12 +40,19 @@ type updateConnectionArgs struct {
 	Settings      map[string]any `json:"settings"                jsonschema:"optional,The values for the 'settings' part of the connector configuration as JSON object, Key-Value pairs, like project_id: 123456"`
 }
 
+type connectionSchemaArgs struct {
+	WorkspaceSlug   string `json:"workspace_slug"   jsonschema:"required,The slug of the workspace to get the connection schema from"`
+	ConnectionID    string `json:"connection_id"    jsonschema:"required,The ID (SQID) of the connection to get the schema from"`
+	OperationMethod string `json:"operation_method" jsonschema:"required,The operation method to get the schema for (pull, push)"`
+}
+
 // RegisterConnectionTools registers all connection-related tools.
 func (mcpTools *MCPTools) RegisterConnectionTools() {
 	mcpTools.registerListConnectionsTool()
 	mcpTools.registerGetConnectionTool()
 	mcpTools.registerCreateConnectionTool()
 	mcpTools.registerUpdateConnectionTool()
+	mcpTools.registerConnectionSchemaTool()
 }
 
 // registerListConnectionsTool registers the list_connections tool for listing connections in a workspace
@@ -139,7 +146,7 @@ func (mcpTools *MCPTools) registerCreateConnectionTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "create_connection",
-			Description: "Create a new connection in a workspace. In order to create a connection, you need to provide the connector_id and the values for the configuration fields for the connector. The configuration fields are returned by the show_required_connector_configuration_fields tool.",
+			Description: "Create a new connection in a workspace. In order to create a connection, you need to provide the connector_id and the values for the configuration fields for the connector. The configuration fields are returned by the show_required_connector_configuration_fields tool. Always validate the connection configuration with the connector before creating a new connection or updating the configuration of an existing one. Use the `validate_connector_configuration` tool.",
 		},
 		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createConnectionArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
 			// Validate user
@@ -243,6 +250,52 @@ func (mcpTools *MCPTools) registerUpdateConnectionTool() {
 			}
 
 			return helpers.MCPSuccess(formatted)
+		},
+	)
+}
+
+// registerConnectionSchemaTool registers the connection_schema tool for getting the schema of a connection
+func (mcpTools *MCPTools) registerConnectionSchemaTool() {
+	sdkmcp.AddTool(
+		mcpTools.server,
+		&sdkmcp.Tool{Name: "get_connection_schema", Description: "Get the schema of a connection"},
+		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[connectionSchemaArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+			// Validate user
+			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
+			if err != nil {
+				return nil, err
+			}
+
+			// Get the workspace
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), nil
+			}
+
+			// Get the connection
+			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, params.Arguments.ConnectionID)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get connection", "error", err)
+				return helpers.MCPError("Failed to get connection"), nil
+			}
+
+			// Get the schema of the connection
+			schema, err := mcpTools.apiServices.GetConnectionSchema(
+				ctx,
+				"en",
+				user,
+				workspace,
+				connection,
+				params.Arguments.OperationMethod,
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get connection schema", "error", err)
+				return helpers.MCPError("Failed to get connection schema"), nil
+			}
+
+			// Return the schema
+			return helpers.MCPSuccess(schema)
 		},
 	)
 }
