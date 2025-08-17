@@ -17,6 +17,14 @@ interface MoveObjectRequest {
 }
 
 /**
+ * Interface for uploading an object from a URL
+ */
+interface UploadObjectFromURLRequest {
+  url: string;
+  headers?: { [key: string]: string };
+}
+
+/**
  * Object API service
  *
  * Responsible for all repository object-related API calls.
@@ -40,6 +48,7 @@ class ObjectService {
     this.downloadObjectZip = this.downloadObjectZip.bind(this);
     this.getObjectSchema = this.getObjectSchema.bind(this);
     this.uploadObject = this.uploadObject.bind(this);
+    this.uploadObjectFromURL = this.uploadObjectFromURL.bind(this);
     this.moveObject = this.moveObject.bind(this);
     this.copyObject = this.copyObject.bind(this);
     this.deleteObject = this.deleteObject.bind(this);
@@ -309,6 +318,56 @@ class ObjectService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Upload object error');
+      throw error;
+    }
+  }
+
+  /**
+   * Upload an object from a URL.
+   *
+   * @param props - The object upload properties.
+   * @param props.workspace - The workspace slug.
+   * @param props.repository - The repository slug.
+   * @param props.ref - The ref (branch, tag or commit hash) to upload to.
+   * @param props.path - The path within the repository where the object will be uploaded.
+   * @param props.fileURL - The URL to upload the object from.
+   * @param props.headers - (optional) The headers to pass to the URL. e.g. { 'Authorization': 'Bearer <token>' }
+   * @returns IrminAPIResponse containing the uploaded object.
+   */
+  async uploadObjectFromURL({
+    workspace,
+    repository,
+    ref,
+    path,
+    fileURL,
+    headers,
+  }: {
+    workspace: string;
+    repository: string;
+    ref: string;
+    path: string;
+    fileURL: string;
+    headers?: { [key: string]: string }; // e.g. { 'Authorization': 'Bearer <token>' }
+  }): Promise<IrminAPIResponse<RepositoryObject>> {
+    try {
+      const requestBody: UploadObjectFromURLRequest = {
+        url: fileURL,
+        headers,
+      };
+
+      const urlParams = new URLSearchParams();
+      urlParams.append('ref', ref);
+      urlParams.append('path', path);
+      const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects/upload-from-url?${urlParams.toString()}`;
+      const response = (await this.irminCore.fetchAPI(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })) as IrminAPIResponse<RepositoryObject>;
+
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Upload object from URL error');
       throw error;
     }
   }

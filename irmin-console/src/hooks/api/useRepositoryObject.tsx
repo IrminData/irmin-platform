@@ -147,6 +147,37 @@ export const useRepositoryObject = (
     },
   });
 
+  const uploadObjectFromURLMutation = useMutation<
+    IrminAPIResponse,
+    Error,
+    {
+      path: string;
+      ref: string;
+      fileURL: string;
+      headers?: { [key: string]: string };
+    }
+  >({
+    mutationFn: async ({ path, ref, fileURL, headers }) => {
+      const token = await getToken();
+      const irminCore = new IrminCore(locale, token);
+      return irminCore.objectService.uploadObjectFromURL({
+        workspace: workspaceSlug,
+        repository: repositorySlug,
+        path,
+        ref,
+        fileURL,
+        headers,
+      });
+    },
+    onSuccess: (res, { path, ref }) => {
+      invalidateObjectQueries(path, ref);
+      irminAlert('success', res.message ?? 'Object uploaded successfully');
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Failed to upload object');
+    },
+  });
+
   return {
     // Queries
     repositoryObjectQuery,
@@ -156,5 +187,6 @@ export const useRepositoryObject = (
     moveObjectMutation,
     copyObjectMutation,
     uploadObjectMutation,
+    uploadObjectFromURLMutation,
   };
 };
