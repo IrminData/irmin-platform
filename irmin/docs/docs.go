@@ -5862,7 +5862,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects": {
             "get": {
                 "security": [
                     {
@@ -5898,8 +5898,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object path within the repository",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -5996,8 +5996,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object path within the repository to delete",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6048,7 +6048,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/content": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/content": {
             "get": {
                 "security": [
                     {
@@ -6084,8 +6084,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object path within the repository",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6136,7 +6136,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/copy": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/copy": {
             "post": {
                 "security": [
                     {
@@ -6172,8 +6172,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Source object path within the repository",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6245,7 +6245,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/download": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/download": {
             "get": {
                 "security": [
                     {
@@ -6281,8 +6281,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object or directory path within the repository",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6333,7 +6333,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/history": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/history": {
             "get": {
                 "security": [
                     {
@@ -6369,8 +6369,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object path within the repository",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6436,7 +6436,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/move": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/move": {
             "patch": {
                 "security": [
                     {
@@ -6471,17 +6471,17 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Current object path within the repository",
-                        "name": "object_path",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "default": "\"main\"",
                         "description": "Reference (branch, tag, or commit) to move in",
                         "name": "ref",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Current object path within the repository",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
                     },
                     {
                         "description": "Move object request with new path",
@@ -6545,7 +6545,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/schema": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/schema": {
             "get": {
                 "security": [
                     {
@@ -6581,8 +6581,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object path within the repository",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6645,7 +6645,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/structured": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/structured": {
             "get": {
                 "security": [
                     {
@@ -6681,8 +6681,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object path within the repository (must be structured data file)",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6745,7 +6745,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/upload": {
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload": {
             "post": {
                 "security": [
                     {
@@ -6781,8 +6781,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Object path within the repository",
-                        "name": "object_path",
-                        "in": "path",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -6827,6 +6827,109 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad request - invalid file or parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload-from-url": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Upload a file from a URL to a specific path in a repository at a given reference",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repository-objects"
+                ],
+                "summary": "Upload object to repository from URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository slug",
+                        "name": "repository_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object path within the repository",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"main\"",
+                        "description": "Reference (branch, tag, or commit) to upload to",
+                        "name": "ref",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Upload object from URL request with URL and headers",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UploadObjectFromURLRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object uploaded successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.Object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid URL or parameters",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -10528,6 +10631,27 @@ const docTemplate = `{
                 }
             }
         },
+        "irmincore.UploadObjectFromURLRequest": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "Authorization": " Bearer \u003ctoken\u003e"
+                    }
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/file.json"
+                }
+            }
+        },
         "irmincore.WorkflowRequest": {
             "type": "object",
             "required": [
@@ -13074,23 +13198,11 @@ const docTemplate = `{
                 1000000,
                 1000000000,
                 60000000000,
-                3600000000000,
-                1,
-                1000,
-                1000000,
-                1000000000,
-                60000000000,
                 3600000000000
             ],
             "x-enum-varnames": [
                 "minDuration",
                 "maxDuration",
-                "Nanosecond",
-                "Microsecond",
-                "Millisecond",
-                "Second",
-                "Minute",
-                "Hour",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",

@@ -123,8 +123,8 @@ github.com/gofiber/storage/memory/v2 v2.1.0 h1:vg02c9n114665UNF4ijzehbIAv56mGF4t
 github.com/gofiber/storage/memory/v2 v2.1.0/go.mod h1:S3+xrcTF2KPFSwYHYtw1DiYgwNBVS8akBpu0/6heuzw=
 github.com/gofiber/storage/s3/v2 v2.4.0 h1:500ETEqbJ7Q7JPcnwANJrb15o2HHxejMVj+e9pxnknA=
 github.com/gofiber/storage/s3/v2 v2.4.0/go.mod h1:qZvBE7kAZwcoK8B3TzuJkR84awMuex/0xs0sRerDREE=
-github.com/gofiber/utils/v2 v2.0.0-beta.14 h1:sm2qJWshJip/DE/VKahhTNWb78gToesceTKdEgSs7rg=
-github.com/gofiber/utils/v2 v2.0.0-beta.14/go.mod h1:Y1g08g7gvST49bbjHJ1AVqcsmg93912R/tbKWhn6V3E=
+github.com/gofiber/utils/v2 v2.0.0-rc.1 h1:b77K5Rk9+Pjdxz4HlwEBnS7u5nikhx7armQB8xPds4s=
+github.com/gofiber/utils/v2 v2.0.0-rc.1/go.mod h1:Y1g08g7gvST49bbjHJ1AVqcsmg93912R/tbKWhn6V3E=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
 github.com/golang-jwt/jwt/v5 v5.3.0 h1:pv4AsKCKKZuqlgs5sUmn4x8UlGa0kEVt/puTpKx9vvo=

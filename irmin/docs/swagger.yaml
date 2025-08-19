@@ -584,6 +584,20 @@ definitions:
         maxLength: 100
         type: string
     type: object
+  irmincore.UploadObjectFromURLRequest:
+    properties:
+      headers:
+        additionalProperties:
+          type: string
+        example:
+          Authorization: ' Bearer <token>'
+        type: object
+      url:
+        example: https://example.com/file.json
+        type: string
+    required:
+    - url
+    type: object
   irmincore.WorkflowRequest:
     properties:
       description:
@@ -2497,23 +2511,11 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
-    - 1
-    - 1000
-    - 1000000
-    - 1000000000
-    - 60000000000
-    - 3600000000000
     format: int64
     type: integer
     x-enum-varnames:
     - minDuration
     - maxDuration
-    - Nanosecond
-    - Microsecond
-    - Millisecond
-    - Second
-    - Minute
-    - Hour
     - Nanosecond
     - Microsecond
     - Millisecond
@@ -6159,7 +6161,7 @@ paths:
       summary: Merge two repository references
       tags:
       - compare
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects:
     delete:
       consumes:
       - application/json
@@ -6177,8 +6179,8 @@ paths:
         required: true
         type: string
       - description: Object path within the repository to delete
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6235,8 +6237,8 @@ paths:
         required: true
         type: string
       - description: Object path within the repository
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6281,7 +6283,7 @@ paths:
       summary: Get repository object
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/content:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/content:
     get:
       consumes:
       - application/json
@@ -6299,8 +6301,8 @@ paths:
         required: true
         type: string
       - description: Object path within the repository
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6340,7 +6342,7 @@ paths:
       summary: Download repository object content
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/copy:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/copy:
     post:
       consumes:
       - application/json
@@ -6358,8 +6360,8 @@ paths:
         required: true
         type: string
       - description: Source object path within the repository
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6410,7 +6412,7 @@ paths:
       summary: Copy repository object
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/download:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/download:
     get:
       consumes:
       - application/json
@@ -6428,8 +6430,8 @@ paths:
         required: true
         type: string
       - description: Object or directory path within the repository
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6469,7 +6471,7 @@ paths:
       summary: Download repository objects as ZIP
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/history:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/history:
     get:
       consumes:
       - application/json
@@ -6486,8 +6488,8 @@ paths:
         required: true
         type: string
       - description: Object path within the repository
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6534,7 +6536,7 @@ paths:
       summary: Get object commit history
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/move:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/move:
     patch:
       consumes:
       - application/json
@@ -6551,15 +6553,15 @@ paths:
         name: repository_slug
         required: true
         type: string
-      - description: Current object path within the repository
-        in: path
-        name: object_path
-        required: true
-        type: string
       - default: '"main"'
         description: Reference (branch, tag, or commit) to move in
         in: query
         name: ref
+        type: string
+      - description: Current object path within the repository
+        in: query
+        name: path
+        required: true
         type: string
       - description: Move object request with new path
         in: body
@@ -6604,7 +6606,7 @@ paths:
       summary: Move repository object
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/schema:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/schema:
     get:
       consumes:
       - application/json
@@ -6621,8 +6623,8 @@ paths:
         required: true
         type: string
       - description: Object path within the repository
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6667,7 +6669,7 @@ paths:
       summary: Get object schema
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/structured:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/structured:
     get:
       consumes:
       - application/json
@@ -6685,8 +6687,8 @@ paths:
         required: true
         type: string
       - description: Object path within the repository (must be structured data file)
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6731,7 +6733,7 @@ paths:
       summary: Get structured object content
       tags:
       - repository-objects
-  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/{object_path}/upload:
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload:
     post:
       consumes:
       - multipart/form-data
@@ -6748,8 +6750,8 @@ paths:
         required: true
         type: string
       - description: Object path within the repository
-        in: path
-        name: object_path
+        in: query
+        name: path
         required: true
         type: string
       - default: '"main"'
@@ -6797,6 +6799,72 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Upload object to repository
+      tags:
+      - repository-objects
+  /workspaces/{workspace_slug}/repositories/{repository_slug}/objects/upload-from-url:
+    post:
+      consumes:
+      - application/json
+      description: Upload a file from a URL to a specific path in a repository at
+        a given reference
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Repository slug
+        in: path
+        name: repository_slug
+        required: true
+        type: string
+      - description: Object path within the repository
+        in: query
+        name: path
+        required: true
+        type: string
+      - default: '"main"'
+        description: Reference (branch, tag, or commit) to upload to
+        in: query
+        name: ref
+        type: string
+      - description: Upload object from URL request with URL and headers
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UploadObjectFromURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object uploaded successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.Object'
+              type: object
+        "400":
+          description: Bad request - invalid URL or parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload object to repository from URL
       tags:
       - repository-objects
   /workspaces/{workspace_slug}/repositories/{repository_slug}/revert-uncommitted-changes:
