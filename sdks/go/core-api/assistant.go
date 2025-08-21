@@ -9,8 +9,7 @@ import (
 
 // CreateAssistantMessageRequest represents the JSON request body for creating assistant messages.
 type CreateAssistantMessageRequest struct {
-	Message        string `json:"message"         validate:"required,max=100" example:"What is the capital of France?"`
-	ConversationID string `json:"conversation_id" validate:"required,max=100" example:"conv_1a2b3c"`
+	Message string `json:"message" validate:"required,max=100" example:"What is the capital of France?"`
 }
 
 // CreateAssistantConversationRequest represents the JSON request body for creating assistant conversations.
@@ -135,12 +134,13 @@ func (c *Client) GetAssistantConversationStats(
 // SendAssistantMessage sends a message to the AI assistant and gets a response.
 func (c *Client) SendAssistantMessage(
 	workspace string,
+	conversationID string,
 	req CreateAssistantMessageRequest,
 ) (*irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error) {
 	var response irminmodels.AssistantMessage
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/assistant/messages", workspace),
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/assistant/conversations/%s/messages", workspace, conversationID),
 		ContentType: "application/json",
 		Body:        req,
 	}, &response)
