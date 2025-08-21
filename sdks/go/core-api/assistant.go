@@ -15,6 +15,13 @@ type CreateAssistantMessageRequest struct {
 
 // CreateAssistantConversationRequest represents the JSON request body for creating assistant conversations.
 type CreateAssistantConversationRequest struct {
+	Title    string         `json:"title"    validate:"required,max=255" example:"My conversation"`
+	Metadata map[string]any `json:"metadata"`
+}
+
+// UpdateAssistantConversationRequest represents the request to update an assistant conversation.
+type UpdateAssistantConversationRequest struct {
+	Title    string         `json:"title"    validate:"required,max=255" example:"My conversation"`
 	Metadata map[string]any `json:"metadata"`
 }
 
@@ -61,6 +68,23 @@ func (c *Client) CreateAssistantConversation(
 		return nil, nil, fmt.Errorf("create assistant conversation error: %w", err)
 	}
 	return &newConversation, apiResp, nil
+}
+
+// UpdateAssistantConversation updates an assistant conversation.
+func (c *Client) UpdateAssistantConversation(
+	workspace, conversationID string,
+	req UpdateAssistantConversationRequest,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method:      http.MethodPatch,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/assistant/conversations/%s", workspace, conversationID),
+		ContentType: "application/json",
+		Body:        req,
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("update assistant conversation error: %w", err)
+	}
+	return apiResp, nil
 }
 
 // DeleteAssistantConversation deletes an assistant conversation by its ID.
