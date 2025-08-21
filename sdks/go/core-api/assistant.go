@@ -15,13 +15,13 @@ type CreateAssistantMessageRequest struct {
 
 // CreateAssistantConversationRequest represents the JSON request body for creating assistant conversations.
 type CreateAssistantConversationRequest struct {
-	Title    string         `json:"title"    validate:"required,max=255" example:"My conversation"`
+	Title    string         `json:"title"    example:"My conversation"`
 	Metadata map[string]any `json:"metadata"`
 }
 
 // UpdateAssistantConversationRequest represents the request to update an assistant conversation.
 type UpdateAssistantConversationRequest struct {
-	Title    string         `json:"title"    validate:"required,max=255" example:"My conversation"`
+	Title    string         `json:"title"    example:"My conversation"`
 	Metadata map[string]any `json:"metadata"`
 }
 
