@@ -1,3 +1,4 @@
+import { globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import next from '@next/eslint-plugin-next';
 import tanstackQuery from '@tanstack/eslint-plugin-query';
@@ -15,6 +16,25 @@ import globals from 'globals';
 import tseslint, { configs as tseslintConfigs } from 'typescript-eslint';
 
 export default tseslint.config(
+  globalIgnores([
+    'public',
+    '.claude',
+    '.github',
+    '.vscode',
+    'node_modules',
+    'tmp',
+    'playwright-report',
+    'test-results',
+    'certificates',
+    '.git',
+    '.next',
+    'tests',
+    '**/*.config.{js,ts,mjs}',
+    '**/*.config.js',
+    '**/*.config.ts',
+    '**/*.config.mjs',
+    '**/*.d.ts',
+  ]),
   js.configs.recommended,
   tseslintConfigs.recommended,
   importX.flatConfigs.recommended,

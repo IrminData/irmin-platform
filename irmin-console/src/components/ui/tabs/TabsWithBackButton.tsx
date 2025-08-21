@@ -54,7 +54,11 @@ const TabsWithBackButton = ({
                 className={`
                   rounded-b-none border shadow-none
                   hover:no-underline
-                  ${tab.active ? 'border-0 border-b-2 border-solid border-accent' : ''}
+                  ${
+                    tab.active
+                      ? `border-0 border-b-2 border-solid border-accent`
+                      : ''
+                  }
                 `}
                 size='lg'
                 variant={'ghost'}
