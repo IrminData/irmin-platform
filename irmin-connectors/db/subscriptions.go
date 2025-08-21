@@ -38,7 +38,7 @@ func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription
 
 // DeleteSubscriptionsByOperationID removes all subscriptions associated with the specified operation ID.
 func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error {
-	if err := d.Where("operation_id = ?", operationID).Delete(&Subscription{}).Error; err != nil {
+	if err := d.Where(&Subscription{OperationID: operationID}).Delete(&Subscription{}).Error; err != nil {
 		return fmt.Errorf("failed to delete subscriptions: %w", err)
 	}
 	return nil
@@ -46,7 +46,7 @@ func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error {
 
 // DeleteSubscriptionsByConnectorRegistrationID removes all subscriptions associated with the specified connector registration ID.
 func (d *Database) DeleteSubscriptionsByConnectorRegistrationID(connectorRegistrationID uint) error {
-	if err := d.Where("connector_registration_id = ?", connectorRegistrationID).Delete(&Subscription{}).Error; err != nil {
+	if err := d.Where(&Subscription{ConnectorRegistrationID: connectorRegistrationID}).Delete(&Subscription{}).Error; err != nil {
 		return fmt.Errorf("failed to delete subscriptions: %w", err)
 	}
 	return nil

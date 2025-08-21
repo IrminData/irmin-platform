@@ -48,7 +48,7 @@ func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration
 // GetConnectorRegistrationByConnectorName retrieves a ConnectorRegistration record from the database by the name of the connector.
 func (d *Database) GetConnectorRegistrationByConnectorName(name string) (*ConnectorRegistration, error) {
 	var registration ConnectorRegistration
-	if err := d.Where("connector_name = ?", name).Where("deleted_at IS NULL").First(&registration).Error; err != nil {
+	if err := d.Where(&ConnectorRegistration{ConnectorName: name}).First(&registration).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrConnectorRegistrationNotFound
 		}
@@ -60,7 +60,7 @@ func (d *Database) GetConnectorRegistrationByConnectorName(name string) (*Connec
 // GetConnectorRegistrationsByConnectorName retrieves all ConnectorRegistration records from the database by the name of the connector.
 func (d *Database) GetConnectorRegistrationsByConnectorName(name string) ([]ConnectorRegistration, error) {
 	var registrations []ConnectorRegistration
-	if err := d.Where("connector_name = ?", name).Where("deleted_at IS NULL").Find(&registrations).Error; err != nil {
+	if err := d.Where(&ConnectorRegistration{ConnectorName: name}).Find(&registrations).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch connector registrations: %w", err)
 	}
 	return registrations, nil
