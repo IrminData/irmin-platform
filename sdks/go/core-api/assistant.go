@@ -136,8 +136,8 @@ func (c *Client) SendAssistantMessage(
 	workspace string,
 	conversationID string,
 	req CreateAssistantMessageRequest,
-) (*irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error) {
-	var response irminmodels.AssistantMessage
+) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error) {
+	var response []irminmodels.AssistantMessage
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/assistant/conversations/%s/messages", workspace, conversationID),
@@ -147,5 +147,5 @@ func (c *Client) SendAssistantMessage(
 	if err != nil {
 		return nil, nil, fmt.Errorf("send assistant message error: %w", err)
 	}
-	return &response, apiResp, nil
+	return response, apiResp, nil
 }
