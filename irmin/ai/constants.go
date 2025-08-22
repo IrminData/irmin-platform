@@ -13,13 +13,13 @@ const (
 	DefaultSmallModel = anthropic.ModelClaude3_5HaikuLatest
 
 	// DefaultTemperature is the default temperature for AI messages
-	DefaultTemperature = 0.75
+	DefaultTemperature = 0.8
 
 	// DefaultMaxTokens is the default maximum number of tokens for a message
-	DefaultMaxTokens = 1024 * 15
+	DefaultMaxTokens = 1024 * 10
 
 	// DefaultThinkingMaxTokens is the default maximum number of tokens for thinking
-	DefaultThinkingMaxTokens = 1024 * 5
+	DefaultThinkingMaxTokens = 1024 * 4
 
 	// MaxRetries is the maximum number of retries for overloaded errors
 	MaxRetries = 3

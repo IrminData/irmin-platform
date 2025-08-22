@@ -7,7 +7,6 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 	"maps"
-	"strconv"
 	"strings"
 	"time"
 
@@ -195,7 +194,7 @@ func (api *APIServices) prepareMessageMetadata(
 	return newMetadata
 }
 
-// initializeAIAndSendMessage initializes the AI service and sends the message
+// initializeAIAndSendMessage initializes the AI service and sends a message
 func (api *APIServices) initializeAIAndSendMessage(
 	c context.Context,
 	userToken *string,
@@ -205,7 +204,7 @@ func (api *APIServices) initializeAIAndSendMessage(
 	metadata map[string]any,
 ) (*ai.AI, *anthropic.BetaMessage, error) {
 	// Initialize AI service
-	aiService, err := ai.NewAI(api.Env, userToken)
+	aiService, err := ai.NewAIFromEnv(api.Env, userToken)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error creating AI service", "error", err)
 		// Create a failed AI message to record the error
@@ -221,8 +220,29 @@ func (api *APIServices) initializeAIAndSendMessage(
 		return nil, nil, err
 	}
 
+	// Get conversation history from database
+	dbConversation, err := api.DB.GetAssistantConversationWithMessages(conversation.ID)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error retrieving conversation history", "error", err)
+		// Continue without history rather than failing
+		dbConversation = conversation
+	}
+
+	// Convert database messages to AI conversation format
+	conversationHistory := make([]ai.ConversationMessage, 0, len(dbConversation.Messages))
+	for _, msg := range dbConversation.Messages {
+		conversationHistory = append(conversationHistory, ai.ConversationMessage{
+			Role:    msg.Role,
+			Content: msg.Content,
+		})
+	}
+
+	// Convert MessageOptions to MessageRequest
+	req := opts.ToMessageRequest(message)
+	req.ConversationHistory = conversationHistory
+
 	// Send message to AI
-	response, err := aiService.SendMessage(c, message, opts)
+	response, err := aiService.SendMessage(c, req)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error sending message to AI", "error", err)
 		// Create a failed AI message to record the error
@@ -362,7 +382,7 @@ func (api *APIServices) ListAssistantConversations(
 // CreateAssistantConversation creates a new conversation
 func (api *APIServices) CreateAssistantConversation(
 	c context.Context,
-	userToken *string,
+	_ *string,
 	user *db.User,
 	workspace *db.Workspace,
 	req irmincore.CreateAssistantConversationRequest,
@@ -401,12 +421,6 @@ func (api *APIServices) CreateAssistantConversation(
 		return nil, createErr
 	}
 
-	// Also create in AI service for consistency
-	aiService, err := ai.NewAI(api.Env, userToken)
-	if err == nil {
-		aiService.CreateConversation(strconv.FormatUint(uint64(dbConversation.ID), 10), convMetadata)
-	}
-
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
@@ -424,7 +438,7 @@ func (api *APIServices) UpdateAssistantConversation(
 	c context.Context,
 	user *db.User,
 	workspace *db.Workspace,
-	conversationSqid *string,
+	_ *string,
 	conversation *db.AssistantConversation,
 	req irmincore.UpdateAssistantConversationRequest,
 ) (*db.AssistantConversation, error) {
@@ -449,12 +463,6 @@ func (api *APIServices) UpdateAssistantConversation(
 		return nil, updateErr
 	}
 
-	// Also update in AI service for consistency
-	aiService, err := ai.NewAI(api.Env, nil) // No user token needed for metadata updates
-	if err == nil {
-		aiService.UpdateConversationMetadata(*conversationSqid, conversation.Metadata)
-	}
-
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeUpdate,
@@ -469,10 +477,10 @@ func (api *APIServices) UpdateAssistantConversation(
 // DeleteAssistantConversation deletes a conversation and all its messages
 func (api *APIServices) DeleteAssistantConversation(
 	c context.Context,
-	userToken *string,
+	_ *string,
 	user *db.User,
 	workspace *db.Workspace,
-	conversationSqid *string,
+	_ *string,
 	conversation *db.AssistantConversation,
 ) error {
 	// Make sure this is allowed
@@ -490,12 +498,6 @@ func (api *APIServices) DeleteAssistantConversation(
 		return deleteErr
 	}
 
-	// Also perform the operation in AI service
-	aiService, err := ai.NewAI(api.Env, userToken)
-	if err == nil {
-		aiService.DeleteConversation(*conversationSqid)
-	}
-
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
@@ -510,10 +512,10 @@ func (api *APIServices) DeleteAssistantConversation(
 // ClearAssistantConversation clears all messages from a conversation
 func (api *APIServices) ClearAssistantConversation(
 	c context.Context,
-	userToken *string,
+	_ *string,
 	user *db.User,
 	workspace *db.Workspace,
-	conversationSqid *string,
+	_ *string,
 	conversation *db.AssistantConversation,
 ) error {
 	// Make sure this is allowed
@@ -530,14 +532,6 @@ func (api *APIServices) ClearAssistantConversation(
 	if clearErr := api.DB.ClearAssistantConversationMessages(conversation.ID); clearErr != nil {
 		api.Logger.ErrorContext(c, "Error clearing assistant conversation messages in database", "error", clearErr)
 		return clearErr
-	}
-
-	// Also perform the operation in AI service
-	aiService, err := ai.NewAI(api.Env, userToken)
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error creating AI service", "error", err)
-	} else {
-		aiService.ClearConversation(*conversationSqid)
 	}
 
 	// Log the event

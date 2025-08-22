@@ -8,7 +8,6 @@ import (
 	"irmin-api/utils"
 	"math"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -18,36 +17,60 @@ import (
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
 
-// AI represents the main AI service with conversation management capabilities
+// Config holds AI service configuration
+type Config struct {
+	APIKey       string
+	BaseURL      string
+	MCPPath      string
+	UserToken    *string
+	DefaultModel anthropic.Model
+	MaxTokens    int64
+	Temperature  float64
+	MaxRetries   int
+	BaseDelay    time.Duration
+}
+
+// DefaultConfig returns sensible default configuration
+func DefaultConfig() *Config {
+	return &Config{
+		DefaultModel: DefaultMainModel,
+		MaxTokens:    DefaultMaxTokens,
+		Temperature:  DefaultTemperature,
+		MaxRetries:   MaxRetries,
+		BaseDelay:    BaseDelay,
+	}
+}
+
+// AI represents the AI service for sending messages
 type AI struct {
-	userToken      *string
-	env            *utils.CoreAPIEnv
-	mcpServers     []anthropic.BetaRequestMCPServerURLDefinitionParam
-	client         *anthropic.Client
-	anthropicBetas []anthropic.AnthropicBeta
-	conversations  map[string]*Conversation
-	mutex          sync.RWMutex
+	config *Config
+	client *anthropic.Client
 }
 
-// Conversation represents a chat conversation with history
-type Conversation struct {
-	ID        string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Messages  []Message
-	Metadata  map[string]any
+// MessageRequest represents a message request with options
+type MessageRequest struct {
+	Content                string
+	ConversationID         string
+	ConversationHistory    []ConversationMessage
+	MaxTokens              *int64
+	Model                  *anthropic.Model
+	Temperature            *float64
+	TopP                   *float64
+	Stream                 bool
+	Metadata               map[string]any
+	ThinkingEnabled        bool
+	DocsToolsOnly          bool
+	AIType                 *IrminAIType
+	AdditionalSystemPrompt string
 }
 
-// Message represents a single message in a conversation
-type Message struct {
-	ID        string
-	Role      anthropic.BetaMessageParamRole
-	Content   string
-	Timestamp time.Time
-	Metadata  map[string]any
+// ConversationMessage represents a message in conversation history
+type ConversationMessage struct {
+	Role    anthropic.BetaMessageParamRole
+	Content string
 }
 
-// MessageOptions provides configuration for message sending
+// MessageOptions provides configuration for message sending (backward compatibility)
 type MessageOptions struct {
 	AdditionalSystemPrompt string
 	ConversationID         string
@@ -62,62 +85,87 @@ type MessageOptions struct {
 	AIType                 *IrminAIType
 }
 
-// ConversationOptions provides configuration for conversation management
-type ConversationOptions struct {
-	MaxHistorySize int
-	AutoCleanup    bool
-	TTL            time.Duration
+// ToMessageRequest converts MessageOptions to MessageRequest
+func (opts *MessageOptions) ToMessageRequest(content string) *MessageRequest {
+	if opts == nil {
+		return &MessageRequest{Content: content}
+	}
+
+	// Only set Model if it's not the zero value
+	var model *anthropic.Model
+	if opts.Model != "" {
+		model = &opts.Model
+	}
+
+	// Only set MaxTokens if it's not the zero value
+	var maxTokens *int64
+	if opts.MaxTokens != 0 {
+		maxTokens = &opts.MaxTokens
+	}
+
+	return &MessageRequest{
+		Content:                content,
+		ConversationID:         opts.ConversationID,
+		MaxTokens:              maxTokens,
+		Model:                  model,
+		Temperature:            opts.Temperature,
+		TopP:                   opts.TopP,
+		Stream:                 opts.Stream,
+		Metadata:               opts.Metadata,
+		ThinkingEnabled:        opts.ThinkingEnabled,
+		DocsToolsOnly:          opts.DocsToolsOnly,
+		AIType:                 opts.AIType,
+		AdditionalSystemPrompt: opts.AdditionalSystemPrompt,
+	}
 }
 
-// NewAI creates a new AI service instance
-func NewAI(env *utils.CoreAPIEnv, userToken *string) (*AI, error) {
+// NewAI creates a new AI service instance with the given configuration
+func NewAI(config *Config) (*AI, error) {
+	if config == nil {
+		config = DefaultConfig()
+	}
+
+	if config.APIKey == "" {
+		return nil, errors.New("API key is required")
+	}
+
 	// Initialize Anthropic API client
 	client := anthropic.NewClient(
-		option.WithAPIKey(env.AnthropicAPIKey),
+		option.WithAPIKey(config.APIKey),
 	)
 
-	// Define Anthropic API Betas
-	anthropicBetas := []anthropic.AnthropicBeta{
-		anthropic.AnthropicBetaMCPClient2025_04_04,
-	}
-
-	// Get the token
-	var mcpUserToken string
-	if userToken == nil {
-		mcpUserToken = ""
-	} else {
-		mcpUserToken = *userToken
-	}
-
-	// Define base MCP server configuration
-	irminMCP := anthropic.BetaRequestMCPServerURLDefinitionParam{
-		URL:                fmt.Sprintf("%s%s", env.URL, env.MCPHTTPPath),
-		Name:               "irmin-mcp",
-		AuthorizationToken: param.NewOpt(mcpUserToken),
-		// ToolConfiguration will be set dynamically per message in ConfigureMCPServers
-	}
-
 	return &AI{
-		userToken:      userToken,
-		env:            env,
-		mcpServers:     []anthropic.BetaRequestMCPServerURLDefinitionParam{irminMCP},
-		client:         &client,
-		anthropicBetas: anthropicBetas,
-		conversations:  make(map[string]*Conversation),
+		config: config,
+		client: &client,
 	}, nil
 }
 
-// SendMessage sends a message and optionally maintains conversation history, with retry logic for overloaded errors
-func (a *AI) SendMessage(ctx context.Context, message string, opts *MessageOptions) (*anthropic.BetaMessage, error) {
-	for attempt := range MaxRetries {
-		response, err := a.sendMessageInternal(ctx, message, opts)
+// NewAIFromEnv creates a new AI service from environment configuration
+func NewAIFromEnv(env *utils.CoreAPIEnv, userToken *string) (*AI, error) {
+	config := DefaultConfig()
+	config.APIKey = env.AnthropicAPIKey
+	config.BaseURL = env.URL
+	config.MCPPath = env.MCPHTTPPath
+	config.UserToken = userToken
+
+	return NewAI(config)
+}
+
+// SendMessage sends a message and returns the response
+func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, error) {
+	if req == nil {
+		return nil, errors.New("message request cannot be nil")
+	}
+
+	for attempt := range a.config.MaxRetries {
+		response, err := a.sendMessageInternal(ctx, req)
 		if err == nil {
 			return response, nil
 		}
 
 		// Check if it's an overloaded error and we haven't exceeded max retries
-		if strings.Contains(err.Error(), "overloaded_error") && attempt < MaxRetries-1 {
-			delay := time.Duration(math.Pow(DelayBackoffFactor, float64(attempt))) * BaseDelay
+		if strings.Contains(err.Error(), "overloaded_error") && attempt < a.config.MaxRetries-1 {
+			delay := time.Duration(math.Pow(DelayBackoffFactor, float64(attempt))) * a.config.BaseDelay
 			time.Sleep(delay)
 			continue
 		}
@@ -129,50 +177,32 @@ func (a *AI) SendMessage(ctx context.Context, message string, opts *MessageOptio
 }
 
 // sendMessageInternal is the internal implementation without retry logic
-func (a *AI) sendMessageInternal(
-	ctx context.Context,
-	message string,
-	opts *MessageOptions,
-) (*anthropic.BetaMessage, error) {
-	opts = a.setMessageDefaults(opts)
-	messages := a.prepareMessages(opts.ConversationID, message)
-	params := a.prepareAPIParams(opts, messages)
+func (a *AI) sendMessageInternal(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, error) {
+	messages := a.prepareMessages(req.Content, req.ConversationHistory)
+	params := a.prepareAPIParams(req, messages)
 
 	response, err := a.client.Beta.Messages.New(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
-	// TODO: We might want to return more details about the message/request sent
-	// - Store the data in the database
-	// - Return stuff like AI type, AI model, temperature, etc.
-
-	a.storeConversationMessages(opts.ConversationID, message, response, opts.Metadata)
 	return response, nil
 }
 
-// setMessageDefaults sets default values for message options
-func (a *AI) setMessageDefaults(opts *MessageOptions) *MessageOptions {
-	if opts == nil {
-		opts = &MessageOptions{}
-	}
-	if opts.MaxTokens == 0 {
-		opts.MaxTokens = int64(DefaultMaxTokens)
-	}
-	if opts.Model == "" {
-		opts.Model = DefaultMainModel
-	}
-	return opts
-}
-
 // prepareMessages prepares messages for API call including conversation history
-func (a *AI) prepareMessages(conversationID, message string) []anthropic.BetaMessageParam {
+func (a *AI) prepareMessages(message string, history []ConversationMessage) []anthropic.BetaMessageParam {
 	var messages []anthropic.BetaMessageParam
 
-	if conversationID != "" {
-		conversation := a.GetConversation(conversationID)
-		if conversation != nil {
-			messages = a.convertConversationMessages(conversation.Messages)
+	// Add conversation history
+	for _, msg := range history {
+		switch msg.Role {
+		case anthropic.BetaMessageParamRoleUser:
+			messages = append(messages, anthropic.NewBetaUserMessage(anthropic.NewBetaTextBlock(msg.Content)))
+		case anthropic.BetaMessageParamRoleAssistant:
+			messages = append(messages, anthropic.BetaMessageParam{
+				Role:    anthropic.BetaMessageParamRoleAssistant,
+				Content: []anthropic.BetaContentBlockParamUnion{anthropic.NewBetaTextBlock(msg.Content)},
+			})
 		}
 	}
 
@@ -181,37 +211,17 @@ func (a *AI) prepareMessages(conversationID, message string) []anthropic.BetaMes
 	return messages
 }
 
-// convertConversationMessages converts conversation messages to API format
-func (a *AI) convertConversationMessages(conversationMessages []Message) []anthropic.BetaMessageParam {
-	var messages []anthropic.BetaMessageParam
-
-	for _, msg := range conversationMessages {
-		switch msg.Role {
-		case anthropic.BetaMessageParamRoleUser:
-			messages = append(messages, anthropic.NewBetaUserMessage(anthropic.NewBetaTextBlock(msg.Content)))
-		case anthropic.BetaMessageParamRoleAssistant:
-			// Create proper assistant message to maintain conversation structure
-			messages = append(messages, anthropic.BetaMessageParam{
-				Role:    anthropic.BetaMessageParamRoleAssistant,
-				Content: []anthropic.BetaContentBlockParamUnion{anthropic.NewBetaTextBlock(msg.Content)},
-			})
-		}
-	}
-
-	return messages
-}
-
 // prepareAPIParams prepares API parameters for the message request
 func (a *AI) prepareAPIParams(
-	opts *MessageOptions,
+	req *MessageRequest,
 	messages []anthropic.BetaMessageParam,
 ) anthropic.BetaMessageNewParams {
 	// Prepare system prompts
 	var systemPrompts []anthropic.BetaTextBlockParam
 
 	// Add AI type-specific system prompt if specified
-	if opts.AIType != nil {
-		aiSystemPrompt := GetSystemPrompt(*opts.AIType)
+	if req.AIType != nil {
+		aiSystemPrompt := GetSystemPrompt(*req.AIType)
 		if aiSystemPrompt != "" {
 			systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{
 				Text: aiSystemPrompt,
@@ -220,27 +230,27 @@ func (a *AI) prepareAPIParams(
 	}
 
 	// Add the additional system prompt if provided
-	if opts.AdditionalSystemPrompt != "" {
+	if req.AdditionalSystemPrompt != "" {
 		systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{
-			Text: opts.AdditionalSystemPrompt,
+			Text: req.AdditionalSystemPrompt,
 		})
 	}
 
-	// Configure MCP servers based on message options
-	mcpServers := a.ConfigureMCPServers(opts)
+	// Configure MCP servers
+	mcpServers := a.configureMCPServers(req)
 
 	// Prepare request parameters
 	params := anthropic.BetaMessageNewParams{
-		MaxTokens:  opts.MaxTokens,
+		MaxTokens:  a.getMaxTokens(req.MaxTokens),
 		Messages:   messages,
-		Model:      opts.Model,
+		Model:      a.getModel(req.Model),
 		MCPServers: mcpServers,
-		Betas:      a.anthropicBetas,
+		Betas:      []anthropic.AnthropicBeta{anthropic.AnthropicBetaMCPClient2025_04_04},
 		System:     systemPrompts,
 	}
 
 	// Enable thinking if needed
-	if opts.ThinkingEnabled {
+	if req.ThinkingEnabled {
 		params.Thinking = anthropic.BetaThinkingConfigParamUnion{
 			OfEnabled: &anthropic.BetaThinkingConfigEnabledParam{
 				BudgetTokens: DefaultThinkingMaxTokens,
@@ -248,92 +258,65 @@ func (a *AI) prepareAPIParams(
 		}
 	} else {
 		// Temperature is not supported when thinking is enabled
-		if opts.Temperature != nil {
-			params.Temperature = param.NewOpt(*opts.Temperature)
+		if req.Temperature != nil {
+			params.Temperature = param.NewOpt(*req.Temperature)
 		} else {
-			params.Temperature = param.NewOpt(DefaultTemperature)
+			params.Temperature = param.NewOpt(a.config.Temperature)
 		}
 	}
 
 	// Add optional parameters
-	if opts.TopP != nil {
-		params.TopP = param.NewOpt(*opts.TopP)
+	if req.TopP != nil {
+		params.TopP = param.NewOpt(*req.TopP)
 	}
 
 	return params
 }
 
-// ConfigureMCPServers configures MCP servers based on message options
-func (a *AI) ConfigureMCPServers(opts *MessageOptions) []anthropic.BetaRequestMCPServerURLDefinitionParam {
-	// Start with the base MCP server configuration
-	mcpServers := make([]anthropic.BetaRequestMCPServerURLDefinitionParam, len(a.mcpServers))
-	copy(mcpServers, a.mcpServers)
+// configureMCPServers configures MCP servers based on message options
+func (a *AI) configureMCPServers(req *MessageRequest) []anthropic.BetaRequestMCPServerURLDefinitionParam {
+	// Configure Irmin MCP tool access based on message options
+	toolConfig := anthropic.BetaRequestMCPServerToolConfigurationParam{
+		Enabled: anthropic.Bool(true),
+	}
 
-	// Configure tool access based on message options
-	for i := range mcpServers {
-		if opts.DocsToolsOnly {
-			// Restrict to only docs tools
-			mcpServers[i].ToolConfiguration = anthropic.BetaRequestMCPServerToolConfigurationParam{
-				Enabled: anthropic.Bool(true),
-				AllowedTools: []string{
-					"list_docs",
-					"get_docs",
-				},
-			}
-		} else {
-			// Allow all tools (default behavior)
-			mcpServers[i].ToolConfiguration = anthropic.BetaRequestMCPServerToolConfigurationParam{
-				Enabled: anthropic.Bool(true),
-				// By not setting AllowedTools, all tools are available
-			}
+	if req.DocsToolsOnly {
+		// Restrict to only docs tools
+		toolConfig.AllowedTools = []string{
+			"list_docs",
+			"get_docs",
 		}
 	}
 
-	return mcpServers
-}
-
-// SetMCPServers sets the MCP servers (used for testing)
-func (a *AI) SetMCPServers(servers []anthropic.BetaRequestMCPServerURLDefinitionParam) {
-	a.mcpServers = servers
-}
-
-// storeConversationMessages stores user message and AI response in conversation
-func (a *AI) storeConversationMessages(
-	conversationID, message string,
-	response *anthropic.BetaMessage,
-	metadata map[string]any,
-) {
-	if conversationID == "" {
-		return
+	// Create MCP server configuration
+	mcpServer := anthropic.BetaRequestMCPServerURLDefinitionParam{
+		URL:               fmt.Sprintf("%s%s", a.config.BaseURL, a.config.MCPPath),
+		Name:              "irmin-mcp",
+		ToolConfiguration: toolConfig,
 	}
 
-	// Generate unique IDs for our internal tracking that won't conflict with database IDs
-	// Use a prefix to distinguish from database IDs and include timestamp for uniqueness
-	userMessageID := fmt.Sprintf("ai_user_%s_%d", conversationID, time.Now().UnixNano())
-
-	// Store user message
-	a.StoreMessage(conversationID, Message{
-		ID:        userMessageID,
-		Role:      anthropic.BetaMessageParamRoleUser,
-		Content:   message,
-		Timestamp: time.Now(),
-		Metadata:  metadata,
-	})
-
-	// Store AI response blocks
-	if len(response.Content) > 0 {
-		contentBlocks := ExtractResponseBlocks(response.Content)
-		for i, block := range contentBlocks {
-			aiMessageID := fmt.Sprintf("ai_assistant_%s_%d_%d", conversationID, time.Now().UnixNano(), i)
-			a.StoreMessage(conversationID, Message{
-				ID:        aiMessageID,
-				Role:      anthropic.BetaMessageParamRoleAssistant,
-				Content:   block.Content,
-				Timestamp: time.Now(),
-				Metadata:  metadata,
-			})
-		}
+	// Add authorization token if available
+	if a.config.UserToken != nil && *a.config.UserToken != "" {
+		mcpServer.AuthorizationToken = param.NewOpt(*a.config.UserToken)
 	}
+
+	return []anthropic.BetaRequestMCPServerURLDefinitionParam{mcpServer}
+}
+
+// getMaxTokens returns the max tokens value, using default if not specified
+func (a *AI) getMaxTokens(maxTokens *int64) int64 {
+	if maxTokens != nil {
+		return *maxTokens
+	}
+	return a.config.MaxTokens
+}
+
+// getModel returns the model value, using default if not specified
+func (a *AI) getModel(model *anthropic.Model) anthropic.Model {
+	if model != nil {
+		return *model
+	}
+	return a.config.DefaultModel
 }
 
 // ContentBlock represents a single content block from the AI response
@@ -452,19 +435,14 @@ func (a *AI) GenerateConversationTitle(ctx context.Context, firstMessage string)
 	)
 
 	// Prepare the message
-	messages := []anthropic.BetaMessageParam{
-		anthropic.NewBetaUserMessage(anthropic.NewBetaTextBlock(prompt)),
-	}
-
-	// Create parameters for a quick, focused response
-	params := anthropic.BetaMessageNewParams{
-		MaxTokens: TitleMaxTokens, // Very short response for title
-		Messages:  messages,
-		Model:     DefaultSmallModel, // Use the smaller model
+	req := &MessageRequest{
+		Content:   prompt,
+		MaxTokens: &[]int64{TitleMaxTokens}[0],
+		Model:     &[]anthropic.Model{DefaultSmallModel}[0],
 	}
 
 	// Send the request
-	response, err := a.client.Beta.Messages.New(ctx, params)
+	response, err := a.SendMessage(ctx, req)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate title: %w", err)
 	}
@@ -487,312 +465,4 @@ func (a *AI) GenerateConversationTitle(ctx context.Context, firstMessage string)
 	}
 
 	return title, nil
-}
-
-// CreateConversation creates a new conversation
-func (a *AI) CreateConversation(id string, metadata map[string]any) *Conversation {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	conversation := &Conversation{
-		ID:        id,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Messages:  make([]Message, 0),
-		Metadata:  metadata,
-	}
-
-	a.conversations[id] = conversation
-	return conversation
-}
-
-// GetConversation retrieves a conversation by ID
-func (a *AI) GetConversation(id string) *Conversation {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
-
-	conversation, exists := a.conversations[id]
-	if !exists {
-		return nil
-	}
-
-	return conversation
-}
-
-// StoreMessage adds a message to a conversation
-func (a *AI) StoreMessage(conversationID string, message Message) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	conversation, exists := a.conversations[conversationID]
-	if !exists {
-		// Create the conversation while holding the lock to prevent race conditions
-		conversation = &Conversation{
-			ID:        conversationID,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			Messages:  make([]Message, 0),
-			Metadata:  nil,
-		}
-		a.conversations[conversationID] = conversation
-	}
-
-	conversation.Messages = append(conversation.Messages, message)
-	conversation.UpdatedAt = time.Now()
-}
-
-// GetConversationHistory returns all messages in a conversation
-func (a *AI) GetConversationHistory(conversationID string) []Message {
-	conversation := a.GetConversation(conversationID)
-	if conversation == nil {
-		return nil
-	}
-	return conversation.Messages
-}
-
-// ClearConversation removes all messages from a conversation
-func (a *AI) ClearConversation(conversationID string) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	if conversation, exists := a.conversations[conversationID]; exists {
-		conversation.Messages = make([]Message, 0)
-		conversation.UpdatedAt = time.Now()
-	}
-}
-
-// DeleteConversation removes a conversation entirely
-func (a *AI) DeleteConversation(conversationID string) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	delete(a.conversations, conversationID)
-}
-
-// UpdateConversationMetadata updates the metadata of an existing conversation
-func (a *AI) UpdateConversationMetadata(conversationID string, metadata map[string]any) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	if conversation, exists := a.conversations[conversationID]; exists {
-		conversation.Metadata = metadata
-		conversation.UpdatedAt = time.Now()
-	}
-}
-
-// GetConversationMetadata retrieves the metadata of a conversation
-func (a *AI) GetConversationMetadata(conversationID string) map[string]any {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
-
-	if conversation, exists := a.conversations[conversationID]; exists {
-		return conversation.Metadata
-	}
-	return nil
-}
-
-// UpdateConversationMetadataField updates a specific metadata field
-func (a *AI) UpdateConversationMetadataField(conversationID string, key string, value any) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	if conversation, exists := a.conversations[conversationID]; exists {
-		if conversation.Metadata == nil {
-			conversation.Metadata = make(map[string]any)
-		}
-		conversation.Metadata[key] = value
-		conversation.UpdatedAt = time.Now()
-	}
-}
-
-// ListConversations returns all conversation IDs
-func (a *AI) ListConversations() []string {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
-
-	ids := make([]string, 0, len(a.conversations))
-	for id := range a.conversations {
-		ids = append(ids, id)
-	}
-	return ids
-}
-
-// GetConversationStats returns statistics about a conversation
-func (a *AI) GetConversationStats(conversationID string) map[string]any {
-	conversation := a.GetConversation(conversationID)
-	if conversation == nil {
-		return nil
-	}
-
-	userMessageCount := 0
-	assistantMessageCount := 0
-	totalTokens := 0
-
-	for _, msg := range conversation.Messages {
-		switch msg.Role {
-		case anthropic.BetaMessageParamRoleUser:
-			userMessageCount++
-		case anthropic.BetaMessageParamRoleAssistant:
-			assistantMessageCount++
-		}
-		// Estimate tokens (rough approximation: 1 token ≈ 4 characters)
-		const charsPerToken = 4
-		totalTokens += len(msg.Content) / charsPerToken
-	}
-
-	return map[string]any{
-		"total_messages":     len(conversation.Messages),
-		"user_messages":      userMessageCount,
-		"assistant_messages": assistantMessageCount,
-		"estimated_tokens":   totalTokens,
-		"created_at":         conversation.CreatedAt,
-		"last_updated":       conversation.UpdatedAt,
-		"duration_minutes":   int(time.Since(conversation.CreatedAt).Minutes()),
-	}
-}
-
-// CleanupOldConversations removes conversations older than the specified TTL
-func (a *AI) CleanupOldConversations(ttl time.Duration) int {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	cutoff := time.Now().Add(-ttl)
-	deletedCount := 0
-
-	for id, conversation := range a.conversations {
-		if conversation.UpdatedAt.Before(cutoff) {
-			delete(a.conversations, id)
-			deletedCount++
-		}
-	}
-
-	return deletedCount
-}
-
-// ExportConversation exports a conversation to a structured format
-func (a *AI) ExportConversation(conversationID string) map[string]any {
-	conversation := a.GetConversation(conversationID)
-	if conversation == nil {
-		return nil
-	}
-
-	messages := make([]map[string]any, len(conversation.Messages))
-	for i, msg := range conversation.Messages {
-		messages[i] = map[string]any{
-			"id":        msg.ID,
-			"role":      string(msg.Role),
-			"content":   msg.Content,
-			"timestamp": msg.Timestamp,
-			"metadata":  msg.Metadata,
-		}
-	}
-
-	return map[string]any{
-		"id":         conversation.ID,
-		"created_at": conversation.CreatedAt,
-		"updated_at": conversation.UpdatedAt,
-		"messages":   messages,
-		"metadata":   conversation.Metadata,
-		"stats":      a.GetConversationStats(conversationID),
-	}
-}
-
-// ImportConversation imports a conversation from a structured format
-func (a *AI) ImportConversation(data map[string]any) error {
-	id, ok := data["id"].(string)
-	if !ok {
-		return errors.New("invalid conversation ID")
-	}
-
-	conversation := a.CreateConversation(id, nil)
-	a.importMessages(data, conversation)
-	a.importMetadata(data, conversation)
-
-	return nil
-}
-
-// importMessages imports messages from the data into the conversation
-func (a *AI) importMessages(data map[string]any, conversation *Conversation) {
-	messagesData, messagesOk := data["messages"].([]any)
-	if !messagesOk {
-		return
-	}
-
-	for _, msgData := range messagesData {
-		msgMap, msgOk := msgData.(map[string]any)
-		if !msgOk {
-			continue
-		}
-
-		message := a.createMessageFromData(msgMap)
-		if message != nil {
-			conversation.Messages = append(conversation.Messages, *message)
-		}
-	}
-}
-
-// createMessageFromData creates a Message from message data
-func (a *AI) createMessageFromData(msgMap map[string]any) *Message {
-	role := a.parseMessageRole(msgMap)
-	if role == "" {
-		return nil
-	}
-
-	content, _ := msgMap["content"].(string)
-	timestamp := a.parseMessageTimestamp(msgMap)
-	msgID, msgIDOk := msgMap["id"].(string)
-	if !msgIDOk {
-		return nil
-	}
-
-	message := &Message{
-		ID:        msgID,
-		Role:      role,
-		Content:   content,
-		Timestamp: timestamp,
-		Metadata:  make(map[string]any),
-	}
-
-	a.setMessageMetadata(msgMap, message)
-	return message
-}
-
-// parseMessageRole parses the role from message data
-func (a *AI) parseMessageRole(msgMap map[string]any) anthropic.BetaMessageParamRole {
-	roleStr, _ := msgMap["role"].(string)
-	switch roleStr {
-	case "user":
-		return anthropic.BetaMessageParamRoleUser
-	case "assistant":
-		return anthropic.BetaMessageParamRoleAssistant
-	default:
-		return ""
-	}
-}
-
-// parseMessageTimestamp parses the timestamp from message data
-func (a *AI) parseMessageTimestamp(msgMap map[string]any) time.Time {
-	timestampStr, _ := msgMap["timestamp"].(string)
-	if timestampStr == "" {
-		return time.Now()
-	}
-
-	if parsed, err := time.Parse(time.RFC3339, timestampStr); err == nil {
-		return parsed
-	}
-	return time.Now()
-}
-
-// setMessageMetadata sets metadata for a message if available
-func (a *AI) setMessageMetadata(msgMap map[string]any, message *Message) {
-	if metadata, metadataOk := msgMap["metadata"].(map[string]any); metadataOk {
-		message.Metadata = metadata
-	}
-}
-
-// importMetadata imports metadata from the data into the conversation
-func (a *AI) importMetadata(data map[string]any, conversation *Conversation) {
-	if metadata, metadataOk := data["metadata"].(map[string]any); metadataOk {
-		conversation.Metadata = metadata
-	}
 }

@@ -1,17 +1,16 @@
-# Universal AI Message Service
+# AI Communication Service
 
-A comprehensive, thread-safe Go package for managing AI conversations with the Anthropic Claude API. This package provides conversation management, message history, and advanced features to avoid code repetition across your application.
+A lightweight, stateless Go package for communicating with the Anthropic Claude API. This package provides a clean interface for sending messages and processing AI responses without managing conversation state.
 
 ## Features
 
+- **Stateless Design**: No in-memory conversation storage or mutexes
 - **Universal Message Sending**: Single interface for all AI interactions
-- **Conversation Management**: Automatic conversation creation and management
-- **Thread-Safe Operations**: Concurrent access with mutex protection
-- **Message History**: Automatic storage and retrieval of conversation history
+- **MCP Integration**: Built-in support for Model Context Protocol servers
 - **Flexible Configuration**: Customizable options for each message
-- **Data Export/Import**: Conversation persistence and migration support
-- **Statistics and Analytics**: Built-in conversation metrics
-- **Automatic Cleanup**: Time-based conversation cleanup utilities
+- **Response Processing**: Utilities for extracting and processing AI responses
+- **Error Handling**: Built-in retry logic with exponential backoff
+- **Conversation History Support**: Accepts conversation history from external sources
 
 ## Quick Start
 
@@ -24,27 +23,32 @@ import (
     "context"
     "log"
     "irmin-api/ai"
-    "irmin-api/utils"
 )
 
 func main() {
-    // Initialize API services (replace with your actual services)
-    env := &utils.CoreAPIEnv{
-        AnthropicAPIKey: "your-anthropic-api-key",
-        URL:             "https://your-api.com",
-        MCPHTTPPath:     "/mcp",
+    // Create AI service with custom configuration
+    config := &ai.Config{
+        APIKey:       "your-anthropic-api-key",
+        BaseURL:      "https://your-api.com",
+        MCPPath:      "/mcp",
+        UserToken:    &userToken, // Required for MCP authentication
+        DefaultModel: ai.DefaultMainModel,
+        MaxTokens:    ai.DefaultMaxTokens,
+        Temperature:  ai.DefaultTemperature,
     }
-    userToken := "user-token-123" // User's JWT token to authenticate Irmin MCP usage
-
-    // Create AI service instance
-    aiService, err := ai.NewAI(env, &userToken)
+    
+    aiService, err := ai.NewAI(config)
     if err != nil {
         log.Fatal(err)
     }
 
     // Send a simple message
     ctx := context.Background()
-    response, err := aiService.SendMessage(ctx, "Hello, Claude!", nil)
+    req := &ai.MessageRequest{
+        Content: "Hello, Claude!",
+    }
+    
+    response, err := aiService.SendMessage(ctx, req)
     if err != nil {
         log.Fatal(err)
     }
@@ -53,65 +57,79 @@ func main() {
 }
 ```
 
-### Using Conversations
+### Using Environment Configuration
 
 ```go
-// Create a conversation with metadata
-conversationID := "user_123_session_1"
-conversation := aiService.CreateConversation(conversationID, map[string]any{
-    "user_id": "user_123",
-    "topic":   "technical_support",
-})
+// For existing Irmin projects, use the environment-based constructor
+// This automatically handles MCP authentication with the user token
+aiService, err := ai.NewAIFromEnv(env, &userToken)
+if err != nil {
+    log.Fatal(err)
+}
+```
 
-// Send messages with conversation context
-opts := &ai.MessageOptions{
-    ConversationID: conversationID,
-    MaxTokens:      2048,
-    Temperature:    &[]float64{0.7}[0], // Helper for pointer
+**Note**: The `userToken` is required for MCP server authentication. Without it, the AI service won't be able to access Irmin-specific tools and functionality.
+
+### Using Conversation History
+
+```go
+// Prepare conversation history from your database
+conversationHistory := []ai.ConversationMessage{
+    {
+        Role:    anthropic.BetaMessageParamRoleUser,
+        Content: "I need help with my API",
+    },
+    {
+        Role:    anthropic.BetaMessageParamRoleAssistant,
+        Content: "I'd be happy to help! What specific issue are you experiencing?",
+    },
 }
 
-// First message
-response1, err := aiService.SendMessage(ctx, "I need help with my API", opts)
+// Send message with conversation context
+req := &ai.MessageRequest{
+    Content:             "The authentication is failing",
+    ConversationHistory: conversationHistory,
+    MaxTokens:           &[]int64{2048}[0],
+    Temperature:         &[]float64{0.7}[0],
+}
 
-// Follow-up message (history automatically included)
-response2, err := aiService.SendMessage(ctx, "The authentication is failing", opts)
-
-// Get conversation history
-history := aiService.GetConversationHistory(conversationID)
-log.Printf("Conversation has %d messages", len(history))
+response, err := aiService.SendMessage(ctx, req)
 ```
 
 ## API Reference
 
 ### Core Types
 
-#### `AI`
-Main service struct for managing AI interactions.
+#### `Config`
+Configuration for the AI service:
+- `APIKey`: Anthropic API key (required)
+- `BaseURL`: Base URL for MCP server
+- `MCPPath`: MCP server path
+- `UserToken`: User authentication token for MCP server access
+- `DefaultModel`: Default AI model to use
+- `MaxTokens`: Default maximum tokens
+- `Temperature`: Default temperature setting
+- `MaxRetries`: Maximum retry attempts
+- `BaseDelay`: Base delay between retries
 
-#### `MessageOptions`
-Configuration options for message sending:
-- `ConversationID`: Optional conversation identifier
-- `MaxTokens`: Maximum tokens in response (default: 1024)
-- `Model`: AI model to use (default: Claude Sonnet 4)
+#### `MessageRequest`
+Configuration for message sending:
+- `Content`: The message content (required)
+- `ConversationHistory`: Array of previous conversation messages
+- `MaxTokens`: Maximum tokens in response
+- `Model`: AI model to use
 - `Temperature`: Response creativity (0.0-1.0)
 - `TopP`: Nucleus sampling parameter
 - `Metadata`: Custom metadata for the message
+- `ThinkingEnabled`: Enable thinking mode
+- `DocsToolsOnly`: Restrict to documentation tools only
+- `AIType`: AI type for system prompts
+- `AdditionalSystemPrompt`: Additional system instructions
 
-#### `Conversation`
-Represents a conversation with history:
-- `ID`: Unique conversation identifier
-- `CreatedAt`: Creation timestamp
-- `UpdatedAt`: Last modification timestamp
-- `Messages`: Array of conversation messages
-- `Metadata`: Custom conversation metadata
-
-#### `Message`
-Individual message in a conversation:
-- `ID`: Unique message identifier
+#### `ConversationMessage`
+Represents a message in conversation history:
 - `Role`: Message role (user/assistant)
 - `Content`: Message text content
-- `Timestamp`: Message timestamp
-- `Metadata`: Custom message metadata
 
 ### Core Methods
 
@@ -119,251 +137,254 @@ Individual message in a conversation:
 
 ```go
 // Send message without conversation context
-response, err := ai.SendMessage(ctx, "Hello", nil)
+req := &ai.MessageRequest{Content: "Hello"}
+response, err := ai.SendMessage(ctx, req)
 
-// Send message with full options
-opts := &MessageOptions{
-    ConversationID: "conv_123",
-    MaxTokens:      2048,
-    Temperature:    &[]float64{0.8}[0],
-    Metadata:       map[string]any{"source": "chat"},
+// Send message with conversation history
+req := &ai.MessageRequest{
+    Content:             "Hello",
+    ConversationHistory: conversationHistory,
+    MaxTokens:           &[]int64{2048}[0],
+    Temperature:         &[]float64{0.8}[0],
+    Metadata:            map[string]any{"source": "chat"},
 }
-response, err := ai.SendMessage(ctx, "Hello", opts)
+response, err := ai.SendMessage(ctx, req)
 ```
 
-#### Conversation Management
+#### Response Processing
 
 ```go
-// Create conversation
-conversation := ai.CreateConversation("conv_id", metadata)
-
-// Get conversation
-conversation := ai.GetConversation("conv_id")
-
-// Store message manually
-message := ai.Message{
-    ID:        "msg_123",
-    Role:      anthropic.BetaMessageParamRoleUser,
-    Content:   "Hello",
-    Timestamp: time.Now(),
+// Extract all content blocks from AI response
+contentBlocks := ai.ExtractResponseBlocks(response.Content)
+for _, block := range contentBlocks {
+    log.Printf("Content type: %s, Content: %s", block.Type, block.Content)
 }
-ai.StoreMessage("conv_id", message)
 
-// Get conversation history
-history := ai.GetConversationHistory("conv_id")
-
-// Clear conversation messages
-ai.ClearConversation("conv_id")
-
-// Delete conversation entirely
-ai.DeleteConversation("conv_id")
-
-// List all conversations
-conversations := ai.ListConversations()
+// Extract text content (backward compatibility)
+textContent := ai.ExtractResponseContent(response.Content)
+log.Printf("Text content: %s", textContent)
 ```
 
-#### Analytics and Statistics
+#### Conversation Title Generation
 
 ```go
-// Get conversation statistics
-stats := ai.GetConversationStats("conv_id")
-// Returns: total_messages, user_messages, assistant_messages, 
-//          estimated_tokens, created_at, last_updated, duration_minutes
-```
-
-#### Data Persistence
-
-```go
-// Export conversation to map
-exported := ai.ExportConversation("conv_id")
-
-// Import conversation from map
-err := ai.ImportConversation(exported)
-
-// Cleanup old conversations (older than 24 hours)
-deletedCount := ai.CleanupOldConversations(24 * time.Hour)
+// Generate a title for a conversation based on the first message
+title, err := aiService.GenerateConversationTitle(ctx, "I need help with my API authentication")
+if err != nil {
+    log.Printf("Failed to generate title: %v", err)
+} else {
+    log.Printf("Generated title: %s", title)
+}
 ```
 
 ## Advanced Usage Patterns
 
-### Multi-User Support
+### MCP Server Configuration
 
 ```go
-// Create user-specific conversation IDs
-userID := "user_123"
-sessionID := "session_456"
-conversationID := fmt.Sprintf("conv_%s_%s", userID, sessionID)
-
-conversation := aiService.CreateConversation(conversationID, map[string]any{
-    "user_id":    userID,
-    "session_id": sessionID,
-    "created_by": "support_system",
-})
-```
-
-### Conversation Templates
-
-```go
-// Create conversation factory function
-func createSupportConversation(userID, ticketID string) *ai.Conversation {
-    conversationID := fmt.Sprintf("support_%s_%s", userID, ticketID)
-    metadata := map[string]any{
-        "type":      "support",
-        "user_id":   userID,
-        "ticket_id": ticketID,
-        "priority":  "medium",
-    }
-    return aiService.CreateConversation(conversationID, metadata)
+// Configure MCP servers with custom tool access
+req := &ai.MessageRequest{
+    Content:        "Search the documentation",
+    DocsToolsOnly:  true, // Restricts to only docs tools
+    ThinkingEnabled: true, // Enables thinking mode
 }
 ```
 
-### Batch Operations
+### System Prompt Management
 
 ```go
-// Process multiple conversations
-conversations := aiService.ListConversations()
-for _, convID := range conversations {
-    stats := aiService.GetConversationStats(convID)
-    if stats["duration_minutes"].(int) > 60 {
-        // Archive long conversations
-        exported := aiService.ExportConversation(convID)
-        // Save to database/file
-        aiService.DeleteConversation(convID)
-    }
+// Add AI type-specific system prompts
+req := &ai.MessageRequest{
+    Content: "Help me with this task",
+    AIType:  &ai.IrminAIType, // Uses predefined system prompt
+}
+
+// Add custom system prompts
+req := &ai.MessageRequest{
+    Content:                "Process this data",
+    AdditionalSystemPrompt: "You are a data processing expert. Always validate inputs.",
 }
 ```
 
 ### Error Handling Patterns
 
 ```go
-func sendMessageSafely(ai *ai.AI, ctx context.Context, msg string, opts *ai.MessageOptions) (*anthropic.BetaMessage, error) {
-    response, err := ai.SendMessage(ctx, msg, opts)
+func sendMessageSafely(ai *ai.AI, ctx context.Context, msg string, history []ai.ConversationMessage) (*anthropic.BetaMessage, error) {
+    req := &ai.MessageRequest{
+        Content:             msg,
+        ConversationHistory: history,
+    }
+    
+    response, err := ai.SendMessage(ctx, req)
     if err != nil {
         // Log error with context
-        log.Printf("AI message failed: %v, conversation: %s", err, opts.ConversationID)
-        
-        // Optionally retry with simplified options
-        if opts.ConversationID != "" {
-            simpleOpts := &ai.MessageOptions{ConversationID: opts.ConversationID}
-            return ai.SendMessage(ctx, msg, simpleOpts)
-        }
+        log.Printf("AI message failed: %v, history length: %d", err, len(history))
         return nil, err
     }
+    
     return response, nil
 }
 ```
 
-### Conversation Monitoring
+### Conversation History Management
 
 ```go
-// Monitor conversation health
-func monitorConversations(ai *ai.AI) {
-    conversations := ai.ListConversations()
-    for _, convID := range conversations {
-        stats := ai.GetConversationStats(convID)
-        
-        // Alert on long conversations
-        if stats["total_messages"].(int) > 100 {
-            log.Printf("Long conversation detected: %s with %d messages", 
-                convID, stats["total_messages"])
-        }
-        
-        // Alert on high token usage
-        if stats["estimated_tokens"].(int) > 10000 {
-            log.Printf("High token usage in conversation: %s (%d tokens)", 
-                convID, stats["estimated_tokens"])
+// Example of how to manage conversation history in your application
+type ConversationManager struct {
+    db *Database
+}
+
+func (cm *ConversationManager) SendMessage(conversationID string, message string) (*anthropic.BetaMessage, error) {
+    // 1. Retrieve conversation history from database
+    history, err := cm.db.GetConversationMessages(conversationID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get history: %w", err)
+    }
+    
+    // 2. Convert to AI format
+    conversationHistory := make([]ai.ConversationMessage, len(history))
+    for i, msg := range history {
+        conversationHistory[i] = ai.ConversationMessage{
+            Role:    msg.Role,
+            Content: msg.Content,
         }
     }
+    
+    // 3. Send message with history
+    aiService, err := ai.NewAIFromEnv(env, userToken)
+    if err != nil {
+        return nil, err
+    }
+    
+    req := &ai.MessageRequest{
+        Content:             message,
+        ConversationHistory: conversationHistory,
+    }
+    
+    return aiService.SendMessage(ctx, req)
 }
 ```
 
 ## Best Practices
 
-### 1. Conversation ID Naming
-Use descriptive, hierarchical conversation IDs:
-```go
-// Good
-"user_123_session_456_chat"
-"support_ticket_789_conversation"
-"onboarding_user_123_step_2"
+### 1. Conversation History Management
+Since this package doesn't store conversation state, manage it in your application:
 
-// Avoid
-"conv1"
-"chat"
-"conversation"
-```
-
-### 2. Metadata Usage
-Store relevant context in metadata:
 ```go
-metadata := map[string]any{
-    "user_id":      userID,
-    "session_id":   sessionID,
-    "feature":      "chat_support",
-    "version":      "1.0",
-    "environment":  "production",
-    "created_by":   "user_action",
-}
-```
-
-### 3. Resource Management
-Implement cleanup strategies:
-```go
-// Daily cleanup of old conversations
-go func() {
-    ticker := time.NewTicker(24 * time.Hour)
-    for range ticker.C {
-        deleted := aiService.CleanupOldConversations(7 * 24 * time.Hour)
-        log.Printf("Cleaned up %d old conversations", deleted)
+// Store messages in your database
+func storeMessage(db *Database, conversationID string, role string, content string) error {
+    message := &Message{
+        ConversationID: conversationID,
+        Role:          role,
+        Content:       content,
+        Timestamp:     time.Now(),
     }
-}()
-```
+    return db.Create(message)
+}
 
-### 4. Error Recovery
-Always handle conversation creation failures:
-```go
-conversation := aiService.GetConversation(conversationID)
-if conversation == nil {
-    // Conversation doesn't exist, create it
-    conversation = aiService.CreateConversation(conversationID, defaultMetadata)
+// Retrieve history when needed
+func getConversationHistory(db *Database, conversationID string) ([]ai.ConversationMessage, error) {
+    messages, err := db.GetMessagesByConversation(conversationID)
+    if err != nil {
+        return nil, err
+    }
+    
+    history := make([]ai.ConversationMessage, len(messages))
+    for i, msg := range messages {
+        history[i] = ai.ConversationMessage{
+            Role:    msg.Role,
+            Content: msg.Content,
+        }
+    }
+    
+    return history, nil
 }
 ```
 
-### 5. Performance Optimization
+### 2. AI Service Lifecycle
+Create AI services per request or use a connection pool:
+
+```go
+// Per-request creation (recommended for most use cases)
+func handleRequest(ctx context.Context, userToken string) error {
+    aiService, err := ai.NewAIFromEnv(env, &userToken)
+    if err != nil {
+        return err
+    }
+    
+    // Use service for this request
+    response, err := aiService.SendMessage(ctx, req)
+    // ... handle response
+    
+    return nil
+}
+
+// Connection pooling for high-frequency usage
+type AIServicePool struct {
+    services chan *ai.AI
+}
+
+func (p *AIServicePool) GetService(userToken string) (*ai.AI, error) {
+    select {
+    case service := <-p.services:
+        // Reuse existing service
+        return service, nil
+    default:
+        // Create new service
+        return ai.NewAIFromEnv(env, &userToken)
+    }
+}
+```
+
+### 3. Error Recovery
+Implement proper error handling and retry logic:
+
+```go
+func sendMessageWithRetry(ai *ai.AI, ctx context.Context, req *ai.MessageRequest, maxRetries int) (*anthropic.BetaMessage, error) {
+    var lastErr error
+    
+    for attempt := 0; attempt < maxRetries; attempt++ {
+        response, err := ai.SendMessage(ctx, req)
+        if err == nil {
+            return response, nil
+        }
+        
+        lastErr = err
+        
+        // Check if it's a retryable error
+        if strings.Contains(err.Error(), "overloaded_error") {
+            // Wait before retry
+            time.Sleep(time.Duration(attempt+1) * time.Second)
+            continue
+        }
+        
+        // Non-retryable error
+        break
+    }
+    
+    return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
+}
+```
+
+### 4. Performance Optimization
 For high-frequency usage:
-- Use conversation IDs strategically to avoid memory bloat
-- Implement periodic exports for long-term storage
-- Monitor conversation count and clean up proactively
+- Reuse AI service instances when possible
+- Implement conversation history caching
+- Monitor API rate limits and implement backoff strategies
 
 ## Thread Safety
 
-All methods in this package are thread-safe and can be called concurrently. The package uses read-write mutexes to ensure data consistency while allowing concurrent read operations.
+This package is designed to be stateless and thread-safe. Each AI service instance can be used safely from multiple goroutines, and you can create multiple instances for concurrent use.
 
 ```go
-// Safe to call from multiple goroutines
-go aiService.SendMessage(ctx, "Message 1", opts1)
-go aiService.SendMessage(ctx, "Message 2", opts2)
-go aiService.GetConversationHistory("conv_id")
-```
+// Safe to use concurrently
+go func() {
+    aiService1, _ := ai.NewAIFromEnv(env, &userToken1)
+    aiService1.SendMessage(ctx, req1)
+}()
 
-## Migration and Persistence
-
-The package supports full conversation export/import for data migration:
-
-```go
-// Export all conversations
-allConversations := aiService.ListConversations()
-exports := make(map[string]any)
-
-for _, convID := range allConversations {
-    exports[convID] = aiService.ExportConversation(convID)
-}
-
-// Later, reimport conversations
-for convID, exported := range exports {
-    err := aiService.ImportConversation(exported)
-    if err != nil {
-        log.Printf("Failed to import conversation %s: %v", convID, err)
-    }
-}
+go func() {
+    aiService2, _ := ai.NewAIFromEnv(env, &userToken2)
+    aiService2.SendMessage(ctx, req2)
+}()
 ```
