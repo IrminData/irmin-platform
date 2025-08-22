@@ -179,10 +179,10 @@ func (api *APIServices) generateConversationTitle(
 func (api *APIServices) prepareMessageMetadata(
 	user *db.User,
 	workspace *db.Workspace,
-	opts *ai.MessageOptions,
+	opts *ai.MessageRequest,
 ) map[string]any {
 	if opts == nil {
-		opts = &ai.MessageOptions{}
+		opts = &ai.MessageRequest{}
 	}
 
 	newMetadata := map[string]any{
@@ -199,12 +199,12 @@ func (api *APIServices) initializeAIAndSendMessage(
 	c context.Context,
 	userToken *string,
 	message string,
-	opts *ai.MessageOptions,
+	opts *ai.MessageRequest,
 	conversation *db.AssistantConversation,
 	metadata map[string]any,
 ) (*ai.AI, *anthropic.BetaMessage, error) {
 	// Initialize AI service
-	aiService, err := ai.NewAIFromEnv(api.Env, userToken)
+	aiService, err := ai.NewAIFromEnv(api.Env, userToken, api.Logger)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error creating AI service", "error", err)
 		// Create a failed AI message to record the error
@@ -237,8 +237,27 @@ func (api *APIServices) initializeAIAndSendMessage(
 		})
 	}
 
-	// Convert MessageOptions to MessageRequest
-	req := opts.ToMessageRequest(message)
+	// Create a copy of the MessageRequest to avoid mutating the original
+	var req *ai.MessageRequest
+	if opts == nil {
+		req = &ai.MessageRequest{Content: message}
+	} else {
+		// Deep copy the opts to avoid mutating the original
+		req = &ai.MessageRequest{
+			Content:                message, // Override with the current message
+			ConversationID:         opts.ConversationID,
+			MaxTokens:              opts.MaxTokens,
+			Model:                  opts.Model,
+			Temperature:            opts.Temperature,
+			TopP:                   opts.TopP,
+			Stream:                 opts.Stream,
+			Metadata:               opts.Metadata,
+			ThinkingEnabled:        opts.ThinkingEnabled,
+			DocsToolsOnly:          opts.DocsToolsOnly,
+			AIType:                 opts.AIType,
+			AdditionalSystemPrompt: opts.AdditionalSystemPrompt,
+		}
+	}
 	req.ConversationHistory = conversationHistory
 
 	// Send message to AI
@@ -279,22 +298,25 @@ func (api *APIServices) SendAssistantMessage(
 	workspace *db.Workspace,
 	message string,
 	conversation *db.AssistantConversation,
-	opts *ai.MessageOptions,
+	opts *ai.MessageRequest,
 ) ([]*db.AssistantMessage, error) {
-	// Initialize the message options if it is not provided
-	if opts == nil {
-		opts = &ai.MessageOptions{}
-	}
-
-	// Construct the additional system prompt if it is not provided
-	if opts.AdditionalSystemPrompt == "" {
-		opts.AdditionalSystemPrompt = fmt.Sprintf(
+	// Set defaults - use AssistantAI for intelligent model selection
+	assistantAI := ai.AssistantAI
+	messageOpts := &ai.MessageRequest{
+		Content: message,
+		AIType:  &assistantAI, // Always use AssistantAI for intelligent model selection
+		AdditionalSystemPrompt: fmt.Sprintf(
 			"Context:\n The current workspace is '%s'. \n The current user '%s', with email '%s'. \n The current UTC date and time is %s.",
 			workspace.Slug,
 			user.FirstName+" "+user.LastName,
 			user.Email,
 			time.Now().UTC().Format("2006-01-02 15:04:05"),
-		)
+		),
+	}
+
+	// Override with any provided options
+	if opts != nil {
+		api.overrideMessageOptions(messageOpts, opts)
 	}
 
 	// Validate request and permissions
@@ -303,7 +325,7 @@ func (api *APIServices) SendAssistantMessage(
 	}
 
 	// Prepare metadata
-	newMetadata := api.prepareMessageMetadata(user, workspace, opts)
+	newMetadata := api.prepareMessageMetadata(user, workspace, messageOpts)
 
 	// Store user message
 	if err := api.createUserMessage(conversation, message, newMetadata); err != nil {
@@ -312,7 +334,14 @@ func (api *APIServices) SendAssistantMessage(
 	}
 
 	// Initialize AI service and send message
-	aiService, response, err := api.initializeAIAndSendMessage(c, userToken, message, opts, conversation, newMetadata)
+	aiService, response, err := api.initializeAIAndSendMessage(
+		c,
+		userToken,
+		message,
+		messageOpts,
+		conversation,
+		newMetadata,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -567,6 +596,40 @@ func (api *APIServices) GetAssistantConversationStats(
 }
 
 // Helper methods
+
+// overrideMessageOptions overrides message options with provided values
+func (api *APIServices) overrideMessageOptions(messageOpts *ai.MessageRequest, opts *ai.MessageRequest) {
+	if opts.MaxTokens != nil {
+		messageOpts.MaxTokens = opts.MaxTokens
+	}
+	if opts.Model != nil {
+		messageOpts.Model = opts.Model
+	}
+	if opts.Temperature != nil {
+		messageOpts.Temperature = opts.Temperature
+	}
+	if opts.TopP != nil {
+		messageOpts.TopP = opts.TopP
+	}
+	if opts.Stream {
+		messageOpts.Stream = opts.Stream
+	}
+	if opts.Metadata != nil {
+		messageOpts.Metadata = opts.Metadata
+	}
+	if opts.ThinkingEnabled {
+		messageOpts.ThinkingEnabled = opts.ThinkingEnabled
+	}
+	if opts.DocsToolsOnly {
+		messageOpts.DocsToolsOnly = opts.DocsToolsOnly
+	}
+	if opts.AIType != nil {
+		messageOpts.AIType = opts.AIType
+	}
+	if opts.AdditionalSystemPrompt != "" {
+		messageOpts.AdditionalSystemPrompt = opts.AdditionalSystemPrompt
+	}
+}
 
 // checkAssistantPermission checks if a user has permission to perform an action on the assistant
 func (api *APIServices) checkAssistantPermission(

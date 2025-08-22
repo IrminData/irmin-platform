@@ -13,6 +13,16 @@ func TestGetSystemPrompt(t *testing.T) {
 		expected string
 	}{
 		{
+			name:     "Model Router AI prompt",
+			aiType:   ai.ModelRouterAI,
+			expected: "You are a model selector for AI requests",
+		},
+		{
+			name:     "Conversation Title Generator AI prompt",
+			aiType:   ai.ConversationTitleGenerator,
+			expected: "You are a title generator utility",
+		},
+		{
 			name:     "Assistant AI prompt",
 			aiType:   ai.AssistantAI,
 			expected: "You are Irmin Assistant",
@@ -49,5 +59,14 @@ func TestIrminAITypeConstants(t *testing.T) {
 	}
 	if ai.QueryAI != "query" {
 		t.Errorf("Expected QueryAI to be 'query', got: %s", ai.QueryAI)
+	}
+	if ai.ModelRouterAI != "model-router" {
+		t.Errorf("Expected ModelRouterAI to be 'model-router', got: %s", ai.ModelRouterAI)
+	}
+	if ai.ConversationTitleGenerator != "conversation-title-generator" {
+		t.Errorf(
+			"Expected ConversationTitleGenerator to be 'conversation-title-generator', got: %s",
+			ai.ConversationTitleGenerator,
+		)
 	}
 }

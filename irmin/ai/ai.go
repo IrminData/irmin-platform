@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/utils"
+	"log/slog"
 	"math"
 	"strings"
 	"time"
@@ -19,15 +20,16 @@ import (
 
 // Config holds AI service configuration
 type Config struct {
-	APIKey       string
-	BaseURL      string
-	MCPPath      string
-	UserToken    *string
-	DefaultModel anthropic.Model
-	MaxTokens    int64
-	Temperature  float64
-	MaxRetries   int
-	BaseDelay    time.Duration
+	AnthropicAPIKey string
+	IrminBaseURL    string
+	IrminMCPPath    string
+	UserToken       *string
+	DefaultModel    anthropic.Model
+	MaxTokens       int64
+	Temperature     float64
+	MaxRetries      int
+	BaseDelay       time.Duration
+	Logger          *slog.Logger
 }
 
 // DefaultConfig returns sensible default configuration
@@ -38,6 +40,7 @@ func DefaultConfig() *Config {
 		Temperature:  DefaultTemperature,
 		MaxRetries:   MaxRetries,
 		BaseDelay:    BaseDelay,
+		Logger:       slog.Default(),
 	}
 }
 
@@ -70,69 +73,26 @@ type ConversationMessage struct {
 	Content string
 }
 
-// MessageOptions provides configuration for message sending (backward compatibility)
-type MessageOptions struct {
-	AdditionalSystemPrompt string
-	ConversationID         string
-	MaxTokens              int64
-	Model                  anthropic.Model
-	Temperature            *float64
-	TopP                   *float64
-	Stream                 bool
-	Metadata               map[string]any
-	ThinkingEnabled        bool
-	DocsToolsOnly          bool
-	AIType                 *IrminAIType
-}
-
-// ToMessageRequest converts MessageOptions to MessageRequest
-func (opts *MessageOptions) ToMessageRequest(content string) *MessageRequest {
-	if opts == nil {
-		return &MessageRequest{Content: content}
-	}
-
-	// Only set Model if it's not the zero value
-	var model *anthropic.Model
-	if opts.Model != "" {
-		model = &opts.Model
-	}
-
-	// Only set MaxTokens if it's not the zero value
-	var maxTokens *int64
-	if opts.MaxTokens != 0 {
-		maxTokens = &opts.MaxTokens
-	}
-
-	return &MessageRequest{
-		Content:                content,
-		ConversationID:         opts.ConversationID,
-		MaxTokens:              maxTokens,
-		Model:                  model,
-		Temperature:            opts.Temperature,
-		TopP:                   opts.TopP,
-		Stream:                 opts.Stream,
-		Metadata:               opts.Metadata,
-		ThinkingEnabled:        opts.ThinkingEnabled,
-		DocsToolsOnly:          opts.DocsToolsOnly,
-		AIType:                 opts.AIType,
-		AdditionalSystemPrompt: opts.AdditionalSystemPrompt,
-	}
-}
-
 // NewAI creates a new AI service instance with the given configuration
 func NewAI(config *Config) (*AI, error) {
 	if config == nil {
 		config = DefaultConfig()
+		config.Logger.Info("Using default configuration for AI service")
 	}
 
-	if config.APIKey == "" {
+	if config.AnthropicAPIKey == "" {
+		config.Logger.Error("Failed to create AI service: API key is required")
 		return nil, errors.New("API key is required")
 	}
 
-	// Initialize Anthropic API client
-	client := anthropic.NewClient(
-		option.WithAPIKey(config.APIKey),
-	)
+	client := anthropic.NewClient(option.WithAPIKey(config.AnthropicAPIKey))
+
+	config.Logger.Info("AI service initialized successfully",
+		"defaultModel", config.DefaultModel,
+		"maxTokens", config.MaxTokens,
+		"temperature", config.Temperature,
+		"maxRetries", config.MaxRetries,
+		"baseDelay", config.BaseDelay)
 
 	return &AI{
 		config: config,
@@ -141,12 +101,18 @@ func NewAI(config *Config) (*AI, error) {
 }
 
 // NewAIFromEnv creates a new AI service from environment configuration
-func NewAIFromEnv(env *utils.CoreAPIEnv, userToken *string) (*AI, error) {
+func NewAIFromEnv(env *utils.CoreAPIEnv, userToken *string, logger *slog.Logger) (*AI, error) {
+	logger.Info("Initializing AI service from environment configuration",
+		"irminBaseURL", env.URL,
+		"irminMCPPath", env.MCPHTTPPath,
+		"hasUserToken", userToken != nil && *userToken != "")
+
 	config := DefaultConfig()
-	config.APIKey = env.AnthropicAPIKey
-	config.BaseURL = env.URL
-	config.MCPPath = env.MCPHTTPPath
+	config.AnthropicAPIKey = env.AnthropicAPIKey
+	config.IrminBaseURL = env.URL
+	config.IrminMCPPath = env.MCPHTTPPath
 	config.UserToken = userToken
+	config.Logger = logger
 
 	return NewAI(config)
 }
@@ -166,10 +132,19 @@ func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.B
 		// Check if it's an overloaded error and we haven't exceeded max retries
 		if strings.Contains(err.Error(), "overloaded_error") && attempt < a.config.MaxRetries-1 {
 			delay := time.Duration(math.Pow(DelayBackoffFactor, float64(attempt))) * a.config.BaseDelay
+			a.config.Logger.InfoContext(ctx, "Retrying due to overloaded error",
+				"attempt", attempt+1,
+				"maxRetries", a.config.MaxRetries,
+				"delay", delay,
+				"error", err.Error())
 			time.Sleep(delay)
 			continue
 		}
 
+		a.config.Logger.ErrorContext(ctx, "Message sending failed after retries",
+			"attempts", attempt+1,
+			"maxRetries", a.config.MaxRetries,
+			"finalError", err.Error())
 		return nil, err
 	}
 
@@ -179,12 +154,29 @@ func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.B
 // sendMessageInternal is the internal implementation without retry logic
 func (a *AI) sendMessageInternal(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, error) {
 	messages := a.prepareMessages(req.Content, req.ConversationHistory)
-	params := a.prepareAPIParams(req, messages)
+	params := a.prepareAPIParams(ctx, req, messages)
+
+	a.config.Logger.InfoContext(ctx, "Sending message to Anthropic with final parameters",
+		"finalModel", params.Model,
+		"requestedModel", req.Model,
+		"aiType", req.AIType,
+		"maxTokens", params.MaxTokens,
+		"thinkingEnabled", params.Thinking.OfEnabled != nil,
+		"mcpServers", len(params.MCPServers),
+		"conversationHistoryLength", len(req.ConversationHistory),
+		"contentLength", len(req.Content))
 
 	response, err := a.client.Beta.Messages.New(ctx, params)
 	if err != nil {
+		a.config.Logger.ErrorContext(ctx, "Failed to send message to Anthropic",
+			"error", err.Error(),
+			"model", params.Model)
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
+
+	a.config.Logger.DebugContext(ctx, "Successfully received response from Anthropic",
+		"model", params.Model,
+		"responseLength", len(response.Content))
 
 	return response, nil
 }
@@ -213,56 +205,49 @@ func (a *AI) prepareMessages(message string, history []ConversationMessage) []an
 
 // prepareAPIParams prepares API parameters for the message request
 func (a *AI) prepareAPIParams(
+	ctx context.Context,
 	req *MessageRequest,
 	messages []anthropic.BetaMessageParam,
 ) anthropic.BetaMessageNewParams {
-	// Prepare system prompts
-	var systemPrompts []anthropic.BetaTextBlockParam
-
-	// Add AI type-specific system prompt if specified
-	if req.AIType != nil {
-		aiSystemPrompt := GetSystemPrompt(*req.AIType)
-		if aiSystemPrompt != "" {
-			systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{
-				Text: aiSystemPrompt,
-			})
-		}
-	}
-
-	// Add the additional system prompt if provided
-	if req.AdditionalSystemPrompt != "" {
-		systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{
-			Text: req.AdditionalSystemPrompt,
-		})
-	}
-
-	// Configure MCP servers
+	systemPrompts := a.buildSystemPrompts(req)
 	mcpServers := a.configureMCPServers(req)
+	aiTypeDefaults := a.getAITypeDefaults(req.AIType)
 
-	// Prepare request parameters
+	initialModel := a.getModel(req.Model, req.AIType)
 	params := anthropic.BetaMessageNewParams{
 		MaxTokens:  a.getMaxTokens(req.MaxTokens),
 		Messages:   messages,
-		Model:      a.getModel(req.Model),
+		Model:      initialModel,
 		MCPServers: mcpServers,
 		Betas:      []anthropic.AnthropicBeta{anthropic.AnthropicBetaMCPClient2025_04_04},
 		System:     systemPrompts,
 	}
 
-	// Enable thinking if needed
-	if req.ThinkingEnabled {
-		params.Thinking = anthropic.BetaThinkingConfigParamUnion{
-			OfEnabled: &anthropic.BetaThinkingConfigEnabledParam{
-				BudgetTokens: DefaultThinkingMaxTokens,
-			},
-		}
-	} else {
-		// Temperature is not supported when thinking is enabled
-		if req.Temperature != nil {
-			params.Temperature = param.NewOpt(*req.Temperature)
-		} else {
-			params.Temperature = param.NewOpt(a.config.Temperature)
-		}
+	a.config.Logger.InfoContext(ctx, "Initial model selection",
+		"requestedModel", req.Model,
+		"aiType", req.AIType,
+		"initialSelectedModel", initialModel,
+		"willUseModelRouter", req.AIType != nil && *req.AIType == AssistantAI && req.Model == nil)
+
+	// Handle special case for AssistantAI - use model router if no explicit model specified
+	if req.AIType != nil && *req.AIType == AssistantAI && req.Model == nil {
+		a.config.Logger.InfoContext(ctx, "AssistantAI detected, using model router for model selection",
+			"requestedModel", req.Model,
+			"aiType", *req.AIType,
+			"contentLength", len(req.Content))
+		selectedModel := a.selectModelForAssistantAI(ctx, req.Content)
+		params.Model = selectedModel
+		a.config.Logger.InfoContext(ctx, "Model router selected final model",
+			"selectedModel", selectedModel,
+			"wasExplicitlyRequested", req.Model != nil)
+	}
+
+	// Configure thinking
+	a.configureThinking(&params, req, aiTypeDefaults)
+
+	// Set temperature - not supported when thinking is enabled
+	if !req.ThinkingEnabled && params.Thinking.OfEnabled == nil {
+		params.Temperature = a.getTemperature(req, aiTypeDefaults)
 	}
 
 	// Add optional parameters
@@ -270,27 +255,151 @@ func (a *AI) prepareAPIParams(
 		params.TopP = param.NewOpt(*req.TopP)
 	}
 
+	a.config.Logger.DebugContext(ctx, "Prepared API parameters",
+		"model", params.Model,
+		"maxTokens", params.MaxTokens,
+		"thinkingEnabled", params.Thinking.OfEnabled != nil,
+		"temperature", params.Temperature,
+		"systemPrompts", len(systemPrompts),
+		"mcpServers", len(mcpServers),
+		"aiType", req.AIType)
+
 	return params
 }
 
-// configureMCPServers configures MCP servers based on message options
+// modelSupportsThinking checks if the given model supports thinking mode
+func (a *AI) modelSupportsThinking(model anthropic.Model) bool {
+	// Only Sonnet 4 and newer models support thinking
+	modelStr := string(model)
+
+	// Sonnet 4 models support thinking
+	if strings.Contains(modelStr, "sonnet-4") {
+		return true
+	}
+
+	// Opus models support thinking
+	if strings.Contains(modelStr, "opus") {
+		return true
+	}
+
+	// Haiku and older Sonnet models do not support thinking
+	return false
+}
+
+// buildSystemPrompts builds the system prompts for the request
+func (a *AI) buildSystemPrompts(req *MessageRequest) []anthropic.BetaTextBlockParam {
+	var systemPrompts []anthropic.BetaTextBlockParam
+
+	// Add AI type-specific system prompt if specified
+	if req.AIType != nil {
+		if aiSystemPrompt := GetSystemPrompt(*req.AIType); aiSystemPrompt != "" {
+			systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{Text: aiSystemPrompt})
+		}
+	}
+
+	// Add the additional system prompt if provided
+	if req.AdditionalSystemPrompt != "" {
+		systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{Text: req.AdditionalSystemPrompt})
+	}
+
+	return systemPrompts
+}
+
+// configureThinking configures the thinking parameter based on request and defaults
+func (a *AI) configureThinking(
+	params *anthropic.BetaMessageNewParams,
+	req *MessageRequest,
+	aiTypeDefaults map[string]any,
+) {
+	// Only enable thinking if the model supports it
+	if !a.modelSupportsThinking(params.Model) {
+		a.config.Logger.Debug("Model does not support thinking, disabling thinking mode",
+			"model", params.Model)
+		params.Thinking = anthropic.BetaThinkingConfigParamUnion{}
+		return
+	}
+
+	if req.ThinkingEnabled || (req.AIType != nil && aiTypeDefaults["thinkingEnabled"] == true) {
+		a.config.Logger.Debug("Enabling thinking mode",
+			"requested", req.ThinkingEnabled,
+			"aiTypeDefault", aiTypeDefaults["thinkingEnabled"],
+			"budgetTokens", DefaultThinkingMaxTokens)
+		params.Thinking = anthropic.BetaThinkingConfigParamUnion{
+			OfEnabled: &anthropic.BetaThinkingConfigEnabledParam{
+				BudgetTokens: DefaultThinkingMaxTokens,
+			},
+		}
+	}
+}
+
+// getTemperature returns the temperature value based on request and defaults
+func (a *AI) getTemperature(req *MessageRequest, aiTypeDefaults map[string]any) param.Opt[float64] {
+	if req.Temperature != nil {
+		return param.NewOpt(*req.Temperature)
+	}
+
+	if req.AIType != nil && aiTypeDefaults["temperature"] != nil {
+		if temp, ok := aiTypeDefaults["temperature"].(float64); ok {
+			return param.NewOpt(temp)
+		}
+	}
+
+	return param.NewOpt(a.config.Temperature)
+}
+
+// configureMCPServers configures MCP servers based on AI type and message options
 func (a *AI) configureMCPServers(req *MessageRequest) []anthropic.BetaRequestMCPServerURLDefinitionParam {
-	// Configure Irmin MCP tool access based on message options
+	// Priority 1: Explicit caller overrides take precedence
+	if req.DocsToolsOnly {
+		// Caller explicitly requested docs-only access, respect that regardless of AI type
+		a.config.Logger.Debug("Configuring MCP servers for docs-only access")
+		return a.createMCPServer([]string{"list_docs", "get_docs"})
+	}
+
+	// Priority 2: AI type-specific defaults (when no explicit override)
+	if req.AIType == nil {
+		// No AI type specified - default to full MCP access (legacy behavior)
+		a.config.Logger.Debug("No AI type specified, using full MCP access")
+		return a.createMCPServer(nil)
+	}
+
+	// Priority 3: AI type-specific MCP configuration
+	switch *req.AIType {
+	case ModelRouterAI, ConversationTitleGenerator:
+		// These AI types don't need MCP access at all
+		a.config.Logger.Debug("AI type does not require MCP access", "aiType", *req.AIType)
+		return []anthropic.BetaRequestMCPServerURLDefinitionParam{}
+	case QueryAI:
+		// Query AI only needs docs tools
+		a.config.Logger.Debug("Configuring MCP servers for QueryAI (docs-only)")
+		return a.createMCPServer([]string{"list_docs", "get_docs"})
+	case AssistantAI:
+		// Assistant AI gets full MCP access by default
+		a.config.Logger.Debug("Configuring MCP servers for AssistantAI (full access)")
+		return a.createMCPServer(nil)
+	default:
+		// Unknown AI type, default to full access
+		a.config.Logger.Warn("Unknown AI type, defaulting to full MCP access", "aiType", *req.AIType)
+		return a.createMCPServer(nil)
+	}
+}
+
+// createMCPServer creates an MCP server configuration with the specified tool restrictions
+func (a *AI) createMCPServer(allowedTools []string) []anthropic.BetaRequestMCPServerURLDefinitionParam {
 	toolConfig := anthropic.BetaRequestMCPServerToolConfigurationParam{
 		Enabled: anthropic.Bool(true),
 	}
 
-	if req.DocsToolsOnly {
-		// Restrict to only docs tools
-		toolConfig.AllowedTools = []string{
-			"list_docs",
-			"get_docs",
-		}
+	// If allowedTools is specified, restrict to those tools
+	if allowedTools != nil {
+		toolConfig.AllowedTools = allowedTools
+		a.config.Logger.Debug("Restricting MCP tools", "allowedTools", allowedTools)
+	} else {
+		a.config.Logger.Debug("No tool restrictions for MCP server")
 	}
 
-	// Create MCP server configuration
 	mcpServer := anthropic.BetaRequestMCPServerURLDefinitionParam{
-		URL:               fmt.Sprintf("%s%s", a.config.BaseURL, a.config.MCPPath),
+		URL:               fmt.Sprintf("%s%s", a.config.IrminBaseURL, a.config.IrminMCPPath),
 		Name:              "irmin-mcp",
 		ToolConfiguration: toolConfig,
 	}
@@ -298,6 +407,9 @@ func (a *AI) configureMCPServers(req *MessageRequest) []anthropic.BetaRequestMCP
 	// Add authorization token if available
 	if a.config.UserToken != nil && *a.config.UserToken != "" {
 		mcpServer.AuthorizationToken = param.NewOpt(*a.config.UserToken)
+		a.config.Logger.Debug("Added authorization token to MCP server")
+	} else {
+		a.config.Logger.Debug("No authorization token for MCP server")
 	}
 
 	return []anthropic.BetaRequestMCPServerURLDefinitionParam{mcpServer}
@@ -311,12 +423,92 @@ func (a *AI) getMaxTokens(maxTokens *int64) int64 {
 	return a.config.MaxTokens
 }
 
-// getModel returns the model value, using default if not specified
-func (a *AI) getModel(model *anthropic.Model) anthropic.Model {
+// getModel returns the model value, using AI type-specific defaults if not specified
+func (a *AI) getModel(model *anthropic.Model, aiType *IrminAIType) anthropic.Model {
 	if model != nil {
 		return *model
 	}
-	return a.config.DefaultModel
+
+	if aiType == nil {
+		return a.config.DefaultModel
+	}
+
+	return a.getAITypeDefaultModel(*aiType)
+}
+
+// getAITypeDefaultModel returns the default model for a specific AI type
+func (a *AI) getAITypeDefaultModel(aiType IrminAIType) anthropic.Model {
+	switch aiType {
+	case ModelRouterAI, ConversationTitleGenerator, QueryAI:
+		return DefaultSmallModel
+	case AssistantAI:
+		return DefaultMainModel
+	default:
+		return a.config.DefaultModel
+	}
+}
+
+// getAITypeDefaults returns AI type-specific default configuration
+func (a *AI) getAITypeDefaults(aiType *IrminAIType) map[string]any {
+	if aiType == nil {
+		return map[string]any{
+			"maxTokens":       a.config.MaxTokens,
+			"temperature":     a.config.Temperature,
+			"thinkingEnabled": false,
+		}
+	}
+
+	defaults := make(map[string]any)
+	switch *aiType {
+	case ModelRouterAI:
+		// Model router should be fast and cheap
+		defaults["maxTokens"] = ModelRouterMaxTokens
+		defaults["temperature"] = 0.1
+		defaults["thinkingEnabled"] = false
+	case ConversationTitleGenerator:
+		// Title generation should be fast and focused
+		defaults["maxTokens"] = TitleMaxTokens
+		defaults["temperature"] = 0.3
+		defaults["thinkingEnabled"] = false
+	case QueryAI:
+		// Query AI should be fast for simple queries
+		defaults["maxTokens"] = a.config.MaxTokens
+		defaults["temperature"] = 0.3
+		defaults["thinkingEnabled"] = false
+	case AssistantAI:
+		// Assistant AI gets full configuration with thinking enabled by default
+		defaults["maxTokens"] = a.config.MaxTokens
+		defaults["temperature"] = a.config.Temperature
+		defaults["thinkingEnabled"] = true
+	default:
+		// Default to global defaults
+		defaults["maxTokens"] = a.config.MaxTokens
+		defaults["temperature"] = a.config.Temperature
+		defaults["thinkingEnabled"] = false
+	}
+
+	return defaults
+}
+
+// selectModelForAssistantAI selects the appropriate model for AssistantAI using the model router
+func (a *AI) selectModelForAssistantAI(ctx context.Context, content string) anthropic.Model {
+	a.config.Logger.InfoContext(ctx, "Selecting model for AssistantAI using model router",
+		"content", content,
+		"contentLength", len(content))
+
+	modelRouterAI := &AI{config: a.config, client: a.client}
+
+	if selectedModel, err := modelRouterAI.SelectModel(ctx, content); err == nil {
+		a.config.Logger.InfoContext(ctx, "Model router selected model for AssistantAI",
+			"selectedModel", selectedModel,
+			"contentLength", len(content))
+		return selectedModel
+	}
+
+	a.config.Logger.WarnContext(ctx, "Model router failed, using default model for AssistantAI",
+		"defaultModel", DefaultMainModel,
+		"error", "model selection failed")
+	return DefaultMainModel
 }
 
 // ContentBlock represents a single content block from the AI response
@@ -326,9 +518,48 @@ type ContentBlock struct {
 	Index   int                                     `json:"index"`
 }
 
+// extractContentBlock extracts content from a content block with safe type assertion
+func extractContentBlock(block anthropic.BetaContentBlockUnion) (string, error) {
+	switch block.Type {
+	case "text":
+		textBlock := block.AsText()
+		return textBlock.Text, nil
+	case "thinking":
+		thinkingBlock := block.AsThinking()
+		return thinkingBlock.Thinking, nil
+	case "redacted_thinking":
+		redactedBlock := block.AsRedactedThinking()
+		return redactedBlock.Data, nil
+	case "tool_use":
+		toolBlock := block.AsToolUse()
+		return toolBlock.Name, nil
+	case "server_tool_use":
+		serverBlock := block.AsServerToolUse()
+		return string(serverBlock.Name), nil
+	case "web_search_tool_result":
+		webBlock := block.AsWebSearchToolResult()
+		jsonData, err := json.Marshal(webBlock.Content)
+		return string(jsonData), err
+	case "code_execution_tool_result":
+		codeBlock := block.AsCodeExecutionToolResult()
+		jsonData, err := json.Marshal(codeBlock.Content)
+		return string(jsonData), err
+	case "mcp_tool_use":
+		mcpBlock := block.AsMCPToolUse()
+		return fmt.Sprintf("Server: %s\nTool: %s\nInput: %v", mcpBlock.ServerName, mcpBlock.Name, mcpBlock.Input), nil
+	case "mcp_tool_result":
+		mcpResultBlock := block.AsMCPToolResult()
+		jsonData, err := json.Marshal(mcpResultBlock.Content)
+		return string(jsonData), err
+	case "container_upload":
+		uploadBlock := block.AsContainerUpload()
+		return uploadBlock.FileID, nil
+	default:
+		return "", fmt.Errorf("unsupported content block type: %s", block.Type)
+	}
+}
+
 // ExtractResponseBlocks extracts all content blocks from AI response
-//
-//nolint:funlen // We have a long switch statement here, to handle all the different content block types
 func ExtractResponseBlocks(content []anthropic.BetaContentBlockUnion) []ContentBlock {
 	if len(content) == 0 {
 		return []ContentBlock{}
@@ -336,67 +567,47 @@ func ExtractResponseBlocks(content []anthropic.BetaContentBlockUnion) []ContentB
 
 	var blocks []ContentBlock
 	for i, block := range content {
-		contentBlock := ContentBlock{
-			Index: i,
-		}
-
-		switch block.Type {
-		case "text":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeText
-			contentBlock.Content = block.AsText().Text
-		case "thinking":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeThinking
-			contentBlock.Content = block.AsThinking().Thinking
-		case "redacted_thinking":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeRedactedThinking
-			contentBlock.Content = block.AsRedactedThinking().Data
-		case "tool_use":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeToolUse
-			contentBlock.Content = block.AsToolUse().Name
-		case "server_tool_use":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeServerToolUse
-			contentBlock.Content = string(block.AsServerToolUse().Name)
-		case "web_search_tool_result":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeWebSearchToolResult
-			webSearchToolResultJSON, err := json.Marshal(block.AsWebSearchToolResult().Content)
-			if err != nil {
-				continue
-			}
-			contentBlock.Content = string(webSearchToolResultJSON)
-		case "code_execution_tool_result":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeCodeExecutionToolResult
-			codeExecutionToolResultJSON, err := json.Marshal(block.AsCodeExecutionToolResult().Content)
-			if err != nil {
-				continue
-			}
-			contentBlock.Content = string(codeExecutionToolResultJSON)
-		case "mcp_tool_use":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeMCPToolUse
-			serverName := block.AsMCPToolUse().ServerName
-			toolName := block.AsMCPToolUse().Name
-			toolInput := block.AsMCPToolUse().Input
-			contentBlock.Content = fmt.Sprintf("Server: %s\nTool: %s\nInput: %v", serverName, toolName, toolInput)
-		case "mcp_tool_result":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeMCPToolResult
-			toolResultJSON, err := json.Marshal(block.AsMCPToolResult().Content)
-			if err != nil {
-				continue
-			}
-			contentBlock.Content = string(toolResultJSON)
-		case "container_upload":
-			contentBlock.Type = irminmodels.AssistantMessageContentTypeContainerUpload
-			contentBlock.Content = block.AsContainerUpload().FileID
-		default:
+		contentStr, err := extractContentBlock(block)
+		if err != nil || contentStr == "" {
 			continue
 		}
 
-		// Only add blocks with meaningful content
-		if contentBlock.Content != "" {
-			blocks = append(blocks, contentBlock)
-		}
+		blocks = append(blocks, ContentBlock{
+			Type:    getContentBlockType(block.Type),
+			Content: contentStr,
+			Index:   i,
+		})
 	}
 
 	return blocks
+}
+
+// getContentBlockType maps Anthropic content block types to Irmin types
+func getContentBlockType(blockType string) irminmodels.AssistantMessageContentType {
+	switch blockType {
+	case "text":
+		return irminmodels.AssistantMessageContentTypeText
+	case "thinking":
+		return irminmodels.AssistantMessageContentTypeThinking
+	case "redacted_thinking":
+		return irminmodels.AssistantMessageContentTypeRedactedThinking
+	case "tool_use":
+		return irminmodels.AssistantMessageContentTypeToolUse
+	case "server_tool_use":
+		return irminmodels.AssistantMessageContentTypeServerToolUse
+	case "web_search_tool_result":
+		return irminmodels.AssistantMessageContentTypeWebSearchToolResult
+	case "code_execution_tool_result":
+		return irminmodels.AssistantMessageContentTypeCodeExecutionToolResult
+	case "mcp_tool_use":
+		return irminmodels.AssistantMessageContentTypeMCPToolUse
+	case "mcp_tool_result":
+		return irminmodels.AssistantMessageContentTypeMCPToolResult
+	case "container_upload":
+		return irminmodels.AssistantMessageContentTypeContainerUpload
+	default:
+		return irminmodels.AssistantMessageContentTypeText
+	}
 }
 
 // ExtractResponseContent extracts content from AI response (kept for backward compatibility)
@@ -408,7 +619,7 @@ func ExtractResponseContent(content []anthropic.BetaContentBlockUnion) string {
 
 	// Return the first text block content for backward compatibility
 	for _, block := range blocks {
-		if block.Type == "text" {
+		if block.Type == irminmodels.AssistantMessageContentTypeText {
 			return block.Content
 		}
 	}
@@ -423,46 +634,120 @@ func ExtractResponseContent(content []anthropic.BetaContentBlockUnion) string {
 
 // GenerateConversationTitle generates a title for a conversation based on the first user message
 func (a *AI) GenerateConversationTitle(ctx context.Context, firstMessage string) (string, error) {
+	a.config.Logger.DebugContext(ctx, "Generating conversation title", "messageLength", len(firstMessage))
+
 	fallbackTitle := fmt.Sprintf("New Conversation %s", time.Now().Format("2006-01-02 15:04:05"))
 	if firstMessage == "" {
+		a.config.Logger.DebugContext(ctx, "Empty message, using fallback title", "fallbackTitle", fallbackTitle)
 		return fallbackTitle, nil
 	}
 
-	// Create a simple prompt for title generation
-	prompt := fmt.Sprintf(
-		"Generate a short, descriptive title (max 50 characters) for a conversation that starts with: \"%s\"\n\nTitle:",
-		firstMessage,
-	)
-
-	// Prepare the message
 	req := &MessageRequest{
-		Content:   prompt,
+		Content:   firstMessage,
 		MaxTokens: &[]int64{TitleMaxTokens}[0],
 		Model:     &[]anthropic.Model{DefaultSmallModel}[0],
+		AIType:    &[]IrminAIType{ConversationTitleGenerator}[0],
 	}
 
-	// Send the request
 	response, err := a.SendMessage(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate title: %w", err)
+		a.config.Logger.ErrorContext(ctx, "Failed to generate conversation title",
+			"error", err.Error(),
+			"messageLength", len(firstMessage))
+		return fallbackTitle, fmt.Errorf("failed to generate title: %w", err)
 	}
 
-	// Extract the title from the response
-	title := ExtractResponseContent(response.Content)
-
-	// Clean up the title (remove quotes, extra whitespace, etc.)
-	title = strings.TrimSpace(title)
-	title = strings.Trim(title, `"'`)
+	title := strings.Trim(strings.TrimSpace(ExtractResponseContent(response.Content)), `"'`)
 
 	// Limit to max title length
 	if len(title) > MaxTitleLength {
+		originalTitle := title
 		title = title[:MaxTitleLength-3] + "..."
+		a.config.Logger.DebugContext(ctx, "Title truncated due to length limit",
+			"originalLength", len(originalTitle),
+			"maxLength", MaxTitleLength,
+			"truncatedTitle", title)
 	}
 
-	// Fallback if title is empty
 	if title == "" {
+		a.config.Logger.WarnContext(
+			ctx,
+			"Generated title is empty, using fallback title",
+			"fallbackTitle",
+			fallbackTitle,
+		)
 		return fallbackTitle, nil
 	}
 
+	a.config.Logger.InfoContext(ctx, "Successfully generated conversation title",
+		"title", title,
+		"titleLength", len(title))
 	return title, nil
+}
+
+// SelectModel selects the appropriate model for a given user prompt using the model router AI
+func (a *AI) SelectModel(ctx context.Context, userPrompt string) (anthropic.Model, error) {
+	a.config.Logger.DebugContext(ctx, "Selecting model using model router", "promptLength", len(userPrompt))
+
+	if userPrompt == "" {
+		a.config.Logger.DebugContext(ctx, "Empty prompt, using default main model", "defaultModel", DefaultMainModel)
+		return DefaultMainModel, nil
+	}
+
+	req := &MessageRequest{
+		Content:   userPrompt,
+		MaxTokens: &[]int64{ModelRouterMaxTokens}[0],
+		Model:     &[]anthropic.Model{DefaultSmallModel}[0],
+		AIType:    &[]IrminAIType{ModelRouterAI}[0],
+	}
+
+	response, err := a.SendMessage(ctx, req)
+	if err != nil {
+		a.config.Logger.ErrorContext(ctx, "Model router failed to select model",
+			"error", err.Error(),
+			"promptLength", len(userPrompt))
+		return DefaultMainModel, fmt.Errorf("failed to select model: %w", err)
+	}
+
+	const (
+		modelSelectionMain  = "main"
+		modelSelectionSmall = "small"
+	)
+
+	rawContent := ExtractResponseContent(response.Content)
+	modelSelection := strings.ToLower(strings.TrimSpace(rawContent))
+
+	a.config.Logger.InfoContext(ctx, "Model router raw response",
+		"rawContent", rawContent,
+		"trimmedSelection", modelSelection,
+		"promptLength", len(userPrompt),
+		"isValidSelection", modelSelection == modelSelectionMain || modelSelection == modelSelectionSmall)
+
+	// Validate the model router output
+	if modelSelection != modelSelectionMain && modelSelection != modelSelectionSmall {
+		a.config.Logger.WarnContext(ctx, "Model router returned invalid selection, using default main model",
+			"invalidSelection", modelSelection,
+			"rawContent", rawContent,
+			"prompt", userPrompt)
+	}
+
+	var selectedModel anthropic.Model
+	switch modelSelection {
+	case modelSelectionSmall:
+		selectedModel = DefaultSmallModel
+	case modelSelectionMain:
+		selectedModel = DefaultMainModel
+	default:
+		selectedModel = DefaultMainModel
+		a.config.Logger.WarnContext(ctx, "Model router returned unknown selection, using default",
+			"selection", modelSelection,
+			"defaultModel", selectedModel)
+	}
+
+	a.config.Logger.InfoContext(ctx, "Model router selected model",
+		"selection", modelSelection,
+		"selectedModel", selectedModel,
+		"promptLength", len(userPrompt))
+
+	return selectedModel, nil
 }

@@ -16,10 +16,10 @@ const (
 	DefaultTemperature = 0.8
 
 	// DefaultMaxTokens is the default maximum number of tokens for a message
-	DefaultMaxTokens = 1024 * 10
+	DefaultMaxTokens = 8192
 
 	// DefaultThinkingMaxTokens is the default maximum number of tokens for thinking
-	DefaultThinkingMaxTokens = 1024 * 4
+	DefaultThinkingMaxTokens = 2048
 
 	// MaxRetries is the maximum number of retries for overloaded errors
 	MaxRetries = 3
@@ -32,4 +32,7 @@ const (
 	MaxTitleLength = 50
 	// TitleMaxTokens is the maximum tokens for title generation
 	TitleMaxTokens = 50
+
+	// ModelRouterMaxTokens is the maximum tokens for model router decisions
+	ModelRouterMaxTokens = 50
 )
