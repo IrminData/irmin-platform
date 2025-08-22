@@ -269,10 +269,11 @@ func (api *APIServices) SendAssistantMessage(
 	// Construct the additional system prompt if it is not provided
 	if opts.AdditionalSystemPrompt == "" {
 		opts.AdditionalSystemPrompt = fmt.Sprintf(
-			"The current workspace is '%s'. The current user '%s', with email '%s'.",
+			"Context:\n The current workspace is '%s'. \n The current user '%s', with email '%s'. \n The current UTC date and time is %s.",
 			workspace.Slug,
 			user.FirstName+" "+user.LastName,
 			user.Email,
+			time.Now().UTC().Format("2006-01-02 15:04:05"),
 		)
 	}
 

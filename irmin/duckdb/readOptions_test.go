@@ -3,6 +3,7 @@ package duckdb_test
 import (
 	"irmin-api/duckdb"
 	"irmin-api/lib"
+	"slices"
 	"strings"
 	"testing"
 
@@ -353,7 +354,7 @@ func TestGetRequiredExtensions(t *testing.T) {
 			result := duckdb.GetRequiredExtensions(tc.options)
 
 			for _, expected := range tc.expectedExtensions {
-				assert.True(t, contains(result, expected))
+				assert.True(t, slices.Contains(result, expected))
 			}
 		})
 	}
@@ -426,10 +427,10 @@ func TestGetSupportedFormats(t *testing.T) {
 	formats := duckdb.GetSupportedFormats()
 
 	assert.True(t, len(formats) > 0)
-	assert.True(t, contains(formats, "csv"))
-	assert.True(t, contains(formats, "json"))
-	assert.True(t, contains(formats, "parquet"))
-	assert.True(t, contains(formats, "xlsx"))
+	assert.True(t, slices.Contains(formats, "csv"))
+	assert.True(t, slices.Contains(formats, "json"))
+	assert.True(t, slices.Contains(formats, "parquet"))
+	assert.True(t, slices.Contains(formats, "xlsx"))
 }
 
 // TestSpecialFormatHandling tests handling of special format cases.
@@ -555,14 +556,4 @@ func TestPerformanceWithManyFormats(t *testing.T) {
 			assert.NotNil(t, result)
 		})
 	}
-}
-
-// Helper function to check if slice contains a string.
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }

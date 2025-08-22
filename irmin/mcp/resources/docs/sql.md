@@ -6,6 +6,10 @@ Irmin provides powerful SQL querying capabilities through DuckDB, enabling compl
 
 Please note, that queries can only be ran on data stored in the repositories, not on the connections directly.
 
+## Do not use SQL for schemas
+
+Irmin provides Object Schemas, which are used to describe files/objects, repositories, connections and more. You don't need to write SQL to get the schema of a file, instead opt for getting the schema. A documentation on Object Schemas is available.
+
 ## Key Features
 
 - **DuckDB**: High-performance, in-memory analytical database

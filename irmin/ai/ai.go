@@ -58,6 +58,8 @@ type MessageOptions struct {
 	Stream                 bool
 	Metadata               map[string]any
 	ThinkingEnabled        bool
+	DocsToolsOnly          bool
+	AIType                 *IrminAIType
 }
 
 // ConversationOptions provides configuration for conversation management
@@ -87,23 +89,18 @@ func NewAI(env *utils.CoreAPIEnv, userToken *string) (*AI, error) {
 		mcpUserToken = *userToken
 	}
 
-	// Define MCP servers
-	mcpServers := []anthropic.BetaRequestMCPServerURLDefinitionParam{
-		{
-			URL:                fmt.Sprintf("%s%s", env.URL, env.MCPHTTPPath),
-			Name:               "irmin-mcp",
-			AuthorizationToken: param.NewOpt(mcpUserToken),
-			ToolConfiguration: anthropic.BetaRequestMCPServerToolConfigurationParam{
-				Enabled: anthropic.Bool(true),
-				// By not explicitly setting AllowedTools, we allow all Irmin MCP tools to be usable
-			},
-		},
+	// Define base MCP server configuration
+	irminMCP := anthropic.BetaRequestMCPServerURLDefinitionParam{
+		URL:                fmt.Sprintf("%s%s", env.URL, env.MCPHTTPPath),
+		Name:               "irmin-mcp",
+		AuthorizationToken: param.NewOpt(mcpUserToken),
+		// ToolConfiguration will be set dynamically per message in ConfigureMCPServers
 	}
 
 	return &AI{
 		userToken:      userToken,
 		env:            env,
-		mcpServers:     mcpServers,
+		mcpServers:     []anthropic.BetaRequestMCPServerURLDefinitionParam{irminMCP},
 		client:         &client,
 		anthropicBetas: anthropicBetas,
 		conversations:  make(map[string]*Conversation),
@@ -145,6 +142,10 @@ func (a *AI) sendMessageInternal(
 	if err != nil {
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
+
+	// TODO: We might want to return more details about the message/request sent
+	// - Store the data in the database
+	// - Return stuff like AI type, AI model, temperature, etc.
 
 	a.storeConversationMessages(opts.ConversationID, message, response, opts.Metadata)
 	return response, nil
@@ -189,38 +190,51 @@ func (a *AI) convertConversationMessages(conversationMessages []Message) []anthr
 		case anthropic.BetaMessageParamRoleUser:
 			messages = append(messages, anthropic.NewBetaUserMessage(anthropic.NewBetaTextBlock(msg.Content)))
 		case anthropic.BetaMessageParamRoleAssistant:
-			// For assistant messages, we'll reconstruct them as user messages for simplicity
-			// This maintains conversation history while avoiding complex type casting
-			messages = append(
-				messages,
-				anthropic.NewBetaUserMessage(anthropic.NewBetaTextBlock("Assistant: "+msg.Content)),
-			)
+			// Create proper assistant message to maintain conversation structure
+			messages = append(messages, anthropic.BetaMessageParam{
+				Role:    anthropic.BetaMessageParamRoleAssistant,
+				Content: []anthropic.BetaContentBlockParamUnion{anthropic.NewBetaTextBlock(msg.Content)},
+			})
 		}
 	}
 
 	return messages
 }
 
-// prepareAPIParams prepares API parameters for the request
+// prepareAPIParams prepares API parameters for the message request
 func (a *AI) prepareAPIParams(
 	opts *MessageOptions,
 	messages []anthropic.BetaMessageParam,
 ) anthropic.BetaMessageNewParams {
 	// Prepare system prompts
 	var systemPrompts []anthropic.BetaTextBlockParam
+
+	// Add AI type-specific system prompt if specified
+	if opts.AIType != nil {
+		aiSystemPrompt := GetSystemPrompt(*opts.AIType)
+		if aiSystemPrompt != "" {
+			systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{
+				Text: aiSystemPrompt,
+			})
+		}
+	}
+
+	// Add the additional system prompt if provided
 	if opts.AdditionalSystemPrompt != "" {
-		// Add the additional system prompt if provided
 		systemPrompts = append(systemPrompts, anthropic.BetaTextBlockParam{
 			Text: opts.AdditionalSystemPrompt,
 		})
 	}
+
+	// Configure MCP servers based on message options
+	mcpServers := a.ConfigureMCPServers(opts)
 
 	// Prepare request parameters
 	params := anthropic.BetaMessageNewParams{
 		MaxTokens:  opts.MaxTokens,
 		Messages:   messages,
 		Model:      opts.Model,
-		MCPServers: a.mcpServers,
+		MCPServers: mcpServers,
 		Betas:      a.anthropicBetas,
 		System:     systemPrompts,
 	}
@@ -247,6 +261,40 @@ func (a *AI) prepareAPIParams(
 	}
 
 	return params
+}
+
+// ConfigureMCPServers configures MCP servers based on message options
+func (a *AI) ConfigureMCPServers(opts *MessageOptions) []anthropic.BetaRequestMCPServerURLDefinitionParam {
+	// Start with the base MCP server configuration
+	mcpServers := make([]anthropic.BetaRequestMCPServerURLDefinitionParam, len(a.mcpServers))
+	copy(mcpServers, a.mcpServers)
+
+	// Configure tool access based on message options
+	for i := range mcpServers {
+		if opts.DocsToolsOnly {
+			// Restrict to only docs tools
+			mcpServers[i].ToolConfiguration = anthropic.BetaRequestMCPServerToolConfigurationParam{
+				Enabled: anthropic.Bool(true),
+				AllowedTools: []string{
+					"list_docs",
+					"get_docs",
+				},
+			}
+		} else {
+			// Allow all tools (default behavior)
+			mcpServers[i].ToolConfiguration = anthropic.BetaRequestMCPServerToolConfigurationParam{
+				Enabled: anthropic.Bool(true),
+				// By not setting AllowedTools, all tools are available
+			}
+		}
+	}
+
+	return mcpServers
+}
+
+// SetMCPServers sets the MCP servers (used for testing)
+func (a *AI) SetMCPServers(servers []anthropic.BetaRequestMCPServerURLDefinitionParam) {
+	a.mcpServers = servers
 }
 
 // storeConversationMessages stores user message and AI response in conversation
