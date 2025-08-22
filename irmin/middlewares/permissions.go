@@ -91,6 +91,15 @@ func (api *APIMiddlewares) WorkspacePermissionMiddleware(action db.PolicyAction)
 	)
 }
 
+// AssistantPermissionMiddleware creates a middleware for assistant-level permissions.
+func (api *APIMiddlewares) AssistantPermissionMiddleware(action db.PolicyAction) fiber.Handler {
+	return api.createPermissionMiddleware(
+		db.PolicyResourceAssistant,
+		action,
+		nil,
+	)
+}
+
 // PolicyPermissionMiddleware creates a middleware for policy-level permissions.
 func (api *APIMiddlewares) PolicyPermissionMiddleware(action db.PolicyAction) fiber.Handler {
 	return api.createPermissionMiddleware(

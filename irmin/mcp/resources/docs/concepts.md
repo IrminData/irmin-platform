@@ -1,6 +1,12 @@
 # Irmin Core Concepts
 
-### "Everything is a File" Philosophy
+## Introduction to Irmin
+
+Irmin is a developer-first platform designed to revolutionise data management, collaboration, and automation.
+
+Irmin is an open-source, serverless, Git-like data lakehouse and data platform designed for developers. It offers robust data versioning, querying, scripting, workflow automation, and comprehensive documentation, auditing, permissions, and more — all within a secure, auditable platform.
+
+## "Everything is a File" Philosophy
 
 Irmin follows the principle that all data should be treated as files:
 

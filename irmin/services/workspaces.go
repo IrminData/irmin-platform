@@ -40,6 +40,14 @@ func (api *APIServices) ListWorkspaces(user *db.User) ([]db.Workspace, error) {
 	// Get the workspaces for the user.
 	userWorkspaces, err := api.DB.GetUserWorkspaces(user.ID)
 	if err != nil {
+		api.Logger.ErrorContext(
+			context.Background(),
+			"Error fetching user workspaces",
+			"error",
+			err,
+			"user_id",
+			user.ID,
+		)
 		return nil, err
 	}
 
@@ -156,6 +164,14 @@ func (api *APIServices) UpdateWorkspace(
 
 	// Update the workspace in the database
 	if updateWorkspaceErr := api.DB.Save(&workspace).Error; updateWorkspaceErr != nil {
+		api.Logger.ErrorContext(
+			context.Background(),
+			"Error updating workspace in database",
+			"error",
+			updateWorkspaceErr,
+			"workspace_id",
+			workspace.ID,
+		)
 		return nil, updateWorkspaceErr
 	}
 
@@ -246,6 +262,7 @@ func (api *APIServices) TransferWorkspaceOwnership(
 	// Validate and decode the new owner SQID
 	newOwnerID, err := api.SQIDManager.Decode("users", req.NewOwnerID)
 	if err != nil {
+		api.Logger.ErrorContext(ctx, "Error decoding new owner SQID", "error", err, "new_owner_sqid", req.NewOwnerID)
 		return nil, err
 	}
 
@@ -330,6 +347,16 @@ func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) e
 		)
 	})
 	if leaveWorkspaceErr != nil {
+		api.Logger.ErrorContext(
+			context.Background(),
+			"Error removing user from workspace during leave operation",
+			"error",
+			leaveWorkspaceErr,
+			"user_id",
+			user.ID,
+			"workspace_id",
+			workspace.ID,
+		)
 		return leaveWorkspaceErr
 	}
 

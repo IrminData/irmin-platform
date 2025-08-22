@@ -54,6 +54,8 @@ func DecodePolicyResourceID(
 		return nil, errors.New("documentation doesn't need ID specific policies")
 	case db.PolicyResourceBilling:
 		return nil, errors.New("billing doesn't need ID specific policies")
+	case db.PolicyResourceAssistant:
+		return nil, errors.New("assistants don't need ID specific policies")
 	default:
 		return nil, fmt.Errorf("invalid resource type: %s", resource)
 	}
@@ -109,6 +111,8 @@ func EncodePolicyResourceID(
 		return "", errors.New("documentation doesn't need ID specific policies")
 	case db.PolicyResourceBilling:
 		return "", errors.New("billing doesn't need ID specific policies")
+	case db.PolicyResourceAssistant:
+		return "", errors.New("assistants don't need ID specific policies")
 	default:
 		return "", fmt.Errorf("invalid resource type: %s", resource)
 	}

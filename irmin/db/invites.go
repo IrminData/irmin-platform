@@ -28,9 +28,9 @@ func (d *Database) GetActiveInvitesByWorkspace(workspaceID uint) ([]Invite, erro
 		Preload("Workspace").
 		Preload("Role").
 		Where("workspace_id = ?", workspaceID).
-		Where("expires_at > ?", time.Now()).
 		Where("accepted_at IS NULL").
 		Where("declined_at IS NULL").
+		Where("expires_at > ?", time.Now().UTC()).
 		Order("created_at desc").
 		Find(&invites)
 	if result.Error != nil {
@@ -45,9 +45,9 @@ func (d *Database) GetInvitesByEmail(email string) ([]Invite, error) {
 		Preload("Workspace").
 		Preload("Role").
 		Where("email = ?", email).
-		Where("expires_at > ?", time.Now()).
 		Where("accepted_at IS NULL").
 		Where("declined_at IS NULL").
+		Where("expires_at > ?", time.Now().UTC()).
 		Order("created_at desc").
 		Find(&invites)
 	if result.Error != nil {

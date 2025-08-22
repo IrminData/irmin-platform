@@ -20,7 +20,7 @@ type APIToken struct {
 // GetAPIToken retrieves an API token by its ID.
 func (d *Database) GetAPIToken(id uint) (*APIToken, error) {
 	var t APIToken
-	if err := d.Where("id = ?", id).First(&t).Error; err != nil {
+	if err := d.First(&t, id).Error; err != nil {
 		return nil, err
 	}
 	return &t, nil
@@ -29,7 +29,7 @@ func (d *Database) GetAPIToken(id uint) (*APIToken, error) {
 // GetAPITokenByToken retrieves an API token by its token value.
 func (d *Database) GetAPITokenByToken(token string) (*APIToken, error) {
 	var t APIToken
-	if err := d.Preload("User").Where("token = ?", token).First(&t).Error; err != nil {
+	if err := d.Preload("User").Where(&APIToken{Token: token}).First(&t).Error; err != nil {
 		return nil, err
 	}
 	return &t, nil
@@ -38,7 +38,7 @@ func (d *Database) GetAPITokenByToken(token string) (*APIToken, error) {
 // GetAPITokensByUserID retrieves all API tokens for a user.
 func (d *Database) GetAPITokensByUserID(userID uint) ([]APIToken, error) {
 	var tokens []APIToken
-	if err := d.Where("user_id = ?", userID).Order("created_at desc").Find(&tokens).Error; err != nil {
+	if err := d.Where(&APIToken{UserID: userID}).Order("created_at desc").Find(&tokens).Error; err != nil {
 		return nil, err
 	}
 	return tokens, nil
@@ -46,5 +46,5 @@ func (d *Database) GetAPITokensByUserID(userID uint) ([]APIToken, error) {
 
 // DeleteAPIToken deletes an API token by its ID.
 func (d *Database) DeleteAPIToken(id uint) error {
-	return d.Where("id = ?", id).Delete(&APIToken{}).Error
+	return d.Delete(&APIToken{}, id).Error
 }

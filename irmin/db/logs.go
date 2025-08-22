@@ -65,7 +65,7 @@ func (d *Database) GetLogEventsForWorkspace(
 
 	// base model for counting
 	countQuery := d.Model(&LogEvent{}).
-		Where("workspace_id = ?", workspaceID)
+		Where(&LogEvent{WorkspaceID: &workspaceID})
 
 	// apply description filter if present
 	if searchTerm != "" {
@@ -88,7 +88,7 @@ func (d *Database) GetLogEventsForWorkspace(
 		Preload("Policy").
 		Preload("StoredQuery").
 		Preload("RepositoryObject.Repository").
-		Where("workspace_id = ?", workspaceID)
+		Where(&LogEvent{WorkspaceID: &workspaceID})
 
 	// apply description filter if present
 	if searchTerm != "" {
@@ -131,24 +131,24 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 
 	// base for counting with workspace filter
 	countQuery := d.Model(&LogEvent{}).
-		Where("workspace_id = ?", workspaceID)
+		Where(&LogEvent{WorkspaceID: &workspaceID})
 
 	// asset-specific filter for counting
 	switch assetType {
 	case "repository":
-		countQuery = countQuery.Where("repository_id = ?", assetID)
+		countQuery = countQuery.Where(&LogEvent{RepositoryID: &assetID})
 	case "workflow":
-		countQuery = countQuery.Where("workflow_id = ?", assetID)
+		countQuery = countQuery.Where(&LogEvent{WorkflowID: &assetID})
 	case "user":
-		countQuery = countQuery.Where("user_id = ?", assetID)
+		countQuery = countQuery.Where(&LogEvent{UserID: &assetID})
 	case "connection":
-		countQuery = countQuery.Where("connection_id = ?", assetID)
+		countQuery = countQuery.Where(&LogEvent{ConnectionID: &assetID})
 	case "stored_query":
-		countQuery = countQuery.Where("stored_query_id = ?", assetID)
+		countQuery = countQuery.Where(&LogEvent{StoredQueryID: &assetID})
 	case "policy":
-		countQuery = countQuery.Where("policy_id = ?", assetID)
+		countQuery = countQuery.Where(&LogEvent{PolicyID: &assetID})
 	case "repository_object":
-		countQuery = countQuery.Where("repository_object_id = ?", assetID)
+		countQuery = countQuery.Where(&LogEvent{RepositoryObjectID: &assetID})
 	}
 
 	// apply description filter if present
@@ -172,24 +172,24 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 		Preload("Policy").
 		Preload("StoredQuery").
 		Preload("RepositoryObject.Repository").
-		Where("workspace_id = ?", workspaceID)
+		Where(&LogEvent{WorkspaceID: &workspaceID})
 
 	// asset-specific filter for fetching
 	switch assetType {
 	case "repository":
-		query = query.Where("repository_id = ?", assetID)
+		query = query.Where(&LogEvent{RepositoryID: &assetID})
 	case "workflow":
-		query = query.Where("workflow_id = ?", assetID)
+		query = query.Where(&LogEvent{WorkflowID: &assetID})
 	case "user":
-		query = query.Where("user_id = ?", assetID)
+		query = query.Where(&LogEvent{UserID: &assetID})
 	case "connection":
-		query = query.Where("connection_id = ?", assetID)
+		query = query.Where(&LogEvent{ConnectionID: &assetID})
 	case "stored_query":
-		query = query.Where("stored_query_id = ?", assetID)
+		query = query.Where(&LogEvent{StoredQueryID: &assetID})
 	case "policy":
-		query = query.Where("policy_id = ?", assetID)
+		query = query.Where(&LogEvent{PolicyID: &assetID})
 	case "repository_object":
-		query = query.Where("repository_object_id = ?", assetID)
+		query = query.Where(&LogEvent{RepositoryObjectID: &assetID})
 	}
 
 	// apply description filter if present

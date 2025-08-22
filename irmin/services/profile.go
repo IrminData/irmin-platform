@@ -59,6 +59,7 @@ func (api *APIServices) UpdateProfile(
 
 	// Persist to DB after successful Clerk updates
 	if err := api.DB.Save(&au).Error; err != nil {
+		api.Logger.ErrorContext(c, "Error saving user profile to database", "error", err, "user_id", au.ID)
 		return nil, err
 	}
 
@@ -73,12 +74,23 @@ func (api *APIServices) updateProfilePictureInClerk(
 ) error {
 	src, err := newProfilePicture.Open()
 	if err != nil {
+		api.Logger.ErrorContext(c, "Error opening profile picture file", "error", err, "user_id", irminUser.ID)
 		return err
 	}
 	defer src.Close()
 
 	clerkUser, err := user.UpdateProfileImage(c, irminUser.ClerkID, &user.UpdateProfileImageParams{File: src})
 	if err != nil {
+		api.Logger.ErrorContext(
+			c,
+			"Error updating profile picture in Clerk",
+			"error",
+			err,
+			"user_id",
+			irminUser.ID,
+			"clerk_id",
+			irminUser.ClerkID,
+		)
 		return err
 	}
 	irminUser.ProfilePicture = valueOrDefault(clerkUser.ImageURL)
@@ -91,6 +103,16 @@ func (api *APIServices) updateClerkUserData(c context.Context, irminUser *db.Use
 	// Fetch current Clerk user to check presence of email/phone entries
 	clerkUser, getUserErr := user.Get(c, irminUser.ClerkID)
 	if getUserErr != nil {
+		api.Logger.ErrorContext(
+			c,
+			"Error fetching user from Clerk",
+			"error",
+			getUserErr,
+			"user_id",
+			irminUser.ID,
+			"clerk_id",
+			irminUser.ClerkID,
+		)
 		return getUserErr
 	}
 
@@ -113,6 +135,18 @@ func (api *APIServices) updateClerkUserData(c context.Context, irminUser *db.Use
 		PrimaryEmailAddressID: &primaryEmailID,
 		PrimaryPhoneNumberID:  &primaryPhoneID,
 	})
+	if err != nil {
+		api.Logger.ErrorContext(
+			c,
+			"Error updating user profile in Clerk",
+			"error",
+			err,
+			"user_id",
+			irminUser.ID,
+			"clerk_id",
+			irminUser.ClerkID,
+		)
+	}
 	return err
 }
 

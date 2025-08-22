@@ -27,6 +27,7 @@ func getAllResources() []db.PolicyResource {
 		db.PolicyResourceAuditLog,
 		db.PolicyResourceDocumentation,
 		db.PolicyResourceBilling,
+		db.PolicyResourceAssistant,
 	}
 }
 
@@ -129,6 +130,23 @@ func setBillingPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 	return createPoliciesBatch(dbConn, combinedPolicies)
 }
 
+// setAssistantPolicies sets all policies for the assistant role.
+func setAssistantPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
+	// Assistant has full access to assistant resource
+	assistantResources := []db.PolicyResource{
+		db.PolicyResourceAssistant,
+	}
+
+	assistantPolicies := preparePoliciesForResources(
+		assistantResources,
+		[]db.PolicyAction{db.PolicyActionRead, db.PolicyActionCreate, db.PolicyActionUpdate, db.PolicyActionDelete},
+		roleID,
+		workspaceID,
+	)
+
+	return createPoliciesBatch(dbConn, assistantPolicies)
+}
+
 // setWorkspaceWidePolicies sets policies that apply to everyone in the workspace.
 func setWorkspaceWidePolicies(dbConn *gorm.DB, workspaceID uint) error {
 	policies := []db.Policy{{
@@ -208,7 +226,7 @@ func setEditorPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 func SetDefaultPolicies(dbConn *gorm.DB, workspaceID uint, overridePolicies bool) error {
 	// Check if any policies exist for this workspace
 	var count int64
-	if workspacePoliciesCountErr := dbConn.Model(&db.Policy{}).Where("workspace_id = ?", workspaceID).Count(&count).Error; workspacePoliciesCountErr != nil {
+	if workspacePoliciesCountErr := dbConn.Model(&db.Policy{}).Where(&db.Policy{WorkspaceID: workspaceID}).Count(&count).Error; workspacePoliciesCountErr != nil {
 		return workspacePoliciesCountErr
 	}
 	if count > 0 && !overridePolicies {
@@ -218,7 +236,7 @@ func SetDefaultPolicies(dbConn *gorm.DB, workspaceID uint, overridePolicies bool
 
 	// If overridePolicies is true, delete all existing policies for this workspace
 	if overridePolicies && count > 0 {
-		if deleteErr := dbConn.Where("workspace_id = ?", workspaceID).Delete(&db.Policy{}).Error; deleteErr != nil {
+		if deleteErr := dbConn.Where(&db.Policy{WorkspaceID: workspaceID}).Delete(&db.Policy{}).Error; deleteErr != nil {
 			return deleteErr
 		}
 	}
@@ -248,6 +266,8 @@ func SetDefaultPolicies(dbConn *gorm.DB, workspaceID uint, overridePolicies bool
 			err = setViewerPolicies(dbConn, &role.ID, workspaceID)
 		case "billing":
 			err = setBillingPolicies(dbConn, &role.ID, workspaceID)
+		case "assistant":
+			err = setAssistantPolicies(dbConn, &role.ID, workspaceID)
 		case "guest":
 			// Guest role has no permissions by default
 			continue

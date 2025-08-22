@@ -13,7 +13,7 @@ type Role struct {
 
 func (d *Database) GetDefaultRole() (*Role, error) {
 	var role Role
-	if err := d.Where("is_default = ?", true).First(&role).Error; err != nil {
+	if err := d.Where(&Role{IsDefault: true}).First(&role).Error; err != nil {
 		return nil, err
 	}
 	return &role, nil
@@ -21,7 +21,7 @@ func (d *Database) GetDefaultRole() (*Role, error) {
 
 func (d *Database) GetOwnerRole() (*Role, error) {
 	var role Role
-	if err := d.Where("is_owner = ?", true).First(&role).Error; err != nil {
+	if err := d.Where(&Role{IsOwner: true}).First(&role).Error; err != nil {
 		return nil, err
 	}
 	return &role, nil

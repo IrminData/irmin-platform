@@ -434,11 +434,11 @@ func (api *APIServices) UpdateWorkflowSchedule(
 
 		// Delete the current associated schedule object and its triggers.
 		if workflow.ScheduleID != nil {
-			if deleteScheduleTriggersErr := tx.Where("schedule_id = ?", workflow.ScheduleID).Delete(&db.WorkflowTrigger{}).Error; deleteScheduleTriggersErr != nil {
+			if deleteScheduleTriggersErr := tx.Where("schedule_id = ?", *workflow.ScheduleID).Delete(&db.WorkflowTrigger{}).Error; deleteScheduleTriggersErr != nil {
 				api.Logger.ErrorContext(c, "Error deleting schedule triggers", "error", deleteScheduleTriggersErr)
 				return deleteScheduleTriggersErr
 			}
-			if deleteScheduleErr := tx.Delete(&db.Schedule{}, workflow.ScheduleID).Error; deleteScheduleErr != nil {
+			if deleteScheduleErr := tx.Delete(&db.Schedule{}, *workflow.ScheduleID).Error; deleteScheduleErr != nil {
 				api.Logger.ErrorContext(c, "Error deleting schedule", "error", deleteScheduleErr)
 				return deleteScheduleErr
 			}

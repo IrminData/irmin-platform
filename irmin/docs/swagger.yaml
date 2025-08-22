@@ -26,6 +26,24 @@ definitions:
     - system_token
     - url
     type: object
+  irmincore.CreateAssistantConversationRequest:
+    properties:
+      metadata:
+        additionalProperties: {}
+        type: object
+      title:
+        example: My conversation
+        type: string
+    type: object
+  irmincore.CreateAssistantMessageRequest:
+    properties:
+      message:
+        example: What is the capital of France?
+        maxLength: 100
+        type: string
+    required:
+    - message
+    type: object
   irmincore.CreateBranchRequest:
     properties:
       from:
@@ -392,6 +410,15 @@ definitions:
     required:
     - new_owner_id
     type: object
+  irmincore.UpdateAssistantConversationRequest:
+    properties:
+      metadata:
+        additionalProperties: {}
+        type: object
+      title:
+        example: My conversation
+        type: string
+    type: object
   irmincore.UpdateBranchRequest:
     properties:
       is_immutable:
@@ -677,6 +704,117 @@ definitions:
     - repository_path
     - repository_ref
     type: object
+  irminmodels.AssistantConversation:
+    properties:
+      assistant_messages:
+        type: integer
+      created_at:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      estimated_tokens:
+        type: integer
+      id:
+        example: assistant_conversation_1a2b3c
+        type: string
+      last_message_at:
+        type: string
+      messages:
+        items:
+          $ref: '#/definitions/irminmodels.AssistantMessage'
+        type: array
+      metadata:
+        additionalProperties: {}
+        type: object
+      title:
+        example: My conversation
+        type: string
+      total_messages:
+        type: integer
+      updated_at:
+        example: "2025-12-01T14:22:30Z"
+        type: string
+      user_id:
+        example: user_1a2b3c
+        type: string
+      user_messages:
+        type: integer
+      workspace_id:
+        example: workspace_1a2b3c
+        type: string
+    required:
+    - created_at
+    - id
+    - title
+    - updated_at
+    - user_id
+    - workspace_id
+    type: object
+  irminmodels.AssistantMessage:
+    properties:
+      ai_model:
+        type: string
+      content:
+        type: string
+      conversation_id:
+        example: assistant_conversation_1a2b3c
+        type: string
+      created_at:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      error_message:
+        type: string
+      id:
+        example: assistant_message_1a2b3c
+        type: string
+      input_tokens:
+        type: integer
+      metadata:
+        additionalProperties: {}
+        type: object
+      output_tokens:
+        type: integer
+      role:
+        $ref: '#/definitions/irminmodels.AssistantMessageRole'
+      sent_at:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/irminmodels.AssistantMessageStatus'
+        enum:
+        - pending
+        - sent
+        - error
+        - failed
+      updated_at:
+        example: "2025-12-01T14:22:30Z"
+        type: string
+    required:
+    - conversation_id
+    - created_at
+    - id
+    - status
+    - updated_at
+    type: object
+  irminmodels.AssistantMessageRole:
+    enum:
+    - user
+    - assistant
+    type: string
+    x-enum-varnames:
+    - AssistantMessageRoleUser
+    - AssistantMessageRoleAssistant
+  irminmodels.AssistantMessageStatus:
+    enum:
+    - pending
+    - sent
+    - error
+    - failed
+    type: string
+    x-enum-varnames:
+    - AssistantMessageStatusPending
+    - AssistantMessageStatusSent
+    - AssistantMessageStatusError
+    - AssistantMessageStatusFailed
   irminmodels.Branch:
     properties:
       default:
@@ -1614,6 +1752,7 @@ definitions:
         - documentation
         - billing
         - workspace_tag
+        - assistant
         example: repository
       resource_id:
         description: |-
@@ -1706,6 +1845,7 @@ definitions:
     - documentation
     - billing
     - workspace_tag
+    - assistant
     type: string
     x-enum-varnames:
     - PolicyResourceWorkspace
@@ -1726,6 +1866,7 @@ definitions:
     - PolicyResourceDocumentation
     - PolicyResourceBilling
     - PolicyResourceWorkspaceTag
+    - PolicyResourceAssistant
   irminmodels.QueryResult:
     properties:
       columns:
@@ -2511,9 +2652,25 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
     format: int64
     type: integer
     x-enum-varnames:
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
     - minDuration
     - maxDuration
     - Nanosecond
@@ -3492,6 +3649,363 @@ paths:
       summary: Update workspace
       tags:
       - workspaces
+  /workspaces/{workspace_slug}/assistant/conversations:
+    get:
+      consumes:
+      - application/json
+      description: Get all assistant conversations in the specified workspace that
+        the user has permission to read
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Conversations retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.AssistantConversation'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Workspace not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List assistant conversations in workspace
+      tags:
+      - assistant
+    post:
+      consumes:
+      - application/json
+      description: Create a new assistant conversation in the specified workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation creation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreateAssistantConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Conversation created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AssistantConversation'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new assistant conversation
+      tags:
+      - assistant
+  /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing assistant conversation from the workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Conversation deleted successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete assistant conversation
+      tags:
+      - assistant
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific assistant conversation by its ID
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Conversation retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AssistantConversation'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get assistant conversation details
+      tags:
+      - assistant
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing assistant conversation
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      - description: Conversation update parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateAssistantConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Conversation updated successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update assistant conversation
+      tags:
+      - assistant
+  /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}/clear:
+    post:
+      consumes:
+      - application/json
+      description: Clear all messages from an existing assistant conversation
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Conversation messages cleared successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Clear assistant conversation messages
+      tags:
+      - assistant
+  /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}/messages:
+    post:
+      consumes:
+      - application/json
+      description: Send a message to the AI assistant and get a response
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      - description: Message parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreateAssistantMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message sent successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AssistantMessage'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send message to assistant
+      tags:
+      - assistant
+  /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics for a specific assistant conversation
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Conversation statistics retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get assistant conversation statistics
+      tags:
+      - assistant
   /workspaces/{workspace_slug}/connections:
     get:
       consumes:

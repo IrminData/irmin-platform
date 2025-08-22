@@ -131,7 +131,7 @@ func (d *Database) GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, erro
 		Preload("Owner").
 		Preload("Tags").
 		Preload("Schedule").
-		Where("workspace_id = ?", workspaceID).
+		Where(&Workflow{WorkspaceID: workspaceID}).
 		Order("created_at desc").
 		Limit(DefaultWorkflowListLimit).
 		Find(&workflows)
@@ -149,7 +149,7 @@ func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
 		Preload("Owner").
 		Preload("Tags").
 		Preload("Schedule").
-		Where("workspace_id = ? AND type = ?", workspaceID, workflowType).
+		Where(&Workflow{WorkspaceID: workspaceID, Type: workflowType}).
 		Order("created_at desc").
 		Limit(DefaultWorkflowListLimit).
 		Find(&workflows)
@@ -201,6 +201,58 @@ func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, 
 	return &pipeline, result.Error
 }
 
+// deleteWorkflowSchedule deletes a workflow's schedule and associated triggers if they exist.
+func (d *Database) deleteWorkflowSchedule(tx *gorm.DB, scheduleID *uint) error {
+	if scheduleID == nil {
+		return nil
+	}
+
+	// Delete workflow triggers associated with this schedule
+	if err := tx.Where(&WorkflowTrigger{ScheduleID: scheduleID}).Delete(&WorkflowTrigger{}).Error; err != nil {
+		return err
+	}
+	// Delete the schedule itself
+	return tx.Delete(&Schedule{}, *scheduleID).Error
+}
+
+// deleteWorkflowImport deletes a workflow's import workflowable if it exists.
+func (d *Database) deleteWorkflowImport(tx *gorm.DB, importID *uint) error {
+	if importID == nil {
+		return nil
+	}
+	return tx.Delete(&ImportWorkflowable{}, *importID).Error
+}
+
+// deleteWorkflowExport deletes a workflow's export workflowable if it exists.
+func (d *Database) deleteWorkflowExport(tx *gorm.DB, exportID *uint) error {
+	if exportID == nil {
+		return nil
+	}
+	return tx.Delete(&ExportWorkflowable{}, *exportID).Error
+}
+
+// deleteWorkflowAction deletes a workflow's action workflowable if it exists.
+func (d *Database) deleteWorkflowAction(tx *gorm.DB, actionID *uint) error {
+	if actionID == nil {
+		return nil
+	}
+	return tx.Delete(&ActionWorkflowable{}, *actionID).Error
+}
+
+// deleteWorkflowPipeline deletes a workflow's pipeline workflowable and its stages if they exist.
+func (d *Database) deleteWorkflowPipeline(tx *gorm.DB, pipelineID *uint) error {
+	if pipelineID == nil {
+		return nil
+	}
+
+	// Delete pipeline stages first
+	if err := tx.Where(&PipelineStage{PipelineID: pipelineID}).Delete(&PipelineStage{}).Error; err != nil {
+		return err
+	}
+	// Delete the pipeline itself
+	return tx.Delete(&PipelineWorkflowable{}, *pipelineID).Error
+}
+
 // DeleteWorkflow deletes a workflow and all related records.
 func (d *Database) DeleteWorkflow(tx *gorm.DB, id uint) error {
 	// First get the workflow to ensure it exists and to get related IDs
@@ -210,37 +262,32 @@ func (d *Database) DeleteWorkflow(tx *gorm.DB, id uint) error {
 	}
 
 	// Remove tag associations first
-	if err := tx.Where("workflow_id = ?", id).Delete(&WorkflowTag{}).Error; err != nil {
+	if err := tx.Where(&WorkflowTag{WorkflowID: id}).Delete(&WorkflowTag{}).Error; err != nil {
 		return err
 	}
+
 	// Delete workflow runs
-	if err := tx.Where("workflow_id = ?", id).Delete(&WorkflowRun{}).Error; err != nil {
+	if err := tx.Where(&WorkflowRun{WorkflowID: id}).Delete(&WorkflowRun{}).Error; err != nil {
 		return err
 	}
 
 	// Delete schedule and its triggers if exists
-	if err := tx.Where("schedule_id = ?", *workflow.ScheduleID).Delete(&WorkflowTrigger{}).Error; err != nil {
-		return err
-	}
-	if err := tx.Delete(&Schedule{}, *workflow.ScheduleID).Error; err != nil {
+	if err := d.deleteWorkflowSchedule(tx, workflow.ScheduleID); err != nil {
 		return err
 	}
 
-	// Delete workflowable
-	if deleteImportErr := tx.Delete(&ImportWorkflowable{}, *workflow.ImportID).Error; deleteImportErr != nil {
-		return deleteImportErr
+	// Delete workflowable based on type
+	if err := d.deleteWorkflowImport(tx, workflow.ImportID); err != nil {
+		return err
 	}
-	if deleteExportErr := tx.Delete(&ExportWorkflowable{}, *workflow.ExportID).Error; deleteExportErr != nil {
-		return deleteExportErr
+	if err := d.deleteWorkflowExport(tx, workflow.ExportID); err != nil {
+		return err
 	}
-	if deleteActionErr := tx.Delete(&ActionWorkflowable{}, *workflow.ActionID).Error; deleteActionErr != nil {
-		return deleteActionErr
+	if err := d.deleteWorkflowAction(tx, workflow.ActionID); err != nil {
+		return err
 	}
-	if deletePipelineStagesErr := tx.Where("pipeline_id = ?", *workflow.PipelineID).Delete(&PipelineStage{}).Error; deletePipelineStagesErr != nil {
-		return deletePipelineStagesErr
-	}
-	if deletePipelineErr := tx.Delete(&PipelineWorkflowable{}, *workflow.PipelineID).Error; deletePipelineErr != nil {
-		return deletePipelineErr
+	if err := d.deleteWorkflowPipeline(tx, workflow.PipelineID); err != nil {
+		return err
 	}
 
 	// Finally delete the workflow itself

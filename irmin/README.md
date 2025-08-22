@@ -194,7 +194,7 @@ For detailed documentation and advanced features, see [swaggo/swag](https://gith
 
 ## MCP Server
 
-The MCP server implementation using the official Go SDK is available under `mcp/`. It runs automatically with the main server and is mounted at `MCP_HTTP_PATH` (default `/mcp/sse`). See `mcp/README.md` for details.
+The MCP server implementation using the official Go SDK is available under `mcp/`. It runs automatically with the main server and is mounted at `MCP_HTTP_PATH` (default `/mcp`). See `mcp/README.md` for details.
 
 Run `npx @modelcontextprotocol/inspector` to test and inspect the MCP server.
 
@@ -216,7 +216,10 @@ Create a `.env` file in the root directory of the project and add the following 
 PORT=8082 # Port to run the API server on
 URL=http://localhost:8082 # URL of the API server
 TOKEN=... # Token to authenticate system requests to the API
-MCP_HTTP_PATH=/mcp/sse # Mount path for the embedded MCP server (streamable HTTP)
+
+MCP_HTTP_PATH=/mcp # Mount path for the embedded MCP server (streamable HTTP)
+
+ANTHROPIC_API_KEY=... # Anthropic API key for LLMs
 
 PREFORK_ENABLED=true # Enable prefork
 HELMET_ENABLED=true # Enable helmet

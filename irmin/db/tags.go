@@ -69,19 +69,19 @@ type TagWithAssets struct {
 
 // DeleteTag deletes a tag and removes all its associations.
 func (d *Database) DeleteTag(tx *gorm.DB, id uint) error {
-	if err := tx.Where("tag_id = ?", id).Delete(&QueryTag{}).Error; err != nil {
+	if err := tx.Where(&QueryTag{TagID: id}).Delete(&QueryTag{}).Error; err != nil {
 		return err
 	}
-	if err := tx.Where("tag_id = ?", id).Delete(&RepositoryTag{}).Error; err != nil {
+	if err := tx.Where(&RepositoryTag{TagID: id}).Delete(&RepositoryTag{}).Error; err != nil {
 		return err
 	}
-	if err := tx.Where("tag_id = ?", id).Delete(&WorkflowTag{}).Error; err != nil {
+	if err := tx.Where(&WorkflowTag{TagID: id}).Delete(&WorkflowTag{}).Error; err != nil {
 		return err
 	}
-	if err := tx.Where("tag_id = ?", id).Delete(&ConnectionTag{}).Error; err != nil {
+	if err := tx.Where(&ConnectionTag{TagID: id}).Delete(&ConnectionTag{}).Error; err != nil {
 		return err
 	}
-	if err := tx.Where("tag_id = ?", id).Delete(&RepositoryObjectTag{}).Error; err != nil {
+	if err := tx.Where(&RepositoryObjectTag{TagID: id}).Delete(&RepositoryObjectTag{}).Error; err != nil {
 		return err
 	}
 	// Then delete the tag itself
@@ -110,7 +110,7 @@ func (d *Database) AddTagToQuery(queryID, tagID uint) error {
 
 // RemoveTagFromQuery removes a tag from a query.
 func (d *Database) RemoveTagFromQuery(queryID, tagID uint) error {
-	return d.Where("stored_query_id = ? AND tag_id = ?", queryID, tagID).Delete(&QueryTag{}).Error
+	return d.Where(&QueryTag{StoredQueryID: queryID, TagID: tagID}).Delete(&QueryTag{}).Error
 }
 
 // GetQueryTags retrieves all tags for a query.
@@ -152,7 +152,7 @@ func (d *Database) AddTagToRepository(repositoryID, tagID uint) error {
 
 // RemoveTagFromRepository removes a tag from a repository.
 func (d *Database) RemoveTagFromRepository(repositoryID, tagID uint) error {
-	return d.Where("repository_id = ? AND tag_id = ?", repositoryID, tagID).Delete(&RepositoryTag{}).Error
+	return d.Where(&RepositoryTag{RepositoryID: repositoryID, TagID: tagID}).Delete(&RepositoryTag{}).Error
 }
 
 // GetRepositoryTags retrieves all tags for a repository.
@@ -194,7 +194,7 @@ func (d *Database) AddTagToWorkflow(workflowID, tagID uint) error {
 
 // RemoveTagFromWorkflow removes a tag from a workflow.
 func (d *Database) RemoveTagFromWorkflow(workflowID, tagID uint) error {
-	return d.Where("workflow_id = ? AND tag_id = ?", workflowID, tagID).Delete(&WorkflowTag{}).Error
+	return d.Where(&WorkflowTag{WorkflowID: workflowID, TagID: tagID}).Delete(&WorkflowTag{}).Error
 }
 
 // GetWorkflowTags retrieves all tags for a workflow.
@@ -236,7 +236,7 @@ func (d *Database) AddTagToConnection(connectionID, tagID uint) error {
 
 // RemoveTagFromConnection removes a tag from a connection.
 func (d *Database) RemoveTagFromConnection(connectionID, tagID uint) error {
-	return d.Where("connection_id = ? AND tag_id = ?", connectionID, tagID).Delete(&ConnectionTag{}).Error
+	return d.Where(&ConnectionTag{ConnectionID: connectionID, TagID: tagID}).Delete(&ConnectionTag{}).Error
 }
 
 // GetConnectionTags retrieves all tags for a connection.
@@ -279,7 +279,7 @@ func (d *Database) AddTagToRepositoryObject(repositoryObjectID, tagID uint) erro
 
 // RemoveTagFromRepositoryObject removes a tag from a repository object.
 func (d *Database) RemoveTagFromRepositoryObject(repositoryObjectID, tagID uint) error {
-	return d.Where("repository_object_id = ? AND tag_id = ?", repositoryObjectID, tagID).
+	return d.Where(&RepositoryObjectTag{RepositoryObjectID: repositoryObjectID, TagID: tagID}).
 		Delete(&RepositoryObjectTag{}).
 		Error
 }
@@ -359,35 +359,35 @@ func (d *Database) GetTaggedAssetsCount(tagID uint) (map[string]int, error) {
 
 	// Count queries
 	var queryCount int64
-	if err := d.Model(&QueryTag{}).Where("tag_id = ?", tagID).Count(&queryCount).Error; err != nil {
+	if err := d.Model(&QueryTag{}).Where(&QueryTag{TagID: tagID}).Count(&queryCount).Error; err != nil {
 		return nil, err
 	}
 	counts["queries"] = int(queryCount)
 
 	// Count repositories
 	var repositoryCount int64
-	if err := d.Model(&RepositoryTag{}).Where("tag_id = ?", tagID).Count(&repositoryCount).Error; err != nil {
+	if err := d.Model(&RepositoryTag{}).Where(&RepositoryTag{TagID: tagID}).Count(&repositoryCount).Error; err != nil {
 		return nil, err
 	}
 	counts["repositories"] = int(repositoryCount)
 
 	// Count workflows
 	var workflowCount int64
-	if err := d.Model(&WorkflowTag{}).Where("tag_id = ?", tagID).Count(&workflowCount).Error; err != nil {
+	if err := d.Model(&WorkflowTag{}).Where(&WorkflowTag{TagID: tagID}).Count(&workflowCount).Error; err != nil {
 		return nil, err
 	}
 	counts["workflows"] = int(workflowCount)
 
 	// Count connections
 	var connectionCount int64
-	if err := d.Model(&ConnectionTag{}).Where("tag_id = ?", tagID).Count(&connectionCount).Error; err != nil {
+	if err := d.Model(&ConnectionTag{}).Where(&ConnectionTag{TagID: tagID}).Count(&connectionCount).Error; err != nil {
 		return nil, err
 	}
 	counts["connections"] = int(connectionCount)
 
 	// Count repository objects
 	var repositoryObjectCount int64
-	if err := d.Model(&RepositoryObjectTag{}).Where("tag_id = ?", tagID).Count(&repositoryObjectCount).Error; err != nil {
+	if err := d.Model(&RepositoryObjectTag{}).Where(&RepositoryObjectTag{TagID: tagID}).Count(&repositoryObjectCount).Error; err != nil {
 		return nil, err
 	}
 	counts["repository_objects"] = int(repositoryObjectCount)
@@ -425,7 +425,7 @@ func (d *Database) GetTagWithAssets(tagID uint) (*TagWithAssets, error) {
 // GetTagsByWorkspace retrieves all tags for a specific workspace.
 func (d *Database) GetTagsByWorkspace(workspaceID uint) ([]Tag, error) {
 	var tags []Tag
-	if err := d.Where("workspace_id = ?", workspaceID).Order("name asc").Find(&tags).Error; err != nil {
+	if err := d.Where(&Tag{WorkspaceID: workspaceID}).Order("name asc").Find(&tags).Error; err != nil {
 		return nil, err
 	}
 	return tags, nil

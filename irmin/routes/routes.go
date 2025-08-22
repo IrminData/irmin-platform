@@ -99,6 +99,52 @@ func RegisterAPIRoutes(
 		apiControllers.LeaveWorkspace,
 	)
 
+	// Assistant routes
+	workspace.Get(
+		"/assistant/conversations",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AssistantConversationsIndex,
+	)
+	workspace.Post(
+		"/assistant/conversations",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.AssistantConversationsStore,
+	)
+	assistantConversation := workspace.Group(
+		"/assistant/conversations/:assistant_conversation",
+		apiMiddlewares.AssistantConversationMiddleware,
+	)
+	assistantConversation.Get(
+		"/",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AssistantConversationsShow,
+	)
+	assistantConversation.Delete(
+		"/",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.AssistantConversationsDestroy,
+	)
+	assistantConversation.Post(
+		"/clear",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.AssistantConversationsClear,
+	)
+	assistantConversation.Patch(
+		"/",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.AssistantConversationsUpdate,
+	)
+	assistantConversation.Get(
+		"/stats",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AssistantConversationsStats,
+	)
+	assistantConversation.Post(
+		"/messages",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.AssistantMessagesStore,
+	)
+
 	// Policy routes
 	workspace.Get(
 		"/policies",

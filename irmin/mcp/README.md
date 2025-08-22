@@ -15,7 +15,7 @@ Run `npx @modelcontextprotocol/inspector` to test and inspect the MCP server.
 
 The MCP server runs as an embedded component within the main Irmin API application.
 
-The MCP server is mounted inside the main HTTP server. Configure its mount path with the env `MCP_HTTP_PATH` (default `/mcp/sse`).
+The MCP server is mounted inside the main HTTP server. Configure its mount path with the env `MCP_HTTP_PATH` (default `/mcp`).
 
 - Main server: `http://localhost:<PORT>` (env `PORT`, default in `.env`)
 - MCP endpoint: `http://localhost:<PORT><MCP_HTTP_PATH>`

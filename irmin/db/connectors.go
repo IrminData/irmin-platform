@@ -58,7 +58,7 @@ func (d *Database) GetConnector(id uint) (*Connector, error) {
 // GetConnectorByAPIBaseURL retrieves a connector from the database by its API base URL.
 func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, error) {
 	var connector Connector
-	if err := d.Where("api_base_url = ?", apiBaseURL).First(&connector).Error; err != nil {
+	if err := d.Where(&Connector{APIBaseURL: apiBaseURL}).First(&connector).Error; err != nil {
 		return nil, err
 	}
 	return &connector, nil
@@ -67,7 +67,7 @@ func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, erro
 // DeleteConnector deletes a connector record and its associated connections from the database by its ID.
 func (d *Database) DeleteConnector(tx *gorm.DB, id uint) error {
 	// Delete associated connections first
-	if err := tx.Where("connector_id = ?", id).Delete(&Connection{}).Error; err != nil {
+	if err := tx.Where(&Connection{ConnectorID: id}).Delete(&Connection{}).Error; err != nil {
 		return err
 	}
 	// Then delete the connector

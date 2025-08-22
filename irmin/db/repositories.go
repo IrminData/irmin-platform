@@ -37,7 +37,7 @@ type Repository struct {
 
 func (d *Database) GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error) {
 	var repository Repository
-	err := d.Where("slug = ? AND workspace_id = ?", slug, workspaceID).
+	err := d.Where(&Repository{Slug: slug, WorkspaceID: workspaceID}).
 		Preload("Owner").
 		Preload("Tags").
 		First(&repository).
@@ -47,13 +47,13 @@ func (d *Database) GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID ui
 
 func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool {
 	var repository Repository
-	d.Where("slug = ? AND workspace_id = ?", slug, workspaceID).Preload("Owner").First(&repository)
+	d.Where(&Repository{Slug: slug, WorkspaceID: workspaceID}).Preload("Owner").First(&repository)
 	return repository.ID != 0
 }
 
 func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
 	var repositories []Repository
-	err := d.Where("workspace_id = ?", workspaceID).
+	err := d.Where(&Repository{WorkspaceID: workspaceID}).
 		Preload("Owner").
 		Preload("Tags").
 		Order("created_at desc").
@@ -65,7 +65,7 @@ func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, e
 // FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref.
 func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error) {
 	var schemaCache RepositorySchemaCache
-	if err := d.Where("repository_id = ? AND path = ? AND ref = ?", repositoryID, path, ref).First(&schemaCache).Error; err != nil {
+	if err := d.Where(&RepositorySchemaCache{RepositoryID: repositoryID, Path: path, Ref: ref}).First(&schemaCache).Error; err != nil {
 		return nil, err
 	}
 	return &schemaCache, nil

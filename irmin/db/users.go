@@ -49,7 +49,7 @@ func (d *Database) GetUser(id uint) (*User, error) {
 // GetUserByEmail retrieves a user from the database by their email.
 func (d *Database) GetUserByEmail(email string) (*User, error) {
 	var user User
-	if err := d.Preload("Workspaces").Preload("Workspaces.Roles").Preload("Workspaces.Roles.Role").Where("email = ?", email).First(&user).Error; err != nil {
+	if err := d.Preload("Workspaces").Preload("Workspaces.Roles").Preload("Workspaces.Roles.Role").Where(&User{Email: email}).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -58,7 +58,7 @@ func (d *Database) GetUserByEmail(email string) (*User, error) {
 // GetUserByClerkID retrieves a user from the database by their ClerkID.
 func (d *Database) GetUserByClerkID(clerkID string) (*User, error) {
 	var user User
-	if err := d.Preload("Workspaces").Preload("Workspaces.Roles").Preload("Workspaces.Roles.Role").Where("clerk_id = ?", clerkID).First(&user).Error; err != nil {
+	if err := d.Preload("Workspaces").Preload("Workspaces.Roles").Preload("Workspaces.Roles.Role").Where(&User{ClerkID: clerkID}).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -67,7 +67,7 @@ func (d *Database) GetUserByClerkID(clerkID string) (*User, error) {
 // GetWorkspaceUser retrieves a workspace user record from the database by the workspace and user IDs.
 func (d *Database) GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, error) {
 	var workspaceUser WorkspaceUser
-	if err := d.Preload("User").Preload("Roles").Preload("Roles.Role").Where("workspace_id = ? AND user_id = ?", workspaceID, userID).Order("created_at desc").First(&workspaceUser).Error; err != nil {
+	if err := d.Preload("User").Preload("Roles").Preload("Roles.Role").Where(&WorkspaceUser{WorkspaceID: workspaceID, UserID: userID}).Order("created_at desc").First(&workspaceUser).Error; err != nil {
 		return nil, err
 	}
 	return &workspaceUser, nil
@@ -77,7 +77,7 @@ func (d *Database) GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, e
 // for a given user ID. It preloads the related Workspace.
 func (d *Database) GetUserWorkspaces(userID uint) ([]WorkspaceUser, error) {
 	var workspaceUsers []WorkspaceUser
-	if err := d.Where("user_id = ?", userID).
+	if err := d.Where(&WorkspaceUser{UserID: userID}).
 		Preload("Workspace").
 		Preload("Workspace.Owner").
 		Preload("Roles").
@@ -92,7 +92,7 @@ func (d *Database) GetUserWorkspaces(userID uint) ([]WorkspaceUser, error) {
 // IsUserInWorkspace checks if a user is a member of a workspace.
 func (d *Database) IsUserInWorkspace(userID, workspaceID uint) (bool, error) {
 	var workspaceUser WorkspaceUser
-	if err := d.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).Preload("Roles").Preload("Roles.Role").First(&workspaceUser).Error; err != nil {
+	if err := d.Where(&WorkspaceUser{UserID: userID, WorkspaceID: workspaceID}).Preload("Roles").Preload("Roles.Role").First(&workspaceUser).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
@@ -105,7 +105,7 @@ func (d *Database) IsUserInWorkspace(userID, workspaceID uint) (bool, error) {
 func (d *Database) IsUserInWorkspaceByEmail(email string, workspaceID uint) (bool, error) {
 	// Query the User table for a record that matches the provided email.
 	var user User
-	if err := d.Where("email = ?", email).Preload("Workspaces").Preload("Workspaces.Role").First(&user).Error; err != nil {
+	if err := d.Where(&User{Email: email}).Preload("Workspaces").Preload("Workspaces.Role").First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Return false if the user is not found.
 			return false, nil
@@ -119,7 +119,7 @@ func (d *Database) IsUserInWorkspaceByEmail(email string, workspaceID uint) (boo
 // GetUsersInWorkspace retrieves all users associated with a workspace.
 func (d *Database) GetUsersInWorkspace(workspaceID uint) ([]WorkspaceUser, error) {
 	var workspaceUsers []WorkspaceUser
-	if err := d.Where("workspace_id = ?", workspaceID).
+	if err := d.Where(&WorkspaceUser{WorkspaceID: workspaceID}).
 		Preload("User").
 		Preload("Roles").
 		Preload("Roles.Role").
@@ -164,12 +164,12 @@ func (d *Database) AddUserToWorkspace(tx *gorm.DB, userID, workspaceID uint, rol
 func (d *Database) RemoveUserFromWorkspace(tx *gorm.DB, userID, workspaceID uint) error {
 	// Get the workspace user
 	workspaceUser := &WorkspaceUser{}
-	if err := tx.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(workspaceUser).Error; err != nil {
+	if err := tx.Where(&WorkspaceUser{UserID: userID, WorkspaceID: workspaceID}).First(workspaceUser).Error; err != nil {
 		return err
 	}
 
 	// Delete the WorkspaceUserRole records that match the workspace user ID.
-	if err := tx.Where("workspace_user_id = ?", workspaceUser.ID).Delete(&WorkspaceUserRole{}).Error; err != nil {
+	if err := tx.Where(&WorkspaceUserRole{WorkspaceUserID: workspaceUser.ID}).Delete(&WorkspaceUserRole{}).Error; err != nil {
 		return err
 	}
 
@@ -189,12 +189,12 @@ func (d *Database) UpdateWorkspaceUserRoles(
 ) (*WorkspaceUser, error) {
 	// Get the workspace user
 	workspaceUser := &WorkspaceUser{}
-	if err := tx.Where("user_id = ? AND workspace_id = ?", userID, workspaceID).First(workspaceUser).Error; err != nil {
+	if err := tx.Where(&WorkspaceUser{UserID: userID, WorkspaceID: workspaceID}).First(workspaceUser).Error; err != nil {
 		return nil, err
 	}
 
 	// Delete existing roles
-	if err := tx.Where("workspace_user_id = ?", workspaceUser.ID).Delete(&WorkspaceUserRole{}).Error; err != nil {
+	if err := tx.Where(&WorkspaceUserRole{WorkspaceUserID: workspaceUser.ID}).Delete(&WorkspaceUserRole{}).Error; err != nil {
 		return nil, err
 	}
 

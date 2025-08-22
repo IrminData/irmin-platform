@@ -29,7 +29,7 @@ func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset in
 	// Count total number of matching events
 	var total int64
 	if err := d.Model(&WorkflowRun{}).
-		Where("workflow_id = ?", workflowID).
+		Where(&WorkflowRun{WorkflowID: workflowID}).
 		Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -39,7 +39,7 @@ func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset in
 	result := d.Preload("TriggeredBy").
 		Preload("TriggeredByUser").
 		Preload("Workflow").
-		Where("workflow_id = ?", workflowID).
+		Where(&WorkflowRun{WorkflowID: workflowID}).
 		Order("created_at desc").
 		Limit(limit).
 		Offset(offset).
@@ -53,7 +53,7 @@ func (d *Database) GetLatestWorkflowRunByWorkflowID(workflowID uint) (*WorkflowR
 	result := d.Preload("TriggeredBy").
 		Preload("TriggeredByUser").
 		Preload("Workflow").
-		Where("workflow_id = ?", workflowID).
+		Where(&WorkflowRun{WorkflowID: workflowID}).
 		Order("created_at desc").
 		Limit(1).
 		Find(&workflowRun)

@@ -91,7 +91,7 @@ func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*R
 
 func (d *Database) GetFlatDBObjects(repositoryID uint, ref string) ([]RepositoryObject, error) {
 	objects := []RepositoryObject{}
-	if err := d.Select("id, path, parent_id").Where("repository_id = ? AND repository_ref = ?", repositoryID, ref).Find(&objects).Error; err != nil {
+	if err := d.Select("id, path, parent_id").Where(&RepositoryObject{RepositoryID: repositoryID, RepositoryRef: ref}).Find(&objects).Error; err != nil {
 		return objects, err
 	}
 	return objects, nil
@@ -164,7 +164,7 @@ func (d *Database) deleteSingleObjectAndChildren(tx *gorm.DB, object RepositoryO
 	}
 
 	// Remove tag associations
-	if err := tx.Where("repository_object_id = ?", object.ID).Delete(&RepositoryObjectTag{}).Error; err != nil {
+	if err := tx.Where(&RepositoryObjectTag{RepositoryObjectID: object.ID}).Delete(&RepositoryObjectTag{}).Error; err != nil {
 		return err
 	}
 
@@ -175,7 +175,7 @@ func (d *Database) deleteSingleObjectAndChildren(tx *gorm.DB, object RepositoryO
 // deleteChildrenRecursively deletes all children of an object recursively.
 func deleteChildrenRecursively(tx *gorm.DB, parentID uint) error {
 	var children []RepositoryObject
-	if err := tx.Where("parent_id = ?", parentID).Find(&children).Error; err != nil {
+	if err := tx.Where(&RepositoryObject{ParentID: &parentID}).Find(&children).Error; err != nil {
 		return err
 	}
 
@@ -187,11 +187,11 @@ func deleteChildrenRecursively(tx *gorm.DB, parentID uint) error {
 	}
 
 	// Remove tag associations for all direct children using a subquery (compatible with Postgres DELETE)
-	subQuery := tx.Model(&RepositoryObject{}).Select("id").Where("parent_id = ?", parentID)
+	subQuery := tx.Model(&RepositoryObject{}).Select("id").Where(&RepositoryObject{ParentID: &parentID})
 	if err := tx.Where("repository_object_id IN (?)", subQuery).Delete(&RepositoryObjectTag{}).Error; err != nil {
 		return err
 	}
 
 	// Delete all direct children
-	return tx.Where("parent_id = ?", parentID).Delete(&RepositoryObject{}).Error
+	return tx.Where(&RepositoryObject{ParentID: &parentID}).Delete(&RepositoryObject{}).Error
 }

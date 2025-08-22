@@ -40,6 +40,8 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 	c.Locals("is_system", isSystem)
 	if !isSystem && irminUser != nil {
 		c.Locals("user", irminUser)
+		// Set the user's authentication token in the context
+		c.Locals("user_token", &token)
 	}
 
 	return c.Next()

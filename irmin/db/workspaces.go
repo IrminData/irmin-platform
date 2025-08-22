@@ -28,7 +28,7 @@ func (d *Database) GetAllWorkspaces() ([]Workspace, error) {
 // GetWorkspaceBySlug retrieves a workspace by its slug.
 func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error) {
 	var w Workspace
-	if err := d.Preload("Owner").Preload("Users.User").Where("slug = ?", slug).First(&w).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Users.User").Where(&Workspace{Slug: slug}).First(&w).Error; err != nil {
 		return nil, err
 	}
 	return &w, nil
@@ -42,19 +42,19 @@ func (d *Database) DeleteWorkspace(id uint) error {
 			return err
 		}
 		// Delete the workspace users.
-		if err := tx.Delete(&WorkspaceUser{}, "workspace_id = ?", id).Error; err != nil {
+		if err := tx.Delete(&WorkspaceUser{}, &WorkspaceUser{WorkspaceID: id}).Error; err != nil {
 			return err
 		}
 		// Delete the workflows
-		if err := tx.Delete(&Workflow{}, "workspace_id = ?", id).Error; err != nil {
+		if err := tx.Delete(&Workflow{}, &Workflow{WorkspaceID: id}).Error; err != nil {
 			return err
 		}
 		// Delete the connections
-		if err := tx.Delete(&Connection{}, "workspace_id = ?", id).Error; err != nil {
+		if err := tx.Delete(&Connection{}, &Connection{WorkspaceID: id}).Error; err != nil {
 			return err
 		}
 		// Delete the repositories
-		if err := tx.Delete(&Repository{}, "workspace_id = ?", id).Error; err != nil {
+		if err := tx.Delete(&Repository{}, &Repository{WorkspaceID: id}).Error; err != nil {
 			return err
 		}
 		return nil

@@ -46,7 +46,7 @@ func (d *Database) GetConnectionByID(id uint) (*Connection, error) {
 // GetConnectionsByWorkspaceID finds all connections in a workspace.
 func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error) {
 	var connections []Connection
-	if err := d.Preload("Owner").Preload("Connector").Preload("Tags").Where("workspace_id = ?", workspaceID).Order("created_at desc").Find(&connections).Error; err != nil {
+	if err := d.Preload("Owner").Preload("Connector").Preload("Tags").Where(&Connection{WorkspaceID: workspaceID}).Order("created_at desc").Find(&connections).Error; err != nil {
 		return nil, err
 	}
 	return connections, nil
@@ -55,11 +55,11 @@ func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, 
 // DeleteConnection deletes a connection and its associated schema cache from the database.
 func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error {
 	// Remove tag associations first
-	if err := tx.Where("connection_id = ?", id).Delete(&ConnectionTag{}).Error; err != nil {
+	if err := tx.Where(&ConnectionTag{ConnectionID: id}).Delete(&ConnectionTag{}).Error; err != nil {
 		return err
 	}
 	// Delete associated schema cache
-	if err := tx.Where("connection_id = ?", id).Delete(&ConnectionSchemaCache{}).Error; err != nil {
+	if err := tx.Where(&ConnectionSchemaCache{ConnectionID: id}).Delete(&ConnectionSchemaCache{}).Error; err != nil {
 		return err
 	}
 	// Then delete the connection
@@ -72,7 +72,7 @@ func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error {
 // FindConnectionSchemaCache finds a connection schema cache by connection ID and op method.
 func (d *Database) FindConnectionSchemaCache(connectionID uint, opMethod string) (*ConnectionSchemaCache, error) {
 	var schemaCache ConnectionSchemaCache
-	if err := d.Where("connection_id = ? AND op_method = ?", connectionID, opMethod).First(&schemaCache).Error; err != nil {
+	if err := d.Where(&ConnectionSchemaCache{ConnectionID: connectionID, OpMethod: &opMethod}).First(&schemaCache).Error; err != nil {
 		return nil, err
 	}
 	return &schemaCache, nil

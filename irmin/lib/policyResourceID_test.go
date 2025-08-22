@@ -39,6 +39,7 @@ func TestDecodePolicyResourceID(t *testing.T) {
 		{"editor script", db.PolicyResourceEditorScript, 0, true, false, ""},
 		{"documentation", db.PolicyResourceDocumentation, 0, true, false, ""},
 		{"billing", db.PolicyResourceBilling, 0, true, false, ""},
+		{"assistant", db.PolicyResourceAssistant, 0, true, false, ""},
 	}
 
 	for _, tc := range testCases {
@@ -96,6 +97,7 @@ func TestEncodePolicyResourceID(t *testing.T) {
 		{"editor script", db.PolicyResourceEditorScript, 1, true, ""},
 		{"documentation", db.PolicyResourceDocumentation, 1, true, ""},
 		{"billing", db.PolicyResourceBilling, 1, true, ""},
+		{"assistant", db.PolicyResourceAssistant, 1, true, ""},
 	}
 
 	for _, tc := range testCases {

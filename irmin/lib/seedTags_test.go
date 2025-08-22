@@ -26,7 +26,7 @@ func TestSeedDefaultTags(t *testing.T) {
 
 	// Verify that tags were created
 	var tags []db.Tag
-	if findTagsErr := ts.DB.Where("workspace_id = ?", workspace.ID).Find(&tags).Error; findTagsErr != nil &&
+	if findTagsErr := ts.DB.Where(&db.Tag{WorkspaceID: workspace.ID}).Find(&tags).Error; findTagsErr != nil &&
 		!errors.Is(findTagsErr, gorm.ErrRecordNotFound) {
 		t.Errorf("Failed to query tags: %v", findTagsErr)
 	}
@@ -70,7 +70,7 @@ func TestSeedDefaultTags(t *testing.T) {
 	}
 
 	// Verify that the count remains the same
-	if findTagsErr := ts.DB.Where("workspace_id = ?", workspace.ID).Find(&tags).Error; findTagsErr != nil &&
+	if findTagsErr := ts.DB.Where(&db.Tag{WorkspaceID: workspace.ID}).Find(&tags).Error; findTagsErr != nil &&
 		!errors.Is(findTagsErr, gorm.ErrRecordNotFound) {
 		t.Errorf("Failed to query tags after second seeding: %v", findTagsErr)
 	}

@@ -817,6 +817,7 @@ func (api *APIServices) getUserApplicablePolicies(
 			db.PolicyResourceAuditLog,
 			db.PolicyResourceDocumentation,
 			db.PolicyResourceBilling,
+			db.PolicyResourceAssistant,
 		} {
 			for _, action := range []db.PolicyAction{
 				db.PolicyActionCreate,

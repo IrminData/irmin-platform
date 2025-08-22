@@ -251,11 +251,11 @@ func (api *APIServices) deleteRepositoryInTransaction(
 	// Use database transaction to ensure atomicity
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Remove tag associations
-		if err := tx.Where("repository_id = ?", repository.ID).Delete(&db.RepositoryTag{}).Error; err != nil {
+		if err := tx.Where(&db.RepositoryTag{RepositoryID: repository.ID}).Delete(&db.RepositoryTag{}).Error; err != nil {
 			return err
 		}
 		// Delete associated schema caches
-		if err := tx.Where("repository_id = ?", repository.ID).Delete(&db.RepositorySchemaCache{}).Error; err != nil {
+		if err := tx.Where(&db.RepositorySchemaCache{RepositoryID: repository.ID}).Delete(&db.RepositorySchemaCache{}).Error; err != nil {
 			return err
 		}
 		// Delete the repository

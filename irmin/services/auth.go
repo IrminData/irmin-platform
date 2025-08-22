@@ -206,6 +206,7 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 			ProfilePicture: valueOrDefault(clerkUser.ImageURL),
 		}
 		if createErr := api.DB.Create(&irminUser).Error; createErr != nil {
+			api.Logger.ErrorContext(c, "Error creating user in database", "error", createErr, "clerk_id", clerkID)
 			return nil, fmt.Errorf("error creating user: %w", createErr)
 		}
 	}
@@ -223,6 +224,7 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 	}
 
 	if saveErr := api.DB.Save(&irminUser).Error; saveErr != nil {
+		api.Logger.ErrorContext(c, "Error saving user to database", "error", saveErr, "user_id", irminUser.ID)
 		return nil, fmt.Errorf("error saving user: %w", saveErr)
 	}
 
@@ -233,6 +235,7 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 func (api *APIServices) getUserFromClerk(c context.Context, clerkID string) (*clerk.User, string, string, error) {
 	clerkUser, getUserErr := user.Get(c, clerkID)
 	if getUserErr != nil {
+		api.Logger.ErrorContext(c, "Error fetching user from Clerk", "error", getUserErr, "clerk_id", clerkID)
 		return nil, "", "", getUserErr
 	}
 
