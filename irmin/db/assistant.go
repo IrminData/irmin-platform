@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"irmin-api/ai"
 	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -16,6 +17,12 @@ type AssistantConversation struct {
 
 	// Conversation title (auto-generated or user-defined)
 	Title string `gorm:"type:varchar(255);not null;default:''" json:"title"`
+
+	// Assistant type (assistant, scripting, etc.)
+	AssistantType ai.IrminAIType `gorm:"type:varchar(50);not null;default:'assistant'" json:"assistant_type"`
+
+	// Hidden from user
+	Hidden bool `gorm:"default:false" json:"hidden"`
 
 	// Workspace this conversation belongs to
 	WorkspaceID uint      `gorm:"index;not null"         json:"workspace_id"`

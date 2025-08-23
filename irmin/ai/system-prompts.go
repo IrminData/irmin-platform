@@ -16,6 +16,9 @@ var assistantPrompt string
 //go:embed system-prompts/query.txt
 var queryPrompt string
 
+//go:embed system-prompts/scripting.txt
+var scriptingPrompt string
+
 // IrminAIType represents the type of AI system
 type IrminAIType string
 
@@ -28,6 +31,8 @@ const (
 	AssistantAI IrminAIType = "assistant"
 	// QueryAI represents the Irmin Query AI
 	QueryAI IrminAIType = "query"
+	// ScriptingAI represents the Irmin Scripting AI
+	ScriptingAI IrminAIType = "scripting"
 )
 
 // GetSystemPrompt returns the system prompt for the specified AI type
@@ -41,6 +46,8 @@ func GetSystemPrompt(aiType IrminAIType) string {
 		return assistantPrompt
 	case QueryAI:
 		return queryPrompt
+	case ScriptingAI:
+		return scriptingPrompt
 	default:
 		return ""
 	}

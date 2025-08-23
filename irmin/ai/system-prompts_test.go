@@ -33,6 +33,11 @@ func TestGetSystemPrompt(t *testing.T) {
 			expected: "Role and scope",
 		},
 		{
+			name:     "Scripting AI prompt",
+			aiType:   ai.ScriptingAI,
+			expected: "You translate natural language into safe, runnable Go‑lang scripts for the Irmin compute sandbox",
+		},
+		{
 			name:     "Unknown AI type",
 			aiType:   ai.IrminAIType("unknown"),
 			expected: "",
@@ -62,6 +67,9 @@ func TestIrminAITypeConstants(t *testing.T) {
 	}
 	if ai.ModelRouterAI != "model-router" {
 		t.Errorf("Expected ModelRouterAI to be 'model-router', got: %s", ai.ModelRouterAI)
+	}
+	if ai.ScriptingAI != "scripting" {
+		t.Errorf("Expected ScriptingAI to be 'scripting', got: %s", ai.ScriptingAI)
 	}
 	if ai.ConversationTitleGenerator != "conversation-title-generator" {
 		t.Errorf(

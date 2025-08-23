@@ -373,9 +373,9 @@ func (a *AI) configureMCPServers(req *MessageRequest) []anthropic.BetaRequestMCP
 		// Query AI only needs docs tools
 		a.config.Logger.Debug("Configuring MCP servers for QueryAI (docs-only)")
 		return a.createMCPServer([]string{"list_docs", "get_docs"})
-	case AssistantAI:
-		// Assistant AI gets full MCP access by default
-		a.config.Logger.Debug("Configuring MCP servers for AssistantAI (full access)")
+	case AssistantAI, ScriptingAI:
+		// Assistant AI and Scripting AI get full MCP access by default
+		a.config.Logger.Debug("Configuring MCP servers for AI type (full access)", "aiType", *req.AIType)
 		return a.createMCPServer(nil)
 	default:
 		// Unknown AI type, default to full access
@@ -441,7 +441,7 @@ func (a *AI) getAITypeDefaultModel(aiType IrminAIType) anthropic.Model {
 	switch aiType {
 	case ModelRouterAI, ConversationTitleGenerator, QueryAI:
 		return DefaultSmallModel
-	case AssistantAI:
+	case AssistantAI, ScriptingAI:
 		return DefaultMainModel
 	default:
 		return a.config.DefaultModel
@@ -475,8 +475,8 @@ func (a *AI) getAITypeDefaults(aiType *IrminAIType) map[string]any {
 		defaults["maxTokens"] = a.config.MaxTokens
 		defaults["temperature"] = 0.3
 		defaults["thinkingEnabled"] = false
-	case AssistantAI:
-		// Assistant AI gets full configuration with thinking enabled by default
+	case AssistantAI, ScriptingAI:
+		// Assistant AI and Scripting AI get full configuration with thinking enabled by default
 		defaults["maxTokens"] = a.config.MaxTokens
 		defaults["temperature"] = a.config.Temperature
 		defaults["thinkingEnabled"] = true

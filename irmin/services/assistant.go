@@ -300,11 +300,14 @@ func (api *APIServices) SendAssistantMessage(
 	conversation *db.AssistantConversation,
 	opts *ai.MessageRequest,
 ) ([]*db.AssistantMessage, error) {
-	// Set defaults - use AssistantAI for intelligent model selection
-	assistantAI := ai.AssistantAI
+	// Set defaults - use the conversation's assistant type with fallback
+	assistantType := conversation.AssistantType
+	if assistantType == "" {
+		assistantType = ai.AssistantAI // Fallback to default if not set
+	}
 	messageOpts := &ai.MessageRequest{
 		Content: message,
-		AIType:  &assistantAI, // Always use AssistantAI for intelligent model selection
+		AIType:  &assistantType, // Use the conversation's stored assistant type
 		AdditionalSystemPrompt: fmt.Sprintf(
 			"Context:\n The current workspace is '%s'. \n The current user '%s', with email '%s'. \n The current UTC date and time is %s.",
 			workspace.Slug,
@@ -440,10 +443,12 @@ func (api *APIServices) CreateAssistantConversation(
 
 	// Create conversation in database
 	dbConversation := &db.AssistantConversation{
-		Title:       title,
-		WorkspaceID: workspace.ID,
-		UserID:      user.ID,
-		Metadata:    convMetadata,
+		Title:         title,
+		WorkspaceID:   workspace.ID,
+		UserID:        user.ID,
+		Metadata:      convMetadata,
+		AssistantType: ai.AssistantAI,
+		Hidden:        false,
 	}
 	if createErr := api.DB.CreateAssistantConversation(dbConversation); createErr != nil {
 		api.Logger.ErrorContext(c, "Error creating conversation in database", "error", createErr)
