@@ -19,7 +19,7 @@ type QueryGenerationRequest struct {
 	RepositoryRef *string `json:"repository_ref,omitempty"`
 
 	// Optional conversation ID to continue an existing conversation
-	ConversationID *uint `json:"conversation_id,omitempty"`
+	ConversationID *string `json:"conversation_id,omitempty" validate:"validsqid=assistant_conversations"`
 
 	// Optional metadata for the request
 	Metadata map[string]any `json:"metadata,omitempty"`
