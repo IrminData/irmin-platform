@@ -44,18 +44,18 @@ func (c *Client) ListQueryGenerationConversations(
 func (c *Client) GenerateQuery(
 	workspace string,
 	req QueryGenerationRequest,
-) (*irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error) {
-	var message irminmodels.AssistantMessage
+) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error) {
+	var messages []irminmodels.AssistantMessage
 	apiResp, err := c.FetchAPI(RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/assistant/query", workspace),
 		ContentType: "application/json",
 		Body:        req,
-	}, &message)
+	}, &messages)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generate query error: %w", err)
 	}
-	return &message, apiResp, nil
+	return messages, apiResp, nil
 }
 
 // GetQueryGenerationConversation retrieves details of a specific query generation conversation.
