@@ -173,19 +173,7 @@ func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminmo
 func (c *Client) DeletePolicy(workspace, policyID string) (*irminmodels.IrminAPIResponse, error)
     DeletePolicy deletes a policy.
 
-func (c *Client) DeleteQueryGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.IrminAPIResponse, error)
-    DeleteQueryGenerationConversation deletes a query generation conversation by
-    its ID.
-
 func (c *Client) DeleteRepository(workspace, slug string) (*irminmodels.IrminAPIResponse, error)
-
-func (c *Client) DeleteScriptGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.IrminAPIResponse, error)
-    DeleteScriptGenerationConversation deletes a script generation conversation
-    by its ID.
 
 func (c *Client) DeleteStoredQuery(workspace, queryID string) (*irminmodels.IrminAPIResponse, error)
 
@@ -379,19 +367,7 @@ func (c *Client) GetPolicyUserSummary(
 
 func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 
-func (c *Client) GetQueryGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-    GetQueryGenerationConversation retrieves details of a specific query
-    generation conversation.
-
 func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) GetScriptGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-    GetScriptGenerationConversation retrieves details of a specific script
-    generation conversation.
 
 func (c *Client) GetStoredQuery(
 	workspace, queryID string,

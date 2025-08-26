@@ -547,9 +547,7 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) DeleteInvite\(inviteID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteInvite>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, ref, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeletePolicy\(workspace, policyID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeletePolicy>)
-  - [func \(c \*Client\) DeleteQueryGenerationConversation\(workspace, conversationID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteQueryGenerationConversation>)
   - [func \(c \*Client\) DeleteRepository\(workspace, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteRepository>)
-  - [func \(c \*Client\) DeleteScriptGenerationConversation\(workspace, conversationID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteScriptGenerationConversation>)
   - [func \(c \*Client\) DeleteStoredQuery\(workspace, queryID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteStoredQuery>)
   - [func \(c \*Client\) DeleteTag\(workspace, repository, tag string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteTag>)
   - [func \(c \*Client\) DeleteToken\(tokenID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteToken>)
@@ -592,9 +590,7 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) GetPolicyRoleSummary\(workspace string\) \(\[\]irminmodels.RolePolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyRoleSummary>)
   - [func \(c \*Client\) GetPolicyUserSummary\(workspace string\) \(\*irminmodels.UserPolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyUserSummary>)
   - [func \(c \*Client\) GetProfile\(\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetProfile>)
-  - [func \(c \*Client\) GetQueryGenerationConversation\(workspace, conversationID string\) \(\*irminmodels.AssistantConversation, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetQueryGenerationConversation>)
   - [func \(c \*Client\) GetRepository\(workspace, slug string\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetRepository>)
-  - [func \(c \*Client\) GetScriptGenerationConversation\(workspace, conversationID string\) \(\*irminmodels.AssistantConversation, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetScriptGenerationConversation>)
   - [func \(c \*Client\) GetStoredQuery\(workspace, queryID string\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetStoredQuery>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetUncommittedChanges>)
@@ -1043,15 +1039,6 @@ func (c *Client) DeletePolicy(workspace, policyID string) (*irminmodels.IrminAPI
 
 DeletePolicy deletes a policy.
 
-<a name="Client.DeleteQueryGenerationConversation"></a>
-### func \(\*Client\) DeleteQueryGenerationConversation
-
-```go
-func (c *Client) DeleteQueryGenerationConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
-```
-
-DeleteQueryGenerationConversation deletes a query generation conversation by its ID.
-
 <a name="Client.DeleteRepository"></a>
 ### func \(\*Client\) DeleteRepository
 
@@ -1060,15 +1047,6 @@ func (c *Client) DeleteRepository(workspace, slug string) (*irminmodels.IrminAPI
 ```
 
 
-
-<a name="Client.DeleteScriptGenerationConversation"></a>
-### func \(\*Client\) DeleteScriptGenerationConversation
-
-```go
-func (c *Client) DeleteScriptGenerationConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
-```
-
-DeleteScriptGenerationConversation deletes a script generation conversation by its ID.
 
 <a name="Client.DeleteStoredQuery"></a>
 ### func \(\*Client\) DeleteStoredQuery
@@ -1448,15 +1426,6 @@ func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse,
 
 
 
-<a name="Client.GetQueryGenerationConversation"></a>
-### func \(\*Client\) GetQueryGenerationConversation
-
-```go
-func (c *Client) GetQueryGenerationConversation(workspace, conversationID string) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-```
-
-GetQueryGenerationConversation retrieves details of a specific query generation conversation.
-
 <a name="Client.GetRepository"></a>
 ### func \(\*Client\) GetRepository
 
@@ -1465,15 +1434,6 @@ func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository,
 ```
 
 
-
-<a name="Client.GetScriptGenerationConversation"></a>
-### func \(\*Client\) GetScriptGenerationConversation
-
-```go
-func (c *Client) GetScriptGenerationConversation(workspace, conversationID string) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-```
-
-GetScriptGenerationConversation retrieves details of a specific script generation conversation.
 
 <a name="Client.GetStoredQuery"></a>
 ### func \(\*Client\) GetStoredQuery

@@ -51,33 +51,3 @@ func (c *Client) GenerateScript(
 	}
 	return messages, apiResp, nil
 }
-
-// GetScriptGenerationConversation retrieves details of a specific script generation conversation.
-func (c *Client) GetScriptGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error) {
-	var conversation irminmodels.AssistantConversation
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/assistant/script/%s", workspace, conversationID),
-	}, &conversation)
-	if err != nil {
-		return nil, nil, fmt.Errorf("fetch script generation conversation error: %w", err)
-	}
-	return &conversation, apiResp, nil
-}
-
-// DeleteScriptGenerationConversation deletes a script generation conversation by its ID.
-func (c *Client) DeleteScriptGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodDelete,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/assistant/script/%s", workspace, conversationID),
-		ContentType: "application/json",
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("delete script generation conversation error: %w", err)
-	}
-	return apiResp, nil
-}

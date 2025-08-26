@@ -57,33 +57,3 @@ func (c *Client) GenerateQuery(
 	}
 	return messages, apiResp, nil
 }
-
-// GetQueryGenerationConversation retrieves details of a specific query generation conversation.
-func (c *Client) GetQueryGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error) {
-	var conversation irminmodels.AssistantConversation
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: fmt.Sprintf("/v1/workspaces/%s/assistant/query/%s", workspace, conversationID),
-	}, &conversation)
-	if err != nil {
-		return nil, nil, fmt.Errorf("fetch query generation conversation error: %w", err)
-	}
-	return &conversation, apiResp, nil
-}
-
-// DeleteQueryGenerationConversation deletes a query generation conversation by its ID.
-func (c *Client) DeleteQueryGenerationConversation(
-	workspace, conversationID string,
-) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
-		Method:      http.MethodDelete,
-		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/assistant/query/%s", workspace, conversationID),
-		ContentType: "application/json",
-	}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("delete query generation conversation error: %w", err)
-	}
-	return apiResp, nil
-}
