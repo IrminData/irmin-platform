@@ -1,0 +1,442 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/common</title></head><body>
+<h1>Package irmin-connectors/connectors/common</h1>
+<pre>
+package common // import "irmin-connectors/connectors/common"
+
+
+FUNCTIONS
+
+func BuildDetailsFromFields(
+	fields map[string]string,
+	definitions map[string]irminmodels.DynamicField,
+) map[string]string
+    BuildDetailsFromFields creates a details map from form fields using the
+    provided field definitions.
+
+func BuildSettingsFromFields(
+	fields map[string]string,
+	definitions map[string]irminmodels.DynamicField,
+) map[string]string
+    BuildSettingsFromFields creates a settings map from form fields using the
+    provided field definitions.
+
+func CancelOperation(
+	c fiber.Ctx,
+	app *models.ConnectorsApp,
+	cancellationFunc func(*models.ConnectorsApp, *db.Operation) error,
+) error
+    CancelOperation handles the common logic for operation cancellation.
+    It validates the request, finds the operation, verifies ownership, and calls
+    the provided cancellation function.
+
+func CapabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability) []string
+    CapabilitiesToOperationTypes converts connector capabilities to supported
+    operation types.
+
+func ConvertFormFieldsToMaps(fields map[string]string) (map[string]any, map[string]any)
+    ConvertFormFieldsToMaps converts form fields into separate details and
+    settings maps.
+
+func CreateOperationTokenMiddleware(
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) fiber.Handler
+    CreateOperationTokenMiddleware creates an operation token validation
+    middleware for a specific connector.
+
+func CreateSelectOptions(values []string) []irminmodels.SelectOption
+    CreateSelectOptions creates select options from a slice of strings.
+
+func CreateSelectOptionsWithLabels(keyValuePairs map[string]string) []irminmodels.SelectOption
+    CreateSelectOptionsWithLabels creates select options with custom labels.
+
+func CreateSystemTokenMiddleware(
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) fiber.Handler
+    CreateSystemTokenMiddleware creates a system token validation middleware for
+    a specific connector.
+
+func DefaultDatabaseCancellation(app *models.ConnectorsApp, operation *db.Operation) error
+    DefaultDatabaseCancellation provides the standard cancellation logic
+    for database connectors. It deletes subscriptions and then deletes the
+    operation.
+
+func GetConnectorCapabilitiesFromConfig(
+	getConnectorInfo func() models.ConnectorDetails,
+) []irminmodels.ConnectorCapability
+    GetConnectorCapabilitiesFromConfig is a helper function to extract
+    capabilities from connector info.
+
+func GetDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
+    GetDetailsFieldNames returns all detail field names from the provided
+    definitions.
+
+func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
+    GetOptionalFieldNames returns field names that are marked as optional from
+    both details and settings definitions.
+
+func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
+    GetRequiredFieldNames returns field names that are marked as required from
+    both details and settings definitions.
+
+func GetSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
+    GetSettingsFieldNames returns all settings field names from the provided
+    definitions.
+
+func HandleNotSupportedPatch(c fiber.Ctx) error
+    HandleNotSupportedPatch provides a common handler for connectors that don't
+    support patch operations.
+
+func HandleNotSupportedPull(c fiber.Ctx) error
+    HandleNotSupportedPull provides a common handler for connectors that don't
+    support pull operations.
+
+func HandleNotSupportedPush(c fiber.Ctx) error
+    HandleNotSupportedPush provides a common handler for connectors that don't
+    support push operations.
+
+func HandleNotSupportedSchemaGet(c fiber.Ctx) error
+    HandleNotSupportedSchemaGet provides a common handler for connectors that
+    don't support schema operations.
+
+func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *slog.Logger) error
+    HandleOperationPatch provides a common HTTP handler for patch operation
+    endpoints.
+
+func HandleOperationPull(c fiber.Ctx, provider PullOperationProvider, logger *slog.Logger) error
+    HandleOperationPull provides a common HTTP handler for pull operation
+    endpoints.
+
+func HandleOperationPush(c fiber.Ctx, provider PushOperationProvider, logger *slog.Logger) error
+    HandleOperationPush provides a common HTTP handler for push operation
+    endpoints.
+
+func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, logger *slog.Logger) error
+    HandleOperationSchemaGet provides a common HTTP handler for schema operation
+    endpoints.
+
+func HandleOperationStatus(
+	c fiber.Ctx,
+	getConnectorInfo func() models.ConnectorDetails,
+	app *models.ConnectorsApp,
+) error
+    HandleOperationStatus provides common operation status handling logic. It
+    validates the operation, retrieves subscriptions, and formats the response
+    according to the SDK's OperationStatus format.
+
+func LogOnlyCancellation(app *models.ConnectorsApp, operation *db.Operation) error
+    LogOnlyCancellation provides a simple logging-only cancellation for
+    connectors that don't implement full cancellation yet.
+
+func RenderConnectorDetailsPage(
+	c fiber.Ctx,
+	connectorSlug string,
+	getConnectorInfo func() models.ConnectorDetails,
+	eventDescription ...string,
+) error
+    RenderConnectorDetailsPage is a helper function for connectors to easily
+    render their details page.
+
+func RenderConnectorInfo(
+	c fiber.Ctx,
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) error
+    RenderConnectorInfo handles the common logic for connector info endpoints.
+    It retrieves connector information, prefixes URLs with the base URL,
+    and returns the JSON response.
+
+func RenderDetailsPage(c fiber.Ctx, config DetailsPageConfig) error
+    RenderDetailsPage handles the common logic for rendering connector details
+    pages.
+
+func SetupConnectorRoutes(config ConnectorRouteConfig)
+    SetupConnectorRoutes sets up all routes for a connector based on its
+    capabilities.
+
+func ValidateOperationToken(
+	c fiber.Ctx,
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) error
+    ValidateOperationToken validates the operation token for connector data
+    operations. It automatically gets connector info and sets context locals.
+
+func ValidateSystemToken(
+	c fiber.Ctx,
+	app *models.ConnectorsApp,
+	getConnectorInfo func() models.ConnectorDetails,
+) error
+    ValidateSystemToken validates the system token for connector endpoints.
+    It automatically gets connector info and sets context locals.
+
+
+TYPES
+
+type ConfigFieldProvider interface {
+	GetDynamicFields(ctx fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
+}
+    ConfigFieldProvider defines the interface for providing configuration
+    fields.
+
+type ConfigValidationProvider interface {
+	// GetRequiredFormFields returns the list of required and optional form field names
+	GetRequiredFormFields() (required []string, optional []string)
+
+	// ValidateFields performs connector-specific field validation
+	ValidateFields(ctx fiber.Ctx, details map[string]any, settings map[string]any) []string
+
+	// TestConnection tests the actual connection and returns status flags and errors
+	TestConnection(
+		ctx fiber.Ctx,
+		details map[string]any,
+		settings map[string]any,
+	) (canConnect, detailsValid, settingsValid bool, errors []string)
+}
+    ConfigValidationProvider defines the interface for validating connector
+    configurations.
+
+type ConnectorController interface {
+	// Required base controller methods
+	Info(c fiber.Ctx) error
+	ConfigFields(c fiber.Ctx) error
+	ConfigValidate(c fiber.Ctx) error
+	OperationInit(c fiber.Ctx) error
+	OperationCancel(c fiber.Ctx) error
+	OperationStatus(c fiber.Ctx) error
+	OperationSchemaGet(c fiber.Ctx) error
+	DetailsPage(c fiber.Ctx) error
+
+	// Middleware methods
+	ValidateSystemTokenMiddleware(c fiber.Ctx) error
+	ValidateOperationTokenMiddleware(c fiber.Ctx) error
+
+	// Capability-based methods (optional - will only be called if capability is supported)
+	OperationPull(c fiber.Ctx) error
+	OperationPush(c fiber.Ctx) error
+	OperationPatch(c fiber.Ctx) error
+	SubscribeToChanges(c fiber.Ctx) error
+}
+    ConnectorController defines the interface that all connector controllers
+    must implement.
+
+type ConnectorRouteConfig struct {
+	App           *models.ConnectorsApp
+	Controller    ConnectorController
+	ConnectorSlug string
+	Capabilities  []irminmodels.ConnectorCapability
+}
+    ConnectorRouteConfig holds the configuration for setting up connector
+    routes.
+
+type Controllers struct {
+	App    *models.ConnectorsApp
+	DB     *db.Database
+	Logger *slog.Logger
+}
+    Controllers holds the dependencies for connector controllers.
+
+func NewControllers(app *models.ConnectorsApp) *Controllers
+    NewControllers creates a new instance of controllers with the required
+    dependencies.
+
+func (cs *Controllers) HandleConfigFields(c fiber.Ctx, provider ConfigFieldProvider) error
+    HandleConfigFields provides a common HTTP handler for configuration fields
+    endpoints.
+
+func (cs *Controllers) HandleConfigValidation(c fiber.Ctx, provider ConfigValidationProvider) error
+    HandleConfigValidation provides a common HTTP handler for configuration
+    validation endpoints.
+
+func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitProvider) error
+    HandleOperationInit provides a common HTTP handler for operation
+    initialization endpoints.
+
+type DetailsPageConfig struct {
+	ConnectorSlug             string
+	ConnectorInfo             models.ConnectorDetails
+	EventListeningDescription string // Custom description for event listening capabilities
+}
+    DetailsPageConfig holds configuration for rendering a connector details
+    page.
+
+type NotSupportedPatchProvider struct{}
+    NotSupportedPatchProvider provides a default implementation for connectors
+    that don't support patch operations.
+
+func (p *NotSupportedPatchProvider) ExecutePatchOperation(
+	_ fiber.Ctx,
+	_ any,
+	_ irminmodels.PatchOperation,
+	_, _, _ string,
+	_, _, _, _ string,
+) error
+    ExecutePatchOperation returns an error indicating patch operations are not
+    supported.
+
+func (p *NotSupportedPatchProvider) InitializeClient(
+	_ fiber.Ctx,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, func(), error)
+    InitializeClient returns an error indicating patch operations are not
+    supported.
+
+type NotSupportedPullProvider struct{}
+    NotSupportedPullProvider provides a default implementation for connectors
+    that don't support pull operations.
+
+func (p *NotSupportedPullProvider) GetAllFiles(
+	_ fiber.Ctx,
+	_ any,
+) ([]string, [][]byte, error)
+    GetAllFiles returns an error indicating pull operations are not supported.
+
+func (p *NotSupportedPullProvider) GetFileByPath(
+	_ fiber.Ctx,
+	_ any,
+	_ string,
+) (string, []byte, error)
+    GetFileByPath returns an error indicating pull operations are not supported.
+
+func (p *NotSupportedPullProvider) InitializeClient(
+	_ fiber.Ctx,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient returns an error indicating pull operations are not
+    supported.
+
+type NotSupportedPushProvider struct{}
+    NotSupportedPushProvider provides a default implementation for connectors
+    that don't support push operations.
+
+func (p *NotSupportedPushProvider) InitializeClient(
+	_ fiber.Ctx,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient returns an error indicating push operations are not
+    supported.
+
+func (p *NotSupportedPushProvider) ProcessFiles(
+	_ fiber.Ctx,
+	_ any,
+	_ map[string][]byte,
+	_ string,
+) error
+    ProcessFiles returns an error indicating push operations are not supported.
+
+type NotSupportedSchemaProvider struct{}
+    NotSupportedSchemaProvider provides a default implementation for connectors
+    that don't support schema operations.
+
+func (p *NotSupportedSchemaProvider) GetSchema(
+	_ fiber.Ctx,
+	_ any,
+	_ string,
+	_ *string,
+) (*irminmodels.ObjectSchema, error)
+    GetSchema returns an error indicating schema operations are not supported.
+
+func (p *NotSupportedSchemaProvider) GetSupportedOperationTypes() []string
+    GetSupportedOperationTypes returns an empty slice for unsupported
+    connectors.
+
+func (p *NotSupportedSchemaProvider) InitializeClient(
+	_ fiber.Ctx,
+	_ *slog.Logger,
+	_ *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient returns an error indicating schema operations are not
+    supported.
+
+type OperationCancelConfig struct {
+	App              *models.ConnectorsApp
+	ConnectorInfo    *models.ConnectorDetails
+	Operation        *db.Operation
+	CancellationFunc func(*models.ConnectorsApp, *db.Operation) error // Optional custom cancellation logic
+}
+    OperationCancelConfig holds configuration for operation cancellation.
+
+type OperationInitProvider interface {
+	// GetOperationFormFields returns the list of required and optional form field names
+	GetOperationFormFields() (required []string, optional []string)
+
+	// BuildDetails constructs the details JSON from parsed form fields
+	BuildDetails(fields map[string]string) (map[string]string, error)
+
+	// BuildSettings constructs the settings JSON from parsed form fields
+	BuildSettings(fields map[string]string) (map[string]string, error)
+}
+    OperationInitProvider defines the interface for initializing connector
+    operations.
+
+type PatchOperationProvider interface {
+	// InitializeClient initializes the database client for patch operations
+	InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (client any, cleanup func(), err error)
+
+	// ExecutePatchOperation executes a single patch operation within a transaction
+	ExecutePatchOperation(
+		c fiber.Ctx,
+		client any,
+		op irminmodels.PatchOperation,
+		tableName, rowIdentifier, columnName string,
+		fromDB, fromTable, fromRow, fromColumn string,
+	) error
+}
+    PatchOperationProvider defines the interface for connector-specific patch
+    operation handling.
+
+type PullOperationProvider interface {
+	// InitializeClient initializes the client for pull operations
+	InitializeClient(
+		c fiber.Ctx,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, databaseName *string, cleanup func(), err error)
+
+	// GetAllFiles retrieves all available data as files
+	GetAllFiles(c fiber.Ctx, client any) (filePaths []string, fileContents [][]byte, err error)
+
+	// GetFileByPath retrieves a specific file by path
+	GetFileByPath(c fiber.Ctx, client any, path string) (filePath string, fileContent []byte, err error)
+}
+    PullOperationProvider defines the interface for connector-specific pull
+    operation handling.
+
+type PushOperationProvider interface {
+	// InitializeClient initializes the client for push operations
+	InitializeClient(
+		c fiber.Ctx,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, databaseName *string, cleanup func(), err error)
+
+	// ProcessFiles processes the extracted files and uploads/inserts them
+	ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, targetPath string) error
+}
+    PushOperationProvider defines the interface for connector-specific push
+    operation handling.
+
+type SchemaOperationProvider interface {
+	// InitializeClient initializes the client for schema operations
+	InitializeClient(
+		c fiber.Ctx,
+		logger *slog.Logger,
+		operation *db.Operation,
+	) (client any, databaseName *string, cleanup func(), err error)
+
+	// GetSchema retrieves the schema for the specified operation type
+	GetSchema(c fiber.Ctx, client any, operationType string, databaseName *string) (*irminmodels.ObjectSchema, error)
+
+	// GetSupportedOperationTypes returns the list of supported operation types for this connector
+	GetSupportedOperationTypes() []string
+}
+    SchemaOperationProvider defines the interface for connector-specific schema
+    operation handling.
+
+</pre>
+</body></html>

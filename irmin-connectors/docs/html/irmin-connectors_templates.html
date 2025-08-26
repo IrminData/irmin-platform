@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/templates</title></head><body>
+<h1>Package irmin-connectors/templates</h1>
+<pre>
+package templates // import "irmin-connectors/templates"
+
+
+VARIABLES
+
+var MySQLDetailsHTML []byte
+var PostgresDetailsHTML []byte
+var SFTPDetailsHTML []byte
+var SwaggerUIHTML []byte
+
+TYPES
+
+type ConnectorDetailsData struct {
+	Title                     string
+	Description               string
+	LogoPath                  string
+	LogoAlt                   string
+	EventListeningDescription string
+	DocsPath                  string
+}
+    ConnectorDetailsData represents the data structure for connector detail
+    templates.
+
+type ConnectorTemplate struct {
+	Template *template.Template
+	Name     string
+}
+    ConnectorTemplate represents a loaded template.
+
+func (ct *ConnectorTemplate) RenderHTML(data ConnectorDetailsData) (string, error)
+    RenderHTML renders the template with the provided data.
+
+type ConnectorTemplateManager struct {
+	// Has unexported fields.
+}
+    ConnectorTemplateManager handles loading and rendering of connector
+    templates.
+
+func NewConnectorTemplateManager() *ConnectorTemplateManager
+    NewConnectorTemplateManager creates a new connector template manager.
+
+func (ctm *ConnectorTemplateManager) ClearCache()
+    ClearCache clears the template cache.
+
+func (ctm *ConnectorTemplateManager) GetAvailableTemplates() []string
+    GetAvailableTemplates returns a list of available connector templates.
+
+func (ctm *ConnectorTemplateManager) LoadTemplate(templateName string) (*ConnectorTemplate, error)
+    LoadTemplate loads a connector template by name.
+
+</pre>
+</body></html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/lib</title></head><body>
+<h1>Package irmin-connectors/lib</h1>
+<pre>
+package lib // import "irmin-connectors/lib"
+
+
+FUNCTIONS
+
+func UpdateConnectorInDB(
+	d *db.Database,
+	logger *slog.Logger,
+	irminID, token, connectorName string,
+) error
+    UpdateConnectorInDB updates the connector registration in the database.
+
+func ValidateConnectorSystemToken(
+	d *db.Database,
+	logger *slog.Logger,
+	c fiber.Ctx,
+	connectorName string,
+) (bool, *db.ConnectorRegistration)
+    ValidateConnectorSystemToken validates the provided token against the system
+    token of the connector registration instance.
+
+func ValidateOperationToken(
+	d *db.Database,
+	logger *slog.Logger,
+	c fiber.Ctx,
+	connectorName string,
+) (bool, *db.ConnectorRegistration, *db.Operation)
+    ValidateOperationToken validates the provided token against the operation
+    token of the connector registration instance.
+
+</pre>
+</body></html>

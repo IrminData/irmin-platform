@@ -125,19 +125,56 @@ golangci-lint run --fix
 
 	docker run -p 8080:8080 --env-file .env irmin-connectors
 
-## API Documentation (Swagger)
+## API Documentation
 
-This project uses [swaggo/swag](https://github.com/swaggo/swag) to automatically generate OpenAPI/Swagger documentation from Go annotations.
+This project generates comprehensive documentation in multiple formats using a unified workflow.
+
+### Documentation Types
+
+The project generates three types of documentation:
+
+1. **HTML Documentation** - Individual HTML files for each package using `go doc`, stored in `docs/html/` with an index
+2. **Markdown Reference** - Combined markdown documentation using `gomarkdoc`, stored in `docs/docs.md`
+3. **Swagger/OpenAPI** - API documentation using `swaggo/swag`, stored in `docs/swagger.json`, `docs/swagger.yaml`, and `docs/docs.go`
 
 ### Quick Start
 
-**Generate documentation**:
+**Generate all documentation**:
 ```bash
-go install github.com/swaggo/swag/cmd/swag@latest
-go run github.com/swaggo/swag/cmd/swag@latest init --parseDependency
+./generate-docs.sh
 ```
 
-**View documentation**: `http://localhost:8080/swagger`
+This script will:
+- Install required tools (`gomarkdoc` and `swag`) if not present
+- Generate HTML docs for all packages in `docs/html/`
+- Create a combined markdown reference in `docs/docs.md`
+- Generate Swagger API documentation in `docs/`
+- Ensure proper Go version compatibility
+
+**View documentation**:
+- HTML docs: Open `docs/html/index.html` in your browser
+- Markdown: View `docs/docs.md`
+- Swagger UI: `http://localhost:8080/swagger`
+
+### Manual Generation (Alternative)
+
+If you prefer to generate documentation manually:
+
+```bash
+# Install tools
+go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@latest
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Generate HTML docs
+mkdir -p docs/html
+go doc -all ./... > docs/html/packages.html
+
+# Generate markdown docs
+gomarkdoc ./... > docs/docs.md
+
+# Generate Swagger docs
+swag init -g main.go --output ./docs --parseDependency --parseInternal
+```
 
 ### Basic Annotation Examples
 

@@ -1,0 +1,126 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/postgres/client</title></head><body>
+<h1>Package irmin-connectors/connectors/postgres/client</h1>
+<pre>
+package postgresclient // import "irmin-connectors/connectors/postgres/client"
+
+
+FUNCTIONS
+
+func SetupNotifications(dbClient *PostgresClient) error
+
+TYPES
+
+type ColumnInfo struct {
+	ColumnName string
+	DataType   string
+	IsNullable bool
+}
+    ColumnInfo holds metadata about a single column in a table.
+
+type PostgresClient struct {
+	// Has unexported fields.
+}
+    PostgresClient manages a pgxpool.Pool connection to Postgres. It may or may
+    not be connected to a specific database, depending on how it's instantiated.
+
+func InitPostgresClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (*PostgresClient, *string, error)
+    InitPostgresClient initializes a PostgresClient instance based on the data
+    provided in the operation.
+
+func NewPostgresClient(
+	ctx context.Context,
+	host string,
+	port int,
+	user, password, defaultDB string,
+	sslMode bool,
+) (*PostgresClient, error)
+    NewPostgresClient connects to Postgres without specifying a database.
+    This is useful for listing available databases or validating credentials
+    without "locking" into a specific dbName.
+
+func (pc *PostgresClient) BeginTransaction(ctx context.Context) (*Tx, error)
+    BeginTransaction acquires a connection from the pool and begins a database
+    transaction. Remember to call either .Commit() or .Rollback() on the
+    returned Tx to release the connection.
+
+func (pc *PostgresClient) Close()
+    Close frees resources used by the connection pool.
+
+func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+    Exec performs a statement (INSERT/UPDATE/DELETE/DDL) that doesn't return
+    rows.
+
+func (pc *PostgresClient) GetAvailableDatabases(ctx context.Context) ([]string, error)
+    GetAvailableDatabases returns a list of non-template databases, excluding
+    'postgres' as well.
+
+func (pc *PostgresClient) GetTableStructure(ctx context.Context, tableName string) ([]ColumnInfo, error)
+    GetTableStructure returns a slice of ColumnInfo for the specified table.
+
+func (pc *PostgresClient) GetTables(ctx context.Context) ([]string, error)
+    GetTables lists all table names in the 'public' schema of the current
+    database. Must be invoked on a client that has a dbName selected (via
+    WithDatabase).
+
+func (pc *PostgresClient) GetTablesAndStructures(ctx context.Context) (map[string][]ColumnInfo, error)
+    GetTablesAndStructures returns a map of tableName -&gt; slice of ColumnInfo for
+    all tables in the 'public' schema.
+
+func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+    Query performs a generic query returning rows. Remember to close the
+    returned pgx.Rows when you're done with them.
+
+func (pc *PostgresClient) StartNotificationListener(
+	ctx context.Context,
+	logger *slog.Logger,
+	channelName string,
+	onNotify func(payload string),
+) error
+    StartNotificationListener sets up a LISTEN on the given channel, then loops
+    on WaitForNotification and calls onNotify(payload) when a notification
+    arrives.
+
+func (pc *PostgresClient) ValidateCredentials(ctx context.Context) error
+    ValidateCredentials pings the database server to ensure the connection is
+    valid.
+
+func (pc *PostgresClient) WithDatabase(ctx context.Context, dbName string) (*PostgresClient, error)
+    WithDatabase creates a new client instance *connected to a specific
+    database*. This is handy once you decide which database you want to use
+    (e.g. after listing them).
+
+type Tx struct {
+	// Has unexported fields.
+}
+    Tx provides methods for executing queries within a PostgreSQL transaction.
+    It wraps a pgx.Tx and also stores the pool connection so that it can be
+    released on Commit or Rollback.
+
+func (t *Tx) Commit(ctx context.Context) error
+    Commit commits the transaction and releases the underlying connection to the
+    pool.
+
+func (t *Tx) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+    Exec executes a query that does not return rows (e.g. INSERT/UPDATE/DELETE,
+    DDL statements). This will be run inside the current transaction context.
+
+func (t *Tx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+    Query executes a query that returns rows (e.g. SELECT). The caller is
+    responsible for closing the returned pgx.Rows.
+
+func (t *Tx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+    QueryRow returns a single row from the transaction context, a convenience
+    wrapper around pgxTx.QueryRow.
+
+func (t *Tx) Rollback(ctx context.Context) error
+    Rollback aborts the transaction and releases the underlying connection to
+    the pool. It is safe to call Rollback even if the transaction is already
+    committed or rolled back.
+
+</pre>
+</body></html>

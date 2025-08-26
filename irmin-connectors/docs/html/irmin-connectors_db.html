@@ -1,0 +1,135 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/db</title></head><body>
+<h1>Package irmin-connectors/db</h1>
+<pre>
+package db // import "irmin-connectors/db"
+
+
+VARIABLES
+
+var ErrConnectorRegistrationNotFound = errors.New("connector registration not found")
+    ErrConnectorRegistrationNotFound is returned when no connector registration
+    is found
+
+
+TYPES
+
+type ConnectorRegistration struct {
+	gorm.Model
+
+	IrminID       string `json:"irminID"       gorm:"type:varchar(255);not null"`
+	ConnectorName string `json:"connectorName" gorm:"not null"`
+	SystemToken   string `json:"systemToken"   gorm:"type:varchar(255);not null"`
+}
+    ConnectorRegistration represents a record associating a system token with a
+    connector.
+
+type Database struct {
+	*gorm.DB
+	// Has unexported fields.
+}
+    Database represents a database connection and its operations. It now shares
+    a single underlying pgxpool for both GORM and direct pgx access.
+
+func InitialiseDB(ctx context.Context, runMigrations bool) (*Database, error)
+    InitialiseDB establishes a Postgres database connection, performs any
+    necessary migrations, and returns an error if something goes wrong.
+
+func (d *Database) Close()
+    Close closes the shared database connection pool.
+
+func (d *Database) CreateConnectorRegistration(registration *ConnectorRegistration) (*ConnectorRegistration, error)
+    CreateConnectorRegistration inserts a new ConnectorRegistration record into
+    the database.
+
+func (d *Database) CreateOperation(operation *Operation) (*Operation, error)
+    CreateOperation inserts a new Operation record into the database.
+
+func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription, error)
+    CreateSubscription inserts a new Subscription record into the database.
+
+func (d *Database) DeleteConnectorRegistration(id uint) error
+    DeleteConnectorRegistration removes the record with the specified ID from
+    the database.
+
+func (d *Database) DeleteOperation(id uint) error
+    DeleteOperation removes the record with the specified ID from the database.
+
+func (d *Database) DeleteSubscriptionsByConnectorRegistrationID(connectorRegistrationID uint) error
+    DeleteSubscriptionsByConnectorRegistrationID removes all subscriptions
+    associated with the specified connector registration ID.
+
+func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error
+    DeleteSubscriptionsByOperationID removes all subscriptions associated with
+    the specified operation ID.
+
+func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, error)
+    GetAllConnectorRegistrations retrieves all ConnectorRegistration records
+    from the database.
+
+func (d *Database) GetAllOperations() ([]Operation, error)
+    GetAllOperations retrieves all Operation records from the database.
+
+func (d *Database) GetAllSubscriptions() ([]Subscription, error)
+    GetAllSubscriptions retrieves all Subscription records from the database.
+
+func (d *Database) GetConnectorRegistrationByConnectorName(name string) (*ConnectorRegistration, error)
+    GetConnectorRegistrationByConnectorName retrieves a ConnectorRegistration
+    record from the database by the name of the connector.
+
+func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration, error)
+    GetConnectorRegistrationByID retrieves a ConnectorRegistration record from
+    the database by ID.
+
+func (d *Database) GetConnectorRegistrationsByConnectorName(name string) ([]ConnectorRegistration, error)
+    GetConnectorRegistrationsByConnectorName retrieves all ConnectorRegistration
+    records from the database by the name of the connector.
+
+func (d *Database) GetOperationByID(id uint) (*Operation, error)
+    GetOperationByID retrieves an Operation record from the database by ID.
+
+func (d *Database) GetOperationsByConnectorRegistrationID(id uint) ([]Operation, error)
+    GetOperationsByConnectorRegistrationID retrieves all Operation records from
+    the database by associated connector registration ID.
+
+func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
+    GetPgxConn returns a pgx connection from the shared pool.
+
+func (d *Database) Migrate() error
+    Migrate runs the auto migration calls in the correct order. It separates the
+    migrations into groups based on model dependencies.
+
+func (d *Database) Reset() error
+    Reset drops all tables to start fresh.
+
+func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
+    RunRawQuery executes a raw SQL query against the database.
+
+type Operation struct {
+	gorm.Model
+
+	Details  datatypes.JSON `json:"details"  gorm:"type:json"`
+	Settings datatypes.JSON `json:"settings" gorm:"type:json"`
+	Token    string         `json:"token"    gorm:"type:varchar(255);not null"`
+
+	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
+	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
+}
+    Operation represents a record of an initiated operation tied to a connector.
+
+type Subscription struct {
+	gorm.Model
+
+	WebhookURL         string `json:"webhookUrl"         gorm:"type:varchar(255);not null"`
+	WebhookAccessToken string `json:"webhookAccessToken" gorm:"type:varchar(255);not null"`
+
+	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
+	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
+	OperationID             uint                   `json:"operationID"`
+	Operation               *Operation             `json:"operation,omitempty"             gorm:"foreignKey:OperationID"`
+}
+    Subscription represents a record of an active subscription to changes in
+    data.
+
+</pre>
+</body></html>

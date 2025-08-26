@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/swagger</title></head><body>
+<h1>Package irmin-connectors/swagger</h1>
+<pre>
+package swagger // import "irmin-connectors/swagger"
+
+
+FUNCTIONS
+
+func JSON(c fiber.Ctx) error
+    JSON godoc @Summary Get Swagger JSON specification @Description
+    Retrieve the OpenAPI 3.0 specification in JSON format for this API
+    @Tags documentation @Accept json @Produce json @Success 200 {object}
+    object "OpenAPI 3.0 specification in JSON format" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Swagger specification file not found" @Failure
+    500 {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /swagger.json [get]
+
+func UI(c fiber.Ctx) error
+    UI godoc @Summary Swagger UI interface @Description Interactive API
+    documentation interface using Swagger UI @Tags documentation @Accept json
+    @Produce text/html @Success 200 {string} string "Swagger UI HTML page"
+    @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+    @Router /swagger [get]
+
+</pre>
+</body></html>

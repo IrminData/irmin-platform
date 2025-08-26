@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/postgres/config</title></head><body>
+<h1>Package irmin-connectors/connectors/postgres/config</h1>
+<pre>
+package config // import "irmin-connectors/connectors/postgres/config"
+
+
+CONSTANTS
+
+const (
+	// DefaultPostgreSQLPort is the default PostgreSQL port number.
+	DefaultPostgreSQLPort = 5432
+)
+
+FUNCTIONS
+
+func GetConnectorInfo() models.ConnectorDetails
+    GetConnectorInfo returns the default connector information for PostgreSQL.
+
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+func GetDetailsFields() []string
+    GetDetailsFields returns the detail-specific fields.
+
+func GetOptionalFields() []string
+    GetOptionalFields returns the optional form fields for PostgreSQL.
+
+func GetRequiredFields() []string
+    GetRequiredFields returns the mandatory form fields for PostgreSQL.
+
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetSettingsFieldDefinitions returns static settings fields (dynamic ones are
+    handled in controllers).
+
+func GetSettingsFields() []string
+    GetSettingsFields returns the settings-specific fields.
+
+</pre>
+</body></html>
