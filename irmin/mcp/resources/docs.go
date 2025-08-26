@@ -153,6 +153,25 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		}, nil
 	})
 
+	// Register Go SDK documentation
+	mcpResources.server.AddResource(&sdkmcp.Resource{
+		Name:        "docs-go-sdk",
+		Description: "Documentation of the Irmin Go-lang SDK",
+		MIMEType:    "text/markdown",
+		URI:         "irmin://docs/go-sdk",
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
+		content, err := docsFS.ReadFile("docs/go-sdk.md")
+		if err != nil {
+			return nil, fmt.Errorf("failed to read go sdk docs: %w", err)
+		}
+
+		return &sdkmcp.ReadResourceResult{
+			Contents: []*sdkmcp.ResourceContents{
+				{URI: "irmin://docs/go-sdk", MIMEType: "text/markdown", Text: string(content)},
+			},
+		}, nil
+	})
+
 	// Register dynamic documentation resource for serving any markdown file
 	mcpResources.server.AddResource(&sdkmcp.Resource{
 		Name:        "docs-file",

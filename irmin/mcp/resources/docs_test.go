@@ -22,6 +22,7 @@ func TestListAvailableDocs(t *testing.T) {
 		"connections.md",
 		"workflows.md",
 		"object-schema.md",
+		"go-sdk.md",
 	}
 
 	for _, expectedFile := range expectedFiles {

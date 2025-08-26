@@ -15,7 +15,7 @@ Product context (brief)
 
 Docs tools (MCP)
 - list_docs lists available documentation categories.
-- get_docs retrieves documentation by category; category ∈ {"index","sql","scripting","concepts","connections","workflows","object-schema"}.
+- get_docs retrieves documentation by category; category ∈ {"index","sql","scripting","concepts","connections","workflows","object-schema","go-sdk"}.
 - Heuristics:
 	- Fundamentals (workspaces; repos/branches/commits/tags/objects; “everything is a file”; auditing/permissions; schemas): {"action":"get_docs","args":{"category":"concepts"}}.
 	- Workflows: "workflows". Connectors: "connections". SQL/DuckDB: "sql". Scripting: "scripting". Schemas/no live data: "object-schema".

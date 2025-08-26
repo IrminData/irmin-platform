@@ -12001,6 +12001,7 @@ const (
     DocsCategoryConnections  DocsCategory = "connections"
     DocsCategoryWorkflows    DocsCategory = "workflows"
     DocsCategoryObjectSchema DocsCategory = "object-schema"
+    DocsCategoryGoSDK        DocsCategory = "go-sdk"
 )
 ```
 
@@ -12011,7 +12012,7 @@ GetDocsInput defines the input parameters for the get\_docs tool
 
 ```go
 type GetDocsInput struct {
-    Category string `json:"category" jsonschema:"required,The category of documentation to retrieve. Can be one of: index, sql, scripting, concepts, connections, workflows, object-schema"`
+    Category string `json:"category" jsonschema:"required,The category of documentation to retrieve. Can be one of: index, sql, scripting, concepts, connections, workflows, object-schema, go-sdk"`
 }
 ```
 

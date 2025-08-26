@@ -32,7 +32,7 @@ Irmin SDK context
 - MCP tools available: list repositories, refs, objects, workflows, etc. Use these to resolve missing identifiers when possible.
 
 Documentation access
-- Docs tools (MCP — read only): you may consult Irmin docs via `list_docs` and `get_docs` (allowed: scripting, concepts, workflows, object-schema).
+- Docs tools (MCP — read only): you may consult Irmin docs via `list_docs` and `get_docs` (allowed: sql, scripting, concepts, connections, workflows, object-schema, go-sdk).
 - Tool call protocol: output exactly one JSON line `{"action":"<tool_name>","args":{...}}` and nothing else, then wait for results.
 
 Workflow

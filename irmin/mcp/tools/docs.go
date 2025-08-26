@@ -20,11 +20,12 @@ const (
 	DocsCategoryConnections  DocsCategory = "connections"
 	DocsCategoryWorkflows    DocsCategory = "workflows"
 	DocsCategoryObjectSchema DocsCategory = "object-schema"
+	DocsCategoryGoSDK        DocsCategory = "go-sdk"
 )
 
 // GetDocsInput defines the input parameters for the get_docs tool
 type GetDocsInput struct {
-	Category string `json:"category" jsonschema:"required,The category of documentation to retrieve. Can be one of: index, sql, scripting, concepts, connections, workflows, object-schema"`
+	Category string `json:"category" jsonschema:"required,The category of documentation to retrieve. Can be one of: index, sql, scripting, concepts, connections, workflows, object-schema, go-sdk"`
 }
 
 // RegisterDocsTools registers the tools for documentation access.
@@ -71,6 +72,8 @@ func (mcpTools *MCPTools) registerGetDocsTool() {
 			case DocsCategoryWorkflows:
 			// Valid category
 			case DocsCategoryObjectSchema:
+				// Valid category
+			case DocsCategoryGoSDK:
 				// Valid category
 			default:
 				return helpers.MCPError(
@@ -165,6 +168,13 @@ func (mcpTools *MCPTools) registerListDocsTool() {
 					"description":    "Object schema, including connection and repository object schemas",
 					"uri":            "irmin://docs/object-schema",
 					"tool_parameter": "object-schema",
+				},
+				{
+					"category":       "go-sdk",
+					"name":           "Go SDK",
+					"description":    "Documentation of the Irmin Go-lang SDK",
+					"uri":            "irmin://docs/go-sdk",
+					"tool_parameter": "go-sdk",
 				},
 			}
 
