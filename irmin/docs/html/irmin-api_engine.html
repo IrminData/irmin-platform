@@ -49,6 +49,7 @@ func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *uti
     NewClient creates a new Irmin Data Engine API client with default settings.
 
 func (c *Client) ApplyFieldMappings(
+	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,
 	fileContent []byte,
 	originalFilePath string,
@@ -105,6 +106,7 @@ func (c *Client) CreateRepository(
 func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodels.GitTag, error)
 
 func (c *Client) DataExport(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPath string,
 	workspaceSlug string,
@@ -119,6 +121,7 @@ func (c *Client) DataExport(
     the paths of the files that were pushed and any errors that occurred.
 
 func (c *Client) DataImport(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
 	workspace string,
@@ -144,11 +147,14 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 
 func (c *Client) DeleteTag(workspace, repository, tag string) error
 
-func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryResult
+func (c *Client) ExecuteQuery(ctx context.Context, userWorkspace, query string) *irminmodels.QueryResult
     ExecuteQuery executes a query in the specified workspace and returns the
     results.
 
-func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error)
+func (c *Client) GenerateObjectSchema(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+) (*irminmodels.ObjectSchema, error)
 
 func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminmodels.Branch, error)
 

@@ -37,6 +37,7 @@ func trimPaths(paths []string) []string {
 
 // performImportOperation executes the import operation.
 func (o *Orchestrator) performImportOperation(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
 	workspace *db.Workspace,
@@ -51,6 +52,7 @@ func (o *Orchestrator) performImportOperation(
 	}
 
 	importedObjects, errors := o.dataEngine.DataImport(
+		ctx,
 		connection,
 		connectionPaths,
 		workspace.Slug,
@@ -68,6 +70,7 @@ func (o *Orchestrator) performImportOperation(
 
 // performExportOperation executes the export operation.
 func (o *Orchestrator) performExportOperation(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
 	workspace *db.Workspace,
@@ -82,6 +85,7 @@ func (o *Orchestrator) performExportOperation(
 	}
 
 	exportedPaths, errors := o.dataEngine.DataExport(
+		ctx,
 		connection,
 		connectionPath,
 		workspace.Slug,
@@ -204,6 +208,7 @@ func (o *Orchestrator) executeWorkflowableCommon(
 	switch operation {
 	case operationImport:
 		result = o.performImportOperation(
+			ctx,
 			connection,
 			trimmedConnectionPaths,
 			workspace,
@@ -214,6 +219,7 @@ func (o *Orchestrator) executeWorkflowableCommon(
 		)
 	case operationExport:
 		result = o.performExportOperation(
+			ctx,
 			connection,
 			trimmedConnectionPaths,
 			workspace,

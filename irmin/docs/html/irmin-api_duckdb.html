@@ -57,7 +57,7 @@ type QueryClient struct {
 }
     QueryClient is a client for interacting with DuckDB for querying data.
 
-func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error)
+func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error)
     NewQueryClient creates a new client for querying data from LakeFS.
     It configures the DuckDB connection with the required S3 / LakeFS settings.
     Returns the client and an error if encountered.
@@ -65,14 +65,14 @@ func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, e
 func (c *QueryClient) Close() error
     Close closes the DuckDB connection held by the client.
 
-func (c *QueryClient) ExecuteNonQuery(query string, args ...any) (sql.Result, error)
+func (c *QueryClient) ExecuteNonQuery(ctx context.Context, query string, args ...any) (sql.Result, error)
     ExecuteNonQuery executes a SQL statement that does not return rows (such as
     INSERT, UPDATE, DELETE).
 
     query: the SQL statement to execute. args: optional arguments for the
     statement.
 
-func (c *QueryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error)
+func (c *QueryClient) ExecuteQuery(ctx context.Context, query string, args ...any) (*sql.Rows, error)
     ExecuteQuery executes a SQL query using the client's DuckDB connection and
     returns the resulting rows. It is suitable for queries that return rows
     (e.g. SELECT statements).
@@ -80,6 +80,7 @@ func (c *QueryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error)
     query: the SQL query to execute. args: optional arguments for the query.
 
 func (c *QueryClient) MergeFiles(
+	ctx context.Context,
 	sourceFiles map[string][]byte,
 	destinationPath string,
 	strategy MergeStrategy,

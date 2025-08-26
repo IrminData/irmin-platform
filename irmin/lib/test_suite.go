@@ -68,7 +68,7 @@ func SetupTestSuite(t *testing.T) error {
 	}
 
 	// Create DuckDB client for data operations
-	duckDBClient, err := duckdb.NewQueryClient(testEnv, logger)
+	duckDBClient, err := duckdb.NewQueryClient(t.Context(), testEnv, logger)
 	if err != nil {
 		// Close the DB if DuckDB client fails
 		testDB.Close()
@@ -112,20 +112,4 @@ func TeardownTestSuite() {
 	}
 
 	globalTestSuite = nil
-}
-
-// GetDuckDBClient returns a DuckDB client for testing.
-// This is a convenience method that creates a new client if needed.
-func (ts *TestSuite) GetDuckDBClient() (*duckdb.QueryClient, error) {
-	if ts.DuckDBClient != nil {
-		return ts.DuckDBClient, nil
-	}
-
-	// Create a new DuckDB client if one doesn't exist
-	client, err := duckdb.NewQueryClient(ts.Env, ts.Logger)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }

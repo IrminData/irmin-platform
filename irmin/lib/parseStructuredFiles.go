@@ -20,7 +20,11 @@ func getFileExtension(fileName string) string {
 }
 
 // generateCreateViewSQL generates the appropriate SQL for creating a view based on file extension.
-func generateCreateViewSQL(qc *duckdb.QueryClient, fileName, viewName, tmpFilePath string) (string, error) {
+func generateCreateViewSQL(
+	ctx context.Context,
+	qc *duckdb.QueryClient,
+	fileName, viewName, tmpFilePath string,
+) (string, error) {
 	fileExt := getFileExtension(fileName)
 
 	// Helper to quote identifiers and paths
@@ -65,20 +69,20 @@ func generateCreateViewSQL(qc *duckdb.QueryClient, fileName, viewName, tmpFilePa
 
 	// Excel formats
 	case ".xlsx", ".xls", ".xlsm", ".xlsb":
-		return handleExcelFormat(qc, fileName, viewName, tmpFilePath)
+		return handleExcelFormat(ctx, qc, fileName, viewName, tmpFilePath)
 
 	// Advanced analytics formats
 	case ".avro":
-		return handleAvroFormat(qc, fileName, viewName, tmpFilePath)
+		return handleAvroFormat(ctx, qc, fileName, viewName, tmpFilePath)
 	case ".orc":
 		return fmt.Sprintf(`
 			CREATE OR REPLACE TEMPORARY VIEW %s AS 
 			SELECT * FROM read_orc(%s);
 		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
 	case ".delta":
-		return handleDeltaFormat(qc, fileName, viewName, tmpFilePath)
+		return handleDeltaFormat(ctx, qc, fileName, viewName, tmpFilePath)
 	case ".iceberg":
-		return handleIcebergFormat(qc, fileName, viewName, tmpFilePath)
+		return handleIcebergFormat(ctx, qc, fileName, viewName, tmpFilePath)
 
 	// XML and YAML formats (experimental support)
 	case ".xml", ".yaml", ".yml":
@@ -93,9 +97,9 @@ func generateCreateViewSQL(qc *duckdb.QueryClient, fileName, viewName, tmpFilePa
 }
 
 // handleExcelFormat handles Excel file formats.
-func handleExcelFormat(qc *duckdb.QueryClient, _, viewName, tmpFilePath string) (string, error) {
+func handleExcelFormat(ctx context.Context, qc *duckdb.QueryClient, _, viewName, tmpFilePath string) (string, error) {
 	// First try to install and load the Excel extension
-	_, spatialErr := qc.ExecuteNonQuery("INSTALL spatial; LOAD spatial;")
+	_, spatialErr := qc.ExecuteNonQuery(ctx, "INSTALL spatial; LOAD spatial;")
 	if spatialErr == nil {
 		// Spatial extension loaded successfully, try to use it
 		createViewSQL := fmt.Sprintf(`
@@ -104,13 +108,13 @@ func handleExcelFormat(qc *duckdb.QueryClient, _, viewName, tmpFilePath string) 
 		`, viewName, tmpFilePath)
 
 		// If spatial works, return it; otherwise fall back below
-		if _, execErr := qc.ExecuteNonQuery(createViewSQL); execErr == nil {
+		if _, execErr := qc.ExecuteNonQuery(ctx, createViewSQL); execErr == nil {
 			return createViewSQL, nil
 		}
 	}
 
 	// Try alternative Excel extension installation
-	if _, excelErr := qc.ExecuteNonQuery("INSTALL excel; LOAD excel;"); excelErr == nil {
+	if _, excelErr := qc.ExecuteNonQuery(ctx, "INSTALL excel; LOAD excel;"); excelErr == nil {
 		// Excel extension loaded, try to use it with spatial read
 		createViewSQL := fmt.Sprintf(`
 			CREATE OR REPLACE TEMPORARY VIEW %s AS 
@@ -118,7 +122,7 @@ func handleExcelFormat(qc *duckdb.QueryClient, _, viewName, tmpFilePath string) 
 		`, viewName, tmpFilePath)
 
 		// If it works, return it; otherwise fall back below
-		if _, execErr := qc.ExecuteNonQuery(createViewSQL); execErr == nil {
+		if _, execErr := qc.ExecuteNonQuery(ctx, createViewSQL); execErr == nil {
 			return createViewSQL, nil
 		}
 	}
@@ -131,8 +135,12 @@ func handleExcelFormat(qc *duckdb.QueryClient, _, viewName, tmpFilePath string) 
 }
 
 // handleAvroFormat handles Avro file format.
-func handleAvroFormat(qc *duckdb.QueryClient, fileName, viewName, tmpFilePath string) (string, error) {
-	if _, avroErr := qc.ExecuteNonQuery("INSTALL avro; LOAD avro;"); avroErr != nil {
+func handleAvroFormat(
+	ctx context.Context,
+	qc *duckdb.QueryClient,
+	fileName, viewName, tmpFilePath string,
+) (string, error) {
+	if _, avroErr := qc.ExecuteNonQuery(ctx, "INSTALL avro; LOAD avro;"); avroErr != nil {
 		// If Avro extension is not available, return a more descriptive error
 		return "", fmt.Errorf(
 			"avro format is not supported on this platform - DuckDB Avro extension could not be loaded for %s: %w",
@@ -147,8 +155,12 @@ func handleAvroFormat(qc *duckdb.QueryClient, fileName, viewName, tmpFilePath st
 }
 
 // handleDeltaFormat handles Delta Lake file format.
-func handleDeltaFormat(qc *duckdb.QueryClient, fileName, viewName, tmpFilePath string) (string, error) {
-	if _, deltaErr := qc.ExecuteNonQuery("INSTALL delta; LOAD delta;"); deltaErr != nil {
+func handleDeltaFormat(
+	ctx context.Context,
+	qc *duckdb.QueryClient,
+	fileName, viewName, tmpFilePath string,
+) (string, error) {
+	if _, deltaErr := qc.ExecuteNonQuery(ctx, "INSTALL delta; LOAD delta;"); deltaErr != nil {
 		// If Delta extension is not available, return a more descriptive error
 		return "", fmt.Errorf(
 			"delta Lake format is not supported on this platform - DuckDB Delta extension could not be loaded for %s: %w",
@@ -163,8 +175,12 @@ func handleDeltaFormat(qc *duckdb.QueryClient, fileName, viewName, tmpFilePath s
 }
 
 // handleIcebergFormat handles Iceberg file format.
-func handleIcebergFormat(qc *duckdb.QueryClient, fileName, viewName, tmpFilePath string) (string, error) {
-	if _, icebergErr := qc.ExecuteNonQuery("INSTALL iceberg; LOAD iceberg;"); icebergErr != nil {
+func handleIcebergFormat(
+	ctx context.Context,
+	qc *duckdb.QueryClient,
+	fileName, viewName, tmpFilePath string,
+) (string, error) {
+	if _, icebergErr := qc.ExecuteNonQuery(ctx, "INSTALL iceberg; LOAD iceberg;"); icebergErr != nil {
 		// If Iceberg extension is not available, return a more descriptive error
 		return "", fmt.Errorf(
 			"iceberg format is not supported on this platform - DuckDB Iceberg extension could not be loaded for %s: %w",
@@ -180,7 +196,12 @@ func handleIcebergFormat(qc *duckdb.QueryClient, fileName, viewName, tmpFilePath
 
 // createTemporaryView creates a temporary view in DuckDB for the given file content.
 // Returns the view name and temp file path (which must be cleaned up by caller).
-func createTemporaryView(qc *duckdb.QueryClient, fileName string, content []byte) (string, string, error) {
+func createTemporaryView(
+	ctx context.Context,
+	qc *duckdb.QueryClient,
+	fileName string,
+	content []byte,
+) (string, string, error) {
 	// Sanitize fileName for temp file creation (replace path separators with underscores)
 	safeFileName := strings.ReplaceAll(strings.ReplaceAll(fileName, "/", "_"), "\\", "_")
 
@@ -214,13 +235,13 @@ func createTemporaryView(qc *duckdb.QueryClient, fileName string, content []byte
 	viewName := fmt.Sprintf("temp_view_%s", strings.ReplaceAll(strings.ReplaceAll(baseFileName, "/", "_"), ".", "_"))
 
 	// Generate the appropriate SQL for this file type
-	createViewSQL, sqlErr := generateCreateViewSQL(qc, fileName, viewName, tmpFile.Name())
+	createViewSQL, sqlErr := generateCreateViewSQL(ctx, qc, fileName, viewName, tmpFile.Name())
 	if sqlErr != nil {
 		_ = os.Remove(tmpFile.Name()) // Handle removal error by ignoring it
 		return "", "", sqlErr
 	}
 
-	if _, execViewErr := qc.ExecuteNonQuery(createViewSQL); execViewErr != nil {
+	if _, execViewErr := qc.ExecuteNonQuery(ctx, createViewSQL); execViewErr != nil {
 		_ = os.Remove(tmpFile.Name()) // Handle removal error by ignoring it
 		return "", "", fmt.Errorf("failed to create view for %s: %w", fileName, execViewErr)
 	}
@@ -271,8 +292,13 @@ func processRows(rows *sql.Rows, fileName string) ([]map[string]any, error) {
 }
 
 // processFile handles the processing of a single file.
-func processFile(qc *duckdb.QueryClient, fileName string, content []byte) ([]map[string]any, error) {
-	viewName, tmpFilePath, err := createTemporaryView(qc, fileName, content)
+func processFile(
+	ctx context.Context,
+	qc *duckdb.QueryClient,
+	fileName string,
+	content []byte,
+) ([]map[string]any, error) {
+	viewName, tmpFilePath, err := createTemporaryView(ctx, qc, fileName, content)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +306,7 @@ func processFile(qc *duckdb.QueryClient, fileName string, content []byte) ([]map
 
 	// Always quote the view name for the SELECT query
 	quotedViewName := fmt.Sprintf(`"%s"`, strings.ReplaceAll(viewName, `"`, `""`))
-	rows, err := qc.ExecuteQuery(fmt.Sprintf("SELECT * FROM %s", quotedViewName))
+	rows, err := qc.ExecuteQuery(ctx, fmt.Sprintf("SELECT * FROM %s", quotedViewName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query data from %s: %w", fileName, err)
 	}
@@ -309,7 +335,7 @@ func ParseStructuredFiles(
 	env *utils.CoreAPIEnv,
 	logger *slog.Logger,
 ) (map[string][]map[string]any, error) {
-	qc, err := duckdb.NewQueryClient(env, logger)
+	qc, err := duckdb.NewQueryClient(ctx, env, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DuckDB client: %w", err)
 	}
@@ -322,7 +348,7 @@ func ParseStructuredFiles(
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
-			fileData, processFileErr := processFile(qc, fileName, content)
+			fileData, processFileErr := processFile(ctx, qc, fileName, content)
 			if processFileErr != nil {
 				return nil, processFileErr
 			}

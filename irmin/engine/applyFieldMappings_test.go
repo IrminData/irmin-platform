@@ -43,6 +43,7 @@ func TestApplyFieldMappingsInputValidation(t *testing.T) {
 
 	// Test nil duckDBClient
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		nil,
 		[]byte("test"),
 		"test.csv",
@@ -54,6 +55,7 @@ func TestApplyFieldMappingsInputValidation(t *testing.T) {
 
 	// Test empty fileContent
 	result, err = suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		[]byte{},
 		"test.csv",
@@ -65,6 +67,7 @@ func TestApplyFieldMappingsInputValidation(t *testing.T) {
 
 	// Test empty originalFilePath
 	result, err = suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		[]byte("test"),
 		"",
@@ -84,6 +87,7 @@ John,30
 Jane,25`)
 
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		fileContent,
 		"employees.csv",
@@ -133,6 +137,7 @@ Jane,25,Marketing`)
 	}
 
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		fileContent,
 		"employees.csv",
@@ -225,6 +230,7 @@ func TestApplyFieldMappingsComplexScenario(t *testing.T) {
 	}
 
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		fileContent,
 		"employees.csv",
@@ -320,6 +326,7 @@ func TestApplyFieldMappingsMultipleDestinations(t *testing.T) {
 	}
 
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		fileContent,
 		"products.csv",
@@ -376,6 +383,7 @@ func TestApplyFieldMappingsCrossFormatMapping(t *testing.T) {
 	}
 
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		fileContent,
 		"users.csv",
@@ -437,6 +445,7 @@ func TestApplyFieldMappingsPerformance(t *testing.T) {
 	}
 
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		fileContent,
 		"employees.csv",

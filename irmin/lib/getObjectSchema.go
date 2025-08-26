@@ -96,7 +96,7 @@ func (scm *SchemaCacheManager) GetObjectSchema(
 	}
 
 	// Get the schema of the object in the repository at ref
-	schema, err := dataEngine.GenerateObjectSchema(workspace.Slug, repository.Slug, object.Path, ref)
+	schema, err := dataEngine.GenerateObjectSchema(ctx, workspace.Slug, repository.Slug, object.Path, ref)
 	if err != nil {
 		scm.logger.ErrorContext(ctx, "error getting object schema", "error", err)
 		return nil, fmt.Errorf("failed to get object schema: %w", err)

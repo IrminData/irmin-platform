@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -33,6 +34,7 @@ type FieldMappingResult struct {
 //
 // Returns a map of destination file paths to their transformed content, or an error.
 func (c *Client) ApplyFieldMappings(
+	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,
 	fileContent []byte,
 	originalFilePath string,
@@ -56,14 +58,14 @@ func (c *Client) ApplyFieldMappings(
 	}
 
 	// Create temporary input file with the content
-	tempInputPath, cleanup1, err := c.createTempInputFile(fileContent, objectDetails.Name)
+	tempInputPath, cleanup1, err := c.createTempInputFile(ctx, fileContent, objectDetails.Name)
 	if err != nil {
 		return nil, err
 	}
 	defer cleanup1()
 
 	// Get schema information from the file
-	columnNames, err := c.getFileSchema(duckDBClient, tempInputPath, readOpts, originalFilePath)
+	columnNames, err := c.getFileSchema(ctx, duckDBClient, tempInputPath, readOpts, originalFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +97,7 @@ func (c *Client) ApplyFieldMappings(
 		}
 
 		transformedContent, transformErr := c.executeTransformation(
+			ctx,
 			duckDBClient,
 			tempInputPath,
 			readOpts,
@@ -114,6 +117,7 @@ func (c *Client) ApplyFieldMappings(
 		unmappedSelectClause := c.buildSelectClauseForUnmappedFields(unmappedFields)
 
 		remainderContent, transformErr := c.executeTransformation(
+			ctx,
 			duckDBClient,
 			tempInputPath,
 			readOpts,
@@ -168,7 +172,11 @@ func (c *Client) getReadOptions(
 }
 
 // createTempInputFile creates a temporary file with the provided content.
-func (c *Client) createTempInputFile(fileContent []byte, fileName string) (string, func(), error) {
+func (c *Client) createTempInputFile(
+	ctx context.Context,
+	fileContent []byte,
+	fileName string,
+) (string, func(), error) {
 	tempFile, err := os.CreateTemp("", "duckdb-input-*"+fileName)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp input file: %w", err)
@@ -178,7 +186,7 @@ func (c *Client) createTempInputFile(fileContent []byte, fileName string) (strin
 
 	cleanup := func() {
 		if removeErr := os.Remove(tempFilePath); removeErr != nil {
-			c.Logger.Error("failed to remove temp input file", "error", removeErr)
+			c.Logger.ErrorContext(ctx, "failed to remove temp input file", "error", removeErr)
 		}
 	}
 
@@ -186,7 +194,7 @@ func (c *Client) createTempInputFile(fileContent []byte, fileName string) (strin
 	if _, writeErr := tempFile.Write(fileContent); writeErr != nil {
 		closeErr := tempFile.Close()
 		if closeErr != nil {
-			c.Logger.Error("failed to close temp input file", "error", closeErr)
+			c.Logger.ErrorContext(ctx, "failed to close temp input file", "error", closeErr)
 		}
 		cleanup()
 		return "", nil, fmt.Errorf("failed to write to temp input file: %w", writeErr)
@@ -203,6 +211,7 @@ func (c *Client) createTempInputFile(fileContent []byte, fileName string) (strin
 
 // getFileSchema retrieves the column names from the file using DuckDB DESCRIBE.
 func (c *Client) getFileSchema(
+	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,
 	tempInputPath string,
 	readOpts *duckdb.ReadOptions,
@@ -211,7 +220,7 @@ func (c *Client) getFileSchema(
 	readQueryPart := duckdb.BuildReadQuery(tempInputPath, readOpts)
 	describeQuery := fmt.Sprintf("DESCRIBE SELECT * FROM %s;", readQueryPart)
 
-	rows, err := duckDBClient.ExecuteQuery(describeQuery)
+	rows, err := duckDBClient.ExecuteQuery(ctx, describeQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to describe schema for %s: %w", originalFilePath, err)
 	}
@@ -319,6 +328,7 @@ func (c *Client) buildSelectClauseForUnmappedFields(unmappedFields []string) str
 
 // executeTransformation performs the actual data transformation using DuckDB.
 func (c *Client) executeTransformation(
+	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,
 	tempInputPath string,
 	inputReadOpts *duckdb.ReadOptions,
@@ -333,11 +343,11 @@ func (c *Client) executeTransformation(
 	}
 	tempOutputPath := tempOutputFile.Name()
 	if closeErr := tempOutputFile.Close(); closeErr != nil {
-		c.Logger.Error("failed to close temp output file", "error", closeErr)
+		c.Logger.ErrorContext(ctx, "failed to close temp output file", "error", closeErr)
 	}
 	defer func() {
 		if removeErr := os.Remove(tempOutputPath); removeErr != nil {
-			c.Logger.Error("failed to remove temp output file", "error", removeErr)
+			c.Logger.ErrorContext(ctx, "failed to remove temp output file", "error", removeErr)
 		}
 	}()
 
@@ -345,7 +355,7 @@ func (c *Client) executeTransformation(
 	readQueryPart := duckdb.BuildReadQuery(tempInputPath, inputReadOpts)
 	copyQuery := c.buildCopyQuery(selectClause, readQueryPart, tempOutputPath, outputReadOpts)
 
-	if _, execErr := duckDBClient.ExecuteNonQuery(copyQuery); execErr != nil {
+	if _, execErr := duckDBClient.ExecuteNonQuery(ctx, copyQuery); execErr != nil {
 		return nil, fmt.Errorf("failed to execute transformation query: %w", execErr)
 	}
 

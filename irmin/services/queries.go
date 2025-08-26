@@ -403,7 +403,7 @@ func (api *APIServices) ExecuteSQL(
 	})
 
 	// Execute the SQL
-	result := dataEngine.ExecuteQuery(workspace.Slug, req.SQL)
+	result := dataEngine.ExecuteQuery(c, workspace.Slug, req.SQL)
 
 	// Check for errors
 	if result.HasErrors {

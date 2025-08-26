@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"maps"
 	"path"
@@ -73,6 +74,7 @@ func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*
 // processFieldMappings applies field mappings to files and merges results.
 // This is a common workflow used by both import and export operations.
 func (c *Client) processFieldMappings(
+	ctx context.Context,
 	files map[string][]byte,
 	fieldMappings []irminmodels.FieldMapping,
 ) (map[string][]byte, []error) {
@@ -82,20 +84,20 @@ func (c *Client) processFieldMappings(
 	}
 
 	// Initialize DuckDB client for field mappings and merging
-	duckDBClient, err := duckdb.NewQueryClient(c.Env, c.Logger)
+	duckDBClient, err := duckdb.NewQueryClient(ctx, c.Env, c.Logger)
 	if err != nil {
 		return nil, []error{fmt.Errorf("failed to initialize DuckDB client: %w", err)}
 	}
 	defer duckDBClient.Close()
 
 	// Apply field mappings to all files and collect results by destination
-	destinationFiles, mappingErrors := c.applyFieldMappingsToAllFiles(duckDBClient, files, fieldMappings)
+	destinationFiles, mappingErrors := c.applyFieldMappingsToAllFiles(ctx, duckDBClient, files, fieldMappings)
 	if len(mappingErrors) > 0 {
 		return nil, mappingErrors
 	}
 
 	// Merge files that map to the same destination
-	mergedFiles, mergeErrors := c.mergeDestinationFiles(duckDBClient, destinationFiles)
+	mergedFiles, mergeErrors := c.mergeDestinationFiles(ctx, duckDBClient, destinationFiles)
 	if len(mergeErrors) > 0 {
 		return nil, mergeErrors
 	}
@@ -120,6 +122,7 @@ func (c *Client) buildTargetPath(basePath, itemName string, hasMultipleItems boo
 // to the same destination, and uploads the results.
 // Returns the metadata of the uploaded objects and any errors that occurred.
 func (c *Client) DataImport(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
 	workspace string,
@@ -135,7 +138,7 @@ func (c *Client) DataImport(
 	}
 
 	// Process field mappings (or return files as-is if no mappings)
-	processedFiles, processingErrors := c.processFieldMappings(allFiles, fieldMappings)
+	processedFiles, processingErrors := c.processFieldMappings(ctx, allFiles, fieldMappings)
 	if len(processingErrors) > 0 {
 		return nil, processingErrors
 	}
@@ -201,6 +204,7 @@ func (c *Client) uploadFiles(
 
 // applyFieldMappingsToAllFiles applies field mappings to all source files.
 func (c *Client) applyFieldMappingsToAllFiles(
+	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,
 	allFiles map[string][]byte,
 	fieldMappings []irminmodels.FieldMapping,
@@ -211,7 +215,7 @@ func (c *Client) applyFieldMappingsToAllFiles(
 
 	for sourcePath, fileContent := range allFiles {
 		// Apply field mappings to this source file
-		results, err := c.ApplyFieldMappings(duckDBClient, fileContent, sourcePath, fieldMappings)
+		results, err := c.ApplyFieldMappings(ctx, duckDBClient, fileContent, sourcePath, fieldMappings)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to apply field mappings to %s: %w", sourcePath, err))
 			continue
@@ -231,6 +235,7 @@ func (c *Client) applyFieldMappingsToAllFiles(
 
 // mergeDestinationFiles merges multiple source files that map to the same destination.
 func (c *Client) mergeDestinationFiles(
+	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,
 	destinationFiles map[string]map[string][]byte,
 ) (map[string][]byte, []error) {
@@ -247,6 +252,7 @@ func (c *Client) mergeDestinationFiles(
 		} else {
 			// Multiple sources, need to merge
 			mergeResult, err := duckDBClient.MergeFiles(
+				ctx,
 				sourceFiles,
 				destPath,
 				duckdb.MergeStrategyUnionDistinct, // Default strategy, could be configurable
@@ -413,6 +419,7 @@ func (c *Client) fetchObjectsFromPaths(
 // to the same destination, and pushes the results to the connector.
 // Returns the paths of the files that were pushed and any errors that occurred.
 func (c *Client) DataExport(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPath string,
 	workspaceSlug string,
@@ -430,7 +437,7 @@ func (c *Client) DataExport(
 	}
 
 	// Process field mappings (or return files as-is if no mappings)
-	finalFiles, processingErrors := c.processFieldMappings(files, fieldMappings)
+	finalFiles, processingErrors := c.processFieldMappings(ctx, files, fieldMappings)
 	if len(processingErrors) > 0 {
 		return repositoryPaths, processingErrors
 	}

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -133,11 +134,12 @@ func scanRow(rows *sql.Rows, columns []string) (map[string]any, error) {
 
 // executeQueryWithClient executes a query using the provided query client and returns the results.
 func executeQueryWithClient(
+	ctx context.Context,
 	queryClient *duckdb.QueryClient,
 	parsedQuery utils.ParsedIrminQuery,
 ) (*irminmodels.QueryResult, error) {
 	startedAt := time.Now()
-	rows, executeQueryErr := queryClient.ExecuteQuery(parsedQuery.FormattedQuery)
+	rows, executeQueryErr := queryClient.ExecuteQuery(ctx, parsedQuery.FormattedQuery)
 	if executeQueryErr != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", executeQueryErr)
 	}
@@ -158,7 +160,7 @@ func executeQueryWithClient(
 }
 
 // ExecuteQuery executes a query in the specified workspace and returns the results.
-func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryResult {
+func (c *Client) ExecuteQuery(ctx context.Context, userWorkspace, query string) *irminmodels.QueryResult {
 	parsedQuery, err := parseIrminQuery(c, userWorkspace, query)
 	if err != nil {
 		return &irminmodels.QueryResult{
@@ -167,7 +169,7 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryRes
 		}
 	}
 
-	queryClient, err := duckdb.NewQueryClient(c.Env, c.Logger)
+	queryClient, err := duckdb.NewQueryClient(ctx, c.Env, c.Logger)
 	if err != nil {
 		return &irminmodels.QueryResult{
 			HasErrors: true,
@@ -176,7 +178,7 @@ func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryRes
 	}
 	defer queryClient.Close()
 
-	result, err := executeQueryWithClient(queryClient, parsedQuery)
+	result, err := executeQueryWithClient(ctx, queryClient, parsedQuery)
 	if err != nil {
 		return &irminmodels.QueryResult{
 			HasErrors: true,

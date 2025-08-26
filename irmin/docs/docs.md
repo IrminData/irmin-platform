@@ -4997,11 +4997,11 @@ import "irmin-api/duckdb"
 - [type MergeFileResult](<#MergeFileResult>)
 - [type MergeStrategy](<#MergeStrategy>)
 - [type QueryClient](<#QueryClient>)
-  - [func NewQueryClient\(env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(\*QueryClient, error\)](<#NewQueryClient>)
+  - [func NewQueryClient\(ctx context.Context, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(\*QueryClient, error\)](<#NewQueryClient>)
   - [func \(c \*QueryClient\) Close\(\) error](<#QueryClient.Close>)
-  - [func \(c \*QueryClient\) ExecuteNonQuery\(query string, args ...any\) \(sql.Result, error\)](<#QueryClient.ExecuteNonQuery>)
-  - [func \(c \*QueryClient\) ExecuteQuery\(query string, args ...any\) \(\*sql.Rows, error\)](<#QueryClient.ExecuteQuery>)
-  - [func \(c \*QueryClient\) MergeFiles\(sourceFiles map\[string\]\[\]byte, destinationPath string, strategy MergeStrategy\) \(\*MergeFileResult, error\)](<#QueryClient.MergeFiles>)
+  - [func \(c \*QueryClient\) ExecuteNonQuery\(ctx context.Context, query string, args ...any\) \(sql.Result, error\)](<#QueryClient.ExecuteNonQuery>)
+  - [func \(c \*QueryClient\) ExecuteQuery\(ctx context.Context, query string, args ...any\) \(\*sql.Rows, error\)](<#QueryClient.ExecuteQuery>)
+  - [func \(c \*QueryClient\) MergeFiles\(ctx context.Context, sourceFiles map\[string\]\[\]byte, destinationPath string, strategy MergeStrategy\) \(\*MergeFileResult, error\)](<#QueryClient.MergeFiles>)
 - [type ReadOptions](<#ReadOptions>)
   - [func GetDuckDBReadOptions\(filePathOrMIMEType string\) \(\*ReadOptions, error\)](<#GetDuckDBReadOptions>)
   - [func GetDuckDBReadOptionsByExtension\(extension string\) \(\*ReadOptions, error\)](<#GetDuckDBReadOptionsByExtension>)
@@ -5112,7 +5112,7 @@ type QueryClient struct {
 ### func NewQueryClient
 
 ```go
-func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error)
+func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error)
 ```
 
 NewQueryClient creates a new client for querying data from LakeFS. It configures the DuckDB connection with the required S3 / LakeFS settings. Returns the client and an error if encountered.
@@ -5130,7 +5130,7 @@ Close closes the DuckDB connection held by the client.
 ### func \(\*QueryClient\) ExecuteNonQuery
 
 ```go
-func (c *QueryClient) ExecuteNonQuery(query string, args ...any) (sql.Result, error)
+func (c *QueryClient) ExecuteNonQuery(ctx context.Context, query string, args ...any) (sql.Result, error)
 ```
 
 ExecuteNonQuery executes a SQL statement that does not return rows \(such as INSERT, UPDATE, DELETE\).
@@ -5141,7 +5141,7 @@ query: the SQL statement to execute. args: optional arguments for the statement.
 ### func \(\*QueryClient\) ExecuteQuery
 
 ```go
-func (c *QueryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error)
+func (c *QueryClient) ExecuteQuery(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 ```
 
 ExecuteQuery executes a SQL query using the client's DuckDB connection and returns the resulting rows. It is suitable for queries that return rows \(e.g. SELECT statements\).
@@ -5152,7 +5152,7 @@ query: the SQL query to execute. args: optional arguments for the query.
 ### func \(\*QueryClient\) MergeFiles
 
 ```go
-func (c *QueryClient) MergeFiles(sourceFiles map[string][]byte, destinationPath string, strategy MergeStrategy) (*MergeFileResult, error)
+func (c *QueryClient) MergeFiles(ctx context.Context, sourceFiles map[string][]byte, destinationPath string, strategy MergeStrategy) (*MergeFileResult, error)
 ```
 
 MergeFiles merges multiple source files that map to the same destination path. It handles schema alignment, data type conflicts, and different merge strategies.
@@ -5233,7 +5233,7 @@ import "irmin-api/engine"
   - [func \(m \*BranchProtectionManager\) UpdateBranchProtection\(repositoryName, branchName string, isImmutable bool\) error](<#BranchProtectionManager.UpdateBranchProtection>)
 - [type Client](<#Client>)
   - [func NewClient\(ctx context.Context, locale string, logger \*slog.Logger, env \*utils.CoreAPIEnv\) \(\*Client, error\)](<#NewClient>)
-  - [func \(c \*Client\) ApplyFieldMappings\(duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, originalFilePath string, mappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyFieldMappings>)
+  - [func \(c \*Client\) ApplyFieldMappings\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, originalFilePath string, mappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyFieldMappings>)
   - [func \(c \*Client\) CommitChanges\(workspace, repository, branch, message, author string, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.CommitChanges>)
   - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#Client.CompareRefs>)
   - [func \(c \*Client\) ConfigureRepositoryWebhookNotifications\(lakefsRepository \*lakefs.Repository\) \(\*lakefs.ObjectMetadata, error\)](<#Client.ConfigureRepositoryWebhookNotifications>)
@@ -5241,15 +5241,15 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateRepository\(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
-  - [func \(c \*Client\) DataExport\(connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]string, \[\]error\)](<#Client.DataExport>)
-  - [func \(c \*Client\) DataImport\(connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
+  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]string, \[\]error\)](<#Client.DataExport>)
+  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
   - [func \(c \*Client\) DataMovementSchema\(connection \*db.Connection, method string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
   - [func \(c \*Client\) DeleteTag\(workspace, repository, tag string\) error](<#Client.DeleteTag>)
-  - [func \(c \*Client\) ExecuteQuery\(userWorkspace, query string\) \*irminmodels.QueryResult](<#Client.ExecuteQuery>)
-  - [func \(c \*Client\) GenerateObjectSchema\(workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateObjectSchema>)
+  - [func \(c \*Client\) ExecuteQuery\(ctx context.Context, userWorkspace, query string\) \*irminmodels.QueryResult](<#Client.ExecuteQuery>)
+  - [func \(c \*Client\) GenerateObjectSchema\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateObjectSchema>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.Branch, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(workspace, repository, hash string\) \(\*irminmodels.Commit, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetObjectChanges\(workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, error\)](<#Client.GetObjectChanges>)
@@ -5360,7 +5360,7 @@ NewClient creates a new Irmin Data Engine API client with default settings.
 ### func \(\*Client\) ApplyFieldMappings
 
 ```go
-func (c *Client) ApplyFieldMappings(duckDBClient *duckdb.QueryClient, fileContent []byte, originalFilePath string, mappings []irminmodels.FieldMapping) (map[string][]byte, error)
+func (c *Client) ApplyFieldMappings(ctx context.Context, duckDBClient *duckdb.QueryClient, fileContent []byte, originalFilePath string, mappings []irminmodels.FieldMapping) (map[string][]byte, error)
 ```
 
 ApplyFieldMappings applies field mapping transformations to split file content across multiple destinations. This function implements a "field routing" approach where: \- Fields with explicit mappings are routed to their specified destinations \- Unmapped fields are included in a "remainder" file using the original path \- Each destination gets only the fields explicitly mapped to it
@@ -5441,7 +5441,7 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodel
 ### func \(\*Client\) DataExport
 
 ```go
-func (c *Client) DataExport(connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping) ([]string, []error)
+func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping) ([]string, []error)
 ```
 
 DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred.
@@ -5450,7 +5450,7 @@ DataExport exports data from a lakeFS repository to an external connector. It ap
 ### func \(\*Client\) DataImport
 
 ```go
-func (c *Client) DataImport(connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping) ([]lakefs.ObjectMetadata, []error)
+func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping) ([]lakefs.ObjectMetadata, []error)
 ```
 
 DataImport imports data from an external source into a lakeFS repository. It applies field mappings to route and transform data, merges files that map to the same destination, and uploads the results. Returns the metadata of the uploaded objects and any errors that occurred.
@@ -5504,7 +5504,7 @@ func (c *Client) DeleteTag(workspace, repository, tag string) error
 ### func \(\*Client\) ExecuteQuery
 
 ```go
-func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryResult
+func (c *Client) ExecuteQuery(ctx context.Context, userWorkspace, query string) *irminmodels.QueryResult
 ```
 
 ExecuteQuery executes a query in the specified workspace and returns the results.
@@ -5513,7 +5513,7 @@ ExecuteQuery executes a query in the specified workspace and returns the results
 ### func \(\*Client\) GenerateObjectSchema
 
 ```go
-func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error)
+func (c *Client) GenerateObjectSchema(ctx context.Context, workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error)
 ```
 
 
@@ -8268,7 +8268,7 @@ import "irmin-api/lib"
 - [func GetObject\(ctx context.Context, locale string, d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, workspace \*db.Workspace, repository \*db.Repository, path, ref string, ignoreCache bool\) \(\*db.RepositoryObject, error\)](<#GetObject>)
 - [func GetRepository\(ctx context.Context, locale string, d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, workspace \*db.Workspace, repositorySlug string, ignoreCache bool\) \(\*db.Repository, error\)](<#GetRepository>)
 - [func IsAllowedFilter\[T any\]\(ps \*PermissionService, user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, action db.PolicyAction, resources \[\]T, idExtractor func\(T\) uint\) \(\[\]T, error\)](<#IsAllowedFilter>)
-- [func NewSafeHTTPClient\(\) \*http.Client](<#NewSafeHTTPClient>)
+- [func NewSafeHTTPClient\(ctx context.Context\) \*http.Client](<#NewSafeHTTPClient>)
 - [func ParseScheduleFromData\(scheduleReq \*irminmodels.Schedule, d \*db.Database, workspace db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*db.Schedule, error\)](<#ParseScheduleFromData>)
 - [func ParseScheduleFromRequest\(c fiber.Ctx, d \*db.Database, workspace db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*db.Schedule, error\)](<#ParseScheduleFromRequest>)
 - [func ParseStructuredFiles\(ctx context.Context, files map\[string\]\[\]byte, env \*utils.CoreAPIEnv, logger \*slog.Logger\) \(map\[string\]\[\]map\[string\]any, error\)](<#ParseStructuredFiles>)
@@ -8307,7 +8307,6 @@ import "irmin-api/lib"
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
-  - [func \(ts \*TestSuite\) GetDuckDBClient\(\) \(\*duckdb.QueryClient, error\)](<#TestSuite.GetDuckDBClient>)
 
 
 ## Constants
@@ -8442,7 +8441,7 @@ IsAllowedFilter filters a list of resources based on user permissions. It return
 ## func NewSafeHTTPClient
 
 ```go
-func NewSafeHTTPClient() *http.Client
+func NewSafeHTTPClient(ctx context.Context) *http.Client
 ```
 
 NewSafeHTTPClient creates an HTTP client with timeouts, redirect checks, and IP blocking via Dialer.Control.
@@ -8849,15 +8848,6 @@ func GetTestSuite() *TestSuite
 ```
 
 GetTestSuite returns the global test suite instance. This is safe to call from any test function.
-
-<a name="TestSuite.GetDuckDBClient"></a>
-### func \(\*TestSuite\) GetDuckDBClient
-
-```go
-func (ts *TestSuite) GetDuckDBClient() (*duckdb.QueryClient, error)
-```
-
-GetDuckDBClient returns a DuckDB client for testing. This is a convenience method that creates a new client if needed.
 
 # locales
 

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"irmin-api/utils"
 	"slices"
@@ -9,6 +10,7 @@ import (
 )
 
 func generateGroupObjectSchema(
+	ctx context.Context,
 	c *Client,
 	workspace, repository, ref string,
 	object irminmodels.Object,
@@ -48,7 +50,7 @@ func generateGroupObjectSchema(
 		switch child.Type {
 		case irminmodels.ObjectTypeGroup:
 			// Generate the schema for the child group object.
-			childSchema, err = generateGroupObjectSchema(c, workspace, repository, ref, child)
+			childSchema, err = generateGroupObjectSchema(ctx, c, workspace, repository, ref, child)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate group schema: %w", err)
 			}
@@ -58,9 +60,9 @@ func generateGroupObjectSchema(
 			onlyBinary = false
 		case irminmodels.ObjectTypeStructured:
 			// Generate the schema for the child structured object.
-			childSchema, err = generateStructuredObjectSchema(c, workspace, repository, ref, child)
+			childSchema, err = generateStructuredObjectSchema(ctx, c, workspace, repository, ref, child)
 			if err != nil {
-				c.Logger.Warn("failed to generate structured schema, treating as binary", "error", err)
+				c.Logger.WarnContext(ctx, "failed to generate structured schema, treating as binary", "error", err)
 				childSchema = generateBinaryObjectSchema(child)
 			} else {
 				// Update the restrictions based on the child type.
@@ -97,6 +99,7 @@ func generateGroupObjectSchema(
 }
 
 func generateStructuredObjectSchema(
+	ctx context.Context,
 	c *Client,
 	workspace, repository, ref string,
 	object irminmodels.Object,
@@ -111,7 +114,7 @@ func generateStructuredObjectSchema(
 	}
 
 	// Query the object using DuckDB to get the data types.
-	duckDBSchema, err := getDuckDBSchema(c, c.Env, workspace, repository, object.Path, ref)
+	duckDBSchema, err := getDuckDBSchema(ctx, c, c.Env, workspace, repository, object.Path, ref)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DuckDB schema: %w", err)
 	}
@@ -136,7 +139,10 @@ func generateBinaryObjectSchema(object irminmodels.Object) *irminmodels.ObjectSc
 	return schema
 }
 
-func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error) {
+func (c *Client) GenerateObjectSchema(
+	ctx context.Context,
+	workspace, repository, path, ref string,
+) (*irminmodels.ObjectSchema, error) {
 	// Check if the requested path is a system path
 	if IsSystemPath(path) {
 		return nil, fmt.Errorf("access to system path %s is not allowed", path)
@@ -164,16 +170,16 @@ func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (
 	var schema *irminmodels.ObjectSchema
 	switch irminObject.Type {
 	case irminmodels.ObjectTypeGroup:
-		schema, err = generateGroupObjectSchema(c, workspace, repository, ref, *irminObject)
+		schema, err = generateGroupObjectSchema(ctx, c, workspace, repository, ref, *irminObject)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate group schema: %w", err)
 		}
 	case irminmodels.ObjectTypeStructured:
 		// Try to generate structured schema, but fall back to binary if we can't handle the content type
-		schema, err = generateStructuredObjectSchema(c, workspace, repository, ref, *irminObject)
+		schema, err = generateStructuredObjectSchema(ctx, c, workspace, repository, ref, *irminObject)
 		if err != nil {
 			// If we get an error, treat it as binary
-			c.Logger.Warn("failed to generate structured schema, treating as binary", "error", err)
+			c.Logger.WarnContext(ctx, "failed to generate structured schema, treating as binary", "error", err)
 			schema = generateBinaryObjectSchema(*irminObject)
 		}
 	case irminmodels.ObjectTypeBinary:

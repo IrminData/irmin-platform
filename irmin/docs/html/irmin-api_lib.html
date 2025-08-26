@@ -120,7 +120,7 @@ func IsAllowedFilter[T any](
     permission checks. The idExtractor function should return the ID of the
     resource.
 
-func NewSafeHTTPClient() *http.Client
+func NewSafeHTTPClient(ctx context.Context) *http.Client
     NewSafeHTTPClient creates an HTTP client with timeouts, redirect checks,
     and IP blocking via Dialer.Control.
 
@@ -401,10 +401,6 @@ type TestSuite struct {
 func GetTestSuite() *TestSuite
     GetTestSuite returns the global test suite instance. This is safe to call
     from any test function.
-
-func (ts *TestSuite) GetDuckDBClient() (*duckdb.QueryClient, error)
-    GetDuckDBClient returns a DuckDB client for testing. This is a convenience
-    method that creates a new client if needed.
 
 </pre>
 </body></html>

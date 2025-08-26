@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
@@ -101,11 +102,12 @@ func parseField(name, typ string, required bool) SchemaField {
 //   - parse each into SchemaField, setting Required = is_nullable == "NO"
 //     and recursively parse STRUCT fields.
 func getDuckDBSchema(
+	ctx context.Context,
 	c *Client,
 	env *utils.CoreAPIEnv,
 	userWorkspace, repository, path, ref string,
 ) ([]SchemaField, error) {
-	qc, newQueryClientErr := duckdb.NewQueryClient(env, c.Logger)
+	qc, newQueryClientErr := duckdb.NewQueryClient(ctx, env, c.Logger)
 	if newQueryClientErr != nil {
 		return nil, fmt.Errorf("failed to create DuckDB client: %w", newQueryClientErr)
 	}
@@ -124,12 +126,12 @@ func getDuckDBSchema(
 		"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s;",
 		selector,
 	)
-	if _, executeNonQueryErr := qc.ExecuteNonQuery(viewSQL); executeNonQueryErr != nil {
+	if _, executeNonQueryErr := qc.ExecuteNonQuery(ctx, viewSQL); executeNonQueryErr != nil {
 		return nil, fmt.Errorf("failed to create view: %w", executeNonQueryErr)
 	}
 
 	// fetch schema with nullability
-	rows, executeQueryErr := qc.ExecuteQuery(`
+	rows, executeQueryErr := qc.ExecuteQuery(ctx, `
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_schema='main' AND table_name='table_view'

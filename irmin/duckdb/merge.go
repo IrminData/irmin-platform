@@ -1,6 +1,7 @@
 package duckdb
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -45,6 +46,7 @@ type MergeFileResult struct {
 //
 // Returns the merged file content or an error.
 func (c *QueryClient) MergeFiles(
+	ctx context.Context,
 	sourceFiles map[string][]byte,
 	destinationPath string,
 	strategy MergeStrategy,
@@ -72,20 +74,21 @@ func (c *QueryClient) MergeFiles(
 	}
 
 	// Create temporary files for each source
-	tempFiles, cleanup, err := c.createTempSourceFiles(sourceFiles)
+	tempFiles, cleanup, err := c.createTempSourceFiles(ctx, sourceFiles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary source files: %w", err)
 	}
 	defer cleanup()
 
 	// Analyze schemas and build union schema
-	unionSchema, err := c.buildUnionSchema(tempFiles)
+	unionSchema, err := c.buildUnionSchema(ctx, tempFiles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build union schema: %w", err)
 	}
 
 	// Execute merge query
 	mergedContent, err := c.executeMergeQuery(
+		ctx,
 		tempFiles,
 		unionSchema,
 		destReadOpts,
@@ -110,7 +113,10 @@ func (c *QueryClient) MergeFiles(
 }
 
 // createTempSourceFiles creates temporary files for all source files.
-func (c *QueryClient) createTempSourceFiles(sourceFiles map[string][]byte) (map[string]string, func(), error) {
+func (c *QueryClient) createTempSourceFiles(
+	ctx context.Context,
+	sourceFiles map[string][]byte,
+) (map[string]string, func(), error) {
 	tempFiles := make(map[string]string)
 	var cleanupFuncs []func()
 
@@ -121,7 +127,7 @@ func (c *QueryClient) createTempSourceFiles(sourceFiles map[string][]byte) (map[
 	}
 
 	for sourcePath, content := range sourceFiles {
-		tempPath, cleanupFunc, err := c.createSingleTempFile(sourcePath, content)
+		tempPath, cleanupFunc, err := c.createSingleTempFile(ctx, sourcePath, content)
 		if err != nil {
 			cleanup()
 			return nil, nil, err
@@ -135,7 +141,11 @@ func (c *QueryClient) createTempSourceFiles(sourceFiles map[string][]byte) (map[
 }
 
 // createSingleTempFile creates a single temporary file for the given source.
-func (c *QueryClient) createSingleTempFile(sourcePath string, content []byte) (string, func(), error) {
+func (c *QueryClient) createSingleTempFile(
+	ctx context.Context,
+	sourcePath string,
+	content []byte,
+) (string, func(), error) {
 	objectDetails := irminutils.ParseObjectDetailsFromPath(sourcePath)
 
 	tempFile, createTempFileErr := os.CreateTemp("", "duckdb-merge-*"+objectDetails.Name)
@@ -146,11 +156,11 @@ func (c *QueryClient) createSingleTempFile(sourcePath string, content []byte) (s
 	tempPath := tempFile.Name()
 	cleanup := func() {
 		if removeTempPathErr := os.Remove(tempPath); removeTempPathErr != nil {
-			c.logger.Error("failed to remove temp file", "error", removeTempPathErr)
+			c.logger.ErrorContext(ctx, "failed to remove temp file", "error", removeTempPathErr)
 		}
 	}
 
-	if writeAndCloseErr := c.writeAndCloseTempFile(tempFile, content, sourcePath); writeAndCloseErr != nil {
+	if writeAndCloseErr := c.writeAndCloseTempFile(ctx, tempFile, content, sourcePath); writeAndCloseErr != nil {
 		cleanup()
 		return "", nil, writeAndCloseErr
 	}
@@ -159,19 +169,24 @@ func (c *QueryClient) createSingleTempFile(sourcePath string, content []byte) (s
 }
 
 // writeAndCloseTempFile writes content to temp file and closes it properly.
-func (c *QueryClient) writeAndCloseTempFile(tempFile *os.File, content []byte, sourcePath string) error {
+func (c *QueryClient) writeAndCloseTempFile(
+	ctx context.Context,
+	tempFile *os.File,
+	content []byte,
+	sourcePath string,
+) error {
 	// Write content using the existing file handle
 	if _, err := tempFile.Write(content); err != nil {
 		closeErr := tempFile.Close()
 		if closeErr != nil {
-			c.logger.Error("failed to close temp file", "error", closeErr)
+			c.logger.ErrorContext(ctx, "failed to close temp file", "error", closeErr)
 		}
 		return fmt.Errorf("failed to write temp file for %s: %w", sourcePath, err)
 	}
 
 	// Close the file handle
 	if closeErr := tempFile.Close(); closeErr != nil {
-		c.logger.Error("failed to close temp file", "error", closeErr)
+		c.logger.ErrorContext(ctx, "failed to close temp file", "error", closeErr)
 		return fmt.Errorf("failed to close temp file for %s: %w", sourcePath, closeErr)
 	}
 
@@ -185,7 +200,7 @@ type ColumnSchema struct {
 }
 
 // analyzeFileSchema analyzes a single file's schema and returns column information.
-func (c *QueryClient) analyzeFileSchema(sourcePath, tempPath string) ([]ColumnSchema, error) {
+func (c *QueryClient) analyzeFileSchema(ctx context.Context, sourcePath, tempPath string) ([]ColumnSchema, error) {
 	objectDetails := irminutils.ParseObjectDetailsFromPath(sourcePath)
 	readOpts, err := GetDuckDBReadOptions(objectDetails.ContentType)
 	if err != nil {
@@ -196,7 +211,7 @@ func (c *QueryClient) analyzeFileSchema(sourcePath, tempPath string) ([]ColumnSc
 	readQueryPart := BuildReadQuery(tempPath, readOpts)
 	describeQuery := fmt.Sprintf("DESCRIBE SELECT * FROM %s;", readQueryPart)
 
-	rows, err := c.ExecuteQuery(describeQuery)
+	rows, err := c.ExecuteQuery(ctx, describeQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to describe schema for %s: %w", sourcePath, err)
 	}
@@ -271,12 +286,12 @@ func mergeColumnSchemas(allFileSchemas map[string][]ColumnSchema) []ColumnSchema
 }
 
 // buildUnionSchema analyzes all source files and creates a unified schema.
-func (c *QueryClient) buildUnionSchema(tempFiles map[string]string) ([]ColumnSchema, error) {
+func (c *QueryClient) buildUnionSchema(ctx context.Context, tempFiles map[string]string) ([]ColumnSchema, error) {
 	allFileSchemas := make(map[string][]ColumnSchema)
 
 	// Analyze each source file's schema
 	for sourcePath, tempPath := range tempFiles {
-		fileSchema, err := c.analyzeFileSchema(sourcePath, tempPath)
+		fileSchema, err := c.analyzeFileSchema(ctx, sourcePath, tempPath)
 		if err != nil {
 			return nil, err
 		}
@@ -318,6 +333,7 @@ func resolveTypeConflict(types map[string]bool) string {
 
 // executeMergeQuery performs the actual merge operation using DuckDB.
 func (c *QueryClient) executeMergeQuery(
+	ctx context.Context,
 	tempFiles map[string]string,
 	schema []ColumnSchema,
 	destReadOpts *ReadOptions,
@@ -325,7 +341,7 @@ func (c *QueryClient) executeMergeQuery(
 	strategy MergeStrategy,
 ) ([]byte, error) {
 	// Build individual SELECT queries for each source file
-	selectQueries, err := c.buildSelectQueries(tempFiles, schema)
+	selectQueries, err := c.buildSelectQueries(ctx, tempFiles, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +358,7 @@ func (c *QueryClient) executeMergeQuery(
 
 	// Build and execute the copy query
 	copyQuery := c.buildCopyQuery(finalQuery, tempOutputPath, destReadOpts)
-	if _, execErr := c.ExecuteNonQuery(copyQuery); execErr != nil {
+	if _, execErr := c.ExecuteNonQuery(ctx, copyQuery); execErr != nil {
 		return nil, fmt.Errorf("failed to execute merge query: %w", execErr)
 	}
 
@@ -356,7 +372,11 @@ func (c *QueryClient) executeMergeQuery(
 }
 
 // buildSelectQueries creates SELECT queries for each source file with schema alignment.
-func (c *QueryClient) buildSelectQueries(tempFiles map[string]string, schema []ColumnSchema) ([]string, error) {
+func (c *QueryClient) buildSelectQueries(
+	ctx context.Context,
+	tempFiles map[string]string,
+	schema []ColumnSchema,
+) ([]string, error) {
 	var selectQueries []string
 
 	for sourcePath, tempPath := range tempFiles {
@@ -369,7 +389,7 @@ func (c *QueryClient) buildSelectQueries(tempFiles map[string]string, schema []C
 		readQueryPart := BuildReadQuery(tempPath, readOpts)
 
 		// Get the actual schema of this specific file
-		fileSchema, err := c.analyzeFileSchema(sourcePath, tempPath)
+		fileSchema, err := c.analyzeFileSchema(ctx, sourcePath, tempPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to analyze schema for %s: %w", sourcePath, err)
 		}

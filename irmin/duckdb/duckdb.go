@@ -1,6 +1,7 @@
 package duckdb
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"irmin-api/utils"
@@ -22,7 +23,7 @@ type QueryClient struct {
 // NewQueryClient creates a new client for querying data from LakeFS.
 // It configures the DuckDB connection with the required S3 / LakeFS settings.
 // Returns the client and an error if encountered.
-func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error) {
+func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error) {
 	// Open a connection to DuckDB (empty string uses an in-memory database).
 	db, err := sql.Open("duckdb", "")
 	if err != nil {
@@ -30,7 +31,7 @@ func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, e
 	}
 
 	// Install and load HTTPFS extension (required for S3/LakeFS access).
-	_, err = db.Exec("INSTALL httpfs; LOAD httpfs;")
+	_, err = db.ExecContext(ctx, "INSTALL httpfs; LOAD httpfs;")
 	if err != nil {
 		return nil, fmt.Errorf("failed to install and load httpfs extension: %w", err)
 	}
@@ -46,9 +47,9 @@ func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, e
 			"iceberg",      // Support for Apache Iceberg format
 			"autocomplete", // Enhanced autocomplete functionality
 		}
-		client.installOptionalExtensions(optionalExtensions, logger)
+		client.installOptionalExtensions(ctx, optionalExtensions, logger)
 	} else {
-		logger.Debug("skipping optional extensions installation")
+		logger.DebugContext(ctx, "skipping optional extensions installation")
 	}
 
 	// Configure S3 / LakeFS connection secret.
@@ -66,7 +67,7 @@ func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, e
 		env.S3Region,
 		strings.TrimPrefix(env.LakeFSURL, "https://"),
 	)
-	_, err = db.Exec(createCredentialsQuery)
+	_, err = db.ExecContext(ctx, createCredentialsQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create S3 / LakeFS credentials: %w", err)
 	}
@@ -76,21 +77,21 @@ func NewQueryClient(env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, e
 
 // installOptionalExtensions attempts to install and load optional DuckDB extensions.
 // It logs warnings for any failures but doesn't return errors since these are optional.
-func (c *QueryClient) installOptionalExtensions(extensions []string, logger *slog.Logger) {
+func (c *QueryClient) installOptionalExtensions(ctx context.Context, extensions []string, logger *slog.Logger) {
 	for _, ext := range extensions {
 		installQuery := fmt.Sprintf("INSTALL %s;", ext)
 		loadQuery := fmt.Sprintf("LOAD %s;", ext)
 
-		_, installErr := c.db.Exec(installQuery)
+		_, installErr := c.db.ExecContext(ctx, installQuery)
 		if installErr == nil {
-			_, loadErr := c.db.Exec(loadQuery)
+			_, loadErr := c.db.ExecContext(ctx, loadQuery)
 			if loadErr != nil {
-				logger.Warn("failed to load extension", "extension", ext, "error", loadErr)
+				logger.WarnContext(ctx, "failed to load extension", "extension", ext, "error", loadErr)
 			} else {
-				logger.Debug("successfully loaded extension", "extension", ext)
+				logger.DebugContext(ctx, "successfully loaded extension", "extension", ext)
 			}
 		} else {
-			logger.Warn("failed to install extension", "extension", ext, "error", installErr)
+			logger.WarnContext(ctx, "failed to install extension", "extension", ext, "error", installErr)
 		}
 	}
 }
@@ -100,9 +101,9 @@ func (c *QueryClient) installOptionalExtensions(extensions []string, logger *slo
 //
 // query: the SQL query to execute.
 // args: optional arguments for the query.
-func (c *QueryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error) {
+func (c *QueryClient) ExecuteQuery(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	// Execute the query and return the rows and any error encountered.
-	rows, err := c.db.Query(query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,9 +114,9 @@ func (c *QueryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error)
 //
 // query: the SQL statement to execute.
 // args: optional arguments for the statement.
-func (c *QueryClient) ExecuteNonQuery(query string, args ...any) (sql.Result, error) {
+func (c *QueryClient) ExecuteNonQuery(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	// Execute the statement and return the result and any error encountered.
-	result, err := c.db.Exec(query, args...)
+	result, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

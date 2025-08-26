@@ -98,6 +98,7 @@ func TestApplyFieldMappingsDirectly(t *testing.T) {
 
 	// Apply field mappings
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		employeeData,
 		"employees.csv",
@@ -161,6 +162,7 @@ May,South,Widget B,11000`)
 
 	// Test merge functionality
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"annual_sales.csv",
 		duckdb.MergeStrategyUnionDistinct,
@@ -217,6 +219,7 @@ func TestCrossFormatFieldMapping(t *testing.T) {
 
 	// Apply field mappings
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		csvData,
 		"users.csv",
@@ -256,6 +259,7 @@ func TestSchemaConflictHandling(t *testing.T) {
 
 	// Test merge with schema differences
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"unified_employees.csv",
 		duckdb.MergeStrategyUnion,
@@ -298,6 +302,7 @@ func TestLargeDatasetHandling(t *testing.T) {
 
 	// Test merge with larger datasets
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"all_employees.csv",
 		duckdb.MergeStrategyUnion,
@@ -344,6 +349,7 @@ Widget B,North,Q1,15000`)
 
 	// Apply field mappings
 	result, err := suite.engineClient.ApplyFieldMappings(
+		t.Context(),
 		suite.DuckDBClient,
 		salesData,
 		"sales.csv",

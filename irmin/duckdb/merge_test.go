@@ -38,6 +38,7 @@ Jane,25,Marketing`),
 	}
 
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"merged_employees.csv",
 		duckdb.MergeStrategyUnion,
@@ -69,6 +70,7 @@ Alice,28,HR`),
 	}
 
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"merged_employees.csv",
 		duckdb.MergeStrategyUnion,
@@ -102,6 +104,7 @@ Alice,HR,55000`),
 	}
 
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"merged.csv",
 		duckdb.MergeStrategyUnion,
@@ -134,6 +137,7 @@ Jane,25`),
 	}
 
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"merged.csv",
 		duckdb.MergeStrategyUnion,
@@ -165,6 +169,7 @@ func TestMergeFilesTypeConflictResolution(t *testing.T) {
 	}
 
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"merged.csv",
 		duckdb.MergeStrategyUnion,
@@ -203,6 +208,7 @@ unique2,300`),
 	for _, strategy := range strategies {
 		t.Run(string(strategy), func(t *testing.T) {
 			result, err := suite.DuckDBClient.MergeFiles(
+				t.Context(),
 				sourceFiles,
 				"merged.csv",
 				strategy,
@@ -225,6 +231,7 @@ func TestMergeFilesErrorHandling(t *testing.T) {
 
 	t.Run("no source files", func(t *testing.T) {
 		result, err := suite.DuckDBClient.MergeFiles(
+			t.Context(),
 			map[string][]byte{},
 			"destination.csv",
 			duckdb.MergeStrategyUnion,
@@ -241,6 +248,7 @@ func TestMergeFilesErrorHandling(t *testing.T) {
 		}
 
 		result, err := suite.DuckDBClient.MergeFiles(
+			t.Context(),
 			sourceFiles,
 			"destination.unsupported",
 			duckdb.MergeStrategyUnion,
@@ -273,6 +281,7 @@ func TestMergeFilesPerformance(t *testing.T) {
 	}
 
 	result, err := suite.DuckDBClient.MergeFiles(
+		t.Context(),
 		sourceFiles,
 		"merged_large.csv",
 		duckdb.MergeStrategyUnion,

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -72,7 +73,7 @@ func isIPDisallowed(ip net.IP) bool {
 }
 
 // validateFetchURL performs basic SSRF checks on the URL before issuing a request.
-func validateFetchURL(target *urlpkg.URL) error {
+func validateFetchURL(ctx context.Context, target *urlpkg.URL) error {
 	if target == nil {
 		return errors.New("invalid URL")
 	}
@@ -92,20 +93,21 @@ func validateFetchURL(target *urlpkg.URL) error {
 		return nil
 	}
 	// Otherwise resolve and ensure no private/internal addresses
-	addrs, err := net.LookupIP(host)
+	resolver := &net.Resolver{}
+	addrs, err := resolver.LookupIPAddr(ctx, host)
 	if err != nil {
 		return fmt.Errorf("failed to resolve host: %w", err)
 	}
-	for _, ip := range addrs {
-		if isIPDisallowed(ip) {
-			return errors.New("disallowed resolved IP address")
-		}
+	if slices.ContainsFunc(addrs, func(addr net.IPAddr) bool {
+		return isIPDisallowed(addr.IP)
+	}) {
+		return errors.New("disallowed resolved IP address")
 	}
 	return nil
 }
 
 // NewSafeHTTPClient creates an HTTP client with timeouts, redirect checks, and IP blocking via Dialer.Control.
-func NewSafeHTTPClient() *http.Client {
+func NewSafeHTTPClient(ctx context.Context) *http.Client {
 	dialer := &net.Dialer{
 		Timeout:   time.Duration(httpDialTimeoutSeconds) * time.Second,
 		KeepAlive: time.Duration(httpKeepAliveSeconds) * time.Second,
@@ -149,7 +151,7 @@ func NewSafeHTTPClient() *http.Client {
 			}
 		}
 		// Validate the redirect target as well
-		if err := validateFetchURL(req.URL); err != nil {
+		if err := validateFetchURL(ctx, req.URL); err != nil {
 			return err
 		}
 		return nil
@@ -164,11 +166,11 @@ func DownloadFileFromURL(ctx context.Context, targetURL string, headers map[stri
 	if parseErr != nil {
 		return nil, fmt.Errorf("invalid URL: %w", parseErr)
 	}
-	if validateErr := validateFetchURL(parsedURL); validateErr != nil {
+	if validateErr := validateFetchURL(ctx, parsedURL); validateErr != nil {
 		return nil, validateErr
 	}
 
-	httpClient := NewSafeHTTPClient()
+	httpClient := NewSafeHTTPClient(ctx)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsedURL.String(), nil)
 	if err != nil {
