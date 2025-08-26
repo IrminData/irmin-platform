@@ -1,6 +1,7 @@
 package duckdb
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -44,6 +45,7 @@ type MergeResult struct {
 //
 // Returns the merge result or an error.
 func (c *InMemoryClient) MergeDataSources(
+	ctx context.Context,
 	dataSources map[string][]map[string]any,
 	targetTableName string,
 	strategy MergeStrategy,
@@ -55,7 +57,7 @@ func (c *InMemoryClient) MergeDataSources(
 	// If only one source, create table directly
 	if len(dataSources) == 1 {
 		for sourceName, data := range dataSources {
-			if err := c.CreateTableFromData(targetTableName, data); err != nil {
+			if err := c.CreateTableFromData(ctx, targetTableName, data); err != nil {
 				return nil, fmt.Errorf("failed to create table from single source: %w", err)
 			}
 			return &MergeResult{
@@ -77,7 +79,7 @@ func (c *InMemoryClient) MergeDataSources(
 		sourceNames = append(sourceNames, sourceName)
 		totalRows += len(data)
 
-		if err := c.CreateTableFromData(tempTableName, data); err != nil {
+		if err := c.CreateTableFromData(ctx, tempTableName, data); err != nil {
 			return nil, fmt.Errorf("failed to create temp table for source %s: %w", sourceName, err)
 		}
 	}
@@ -89,7 +91,7 @@ func (c *InMemoryClient) MergeDataSources(
 	}
 
 	// Execute merge query
-	if _, execErr := c.db.Exec(mergeQuery); execErr != nil {
+	if _, execErr := c.db.ExecContext(ctx, mergeQuery); execErr != nil {
 		return nil, fmt.Errorf("failed to execute merge query: %w", execErr)
 	}
 
@@ -97,16 +99,23 @@ func (c *InMemoryClient) MergeDataSources(
 	var finalRowCount int
 	countQuery, queryErr := buildCountQuery(targetTableName)
 	if queryErr != nil {
-		c.logger.Warn("invalid target table name for count query", "table", targetTableName, "error", queryErr)
+		c.logger.WarnContext(
+			ctx,
+			"invalid target table name for count query",
+			"table",
+			targetTableName,
+			"error",
+			queryErr,
+		)
 		finalRowCount = totalRows // fallback
 	} else {
-		if scanErr := c.db.QueryRow(countQuery).Scan(&finalRowCount); scanErr != nil {
+		if scanErr := c.db.QueryRowContext(ctx, countQuery).Scan(&finalRowCount); scanErr != nil {
 			finalRowCount = totalRows // fallback
 		}
 	}
 
 	// Clean up temporary tables
-	c.cleanupTempTables(tempTableNames)
+	c.cleanupTempTables(ctx, tempTableNames)
 
 	return &MergeResult{
 		TableName:   targetTableName,
@@ -118,6 +127,7 @@ func (c *InMemoryClient) MergeDataSources(
 // MergeFiles merges multiple files from byte content into a single table.
 // This is useful for processing files loaded into memory.
 func (c *InMemoryClient) MergeFiles(
+	ctx context.Context,
 	sourceFiles map[string][]byte,
 	targetTableName string,
 	strategy MergeStrategy,
@@ -127,7 +137,7 @@ func (c *InMemoryClient) MergeFiles(
 	}
 
 	// Process files and create temporary tables
-	tempTableNames, sourceNames, cleanup, err := c.processFilesForMerge(sourceFiles, targetTableName)
+	tempTableNames, sourceNames, cleanup, err := c.processFilesForMerge(ctx, sourceFiles, targetTableName)
 	if err != nil {
 		return nil, err
 	}
@@ -139,11 +149,12 @@ func (c *InMemoryClient) MergeFiles(
 	}()
 
 	// Execute merge operation
-	return c.executeMergeOperation(tempTableNames, sourceNames, targetTableName, strategy)
+	return c.executeMergeOperation(ctx, tempTableNames, sourceNames, targetTableName, strategy)
 }
 
 // processFilesForMerge handles the creation of temporary files and tables from source files.
 func (c *InMemoryClient) processFilesForMerge(
+	ctx context.Context,
 	sourceFiles map[string][]byte,
 	targetTableName string,
 ) ([]string, []string, []func(), error) {
@@ -175,7 +186,7 @@ func (c *InMemoryClient) processFilesForMerge(
 		sourceNames = append(sourceNames, filename)
 
 		var loadErr error
-		if loadErr = c.loadFileAsTableFromPath(tempFilePath, filename, tempTableName); loadErr != nil {
+		if loadErr = c.loadFileAsTableFromPath(ctx, tempFilePath, filename, tempTableName); loadErr != nil {
 			return nil, nil, cleanup, fmt.Errorf("failed to load file %s as table: %w", filename, loadErr)
 		}
 	}
@@ -200,6 +211,7 @@ func (c *InMemoryClient) writeAndCloseFile(tempFile *os.File, content []byte) er
 
 // executeMergeOperation performs the actual merge operation and cleanup.
 func (c *InMemoryClient) executeMergeOperation(
+	ctx context.Context,
 	tempTableNames, sourceNames []string,
 	targetTableName string,
 	strategy MergeStrategy,
@@ -210,7 +222,7 @@ func (c *InMemoryClient) executeMergeOperation(
 		return nil, fmt.Errorf("failed to build merge query: %w", err)
 	}
 
-	if _, execErr := c.db.Exec(mergeQuery); execErr != nil {
+	if _, execErr := c.db.ExecContext(ctx, mergeQuery); execErr != nil {
 		return nil, fmt.Errorf("failed to execute merge query: %w", execErr)
 	}
 
@@ -218,15 +230,22 @@ func (c *InMemoryClient) executeMergeOperation(
 	var finalRowCount int
 	countQuery, queryErr := buildCountQuery(targetTableName)
 	if queryErr != nil {
-		c.logger.Warn("invalid target table name for count query", "table", targetTableName, "error", queryErr)
+		c.logger.WarnContext(
+			ctx,
+			"invalid target table name for count query",
+			"table",
+			targetTableName,
+			"error",
+			queryErr,
+		)
 	} else {
-		if scanErr := c.db.QueryRow(countQuery).Scan(&finalRowCount); scanErr != nil {
-			c.logger.Warn("failed to get row count", "error", scanErr)
+		if scanErr := c.db.QueryRowContext(ctx, countQuery).Scan(&finalRowCount); scanErr != nil {
+			c.logger.WarnContext(ctx, "failed to get row count", "error", scanErr)
 		}
 	}
 
 	// Clean up temporary tables
-	c.cleanupTempTables(tempTableNames)
+	c.cleanupTempTables(ctx, tempTableNames)
 
 	return &MergeResult{
 		TableName:   targetTableName,
@@ -236,17 +255,17 @@ func (c *InMemoryClient) executeMergeOperation(
 }
 
 // cleanupTempTables removes temporary tables from the database.
-func (c *InMemoryClient) cleanupTempTables(tempTableNames []string) {
+func (c *InMemoryClient) cleanupTempTables(ctx context.Context, tempTableNames []string) {
 	for _, tempTable := range tempTableNames {
 		dropQuery := fmt.Sprintf("DROP TABLE IF EXISTS %s", tempTable)
-		if _, dropErr := c.db.Exec(dropQuery); dropErr != nil {
-			c.logger.Warn("failed to drop temporary table", "table", tempTable, "error", dropErr)
+		if _, dropErr := c.db.ExecContext(ctx, dropQuery); dropErr != nil {
+			c.logger.WarnContext(ctx, "failed to drop temporary table", "table", tempTable, "error", dropErr)
 		}
 	}
 }
 
 // loadFileAsTable overloaded version that accepts byte data.
-func (c *InMemoryClient) loadFileAsTable(data []byte, originalFilename, tableName string) error {
+func (c *InMemoryClient) loadFileAsTable(ctx context.Context, data []byte, originalFilename, tableName string) error {
 	// Validate format is supported before proceeding
 	if !IsFormatSupported(originalFilename) {
 		return fmt.Errorf("unsupported format for %s", originalFilename)
@@ -269,11 +288,14 @@ func (c *InMemoryClient) loadFileAsTable(data []byte, originalFilename, tableNam
 	}
 
 	// Create table from file using the file path version
-	return c.loadFileAsTableFromPath(tempFile.Name(), originalFilename, tableName)
+	return c.loadFileAsTableFromPath(ctx, tempFile.Name(), originalFilename, tableName)
 }
 
 // loadFileAsTableFromPath loads a file from a file path into DuckDB as a table.
-func (c *InMemoryClient) loadFileAsTableFromPath(filePath, originalFilename, tableName string) error {
+func (c *InMemoryClient) loadFileAsTableFromPath(
+	ctx context.Context,
+	filePath, originalFilename, tableName string,
+) error {
 	options, err := GetDuckDBReadOptions(originalFilename)
 	if err != nil {
 		return fmt.Errorf("unsupported format for %s: %w", originalFilename, err)
@@ -284,11 +306,11 @@ func (c *InMemoryClient) loadFileAsTableFromPath(filePath, originalFilename, tab
 		installQuery := fmt.Sprintf("INSTALL %s;", ext)
 		loadQuery := fmt.Sprintf("LOAD %s;", ext)
 
-		if _, installErr := c.db.Exec(installQuery); installErr != nil {
-			c.logger.Warn("failed to install extension", "extension", ext, "error", installErr)
+		if _, installErr := c.db.ExecContext(ctx, installQuery); installErr != nil {
+			c.logger.WarnContext(ctx, "failed to install extension", "extension", ext, "error", installErr)
 		}
-		if _, loadErr := c.db.Exec(loadQuery); loadErr != nil {
-			c.logger.Warn("failed to load extension", "extension", ext, "error", loadErr)
+		if _, loadErr := c.db.ExecContext(ctx, loadQuery); loadErr != nil {
+			c.logger.WarnContext(ctx, "failed to load extension", "extension", ext, "error", loadErr)
 		}
 	}
 
@@ -303,7 +325,7 @@ func (c *InMemoryClient) loadFileAsTableFromPath(filePath, originalFilename, tab
 		return fmt.Errorf("invalid table name: %w", queryErr)
 	}
 
-	if _, createErr := c.db.Exec(createQuery); createErr != nil {
+	if _, createErr := c.db.ExecContext(ctx, createQuery); createErr != nil {
 		return fmt.Errorf("failed to create table %s from file: %w", tableName, createErr)
 	}
 
@@ -321,7 +343,7 @@ func (c *InMemoryClient) buildMergeQuery(
 	}
 
 	// Validate and quote target table name to prevent SQL injection
-	validatedTargetTable, err := validateSQLIdentifierForMerge(targetTableName)
+	validatedTargetTable, err := ValidateSQLIdentifier(targetTableName)
 	if err != nil {
 		return "", fmt.Errorf("invalid target table name: %w", err)
 	}
@@ -329,7 +351,7 @@ func (c *InMemoryClient) buildMergeQuery(
 	// Validate and quote all source table names to prevent SQL injection
 	var validatedSourceTables []string
 	for _, tableName := range sourceTableNames {
-		validatedTable, validateSQLIdentifierForMergeErr := validateSQLIdentifierForMerge(tableName)
+		validatedTable, validateSQLIdentifierForMergeErr := ValidateSQLIdentifier(tableName)
 		if validateSQLIdentifierForMergeErr != nil {
 			return "", fmt.Errorf("invalid source table name '%s': %w", tableName, validateSQLIdentifierForMergeErr)
 		}
@@ -431,15 +453,9 @@ func CleanTableName(name string) string {
 	return name
 }
 
-// validateSQLIdentifierForMerge validates and safely quotes SQL identifiers for merge operations.
-// This helps prevent SQL injection by ensuring only valid identifiers are used.
-func validateSQLIdentifierForMerge(identifier string) (string, error) {
-	return ValidateSQLIdentifier(identifier)
-}
-
 // buildCountQuery safely constructs a COUNT query for a table.
 func buildCountQuery(tableName string) (string, error) {
-	safeTableName, err := validateSQLIdentifierForMerge(tableName)
+	safeTableName, err := ValidateSQLIdentifier(tableName)
 	if err != nil {
 		return "", err
 	}
@@ -450,7 +466,7 @@ func buildCountQuery(tableName string) (string, error) {
 
 // buildCreateTableQuery safely constructs a CREATE TABLE AS query.
 func buildCreateTableQuery(tableName, fromClause string) (string, error) {
-	safeTableName, err := validateSQLIdentifierForMerge(tableName)
+	safeTableName, err := ValidateSQLIdentifier(tableName)
 	if err != nil {
 		return "", err
 	}

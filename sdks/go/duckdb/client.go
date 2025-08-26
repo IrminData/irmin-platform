@@ -1,6 +1,7 @@
 package duckdb
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -23,7 +24,7 @@ type InMemoryClient struct {
 // NewInMemoryClient creates a new client for in-memory data processing with DuckDB.
 // It configures the DuckDB connection without external storage dependencies.
 // Returns the client and an error if encountered.
-func NewInMemoryClient(logger *slog.Logger) (*InMemoryClient, error) {
+func NewInMemoryClient(ctx context.Context, logger *slog.Logger) (*InMemoryClient, error) {
 	// Open a connection to DuckDB using an in-memory database.
 	db, err := sql.Open("duckdb", "")
 	if err != nil {
@@ -41,7 +42,7 @@ func NewInMemoryClient(logger *slog.Logger) (*InMemoryClient, error) {
 		"autocomplete", // Enhanced autocomplete functionality
 		"json",         // Enhanced JSON processing
 	}
-	client.installOptionalExtensions(optionalExtensions, logger)
+	client.installOptionalExtensions(ctx, optionalExtensions, logger)
 
 	// Return the client.
 	return client, nil
@@ -49,21 +50,21 @@ func NewInMemoryClient(logger *slog.Logger) (*InMemoryClient, error) {
 
 // installOptionalExtensions attempts to install and load optional DuckDB extensions.
 // It logs warnings for any failures but doesn't return errors since these are optional.
-func (c *InMemoryClient) installOptionalExtensions(extensions []string, logger *slog.Logger) {
+func (c *InMemoryClient) installOptionalExtensions(ctx context.Context, extensions []string, logger *slog.Logger) {
 	for _, ext := range extensions {
 		installQuery := fmt.Sprintf("INSTALL %s;", ext)
 		loadQuery := fmt.Sprintf("LOAD %s;", ext)
 
-		_, installErr := c.db.Exec(installQuery)
+		_, installErr := c.db.ExecContext(ctx, installQuery)
 		if installErr == nil {
-			_, loadErr := c.db.Exec(loadQuery)
+			_, loadErr := c.db.ExecContext(ctx, loadQuery)
 			if loadErr != nil {
-				logger.Warn("failed to load extension", "extension", ext, "error", loadErr)
+				logger.WarnContext(ctx, "failed to load extension", "extension", ext, "error", loadErr)
 			} else {
-				logger.Debug("successfully loaded extension", "extension", ext)
+				logger.DebugContext(ctx, "successfully loaded extension", "extension", ext)
 			}
 		} else {
-			logger.Warn("failed to install extension", "extension", ext, "error", installErr)
+			logger.WarnContext(ctx, "failed to install extension", "extension", ext, "error", installErr)
 		}
 	}
 }
@@ -73,9 +74,9 @@ func (c *InMemoryClient) installOptionalExtensions(extensions []string, logger *
 //
 // query: the SQL query to execute.
 // args: optional arguments for the query.
-func (c *InMemoryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, error) {
+func (c *InMemoryClient) ExecuteQuery(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	// Execute the query and return the rows and any error encountered.
-	rows, err := c.db.Query(query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,9 +87,9 @@ func (c *InMemoryClient) ExecuteQuery(query string, args ...any) (*sql.Rows, err
 //
 // query: the SQL statement to execute.
 // args: optional arguments for the statement.
-func (c *InMemoryClient) ExecuteNonQuery(query string, args ...any) (sql.Result, error) {
+func (c *InMemoryClient) ExecuteNonQuery(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	// Execute the statement and return the result and any error encountered.
-	result, err := c.db.Exec(query, args...)
+	result, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (c *InMemoryClient) ExecuteNonQuery(query string, args ...any) (sql.Result,
 
 // CreateTableFromData creates a table in DuckDB from in-memory data.
 // This is useful for loading data directly into DuckDB for processing.
-func (c *InMemoryClient) CreateTableFromData(tableName string, data []map[string]any) error {
+func (c *InMemoryClient) CreateTableFromData(ctx context.Context, tableName string, data []map[string]any) error {
 	if len(data) == 0 {
 		return fmt.Errorf("no data provided for table %s", tableName)
 	}
@@ -138,7 +139,7 @@ func (c *InMemoryClient) CreateTableFromData(tableName string, data []map[string
 	if queryErr != nil {
 		return fmt.Errorf("invalid table name: %w", queryErr)
 	}
-	if _, execErr := c.db.Exec(createQuery); execErr != nil {
+	if _, execErr := c.db.ExecContext(ctx, createQuery); execErr != nil {
 		return fmt.Errorf("failed to create table %s: %w", tableName, execErr)
 	}
 
@@ -155,7 +156,7 @@ func (c *InMemoryClient) CreateTableFromData(tableName string, data []map[string
 			return fmt.Errorf("failed to build insert query: %w", insertQueryErr)
 		}
 
-		if _, insertErr := c.db.Exec(insertQuery, rowValues...); insertErr != nil {
+		if _, insertErr := c.db.ExecContext(ctx, insertQuery, rowValues...); insertErr != nil {
 			return fmt.Errorf("failed to insert data into table %s: %w", tableName, insertErr)
 		}
 	}
@@ -165,8 +166,8 @@ func (c *InMemoryClient) CreateTableFromData(tableName string, data []map[string
 
 // QueryToMap executes a query and returns the results as a slice of maps.
 // This is convenient for working with query results in Go.
-func (c *InMemoryClient) QueryToMap(query string, args ...any) ([]map[string]any, error) {
-	rows, err := c.ExecuteQuery(query, args...)
+func (c *InMemoryClient) QueryToMap(ctx context.Context, query string, args ...any) ([]map[string]any, error) {
+	rows, err := c.ExecuteQuery(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -2,24 +2,24 @@ name: Lint
 
 on:
   pull_request:
-    branches: [main, master, development]
+    branches: [main, development]
 
 # Prevent concurrent runs of the same workflow on the same PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Set read-only permissions
+# Set permissions
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   golangci:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -30,11 +30,28 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.6
+          version: v2.4.0
           args: --timeout=5m
           skip-cache: true
 
-      - name: Notify on Failure
+      - name: Create or update PR comment on failure
         if: failure()
-        run: |
-          echo "Linting failed! Please check the workflow run for details."
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          header: lint
+          message: |
+            ❌ Linting failed!
+
+            Please check the workflow run for details and fix the issues manually.
+
+      - name: Create or update PR comment on success
+        if: success()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          header: lint
+          message: |
+            ✅ Linting passed successfully!
+
+            All code style checks and static analysis completed without issues.

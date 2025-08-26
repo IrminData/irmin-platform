@@ -1,0 +1,979 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>github.com/IrminData/irmin-sdk-go/models</title></head><body>
+<h1>Package github.com/IrminData/irmin-sdk-go/models</h1>
+<pre>
+package irminmodels // import "github.com/IrminData/irmin-sdk-go/models"
+
+
+TYPES
+
+type APIToken struct {
+	ID        string    `json:"id"              validate:"required,validsqid=api_tokens" example:"token_1a2b3c"`
+	CreatedAt time.Time `json:"created_at"      validate:"required"                      example:"2025-01-15T10:30:00Z"`
+	UpdatedAt time.Time `json:"updated_at"      validate:"required"                      example:"2025-12-01T14:22:30Z"`
+	Name      string    `json:"name"            validate:"required,max=100"              example:"API Token 1"`
+	Token     *string   `json:"token,omitempty" validate:"min=64,validtoken"             example:"1a2b3c4d5e6f7g8h9i0j1k22x3y4z5a6b7c8d9e0"`
+	ExpiresAt time.Time `json:"expiry"          validate:"required,gtfield=CreatedAt"    example:"2025-01-15T10:30:00Z"`
+}
+
+type ActionInputData struct {
+	Repository     string `json:"repository"      validate:"required" example:"customer-analytics"`
+	RepositoryRef  string `json:"repository_ref"  validate:"required" example:"main"`
+	RepositoryPath string `json:"repository_path" validate:"required" example:"/data/customers.csv"`
+}
+
+type AssistantConversation struct {
+	ID                string             `json:"id"                 validate:"required,validsqid=assistant_conversations" example:"assistant_conversation_1a2b3c"`
+	Title             string             `json:"title"              validate:"required"                                   example:"My conversation"`
+	WorkspaceID       string             `json:"workspace_id"       validate:"required,validsqid=workspaces"              example:"workspace_1a2b3c"`
+	UserID            string             `json:"user_id"            validate:"required,validsqid=users"                   example:"user_1a2b3c"`
+	Metadata          map[string]any     `json:"metadata"`
+	Messages          []AssistantMessage `json:"messages,omitempty"`
+	TotalMessages     int                `json:"total_messages"`
+	UserMessages      int                `json:"user_messages"`
+	AssistantMessages int                `json:"assistant_messages"`
+	EstimatedTokens   int                `json:"estimated_tokens"`
+	LastMessageAt     *time.Time         `json:"last_message_at"`
+	CreatedAt         time.Time          `json:"created_at"         validate:"required"                                   example:"2025-01-15T10:30:00Z"`
+	UpdatedAt         time.Time          `json:"updated_at"         validate:"required"                                   example:"2025-12-01T14:22:30Z"`
+}
+    AssistantConversation represents a conversation with the AI assistant
+
+type AssistantConversationStats struct {
+	TotalMessages     int       `json:"total_messages"`
+	UserMessages      int       `json:"user_messages"`
+	AssistantMessages int       `json:"assistant_messages"`
+	EstimatedTokens   int       `json:"estimated_tokens"`
+	CreatedAt         time.Time `json:"created_at"`
+	LastUpdated       time.Time `json:"last_updated"`
+	DurationMinutes   int       `json:"duration_minutes"`
+}
+
+type AssistantMessage struct {
+	ID             string                      `json:"id"                      validate:"required,validsqid=assistant_messages"      example:"assistant_message_1a2b3c"`
+	ConversationID string                      `json:"conversation_id"         validate:"required,validsqid=assistant_conversations" example:"assistant_conversation_1a2b3c"`
+	Role           AssistantMessageRole        `json:"role"`
+	Content        string                      `json:"content"`
+	ContentType    AssistantMessageContentType `json:"content_type"                                                                  example:"text"`
+	BlockIndex     *int                        `json:"block_index,omitempty"`
+	Metadata       map[string]any              `json:"metadata"`
+	InputTokens    *int                        `json:"input_tokens"`
+	OutputTokens   *int                        `json:"output_tokens"`
+	AIModel        string                      `json:"ai_model"`
+	Status         AssistantMessageStatus      `json:"status"                  validate:"required,oneof=pending sent error failed"`
+	ErrorMessage   *string                     `json:"error_message,omitempty"`
+	SentAt         time.Time                   `json:"sent_at"`
+	CreatedAt      time.Time                   `json:"created_at"              validate:"required"                                   example:"2025-01-15T10:30:00Z"`
+	UpdatedAt      time.Time                   `json:"updated_at"              validate:"required"                                   example:"2025-01-15T10:30:00Z"`
+}
+
+type AssistantMessageContentType string
+
+const (
+	AssistantMessageContentTypeText                    AssistantMessageContentType = "text"
+	AssistantMessageContentTypeThinking                AssistantMessageContentType = "thinking"
+	AssistantMessageContentTypeRedactedThinking        AssistantMessageContentType = "redacted_thinking"
+	AssistantMessageContentTypeToolUse                 AssistantMessageContentType = "tool_use"
+	AssistantMessageContentTypeServerToolUse           AssistantMessageContentType = "server_tool_use"
+	AssistantMessageContentTypeWebSearchToolResult     AssistantMessageContentType = "web_search_tool_result"
+	AssistantMessageContentTypeCodeExecutionToolResult AssistantMessageContentType = "code_execution_tool_result"
+	AssistantMessageContentTypeMCPToolUse              AssistantMessageContentType = "mcp_tool_use"
+	AssistantMessageContentTypeMCPToolResult           AssistantMessageContentType = "mcp_tool_result"
+	AssistantMessageContentTypeContainerUpload         AssistantMessageContentType = "container_upload"
+)
+type AssistantMessageRole string
+
+const (
+	AssistantMessageRoleUser      AssistantMessageRole = "user"
+	AssistantMessageRoleAssistant AssistantMessageRole = "assistant"
+)
+type AssistantMessageStatus string
+
+const (
+	AssistantMessageStatusPending AssistantMessageStatus = "pending"
+	AssistantMessageStatusSent    AssistantMessageStatus = "sent"
+	AssistantMessageStatusError   AssistantMessageStatus = "error"
+	AssistantMessageStatusFailed  AssistantMessageStatus = "failed"
+)
+type Branch struct {
+	// Name of the branch
+	Name string `json:"name"         validate:"required,max=100,validslug" example:"main"`
+	// Whether the branch is the default branch. Only one branch can be default, usually "main"
+	Default bool `json:"default"                                            example:"true"`
+	// Whether the branch is immutable and cannot be modified. Used for example for migrations
+	IsImmutable bool `json:"is_immutable"                                       example:"false"`
+}
+    Branch represents a repository branch.
+
+type BranchGarbageCollectionRules struct {
+	BranchID      string `json:"branch_id"      validate:"required,validslug"      example:"main"`
+	RetentionDays int    `json:"retention_days" validate:"required,gte=0,lte=3650" example:"30"`
+}
+    BranchGarbageCollectionRules represents the garbage collection rules for a
+    branch.
+
+type ChangeItem struct {
+	// Object affected by the change
+	Object Object `json:"object" validate:"required"`
+	// Type of the change (e.g., added, removed, changed, etc.)
+	Type ChangeType `json:"type"   validate:"required,oneof=added removed changed conflict moved" example:"added"`
+	// Size of the change
+	Size int `json:"size"   validate:"required,min=0"                                      example:"100"`
+}
+    ChangeItem represents a single change in a diff.
+
+type ChangeType string
+    ChangeType represents the type of change in a diff.
+
+const (
+	ChangeTypeAdded    ChangeType = "added"
+	ChangeTypeRemoved  ChangeType = "removed"
+	ChangeTypeChanged  ChangeType = "changed"
+	ChangeTypeConflict ChangeType = "conflict"
+	ChangeTypeMoved    ChangeType = "moved"
+)
+type Commit struct {
+	// Hash of the commit
+	Hash string `json:"hash"                    validate:"required"          example:"1a2b3c4dn7o8p9q0r1s2t3u4v5w6x7y8z9a0b1c2d3"`
+	// Commit message
+	Message string `json:"message"                 validate:"required"          example:"Initial commit"`
+	// Commit timestamp
+	Timestamp string `json:"timestamp"               validate:"required,datetime" example:"2025-01-15T10:30:00Z"`
+	// Commit author
+	Author string `json:"author"                  validate:"required"          example:"John Doe"`
+	// Previous commit hash, if any (optional)
+	PreviousHash *string `json:"previous_hash,omitempty"                              example:"16z7a8b9c02j3k4l5m6n7o8p9q0r1"`
+}
+    Commit represents a repository commit.
+
+type Connection struct {
+	ID            string            `json:"id"             validate:"required,validsqid=connections" example:"conn_5p8q2n7m9x4k"`
+	Name          string            `json:"name"           validate:"required,max=100"               example:"Production MySQL Database"`
+	Description   string            `json:"description"    validate:"max=500"                        example:"Primary MySQL database"`
+	Documentation string            `json:"documentation"  validate:"validdocumentation"             example:"# Production Database"`
+	Details       CustomFieldValues `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
+	Settings      CustomFieldValues `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+	Owner         User              `json:"owner"          validate:"required"`
+	Connector     Connector         `json:"connector"      validate:"required"`
+	Tags          []Tag             `json:"tags,omitempty" validate:"dive"`
+}
+
+type Connector struct {
+	// ID is a unique SQIDidentifier of the connector
+	ID string `json:"id"                validate:"required,validsqid=connectors"                                                                                                                                  example:"conn_9m3x7k2n8q5p"`
+	// Name of the connector
+	Name string `json:"name"              validate:"required,max=100"                                                                                                                                               example:"MySQL Database Connector"`
+	// Description of the connector
+	Description string `json:"description"       validate:"required,max=500"                                                                                                                                               example:"Connect to MySQL databases for data extraction and synchronization"`
+	// Version of the connector (provided by the connector author)
+	Version string `json:"version"           validate:"required,max=20"                                                                                                                                                example:"1.2.3"`
+	// Structure version of the connector (e.g. which connector guideline version the connector is based on)
+	StructureVersion string `json:"structure_version" validate:"required,max=20"                                                                                                                                                example:"1.0.0"`
+	// Author of the connector
+	Author string `json:"author"            validate:"required,max=100"                                                                                                                                               example:"Irmin Team"`
+	// URL to the connector's logo
+	LogoURL string `json:"logo_url"          validate:"required,validimageurl"                                                                                                                                         example:"https://cdn.irmin.dev/mysql.png"`
+	// Array of capabilities of the connector, eg. what kind of operations the connector can perform
+	Capabilities []ConnectorCapability `json:"capabilities"      validate:"required,dive,oneof=pull push push_patch event_webhook"                                                                                                         example:"pull,push"`
+	// Array of locales supported by the connector, eg. what languages the connector supports
+	Locales []string `json:"locales"           validate:"required,dive,min=2,max=5"                                                                                                                                      example:"en,fi"`
+	// Array of categories associated with the connector, eg. what kind of connector it is
+	Categories []ConnectorCategory `json:"categories"        validate:"required,dive,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other" example:"database"`
+	// Primary category of the connector
+	PrimaryCategory ConnectorCategory `json:"primary_category"  validate:"required,oneof=database crm erp warehouse marketing analytics storage messaging payment social calendar project_management ecommerce iot monitoring other"      example:"database"`
+	// Author's email address, eg. who to contact if there are any issues with the connector
+	AuthorEmail string `json:"author_email"      validate:"required,email"                                                                                                                                                 example:"connectors@irmin.dev"`
+	// URL for more information about the connector, eg. a website where the connector is described
+	ReadMoreURL string `json:"read_more_url"     validate:"required,validurl"                                                                                                                                              example:"https://docs.irmin.dev/connectors/mysql"`
+}
+    Connector represents general information about a connector.
+
+type ConnectorCapability string
+    ConnectorCapability represents the capabilities of a connector.
+
+const (
+	// ConnectorCapabilityPull means that data files can be pulled from different paths in the connector.
+	ConnectorCapabilityPull ConnectorCapability = "pull"
+	// ConnectorCapabilityPush means that data files can be pushed to different paths in the connector.
+	ConnectorCapabilityPush ConnectorCapability = "push"
+	// ConnectorCapabilityPushPatch means that JSON Patch based change sets can be pushed to the connector.
+	ConnectorCapabilityPushPatch ConnectorCapability = "push_patch"
+	// ConnectorCapabilityEventWebhook means that the connector can send webhook notifications when something changes in the underlying data.
+	ConnectorCapabilityEventWebhook ConnectorCapability = "event_webhook"
+)
+type ConnectorCategory string
+    ConnectorCategory represents the category of a connector.
+
+const (
+	ConnectorCategoryDatabase          ConnectorCategory = "database"
+	ConnectorCategoryCRM               ConnectorCategory = "crm"
+	ConnectorCategoryERP               ConnectorCategory = "erp"
+	ConnectorCategoryWarehouse         ConnectorCategory = "warehouse"
+	ConnectorCategoryMarketing         ConnectorCategory = "marketing"
+	ConnectorCategoryAnalytics         ConnectorCategory = "analytics"
+	ConnectorCategoryStorage           ConnectorCategory = "storage"
+	ConnectorCategoryMessaging         ConnectorCategory = "messaging"
+	ConnectorCategoryPayment           ConnectorCategory = "payment"
+	ConnectorCategorySocial            ConnectorCategory = "social"
+	ConnectorCategoryCalendar          ConnectorCategory = "calendar"
+	ConnectorCategoryProjectManagement ConnectorCategory = "project_management"
+	ConnectorCategoryECommerce         ConnectorCategory = "ecommerce"
+	ConnectorCategoryIoT               ConnectorCategory = "iot"
+	ConnectorCategoryMonitoring        ConnectorCategory = "monitoring"
+	ConnectorCategoryOther             ConnectorCategory = "other"
+)
+type ConnectorConfigurationValidationResult struct {
+	OK                      bool     `json:"ok"                        example:"true"`                                                       // Indicates if the configuration is valid
+	CanConnect              bool     `json:"can_connect"               example:"true"`                                                       // Indicates if the connector can connect to the external system
+	ConnectionDetailsValid  bool     `json:"connection_details_valid"  example:"true"`                                                       // Indicates if the connection details are valid
+	ConnectionSettingsValid bool     `json:"connection_settings_valid" example:"true"`                                                       // Indicates if the connection settings are valid
+	Errors                  []string `json:"errors,omitempty"          example:"Invalid host address,Authentication failed" validate:"dive"` // (Optional) Array of validation errors
+}
+    ConnectorConfigurationValidationResult represents the validation result of a
+    connector configuration.
+
+type ConnectorEvent struct {
+	// Type of the event
+	Type ConnectorEventType `json:"type"      validate:"required,oneof=create update delete" example:"create"`
+	// Irmin path of the event (e.g. /maindb/users.json/1/name)
+	Path string `json:"path"      validate:"required"                            example:"/maindb/users.json/1/name"`
+	// Timestamp of the event in milliseconds since the Unix epoch
+	Timestamp int64 `json:"timestamp" validate:"required,min=0"                      example:"1717334400000"`
+}
+    ConnectorEvent represents a webhook event sent by a connector when a change
+    in the data occurs.
+
+type ConnectorEventType string
+    ConnectorEventType represents the type of webhook event sent by a connector.
+
+const (
+	ConnectorEventTypeCreate ConnectorEventType = "create"
+	ConnectorEventTypeUpdate ConnectorEventType = "update"
+	ConnectorEventTypeDelete ConnectorEventType = "delete"
+)
+type CustomFieldValues map[string]string
+
+type Diff struct {
+	// Slug of the repository
+	Repository string `json:"repository"        validate:"required,validslug" example:"customer-analytics"`
+	// Base reference
+	BaseRef string `json:"base_ref"          validate:"required"           example:"main"`
+	// Compare reference
+	CompareRef string `json:"compare_ref"       validate:"required"           example:"development"`
+	// List of changes in the diff
+	Items []ChangeItem `json:"items"             validate:"required,dive"`
+	// List of commits between the refs
+	Commits []Commit `json:"commits,omitempty" validate:"dive"`
+}
+    Diff represents the difference between two refs.
+
+type DynamicField struct {
+	Type         FieldType      `json:"type"                    validate:"required,oneof=text textarea password email checkbox integer float select radio file date time datetime" example:"text"`
+	Label        string         `json:"label"                   validate:"required,max=100"                                                                                        example:"Name"`
+	Min          float64        `json:"min,omitempty"                                                                                                                              example:"1"`
+	Max          float64        `json:"max,omitempty"                                                                                                                              example:"100"`
+	Multiple     bool           `json:"multiple,omitempty"                                                                                                                         example:"false"`
+	Options      []SelectOption `json:"options,omitempty"       validate:"dive"`
+	HelpText     string         `json:"help_text,omitempty"     validate:"max=200"                                                                                                 example:"This is a help text"`
+	Example      string         `json:"example,omitempty"       validate:"max=100"                                                                                                 example:"Example value"`
+	Default      string         `json:"default,omitempty"                                                                                                                          example:"Default value"`
+	Required     bool           `json:"required,omitempty"                                                                                                                         example:"true"`
+	RequiredWith []string       `json:"required_with,omitempty" validate:"dive"                                                                                                    example:"field1,field2"`
+}
+    DynamicField represents a field for user to fill in.
+
+type DynamicFields map[string]DynamicField
+    DynamicFields represents a list of dynamic fields for a form.
+
+type EditorItem struct {
+	Name         string         `json:"name"               validate:"required,max=255"           example:"file.txt"`
+	Path         string         `json:"path"               validate:"required"                   example:"/path/to/file.txt"`
+	Type         EditorItemType `json:"type"               validate:"required,oneof=file folder" example:"file"`
+	Content      *string        `json:"content,omitempty"                                        example:"This is the content of the file"`
+	Language     *string        `json:"language,omitempty" validate:"required_if=Type file"      example:"js"` // js, py, go, etc.
+	Children     []EditorItem   `json:"children,omitempty" validate:"dive,excluded_if=Type file"`
+	LastModified time.Time      `json:"last_modified"      validate:"required"                   example:"2025-01-15T10:30:00Z"`
+}
+
+type EditorItemType string
+
+const (
+	EditorItemTypeFile   EditorItemType = "file"
+	EditorItemTypeFolder EditorItemType = "folder"
+)
+type FieldMapping struct {
+	SourcePath       string  `json:"source_path"                 validate:"required" example:"/data/customers.csv"`
+	SourceField      *string `json:"source_field,omitempty"                          example:"email"`
+	DestinationPath  string  `json:"destination_path"            validate:"required" example:"/processed/customers.json"`
+	DestinationField *string `json:"destination_field,omitempty"                     example:"customer_email"`
+}
+
+type FieldType string
+    FieldType represents the type of a dynamic field.
+
+const (
+	FieldTypeText     FieldType = "text"
+	FieldTypeTextarea FieldType = "textarea"
+	FieldTypePassword FieldType = "password"
+	FieldTypeEmail    FieldType = "email"
+	FieldTypeCheckbox FieldType = "checkbox"
+	FieldTypeInteger  FieldType = "integer"
+	FieldTypeFloat    FieldType = "float"
+	FieldTypeSelect   FieldType = "select"
+	FieldTypeRadio    FieldType = "radio"
+	FieldTypeFile     FieldType = "file"
+	FieldTypeDate     FieldType = "date"
+	FieldTypeTime     FieldType = "time"
+	FieldTypeDatetime FieldType = "datetime"
+)
+type GarbageCollectionRules struct {
+	DefaultRetentionDays *int                           `json:"default_retention_days,omitempty" example:"90"`
+	Branches             []BranchGarbageCollectionRules `json:"branches,omitempty"                            validate:"dive"`
+}
+    GarbageCollectionRules represents the garbage collection rules for a
+    repository.
+
+type GitTag struct {
+	Name string `json:"name" validate:"required,validslug" example:"v1.0.0"`   // Tag name
+	Ref  string `json:"ref"  validate:"required"           example:"1a2b3c4d"` // Commit hash referenced in a tag
+}
+    GitTag represents a repository tag object (Git-style tag with ref).
+
+type GroupSchemaRestrictions struct {
+	NoStructured           *bool     `json:"no_structured,omitempty"            example:"false"`
+	NoBinary               *bool     `json:"no_binary,omitempty"                example:"true"`
+	NoGroups               *bool     `json:"no_groups,omitempty"                example:"false"`
+	OnlyStructured         *bool     `json:"only_structured,omitempty"          example:"true"`
+	OnlyBinary             *bool     `json:"only_binary,omitempty"              example:"false"`
+	OnlyGroups             *bool     `json:"only_groups,omitempty"              example:"false"`
+	AllowedContentTypes    *[]string `json:"allowed_content_types,omitempty"    example:"application/json,text/csv"`
+	RestrictedContentTypes *[]string `json:"restricted_content_types,omitempty" example:"application/octet-stream,image/*"`
+	MaxSize                *int      `json:"max_size,omitempty"                 example:"104857600"`
+	MinSize                *int      `json:"min_size,omitempty"                 example:"1024"`
+	MaxCount               *int      `json:"max_count,omitempty"                example:"1000"`
+	MinCount               *int      `json:"min_count,omitempty"                example:"1"`
+	NamePattern            *string   `json:"name_pattern,omitempty"             example:"*.json"`
+}
+    GroupSchemaRestrictions defines restrictions on group schemas.
+
+type Invite struct {
+	ID         string     `json:"id"                    validate:"required,validsqid=invites" example:"inv_1a2b3c4d"`
+	Email      string     `json:"email"                 validate:"required,email"             example:"john.doe@example.com"`
+	Role       Role       `json:"role"                  validate:"required"`
+	AcceptedAt *time.Time `json:"accepted_at,omitempty"                                       example:"2025-01-15T10:30:00Z"`
+	DeclinedAt *time.Time `json:"declined_at,omitempty"                                       example:"2025-01-15T10:30:00Z"`
+	ExpiresAt  time.Time  `json:"expires_at"            validate:"required"                   example:"2025-01-15T10:30:00Z"`
+	InvitedBy  User       `json:"invited_by"            validate:"required"`
+	Workspace  Workspace  `json:"workspace"             validate:"required"`
+}
+
+type IrminAPIPaginationMetadata struct {
+	// Total is the total number of items available
+	Total *int `json:"total,omitempty"       validate:"omitempty,gte=0" example:"150"`
+	// Current page number
+	Page *int `json:"page,omitempty"        validate:"omitempty,gte=1" example:"2"`
+	// Number of items per page
+	PerPage *int `json:"per_page,omitempty"    validate:"omitempty,gte=1" example:"20"`
+	// Total number of pages available
+	TotalPages *int `json:"total_pages,omitempty" validate:"omitempty,gte=1" example:"8"`
+	// HasMore indicates if there are more items available
+	HasMore *bool `json:"has_more,omitempty"                               example:"true"`
+	// Next is the next page number or token, if applicable
+	Next *string `json:"next,omitempty"                                   example:"3"`
+}
+    IrminAPIPaginationMetadata represents the pagination metadata from the Irmin
+    Core API.
+
+type IrminAPIResponse struct {
+	Pagination *IrminAPIPaginationMetadata `json:"pagination,omitempty"`
+	Metadata   map[string]string           `json:"metadata,omitempty"`
+	Message    string                      `json:"message,omitempty"    example:"Operation completed successfully"             validate:"max=140"`
+	Errors     []string                    `json:"errors,omitempty"     example:"Field validation failed,Invalid input format" validate:"dive"`
+	Data       any                         `json:"data,omitempty"`
+}
+    IrminAPIResponse is a "raw" response type where the `Data` is
+    `json.RawMessage`. This lets us unmarshal it a second time into the type we
+    actually want.
+
+type JSONSchema struct {
+	Type                 string                `json:"type"                           validate:"required,oneof=object array string number integer boolean null" example:"object"` // e.g. "object", "array", etc.
+	Properties           map[string]JSONSchema `json:"properties,omitempty"`                                                                                                      // Properties of the schema, formatted like {"name":{"type":"string"},"age":{"type":"integer"}}
+	Required             []string              `json:"required,omitempty"             validate:"dive"                                                           example:"name,email"`
+	Items                *JSONSchema           `json:"items,omitempty"`
+	Description          *string               `json:"description,omitempty"                                                                                    example:"Customer information schema"`
+	Default              any                   `json:"default,omitempty"`
+	Enum                 []any                 `json:"enum,omitempty"                                                                                                                                 swaggertype:"array,string"`
+	AdditionalProperties any                   `json:"additionalProperties,omitempty"                                                                                                                 swaggertype:"boolean"`
+	Format               *string               `json:"format,omitempty"                                                                                         example:"email"`
+	Minimum              *float64              `json:"minimum,omitempty"                                                                                        example:"0"`
+	Maximum              *float64              `json:"maximum,omitempty"                                                                                        example:"100"`
+	MinLength            *int                  `json:"minLength,omitempty"                                                                                      example:"1"`
+	MaxLength            *int                  `json:"maxLength,omitempty"                                                                                      example:"255"`
+	Pattern              *string               `json:"pattern,omitempty"                                                                                        example:"email-pattern"`
+}
+    JSONSchema represents a JSON Schema for structured data.
+
+type LogEvent struct {
+	ID          string       `json:"id"                     validate:"required,validsqid=logs"                                             example:"log_1a2b3c4d"`
+	Type        LogEventType `json:"type"                   validate:"required,oneof=CREATE UPDATE DELETE LOGIN LOGOUT ERROR INFO WARNING" example:"CREATE"`
+	Description string       `json:"description"            validate:"required,max=500"                                                    example:"User created a new object"`
+	CreatedAt   time.Time    `json:"created_at"             validate:"required"                                                            example:"2025-01-15T10:30:00Z"`
+	Workspace   *Workspace   `json:"workspace,omitempty"`
+	User        *User        `json:"user,omitempty"`
+	WorkflowRun *WorkflowRun `json:"workflow_run,omitempty"`
+	Workflow    *Workflow    `json:"workflow,omitempty"`
+	Repository  *Repository  `json:"repository,omitempty"`
+	Connection  *Connection  `json:"connection,omitempty"`
+	StoredQuery *StoredQuery `json:"stored_query,omitempty"`
+	Policy      *Policy      `json:"policy,omitempty"`
+	Object      *Object      `json:"object,omitempty"`
+}
+
+type LogEventType string
+
+const (
+	LogEventTypeCreate  LogEventType = "CREATE"
+	LogEventTypeUpdate  LogEventType = "UPDATE"
+	LogEventTypeDelete  LogEventType = "DELETE"
+	LogEventTypeLogin   LogEventType = "LOGIN"
+	LogEventTypeLogout  LogEventType = "LOGOUT"
+	LogEventTypeError   LogEventType = "ERROR"
+	LogEventTypeInfo    LogEventType = "INFO"
+	LogEventTypeWarning LogEventType = "WARNING"
+)
+type MergeStrategy string
+    MergeStrategy represents possible merge strategies.
+
+const (
+	MergeStrategyDefault    MergeStrategy = "default"
+	MergeStrategySourceWins MergeStrategy = "source-wins"
+	MergeStrategyDestWins   MergeStrategy = "dest-wins"
+)
+type Object struct {
+	ID                    string            `json:"id"                                validate:"required,validsqid=repository_objects"  example:"obj_3x7k9m2n5q8p"`
+	Name                  string            `json:"name"                              validate:"omitempty,max=255"                      example:"customers.json"`                 // Empty name signifies root directory object
+	Path                  string            `json:"path"                              validate:"omitempty,required_if=Name !=''"        example:"/data/customers/customers.json"` // Path required if Name is NOT empty
+	RepositorySlug        string            `json:"repository_slug"                   validate:"required,max=100"                       example:"customer-analytics"`
+	Ref                   string            `json:"ref"                               validate:"required,max=100"                       example:"main"`
+	Type                  ObjectType        `json:"type"                              validate:"required,oneof=group structured binary" example:"structured"`
+	ContentType           string            `json:"content_type,omitempty"            validate:"max=100,excluded_if=Type group"         example:"application/json"`
+	PhysicalAddress       string            `json:"physical_address,omitempty"        validate:"omitempty,uri"                          example:"s3://bucket/path/to/customers.json"`
+	PhysicalAddressExpiry *int64            `json:"physical_address_expiry,omitempty" validate:"omitempty,min=0"                        example:"1672531200"`
+	SizeBytes             int64             `json:"size_bytes,omitempty"              validate:"omitempty,min=0"                        example:"1048576"`
+	LastModified          string            `json:"last_modified,omitempty"                                                             example:"2025-12-01T14:22:30Z"`
+	Metadata              map[string]string `json:"metadata,omitempty"`
+	Tags                  []Tag             `json:"tags,omitempty"                    validate:"dive,omitempty"`
+	Children              []Object          `json:"children,omitempty"                validate:"dive,omitempty"`
+}
+
+type ObjectSchema struct {
+	Name         string     `json:"name"                    validate:"required,max=255"                                    example:"customers.json"`
+	Path         string     `json:"path"                    validate:"required"                                            example:"/data/customers/customers.json"`
+	Type         ObjectType `json:"type"                    validate:"required,oneof=group structured binary"              example:"structured"`
+	LastModified *string    `json:"last_modified,omitempty"                                                                example:"2025-12-01T14:22:30Z"`
+	Description  *string    `json:"description,omitempty"                                                                  example:"Customer data in JSON format with contact information"`
+	// Structured schema
+	Schema *JSONSchema `json:"schema,omitempty"        validate:"required_if=Type structured"`
+	// Structured or Binary schema
+	Size        *int    `json:"size,omitempty"          validate:"required_if=Type binary,required_if=Type structured" example:"1048576"`
+	ContentType *string `json:"content_type,omitempty"  validate:"required_if=Type binary,required_if=Type structured" example:"application/json"`
+	// Group schema
+	Children     []ObjectSchema           `json:"children,omitempty"      validate:"dive,required_if=Type group"`
+	Restrictions *GroupSchemaRestrictions `json:"restrictions,omitempty"` // Restrictions are not required, but are available for group schemas
+}
+
+type ObjectType string
+    ObjectType represents the type of the object ("group", "structured",
+    or "binary").
+
+const (
+	// ObjectTypeGroup is a folder object, which can contain other objects.
+	ObjectTypeGroup ObjectType = "group"
+	// ObjectTypeStructured is a tabular file, which can be parsed and queried (e.g. CSV, JSON, Parquet, etc.)
+	ObjectTypeStructured ObjectType = "structured"
+	// ObjectTypeBinary is a binary file, which can't be parsed or queried (e.g. image, video, audio, etc.)
+	ObjectTypeBinary ObjectType = "binary"
+)
+type Patch []PatchOperation
+    Patch is a series of patch operations.
+
+type PatchOperation struct {
+	// The operation: "add", "remove", "replace", "move" or "copy"
+	Op string `json:"op"              validate:"required,oneof=add remove replace move copy" example:"replace"`
+	// The JSON-Pointer location to apply the operation
+	Path string `json:"path"            validate:"required"                                    example:"/users.json/1/name"`
+	// Used for "move" or "copy" operations
+	From *string `json:"from,omitempty"  validate:"required_if=Op move,required_if=Op copy"     example:"/users.json/1/name"`
+	// Used for "add" or "replace" operations
+	Value *any `json:"value,omitempty" validate:"required_if=Op add,required_if=Op replace"   example:"John"`
+}
+    PatchOperation represents a single operation in a JSON Patch array.
+
+type PipelineStage struct {
+	Description   string            `json:"description"    validate:"required,max=200"                                               example:"Process customer data"`
+	Write         bool              `json:"write"                                                                                    example:"true"`
+	Read          bool              `json:"read"                                                                                     example:"true"`
+	OrderSequence int               `json:"order_sequence" validate:"required"                                                       example:"1"`
+	Type          PipelineStageType `json:"type"           validate:"required,oneof=action connection repository,validpipelinestage" example:"repository"`
+
+	// Action stage specific
+	Executable *string `json:"executable,omitempty" validate:"min=1" example:"python data_processor.py"`
+
+	// Connection stage specific
+	ConnectionID        *string   `json:"connection_id,omitempty"         validate:"validsqid=connections" example:"conn_8x2m9k4n7p5q"`
+	ConnectionWritePath *string   `json:"connection_write_path,omitempty"                                  example:"/exports/processed_data.csv"`
+	ConnectionReadPaths *[]string `json:"connection_read_paths,omitempty" validate:"dive"                  example:"/imports/raw_data.csv,/imports/metadata.json"`
+
+	// Repository stage specific
+	Repository          *string   `json:"repository,omitempty"            example:"customer-analytics"`
+	RepositoryBranch    *string   `json:"repository_branch,omitempty"     example:"main"`
+	RepositoryWritePath *string   `json:"repository_write_path,omitempty" example:"/processed/customers.json"`
+	RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" example:"/raw/customers.csv,/config/schema.json" validate:"dive"`
+}
+
+type PipelineStageType string
+
+const (
+	PipelineStageTypeAction     PipelineStageType = "action"
+	PipelineStageTypeConnection PipelineStageType = "connection"
+	PipelineStageTypeRepository PipelineStageType = "repository"
+)
+type Policy struct {
+	// ID is the unique identifier for the policy
+	ID string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                              example:"pol_8x2m9k4n7p5q"`
+	// Effect specifies whether the policy is an allow or deny policy
+	Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                                example:"allow"`
+	// Action specifies the action that the policy is applied to
+	Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                                 example:"read"`
+	// Resource specifies the resource type that the policy is applied to
+	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag assistant" example:"repository"`
+	// ResourceID is used to specify which resource the policy is applied to.
+	// When undefined, the policy is applied to all resources of the given type.
+	//
+	// It is applicable for:
+	// - queries
+	// - workflows
+	// - connections
+	// - repositories
+	// - users
+	//
+	// It is not applicable for:
+	// - workspaces (policies are workspace scoped)
+	// - policies
+	// - invites
+	// - audit logs
+	// - editor scripts
+	// - documentation
+	// - billing
+	//
+	// Note that some resources point to their parent resource's ID:
+	// - repository objects, branches, tags, and commits point to their repository's ID
+	// - workflow runs point to their workflow's ID
+	ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                                     example:"repo_8x2m9k4n7p5q"`
+	// Principal specifies which group of users the policy is applied to
+	Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                              example:"role"`
+	// Role is used to give a policy to a specific role
+	Role *Role `json:"role,omitempty"`
+	// User is used to give a policy to a specific workspace user
+	User *User `json:"user,omitempty"`
+}
+    Policy represents a policy in the API response.
+
+type PolicyAction string
+    PolicyAction specifies the action that the policy is applied to.
+
+const (
+	// PolicyActionCreate represents the create action.
+	PolicyActionCreate PolicyAction = "create"
+	// PolicyActionRead represents the read action.
+	PolicyActionRead PolicyAction = "read"
+	// PolicyActionUpdate represents the update action.
+	PolicyActionUpdate PolicyAction = "update"
+	// PolicyActionDelete represents the delete action.
+	PolicyActionDelete PolicyAction = "delete"
+)
+type PolicyEffect string
+    PolicyEffect specifies whether the policy is an allow or deny policy.
+
+const (
+	// PolicyEffectAllow represents a policy that allows an action.
+	PolicyEffectAllow PolicyEffect = "allow"
+	// PolicyEffectDeny represents a policy that denies an action.
+	PolicyEffectDeny PolicyEffect = "deny"
+)
+type PolicyPrincipal string
+    PolicyPrincipal specifies which group of users the policy is applied to.
+
+const (
+	// PolicyPrincipalWorkspaceUser represents a policy applied to a specific workspace user.
+	PolicyPrincipalWorkspaceUser PolicyPrincipal = "workspace_user"
+	// PolicyPrincipalRole represents a policy applied to a specific role.
+	PolicyPrincipalRole PolicyPrincipal = "role"
+	// PolicyPrincipalEveryone represents a policy applied to everyone.
+	PolicyPrincipalEveryone PolicyPrincipal = "everyone"
+)
+type PolicyResource string
+    PolicyResource specifies the resource type that the policy is applied to.
+
+const (
+	// PolicyResourceWorkspace represents a workspace resource.
+	PolicyResourceWorkspace PolicyResource = "workspace"
+	// PolicyResourceEditorScript represents script editor resource.
+	PolicyResourceEditorScript PolicyResource = "editor_script"
+	// PolicyResourceQuery represents a query resource.
+	PolicyResourceQuery PolicyResource = "query"
+	// PolicyResourceWorkflow represents a workflow resource.
+	PolicyResourceWorkflow PolicyResource = "workflow"
+	// PolicyResourceWorkflowRun represents a workflow run resource.
+	PolicyResourceWorkflowRun PolicyResource = "workflow_run"
+	// PolicyResourceConnection represents a connection resource.
+	PolicyResourceConnection PolicyResource = "connection"
+	// PolicyResourceRepository represents a repository resource.
+	PolicyResourceRepository PolicyResource = "repository"
+	// PolicyResourceRepositoryBranch represents a repository branch resource.
+	PolicyResourceRepositoryBranch PolicyResource = "repository_branch"
+	// PolicyResourceRepositoryTag represents a repository tag resource.
+	PolicyResourceRepositoryTag PolicyResource = "repository_tag"
+	// PolicyResourceRepositoryCommit represents a repository commit resource.
+	PolicyResourceRepositoryCommit PolicyResource = "repository_commit"
+	// PolicyResourceRepositoryObject represents a repository object resource.
+	PolicyResourceRepositoryObject PolicyResource = "repository_object"
+	// PolicyResourceUser represents a user resource.
+	PolicyResourceUser PolicyResource = "user"
+	// PolicyResourcePolicy represents a policy resource.
+	PolicyResourcePolicy PolicyResource = "policy"
+	// PolicyResourceInvite represents an invite resource.
+	PolicyResourceInvite PolicyResource = "invite"
+	// PolicyResourceAuditLog represents an audit log resource.
+	PolicyResourceAuditLog PolicyResource = "audit_log"
+	// PolicyResourceDocumentation represents a documentation resource.
+	PolicyResourceDocumentation PolicyResource = "documentation"
+	// PolicyResourceBilling represents billing and subscription management resource.
+	PolicyResourceBilling PolicyResource = "billing"
+	// PolicyResourceWorkspaceTag represents a workspace tag resource.
+	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+	// PolicyResourceAssistant represents an assistant resource.
+	PolicyResourceAssistant PolicyResource = "assistant"
+)
+type PolicyResourceOption struct {
+	ID    string `json:"id"    validate:"required"         example:"repo_8x2m9k4n7p5q"`
+	Label string `json:"label" validate:"required,max=100" example:"Customer Analytics Repository"`
+}
+    PolicyResourceOption represents a policy resource option.
+
+type PolicyResourceOptions struct {
+	Queries      []PolicyResourceOption `json:"queries"      validate:"required,dive"`
+	Workflows    []PolicyResourceOption `json:"workflows"    validate:"required,dive"`
+	Connections  []PolicyResourceOption `json:"connections"  validate:"required,dive"`
+	Repositories []PolicyResourceOption `json:"repositories" validate:"required,dive"`
+	Users        []PolicyResourceOption `json:"users"        validate:"required,dive"`
+	Tags         []PolicyResourceOption `json:"tags"         validate:"required,dive"`
+}
+    PolicyResourceOptions represents all possible policy resource options for a
+    given workspace.
+
+type QueryResult struct {
+	Columns    []string         `json:"columns,omitempty"     validate:"dive"  example:"region,category,total_sales"`
+	Data       []map[string]any `json:"data,omitempty"`                                              // Example: [{"region":"North","category":"Electronics","total_sales":125000.50}]
+	HasErrors  bool             `json:"has_errors,omitempty"                   example:"false"`      // Whether the query execution encountered errors
+	Duration   time.Duration    `json:"duration,omitempty"    validate:"min=0" example:"1500000000"` // Time between two instants as an int64 nanosecond count
+	StartedAt  time.Time        `json:"started_at,omitempty"                   example:"2025-12-01T14:22:30.100Z"`
+	FinishedAt time.Time        `json:"finished_at,omitempty"                  example:"2025-12-01T14:22:31.600Z"`
+	Logs       []string         `json:"logs,omitempty"        validate:"dive"  example:"Query started,Scanning 50,000 rows,Query completed successfully"`
+}
+
+type Repository struct {
+	ID                     string                  `json:"id"                                 validate:"required,validsqid=repositories" example:"repo_8x2m9k4n7p5q"`
+	Name                   string                  `json:"name"                               validate:"required,max=100"                example:"Customer Analytics"`
+	Slug                   string                  `json:"slug"                               validate:"required,validslug"              example:"customer-analytics"`
+	Description            string                  `json:"description"                        validate:"max=500"                         example:"Customer data analysis and reporting repository"`
+	Documentation          string                  `json:"documentation"                      validate:"validdocumentation"              example:"# Customer Analytics Repository. ## This repository contains customer data for analysis..."`
+	IsImmutable            bool                    `json:"is_immutable"                                                                  example:"false"`
+	DefaultBranch          string                  `json:"default_branch"                     validate:"required,validslug"              example:"main"`
+	Owner                  User                    `json:"owner"                              validate:"required"`
+	Tags                   []Tag                   `json:"tags,omitempty"                     validate:"dive"`
+	GarbageCollectionRules *GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+	CreatedAt              time.Time               `json:"created_at"                         validate:"required"                        example:"2025-01-15T10:30:00Z"`
+	UpdatedAt              time.Time               `json:"updated_at"                         validate:"required"                        example:"2025-12-01T14:22:30Z"`
+}
+
+type RepositoryEvent string
+
+const (
+	PreCommit        RepositoryEvent = "pre-commit"
+	PostCommit       RepositoryEvent = "post-commit"
+	PreMerge         RepositoryEvent = "pre-merge"
+	PostMerge        RepositoryEvent = "post-merge"
+	PreCreateBranch  RepositoryEvent = "pre-create-branch"
+	PostCreateBranch RepositoryEvent = "post-create-branch"
+	PreDeleteBranch  RepositoryEvent = "pre-delete-branch"
+	PostDeleteBranch RepositoryEvent = "post-delete-branch"
+	PreCreateTag     RepositoryEvent = "pre-create-tag"
+	PostCreateTag    RepositoryEvent = "post-create-tag"
+	PreDeleteTag     RepositoryEvent = "pre-delete-tag"
+	PostDeleteTag    RepositoryEvent = "post-delete-tag"
+)
+type Role struct {
+	ID          string `json:"id"          validate:"required,validsqid=roles" example:"role_2a8m5x9n4p7s"`
+	Role        string `json:"role"        validate:"required,max=50"          example:"Administrator"`
+	Description string `json:"description" validate:"max=200"                  example:"Full system access with administrative privileges"`
+	IsOwner     bool   `json:"is_owner"                                        example:"false"`
+	IsDefault   bool   `json:"is_default"                                      example:"false"`
+}
+
+type RolePolicySummary struct {
+	Role     Role     `json:"role"     validate:"required"`
+	IsOwner  bool     `json:"is_owner"                          example:"false"`
+	Policies []Policy `json:"policies" validate:"required,dive"`
+}
+    RolePolicySummary represents a summary of a role's policies.
+
+type Schedule struct {
+	Triggers    []ScheduleTrigger `json:"triggers"               validate:"dive"`
+	MaxRetries  int               `json:"max_retries,omitempty"  validate:"min=0,max=10" example:"3"`
+	MaxRuntime  int               `json:"max_runtime,omitempty"  validate:"min=0"        example:"3600"`
+	MinInterval int               `json:"min_interval,omitempty" validate:"min=0"        example:"300"`
+}
+
+type ScheduleTrigger struct {
+	Type WorkflowTriggerType `json:"type" validate:"required,oneof=time repository-event workflow-run-event,validschedule" example:"time"`
+
+	// Time trigger - these should only be validated if they have values
+	RRule *string `json:"rrule,omitempty" example:"FREQ=DAILY;INTERVAL=1;BYHOUR=9"`
+	Cron  *string `json:"cron,omitempty"  example:"0 9 * * *"`
+
+	// Repository event trigger
+	RepositoryEvent *RepositoryEvent `json:"repository_event,omitempty" validate:"required_if=Type repository-event"       example:"post-commit"`
+	Repository      *string          `json:"repository,omitempty"       validate:"required_with=RepositoryEvent,validslug" example:"customer-analytics"` // Slug of the repository
+	RepositoryRef   *string          `json:"repository_ref,omitempty"   validate:"required_with=RepositoryEvent"           example:"main"`
+
+	// Workflow run event trigger
+	WorkflowRunEvent *WorkflowRunEvent `json:"workflow_run_event,omitempty" validate:"required_if=Type workflow-run-event"                example:"post-workflow-run"`
+	WorkflowID       *string           `json:"workflow_id,omitempty"        validate:"required_with=WorkflowRunEvent,validsqid=workflows" example:"wf_8x2m9k4n7p5q"` // Sqid of the workflow
+}
+
+type ScriptResult struct {
+	StructuredResults map[string][]map[string]any `json:"structured_results,omitempty"`                 // Parsed resulting structured files, formatted like {"customers.json":[{"name":"John","age":30}]}
+	HasErrors         bool                        `json:"has_errors,omitempty"         example:"false"` // Whether the script execution encountered errors
+	Duration          time.Duration               `json:"duration,omitempty"           example:"1000"`  // Time between two instants as an int64 nanosecond count
+	StartedAt         time.Time                   `json:"started_at,omitempty"         example:"2025-01-15T10:30:00Z"`
+	FinishedAt        time.Time                   `json:"finished_at,omitempty"        example:"2025-01-15T10:30:00Z"`
+	Logs              []string                    `json:"logs,omitempty"               example:"Execution started,Execution completed" validate:"dive"`
+}
+
+type SearchFilters struct {
+	Query    string   `json:"query"               validate:"required,min=3"                                                                example:"customer data"`
+	Types    []string `json:"types"               validate:"dive,oneof=workflow repository connection query user repository_object invite" example:"repository,workflow"`
+	Tags     []string `json:"tags"                validate:"dive,validsqid=tags"                                                           example:"tag_8x2m9k4n7p5q,tag_9y3n0l5o8r6s"`
+	OwnerID  *string  `json:"owner_id,omitempty"  validate:"omitempty,validsqid=users"                                                     example:"usr_2k8n9q1m7p3x4z"`
+	DateFrom *string  `json:"date_from,omitempty" validate:"omitempty,datetime"                                                            example:"2025-01-01T00:00:00Z"`
+	DateTo   *string  `json:"date_to,omitempty"   validate:"omitempty,datetime"                                                            example:"2025-12-31T23:59:59Z"`
+	Limit    int      `json:"limit"               validate:"required,max=100"                                                              example:"20"`
+	Offset   int      `json:"offset"              validate:"min=0"                                                                         example:"0"`
+}
+    SearchFilters represents the search filter options (importing from
+    controllers).
+
+type SearchResponse struct {
+	Results []SearchResult `json:"results" validate:"required,dive"`
+	Total   int            `json:"total"   validate:"required,min=0" example:"42"`
+	Query   string         `json:"query"   validate:"required,min=3" example:"customer data"`
+	Filters SearchFilters  `json:"filters" validate:"required"`
+}
+    SearchResponse represents the search API response.
+
+type SearchResult struct {
+	Type      WorkspaceSearchResultType `json:"type"      validate:"required,oneof=workflow repository connection query user repository_object invite" example:"repository"`
+	Relevance float64                   `json:"relevance" validate:"required,gte=0,lte=5"                                                              example:"4.2"`
+
+	Repository       *Repository  `json:"repository,omitempty"`
+	RepositoryObject *Object      `json:"repository_object,omitempty"`
+	Workflow         *Workflow    `json:"workflow,omitempty"`
+	Connection       *Connection  `json:"connection,omitempty"`
+	Query            *StoredQuery `json:"query,omitempty"`
+	User             *User        `json:"user,omitempty"`
+	Invite           *Invite      `json:"invite,omitempty"`
+}
+    SearchResult represents a unified search result with typed entity data.
+
+type SelectOption struct {
+	Key   string `json:"key"   validate:"required,max=50"  example:"key1"`
+	Value string `json:"value" validate:"required,max=100" example:"Value 1"`
+}
+    SelectOption represents an option for select/radio fields.
+
+type StoredQuery struct {
+	ID          string    `json:"id"             validate:"required,validsqid=queries" example:"query_1a2b3c4d5e"`
+	Name        string    `json:"name"           validate:"required,max=100"           example:"Monthly Sales Report"`
+	Description string    `json:"description"    validate:"max=500"                    example:"Monthly aggregated sales data by region and product category"`
+	SQL         string    `json:"sql"            validate:"required,validsql"          example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+	Owner       User      `json:"owner"          validate:"required"`
+	Tags        []Tag     `json:"tags,omitempty" validate:"dive"`
+	CreatedAt   time.Time `json:"created_at"     validate:"required"                   example:"2025-01-15T10:30:00Z"`
+	UpdatedAt   time.Time `json:"updated_at"     validate:"required"                   example:"2025-12-01T14:22:30Z"`
+}
+
+type Tag struct {
+	// ID is the unique sqid for the tag
+	ID string `json:"id"          validate:"required,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
+	// Name is the name of the tag
+	Name string `json:"name"        validate:"required,validslug"      example:"production"`
+	// Color is the hex color code for the tag
+	Color string `json:"color"       validate:"required,iscolor"        example:"#ff5722"`
+	// Description is the description of the tag, used for tagging entities
+	Description string `json:"description" validate:"max=200"                 example:"Production environment resources"`
+}
+    Tag represents a workspace tag object for labeling entities.
+
+type TagEntityType string
+
+const (
+	TagEntityTypeRepository TagEntityType = "repositories"
+	TagEntityTypeQuery      TagEntityType = "queries"
+	TagEntityTypeWorkflow   TagEntityType = "workflows"
+	TagEntityTypeConnection TagEntityType = "connections"
+	TagEntityTypeObject     TagEntityType = "repository_objects"
+)
+type TagWithAssets struct {
+	Tag    Tag            `json:"tag"    validate:"required"`
+	Assets TaggedAssets   `json:"assets" validate:"required"`
+	Counts map[string]int `json:"counts" validate:"required"` // Counts of assets associated with the tag, formatted like {"repositories":5,"queries":12,"workflows":3}
+}
+    TagWithAssets represents a tag along with all its associated assets and
+    counts.
+
+type TaggedAssets struct {
+	Queries           []StoredQuery `json:"queries"            validate:"dive"`
+	Repositories      []Repository  `json:"repositories"       validate:"dive"`
+	Workflows         []Workflow    `json:"workflows"          validate:"dive"`
+	Connections       []Connection  `json:"connections"        validate:"dive"`
+	RepositoryObjects []Object      `json:"repository_objects" validate:"dive"`
+}
+    TaggedAssets represents all assets associated with a specific tag.
+
+type User struct {
+	ID             string `json:"id"              validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+	FirstName      string `json:"first_name"      validate:"required,max=50"          example:"John"`
+	LastName       string `json:"last_name"       validate:"required,max=50"          example:"Doe"`
+	Email          string `json:"email"           validate:"required,email"           example:"john.doe@example.com"`
+	Phone          string `json:"phone"           validate:"validphone"               example:"+1-555-0123"`
+	Company        string `json:"company"         validate:"max=100"                  example:"Acme Corp"`
+	ProfilePicture string `json:"profile_picture" validate:"validimageurl"            example:"https://avatars.example.com/john-doe.jpg"`
+	Roles          []Role `json:"roles"           validate:"dive"`
+}
+
+type UserPolicySummary struct {
+	UserID   string   `json:"user_id"  validate:"required,validsqid=users"      example:"usr_2k8n9q1m7p3x4z"`
+	Email    string   `json:"email"    validate:"required,email"                example:"john.doe@example.com"`
+	IsOwner  bool     `json:"is_owner"                                          example:"false"`
+	RoleIDs  []string `json:"role_ids" validate:"required,dive,validsqid=roles" example:"role_2a8m5x9n4p7s,role_3b9n6y0o5q8t"`
+	Policies []Policy `json:"policies" validate:"required,dive"`
+}
+    UserPolicySummary represents a summary of a user's policies.
+
+type Workflow struct {
+	ID            string           `json:"id"                     validate:"required,validsqid=workflows" example:"wf_8x2m9k4n7p5q"`
+	Name          string           `json:"name"                   validate:"required,max=100"             example:"Customer Data Import"`
+	Description   string           `json:"description"            validate:"max=500"                      example:"Imports customer data from external sources and processes it for analytics"`
+	Documentation string           `json:"documentation"          validate:"validdocumentation"           example:"# Customer Data Import"`
+	Status        WorkflowStatus   `json:"status"                 validate:"required"                     example:"running"`
+	Type          WorkflowableType `json:"type"                   validate:"required"                     example:"import"`
+	Owner         User             `json:"owner"                  validate:"required"`
+	Tags          []Tag            `json:"tags,omitempty"         validate:"dive"`
+	Schedule      *Schedule        `json:"schedule,omitempty"`
+	Workflowable  *Workflowable    `json:"workflowable,omitempty"`
+}
+
+type WorkflowRun struct {
+	ID              string           `json:"id"                          validate:"required,validsqid=workflow-runs"                                          example:"wr_2k8n9q1m7p3x4z"`
+	CreatedAt       time.Time        `json:"created_at"                  validate:"required"                                                                  example:"2025-01-15T10:30:00Z"`
+	UpdatedAt       time.Time        `json:"updated_at"                  validate:"required"                                                                  example:"2025-01-15T10:35:00Z"`
+	StartedAt       *time.Time       `json:"started_at,omitempty"                                                                                             example:"2025-01-15T10:30:30Z"`
+	FinishedAt      *time.Time       `json:"finished_at,omitempty"                                                                                            example:"2025-01-15T10:35:00Z"`
+	Status          WorkflowStatus   `json:"status"                      validate:"required,oneof=paused pending initiating running complete error cancelled" example:"complete"`
+	TriggeredBy     *ScheduleTrigger `json:"triggered_by,omitempty"`
+	TriggeredByUser *User            `json:"triggered_by_user,omitempty"`
+	WorkflowID      string           `json:"workflow_id"                 validate:"required,validsqid=workflows"                                              example:"wf_8x2m9k4n7p5q"`
+	Logs            []string         `json:"logs,omitempty"              validate:"dive"                                                                      example:"Starting workflow execution,Processing customer data,Workflow completed successfully"`
+}
+
+type WorkflowRunEvent string
+
+const (
+	PreWorkflowRun  WorkflowRunEvent = "pre-workflow-run"
+	PostWorkflowRun WorkflowRunEvent = "post-workflow-run"
+)
+type WorkflowStatus string
+
+const (
+	WorkflowStatusEmpty      WorkflowStatus = ""
+	WorkflowStatusPaused     WorkflowStatus = "paused"
+	WorkflowStatusPending    WorkflowStatus = "pending"
+	WorkflowStatusInitiating WorkflowStatus = "initiating"
+	WorkflowStatusRunning    WorkflowStatus = "running"
+	WorkflowStatusComplete   WorkflowStatus = "complete"
+	WorkflowStatusError      WorkflowStatus = "error"
+	WorkflowStatusCancelled  WorkflowStatus = "cancelled"
+)
+type WorkflowTriggerType string
+
+const (
+	TimeTriggerType        WorkflowTriggerType = "time"
+	RepositoryTriggerType  WorkflowTriggerType = "repository-event"
+	WorkflowRunTriggerType WorkflowTriggerType = "workflow-run-event"
+)
+type Workflowable struct {
+	Type WorkflowableType `json:"type" validate:"required,oneof=import action export pipeline,validworkflowable" example:"import"`
+
+	// Import &amp; Export workflowable
+	FieldMappings    []FieldMapping `json:"field_mappings,omitempty"    validate:"dive,required_if=Type import,required_if=Type export"`
+	ConnectionID     string         `json:"connection_id,omitempty"     validate:"validsqid=connections,required_if=Type import,required_if=Type export" example:"conn_8x2m9k4n7p5q"`
+	Repository       string         `json:"repository,omitempty"        validate:"required_if=Type import,required_if=Type export"                       example:"customer-analytics"`
+	RepositoryBranch string         `json:"repository_branch,omitempty" validate:"required_if=Type import,required_if=Type export"                       example:"main"`
+
+	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" validate:"dive,required_if=Type import" example:"/exports/customers.csv,/exports/metadata.json"`
+	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    validate:"required_if=Type import"      example:"/imported/customers.json"`
+
+	ExportFromRepositoryPaths []string `json:"export_from_repository_paths,omitempty" validate:"dive,required_if=Type export" example:"/processed/customers.json,/processed/summary.json"`
+	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"    validate:"required_if=Type export"      example:"/exports/final_data.csv"`
+
+	Live   bool            `json:"live,omitempty"   example:"true"`
+	Stages []PipelineStage `json:"stages,omitempty"                validate:"dive"`
+
+	Executable              string            `json:"executable,omitempty"                validate:"required_if=Type action" example:"python analyze_data.py"`
+	Input                   []ActionInputData `json:"input,omitempty"                     validate:"dive"`
+	ResultsRepository       *string           `json:"results_repository,omitempty"                                           example:"analytics-results"`
+	ResultsRepositoryBranch *string           `json:"results_repository_branch,omitempty"                                    example:"main"`
+	ResultsRepositoryPath   *string           `json:"results_repository_path,omitempty"                                      example:"/results/analysis.json"`
+}
+
+type WorkflowableType string
+
+const (
+	WorkflowableTypeImport   WorkflowableType = "import"
+	WorkflowableTypeAction   WorkflowableType = "action"
+	WorkflowableTypeExport   WorkflowableType = "export"
+	WorkflowableTypePipeline WorkflowableType = "pipeline"
+)
+type Workspace struct {
+	ID          string `json:"id"              validate:"required,validsqid=workspaces" example:"ws_5n8k2m7x9q4p"`
+	Name        string `json:"name"            validate:"required,max=100"              example:"Data Analytics Team"`
+	Slug        string `json:"slug"            validate:"required,validslug"            example:"data-analytics-team"`
+	Description string `json:"description"     validate:"max=500"                       example:"Workspace for data analytics and business intelligence projects"`
+	Owner       User   `json:"owner,omitempty" validate:"required"`
+	Users       []User `json:"users,omitempty" validate:"dive"`
+}
+
+type WorkspaceSearchResultType string
+
+const (
+	WorkspaceSearchResultTypeWorkflow         WorkspaceSearchResultType = "workflow"
+	WorkspaceSearchResultTypeRepository       WorkspaceSearchResultType = "repository"
+	WorkspaceSearchResultTypeConnection       WorkspaceSearchResultType = "connection"
+	WorkspaceSearchResultTypeQuery            WorkspaceSearchResultType = "query"
+	WorkspaceSearchResultTypeUser             WorkspaceSearchResultType = "user"
+	WorkspaceSearchResultTypeRepositoryObject WorkspaceSearchResultType = "repository_object"
+	WorkspaceSearchResultTypeInvite           WorkspaceSearchResultType = "invite"
+)
+</pre>
+</body></html>

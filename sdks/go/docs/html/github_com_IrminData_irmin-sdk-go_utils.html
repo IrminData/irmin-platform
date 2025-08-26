@@ -1,0 +1,108 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>github.com/IrminData/irmin-sdk-go/utils</title></head><body>
+<h1>Package github.com/IrminData/irmin-sdk-go/utils</h1>
+<pre>
+package irminutils // import "github.com/IrminData/irmin-sdk-go/utils"
+
+
+FUNCTIONS
+
+func AutoDetectMimeType(filename string) string
+    AutoDetectMimeType detects MIME type from filename extension.
+
+func CreateMultipartForm(file *File, fieldName string) (*bytes.Buffer, string, error)
+    CreateMultipartForm creates a complete multipart/form-data form.
+
+func CreateMultipartFormWithFields(
+	file *File,
+	fieldName string,
+	textFields map[string]string,
+) (*bytes.Buffer, string, error)
+    CreateMultipartFormWithFields creates multipart form with additional text
+    fields.
+
+func GetAPIFromFlags() (string, string, error)
+    GetAPIFromFlags retrieves the API key and the base URL from command line
+    flags.
+
+func GetInputFile(filePath string) ([]byte, error)
+    GetInputFile reads a file from the _input directory. Returns the file
+    content as bytes and any error encountered.
+
+func ListInputFiles() ([]string, error)
+    ListInputFiles returns a list of all files in the _input directory.
+    Returns a slice of file paths relative to the _input directory and any error
+    encountered.
+
+func SendComputeResult(data []byte, fileName string) error
+    SendComputeResult writes the provided data to a file with the given name in
+    the current working directory. This file will be used to pass computation
+    results back to the host system from within the container.
+
+func UnzipFiles(zipData []byte) (map[string][]byte, error)
+    UnzipFiles decompresses a ZIP archive from a byte slice into a map of file
+    paths to contents.
+
+    The input is a byte slice containing a ZIP archive. Returns a map where keys
+    are the full paths within the archive (e.g. "path/to/file.json") and values
+    are the file contents, or an error if the decompression fails.
+
+    Example paths in the returned map:
+      - "config/settings.json"
+      - "src/main.go"
+      - "docs/README.md"
+
+func ZipFiles(files map[string][]byte) ([]byte, error)
+    ZipFiles compresses the given map of files into a ZIP archive.
+
+    files map keys are the full paths within the archive (e.g.
+    "path/to/file.json"), and values are the corresponding file contents.
+
+    It returns a byte slice containing the complete ZIP archive, or an error if
+    any step fails.
+
+
+TYPES
+
+type File struct {
+	Content  []byte
+	Filename string
+}
+    File represents file content with a filename.
+
+func NewFile(content, filename string) *File
+    NewFile creates a File from string content and filename.
+
+func NewFileFromBytes(content []byte, filename string) *File
+    NewFileFromBytes creates a File from byte content and filename.
+
+func (f *File) MimeType() string
+    MimeType returns the MIME type based on the filename extension.
+
+func (f *File) MultipartFile() multipart.File
+    MultipartFile returns a multipart.File for the file content.
+
+func (f *File) Reader() io.Reader
+    Reader returns an io.Reader for the file content.
+
+type ObjectDetails struct {
+	Name        string                 // The object name.
+	FullPath    string                 // The cleaned full path.
+	ParentPath  *string                // The parent directory object's path. Nil if the object is the root object.
+	Type        irminmodels.ObjectType // The object's type.
+	ContentType string                 // The MIME type of the object.
+}
+    ObjectDetails holds details about an object parsed from its path.
+
+func ParseObjectDetailsFromPath(inputPath string) ObjectDetails
+    ParseObjectDetailsFromPath parses an object's details from a given
+    path. Path examples: "/path/to/object.json", "/object.json",
+    "path/to/object.json", "object.json", "path/to/group", "". Returns an
+    ObjectDetails struct.
+
+    This function uses a hybrid approach for MIME type detection: - Specialized
+    data analytics formats use predefined mappings - Standard formats use the
+    system's built-in MIME type database
+
+</pre>
+</body></html>

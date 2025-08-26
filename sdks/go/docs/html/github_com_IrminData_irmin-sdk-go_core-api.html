@@ -1,0 +1,1105 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>github.com/IrminData/irmin-sdk-go/core-api</title></head><body>
+<h1>Package github.com/IrminData/irmin-sdk-go/core-api</h1>
+<pre>
+package irmincore // import "github.com/IrminData/irmin-sdk-go/core-api"
+
+
+TYPES
+
+type Client struct {
+	// BaseURL is your Irmin Core API base: e.g. "https://api.irmin.co/api"
+	BaseURL string
+
+	// Token is your Irmin Core API token.
+	Token string
+
+	// Locale is used to request localised messages from the Irmin Core API.
+	Locale string
+
+	// HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
+	HTTPClient *http.Client
+
+	// Validator is used to validate request structs before sending them to the API.
+	Validator *irminvalidator.Validator
+}
+    Client represents the Irmin API client.
+
+func NewClient(baseURL, token, locale string) *Client
+    NewClient creates a new Irmin API client with default settings.
+
+func NewClientWithSQIDManager(baseURL, token, locale string, sqidManager *irminsqids.SQIDManager) *Client
+    NewClientWithSQIDManager creates a new Irmin API client with a custom SQID
+    manager.
+
+func (c *Client) AcceptInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) AddTagToEntity(
+	workspace, tagID string,
+	entityType irminmodels.TagEntityType,
+	entityID string,
+) (*irminmodels.IrminAPIResponse, error)
+    AddTagToEntity adds an entity to a tag using the workspace tag route.
+
+func (c *Client) CallSystemWebhook(
+	webhookType string,
+	headers map[string]string,
+	body any,
+) (*irminmodels.IrminAPIResponse, error)
+    CallSystemWebhook calls the system webhook endpoint. The body is expected to
+    be an that will be marshaled to JSON.
+
+    Usable only with a system token.
+
+func (c *Client) CancelWorkflowRun(
+	workspace, workflowID, runID string,
+) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CheckPermission(
+	workspace string,
+	resource irminmodels.PolicyResource,
+	action irminmodels.PolicyAction,
+	resourceID *string,
+) (bool, error)
+    CheckPermission checks if a user has permission to perform an action on a
+    resource.
+
+func (c *Client) ClearAssistantConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
+    ClearAssistantConversation clears all messages from an assistant
+    conversation.
+
+func (c *Client) CompareRefs(
+	workspace, repository, baseRef, compareRef string,
+) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
+    CompareRefs compares two refs in a repository and returns the differences.
+
+func (c *Client) CopyEditorItem(
+	workspace, path string,
+	req MoveEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CopyObject(
+	workspace, repository, path, ref string,
+	req MoveObjectRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateAssistantConversation(
+	workspace string,
+	req CreateAssistantConversationRequest,
+) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateBranch(
+	workspace, repository string,
+	req CreateBranchRequest,
+) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
+    CreateBranch creates a new branch in the repository.
+
+func (c *Client) CreateCommit(
+	workspace, repository string,
+	req CreateCommitRequest,
+) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateConnection(
+	workspace string,
+	req CreateConnectionRequest,
+) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateEditorFolder(
+	workspace, path string,
+	req CreateEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreatePolicy(
+	workspace string,
+	req CreatePolicyRequest,
+) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+    CreatePolicy creates a new policy for a workspace.
+
+func (c *Client) CreateRepository(
+	workspace string,
+	req CreateRepositoryRequest,
+) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateStoredQuery(
+	workspace string,
+	req CreateQueryRequest,
+) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateTag(
+	workspace, repository string,
+	req CreateRepositoryTagRequest,
+) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateToken(
+	req CreateCredentialRequest,
+) (*irminmodels.APIToken, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateWorkflow(
+	workspace string,
+	req WorkflowRequest,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateWorkspace(
+	req CreateWorkspaceRequest,
+) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) CreateWorkspaceTag(
+	workspace string,
+	req CreateTagRequest,
+) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
+    CreateWorkspaceTag creates a new workspace tag.
+
+func (c *Client) DeclineInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteAssistantConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
+    DeleteAssistantConversation deletes an assistant conversation by its ID.
+
+func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminmodels.IrminAPIResponse, error)
+    DeleteBranch deletes a branch in the repository.
+
+func (c *Client) DeleteConnection(workspace, connectionID string) (*irminmodels.IrminAPIResponse, error)
+    DeleteConnection deletes a connection by its ID.
+
+func (c *Client) DeleteConnector(connectorID string) (*irminmodels.IrminAPIResponse, error)
+    DeleteConnector deletes a connector from the system. Requests to this
+    endpoint must be authenticated with a system token.
+
+func (c *Client) DeleteEditorItem(workspace, path string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteInvite(inviteID string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeletePolicy(workspace, policyID string) (*irminmodels.IrminAPIResponse, error)
+    DeletePolicy deletes a policy.
+
+func (c *Client) DeleteQueryGenerationConversation(
+	workspace, conversationID string,
+) (*irminmodels.IrminAPIResponse, error)
+    DeleteQueryGenerationConversation deletes a query generation conversation by
+    its ID.
+
+func (c *Client) DeleteRepository(workspace, slug string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteScriptGenerationConversation(
+	workspace, conversationID string,
+) (*irminmodels.IrminAPIResponse, error)
+    DeleteScriptGenerationConversation deletes a script generation conversation
+    by its ID.
+
+func (c *Client) DeleteStoredQuery(workspace, queryID string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteTag(workspace, repository, tag string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteToken(tokenID string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteWorkflow(workspace, workflowID string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteWorkspace(slug string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) DeleteWorkspaceTag(workspace, tagID string) (*irminmodels.IrminAPIResponse, error)
+    DeleteWorkspaceTag deletes a workspace tag.
+
+func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte, error)
+    DownloadObject creates a zip file of the object at the given path and ref
+    and returns the binary data.
+
+func (c *Client) ExecuteSQL(
+	workspace string,
+	req ExecuteSQLRequest,
+) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ExecuteStoredQuery(
+	workspace, queryID string,
+) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error)
+    FetchAPI sends a request and attempts to parse the response into
+    IrminAPIResponse[T].
+
+func (c *Client) FetchAPIEnhanced(
+	opts RequestOptions,
+	out any,
+) (*irminmodels.IrminAPIResponse, *irminvalidator.ValidationResultError, error)
+    FetchAPIEnhanced sends a request with enhanced validation and attempts to
+    parse the response into IrminAPIResponse[T]. This method provides detailed
+    validation results before sending the request.
+
+func (c *Client) FetchBinary(opts RequestOptions) ([]byte, error)
+    FetchBinary sends a request and returns the raw bytes (which you can treat
+    as a file, or parse further).
+
+func (c *Client) FetchConnectorConfigurationFields(
+	connectorID, configType string,
+	currentDetails map[string]string,
+	currentSettings map[string]string,
+) ([]irminmodels.DynamicField, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) FetchLogEvents(
+	workspace, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEvents retrieves general audit log events for the current workspace.
+
+func (c *Client) FetchLogEventsForConnection(
+	workspace, connectionID, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsForConnection retrieves general audit log events for a
+    connection.
+
+func (c *Client) FetchLogEventsForObject(
+	workspace, objectID, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsForObject retrieves general audit log events for an object.
+
+func (c *Client) FetchLogEventsForPolicy(
+	workspace, policyID, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsForPolicy retrieves general audit log events for a policy.
+
+func (c *Client) FetchLogEventsForRepository(
+	workspace, repositorySlug, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsForRepository retrieves general audit log events for a
+    repository.
+
+func (c *Client) FetchLogEventsForStoredQuery(
+	workspace, storedQueryID, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsForStoredQuery retrieves general audit log events for a stored
+    query.
+
+func (c *Client) FetchLogEventsForUser(
+	workspace, userID, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsForUser retrieves general audit log events for a user.
+
+func (c *Client) FetchLogEventsForWorkflow(
+	workspace, workflowID, search string,
+	page, perPage int,
+) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+    FetchLogEventsForWorkflow retrieves general audit log events for a workflow.
+
+func (c *Client) GenerateQuery(
+	workspace string,
+	req QueryGenerationRequest,
+) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
+    GenerateQuery generates a SQL query from natural language using the QueryAI
+    assistant.
+
+func (c *Client) GenerateScript(
+	workspace string,
+	req ScriptGenerationRequest,
+) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
+    GenerateScript generates a Go script from natural language using the
+    ScriptingAI assistant.
+
+func (c *Client) GetAssistantConversation(
+	workspace, conversationID string,
+) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetAssistantConversationStats(
+	workspace, conversationID string,
+) (map[string]any, *irminmodels.IrminAPIResponse, error)
+    GetAssistantConversationStats retrieves statistics for a specific assistant
+    conversation.
+
+func (c *Client) GetBranch(
+	workspace, repository, branchName string,
+) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetCommit(
+	workspace, repository, hash string,
+) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetConnection(
+	workspace, connectionID string,
+) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetConnectionSchema(
+	workspace, connectionID, operationMethod string,
+) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+    GetConnectionSchema retrieves the schema for a specific connection and
+    operation method.
+
+func (c *Client) GetConnector(connectorID string) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetObjectAtPath(
+	workspace, repository, path, ref string,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+    GetObjectAtPath fetches the object at the given path and ref.
+
+func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error)
+    GetObjectContent fetches the content of an object at the given path and ref.
+
+func (c *Client) GetObjectHistory(
+	workspace, repository, path, ref string,
+) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+    GetObjectHistory fetches the history of an object at the given path and ref.
+
+func (c *Client) GetObjectSchema(
+	workspace, repository, path, ref string,
+) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+    GetObjectSchema fetches the schema of an object at the given path and ref.
+
+func (c *Client) GetObjectStructuredContent(
+	workspace, repository, path, ref string,
+) (map[string]any, *irminmodels.IrminAPIResponse, error)
+    GetObjectStructuredContent fetches the parsed structured content of an
+    object at the given path and ref.
+
+func (c *Client) GetPolicy(workspace, policyID string) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+    GetPolicy returns a single policy.
+
+func (c *Client) GetPolicyResourceOptions(
+	workspace string,
+) (*irminmodels.PolicyResourceOptions, *irminmodels.IrminAPIResponse, error)
+    GetPolicyResourceOptions returns all possible policy resource options for a
+    given workspace.
+
+func (c *Client) GetPolicyRoleSummary(
+	workspace string,
+) ([]irminmodels.RolePolicySummary, *irminmodels.IrminAPIResponse, error)
+    GetPolicyRoleSummary returns a list of policies that apply to a role.
+
+func (c *Client) GetPolicyUserSummary(
+	workspace string,
+) (*irminmodels.UserPolicySummary, *irminmodels.IrminAPIResponse, error)
+    GetPolicyUserSummary returns a list of policies that apply to a user.
+
+func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetQueryGenerationConversation(
+	workspace, conversationID string,
+) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
+    GetQueryGenerationConversation retrieves details of a specific query
+    generation conversation.
+
+func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetScriptGenerationConversation(
+	workspace, conversationID string,
+) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
+    GetScriptGenerationConversation retrieves details of a specific script
+    generation conversation.
+
+func (c *Client) GetStoredQuery(
+	workspace, queryID string,
+) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetUncommittedChanges(
+	workspace, repository, branch string,
+) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
+    GetUncommittedChanges retrieves the list of uncommitted changes in a branch.
+
+func (c *Client) GetUser(workspace, userID string) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetWorkflow(
+	workspace, workflowID string,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetWorkflowRun(
+	workspace, workflowID, runID string,
+) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetWorkspace(slug string) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetWorkspaceSchema(slug string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) GetWorkspaceTag(
+	workspace, tagID string,
+) (*irminmodels.TagWithAssets, *irminmodels.IrminAPIResponse, error)
+    GetWorkspaceTag retrieves a specific workspace tag with all its associated
+    assets.
+
+func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListAssistantConversations(
+	workspace string,
+) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListBranches(
+	workspace, repository string,
+) ([]irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListCommits(
+	workspace, repository, ref, after string,
+	perPage int,
+) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListConnections(workspace string) ([]irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListConnectors() ([]irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListEditorItems(
+	workspace, path string,
+) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListInviteInbox() ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListInvitesToWorkspace(workspace string) ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListPolicies(
+	workspace string,
+	params ListPoliciesParams,
+) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+    ListPolicies returns a list of all policies for a workspace.
+
+func (c *Client) ListQueryGenerationConversations(
+	workspace string,
+) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
+    ListQueryGenerationConversations retrieves all query generation
+    conversations in a workspace.
+
+func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListRoles() ([]irminmodels.Role, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListScriptGenerationConversations(
+	workspace string,
+) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
+    ListScriptGenerationConversations retrieves all script generation
+    conversations in a workspace.
+
+func (c *Client) ListStoredQueries(workspace string) ([]irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListTokens() ([]irminmodels.APIToken, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListUsers(workspace string) ([]irminmodels.User, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListWorkflowRuns(
+	workspace, workflowID string,
+	page, perPage int,
+) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListWorkflows(workspace string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListWorkflowsOfType(
+	workspace, workflowType string,
+) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ListWorkspaceTags(workspace string) ([]irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
+    ListWorkspaceTags retrieves all workspace tags for a workspace.
+
+func (c *Client) ListWorkspaces() ([]irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) MergeRefs(
+	workspace, repository string,
+	req MergeRefsRequest,
+) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+    MergeRefs merges one ref into another.
+
+func (c *Client) MoveEditorItem(
+	workspace, path string,
+	req MoveEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) MoveObject(
+	workspace, repository, path, ref string,
+	req MoveObjectRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) PauseWorkflow(
+	workspace, workflowID string,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) RegisterNewConnector(
+	req ConnectorRequest,
+) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+    RegisterNewConnector registers a new connector with the system. Requests to
+    this endpoint must be authenticated with a system token.
+
+func (c *Client) RemoveTagFromEntity(
+	workspace, tagID string, entityType irminmodels.TagEntityType, entityID string,
+) (*irminmodels.IrminAPIResponse, error)
+    RemoveTagFromEntity removes an entity from a tag using the workspace tag
+    route.
+
+func (c *Client) RemoveUser(workspace, userID string) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) Request(opts RequestOptions) ([]byte, error)
+    Request is the main method that sends requests to the Irmin API and returns
+    raw response data.
+
+func (c *Client) ResendInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) RevertChanges(
+	workspace, repository string,
+	req RevertUncommittedChangesRequest,
+) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) RunScript(
+	workspace, path string,
+	inputs []irminmodels.ActionInputData,
+) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) SaveEditorItem(
+	workspace, path string,
+	req CreateEditorItemRequest,
+) (*irminmodels.IrminAPIResponse, error)
+
+func (c *Client) Search(
+	workspace string,
+	params irminmodels.SearchFilters,
+) (*irminmodels.SearchResponse, *irminmodels.IrminAPIResponse, error)
+    Search performs a workspace-wide search using the provided filters.
+
+func (c *Client) SendAssistantMessage(
+	workspace string,
+	conversationID string,
+	req CreateAssistantMessageRequest,
+) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
+    SendAssistantMessage sends a message to the AI assistant and gets a
+    response.
+
+func (c *Client) SendInvite(
+	workspace string,
+	req SendInviteRequest,
+) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) StartWorkflow(
+	workspace, workflowID string,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) TransferConnection(
+	workspace, connectionID string,
+	req TransferConnectionOwnershipRequest,
+) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+    TransferConnection reassigns a connection to a new owner.
+
+func (c *Client) TransferRepository(
+	workspace, slug string,
+	req TransferRepositoryOwnershipRequest,
+) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) TransferStoredQuery(
+	workspace, queryID string,
+	req TransferQueryOwnershipRequest,
+) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) TransferWorkflow(
+	workspace, workflowID, newOwnerID string,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) TransferWorkspace(
+	workspaceSlug string,
+	req TransferOwnershipRequest,
+) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) TriggerWorkflowRun(
+	workspace, workflowID string,
+) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateAssistantConversation(
+	workspace, conversationID string,
+	req UpdateAssistantConversationRequest,
+) (*irminmodels.IrminAPIResponse, error)
+    UpdateAssistantConversation updates an assistant conversation.
+
+func (c *Client) UpdateBranch(
+	workspace, repository, oldName string,
+	req UpdateBranchRequest,
+) (*irminmodels.IrminAPIResponse, error)
+    UpdateBranch updates a branch name in the repository.
+
+func (c *Client) UpdateConnection(
+	workspace, connectionID string,
+	req UpdateConnectionRequest,
+) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateInvite(
+	inviteID string,
+	req UpdateInviteRequest,
+) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdatePolicy(
+	workspace, policyID string,
+	req UpdatePolicyRequest,
+) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+    UpdatePolicy updates an existing policy.
+
+func (c *Client) UpdateProfile(
+	firstName, lastName, email, phone, company string,
+	profilePicture *os.File,
+) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateRegisteredConnector(
+	connectorID string,
+	req ConnectorRequest,
+) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+    UpdateRegisteredConnector updates the details of a registered connector.
+    Requests to this endpoint must be authenticated with a system token.
+
+func (c *Client) UpdateRepository(
+	workspace, slug string,
+	req UpdateRepositoryRequest,
+) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateStoredQuery(
+	workspace, queryID string,
+	req UpdateQueryRequest,
+) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateUserRoles(
+	workspace, userID string,
+	req UpdateUserRolesRequest,
+) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateWorkflow(
+	workspace, workflowID string,
+	req UpdateWorkflowRequest,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateWorkflowSchedule(
+	workspace, workflowID string,
+	schedule irminmodels.Schedule,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateWorkflowWorkflowable(
+	workspace, workflowID string,
+	workflowable irminmodels.Workflowable,
+) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateWorkspace(
+	workspaceSlug string,
+	req UpdateWorkspaceRequest,
+) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) UpdateWorkspaceTag(
+	workspace, tagID string,
+	req UpdateTagRequest,
+) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
+    UpdateWorkspaceTag updates an existing workspace tag.
+
+func (c *Client) UploadObject(
+	workspace, repository, ref, path string,
+	files map[string][]byte,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+    UploadObject uploads a file to the given path and ref.
+
+func (c *Client) UploadObjectFromURL(
+	workspace, repository, ref, path string,
+	req UploadObjectFromURLRequest,
+) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+    UploadObjectFromURL uploads an object from a URL to the given path and ref.
+
+func (c *Client) ValidateConnectorConfiguration(
+	connectorID string,
+	req ConnectorConfigurationRequest,
+) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error)
+
+func (c *Client) ValidateRequest(req any) error
+    ValidateRequest validates a request struct without sending it to the API.
+    This is useful for testing or pre-validation of request data.
+
+func (c *Client) ValidateRequestEnhanced(req any) *irminvalidator.ValidationResultError
+    ValidateRequestEnhanced validates a request struct and returns detailed
+    validation results. This provides multiple error formats for different use
+    cases: - A single user-friendly message - A map of field-specific error
+    messages - The original validation errors.
+
+func (c *Client) ValidateVar(field any, tag string) error
+    ValidateVar validates a single variable against validation tags. Example:
+    client.ValidateVar("test@example.com", "email").
+
+func (c *Client) ValidateVarEnhanced(field any, tag string) *irminvalidator.ValidationResultError
+    ValidateVarEnhanced validates a single variable and returns detailed
+    validation results. Example: client.ValidateVarEnhanced("test@example.com",
+    "email").
+
+type ConnectorConfigurationRequest struct {
+	Details  map[string]any `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
+	Settings map[string]any `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+}
+    ConnectorConfigurationRequest represents the JSON request body for connector
+    configuration operations.
+
+type ConnectorRequest struct {
+	URL         string `json:"url"          validate:"required,validurl" example:"https://example.com/connector"`
+	SystemToken string `json:"system_token" validate:"required,max=100"  example:"system_token_123"`
+}
+    ConnectorRequest represents the JSON request body for creating/updating
+    connectors.
+
+type CreateAssistantConversationRequest struct {
+	Title    string         `json:"title"    example:"My conversation"`
+	Metadata map[string]any `json:"metadata"`
+}
+    CreateAssistantConversationRequest represents the JSON request body for
+    creating assistant conversations.
+
+type CreateAssistantMessageRequest struct {
+	Message string `json:"message" validate:"required,max=100" example:"What is the capital of France?"`
+}
+    CreateAssistantMessageRequest represents the JSON request body for creating
+    assistant messages.
+
+type CreateBranchRequest struct {
+	Name        string `json:"name"                   validate:"required" example:"feature/add-customer-data"`
+	From        string `json:"from"                   validate:"required" example:"main"`
+	IsImmutable bool   `json:"is_immutable,omitempty"                     example:"false"`
+}
+    CreateBranchRequest represents the JSON request body for creating a branch.
+
+type CreateCommitRequest struct {
+	Branch  string `json:"branch"  validate:"required" example:"main"`
+	Message string `json:"message" validate:"required" example:"Add customer data"`
+}
+    CreateCommitRequest represents the JSON request body for creating a commit.
+
+type CreateConnectionRequest struct {
+	Name          string         `json:"name"                    validate:"required,max=100"              example:"Production MySQL Database"`
+	Connector     string         `json:"connector"               validate:"required,validsqid=connectors" example:"conn_5p8q2n7m9x4k"`
+	Description   string         `json:"description,omitempty"   validate:"max=500"                       example:"Primary MySQL database for production customer data"`
+	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"            example:"# Production Database"`
+	Details       map[string]any `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
+	Settings      map[string]any `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+}
+    CreateConnectionRequest represents the JSON request body for creating
+    connections.
+
+type CreateCredentialRequest struct {
+	Name   string `json:"name"   validate:"required,max=100" example:"API Token"`
+	Expiry int    `json:"expiry" validate:"required"         example:"3600"` // Seconds until expiry
+}
+    CreateCredentialRequest represents the JSON request body for creating API
+    credentials.
+
+type CreateEditorItemRequest struct {
+	Content *string        `json:"content,omitempty" example:"This is the content of the file"`
+	Type    EditorItemType `json:"type"              example:"file"                            validate:"required"`
+}
+    CreateEditorItemRequest represents the JSON request body for creating an
+    editor file.
+
+type CreatePolicyRequest struct {
+	Effect     irminmodels.PolicyEffect    `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
+	Action     irminmodels.PolicyAction    `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                       example:"read"`
+	Resource   irminmodels.PolicyResource  `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
+	Principal  irminmodels.PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                    example:"role"`
+	ResourceID *string                     `json:"resource_id,omitempty"                                                                                                                                                                                                                                           example:"repo_8x2m9k4n7p5q"`
+	RoleID     *string                     `json:"role_id,omitempty"     validate:"required_if=Principal role,validsqid=roles"                                                                                                                                                                                     example:"role_2a8m5x9n4p7s"`
+	UserID     *string                     `json:"user_id,omitempty"     validate:"required_if=Principal workspace_user,validsqid=users"                                                                                                                                                                           example:"usr_2k8n9q1m7p3x4z"`
+}
+    CreatePolicyRequest represents the JSON request body for creating a policy.
+
+type CreateQueryRequest struct {
+	Name        string `json:"name"                  validate:"required,max=100" example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500"          example:"Customer data analysis and reporting"`
+	SQL         string `json:"sql,omitempty"         validate:"validsql"         example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+}
+    CreateQueryRequest represents the JSON request body for creating a query.
+
+type CreateRepositoryRequest struct {
+	Name                              string `json:"name"                                            validate:"required,max=100"   example:"Customer Analytics"`
+	Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
+	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
+	DefaultBranch                     string `json:"default_branch,omitempty"                        validate:"validslug"          example:"main"`
+	IsImmutable                       bool   `json:"is_immutable,omitempty"                                                        example:"false"`
+	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
+	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+}
+    CreateRepositoryRequest represents the JSON request body for creating a
+    repository.
+
+type CreateRepositoryTagRequest struct {
+	Name string `json:"name" validate:"required" example:"v1.0.0"`
+	Ref  string `json:"ref"  validate:"required" example:"main"`
+}
+    CreateRepositoryTagRequest represents the JSON request body for creating a
+    repository tag.
+
+type CreateTagRequest struct {
+	Name        string `json:"name"                  validate:"required,validslug" example:"v1.0.0"`
+	Color       string `json:"color,omitempty"       validate:"iscolor"            example:"#000000"`
+	Description string `json:"description,omitempty" validate:"max=200"            example:"Customer analytics tag"`
+}
+    CreateTagRequest represents the JSON request body for creating a tag.
+
+type CreateWorkspaceRequest struct {
+	Name        string `json:"name"                  validate:"required,max=100" example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500"          example:"Customer data analysis and reporting"`
+}
+    CreateWorkspaceRequest represents the JSON request body for creating a
+    workspace.
+
+type EditorItemType string
+
+const (
+	EditorItemTypeFile   EditorItemType = "file"
+	EditorItemTypeFolder EditorItemType = "folder"
+)
+type ExecuteEditorItemRequest struct {
+	Input []irminmodels.ActionInputData `json:"input,omitempty"`
+}
+    ExecuteEditorItemRequest represents the JSON request body for executing
+    editor items.
+
+type ExecuteSQLRequest struct {
+	SQL string `json:"sql,omitempty" validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+}
+    ExecuteSQLRequest represents the JSON request body for executing SQL.
+
+type FormFile struct {
+	FieldName string    // The form field name
+	FilePath  string    // Local path to the file on disk
+	Reader    io.Reader // Use if you already have a stream (os.Open, bytes.Buffer, etc.)
+	FileName  string    // Optional override for the actual filename
+}
+    FormFile holds information about a file you want to upload with
+    multipart/form-data.
+
+type ListPoliciesParams struct {
+	Effect     *irminmodels.PolicyEffect    `form:"effect,omitempty"`      // The effect of the policy (allow/deny)
+	Action     *irminmodels.PolicyAction    `form:"action,omitempty"`      // The action being controlled (read/write/etc)
+	Resource   *irminmodels.PolicyResource  `form:"resource,omitempty"`    // The resource type being controlled
+	Principal  *irminmodels.PolicyPrincipal `form:"principal,omitempty"`   // The principal type (role/user)
+	ResourceID *string                      `form:"resource_id,omitempty"` // ID of the specific resource
+	RoleID     *string                      `form:"role_id,omitempty"`     // ID of the role if principal is role
+	UserID     *string                      `form:"user_id,omitempty"`     // ID of the user if principal is user
+}
+    ListPoliciesParams represents the parameters for listing policies.
+
+type MergeRefsRequest struct {
+	BaseRef     string `json:"base_ref"              validate:"required"                                     example:"main"`
+	CompareRef  string `json:"compare_ref"           validate:"required"                                     example:"feature/add-customer-data"`
+	Description string `json:"description,omitempty"                                                         example:"Merge feature branch into main"`
+	Strategy    string `json:"strategy"              validate:"required,oneof=default dest-wins source-wins" example:"default"`
+	Squash      bool   `json:"squash,omitempty"                                                              example:"false"`
+	AllowEmpty  bool   `json:"allow_empty,omitempty"                                                         example:"false"`
+}
+    MergeRefsRequest represents the JSON request body for merging refs.
+
+type MoveEditorItemRequest struct {
+	DestinationPath string `json:"destination_path" validate:"required" example:"/path/to/new/location"`
+}
+    MoveEditorItemRequest represents the JSON request body for moving editor
+    items.
+
+type MoveObjectRequest struct {
+	NewPath string `json:"new_path" validate:"required" example:"path/to/new/location"`
+}
+    MoveObjectRequest represents the JSON request body for moving/copying
+    repository objects.
+
+type QueryGenerationRequest struct {
+	// Natural language prompt describing the desired query
+	Prompt string `json:"prompt" validate:"required,min=1,max=1000"`
+
+	// Optional repository slug for repository-specific queries
+	RepositorySlug *string `json:"repository_slug,omitempty"`
+
+	// Optional repository reference (branch, tag, commit)
+	RepositoryRef *string `json:"repository_ref,omitempty"`
+
+	// Optional conversation ID to continue an existing conversation
+	ConversationID *string `json:"conversation_id,omitempty" validate:"validsqid=assistant_conversations"`
+
+	// Optional metadata for the request
+	Metadata map[string]any `json:"metadata,omitempty"`
+}
+    QueryGenerationRequest represents a request to generate a query from natural
+    language
+
+type RequestOptions struct {
+	Method        string
+	Endpoint      string
+	AllowedStatus []int             // Status codes that are considered successful, e.g. 200, 201, 204
+	Body          any               // For JSON, this can be a struct or map to JSON-encode
+	FormFields    map[string]string // Key-value form fields (for multipart/form-data)
+	Files         []FormFile        // Files to attach (for multipart/form-data)
+	Headers       map[string]string // Extra headers, if needed
+	ContentType   string            // e.g. "application/json", "multipart/form-data", etc.
+}
+    RequestOptions allows you to specify how you'd like to send data in the
+    request.
+
+type RevertUncommittedChangesRequest struct {
+	Branch   string `json:"branch"              validate:"required" example:"main"`
+	Path     string `json:"path,omitempty"                          example:"path/to/file.txt"`
+	PathType string `json:"path_type,omitempty"                     example:"file"`
+}
+    RevertUncommittedChangesRequest represents the JSON request body for
+    reverting uncommitted changes.
+
+type ScriptGenerationRequest struct {
+	// Natural language prompt describing the desired script
+	Prompt string `json:"prompt" validate:"required,min=1,max=1000"`
+
+	// Optional conversation ID to continue an existing conversation
+	ConversationID *string `json:"conversation_id,omitempty" validate:"validsqid=assistant_conversations"`
+
+	// Optional metadata for the request
+	Metadata map[string]any `json:"metadata,omitempty"`
+}
+    ScriptGenerationRequest represents a request to generate a script from
+    natural language
+
+type SendInviteRequest struct {
+	Email string `json:"email" validate:"required,email"  example:"john.doe@example.com"`
+	Role  string `json:"role"  validate:"required,max=50" example:"admin"`
+}
+    SendInviteRequest represents the JSON request body for sending an invite.
+
+type TransferConnectionOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+    TransferConnectionOwnershipRequest represents the JSON request body for
+    transferring connection ownership.
+
+type TransferOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+    TransferOwnershipRequest represents the JSON request body for transferring
+    workspace ownership.
+
+type TransferQueryOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+    TransferQueryOwnershipRequest represents the JSON request body for
+    transferring query ownership.
+
+type TransferRepositoryOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+    TransferRepositoryOwnershipRequest represents the JSON request body for
+    transferring repository ownership.
+
+type TransferWorkflowOwnershipRequest struct {
+	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
+}
+    TransferWorkflowOwnershipRequest represents the JSON request body for
+    transferring workflow ownership.
+
+type UpdateAssistantConversationRequest struct {
+	Title    string         `json:"title"    example:"My conversation"`
+	Metadata map[string]any `json:"metadata"`
+}
+    UpdateAssistantConversationRequest represents the request to update an
+    assistant conversation.
+
+type UpdateBranchRequest struct {
+	Name        string `json:"name,omitempty"         example:"feature/add-customer-data"`
+	IsImmutable *bool  `json:"is_immutable,omitempty" example:"false"`
+}
+    UpdateBranchRequest represents the JSON request body for updating a branch.
+
+type UpdateConnectionRequest struct {
+	Name          string         `json:"name,omitempty"          validate:"max=100"              example:"Production MySQL Database"`
+	Connector     string         `json:"connector,omitempty"     validate:"validsqid=connectors" example:"conn_5p8q2n7m9x4k"`
+	Description   string         `json:"description,omitempty"   validate:"max=500"              example:"Primary MySQL database for production customer data"`
+	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"   example:"# Production Database"`
+	Details       map[string]any `json:"details,omitempty"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
+	Settings      map[string]any `json:"settings,omitempty"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+}
+    UpdateConnectionRequest represents the JSON request body for updating
+    connections.
+
+type UpdateInviteRequest struct {
+	Role string `json:"role" validate:"required,max=50" example:"admin"`
+}
+    UpdateInviteRequest represents the JSON request body for updating an invite.
+
+type UpdatePolicyRequest struct {
+	Effect     irminmodels.PolicyEffect    `json:"effect,omitempty"      validate:"oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
+	Action     irminmodels.PolicyAction    `json:"action,omitempty"      validate:"oneof=create read update delete"                                                                                                                                                                                       example:"read"`
+	Resource   irminmodels.PolicyResource  `json:"resource,omitempty"    validate:"oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
+	Principal  irminmodels.PolicyPrincipal `json:"principal,omitempty"   validate:"oneof=workspace_user role everyone"                                                                                                                                                                                    example:"role"`
+	ResourceID *string                     `json:"resource_id,omitempty"                                                                                                                                                                                                                                  example:"repo_8x2m9k4n7p5q"`
+	RoleID     *string                     `json:"role_id,omitempty"     validate:"required_if=Principal role,validsqid=roles"                                                                                                                                                                            example:"role_2a8m5x9n4p7s"`
+	UserID     *string                     `json:"user_id,omitempty"     validate:"required_if=Principal workspace_user,validsqid=users"                                                                                                                                                                  example:"usr_2k8n9q1m7p3x4z"`
+}
+    UpdatePolicyRequest represents the JSON request body for updating a policy.
+
+type UpdateProfileRequest struct {
+	FirstName string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
+	LastName  string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
+	Email     string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
+	Phone     string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
+	Company   string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
+}
+    UpdateProfileRequest represents the JSON request body for updating profile.
+
+type UpdateQueryRequest struct {
+	Name        string `json:"name,omitempty"        validate:"max=100"  example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500"  example:"Customer data analysis and reporting"`
+	SQL         string `json:"sql,omitempty"         validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+}
+    UpdateQueryRequest represents the JSON request body for updating a query.
+
+type UpdateRepositoryRequest struct {
+	Name                              string `json:"name,omitempty"                                  validate:"max=100"            example:"Customer Analytics"`
+	Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
+	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
+	IsImmutable                       *bool  `json:"is_immutable,omitempty"                                                        example:"false"`
+	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
+	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+}
+    UpdateRepositoryRequest represents the JSON request body for updating a
+    repository.
+
+type UpdateTagRequest struct {
+	Name        string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
+	Color       string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
+	Description string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
+}
+    UpdateTagRequest represents the JSON request body for updating a tag.
+
+type UpdateUserRolesRequest struct {
+	Roles []string `json:"roles" validate:"required,dive,validsqid=roles" example:"role_2a8m5x9n4p7s,role_1a2m3x4n5p6s"`
+}
+    UpdateUserRolesRequest represents the JSON request body for updating user
+    roles.
+
+type UpdateWorkflowRequest struct {
+	Name          string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
+	Description   string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
+	Documentation string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
+}
+    UpdateWorkflowRequest represents the JSON request body for updating basic
+    workflow info.
+
+type UpdateWorkspaceRequest struct {
+	Name        string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
+	Description string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
+}
+    UpdateWorkspaceRequest represents the JSON request body for updating a
+    workspace.
+
+type UploadObjectFromURLRequest struct {
+	URL     string            `json:"url"     validate:"required"  example:"https://example.com/file.json"`
+	Headers map[string]string `json:"headers" validate:"omitempty" example:"Authorization: Bearer &lt;token&gt;"`
+}
+    UploadObjectFromURLRequest represents the JSON request body for uploading
+    objects from URLs.
+
+type WorkflowRequest struct {
+	Type          irminmodels.WorkflowableType `json:"type"                    validate:"required,oneof=import action export pipeline" example:"import"`
+	Name          string                       `json:"name"                    validate:"required,max=100"                             example:"Customer Analytics"`
+	Description   string                       `json:"description,omitempty"   validate:"omitempty,max=500"                            example:"Customer data analysis and reporting"`
+	Documentation string                       `json:"documentation,omitempty" validate:"validdocumentation"                           example:"# Customer Analytics Workflow"`
+
+	// Workflowable configuration
+	Workflowable irminmodels.Workflowable `json:"workflowable"`
+
+	// Schedule configuration
+	Schedule irminmodels.Schedule `json:"schedule"`
+}
+    WorkflowRequest represents the JSON request body for creating a workflow.
+
+</pre>
+</body></html>

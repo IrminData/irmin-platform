@@ -1,0 +1,41 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>github.com/IrminData/irmin-sdk-go/sqids</title></head><body>
+<h1>Package github.com/IrminData/irmin-sdk-go/sqids</h1>
+<pre>
+package irminsqids // import "github.com/IrminData/irmin-sdk-go/sqids"
+
+
+CONSTANTS
+
+const (
+	// MinSQIDLength defines the minimum length for generated SQIDs.
+	MinSQIDLength = 16
+	// RequiredSQIDComponents defines the number of components required in a valid SQID
+	// (type code + actual ID).
+	RequiredSQIDComponents = 2
+)
+
+TYPES
+
+type SQIDManager struct {
+	// Has unexported fields.
+}
+    SQIDManager handles the creation and management of SQID generators.
+
+func NewSQIDManager(alphabet string) *SQIDManager
+    NewSQIDManager creates a new SQID manager instance.
+
+func (m *SQIDManager) Decode(contentType string, sqid string) (uint64, error)
+    Decode decodes the given SQID and verifies it matches the expected content
+    type. - contentType: a string representing the expected content type (e.g.
+    "workspace") - sqid: the encoded SQID string Returns the original ID if the
+    type code matches, or an error.
+
+func (m *SQIDManager) Encode(contentType string, id uint64) (string, error)
+    Encode encodes the given ID with a content type identifier. The content type
+    string is hashed to create a type code. - contentType: a string representing
+    the type (e.g. "workspace") - id: the actual numeric ID to encode Returns
+    the SQID string or an error if something goes wrong.
+
+</pre>
+</body></html>

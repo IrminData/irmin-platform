@@ -1,0 +1,105 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>github.com/IrminData/irmin-sdk-go/validator</title></head><body>
+<h1>Package github.com/IrminData/irmin-sdk-go/validator</h1>
+<pre>
+package irminsdkvalidator // import "github.com/IrminData/irmin-sdk-go/validator"
+
+
+CONSTANTS
+
+const (
+	TokenPrefix = "cred_"
+	TokenLength = 64
+)
+    Token validation constants.
+
+const (
+	SlugMinLength = 1
+	SlugMaxLength = 100
+)
+    Slug validation constants.
+
+const (
+	DocumentationMaxLength = 10000
+	SQLMaxLength           = 50000
+	URLMaxLength           = 2000
+)
+    Content length validation constants.
+
+const (
+	// FieldNameConversionBuffer is the estimated additional characters needed
+	// when converting PascalCase field names to snake_case (for underscores).
+	FieldNameConversionBuffer = 5
+)
+    Field name conversion constants.
+
+
+TYPES
+
+type ValidationResultError struct {
+	// IsValid indicates whether the validation passed
+	IsValid bool
+
+	// UserMessage provides a single, generic error message suitable for end users
+	UserMessage string
+
+	// FieldErrors maps field names to user-friendly error messages
+	FieldErrors map[string]string
+
+	// RawErrors contains the original validation errors from the underlying library
+	RawErrors error
+}
+    ValidationResultError contains validation results in multiple formats for
+    different use cases.
+
+func (vr *ValidationResultError) Error() string
+    Error implements the error interface for backward compatibility.
+
+func (vr *ValidationResultError) GetFieldErrors() map[string]string
+    GetFieldErrors returns a map of field-specific error messages.
+
+func (vr *ValidationResultError) GetRawErrors() error
+    GetRawErrors returns the original validation errors.
+
+func (vr *ValidationResultError) GetUserMessage() string
+    GetUserMessage returns a single user-friendly error message.
+
+func (vr *ValidationResultError) HasErrors() bool
+    HasErrors returns true if there are any validation errors.
+
+type Validator struct {
+	// Has unexported fields.
+}
+    Validator provides validation functionality for Irmin models.
+
+func NewClientValidator() *Validator
+    NewClientValidator creates a new validator instance for client-side use.
+    This validator skips SQID validation since clients don't have access to the
+    SQID alphabet.
+
+func NewValidator(sqidManager *irminsqids.SQIDManager) *Validator
+    NewValidator creates a new validator instance.
+
+func (v *Validator) Validate(s any) error
+    Validate validates a struct and returns validation errors.
+
+func (v *Validator) ValidateDynamic(data any) *ValidationResultError
+    ValidateDynamic validates data that could be either a single struct or an
+    array of structs. It dynamically determines the type and applies appropriate
+    validation. This is useful for API responses where the data field can
+    contain either a single object or an array.
+
+func (v *Validator) ValidateEnhanced(s any) *ValidationResultError
+    ValidateEnhanced validates a struct and returns a detailed
+    ValidationResultError. This provides multiple error formats for different
+    use cases.
+
+func (v *Validator) ValidateVar(field any, tag string) error
+    ValidateVar validates a single variable.
+
+func (v *Validator) ValidateVarEnhanced(field any, tag string) *ValidationResultError
+    ValidateVarEnhanced validates a single variable and returns a detailed
+    ValidationResultError.
+
+</pre>
+</body></html>

@@ -11,7 +11,7 @@ import (
 func TestNewInMemoryClient(t *testing.T) {
 	logger := slog.Default()
 
-	client, err := duckdb.NewInMemoryClient(logger)
+	client, err := duckdb.NewInMemoryClient(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create in-memory client: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestNewInMemoryClient(t *testing.T) {
 
 func TestCreateTableFromData(t *testing.T) {
 	logger := slog.Default()
-	client, err := duckdb.NewInMemoryClient(logger)
+	client, err := duckdb.NewInMemoryClient(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create in-memory client: %v", err)
 	}
@@ -32,13 +32,13 @@ func TestCreateTableFromData(t *testing.T) {
 		{"id": 2, "name": "Jane", "age": 25, "active": false},
 	}
 
-	err = client.CreateTableFromData("test_users", data)
+	err = client.CreateTableFromData(t.Context(), "test_users", data)
 	if err != nil {
 		t.Fatalf("Failed to create table from data: %v", err)
 	}
 
 	// Verify the table was created and has data
-	rows, err := client.ExecuteQuery("SELECT COUNT(*) FROM test_users")
+	rows, err := client.ExecuteQuery(t.Context(), "SELECT COUNT(*) FROM test_users")
 	if err != nil {
 		t.Fatalf("Failed to query table: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestCreateTableFromData(t *testing.T) {
 
 func TestQueryToMap(t *testing.T) {
 	logger := slog.Default()
-	client, err := duckdb.NewInMemoryClient(logger)
+	client, err := duckdb.NewInMemoryClient(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create in-memory client: %v", err)
 	}
@@ -75,13 +75,13 @@ func TestQueryToMap(t *testing.T) {
 		{"id": 2, "name": "Jane", "age": 25},
 	}
 
-	err = client.CreateTableFromData("test_users", data)
+	err = client.CreateTableFromData(t.Context(), "test_users", data)
 	if err != nil {
 		t.Fatalf("Failed to create table from data: %v", err)
 	}
 
 	// Query and convert to map
-	results, err := client.QueryToMap("SELECT * FROM test_users ORDER BY id")
+	results, err := client.QueryToMap(t.Context(), "SELECT * FROM test_users ORDER BY id")
 	if err != nil {
 		t.Fatalf("Failed to query to map: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestQueryToMap(t *testing.T) {
 
 func TestMergeDataSources(t *testing.T) {
 	logger := slog.Default()
-	client, err := duckdb.NewInMemoryClient(logger)
+	client, err := duckdb.NewInMemoryClient(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create in-memory client: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestMergeDataSources(t *testing.T) {
 		},
 	}
 
-	result, err := client.MergeDataSources(dataSources, "merged_users", duckdb.MergeStrategyUnion)
+	result, err := client.MergeDataSources(t.Context(), dataSources, "merged_users", duckdb.MergeStrategyUnion)
 	if err != nil {
 		t.Fatalf("Failed to merge data sources: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestMergeDataSources(t *testing.T) {
 	}
 
 	// Verify the merged data
-	rows, err := client.QueryToMap("SELECT COUNT(*) as count FROM merged_users")
+	rows, err := client.QueryToMap(t.Context(), "SELECT COUNT(*) as count FROM merged_users")
 	if err != nil {
 		t.Fatalf("Failed to query merged table: %v", err)
 	}
@@ -207,7 +207,7 @@ func TestIsFormatSupported(t *testing.T) {
 
 func TestLoadFileFromBytes(t *testing.T) {
 	logger := slog.Default()
-	client, err := duckdb.NewInMemoryClient(logger)
+	client, err := duckdb.NewInMemoryClient(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create in-memory client: %v", err)
 	}
@@ -219,13 +219,13 @@ John,30,New York
 Jane,25,Los Angeles
 Bob,35,Chicago`)
 
-	err = client.LoadFileFromBytes(csvData, "users.csv", "users_from_csv")
+	err = client.LoadFileFromBytes(t.Context(), csvData, "users.csv", "users_from_csv")
 	if err != nil {
 		t.Fatalf("Failed to load CSV from bytes: %v", err)
 	}
 
 	// Verify the data was loaded correctly
-	results, err := client.QueryToMap("SELECT COUNT(*) as count FROM users_from_csv")
+	results, err := client.QueryToMap(t.Context(), "SELECT COUNT(*) as count FROM users_from_csv")
 	if err != nil {
 		t.Fatalf("Failed to query loaded table: %v", err)
 	}
@@ -251,13 +251,13 @@ Bob,35,Chicago`)
 		{"name": "Charlie", "age": 32, "city": "Seattle"}
 	]`)
 
-	err = client.LoadFileFromBytes(jsonData, "users.json", "users_from_json")
+	err = client.LoadFileFromBytes(t.Context(), jsonData, "users.json", "users_from_json")
 	if err != nil {
 		t.Fatalf("Failed to load JSON from bytes: %v", err)
 	}
 
 	// Verify JSON data
-	jsonResults, err := client.QueryToMap("SELECT name FROM users_from_json ORDER BY name")
+	jsonResults, err := client.QueryToMap(t.Context(), "SELECT name FROM users_from_json ORDER BY name")
 	if err != nil {
 		t.Fatalf("Failed to query JSON table: %v", err)
 	}
@@ -273,7 +273,7 @@ Bob,35,Chicago`)
 
 func TestCreateTableFromDataWithSpacesInColumnNames(t *testing.T) {
 	logger := slog.Default()
-	client, err := duckdb.NewInMemoryClient(logger)
+	client, err := duckdb.NewInMemoryClient(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create in-memory client: %v", err)
 	}
@@ -285,13 +285,13 @@ func TestCreateTableFromDataWithSpacesInColumnNames(t *testing.T) {
 		{"user id": 2, "first name": "Jane", "last name": "Smith", "is active": false},
 	}
 
-	err = client.CreateTableFromData("test_users_spaces", data)
+	err = client.CreateTableFromData(t.Context(), "test_users_spaces", data)
 	if err != nil {
 		t.Fatalf("Failed to create table from data with spaces in column names: %v", err)
 	}
 
 	// Verify the table was created and has correct data
-	jsonResults, err := client.QueryToMap("SELECT * FROM test_users_spaces ORDER BY \"user id\"")
+	jsonResults, err := client.QueryToMap(t.Context(), "SELECT * FROM test_users_spaces ORDER BY \"user id\"")
 	if err != nil {
 		t.Fatalf("Failed to query table: %v", err)
 	}
@@ -331,7 +331,7 @@ func TestCreateTableFromDataWithSpacesInColumnNames(t *testing.T) {
 
 func TestCreateTableFromDataWithQuotesAndConsistentOrdering(t *testing.T) {
 	logger := slog.Default()
-	client, err := duckdb.NewInMemoryClient(logger)
+	client, err := duckdb.NewInMemoryClient(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create in-memory client: %v", err)
 	}
@@ -351,13 +351,13 @@ func TestCreateTableFromDataWithQuotesAndConsistentOrdering(t *testing.T) {
 		},
 	}
 
-	err = client.CreateTableFromData("test_quotes", data)
+	err = client.CreateTableFromData(t.Context(), "test_quotes", data)
 	if err != nil {
 		t.Fatalf("Failed to create table with quoted column names: %v", err)
 	}
 
 	// Verify the table was created and has correct data
-	rows, err := client.ExecuteQuery("SELECT COUNT(*) FROM test_quotes")
+	rows, err := client.ExecuteQuery(t.Context(), "SELECT COUNT(*) FROM test_quotes")
 	if err != nil {
 		t.Fatalf("Failed to query table: %v", err)
 	}
@@ -377,7 +377,7 @@ func TestCreateTableFromDataWithQuotesAndConsistentOrdering(t *testing.T) {
 	}
 
 	// Verify data integrity by checking the values are inserted in correct columns
-	resultRows, executeQueryErr := client.ExecuteQuery(
+	resultRows, executeQueryErr := client.ExecuteQuery(t.Context(),
 		`SELECT "col""with""quotes", "alpha_column", "zebra_column" FROM test_quotes ORDER BY "alpha_column"`,
 	)
 	if executeQueryErr != nil {

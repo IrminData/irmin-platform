@@ -1,0 +1,157 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>github.com/IrminData/irmin-sdk-go/duckdb</title></head><body>
+<h1>Package github.com/IrminData/irmin-sdk-go/duckdb</h1>
+<pre>
+package duckdb // import "github.com/IrminData/irmin-sdk-go/duckdb"
+
+
+FUNCTIONS
+
+func BuildReadQuery(filePath string, options *ReadOptions) (string, error)
+    BuildReadQuery constructs a DuckDB query string for reading data with the
+    given options. This function now properly escapes all user input to prevent
+    SQL injection.
+
+func CleanTableName(name string) string
+    CleanTableName removes special characters from table names to make them
+    valid SQL identifiers. Ensures the resulting name starts with a letter or
+    underscore and contains only valid characters.
+
+func EscapeSQLIdentifier(identifier string) string
+    EscapeSQLIdentifier properly escapes a SQL identifier by doubling any
+    internal quotes and wrapping the result in double quotes.
+
+func GetRequiredExtensions(options *ReadOptions) []string
+    GetRequiredExtensions returns a list of required DuckDB extensions for the
+    given read options.
+
+func GetSupportedFormats() []string
+    GetSupportedFormats returns a list of all supported file extensions.
+
+func IsFormatSupported(filename string) bool
+    IsFormatSupported checks if a file format is supported.
+
+func ValidateSQLIdentifier(identifier string) (string, error)
+    ValidateSQLIdentifier helps prevent SQL injection by ensuring only valid
+    identifiers are used.
+
+
+TYPES
+
+type InMemoryClient struct {
+	// Has unexported fields.
+}
+    InMemoryClient is a client for interacting with DuckDB for in-memory data
+    processing.
+
+func NewInMemoryClient(ctx context.Context, logger *slog.Logger) (*InMemoryClient, error)
+    NewInMemoryClient creates a new client for in-memory data processing
+    with DuckDB. It configures the DuckDB connection without external storage
+    dependencies. Returns the client and an error if encountered.
+
+func (c *InMemoryClient) Close() error
+    Close closes the DuckDB connection held by the client.
+
+func (c *InMemoryClient) CreateTableFromData(ctx context.Context, tableName string, data []map[string]any) error
+    CreateTableFromData creates a table in DuckDB from in-memory data. This is
+    useful for loading data directly into DuckDB for processing.
+
+func (c *InMemoryClient) ExecuteNonQuery(ctx context.Context, query string, args ...any) (sql.Result, error)
+    ExecuteNonQuery executes a SQL statement that does not return rows (such as
+    INSERT, UPDATE, DELETE).
+
+    query: the SQL statement to execute. args: optional arguments for the
+    statement.
+
+func (c *InMemoryClient) ExecuteQuery(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+    ExecuteQuery executes a SQL query using the client's DuckDB connection and
+    returns the resulting rows. It is suitable for queries that return rows
+    (e.g. SELECT statements).
+
+    query: the SQL query to execute. args: optional arguments for the query.
+
+func (c *InMemoryClient) LoadFileFromBytes(ctx context.Context, data []byte, filename string, tableName string) error
+    LoadFileFromBytes loads data from byte content into DuckDB as a table.
+    This is useful for processing binary file content like CSV, JSON, etc.
+
+    Parameters:
+      - data: The binary content of the file
+      - filename: The original filename (used for format detection)
+      - tableName: The name of the table to create in DuckDB
+
+    Example:
+
+        csvData := []byte("name,age\nJohn,30\nJane,25")
+        err := client.LoadFileFromBytes(csvData, "users.csv", "users")
+
+func (c *InMemoryClient) MergeDataSources(
+	ctx context.Context,
+	dataSources map[string][]map[string]any,
+	targetTableName string,
+	strategy MergeStrategy,
+) (*MergeResult, error)
+    MergeDataSources merges multiple in-memory data sources into a single table.
+    It handles different merge strategies for conflict resolution.
+
+    Parameters:
+      - dataSources: Map of source names to their data
+      - targetTableName: The name of the target table to create
+      - strategy: How to handle merge conflicts
+
+    Returns the merge result or an error.
+
+func (c *InMemoryClient) MergeFiles(
+	ctx context.Context,
+	sourceFiles map[string][]byte,
+	targetTableName string,
+	strategy MergeStrategy,
+) (*MergeResult, error)
+    MergeFiles merges multiple files from byte content into a single table.
+    This is useful for processing files loaded into memory.
+
+func (c *InMemoryClient) QueryToMap(ctx context.Context, query string, args ...any) ([]map[string]any, error)
+    QueryToMap executes a query and returns the results as a slice of maps.
+    This is convenient for working with query results in Go.
+
+type MergeResult struct {
+	TableName   string   `json:"table_name"`
+	RowCount    int      `json:"row_count"`
+	SourceNames []string `json:"source_names"` // Track which sources contributed
+}
+    MergeResult represents the result of merging multiple data sources.
+
+type MergeStrategy string
+    MergeStrategy defines how to handle conflicts when merging data.
+
+const (
+	// MergeStrategyUnion combines all rows from all sources (allows duplicates).
+	MergeStrategyUnion MergeStrategy = "union"
+
+	// MergeStrategyUnionDistinct combines all rows but removes exact duplicates.
+	MergeStrategyUnionDistinct MergeStrategy = "union_distinct"
+
+	// MergeStrategyFirstWins keeps only rows from the first source when conflicts occur.
+	MergeStrategyFirstWins MergeStrategy = "first_wins"
+
+	// MergeStrategyLastWins keeps only rows from the last source when conflicts occur.
+	MergeStrategyLastWins MergeStrategy = "last_wins"
+)
+type ReadOptions struct {
+	ReadFunction string            `json:"read_function"` // DuckDB function to use (e.g., "read_json_auto")
+	FormatOption string            `json:"format_option"` // Format option for writing (e.g., "JSON")
+	Parameters   map[string]string `json:"parameters"`    // Additional parameters for the read function
+	Extension    string            `json:"extension"`     // Required DuckDB extension (if any)
+	Description  string            `json:"description"`   // Human-readable description
+}
+    ReadOptions represents the configuration for reading a file with DuckDB.
+
+func GetDuckDBReadOptions(filename string) (*ReadOptions, error)
+    GetDuckDBReadOptions automatically detects the format from filename and
+    returns read options.
+
+func GetDuckDBReadOptionsByExtension(extension string) (*ReadOptions, error)
+    GetDuckDBReadOptionsByExtension maps a file extension to the appropriate
+    DuckDB read options.
+
+</pre>
+</body></html>

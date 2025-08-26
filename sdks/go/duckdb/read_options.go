@@ -1,6 +1,7 @@
 package duckdb
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -206,7 +207,7 @@ func GetSupportedFormats() []string {
 //
 //	csvData := []byte("name,age\nJohn,30\nJane,25")
 //	err := client.LoadFileFromBytes(csvData, "users.csv", "users")
-func (c *InMemoryClient) LoadFileFromBytes(data []byte, filename string, tableName string) error {
+func (c *InMemoryClient) LoadFileFromBytes(ctx context.Context, data []byte, filename string, tableName string) error {
 	options, err := GetDuckDBReadOptions(filename)
 	if err != nil {
 		return fmt.Errorf("unsupported format for %s: %w", filename, err)
@@ -217,13 +218,13 @@ func (c *InMemoryClient) LoadFileFromBytes(data []byte, filename string, tableNa
 		installQuery := fmt.Sprintf("INSTALL %s;", ext)
 		loadQuery := fmt.Sprintf("LOAD %s;", ext)
 
-		if _, installErr := c.db.Exec(installQuery); installErr != nil {
-			c.logger.Warn("failed to install extension", "extension", ext, "error", installErr)
+		if _, installErr := c.db.ExecContext(ctx, installQuery); installErr != nil {
+			c.logger.WarnContext(ctx, "failed to install extension", "extension", ext, "error", installErr)
 		}
-		if _, loadErr := c.db.Exec(loadQuery); loadErr != nil {
-			c.logger.Warn("failed to load extension", "extension", ext, "error", loadErr)
+		if _, loadErr := c.db.ExecContext(ctx, loadQuery); loadErr != nil {
+			c.logger.WarnContext(ctx, "failed to load extension", "extension", ext, "error", loadErr)
 		}
 	}
 
-	return c.loadFileAsTable(data, filename, tableName)
+	return c.loadFileAsTable(ctx, data, filename, tableName)
 }
