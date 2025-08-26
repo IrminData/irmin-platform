@@ -1850,7 +1850,7 @@ import "irmin-connectors/connectors/mysql/client"
 - [type ColumnInfo](<#ColumnInfo>)
 - [type MySQLClient](<#MySQLClient>)
   - [func InitMySQLClient\(ctx context.Context, logger \*slog.Logger, operation \*db.Operation\) \(\*MySQLClient, \*string, error\)](<#InitMySQLClient>)
-  - [func NewMySQLClient\(host string, port int, user, password, defaultDB string\) \(\*MySQLClient, error\)](<#NewMySQLClient>)
+  - [func NewMySQLClient\(ctx context.Context, host string, port int, user, password, defaultDB string\) \(\*MySQLClient, error\)](<#NewMySQLClient>)
   - [func \(mc \*MySQLClient\) BeginTransaction\(ctx context.Context\) \(\*Tx, error\)](<#MySQLClient.BeginTransaction>)
   - [func \(mc \*MySQLClient\) Close\(\) error](<#MySQLClient.Close>)
   - [func \(mc \*MySQLClient\) Exec\(ctx context.Context, query string, args ...any\) \(sql.Result, error\)](<#MySQLClient.Exec>)
@@ -1861,7 +1861,7 @@ import "irmin-connectors/connectors/mysql/client"
   - [func \(mc \*MySQLClient\) Query\(ctx context.Context, query string, args ...any\) \(\*sql.Rows, error\)](<#MySQLClient.Query>)
   - [func \(mc \*MySQLClient\) StartBinlogListener\(ctx context.Context, logger \*slog.Logger, onNotify func\(payload string\)\) error](<#MySQLClient.StartBinlogListener>)
   - [func \(mc \*MySQLClient\) ValidateCredentials\(ctx context.Context\) error](<#MySQLClient.ValidateCredentials>)
-  - [func \(mc \*MySQLClient\) WithDatabase\(dbName string\) \(\*MySQLClient, error\)](<#MySQLClient.WithDatabase>)
+  - [func \(mc \*MySQLClient\) WithDatabase\(ctx context.Context, dbName string\) \(\*MySQLClient, error\)](<#MySQLClient.WithDatabase>)
 - [type Tx](<#Tx>)
   - [func \(t \*Tx\) Commit\(\) error](<#Tx.Commit>)
   - [func \(t \*Tx\) Exec\(ctx context.Context, query string, args ...any\) \(sql.Result, error\)](<#Tx.Exec>)
@@ -1951,7 +1951,7 @@ InitMySQLClient initializes a MySQLClient instance based on the data provided in
 ### func NewMySQLClient
 
 ```go
-func NewMySQLClient(host string, port int, user, password, defaultDB string) (*MySQLClient, error)
+func NewMySQLClient(ctx context.Context, host string, port int, user, password, defaultDB string) (*MySQLClient, error)
 ```
 
 NewMySQLClient connects to MySQL without specifying a database. This is useful for listing available databases or validating credentials without "locking" into a specific dbName.
@@ -2050,7 +2050,7 @@ ValidateCredentials pings the database server to ensure the connection is valid.
 ### func \(\*MySQLClient\) WithDatabase
 
 ```go
-func (mc *MySQLClient) WithDatabase(dbName string) (*MySQLClient, error)
+func (mc *MySQLClient) WithDatabase(ctx context.Context, dbName string) (*MySQLClient, error)
 ```
 
 WithDatabase creates a new client instance \*connected to a specific database\*. This is handy once you decide which database you want to use \(e.g. after listing them\).

@@ -52,6 +52,7 @@ func InitMySQLClient(
 
 	// Establish a connection to the MySQL server
 	mysqlClient, err := NewMySQLClient(
+		ctx,
 		connectionDetails.Host,
 		connectionDetails.Port,
 		connectionDetails.Username,
@@ -65,7 +66,7 @@ func InitMySQLClient(
 	}
 
 	// Connect to the specified database (creates a new independent connection)
-	dbClient, err := mysqlClient.WithDatabase(connectionSettings.Database)
+	dbClient, err := mysqlClient.WithDatabase(ctx, connectionSettings.Database)
 	if err != nil {
 		// Close the initial client on error
 		if closeErr := mysqlClient.Close(); closeErr != nil {

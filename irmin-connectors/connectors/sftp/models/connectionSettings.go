@@ -1,8 +1,6 @@
 package sftpmodels
 
-import (
-	"irmin-connectors/utils"
-)
+import "irmin-connectors/utils"
 
 const (
 	// TrueValue represents the string "true" for boolean comparisons.

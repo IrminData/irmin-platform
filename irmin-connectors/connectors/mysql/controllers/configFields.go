@@ -104,7 +104,7 @@ func (cs *Controllers) getSettingsFields(
 	}
 
 	// Create a client WITHOUT specifying a database (so we can fetch them)
-	mc, err := mysqlclient.NewMySQLClient(host, port, user, password, defaultDB)
+	mc, err := mysqlclient.NewMySQLClient(c, host, port, user, password, defaultDB)
 	if err != nil {
 		cs.Logger.Error("Error initialising MySQL client",
 			"error", err)

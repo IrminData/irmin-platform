@@ -409,6 +409,13 @@ linters:
       # Default: false
       os-temp-dir: true
 
+    revive:
+      # Rules to enable/disable.
+      # Default: []
+      rules:
+        - name: var-naming
+          disabled: true
+
   exclusions:
     # Log a warning if an exclusion rule is unused.
     # Default: false

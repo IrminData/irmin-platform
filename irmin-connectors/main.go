@@ -260,7 +260,10 @@ func waitForServerReady(ctx context.Context, port string, maxAttempts int) bool 
 		default:
 		}
 
-		conn, err := net.DialTimeout("tcp", address, ConnectionTimeout)
+		dialer := &net.Dialer{
+			Timeout: ConnectionTimeout,
+		}
+		conn, err := dialer.DialContext(ctx, "tcp", address)
 		if err == nil {
 			if closeErr := conn.Close(); closeErr != nil {
 				log.Printf("Warning: failed to close connection: %v", closeErr)

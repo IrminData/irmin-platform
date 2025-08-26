@@ -56,7 +56,12 @@ func InitMySQLClient(
     InitMySQLClient initializes a MySQLClient instance based on the data
     provided in the operation.
 
-func NewMySQLClient(host string, port int, user, password, defaultDB string) (*MySQLClient, error)
+func NewMySQLClient(
+	ctx context.Context,
+	host string,
+	port int,
+	user, password, defaultDB string,
+) (*MySQLClient, error)
     NewMySQLClient connects to MySQL without specifying a database. This is
     useful for listing available databases or validating credentials without
     "locking" into a specific dbName.
@@ -104,7 +109,7 @@ func (mc *MySQLClient) ValidateCredentials(ctx context.Context) error
     ValidateCredentials pings the database server to ensure the connection is
     valid.
 
-func (mc *MySQLClient) WithDatabase(dbName string) (*MySQLClient, error)
+func (mc *MySQLClient) WithDatabase(ctx context.Context, dbName string) (*MySQLClient, error)
     WithDatabase creates a new client instance *connected to a specific
     database*. This is handy once you decide which database you want to use
     (e.g. after listing them).

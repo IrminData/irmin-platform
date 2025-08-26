@@ -34,7 +34,12 @@ type MySQLClient struct {
 // NewMySQLClient connects to MySQL without specifying a database.
 // This is useful for listing available databases or validating credentials without
 // "locking" into a specific dbName.
-func NewMySQLClient(host string, port int, user, password, defaultDB string) (*MySQLClient, error) {
+func NewMySQLClient(
+	ctx context.Context,
+	host string,
+	port int,
+	user, password, defaultDB string,
+) (*MySQLClient, error) {
 	if host == "" || port == 0 || user == "" {
 		return nil, errors.New("missing required connection details: host, port, user")
 	}
@@ -54,7 +59,7 @@ func NewMySQLClient(host string, port int, user, password, defaultDB string) (*M
 	db.SetConnMaxLifetime(ConnectionLifetime)
 
 	// Test connectivity
-	if err = db.Ping(); err != nil {
+	if err = db.PingContext(ctx); err != nil {
 		if closeErr := db.Close(); closeErr != nil {
 			return nil, fmt.Errorf("failed to ping MySQL and close connection: %w (original error: %w)", closeErr, err)
 		}
@@ -73,7 +78,7 @@ func NewMySQLClient(host string, port int, user, password, defaultDB string) (*M
 
 // WithDatabase creates a new client instance *connected to a specific database*.
 // This is handy once you decide which database you want to use (e.g. after listing them).
-func (mc *MySQLClient) WithDatabase(dbName string) (*MySQLClient, error) {
+func (mc *MySQLClient) WithDatabase(ctx context.Context, dbName string) (*MySQLClient, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&multiStatements=true",
 		mc.user, mc.password, mc.host, mc.port, dbName)
 
@@ -87,7 +92,7 @@ func (mc *MySQLClient) WithDatabase(dbName string) (*MySQLClient, error) {
 	newDB.SetMaxIdleConns(MaxIdleConnections)
 	newDB.SetConnMaxLifetime(ConnectionLifetime)
 
-	if err = newDB.Ping(); err != nil {
+	if err = newDB.PingContext(ctx); err != nil {
 		if closeErr := newDB.Close(); closeErr != nil {
 			return nil, fmt.Errorf(
 				"failed to ping MySQL db=%s and close connection: %w (original error: %w)",

@@ -69,6 +69,7 @@ func (cs *Controllers) TestConnection(
 
 	// Create MySQL client using model fields
 	mc, err := mysqlclient.NewMySQLClient(
+		ctx,
 		connectionDetails.Host,
 		connectionDetails.Port,
 		connectionDetails.Username,
@@ -112,7 +113,7 @@ func (cs *Controllers) validateDatabaseConnection(
 ) (bool, []string) {
 	var errors []string
 
-	dbClient, err := mc.WithDatabase(database)
+	dbClient, err := mc.WithDatabase(ctx, database)
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Error connecting to database '%s': %v", database, err))
 		return false, errors
