@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/mcp/resources</title></head><body>
+<h1>Package irmin-api/mcp/resources</h1>
+<pre>
+package resources // import "irmin-api/mcp/resources"
+
+
+FUNCTIONS
+
+func ListAvailableDocs() ([]string, error)
+    ListAvailableDocs returns a list of available documentation files
+
+
+TYPES
+
+type MCPResources struct {
+	// Has unexported fields.
+}
+
+func NewMCPResources(
+	server *sdkmcp.Server,
+	apiServices *services.APIServices,
+	getUser func(ctx context.Context) (*db.User, bool),
+) *MCPResources
+
+func (mcpResources *MCPResources) RegisterAll()
+    RegisterAll registers all resources in this package.
+
+func (mcpResources *MCPResources) RegisterDocs()
+    RegisterDocs registers the docs resource for serving static documentation.
+
+func (mcpResources *MCPResources) RegisterProfile()
+    RegisterProfile registers the profile resource.
+
+</pre>
+</body></html>

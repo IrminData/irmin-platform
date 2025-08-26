@@ -1,0 +1,45 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/lib/repository-object-cache</title></head><body>
+<h1>Package irmin-api/lib/repository-object-cache</h1>
+<pre>
+package repositoryobjectcache // import "irmin-api/lib/repository-object-cache"
+
+
+TYPES
+
+type Manager struct {
+	// Has unexported fields.
+}
+    Manager handles repository object caching operations
+
+func NewManager(database *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv) *Manager
+    NewManager creates a new cache manager instance
+
+func (m *Manager) ProcessEngineObject(
+	object *irminmodels.Object,
+	flatObjects []db.RepositoryObject,
+	ref string,
+	repositoryID uint,
+	parentPath *string,
+	parentID *uint,
+) (*db.RepositoryObject, error)
+    ProcessEngineObject processes an object from the data engine and saves it
+    to the database. It returns the object from the database if it is found,
+    otherwise it gets it from the data engine and caches it in the database.
+
+func (m *Manager) RefreshObjectFromDataEngine(
+	ctx context.Context,
+	locale string,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	path, ref string,
+	existingObject *db.RepositoryObject,
+) (*db.RepositoryObject, error)
+    RefreshObjectFromDataEngine fetches the object from data engine and updates
+    cache
+
+func (m *Manager) ShouldRefreshCache(repositoryObjectDB *db.RepositoryObject, ignoreCache bool) bool
+    ShouldRefreshCache determines if the cache needs to be refreshed
+
+</pre>
+</body></html>

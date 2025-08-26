@@ -1,0 +1,373 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/utils</title></head><body>
+<h1>Package irmin-api/utils</h1>
+<pre>
+package utils // import "irmin-api/utils"
+
+
+CONSTANTS
+
+const (
+	KiB = 1 &lt;&lt; 10 // 1024
+	MiB = 1 &lt;&lt; 20 // 1048576
+	GiB = 1 &lt;&lt; 30 // 1073741824
+	TiB = 1 &lt;&lt; 40 // 1099511627776
+	PiB = 1 &lt;&lt; 50 // 1125899906842624
+	EiB = 1 &lt;&lt; 60 // 1152921504606846976
+	ZiB = 1 &lt;&lt; 70 // 1180591620717411303424
+	YiB = 1 &lt;&lt; 80 // 1208925819614629174706176
+
+	KB = 1000                      // 10^3
+	MB = 1000000                   // 10^6
+	GB = 1000000000                // 10^9
+	TB = 1000000000000             // 10^12
+	PB = 1000000000000000          // 10^15
+	EB = 1000000000000000000       // 10^18
+	ZB = 1000000000000000000000    // 10^21
+	YB = 1000000000000000000000000 // 10^24
+)
+const (
+	// MaxSubParts represents the maximum allowed number of parts when splitting by '@'.
+	MaxSubParts = 2
+	// MinPartsWithWorkspace represents the number of parts when workspace is included.
+	MinPartsWithWorkspace = 3
+	// MinPartsWithoutWorkspace represents the number of parts when workspace is omitted.
+	MinPartsWithoutWorkspace = 2
+)
+
+FUNCTIONS
+
+func Abs(x float64) float64
+    Abs returns the absolute value of x.
+
+func Average(numbers []float64) float64
+    Average computes the average value of a slice of float64 numbers. It returns
+    an error if the slice is empty.
+
+    Params:
+      - numbers: slice of float64 numbers
+
+    Returns:
+      - float64: the average of the numbers
+
+func ConstructEditorStorageNamespace(workspaceSlug string) string
+    ConstructEditorStorageNamespace constructs the editor storage namespace.
+
+func ConstructLakeFSRepositoryName(workspace, repository string) string
+    ConstructLakeFSRepositoryName constructs the LakeFS repository name using
+    the workspace and repository names.
+
+func ConstructLakeFSRepositoryPrefix(workspace string) string
+    ConstructLakeFSRepositoryPrefix constructs the LakeFS repository name prefix
+    using the workspace name.
+
+func ConstructLakeFSRepositoryStorageNamespace(workspace, repository string) (string, error)
+    ConstructLakeFSRepositoryStorageNamespace constructs the LakeFS repository
+    storage namespace.
+
+func ConvertToStringMap(source map[string]any) map[string]string
+    ConvertToStringMap converts a map[string]any to map[string]string for
+    database compatibility.
+
+func CreateMultipartPayload(
+	fileFields map[string]FilePayload,
+	textFields map[string]string,
+) (*bytes.Buffer, string, error)
+    CreateMultipartPayload creates a multipart form payload that can contain
+    multiple file fields and additional text fields.
+
+    fileFields is a map where the key is the form field name and the value is
+    the FilePayload. textFields is a map of string key/value pairs to include as
+    form fields.
+
+    The function returns a *bytes.Buffer containing the multipart payload,
+    the Content-Type (which includes the boundary), and an error if something
+    goes wrong.
+
+func DetermineEditorItemLanguageFromPath(inputPath string) *string
+    DetermineEditorItemLanguageFromPath parses the language of an editor
+    item from its path. Path examples: "/path/to/script.js", "/script.js",
+    "path/to/script.go", "script.py", "path/to/group", "". Returns the language
+    of the editor item (if any), like "js", "py", "go", etc.
+
+func FindProjectRoot() (string, error)
+    FindProjectRoot traverses upwards from the current directory until it finds
+    a "go.mod" file. If a ".env" file is found in the current working directory,
+    it returns that directory.
+
+func GenerateRandomString() (string, error)
+    GenerateRandomString generates a random 64-character string. It does so by
+    generating 32 random bytes and then encoding them in hexadecimal, as each
+    byte produces two hexadecimal characters. Returns the random string or an
+    error if one occurs.
+
+func GetDefaultBranchRetentionDays(branchRules []irminmodels.BranchGarbageCollectionRules, defaultBranch string) *int
+    GetDefaultBranchRetentionDays gets the retention days for the default branch
+    from existing rules.
+
+func GetSupportedJWTAlgorithms() []string
+    GetSupportedJWTAlgorithms returns a list of all supported JWT algorithms.
+
+func IsJWTAlgorithmSupported(algorithm string) bool
+    IsJWTAlgorithmSupported checks if the given JWT algorithm is supported by
+    our validation.
+
+func ParseBytes(s string) (float64, error)
+    ParseBytes converts a string with a unit (e.g. "9.602MiB", "1.05k", "53m",
+    "1.05kb", "185.4mi", "2.5GB") to bytes. It supports both binary (e.g. KiB,
+    MiB, GiB) and decimal units (e.g. k, m, gb, mi).
+
+    Parameters:
+      - s: the string representing the number and its unit.
+
+    Returns:
+      - The number of bytes as a float64.
+      - An error if the conversion fails.
+
+func ParseContentRange(cr string) (int64, int64, int64, error)
+    ParseContentRange parses a Content-Range HTTP header value. It expects a
+    string in the format "bytes start-end/total" (e.g. "bytes 0-1023/2048") and
+    returns the start byte, end byte, total size, and any parsing error.
+
+func ParseHeaders(c fiber.Ctx, required, optional []string) (map[string]string, error)
+    ParseHeaders parses the header parameters from a Fiber context, retrieving
+    both required and optional headers.
+
+    Params: - c: The Fiber context containing the headers. - required:
+    A slice of strings representing the required header names. - optional:
+    A slice of strings representing the optional header names.
+
+    Returns:
+      - A map where the key is the header name and the value is the header
+        value. The map will include all required headers and any optional
+        headers that are present.
+      - An error if any required headers are missing.
+
+func ParseQueryParams(c fiber.Ctx, required, optional []string) (map[string]string, error)
+    ParseQueryParams parses the query parameters from a Fiber context,
+    retrieving both required and optional parameters.
+
+    Params: - c: The Fiber context containing the query parameters. - required:
+    A slice of strings representing the required parameter names. - optional:
+    A slice of strings representing the optional parameter names.
+
+    Returns:
+      - A map where the key is the parameter name and the value is the parameter
+        value. The map will include all required parameters and any optional
+        parameters that are present.
+      - An error if any required parameters are missing.
+
+func Slugify(s string) string
+    Slugify converts a given string into a URL-friendly slug. It lowercases
+    the input, removes non-alphanumeric characters (except spaces and hyphens),
+    replaces spaces and consecutive hyphens with a single hyphen, and trims
+    hyphens from the beginning and end of the string. Returns the resulting
+    slug.
+
+func StringPtr(s string) *string
+    StringPtr returns a pointer to a string
+
+func ValidateGarbageCollectionSettings(settings *GarbageCollectionSettings) error
+    ValidateGarbageCollectionSettings validates the garbage collection settings.
+
+func ValidateJWT(tokenString string, signingKey []byte, signingAlg string) (*jwt.Token, error)
+    ValidateJWT validates a JWT token using the provided signing key and
+    algorithm.
+
+    Parameters: - tokenString: The JWT token string to be validated.
+    - signingKey: The signing key used to sign the token. - signingAlg:
+    The expected signing algorithm (e.g. "HS512").
+
+    Returns: - A pointer to a jwt.Token if the token is valid. - An error if the
+    token is invalid or token parsing fails.
+
+func WriteFileDownloadResponse(c fiber.Ctx, status int, filename, contentType string, data []byte) error
+    WriteFileDownloadResponse writes a file download response with the given
+    status and filename. It sets the appropriate headers and sends the file
+    data. Parameters: - c: the Fibre context. - status: the HTTP status code. -
+    filename: the name for the file to be downloaded. - data: the file content.
+
+func WriteResponse(c fiber.Ctx, status int, response irminmodels.IrminAPIResponse) error
+
+TYPES
+
+type AsyncResult[T any] struct {
+	Result T
+	Err    error
+}
+    AsyncResult wraps a result of type T with a potential error.
+
+type CoreAPIEnv struct {
+	Port                         string // Port to run the Core API server on
+	URL                          string // URL of the Core API server
+	SystemToken                  string // Token to authenticate system requests to the API
+	CorsEnabled                  bool   // Flag to enable CORS
+	PreforkEnabled               bool   // Flag to enable prefork
+	HelmetEnabled                bool   // Flag to enable helmet
+	IdempotencyEnabled           bool   // Flag to enable idempotency
+	AllowedOrigins               string // Allowed origins for CORS
+	MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
+	AnthropicAPIKey              string // Anthropic API key to run inference
+	OrchestratorEnabled          bool   // Flag to enable the orchestrator
+	SqidAlphabet                 string // Alphabet to use for SQIDs
+	DatabaseConnectionString     string // Postgres DB connection string
+	ResendAPIKey                 string // Resend API Key for emails
+	ConsoleURL                   string // URL of the Irmin Console
+	InviteExpiresInDays          int    // Number of days before an invite expires
+	ClerkPublicKey               string // Clerk Public API Key
+	ClerkSecretKey               string // Clerk Secret API Key
+	ClerkSigningKey              string // Clerk Signing Key for JWT
+	ClerkSigningAlgorithm        string // Clerk Signing Algorithm for JWT
+	NovuSecretKey                string // Novu secret key
+	LakeFSURL                    string // URL of the LakeFS instance to connect to
+	LakeFSAccessKey              string // Access key for the LakeFS instance
+	LakeFSSecretKey              string // Secret key for the LakeFS instance
+	LakeFSS3Bucket               string // Bucket name where LakeFS stores repositories
+	IrminS3Bucket                string // Bucket name where Irmin stores non-repository objects
+	S3Endpoint                   string // Endpoint of the S3-compatible object store
+	S3Region                     string // Region of the S3-compatible object store
+	S3AccessKeyID                string // Access key ID for the S3-compatible object store
+	S3AccessSecret               string // Secret access key for the S3-compatible object store
+	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
+	TestConnectorBaseURL         string // Base URL of the connector to test with
+	TestConnectorToken           string // Operation token for the connector to test with
+	TestConnectorPath            string // Path to the test file in the connector
+	TestObjectName               string // Name of the test object which is expected to be a structured JSON file
+	TestUserEmail                string // Email of the test user
+	TestWorkspace                string // Workspace to test with
+	TestRepository               string // Repository to test with
+	TestBranch                   string // Branch to test with
+	TestTag                      string // Tag to test with
+}
+    CoreAPIEnv is a struct that holds the environment variables for the data
+    engine.
+
+func LoadEnv() (*CoreAPIEnv, error)
+    LoadEnv loads environment variables from the .env file in the project root,
+    sets default values for required system variables if not present, and
+    returns a CoreAPIEnv struct with the loaded environment variables.
+
+type EmailTemplate struct {
+	HTMLTemplate *template.Template
+	TextTemplate *template.Template
+	Name         string
+}
+    EmailTemplate represents a loaded email template with both HTML and text
+    versions.
+
+func (et *EmailTemplate) RenderHTML(data any) (string, error)
+    RenderHTML renders the HTML version of the template with the provided data.
+
+func (et *EmailTemplate) RenderText(data any) (string, error)
+    RenderText renders the text version of the template with the provided data.
+
+type EmailTemplateData struct {
+	WorkspaceName       string
+	InvitedByName       string
+	InvitedByEmail      string
+	RoleName            string
+	InviteAcceptanceURL string
+	InviteExpiresAt     string
+}
+    EmailTemplateData represents the data structure for email templates.
+
+type EmailTemplateManager struct {
+	// Has unexported fields.
+}
+    EmailTemplateManager handles loading and rendering of email templates.
+
+func NewEmailTemplateManager(templatesPath string) *EmailTemplateManager
+    NewEmailTemplateManager creates a new email template manager.
+
+func (etm *EmailTemplateManager) ClearCache()
+    ClearCache clears the template cache, forcing templates to be reloaded on
+    next access.
+
+func (etm *EmailTemplateManager) GetAvailableTemplates() ([]string, error)
+    GetAvailableTemplates returns a list of available email templates.
+
+func (etm *EmailTemplateManager) GetLoadedTemplates() []string
+    GetLoadedTemplates returns the names of currently loaded templates.
+
+func (etm *EmailTemplateManager) LoadTemplate(templateName string) (*EmailTemplate, error)
+    LoadTemplate loads an email template by name from the templates directory.
+
+func (etm *EmailTemplateManager) PreloadAllTemplates() error
+    PreloadAllTemplates loads all available templates into memory for faster
+    access.
+
+type FilePayload struct {
+	// FileName is the name of the file as it should appear in the form.
+	FileName string
+	// Reader provides the file's content.
+	Reader io.Reader
+}
+    FilePayload holds the information required for a file field.
+
+type FutureResult[T any] interface {
+	// Await waits for the async function to complete and returns its result and error.
+	Await() (T, error)
+}
+    FutureResult is an interface for an asynchronous result that returns a value
+    of type T and an error.
+
+func Async[T any](f func() (T, error)) FutureResult[T]
+    Async runs function f concurrently and returns a FutureResult for its
+    result.
+
+func AsyncWithContext[T any](ctx context.Context, f func() (T, error)) FutureResult[T]
+    AsyncWithContext runs function f concurrently and returns a FutureResult
+    that supports cancellation. If the context is canceled before f completes,
+    Await returns ctx.Err().
+
+type GarbageCollectionSettings struct {
+	DefaultRetentionDays       *int
+	DefaultBranchRetentionDays *int
+}
+    GarbageCollectionSettings represents the garbage collection configuration.
+
+func ParseGarbageCollectionSettings(fields map[string]string) (*GarbageCollectionSettings, error)
+    ParseGarbageCollectionSettings parses garbage collection settings from form
+    fields.
+
+type ParsedIrminQuery struct {
+	Placeholders   []ParsedQueryPlaceholder `json:"placeholders"`
+	OriginalQuery  string                   `json:"original_query"`
+	FormattedQuery string                   `json:"formatted_query"`
+}
+    ParsedIrminQuery encapsulates the entire query, including its original form,
+    a formatted version with placeholders replaced, and a slice of parsed
+    placeholders.
+
+func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error)
+    ParseIrminQuery extracts and parses all Irmin query placeholders from
+    the given string, replacing each placeholder with the value returned
+    by the provided replaceFn. The expected placeholder format is:
+    $["workspace;repository;object@ref"] The workspace and ref components are
+    optional (for example, "@main" might be omitted).
+
+    Example query string with multiple placeholders:
+
+        "Preamble text $[\"acme;mobile-app;users.json@main\"] some middle text $[\"other;repo;file.json\"] end text"
+
+    Returns a ParsedIrminQuery containing the original query, the formatted
+    query, and the parsed placeholders.
+
+type ParsedQueryPlaceholder struct {
+	Workspace   string `json:"workspace"`   // The workspace (e.g. "acme-corp")
+	Repository  string `json:"repository"`  // The repository (e.g. "mobile-app")
+	Object      string `json:"object"`      // The object including its file extension (e.g. "users.json")
+	Ref         string `json:"ref"`         // The branch or reference (e.g. "main"); optional
+	Placeholder string `json:"placeholder"` // The full query placeholder string (e.g. $["..."])
+	Replacer    string `json:"replacer"`    // The value that replaces the placeholder
+	Operation   string `json:"operation"`   // The determined operation: "read" or "write"
+}
+    ParsedQueryPlaceholder represents a parsed placeholder in an Irmin query.
+
+type ReplaceFn func(pi *ParsedQueryPlaceholder) (string, error)
+    ReplaceFn is the type for a function that computes a replacement string for
+    a parsed placeholder. It receives a pointer to ParsedQueryPlaceholder and
+    returns a string to be substituted along with any error.
+
+</pre>
+</body></html>

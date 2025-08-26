@@ -1,0 +1,1199 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/services</title></head><body>
+<h1>Package irmin-api/services</h1>
+<pre>
+package services // import "irmin-api/services"
+
+
+CONSTANTS
+
+const (
+	// UserDetailsCacheMaxAge is the maximum age of a user details cache entry used to decide refresh from Clerk
+	UserDetailsCacheMaxAge = 5 * time.Minute
+
+	// NovuSubscriberTimeout is the timeout for ensuring a Novu subscriber.
+	NovuSubscriberTimeout = 30 * time.Second
+
+	// AuthCacheTTL is how long to cache auth results.
+	AuthCacheTTL = 5 * time.Minute
+)
+const (
+	// SearchDefaultLimit is the default number of results to return.
+	SearchDefaultLimit = 20
+	// SearchDefaultOffset is the default offset to start from.
+	SearchDefaultOffset = 0
+)
+
+VARIABLES
+
+var (
+	ErrNotFound                               = errors.New("not found")
+	ErrInvalidRequest                         = errors.New("invalid request")
+	ErrAccessDenied                           = errors.New("access denied")
+	ErrSystemUserRequired                     = errors.New("system user required")
+	ErrWorkspaceNotMember                     = errors.New("user not a member of the workspace")
+	ErrWorkspaceNotOwner                      = errors.New("user is not the owner of the workspace")
+	ErrWorkspaceOwnerCannotLeave              = errors.New("user is the owner of the workspace")
+	ErrWorkspaceLastMemberCannotLeave         = errors.New("user is the last user in the workspace")
+	ErrNewOwnerInvalid                        = errors.New("new owner is invalid")
+	ErrURLAndSystemTokenRequiredForConnectors = errors.New("URL and system token are required for connectors")
+	ErrAPITokenNotBelongToUser                = errors.New("API token does not belong to user")
+	ErrAPITokenIsHidden                       = errors.New("API token is hidden")
+	ErrEditorItemPathRequired                 = errors.New("editor item path is required")
+	ErrEditorItemDestinationPathRequired      = errors.New("editor item destination path is required")
+	ErrUserAlreadyInWorkspace                 = errors.New("user already in the workspace")
+	ErrUserAlreadyInvitedToWorkspace          = errors.New("user already invited to the workspace")
+	ErrInvalidRole                            = errors.New("invalid role")
+	ErrInviteExpired                          = errors.New("invite expired")
+	ErrInviteNotAllowed                       = errors.New("invite not allowed")
+	ErrInviteAlreadyAcceptedOrDeclined        = errors.New("invite already accepted or declined")
+	ErrPolicyAlreadyExists                    = errors.New("policy already exists")
+	ErrRepositoryAlreadyExists                = errors.New("repository already exists")
+	ErrCannotRemoveSelfFromWorkspace          = errors.New("cannot remove self from workspace")
+	ErrCannotRemoveOwnerFromWorkspace         = errors.New("cannot remove owner from workspace")
+	ErrInvalidWebhookType                     = errors.New("invalid webhook type")
+	ErrTagNameRequired                        = errors.New("tag name is required")
+	ErrInvalidWorkflowType                    = errors.New("invalid workflow type")
+	ErrWorkflowRunNotFound                    = errors.New("workflow run not found")
+	ErrInvalidPath                            = errors.New("invalid path")
+	ErrWorkflowAlreadyPaused                  = errors.New("workflow already paused")
+	ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
+	ErrBranchAlreadyExists                    = errors.New("branch already exists")
+	ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
+)
+    Sentinel errors used for consistent HTTP mapping in controllers
+
+
+TYPES
+
+type APIServices struct {
+	DB                *db.Database
+	Logger            *slog.Logger
+	Env               *utils.CoreAPIEnv
+	Orchestrator      *orchestrator.Orchestrator
+	SQIDManager       *irminsqids.SQIDManager
+	LocaleManager     *locales.LocaleManager
+	PermissionService *lib.PermissionService
+	Validator         *irminvalidator.Validator
+	CacheStorage      fiber.Storage
+
+	// Has unexported fields.
+}
+
+func NewAPIServices(
+	db *db.Database,
+	logger *slog.Logger,
+	env *utils.CoreAPIEnv,
+	orchestrator *orchestrator.Orchestrator,
+	sqidManager *irminsqids.SQIDManager,
+	localeManager *locales.LocaleManager,
+	permissionService *lib.PermissionService,
+	cacheStorage fiber.Storage,
+) *APIServices
+
+func (api *APIServices) AcceptInvite(c context.Context, user *db.User, invite *db.Invite) error
+
+func (api *APIServices) AddOrRemoveTagFromEntity(
+	c context.Context,
+	operation TagEntityOperation,
+	user *db.User,
+	workspace *db.Workspace,
+	tag *db.TagWithAssets,
+	entityType string,
+	entityID string,
+) error
+    AddOrRemoveTagFromEntity is a helper function that handles common logic for
+    adding/removing tags from entities.
+
+func (api *APIServices) AddTagToEntity(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	tag *db.Tag,
+	entityType string,
+	entityID uint,
+) error
+
+func (api *APIServices) CancelWorkflowRun(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	runSqid string,
+) (*db.WorkflowRun, error)
+
+func (api *APIServices) CheckPolicyPermission(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	resource db.PolicyResource,
+	resourceID string,
+	action db.PolicyAction,
+) (bool, error)
+
+func (api *APIServices) ClearAssistantConversation(
+	c context.Context,
+	_ *string,
+	user *db.User,
+	workspace *db.Workspace,
+	_ *string,
+	conversation *db.AssistantConversation,
+) error
+    ClearAssistantConversation clears all messages from a conversation
+
+func (api *APIServices) CompareRepositoryRefs(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	baseRef, compareRef string,
+) (*irminmodels.Diff, error)
+
+func (api *APIServices) CopyEditorItem(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	sourcePath string,
+	destinationPath string,
+) (*irminmodels.EditorItem, error)
+
+func (api *APIServices) CopyRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	req irmincore.MoveObjectRequest,
+) (*db.RepositoryObject, error)
+
+func (api *APIServices) CreateAPIToken(
+	c context.Context,
+	user *db.User,
+	req irmincore.CreateCredentialRequest,
+) (*db.APIToken, error)
+
+func (api *APIServices) CreateAssistantConversation(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateAssistantConversationRequest,
+) (*db.AssistantConversation, error)
+    CreateAssistantConversation creates a new conversation
+
+func (api *APIServices) CreateConnection(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateConnectionRequest,
+) (*db.Connection, error)
+
+func (api *APIServices) CreateConnector(
+	c context.Context,
+	locale string,
+	isSystem bool,
+	req irmincore.ConnectorRequest,
+) (*db.Connector, error)
+
+func (api *APIServices) CreatePolicy(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreatePolicyRequest,
+) (*db.Policy, error)
+
+func (api *APIServices) CreateQuery(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateQueryRequest,
+) (*db.StoredQuery, error)
+
+func (api *APIServices) CreateRepository(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateRepositoryRequest,
+) (*db.Repository, error)
+
+func (api *APIServices) CreateRepositoryBranch(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.CreateBranchRequest,
+) (*irminmodels.Branch, error)
+
+func (api *APIServices) CreateRepositoryCommit(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.CreateCommitRequest,
+) (*irminmodels.Commit, error)
+
+func (api *APIServices) CreateRepositoryTag(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.CreateRepositoryTagRequest,
+) (*irminmodels.GitTag, error)
+
+func (api *APIServices) CreateWorkflow(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.WorkflowRequest,
+) (*db.Workflow, error)
+
+func (api *APIServices) CreateWorkflowRun(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+) (*db.WorkflowRun, error)
+
+func (api *APIServices) CreateWorkspace(
+	ctx context.Context,
+	user *db.User,
+	req irmincore.CreateWorkspaceRequest,
+) (*db.Workspace, error)
+
+func (api *APIServices) CreateWorkspaceTag(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateTagRequest,
+) (*db.Tag, error)
+
+func (api *APIServices) DeclineInvite(c context.Context, user *db.User, invite *db.Invite) error
+
+func (api *APIServices) DeleteAPIToken(c context.Context, user *db.User, tokenID uint) error
+
+func (api *APIServices) DeleteAssistantConversation(
+	c context.Context,
+	_ *string,
+	user *db.User,
+	workspace *db.Workspace,
+	_ *string,
+	conversation *db.AssistantConversation,
+) error
+    DeleteAssistantConversation deletes a conversation and all its messages
+
+func (api *APIServices) DeleteConnection(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	connection *db.Connection,
+) error
+    DeleteConnection deletes a connection from a workspace.
+
+func (api *APIServices) DeleteConnector(c context.Context, connector *db.Connector, isSystem bool) error
+
+func (api *APIServices) DeleteEditorItem(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	itemPath string,
+) error
+
+func (api *APIServices) DeleteInvite(c context.Context, user *db.User, invite *db.Invite) error
+
+func (api *APIServices) DeletePolicy(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	policy *db.Policy,
+) error
+
+func (api *APIServices) DeleteQuery(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	query *db.StoredQuery,
+) error
+    DeleteQuery deletes a query from a workspace.
+
+func (api *APIServices) DeleteQueryGenerationConversation(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	conversation *db.AssistantConversation,
+) error
+    DeleteQueryGenerationConversation deletes a query generation conversation
+
+func (api *APIServices) DeleteRepository(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+) error
+
+func (api *APIServices) DeleteRepositoryBranch(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branch *irminmodels.Branch,
+) error
+
+func (api *APIServices) DeleteRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+) error
+
+func (api *APIServices) DeleteRepositoryTag(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	tag *irminmodels.GitTag,
+) error
+
+func (api *APIServices) DeleteScriptGenerationConversation(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	conversation *db.AssistantConversation,
+) error
+    DeleteScriptGenerationConversation deletes a script generation conversation
+
+func (api *APIServices) DeleteWorkflow(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+) error
+
+func (api *APIServices) DeleteWorkspace(ctx context.Context, user *db.User, workspace *db.Workspace) error
+
+func (api *APIServices) DeleteWorkspaceTag(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	tagWithAssets *db.TagWithAssets,
+) error
+
+func (api *APIServices) ExecuteEditorItem(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	itemPath string,
+	inputData []irminmodels.ActionInputData,
+	locale string,
+) (*irminmodels.ScriptResult, error)
+
+func (api *APIServices) ExecuteSQL(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.ExecuteSQLRequest,
+) (*irminmodels.QueryResult, error)
+
+func (api *APIServices) GenerateQuery(
+	c context.Context,
+	userToken *string,
+	user *db.User,
+	workspace *db.Workspace,
+	req *irmincore.QueryGenerationRequest,
+) ([]*db.AssistantMessage, error)
+    GenerateQuery generates a SQL query from natural language using the QueryAI
+
+func (api *APIServices) GenerateScript(
+	c context.Context,
+	userToken *string,
+	user *db.User,
+	workspace *db.Workspace,
+	req *irmincore.ScriptGenerationRequest,
+) ([]*db.AssistantMessage, error)
+    GenerateScript generates a Go script from natural language using the
+    ScriptingAI
+
+func (api *APIServices) GetAssistantConversation(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	conversation *db.AssistantConversation,
+) (*db.AssistantConversation, error)
+    GetAssistantConversation retrieves a conversation by ID with all messages
+
+func (api *APIServices) GetAssistantConversationStats(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	conversation *db.AssistantConversation,
+) (*irminmodels.AssistantConversationStats, error)
+    GetAssistantConversationStats returns statistics about a conversation
+
+func (api *APIServices) GetConnection(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	connectionSqid string,
+) (*db.Connection, error)
+    GetConnection gets a connection by its SQID.
+
+func (api *APIServices) GetConnectionSchema(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	connection *db.Connection,
+	method string,
+) (*irminmodels.ObjectSchema, error)
+
+func (api *APIServices) GetConnector(c context.Context, connectorID uint) (*db.Connector, error)
+
+func (api *APIServices) GetConnectorConfigurationFields(
+	c context.Context,
+	locale string,
+	connector *db.Connector,
+	configurationType string,
+	req irmincore.ConnectorConfigurationRequest,
+) (map[string]irminmodels.DynamicField, error)
+
+func (api *APIServices) GetEditorItemContent(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	itemPath string,
+) (string, error)
+
+func (api *APIServices) GetInviteByID(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	inviteSqid string,
+) (*db.Invite, error)
+
+func (api *APIServices) GetLogEventByID(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	logEventSqid string,
+) (*db.LogEvent, error)
+    GetLogEventByID retrieves a log event by its ID and validates access
+    permissions.
+
+func (api *APIServices) GetPoliciesForUser(
+	c context.Context,
+	workspace *db.Workspace,
+	user *db.User,
+) ([]db.Policy, *db.WorkspaceUser, bool, error)
+
+func (api *APIServices) GetPoliciesForWorkspace(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	filters PolicyFilters,
+) ([]db.Policy, error)
+
+func (api *APIServices) GetPoliciesRoleSummary(
+	c context.Context,
+	workspace *db.Workspace,
+) ([]irminmodels.RolePolicySummary, error)
+
+func (api *APIServices) GetPolicy(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	policySQID string,
+) (*db.Policy, error)
+
+func (api *APIServices) GetPolicyResourceOptions(c context.Context, workspace *db.Workspace) (
+	[]db.StoredQuery,
+	[]db.Workflow,
+	[]db.Connection,
+	[]db.Repository,
+	[]db.Tag,
+	[]db.WorkspaceUser,
+	error,
+)
+
+func (api *APIServices) GetQuery(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	querySqid string,
+) (*db.StoredQuery, error)
+
+func (api *APIServices) GetQueryGenerationConversation(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	conversation *db.AssistantConversation,
+) (*db.AssistantConversation, error)
+    GetQueryGenerationConversation retrieves a query generation conversation by
+    ID
+
+func (api *APIServices) GetRepositoryBranch(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branchName string,
+) (*irminmodels.Branch, error)
+
+func (api *APIServices) GetRepositoryBySlug(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repositorySlug string,
+) (*db.Repository, error)
+
+func (api *APIServices) GetRepositoryCommit(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	hash string,
+) (*irminmodels.Commit, error)
+
+func (api *APIServices) GetRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	objectPath string,
+	objectRef string,
+) (*db.RepositoryObject, irminutils.ObjectDetails, string, error)
+
+func (api *APIServices) GetRepositoryObjectContent(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+) ([]byte, error)
+
+func (api *APIServices) GetRepositoryObjectHistory(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+) ([]irminmodels.Commit, error)
+
+func (api *APIServices) GetRepositoryObjectSchema(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	ref string,
+) (*irminmodels.ObjectSchema, error)
+
+func (api *APIServices) GetRepositoryObjectStructuredContent(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+) (map[string][]map[string]any, error)
+
+func (api *APIServices) GetRepositoryTag(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	tagName string,
+) (*irminmodels.GitTag, error)
+
+func (api *APIServices) GetRepositoryUncommittedChanges(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branch *irminmodels.Branch,
+) (*irminmodels.Diff, error)
+
+func (api *APIServices) GetScriptGenerationConversation(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	conversation *db.AssistantConversation,
+) (*db.AssistantConversation, error)
+    GetScriptGenerationConversation retrieves a script generation conversation
+    by ID
+
+func (api *APIServices) GetWorkflow(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflowSqid string,
+) (*db.Workflow, error)
+    GetWorkflow gets a workflow by its SQID.
+
+func (api *APIServices) GetWorkflowRun(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	runSqid string,
+) (*db.WorkflowRun, error)
+
+func (api *APIServices) GetWorkspace(ctx context.Context, user *db.User, workspaceSlug string) (*db.Workspace, error)
+
+func (api *APIServices) GetWorkspaceSchema(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	includeConnections bool,
+	includeRepositories bool,
+) (*irminmodels.ObjectSchema, error)
+
+func (api *APIServices) GetWorkspaceTag(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	tagID uint,
+) (*db.TagWithAssets, error)
+
+func (api *APIServices) GetWorkspaceTagWithAssets(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	tag *db.Tag,
+) (*db.Tag, error)
+
+func (api *APIServices) GetWorkspaceUser(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workspaceUserSqid string,
+) (*db.WorkspaceUser, error)
+
+func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, bool, error)
+    IdentifyUserFromToken validates the provided token and returns the
+    associated user. It supports system token, credentials token (cred_ prefix),
+    and JWT from Clerk. Uses caching to avoid expensive validation and sync
+    operations for recently authenticated tokens. Returns: user, isSystem, error
+
+func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) error
+
+func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.APIToken, error)
+
+func (api *APIServices) ListAssistantConversations(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.AssistantConversation, error)
+    ListAssistantConversations lists all conversations for a user
+
+func (api *APIServices) ListConnections(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.Connection, error)
+    ListConnections lists all connections in a workspace available to the user.
+
+func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error)
+
+func (api *APIServices) ListEditorItems(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	itemPath string,
+) ([]irminmodels.EditorItem, error)
+
+func (api *APIServices) ListInvitesForUser(
+	c context.Context,
+	user *db.User,
+) ([]db.Invite, error)
+
+func (api *APIServices) ListInvitesToWorkspace(
+	c context.Context,
+	workspace *db.Workspace,
+	user *db.User,
+) ([]db.Invite, error)
+    ListInvitesToWorkspace lists all invites to a workspace.
+
+func (api *APIServices) ListLogEventsForWorkspace(
+	c context.Context,
+	workspace *db.Workspace,
+	user *db.User,
+	searchTerm string,
+	limit, offset int,
+) ([]db.LogEvent, int64, error)
+    ListLogEventsForWorkspace retrieves log events for a workspace with
+    permissions filtering.
+
+func (api *APIServices) ListLogEventsForWorkspaceAndAsset(
+	c context.Context,
+	workspace *db.Workspace,
+	user *db.User,
+	assetType string,
+	assetID uint,
+	searchTerm string,
+	limit, offset int,
+) ([]db.LogEvent, int64, error)
+    ListLogEventsForWorkspaceAndAsset retrieves log events for a specific asset
+    within a workspace.
+
+func (api *APIServices) ListQueryGenerationConversations(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.AssistantConversation, error)
+    ListQueryGenerationConversations lists all query generation conversations
+    for a user
+
+func (api *APIServices) ListRepositories(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.Repository, error)
+
+func (api *APIServices) ListRepositoryBranches(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+) ([]irminmodels.Branch, error)
+
+func (api *APIServices) ListRepositoryCommits(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	ref string,
+	after *string,
+	perPage *int,
+) ([]irminmodels.Commit, *lakefs.Pagination, error)
+
+func (api *APIServices) ListRepositoryTags(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+) ([]irminmodels.GitTag, error)
+
+func (api *APIServices) ListRoles(c context.Context) ([]irminmodels.Role, error)
+
+func (api *APIServices) ListScriptGenerationConversations(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.AssistantConversation, error)
+    ListScriptGenerationConversations lists all script generation conversations
+    for a user
+
+func (api *APIServices) ListWorkflowRuns(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	perPage, offset int,
+) ([]db.WorkflowRun, int, error)
+
+func (api *APIServices) ListWorkflows(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflowType string,
+) ([]db.Workflow, error)
+
+func (api *APIServices) ListWorkspaceQueries(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.StoredQuery, error)
+
+func (api *APIServices) ListWorkspaceTags(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.Tag, error)
+
+func (api *APIServices) ListWorkspaceUsers(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.WorkspaceUser, error)
+
+func (api *APIServices) ListWorkspaces(user *db.User) ([]db.Workspace, error)
+
+func (api *APIServices) MergeRepositoryRefs(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.MergeRefsRequest,
+) (*irminmodels.Commit, error)
+
+func (api *APIServices) MoveEditorItem(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	sourcePath string,
+	destinationPath string,
+) (*irminmodels.EditorItem, error)
+
+func (api *APIServices) MoveRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	req irmincore.MoveObjectRequest,
+) (*db.RepositoryObject, error)
+
+func (api *APIServices) PauseWorkflow(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+) (*db.Workflow, error)
+
+func (api *APIServices) ProcessSystemWebhook(
+	c context.Context,
+	webhookType string,
+	payload []byte,
+	isSystem bool,
+) error
+
+func (api *APIServices) RemoveTagFromEntity(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	tag *db.Tag,
+	entityType string,
+	entityID uint,
+) error
+
+func (api *APIServices) RemoveUserFromWorkspace(
+	c context.Context,
+	currentUser *db.User,
+	workspace *db.Workspace,
+	workspaceMember *db.WorkspaceUser,
+) error
+
+func (api *APIServices) ResendInvite(c context.Context, locale string, user *db.User, invite *db.Invite) error
+
+func (api *APIServices) RevertRepositoryUncommittedChanges(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.RevertUncommittedChangesRequest,
+) error
+
+func (api *APIServices) SaveEditorItem(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	itemPath string,
+	req irmincore.CreateEditorItemRequest,
+) (*irminmodels.EditorItem, error)
+
+func (api *APIServices) SearchWorkspace(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	filters db.SearchFilters,
+) (*irminmodels.SearchResponse, error)
+
+func (api *APIServices) SendAssistantMessage(
+	c context.Context,
+	userToken *string,
+	user *db.User,
+	workspace *db.Workspace,
+	message string,
+	conversation *db.AssistantConversation,
+	opts *ai.MessageRequest,
+) ([]*db.AssistantMessage, error)
+    SendAssistantMessage sends a message to the AI assistant and returns the
+    response
+
+func (api *APIServices) SendInvite(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.SendInviteRequest,
+) (*InviteTransactionResult, error)
+
+func (api *APIServices) StartWorkflow(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+) (*db.Workflow, error)
+
+func (api *APIServices) SyncUserWithClerkAndNovu(
+	c context.Context,
+	irminUser *db.User,
+	clerkID, locale string,
+) (*db.User, error)
+    SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu under a
+    lock and persists in DB.
+
+func (api *APIServices) TransferConnectionOwnership(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	connection *db.Connection,
+	req irmincore.TransferConnectionOwnershipRequest,
+) (*db.Connection, error)
+
+func (api *APIServices) TransferQueryOwnership(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	query *db.StoredQuery,
+	req irmincore.TransferQueryOwnershipRequest,
+) (*db.StoredQuery, error)
+
+func (api *APIServices) TransferRepositoryOwnership(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.TransferRepositoryOwnershipRequest,
+) (*db.Repository, error)
+
+func (api *APIServices) TransferWorkflowOwnership(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	req irmincore.TransferWorkflowOwnershipRequest,
+) (*db.Workflow, error)
+
+func (api *APIServices) TransferWorkspaceOwnership(
+	ctx context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.TransferOwnershipRequest,
+) (*db.Workspace, error)
+
+func (api *APIServices) UpdateAssistantConversation(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	_ *string,
+	conversation *db.AssistantConversation,
+	req irmincore.UpdateAssistantConversationRequest,
+) (*db.AssistantConversation, error)
+    UpdateAssistantConversation updates an existing conversation
+
+func (api *APIServices) UpdateConnection(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	connection *db.Connection,
+	req irmincore.UpdateConnectionRequest,
+) (*db.Connection, error)
+
+func (api *APIServices) UpdateConnector(
+	c context.Context,
+	locale string,
+	isSystem bool,
+	connector *db.Connector,
+	req irmincore.ConnectorRequest,
+) (*db.Connector, error)
+
+func (api *APIServices) UpdateInvite(
+	c context.Context,
+	user *db.User,
+	invite *db.Invite,
+	req irmincore.UpdateInviteRequest,
+) (*db.Invite, error)
+
+func (api *APIServices) UpdatePolicy(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	policy *db.Policy,
+	req irmincore.UpdatePolicyRequest,
+) (*db.Policy, error)
+
+func (api *APIServices) UpdateProfile(
+	c context.Context,
+	au *db.User,
+	req *irmincore.UpdateProfileRequest,
+	form *multipart.Form,
+) (*db.User, error)
+    UpdateProfile updates profile fields and optional profile picture in Clerk
+    atomically, then persists user in DB.
+
+func (api *APIServices) UpdateQuery(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	query *db.StoredQuery,
+	req irmincore.UpdateQueryRequest,
+) (*db.StoredQuery, error)
+
+func (api *APIServices) UpdateRepository(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	req irmincore.UpdateRepositoryRequest,
+) (*db.Repository, error)
+
+func (api *APIServices) UpdateRepositoryBranch(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	branch *irminmodels.Branch,
+	req irmincore.UpdateBranchRequest,
+) (*irminmodels.Branch, error)
+
+func (api *APIServices) UpdateWorkflow(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	req irmincore.UpdateWorkflowRequest,
+) (*db.Workflow, error)
+
+func (api *APIServices) UpdateWorkflowSchedule(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	schedule *db.Schedule,
+) (*db.Workflow, error)
+
+func (api *APIServices) UpdateWorkflowable(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	workflow *db.Workflow,
+	workflowableReq irminmodels.Workflowable,
+) (*db.Workflow, error)
+
+func (api *APIServices) UpdateWorkspace(
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.UpdateWorkspaceRequest,
+) (*db.Workspace, error)
+
+func (api *APIServices) UpdateWorkspaceTag(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	tagWithAssets *db.TagWithAssets,
+	req irmincore.UpdateTagRequest,
+) (*db.TagWithAssets, error)
+
+func (api *APIServices) UpdateWorkspaceUserRoles(
+	c context.Context,
+	currentUser *db.User,
+	workspace *db.Workspace,
+	workspaceMember *db.WorkspaceUser,
+	req irmincore.UpdateUserRolesRequest,
+) (*db.WorkspaceUser, error)
+
+func (api *APIServices) UploadRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	objectPath string,
+	objectRef string,
+	file io.Reader,
+) (*db.RepositoryObject, error)
+
+func (api *APIServices) UploadRepositoryObjectFromURL(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	objectPath string,
+	objectRef string,
+	url string,
+	headers map[string]string,
+) (*db.RepositoryObject, error)
+
+func (api *APIServices) ValidateConnectorConfiguration(
+	c context.Context,
+	locale string,
+	connector *db.Connector,
+	req irmincore.ConnectorConfigurationRequest,
+) (*irminmodels.ConnectorConfigurationValidationResult, error)
+
+func (api *APIServices) ZipRepositoryObject(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+) ([]byte, string, error)
+
+type AuthCache struct {
+	// Has unexported fields.
+}
+    AuthCache provides thread-safe caching for authentication results.
+
+type AuthCacheEntry struct {
+	User      *db.User
+	ExpiresAt time.Time
+}
+    AuthCacheEntry represents a cached authentication result.
+
+type InviteTransactionResult struct {
+	Invite             *db.Invite                    `json:"invite"`
+	ClerkInviteCreated bool                          `json:"clerk_invite_created"`
+	NotificationResult *lib.InviteNotificationResult `json:"notification_result,omitempty"`
+}
+    InviteTransactionResult contains the result of invitation creation including
+    notification status.
+
+type PolicyFilters struct {
+	Effect     string
+	Resource   string
+	ResourceID string
+	Action     string
+	Principal  string
+	RoleID     string
+	UserID     string
+}
+
+type TagEntityOperation string
+
+const (
+	TagEntityOperationAdd    TagEntityOperation = "add"
+	TagEntityOperationRemove TagEntityOperation = "remove"
+)
+</pre>
+</body></html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/orchestrator</title></head><body>
+<h1>Package irmin-api/orchestrator</h1>
+<pre>
+package orchestrator // import "irmin-api/orchestrator"
+
+
+CONSTANTS
+
+const (
+	// DefaultChannelBufferSize represents the default buffer size for the orchestrator's channels.
+	DefaultChannelBufferSize = 100
+
+	// TriggerScanInterval represents the interval for scanning triggers.
+	TriggerScanInterval = 10 * time.Second
+
+	// ListenForStatusChangesTimeout is the timeout for listening for status changes.
+	ListenForStatusChangesTimeout = 90 * time.Second
+
+	// DefaultMaxWorkflowRuntime is the default maximum runtime for a workflow in seconds.
+	DefaultMaxWorkflowRuntime = 120
+)
+
+TYPES
+
+type DispatchEvent struct {
+	Timestamp     time.Time         `json:"timestamp"`
+	EventType     DispatchEventType `json:"event_type"`
+	WorkflowID    *uint             `json:"workflow_id,omitempty"`
+	WorkflowRunID *uint             `json:"workflow_run_id,omitempty"`
+}
+    DispatchEvent represents an event dispatched by the orchestrator to the API.
+
+type DispatchEventType string
+    DispatchEventType represents the type of dispatch event.
+
+const (
+	DispatchEventTypeWorkflowRun DispatchEventType = "workflow_run"
+)
+type Orchestrator struct {
+	// Has unexported fields.
+}
+
+func NewOrchestrator(
+	d *db.Database,
+	logger *slog.Logger,
+	env *utils.CoreAPIEnv,
+	dataEngine *engine.Client,
+) *Orchestrator
+
+func (o *Orchestrator) AddDispatchedEvent(event *DispatchEvent)
+
+func (o *Orchestrator) AddLakefsEvent(event *lakefs.WebhookEvent)
+
+func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent)
+
+func (o *Orchestrator) ExecuteDispatchedEvent(ctx context.Context, event *DispatchEvent) error
+    ExecuteDispatchedEvent executes a dispatched event.
+
+func (o *Orchestrator) ExecuteWorkflow(
+	ctx context.Context,
+	workflow *db.Workflow,
+	run *db.WorkflowRun,
+) (*db.WorkflowRun, error)
+    ExecuteWorkflow executes a workflow and listens for status changes in the
+    database.
+
+func (o *Orchestrator) StartDispatcher(ctx context.Context) error
+    StartDispatcher starts the dispatcher that listens for PostgreSQL
+    notifications about new or updated workflow runs and dispatches them to the
+    API.
+
+func (o *Orchestrator) StartOrchestrator(ctx context.Context) error
+    StartOrchestrator starts the orchestrator and the dispatcher. It will tick
+    every 10 seconds to check for time-based triggers. When a trigger is due to
+    run, it will create a new workflow run. It will also start the dispatcher
+    in a new goroutine. The dispatcher will check for pending workflow runs and
+    dispatch them to be executed.
+
+type WorkerEvent struct {
+	Topic WorkerEventTopic
+
+	// Workflow run event
+	WorkflowRunEventType db.WorkflowRunEventType
+	WorkflowRunID        uint
+	WorkflowID           uint
+}
+
+type WorkerEventTopic string
+
+const (
+	WorkerEventTopicWorkflowRun WorkerEventTopic = "workflow_run"
+)
+</pre>
+</body></html>

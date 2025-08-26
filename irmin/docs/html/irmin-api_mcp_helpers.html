@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/mcp/helpers</title></head><body>
+<h1>Package irmin-api/mcp/helpers</h1>
+<pre>
+package helpers // import "irmin-api/mcp/helpers"
+
+
+FUNCTIONS
+
+func MCPError(message string) *sdkmcp.CallToolResult
+    MCPError creates a standardized error response for MCP tools.
+
+func MCPSuccess(data any) (*sdkmcp.CallToolResult, error)
+    MCPSuccess creates a standardized success response for MCP tools with JSON
+    data.
+
+func ValidateUser(ctx context.Context, getUser func(ctx context.Context) (*db.User, bool)) (*db.User, error)
+    ValidateUser checks if the user is authenticated and authorized.
+
+</pre>
+</body></html>

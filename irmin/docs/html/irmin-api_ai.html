@@ -1,0 +1,142 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/ai</title></head><body>
+<h1>Package irmin-api/ai</h1>
+<pre>
+package ai // import "irmin-api/ai"
+
+
+CONSTANTS
+
+const (
+	// DefaultMainModel is the default model to use for AI messages
+	DefaultMainModel = anthropic.ModelClaudeSonnet4_20250514
+	// DefaultSmallModel is the smaller, cheaper and faster model to use for AI messages
+	DefaultSmallModel = anthropic.ModelClaude3_5HaikuLatest
+
+	// DefaultTemperature is the default temperature for AI messages
+	DefaultTemperature = 0.8
+
+	// DefaultMaxTokens is the default maximum number of tokens for a message
+	DefaultMaxTokens = 8192
+
+	// DefaultThinkingMaxTokens is the default maximum number of tokens for thinking
+	DefaultThinkingMaxTokens = 2048
+
+	// MaxRetries is the maximum number of retries for overloaded errors
+	MaxRetries = 3
+	// BaseDelay is the base delay for overloaded errors
+	BaseDelay = time.Second * 2
+	// DelayBackoffFactor is the factor to multiply the delay by
+	DelayBackoffFactor = 2
+
+	// MaxTitleLength is the maximum length for conversation titles
+	MaxTitleLength = 50
+	// TitleMaxTokens is the maximum tokens for title generation
+	TitleMaxTokens = 50
+
+	// ModelRouterMaxTokens is the maximum tokens for model router decisions
+	ModelRouterMaxTokens = 50
+)
+
+FUNCTIONS
+
+func ExtractResponseContent(content []anthropic.BetaContentBlockUnion) string
+    ExtractResponseContent extracts content from AI response (kept for backward
+    compatibility)
+
+func GetSystemPrompt(aiType IrminAIType) string
+    GetSystemPrompt returns the system prompt for the specified AI type
+
+
+TYPES
+
+type AI struct {
+	// Has unexported fields.
+}
+    AI represents the AI service for sending messages
+
+func NewAI(config *Config) (*AI, error)
+    NewAI creates a new AI service instance with the given configuration
+
+func NewAIFromEnv(env *utils.CoreAPIEnv, userToken *string, logger *slog.Logger) (*AI, error)
+    NewAIFromEnv creates a new AI service from environment configuration
+
+func (a *AI) GenerateConversationTitle(ctx context.Context, firstMessage string) (string, error)
+    GenerateConversationTitle generates a title for a conversation based on the
+    first user message
+
+func (a *AI) SelectModel(ctx context.Context, userPrompt string) (anthropic.Model, error)
+    SelectModel selects the appropriate model for a given user prompt using the
+    model router AI
+
+func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, string, error)
+    SendMessage sends a message and returns the response Returns the response,
+    the system prompt used for the message, and an error if it occurs
+
+type Config struct {
+	AnthropicAPIKey string
+	IrminBaseURL    string
+	IrminMCPPath    string
+	UserToken       *string
+	DefaultModel    anthropic.Model
+	MaxTokens       int64
+	Temperature     float64
+	MaxRetries      int
+	BaseDelay       time.Duration
+	Logger          *slog.Logger
+}
+    Config holds AI service configuration
+
+func DefaultConfig() *Config
+    DefaultConfig returns sensible default configuration
+
+type ContentBlock struct {
+	Type    irminmodels.AssistantMessageContentType `json:"type"`
+	Content string                                  `json:"content"`
+	Index   int                                     `json:"index"`
+}
+    ContentBlock represents a single content block from the AI response
+
+func ExtractResponseBlocks(content []anthropic.BetaContentBlockUnion) []ContentBlock
+    ExtractResponseBlocks extracts all content blocks from AI response
+
+type ConversationMessage struct {
+	Role    anthropic.BetaMessageParamRole
+	Content string
+}
+    ConversationMessage represents a message in conversation history
+
+type IrminAIType string
+    IrminAIType represents the type of AI system
+
+const (
+	// ModelRouterAI represents the Irmin Model Router AI
+	ModelRouterAI IrminAIType = "model-router"
+	// ConversationTitleGenerator represents the Irmin Conversation Title Generator AI
+	ConversationTitleGenerator IrminAIType = "conversation-title-generator"
+	// AssistantAI represents the Irmin Assistant AI
+	AssistantAI IrminAIType = "assistant"
+	// QueryAI represents the Irmin Query AI
+	QueryAI IrminAIType = "query"
+	// ScriptingAI represents the Irmin Scripting AI
+	ScriptingAI IrminAIType = "scripting"
+)
+type MessageRequest struct {
+	Content                string
+	ConversationID         string
+	ConversationHistory    []ConversationMessage
+	MaxTokens              *int64
+	Model                  *anthropic.Model
+	Temperature            *float64
+	TopP                   *float64
+	Stream                 bool
+	Metadata               map[string]any
+	ThinkingEnabled        bool
+	DocsToolsOnly          bool
+	AIType                 *IrminAIType
+	AdditionalSystemPrompt string
+}
+    MessageRequest represents a message request with options
+
+</pre>
+</body></html>

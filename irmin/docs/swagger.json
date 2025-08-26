@@ -2423,6 +2423,287 @@
                 }
             }
         },
+        "/workspaces/{workspace_slug}/assistant/script": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all script generation conversations in the specified workspace that the user has permission to read",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-script"
+                ],
+                "summary": "List script generation conversations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script generation conversations retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.AssistantConversation"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Generate a SQL script from natural language using the ScriptAI assistant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-script"
+                ],
+                "summary": "Generate a SQL script from natural language",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Script generation parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.ScriptGenerationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script generated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.AssistantMessage"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/assistant/script/{conversation_id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get details of a specific script generation conversation by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-script"
+                ],
+                "summary": "Get script generation conversation details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Conversation ID",
+                        "name": "conversation_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script generation conversation retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.AssistantConversation"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Conversation not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete an existing script generation conversation from the workspace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-script"
+                ],
+                "summary": "Delete script generation conversation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Conversation ID",
+                        "name": "conversation_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script generation conversation deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Conversation not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/connections": {
             "get": {
                 "security": [
@@ -11200,6 +11481,29 @@
                 }
             }
         },
+        "irmincore.ScriptGenerationRequest": {
+            "type": "object",
+            "required": [
+                "prompt"
+            ],
+            "properties": {
+                "conversation_id": {
+                    "description": "Optional conversation ID to continue an existing conversation",
+                    "type": "string"
+                },
+                "metadata": {
+                    "description": "Optional metadata for the request",
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "prompt": {
+                    "description": "Natural language prompt describing the desired script",
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 1
+                }
+            }
+        },
         "irmincore.SendInviteRequest": {
             "type": "object",
             "required": [
@@ -14316,23 +14620,11 @@
                 1000000,
                 1000000000,
                 60000000000,
-                3600000000000,
-                1,
-                1000,
-                1000000,
-                1000000000,
-                60000000000,
                 3600000000000
             ],
             "x-enum-varnames": [
                 "minDuration",
                 "maxDuration",
-                "Nanosecond",
-                "Microsecond",
-                "Millisecond",
-                "Second",
-                "Minute",
-                "Hour",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",

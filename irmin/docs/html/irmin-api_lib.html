@@ -1,0 +1,410 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/lib</title></head><body>
+<h1>Package irmin-api/lib</h1>
+<pre>
+package lib // import "irmin-api/lib"
+
+
+CONSTANTS
+
+const (
+	// DefaultCacheSize is the maximum number of entries allowed in the permission cache.
+	DefaultCacheSize = 10000
+
+	// OwnerPermissionCacheTTL is how long to cache permissions for workspace owners.
+	OwnerPermissionCacheTTL = 10 * time.Minute
+
+	// DefaultPermissionCacheTTL is the default TTL for cached permissions.
+	DefaultPermissionCacheTTL = 5 * time.Minute
+
+	// CleanupInterval defines how often to clean expired entries.
+	CleanupInterval = 1 * time.Minute
+)
+const (
+	// ConnectionSchemaCacheMaxAge is the maximum age of a connection schema cache entry.
+	ConnectionSchemaCacheMaxAge = 12 * time.Hour
+)
+const (
+	// ObjectSchemaCacheMaxAge is the maximum age of an object schema cache entry.
+	ObjectSchemaCacheMaxAge = 30 * time.Minute
+)
+
+FUNCTIONS
+
+func AssignDefaultRolesToUsersWithoutRoles(d *db.Database) error
+    AssignDefaultRolesToUsersWithoutRoles assigns the default role to any users
+    in workspaces who don't have any roles. For workspace owners, it assigns the
+    owner role instead of the default role.
+
+func CreateAuditLogEventAsync(d *db.Database, logger *slog.Logger, event *db.LogEvent)
+    CreateAuditLogEventAsync creates an audit log event asynchronously.
+
+func CreateWorkflowRun(
+	tx *gorm.DB,
+	workflow *db.Workflow,
+	user *db.User,
+	trigger *db.WorkflowTrigger,
+) (*db.WorkflowRun, error)
+    CreateWorkflowRun will check if enough time has passed since the last run.
+    If so, it will create a new pending workflow run, update the schedule's
+    previous run time, and return the new workflow run. Creating a new workflow
+    run will cause the orchestrator to pick it up and execute it.
+
+func DecodePolicyResourceID(
+	sqid string,
+	resource db.PolicyResource,
+	sqidManager *irminsqids.SQIDManager,
+) (*uint, error)
+    DecodePolicyResourceID decodes a SQID based on the resource type for policy
+    resources.
+
+func DownloadFileFromURL(ctx context.Context, targetURL string, headers map[string]string) (io.ReadCloser, error)
+    DownloadFileFromURL performs a safe HTTP GET with SSRF protections and
+    returns a size-limited body. The caller must Close the returned ReadCloser.
+
+func EncodePolicyResourceID(
+	id uint,
+	resource db.PolicyResource,
+	sqidManager *irminsqids.SQIDManager,
+) (string, error)
+    EncodePolicyResourceID encodes an ID into a SQID based on the resource type
+    for policy resources.
+
+func EnsureNovuSubscriber(
+	ctx context.Context,
+	sqidManager *irminsqids.SQIDManager,
+	env *utils.CoreAPIEnv,
+	locale string,
+	user *db.User,
+) (*components.SubscriberResponseDto, error)
+    EnsureNovuSubscriber ensures that the user is a subscriber in Novu It
+    creates the subscriber if it doesn't exist, or updates it if it does.
+
+func GetObject(
+	ctx context.Context,
+	locale string,
+	d *db.Database,
+	logger *slog.Logger,
+	env *utils.CoreAPIEnv,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	path, ref string,
+	ignoreCache bool,
+) (*db.RepositoryObject, error)
+    GetObject gets an object from the data engine and caches it in the database.
+    It returns the object from the database if it is found, otherwise it gets it
+    from the data engine and caches it in the database.
+
+func GetRepository(
+	ctx context.Context,
+	locale string,
+	d *db.Database,
+	logger *slog.Logger,
+	env *utils.CoreAPIEnv,
+	workspace *db.Workspace,
+	repositorySlug string,
+	ignoreCache bool,
+) (*db.Repository, error)
+func IsAllowedFilter[T any](
+	ps *PermissionService,
+	user *db.User,
+	workspace *db.Workspace,
+	resource db.PolicyResource,
+	action db.PolicyAction,
+	resources []T,
+	idExtractor func(T) uint,
+) ([]T, error)
+    IsAllowedFilter filters a list of resources based on user permissions.
+    It returns only the resources that the user has access to for the given
+    action. The function is optimized to minimize database queries by batching
+    permission checks. The idExtractor function should return the ID of the
+    resource.
+
+func NewSafeHTTPClient() *http.Client
+    NewSafeHTTPClient creates an HTTP client with timeouts, redirect checks,
+    and IP blocking via Dialer.Control.
+
+func ParseScheduleFromData(
+	scheduleReq *irminmodels.Schedule,
+	d *db.Database,
+	workspace db.Workspace,
+	sqidManager *irminsqids.SQIDManager,
+) (*db.Schedule, error)
+    ParseScheduleFromData creates a schedule object from structured data instead
+    of parsing from request context. This is used when schedule data is part of
+    a larger JSON request structure.
+
+func ParseScheduleFromRequest(
+	c fiber.Ctx,
+	d *db.Database,
+	workspace db.Workspace,
+	sqidManager *irminsqids.SQIDManager,
+) (*db.Schedule, error)
+    ParseScheduleFromRequest creates a schedule object from the request body,
+    while validating the requested schedule is valid and setting default values
+    for optional fields that are not provided.
+
+func ParseStructuredFiles(
+	ctx context.Context,
+	files map[string][]byte,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+) (map[string][]map[string]any, error)
+    ParseStructuredFiles parses structured data files into a map of file names
+    to arrays of maps. Supported formats:
+      - JSON (.json)
+      - JSONL/NDJSON (.jsonl, .ndjson)
+      - CSV (.csv)
+      - TSV/TAB (.tsv, .tab)
+      - XML (.xml)
+      - YAML (.yaml, .yml)
+      - Parquet (.parquet)
+      - ORC (.orc)
+      - Excel (.xlsx, .xls, .xlsm, .xlsb)
+      - Avro (.avro)
+      - Delta Lake (.delta)
+      - Iceberg (.iceberg)
+
+func SaveObject(
+	d *db.Database,
+	logger *slog.Logger,
+	env *utils.CoreAPIEnv,
+	object *irminmodels.Object,
+	ref string,
+	repositoryID uint,
+) (*db.RepositoryObject, error)
+    SaveObject creates or updates an object in the database based on the object
+    from the data engine, ref and repositoryID. It returns the object from the
+    database.
+
+func ScheduleModelToDBSchedule(
+	scheduleReq *irminmodels.Schedule,
+	d *db.Database,
+	workspace db.Workspace,
+	sqidManager *irminsqids.SQIDManager,
+) (*db.Schedule, error)
+    ScheduleModelToDBSchedule converts a schedule model to a database schedule
+
+func SeedDefaultTags(dbConn *gorm.DB, workspaceID uint) error
+    SeedDefaultTags seeds a workspace with default tags.
+
+func SeedRoles(d *db.Database) error
+    SeedRoles seeds the database with the default roles.
+
+func SetDefaultPolicies(dbConn *gorm.DB, workspaceID uint, overridePolicies bool) error
+    SetDefaultPolicies creates a set of default policies for a newly created
+    workspace. It will only insert each policy if it does not already exist
+    for the given workspace. If any policies already exist for the workspace,
+    this function will do nothing.
+
+    Parameters:
+      - dbConn: the database connection to use (can be a transaction).
+      - workspaceID: the ID of the workspace for which to create default
+        policies.
+      - overridePolicies: if true, the default policies will be overridden.
+        If false, the default policies will only be created if no policies
+        already exist for the workspace.
+
+    Returns:
+      - error: if any database operation fails.
+
+func SetupTestSuite(t *testing.T) error
+    SetupTestSuite initializes the global test suite.
+
+func TeardownTestSuite()
+    TeardownTestSuite cleans up the global test suite. This should be called
+    from TestMain after all tests are done.
+
+
+TYPES
+
+type CacheStats struct {
+	Size        int
+	MaxSize     int
+	LastCleanup time.Time
+}
+    CacheStats returns cache statistics for monitoring.
+
+type InviteNotificationParams struct {
+	Invite              *db.Invite
+	Workspace           *db.Workspace
+	InvitedBy           *db.User
+	Role                *db.Role
+	InviteAcceptanceURL string
+	Locale              string
+}
+    InviteNotificationParams contains all parameters needed to send invitation
+    notifications.
+
+type InviteNotificationResult struct {
+	Success        bool   `json:"success"`
+	Method         string `json:"method"` // "clerk", "novu", "resend", "none"
+	Message        string `json:"message"`
+	NotificationID string `json:"notification_id,omitempty"`
+	Error          string `json:"error,omitempty"`
+}
+    InviteNotificationResult represents the result of sending an invitation
+    notification.
+
+func SendFallbackInviteNotification(
+	ctx context.Context,
+	database *db.Database,
+	sqidManager *irminsqids.SQIDManager,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+	params InviteNotificationParams,
+) *InviteNotificationResult
+    SendFallbackInviteNotification orchestrates the fallback notification logic.
+
+func SendNovuInviteNotification(
+	ctx context.Context,
+	database *db.Database,
+	_ *irminsqids.SQIDManager,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+	params InviteNotificationParams,
+) (*InviteNotificationResult, error)
+    SendNovuInviteNotification sends an invitation notification via Novu.
+
+func SendResendInviteNotification(
+	ctx context.Context,
+	env *utils.CoreAPIEnv,
+	logger *slog.Logger,
+	params InviteNotificationParams,
+) (*InviteNotificationResult, error)
+    SendResendInviteNotification sends an invitation notification via Resend
+    email.
+
+type PermissionCache struct {
+	// Has unexported fields.
+}
+    PermissionCache provides thread-safe LRU caching with TTL for permission
+    results.
+
+func NewPermissionCache() *PermissionCache
+    NewPermissionCache creates a new LRU permission cache with TTL.
+
+func (pc *PermissionCache) Clear()
+    Clear removes expired entries from cache.
+
+func (pc *PermissionCache) Get(key string) (bool, bool)
+    Get retrieves a cached permission result and updates its position in LRU
+    order.
+
+func (pc *PermissionCache) GetStats() CacheStats
+    GetStats returns current cache statistics.
+
+func (pc *PermissionCache) Set(key string, allowed bool, ttl time.Duration)
+    Set stores a permission result in cache with LRU eviction if necessary.
+
+func (pc *PermissionCache) Size() int
+    Size returns the current number of entries in the cache.
+
+type PermissionCacheEntry struct {
+	Allowed   bool
+	ExpiresAt time.Time
+	Key       string // Store key for easier cleanup
+}
+    PermissionCacheEntry represents a cached permission result.
+
+type PermissionService struct {
+	// Has unexported fields.
+}
+    PermissionService provides permission checking with caching.
+
+func NewPermissionService(db *db.Database, logger *slog.Logger) *PermissionService
+    NewPermissionService creates a new permission service.
+
+func (ps *PermissionService) ClearPermissionCache()
+    ClearPermissionCache clears expired entries from the permission cache.
+
+func (ps *PermissionService) IsAllowed(
+	user *db.User,
+	workspace *db.Workspace,
+	resource db.PolicyResource,
+	resourceID *uint,
+	action db.PolicyAction,
+) (bool, error)
+    IsAllowed checks if a user is allowed to perform an action on a resource
+    It checks for explicit deny policies first, then for allow policies,
+    and returns false if no policies match It returns true if any allow policy
+    matches, false if any deny policy matches, or an error if there's a database
+    error Workspace owners are always allowed to perform any action on any
+    resource (ownership defined based on workspace.OwnerID or role.IsOwner).
+
+func (ps *PermissionService) SetPermissionCacheTTL(
+	userID, workspaceID uint,
+	resource db.PolicyResource,
+	resourceID *uint,
+	action db.PolicyAction,
+	allowed bool,
+	ttl time.Duration,
+)
+    SetPermissionCacheTTL allows customizing the cache TTL for specific
+    permissions.
+
+type PolicyMatch struct {
+	Effect          db.PolicyEffect
+	Principal       db.PolicyPrincipal
+	WorkspaceUserID *uint
+	RoleID          *uint
+	ResourceID      *uint
+}
+    PolicyMatch represents a matched policy from the database.
+
+type SchemaCacheManager struct {
+	// Has unexported fields.
+}
+    SchemaCacheManager manages schema caching for both connections and objects.
+
+func NewSchemaCacheManager(env *utils.CoreAPIEnv, logger *slog.Logger, db *db.Database) *SchemaCacheManager
+    NewSchemaCacheManager creates a new SchemaCacheManager instance.
+
+func (m *SchemaCacheManager) GetConnectionMutex(key string) (bool, func())
+    GetConnectionMutex returns the mutex for a connection schema cache entry.
+
+func (scm *SchemaCacheManager) GetConnectionSchema(
+	ctx context.Context,
+	connection *db.Connection,
+	operationMethod, locale string,
+	ignoreCache bool,
+) (*irminmodels.ObjectSchema, error)
+    GetConnectionSchema returns the schema for a connection. It first checks
+    if the schema is cached, and if so, returns the cached schema. Otherwise,
+    it fetches the schema from the Data Engine and caches it. The cache is
+    updated in a goroutine to avoid blocking the main thread.
+
+func (m *SchemaCacheManager) GetObjectMutex(key string) (bool, func())
+    GetObjectMutex returns the mutex for an object schema cache entry.
+
+func (scm *SchemaCacheManager) GetObjectSchema(
+	ctx context.Context,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	ref, locale string,
+	ignoreCache bool,
+) (*irminmodels.ObjectSchema, error)
+    GetObjectSchema returns the schema for an object. It first checks if the
+    schema is cached, and if so, returns the cached schema. Otherwise, it
+    fetches the schema from the Data Engine and caches it. The cache is updated
+    in a goroutine to avoid blocking the main thread.
+
+type TestSuite struct {
+	DB           *db.Database
+	Env          *utils.CoreAPIEnv
+	Logger       *slog.Logger
+	DuckDBClient *duckdb.QueryClient
+}
+    TestSuite holds the test environment and database connection.
+
+func GetTestSuite() *TestSuite
+    GetTestSuite returns the global test suite instance. This is safe to call
+    from any test function.
+
+func (ts *TestSuite) GetDuckDBClient() (*duckdb.QueryClient, error)
+    GetDuckDBClient returns a DuckDB client for testing. This is a convenience
+    method that creates a new client if needed.
+
+</pre>
+</body></html>

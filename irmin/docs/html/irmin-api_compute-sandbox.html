@@ -1,0 +1,100 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/compute-sandbox</title></head><body>
+<h1>Package irmin-api/compute-sandbox</h1>
+<pre>
+package sandbox // import "irmin-api/compute-sandbox"
+
+
+CONSTANTS
+
+const (
+	InitialSamplingIntervalMs = 10  // Sample every 10ms for the first second
+	NormalSamplingIntervalMs  = 100 // Then sample every 100ms
+	InitialSamplingDuration   = 1 * time.Second
+	ContainerStopTimeout      = 100 * time.Millisecond // Time to wait after container stops before ending sampling
+	StatsRetryDelay           = 10 * time.Millisecond  // Delay before retrying stats collection
+
+	DockerShortIDLength     = 12  // Standard length of Docker's short container ID format
+	DockerStatsFieldCount   = 14  // Expected number of fields in Docker stats output
+	SampleChannelBufferSize = 100 // Buffer size for the metrics sampling channel
+	StatsSplitCount         = 2   // Number of parts when splitting stats values (e.g. "X/Y")
+
+	ContainerStartTimeout     = 30 * time.Second // Timeout for starting a container
+	ContainerExecTimeout      = 10 * time.Second // Timeout for container stop operations
+	DockerCommandTimeout      = 60 * time.Second // Timeout for general Docker commands
+	ContainerCleanupTimeout   = 10 * time.Second // Timeout for container cleanup operations
+	ContainerOperationTimeout = 30 * time.Minute // Maximum time for container operations
+
+	FileDownloadTimeout  = 300 * time.Second // 5 minutes for large files
+	FileUploadTimeout    = 180 * time.Second // 3 minutes
+	FileOperationTimeout = 30 * time.Second  // Timeout for general file operations
+
+	LatestGoVersion     = "1.25.0"
+	LatestNodeVersion   = "24.2.0"
+	LatestPythonVersion = "3.11.12"
+
+	TokenExpiryDuration = 60 * time.Minute // How long API tokens created for sandbox execution should be valid
+)
+
+TYPES
+
+type ComputeSandbox struct {
+	// Has unexported fields.
+}
+    ComputeSandbox is a struct that contains the environment, database,
+    and logger for the compute sandbox.
+
+func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logger) *ComputeSandbox
+    NewComputeSandbox creates a new ComputeSandbox.
+
+func (c *ComputeSandbox) CollectMetricsFromContainer(ctx context.Context, containerID string) ResourceUsageMetrics
+
+func (s *ComputeSandbox) ExecuteEditorItem(
+	ctx context.Context,
+	inputFiles map[string][]byte,
+	responsibleUser db.User,
+	executablePath, workspaceSlug string,
+) (ExecutionResult, error)
+    ExecuteEditorItem executes the provided executable code in a sandbox
+    environment. It downloads the workspace files from the S3 bucket to a
+    temporary directory, executes the code using Docker, and returns the
+    execution result.
+
+type ExecutionResult struct {
+	StartTime            time.Time            `json:"start_time"`             // Start time of the container
+	EndTime              time.Time            `json:"end_time"`               // End time of the container
+	ContainerID          string               `json:"container_id"`           // Container ID (short form)
+	Logs                 string               `json:"logs"`                   // Output logs from container execution
+	ResourceUsageMetrics ResourceUsageMetrics `json:"resource_usage_metrics"` // Averace metric values, sampled every 10 milliseconds of execution
+	ResultFiles          map[string][]byte    `json:"result_files"`           // Map of result files and their contents
+}
+    ExecutionResult holds the container logs and raw metric samples collected
+    during execution.
+
+type ResourceUsage struct {
+	ContainerID      string    // Container ID (short form)
+	Timestamp        time.Time // Timestamp of the sample
+	Name             string    // Container name
+	CPUPercent       float64   // CPU usage in percentage
+	MemUsageBytes    float64   // Memory usage in bytes (NOT a percentage)
+	MemPercent       float64   // Memory usage percentage (parsed from stats, not used for sampling)
+	NetInputBytes    float64   // Network input in bytes (cumulative)
+	NetOutputBytes   float64   // Network output in bytes (cumulative)
+	BlockInputBytes  float64   // Block input in bytes (cumulative)
+	BlockOutputBytes float64   // Block output in bytes (cumulative)
+}
+    ResourceUsage holds a snapshot of resource usage metrics as numeric values.
+
+type ResourceUsageMetrics struct {
+	CPU         float64 `json:"cpu"`          // Average CPU usage percentage
+	MemUsage    float64 `json:"mem_usage"`    // Average memory usage in bytes
+	NetInput    float64 `json:"net_input"`    // Average cumulative network input in bytes
+	NetOutput   float64 `json:"net_output"`   // Average cumulative network output in bytes
+	BlockInput  float64 `json:"block_input"`  // Average cumulative block input in bytes
+	BlockOutput float64 `json:"block_output"` // Average cumulative block output in bytes
+}
+    ResourceUsageMetrics holds average metric values sampled during container
+    execution.
+
+</pre>
+</body></html>

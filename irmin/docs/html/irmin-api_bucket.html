@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/bucket</title></head><body>
+<h1>Package irmin-api/bucket</h1>
+<pre>
+package bucket // import "irmin-api/bucket"
+
+
+TYPES
+
+type Client struct {
+	fiberS3.Storage
+	Bucket   string
+	Endpoint string
+	Region   string
+	Env      *utils.CoreAPIEnv
+}
+    Client is a client for interacting with S3 for storing and retrieving files.
+
+func CreateClient(env *utils.CoreAPIEnv, bucketName string) (*Client, error)
+    CreateClient creates a new S3 client.
+
+func (bucket *Client) DeletePath(ctx context.Context, keyPrefix string) error
+
+func (bucket *Client) DownloadFolder(ctx context.Context, folderPrefix, localDir string) error
+    DownloadFolder downloads all objects under the given folder prefix from
+    the S3 bucket and saves them to the specified local directory. It creates
+    any necessary local directories. - ctx: the context for the request -
+    folderPrefix: the prefix for the folder in the bucket - localDir: the local
+    directory where files will be saved Returns an error if any step fails.
+
+func (bucket *Client) DuplicatePath(ctx context.Context, sourceKey, destKey string, removeOriginal bool) error
+
+func (bucket *Client) ListObjects(ctx context.Context, keyPrefix string) ([]types.Object, error)
+
+func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
+
+func (bucket *Client) WritePath(ctx context.Context, key string, content string) error
+
+</pre>
+</body></html>

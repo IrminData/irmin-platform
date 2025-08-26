@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/mcp/tools</title></head><body>
+<h1>Package irmin-api/mcp/tools</h1>
+<pre>
+package tools // import "irmin-api/mcp/tools"
+
+
+TYPES
+
+type DocsCategory string
+
+const (
+	DocsCategoryIndex        DocsCategory = "index"
+	DocsCategorySQL          DocsCategory = "sql"
+	DocsCategoryScripting    DocsCategory = "scripting"
+	DocsCategoryConcepts     DocsCategory = "concepts"
+	DocsCategoryConnections  DocsCategory = "connections"
+	DocsCategoryWorkflows    DocsCategory = "workflows"
+	DocsCategoryObjectSchema DocsCategory = "object-schema"
+)
+type GetDocsInput struct {
+	Category string `json:"category" jsonschema:"required,The category of documentation to retrieve. Can be one of: index, sql, scripting, concepts, connections, workflows, object-schema"`
+}
+    GetDocsInput defines the input parameters for the get_docs tool
+
+type MCPTools struct {
+	// Has unexported fields.
+}
+
+func NewMCPTools(
+	server *sdkmcp.Server,
+	apiServices *services.APIServices,
+	getUser func(ctx context.Context) (*db.User, bool),
+) *MCPTools
+
+func (mcpTools *MCPTools) RegisterAll()
+    RegisterAll registers all tools in this package.
+
+func (mcpTools *MCPTools) RegisterConnectionTools()
+    RegisterConnectionTools registers all connection-related tools.
+
+func (mcpTools *MCPTools) RegisterConnectorTools()
+    RegisterConnectorTools registers all connector-related tools.
+
+func (mcpTools *MCPTools) RegisterDocsTools()
+    RegisterDocsTools registers the tools for documentation access.
+
+func (mcpTools *MCPTools) RegisterQueryTools()
+    RegisterQueryTools registers all query-related tools.
+
+func (mcpTools *MCPTools) RegisterRepositoryBranchesTools()
+    RegisterRepositoryBranchesTools registers all repository branch-related
+    tools.
+
+func (mcpTools *MCPTools) RegisterRepositoryCommitsTools()
+    RegisterRepositoryCommitsTools registers all repository commit-related
+    tools.
+
+func (mcpTools *MCPTools) RegisterRepositoryCompareTools()
+    RegisterRepositoryCompareTools registers all repository compare-related
+    tools.
+
+func (mcpTools *MCPTools) RegisterRepositoryObjectsTools()
+    RegisterRepositoryObjectsTools registers all repository object-related
+    tools.
+
+func (mcpTools *MCPTools) RegisterRepositoryTagsTools()
+    RegisterRepositoryTagsTools registers all repository tag-related tools.
+
+func (mcpTools *MCPTools) RegisterRepositoryTools()
+    RegisterRepositoryTools registers all repository-related tools.
+
+func (mcpTools *MCPTools) RegisterScriptsTools()
+
+func (mcpTools *MCPTools) RegisterWorkflowRunsTools()
+
+func (mcpTools *MCPTools) RegisterWorkflowsTools()
+    RegisterWorkflowsTools registers all workflows-related tools.
+
+func (mcpTools *MCPTools) RegisterWorkspaceTools()
+    RegisterWorkspaceTools registers the tools for workspace management.
+
+</pre>
+</body></html>

@@ -1,0 +1,1429 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/db</title></head><body>
+<h1>Package irmin-api/db</h1>
+<pre>
+package db // import "irmin-api/db"
+
+
+CONSTANTS
+
+const (
+	// Minimum relevance threshold for filtering search results.
+	MinRelevanceThreshold = 0.1
+
+	// Entity type priorities (lower = higher priority).
+	WorkflowPriority         = 1
+	RepositoryPriority       = 2
+	ConnectionPriority       = 3
+	QueryPriority            = 4
+	RepositoryObjectPriority = 5
+	UserPriority             = 6
+	InvitePriority           = 7
+	DefaultPriority          = 999
+
+	// Search relevance weights.
+	ExactMatchWeight       = 2.0
+	PrefixMatchWeight      = 1.5
+	PartialMatchWeight     = 1.0
+	FuzzyMatchWeight       = 0.7
+	FieldNameWeight        = 1.3
+	FieldDescriptionWeight = 1.1
+	FieldContentWeight     = 0.9
+
+	// Fuzzy matching constants.
+	MinTokenLengthForFuzzy   = 2
+	FuzzySimilarityThreshold = 0.7
+	// Batch loading constants.
+	MaxBatchSize = 1000 // Maximum number of entities to load in a single batch
+
+	// SQL condition constants.
+	NeverMatchCondition = "1=0"
+	NullFieldReference  = "NULL"
+
+	// Field parsing constants.
+	MaxFieldParts = 2
+
+	// Query normalization constants.
+	DefaultMinTokenLength = 2 // Default minimum length for search tokens
+
+	// Search result limits and timeout constants.
+	MaxSearchResults        = 10000 // Maximum total search results
+	MaxResultsPerEntityType = 2000  // Maximum results per entity type
+	DefaultSearchTimeout    = 30    // Default search timeout in seconds
+	MaxSearchTimeout        = 120   // Maximum allowed search timeout in seconds
+	DatabaseQueryTimeout    = 15    // Database query timeout in seconds
+
+	// Fast search configuration constants.
+	FastSearchMaxResults = 1000 // Fast search total results limit
+	FastSearchMaxPerType = 200  // Fast search per-type results limit
+	FastSearchTimeout    = 10   // Fast search timeout in seconds
+	FastSearchDBTimeout  = 5    // Fast search database timeout in seconds
+
+	// Extensive search configuration constants.
+	ExtensiveSearchDBTimeout = 30 // Extensive search database timeout in seconds
+
+	// Security constants for input validation.
+	MaxSearchTokenLength = 1000 // Maximum length for a search token to prevent abuse
+	MaxSearchQueryLength = 5000 // Maximum length for entire search query
+	MaxFieldNameLength   = 100  // Maximum length for field names
+	MaxTableNameLength   = 100  // Maximum length for table names
+
+	// Relevance boost constants.
+	ExactMatchBoostFactor  = 1.5 // 50% boost for exact matches
+	PrefixMatchBoostFactor = 1.2 // 20% boost for prefix matches
+	RelevanceRoundingBase  = 100 // Base for rounding to 2 decimal places
+
+	// Search entity type strings for batch loading.
+	SearchEntityTypeWorkflow         = "workflow"
+	SearchEntityTypeRepository       = "repository"
+	SearchEntityTypeConnection       = "connection"
+	SearchEntityTypeQuery            = "query"
+	SearchEntityTypeRepositoryObject = "repository_object"
+
+	// Cursor-based pagination constants.
+	DefaultCursorDatabaseTimeout = 10 // Default database timeout for cursor-based searches in seconds
+	CursorPartsCount             = 2  // Number of parts in cursor string (ID_timestamp)
+)
+    Search-related constants.
+
+const (
+	// DefaultWorkflowListLimit is the default limit for workflow listings to improve performance.
+	DefaultWorkflowListLimit = 100
+)
+
+FUNCTIONS
+
+func ContainsSQLInjectionPattern(input string) bool
+    ContainsSQLInjectionPattern checks for common SQL injection patterns.
+
+func ContainsSuspiciousPatterns(input string) bool
+    ContainsSuspiciousPatterns checks for additional suspicious patterns.
+
+func GetNormalizedQuery(query string) string
+    GetNormalizedQuery returns just the normalized version of a query string.
+    This is useful for debugging or displaying the processed query to users.
+
+func GetNormalizedQueryWithOptions(query string, options QueryNormalizationOptions) string
+    GetNormalizedQueryWithOptions returns the normalized version with custom
+    options.
+
+func IsValidFieldName(fieldName string) bool
+    IsValidFieldName validates that a field name is in the allowed whitelist.
+
+func IsValidTableName(tableName string) bool
+    IsValidTableName validates that a table name is in the allowed whitelist.
+
+func SanitizeSearchValue(value string) string
+    SanitizeSearchValue sanitizes a search value for use in ILIKE patterns.
+
+func ValidateFieldMappings(fieldMappings map[string]string) map[string]string
+    ValidateFieldMappings validates and filters field mappings to ensure they
+    are safe.
+
+func ValidateSearchToken(token SearchToken) bool
+    ValidateSearchToken performs comprehensive security validation on search
+    tokens.
+
+
+TYPES
+
+type APIToken struct {
+	gorm.Model
+
+	Name      string    `json:"name"`
+	Hidden    bool      `json:"hidden"`
+	Token     string    `json:"token,omitempty" gorm:"uniqueIndex"`
+	ExpiresAt time.Time `json:"expiry"`
+	User      User      `json:"user"            gorm:"foreignKey:UserID"`
+	UserID    uint      `json:"user_id"`
+}
+
+type ActionWorkflowable struct {
+	gorm.Model
+	Executable              string                    `json:"executable"`
+	ResultsRepository       *Repository               `json:"results_repository"        gorm:"foreignKey:ResultsRepositoryID"`
+	ResultsRepositoryID     *uint                     `json:"results_repository_id"     gorm:"index"`
+	ResultsRepositoryBranch *string                   `json:"results_repository_branch"`
+	ResultsRepositoryPath   *string                   `json:"results_repository_path"`
+	Inputs                  []ActionWorkflowableInput `json:"inputs"                    gorm:"foreignKey:ActionWorkflowableID"`
+}
+
+type ActionWorkflowableInput struct {
+	gorm.Model
+	Repository           Repository          `json:"repository"             gorm:"foreignKey:RepositoryID"`
+	RepositoryID         uint                `json:"repository_id"          gorm:"index"`
+	RepositoryRef        string              `json:"repository_ref"`
+	RepositoryPath       string              `json:"repository_path"`
+	ActionWorkflowable   *ActionWorkflowable `json:"action_workflowable"    gorm:"foreignKey:ActionWorkflowableID"`
+	ActionWorkflowableID *uint               `json:"action_workflowable_id"`
+}
+
+type AssistantConversation struct {
+	gorm.Model
+
+	// Conversation title (auto-generated or user-defined)
+	Title string `gorm:"type:varchar(255);not null;default:''" json:"title"`
+
+	// Assistant type (assistant, scripting, etc.)
+	AssistantType ai.IrminAIType `gorm:"type:varchar(50);not null;default:'assistant'" json:"assistant_type"`
+
+	// Hidden from user
+	Hidden bool `gorm:"default:false" json:"hidden"`
+
+	// Workspace this conversation belongs to
+	WorkspaceID uint      `gorm:"index;not null"         json:"workspace_id"`
+	Workspace   Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace"`
+
+	// User who owns this conversation
+	UserID uint `gorm:"not null"          json:"user_id"`
+	User   User `gorm:"foreignKey:UserID" json:"user"`
+
+	// Conversation metadata (stored as JSON)
+	Metadata map[string]any `gorm:"type:jsonb;serializer:json" json:"metadata"`
+
+	// Messages in this conversation
+	Messages []AssistantMessage `json:"messages" gorm:"foreignKey:ConversationID"`
+
+	// Statistics
+	TotalMessages     int `gorm:"default:0" json:"total_messages"`
+	UserMessages      int `gorm:"default:0" json:"user_messages"`
+	AssistantMessages int `gorm:"default:0" json:"assistant_messages"`
+	EstimatedTokens   int `gorm:"default:0" json:"estimated_tokens"`
+
+	// Timestamps
+	LastMessageAt *time.Time `json:"last_message_at"`
+}
+    AssistantConversation represents a conversation with the AI assistant
+
+type AssistantMessage struct {
+	gorm.Model
+
+	// Conversation this message belongs to
+	ConversationID *uint                  `json:"conversation_id" gorm:"column:conversation_id;index"`
+	Conversation   *AssistantConversation `json:"conversation"    gorm:"foreignKey:ConversationID"`
+
+	// Message role (user or assistant)
+	Role anthropic.BetaMessageParamRole `gorm:"not null" json:"role"`
+
+	// Message content
+	Content string `gorm:"type:text;not null" json:"content"`
+
+	// System prompt used for this message (user message only)
+	SystemPrompt *string `gorm:"type:text" json:"system_prompt"`
+
+	// Content type (text, image, tool_call, etc.)
+	ContentType irminmodels.AssistantMessageContentType `gorm:"type:varchar(50);not null;default:'text'" json:"content_type"`
+
+	// Block index within the AI response (0-based, for ordering multiple blocks)
+	BlockIndex *int `gorm:"default:0" json:"block_index"`
+
+	// Message status (pending, sent, error, etc.)
+	Status irminmodels.AssistantMessageStatus `gorm:"type:varchar(50);not null;default:'pending'" json:"status"`
+
+	// Error message if status is error
+	ErrorMessage *string `gorm:"type:text" json:"error_message"`
+
+	// Message metadata (stored as JSON)
+	Metadata map[string]any `gorm:"type:jsonb;serializer:json" json:"metadata"`
+
+	// Token usage information
+	InputTokens  *int `json:"input_tokens"`
+	OutputTokens *int `json:"output_tokens"`
+
+	// AI model used for this message
+	AIModel string `json:"ai_model"`
+
+	// Anthropic ID (for AI responses only)
+	AnthropicID string `json:"anthropic_id"`
+
+	// Timestamps
+	SentAt time.Time `json:"sent_at"`
+}
+    AssistantMessage represents a single message in a conversation
+
+type BatchLoadResult struct {
+	Entities map[uint]any   // Map of entity ID to entity
+	Tags     map[uint][]Tag // Map of entity ID to tags
+}
+    BatchLoadResult represents the result of a batch loading operation.
+
+type Connection struct {
+	gorm.Model
+
+	Name          string                  `json:"name,omitempty"`
+	Description   string                  `json:"description,omitempty"`
+	Documentation string                  `json:"documentation,omitempty"`
+	Details       CustomFieldValues       `json:"details,omitempty"       gorm:"type:jsonb;serializer:json"`
+	Settings      CustomFieldValues       `json:"settings,omitempty"      gorm:"type:jsonb;serializer:json"`
+	OwnerID       uint                    `json:"owner_id,omitempty"`
+	Owner         User                    `json:"owner"                   gorm:"foreignKey:OwnerID"`
+	WorkspaceID   uint                    `json:"workspace_id,omitempty"  gorm:"index"`
+	Workspace     Workspace               `json:"workspace"               gorm:"foreignKey:WorkspaceID"`
+	ConnectorID   uint                    `json:"connector_id,omitempty"`
+	Connector     Connector               `json:"connector"               gorm:"foreignKey:ConnectorID"`
+	SchemaCache   []ConnectionSchemaCache `json:"schema_cache,omitempty"  gorm:"foreignKey:ConnectionID"`
+	Tags          []Tag                   `json:"tags,omitempty"          gorm:"many2many:connection_tags;"`
+}
+
+type ConnectionSchemaCache struct {
+	gorm.Model
+
+	Schema       *irminmodels.ObjectSchema `json:"schema,omitempty"        gorm:"type:jsonb;serializer:json"`
+	OpMethod     *string                   `json:"op_method,omitempty"`
+	ConnectionID uint                      `json:"connection_id,omitempty" gorm:"index"`
+	Connection   Connection                `json:"connection"              gorm:"foreignKey:ConnectionID"`
+}
+
+type ConnectionTag struct {
+	ConnectionID uint       `json:"connection_id" gorm:"primaryKey"`
+	Connection   Connection `json:"connection"    gorm:"foreignKey:ConnectionID"`
+	TagID        uint       `json:"tag_id"        gorm:"primaryKey"`
+	Tag          Tag        `json:"tag"           gorm:"foreignKey:TagID"`
+}
+
+type Connector struct {
+	gorm.Model
+
+	// Base URL for the connector's REST API
+	APIBaseURL string `json:"api_base_url"               gorm:"index"`
+	// Token to authenticate system requests to the Connector's API
+	SystemToken string `json:"system_token"`
+	// Name of the connector
+	Name string `json:"name"`
+	// Short description of the connector
+	Description string `json:"description"`
+	// Current version of the connector
+	Version string `json:"version"`
+	// Version of the Irmin Connector Structure this connector adheres to
+	StructureVersion string `json:"structure_version"`
+	// Name of the author of the connector
+	Author string `json:"author"`
+	// URL to the connector's logo image
+	LogoURL string `json:"logo_url"`
+	// List of capabilities supported by the connector e.g. pull, push, webhook_pull, webhook_patch
+	Capabilities []string `json:"capabilities"               gorm:"type:jsonb;serializer:json"`
+	// List of locales supported by the connector
+	Locales []string `json:"locales"                    gorm:"type:jsonb;serializer:json"`
+	// (optional) Primary category of the connector
+	PrimaryCategory string `json:"primary_category,omitempty" gorm:"type:varchar(255)"`
+	// (optional) List of categories the connector belongs to
+	Categories []string `json:"categories,omitempty"       gorm:"type:jsonb;serializer:json"`
+	// (optional) Email address of the author
+	AuthorEmail string `json:"author_email,omitempty"`
+	// (optional) URL to read more about the connector, such as documentation
+	ReadMoreURL string `json:"read_more_url,omitempty"`
+}
+
+type CursorPagination struct {
+	After  *string // Cursor for pagination (encoded ID + timestamp)
+	Before *string // Cursor for reverse pagination
+	First  *int    // Number of items to fetch forward
+	Last   *int    // Number of items to fetch backward
+}
+    CursorPagination represents cursor-based pagination parameters for better
+    performance.
+
+type CustomFieldValues map[string]string
+
+type Database struct {
+	*gorm.DB
+	// Has unexported fields.
+}
+    Database represents a database connection and its operations. It now shares
+    a single underlying pgxpool for both GORM and direct pgx access.
+
+func InitialiseDB(env *utils.CoreAPIEnv) (*Database, error)
+    InitialiseDB establishes a Postgres database connection, performs any
+    necessary migrations, and returns an error if something goes wrong.
+
+func (d *Database) AddTagToConnection(connectionID, tagID uint) error
+    AddTagToConnection adds a tag to a connection.
+
+func (d *Database) AddTagToQuery(queryID, tagID uint) error
+    AddTagToQuery adds a tag to a query.
+
+func (d *Database) AddTagToRepository(repositoryID, tagID uint) error
+    AddTagToRepository adds a tag to a repository.
+
+func (d *Database) AddTagToRepositoryObject(repositoryObjectID, tagID uint) error
+    AddTagToRepositoryObject adds a tag to a repository object.
+
+func (d *Database) AddTagToWorkflow(workflowID, tagID uint) error
+    AddTagToWorkflow adds a tag to a workflow.
+
+func (d *Database) AddUserToWorkspace(tx *gorm.DB, userID, workspaceID uint, roleIDs []uint) (*WorkspaceUser, error)
+    AddUserToWorkspace adds a user to a workspace with the specified roles.
+
+func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
+
+func (d *Database) ClearAssistantConversationMessages(conversationID uint) error
+    ClearAssistantConversationMessages removes all messages from a conversation
+
+func (d *Database) Close()
+    Close closes the shared database connection pool.
+
+func (d *Database) CreateAssistantConversation(conversation *AssistantConversation) error
+    CreateAssistantConversation creates a new conversation
+
+func (d *Database) CreateAssistantMessage(message *AssistantMessage) error
+    CreateAssistantMessage creates a new message in a conversation
+
+func (d *Database) CreateSearchIndexes() error
+    CreateSearchIndexes creates indexes to optimize search performance.
+
+func (d *Database) DeleteAPIToken(id uint) error
+    DeleteAPIToken deletes an API token by its ID.
+
+func (d *Database) DeleteAssistantConversation(conversationID uint) error
+    DeleteAssistantConversation deletes a conversation and all its messages
+
+func (d *Database) DeleteAssistantMessage(messageID uint) error
+    DeleteAssistantMessage deletes a message and updates conversation statistics
+
+func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error
+    DeleteConnection deletes a connection and its associated schema cache from
+    the database.
+
+func (d *Database) DeleteConnector(tx *gorm.DB, id uint) error
+    DeleteConnector deletes a connector record and its associated connections
+    from the database by its ID.
+
+func (d *Database) DeleteInvite(id uint) error
+
+func (d *Database) DeleteObjects(tx *gorm.DB, path *string, repositoryID *uint, ref *string) error
+
+func (d *Database) DeleteStoredQuery(tx *gorm.DB, id uint) error
+
+func (d *Database) DeleteTag(tx *gorm.DB, id uint) error
+    DeleteTag deletes a tag and removes all its associations.
+
+func (d *Database) DeleteWorkflow(tx *gorm.DB, id uint) error
+    DeleteWorkflow deletes a workflow and all related records.
+
+func (d *Database) DeleteWorkspace(id uint) error
+    DeleteWorkspace deletes a workspace and the related records.
+
+func (d *Database) DropSearchIndexes() error
+    DropSearchIndexes drops the search indexes (useful for testing or cleanup).
+
+func (d *Database) EnsureNotificationTrigger(ctx context.Context) error
+    EnsureNotificationTrigger ensures that the workflow run notification trigger
+    exists in the database.
+
+func (d *Database) FindConnectionSchemaCache(connectionID uint, opMethod string) (*ConnectionSchemaCache, error)
+    FindConnectionSchemaCache finds a connection schema cache by connection ID
+    and op method.
+
+func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*RepositoryObject, error)
+
+func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error)
+    FindRepositorySchemaCache finds a repository schema cache by repository ID,
+    path, and ref.
+
+func (d *Database) GenerateAllPossiblePolicies(
+	workspaceID uint,
+	principal PolicyPrincipal,
+	principalID *uint,
+	opts ...PolicyGenerationOptions,
+) []Policy
+    GenerateAllPossiblePolicies generates all possible policy combinations for a
+    given workspace and principal.
+
+func (d *Database) GetAPIToken(id uint) (*APIToken, error)
+    GetAPIToken retrieves an API token by its ID.
+
+func (d *Database) GetAPITokenByToken(token string) (*APIToken, error)
+    GetAPITokenByToken retrieves an API token by its token value.
+
+func (d *Database) GetAPITokensByUserID(userID uint) ([]APIToken, error)
+    GetAPITokensByUserID retrieves all API tokens for a user.
+
+func (d *Database) GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error)
+    GetActionWorkflowableByID retrieves an action workflowable by its ID.
+
+func (d *Database) GetActiveInvitesByWorkspace(workspaceID uint) ([]Invite, error)
+
+func (d *Database) GetAllAssetsByTag(tagID uint) (*TaggedAssets, error)
+    GetAllAssetsByTag retrieves all assets associated with a specific tag.
+
+func (d *Database) GetAllConnectors() ([]Connector, error)
+    GetAllConnectors retrieves all connectors from the database.
+
+func (d *Database) GetAllWorkspaces() ([]Workspace, error)
+    GetAllWorkspaces retrieves all workspaces from the database.
+
+func (d *Database) GetAssistantConversationByID(conversationID uint) (*AssistantConversation, error)
+    GetAssistantConversationByID retrieves a conversation by its ID
+
+func (d *Database) GetAssistantConversationStats(
+	conversationID uint,
+) (*irminmodels.AssistantConversationStats, error)
+    GetAssistantConversationStats retrieves statistics for a conversation
+
+func (d *Database) GetAssistantConversationWithMessages(conversationID uint) (*AssistantConversation, error)
+    GetAssistantConversationWithMessages retrieves a conversation by its ID with
+    all messages
+
+func (d *Database) GetAssistantConversationsByUser(
+	workspaceID uint,
+	userID uint,
+	includeHidden bool,
+) ([]AssistantConversation, error)
+    GetAssistantConversationsByUser retrieves all conversations for a specific
+    user in a workspace
+
+func (d *Database) GetConnectionByID(id uint) (*Connection, error)
+    GetConnectionByID finds a connection by its ID.
+
+func (d *Database) GetConnectionTags(connectionID uint) ([]Tag, error)
+    GetConnectionTags retrieves all tags for a connection.
+
+func (d *Database) GetConnectionsByTag(tagID uint) ([]Connection, error)
+    GetConnectionsByTag retrieves all connections that have a specific tag.
+
+func (d *Database) GetConnectionsByWorkspaceID(workspaceID uint) ([]Connection, error)
+    GetConnectionsByWorkspaceID finds all connections in a workspace.
+
+func (d *Database) GetConnector(id uint) (*Connector, error)
+    GetConnector retrieves a connector from the database by its ID.
+
+func (d *Database) GetConnectorByAPIBaseURL(apiBaseURL string) (*Connector, error)
+    GetConnectorByAPIBaseURL retrieves a connector from the database by its API
+    base URL.
+
+func (d *Database) GetDefaultRole() (*Role, error)
+
+func (d *Database) GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error)
+    GetExportWorkflowableByID retrieves an export workflowable by its ID.
+
+func (d *Database) GetFlatDBObjects(repositoryID uint, ref string) ([]RepositoryObject, error)
+
+func (d *Database) GetImportWorkflowableByID(id uint) (*ImportWorkflowable, error)
+    GetImportWorkflowableByID retrieves an import workflowable by its ID.
+
+func (d *Database) GetInviteByID(id uint) (*Invite, error)
+
+func (d *Database) GetInvitesByEmail(email string) ([]Invite, error)
+
+func (d *Database) GetLatestWorkflowRunByWorkflowID(workflowID uint) (*WorkflowRun, error)
+
+func (d *Database) GetLogEventsByWorkspaceAndAsset(
+	workspaceID uint,
+	assetType string,
+	assetID uint,
+	searchTerm string,
+	limit, offset int,
+) ([]LogEvent, int64, error)
+    GetLogEventsByWorkspaceAndAsset fetches log events for a specific asset
+    within a workspace, optionally filtering by description, alongside the total
+    count for pagination.
+
+    workspaceID: identifier of the workspace assetType: one of "repository",
+    "workflow", "user", "connection" assetID: identifier of the asset to filter
+    by searchTerm: substring to match in the description; if empty, ignored
+    limit: maximum number of events to return offset: number of events to skip
+    returns: slice of LogEvent, total count of matching events, and error if any
+
+func (d *Database) GetLogEventsForWorkspace(
+	workspaceID uint,
+	searchTerm string,
+	limit, offset int,
+) ([]LogEvent, int64, error)
+    GetLogEventsForWorkspace returns log events for the given workspace,
+    optionally filtering by description, sorted by creation time, along with the
+    total count of matching events for pagination.
+
+    workspaceID: identifier of the workspace to fetch events for searchTerm:
+    substring to search for in the description; if empty, ignored limit:
+    maximum number of events to return offset: number of events to skip returns:
+    slice of LogEvent, total count of matching events, and error if any
+
+func (d *Database) GetOwnerRole() (*Role, error)
+
+func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
+    GetPgxConn returns a pgx connection from the shared pool.
+
+func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, error)
+    GetPipelineWorkflowableByID retrieves a pipeline workflowable by its ID.
+
+func (d *Database) GetQueriesByTag(tagID uint) ([]StoredQuery, error)
+    GetQueriesByTag retrieves all queries that have a specific tag.
+
+func (d *Database) GetQueryTags(queryID uint) ([]Tag, error)
+    GetQueryTags retrieves all tags for a query.
+
+func (d *Database) GetRepositoriesByTag(tagID uint) ([]Repository, error)
+    GetRepositoriesByTag retrieves all repositories that have a specific tag.
+
+func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error)
+
+func (d *Database) GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error)
+
+func (d *Database) GetRepositoryObjectTags(repositoryObjectID uint) ([]Tag, error)
+    GetRepositoryObjectTags retrieves all tags for a repository object.
+
+func (d *Database) GetRepositoryObjectsByTag(tagID uint) ([]RepositoryObject, error)
+    GetRepositoryObjectsByTag retrieves all repository objects that have a
+    specific tag.
+
+func (d *Database) GetRepositoryTags(repositoryID uint) ([]Tag, error)
+    GetRepositoryTags retrieves all tags for a repository.
+
+func (d *Database) GetRole(id uint) (*Role, error)
+
+func (d *Database) GetRoles() ([]Role, error)
+
+func (d *Database) GetScheduleByID(id uint) (*Schedule, error)
+    GetScheduleByID retrieves a schedule record from the database by its ID.
+
+func (d *Database) GetStoredQueriesByWorkspaceID(workspaceID uint) ([]StoredQuery, error)
+
+func (d *Database) GetStoredQueryByID(id uint) (*StoredQuery, error)
+
+func (d *Database) GetTagByID(id uint) (*Tag, error)
+    GetTagByID retrieves a tag by its ID.
+
+func (d *Database) GetTagWithAssets(tagID uint) (*TagWithAssets, error)
+    GetTagWithAssets retrieves a tag along with all its associated assets and
+    counts.
+
+func (d *Database) GetTaggedAssetsCount(tagID uint) (map[string]int, error)
+    GetTaggedAssetsCount returns the count of all assets associated with a
+    specific tag.
+
+func (d *Database) GetTagsByWorkspace(workspaceID uint) ([]Tag, error)
+    GetTagsByWorkspace retrieves all tags for a specific workspace.
+
+func (d *Database) GetUser(id uint) (*User, error)
+    GetUser retrieves a user from the database by their ID.
+
+func (d *Database) GetUserByClerkID(clerkID string) (*User, error)
+    GetUserByClerkID retrieves a user from the database by their ClerkID.
+
+func (d *Database) GetUserByEmail(email string) (*User, error)
+    GetUserByEmail retrieves a user from the database by their email.
+
+func (d *Database) GetUserWorkspaces(userID uint) ([]WorkspaceUser, error)
+    GetUserWorkspaces retrieves all workspace associations (WorkspaceUser) for a
+    given user ID. It preloads the related Workspace.
+
+func (d *Database) GetUsersInWorkspace(workspaceID uint) ([]WorkspaceUser, error)
+    GetUsersInWorkspace retrieves all users associated with a workspace.
+
+func (d *Database) GetWorkflowByID(id uint) (*Workflow, error)
+    GetWorkflowByID retrieves a workflow by its ID.
+
+func (d *Database) GetWorkflowRunByID(id uint) (*WorkflowRun, error)
+
+func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset int) ([]WorkflowRun, int, error)
+    GetWorkflowRunsByWorkflowID returns workflow runs for the given workflow ID,
+    sorted by creation time, along with the total count of matching runs for
+    pagination.
+
+func (d *Database) GetWorkflowTags(workflowID uint) ([]Tag, error)
+    GetWorkflowTags retrieves all tags for a workflow.
+
+func (d *Database) GetWorkflowsByTag(tagID uint) ([]Workflow, error)
+    GetWorkflowsByTag retrieves all workflows that have a specific tag.
+
+func (d *Database) GetWorkflowsByWorkspaceID(workspaceID uint) ([]Workflow, error)
+    GetWorkflowsByWorkspaceID retrieves all workflows for a workspace. Optimized
+    for listing - minimal preloads, reasonable limit.
+
+func (d *Database) GetWorkflowsOfTypeByWorkspaceID(
+	workspaceID uint,
+	workflowType irminmodels.WorkflowableType,
+) ([]Workflow, error)
+    GetWorkflowsOfTypeByWorkspaceID retrieves all workflows of a specific type
+    for a workspace. Optimized for listing - minimal preloads, reasonable limit.
+
+func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error)
+    GetWorkspaceBySlug retrieves a workspace by its slug.
+
+func (d *Database) GetWorkspaceUser(workspaceID, userID uint) (*WorkspaceUser, error)
+    GetWorkspaceUser retrieves a workspace user record from the database by the
+    workspace and user IDs.
+
+func (d *Database) IsUserInWorkspace(userID, workspaceID uint) (bool, error)
+    IsUserInWorkspace checks if a user is a member of a workspace.
+
+func (d *Database) IsUserInWorkspaceByEmail(email string, workspaceID uint) (bool, error)
+    IsUserInWorkspaceByEmail checks if a user with the provided email is a
+    member of a workspace.
+
+func (d *Database) ListenForNotifications(ctx context.Context, channel string) (func() error, error)
+    ListenForNotifications starts listening for notifications on a specific
+    channel. It returns a function that can be called to stop listening.
+
+func (d *Database) Migrate() error
+    Migrate runs the auto migration calls in the correct order. It separates the
+    migrations into groups based on model dependencies.
+
+func (d *Database) RemoveTagFromConnection(connectionID, tagID uint) error
+    RemoveTagFromConnection removes a tag from a connection.
+
+func (d *Database) RemoveTagFromQuery(queryID, tagID uint) error
+    RemoveTagFromQuery removes a tag from a query.
+
+func (d *Database) RemoveTagFromRepository(repositoryID, tagID uint) error
+    RemoveTagFromRepository removes a tag from a repository.
+
+func (d *Database) RemoveTagFromRepositoryObject(repositoryObjectID, tagID uint) error
+    RemoveTagFromRepositoryObject removes a tag from a repository object.
+
+func (d *Database) RemoveTagFromWorkflow(workflowID, tagID uint) error
+    RemoveTagFromWorkflow removes a tag from a workflow.
+
+func (d *Database) RemoveUserFromWorkspace(tx *gorm.DB, userID, workspaceID uint) error
+    RemoveUserFromWorkspace removes a user from a workspace.
+
+func (d *Database) Reset() error
+    Reset drops all tables to start fresh.
+
+func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
+    RunRawQuery executes a raw SQL query against the database.
+
+func (d *Database) SearchWithCursor(
+	ctx context.Context,
+	workspaceID uint,
+	filters SearchFilters,
+	pagination CursorPagination,
+) ([]SearchResult, *string, *string, error)
+    SearchWithCursor performs search with cursor-based pagination for better
+    performance on large datasets.
+
+func (d *Database) SearchWorkspace(
+	workspaceID uint,
+	filters SearchFilters,
+) ([]SearchResult, int, error)
+    SearchWorkspace performs a full-text search across all entities in a
+    workspace with timeout and limits.
+
+func (d *Database) SearchWorkspaceCount(
+	workspaceID uint,
+	filters SearchFilters,
+) (int, error)
+    SearchWorkspaceCount performs a search and returns only the total count of
+    results with timeout protection.
+
+func (d *Database) TrackNewMessageUsage(
+	conversation *AssistantConversation,
+	inputTokens int,
+	outputTokens int,
+	assistantMessageCount int,
+	userMessageCount int,
+) error
+    TrackNewMessageUsage updates the conversation statistics with the new
+    message usage
+
+func (d *Database) UpdateAssistantConversation(conversation *AssistantConversation) error
+    UpdateAssistantConversation updates an existing conversation
+
+func (d *Database) UpdateAssistantMessageStatus(
+	messageID uint,
+	status irminmodels.AssistantMessageStatus,
+	errorMessage *string,
+) error
+    UpdateAssistantMessageStatus updates the status of a message
+
+func (d *Database) UpdateWorkspaceUserRoles(
+	tx *gorm.DB,
+	userID, workspaceID uint,
+	roleIDs []uint,
+) (*WorkspaceUser, error)
+    UpdateWorkspaceUserRoles updates the roles for a user in a workspace.
+
+func (d *Database) WaitForNotification(ctx context.Context, channel string) (*pgconn.Notification, error)
+    WaitForNotification waits for a notification on the given channel. It uses
+    the connection pool to get a connection and waits for notifications.
+
+type EntityLoader struct {
+	// Has unexported fields.
+}
+    EntityLoader provides methods for batch loading entities.
+
+func NewEntityLoader(db *Database) *EntityLoader
+    NewEntityLoader creates a new EntityLoader instance.
+
+func (el *EntityLoader) BatchLoadEntities(
+	model any,
+	ids []uint,
+	preloads []string,
+) (map[uint]any, error)
+    BatchLoadEntities loads multiple entities of the same type in a single
+    query.
+
+func (el *EntityLoader) BatchLoadTags(
+	entityType string,
+	entityIDs []uint,
+) (map[uint][]Tag, error)
+    BatchLoadTags loads tags for multiple entities in batches.
+
+type ExportWorkflowable struct {
+	gorm.Model
+	FieldMappings             []irminmodels.FieldMapping `json:"field_mappings,omitempty"     gorm:"type:jsonb;serializer:json"`
+	Connection                Connection                 `json:"connection"                   gorm:"foreignKey:ConnectionID"`
+	ConnectionID              uint                       `json:"connection_id"                gorm:"index"`
+	ExportFromRepositoryPaths []string                   `json:"export_from_repository_paths" gorm:"type:jsonb;serializer:json"`
+	ExportToConnectionPath    string                     `json:"export_to_connection_path"`
+	Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
+	RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
+	RepositoryBranch          string                     `json:"repository_branch"`
+}
+
+type ImportWorkflowable struct {
+	gorm.Model
+	FieldMappings             []irminmodels.FieldMapping `json:"field_mappings,omitempty"     gorm:"type:jsonb;serializer:json"`
+	Connection                Connection                 `json:"connection"                   gorm:"foreignKey:ConnectionID"`
+	ConnectionID              uint                       `json:"connection_id"                gorm:"index"`
+	ImportFromConnectionPaths []string                   `json:"import_from_connection_paths" gorm:"type:jsonb;serializer:json"`
+	ImportToRepositoryPath    string                     `json:"import_to_repository_path"`
+	Repository                Repository                 `json:"repository"                   gorm:"foreignKey:RepositoryID"`
+	RepositoryID              uint                       `json:"repository_id"                gorm:"index"`
+	RepositoryBranch          string                     `json:"repository_branch"`
+}
+
+type Invite struct {
+	gorm.Model
+
+	Email       string     `json:"email"         gorm:"index"`
+	ClerkID     string     `json:"clerk_id"`
+	AcceptedAt  *time.Time `json:"accepted_at"`
+	DeclinedAt  *time.Time `json:"declined_at"`
+	ExpiresAt   time.Time  `json:"expires_at"`
+	Role        Role       `json:"role"          gorm:"foreignKey:RoleID"`
+	RoleID      uint       `json:"role_id"       gorm:"index"`
+	InvitedBy   User       `json:"invited_by"    gorm:"foreignKey:InvitedByID"`
+	InvitedByID uint       `json:"invited_by_id"`
+	Workspace   Workspace  `json:"workspace"     gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID uint       `json:"workspace_id"  gorm:"index"`
+}
+
+type LogEvent struct {
+	gorm.Model
+
+	Type        LogEventType `json:"type"`
+	Description string       `json:"description"`
+
+	User               *User             `json:"user"                 gorm:"foreignKey:UserID"`
+	UserID             *uint             `json:"user_id"              gorm:"index"`
+	Workspace          *Workspace        `json:"workspace"            gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID        *uint             `json:"workspace_id"         gorm:"index"`
+	Repository         *Repository       `json:"repository"           gorm:"foreignKey:RepositoryID"`
+	RepositoryID       *uint             `json:"repository_id"        gorm:"index"`
+	RepositoryObject   *RepositoryObject `json:"repository_object"    gorm:"foreignKey:RepositoryObjectID"`
+	RepositoryObjectID *uint             `json:"repository_object_id" gorm:"index"`
+	Workflow           *Workflow         `json:"workflow"             gorm:"foreignKey:WorkflowID"`
+	WorkflowID         *uint             `json:"workflow_id"          gorm:"index"`
+	WorkflowRun        *WorkflowRun      `json:"workflow_run"         gorm:"foreignKey:WorkflowRunID"`
+	WorkflowRunID      *uint             `json:"workflow_run_id"      gorm:"index"`
+	ConnectionID       *uint             `json:"connection_id"        gorm:"index"`
+	Connection         *Connection       `json:"connection"           gorm:"foreignKey:ConnectionID"`
+	Policy             *Policy           `json:"policy"               gorm:"foreignKey:PolicyID"`
+	PolicyID           *uint             `json:"policy_id"            gorm:"index"`
+	StoredQuery        *StoredQuery      `json:"stored_query"         gorm:"foreignKey:StoredQueryID"`
+	StoredQueryID      *uint             `json:"stored_query_id"      gorm:"index"`
+}
+
+type LogEventType string
+
+const (
+	LogEventTypeCreate  LogEventType = "CREATE"
+	LogEventTypeUpdate  LogEventType = "UPDATE"
+	LogEventTypeDelete  LogEventType = "DELETE"
+	LogEventTypeLogin   LogEventType = "LOGIN"
+	LogEventTypeLogout  LogEventType = "LOGOUT"
+	LogEventTypeError   LogEventType = "ERROR"
+	LogEventTypeInfo    LogEventType = "INFO"
+	LogEventTypeWarning LogEventType = "WARNING"
+)
+type PipelineStage struct {
+	gorm.Model
+	OrderSequence int                   `json:"order_sequence"`
+	Description   string                `json:"description"`
+	Write         bool                  `json:"write"`
+	Read          bool                  `json:"read"`
+	Pipeline      *PipelineWorkflowable `json:"pipeline"       gorm:"foreignKey:PipelineID"`
+	PipelineID    *uint                 `json:"pipeline_id"    gorm:"index"`
+	Type          PipelineStageType     `json:"type"`
+
+	Executable *string `json:"executable,omitempty"`
+
+	Connection          *Connection `json:"connection,omitempty"            gorm:"foreignKey:ConnectionID"`
+	ConnectionID        *uint       `json:"connection_id,omitempty"`
+	ConnectionWritePath *string     `json:"connection_write_path,omitempty"`
+	ConnectionReadPaths []string    `json:"connection_read_paths"           gorm:"type:jsonb;serializer:json"`
+
+	Repository          *Repository `json:"repository"                      gorm:"foreignKey:RepositoryID"`
+	RepositoryID        *uint       `json:"repository_id,omitempty"`
+	RepositoryBranch    *string     `json:"repository_branch,omitempty"`
+	RepositoryWritePath *string     `json:"repository_write_path,omitempty"`
+	RepositoryReadPaths []string    `json:"repository_read_paths"           gorm:"type:jsonb;serializer:json"`
+}
+
+type PipelineStageType string
+
+const (
+	PipelineStageTypeAction     PipelineStageType = "action"
+	PipelineStageTypeConnection PipelineStageType = "connection"
+	PipelineStageTypeRepository PipelineStageType = "repository"
+)
+type PipelineWorkflowable struct {
+	gorm.Model
+	Live   bool            `json:"live"`
+	Stages []PipelineStage `json:"stages" gorm:"foreignKey:PipelineID"`
+}
+
+type Policy struct {
+	gorm.Model
+
+	// Effect specifies whether the policy is an allow or deny policy
+	Effect PolicyEffect `json:"effect"`
+
+	// Action specifies the action that the policy is applied to (create, read, update, delete)
+	Action PolicyAction `gorm:"index:idx_policy_unique,priority:5"`
+
+	// Resource specifies the resource type that the policy is applied to (workspace, workflow, etc.)
+	Resource PolicyResource `gorm:"index:idx_policy_unique,priority:3"`
+
+	// ResourceID being nil means the policy is applied to all resources of the given type.
+	// When set, the policy applies only to the specific resource identified by this ID.
+	ResourceID *uint `gorm:"index:idx_policy_unique,priority:4"`
+
+	// WorkspaceID is used to specify which workspace the policy is applied to.
+	// This field is required for workspace-scoped policies.
+	WorkspaceID uint      `gorm:"index:idx_policy_unique,priority:1"`
+	Workspace   Workspace `gorm:"foreignKey:WorkspaceID"             json:"workspace"`
+
+	// Principal specifies which group of users the policy is applied to (workspace_user, role, or everyone)
+	Principal PolicyPrincipal `gorm:"index:idx_policy_unique,priority:6"`
+
+	// WorkspaceUserID is used to give a policy to a specific workspace user.
+	// This field is required when Principal is set to PolicyPrincipalWorkspaceUser.
+	WorkspaceUserID *uint          `gorm:"index:idx_policy_unique,priority:2"`
+	WorkspaceUser   *WorkspaceUser `gorm:"foreignKey:WorkspaceUserID"         json:"workspace_user"`
+
+	// RoleID is used to give a policy to a specific role.
+	// This field is required when Principal is set to PolicyPrincipalRole.
+	RoleID *uint `gorm:"index:idx_policy_unique,priority:2"`
+	Role   *Role `gorm:"foreignKey:RoleID"                  json:"role"`
+}
+    Policy is a policy that is applied to a resource.
+
+type PolicyAction string
+    PolicyAction specifies the action that the policy is applied to.
+
+const (
+	// PolicyActionCreate represents the create action.
+	PolicyActionCreate PolicyAction = "create"
+	// PolicyActionRead represents the read action.
+	PolicyActionRead PolicyAction = "read"
+	// PolicyActionUpdate represents the update action.
+	PolicyActionUpdate PolicyAction = "update"
+	// PolicyActionDelete represents the delete action.
+	PolicyActionDelete PolicyAction = "delete"
+)
+type PolicyEffect string
+    PolicyEffect specifies whether the policy is an allow or deny policy.
+
+const (
+	// PolicyEffectAllow represents a policy that allows an action.
+	PolicyEffectAllow PolicyEffect = "allow"
+	// PolicyEffectDeny represents a policy that denies an action.
+	PolicyEffectDeny PolicyEffect = "deny"
+)
+type PolicyGenerationOptions struct {
+	// IncludeResources specifies which resources to include in the generated policies.
+	// If nil, all resources will be included.
+	IncludeResources []PolicyResource
+	// IncludeActions specifies which actions to include in the generated policies.
+	// If nil, all actions will be included.
+	IncludeActions []PolicyAction
+	// Effect specifies the effect to use for all generated policies.
+	// If not set, PolicyEffectAllow will be used.
+	Effect PolicyEffect
+}
+    PolicyGenerationOptions specifies options for generating policies.
+
+func DefaultPolicyGenerationOptions() PolicyGenerationOptions
+    DefaultPolicyGenerationOptions returns the default options for policy
+    generation.
+
+type PolicyPrincipal string
+    PolicyPrincipal specifies which group of users the policy is applied to,
+    like a workspace user or a role.
+
+const (
+	// PolicyPrincipalWorkspaceUser represents a policy applied to a specific workspace user.
+	PolicyPrincipalWorkspaceUser PolicyPrincipal = "workspace_user"
+	// PolicyPrincipalRole represents a policy applied to a specific role.
+	PolicyPrincipalRole PolicyPrincipal = "role"
+	// PolicyPrincipalEveryone represents a policy applied to everyone.
+	PolicyPrincipalEveryone PolicyPrincipal = "everyone"
+)
+type PolicyResource string
+    PolicyResource specifies the resource type that the policy is applied to.
+
+const (
+	// PolicyResourceWorkspace represents a workspace resource.
+	PolicyResourceWorkspace PolicyResource = "workspace"
+	// PolicyResourceEditorScript represents script editor resource.
+	PolicyResourceEditorScript PolicyResource = "editor_script" // Editor scripts are not stored in the database, so policies are not script specific.
+	// PolicyResourceQuery represents a query resource.
+	PolicyResourceQuery PolicyResource = "query"
+	// PolicyResourceWorkflow represents a workflow resource.
+	PolicyResourceWorkflow PolicyResource = "workflow"
+	// PolicyResourceWorkflowRun represents a workflow run resource.
+	PolicyResourceWorkflowRun PolicyResource = "workflow_run" // Workflow runs are identified by the workflow ID, so policies are not run specific.
+	// PolicyResourceConnection represents a connection resource.
+	PolicyResourceConnection PolicyResource = "connection"
+	// PolicyResourceRepository represents a repository resource.
+	PolicyResourceRepository PolicyResource = "repository"
+	// PolicyResourceRepositoryBranch represents a repository branch resource.
+	PolicyResourceRepositoryBranch PolicyResource = "repository_branch" // Repository branches are identified by the repository ID, so policies are not branch specific.
+	// PolicyResourceRepositoryTag represents a repository tag resource.
+	PolicyResourceRepositoryTag PolicyResource = "repository_tag" // Repository tags are identified by the repository ID, so policies are not tag specific.
+	// PolicyResourceRepositoryCommit represents a repository commit resource.
+	PolicyResourceRepositoryCommit PolicyResource = "repository_commit" // Repository commits are identified by the repository ID, so policies are not commit specific.
+	// PolicyResourceRepositoryObject represents a repository object resource.
+	PolicyResourceRepositoryObject PolicyResource = "repository_object"
+	// PolicyResourceUser represents a user resource.
+	PolicyResourceUser PolicyResource = "user"
+	// PolicyResourcePolicy represents a policy resource.
+	PolicyResourcePolicy PolicyResource = "policy" // Policies for policies are not policy specific.
+	// PolicyResourceInvite represents an invite resource.
+	PolicyResourceInvite PolicyResource = "invite"
+	// PolicyResourceAuditLog represents an audit log resource.
+	PolicyResourceAuditLog PolicyResource = "audit_log" // Audit logs are identified by the workspace ID, so policies are not log event specific.
+	// PolicyResourceDocumentation represents a documentation resource.
+	PolicyResourceDocumentation PolicyResource = "documentation" // Documentation is not stored in the database, so policies are not documentation specific.
+	// PolicyResourceBilling represents billing and subscription management resource.
+	PolicyResourceBilling PolicyResource = "billing" // Billing is not stored in the database, so policies are not billing specific.
+	// PolicyResourceWorkspaceTag represents a workspace tag resource.
+	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
+	// PolicyResourceAssistant represents an AI assistant resource.
+	PolicyResourceAssistant PolicyResource = "assistant"
+)
+type QueryNormalizationOptions struct {
+	RemoveStopWords bool
+	MinTokenLength  int
+	PreservePhrases bool
+}
+    QueryNormalizationOptions represents options for query normalization.
+
+func DefaultNormalizationOptions() QueryNormalizationOptions
+    DefaultNormalizationOptions returns the default query normalization options.
+
+type QueryTag struct {
+	StoredQueryID uint        `json:"stored_query_id" gorm:"primaryKey"`
+	StoredQuery   StoredQuery `json:"stored_query"    gorm:"foreignKey:StoredQueryID"`
+	TagID         uint        `json:"tag_id"          gorm:"primaryKey"`
+	Tag           Tag         `json:"tag"             gorm:"foreignKey:TagID"`
+}
+
+type Repository struct {
+	gorm.Model
+
+	Name                   string                              `json:"name"`
+	LakeFSRepoID           string                              `json:"lakefs_repo_id"                     gorm:"index"`
+	Slug                   string                              `json:"slug"                               gorm:"uniqueIndex"`
+	Description            string                              `json:"description"`
+	Documentation          string                              `json:"documentation"`
+	StorageNamespace       string                              `json:"storage_namespace"`
+	IsImmutable            bool                                `json:"is_immutable"`
+	DefaultBranch          string                              `json:"default_branch"`
+	GarbageCollectionRules *irminmodels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty" gorm:"type:jsonb;serializer:json"`
+	Workspace              Workspace                           `json:"workspace"                          gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID            uint                                `json:"workspace_id"                       gorm:"index"`
+	Owner                  User                                `json:"owner"                              gorm:"foreignKey:OwnerID"`
+	OwnerID                uint                                `json:"owner_id"`
+	SchemaCache            []RepositorySchemaCache             `json:"schema_cache,omitempty"             gorm:"foreignKey:RepositoryID"`
+	Tags                   []Tag                               `json:"tags,omitempty"                     gorm:"many2many:repository_tags;"`
+}
+
+type RepositoryObject struct {
+	gorm.Model
+
+	Name                  string                 `json:"name"`
+	Path                  string                 `json:"path"                              gorm:"index"`
+	Type                  irminmodels.ObjectType `json:"type"`
+	ContentType           string                 `json:"content_type,omitempty"`
+	PhysicalAddress       string                 `json:"physical_address,omitempty"`
+	PhysicalAddressExpiry *int64                 `json:"physical_address_expiry,omitempty"`
+	SizeBytes             int64                  `json:"size_bytes,omitempty"`
+	LastModified          string                 `json:"last_modified,omitempty"`
+	Metadata              map[string]string      `json:"metadata,omitempty"                gorm:"type:jsonb;serializer:json"`
+
+	ParentID *uint              `json:"parent_id,omitempty" gorm:"index"`
+	Parent   *RepositoryObject  `json:"parent,omitempty"    gorm:"foreignKey:ParentID;references:ID"`
+	Children []RepositoryObject `json:"children,omitempty"  gorm:"foreignKey:ParentID;references:ID"`
+
+	RepositoryRef string      `json:"repository_ref,omitempty" gorm:"index"`
+	Repository    *Repository `json:"repository,omitempty"     gorm:"foreignKey:RepositoryID;references:ID"`
+	RepositoryID  uint        `json:"repository_id,omitempty"  gorm:"index"`
+	Tags          []Tag       `json:"tags,omitempty"           gorm:"many2many:repository_object_tags;"`
+}
+
+type RepositoryObjectTag struct {
+	RepositoryObjectID uint             `json:"repository_object_id" gorm:"primaryKey"`
+	RepositoryObject   RepositoryObject `json:"repository_object"    gorm:"foreignKey:RepositoryObjectID"`
+	TagID              uint             `json:"tag_id"               gorm:"primaryKey"`
+	Tag                Tag              `json:"tag"                  gorm:"foreignKey:TagID"`
+}
+
+type RepositorySchemaCache struct {
+	gorm.Model
+
+	Path         string                    `json:"path,omitempty"`
+	Ref          string                    `json:"ref,omitempty"`
+	Schema       *irminmodels.ObjectSchema `json:"schema,omitempty"        gorm:"type:jsonb;serializer:json"`
+	RepositoryID uint                      `json:"repository_id,omitempty" gorm:"index"`
+	Repository   Repository                `json:"repository"              gorm:"foreignKey:RepositoryID"`
+}
+
+type RepositoryTag struct {
+	RepositoryID uint       `json:"repository_id" gorm:"primaryKey"`
+	Repository   Repository `json:"repository"    gorm:"foreignKey:RepositoryID"`
+	TagID        uint       `json:"tag_id"        gorm:"primaryKey"`
+	Tag          Tag        `json:"tag"           gorm:"foreignKey:TagID"`
+}
+
+type Role struct {
+	gorm.Model
+
+	Role        string `json:"role"        gorm:"uniqueIndex"`
+	Description string `json:"description"`
+	IsOwner     bool   `json:"is_owner"`
+	IsDefault   bool   `json:"is_default"`
+}
+
+type RunStatusNotificationPayload struct {
+	ID        uint   `json:"id"`
+	Status    string `json:"status"`
+	Operation string `json:"operation"`
+}
+    RunStatusNotificationPayload represents the structure of a notification from
+    PostgreSQL.
+
+type Schedule struct {
+	gorm.Model
+
+	Triggers    []WorkflowTrigger `json:"triggers"`
+	PreviousRun *time.Time        `json:"previous_run,omitempty"`
+	// MaxRetries is the maximum number of retries for a single workflow run.
+	MaxRetries int `json:"max_retries,omitempty"`
+	// MaxRuntime is the maximum runtime in seconds for a single workflow run.
+	MaxRuntime int `json:"max_runtime,omitempty"`
+	// MinInterval is the minimum interval in seconds between workflow runs.
+	MinInterval int `json:"min_interval,omitempty"`
+}
+
+type SearchCondition struct {
+	SQL    string
+	Args   []any
+	Weight float64
+}
+    SearchCondition represents a parameterized search condition.
+
+type SearchConfig struct {
+	EntityType      irminmodels.WorkspaceSearchResultType
+	Model           any
+	TableName       string
+	FieldMappings   map[string]string
+	FieldWeights    map[string]float64
+	JoinTable       string
+	EntityIDField   string
+	GetTagsFunc     func(uint) ([]Tag, error)
+	Preloads        []string
+	AdditionalJoins []string
+}
+    SearchConfig represents configuration for entity-specific search operations.
+
+type SearchFilters struct {
+	Query    string
+	Types    []string
+	Tags     []uint
+	OwnerID  *uint
+	DateFrom *string
+	DateTo   *string
+	Limit    int
+	Offset   int
+	// Enhanced search options
+	FuzzyMatch    bool
+	CaseSensitive bool
+	SearchFields  []string      // Specific fields to search
+	Limits        *SearchLimits // Search limits and timeout configuration
+}
+    SearchFilters represents search filters with enhanced query parsing.
+
+type SearchLimits struct {
+	MaxTotalResults        int           // Maximum total search results across all types
+	MaxResultsPerType      int           // Maximum results per entity type
+	TimeoutSeconds         int           // Search timeout in seconds
+	DatabaseTimeout        time.Duration // Database query timeout
+	EnableEarlyTermination bool          // Stop searching when limits are reached
+}
+    SearchLimits represents search result limits and timeout configuration.
+
+func CreateCustomSearchLimits(maxTotal, maxPerType, timeoutSeconds int) SearchLimits
+    CreateCustomSearchLimits creates a SearchLimits configuration with custom
+    values.
+
+func CreateExtensiveSearchLimits() SearchLimits
+    CreateExtensiveSearchLimits creates search limits for comprehensive
+    searches.
+
+func CreateFastSearchLimits() SearchLimits
+    CreateFastSearchLimits creates search limits optimized for fast responses.
+
+func DefaultSearchLimits() SearchLimits
+    DefaultSearchLimits returns the default search limits configuration.
+
+func ValidateSearchLimits(limits SearchLimits) SearchLimits
+    ValidateSearchLimits validates and normalizes search limits.
+
+type SearchQuery struct {
+	OriginalQuery   string
+	NormalizedQuery string
+	Tokens          []SearchToken
+	ExactPhrases    []string
+	HasFilters      bool
+}
+    SearchQuery represents a parsed search query with tokens and metadata.
+
+func ParseSearchQuery(query string) *SearchQuery
+    ParseSearchQuery parses a search query string into tokens and metadata.
+
+func ParseSearchQueryWithOptions(query string, options QueryNormalizationOptions) *SearchQuery
+    ParseSearchQueryWithOptions parses a search query string with custom
+    normalization options.
+
+type SearchResult struct {
+	Type      irminmodels.WorkspaceSearchResultType
+	Relevance float64
+	Entity    any
+}
+
+type SearchResultSorter struct{}
+    SearchResultSorter provides methods for sorting and merging search results.
+
+func (s *SearchResultSorter) BoostRelevanceForExactMatches(results []SearchResult, query string) []SearchResult
+    BoostRelevanceForExactMatches boosts relevance scores for exact matches.
+
+func (s *SearchResultSorter) CalculateEnhancedRelevance(
+	results []SearchResult,
+	parsedQuery *SearchQuery,
+) []SearchResult
+    CalculateEnhancedRelevance calculates enhanced relevance scores for search
+    results.
+
+func (s *SearchResultSorter) FilterByMinimumRelevance(results []SearchResult, minRelevance float64) []SearchResult
+    FilterByMinimumRelevance filters out results below a minimum relevance
+    threshold.
+
+func (s *SearchResultSorter) MergeAndDeduplicate(resultsList ...[]SearchResult) []SearchResult
+    MergeAndDeduplicate merges search results from multiple sources and removes
+    duplicates.
+
+func (s *SearchResultSorter) SortByRelevance(results []SearchResult) []SearchResult
+    SortByRelevance sorts search results by relevance score in descending order.
+
+type SearchTimeoutError struct {
+	TimeoutSeconds int
+	Message        string
+}
+    SearchTimeoutError represents a search timeout error.
+
+func NewSearchTimeoutError(timeoutSeconds int) *SearchTimeoutError
+    NewSearchTimeoutError creates a new search timeout error.
+
+func (e *SearchTimeoutError) Error() string
+    Error implements the error interface for SearchTimeoutError.
+
+type SearchToken struct {
+	Value    string
+	Type     TokenType
+	Weight   float64
+	IsExact  bool
+	IsPrefix bool
+}
+    SearchToken represents a single search token with metadata.
+
+type StoredQuery struct {
+	gorm.Model
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	SQL         string    `json:"sql"`
+	Owner       User      `json:"owner"          gorm:"foreignKey:OwnerID"`
+	OwnerID     uint      `json:"owner_id"`
+	Workspace   Workspace `json:"workspace"      gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID uint      `json:"workspace_id"   gorm:"index"`
+	Tags        []Tag     `json:"tags,omitempty" gorm:"many2many:query_tags;"`
+}
+
+type Tag struct {
+	gorm.Model
+	Name        string    `json:"name"`
+	Color       string    `json:"color"` // Hex color code
+	Description string    `json:"description"`
+	WorkspaceID uint      `json:"workspace_id" gorm:"index"`
+	Workspace   Workspace `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
+}
+    Tag represents a tag/label that can be attached to various entities.
+
+type TagWithAssets struct {
+	Tag    Tag            `json:"tag"`
+	Assets TaggedAssets   `json:"assets"`
+	Counts map[string]int `json:"counts"`
+}
+    TagWithAssets represents a tag along with all its associated assets.
+
+type TaggedAssets struct {
+	Queries           []StoredQuery      `json:"queries"`
+	Repositories      []Repository       `json:"repositories"`
+	Workflows         []Workflow         `json:"workflows"`
+	Connections       []Connection       `json:"connections"`
+	RepositoryObjects []RepositoryObject `json:"repository_objects"`
+}
+    TaggedAssets represents all assets associated with a specific tag.
+
+type TokenType int
+    TokenType represents the type of search token.
+
+const (
+	TokenTypeWord TokenType = iota
+	TokenTypePhrase
+	TokenTypeFilter
+	TokenTypeOperator
+)
+type User struct {
+	gorm.Model
+	ClerkID          string          `json:"clerk_id"           gorm:"uniqueIndex"`
+	NovuSubscriberID string          `json:"novu_subscriber_id"`
+	FirstName        string          `json:"first_name"`
+	LastName         string          `json:"last_name"`
+	Email            string          `json:"email"              gorm:"index"`
+	Phone            string          `json:"phone"`
+	Company          string          `json:"company"`
+	ProfilePicture   string          `json:"profile_picture"`
+	Workspaces       []WorkspaceUser `json:"workspaces"         gorm:"foreignKey:UserID"`
+}
+
+type Workflow struct {
+	gorm.Model
+
+	Name          string                       `json:"name"`
+	Description   string                       `json:"description"`
+	Documentation string                       `json:"documentation"`
+	Paused        bool                         `json:"paused"`
+	Type          irminmodels.WorkflowableType `json:"type"                  gorm:"index"`
+	Workspace     Workspace                    `json:"workspace"             gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID   uint                         `json:"workspace_id"          gorm:"index"`
+	Owner         User                         `json:"owner"                 gorm:"foreignKey:OwnerID"`
+	OwnerID       uint                         `json:"owner_id"`
+	Schedule      *Schedule                    `json:"schedule,omitempty"    gorm:"foreignKey:ScheduleID"`
+	ScheduleID    *uint                        `json:"schedule_id,omitempty" gorm:"index"`
+	Import        *ImportWorkflowable          `json:"import,omitempty"      gorm:"foreignKey:ImportID"`
+	ImportID      *uint                        `json:"import_id,omitempty"   gorm:"index"`
+	Export        *ExportWorkflowable          `json:"export,omitempty"      gorm:"foreignKey:ExportID"`
+	ExportID      *uint                        `json:"export_id,omitempty"   gorm:"index"`
+	Action        *ActionWorkflowable          `json:"action,omitempty"      gorm:"foreignKey:ActionID"`
+	ActionID      *uint                        `json:"action_id,omitempty"   gorm:"index"`
+	Pipeline      *PipelineWorkflowable        `json:"pipeline,omitempty"    gorm:"foreignKey:PipelineID"`
+	PipelineID    *uint                        `json:"pipeline_id,omitempty" gorm:"index"`
+	Tags          []Tag                        `json:"tags,omitempty"        gorm:"many2many:workflow_tags;"`
+}
+
+type WorkflowRun struct {
+	gorm.Model
+
+	StartedAt         *time.Time                 `json:"started_at,omitempty"`
+	FinishedAt        *time.Time                 `json:"finished_at,omitempty"`
+	Status            irminmodels.WorkflowStatus `json:"status"                gorm:"index"`
+	Retries           int                        `json:"retries"               gorm:"default:0"`
+	Logs              []string                   `json:"logs,omitempty"        gorm:"type:jsonb;serializer:json"`
+	TriggeredBy       *WorkflowTrigger           `json:"triggered_by"          gorm:"foreignKey:TriggeredByID"`
+	TriggeredByID     *uint                      `json:"triggered_by_id"`
+	TriggeredByUser   *User                      `json:"triggered_by_user"     gorm:"foreignKey:TriggeredByUserID"`
+	TriggeredByUserID *uint                      `json:"triggered_by_user_id"`
+	Workflow          Workflow                   `json:"workflow"              gorm:"foreignKey:WorkflowID"`
+	WorkflowID        uint                       `json:"workflow_id"           gorm:"index"`
+}
+
+type WorkflowRunEventType string
+
+const (
+	PreWorkflowRun  WorkflowRunEventType = "pre-workflow-run"
+	PostWorkflowRun WorkflowRunEventType = "post-workflow-run"
+)
+type WorkflowTag struct {
+	WorkflowID uint     `json:"workflow_id" gorm:"primaryKey"`
+	Workflow   Workflow `json:"workflow"    gorm:"foreignKey:WorkflowID"`
+	TagID      uint     `json:"tag_id"      gorm:"primaryKey"`
+	Tag        Tag      `json:"tag"         gorm:"foreignKey:TagID"`
+}
+
+type WorkflowTrigger struct {
+	gorm.Model
+
+	Type       WorkflowTriggerType `json:"type"                  gorm:"index"`
+	Schedule   *Schedule           `json:"schedule,omitempty"    gorm:"foreignKey:ScheduleID"`
+	ScheduleID *uint               `json:"schedule_id,omitempty" gorm:"index"`
+
+	// Time trigger
+	RRule   *string    `json:"rrule,omitempty"`
+	Cron    *string    `json:"cron,omitempty"`
+	LastRun *time.Time `json:"last_run,omitempty"`
+	NextRun *time.Time `json:"next_run,omitempty"`
+
+	// Repository event trigger
+	RepositoryEvent *lakefs.WebhookEventType `json:"repository_event,omitempty"`
+	Repository      *Repository              `json:"repository,omitempty"       gorm:"foreignKey:RepositoryID"`
+	RepositoryID    *uint                    `json:"repository_id,omitempty"`
+	RepositoryRef   *string                  `json:"repository_ref,omitempty"`
+
+	// Workflow run event trigger
+	WorkflowRunEvent *WorkflowRunEventType `json:"workflow_run_event,omitempty"`
+	Workflow         *Workflow             `json:"workflow,omitempty"           gorm:"foreignKey:WorkflowID"`
+	WorkflowID       *uint                 `json:"workflow_id,omitempty"`
+}
+
+type WorkflowTriggerType string
+
+const (
+	TimeTriggerType        WorkflowTriggerType = "time"
+	RepositoryTriggerType  WorkflowTriggerType = "repository-event"
+	WorkflowRunTriggerType WorkflowTriggerType = "workflow-run-event"
+)
+type Workspace struct {
+	gorm.Model
+
+	Name        string          `json:"name"`
+	Slug        string          `json:"slug"        gorm:"uniqueIndex"`
+	Description string          `json:"description"`
+	Owner       User            `json:"owner"       gorm:"foreignKey:OwnerID"`
+	OwnerID     uint            `json:"owner_id"    gorm:"index"`
+	Users       []WorkspaceUser `json:"users"       gorm:"foreignKey:WorkspaceID"`
+	Policies    []Policy        `json:"policies"    gorm:"foreignKey:WorkspaceID"`
+}
+
+type WorkspaceUser struct {
+	gorm.Model
+	UserID      uint                `json:"user_id"      gorm:"index"`
+	User        User                `json:"user"         gorm:"foreignKey:UserID"`
+	WorkspaceID uint                `json:"workspace_id" gorm:"index"`
+	Workspace   Workspace           `json:"workspace"    gorm:"foreignKey:WorkspaceID"`
+	Roles       []WorkspaceUserRole `json:"roles"        gorm:"foreignKey:WorkspaceUserID"`
+	Policies    []Policy            `json:"policies"     gorm:"foreignKey:WorkspaceUserID"`
+}
+
+type WorkspaceUserRole struct {
+	gorm.Model
+	WorkspaceUserID uint          `json:"workspace_user_id" gorm:"index"`
+	WorkspaceUser   WorkspaceUser `json:"workspace_user"    gorm:"foreignKey:WorkspaceUserID"`
+	RoleID          uint          `json:"role_id"           gorm:"index"`
+	Role            Role          `json:"role"              gorm:"foreignKey:RoleID"`
+}
+
+</pre>
+</body></html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/formatter</title></head><body>
+<h1>Package irmin-api/formatter</h1>
+<pre>
+package formatter // import "irmin-api/formatter"
+
+
+FUNCTIONS
+
+func FormatAPITokenResponse(token *db.APIToken, sqidManager *irminsqids.SQIDManager) (*irminmodels.APIToken, error)
+    FormatAPITokenResponse formats an API token for the response.
+
+func FormatAssistantConversationResponse(
+	assistantConversation *db.AssistantConversation,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.AssistantConversation, error)
+    FormatAssistantConversationResponse creates a assistant conversation
+    response object from a assistant conversation object.
+
+func FormatAssistantMessageResponse(
+	assistantMessage *db.AssistantMessage,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.AssistantMessage, error)
+    FormatAssistantMessageResponse creates a assistant message response object
+    from a assistant message object.
+
+func FormatConnectionResponse(
+	connection *db.Connection,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Connection, error)
+    FormatConnectionResponse creates a connection response object from a
+    connection object.
+
+func FormatConnectorResponse(
+	connector *db.Connector,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Connector, error)
+func FormatEditorItemsResponse(
+	items []types.Object,
+	workspace *db.Workspace,
+) ([]irminmodels.EditorItem, error)
+    FormatEditorItemsResponse formats a list of S3 objects into a nested tree of
+    EditorItem objects.
+
+func FormatIndexResponse[T any, R any](
+	items []T,
+	formatter func(*T, *irminsqids.SQIDManager) (*R, error),
+	sqidManager *irminsqids.SQIDManager,
+) ([]R, error)
+    FormatIndexResponse is a generic helper function to format index responses.
+    It takes a slice of items, a formatter function, and returns a formatted
+    response.
+
+func FormatInviteResponse(invite *db.Invite, sqidManager *irminsqids.SQIDManager) (*irminmodels.Invite, error)
+func FormatLogEventResponse(
+	ctx context.Context,
+	d *db.Database,
+	logEvent db.LogEvent,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.LogEvent, error)
+func FormatPolicyResourceOptionsResponse(
+	queries []db.StoredQuery,
+	workflows []db.Workflow,
+	connections []db.Connection,
+	repositories []db.Repository,
+	tags []db.Tag,
+	users []db.WorkspaceUser,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.PolicyResourceOptions, error)
+func FormatPolicyResponse(policy *db.Policy, sqidManager *irminsqids.SQIDManager) (*irminmodels.Policy, error)
+    FormatPolicyResponse formats a single policy into an API response.
+
+func FormatRepositoryObjectResponse(
+	object *db.RepositoryObject,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Object, error)
+    FormatRepositoryObjectResponse formats a repository object to an Irmin
+    object.
+
+func FormatRepositoryResponse(
+	repository *db.Repository,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Repository, error)
+func FormatRoleResponse(role *db.Role, sqidManager *irminsqids.SQIDManager) (*irminmodels.Role, error)
+func FormatScheduleResponse(schedule *db.Schedule, sqidManager *irminsqids.SQIDManager) (*irminmodels.Schedule, error)
+    FormatScheduleResponse creates a schedule response object from a schedule
+    object.
+
+func FormatScheduleTriggerResponse(
+	trigger *db.WorkflowTrigger,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.ScheduleTrigger, error)
+    FormatScheduleTriggerResponse formats a schedule trigger for the response.
+
+func FormatStoredQueryResponse(
+	query *db.StoredQuery,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.StoredQuery, error)
+func FormatTagResponse(tag *db.Tag, sqidManager *irminsqids.SQIDManager) (*irminmodels.Tag, error)
+    FormatTagResponse creates a tag response object from a database tag object.
+
+func FormatTagWithAssetsResponse(
+	tag *db.TagWithAssets,
+	sqidManager *irminsqids.SQIDManager,
+	d *db.Database,
+) (*irminmodels.TagWithAssets, error)
+    FormatTagWithAssetsResponse creates a tag response object from a database
+    tag object.
+
+func FormatTagsResponse(tags []db.Tag, sqidManager *irminsqids.SQIDManager) ([]irminmodels.Tag, error)
+    FormatTagsResponse creates a slice of tag response objects from database tag
+    objects.
+
+func FormatUserResponse(user *db.User, sqidManager *irminsqids.SQIDManager) (*irminmodels.User, error)
+    FormatUserResponse creates a role response object from a workspace role
+    object.
+
+func FormatWorkflowResponse(
+	d *db.Database,
+	workflow *db.Workflow,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Workflow, error)
+    FormatWorkflowResponse creates a workflow response object from a workflow
+    object.
+
+func FormatWorkflowRunResponse(
+	workflowRun *db.WorkflowRun,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.WorkflowRun, error)
+func FormatWorkflowableResponse(
+	d *db.Database,
+	workflow *db.Workflow,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Workflowable, error)
+    FormatWorkflowableResponse formats a workflowable object into an
+    irminmodels.Workflowable object. It returns an error if the workflowable is
+    not found or if type assertion fails.
+
+func FormatWorkspaceResponse(
+	workspace *db.Workspace,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.Workspace, error)
+func FormatWorkspaceUserResponse(
+	workspaceUser *db.WorkspaceUser,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.User, error)
+    FormatWorkspaceUserResponse creates a user response object from a workspace
+    user object.
+
+</pre>
+</body></html>

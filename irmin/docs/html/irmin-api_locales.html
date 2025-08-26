@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/locales</title></head><body>
+<h1>Package irmin-api/locales</h1>
+<pre>
+package locales // import "irmin-api/locales"
+
+
+TYPES
+
+type Dictionary map[string]string
+    Dictionary represents a map of translation keys to their localized strings.
+
+type LocaleManager struct {
+	// Has unexported fields.
+}
+    LocaleManager handles localization for the application.
+
+func New() (*LocaleManager, error)
+    New creates a new LocaleManager instance.
+
+func (lm *LocaleManager) GetDictionary(c fiber.Ctx) (Dictionary, string)
+    GetDictionary retrieves the appropriate dictionary and locale based on the
+    request's language header.
+
+func (lm *LocaleManager) T(dict Dictionary, key string) string
+    T returns the translation for a given key from the dictionary. It falls back
+    to English if the key is not found in the current dictionary.
+
+</pre>
+</body></html>

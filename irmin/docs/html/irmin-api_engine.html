@@ -1,0 +1,265 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/engine</title></head><body>
+<h1>Package irmin-api/engine</h1>
+<pre>
+package engine // import "irmin-api/engine"
+
+
+FUNCTIONS
+
+func IsSystemPath(path string) bool
+    IsSystemPath checks if the given path is a system path that should be
+    hidden.
+
+
+TYPES
+
+type BranchProtectionManager struct {
+	// Has unexported fields.
+}
+    BranchProtectionManager handles branch protection and renaming operations.
+
+func NewBranchProtectionManager(client *lakefs.Client) *BranchProtectionManager
+    NewBranchProtectionManager creates a new BranchProtectionManager.
+
+func (m *BranchProtectionManager) EnsureBranchProtection(repositoryName, branchName string, isImmutable bool) error
+    EnsureBranchProtection ensures a branch is protected if isImmutable is true.
+
+func (m *BranchProtectionManager) RenameBranch(
+	repositoryName, currentName, newName string,
+	isImmutable bool,
+	currentBranch *lakefs.Branch,
+) (*irminmodels.Branch, error)
+    RenameBranch handles the process of renaming a branch, including protection
+    rules management.
+
+func (m *BranchProtectionManager) UpdateBranchProtection(repositoryName, branchName string, isImmutable bool) error
+    UpdateBranchProtection updates protection rules for a branch.
+
+type Client struct {
+	Locale       string
+	LakeFSClient *lakefs.Client
+	Logger       *slog.Logger
+	Env          *utils.CoreAPIEnv
+	// Has unexported fields.
+}
+    Client represents the Irmin Data Engine API client.
+
+func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *utils.CoreAPIEnv) (*Client, error)
+    NewClient creates a new Irmin Data Engine API client with default settings.
+
+func (c *Client) ApplyFieldMappings(
+	duckDBClient *duckdb.QueryClient,
+	fileContent []byte,
+	originalFilePath string,
+	mappings []irminmodels.FieldMapping,
+) (map[string][]byte, error)
+    ApplyFieldMappings applies field mapping transformations to split file
+    content across multiple destinations. This function implements a "field
+    routing" approach where: - Fields with explicit mappings are routed to their
+    specified destinations - Unmapped fields are included in a "remainder" file
+    using the original path - Each destination gets only the fields explicitly
+    mapped to it
+
+    Parameters:
+      - duckDBClient: DuckDB client for executing queries
+      - fileContent: Raw file content to transform
+      - originalFilePath: Original file path (used for format detection and
+        naming)
+      - mappings: Field mapping rules (source -&gt; destination paths and column
+        names)
+
+    Returns a map of destination file paths to their transformed content,
+    or an error.
+
+func (c *Client) CommitChanges(
+	workspace, repository, branch, message, author string,
+	allowEmpty bool,
+) (*irminmodels.Commit, error)
+
+func (c *Client) CompareRefs(
+	ctx context.Context,
+	workspace, repository, baseRef, compareRef string,
+) (*irminmodels.Diff, error)
+
+func (c *Client) ConfigureRepositoryWebhookNotifications(
+	lakefsRepository *lakefs.Repository,
+) (*lakefs.ObjectMetadata, error)
+    ConfigureRepositoryWebhookNotifications configures the webhook notifications
+    for the main branch of a repository. This should be called once, right after
+    the repository is created.
+
+func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error)
+
+func (c *Client) CreateBranch(
+	workspace, repository, name, from string,
+	isImmutable bool,
+) (*irminmodels.Branch, error)
+
+func (c *Client) CreateRepository(
+	workspace, name, defaultBranch string,
+	isImmutable bool,
+	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
+) (*Repository, error)
+
+func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodels.GitTag, error)
+
+func (c *Client) DataExport(
+	connection *db.Connection,
+	connectionPath string,
+	workspaceSlug string,
+	repositorySlug string,
+	branch string,
+	requestedRepositoryPaths []string,
+	fieldMappings []irminmodels.FieldMapping,
+) ([]string, []error)
+    DataExport exports data from a lakeFS repository to an external connector.
+    It applies field mappings to route and transform data, merges files that map
+    to the same destination, and pushes the results to the connector. Returns
+    the paths of the files that were pushed and any errors that occurred.
+
+func (c *Client) DataImport(
+	connection *db.Connection,
+	connectionPaths []string,
+	workspace string,
+	repository string,
+	branch string,
+	repositoryPath string,
+	fieldMappings []irminmodels.FieldMapping,
+) ([]lakefs.ObjectMetadata, []error)
+    DataImport imports data from an external source into a lakeFS repository.
+    It applies field mappings to route and transform data, merges files that map
+    to the same destination, and uploads the results. Returns the metadata of
+    the uploaded objects and any errors that occurred.
+
+func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*irminmodels.ObjectSchema, error)
+    DataMovementSchema retrieves the schema for a specific method from the
+    connector. It returns the schema and an error if any occurred.
+
+func (c *Client) DeleteBranch(workspace, repository, branch string) error
+
+func (c *Client) DeleteObject(workspace, repository, path, ref string) error
+
+func (c *Client) DeleteRepository(ctx context.Context, workspace, repository string, keepObjects bool) error
+
+func (c *Client) DeleteTag(workspace, repository, tag string) error
+
+func (c *Client) ExecuteQuery(userWorkspace, query string) *irminmodels.QueryResult
+    ExecuteQuery executes a query in the specified workspace and returns the
+    results.
+
+func (c *Client) GenerateObjectSchema(workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error)
+
+func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminmodels.Branch, error)
+
+func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Commit, error)
+
+func (c *Client) GetObjectChanges(workspace, repository, path, ref string) ([]irminmodels.Commit, error)
+
+func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error)
+
+func (c *Client) GetPath(workspace, repository, path, ref string) (*irminmodels.Object, error)
+
+func (c *Client) GetRepository(ctx context.Context, workspace, repository string) (*Repository, error)
+
+func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag, error)
+
+func (c *Client) GetUncommittedChanges(
+	workspace, repository, branch string,
+) (*irminmodels.Diff, error)
+
+func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*irminconnectorclient.Client, func(), error)
+    InitializeConnectorOperation sets up a connector operation and returns
+    an operation client, along with a cancel function to clean up when done.
+    It returns an error if initialization fails.
+
+func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, error)
+
+func (c *Client) ListCommits(
+	workspace, repository, ref string,
+	after *string,
+	limit *int,
+) ([]irminmodels.Commit, *lakefs.Pagination, error)
+
+func (c *Client) ListRepositories(workspace string) ([]Repository, error)
+
+func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, error)
+
+func (c *Client) MergeRefs(
+	workspace, repository, baseRef, compareRef, message, author, strategy string,
+	squash, allowEmpty bool,
+) (*irminmodels.Commit, error)
+
+func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error)
+
+func (c *Client) PullFilesFromConnector(
+	connection *db.Connection,
+	connectionPaths []string,
+) (map[string][]byte, error)
+    PullFilesFromConnector pulls files from a connector, unzips them, and
+    returns a map of file paths to file contents. It returns a map of file paths
+    to file contents and an error if any occurred.
+
+func (c *Client) PushFilesToConnector(
+	connection *db.Connection,
+	connectionPath string,
+	objects []*irminmodels.Object,
+	files map[string][]byte,
+) ([]string, error)
+    PushFilesToConnector pushes files to a connector. It returns the paths of
+    the files that were pushed and an error if any occurred.
+
+func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error
+
+func (c *Client) UpdateBranch(
+	ctx context.Context,
+	workspace, repository, currentName, name string,
+	isImmutable bool,
+) (*irminmodels.Branch, error)
+
+func (c *Client) UpdateRepository(
+	workspace, repository string,
+	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
+) (*Repository, error)
+
+func (c *Client) UploadObject(workspace, repository, path, ref string, file io.Reader) (*irminmodels.Object, error)
+
+type FieldMappingResult struct {
+	Path    string `json:"path"`
+	Content []byte `json:"content"`
+}
+    FieldMappingResult represents the result of applying field mappings,
+    containing the destination file path and its transformed content.
+
+type Repository struct {
+	// Repository ID
+	ID string `json:"id"`
+	// Workspace the Repository belongs to
+	Workspace string `json:"workspace"`
+	// Storage path of the Repository
+	StorageNamespace string `json:"storage_namespace"`
+	// If the Repository is immutable, it cannot be changed or updated
+	IsImmutable bool `json:"is_immutable"`
+	// Default branch of the Repository
+	DefaultBranch string `json:"default_branch"`
+	// Timestamp of the creation of the Repository
+	CreatedAt string `json:"created_at"`
+	// Garbage collection rules for the Repository
+	GarbageCollectionRules *irminmodels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+}
+    Repository represents a returned by the data engine.
+
+type SchemaField struct {
+	Name     string        `json:"name"`
+	Type     string        `json:"type"`
+	Required bool          `json:"required"`
+	Children []SchemaField `json:"children,omitempty"`
+}
+    SchemaField represents one column or nested field in the DuckDB schema. Name
+    is the column name or nested field name. Type is the DuckDB data type (e.g.
+    "VARCHAR", "STRUCT", or "ARRAY&lt;STRUCT&gt;"). Required indicates whether the
+    field is non-nullable in DuckDB (is_nullable = 'NO'). Children holds nested
+    struct fields if this column is a STRUCT or array of STRUCTs.
+
+</pre>
+</body></html>

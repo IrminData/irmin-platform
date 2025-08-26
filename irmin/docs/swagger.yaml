@@ -380,6 +380,23 @@ definitions:
     required:
     - branch
     type: object
+  irmincore.ScriptGenerationRequest:
+    properties:
+      conversation_id:
+        description: Optional conversation ID to continue an existing conversation
+        type: string
+      metadata:
+        additionalProperties: {}
+        description: Optional metadata for the request
+        type: object
+      prompt:
+        description: Natural language prompt describing the desired script
+        maxLength: 1000
+        minLength: 1
+        type: string
+    required:
+    - prompt
+    type: object
   irmincore.SendInviteRequest:
     properties:
       email:
@@ -2705,23 +2722,11 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
-    - 1
-    - 1000
-    - 1000000
-    - 1000000000
-    - 60000000000
-    - 3600000000000
     format: int64
     type: integer
     x-enum-varnames:
     - minDuration
     - maxDuration
-    - Nanosecond
-    - Microsecond
-    - Millisecond
-    - Second
-    - Minute
-    - Hour
     - Nanosecond
     - Microsecond
     - Millisecond
@@ -4232,6 +4237,182 @@ paths:
       summary: Get query generation conversation details
       tags:
       - assistant-query
+  /workspaces/{workspace_slug}/assistant/script:
+    get:
+      consumes:
+      - application/json
+      description: Get all script generation conversations in the specified workspace
+        that the user has permission to read
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script generation conversations retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.AssistantConversation'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Workspace not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List script generation conversations
+      tags:
+      - assistant-script
+    post:
+      consumes:
+      - application/json
+      description: Generate a SQL script from natural language using the ScriptAI
+        assistant
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Script generation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.ScriptGenerationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script generated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.AssistantMessage'
+                  type: array
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Generate a SQL script from natural language
+      tags:
+      - assistant-script
+  /workspaces/{workspace_slug}/assistant/script/{conversation_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing script generation conversation from the workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script generation conversation deleted successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete script generation conversation
+      tags:
+      - assistant-script
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific script generation conversation by its
+        ID
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script generation conversation retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.AssistantConversation'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get script generation conversation details
+      tags:
+      - assistant-script
   /workspaces/{workspace_slug}/connections:
     get:
       consumes:

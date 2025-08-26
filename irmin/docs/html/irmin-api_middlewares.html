@@ -1,0 +1,166 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/middlewares</title></head><body>
+<h1>Package irmin-api/middlewares</h1>
+<pre>
+package middlewares // import "irmin-api/middlewares"
+
+
+TYPES
+
+type APIMiddlewares struct {
+	DB           *db.Database
+	Logger       *slog.Logger
+	Env          *utils.CoreAPIEnv
+	Orchestrator *orchestrator.Orchestrator
+	SQIDManager  *irminsqids.SQIDManager
+	Services     *services.APIServices
+
+	// Has unexported fields.
+}
+
+func NewAPIMiddlewares(
+	apiServices *services.APIServices,
+) *APIMiddlewares
+
+func (api *APIMiddlewares) AssistantConversationMiddleware(c fiber.Ctx) error
+    AssistantConversationMiddleware verifies that the user has access to the
+    assistant conversation they are trying to access.
+
+func (api *APIMiddlewares) AssistantPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    AssistantPermissionMiddleware creates a middleware for assistant-level
+    permissions.
+
+func (api *APIMiddlewares) AuditLogPermissionMiddleware() fiber.Handler
+    AuditLogPermissionMiddleware creates a middleware for audit log permissions.
+
+func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error
+    AuthMiddleware handles the user authentication for the API, tokens and user
+    details syncing with Clerk.
+
+func (api *APIMiddlewares) ConnectionMiddleware(c fiber.Ctx) error
+    ConnectionMiddleware verifies that the user has access to the connection
+    they are trying to access.
+
+func (api *APIMiddlewares) ConnectionPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    ConnectionPermissionMiddleware creates a middleware for connection-level
+    permissions.
+
+func (api *APIMiddlewares) ConnectorMiddleware(c fiber.Ctx) error
+    ConnectorMiddleware parses the connector SQID from the request URL and sets
+    the connector in the context.
+
+func (api *APIMiddlewares) DocumentationPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    DocumentationPermissionMiddleware creates a middleware for
+    documentation-level permissions.
+
+func (api *APIMiddlewares) EditorScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    EditorScriptPermissionMiddleware creates a middleware for editor
+    script-level permissions.
+
+func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error
+    InviteMiddleware parses the invite SQID from the request URL and sets the
+    invite in the context.
+
+func (api *APIMiddlewares) InvitePermissionMiddleware(action db.PolicyAction) fiber.Handler
+    InvitePermissionMiddleware creates a middleware for invite-level
+    permissions.
+
+func (api *APIMiddlewares) LocaleMiddleware(c fiber.Ctx) error
+    LocaleMiddleware sets the dictionary and locale for the request.
+
+func (api *APIMiddlewares) PolicyMiddleware(c fiber.Ctx) error
+    PolicyMiddleware verifies that the policy exists and belongs to the
+    workspace.
+
+func (api *APIMiddlewares) PolicyPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    PolicyPermissionMiddleware creates a middleware for policy-level
+    permissions.
+
+func (api *APIMiddlewares) QueryMiddleware(c fiber.Ctx) error
+    QueryMiddleware verifies that the user has access to the stored query they
+    are trying to access.
+
+func (api *APIMiddlewares) QueryPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    QueryPermissionMiddleware creates a middleware for query-level permissions.
+
+func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error
+    RepositoryBranchMiddleware parses the branch name from the request URL and
+    sets the branch in the context.
+
+func (api *APIMiddlewares) RepositoryBranchPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    RepositoryBranchPermissionMiddleware creates a middleware for branch-level
+    permissions.
+
+func (api *APIMiddlewares) RepositoryCommitPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    RepositoryCommitPermissionMiddleware creates a middleware for commit-level
+    permissions.
+
+func (api *APIMiddlewares) RepositoryMiddleware(c fiber.Ctx) error
+    RepositoryMiddleware parses the repository slug from the request URL and
+    sets the repository in the context.
+
+func (api *APIMiddlewares) RepositoryObjectMiddleware(c fiber.Ctx) error
+    RepositoryObjectMiddleware parses the query parameters and sets the object
+    in the context.
+
+func (api *APIMiddlewares) RepositoryObjectPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    RepositoryObjectPermissionMiddleware creates a middleware for object-level
+    permissions.
+
+func (api *APIMiddlewares) RepositoryPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    RepositoryPermissionMiddleware creates a middleware for repository-level
+    permissions.
+
+func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error
+    RepositoryTagMiddleware parses the tag name from the request URL and sets
+    the tag in the context.
+
+func (api *APIMiddlewares) RepositoryTagPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    RepositoryTagPermissionMiddleware creates a middleware for tag-level
+    permissions.
+
+func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error
+    UserMiddleware parses the user SQID from the request URL and sets the user
+    in the context.
+
+func (api *APIMiddlewares) UserPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    UserPermissionMiddleware creates a middleware for user-level permissions.
+
+func (api *APIMiddlewares) WorkflowMiddleware(c fiber.Ctx) error
+    WorkflowMiddleware verifies that the user has access to the workflow they
+    are trying to access.
+
+func (api *APIMiddlewares) WorkflowPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    WorkflowPermissionMiddleware creates a middleware for workflow-level
+    permissions.
+
+func (api *APIMiddlewares) WorkflowRunPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    WorkflowRunPermissionMiddleware creates a middleware for workflow run-level
+    permissions.
+
+func (api *APIMiddlewares) WorkspaceMiddleware(c fiber.Ctx) error
+    WorkspaceMiddleware verifies that the user has access to the workspace they
+    are trying to access.
+
+func (api *APIMiddlewares) WorkspacePermissionMiddleware(action db.PolicyAction) fiber.Handler
+    WorkspacePermissionMiddleware creates a middleware for workspace-level
+    permissions.
+
+func (api *APIMiddlewares) WorkspaceTagEntityPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    WorkspaceTagEntityPermissionMiddleware creates a middleware for workspace
+    tag entity-level permissions.
+
+func (api *APIMiddlewares) WorkspaceTagMiddleware(c fiber.Ctx) error
+    WorkspaceTagMiddleware verifies that the user has access to the tag they are
+    trying to access.
+
+func (api *APIMiddlewares) WorkspaceTagPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    WorkspaceTagPermissionMiddleware creates a middleware for workspace
+    tag-level permissions.
+
+type PermissionCheck func(c fiber.Ctx, user *db.User, workspace *db.Workspace, resourceID *uint) (bool, error)
+    PermissionCheck is a function type that checks if a user has permission to
+    perform an action.
+
+</pre>
+</body></html>

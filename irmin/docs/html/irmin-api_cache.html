@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/cache</title></head><body>
+<h1>Package irmin-api/cache</h1>
+<pre>
+package cache // import "irmin-api/cache"
+
+
+CONSTANTS
+
+const (
+	// DefaultExpiration is the default cache TTL for app-level caching.
+	DefaultExpiration = 5 * time.Minute
+)
+
+FUNCTIONS
+
+func BuildAllIndexKey(pathPrefix string) string
+func BuildIndexKey(authorization string, pathPrefix string) string
+func BuildKeyFromParts(path string, queryParams map[string]string, authorization string) string
+    BuildKeyFromParts builds a cache key compatible with the cache middleware
+    key generator using an explicit path, query parameters, and authorization
+    header value.
+
+func InvalidateKey(storage fiber.Storage, key string) error
+    InvalidateKey deletes a specific cache entry key from storage.
+
+func InvalidatePathForCurrentUser(
+	c fiber.Ctx,
+	storage fiber.Storage,
+	path string,
+	queryParams map[string]string,
+) error
+    InvalidatePathForCurrentUser computes the cache key for the given path and
+    query using the current request's Authorization header, and deletes it from
+    storage.
+
+func InvalidatePathPrefixForAllUsers(storage fiber.Storage, pathPrefix string) error
+    InvalidatePathPrefixForAllUsers invalidates all cached entries under the
+    given path prefix regardless of Authorization header.
+
+func InvalidatePathPrefixForCurrentUser(c fiber.Ctx, storage fiber.Storage, pathPrefix string) error
+    InvalidatePathPrefixForCurrentUser invalidates all cached entries under the
+    given path prefix for the current request's Authorization header, including
+    all subpaths and query variations.
+
+func InvalidatePathsForCurrentUser(c fiber.Ctx, storage fiber.Storage, paths []string) error
+    InvalidatePathsForCurrentUser invalidates multiple paths for the current
+    request's user. Returns the first error encountered, if any.
+
+func NewAppCacheMiddleware(storage fiber.Storage) fiber.Handler
+    NewAppCacheMiddleware returns the global cache middleware configured with
+    the provided storage.
+
+func NewDefaultStorage() fiber.Storage
+    NewDefaultStorage returns the default cache storage implementation.
+    Currently uses in-memory storage; can be swapped to Redis, Memcached, etc.
+
+func NewResponseCacheMiddleware(storage fiber.Storage, ttl time.Duration) fiber.Handler
+    NewResponseCacheMiddleware returns a route-level cache middleware with a
+    custom TTL.
+
+func PathPrefixes(path string) []string
+func TrackKeyForPath(storage fiber.Storage, authorization string, path string, key string)
+func TrackKeyForRequest(c fiber.Ctx, storage fiber.Storage, key string)
+    TrackKeyForRequest indexes a generated cache key by all path prefixes for
+    fast prefix invalidation later. Keys are indexed per-authorization to avoid
+    cross-tenant invalidations.
+
+func UpsertIndexEntry(storage fiber.Storage, indexKey string, key string)
+</pre>
+</body></html>
