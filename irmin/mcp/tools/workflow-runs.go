@@ -40,29 +40,29 @@ func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
 			Name:        "create_workflow_run",
 			Description: "Create a new workflow run for a given workflow, executing the workflow. The workflow will be executed in the background, with logs and status updates available in the workflow run.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createWorkflowRunArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createWorkflowRunArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workflow
-			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, params.Arguments.WorkflowID)
+			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Create the workflow run
 			workflowRun, err := mcpTools.apiServices.CreateWorkflowRun(ctx, user, workspace, workflow)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Format the workflow run for the response.
@@ -71,10 +71,14 @@ func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
 				mcpTools.apiServices.SQIDManager,
 			)
 			if formatErr != nil {
-				return nil, formatErr
+				return nil, struct{}{}, formatErr
 			}
 
-			return helpers.MCPSuccess(formattedRun)
+			result, err := helpers.MCPSuccess(formattedRun)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -87,23 +91,23 @@ func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 			Name:        "cancel_workflow_run",
 			Description: "Cancel an existing workflow run. The workflow run will be set to cancelled, and the workflow will stop executing.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[cancelWorkflowRunArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args cancelWorkflowRunArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workflow
-			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, params.Arguments.WorkflowID)
+			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Cancel the workflow run
@@ -112,10 +116,10 @@ func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 				user,
 				workspace,
 				workflow,
-				params.Arguments.RunID,
+				args.RunID,
 			)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Format the workflow run for the response.
@@ -124,10 +128,14 @@ func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 				mcpTools.apiServices.SQIDManager,
 			)
 			if formatErr != nil {
-				return nil, formatErr
+				return nil, struct{}{}, formatErr
 			}
 
-			return helpers.MCPSuccess(formattedRun)
+			result, err := helpers.MCPSuccess(formattedRun)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -140,23 +148,23 @@ func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
 			Name:        "list_workflow_runs",
 			Description: "List the workflow runs for a given workflow. Workflow runs are executions of a workflow that have been run, with statuses, timestamps, logs, and other metadata.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listWorkflowRunsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listWorkflowRunsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workflow
-			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, params.Arguments.WorkflowID)
+			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workflow runs for the workflow.
@@ -165,11 +173,11 @@ func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
 				user,
 				workspace,
 				workflow,
-				params.Arguments.PerPage,
-				params.Arguments.Page,
+				args.PerPage,
+				args.Page,
 			)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Format the workflow runs for the response.
@@ -179,15 +187,19 @@ func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
 				mcpTools.apiServices.SQIDManager,
 			)
 			if formatErr != nil {
-				return nil, formatErr
+				return nil, struct{}{}, formatErr
 			}
-			return helpers.MCPSuccess(map[string]any{
+			result, err := helpers.MCPSuccess(map[string]any{
 				"data":     formattedRuns,
 				"count":    count,
-				"per_page": params.Arguments.PerPage,
-				"page":     params.Arguments.Page,
+				"per_page": args.PerPage,
+				"page":     args.Page,
 				"total":    count,
 			})
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

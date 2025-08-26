@@ -28,7 +28,7 @@ func (api *APIControllers) WorkspaceSchemaIndex(c fiber.Ctx) error {
 	}
 
 	// Get the workspace schema
-	schema, err := api.Services.GetWorkspaceSchema(c, locale, user, workspace)
+	schema, err := api.Services.GetWorkspaceSchema(c, locale, user, workspace, true, true)
 	if err != nil {
 		api.Logger.Error("Error getting workspace schema", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

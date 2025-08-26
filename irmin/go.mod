@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.3
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250821202848-3fe5e5baa588
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250824100028-c08990413428
 	github.com/anthropics/anthropic-sdk-go v1.9.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.1
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
@@ -16,7 +16,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/marcboeker/go-duckdb v1.8.5
-	github.com/modelcontextprotocol/go-sdk v0.2.0
+	github.com/modelcontextprotocol/go-sdk v0.3.0
 	github.com/novuhq/novu-go v1.3.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/swaggo/swag v1.16.6
@@ -64,6 +64,7 @@ require (
 	github.com/gofiber/schema v1.6.0 // indirect
 	github.com/gofiber/utils/v2 v2.0.0-rc.1 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
+	github.com/google/jsonschema-go v0.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

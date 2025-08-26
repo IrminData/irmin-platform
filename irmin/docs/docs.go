@@ -2040,7 +2040,10 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/irminmodels.AssistantMessage"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.AssistantMessage"
+                                            }
                                         }
                                     }
                                 }
@@ -2119,6 +2122,287 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Conversation not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/assistant/query": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all query generation conversations in the specified workspace that the user has permission to read",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-query"
+                ],
+                "summary": "List query generation conversations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Query generation conversations retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.AssistantConversation"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Generate a SQL query from natural language using the QueryAI assistant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-query"
+                ],
+                "summary": "Generate a SQL query from natural language",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Query generation parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.QueryGenerationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Query generated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.AssistantMessage"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/assistant/query/{conversation_id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get details of a specific query generation conversation by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-query"
+                ],
+                "summary": "Get query generation conversation details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Conversation ID",
+                        "name": "conversation_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Query generation conversation retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.AssistantConversation"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Conversation not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete an existing query generation conversation from the workspace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "assistant-query"
+                ],
+                "summary": "Delete query generation conversation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Conversation ID",
+                        "name": "conversation_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Query generation conversation deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
                     },
                     "401": {
@@ -10868,6 +11152,37 @@ const docTemplate = `{
                 }
             }
         },
+        "irmincore.QueryGenerationRequest": {
+            "type": "object",
+            "required": [
+                "prompt"
+            ],
+            "properties": {
+                "conversation_id": {
+                    "description": "Optional conversation ID to continue an existing conversation",
+                    "type": "string"
+                },
+                "metadata": {
+                    "description": "Optional metadata for the request",
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "prompt": {
+                    "description": "Natural language prompt describing the desired query",
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 1
+                },
+                "repository_ref": {
+                    "description": "Optional repository reference (branch, tag, commit)",
+                    "type": "string"
+                },
+                "repository_slug": {
+                    "description": "Optional repository slug for repository-specific queries",
+                    "type": "string"
+                }
+            }
+        },
         "irmincore.RevertUncommittedChangesRequest": {
             "type": "object",
             "required": [
@@ -11451,8 +11766,19 @@ const docTemplate = `{
                 "ai_model": {
                     "type": "string"
                 },
+                "block_index": {
+                    "type": "integer"
+                },
                 "content": {
                     "type": "string"
+                },
+                "content_type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.AssistantMessageContentType"
+                        }
+                    ],
+                    "example": "text"
                 },
                 "conversation_id": {
                     "type": "string",
@@ -11500,9 +11826,36 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string",
-                    "example": "2025-12-01T14:22:30Z"
+                    "example": "2025-01-15T10:30:00Z"
                 }
             }
+        },
+        "irminmodels.AssistantMessageContentType": {
+            "type": "string",
+            "enum": [
+                "text",
+                "thinking",
+                "redacted_thinking",
+                "tool_use",
+                "server_tool_use",
+                "web_search_tool_result",
+                "code_execution_tool_result",
+                "mcp_tool_use",
+                "mcp_tool_result",
+                "container_upload"
+            ],
+            "x-enum-varnames": [
+                "AssistantMessageContentTypeText",
+                "AssistantMessageContentTypeThinking",
+                "AssistantMessageContentTypeRedactedThinking",
+                "AssistantMessageContentTypeToolUse",
+                "AssistantMessageContentTypeServerToolUse",
+                "AssistantMessageContentTypeWebSearchToolResult",
+                "AssistantMessageContentTypeCodeExecutionToolResult",
+                "AssistantMessageContentTypeMCPToolUse",
+                "AssistantMessageContentTypeMCPToolResult",
+                "AssistantMessageContentTypeContainerUpload"
+            ]
         },
         "irminmodels.AssistantMessageRole": {
             "type": "string",
@@ -13967,8 +14320,6 @@ const docTemplate = `{
                 1000000000,
                 60000000000,
                 3600000000000,
-                -9223372036854775808,
-                9223372036854775807,
                 1,
                 1000,
                 1000000,
@@ -13985,8 +14336,6 @@ const docTemplate = `{
                 "Second",
                 "Minute",
                 "Hour",
-                "minDuration",
-                "maxDuration",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",

@@ -43,12 +43,12 @@ func (mcpTools *MCPTools) registerListConnectorsTool() {
 			Name:        "list_connectors",
 			Description: "List connectors available to be used for data ingestion, export, and other operations.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.CallToolParamsFor[struct{}]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
 			// List the connectors
 			connectors, err := mcpTools.apiServices.ListConnectors(ctx)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list connectors", "error", err)
-				return helpers.MCPError("Failed to list connectors"), nil
+				return helpers.MCPError("Failed to list connectors"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
@@ -59,10 +59,14 @@ func (mcpTools *MCPTools) registerListConnectorsTool() {
 			)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format connectors", "error", ferr)
-				return nil, fmt.Errorf("failed to format connectors response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format connectors response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -75,23 +79,23 @@ func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool()
 			Name:        "show_required_connector_configuration_fields",
 			Description: "Show the required configuration fields for a connector. The values for these fields need to be supplied when creating a new connection, to authenticate and establish a connection with the external system.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[showRequiredConnectorConfigurationFieldsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args showRequiredConnectorConfigurationFieldsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Parse the connector ID from the SQID
-			connectorID, err := mcpTools.apiServices.SQIDManager.Decode("connectors", params.Arguments.ConnectorID)
+			connectorID, err := mcpTools.apiServices.SQIDManager.Decode("connectors", args.ConnectorID)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the connector
 			connector, err := mcpTools.apiServices.GetConnector(ctx, uint(connectorID))
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Validate the configuration type
-			if params.Arguments.ConfigurationType != configurationFieldsTypeDetails &&
-				params.Arguments.ConfigurationType != configurationFieldsTypeSettings {
-				return helpers.MCPError("Invalid configuration type"), nil
+			if args.ConfigurationType != configurationFieldsTypeDetails &&
+				args.ConfigurationType != configurationFieldsTypeSettings {
+				return helpers.MCPError("Invalid configuration type"), struct{}{}, nil
 			}
 
 			// Get the configuration fields
@@ -99,15 +103,19 @@ func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool()
 				ctx,
 				"en",
 				connector,
-				string(params.Arguments.ConfigurationType),
-				params.Arguments.CurrentConfiguration,
+				string(args.ConfigurationType),
+				args.CurrentConfiguration,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error fetching connection configuration fields", "error", err)
-				return helpers.MCPError("Error fetching connection configuration fields"), nil
+				return helpers.MCPError("Error fetching connection configuration fields"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(configurationFields)
+			result, err := helpers.MCPSuccess(configurationFields)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -120,17 +128,17 @@ func (mcpTools *MCPTools) registerValidateConnectorConfigurationTool() {
 			Name:        "validate_connector_configuration",
 			Description: "Validate the configuration of a connector. This is used to validate the configuration of a connector before creating a new connection.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[validateConnectorConfigurationArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args validateConnectorConfigurationArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Parse the connector ID from the SQID
-			connectorID, err := mcpTools.apiServices.SQIDManager.Decode("connectors", params.Arguments.ConnectorID)
+			connectorID, err := mcpTools.apiServices.SQIDManager.Decode("connectors", args.ConnectorID)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the connector
 			connector, err := mcpTools.apiServices.GetConnector(ctx, uint(connectorID))
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Validate the configuration
@@ -138,13 +146,17 @@ func (mcpTools *MCPTools) registerValidateConnectorConfigurationTool() {
 				ctx,
 				"en",
 				connector,
-				params.Arguments.Configuration,
+				args.Configuration,
 			)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
-			return helpers.MCPSuccess(validationResult)
+			result, err := helpers.MCPSuccess(validationResult)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

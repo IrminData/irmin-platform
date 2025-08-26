@@ -41,19 +41,19 @@ func (mcpTools *MCPTools) registerGetDocsTool() {
 			Name:        "get_docs",
 			Description: "Retrieve specific documentation content. Use 'list_docs' to see available documentation categories.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[GetDocsInput]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args GetDocsInput) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			_, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the category from parameters
-			category := DocsCategory(params.Arguments.Category)
+			category := DocsCategory(args.Category)
 			if category == "" {
 				return helpers.MCPError(
 					"Category parameter is required. Use 'list_docs' to see available categories.",
-				), nil
+				), struct{}{}, nil
 			}
 
 			// Validate the category parameter
@@ -78,7 +78,7 @@ func (mcpTools *MCPTools) registerGetDocsTool() {
 						"Unknown documentation category: %s. Use 'list_docs' to see available categories.",
 						category,
 					),
-				), nil
+				), struct{}{}, nil
 			}
 
 			// Return a text response with the resource URI information
@@ -86,7 +86,7 @@ func (mcpTools *MCPTools) registerGetDocsTool() {
 			resourceURI := fmt.Sprintf("irmin://docs/%s", category)
 			message := fmt.Sprintf("Documentation for %s is available at: %s", category, resourceURI)
 
-			return &sdkmcp.CallToolResultFor[struct{}]{
+			return &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{&sdkmcp.TextContent{
 					Text: message,
 					Meta: sdkmcp.Meta{
@@ -95,7 +95,7 @@ func (mcpTools *MCPTools) registerGetDocsTool() {
 						"category":     string(category),
 					},
 				}},
-			}, nil
+			}, struct{}{}, nil
 		},
 	)
 }
@@ -108,11 +108,11 @@ func (mcpTools *MCPTools) registerListDocsTool() {
 			Name:        "list_docs",
 			Description: "List available documentation categories and their descriptions.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.CallToolParamsFor[struct{}]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			_, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Define available documentation categories
@@ -183,7 +183,7 @@ func (mcpTools *MCPTools) registerListDocsTool() {
 				responseText.WriteString(fmt.Sprintf("  Use parameter: %s\n\n", cat["tool_parameter"]))
 			}
 
-			return &sdkmcp.CallToolResultFor[struct{}]{
+			return &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{&sdkmcp.TextContent{
 					Text: responseText.String(),
 					Meta: sdkmcp.Meta{
@@ -191,7 +191,7 @@ func (mcpTools *MCPTools) registerListDocsTool() {
 						"categories": categories,
 					},
 				}},
-			}, nil
+			}, struct{}{}, nil
 		},
 	)
 }

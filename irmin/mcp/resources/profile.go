@@ -17,7 +17,7 @@ func (mcpResources *MCPResources) RegisterProfile() {
 		Description: "User information of the authenticated user",
 		MIMEType:    "application/json",
 		URI:         "irmin://profile",
-	}, func(ctx context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(ctx context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		user, ok := mcpResources.getUser(ctx)
 		if !ok || user == nil || user.ID == 0 {
 			return nil, errors.New("unauthorized")

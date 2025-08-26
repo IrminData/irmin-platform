@@ -46,18 +46,18 @@ func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 			Name:        "compare_repository_refs",
 			Description: "Compare two references in a repository. References can be branches, tags or commit hashes.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[compareRepositoryRefsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args compareRepositoryRefsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -66,11 +66,11 @@ func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the diff between the refs
@@ -80,15 +80,19 @@ func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.BaseRef,
-				params.Arguments.CompareRef,
+				args.BaseRef,
+				args.CompareRef,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to compare repository refs", "error", err)
-				return helpers.MCPError("Failed to compare repository refs"), nil
+				return helpers.MCPError("Failed to compare repository refs"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(diff)
+			result, err := helpers.MCPSuccess(diff)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -101,18 +105,18 @@ func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
 			Name:        "merge_repository_refs",
 			Description: "Merge one reference into another in a repository. References can be branches, tags or commit hashes.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[mergeRepositoryRefsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args mergeRepositoryRefsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -121,17 +125,17 @@ func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Determine the strategy to use
 			strategy := mergeStrategyDefault
-			if params.Arguments.Strategy != "" {
-				strategy = params.Arguments.Strategy
+			if args.Strategy != "" {
+				strategy = args.Strategy
 			}
 
 			// Merge the refs
@@ -142,19 +146,23 @@ func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
 				workspace,
 				repository,
 				irmincore.MergeRefsRequest{
-					BaseRef:     params.Arguments.BaseRef,
-					CompareRef:  params.Arguments.CompareRef,
+					BaseRef:     args.BaseRef,
+					CompareRef:  args.CompareRef,
 					Strategy:    string(strategy),
-					Description: params.Arguments.Description,
+					Description: args.Description,
 					AllowEmpty:  false,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to merge repository refs", "error", err)
-				return helpers.MCPError("Failed to merge repository refs"), nil
+				return helpers.MCPError("Failed to merge repository refs"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(mergeCommit)
+			result, err := helpers.MCPSuccess(mergeCommit)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

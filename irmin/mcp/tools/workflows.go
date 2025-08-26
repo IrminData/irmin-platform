@@ -65,25 +65,25 @@ func (mcpTools *MCPTools) registerListWorkflowsTool() {
 			Name:        "list_workflows",
 			Description: "List workflows in a workspace. Workflows are used to orchestrate the execution of data ingestion, export, and other operations.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listWorkflowsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listWorkflowsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// List the workflows
 			workflows, err := mcpTools.apiServices.ListWorkflows(ctx, user, workspace, "")
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list workflows", "error", err)
-				return helpers.MCPError("Failed to list workflows"), nil
+				return helpers.MCPError("Failed to list workflows"), struct{}{}, nil
 			}
 
 			// Create a wrapper function that adapts FormatWorkflowResponse to the expected signature
@@ -99,10 +99,14 @@ func (mcpTools *MCPTools) registerListWorkflowsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting workflow response", "error", err)
-				return helpers.MCPError("Error formatting workflow response"), nil
+				return helpers.MCPError("Error formatting workflow response"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(workflowsResponse)
+			result, err := helpers.MCPSuccess(workflowsResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -117,25 +121,25 @@ func (mcpTools *MCPTools) registerGetWorkflowTool() {
 			Name:        "get_workflow",
 			Description: "Get a workflow by ID.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getWorkflowArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getWorkflowArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the workflow
-			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, params.Arguments.WorkflowID)
+			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workflow", "error", err)
-				return helpers.MCPError("Failed to get workflow"), nil
+				return helpers.MCPError("Failed to get workflow"), struct{}{}, nil
 			}
 
 			// Format the response using FormatWorkflowResponse
@@ -146,10 +150,14 @@ func (mcpTools *MCPTools) registerGetWorkflowTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting workflow response", "error", err)
-				return helpers.MCPError("Error formatting workflow response"), nil
+				return helpers.MCPError("Error formatting workflow response"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(workflowResponse)
+			result, err := helpers.MCPSuccess(workflowResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -164,25 +172,25 @@ func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 			Name:        "create_workflow",
 			Description: "Create a new workflow, with workflowable and schedule configuration. It's recommended to read the documentation for workflows first, use `list_docs` tool for more information.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createWorkflowArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createWorkflowArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Create the workflow
-			workflow, err := mcpTools.apiServices.CreateWorkflow(ctx, user, workspace, params.Arguments.Workflow)
+			workflow, err := mcpTools.apiServices.CreateWorkflow(ctx, user, workspace, args.Workflow)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to create workflow", "error", err)
-				return helpers.MCPError("Failed to create workflow"), nil
+				return helpers.MCPError("Failed to create workflow"), struct{}{}, nil
 			}
 
 			// Format the response using FormatWorkflowResponse
@@ -193,10 +201,14 @@ func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting workflow response", "error", err)
-				return helpers.MCPError("Error formatting workflow response"), nil
+				return helpers.MCPError("Error formatting workflow response"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(workflowResponse)
+			result, err := helpers.MCPSuccess(workflowResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -209,25 +221,25 @@ func (mcpTools *MCPTools) registerUpdateWorkflowTool() {
 			Name:        "update_workflow",
 			Description: "Update the basic workflow configuration, like name and description, but not the workflowable or schedule configuration.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[updateWorkflowArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateWorkflowArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the workflow
-			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, params.Arguments.WorkflowID)
+			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workflow", "error", err)
-				return helpers.MCPError("Failed to get workflow"), nil
+				return helpers.MCPError("Failed to get workflow"), struct{}{}, nil
 			}
 
 			// Update the workflow
@@ -237,14 +249,14 @@ func (mcpTools *MCPTools) registerUpdateWorkflowTool() {
 				workspace,
 				workflow,
 				irmincore.UpdateWorkflowRequest{
-					Name:          params.Arguments.Name,
-					Description:   params.Arguments.Description,
-					Documentation: params.Arguments.Documentation,
+					Name:          args.Name,
+					Description:   args.Description,
+					Documentation: args.Documentation,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to update workflow", "error", err)
-				return helpers.MCPError("Failed to update workflow"), nil
+				return helpers.MCPError("Failed to update workflow"), struct{}{}, nil
 			}
 
 			// Format the response using FormatWorkflowResponse
@@ -255,10 +267,14 @@ func (mcpTools *MCPTools) registerUpdateWorkflowTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting workflow response", "error", err)
-				return helpers.MCPError("Error formatting workflow response"), nil
+				return helpers.MCPError("Error formatting workflow response"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(workflowResponse)
+			result, err := helpers.MCPSuccess(workflowResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -271,25 +287,25 @@ func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
 			Name:        "update_workflowable_config",
 			Description: "Update the workflowable configuration of a workflow.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[updateWorkflowWorkflowableArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateWorkflowWorkflowableArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the workflow
-			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, params.Arguments.WorkflowID)
+			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workflow", "error", err)
-				return helpers.MCPError("Failed to get workflow"), nil
+				return helpers.MCPError("Failed to get workflow"), struct{}{}, nil
 			}
 
 			// Update the workflowable configuration
@@ -298,11 +314,11 @@ func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
 				user,
 				workspace,
 				workflow,
-				params.Arguments.Workflowable,
+				args.Workflowable,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to update workflowable configuration", "error", err)
-				return helpers.MCPError("Failed to update workflowable configuration"), nil
+				return helpers.MCPError("Failed to update workflowable configuration"), struct{}{}, nil
 			}
 
 			// Format the response using FormatWorkflowResponse
@@ -313,10 +329,14 @@ func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting workflow response", "error", err)
-				return helpers.MCPError("Error formatting workflow response"), nil
+				return helpers.MCPError("Error formatting workflow response"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(workflowResponse)
+			result, err := helpers.MCPSuccess(workflowResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -329,44 +349,44 @@ func (mcpTools *MCPTools) registerUpdateWorkflowScheduleTool() {
 			Name:        "update_workflow_schedule",
 			Description: "Update the schedule configuration of a workflow.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[updateWorkflowScheduleArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateWorkflowScheduleArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the workflow
-			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, params.Arguments.WorkflowID)
+			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workflow", "error", err)
-				return helpers.MCPError("Failed to get workflow"), nil
+				return helpers.MCPError("Failed to get workflow"), struct{}{}, nil
 			}
 
 			// Convert the schedule model to a database schedule
 			schedule, err := lib.ScheduleModelToDBSchedule(
-				&params.Arguments.Schedule,
+				&args.Schedule,
 				mcpTools.apiServices.DB,
 				*workspace,
 				mcpTools.apiServices.SQIDManager,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to convert schedule model to database schedule", "error", err)
-				return helpers.MCPError("Failed to convert schedule model to database schedule"), nil
+				return helpers.MCPError("Failed to convert schedule model to database schedule"), struct{}{}, nil
 			}
 
 			// Update the schedule configuration
 			workflow, err = mcpTools.apiServices.UpdateWorkflowSchedule(ctx, user, workspace, workflow, schedule)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to update schedule configuration", "error", err)
-				return helpers.MCPError("Failed to update schedule configuration"), nil
+				return helpers.MCPError("Failed to update schedule configuration"), struct{}{}, nil
 			}
 
 			// Format the response using FormatWorkflowResponse
@@ -377,10 +397,14 @@ func (mcpTools *MCPTools) registerUpdateWorkflowScheduleTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting workflow response", "error", err)
-				return helpers.MCPError("Error formatting workflow response"), nil
+				return helpers.MCPError("Error formatting workflow response"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(workflowResponse)
+			result, err := helpers.MCPSuccess(workflowResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

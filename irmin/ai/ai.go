@@ -118,15 +118,16 @@ func NewAIFromEnv(env *utils.CoreAPIEnv, userToken *string, logger *slog.Logger)
 }
 
 // SendMessage sends a message and returns the response
-func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, error) {
+// Returns the response, the system prompt used for the message, and an error if it occurs
+func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, string, error) {
 	if req == nil {
-		return nil, errors.New("message request cannot be nil")
+		return nil, "", errors.New("message request cannot be nil")
 	}
 
 	for attempt := range a.config.MaxRetries {
-		response, err := a.sendMessageInternal(ctx, req)
+		response, fullSystemPrompt, err := a.sendMessageInternal(ctx, req)
 		if err == nil {
-			return response, nil
+			return response, fullSystemPrompt, nil
 		}
 
 		// Check if it's an overloaded error and we haven't exceeded max retries
@@ -145,14 +146,14 @@ func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.B
 			"attempts", attempt+1,
 			"maxRetries", a.config.MaxRetries,
 			"finalError", err.Error())
-		return nil, err
+		return nil, "", err
 	}
 
-	return nil, errors.New("max retries exceeded")
+	return nil, "", errors.New("max retries exceeded")
 }
 
 // sendMessageInternal is the internal implementation without retry logic
-func (a *AI) sendMessageInternal(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, error) {
+func (a *AI) sendMessageInternal(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, string, error) {
 	messages := a.prepareMessages(req.Content, req.ConversationHistory)
 	params := a.prepareAPIParams(ctx, req, messages)
 
@@ -166,19 +167,26 @@ func (a *AI) sendMessageInternal(ctx context.Context, req *MessageRequest) (*ant
 		"conversationHistoryLength", len(req.ConversationHistory),
 		"contentLength", len(req.Content))
 
+	// Combine the system prompt in to a single string for storage
+	fullSystemPrompt := ""
+	for _, prompt := range params.System {
+		fullSystemPrompt += prompt.Text + "\n\n"
+	}
+
+	// Send the message to the Anthropic API
 	response, err := a.client.Beta.Messages.New(ctx, params)
 	if err != nil {
 		a.config.Logger.ErrorContext(ctx, "Failed to send message to Anthropic",
 			"error", err.Error(),
 			"model", params.Model)
-		return nil, fmt.Errorf("failed to send message: %w", err)
+		return nil, fullSystemPrompt, fmt.Errorf("failed to send message: %w", err)
 	}
 
 	a.config.Logger.DebugContext(ctx, "Successfully received response from Anthropic",
 		"model", params.Model,
 		"responseLength", len(response.Content))
 
-	return response, nil
+	return response, fullSystemPrompt, nil
 }
 
 // prepareMessages prepares messages for API call including conversation history
@@ -370,9 +378,9 @@ func (a *AI) configureMCPServers(req *MessageRequest) []anthropic.BetaRequestMCP
 		a.config.Logger.Debug("AI type does not require MCP access", "aiType", *req.AIType)
 		return []anthropic.BetaRequestMCPServerURLDefinitionParam{}
 	case QueryAI:
-		// Query AI only needs docs tools
-		a.config.Logger.Debug("Configuring MCP servers for QueryAI (docs-only)")
-		return a.createMCPServer([]string{"list_docs", "get_docs"})
+		// Query AI only needs docs tools and execute_sql
+		a.config.Logger.Debug("Configuring MCP servers for QueryAI (docs and execute_sql)")
+		return a.createMCPServer([]string{"list_docs", "get_docs", "execute_sql"})
 	case AssistantAI, ScriptingAI:
 		// Assistant AI and Scripting AI get full MCP access by default
 		a.config.Logger.Debug("Configuring MCP servers for AI type (full access)", "aiType", *req.AIType)
@@ -439,9 +447,9 @@ func (a *AI) getModel(model *anthropic.Model, aiType *IrminAIType) anthropic.Mod
 // getAITypeDefaultModel returns the default model for a specific AI type
 func (a *AI) getAITypeDefaultModel(aiType IrminAIType) anthropic.Model {
 	switch aiType {
-	case ModelRouterAI, ConversationTitleGenerator, QueryAI:
+	case ModelRouterAI, ConversationTitleGenerator:
 		return DefaultSmallModel
-	case AssistantAI, ScriptingAI:
+	case QueryAI, AssistantAI, ScriptingAI:
 		return DefaultMainModel
 	default:
 		return a.config.DefaultModel
@@ -649,7 +657,7 @@ func (a *AI) GenerateConversationTitle(ctx context.Context, firstMessage string)
 		AIType:    &[]IrminAIType{ConversationTitleGenerator}[0],
 	}
 
-	response, err := a.SendMessage(ctx, req)
+	response, _, err := a.SendMessage(ctx, req)
 	if err != nil {
 		a.config.Logger.ErrorContext(ctx, "Failed to generate conversation title",
 			"error", err.Error(),
@@ -701,7 +709,7 @@ func (a *AI) SelectModel(ctx context.Context, userPrompt string) (anthropic.Mode
 		AIType:    &[]IrminAIType{ModelRouterAI}[0],
 	}
 
-	response, err := a.SendMessage(ctx, req)
+	response, _, err := a.SendMessage(ctx, req)
 	if err != nil {
 		a.config.Logger.ErrorContext(ctx, "Model router failed to select model",
 			"error", err.Error(),

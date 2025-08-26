@@ -150,27 +150,61 @@ func (api *APIServices) GetWorkspaceSchema(
 	locale string,
 	user *db.User,
 	workspace *db.Workspace,
+	includeConnections bool,
+	includeRepositories bool,
 ) (*irminmodels.ObjectSchema, error) {
-	// Fetch connections and repositories concurrently
+	var connectionSchemas []irminmodels.ObjectSchema
+	var rootGroupSchemas []irminmodels.ObjectSchema
+
+	// Fetch connections and their schemas if requested
+	if includeConnections {
+		var err error
+		connectionSchemas, err = api.fetchConnectionSchemas(c, locale, user, workspace)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Fetch repositories and their schemas if requested
+	if includeRepositories {
+		var err error
+		rootGroupSchemas, err = api.fetchRepositorySchemas(c, locale, user, workspace)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Build children slice based on what's included
+	children := api.buildWorkspaceChildren(
+		workspace,
+		includeConnections,
+		includeRepositories,
+		connectionSchemas,
+		rootGroupSchemas,
+	)
+
+	return &irminmodels.ObjectSchema{
+		Name:     workspace.Slug,
+		Path:     workspace.Slug,
+		Type:     irminmodels.ObjectTypeGroup,
+		Children: children,
+	}, nil
+}
+
+func (api *APIServices) fetchConnectionSchemas(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]irminmodels.ObjectSchema, error) {
 	connectionsFuture := utils.AsyncWithContext(c, func() ([]db.Connection, error) {
 		return api.DB.GetConnectionsByWorkspaceID(workspace.ID)
 	})
 
-	repositoriesFuture := utils.AsyncWithContext(c, func() ([]db.Repository, error) {
-		return api.DB.GetRepositoriesInWorkspace(workspace.ID)
-	})
-
-	// Await both results
 	connections, connectionsAwaitErr := connectionsFuture.Await()
 	if connectionsAwaitErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching connections", "error", connectionsAwaitErr)
 		return nil, connectionsAwaitErr
-	}
-
-	repositories, repositoriesAwaitErr := repositoriesFuture.Await()
-	if repositoriesAwaitErr != nil {
-		api.Logger.ErrorContext(c, "Error fetching repositories", "error", repositoriesAwaitErr)
-		return nil, repositoriesAwaitErr
 	}
 
 	// Fetch connection schemas concurrently
@@ -179,20 +213,6 @@ func (api *APIServices) GetWorkspaceSchema(
 		conn := connection // Create a new variable to avoid closure issues
 		connectionSchemaFutures[i] = utils.AsyncWithContext(c, func() (*irminmodels.ObjectSchema, error) {
 			return api.GetConnectionSchema(c, locale, user, workspace, &conn, "pull")
-		})
-	}
-
-	// Fetch root group schemas concurrently
-	rootGroupSchemaFutures := make([]utils.FutureResult[*irminmodels.ObjectSchema], len(repositories))
-	for i, repository := range repositories {
-		repo := repository // Create a new variable to avoid closure issues
-		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c, func() (*irminmodels.ObjectSchema, error) {
-			return api.GetRepositoryObjectSchema(c, locale, user, workspace, &repo, &db.RepositoryObject{
-				Path:          "",
-				Name:          "",
-				RepositoryRef: repo.DefaultBranch,
-				Type:          irminmodels.ObjectTypeGroup,
-			}, repo.DefaultBranch)
 		})
 	}
 
@@ -209,6 +229,39 @@ func (api *APIServices) GetWorkspaceSchema(
 		connectionSchemas[i] = *schema
 	}
 
+	return connectionSchemas, nil
+}
+
+func (api *APIServices) fetchRepositorySchemas(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]irminmodels.ObjectSchema, error) {
+	repositoriesFuture := utils.AsyncWithContext(c, func() ([]db.Repository, error) {
+		return api.DB.GetRepositoriesInWorkspace(workspace.ID)
+	})
+
+	repositories, repositoriesAwaitErr := repositoriesFuture.Await()
+	if repositoriesAwaitErr != nil {
+		api.Logger.ErrorContext(c, "Error fetching repositories", "error", repositoriesAwaitErr)
+		return nil, repositoriesAwaitErr
+	}
+
+	// Fetch root group schemas concurrently
+	rootGroupSchemaFutures := make([]utils.FutureResult[*irminmodels.ObjectSchema], len(repositories))
+	for i, repository := range repositories {
+		repo := repository // Create a new variable to avoid closure issues
+		rootGroupSchemaFutures[i] = utils.AsyncWithContext(c, func() (*irminmodels.ObjectSchema, error) {
+			return api.GetRepositoryObjectSchema(c, locale, user, workspace, &repo, &db.RepositoryObject{
+				Path:          "",
+				Name:          "",
+				RepositoryRef: repo.DefaultBranch,
+				Type:          irminmodels.ObjectTypeGroup,
+			}, repo.DefaultBranch)
+		})
+	}
+
 	// Collect all root group schemas
 	rootGroupSchemas := make([]irminmodels.ObjectSchema, len(repositories))
 	for i, future := range rootGroupSchemaFutures {
@@ -222,23 +275,35 @@ func (api *APIServices) GetWorkspaceSchema(
 		rootGroupSchemas[i] = *schema
 	}
 
-	return &irminmodels.ObjectSchema{
-		Name: workspace.Slug,
-		Path: workspace.Slug,
-		Type: irminmodels.ObjectTypeGroup,
-		Children: []irminmodels.ObjectSchema{
-			{
-				Name:     "connections",
-				Path:     fmt.Sprintf("%s/connections", workspace.Slug),
-				Type:     irminmodels.ObjectTypeGroup,
-				Children: connectionSchemas,
-			},
-			{
-				Name:     "repositories",
-				Path:     fmt.Sprintf("%s/repositories", workspace.Slug),
-				Type:     irminmodels.ObjectTypeGroup,
-				Children: rootGroupSchemas,
-			},
-		},
-	}, nil
+	return rootGroupSchemas, nil
+}
+
+func (api *APIServices) buildWorkspaceChildren(
+	workspace *db.Workspace,
+	includeConnections bool,
+	includeRepositories bool,
+	connectionSchemas []irminmodels.ObjectSchema,
+	rootGroupSchemas []irminmodels.ObjectSchema,
+) []irminmodels.ObjectSchema {
+	var children []irminmodels.ObjectSchema
+
+	if includeConnections {
+		children = append(children, irminmodels.ObjectSchema{
+			Name:     "connections",
+			Path:     fmt.Sprintf("%s/connections", workspace.Slug),
+			Type:     irminmodels.ObjectTypeGroup,
+			Children: connectionSchemas,
+		})
+	}
+
+	if includeRepositories {
+		children = append(children, irminmodels.ObjectSchema{
+			Name:     "repositories",
+			Path:     fmt.Sprintf("%s/repositories", workspace.Slug),
+			Type:     irminmodels.ObjectTypeGroup,
+			Children: rootGroupSchemas,
+		})
+	}
+
+	return children
 }

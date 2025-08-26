@@ -65,25 +65,25 @@ func (mcpTools *MCPTools) registerListConnectionsTool() {
 			Name:        "list_connections",
 			Description: "List connections in a workspace. Connections store the configurations for the Connectors used to connect and interact with external services.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listConnectionsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listConnectionsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// List the connections
 			connections, err := mcpTools.apiServices.ListConnections(ctx, user, workspace)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list connections", "error", err)
-				return helpers.MCPError("Failed to list connections"), nil
+				return helpers.MCPError("Failed to list connections"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
@@ -94,10 +94,14 @@ func (mcpTools *MCPTools) registerListConnectionsTool() {
 			)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format connections", "error", ferr)
-				return nil, fmt.Errorf("failed to format connections response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format connections response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -107,35 +111,39 @@ func (mcpTools *MCPTools) registerGetConnectionTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{Name: "get_connection", Description: "Get a connection by ID"},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getConnectionArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getConnectionArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the connection
-			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, params.Arguments.ConnectionID)
+			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, args.ConnectionID)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get connection", "error", err)
-				return helpers.MCPError("Failed to get connection"), nil
+				return helpers.MCPError("Failed to get connection"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
 			formatted, ferr := formatter.FormatConnectionResponse(connection, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format connection response", "error", ferr)
-				return nil, fmt.Errorf("failed to format connection response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format connection response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -148,18 +156,18 @@ func (mcpTools *MCPTools) registerCreateConnectionTool() {
 			Name:        "create_connection",
 			Description: "Create a new connection in a workspace. In order to create a connection, you need to provide the connector_id and the values for the configuration fields for the connector. The configuration fields are returned by the show_required_connector_configuration_fields tool. Always validate the connection configuration with the connector before creating a new connection or updating the configuration of an existing one. Use the `validate_connector_configuration` tool.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createConnectionArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createConnectionArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Create the connection
@@ -168,27 +176,31 @@ func (mcpTools *MCPTools) registerCreateConnectionTool() {
 				user,
 				workspace,
 				irmincore.CreateConnectionRequest{
-					Name:          params.Arguments.Name,
-					Connector:     params.Arguments.Connector,
-					Description:   params.Arguments.Description,
-					Documentation: params.Arguments.Documentation,
-					Details:       params.Arguments.Details,
-					Settings:      params.Arguments.Settings,
+					Name:          args.Name,
+					Connector:     args.Connector,
+					Description:   args.Description,
+					Documentation: args.Documentation,
+					Details:       args.Details,
+					Settings:      args.Settings,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to create connection", "error", err)
-				return helpers.MCPError("Failed to create connection"), nil
+				return helpers.MCPError("Failed to create connection"), struct{}{}, nil
 			}
 
 			// Format the connection for the response
 			formatted, ferr := formatter.FormatConnectionResponse(connection, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format connection", "error", ferr)
-				return nil, fmt.Errorf("failed to format connection response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format connection response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -201,25 +213,25 @@ func (mcpTools *MCPTools) registerUpdateConnectionTool() {
 			Name:        "update_connection",
 			Description: "Update a connection in a workspace. This will update the connection and all associated data.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[updateConnectionArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateConnectionArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the connection
-			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, params.Arguments.ConnectionID)
+			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, args.ConnectionID)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get connection", "error", err)
-				return helpers.MCPError("Failed to get connection"), nil
+				return helpers.MCPError("Failed to get connection"), struct{}{}, nil
 			}
 
 			// Update the connection
@@ -229,27 +241,31 @@ func (mcpTools *MCPTools) registerUpdateConnectionTool() {
 				workspace,
 				connection,
 				irmincore.UpdateConnectionRequest{
-					Name:          params.Arguments.Name,
-					Connector:     params.Arguments.Connector,
-					Description:   params.Arguments.Description,
-					Documentation: params.Arguments.Documentation,
-					Details:       params.Arguments.Details,
-					Settings:      params.Arguments.Settings,
+					Name:          args.Name,
+					Connector:     args.Connector,
+					Description:   args.Description,
+					Documentation: args.Documentation,
+					Details:       args.Details,
+					Settings:      args.Settings,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to update connection", "error", err)
-				return helpers.MCPError("Failed to update connection"), nil
+				return helpers.MCPError("Failed to update connection"), struct{}{}, nil
 			}
 
 			// Format the connection for the response
 			formatted, ferr := formatter.FormatConnectionResponse(connection, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format connection", "error", ferr)
-				return nil, fmt.Errorf("failed to format connection response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format connection response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -259,25 +275,25 @@ func (mcpTools *MCPTools) registerConnectionSchemaTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{Name: "get_connection_schema", Description: "Get the schema of a connection"},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[connectionSchemaArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args connectionSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the connection
-			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, params.Arguments.ConnectionID)
+			connection, err := mcpTools.apiServices.GetConnection(ctx, user, workspace, args.ConnectionID)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get connection", "error", err)
-				return helpers.MCPError("Failed to get connection"), nil
+				return helpers.MCPError("Failed to get connection"), struct{}{}, nil
 			}
 
 			// Get the schema of the connection
@@ -287,15 +303,19 @@ func (mcpTools *MCPTools) registerConnectionSchemaTool() {
 				user,
 				workspace,
 				connection,
-				params.Arguments.OperationMethod,
+				args.OperationMethod,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get connection schema", "error", err)
-				return helpers.MCPError("Failed to get connection schema"), nil
+				return helpers.MCPError("Failed to get connection schema"), struct{}{}, nil
 			}
 
 			// Return the schema
-			return helpers.MCPSuccess(schema)
+			result, err := helpers.MCPSuccess(schema)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

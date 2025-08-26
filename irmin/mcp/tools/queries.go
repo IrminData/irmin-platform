@@ -17,18 +17,18 @@ type listQueriesArgs struct {
 
 type createQueryArgs struct {
 	WorkspaceSlug string                       `json:"workspace_slug" jsonschema:"required,The slug of the workspace to create the query in"`
-	Query         irmincore.CreateQueryRequest `json:"query"          jsonschema:"required,Query creation parameters"`
+	Request       irmincore.CreateQueryRequest `json:"request"        jsonschema:"required,Query creation parameters"`
 }
 
 type updateQueryArgs struct {
 	WorkspaceSlug string                       `json:"workspace_slug" jsonschema:"required,The slug of the workspace"`
 	QueryID       string                       `json:"query_id"       jsonschema:"required,The ID (SQID) of the query to update"`
-	Query         irmincore.UpdateQueryRequest `json:"query"          jsonschema:"required,Query update parameters"`
+	Request       irmincore.UpdateQueryRequest `json:"request"        jsonschema:"required,Query update parameters"`
 }
 
 type executeSQLArgs struct {
-	WorkspaceSlug string                      `json:"workspace_slug" jsonschema:"required,The slug of the workspace to execute SQL in"`
-	SQL           irmincore.ExecuteSQLRequest `json:"sql"            jsonschema:"required,SQL query to execute"`
+	WorkspaceSlug string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to execute SQL in"`
+	SQL           string `json:"sql"            jsonschema:"required,The SQL query to execute"`
 }
 
 type executeQueryArgs struct {
@@ -52,24 +52,24 @@ func (mcpTools *MCPTools) registerListQueriesTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{Name: "list_stored_queries", Description: "List stored queries in a workspace"},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listQueriesArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listQueriesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// List the queries
 			queries, err := mcpTools.apiServices.ListWorkspaceQueries(ctx, user, workspace)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list queries", "error", err)
-				return helpers.MCPError("Failed to list queries"), nil
+				return helpers.MCPError("Failed to list queries"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
@@ -80,10 +80,14 @@ func (mcpTools *MCPTools) registerListQueriesTool() {
 			)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format queries", "error", ferr)
-				return nil, fmt.Errorf("failed to format queries response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format queries response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -96,18 +100,18 @@ func (mcpTools *MCPTools) registerCreateQueryTool() {
 			Name:        "create_query",
 			Description: "Create a new stored query in a workspace. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createQueryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Create the query
@@ -115,21 +119,25 @@ func (mcpTools *MCPTools) registerCreateQueryTool() {
 				ctx,
 				user,
 				workspace,
-				params.Arguments.Query,
+				args.Request,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("query creation failed", "error", err)
-				return helpers.MCPError("Query creation failed"), nil
+				return helpers.MCPError("Query creation failed"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
 			formatted, ferr := formatter.FormatStoredQueryResponse(query, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format query", "error", ferr)
-				return nil, fmt.Errorf("failed to format query response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format query response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -142,17 +150,17 @@ func (mcpTools *MCPTools) registerUpdateQueryTool() {
 			Name:        "update_query",
 			Description: "Update an existing stored query. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[updateQueryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
 			if !ok || user == nil || user.ID == 0 {
-				return helpers.MCPError("Unauthorized"), nil
+				return helpers.MCPError("Unauthorized"), struct{}{}, nil
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the query by SQID
@@ -160,11 +168,11 @@ func (mcpTools *MCPTools) registerUpdateQueryTool() {
 				ctx,
 				user,
 				workspace,
-				params.Arguments.QueryID,
+				args.QueryID,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get query", "error", err)
-				return helpers.MCPError("Failed to get query"), nil
+				return helpers.MCPError("Failed to get query"), struct{}{}, nil
 			}
 
 			// Update the query
@@ -173,21 +181,25 @@ func (mcpTools *MCPTools) registerUpdateQueryTool() {
 				user,
 				workspace,
 				query,
-				params.Arguments.Query,
+				args.Request,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("query update failed", "error", err)
-				return helpers.MCPError("Query update failed"), nil
+				return helpers.MCPError("Query update failed"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
 			formatted, ferr := formatter.FormatStoredQueryResponse(updatedQuery, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format query", "error", ferr)
-				return nil, fmt.Errorf("failed to format query response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format query response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -200,33 +212,39 @@ func (mcpTools *MCPTools) registerExecuteSQLTool() {
 			Name:        "execute_sql",
 			Description: "Execute an arbitrary SQL query on the workspace data. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[executeSQLArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args executeSQLArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
 			if !ok || user == nil || user.ID == 0 {
-				return helpers.MCPError("Unauthorized"), nil
+				return helpers.MCPError("Unauthorized"), struct{}{}, nil
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Execute the SQL
-			result, err := mcpTools.apiServices.ExecuteSQL(
+			sqlResult, err := mcpTools.apiServices.ExecuteSQL(
 				ctx,
 				"en",
 				user,
 				workspace,
-				params.Arguments.SQL,
+				irmincore.ExecuteSQLRequest{
+					SQL: args.SQL,
+				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("SQL execution failed", "error", err)
-				return helpers.MCPError("SQL execution failed"), nil
+				return helpers.MCPError("SQL execution failed"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(result)
+			result, err := helpers.MCPSuccess(sqlResult)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -236,17 +254,17 @@ func (mcpTools *MCPTools) registerExecuteQueryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{Name: "execute_query", Description: "Execute a stored query and return the results"},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[executeQueryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args executeQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
 			if !ok || user == nil || user.ID == 0 {
-				return helpers.MCPError("Unauthorized"), nil
+				return helpers.MCPError("Unauthorized"), struct{}{}, nil
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the query by SQID
@@ -254,15 +272,15 @@ func (mcpTools *MCPTools) registerExecuteQueryTool() {
 				ctx,
 				user,
 				workspace,
-				params.Arguments.QueryID,
+				args.QueryID,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get query", "error", err)
-				return helpers.MCPError("Failed to get query"), nil
+				return helpers.MCPError("Failed to get query"), struct{}{}, nil
 			}
 
 			// Execute the SQL from the stored query
-			result, err := mcpTools.apiServices.ExecuteSQL(
+			queryResult, err := mcpTools.apiServices.ExecuteSQL(
 				ctx,
 				"en",
 				user,
@@ -273,10 +291,14 @@ func (mcpTools *MCPTools) registerExecuteQueryTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("stored query execution failed", "error", err)
-				return helpers.MCPError("Stored query execution failed"), nil
+				return helpers.MCPError("Stored query execution failed"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(result)
+			result, err := helpers.MCPSuccess(queryResult)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

@@ -145,6 +145,32 @@ func RegisterAPIRoutes(
 		apiControllers.AssistantMessagesStore,
 	)
 
+	// Assistant Query Generation routes
+	workspace.Get(
+		"/assistant/query",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.QueryGenerationIndex,
+	)
+	workspace.Post(
+		"/assistant/query",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.QueryGenerationStore,
+	)
+	assistantQueryConversation := workspace.Group(
+		"/assistant/query/:assistant_conversation",
+		apiMiddlewares.AssistantConversationMiddleware,
+	)
+	assistantQueryConversation.Get(
+		"/",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.QueryGenerationShow,
+	)
+	assistantQueryConversation.Delete(
+		"/",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.QueryGenerationDestroy,
+	)
+
 	// Policy routes
 	workspace.Get(
 		"/policies",

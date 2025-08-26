@@ -45,18 +45,18 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 			Name:        "list_repository_commits",
 			Description: "List commits in a repository branch. Commits are used to store the different versions of the data in the repository.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listRepositoryCommitsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryCommitsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -65,11 +65,11 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the commits using the service
@@ -79,31 +79,39 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.BranchName,
-				&params.Arguments.After,
-				&params.Arguments.PerPage,
+				args.BranchName,
+				&args.After,
+				&args.PerPage,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list repository commits", "error", err)
-				return helpers.MCPError("Failed to list repository commits"), nil
+				return helpers.MCPError("Failed to list repository commits"), struct{}{}, nil
 			}
 
 			// Build the pagination response
 			if lakefsPagination != nil {
-				return helpers.MCPSuccess(irminmodels.IrminAPIResponse{
+				response, responseErr := helpers.MCPSuccess(irminmodels.IrminAPIResponse{
 					Pagination: &irminmodels.IrminAPIPaginationMetadata{
 						Total:   &lakefsPagination.Results,
-						PerPage: &params.Arguments.PerPage,
+						PerPage: &args.PerPage,
 						HasMore: &lakefsPagination.HasMore,
 						Next:    &lakefsPagination.NextOffset,
 					},
 					Data: filteredCommits,
 				})
+				if responseErr != nil {
+					return nil, struct{}{}, responseErr
+				}
+				return response, struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(irminmodels.IrminAPIResponse{
+			result, err := helpers.MCPSuccess(irminmodels.IrminAPIResponse{
 				Data: filteredCommits,
 			})
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -118,18 +126,18 @@ func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 			Name:        "create_repository_commit",
 			Description: "Create a new commit in a repository branch, committing all the uncommitted changes in the branch, permamently saving them in the version history.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createRepositoryCommitArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryCommitArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -138,11 +146,11 @@ func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Create the commit using the service
@@ -153,16 +161,20 @@ func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 				workspace,
 				repository,
 				irmincore.CreateCommitRequest{
-					Message: params.Arguments.Message,
-					Branch:  params.Arguments.BranchName,
+					Message: args.Message,
+					Branch:  args.BranchName,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to create repository commit", "error", err)
-				return helpers.MCPError("Failed to create repository commit"), nil
+				return helpers.MCPError("Failed to create repository commit"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(commit)
+			result, err := helpers.MCPSuccess(commit)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -175,18 +187,18 @@ func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
 			Name:        "revert_repository_uncommitted_changes",
 			Description: "Revert the uncommitted changes in a repository branch, restoring the branch to the previous commit.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[revertRepositoryUncommittedChangesArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args revertRepositoryUncommittedChangesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -195,11 +207,11 @@ func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Revert the uncommitted changes using the service
@@ -210,17 +222,21 @@ func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
 				workspace,
 				repository,
 				irmincore.RevertUncommittedChangesRequest{
-					Branch: params.Arguments.BranchName,
+					Branch: args.BranchName,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to revert repository uncommitted changes", "error", err)
-				return helpers.MCPError("Failed to revert repository uncommitted changes"), nil
+				return helpers.MCPError("Failed to revert repository uncommitted changes"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(map[string]string{
+			result, err := helpers.MCPSuccess(map[string]string{
 				"message": "Changes reverted to the previous commit",
 			})
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

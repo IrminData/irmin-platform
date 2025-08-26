@@ -18,12 +18,13 @@ const (
 func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServices) (*mcp.ClientSession, error) {
 	mcpURL := fmt.Sprintf("%s%s", apiServices.Env.URL, apiServices.Env.MCPHTTPPath)
 	client := mcp.NewClient(&mcp.Implementation{Name: "irmin-mcp-client", Version: "v1.0.0"}, &mcp.ClientOptions{})
-	streamableClientTransport := mcp.NewStreamableClientTransport(mcpURL, &mcp.StreamableClientTransportOptions{
+	streamableClientTransport := &mcp.StreamableClientTransport{
+		Endpoint: mcpURL,
 		HTTPClient: &http.Client{
 			Timeout: HTTPClientTimeout,
 		},
-	})
-	cs, err := client.Connect(ctx, streamableClientTransport)
+	}
+	cs, err := client.Connect(ctx, streamableClientTransport, &mcp.ClientSessionOptions{})
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MCP client: %w", err)

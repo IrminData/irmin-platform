@@ -50,18 +50,18 @@ func (mcpTools *MCPTools) registerListRepositoryBranchesTool() {
 			Name:        "list_repository_branches",
 			Description: "List branches in a repository. Branches are used to store the different versions of the data in the repository.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listRepositoryBranchesArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryBranchesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -70,21 +70,25 @@ func (mcpTools *MCPTools) registerListRepositoryBranchesTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// List the branches in the repository
 			branches, err := mcpTools.apiServices.ListRepositoryBranches(ctx, "en", user, workspace, repository)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error listing repository branches", "error", err)
-				return helpers.MCPError("Error listing repository branches"), nil
+				return helpers.MCPError("Error listing repository branches"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(branches)
+			result, err := helpers.MCPSuccess(branches)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -97,18 +101,18 @@ func (mcpTools *MCPTools) registerCreateRepositoryBranchTool() {
 			Name:        "create_repository_branch",
 			Description: "Create a new branch in a repository. Branches are used to store the different versions of the data in the repository.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createRepositoryBranchArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryBranchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -117,11 +121,11 @@ func (mcpTools *MCPTools) registerCreateRepositoryBranchTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Create the branch
@@ -132,17 +136,21 @@ func (mcpTools *MCPTools) registerCreateRepositoryBranchTool() {
 				workspace,
 				repository,
 				irmincore.CreateBranchRequest{
-					Name:        params.Arguments.BranchName,
-					From:        params.Arguments.CreateFromBranch,
+					Name:        args.BranchName,
+					From:        args.CreateFromBranch,
 					IsImmutable: false,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to create repository branch", "error", err)
-				return helpers.MCPError("Failed to create repository branch"), nil
+				return helpers.MCPError("Failed to create repository branch"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(branch)
+			result, err := helpers.MCPSuccess(branch)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -155,18 +163,18 @@ func (mcpTools *MCPTools) registerDeleteRepositoryBranchTool() {
 			Name:        "delete_repository_branch",
 			Description: "Delete a branch in a repository. Branches are used to store the different versions of the data in the repository.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[deleteRepositoryBranchArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args deleteRepositoryBranchArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -175,11 +183,11 @@ func (mcpTools *MCPTools) registerDeleteRepositoryBranchTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the branch
@@ -189,21 +197,25 @@ func (mcpTools *MCPTools) registerDeleteRepositoryBranchTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.BranchName,
+				args.BranchName,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository branch", "error", err)
-				return helpers.MCPError("Failed to get repository branch"), nil
+				return helpers.MCPError("Failed to get repository branch"), struct{}{}, nil
 			}
 
 			// Delete the branch
 			err = mcpTools.apiServices.DeleteRepositoryBranch(ctx, "en", user, workspace, repository, branch)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to delete repository branch", "error", err)
-				return helpers.MCPError("Failed to delete repository branch"), nil
+				return helpers.MCPError("Failed to delete repository branch"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(nil)
+			result, err := helpers.MCPSuccess(nil)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -216,18 +228,18 @@ func (mcpTools *MCPTools) registerGetRepositoryUncommittedChangesTool() {
 			Name:        "get_repository_uncommitted_changes",
 			Description: "Get the uncommitted changes in a branch in a repository. Branches are used to store the different versions of the data in the repository.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getRepositoryUncommittedChangesArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryUncommittedChangesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -236,11 +248,11 @@ func (mcpTools *MCPTools) registerGetRepositoryUncommittedChangesTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the branch
@@ -250,11 +262,11 @@ func (mcpTools *MCPTools) registerGetRepositoryUncommittedChangesTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.BranchName,
+				args.BranchName,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository branch", "error", err)
-				return helpers.MCPError("Failed to get repository branch"), nil
+				return helpers.MCPError("Failed to get repository branch"), struct{}{}, nil
 			}
 
 			// Get the uncommitted changes
@@ -268,10 +280,14 @@ func (mcpTools *MCPTools) registerGetRepositoryUncommittedChangesTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository uncommitted changes", "error", err)
-				return helpers.MCPError("Failed to get repository uncommitted changes"), nil
+				return helpers.MCPError("Failed to get repository uncommitted changes"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(diff)
+			result, err := helpers.MCPSuccess(diff)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

@@ -62,6 +62,9 @@ type AssistantMessage struct {
 	// Message content
 	Content string `gorm:"type:text;not null" json:"content"`
 
+	// System prompt used for this message (user message only)
+	SystemPrompt *string `gorm:"type:text" json:"system_prompt"`
+
 	// Content type (text, image, tool_call, etc.)
 	ContentType irminmodels.AssistantMessageContentType `gorm:"type:varchar(50);not null;default:'text'" json:"content_type"`
 
@@ -117,22 +120,18 @@ func (d *Database) GetAssistantConversationWithMessages(conversationID uint) (*A
 	return &conversation, nil
 }
 
-// GetAssistantConversationsByWorkspace retrieves all conversations in a workspace
-func (d *Database) GetAssistantConversationsByWorkspace(workspaceID uint) ([]AssistantConversation, error) {
-	var conversations []AssistantConversation
-	if err := d.Preload("User").
-		Where(&AssistantConversation{WorkspaceID: workspaceID}).
-		Order("last_message_at DESC NULLS LAST, created_at DESC").
-		Find(&conversations).Error; err != nil {
-		return nil, err
-	}
-	return conversations, nil
-}
-
 // GetAssistantConversationsByUser retrieves all conversations for a specific user in a workspace
-func (d *Database) GetAssistantConversationsByUser(workspaceID, userID uint) ([]AssistantConversation, error) {
+func (d *Database) GetAssistantConversationsByUser(
+	workspaceID uint,
+	userID uint,
+	includeHidden bool,
+) ([]AssistantConversation, error) {
 	var conversations []AssistantConversation
-	if err := d.Where(&AssistantConversation{WorkspaceID: workspaceID, UserID: userID}).
+	query := d.Where(&AssistantConversation{WorkspaceID: workspaceID, UserID: userID})
+	if !includeHidden {
+		query = query.Where("hidden = ?", false)
+	}
+	if err := query.
 		Order("last_message_at DESC NULLS LAST, created_at DESC").
 		Find(&conversations).Error; err != nil {
 		return nil, err

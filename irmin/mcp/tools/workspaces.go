@@ -25,18 +25,18 @@ func (mcpTools *MCPTools) registerListWorkspacesTool() {
 			Name:        "list_workspaces",
 			Description: "List workspaces accessible to the current user. Most tool calls require a workspace to be specified.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.CallToolParamsFor[struct{}]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// List the workspaces
 			workspaces, err := mcpTools.apiServices.ListWorkspaces(user)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list workspaces", "error", err)
-				return helpers.MCPError("Failed to list workspaces"), nil
+				return helpers.MCPError("Failed to list workspaces"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
@@ -47,10 +47,14 @@ func (mcpTools *MCPTools) registerListWorkspacesTool() {
 			)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format workspaces", "error", ferr)
-				return nil, fmt.Errorf("failed to format workspaces response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format workspaces response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -60,31 +64,35 @@ func (mcpTools *MCPTools) registerCreateWorkspaceTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{Name: "create_workspace", Description: "Create a new workspace for the current user"},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[irmincore.CreateWorkspaceRequest]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args irmincore.CreateWorkspaceRequest) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Use the request directly (validation will be handled by the service)
-			req := params.Arguments
+			req := args
 
 			// Use the service to create the workspace
 			newWorkspace, err := mcpTools.apiServices.CreateWorkspace(ctx, user, req)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("workspace creation failed", "error", err)
-				return helpers.MCPError("Workspace creation failed"), nil
+				return helpers.MCPError("Workspace creation failed"), struct{}{}, nil
 			}
 
 			// Format the response using the same formatter as the API
 			formatted, ferr := formatter.FormatWorkspaceResponse(newWorkspace, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format workspace", "error", ferr)
-				return nil, fmt.Errorf("failed to format workspace response: %w", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format workspace response: %w", ferr)
 			}
 
-			return helpers.MCPSuccess(formatted)
+			result, err := helpers.MCPSuccess(formatted)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

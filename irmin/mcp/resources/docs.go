@@ -25,7 +25,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "Static documentation resources for Irmin",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		// Return the main README.md content
 		content, err := docsFS.ReadFile("docs/README.md")
 		if err != nil {
@@ -45,7 +45,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "SQL and querying documentation for Irmin",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs/sql",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		content, err := docsFS.ReadFile("docs/sql.md")
 		if err != nil {
 			return nil, fmt.Errorf("failed to read SQL docs: %w", err)
@@ -64,7 +64,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "Scripting and automation documentation for Irmin",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs/scripting",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		content, err := docsFS.ReadFile("docs/scripting.md")
 		if err != nil {
 			return nil, fmt.Errorf("failed to read scripting docs: %w", err)
@@ -83,7 +83,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "Core concepts and architecture documentation for Irmin",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs/concepts",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		content, err := docsFS.ReadFile("docs/concepts.md")
 		if err != nil {
 			return nil, fmt.Errorf("failed to read concepts docs: %w", err)
@@ -102,7 +102,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "Data source connections and connector documentation for Irmin",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs/connections",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		content, err := docsFS.ReadFile("docs/connections.md")
 		if err != nil {
 			return nil, fmt.Errorf("failed to read connections docs: %w", err)
@@ -121,7 +121,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "Workflow orchestration and pipeline management documentation for Irmin",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs/workflows",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		content, err := docsFS.ReadFile("docs/workflows.md")
 		if err != nil {
 			return nil, fmt.Errorf("failed to read workflows docs: %w", err)
@@ -140,7 +140,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "Object schema documentation for Irmin, including connection and repository object schemas",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs/object-schema",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, _ *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
+	}, func(_ context.Context, _ *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
 		content, err := docsFS.ReadFile("docs/object-schema.md")
 		if err != nil {
 			return nil, fmt.Errorf("failed to read object schema docs: %w", err)
@@ -159,14 +159,14 @@ func (mcpResources *MCPResources) RegisterDocs() {
 		Description: "Dynamic documentation file serving",
 		MIMEType:    "text/markdown",
 		URI:         "irmin://docs/file/*",
-	}, func(_ context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.ReadResourceParams) (*sdkmcp.ReadResourceResult, error) {
-		if params.URI == "" {
+	}, func(_ context.Context, req *sdkmcp.ReadResourceRequest) (*sdkmcp.ReadResourceResult, error) {
+		if req.Params.URI == "" {
 			return nil, errors.New("URI parameter is required")
 		}
 
 		// Extract file path from URI
 		// URI format: irmin://docs/file/path/to/file.md
-		filePath := strings.TrimPrefix(params.URI, "irmin://docs/file/")
+		filePath := strings.TrimPrefix(req.Params.URI, "irmin://docs/file/")
 		if filePath == "" {
 			return nil, errors.New("invalid file path")
 		}
@@ -184,7 +184,7 @@ func (mcpResources *MCPResources) RegisterDocs() {
 
 		return &sdkmcp.ReadResourceResult{
 			Contents: []*sdkmcp.ResourceContents{
-				{URI: params.URI, MIMEType: "text/markdown", Text: string(content)},
+				{URI: req.Params.URI, MIMEType: "text/markdown", Text: string(content)},
 			},
 		}, nil
 	})

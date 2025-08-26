@@ -44,12 +44,14 @@ func (api *APIServices) validateAssistantMessageRequest(
 func (api *APIServices) createUserMessage(
 	conversation *db.AssistantConversation,
 	message string,
+	systemPrompt string,
 	metadata map[string]any,
 ) error {
 	userMessage := &db.AssistantMessage{
 		ConversationID: &conversation.ID,
 		Role:           anthropic.BetaMessageParamRoleUser,
 		Content:        message,
+		SystemPrompt:   &systemPrompt,
 		Status:         irminmodels.AssistantMessageStatusSent,
 		Metadata:       metadata,
 		SentAt:         time.Now(),
@@ -195,6 +197,7 @@ func (api *APIServices) prepareMessageMetadata(
 }
 
 // initializeAIAndSendMessage initializes the AI service and sends a message
+// Returns the AI service, the response, the system prompt used for the message, and an error if it occurs
 func (api *APIServices) initializeAIAndSendMessage(
 	c context.Context,
 	userToken *string,
@@ -202,7 +205,7 @@ func (api *APIServices) initializeAIAndSendMessage(
 	opts *ai.MessageRequest,
 	conversation *db.AssistantConversation,
 	metadata map[string]any,
-) (*ai.AI, *anthropic.BetaMessage, error) {
+) (*ai.AI, *anthropic.BetaMessage, string, error) {
 	// Initialize AI service
 	aiService, err := ai.NewAIFromEnv(api.Env, userToken, api.Logger)
 	if err != nil {
@@ -217,7 +220,7 @@ func (api *APIServices) initializeAIAndSendMessage(
 		); createFailedMsgErr != nil {
 			api.Logger.ErrorContext(c, "Error storing failed AI message", "error", createFailedMsgErr)
 		}
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	// Get conversation history from database
@@ -261,7 +264,7 @@ func (api *APIServices) initializeAIAndSendMessage(
 	req.ConversationHistory = conversationHistory
 
 	// Send message to AI
-	response, err := aiService.SendMessage(c, req)
+	response, fullSystemPrompt, err := aiService.SendMessage(c, req)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error sending message to AI", "error", err)
 		// Create a failed AI message to record the error
@@ -274,10 +277,10 @@ func (api *APIServices) initializeAIAndSendMessage(
 		); createFailedMsgErr != nil {
 			api.Logger.ErrorContext(c, "Error storing failed AI message", "error", createFailedMsgErr)
 		}
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
-	return aiService, response, nil
+	return aiService, response, fullSystemPrompt, nil
 }
 
 // logAssistantMessageEvent logs the assistant message event
@@ -330,14 +333,8 @@ func (api *APIServices) SendAssistantMessage(
 	// Prepare metadata
 	newMetadata := api.prepareMessageMetadata(user, workspace, messageOpts)
 
-	// Store user message
-	if err := api.createUserMessage(conversation, message, newMetadata); err != nil {
-		api.Logger.ErrorContext(c, "Error storing user message", "error", err)
-		return nil, err
-	}
-
 	// Initialize AI service and send message
-	aiService, response, err := api.initializeAIAndSendMessage(
+	aiService, response, fullSystemPrompt, sendMessageErr := api.initializeAIAndSendMessage(
 		c,
 		userToken,
 		message,
@@ -345,15 +342,21 @@ func (api *APIServices) SendAssistantMessage(
 		conversation,
 		newMetadata,
 	)
-	if err != nil {
-		return nil, err
+	if sendMessageErr != nil {
+		return nil, sendMessageErr
+	}
+
+	// Store user message
+	if createUserMessageErr := api.createUserMessage(conversation, message, fullSystemPrompt, newMetadata); createUserMessageErr != nil {
+		api.Logger.ErrorContext(c, "Error storing user message", "error", createUserMessageErr)
+		return nil, createUserMessageErr
 	}
 
 	// Process AI response
-	aiMessages, err := api.processAIResponse(conversation, response, newMetadata)
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error processing AI response", "error", err)
-		return nil, err
+	aiMessages, processAIResponseErr := api.processAIResponse(conversation, response, newMetadata)
+	if processAIResponseErr != nil {
+		api.Logger.ErrorContext(c, "Error processing AI response", "error", processAIResponseErr)
+		return nil, processAIResponseErr
 	}
 
 	// Generate conversation title if needed
@@ -403,7 +406,7 @@ func (api *APIServices) ListAssistantConversations(
 	}
 
 	// Get conversations from database
-	dbConversations, err := api.DB.GetAssistantConversationsByUser(workspace.ID, user.ID)
+	dbConversations, err := api.DB.GetAssistantConversationsByUser(workspace.ID, user.ID, false)
 	if err != nil {
 		return nil, err
 	}

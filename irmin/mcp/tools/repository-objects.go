@@ -99,18 +99,18 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 			Name:        "list_repository_objects",
 			Description: "List objects in a repository. Objects are essentially the different datafiles and folders in the repository. These objects can be structured (e.g. JSON, YAML, XML) or unstructured (e.g. binary data, images, videos, etc.).",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listRepositoryObjectsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryObjectsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -119,11 +119,11 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// List the objects in the repository
@@ -134,11 +134,11 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 				workspace,
 				repository,
 				"",
-				params.Arguments.Ref,
+				args.Ref,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error listing repository objects", "error", err)
-				return helpers.MCPError("Error listing repository objects"), nil
+				return helpers.MCPError("Error listing repository objects"), struct{}{}, nil
 			}
 
 			// Format the object for the response.
@@ -148,10 +148,14 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), nil
+				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(repositoryObjectResponse)
+			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -164,18 +168,18 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 			Name:        "get_repository_object_schema",
 			Description: "Get the schema, with column name, types, and descriptions, of a repository object in a repository. The schema can be used to write SQL queries to analyze the data in the repository object, without actually having to get the data into memory.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getRepositoryObjectSchemaArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -184,15 +188,15 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Determine the branch to get the repository object schema from
-			branch := params.Arguments.Branch
+			branch := args.Branch
 			if branch == "" {
 				branch = repository.DefaultBranch
 			}
@@ -204,12 +208,12 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.Path,
+				args.Path,
 				branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), nil
+				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
 			}
 
 			// Get the repository object schema
@@ -224,10 +228,14 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object schema", "error", err)
-				return helpers.MCPError("Failed to get repository object schema"), nil
+				return helpers.MCPError("Failed to get repository object schema"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(schema)
+			result, err := helpers.MCPSuccess(schema)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -270,18 +278,18 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 			Name:        "get_repository_object_content",
 			Description: "Get the content of a repository object in a repository. The content can be a JSON, YAML, XML, TXT, CSV, etc.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getRepositoryObjectContentArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectContentArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -290,15 +298,15 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Determine the branch to get the repository object content from
-			branch := params.Arguments.Branch
+			branch := args.Branch
 			if branch == "" {
 				branch = repository.DefaultBranch
 			}
@@ -310,12 +318,12 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.Path,
-				params.Arguments.Branch,
+				args.Path,
+				args.Branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), nil
+				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
 			}
 
 			// Get the repository object content
@@ -329,7 +337,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object content", "error", err)
-				return helpers.MCPError("Failed to get repository object content"), nil
+				return helpers.MCPError("Failed to get repository object content"), struct{}{}, nil
 			}
 
 			// Detect MIME type
@@ -337,7 +345,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 
 			// Allow only text-based formats
 			if isAllowedTextType(mimeType) {
-				return &sdkmcp.CallToolResultFor[struct{}]{
+				return &sdkmcp.CallToolResult{
 					Content: []sdkmcp.Content{
 						&sdkmcp.TextContent{
 							Text: string(content),
@@ -352,13 +360,13 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 							},
 						},
 					},
-				}, nil
+				}, struct{}{}, nil
 			}
 
 			// If not text-based, return error
 			return helpers.MCPError(
 				"The content of this object is not a supported text format and cannot be fetched using the MCP server. Structured objects can be still be queried using SQL. Unstructured objects are viewable and downloadable in the Irmin Console, or through the API by the user.",
-			), nil
+			), struct{}{}, nil
 		},
 	)
 }
@@ -371,18 +379,18 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 			Name:        "get_repository_object_history",
 			Description: "Get the history of changes to a repository object in a repository. The history comes in the form of a list of commits, which have modified the object. The history can be used to understand the changes that have been made to the object over time.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[getRepositoryObjectHistoryArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectHistoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -391,11 +399,11 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the repository object
@@ -405,12 +413,12 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.Path,
-				params.Arguments.Branch,
+				args.Path,
+				args.Branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), nil
+				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
 			}
 
 			// Get the repository object history
@@ -424,10 +432,14 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object history", "error", err)
-				return helpers.MCPError("Failed to get repository object history"), nil
+				return helpers.MCPError("Failed to get repository object history"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(history)
+			result, err := helpers.MCPSuccess(history)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -440,18 +452,18 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 			Name:        "save_text_repository_object",
 			Description: "Save a text repository object in a repository. Saving can mean creating a new object or overwriting an existing object. The text content can be a JSON, YAML, XML, TXT, CSV, etc.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[saveTextRepositoryObjectArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args saveTextRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -460,15 +472,15 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Create a file from the content
-			fileContent := irminutils.NewFile(params.Arguments.Content, params.Arguments.Path)
+			fileContent := irminutils.NewFile(args.Content, args.Path)
 			file := fileContent.MultipartFile()
 
 			// Save the text repository object
@@ -478,13 +490,13 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.Path,
-				params.Arguments.Branch,
+				args.Path,
+				args.Branch,
 				file,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to save text repository object", "error", err)
-				return helpers.MCPError("Failed to save text repository object, please try again"), nil
+				return helpers.MCPError("Failed to save text repository object, please try again"), struct{}{}, nil
 			}
 
 			// Format the object for the response.
@@ -494,10 +506,14 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), nil
+				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(repositoryObjectResponse)
+			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -510,18 +526,18 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 			Name:        "upload_repository_object_from_url",
 			Description: "Upload a file from a URL to a specific path in a repository on a given branch. Uploading can mean creating a new object or overwriting an existing object. The file can be anything, like a JSON, Excel, CSV, XML, YAML, text, image, video, etc. A GET request with the provided headers will be made to the URL to get the file.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[uploadRepositoryObjectFromURLArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args uploadRepositoryObjectFromURLArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -530,11 +546,11 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Upload the object from the URL to the path in the repository at ref
@@ -544,14 +560,14 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.Path,
-				params.Arguments.Branch,
-				params.Arguments.URL,
-				params.Arguments.Headers,
+				args.Path,
+				args.Branch,
+				args.URL,
+				args.Headers,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to upload repository object from URL", "error", err)
-				return helpers.MCPError("Failed to upload repository object from URL"), nil
+				return helpers.MCPError("Failed to upload repository object from URL"), struct{}{}, nil
 			}
 
 			// Format the object for the response.
@@ -561,10 +577,14 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), nil
+				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(repositoryObjectResponse)
+			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -577,18 +597,18 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 			Name:        "move_or_copy_repository_object",
 			Description: "Move or copy a repository object in a repository from one path to another.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[moveOrCopyRepositoryObjectArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args moveOrCopyRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -597,11 +617,11 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the object
@@ -611,16 +631,16 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.Path,
-				params.Arguments.Branch,
+				args.Path,
+				args.Branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), nil
+				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
 			}
 
 			// Move or copy the object
-			if params.Arguments.Action == moveOrCopyActionMove {
+			if args.Action == moveOrCopyActionMove {
 				// Move the object
 				object, err = mcpTools.apiServices.MoveRepositoryObject(
 					ctx,
@@ -630,21 +650,21 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 					repository,
 					object,
 					irmincore.MoveObjectRequest{
-						NewPath: params.Arguments.NewPath,
+						NewPath: args.NewPath,
 					},
 				)
 				if err != nil {
 					mcpTools.apiServices.Logger.Error("Failed to move repository object", "error", err)
-					return helpers.MCPError("Failed to move repository object"), nil
+					return helpers.MCPError("Failed to move repository object"), struct{}{}, nil
 				}
 			} else {
 				// Copy the object
 				object, err = mcpTools.apiServices.CopyRepositoryObject(ctx, "en", user, workspace, repository, object, irmincore.MoveObjectRequest{
-					NewPath: params.Arguments.NewPath,
+					NewPath: args.NewPath,
 				})
 				if err != nil {
 					mcpTools.apiServices.Logger.Error("Failed to copy repository object", "error", err)
-					return helpers.MCPError("Failed to copy repository object"), nil
+					return helpers.MCPError("Failed to copy repository object"), struct{}{}, nil
 				}
 			}
 
@@ -655,10 +675,14 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), nil
+				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(repositoryObjectResponse)
+			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -668,18 +692,18 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{Name: "delete_repository_object", Description: "Delete a repository object in a repository."},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[deleteRepositoryObjectArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args deleteRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -688,11 +712,11 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the object
@@ -702,24 +726,28 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.Path,
-				params.Arguments.Branch,
+				args.Path,
+				args.Branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), nil
+				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
 			}
 
 			// Delete the object
 			err = mcpTools.apiServices.DeleteRepositoryObject(ctx, "en", user, workspace, repository, object)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to delete repository object", "error", err)
-				return helpers.MCPError("Failed to delete repository object"), nil
+				return helpers.MCPError("Failed to delete repository object"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(map[string]string{
+			result, err := helpers.MCPSuccess(map[string]string{
 				"message": "Object deleted successfully",
 			})
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

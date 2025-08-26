@@ -43,18 +43,18 @@ func (mcpTools *MCPTools) registerListRepositoryTagsTool() {
 			Name:        "list_repository_tags",
 			Description: "List tags in a repository. Tags are used to mark a specific commit in the repository, as an easy way to reference it later.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[listRepositoryTagsArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryTagsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -63,21 +63,25 @@ func (mcpTools *MCPTools) registerListRepositoryTagsTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// List the tags in the repository
 			tags, err := mcpTools.apiServices.ListRepositoryTags(ctx, "en", user, workspace, repository)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error listing repository tags", "error", err)
-				return helpers.MCPError("Error listing repository tags"), nil
+				return helpers.MCPError("Error listing repository tags"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(tags)
+			result, err := helpers.MCPSuccess(tags)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -92,18 +96,18 @@ func (mcpTools *MCPTools) registerCreateRepositoryTagTool() {
 			Name:        "create_repository_tag",
 			Description: "Create a new tag in a repository. Tags are used to mark a specific commit in the repository, as an easy way to reference it later.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[createRepositoryTagArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryTagArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -112,11 +116,11 @@ func (mcpTools *MCPTools) registerCreateRepositoryTagTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Create the tag
@@ -127,16 +131,20 @@ func (mcpTools *MCPTools) registerCreateRepositoryTagTool() {
 				workspace,
 				repository,
 				irmincore.CreateRepositoryTagRequest{
-					Name: params.Arguments.TagName,
-					Ref:  params.Arguments.CommitHash,
+					Name: args.TagName,
+					Ref:  args.CommitHash,
 				},
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to create tag", "error", err)
-				return helpers.MCPError("Failed to create tag"), nil
+				return helpers.MCPError("Failed to create tag"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(tag)
+			result, err := helpers.MCPSuccess(tag)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }
@@ -149,18 +157,18 @@ func (mcpTools *MCPTools) registerDeleteRepositoryTagTool() {
 			Name:        "delete_repository_tag",
 			Description: "Delete a tag in a repository. Tags are used to mark a specific commit in the repository, as an easy way to reference it later.",
 		},
-		func(ctx context.Context, _ *sdkmcp.ServerSession, params *sdkmcp.CallToolParamsFor[deleteRepositoryTagArgs]) (*sdkmcp.CallToolResultFor[struct{}], error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args deleteRepositoryTagArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, err
+				return nil, struct{}{}, err
 			}
 
 			// Get the workspace
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, params.Arguments.WorkspaceSlug)
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), nil
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
 			// Get the repository
@@ -169,11 +177,11 @@ func (mcpTools *MCPTools) registerDeleteRepositoryTagTool() {
 				"en",
 				user,
 				workspace,
-				params.Arguments.RepositorySlug,
+				args.RepositorySlug,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), nil
+				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
 			// Get the tag
@@ -183,23 +191,27 @@ func (mcpTools *MCPTools) registerDeleteRepositoryTagTool() {
 				user,
 				workspace,
 				repository,
-				params.Arguments.TagName,
+				args.TagName,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get tag", "error", err)
-				return helpers.MCPError("Failed to get tag"), nil
+				return helpers.MCPError("Failed to get tag"), struct{}{}, nil
 			}
 
 			// Delete the tag
 			err = mcpTools.apiServices.DeleteRepositoryTag(ctx, "en", user, workspace, repository, tag)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to delete tag", "error", err)
-				return helpers.MCPError("Failed to delete tag"), nil
+				return helpers.MCPError("Failed to delete tag"), struct{}{}, nil
 			}
 
-			return helpers.MCPSuccess(map[string]string{
+			result, err := helpers.MCPSuccess(map[string]string{
 				"message": "Tag deleted successfully",
 			})
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+			return result, struct{}{}, nil
 		},
 	)
 }

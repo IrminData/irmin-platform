@@ -12,21 +12,21 @@ import (
 )
 
 // MCPError creates a standardized error response for MCP tools.
-func MCPError(message string) *sdkmcp.CallToolResultFor[struct{}] {
-	return &sdkmcp.CallToolResultFor[struct{}]{
+func MCPError(message string) *sdkmcp.CallToolResult {
+	return &sdkmcp.CallToolResult{
 		IsError: true,
 		Content: []sdkmcp.Content{&sdkmcp.TextContent{Text: message}},
 	}
 }
 
 // MCPSuccess creates a standardized success response for MCP tools with JSON data.
-func MCPSuccess(data any) (*sdkmcp.CallToolResultFor[struct{}], error) {
+func MCPSuccess(data any) (*sdkmcp.CallToolResult, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal response data: %w", err)
 	}
 
-	return &sdkmcp.CallToolResultFor[struct{}]{
+	return &sdkmcp.CallToolResult{
 		Content: []sdkmcp.Content{&sdkmcp.TextContent{
 			Text: string(b),
 			Meta: sdkmcp.Meta{"mimeType": "application/json"},
