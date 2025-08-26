@@ -41,7 +41,7 @@ Irmin Connectors are a collection of API services that allow the Irmin platform 
 
 ### Prerequisites
 
-- Go 1.24 or higher
+- Go 1.25 or higher
 - PostgreSQL database
 - Access to Irmin API instance
 
