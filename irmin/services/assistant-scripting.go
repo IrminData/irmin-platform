@@ -17,12 +17,12 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 )
 
-// validateQueryGenerationRequest validates the request for query generation
-func (api *APIServices) validateQueryGenerationRequest(
+// validateScriptGenerationRequest validates the request for script generation
+func (api *APIServices) validateScriptGenerationRequest(
 	c context.Context,
 	user *db.User,
 	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
+	req *irmincore.ScriptGenerationRequest,
 ) error {
 	// Make sure this is allowed
 	if err := api.checkAssistantPermission(c, user, workspace, db.PolicyActionCreate); err != nil {
@@ -37,12 +37,12 @@ func (api *APIServices) validateQueryGenerationRequest(
 	return nil
 }
 
-// createOrGetQueryGenerationConversation creates a new conversation or gets an existing one for query generation
-func (api *APIServices) createOrGetQueryGenerationConversation(
+// createOrGetScriptGenerationConversation creates a new conversation or gets an existing one for script generation
+func (api *APIServices) createOrGetScriptGenerationConversation(
 	c context.Context,
 	user *db.User,
 	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
+	req *irmincore.ScriptGenerationRequest,
 ) (*db.AssistantConversation, error) {
 	// If conversation ID is provided, try to get the existing conversation
 	if req.ConversationID != nil {
@@ -65,8 +65,8 @@ func (api *APIServices) createOrGetQueryGenerationConversation(
 			return nil, ErrAccessDenied
 		}
 
-		// Verify it's a QueryAI conversation
-		if existingConversation.AssistantType != ai.QueryAI {
+		// Verify it's a ScriptingAI conversation
+		if existingConversation.AssistantType != ai.ScriptingAI {
 			return nil, ErrInvalidRequest
 		}
 
@@ -77,13 +77,13 @@ func (api *APIServices) createOrGetQueryGenerationConversation(
 	convMetadata := map[string]any{
 		"user_id":      user.ID,
 		"workspace_id": workspace.ID,
-		"created_by":   "query-generation",
+		"created_by":   "script-generation",
 		"prompt":       req.Prompt,
 	}
 	maps.Copy(convMetadata, req.Metadata)
 
 	// Generate a title for the conversation
-	title := fmt.Sprintf("Query Generation: %s", time.Now().Format("2006-01-02 15:04:05"))
+	title := fmt.Sprintf("Script Generation: %s", time.Now().Format("2006-01-02 15:04:05"))
 
 	// Create conversation in database
 	dbConversation := &db.AssistantConversation{
@@ -91,20 +91,20 @@ func (api *APIServices) createOrGetQueryGenerationConversation(
 		WorkspaceID:   workspace.ID,
 		UserID:        user.ID,
 		Metadata:      convMetadata,
-		AssistantType: ai.QueryAI,
-		Hidden:        true, // Hidden from user since it's for query generation
+		AssistantType: ai.ScriptingAI,
+		Hidden:        true, // Hidden from user since it's for script generation
 	}
 
 	if createErr := api.DB.CreateAssistantConversation(dbConversation); createErr != nil {
-		api.Logger.ErrorContext(c, "Error creating query generation conversation in database", "error", createErr)
+		api.Logger.ErrorContext(c, "Error creating script generation conversation in database", "error", createErr)
 		return nil, createErr
 	}
 
 	return dbConversation, nil
 }
 
-// createQueryGenerationMessage creates and stores a query generation message
-func (api *APIServices) createQueryGenerationMessage(
+// createScriptGenerationMessage creates and stores a script generation message
+func (api *APIServices) createScriptGenerationMessage(
 	conversation *db.AssistantConversation,
 	message string,
 	systemPrompt string,
@@ -123,8 +123,8 @@ func (api *APIServices) createQueryGenerationMessage(
 	return api.DB.CreateAssistantMessage(userMessage)
 }
 
-// processQueryGenerationResponse processes the AI response for query generation
-func (api *APIServices) processQueryGenerationResponse(
+// processScriptGenerationResponse processes the AI response for script generation
+func (api *APIServices) processScriptGenerationResponse(
 	conversation *db.AssistantConversation,
 	response *anthropic.BetaMessage,
 	metadata map[string]any,
@@ -199,32 +199,29 @@ func (api *APIServices) processQueryGenerationResponse(
 	return aiMessages, nil
 }
 
-// prepareQueryGenerationMetadata prepares metadata for query generation messages
-func (api *APIServices) prepareQueryGenerationMetadata(
+// prepareScriptGenerationMetadata prepares metadata for script generation messages
+func (api *APIServices) prepareScriptGenerationMetadata(
 	user *db.User,
 	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
+	req *irmincore.ScriptGenerationRequest,
 ) map[string]any {
 	newMetadata := map[string]any{
-		"user_id":         user.ID,
-		"workspace_id":    workspace.ID,
-		"repository_slug": req.RepositorySlug,
-		"repository_ref":  req.RepositoryRef,
-		"source":          "query-generation",
-		"prompt":          req.Prompt,
+		"user_id":      user.ID,
+		"workspace_id": workspace.ID,
+		"source":       "script-generation",
+		"prompt":       req.Prompt,
 	}
 
 	maps.Copy(newMetadata, req.Metadata)
 	return newMetadata
 }
 
-// buildEnhancedSystemPrompt builds an enhanced system prompt with context information and relevant schemas
-func (api *APIServices) buildEnhancedSystemPrompt(
+// buildEnhancedScriptSystemPrompt builds an enhanced system prompt with context information and relevant schemas
+func (api *APIServices) buildEnhancedScriptSystemPrompt(
 	c context.Context,
 	locale string,
 	user *db.User,
 	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
 	includeSchema bool,
 ) string {
 	var enhancedSystemPrompt strings.Builder
@@ -253,53 +250,12 @@ func (api *APIServices) buildEnhancedSystemPrompt(
 		return enhancedSystemPrompt.String()
 	}
 
-	// Add repository context if specified
-	var objectSchema *irminmodels.ObjectSchema
-	var getSchemaErr error
-	if req.RepositorySlug != nil {
-		// Get the repository
-		repository, err := api.GetRepositoryBySlug(c, locale, user, workspace, *req.RepositorySlug)
-		if err != nil {
-			api.Logger.ErrorContext(c, "Error getting repository", "error", err)
-			return enhancedSystemPrompt.String()
-		}
-		// Add repository information to the prompt
-		enhancedSystemPrompt.WriteString(fmt.Sprintf("\nRepository: %s\n", repository.Slug))
-
-		// Determine the repository reference to use, defaulting to the default branch of the repository
-		schemaRefToUse := repository.DefaultBranch
-		if req.RepositoryRef != nil {
-			schemaRefToUse = *req.RepositoryRef
-		}
-
-		// Add reference information
-		enhancedSystemPrompt.WriteString(
-			fmt.Sprintf("Reference (e.g. branch, tag, commit hash): %s\n", schemaRefToUse),
-		)
-
-		// Get the root object schema for the repository at the ref
-		objectSchema, getSchemaErr = api.GetRepositoryObjectSchema(
-			c,
-			locale,
-			user,
-			workspace,
-			repository,
-			&db.RepositoryObject{
-				Path:          "",
-				Name:          "",
-				RepositoryRef: schemaRefToUse,
-				Type:          irminmodels.ObjectTypeGroup,
-			},
-			schemaRefToUse,
-		)
-	} else {
-		// Get the workspace schema without connections, but with repositories
-		objectSchema, getSchemaErr = api.GetWorkspaceSchema(c, locale, user, workspace, false, true)
-	}
+	// Get the workspace schema without connections, but with repositories
+	objectSchema, getSchemaErr := api.GetWorkspaceSchema(c, locale, user, workspace, false, true)
 
 	// Check if the object schema generation failed
 	if getSchemaErr != nil {
-		api.Logger.ErrorContext(c, "Error getting repository object schema", "error", getSchemaErr)
+		api.Logger.ErrorContext(c, "Error getting workspace schema", "error", getSchemaErr)
 		return enhancedSystemPrompt.String()
 	}
 
@@ -315,9 +271,9 @@ func (api *APIServices) buildEnhancedSystemPrompt(
 	return enhancedSystemPrompt.String()
 }
 
-// buildEnhancedQueryPrompt builds an enhanced prompt with context information and a relevant schema
-func (api *APIServices) buildEnhancedQueryPrompt(
-	req *irmincore.QueryGenerationRequest,
+// buildEnhancedScriptPrompt builds an enhanced prompt with context information and a relevant schema
+func (api *APIServices) buildEnhancedScriptPrompt(
+	req *irmincore.ScriptGenerationRequest,
 	workspace *db.Workspace,
 ) string {
 	var enhancedPrompt strings.Builder
@@ -333,26 +289,26 @@ func (api *APIServices) buildEnhancedQueryPrompt(
 	return enhancedPrompt.String()
 }
 
-// logQueryGenerationEvent logs the query generation event
-func (api *APIServices) logQueryGenerationEvent(user *db.User, workspace *db.Workspace) {
+// logScriptGenerationEvent logs the script generation event
+func (api *APIServices) logScriptGenerationEvent(user *db.User, workspace *db.Workspace) {
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeCreate,
-		Description: fmt.Sprintf("Query generated by user %s", user.Email),
+		Description: fmt.Sprintf("Script generated by user %s", user.Email),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})
 }
 
-// initializeQueryAIAndSendMessage initializes the QueryAI service and sends a message
-func (api *APIServices) initializeQueryAIAndSendMessage(
+// initializeScriptingAIAndSendMessage initializes the ScriptingAI service and sends a message
+func (api *APIServices) initializeScriptingAIAndSendMessage(
 	c context.Context,
 	userToken *string,
 	user *db.User,
 	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
+	req *irmincore.ScriptGenerationRequest,
 	conversation *db.AssistantConversation,
 ) (*ai.AI, *anthropic.BetaMessage, string, error) {
-	// Initialize AI service with QueryAI type
+	// Initialize AI service with ScriptingAI type
 	aiService, err := ai.NewAIFromEnv(api.Env, userToken, api.Logger)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error creating AI service", "error", err)
@@ -377,57 +333,57 @@ func (api *APIServices) initializeQueryAIAndSendMessage(
 	}
 
 	// Build the enhanced prompt with context
-	enhancedPrompt := api.buildEnhancedQueryPrompt(req, workspace)
+	enhancedPrompt := api.buildEnhancedScriptPrompt(req, workspace)
 
 	// Only include schema in system prompt for first message (when no conversation history)
 	includeSchema := len(conversationHistory) == 0
-	enhancedSystemPrompt := api.buildEnhancedSystemPrompt(c, "en", user, workspace, req, includeSchema)
+	enhancedSystemPrompt := api.buildEnhancedScriptSystemPrompt(c, "en", user, workspace, includeSchema)
 
-	// Set the AI type for query generation
-	queryAIType := ai.QueryAI
+	// Set the AI type for script generation
+	scriptingAIType := ai.ScriptingAI
 
-	// Create the MessageRequest for QueryAI
+	// Create the MessageRequest for ScriptingAI
 	messageReq := &ai.MessageRequest{
 		Content:                enhancedPrompt,
 		ConversationHistory:    conversationHistory,
-		AIType:                 &queryAIType,
+		AIType:                 &scriptingAIType,
 		AdditionalSystemPrompt: enhancedSystemPrompt,
 	}
 
 	// Send message to AI
 	response, fullSystemPrompt, err := aiService.SendMessage(c, messageReq)
 	if err != nil {
-		api.Logger.ErrorContext(c, "Error sending message to QueryAI", "error", err)
+		api.Logger.ErrorContext(c, "Error sending message to ScriptingAI", "error", err)
 		return nil, nil, "", err
 	}
 
 	return aiService, response, fullSystemPrompt, nil
 }
 
-// GenerateQuery generates a SQL query from natural language using the QueryAI
-func (api *APIServices) GenerateQuery(
+// GenerateScript generates a Go script from natural language using the ScriptingAI
+func (api *APIServices) GenerateScript(
 	c context.Context,
 	userToken *string,
 	user *db.User,
 	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
+	req *irmincore.ScriptGenerationRequest,
 ) ([]*db.AssistantMessage, error) {
 	// Validate request and permissions
-	if err := api.validateQueryGenerationRequest(c, user, workspace, req); err != nil {
+	if err := api.validateScriptGenerationRequest(c, user, workspace, req); err != nil {
 		return nil, err
 	}
 
-	// Create a hidden conversation for this query generation or get existing one
-	conversation, err := api.createOrGetQueryGenerationConversation(c, user, workspace, req)
+	// Create a hidden conversation for this script generation or get existing one
+	conversation, err := api.createOrGetScriptGenerationConversation(c, user, workspace, req)
 	if err != nil {
 		return nil, err
 	}
 
 	// Prepare metadata
-	newMetadata := api.prepareQueryGenerationMetadata(user, workspace, req)
+	newMetadata := api.prepareScriptGenerationMetadata(user, workspace, req)
 
-	// Initialize QueryAI service and send message
-	_, response, fullSystemPrompt, err := api.initializeQueryAIAndSendMessage(
+	// Initialize ScriptingAI service and send message
+	_, response, fullSystemPrompt, err := api.initializeScriptingAIAndSendMessage(
 		c,
 		userToken,
 		user,
@@ -440,36 +396,36 @@ func (api *APIServices) GenerateQuery(
 		errorMsg := err.Error()
 		if createFailedMsgErr := api.createErrorMessage(
 			conversation,
-			"Failed to generate query",
+			"Failed to generate script",
 			errorMsg,
 			newMetadata,
 		); createFailedMsgErr != nil {
-			api.Logger.ErrorContext(c, "Error storing failed query generation message", "error", createFailedMsgErr)
+			api.Logger.ErrorContext(c, "Error storing failed script generation message", "error", createFailedMsgErr)
 		}
 		return nil, err
 	}
 
 	// Store user message with system prompt
-	if storeErr := api.createQueryGenerationMessage(conversation, req.Prompt, fullSystemPrompt, newMetadata); storeErr != nil {
-		api.Logger.ErrorContext(c, "Error storing query generation message", "error", storeErr)
+	if storeErr := api.createScriptGenerationMessage(conversation, req.Prompt, fullSystemPrompt, newMetadata); storeErr != nil {
+		api.Logger.ErrorContext(c, "Error storing script generation message", "error", storeErr)
 		return nil, storeErr
 	}
 
 	// Process AI response
-	aiMessages, err := api.processQueryGenerationResponse(conversation, response, newMetadata)
+	aiMessages, err := api.processScriptGenerationResponse(conversation, response, newMetadata)
 	if err != nil {
-		api.Logger.ErrorContext(c, "Error processing query generation response", "error", err)
+		api.Logger.ErrorContext(c, "Error processing script generation response", "error", err)
 		return nil, err
 	}
 
 	// Log the event
-	api.logQueryGenerationEvent(user, workspace)
+	api.logScriptGenerationEvent(user, workspace)
 
 	return aiMessages, nil
 }
 
-// GetQueryGenerationConversation retrieves a query generation conversation by ID
-func (api *APIServices) GetQueryGenerationConversation(
+// GetScriptGenerationConversation retrieves a script generation conversation by ID
+func (api *APIServices) GetScriptGenerationConversation(
 	c context.Context,
 	user *db.User,
 	workspace *db.Workspace,
@@ -491,16 +447,16 @@ func (api *APIServices) GetQueryGenerationConversation(
 		return nil, ErrAccessDenied
 	}
 
-	// Make sure this is a query generation conversation
-	if dbConversation.AssistantType != ai.QueryAI {
+	// Make sure this is a script generation conversation
+	if dbConversation.AssistantType != ai.ScriptingAI {
 		return nil, ErrInvalidRequest
 	}
 
 	return dbConversation, nil
 }
 
-// ListQueryGenerationConversations lists all query generation conversations for a user
-func (api *APIServices) ListQueryGenerationConversations(
+// ListScriptGenerationConversations lists all script generation conversations for a user
+func (api *APIServices) ListScriptGenerationConversations(
 	c context.Context,
 	user *db.User,
 	workspace *db.Workspace,
@@ -510,15 +466,15 @@ func (api *APIServices) ListQueryGenerationConversations(
 		return nil, err
 	}
 
-	// Get conversations from database, filtering by QueryAI type and hidden status
+	// Get conversations from database, filtering by ScriptingAI type and hidden status
 	// Note: This would require a new database method or modification to existing one
 	// For now, we'll return an empty list since these conversations are hidden
-	// TODO: Implement proper filtering for query generation conversations
+	// TODO: Implement proper filtering for script generation conversations
 	return []db.AssistantConversation{}, nil
 }
 
-// DeleteQueryGenerationConversation deletes a query generation conversation
-func (api *APIServices) DeleteQueryGenerationConversation(
+// DeleteScriptGenerationConversation deletes a script generation conversation
+func (api *APIServices) DeleteScriptGenerationConversation(
 	c context.Context,
 	user *db.User,
 	workspace *db.Workspace,
@@ -534,8 +490,8 @@ func (api *APIServices) DeleteQueryGenerationConversation(
 		return ErrAccessDenied
 	}
 
-	// Make sure this is a query generation conversation
-	if conversation.AssistantType != ai.QueryAI {
+	// Make sure this is a script generation conversation
+	if conversation.AssistantType != ai.ScriptingAI {
 		return ErrInvalidRequest
 	}
 
@@ -547,7 +503,7 @@ func (api *APIServices) DeleteQueryGenerationConversation(
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("Query generation conversation deleted: %s", conversation.Title),
+		Description: fmt.Sprintf("Script generation conversation deleted: %s", conversation.Title),
 		UserID:      &user.ID,
 		WorkspaceID: &workspace.ID,
 	})

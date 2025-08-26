@@ -2,7 +2,7 @@ name: Lint
 
 on:
   pull_request:
-    branches: [main, master, development]
+    branches: [main, development]
 
 # Prevent concurrent runs of the same workflow on the same PR
 concurrency:
@@ -19,7 +19,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -30,7 +30,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.6
+          version: v2.4.0
           args: --timeout=5m
           skip-cache: true
 

@@ -106,7 +106,7 @@ func (api *APIControllers) AssistantConversationsIndex(c fiber.Ctx) error {
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
 // @Router /workspaces/{workspace_slug}/assistant/conversations [post]
 func (api *APIControllers) AssistantConversationsStore(c fiber.Ctx) error {
-	dict, user, workspace, userToken, err := api.validateAssistantContext(c)
+	dict, user, workspace, _, err := api.validateAssistantContext(c)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (api *APIControllers) AssistantConversationsStore(c fiber.Ctx) error {
 	}()
 
 	// Create the conversation
-	conversation, err := api.Services.CreateAssistantConversation(c, userToken, user, workspace, req)
+	conversation, err := api.Services.CreateAssistantConversation(c, user, workspace, req)
 	if err != nil {
 		api.Logger.Error("Error creating assistant conversation", "error", err)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{

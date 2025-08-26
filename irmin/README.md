@@ -72,9 +72,6 @@ This project uses [golangci-lint](https://golangci-lint.run/) for code quality c
 ```bash
 # macOS
 brew install golangci-lint
-
-# Linux
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
 ```
 
 **Run the linter**

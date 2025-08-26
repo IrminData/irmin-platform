@@ -36,4 +36,5 @@ var (
 	ErrWorkflowAlreadyPaused                  = errors.New("workflow already paused")
 	ErrWorkflowAlreadyRunning                 = errors.New("workflow already running")
 	ErrBranchAlreadyExists                    = errors.New("branch already exists")
+	ErrNoContentExtracted                     = errors.New("no content could be extracted from AI response")
 )

@@ -418,6 +418,7 @@ func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error {
 			Errors: []string{api.lm.T(dict, "error_occurred")},
 		})
 	}
+
 	// Parse the JSON request body for optional input data
 	var req irmincore.ExecuteEditorItemRequest
 	if err := c.Bind().JSON(&req); err != nil {

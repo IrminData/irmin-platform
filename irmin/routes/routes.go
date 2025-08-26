@@ -171,6 +171,32 @@ func RegisterAPIRoutes(
 		apiControllers.QueryGenerationDestroy,
 	)
 
+	// Assistant Script Generation routes
+	workspace.Get(
+		"/assistant/script",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ScriptGenerationIndex,
+	)
+	workspace.Post(
+		"/assistant/script",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.ScriptGenerationStore,
+	)
+	assistantScriptConversation := workspace.Group(
+		"/assistant/script/:assistant_conversation",
+		apiMiddlewares.AssistantConversationMiddleware,
+	)
+	assistantScriptConversation.Get(
+		"/",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ScriptGenerationShow,
+	)
+	assistantScriptConversation.Delete(
+		"/",
+		apiMiddlewares.AssistantPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.ScriptGenerationDestroy,
+	)
+
 	// Policy routes
 	workspace.Get(
 		"/policies",

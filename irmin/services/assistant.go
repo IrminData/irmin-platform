@@ -417,7 +417,6 @@ func (api *APIServices) ListAssistantConversations(
 // CreateAssistantConversation creates a new conversation
 func (api *APIServices) CreateAssistantConversation(
 	c context.Context,
-	_ *string,
 	user *db.User,
 	workspace *db.Workspace,
 	req irmincore.CreateAssistantConversationRequest,
