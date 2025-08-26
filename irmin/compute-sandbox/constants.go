@@ -34,7 +34,7 @@ const (
 
 	// Runtime versions.
 
-	LatestGoVersion     = "1.24.3"
+	LatestGoVersion     = "1.25.0"
 	LatestNodeVersion   = "24.2.0"
 	LatestPythonVersion = "3.11.12"
 

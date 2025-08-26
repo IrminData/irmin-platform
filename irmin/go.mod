@@ -1,15 +1,13 @@
 module irmin-api
 
-go 1.24.0
-
-toolchain go1.24.3
+go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250824100028-c08990413428
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250826135415-56c7012b3140
 	github.com/anthropics/anthropic-sdk-go v1.9.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.1
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
-	github.com/gofiber/fiber/v3 v3.0.0-beta.5
+	github.com/gofiber/fiber/v3 v3.0.0-rc.1
 	github.com/gofiber/storage/memory/v2 v2.1.0
 	github.com/gofiber/storage/s3/v2 v2.4.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
@@ -50,7 +48,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.38.0 // indirect
 	github.com/aws/smithy-go v1.22.5 // indirect
 	github.com/ericlagergren/decimal v0.0.0-20240411145413-00de7ca16731 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.10 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-openapi/jsonpointer v0.21.2 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
