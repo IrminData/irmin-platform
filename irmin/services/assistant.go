@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"irmin-api/ai"
 	"irmin-api/db"
@@ -158,7 +159,10 @@ func (api *APIServices) generateConversationTitle(
 	aiMessages []*db.AssistantMessage,
 	aiService *ai.AI,
 ) {
-	if !strings.HasPrefix(conversation.Title, "New Conversation") {
+	// Check if the title is still a placeholder (any of the generated placeholder formats)
+	if !strings.HasPrefix(conversation.Title, "New Conversation") &&
+		!strings.HasPrefix(conversation.Title, "Query Generation:") &&
+		!strings.HasPrefix(conversation.Title, "Script Generation:") {
 		return
 	}
 
@@ -293,6 +297,112 @@ func (api *APIServices) logAssistantMessageEvent(user *db.User, workspace *db.Wo
 	})
 }
 
+type buildEnhancedSystemPromptOptions struct {
+	Locale                               string
+	User                                 *db.User
+	Workspace                            *db.Workspace
+	IncludeSchema                        bool    // If set to false, no schema will be included at all
+	IncludeConnectionsInWorkspaceSchema  bool    // If set to true, the connections will be included in the workspace schema
+	IncludeRepositoriesInWorkspaceSchema bool    // If set to true, the repositories will be included in the workspace schema
+	RepositorySlug                       *string // The repository slug to include the schema of, if not set, the workspace schema will be included
+	RepositoryRef                        *string // The repository reference to use for the schema, if not set, the default branch will be used
+}
+
+// buildEnhancedSystemPrompt builds an enhanced system prompt with context information and relevant schemas
+func (api *APIServices) buildEnhancedSystemPrompt(
+	c context.Context,
+	opts *buildEnhancedSystemPromptOptions,
+) string {
+	var enhancedSystemPrompt strings.Builder
+
+	// Add a header to the system prompt
+	enhancedSystemPrompt.WriteString("Context:\n")
+
+	// Add workspace information
+	if opts.Workspace != nil {
+		enhancedSystemPrompt.WriteString(fmt.Sprintf("Workspace: %s (%s)\n", opts.Workspace.Name, opts.Workspace.Slug))
+	}
+
+	// Add user information
+	if opts.User != nil {
+		enhancedSystemPrompt.WriteString(
+			fmt.Sprintf("User: %s (%s)\n", opts.User.FirstName+" "+opts.User.LastName, opts.User.Email),
+		)
+	}
+
+	// Add time information
+	enhancedSystemPrompt.WriteString(
+		fmt.Sprintf("Current UTC date and time: %s\n", time.Now().UTC().Format("2006-01-02 15:04:05")),
+	)
+
+	// Only include schema information if requested (for first message)
+	if !opts.IncludeSchema {
+		// Return the final system prompt without schema
+		return enhancedSystemPrompt.String()
+	}
+
+	// Add repository context if specified
+	var objectSchema *irminmodels.ObjectSchema
+	var getSchemaErr error
+	if opts.RepositorySlug != nil {
+		// Get the repository
+		repository, err := api.GetRepositoryBySlug(c, opts.Locale, opts.User, opts.Workspace, *opts.RepositorySlug)
+		if err != nil {
+			api.Logger.ErrorContext(c, "Error getting repository", "error", err)
+			return enhancedSystemPrompt.String()
+		}
+		// Add repository information to the prompt
+		enhancedSystemPrompt.WriteString(fmt.Sprintf("\nRepository: %s\n", repository.Slug))
+
+		// Determine the repository reference to use, defaulting to the default branch of the repository
+		schemaRefToUse := repository.DefaultBranch
+		if opts.RepositoryRef != nil {
+			schemaRefToUse = *opts.RepositoryRef
+		}
+
+		// Add reference information
+		enhancedSystemPrompt.WriteString(
+			fmt.Sprintf("Reference (e.g. branch, tag, commit hash): %s\n", schemaRefToUse),
+		)
+
+		// Get the root object schema for the repository at the ref
+		objectSchema, getSchemaErr = api.GetRepositoryObjectSchema(
+			c,
+			opts.Locale,
+			opts.User,
+			opts.Workspace,
+			repository,
+			&db.RepositoryObject{
+				Path:          "",
+				Name:          "",
+				RepositoryRef: schemaRefToUse,
+				Type:          irminmodels.ObjectTypeGroup,
+			},
+			schemaRefToUse,
+		)
+	} else {
+		// Get the workspace schema without connections, but with repositories
+		objectSchema, getSchemaErr = api.GetWorkspaceSchema(c, opts.Locale, opts.User, opts.Workspace, opts.IncludeConnectionsInWorkspaceSchema, opts.IncludeRepositoriesInWorkspaceSchema)
+	}
+
+	// Check if the object schema generation failed
+	if getSchemaErr != nil {
+		api.Logger.ErrorContext(c, "Error getting repository object schema", "error", getSchemaErr)
+		return enhancedSystemPrompt.String()
+	}
+
+	// Add schema information as a JSON object to the prompt
+	schemaJSON, err := json.MarshalIndent(objectSchema, "", "  ")
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error marshalling object schema to JSON", "error", err)
+		return enhancedSystemPrompt.String()
+	}
+	enhancedSystemPrompt.WriteString(fmt.Sprintf("Schema: %s\n", string(schemaJSON)))
+
+	// Return the final system prompt
+	return enhancedSystemPrompt.String()
+}
+
 // SendAssistantMessage sends a message to the AI assistant and returns the response
 func (api *APIServices) SendAssistantMessage(
 	c context.Context,
@@ -308,16 +418,25 @@ func (api *APIServices) SendAssistantMessage(
 	if assistantType == "" {
 		assistantType = ai.AssistantAI // Fallback to default if not set
 	}
+
+	// Determine whether the schema should be included in the system prompt (first message only)
+	includeSchema := len(conversation.Messages) == 0
+
+	// Build the enhanced system prompt with the workspace schema
+	enhancedSystemPrompt := api.buildEnhancedSystemPrompt(c, &buildEnhancedSystemPromptOptions{
+		Locale:                               "en",
+		User:                                 user,
+		Workspace:                            workspace,
+		IncludeSchema:                        includeSchema,
+		IncludeConnectionsInWorkspaceSchema:  true,
+		IncludeRepositoriesInWorkspaceSchema: true,
+	})
+
+	// Build the message request
 	messageOpts := &ai.MessageRequest{
-		Content: message,
-		AIType:  &assistantType, // Use the conversation's stored assistant type
-		AdditionalSystemPrompt: fmt.Sprintf(
-			"Context:\n The current workspace is '%s'. \n The current user '%s', with email '%s'. \n The current UTC date and time is %s.",
-			workspace.Slug,
-			user.FirstName+" "+user.LastName,
-			user.Email,
-			time.Now().UTC().Format("2006-01-02 15:04:05"),
-		),
+		Content:                message,
+		AIType:                 &assistantType, // Use the conversation's stored assistant type
+		AdditionalSystemPrompt: enhancedSystemPrompt,
 	}
 
 	// Override with any provided options
@@ -406,7 +525,7 @@ func (api *APIServices) ListAssistantConversations(
 	}
 
 	// Get conversations from database
-	dbConversations, err := api.DB.GetAssistantConversationsByUser(workspace.ID, user.ID, false)
+	dbConversations, err := api.DB.GetAssistantConversationsByUserAndType(workspace.ID, user.ID, false, ai.AssistantAI)
 	if err != nil {
 		return nil, err
 	}

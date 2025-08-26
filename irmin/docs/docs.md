@@ -752,9 +752,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) QueriesShow\(c fiber.Ctx\) error](<#APIControllers.QueriesShow>)
   - [func \(api \*APIControllers\) QueriesStore\(c fiber.Ctx\) error](<#APIControllers.QueriesStore>)
   - [func \(api \*APIControllers\) QueriesUpdate\(c fiber.Ctx\) error](<#APIControllers.QueriesUpdate>)
-  - [func \(api \*APIControllers\) QueryGenerationDestroy\(c fiber.Ctx\) error](<#APIControllers.QueryGenerationDestroy>)
   - [func \(api \*APIControllers\) QueryGenerationIndex\(c fiber.Ctx\) error](<#APIControllers.QueryGenerationIndex>)
-  - [func \(api \*APIControllers\) QueryGenerationShow\(c fiber.Ctx\) error](<#APIControllers.QueryGenerationShow>)
   - [func \(api \*APIControllers\) QueryGenerationStore\(c fiber.Ctx\) error](<#APIControllers.QueryGenerationStore>)
   - [func \(api \*APIControllers\) RepositoriesDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoriesDestroy>)
   - [func \(api \*APIControllers\) RepositoriesIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoriesIndex>)
@@ -789,9 +787,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ResendInvite\(c fiber.Ctx\) error](<#APIControllers.ResendInvite>)
   - [func \(api \*APIControllers\) RolesIndex\(c fiber.Ctx\) error](<#APIControllers.RolesIndex>)
   - [func \(api \*APIControllers\) ScheduleUpdate\(c fiber.Ctx\) error](<#APIControllers.ScheduleUpdate>)
-  - [func \(api \*APIControllers\) ScriptGenerationDestroy\(c fiber.Ctx\) error](<#APIControllers.ScriptGenerationDestroy>)
   - [func \(api \*APIControllers\) ScriptGenerationIndex\(c fiber.Ctx\) error](<#APIControllers.ScriptGenerationIndex>)
-  - [func \(api \*APIControllers\) ScriptGenerationShow\(c fiber.Ctx\) error](<#APIControllers.ScriptGenerationShow>)
   - [func \(api \*APIControllers\) ScriptGenerationStore\(c fiber.Ctx\) error](<#APIControllers.ScriptGenerationStore>)
   - [func \(api \*APIControllers\) SendInvite\(c fiber.Ctx\) error](<#APIControllers.SendInvite>)
   - [func \(api \*APIControllers\) ShowConnectorConfigurationFields\(c fiber.Ctx\) error](<#APIControllers.ShowConnectorConfigurationFields>)
@@ -1384,15 +1380,6 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error
 
 QueriesUpdate godoc @Summary Update stored query @Description Update an existing stored query's properties @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param query\_id path string true "Query ID \(SQID\)" @Param request body irmincore.UpdateQueryRequest true "Query update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredQuery\} "Query updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Query not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/queries/\{query\_id\} \[patch\]
 
-<a name="APIControllers.QueryGenerationDestroy"></a>
-### func \(\*APIControllers\) QueryGenerationDestroy
-
-```go
-func (api *APIControllers) QueryGenerationDestroy(c fiber.Ctx) error
-```
-
-QueryGenerationDestroy godoc @Summary Delete query generation conversation @Description Delete an existing query generation conversation from the workspace @Tags assistant\-query @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Query generation conversation deleted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/query/\{conversation\_id\} \[delete\]
-
 <a name="APIControllers.QueryGenerationIndex"></a>
 ### func \(\*APIControllers\) QueryGenerationIndex
 
@@ -1401,15 +1388,6 @@ func (api *APIControllers) QueryGenerationIndex(c fiber.Ctx) error
 ```
 
 QueryGenerationIndex godoc @Summary List query generation conversations @Description Get all query generation conversations in the specified workspace that the user has permission to read @Tags assistant\-query @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantConversation\} "Query generation conversations retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/query \[get\]
-
-<a name="APIControllers.QueryGenerationShow"></a>
-### func \(\*APIControllers\) QueryGenerationShow
-
-```go
-func (api *APIControllers) QueryGenerationShow(c fiber.Ctx) error
-```
-
-QueryGenerationShow godoc @Summary Get query generation conversation details @Description Get details of a specific query generation conversation by its ID @Tags assistant\-query @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AssistantConversation\} "Query generation conversation retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/query/\{conversation\_id\} \[get\]
 
 <a name="APIControllers.QueryGenerationStore"></a>
 ### func \(\*APIControllers\) QueryGenerationStore
@@ -1717,15 +1695,6 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error
 
 ScheduleUpdate godoc @Summary Update workflow schedule @Description Update the scheduling configuration and triggers for a workflow @Tags workflows @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Param body body irminmodels.Schedule true "Schedule configuration update" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Workflow\} "Workflow schedule updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid schedule configuration" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/schedule \[patch\]
 
-<a name="APIControllers.ScriptGenerationDestroy"></a>
-### func \(\*APIControllers\) ScriptGenerationDestroy
-
-```go
-func (api *APIControllers) ScriptGenerationDestroy(c fiber.Ctx) error
-```
-
-ScriptGenerationDestroy godoc @Summary Delete script generation conversation @Description Delete an existing script generation conversation from the workspace @Tags assistant\-script @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Script generation conversation deleted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/script/\{conversation\_id\} \[delete\]
-
 <a name="APIControllers.ScriptGenerationIndex"></a>
 ### func \(\*APIControllers\) ScriptGenerationIndex
 
@@ -1734,15 +1703,6 @@ func (api *APIControllers) ScriptGenerationIndex(c fiber.Ctx) error
 ```
 
 ScriptGenerationIndex godoc @Summary List script generation conversations @Description Get all script generation conversations in the specified workspace that the user has permission to read @Tags assistant\-script @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantConversation\} "Script generation conversations retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/script \[get\]
-
-<a name="APIControllers.ScriptGenerationShow"></a>
-### func \(\*APIControllers\) ScriptGenerationShow
-
-```go
-func (api *APIControllers) ScriptGenerationShow(c fiber.Ctx) error
-```
-
-ScriptGenerationShow godoc @Summary Get script generation conversation details @Description Get details of a specific script generation conversation by its ID @Tags assistant\-script @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AssistantConversation\} "Script generation conversation retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/script/\{conversation\_id\} \[get\]
 
 <a name="APIControllers.ScriptGenerationStore"></a>
 ### func \(\*APIControllers\) ScriptGenerationStore
@@ -2194,7 +2154,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetAssistantConversationByID\(conversationID uint\) \(\*AssistantConversation, error\)](<#Database.GetAssistantConversationByID>)
   - [func \(d \*Database\) GetAssistantConversationStats\(conversationID uint\) \(\*irminmodels.AssistantConversationStats, error\)](<#Database.GetAssistantConversationStats>)
   - [func \(d \*Database\) GetAssistantConversationWithMessages\(conversationID uint\) \(\*AssistantConversation, error\)](<#Database.GetAssistantConversationWithMessages>)
-  - [func \(d \*Database\) GetAssistantConversationsByUser\(workspaceID uint, userID uint, includeHidden bool\) \(\[\]AssistantConversation, error\)](<#Database.GetAssistantConversationsByUser>)
+  - [func \(d \*Database\) GetAssistantConversationsByUserAndType\(workspaceID uint, userID uint, includeHidden bool, assistantType ai.IrminAIType\) \(\[\]AssistantConversation, error\)](<#Database.GetAssistantConversationsByUserAndType>)
   - [func \(d \*Database\) GetConnectionByID\(id uint\) \(\*Connection, error\)](<#Database.GetConnectionByID>)
   - [func \(d \*Database\) GetConnectionTags\(connectionID uint\) \(\[\]Tag, error\)](<#Database.GetConnectionTags>)
   - [func \(d \*Database\) GetConnectionsByTag\(tagID uint\) \(\[\]Connection, error\)](<#Database.GetConnectionsByTag>)
@@ -3166,14 +3126,14 @@ func (d *Database) GetAssistantConversationWithMessages(conversationID uint) (*A
 
 GetAssistantConversationWithMessages retrieves a conversation by its ID with all messages
 
-<a name="Database.GetAssistantConversationsByUser"></a>
-### func \(\*Database\) GetAssistantConversationsByUser
+<a name="Database.GetAssistantConversationsByUserAndType"></a>
+### func \(\*Database\) GetAssistantConversationsByUserAndType
 
 ```go
-func (d *Database) GetAssistantConversationsByUser(workspaceID uint, userID uint, includeHidden bool) ([]AssistantConversation, error)
+func (d *Database) GetAssistantConversationsByUserAndType(workspaceID uint, userID uint, includeHidden bool, assistantType ai.IrminAIType) ([]AssistantConversation, error)
 ```
 
-GetAssistantConversationsByUser retrieves all conversations for a specific user in a workspace
+GetAssistantConversationsByUserAndType retrieves all conversations for a specific user in a workspace by type
 
 <a name="Database.GetConnectionByID"></a>
 ### func \(\*Database\) GetConnectionByID
@@ -9605,12 +9565,10 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) DeleteInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.DeleteInvite>)
   - [func \(api \*APIServices\) DeletePolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, policy \*db.Policy\) error](<#APIServices.DeletePolicy>)
   - [func \(api \*APIServices\) DeleteQuery\(c context.Context, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery\) error](<#APIServices.DeleteQuery>)
-  - [func \(api \*APIServices\) DeleteQueryGenerationConversation\(c context.Context, user \*db.User, workspace \*db.Workspace, conversation \*db.AssistantConversation\) error](<#APIServices.DeleteQueryGenerationConversation>)
   - [func \(api \*APIServices\) DeleteRepository\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository\) error](<#APIServices.DeleteRepository>)
   - [func \(api \*APIServices\) DeleteRepositoryBranch\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch\) error](<#APIServices.DeleteRepositoryBranch>)
   - [func \(api \*APIServices\) DeleteRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) error](<#APIServices.DeleteRepositoryObject>)
   - [func \(api \*APIServices\) DeleteRepositoryTag\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, tag \*irminmodels.GitTag\) error](<#APIServices.DeleteRepositoryTag>)
-  - [func \(api \*APIServices\) DeleteScriptGenerationConversation\(c context.Context, user \*db.User, workspace \*db.Workspace, conversation \*db.AssistantConversation\) error](<#APIServices.DeleteScriptGenerationConversation>)
   - [func \(api \*APIServices\) DeleteWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) error](<#APIServices.DeleteWorkflow>)
   - [func \(api \*APIServices\) DeleteWorkspace\(ctx context.Context, user \*db.User, workspace \*db.Workspace\) error](<#APIServices.DeleteWorkspace>)
   - [func \(api \*APIServices\) DeleteWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagWithAssets \*db.TagWithAssets\) error](<#APIServices.DeleteWorkspaceTag>)
@@ -9633,7 +9591,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetPolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, policySQID string\) \(\*db.Policy, error\)](<#APIServices.GetPolicy>)
   - [func \(api \*APIServices\) GetPolicyResourceOptions\(c context.Context, workspace \*db.Workspace\) \(\[\]db.StoredQuery, \[\]db.Workflow, \[\]db.Connection, \[\]db.Repository, \[\]db.Tag, \[\]db.WorkspaceUser, error\)](<#APIServices.GetPolicyResourceOptions>)
   - [func \(api \*APIServices\) GetQuery\(c context.Context, user \*db.User, workspace \*db.Workspace, querySqid string\) \(\*db.StoredQuery, error\)](<#APIServices.GetQuery>)
-  - [func \(api \*APIServices\) GetQueryGenerationConversation\(c context.Context, user \*db.User, workspace \*db.Workspace, conversation \*db.AssistantConversation\) \(\*db.AssistantConversation, error\)](<#APIServices.GetQueryGenerationConversation>)
   - [func \(api \*APIServices\) GetRepositoryBranch\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branchName string\) \(\*irminmodels.Branch, error\)](<#APIServices.GetRepositoryBranch>)
   - [func \(api \*APIServices\) GetRepositoryBySlug\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repositorySlug string\) \(\*db.Repository, error\)](<#APIServices.GetRepositoryBySlug>)
   - [func \(api \*APIServices\) GetRepositoryCommit\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, hash string\) \(\*irminmodels.Commit, error\)](<#APIServices.GetRepositoryCommit>)
@@ -9644,7 +9601,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetRepositoryObjectStructuredContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(map\[string\]\[\]map\[string\]any, error\)](<#APIServices.GetRepositoryObjectStructuredContent>)
   - [func \(api \*APIServices\) GetRepositoryTag\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, tagName string\) \(\*irminmodels.GitTag, error\)](<#APIServices.GetRepositoryTag>)
   - [func \(api \*APIServices\) GetRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch\) \(\*irminmodels.Diff, error\)](<#APIServices.GetRepositoryUncommittedChanges>)
-  - [func \(api \*APIServices\) GetScriptGenerationConversation\(c context.Context, user \*db.User, workspace \*db.Workspace, conversation \*db.AssistantConversation\) \(\*db.AssistantConversation, error\)](<#APIServices.GetScriptGenerationConversation>)
   - [func \(api \*APIServices\) GetWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowSqid string\) \(\*db.Workflow, error\)](<#APIServices.GetWorkflow>)
   - [func \(api \*APIServices\) GetWorkflowRun\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, runSqid string\) \(\*db.WorkflowRun, error\)](<#APIServices.GetWorkflowRun>)
   - [func \(api \*APIServices\) GetWorkspace\(ctx context.Context, user \*db.User, workspaceSlug string\) \(\*db.Workspace, error\)](<#APIServices.GetWorkspace>)
@@ -10109,15 +10065,6 @@ func (api *APIServices) DeleteQuery(c context.Context, user *db.User, workspace 
 
 DeleteQuery deletes a query from a workspace.
 
-<a name="APIServices.DeleteQueryGenerationConversation"></a>
-### func \(\*APIServices\) DeleteQueryGenerationConversation
-
-```go
-func (api *APIServices) DeleteQueryGenerationConversation(c context.Context, user *db.User, workspace *db.Workspace, conversation *db.AssistantConversation) error
-```
-
-DeleteQueryGenerationConversation deletes a query generation conversation
-
 <a name="APIServices.DeleteRepository"></a>
 ### func \(\*APIServices\) DeleteRepository
 
@@ -10153,15 +10100,6 @@ func (api *APIServices) DeleteRepositoryTag(c context.Context, locale string, us
 ```
 
 
-
-<a name="APIServices.DeleteScriptGenerationConversation"></a>
-### func \(\*APIServices\) DeleteScriptGenerationConversation
-
-```go
-func (api *APIServices) DeleteScriptGenerationConversation(c context.Context, user *db.User, workspace *db.Workspace, conversation *db.AssistantConversation) error
-```
-
-DeleteScriptGenerationConversation deletes a script generation conversation
 
 <a name="APIServices.DeleteWorkflow"></a>
 ### func \(\*APIServices\) DeleteWorkflow
@@ -10361,15 +10299,6 @@ func (api *APIServices) GetQuery(c context.Context, user *db.User, workspace *db
 
 
 
-<a name="APIServices.GetQueryGenerationConversation"></a>
-### func \(\*APIServices\) GetQueryGenerationConversation
-
-```go
-func (api *APIServices) GetQueryGenerationConversation(c context.Context, user *db.User, workspace *db.Workspace, conversation *db.AssistantConversation) (*db.AssistantConversation, error)
-```
-
-GetQueryGenerationConversation retrieves a query generation conversation by ID
-
 <a name="APIServices.GetRepositoryBranch"></a>
 ### func \(\*APIServices\) GetRepositoryBranch
 
@@ -10459,15 +10388,6 @@ func (api *APIServices) GetRepositoryUncommittedChanges(c context.Context, local
 ```
 
 
-
-<a name="APIServices.GetScriptGenerationConversation"></a>
-### func \(\*APIServices\) GetScriptGenerationConversation
-
-```go
-func (api *APIServices) GetScriptGenerationConversation(c context.Context, user *db.User, workspace *db.Workspace, conversation *db.AssistantConversation) (*db.AssistantConversation, error)
-```
-
-GetScriptGenerationConversation retrieves a script generation conversation by ID
 
 <a name="APIServices.GetWorkflow"></a>
 ### func \(\*APIServices\) GetWorkflow

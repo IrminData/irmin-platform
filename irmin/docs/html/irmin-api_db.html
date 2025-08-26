@@ -464,13 +464,14 @@ func (d *Database) GetAssistantConversationWithMessages(conversationID uint) (*A
     GetAssistantConversationWithMessages retrieves a conversation by its ID with
     all messages
 
-func (d *Database) GetAssistantConversationsByUser(
+func (d *Database) GetAssistantConversationsByUserAndType(
 	workspaceID uint,
 	userID uint,
 	includeHidden bool,
+	assistantType ai.IrminAIType,
 ) ([]AssistantConversation, error)
-    GetAssistantConversationsByUser retrieves all conversations for a specific
-    user in a workspace
+    GetAssistantConversationsByUserAndType retrieves all conversations for a
+    specific user in a workspace by type
 
 func (d *Database) GetConnectionByID(id uint) (*Connection, error)
     GetConnectionByID finds a connection by its ID.

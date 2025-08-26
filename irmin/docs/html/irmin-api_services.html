@@ -320,14 +320,6 @@ func (api *APIServices) DeleteQuery(
 ) error
     DeleteQuery deletes a query from a workspace.
 
-func (api *APIServices) DeleteQueryGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) error
-    DeleteQueryGenerationConversation deletes a query generation conversation
-
 func (api *APIServices) DeleteRepository(
 	c context.Context,
 	locale string,
@@ -362,14 +354,6 @@ func (api *APIServices) DeleteRepositoryTag(
 	repository *db.Repository,
 	tag *irminmodels.GitTag,
 ) error
-
-func (api *APIServices) DeleteScriptGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) error
-    DeleteScriptGenerationConversation deletes a script generation conversation
 
 func (api *APIServices) DeleteWorkflow(
 	c context.Context,
@@ -531,15 +515,6 @@ func (api *APIServices) GetQuery(
 	querySqid string,
 ) (*db.StoredQuery, error)
 
-func (api *APIServices) GetQueryGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) (*db.AssistantConversation, error)
-    GetQueryGenerationConversation retrieves a query generation conversation by
-    ID
-
 func (api *APIServices) GetRepositoryBranch(
 	c context.Context,
 	locale string,
@@ -630,15 +605,6 @@ func (api *APIServices) GetRepositoryUncommittedChanges(
 	repository *db.Repository,
 	branch *irminmodels.Branch,
 ) (*irminmodels.Diff, error)
-
-func (api *APIServices) GetScriptGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) (*db.AssistantConversation, error)
-    GetScriptGenerationConversation retrieves a script generation conversation
-    by ID
 
 func (api *APIServices) GetWorkflow(
 	c context.Context,

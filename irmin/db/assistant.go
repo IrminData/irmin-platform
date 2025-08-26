@@ -120,14 +120,15 @@ func (d *Database) GetAssistantConversationWithMessages(conversationID uint) (*A
 	return &conversation, nil
 }
 
-// GetAssistantConversationsByUser retrieves all conversations for a specific user in a workspace
-func (d *Database) GetAssistantConversationsByUser(
+// GetAssistantConversationsByUserAndType retrieves all conversations for a specific user in a workspace by type
+func (d *Database) GetAssistantConversationsByUserAndType(
 	workspaceID uint,
 	userID uint,
 	includeHidden bool,
+	assistantType ai.IrminAIType,
 ) ([]AssistantConversation, error) {
 	var conversations []AssistantConversation
-	query := d.Where(&AssistantConversation{WorkspaceID: workspaceID, UserID: userID})
+	query := d.Where(&AssistantConversation{WorkspaceID: workspaceID, UserID: userID, AssistantType: assistantType})
 	if !includeHidden {
 		query = query.Where("hidden = ?", false)
 	}

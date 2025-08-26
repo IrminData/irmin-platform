@@ -809,19 +809,6 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error
     server error" @Router /workspaces/{workspace_slug}/queries/{query_id}
     [patch]
 
-func (api *APIControllers) QueryGenerationDestroy(c fiber.Ctx) error
-    QueryGenerationDestroy godoc @Summary Delete query generation conversation
-    @Description Delete an existing query generation conversation from
-    the workspace @Tags assistant-query @Security ApiKeyAuth @Accept json
-    @Produce json @Param workspace_slug path string true "Workspace slug"
-    @Param conversation_id path string true "Conversation ID" @Success 200
-    {object} irminmodels.IrminAPIResponse "Query generation conversation
-    deleted successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/query/{conversation_id} [delete]
-
 func (api *APIControllers) QueryGenerationIndex(c fiber.Ctx) error
     QueryGenerationIndex godoc @Summary List query generation
     conversations @Description Get all query generation conversations in
@@ -835,20 +822,6 @@ func (api *APIControllers) QueryGenerationIndex(c fiber.Ctx) error
     "Workspace not found" @Failure 500 {object} irminmodels.IrminAPIResponse
     "Internal server error" @Router /workspaces/{workspace_slug}/assistant/query
     [get]
-
-func (api *APIControllers) QueryGenerationShow(c fiber.Ctx) error
-    QueryGenerationShow godoc @Summary Get query generation conversation details
-    @Description Get details of a specific query generation conversation by
-    its ID @Tags assistant-query @Security ApiKeyAuth @Accept json @Produce
-    json @Param workspace_slug path string true "Workspace slug" @Param
-    conversation_id path string true "Conversation ID" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=irminmodels.AssistantConversation}
-    "Query generation conversation retrieved successfully" @Failure
-    401 {object} irminmodels.IrminAPIResponse "Unauthorized -
-    invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/query/{conversation_id} [get]
 
 func (api *APIControllers) QueryGenerationStore(c fiber.Ctx) error
     QueryGenerationStore godoc @Summary Generate a SQL query from natural
@@ -1398,19 +1371,6 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/workflows/{workflow_slug}/schedule [patch]
 
-func (api *APIControllers) ScriptGenerationDestroy(c fiber.Ctx) error
-    ScriptGenerationDestroy godoc @Summary Delete script generation conversation
-    @Description Delete an existing script generation conversation from
-    the workspace @Tags assistant-script @Security ApiKeyAuth @Accept json
-    @Produce json @Param workspace_slug path string true "Workspace slug"
-    @Param conversation_id path string true "Conversation ID" @Success 200
-    {object} irminmodels.IrminAPIResponse "Script generation conversation
-    deleted successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/script/{conversation_id} [delete]
-
 func (api *APIControllers) ScriptGenerationIndex(c fiber.Ctx) error
     ScriptGenerationIndex godoc @Summary List script generation
     conversations @Description Get all script generation conversations
@@ -1424,21 +1384,6 @@ func (api *APIControllers) ScriptGenerationIndex(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Workspace not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/assistant/script [get]
-
-func (api *APIControllers) ScriptGenerationShow(c fiber.Ctx) error
-    ScriptGenerationShow godoc @Summary Get script generation
-    conversation details @Description Get details of a specific script
-    generation conversation by its ID @Tags assistant-script @Security
-    ApiKeyAuth @Accept json @Produce json @Param workspace_slug
-    path string true "Workspace slug" @Param conversation_id
-    path string true "Conversation ID" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=irminmodels.AssistantConversation}
-    "Script generation conversation retrieved successfully" @Failure
-    401 {object} irminmodels.IrminAPIResponse "Unauthorized -
-    invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/script/{conversation_id} [get]
 
 func (api *APIControllers) ScriptGenerationStore(c fiber.Ctx) error
     ScriptGenerationStore godoc @Summary Generate a SQL script from natural

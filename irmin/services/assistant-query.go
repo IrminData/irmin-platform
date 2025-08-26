@@ -3,7 +3,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"irmin-api/ai"
 	"irmin-api/db"
@@ -218,121 +217,6 @@ func (api *APIServices) prepareQueryGenerationMetadata(
 	return newMetadata
 }
 
-// buildEnhancedSystemPrompt builds an enhanced system prompt with context information and relevant schemas
-func (api *APIServices) buildEnhancedSystemPrompt(
-	c context.Context,
-	locale string,
-	user *db.User,
-	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
-	includeSchema bool,
-) string {
-	var enhancedSystemPrompt strings.Builder
-
-	// Add a header to the system prompt
-	enhancedSystemPrompt.WriteString("Context:\n")
-
-	// Add workspace information
-	if workspace != nil {
-		enhancedSystemPrompt.WriteString(fmt.Sprintf("Workspace: %s (%s)\n", workspace.Name, workspace.Slug))
-	}
-
-	// Add user information
-	if user != nil {
-		enhancedSystemPrompt.WriteString(fmt.Sprintf("User: %s (%s)\n", user.FirstName+" "+user.LastName, user.Email))
-	}
-
-	// Add time information
-	enhancedSystemPrompt.WriteString(
-		fmt.Sprintf("Current UTC date and time: %s\n", time.Now().UTC().Format("2006-01-02 15:04:05")),
-	)
-
-	// Only include schema information if requested (for first message)
-	if !includeSchema {
-		// Return the final system prompt without schema
-		return enhancedSystemPrompt.String()
-	}
-
-	// Add repository context if specified
-	var objectSchema *irminmodels.ObjectSchema
-	var getSchemaErr error
-	if req.RepositorySlug != nil {
-		// Get the repository
-		repository, err := api.GetRepositoryBySlug(c, locale, user, workspace, *req.RepositorySlug)
-		if err != nil {
-			api.Logger.ErrorContext(c, "Error getting repository", "error", err)
-			return enhancedSystemPrompt.String()
-		}
-		// Add repository information to the prompt
-		enhancedSystemPrompt.WriteString(fmt.Sprintf("\nRepository: %s\n", repository.Slug))
-
-		// Determine the repository reference to use, defaulting to the default branch of the repository
-		schemaRefToUse := repository.DefaultBranch
-		if req.RepositoryRef != nil {
-			schemaRefToUse = *req.RepositoryRef
-		}
-
-		// Add reference information
-		enhancedSystemPrompt.WriteString(
-			fmt.Sprintf("Reference (e.g. branch, tag, commit hash): %s\n", schemaRefToUse),
-		)
-
-		// Get the root object schema for the repository at the ref
-		objectSchema, getSchemaErr = api.GetRepositoryObjectSchema(
-			c,
-			locale,
-			user,
-			workspace,
-			repository,
-			&db.RepositoryObject{
-				Path:          "",
-				Name:          "",
-				RepositoryRef: schemaRefToUse,
-				Type:          irminmodels.ObjectTypeGroup,
-			},
-			schemaRefToUse,
-		)
-	} else {
-		// Get the workspace schema without connections, but with repositories
-		objectSchema, getSchemaErr = api.GetWorkspaceSchema(c, locale, user, workspace, false, true)
-	}
-
-	// Check if the object schema generation failed
-	if getSchemaErr != nil {
-		api.Logger.ErrorContext(c, "Error getting repository object schema", "error", getSchemaErr)
-		return enhancedSystemPrompt.String()
-	}
-
-	// Add schema information as a JSON object to the prompt
-	schemaJSON, err := json.MarshalIndent(objectSchema, "", "  ")
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error marshalling object schema to JSON", "error", err)
-		return enhancedSystemPrompt.String()
-	}
-	enhancedSystemPrompt.WriteString(fmt.Sprintf("Schema: %s\n", string(schemaJSON)))
-
-	// Return the final system prompt
-	return enhancedSystemPrompt.String()
-}
-
-// buildEnhancedQueryPrompt builds an enhanced prompt with context information and a relevant schema
-func (api *APIServices) buildEnhancedQueryPrompt(
-	req *irmincore.QueryGenerationRequest,
-	workspace *db.Workspace,
-) string {
-	var enhancedPrompt strings.Builder
-	enhancedPrompt.WriteString(req.Prompt)
-	enhancedPrompt.WriteString("\n\n")
-
-	// Add basic workspace information
-	if workspace != nil {
-		enhancedPrompt.WriteString(fmt.Sprintf("Workspace: %s (%s)\n", workspace.Name, workspace.Slug))
-	}
-
-	// Return the final prompt
-	return enhancedPrompt.String()
-}
-
 // logQueryGenerationEvent logs the query generation event
 func (api *APIServices) logQueryGenerationEvent(user *db.User, workspace *db.Workspace) {
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
@@ -376,19 +260,23 @@ func (api *APIServices) initializeQueryAIAndSendMessage(
 		})
 	}
 
-	// Build the enhanced prompt with context
-	enhancedPrompt := api.buildEnhancedQueryPrompt(req, workspace)
-
 	// Only include schema in system prompt for first message (when no conversation history)
 	includeSchema := len(conversationHistory) == 0
-	enhancedSystemPrompt := api.buildEnhancedSystemPrompt(c, "en", user, workspace, req, includeSchema)
+	enhancedSystemPrompt := api.buildEnhancedSystemPrompt(c, &buildEnhancedSystemPromptOptions{
+		Locale:         "en",
+		User:           user,
+		Workspace:      workspace,
+		IncludeSchema:  includeSchema,
+		RepositorySlug: req.RepositorySlug,
+		RepositoryRef:  req.RepositoryRef,
+	})
 
 	// Set the AI type for query generation
 	queryAIType := ai.QueryAI
 
 	// Create the MessageRequest for QueryAI
 	messageReq := &ai.MessageRequest{
-		Content:                enhancedPrompt,
+		Content:                req.Prompt,
 		ConversationHistory:    conversationHistory,
 		AIType:                 &queryAIType,
 		AdditionalSystemPrompt: enhancedSystemPrompt,
@@ -427,7 +315,7 @@ func (api *APIServices) GenerateQuery(
 	newMetadata := api.prepareQueryGenerationMetadata(user, workspace, req)
 
 	// Initialize QueryAI service and send message
-	_, response, fullSystemPrompt, err := api.initializeQueryAIAndSendMessage(
+	aiService, response, fullSystemPrompt, err := api.initializeQueryAIAndSendMessage(
 		c,
 		userToken,
 		user,
@@ -462,41 +350,13 @@ func (api *APIServices) GenerateQuery(
 		return nil, err
 	}
 
+	// Generate conversation title if needed
+	api.generateConversationTitle(c, conversation, aiMessages, aiService)
+
 	// Log the event
 	api.logQueryGenerationEvent(user, workspace)
 
 	return aiMessages, nil
-}
-
-// GetQueryGenerationConversation retrieves a query generation conversation by ID
-func (api *APIServices) GetQueryGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) (*db.AssistantConversation, error) {
-	// Make sure this is allowed
-	if err := api.checkAssistantPermission(c, user, workspace, db.PolicyActionRead); err != nil {
-		return nil, err
-	}
-
-	// Get conversation from database with messages
-	dbConversation, err := api.DB.GetAssistantConversationWithMessages(conversation.ID)
-	if err != nil {
-		return nil, ErrNotFound
-	}
-
-	// Make sure the conversation belongs to the user and workspace
-	if dbConversation.UserID != user.ID || dbConversation.WorkspaceID != workspace.ID {
-		return nil, ErrAccessDenied
-	}
-
-	// Make sure this is a query generation conversation
-	if dbConversation.AssistantType != ai.QueryAI {
-		return nil, ErrInvalidRequest
-	}
-
-	return dbConversation, nil
 }
 
 // ListQueryGenerationConversations lists all query generation conversations for a user
@@ -510,47 +370,11 @@ func (api *APIServices) ListQueryGenerationConversations(
 		return nil, err
 	}
 
-	// Get conversations from database, filtering by QueryAI type and hidden status
-	// Note: This would require a new database method or modification to existing one
-	// For now, we'll return an empty list since these conversations are hidden
-	// TODO: Implement proper filtering for query generation conversations
-	return []db.AssistantConversation{}, nil
-}
-
-// DeleteQueryGenerationConversation deletes a query generation conversation
-func (api *APIServices) DeleteQueryGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) error {
-	// Make sure this is allowed
-	if err := api.checkAssistantPermission(c, user, workspace, db.PolicyActionDelete); err != nil {
-		return err
+	// Get conversations from database
+	dbConversations, err := api.DB.GetAssistantConversationsByUserAndType(workspace.ID, user.ID, true, ai.QueryAI)
+	if err != nil {
+		return nil, err
 	}
 
-	// Make sure the conversation belongs to the user and workspace
-	if conversation.UserID != user.ID || conversation.WorkspaceID != workspace.ID {
-		return ErrAccessDenied
-	}
-
-	// Make sure this is a query generation conversation
-	if conversation.AssistantType != ai.QueryAI {
-		return ErrInvalidRequest
-	}
-
-	// Perform the database operation
-	if deleteErr := api.DB.DeleteAssistantConversation(conversation.ID); deleteErr != nil {
-		return deleteErr
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("Query generation conversation deleted: %s", conversation.Title),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
-
-	return nil
+	return dbConversations, nil
 }

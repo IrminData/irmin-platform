@@ -3,7 +3,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"irmin-api/ai"
 	"irmin-api/db"
@@ -216,79 +215,6 @@ func (api *APIServices) prepareScriptGenerationMetadata(
 	return newMetadata
 }
 
-// buildEnhancedScriptSystemPrompt builds an enhanced system prompt with context information and relevant schemas
-func (api *APIServices) buildEnhancedScriptSystemPrompt(
-	c context.Context,
-	locale string,
-	user *db.User,
-	workspace *db.Workspace,
-	includeSchema bool,
-) string {
-	var enhancedSystemPrompt strings.Builder
-
-	// Add a header to the system prompt
-	enhancedSystemPrompt.WriteString("Context:\n")
-
-	// Add workspace information
-	if workspace != nil {
-		enhancedSystemPrompt.WriteString(fmt.Sprintf("Workspace: %s (%s)\n", workspace.Name, workspace.Slug))
-	}
-
-	// Add user information
-	if user != nil {
-		enhancedSystemPrompt.WriteString(fmt.Sprintf("User: %s (%s)\n", user.FirstName+" "+user.LastName, user.Email))
-	}
-
-	// Add time information
-	enhancedSystemPrompt.WriteString(
-		fmt.Sprintf("Current UTC date and time: %s\n", time.Now().UTC().Format("2006-01-02 15:04:05")),
-	)
-
-	// Only include schema information if requested (for first message)
-	if !includeSchema {
-		// Return the final system prompt without schema
-		return enhancedSystemPrompt.String()
-	}
-
-	// Get the workspace schema without connections, but with repositories
-	objectSchema, getSchemaErr := api.GetWorkspaceSchema(c, locale, user, workspace, false, true)
-
-	// Check if the object schema generation failed
-	if getSchemaErr != nil {
-		api.Logger.ErrorContext(c, "Error getting workspace schema", "error", getSchemaErr)
-		return enhancedSystemPrompt.String()
-	}
-
-	// Add schema information as a JSON object to the prompt
-	schemaJSON, err := json.MarshalIndent(objectSchema, "", "  ")
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error marshalling object schema to JSON", "error", err)
-		return enhancedSystemPrompt.String()
-	}
-	enhancedSystemPrompt.WriteString(fmt.Sprintf("Schema: %s\n", string(schemaJSON)))
-
-	// Return the final system prompt
-	return enhancedSystemPrompt.String()
-}
-
-// buildEnhancedScriptPrompt builds an enhanced prompt with context information and a relevant schema
-func (api *APIServices) buildEnhancedScriptPrompt(
-	req *irmincore.ScriptGenerationRequest,
-	workspace *db.Workspace,
-) string {
-	var enhancedPrompt strings.Builder
-	enhancedPrompt.WriteString(req.Prompt)
-	enhancedPrompt.WriteString("\n\n")
-
-	// Add basic workspace information
-	if workspace != nil {
-		enhancedPrompt.WriteString(fmt.Sprintf("Workspace: %s (%s)\n", workspace.Name, workspace.Slug))
-	}
-
-	// Return the final prompt
-	return enhancedPrompt.String()
-}
-
 // logScriptGenerationEvent logs the script generation event
 func (api *APIServices) logScriptGenerationEvent(user *db.User, workspace *db.Workspace) {
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
@@ -332,19 +258,21 @@ func (api *APIServices) initializeScriptingAIAndSendMessage(
 		})
 	}
 
-	// Build the enhanced prompt with context
-	enhancedPrompt := api.buildEnhancedScriptPrompt(req, workspace)
-
 	// Only include schema in system prompt for first message (when no conversation history)
 	includeSchema := len(conversationHistory) == 0
-	enhancedSystemPrompt := api.buildEnhancedScriptSystemPrompt(c, "en", user, workspace, includeSchema)
+	enhancedSystemPrompt := api.buildEnhancedSystemPrompt(c, &buildEnhancedSystemPromptOptions{
+		Locale:        "en",
+		User:          user,
+		Workspace:     workspace,
+		IncludeSchema: includeSchema,
+	})
 
 	// Set the AI type for script generation
 	scriptingAIType := ai.ScriptingAI
 
 	// Create the MessageRequest for ScriptingAI
 	messageReq := &ai.MessageRequest{
-		Content:                enhancedPrompt,
+		Content:                req.Prompt,
 		ConversationHistory:    conversationHistory,
 		AIType:                 &scriptingAIType,
 		AdditionalSystemPrompt: enhancedSystemPrompt,
@@ -383,7 +311,7 @@ func (api *APIServices) GenerateScript(
 	newMetadata := api.prepareScriptGenerationMetadata(user, workspace, req)
 
 	// Initialize ScriptingAI service and send message
-	_, response, fullSystemPrompt, err := api.initializeScriptingAIAndSendMessage(
+	aiService, response, fullSystemPrompt, err := api.initializeScriptingAIAndSendMessage(
 		c,
 		userToken,
 		user,
@@ -418,41 +346,13 @@ func (api *APIServices) GenerateScript(
 		return nil, err
 	}
 
+	// Generate conversation title if needed
+	api.generateConversationTitle(c, conversation, aiMessages, aiService)
+
 	// Log the event
 	api.logScriptGenerationEvent(user, workspace)
 
 	return aiMessages, nil
-}
-
-// GetScriptGenerationConversation retrieves a script generation conversation by ID
-func (api *APIServices) GetScriptGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) (*db.AssistantConversation, error) {
-	// Make sure this is allowed
-	if err := api.checkAssistantPermission(c, user, workspace, db.PolicyActionRead); err != nil {
-		return nil, err
-	}
-
-	// Get conversation from database with messages
-	dbConversation, err := api.DB.GetAssistantConversationWithMessages(conversation.ID)
-	if err != nil {
-		return nil, ErrNotFound
-	}
-
-	// Make sure the conversation belongs to the user and workspace
-	if dbConversation.UserID != user.ID || dbConversation.WorkspaceID != workspace.ID {
-		return nil, ErrAccessDenied
-	}
-
-	// Make sure this is a script generation conversation
-	if dbConversation.AssistantType != ai.ScriptingAI {
-		return nil, ErrInvalidRequest
-	}
-
-	return dbConversation, nil
 }
 
 // ListScriptGenerationConversations lists all script generation conversations for a user
@@ -466,47 +366,11 @@ func (api *APIServices) ListScriptGenerationConversations(
 		return nil, err
 	}
 
-	// Get conversations from database, filtering by ScriptingAI type and hidden status
-	// Note: This would require a new database method or modification to existing one
-	// For now, we'll return an empty list since these conversations are hidden
-	// TODO: Implement proper filtering for script generation conversations
-	return []db.AssistantConversation{}, nil
-}
-
-// DeleteScriptGenerationConversation deletes a script generation conversation
-func (api *APIServices) DeleteScriptGenerationConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) error {
-	// Make sure this is allowed
-	if err := api.checkAssistantPermission(c, user, workspace, db.PolicyActionDelete); err != nil {
-		return err
+	// Get conversations from database
+	dbConversations, err := api.DB.GetAssistantConversationsByUserAndType(workspace.ID, user.ID, true, ai.ScriptingAI)
+	if err != nil {
+		return nil, err
 	}
 
-	// Make sure the conversation belongs to the user and workspace
-	if conversation.UserID != user.ID || conversation.WorkspaceID != workspace.ID {
-		return ErrAccessDenied
-	}
-
-	// Make sure this is a script generation conversation
-	if conversation.AssistantType != ai.ScriptingAI {
-		return ErrInvalidRequest
-	}
-
-	// Perform the database operation
-	if deleteErr := api.DB.DeleteAssistantConversation(conversation.ID); deleteErr != nil {
-		return deleteErr
-	}
-
-	// Log the event
-	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
-		Type:        db.LogEventTypeDelete,
-		Description: fmt.Sprintf("Script generation conversation deleted: %s", conversation.Title),
-		UserID:      &user.ID,
-		WorkspaceID: &workspace.ID,
-	})
-
-	return nil
+	return dbConversations, nil
 }
