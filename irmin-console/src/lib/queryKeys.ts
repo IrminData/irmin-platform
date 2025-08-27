@@ -264,3 +264,31 @@ export const logEventsQueryKey = (
 // Stored queries related query keys
 export const storedQueriesQueryKey = (workspaceSlug: string) =>
   ['stored-queries', workspaceSlug] as const;
+
+// Assistant related query keys
+export const assistantConversationsQueryKey = (workspaceSlug: string) =>
+  ['assistant-conversations', workspaceSlug] as const;
+
+export const assistantConversationQueryKey = (
+  workspaceSlug: string,
+  conversationID: string
+) =>
+  [
+    'assistant-conversation-with-messages',
+    workspaceSlug,
+    conversationID,
+  ] as const;
+
+export const assistantConversationStatsQueryKey = (
+  workspaceSlug: string,
+  conversationID: string
+) => ['assistant-conversation-stats', workspaceSlug, conversationID] as const;
+
+// Assistant Query related query keys
+export const assistantQueryConversationsQueryKey = (workspaceSlug: string) =>
+  ['assistant-query-conversations', workspaceSlug] as const;
+
+// Assistant Scripting related query keys
+export const assistantScriptingConversationsQueryKey = (
+  workspaceSlug: string
+) => ['assistant-scripting-conversations', workspaceSlug] as const;

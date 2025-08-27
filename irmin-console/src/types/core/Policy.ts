@@ -17,13 +17,14 @@ export type PolicyResource =
   | 'repository_tag'
   | 'repository_commit'
   | 'repository_object'
-  | 'workspace_tag'
   | 'user'
   | 'policy'
   | 'invite'
   | 'audit_log'
   | 'documentation'
-  | 'billing';
+  | 'billing'
+  | 'workspace_tag'
+  | 'assistant';
 
 export type PolicyPrincipal = 'workspace_user' | 'role' | 'everyone';
 
@@ -58,6 +59,7 @@ export interface Policy {
    * - editor scripts
    * - documentation
    * - billing
+   * - assistant
    *
    * Note that some resources point to their parent resource's ID:
    * - repository objects, branches, tags, and commits point to their repository's ID

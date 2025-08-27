@@ -687,6 +687,57 @@ const en = {
     },
   },
 
+  // === ASSISTANT ===
+  assistant: {
+    // Assistant Section
+    title: 'Assistant',
+    conversations: 'Conversations',
+    noConversationSelected: 'No conversation selected',
+    noConversationSelectedDescription:
+      'Select an existing conversation from the sidebar or create a new one to start chatting with the AI assistant.',
+    noMessagesInTheConversation: 'No messages in the conversation',
+    noMessagesInTheConversationDescription:
+      'This conversation has no messages. Start by sending a message to the assistant.',
+    assistantInterfaceError: 'Assistant Interface Error',
+    failedToLoadAssistantInterface: 'Failed to load assistant interface',
+    openSidebar: 'Open sidebar',
+
+    // Conversations List
+    newConversation: 'New Conversation',
+
+    // Conversation Details
+    created: 'Created',
+    lastUpdated: 'Last updated',
+    lastMessage: 'Last message',
+    totalMessages: 'Total Messages',
+    userMessages: 'User Messages',
+    assistantMessages: 'Assistant Messages',
+    estimatedTokens: 'Estimated Tokens',
+    openConversation: 'Open Conversation',
+    deleteConversation: 'Delete Conversation',
+    clearConversation: 'Clear Conversation',
+
+    // Assistant Chat
+    askMeAnything:
+      'Ask me anything - coding, business, writing, or general questions...',
+    toggleWebSearch: 'Toggle web search simulation',
+    search: 'Search',
+
+    // Chat Suggestions
+    showCodeExamples: 'Show me code examples',
+    explainBusinessConcepts: 'Explain business concepts',
+    helpWithWriting: 'Help with writing',
+    analyzeMarketTrends: 'Analyze market trends',
+
+    // Chat Elements
+    webSearchResult: 'Web search result',
+    tool: 'Tool',
+    back: 'Back',
+    forward: 'Forward',
+    thisIsDetailedExplanation:
+      'This is a detailed explanation of the {approach} approach.',
+  },
+
   // === USER MANAGEMENT ===
   users: {
     removeUserConfirmation: 'Are you sure you want to remove this user?',

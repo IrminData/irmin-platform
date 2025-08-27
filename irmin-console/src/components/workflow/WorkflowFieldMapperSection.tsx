@@ -2,10 +2,10 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import SchemaFieldMapper from '@/components/SchemaFieldMapper';
-import { getFilteredSchema } from '@/components/SchemaFieldMapper/utils';
 import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import SchemaFieldMapper from '@/components/workflow/SchemaFieldMapper';
+import { getFilteredSchema } from '@/components/workflow/SchemaFieldMapper/utils';
 
 import { useLocale } from '@/context/LocaleContext';
 

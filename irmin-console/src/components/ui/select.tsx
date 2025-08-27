@@ -235,16 +235,11 @@ function SelectScrollDownButton({
 export {
   Select,
   SelectContent,
-  // eslint-disable-next-line import-x/no-unused-modules
   SelectGroup,
   SelectItem,
-  // eslint-disable-next-line import-x/no-unused-modules
   SelectLabel,
-  // eslint-disable-next-line import-x/no-unused-modules
   SelectScrollDownButton,
-  // eslint-disable-next-line import-x/no-unused-modules
   SelectScrollUpButton,
-  // eslint-disable-next-line import-x/no-unused-modules
   SelectSeparator,
   SelectTrigger,
   SelectValue,

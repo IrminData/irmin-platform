@@ -231,26 +231,15 @@ export {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuCheckboxItem,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuRadioItem,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuLabel,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuSeparator,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuShortcut,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuGroup,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuPortal,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuSub,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuSubContent,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuSubTrigger,
-  // eslint-disable-next-line import-x/no-unused-modules
   DropdownMenuRadioGroup,
 };

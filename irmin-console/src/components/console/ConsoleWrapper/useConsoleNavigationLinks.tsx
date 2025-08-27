@@ -9,6 +9,7 @@ import { MdCode, MdOutlinePrivacyTip } from 'react-icons/md';
 import {
   TbBook,
   TbChevronLeft,
+  TbCircle,
   TbDashboard,
   TbDatabase,
   TbFile,
@@ -89,6 +90,12 @@ const useConsoleNavigationLinks = (): {
           href: `${workspaceUrl}/workflows`,
           icon: <TbRun />,
           hide: !isResourceAllowed('workflow', 'read'),
+        },
+        {
+          title: dict.assistant.title,
+          href: `${workspaceUrl}/assistant`,
+          icon: <TbCircle />,
+          hide: !isResourceAllowed('assistant', 'read'),
         },
         {
           title: dict.consoleNavigation.editor,

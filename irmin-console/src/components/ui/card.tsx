@@ -78,7 +78,6 @@ CardFooter.displayName = 'CardFooter';
 export {
   Card,
   CardHeader,
-  // eslint-disable-next-line import-x/no-unused-modules
   CardFooter,
   CardTitle,
   CardDescription,

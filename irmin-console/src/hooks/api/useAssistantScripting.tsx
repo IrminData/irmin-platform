@@ -1,0 +1,274 @@
+import { useCallback } from 'react';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import IrminCore from '@/lib/core';
+import {
+  assistantConversationQueryKey,
+  assistantScriptingConversationsQueryKey,
+} from '@/lib/queryKeys';
+
+import { useIAM } from '@/context/IAMContext';
+import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
+
+import type {
+  AssistantConversation,
+  AssistantMessage,
+} from '@/types/core/Assistant';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
+
+type GenerateScriptInput = {
+  prompt: string;
+  conversationId?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export function useAssistantScripting() {
+  const { getToken } = useIAM();
+  const { locale } = useLocale();
+  const { workspaceSlug } = useWorkspaceContext();
+  const queryClient = useQueryClient();
+  const { irminAlert } = usePopup();
+
+  // Query for fetching all script generation conversations
+  const assistantScriptingConversationsQuery = useQuery<
+    IrminAPIResponse<AssistantConversation[]>
+  >({
+    queryKey: assistantScriptingConversationsQueryKey(workspaceSlug),
+    queryFn: async () => {
+      const token = await getToken();
+      const core = new IrminCore(locale, token);
+      const conversations =
+        await core.assistantScriptingService.listConversations({
+          workspace: workspaceSlug,
+        });
+      return conversations;
+    },
+    enabled: !!workspaceSlug,
+  });
+
+  // Mutation for generating a script
+  const generateScriptMutation = useMutation<
+    IrminAPIResponse<AssistantMessage[]>,
+    Error,
+    GenerateScriptInput
+  >({
+    mutationFn: async (input: GenerateScriptInput) => {
+      const token = await getToken();
+      const core = new IrminCore(locale, token);
+      const res = await core.assistantScriptingService.generateScript({
+        workspace: workspaceSlug,
+        prompt: input.prompt,
+        conversationId: input.conversationId,
+        metadata: input.metadata,
+      });
+      return res;
+    },
+    onMutate: async (input: GenerateScriptInput) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: assistantScriptingConversationsQueryKey(workspaceSlug),
+      });
+
+      if (input.conversationId) {
+        await queryClient.cancelQueries({
+          queryKey: assistantConversationQueryKey(
+            workspaceSlug,
+            input.conversationId
+          ),
+        });
+      }
+
+      // Snapshot the previous values
+      const previousConversations = queryClient.getQueryData<
+        IrminAPIResponse<AssistantConversation[]>
+      >(assistantScriptingConversationsQueryKey(workspaceSlug));
+
+      let previousConversation:
+        | IrminAPIResponse<AssistantConversation>
+        | undefined;
+      if (input.conversationId) {
+        previousConversation = queryClient.getQueryData<
+          IrminAPIResponse<AssistantConversation>
+        >(assistantConversationQueryKey(workspaceSlug, input.conversationId));
+      }
+
+      // Optimistically add the user message to the conversation
+      const userMessage: AssistantMessage = {
+        id: `temp-${Date.now()}`,
+        conversation_id: input.conversationId || 'temp',
+        role: 'user',
+        content: input.prompt,
+        content_type: 'text',
+        metadata: {},
+        ai_model: 'unknown',
+        status: 'pending',
+        sent_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Optimistically update the conversations list cache
+      queryClient.setQueryData<IrminAPIResponse<AssistantConversation[]>>(
+        assistantScriptingConversationsQueryKey(workspaceSlug),
+        (old: IrminAPIResponse<AssistantConversation[]> | undefined) => {
+          if (!old?.data) return old;
+
+          const updatedConversations = old.data.map(
+            (conversation: AssistantConversation) =>
+              conversation.id === input.conversationId
+                ? {
+                    ...conversation,
+                    total_messages: conversation.total_messages + 1,
+                    user_messages: conversation.user_messages + 1,
+                    last_message_at: new Date().toISOString(),
+                  }
+                : conversation
+          );
+
+          return {
+            ...old,
+            data: updatedConversations,
+          };
+        }
+      );
+
+      // If we have a conversation ID, optimistically update that conversation
+      if (input.conversationId) {
+        queryClient.setQueryData<IrminAPIResponse<AssistantConversation>>(
+          assistantConversationQueryKey(workspaceSlug, input.conversationId),
+          (old: IrminAPIResponse<AssistantConversation> | undefined) => {
+            if (!old?.data) return old;
+
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                messages: old.data.messages
+                  ? [...old.data.messages, userMessage]
+                  : [userMessage],
+                total_messages: old.data.total_messages + 1,
+                user_messages: old.data.user_messages + 1,
+                last_message_at: new Date().toISOString(),
+              },
+            };
+          }
+        );
+      }
+
+      // Return context for rollback
+      return { previousConversations, previousConversation };
+    },
+    onSuccess: (
+      res: IrminAPIResponse<AssistantMessage[]>,
+      input: GenerateScriptInput
+    ) => {
+      // Append the new messages received from the API to the conversation
+      if (res.data && res.data.length > 0) {
+        const newMessages = res.data;
+
+        // Update the conversations list with the new message count
+        queryClient.setQueryData<IrminAPIResponse<AssistantConversation[]>>(
+          assistantScriptingConversationsQueryKey(workspaceSlug),
+          (old: IrminAPIResponse<AssistantConversation[]> | undefined) => {
+            if (!old?.data) return old;
+
+            const updatedConversations = old.data.map(
+              (conversation: AssistantConversation) =>
+                conversation.id === input.conversationId
+                  ? {
+                      ...conversation,
+                      total_messages:
+                        conversation.total_messages + newMessages.length,
+                      assistant_messages:
+                        conversation.assistant_messages + newMessages.length,
+                      last_message_at: new Date().toISOString(),
+                    }
+                  : conversation
+            );
+
+            return {
+              ...old,
+              data: updatedConversations,
+            };
+          }
+        );
+
+        // If we have a conversation ID, update that specific conversation
+        if (input.conversationId) {
+          queryClient.setQueryData<IrminAPIResponse<AssistantConversation>>(
+            assistantConversationQueryKey(workspaceSlug, input.conversationId),
+            (old: IrminAPIResponse<AssistantConversation> | undefined) => {
+              if (!old?.data) return old;
+
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  messages: old.data.messages
+                    ? [...old.data.messages, ...newMessages]
+                    : newMessages,
+                  total_messages: old.data.total_messages + newMessages.length,
+                  assistant_messages:
+                    old.data.assistant_messages + newMessages.length,
+                  last_message_at: new Date().toISOString(),
+                },
+              };
+            }
+          );
+        }
+
+        irminAlert('success', 'Script generated successfully');
+      }
+    },
+    onError: (error, input: GenerateScriptInput, context: unknown) => {
+      // Rollback on error
+      const typedContext = context as
+        | {
+            previousConversations?: IrminAPIResponse<AssistantConversation[]>;
+            previousConversation?: IrminAPIResponse<AssistantConversation>;
+          }
+        | undefined;
+
+      if (typedContext?.previousConversations) {
+        queryClient.setQueryData(
+          assistantScriptingConversationsQueryKey(workspaceSlug),
+          typedContext.previousConversations
+        );
+      }
+      if (typedContext?.previousConversation && input.conversationId) {
+        queryClient.setQueryData(
+          assistantConversationQueryKey(workspaceSlug, input.conversationId),
+          typedContext.previousConversation
+        );
+      }
+
+      irminAlert('error', error.message ?? 'Error generating script');
+    },
+  });
+
+  // Handler for generating a script
+  const { mutate: generateScript, isPending: isGeneratingScript } =
+    generateScriptMutation;
+
+  const handleGenerateScript = useCallback(
+    async (input: GenerateScriptInput) => {
+      generateScript(input);
+    },
+    [generateScript]
+  );
+
+  return {
+    // Queries
+    assistantScriptingConversationsQuery,
+
+    // Mutations
+    generateScriptMutation,
+
+    // Handlers
+    handleGenerateScript,
+    isGeneratingScript,
+  };
+}

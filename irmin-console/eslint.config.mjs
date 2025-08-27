@@ -1,4 +1,3 @@
-import { globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import next from '@next/eslint-plugin-next';
 import tanstackQuery from '@tanstack/eslint-plugin-query';
@@ -12,6 +11,7 @@ import promisePlugin from 'eslint-plugin-promise';
 import reactPlugin from 'eslint-plugin-react';
 import { configs as reactCompilerConfigs } from 'eslint-plugin-react-compiler';
 import * as reactHooks from 'eslint-plugin-react-hooks';
+import { globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import tseslint, { configs as tseslintConfigs } from 'typescript-eslint';
 
@@ -86,6 +86,12 @@ export default tseslint.config(
     ],
     rules: {
       'import-x/no-unused-modules': 'off', // Next.js system files need to create exports, which would otherwise be flagged as unused
+    },
+  },
+  {
+    files: ['src/components/ui/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'import-x/no-unused-modules': 'off', // UI component files may have unused exports for component libraries
     },
   },
   {

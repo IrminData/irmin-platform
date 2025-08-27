@@ -671,6 +671,58 @@ const fi = {
     },
   },
 
+  // === ASSISTANT ===
+  assistant: {
+    // Assistant Section
+    title: 'Avustaja',
+    conversations: 'Keskustelut',
+    noConversationSelected: 'Ei keskustelua valittuna',
+    noConversationSelectedDescription:
+      'Valitse olemassa oleva keskustelu sivupalkista tai luo uusi aloittaaksesi keskustelun tekoälyavustajan kanssa.',
+    noMessagesInTheConversation: 'Keskustelussa ei ole viestejä',
+    noMessagesInTheConversationDescription:
+      'Tässä keskustelussa ei ole viestejä. Aloita lähettämällä viesti avustajan kanssa.',
+    assistantInterfaceError: 'Avustajakäyttöliittymän virhe',
+    failedToLoadAssistantInterface:
+      'Avustajakäyttöliittymän lataaminen epäonnistui',
+    openSidebar: 'Avaa sivupalkki',
+
+    // Conversations List
+    newConversation: 'Uusi keskustelu',
+
+    // Conversation Details
+    created: 'Luotu',
+    lastUpdated: 'Viimeksi päivitetty',
+    lastMessage: 'Viimeisin viesti',
+    totalMessages: 'Viestit yhteensä',
+    userMessages: 'Käyttäjän viestit',
+    assistantMessages: 'Avustajan viestit',
+    estimatedTokens: 'Arvioitu määrä tokeneita',
+    openConversation: 'Avaa keskustelu',
+    deleteConversation: 'Poista keskustelu',
+    clearConversation: 'Tyhjennä keskustelu',
+
+    // Assistant Chat
+    askMeAnything:
+      'Kysy minulta mitä tahansa - ohjelmointia, liiketoimintaa, kirjoittamista tai yleisiä kysymyksiä...',
+    toggleWebSearch: 'Vaihda verkkohakusimulaatiota',
+    search: 'Hae',
+
+    // Chat Suggestions
+    showCodeExamples: 'Näytä koodiesimerkkejä',
+    explainBusinessConcepts: 'Selitä liiketoimintakäsitteitä',
+    helpWithWriting: 'Auta kirjoittamisessa',
+    analyzeMarketTrends: 'Analysoi markkinatrendejä',
+
+    // Chat Elements
+    webSearchResult: 'Verkkohakutulos',
+    tool: 'Työkalu',
+    back: 'Takaisin',
+    forward: 'Eteenpäin',
+    thisIsDetailedExplanation:
+      'Tämä on yksityiskohtainen selitys {approach} lähestymistavasta.',
+  },
+
   // === USER MANAGEMENT ===
   users: {
     removeUserConfirmation:

@@ -56,10 +56,4 @@ function PopoverAnchor({
   return <PopoverPrimitive.Anchor data-slot='popover-anchor' {...props} />;
 }
 
-export {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  // eslint-disable-next-line import-x/no-unused-modules
-  PopoverAnchor,
-};
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor };

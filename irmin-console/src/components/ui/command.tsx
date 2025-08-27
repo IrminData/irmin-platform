@@ -211,14 +211,12 @@ function CommandShortcut({
 
 export {
   Command,
-  // eslint-disable-next-line import-x/no-unused-modules
   CommandDialog,
   CommandInput,
   CommandList,
   CommandEmpty,
   CommandGroup,
   CommandItem,
-  // eslint-disable-next-line import-x/no-unused-modules
   CommandShortcut,
   CommandSeparator,
 };

@@ -166,18 +166,13 @@ function DialogDescription({
 
 export {
   Dialog,
-  // eslint-disable-next-line import-x/no-unused-modules
   DialogClose,
   DialogContent,
   DialogDescription,
-  // eslint-disable-next-line import-x/no-unused-modules
   DialogFooter,
   DialogHeader,
-  // eslint-disable-next-line import-x/no-unused-modules
   DialogOverlay,
-  // eslint-disable-next-line import-x/no-unused-modules
   DialogPortal,
   DialogTitle,
-  // eslint-disable-next-line import-x/no-unused-modules
   DialogTrigger,
 };

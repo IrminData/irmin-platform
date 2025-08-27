@@ -25,6 +25,9 @@
   }
 
   /* --- Form Element Base Styles --- */
+  button {
+    @apply cursor-pointer;
+  }
   select {
     @apply border-border rounded-[0.2rem] border outline-none appearance-none bg-no-repeat;
 
@@ -50,7 +53,15 @@
   ::after,
   ::before,
   ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+  ::file-selector-button,
+  ::selection,
+  ::placeholder,
+  ::marker {
+    /* Set border color to the border color variable */
+    border-color: hsl(var(--border, currentColor));
+    border-bottom-color: hsl(var(--border, currentColor));
+    border-top-color: hsl(var(--border, currentColor));
+    border-left-color: hsl(var(--border, currentColor));
+    border-right-color: hsl(var(--border, currentColor));
   }
 }

@@ -3,10 +3,10 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useMemo } from 'react';
 
-import SchemaFieldMapper from '@/components/SchemaFieldMapper';
-import { getFilteredSchema } from '@/components/SchemaFieldMapper/utils';
 import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import SchemaFieldMapper from '@/components/workflow/SchemaFieldMapper';
+import { getFilteredSchema } from '@/components/workflow/SchemaFieldMapper/utils';
 
 import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
