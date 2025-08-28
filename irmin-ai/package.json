@@ -1,0 +1,53 @@
+{
+  "name": "irmin-ai",
+  "version": "1.0.0",
+  "description": "Irmin AI applications, with Langchain",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/database/migrate.ts",
+    "clean": "rimraf dist"
+  },
+  "author": "Tim Borovkov / Irmin",
+  "packageManager": "pnpm@10.12.1",
+  "dependencies": {
+    "@ai-sdk/langchain": "^1.0.27",
+    "@fastify/cors": "^9.0.1",
+    "@h1deya/langchain-mcp-tools": "^0.3.4",
+    "@langchain/community": "^0.3.24",
+    "@langchain/core": "^0.3.24",
+    "@langchain/groq": "^0.2.3",
+    "@langchain/openai": "^0.6.9",
+    "@libsql/client": "^0.15.14",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.44.5",
+    "fastify": "^4.28.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.24.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@swc/core": "^1.13.5",
+    "@types/node": "^20.14.9",
+    "drizzle-kit": "^0.31.4",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.2",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.0.1",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
