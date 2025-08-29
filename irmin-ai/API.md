@@ -1,6 +1,6 @@
 # Irmin AI API Documentation
 
-This document describes the API endpoints for the Irmin AI service, including conversation management and chat functionality.
+This document describes the API endpoints for the Irmin AI service, including conversation management, chat functionality, and AI agents.
 
 ## Base URL
 
@@ -13,7 +13,7 @@ http://localhost:3000/api
 Most endpoints require authentication via JWT Bearer token in the Authorization header:
 
 ```
-Authorization: Bearer <your-jwt-token>
+Authorization: Bearer <your-irmin-jwt-token>
 ```
 
 ## Conversation Management
@@ -130,7 +130,7 @@ Retrieve messages for a specific conversation with pagination.
       "outputTokens": 50,
       "totalTokens": 150,
       "processingTimeMs": 2500,
-      "costDollars": 0.003,
+      "costUSD": 0.003,
       "metadata": {},
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
@@ -252,10 +252,10 @@ Send a message and receive an AI response. Supports both streaming and non-strea
 |-----------|---------|----------|---------|-------------|
 | `conversationId` | string | No       | -       | Existing conversation ID (creates new if not provided) |
 | `message`        | string | Yes      | -       | User message content |
-| `provider`       | string | No       | groq    | AI model provider |
+| `provider`       | string | No       | groq    | AI model provider (groq, openai) |
 | `model`          | string | No       | -       | Specific model to use |
-| `temperature`    | number | No       | -       | Response randomness (0.0-1.0) |
-| `maxTokens`      | number | No       | -       | Maximum response length |
+| `temperature`    | number | No       | -       | Response randomness (0.0-2.0) |
+| `maxTokens`      | number | No       | -       | Maximum response length (1-4000) |
 | `useTools`       | boolean| No       | false   | Enable MCP tools |
 | `stream`         | boolean| No       | true    | Enable streaming response |
 
@@ -280,18 +280,8 @@ When `stream: false`, returns a complete response:
     "conversationId": "uuid",
     "role": "assistant",
     "content": "AI response content",
-    "aiModelId": "llama3-8b-8192",
-    "modelProvider": "groq",
-    "modelName": "llama3-8b-8192",
-    "inputTokens": 100,
-    "outputTokens": 50,
-    "totalTokens": 150,
-    "processingTimeMs": 2500,
-    "costDollars": 0.003,
-    "metadata": {},
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z",
-    "timestamp": "2024-01-01T00:00:00.000Z"
+    "timestamp": "2024-01-01T00:00:00.000Z",
+    "metadata": {}
   },
   "usage": {
     "promptTokens": 100,
@@ -313,17 +303,12 @@ Retrieve a list of available AI models with pricing and capabilities.
 {
   "models": [
     {
-      "id": "llama3-8b-8192",
       "name": "Llama 3 8B",
       "provider": "groq",
+      "modelId": "llama3-8b-8192",
       "description": "llama3-8b-8192",
-      "maxTokens": 8192,
-      "supportsStreaming": true,
-      "supportsFunctionCalling": false,
-      "pricing": {
-        "inputTokens": 0.0000001,
-        "outputTokens": 0.0000002
-      }
+      "inputPricePerMillionTokens": 0.0000001,
+      "outputPricePerMillionTokens": 0.0000002
     }
   ]
 }
@@ -343,13 +328,13 @@ Retrieve a list of available MCP tools.
   "initialized": true,
   "tools": [
     {
-      "name": "tool_name",
-      "description": "MCP tool: tool_name",
+      "name": "irmin",
+      "description": "MCP tool: irmin",
       "type": "mcp"
     }
   ],
-  "count": 5,
-  "totalTools": 5
+  "count": 1,
+  "totalTools": 1
 }
 ```
 
@@ -364,27 +349,219 @@ Check the current status of MCP tool connections.
 ```json
 {
   "enabled": true,
-  "initialized": true,
-  "toolCount": 5,
-  "toolNames": ["tool1", "tool2", "tool3", "tool4", "tool5"],
-  "message": "5 MCP tools available"
+  "configStatus": {
+    "enabled": true,
+    "serverCount": 1,
+    "configKeys": ["irmin"]
+  }
 }
 ```
 
-### Reinitialize MCP Tools
 
-**POST** `/chat/reinitialize-mcp`
 
-Reinitialize MCP tools with a new authentication token.
+## AI Agents
+
+The AI agents system provides specialized AI assistants for different tasks, including chat, query generation, scripting, and title generation.
+
+### Execute Agent
+
+**POST** `/agents/:agentId`
+
+Execute a single AI agent with the specified message and context.
+
+#### Path Parameters
+
+| Parameter | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| `agentId` | string | Yes      | Agent identifier (chat, query, scripting, title-generation) |
+
+#### Request Body
+
+```json
+{
+  "message": "Help me understand microservices architecture",
+  "context": {
+    "schema": "database_schema",
+    "userPreferences": { "language": "go" }
+  },
+  "conversationId": "conv-456",
+  "metadata": { "priority": "high" }
+}
+```
+
+#### Request Parameters
+
+| Parameter | Type    | Required | Default | Description |
+|-----------|---------|----------|---------|-------------|
+| `message` | string  | Yes      | -       | User message content |
+| `context` | object  | No       | {}      | Additional context for the agent |
+| `conversationId` | string | No | - | Conversation identifier (used for memory and history) |
+| `metadata` | object  | No       | {}      | Additional metadata |
 
 #### Response
 
 ```json
 {
-  "success": true,
-  "initialized": true,
-  "toolCount": 5,
-  "message": "MCP tools reinitialized with 5 tools"
+  "content": "AI response content",
+  "metadata": {
+    "agentId": "chat",
+    "type": "chat",
+    "context": {}
+  },
+  "usage": {
+    "promptTokens": 150,
+    "completionTokens": 300,
+    "totalTokens": 450
+  }
+}
+```
+
+### Execute Agent with Streaming
+
+**POST** `/agents/:agentId/stream`
+
+Execute an AI agent with streaming response support.
+
+#### Path Parameters
+
+| Parameter | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| `agentId` | string | Yes      | Agent identifier |
+
+#### Request Body
+
+Same as non-streaming agent execution.
+
+#### Streaming Response
+
+Returns a Server-Sent Events (SSE) stream with headers:
+
+```
+X-Agent-Id: <agent-id>
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+```
+
+### List Available Agents
+
+**GET** `/agents`
+
+Retrieve a list of all available AI agents with their configurations.
+
+#### Response
+
+```json
+[
+  {
+    "id": "chat",
+    "name": "General Assistant Chat Agent",
+    "description": "General purpose chat agent that can answer questions and help with tasks",
+    "type": "chat",
+    "modelProvider": "groq",
+    "model": "qwen/qwen3-32b",
+    "temperature": 0.7,
+    "maxTokens": 4000,
+    "responseFormat": "markdown",
+    "contextRequirements": [
+      {
+        "type": "conversation",
+        "name": "conversation_history",
+        "required": false
+      }
+    ],
+    "thinkingEnabled": true,
+    "useTools": true,
+    "streaming": true
+  }
+]
+```
+
+### Get Agent Configuration
+
+**GET** `/agents/:agentId/config`
+
+Retrieve the configuration for a specific agent.
+
+#### Path Parameters
+
+| Parameter | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| `agentId` | string | Yes      | Agent identifier |
+
+#### Response
+
+Same as the agent object in the agents list.
+
+### Get Available Models
+
+**GET** `/agents/models`
+
+Retrieve a list of available AI models for all providers.
+
+#### Response
+
+```json
+{
+  "groq": ["llama-3.1-8b-instant", "qwen/qwen3-32b"],
+  "openai": ["gpt-5", "gpt-5-mini"]
+}
+```
+
+### Get MCP Status
+
+**GET** `/agents/mcp/status`
+
+Check the current status of MCP tool connections.
+
+#### Response
+
+```json
+{
+  "enabled": true,
+  "configStatus": {
+    "enabled": true,
+    "serverCount": 1,
+    "configKeys": ["irmin"]
+  }
+}
+```
+
+
+
+### Agent Health Check
+
+**GET** `/agents/health`
+
+Check the overall health and status of the AI agents system.
+
+#### Response
+
+```json
+{
+  "status": "healthy",
+  "agentsCount": 4,
+  "agents": [
+    {
+      "id": "chat",
+      "name": "General Assistant Chat Agent",
+      "type": "chat"
+    },
+    {
+      "id": "query",
+      "name": "SQL Query Agent",
+      "type": "single-shot"
+    }
+  ],
+  "mcp": {
+    "enabled": true,
+    "configStatus": {
+      "enabled": true,
+      "serverCount": 1,
+      "configKeys": ["irmin"]
+    }
+  },
+  "modelsCount": 15
 }
 ```
 
@@ -400,26 +577,3 @@ All endpoints return consistent error responses:
   "timestamp": "2024-01-01T00:00:00.000Z"
 }
 ```
-
-### Common HTTP Status Codes
-
-- **200** - Success
-- **201** - Created
-- **204** - No Content
-- **400** - Bad Request
-- **404** - Not Found
-- **500** - Internal Server Error
-
-## Rate Limiting
-
-Rate limiting may be applied to prevent abuse. Check response headers for rate limit information.
-
-## WebSocket Support
-
-The chat endpoint supports streaming responses for real-time AI interactions. Use the `stream: true` parameter to enable streaming.
-
-## MCP Tools
-
-Model Context Protocol (MCP) tools can be enabled by setting `useTools: true` in chat requests. These tools provide additional capabilities beyond standard AI responses.
-
-Tools are initialized per authentication token and can be reinitialized using the `/chat/reinitialize-mcp` endpoint.

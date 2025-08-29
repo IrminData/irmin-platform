@@ -1,0 +1,179 @@
+import {
+  AgentConfig,
+  AgentInput,
+  AgentResponse,
+  BaseAgentInterface,
+} from '@/agents/types';
+import { ContextManager } from '@/agents/utils/context-manager';
+import type { Message } from '@/database';
+import { db, messages as messagesTable } from '@/database';
+import { desc, eq } from 'drizzle-orm';
+import fs from 'fs/promises';
+import path from 'path';
+
+import { completionService } from '@/services/completion';
+
+export abstract class BaseAgent implements BaseAgentInterface {
+  public config: AgentConfig;
+  protected contextManager: ContextManager;
+
+  constructor(config: AgentConfig) {
+    this.config = config;
+    this.contextManager = new ContextManager();
+  }
+
+  async execute(input: AgentInput): Promise<AgentResponse> {
+    // Validate input
+    if (!this.validateInput(input)) {
+      throw new Error('Invalid input for agent');
+    }
+
+    // Prepare context and messages
+    const context = await this.prepareContext(input);
+    const conversationMessages = await this.buildMessages(input);
+    const systemPrompt = await this.loadSystemPrompt();
+
+    // Execute with the completion service
+    if (this.config.streaming) {
+      const stream = await completionService.createStreamingResponse({
+        messages: conversationMessages,
+        provider: this.config.modelProvider,
+        model: this.config.model,
+        temperature: this.config.temperature,
+        maxTokens: this.config.maxTokens,
+        systemPrompt,
+        useTools: this.config.useTools,
+        authToken: input.authToken,
+      });
+
+      return {
+        content: '', // Content will be streamed
+        stream: stream, // Pass LangChain stream directly
+        metadata: {
+          agentId: this.config.id,
+          type: this.config.type,
+          context,
+        },
+      };
+    } else {
+      const response = await completionService.createResponse({
+        messages: conversationMessages,
+        provider: this.config.modelProvider,
+        model: this.config.model,
+        temperature: this.config.temperature,
+        maxTokens: this.config.maxTokens,
+        systemPrompt,
+        useTools: this.config.useTools,
+        authToken: input.authToken,
+      });
+
+      return {
+        content: response.content,
+        usage: response.usage,
+        metadata: {
+          agentId: this.config.id,
+          type: this.config.type,
+          context,
+        },
+      };
+    }
+  }
+
+  validateInput(input: AgentInput): boolean {
+    if (!input.message || input.message.trim() === '') {
+      return false;
+    }
+
+    // Check required context
+    for (const requirement of this.config.contextRequirements) {
+      if (requirement.required && !input.context?.[requirement.name]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  async prepareContext(input: AgentInput): Promise<Record<string, unknown>> {
+    const context: Record<string, unknown> = { ...input.context };
+
+    for (const requirement of this.config.contextRequirements) {
+      switch (requirement.type) {
+        case 'conversation':
+          // Fetch conversation history from database if conversationId is provided
+          if (input.conversationId) {
+            const history = await db
+              .select()
+              .from(messagesTable)
+              .where(eq(messagesTable.conversationId, input.conversationId))
+              .orderBy(desc(messagesTable.createdAt))
+              .limit(20);
+            context[requirement.name] = history;
+          } else {
+            context[requirement.name] = [];
+          }
+          break;
+        case 'string':
+          context[requirement.name] = input.context?.[requirement.name] || '';
+          break;
+        case 'vector':
+          context[requirement.name] =
+            await this.contextManager.getVectorContext(
+              requirement.name,
+              input.message
+            );
+          break;
+        case 'memory':
+          context[requirement.name] =
+            await this.contextManager.getMemoryContext(input.conversationId);
+          break;
+        case 'schema':
+          context[requirement.name] =
+            await this.contextManager.getSchemaContext();
+          break;
+        // Add other context types as needed
+      }
+    }
+
+    return context;
+  }
+
+  protected async buildMessages(input: AgentInput): Promise<Message[]> {
+    const conversationMessages: Message[] = [];
+
+    // Fetch conversation history if conversationId is provided
+    if (input.conversationId) {
+      const history = await db
+        .select()
+        .from(messagesTable)
+        .where(eq(messagesTable.conversationId, input.conversationId))
+        .orderBy(desc(messagesTable.createdAt))
+        .limit(20);
+
+      // Reverse to get chronological order
+      conversationMessages.push(...history.reverse());
+    }
+
+    // The current user message is now saved to the database by AgentsManager.executeAgent
+    // and will be included in the conversation history above
+
+    return conversationMessages;
+  }
+
+  protected async loadSystemPrompt(): Promise<string> {
+    try {
+      const promptPath = path.join(
+        process.cwd(),
+        'src/agents',
+        this.config.id,
+        'system-prompt.txt'
+      );
+      return await fs.readFile(promptPath, 'utf-8');
+    } catch {
+      console.warn(
+        `No system prompt found for ${this.config.id}, using default`
+      );
+      return `You are ${this.config.name}. ${this.config.description}`;
+    }
+  }
+}

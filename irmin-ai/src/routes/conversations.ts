@@ -1,30 +1,35 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { eq, desc, asc, count, sum } from 'drizzle-orm';
+import { conversations, db, messages, type NewConversation } from '@/database';
 import { randomUUID } from 'crypto';
+import { asc, count, desc, eq, sum } from 'drizzle-orm';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+
+import { analyticsService } from '@/services/analytics';
+
 import {
-  db,
-  conversations,
-  messages,
-  analytics,
-  type NewConversation,
-} from '@/database';
-import {
-  ConversationCreateRequestSchema,
-  ConversationUpdateRequestSchema,
   type ConversationCreateRequest,
+  ConversationCreateRequestSchema,
+  type ConversationMessagesQuery,
+  ConversationMessagesQuerySchema,
+  type ConversationQuery,
+  ConversationQuerySchema,
+  ConversationSchema,
   type ConversationUpdateRequest,
-} from '@/types';
+  ConversationUpdateRequestSchema,
+  ConversationWithStatsSchema,
+  MessageSchema,
+} from '@/types/conversation';
+
+import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
+import {
+  sendCreatedResponse,
+  sendNoContentResponse,
+  sendOkResponse,
+  sendPaginatedResponse,
+} from '@/utils/responses';
 
 interface ConversationParams {
   id: string;
-}
-
-interface ConversationQuery {
-  page?: number;
-  limit?: number;
-  sortBy?: 'title' | 'createdAt' | 'updatedAt';
-  sortOrder?: 'asc' | 'desc';
 }
 
 export async function conversationRoutes(fastify: FastifyInstance) {
@@ -33,19 +38,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     '/conversations',
     {
       schema: {
-        querystring: {
-          type: 'object',
-          properties: {
-            page: { type: 'integer', minimum: 1, default: 1 },
-            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
-            sortBy: { type: 'string', default: 'updatedAt' },
-            sortOrder: {
-              type: 'string',
-              enum: ['asc', 'desc'],
-              default: 'desc',
-            },
-          },
-        },
+        querystring: zodToJsonSchema(ConversationQuerySchema),
       },
     },
     async (
@@ -87,7 +80,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             updatedAt: conversations.updatedAt,
             messageCount: count(messages.id),
             totalTokens: sum(messages.totalTokens),
-            totalCost: sum(messages.costDollars),
+            totalCost: sum(messages.costUSD),
           })
           .from(conversations)
           .leftJoin(messages, eq(conversations.id, messages.conversationId))
@@ -96,27 +89,36 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .limit(limit)
           .offset(offset);
 
-        return reply.send({
+        sendPaginatedResponse(
+          reply,
+          ConversationWithStatsSchema,
           data,
-          pagination: {
+          {
             page,
             limit,
             total,
             totalPages: Math.ceil(total / limit),
           },
-        });
+          fastify.log
+        );
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error
             ? error.message
             : 'Failed to fetch conversations';
         fastify.log.error('List conversations error: %s', errorMessage);
-        return reply.status(500).send({
-          error: 'Internal Server Error',
-          message: errorMessage,
-          statusCode: 500,
-          timestamp: new Date().toISOString(),
-        });
+
+        // Log error analytics
+        await analyticsService.logError(
+          'list_conversations_failed',
+          errorMessage,
+          undefined,
+          undefined
+        );
+
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
       }
     }
   );
@@ -147,33 +149,38 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .where(eq(conversations.id, id));
 
         if (!conversation.length) {
-          return reply.status(404).send({
-            error: 'Not Found',
-            message: 'Conversation not found',
-            statusCode: 404,
-            timestamp: new Date().toISOString(),
-          });
+          sendNotFoundError(reply, 'Conversation not found', fastify.log);
+          return;
         }
 
-        return reply.send(conversation[0]);
+        sendOkResponse(reply, ConversationSchema, conversation[0], fastify.log);
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error
             ? error.message
             : 'Failed to fetch conversation';
         fastify.log.error('Get conversation error: %s', errorMessage);
-        return reply.status(500).send({
-          error: 'Internal Server Error',
-          message: errorMessage,
-          statusCode: 500,
-          timestamp: new Date().toISOString(),
-        });
+
+        // Log error analytics
+        await analyticsService.logError(
+          'get_conversation_failed',
+          errorMessage,
+          undefined,
+          undefined
+        );
+
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
       }
     }
   );
 
   // GET /api/conversations/:id/messages - Get conversation messages
-  fastify.get<{ Params: ConversationParams; Querystring: ConversationQuery }>(
+  fastify.get<{
+    Params: ConversationParams;
+    Querystring: ConversationMessagesQuery;
+  }>(
     '/conversations/:id/messages',
     {
       schema: {
@@ -184,24 +191,13 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           },
           required: ['id'],
         },
-        querystring: {
-          type: 'object',
-          properties: {
-            page: { type: 'integer', minimum: 1, default: 1 },
-            limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
-            sortOrder: {
-              type: 'string',
-              enum: ['asc', 'desc'],
-              default: 'asc',
-            },
-          },
-        },
+        querystring: zodToJsonSchema(ConversationMessagesQuerySchema),
       },
     },
     async (
       request: FastifyRequest<{
         Params: ConversationParams;
-        Querystring: ConversationQuery;
+        Querystring: ConversationMessagesQuery;
       }>,
       reply: FastifyReply
     ) => {
@@ -216,12 +212,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .from(conversations)
           .where(eq(conversations.id, id));
         if (!conversation.length) {
-          return reply.status(404).send({
-            error: 'Not Found',
-            message: 'Conversation not found',
-            statusCode: 404,
-            timestamp: new Date().toISOString(),
-          });
+          sendNotFoundError(reply, 'Conversation not found', fastify.log);
+          return;
         }
 
         // Count messages
@@ -241,27 +233,27 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .limit(limit)
           .offset(offset);
 
-        return reply.send({
+        sendPaginatedResponse(
+          reply,
+          MessageSchema,
           data,
-          pagination: {
+          {
             page,
             limit,
             total,
             totalPages: Math.ceil(total / limit),
           },
-        });
+          fastify.log
+        );
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error
             ? error.message
             : 'Failed to fetch conversation messages';
         fastify.log.error('Get conversation messages error: %s', errorMessage);
-        return reply.status(500).send({
-          error: 'Internal Server Error',
-          message: errorMessage,
-          statusCode: 500,
-          timestamp: new Date().toISOString(),
-        });
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
       }
     }
   );
@@ -294,27 +286,27 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         await db.insert(conversations).values(newConversation);
 
         // Log analytics
-        await db.insert(analytics).values({
-          id: randomUUID(),
-          eventType: 'conversation_created',
-          conversationId: id,
-          eventData: { title },
-          createdAt: now,
-        });
+        await analyticsService.logConversationEvent(
+          'conversation_created',
+          id,
+          { title }
+        );
 
-        return reply.status(201).send(newConversation);
+        sendCreatedResponse(
+          reply,
+          ConversationSchema,
+          newConversation,
+          fastify.log
+        );
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error
             ? error.message
             : 'Failed to create conversation';
         fastify.log.error('Create conversation error: %s', errorMessage);
-        return reply.status(500).send({
-          error: 'Internal Server Error',
-          message: errorMessage,
-          statusCode: 500,
-          timestamp: new Date().toISOString(),
-        });
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
       }
     }
   );
@@ -351,12 +343,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .from(conversations)
           .where(eq(conversations.id, id));
         if (!existing.length) {
-          return reply.status(404).send({
-            error: 'Not Found',
-            message: 'Conversation not found',
-            statusCode: 404,
-            timestamp: new Date().toISOString(),
-          });
+          sendNotFoundError(reply, 'Conversation not found', fastify.log);
+          return;
         }
 
         // Update conversation
@@ -370,24 +358,31 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .set(updates)
           .where(eq(conversations.id, id));
 
+        // Log analytics
+        await analyticsService.logConversationEvent(
+          'conversation_updated',
+          id,
+          {
+            title: updateData.title,
+            metadata: updateData.metadata,
+          }
+        );
+
         // Get updated conversation
         const updated = await db
           .select()
           .from(conversations)
           .where(eq(conversations.id, id));
-        return reply.send(updated[0]);
+        sendOkResponse(reply, ConversationSchema, updated[0], fastify.log);
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error
             ? error.message
             : 'Failed to update conversation';
         fastify.log.error('Update conversation error: %s', errorMessage);
-        return reply.status(500).send({
-          error: 'Internal Server Error',
-          message: errorMessage,
-          statusCode: 500,
-          timestamp: new Date().toISOString(),
-        });
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
       }
     }
   );
@@ -419,30 +414,32 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .from(conversations)
           .where(eq(conversations.id, id));
         if (!conversation.length) {
-          return reply.status(404).send({
-            error: 'Not Found',
-            message: 'Conversation not found',
-            statusCode: 404,
-            timestamp: new Date().toISOString(),
-          });
+          sendNotFoundError(reply, 'Conversation not found', fastify.log);
+          return;
         }
+
+        // Log analytics before deletion
+        await analyticsService.logConversationEvent(
+          'conversation_deleted',
+          id,
+          {
+            title: conversation[0].title,
+          }
+        );
 
         // Delete conversation (messages and analytics will be deleted by CASCADE)
         await db.delete(conversations).where(eq(conversations.id, id));
 
-        return reply.status(204).send();
+        sendNoContentResponse(reply);
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error
             ? error.message
             : 'Failed to delete conversation';
         fastify.log.error('Delete conversation error: %s', errorMessage);
-        return reply.status(500).send({
-          error: 'Internal Server Error',
-          message: errorMessage,
-          statusCode: 500,
-          timestamp: new Date().toISOString(),
-        });
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
       }
     }
   );

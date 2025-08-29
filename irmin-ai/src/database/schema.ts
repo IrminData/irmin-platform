@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const conversations = sqliteTable('conversations', {
   id: text('id').primaryKey(),
@@ -27,11 +27,14 @@ export const messages = sqliteTable('messages', {
   modelProvider: text('model_provider'), // 'openai', 'groq', etc.
   modelName: text('model_name'),
 
+  // Agent information
+  agentName: text('agent_name'), // Name of the agent that generated this message
+
   // Token usage and costs
   inputTokens: integer('input_tokens').default(0),
   outputTokens: integer('output_tokens').default(0),
   totalTokens: integer('total_tokens').default(0),
-  costDollars: real('cost_dollars').default(0),
+  costUSD: real('cost_dollars').default(0),
 
   // Performance metrics
   processingTimeMs: integer('processing_time_ms').default(0),
@@ -46,25 +49,16 @@ export const messages = sqliteTable('messages', {
 });
 
 export const aiModels = sqliteTable('ai_models', {
-  id: text('id').primaryKey(),
+  id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   provider: text('provider').notNull(), // 'openai', 'groq', etc.
-  modelId: text('model_id').notNull(), // actual model identifier
+  modelId: text('model_id').notNull().unique(), // actual model identifier
+  description: text('description').notNull(), // model description
 
-  // Pricing information (per 1K tokens)
-  inputPricePerToken: real('input_price_per_token').default(0),
-  outputPricePerToken: real('output_price_per_token').default(0),
-
-  // Model capabilities
-  maxTokens: integer('max_tokens'),
-  supportsStreaming: integer('supports_streaming', { mode: 'boolean' }).default(
-    false
-  ),
-  supportsVision: integer('supports_vision', { mode: 'boolean' }).default(
-    false
-  ),
-  supportsFunctions: integer('supports_functions', { mode: 'boolean' }).default(
-    false
+  // Pricing information (per 1M tokens)
+  inputPricePerMillionTokens: real('input_price_per_million_tokens').default(0),
+  outputPricePerMillionTokens: real('output_price_per_million_tokens').default(
+    0
   ),
 
   // Metadata
@@ -86,7 +80,17 @@ export const analytics = sqliteTable('analytics', {
   id: text('id').primaryKey(),
 
   // Event information
-  eventType: text('event_type').notNull(), // 'conversation_created', 'message_sent', 'model_used', etc.
+  eventType: text('event_type', {
+    enum: [
+      'conversation_created',
+      'conversation_updated',
+      'conversation_deleted',
+      'message_sent',
+      'agent_used',
+      'model_used',
+      'error_occurred',
+    ],
+  }).notNull(),
   eventData: text('event_data', { mode: 'json' }),
 
   // Optional references
@@ -96,13 +100,13 @@ export const analytics = sqliteTable('analytics', {
   messageId: text('message_id').references(() => messages.id, {
     onDelete: 'cascade',
   }),
-  aiModelId: text('ai_model_id').references(() => aiModels.id, {
+  aiModelId: integer('ai_model_id').references(() => aiModels.id, {
     onDelete: 'set null',
   }),
 
   // Metrics
   tokenCount: integer('token_count').default(0),
-  costDollars: real('cost_dollars').default(0),
+  costUSD: real('cost_dollars').default(0),
   processingTimeMs: integer('processing_time_ms').default(0),
 
   // Timestamps

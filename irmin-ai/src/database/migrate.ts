@@ -1,4 +1,6 @@
+/* eslint-disable import-x/no-unused-modules */
 import { migrate } from 'drizzle-orm/libsql/migrator';
+
 import { db } from './connection';
 
 async function main() {

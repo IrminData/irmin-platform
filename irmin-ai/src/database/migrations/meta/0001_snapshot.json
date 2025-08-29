@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "346a3127-bb4d-4e05-8a4e-dfffd3c40374",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "2683bc96-5e98-48d3-9ec4-68d89f41a76f",
+  "prevId": "346a3127-bb4d-4e05-8a4e-dfffd3c40374",
   "tables": {
     "ai_models": {
       "name": "ai_models",
@@ -172,44 +172,6 @@
           "notNull": false,
           "autoincrement": false,
           "default": 0
-        },
-        "response_time_ms": {
-          "name": "response_time_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "request_size": {
-          "name": "request_size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "response_size": {
-          "name": "response_size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",

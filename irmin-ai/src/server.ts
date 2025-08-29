@@ -1,10 +1,17 @@
-import Fastify from 'fastify';
+/* eslint-disable import-x/no-unused-modules */
 import cors from '@fastify/cors';
-import { env } from '@/config/env';
-import { seedDefaultModels } from '@/config/models';
+import Fastify from 'fastify';
+
+import { analyticsService } from '@/services/analytics';
+
+import { agentRoutes } from '@/routes/agents';
 import { chatRoutes } from '@/routes/chat';
 import { conversationRoutes } from '@/routes/conversations';
-import { streamingService } from '@/services/streaming';
+
+import { env } from '@/config/env';
+import { seedDefaultModels } from '@/config/models';
+
+import { sendErrorResponse } from '@/utils/errors';
 
 // Create Fastify instance
 const server = Fastify({
@@ -20,18 +27,27 @@ server.register(cors, {
 });
 
 // Global error handler
-server.setErrorHandler((error, _, reply) => {
+server.setErrorHandler(async (error, request, reply) => {
   const statusCode = error.statusCode || 500;
   const message = error.message || 'Internal Server Error';
 
   server.log.error(error);
 
-  reply.status(statusCode).send({
-    error: error.name || 'Error',
+  // Log error analytics
+  await analyticsService.logError(
+    'global_error',
     message,
+    undefined,
+    undefined
+  );
+
+  sendErrorResponse(
+    reply,
     statusCode,
-    timestamp: new Date().toISOString(),
-  });
+    error.name || 'Error',
+    message,
+    server.log
+  );
 });
 
 // Health check endpoint
@@ -47,15 +63,25 @@ server.get('/health', async () => {
 // API routes
 server.register(chatRoutes, { prefix: '/api' });
 server.register(conversationRoutes, { prefix: '/api' });
+server.register(agentRoutes, { prefix: '/api' });
 
 // 404 handler
-server.setNotFoundHandler((request, reply) => {
-  reply.status(404).send({
-    error: 'Not Found',
-    message: `Route ${request.method} ${request.url} not found`,
-    statusCode: 404,
-    timestamp: new Date().toISOString(),
-  });
+server.setNotFoundHandler(async (request, reply) => {
+  // Log 404 analytics
+  await analyticsService.logError(
+    'not_found',
+    `Route ${request.method} ${request.url} not found`,
+    undefined,
+    undefined
+  );
+
+  sendErrorResponse(
+    reply,
+    404,
+    'Not Found',
+    `Route ${request.method} ${request.url} not found`,
+    server.log
+  );
 });
 
 // Start server
@@ -82,11 +108,8 @@ async function start() {
 // Graceful shutdown
 const gracefulShutdown = async (signal: string) => {
   server.log.info(`Received ${signal}, shutting down gracefully`);
-  
+
   try {
-    // Cleanup streaming service and MCP connections
-    await streamingService.cleanup();
-    
     // Close server
     await server.close();
     server.log.info('Server closed');

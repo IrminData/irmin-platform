@@ -1,27 +1,25 @@
 import {
+  CommandBasedConfig,
   convertMcpToLangchainTools,
   SingleMcpServerConfig,
-  CommandBasedConfig,
   UrlBasedConfig,
 } from '@h1deya/langchain-mcp-tools';
-import { defaultMcpConfig } from '@/config/mcp';
 import type { StructuredTool } from '@langchain/core/tools';
 
-export class McpService {
-  private tools: StructuredTool[] = [];
-  private initialized = false;
-  private currentAuthToken: string | undefined;
+import { defaultMcpConfig } from '@/config/mcp';
 
+export class McpService {
   /**
-   * Initialize MCP tools from configuration
+   * Create MCP tools for a specific request with the given auth token
+   * This is per-request and doesn't maintain global state
    */
-  async initializeMcpTools(authToken?: string): Promise<void> {
+  async createMcpTools(authToken?: string): Promise<StructuredTool[]> {
     try {
       const mcpServers = this.createMcpServers(authToken);
 
       if (mcpServers.length === 0) {
         console.warn('No MCP servers configured');
-        return;
+        return [];
       }
 
       // Collect tools from all servers
@@ -41,17 +39,14 @@ export class McpService {
         }
       }
 
-      this.tools = allTools;
-      this.initialized = true;
-      this.currentAuthToken = authToken;
       console.log(
-        `Initialized ${this.tools.length} MCP tools from ${mcpServers.length} servers`
+        `Created ${allTools.length} MCP tools from ${mcpServers.length} servers`
       );
+
+      return allTools;
     } catch (error) {
-      console.error('Failed to initialize MCP tools:', error);
-      this.tools = [];
-      this.initialized = false;
-      this.currentAuthToken = undefined;
+      console.error('Failed to create MCP tools:', error);
+      return [];
     }
   }
 
@@ -150,64 +145,21 @@ export class McpService {
   }
 
   /**
-   * Get initialized tools
+   * Get MCP configuration status (for health checks)
    */
-  getTools(): StructuredTool[] {
-    if (!this.initialized) {
-      console.warn('MCP tools not initialized yet');
-      return [];
-    }
-    return this.tools;
-  }
-
-  /**
-   * Check if MCP tools are initialized
-   */
-  isInitialized(): boolean {
-    return this.initialized;
-  }
-
-  /**
-   * Check if the auth token has changed since last initialization
-   */
-  hasAuthTokenChanged(authToken?: string): boolean {
-    return this.currentAuthToken !== authToken;
-  }
-
-  /**
-   * Get tool count
-   */
-  getToolCount(): number {
-    return this.tools.length;
-  }
-
-  /**
-   * Reinitialize MCP tools with new auth token
-   */
-  async reinitialize(authToken?: string): Promise<void> {
-    this.initialized = false;
-    this.tools = [];
-    await this.initializeMcpTools(authToken);
-  }
-
-  /**
-   * Get tool names for debugging
-   */
-  getToolNames(): string[] {
-    return this.tools.map((tool) => tool.name || 'unnamed-tool');
-  }
-
-  /**
-   * Cleanup MCP connections
-   */
-  async cleanup(): Promise<void> {
-    // The @h1deya/langchain-mcp-tools package handles cleanup internally
-    this.tools = [];
-    this.initialized = false;
-    this.currentAuthToken = undefined;
-    console.log('MCP tools cleaned up');
+  getConfigStatus(): {
+    enabled: boolean;
+    serverCount: number;
+    configKeys: string[];
+  } {
+    const configKeys = Object.keys(defaultMcpConfig);
+    return {
+      enabled: configKeys.length > 0,
+      serverCount: configKeys.length,
+      configKeys,
+    };
   }
 }
 
-// Export singleton instance
+// Export service instance (not singleton)
 export const mcpService = new McpService();

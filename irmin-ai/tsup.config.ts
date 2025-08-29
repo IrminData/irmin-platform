@@ -14,11 +14,11 @@ export default defineConfig({
     '@huggingface/inference',
     '@langchain/core',
     'zod',
-    'dotenv'
+    'dotenv',
   ],
   esbuildOptions(options) {
     options.alias = {
-      '@': './src'
+      '@': './src',
     };
-  }
+  },
 });

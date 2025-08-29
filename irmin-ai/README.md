@@ -2,13 +2,14 @@
 
 # Irmin AI
 
-Fastify-based AI chat API with streaming responses, Groq/OpenAI integration, and MCP tools support.
+LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with streaming responses, Groq/OpenAI integration, and MCP tools support.
 
 ## What it does
 
 - **Streaming chat API** with real-time AI responses
 - **Multiple AI providers** (Groq, OpenAI) with model switching
 - **MCP tools integration** for external tool access
+- **AI agents** for specialized AI tasks
 - **Conversation management** with SQLite storage
 - **Token tracking** and cost analytics
 
@@ -56,14 +57,55 @@ curl -X POST http://localhost:3000/api/chat \
 
 See [.env.example](.env.example) for required and optional variables.
 
-## Development
+## Commands
 
 ```bash
-pnpm dev          # Development server
-pnpm typecheck    # Type checking
-pnpm lint         # Linting
-pnpm build        # Build for production
+pnpm run build # Build for production
+pnpm run dev   # Development server
+pnpm run start # Start the server
+pnpm run typecheck # Type checking
+pnpm run lint # Linting
+pnpm run lint:fix # Linting and fixing
+pnpm run format # Formatting
+pnpm run db:generate # Generate database migrations
+pnpm run db:migrate # Run database migrations
+pnpm run db:studio # Open database studio
+pnpm run clean # Clean build files
 ```
+
+## Services
+
+### LLM Service
+
+The LLM service is responsible for interacting with the LLM providers and managing models. It is also responsible for calculating the usage of the LLM.
+
+See [llm.ts](src/services/llm.ts) for more details.
+
+### MCP Service
+
+The MCP service provides per-request MCP tools creation with user authentication. Each request gets its own MCP tools instance with the caller's JWT token, ensuring proper user isolation and security.
+
+See [mcp.ts](src/services/mcp.ts) for more details.
+
+### Analytics Service
+
+See [analytics.ts](src/services/analytics.ts) for more details.
+
+The Analytics Service provides comprehensive analytics tracking for the Irmin AI application, covering user interactions, performance metrics, error tracking, and system events.
+
+### Completion Service
+
+The Completion service is responsible for LLM completion requests, eg. streaming the completion response and sending messages to the LLM service.
+
+See [completion.ts](src/services/completion.ts) for more details.
+
+## Agents
+
+A specialized AI agents framework built on top of the existing LLM services, providing structured, configurable agents for different AI tasks. This system leverages the `llmService`, `mcpService`, and `completionService` to create focused AI assistants with specific capabilities and behaviors.
+
+**Note:** Agent chaining will be implemented using [LangGraph.js](https://langchain-ai.github.io/langgraphjs) for complex workflow orchestration in future versions.
+
+See [agents/README.md](src/agents/README.md) for more details.
 
 ## Database
 

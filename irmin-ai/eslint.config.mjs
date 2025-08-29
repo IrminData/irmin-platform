@@ -1,17 +1,51 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import prettierConfig from 'eslint-plugin-prettier/recommended';
+import promisePlugin from 'eslint-plugin-promise';
+import { importX } from 'eslint-plugin-import-x';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import { globalIgnores } from 'eslint/config';
 
 export default tseslint.config(
+  globalIgnores([
+    'node_modules/**',
+    'dist/**',
+    'build/**',
+    'public/**',
+    '*.config.js',
+    '*.config.ts',
+    '*.config.mjs',
+    'register.mjs',
+  ]),
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  tseslint.configs.recommended,
+  importX.flatConfigs.recommended,
+  importX.flatConfigs.typescript,
   {
     files: ['src/**/*.ts'],
+    extends: [
+      promisePlugin.configs['flat/recommended'],
+    ],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
       parserOptions: {
         project: './tsconfig.json',
       },
+    },
+    settings: {
+      'import-x/resolver-next': [
+        createTypeScriptImportResolver({
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        }),
+      ],
+      'import-x/resolver-typescript': [
+        createTypeScriptImportResolver({
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        }),
+      ],
     },
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
@@ -22,12 +56,24 @@ export default tseslint.config(
       '@typescript-eslint/no-inferrable-types': 'off',
       'no-console': 'off',
       'prefer-const': 'error',
+      'import-x/no-dynamic-require': 'warn',
+      'import-x/no-nodejs-modules': 'off', // This is a server, so we need to use nodejs modules
+      'import-x/no-cycle': ['warn', { maxDepth: Infinity }],
+      'import-x/no-duplicates': 'error',
+      'import-x/no-unused-modules': [
+        'warn',
+        {
+          unusedExports: true,
+          missingExports: true,
+        },
+      ],
     },
   },
   {
     files: ['**/*.mjs', '**/*.js'],
     ...tseslint.configs.disableTypeChecked,
   },
+  prettierConfig,
   {
     ignores: ['dist/', 'node_modules/', '*.config.js', '*.config.mjs'],
   }

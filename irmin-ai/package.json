@@ -9,11 +9,12 @@
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "format": "prettier --write src/**/*.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/database/migrate.ts",
+    "db:studio": "drizzle-kit studio",
     "clean": "rimraf dist"
   },
   "author": "Tim Borovkov / Irmin",
@@ -37,9 +38,15 @@
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@swc/core": "^1.13.5",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "^20.14.9",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import-x": "^4.16.1",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-promise": "^7.2.1",
     "prettier": "^3.3.2",
     "rimraf": "^5.0.5",
     "tsup": "^8.0.1",
@@ -48,6 +55,6 @@
     "typescript-eslint": "^8.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.10.0"
   }
 }
