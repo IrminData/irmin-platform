@@ -317,33 +317,6 @@ fastify.get('/api/agents', async (request, reply) => {
   const agents = agentsManager.listAgents();
   return reply.send(agents);
 });
-
-// Get available models
-fastify.get('/api/models', async (request, reply) => {
-  const models = agentsManager.getAvailableModels();
-  return reply.send(models);
-});
-
-// MCP status
-fastify.get('/api/mcp/status', async (request, reply) => {
-  const status = agentsManager.getMcpStatus();
-  return reply.send(status);
-});
-
-// Health check for agents
-fastify.get('/api/agents/health', async (request, reply) => {
-  const agents = agentsManager.listAgents();
-  const mcpStatus = agentsManager.getMcpStatus();
-  const models = agentsManager.getAvailableModels();
-  
-  return reply.send({
-    status: 'healthy',
-    agentsCount: agents.length,
-    agents: agents.map(a => ({ id: a.id, name: a.name, type: a.type })),
-    mcp: mcpStatus,
-    modelsCount: models.length
-  });
-});
 ```
 
 ## Advanced Usage

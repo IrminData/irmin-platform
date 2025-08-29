@@ -154,9 +154,6 @@ export abstract class BaseAgent implements BaseAgentInterface {
       conversationMessages.push(...history.reverse());
     }
 
-    // The current user message is now saved to the database by AgentsManager.executeAgent
-    // and will be included in the conversation history above
-
     return conversationMessages;
   }
 

@@ -13,7 +13,6 @@ import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 
 import { analyticsService } from '@/services/analytics';
-import { completionService } from '@/services/completion';
 import { llmService } from '@/services/llm';
 
 export class AgentsManager {
@@ -110,7 +109,10 @@ export class AgentsManager {
       await analyticsService.logMessageSent(conversation.id, userMessageId);
 
       // Execute agent
-      const response = await agent.execute(input);
+      const response = await agent.execute({
+        ...input,
+        conversationId: conversation.id, // Ensure conversationId is set to the actual conversation ID
+      });
       const processingTimeMs = Date.now() - startTime;
 
       // Calculate cost for agent execution
@@ -209,15 +211,6 @@ export class AgentsManager {
 
       throw error;
     }
-  }
-
-  // Service integration methods
-  getAvailableModels() {
-    return completionService.getAvailableModels();
-  }
-
-  getMcpStatus() {
-    return completionService.getMcpStatus();
   }
 
   getAgentConfig(agentId: string): AgentConfig | undefined {

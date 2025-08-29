@@ -209,59 +209,6 @@ export async function agentRoutes(fastify: FastifyInstance) {
       }
     }
   );
-
-  // GET /api/agents/models - Get available models
-  fastify.get('/agents/models', async (_, reply) => {
-    try {
-      const models = agentsManager.getAvailableModels();
-      return reply.send(models);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to fetch models';
-      fastify.log.error('Models error: %s', errorMessage);
-      sendInternalServerError(reply, errorMessage, fastify.log);
-      return;
-    }
-  });
-
-  // GET /api/agents/mcp/status - Get MCP status
-  fastify.get('/agents/mcp/status', async (_, reply) => {
-    try {
-      const status = agentsManager.getMcpStatus();
-      return reply.send(status);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to fetch MCP status';
-      fastify.log.error('MCP status error: %s', errorMessage);
-      sendInternalServerError(reply, errorMessage, fastify.log);
-      return;
-    }
-  });
-
-  // GET /api/agents/health - Health check for agents
-  fastify.get('/agents/health', async (_, reply) => {
-    try {
-      const agents = agentsManager.listAgents();
-      const mcpStatus = agentsManager.getMcpStatus();
-      const models = agentsManager.getAvailableModels();
-
-      const response = {
-        status: 'healthy',
-        agentsCount: agents.length,
-        agents: agents.map((a) => ({ id: a.id, name: a.name, type: a.type })),
-        mcp: mcpStatus,
-        modelsCount: Object.values(models).flat().length,
-      };
-
-      return reply.send(response);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to check agent health';
-      fastify.log.error('Agent health error: %s', errorMessage);
-      sendInternalServerError(reply, errorMessage, fastify.log);
-      return;
-    }
-  });
 }
 
 /**
