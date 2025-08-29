@@ -7,7 +7,7 @@ import { analyticsService } from '@/services/analytics';
 import { type LLMProvider, llmService, type ModelInfo } from '@/services/llm';
 import { mcpService } from '@/services/mcp';
 
-export interface CompletionOptions {
+interface CompletionOptions {
   messages: Message[];
   provider?: LLMProvider;
   model?: string;
@@ -18,7 +18,7 @@ export interface CompletionOptions {
   authToken?: string;
 }
 
-export class CompletionService {
+class CompletionService {
   /**
    * Create a streaming response for agents (returns AIMessageChunk)
    */

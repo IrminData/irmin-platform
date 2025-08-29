@@ -2,7 +2,7 @@ import { aiModels, analytics, db, type NewAnalytics } from '@/database';
 import { randomUUID } from 'crypto';
 import { desc, eq } from 'drizzle-orm';
 
-export type AnalyticsEventType =
+type AnalyticsEventType =
   | 'conversation_created'
   | 'conversation_updated'
   | 'conversation_deleted'
@@ -11,7 +11,7 @@ export type AnalyticsEventType =
   | 'model_used'
   | 'error_occurred';
 
-export interface AnalyticsEvent {
+interface AnalyticsEvent {
   eventType: AnalyticsEventType;
   conversationId?: string;
   messageId?: string;
@@ -22,7 +22,7 @@ export interface AnalyticsEvent {
   eventData?: Record<string, unknown>;
 }
 
-export class AnalyticsService {
+class AnalyticsService {
   /**
    * Log a conversation event
    */

@@ -22,7 +22,7 @@ const server = Fastify({
 
 // Register CORS
 server.register(cors, {
-  origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN,
+  origin: env.CORS_ORIGINS === '*' ? true : env.CORS_ORIGINS.split(','),
   credentials: env.CORS_CREDENTIALS,
 });
 

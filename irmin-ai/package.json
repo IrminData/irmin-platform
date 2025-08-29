@@ -32,6 +32,7 @@
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.44.5",
     "fastify": "^4.28.1",
+    "langsmith": "^0.3.66",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.24.6"
   },

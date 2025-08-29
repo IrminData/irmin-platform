@@ -20,15 +20,21 @@ const envSchema = z.object({
   IRMIN_API_BASE_URL: z
     .string()
     .default('https://irmin-development.up.railway.app'),
-  CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  LANGSMITH_TRACING: z
+    .string()
+    .default('false')
+    .transform((val) => val === 'true'),
+  LANGSMITH_API_KEY: z.string().min(1, 'Langsmith API key is required'),
+  LANGSMITH_PROJECT: z.string(),
+  CORS_ORIGINS: z
+    .string()
+    .default('https://localhost:3000,http://localhost:8082'),
   CORS_CREDENTIALS: z
     .string()
     .default('true')
     .transform((val) => val === 'true'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
-
-export type Env = z.infer<typeof envSchema>;
 
 const result = envSchema.safeParse(process.env);
 

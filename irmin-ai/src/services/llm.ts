@@ -7,13 +7,14 @@ import {
 import type { StructuredTool } from '@langchain/core/tools';
 import { ChatGroq } from '@langchain/groq';
 import { ChatOpenAI } from '@langchain/openai';
+import { wrapSDK } from 'langsmith/wrappers';
 
 import { env } from '@/config/env';
 import { defaultAIModels } from '@/config/models';
 
 export type LLMProvider = 'groq' | 'openai';
 
-export interface LLMOptions {
+interface LLMOptions {
   provider: LLMProvider;
   model?: string;
   temperature?: number;
@@ -29,20 +30,14 @@ export interface ModelInfo {
   outputPricePerMillionTokens: number;
 }
 
-export class LlmService {
+class LlmService {
   private defaultGroqModel = 'openai/gpt-oss-120b';
   private defaultOpenAIModel = 'gpt-5';
 
   /**
    * Create a new model instance with custom parameters and tools
    */
-  createModel(
-    options: LLMOptions
-  ):
-    | ChatGroq
-    | ChatOpenAI
-    | ReturnType<ChatGroq['bindTools']>
-    | ReturnType<ChatOpenAI['bindTools']> {
+  createModel(options: LLMOptions) {
     const {
       provider,
       model,
@@ -54,19 +49,23 @@ export class LlmService {
     let llm: ChatGroq | ChatOpenAI;
 
     if (provider === 'groq') {
-      llm = new ChatGroq({
-        apiKey: env.GROQ_API_KEY,
-        model: model || this.defaultGroqModel,
-        temperature,
-        maxTokens,
-      });
+      llm = wrapSDK(
+        new ChatGroq({
+          apiKey: env.GROQ_API_KEY,
+          model: model || this.defaultGroqModel,
+          temperature,
+          maxTokens,
+        })
+      );
     } else {
-      llm = new ChatOpenAI({
-        apiKey: env.OPENAI_API_KEY,
-        model: model || this.defaultOpenAIModel,
-        temperature,
-        maxTokens,
-      });
+      llm = wrapSDK(
+        new ChatOpenAI({
+          apiKey: env.OPENAI_API_KEY,
+          model: model || this.defaultOpenAIModel,
+          temperature,
+          maxTokens,
+        })
+      );
     }
 
     // Bind tools if provided
@@ -80,10 +79,7 @@ export class LlmService {
   /**
    * Convert our Message format to LangChain messages
    */
-  convertMessagesToLangChain(
-    messages: Message[],
-    systemPrompt?: string
-  ): (HumanMessage | SystemMessage | AIMessage)[] {
+  convertMessagesToLangChain(messages: Message[], systemPrompt?: string) {
     const langchainMessages: (HumanMessage | SystemMessage | AIMessage)[] = [];
 
     // Add system message if provided
@@ -147,7 +143,7 @@ export class LlmService {
   /**
    * Get default models for each provider
    */
-  getDefaultModels(): Record<LLMProvider, string> {
+  getDefaultModels() {
     return {
       groq: this.defaultGroqModel,
       openai: this.defaultOpenAIModel,
@@ -157,7 +153,7 @@ export class LlmService {
   /**
    * Estimate token count (rough approximation)
    */
-  estimateTokens(text: string): number {
+  estimateTokens(text: string) {
     // Rough estimation: ~4 characters per token
     return Math.ceil(text.length / 4);
   }
@@ -172,15 +168,7 @@ export class LlmService {
     modelId: string,
     exactInputTokens?: number,
     exactOutputTokens?: number
-  ): {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    inputCost: number;
-    outputCost: number;
-    totalCost: number;
-    isEstimated: boolean;
-  } {
+  ) {
     // Get model pricing information
     const modelInfo = this.getModelInfo(provider, modelId);
 
