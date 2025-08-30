@@ -3,6 +3,8 @@ import type { IterableReadableStream } from '@langchain/core/utils/stream';
 
 import type { LLMProvider } from '@/services/llm';
 
+import { type ToolSelection } from '@/types/chat';
+
 export type AgentType = 'chat' | 'single-shot';
 export type ResponseFormat =
   | 'structured'
@@ -21,7 +23,7 @@ export interface AgentConfig {
   maxTokens?: number;
   responseFormat: ResponseFormat;
   contextRequirements: ContextRequirement[];
-  useTools: boolean;
+  toolSelection?: ToolSelection;
   streaming: boolean;
 }
 
@@ -38,6 +40,7 @@ export interface AgentInput {
   authToken?: string;
   conversationId?: string;
   metadata?: Record<string, unknown>;
+  toolSelection?: ToolSelection;
 }
 
 export interface AgentResponse {

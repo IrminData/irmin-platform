@@ -177,7 +177,6 @@ export class AgentsManager {
           agentType: agent.config.type,
           modelProvider: agent.config.modelProvider,
           model: agent.config.model,
-          useTools: agent.config.useTools,
           streaming: agent.config.streaming,
           tokenCount: response.usage?.totalTokens,
           costUSD,
@@ -201,7 +200,17 @@ export class AgentsManager {
         },
       };
     } catch (error) {
-      // Log error analytics
+      // Log error analytics only if we have a valid conversation ID
+      // Don't log analytics for "Conversation not found" errors as the conversation doesn't exist
+      if (
+        error instanceof Error &&
+        error.message === 'Conversation not found'
+      ) {
+        // Don't log analytics for non-existent conversations
+        throw error;
+      }
+
+      // Log error analytics for other types of errors
       await analyticsService.logError(
         'agent_execution',
         error instanceof Error ? error.message : 'Unknown error',

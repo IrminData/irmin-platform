@@ -8,7 +8,7 @@ LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with st
 
 - **Streaming chat API** with real-time AI responses
 - **Multiple AI providers** (Groq, OpenAI) with model switching
-- **MCP tools integration** for external tool access
+- **Granular MCP tools integration** with selective tool access
 - **AI agents** for specialized AI tasks
 - **Conversation management** with SQLite storage
 - **Token tracking** and cost analytics
@@ -46,11 +46,17 @@ curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello", "provider": "groq"}'
 
-# With MCP tools
+# With MCP tools (all tools)
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-irmin-jwt-token>" \
-  -d '{"message": "List repositories", "useTools": true}'
+  -d '{"message": "List repositories", "toolSelection": {"includeAll": true}}'
+
+# With selective MCP tools
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-irmin-jwt-token>" \
+  -d '{"message": "List workspaces", "toolSelection": {"includeTools": ["list_workspaces"]}}'
 ```
 
 ## Environment Variables
@@ -83,7 +89,14 @@ See [llm.ts](src/services/llm.ts) for more details.
 
 ### MCP Service
 
-The MCP service provides per-request MCP tools creation with user authentication. Each request gets its own MCP tools instance with the caller's JWT token, ensuring proper user isolation and security.
+The MCP service provides per-request MCP tools creation with user authentication and granular tool selection. Each request gets its own MCP tools instance with the caller's JWT token, ensuring proper user isolation and security. The service supports selective tool access through the `toolSelection` parameter.
+
+**Tool Selection Features:**
+- **Include All Tools**: `{ includeAll: true }`
+- **Include Specific Tools**: `{ includeTools: ["list_workspaces", "list_docs"] }` - only specified tools
+- **Exclude Specific Tools**: `{ excludeTools: ["create_workspace"] }` - all tools except specified ones
+- **Combined Filtering**: Combine include and exclude for precise control
+- **Server-Level Filtering**: `{ includeServers: ["irmin"] }` - all tools from specific MCP servers (future feature)
 
 See [mcp.ts](src/services/mcp.ts) for more details.
 

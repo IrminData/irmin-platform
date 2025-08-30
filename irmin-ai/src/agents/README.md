@@ -7,7 +7,7 @@ A specialized AI agents framework built on top of the existing LLM services, pro
 - **Service Integration**: Built on the existing LLM, MCP, and completion services
 - **Multiple Agent Types**: Chat and single-shot agents
 - **Completion Support**: Full completion response support via LangChain streams (compatible with Vercel AI SDK)
-- **MCP Tools**: Automatic integration with the MCP tools configuration
+- **Granular MCP Tools**: Selective tool access with per-request tool selection
 - **Model Flexibility**: Support for OpenAI and Groq models via the model selector
 - **Context Management**: Vector stores, conversation history (fetched from database), and custom contexts
 - **Memory Management**: Uses conversationId for persistent memory across sessions
@@ -83,12 +83,13 @@ General-purpose chat agent with full MCP tools access.
 const response = await agentsManager.executeAgent('chat', {
   message: "What's the weather like and can you help me write some code?",
   authToken: token,
-  conversationHistory: messages
+  conversationHistory: messages,
+  toolSelection: { includeAll: true }  // Override default tool selection
 });
 ```
 
 **Features:**
-- Full MCP tools integration
+- Full MCP tools integration (configurable via `toolSelection`)
 - Streaming responses
 - Conversation history awareness
 - Thinking enabled
@@ -173,7 +174,9 @@ export const myAgentConfig: AgentConfig = {
     }
   ],
   thinkingEnabled: true,
-  useTools: false,
+  toolSelection: {
+    includeAll: true
+  },
   streaming: false
 };
 ```
@@ -378,3 +381,58 @@ console.log('MCP Status:', status);
 //   }
 // }
 ```
+
+## Tool Selection
+
+Agents support granular tool selection through the `toolSelection` parameter, allowing you to control which MCP tools are available for each request:
+
+### Agent-Level Configuration
+
+Each agent can have a default `toolSelection` in its configuration:
+
+```typescript
+// agents/chat/config.ts
+export const agentConfig: AgentConfig = {
+  // ... other config
+  toolSelection: {
+    includeAll: true  // Chat agent gets all tools by default
+  },
+};
+```
+
+### Request-Level Override
+
+You can override the agent's default tool selection per request:
+
+```typescript
+// Override to use only specific tools
+const response = await agentsManager.executeAgent('chat', {
+  message: "List workspaces",
+  toolSelection: {
+    includeTools: ["list_workspaces", "list_docs"]
+  }
+});
+
+// Override to exclude specific tools
+const response = await agentsManager.executeAgent('chat', {
+  message: "Create a workspace",
+  toolSelection: {
+    excludeTools: ["delete_workspace", "delete_repository"]
+  }
+});
+
+// Override to use no tools
+const response = await agentsManager.executeAgent('chat', {
+  message: "General question",
+  toolSelection: undefined  // No tools
+});
+```
+
+### Tool Selection Options
+
+- `includeAll: true` - Include all available tools
+- `includeTools: ["tool1", "tool2"]` - Include only specified tools
+- `excludeTools: ["tool1", "tool2"]` - Exclude specified tools
+- `includeServers: ["server1"]` - Include all tools from specific MCP servers (future feature)
+
+**Priority:** Request-level `toolSelection` takes precedence over agent-level configuration.

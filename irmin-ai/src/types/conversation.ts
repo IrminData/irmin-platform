@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-// Conversation base schema
+import { MessageSchema } from './chat';
+
+// Conversation schema
 export const ConversationSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -9,8 +11,8 @@ export const ConversationSchema = z.object({
   updatedAt: z.date().optional(),
 });
 
-// Conversation with message stats schema
-export const ConversationWithStatsSchema = z.object({
+// Conversation with stats schema
+const ConversationWithStatsSchema = z.object({
   id: z.string(),
   title: z.string(),
   metadata: z.unknown().optional(),
@@ -19,25 +21,6 @@ export const ConversationWithStatsSchema = z.object({
   messageCount: z.number(),
   totalTokens: z.union([z.number(), z.string()]).nullable(),
   totalCost: z.union([z.number(), z.string()]).nullable(),
-});
-
-// Message schema
-export const MessageSchema = z.object({
-  id: z.string(),
-  conversationId: z.string(),
-  role: z.enum(['user', 'assistant', 'system']),
-  content: z.string(),
-  metadata: z.unknown().optional(),
-  aiModelId: z.string().nullable(),
-  modelProvider: z.string().nullable(),
-  modelName: z.string().nullable(),
-  inputTokens: z.number().nullable(),
-  outputTokens: z.number().nullable(),
-  totalTokens: z.number().nullable(),
-  costUSD: z.number().nullable(),
-  processingTimeMs: z.number().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
 });
 
 // Create conversation request schema
@@ -92,7 +75,6 @@ export const PaginatedMessagesResponseSchema = z.object({
 // Type exports
 export type Conversation = z.infer<typeof ConversationSchema>;
 export type ConversationWithStats = z.infer<typeof ConversationWithStatsSchema>;
-export type Message = z.infer<typeof MessageSchema>;
 export type ConversationCreateRequest = z.infer<
   typeof ConversationCreateRequestSchema
 >;

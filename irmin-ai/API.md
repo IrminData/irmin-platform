@@ -241,7 +241,9 @@ Send a message and receive an AI response. Supports both streaming and non-strea
   "model": "llama3-8b-8192",
   "temperature": 0.7,
   "maxTokens": 1000,
-  "useTools": false,
+  "toolSelection": {
+    "includeAll": true
+  },
   "stream": true
 }
 ```
@@ -256,8 +258,90 @@ Send a message and receive an AI response. Supports both streaming and non-strea
 | `model`          | string | No       | -       | Specific model to use |
 | `temperature`    | number | No       | -       | Response randomness (0.0-2.0) |
 | `maxTokens`      | number | No       | -       | Maximum response length (1-4000) |
-| `useTools`       | boolean| No       | false   | Enable MCP tools |
+| `toolSelection`  | object | No       | -       | MCP tool selection configuration |
 | `stream`         | boolean| No       | true    | Enable streaming response |
+
+#### Tool Selection Configuration
+
+The `toolSelection` object allows granular control over which MCP tools are available:
+
+```json
+{
+  "toolSelection": {
+    "includeAll": true                    // Include all available tools
+  }
+}
+```
+
+```json
+{
+  "toolSelection": {
+    "includeTools": ["list_workspaces", "list_docs"]  // Include specific tools only
+  }
+}
+```
+
+```json
+{
+  "toolSelection": {
+    "excludeTools": ["create_workspace"]  // Exclude specific tools
+  }
+}
+```
+
+```json
+{
+  "toolSelection": {
+    "includeTools": ["list_workspaces", "list_repositories"],
+    "excludeTools": ["create_workspace"]  // Combine include and exclude
+  }
+}
+```
+
+**Tool Selection Options:**
+- `includeAll`: Include all available tools
+- `includeTools`: Array of specific tool names to include
+- `excludeTools`: Array of specific tool names to exclude
+- `includeServers`: Array of MCP server names to include all tools from (future feature)
+
+#### Tool Configuration Examples
+
+**Include all tools (default behavior):**
+```json
+{
+  "toolSelection": {
+    "includeAll": true
+  }
+}
+```
+
+**Include only documentation tools:**
+```json
+{
+  "toolSelection": {
+    "includeTools": [
+      "list_docs",
+      "get_docs",
+    ]
+  }
+}
+```
+
+**Include only data query and analysis tools:**
+```json
+{
+  "toolSelection": {
+    "includeTools": [
+      "execute_sql",
+      "create_query",
+      "update_query",
+      "list_stored_queries",
+      "execute_query",
+      "get_repository_object_schema"
+    ]
+  }
+}
+```
 
 #### Streaming Response
 
@@ -318,44 +402,109 @@ Retrieve a list of available AI models with pricing and capabilities.
 
 **GET** `/chat/tools`
 
-Retrieve a list of available MCP tools.
+Retrieve detailed information about all available MCP tools for the authenticated user, including tool schemas, server information, and authentication requirements.
+
+#### Headers
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| `Authorization` | string | Yes | Bearer token for authentication |
 
 #### Response
 
 ```json
 {
   "enabled": true,
-  "initialized": true,
   "tools": [
     {
-      "name": "irmin",
-      "description": "MCP tool: irmin",
-      "type": "mcp"
+      "name": "list_workspaces",
+      "description": "List workspaces accessible to the current user. Most tool calls require a workspace to be specified.",
+      "type": "mcp",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "not": {}
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "serverId": "irmin",
+      "requiresAuth": true
+    },
+    {
+      "name": "list_repositories",
+      "description": "List repositories in a workspace. Data objects are stored in, and queried from repositories.",
+      "type": "mcp",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "workspace_slug": {
+            "type": "string",
+            "description": "required,The slug of the workspace to list repositories in"
+          }
+        },
+        "required": ["workspace_slug"],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "serverId": "irmin",
+      "requiresAuth": true
+    },
+    {
+      "name": "execute_sql",
+      "description": "Execute an arbitrary SQL query on the workspace data. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
+      "type": "mcp",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string",
+            "description": "required,The SQL query to execute"
+          },
+          "workspace_slug": {
+            "type": "string",
+            "description": "required,The slug of the workspace to execute SQL in"
+          }
+        },
+        "required": ["sql", "workspace_slug"],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "serverId": "irmin",
+      "requiresAuth": true
     }
   ],
-  "count": 1,
-  "totalTools": 1
+  "count": 47,
+  "servers": [
+    {
+      "id": "irmin",
+      "type": "url",
+      "requiresAuth": true,
+      "toolCount": 47
+    }
+  ],
+  "totalServers": 1
 }
 ```
 
-### Get MCP Status
+#### Response Fields
 
-**GET** `/chat/mcp-status`
-
-Check the current status of MCP tool connections.
-
-#### Response
-
-```json
-{
-  "enabled": true,
-  "configStatus": {
-    "enabled": true,
-    "serverCount": 1,
-    "configKeys": ["irmin"]
-  }
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `enabled` | boolean | Whether MCP tools are enabled |
+| `tools` | array | Array of available tools |
+| `tools[].name` | string | Tool name/identifier |
+| `tools[].description` | string | Tool description |
+| `tools[].type` | string | Tool type (always "mcp") |
+| `tools[].schema` | object | Tool input/output schema (optional) |
+| `tools[].serverId` | string | MCP server that provides this tool |
+| `tools[].requiresAuth` | boolean | Whether the tool requires authentication |
+| `count` | number | Total number of available tools |
+| `servers` | array | Array of MCP server information |
+| `servers[].id` | string | Server identifier |
+| `servers[].type` | string | Server type ("command" or "url") |
+| `servers[].requiresAuth` | boolean | Whether the server requires authentication |
+| `servers[].toolCount` | number | Number of tools provided by this server |
+| `totalServers` | number | Total number of configured servers |
 
 
 
@@ -385,7 +534,10 @@ Execute a single AI agent with the specified message and context.
     "userPreferences": { "language": "go" }
   },
   "conversationId": "conv-456",
-  "metadata": { "priority": "high" }
+  "metadata": { "priority": "high" },
+  "toolSelection": {
+    "includeAll": true
+  }
 }
 ```
 
@@ -397,6 +549,7 @@ Execute a single AI agent with the specified message and context.
 | `context` | object  | No       | {}      | Additional context for the agent |
 | `conversationId` | string | No | - | Conversation identifier (used for memory and history) |
 | `metadata` | object  | No       | {}      | Additional metadata |
+| `toolSelection` | object | No       | -       | MCP tool selection configuration (overrides agent default) |
 
 #### Response
 
@@ -471,7 +624,9 @@ Retrieve a list of all available AI agents with their configurations.
       }
     ],
     "thinkingEnabled": true,
-    "useTools": true,
+    "toolSelection": {
+      "includeAll": true
+    },
     "streaming": true
   }
 ]

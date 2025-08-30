@@ -16,8 +16,8 @@ import {
   ConversationSchema,
   type ConversationUpdateRequest,
   ConversationUpdateRequestSchema,
-  ConversationWithStatsSchema,
-  MessageSchema,
+  PaginatedConversationsResponseSchema,
+  PaginatedMessagesResponseSchema,
 } from '@/types/conversation';
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
@@ -25,7 +25,6 @@ import {
   sendCreatedResponse,
   sendNoContentResponse,
   sendOkResponse,
-  sendPaginatedResponse,
 } from '@/utils/responses';
 
 interface ConversationParams {
@@ -89,16 +88,19 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .limit(limit)
           .offset(offset);
 
-        sendPaginatedResponse(
-          reply,
-          ConversationWithStatsSchema,
+        const response = {
           data,
-          {
+          pagination: {
             page,
             limit,
             total,
             totalPages: Math.ceil(total / limit),
           },
+        };
+        sendOkResponse(
+          reply,
+          PaginatedConversationsResponseSchema,
+          response,
           fastify.log
         );
         return;
@@ -233,16 +235,19 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .limit(limit)
           .offset(offset);
 
-        sendPaginatedResponse(
-          reply,
-          MessageSchema,
+        const response = {
           data,
-          {
+          pagination: {
             page,
             limit,
             total,
             totalPages: Math.ceil(total / limit),
           },
+        };
+        sendOkResponse(
+          reply,
+          PaginatedMessagesResponseSchema,
+          response,
           fastify.log
         );
         return;

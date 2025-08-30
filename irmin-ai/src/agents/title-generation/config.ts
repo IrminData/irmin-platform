@@ -11,6 +11,6 @@ export const agentConfig: AgentConfig = {
   maxTokens: 50,
   responseFormat: 'unstructured',
   contextRequirements: [],
-  useTools: false,
+  toolSelection: undefined,
   streaming: false,
 };

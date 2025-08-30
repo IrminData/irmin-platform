@@ -1,13 +1,21 @@
 import { AgentsManager } from '@/agents';
+import { toUIMessageStream } from '@ai-sdk/langchain';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { analyticsService } from '@/services/analytics';
 
-import { type AgentRequest, AgentRequestSchema } from '@/types/agents';
+import {
+  AgentConfigSchema,
+  type AgentRequest,
+  AgentRequestSchema,
+  AgentResponseSchema,
+  ListAgentsResponseSchema,
+} from '@/types/agents';
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
+import { sendOkResponse } from '@/utils/responses';
 
 export async function agentRoutes(fastify: FastifyInstance) {
   const agentsManager = new AgentsManager();
@@ -16,7 +24,9 @@ export async function agentRoutes(fastify: FastifyInstance) {
   fastify.get('/agents', async (_, reply) => {
     try {
       const agents = agentsManager.listAgents();
-      return reply.send(agents);
+      const response = { agents };
+      sendOkResponse(reply, ListAgentsResponseSchema, response, fastify.log);
+      return;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to fetch agents';
@@ -54,7 +64,11 @@ export async function agentRoutes(fastify: FastifyInstance) {
           message: request.body.message,
           context: request.body.context,
           conversationId: request.body.conversationId,
-          metadata: request.body.metadata,
+          metadata: {
+            ...request.body.metadata,
+            streaming: false, // Non-streaming request
+          },
+          toolSelection: request.body.toolSelection,
           authToken,
         });
 
@@ -77,14 +91,25 @@ export async function agentRoutes(fastify: FastifyInstance) {
             );
           });
 
-        return reply.send(response);
+        sendOkResponse(reply, AgentResponseSchema, response, fastify.log);
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         fastify.log.error('Agent execution error: %s', errorMessage);
 
-        if (errorMessage.includes('not found')) {
+        if (errorMessage.includes('Conversation not found')) {
+          sendNotFoundError(reply, 'Conversation not found', fastify.log);
+          return;
+        }
+
+        if (errorMessage.includes('Agent not found')) {
           sendNotFoundError(reply, 'Agent not found', fastify.log);
+          return;
+        }
+
+        if (errorMessage.includes('not found')) {
+          sendNotFoundError(reply, 'Resource not found', fastify.log);
           return;
         }
 
@@ -122,47 +147,69 @@ export async function agentRoutes(fastify: FastifyInstance) {
           message: request.body.message,
           context: request.body.context,
           conversationId: request.body.conversationId,
-          metadata: request.body.metadata,
+          metadata: {
+            ...request.body.metadata,
+            streaming: true, // Streaming request
+          },
+          toolSelection: request.body.toolSelection,
           authToken,
         });
 
         if (response.stream) {
-          reply.type('text/event-stream');
-          reply.header('Cache-Control', 'no-cache');
-          reply.header('Connection', 'keep-alive');
+          // Add custom headers
           reply.header('X-Agent-Id', agentId);
-
-          // Add conversation ID to response headers if available
           if (request.body.conversationId) {
             reply.header('X-Conversation-Id', request.body.conversationId);
           }
 
-          // Handle LangChain stream directly
-          try {
-            for await (const chunk of response.stream) {
-              const content = chunk.content;
-              if (content && typeof content === 'string') {
-                reply.raw.write(`data: ${content}\n\n`);
+          // Use Vercel's AI SDK to convert the stream to a UI message stream
+          const uiMessageStream = toUIMessageStream(response.stream);
+
+          // Convert the UI message stream to a format that Fastify can handle
+          const readableStream = new ReadableStream({
+            async start(controller) {
+              try {
+                // Consume the UI message stream and convert it to chunks
+                for await (const chunk of uiMessageStream) {
+                  if (chunk && typeof chunk === 'object') {
+                    // Convert the chunk to a JSON string
+                    const chunkData = JSON.stringify(chunk);
+                    controller.enqueue(
+                      new TextEncoder().encode(chunkData + '\n')
+                    );
+                  }
+                }
+                controller.close();
+              } catch (error) {
+                console.error('Error processing UI message stream:', error);
+                controller.error(error);
               }
-            }
-            reply.raw.write('data: [DONE]\n\n');
-            reply.raw.end();
-          } catch (error) {
-            reply.raw.write(
-              `data: {"error": "${error instanceof Error ? error.message : 'Stream error'}"}\n\n`
-            );
-            reply.raw.end();
-          }
+            },
+          });
+
+          // Return streaming response
+          return reply.send(readableStream);
         } else {
-          return reply.send(response);
+          sendOkResponse(reply, AgentResponseSchema, response, fastify.log);
+          return;
         }
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         fastify.log.error('Agent streaming error: %s', errorMessage);
 
-        if (errorMessage.includes('not found')) {
+        if (errorMessage.includes('Conversation not found')) {
+          sendNotFoundError(reply, 'Conversation not found', fastify.log);
+          return;
+        }
+
+        if (errorMessage.includes('Agent not found')) {
           sendNotFoundError(reply, 'Agent not found', fastify.log);
+          return;
+        }
+
+        if (errorMessage.includes('not found')) {
+          sendNotFoundError(reply, 'Resource not found', fastify.log);
           return;
         }
 
@@ -197,7 +244,8 @@ export async function agentRoutes(fastify: FastifyInstance) {
           return;
         }
 
-        return reply.send(config);
+        sendOkResponse(reply, AgentConfigSchema, config, fastify.log);
+        return;
       } catch (error) {
         const errorMessage =
           error instanceof Error

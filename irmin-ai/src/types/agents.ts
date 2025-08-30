@@ -1,26 +1,22 @@
 import { z } from 'zod';
 
+import { ToolSelectionSchema } from './chat';
+
 // Agent request schema
 export const AgentRequestSchema = z.object({
   message: z.string().min(1, 'Message is required'),
   context: z.record(z.unknown()).optional(),
   conversationId: z.string().optional(),
   metadata: z.record(z.unknown()).optional(),
+  toolSelection: ToolSelectionSchema.optional(),
 });
 
 // Agent response schema
 export const AgentResponseSchema = z.object({
   content: z.string(),
   stream: z.unknown().optional(),
-  metadata: z
-    .object({
-      agentId: z.string(),
-      type: z.string(),
-      context: z.record(z.unknown()).optional(),
-    })
-    .optional(),
+  metadata: z.record(z.unknown()).optional(),
   toolCalls: z.array(z.unknown()).optional(),
-  thinking: z.string().optional(),
   usage: z
     .object({
       promptTokens: z.number(),
@@ -43,39 +39,23 @@ export const AgentConfigSchema = z.object({
   responseFormat: z.enum(['structured', 'unstructured', 'json', 'markdown']),
   contextRequirements: z.array(
     z.object({
-      type: z.enum(['vector', 'database', 'api', 'memory', 'conversation']),
+      type: z.enum(['string', 'vector', 'memory', 'conversation', 'schema']),
       name: z.string(),
       required: z.boolean(),
       config: z.record(z.unknown()).optional(),
     })
   ),
-  thinkingEnabled: z.boolean(),
-  useTools: z.boolean(),
+  toolSelection: ToolSelectionSchema.optional(),
   streaming: z.boolean(),
 });
 
-// Agent health response schema
-export const AgentHealthResponseSchema = z.object({
-  status: z.string(),
-  agentsCount: z.number(),
-  agents: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      type: z.string(),
-    })
-  ),
-  mcp: z.object({
-    enabled: z.boolean(),
-    initialized: z.boolean(),
-    toolCount: z.number(),
-    toolNames: z.array(z.string()),
-  }),
-  modelsCount: z.number(),
+// List agents response schema
+export const ListAgentsResponseSchema = z.object({
+  agents: z.array(AgentConfigSchema),
 });
 
 // Type exports
 export type AgentRequest = z.infer<typeof AgentRequestSchema>;
 export type AgentResponse = z.infer<typeof AgentResponseSchema>;
 export type AgentConfig = z.infer<typeof AgentConfigSchema>;
-export type AgentHealthResponse = z.infer<typeof AgentHealthResponseSchema>;
+export type ListAgentsResponse = z.infer<typeof ListAgentsResponseSchema>;

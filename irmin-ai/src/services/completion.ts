@@ -7,6 +7,8 @@ import { analyticsService } from '@/services/analytics';
 import { type LLMProvider, llmService, type ModelInfo } from '@/services/llm';
 import { mcpService } from '@/services/mcp';
 
+import { type ToolSelection } from '@/types/chat';
+
 interface CompletionOptions {
   messages: Message[];
   provider?: LLMProvider;
@@ -14,7 +16,7 @@ interface CompletionOptions {
   temperature?: number;
   maxTokens?: number;
   systemPrompt?: string;
-  useTools?: boolean;
+  toolSelection?: ToolSelection;
   authToken?: string;
 }
 
@@ -32,7 +34,7 @@ class CompletionService {
       temperature = 0.7,
       maxTokens = 1000,
       systemPrompt,
-      useTools = false,
+      toolSelection,
       authToken,
     } = options;
 
@@ -43,7 +45,9 @@ class CompletionService {
 
     try {
       // Get MCP tools if enabled (per-request)
-      const tools = useTools ? await this.createMcpTools(authToken) : [];
+      const tools = toolSelection
+        ? await this.createMcpTools(authToken, toolSelection)
+        : [];
 
       // Create model with tools
       const llm = llmService.createModel({
@@ -77,7 +81,6 @@ class CompletionService {
           provider,
           model: usedModel,
           streaming: true,
-          useTools,
           messageCount: messages.length,
         },
       });
@@ -117,7 +120,7 @@ class CompletionService {
       temperature = 0.7,
       maxTokens = 1000,
       systemPrompt,
-      useTools = false,
+      toolSelection,
       authToken,
     } = options;
 
@@ -128,7 +131,9 @@ class CompletionService {
 
     try {
       // Get MCP tools if enabled (per-request)
-      const tools = useTools ? await this.createMcpTools(authToken) : [];
+      const tools = toolSelection
+        ? await this.createMcpTools(authToken, toolSelection)
+        : [];
 
       // Create model with tools
       const llm = llmService.createModel({
@@ -212,28 +217,14 @@ class CompletionService {
   }
 
   /**
-   * Get MCP tools status
-   */
-  getMcpStatus(): {
-    enabled: boolean;
-    configStatus: {
-      enabled: boolean;
-      serverCount: number;
-      configKeys: string[];
-    };
-  } {
-    return {
-      enabled: true,
-      configStatus: mcpService.getConfigStatus(),
-    };
-  }
-
-  /**
    * Create MCP tools for a specific request
    * This is per-request and doesn't maintain global state
    */
-  async createMcpTools(authToken?: string): Promise<StructuredTool[]> {
-    return await mcpService.createMcpTools(authToken);
+  async createMcpTools(
+    authToken?: string,
+    toolSelection?: ToolSelection
+  ): Promise<StructuredTool[]> {
+    return await mcpService.createMcpTools(authToken, toolSelection);
   }
 
   /**

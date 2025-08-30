@@ -15,14 +15,15 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { analyticsService } from '@/services/analytics';
 import { completionService } from '@/services/completion';
 import { llmService } from '@/services/llm';
+import { mcpService } from '@/services/mcp';
 
 import {
   type ChatRequest,
   ChatRequestSchema,
   type ChatResponse,
-  McpStatusResponseSchema,
+  ChatResponseSchema,
+  McpToolsResponseSchema,
   ModelsResponseSchema,
-  ToolsResponseSchema,
 } from '@/types/chat';
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
@@ -51,7 +52,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
           model,
           temperature,
           maxTokens,
-          useTools = false,
+          toolSelection,
           stream = true,
         } = request.body;
 
@@ -134,7 +135,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
               temperature,
               maxTokens,
               systemPrompt,
-              useTools,
+              toolSelection,
               authToken,
             });
 
@@ -147,8 +148,8 @@ export async function chatRoutes(fastify: FastifyInstance) {
             eventData: {
               provider,
               model,
-              useTools,
               stream: true,
+              toolSelection,
             },
           });
 
@@ -245,7 +246,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
             temperature,
             maxTokens,
             systemPrompt,
-            useTools,
+            toolSelection,
             authToken,
           });
 
@@ -291,11 +292,23 @@ export async function chatRoutes(fastify: FastifyInstance) {
           const response: ChatResponse = {
             conversationId: conversation.id,
             message: {
-              ...assistantMessage,
-              timestamp: assistantMessage.createdAt!,
+              id: assistantMessage.id,
+              conversationId: assistantMessage.conversationId,
+              role: assistantMessage.role,
+              content: assistantMessage.content,
               metadata: assistantMessage.metadata as
                 | Record<string, unknown>
                 | undefined,
+              aiModelId: assistantMessage.aiModelId || null,
+              modelProvider: assistantMessage.modelProvider || null,
+              modelName: assistantMessage.modelName || null,
+              inputTokens: assistantMessage.inputTokens || null,
+              outputTokens: assistantMessage.outputTokens || null,
+              totalTokens: assistantMessage.totalTokens || null,
+              costUSD: assistantMessage.costUSD || null,
+              processingTimeMs: assistantMessage.processingTimeMs || null,
+              createdAt: assistantMessage.createdAt!,
+              updatedAt: assistantMessage.updatedAt!,
             },
             usage: aiResponse.usage,
           };
@@ -309,12 +322,13 @@ export async function chatRoutes(fastify: FastifyInstance) {
             eventData: {
               provider,
               model,
-              useTools,
+              toolSelection,
               stream: false,
             },
           });
 
-          return reply.send(response);
+          sendOkResponse(reply, ChatResponseSchema, response, fastify.log);
+          return;
         }
       } catch (error) {
         const errorMessage =
@@ -372,21 +386,20 @@ export async function chatRoutes(fastify: FastifyInstance) {
   // GET /api/chat/tools - List available MCP tools
   fastify.get('/chat/tools', async (request, reply) => {
     try {
-      const mcpStatus = completionService.getMcpStatus();
+      // Extract auth token for MCP tools
+      const authToken = extractAuthToken(request);
+
+      const mcpTools = await mcpService.getTools(authToken);
 
       sendOkResponse(
         reply,
-        ToolsResponseSchema,
+        McpToolsResponseSchema,
         {
-          enabled: mcpStatus.enabled,
-          initialized: mcpStatus.configStatus.enabled,
-          tools: mcpStatus.configStatus.configKeys.map((name) => ({
-            name,
-            description: `MCP tool: ${name}`,
-            type: 'mcp',
-          })),
-          count: mcpStatus.configStatus.serverCount,
-          totalTools: mcpStatus.configStatus.serverCount,
+          enabled: mcpTools.enabled,
+          tools: mcpTools.tools,
+          count: mcpTools.count,
+          servers: mcpTools.servers,
+          totalServers: mcpTools.totalServers,
         },
         fastify.log
       );
@@ -395,35 +408,6 @@ export async function chatRoutes(fastify: FastifyInstance) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to fetch tools';
       fastify.log.error('Tools endpoint error: %s', errorMessage);
-      sendInternalServerError(reply, errorMessage, fastify.log);
-      return;
-    }
-  });
-
-  // GET /api/chat/mcp-status - Get MCP server connection status
-  fastify.get('/chat/mcp-status', async (request, reply) => {
-    try {
-      const status = completionService.getMcpStatus();
-
-      sendOkResponse(
-        reply,
-        McpStatusResponseSchema,
-        {
-          enabled: status.enabled,
-          initialized: status.configStatus.enabled,
-          toolCount: status.configStatus.serverCount,
-          toolNames: status.configStatus.configKeys,
-          message: status.configStatus.enabled
-            ? `${status.configStatus.serverCount} MCP servers configured`
-            : 'No MCP servers configured',
-        },
-        fastify.log
-      );
-      return;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to fetch MCP status';
-      fastify.log.error('MCP status endpoint error: %s', errorMessage);
       sendInternalServerError(reply, errorMessage, fastify.log);
       return;
     }

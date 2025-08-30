@@ -18,6 +18,8 @@ export const agentConfig: AgentConfig = {
       required: false,
     },
   ],
-  useTools: true,
+  toolSelection: {
+    includeAll: true,
+  },
   streaming: true,
 };

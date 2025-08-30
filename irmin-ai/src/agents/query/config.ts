@@ -4,10 +4,10 @@ export const agentConfig: AgentConfig = {
   id: 'query',
   name: 'SQL Query Generator',
   description: 'Converts natural language to SQL queries',
-  type: 'single-shot',
-  modelProvider: 'openai',
-  model: 'gpt-5',
-  temperature: 0.25,
+  type: 'chat',
+  modelProvider: 'groq',
+  model: 'openai/gpt-oss-120b',
+  temperature: 1,
   maxTokens: 1000,
   responseFormat: 'structured',
   contextRequirements: [
@@ -17,6 +17,16 @@ export const agentConfig: AgentConfig = {
       required: true,
     },
   ],
-  useTools: false,
+  toolSelection: {
+    includeTools: [
+      'list_docs',
+      'get_docs',
+      'execute_sql',
+      'get_repository_object_schema',
+      'list_workspaces', // TODO: This is temporary, since we will want to provide the workspace to the agent in the context.
+      'list_repositories',
+      'list_repository_objects',
+    ],
+  },
   streaming: false,
 };

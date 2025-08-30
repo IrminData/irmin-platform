@@ -33,8 +33,12 @@ export abstract class BaseAgent implements BaseAgentInterface {
     const conversationMessages = await this.buildMessages(input);
     const systemPrompt = await this.loadSystemPrompt();
 
+    // Check if this is a streaming request based on input metadata and agent ability to stream
+    const isStreamingRequest =
+      input.metadata?.streaming === true && this.config.streaming;
+
     // Execute with the completion service
-    if (this.config.streaming) {
+    if (isStreamingRequest) {
       const stream = await completionService.createStreamingResponse({
         messages: conversationMessages,
         provider: this.config.modelProvider,
@@ -42,7 +46,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
         temperature: this.config.temperature,
         maxTokens: this.config.maxTokens,
         systemPrompt,
-        useTools: this.config.useTools,
+        toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
       });
 
@@ -63,7 +67,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
         temperature: this.config.temperature,
         maxTokens: this.config.maxTokens,
         systemPrompt,
-        useTools: this.config.useTools,
+        toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
       });
 
@@ -84,9 +88,15 @@ export abstract class BaseAgent implements BaseAgentInterface {
       return false;
     }
 
-    // Check required context
+    // Check required context that must be provided by the user
     for (const requirement of this.config.contextRequirements) {
       if (requirement.required && !input.context?.[requirement.name]) {
+        // For context types that can be prepared automatically, allow them to pass
+        // even if the implementation is not yet complete
+        if (['schema', 'vector', 'memory'].includes(requirement.type)) {
+          // Allow these context types to be prepared automatically
+          continue;
+        }
         return false;
       }
     }

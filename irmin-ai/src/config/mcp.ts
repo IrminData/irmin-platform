@@ -17,7 +17,7 @@ export const defaultMcpConfig: Record<
   // Irmin MCP server - requires user JWT token for authentication
   irmin: {
     url: env.IRMIN_API_BASE_URL + '/mcp',
-    transport: 'sse',
+    transport: 'http',
     type: 'mcp',
     headers: {
       Authorization: 'Bearer ${AUTH_TOKEN}', // Will be replaced with user's JWT
@@ -27,7 +27,7 @@ export const defaultMcpConfig: Record<
   // Example: Static API key server (uncomment and configure as needed)
   // 'static-api-server': {
   //   url: 'https://api.example.com/mcp',
-  //   transport: 'sse',
+  //   transport: 'http',
   //   type: 'mcp',
   //   headers: {
   //     'X-API-Key': env.EXAMPLE_API_KEY // Static key from environment
