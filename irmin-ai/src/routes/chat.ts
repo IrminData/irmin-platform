@@ -56,8 +56,12 @@ export async function chatRoutes(fastify: FastifyInstance) {
           stream = true,
         } = request.body;
 
-        // Extract auth token for MCP tools
-        const authToken = extractAuthToken(request);
+        // Get authenticated user context (set by auth middleware)
+        const authContext = request.auth;
+        if (!authContext) {
+          throw new Error('Authentication required');
+        }
+        const authToken = authContext.token;
 
         // MCP tools are now created per-request, no initialization needed
 
@@ -386,8 +390,12 @@ export async function chatRoutes(fastify: FastifyInstance) {
   // GET /api/chat/tools - List available MCP tools
   fastify.get('/chat/tools', async (request, reply) => {
     try {
-      // Extract auth token for MCP tools
-      const authToken = extractAuthToken(request);
+      // Get authenticated user context (set by auth middleware)
+      const authContext = request.auth;
+      if (!authContext) {
+        throw new Error('Authentication required');
+      }
+      const authToken = authContext.token;
 
       const mcpTools = await mcpService.getTools(authToken);
 
@@ -412,15 +420,4 @@ export async function chatRoutes(fastify: FastifyInstance) {
       return;
     }
   });
-}
-
-/**
- * Extract JWT token from request headers
- */
-function extractAuthToken(request: FastifyRequest): string | undefined {
-  const authHeader = request.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-  return undefined;
 }

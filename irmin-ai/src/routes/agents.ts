@@ -58,7 +58,12 @@ export async function agentRoutes(fastify: FastifyInstance) {
     ) => {
       try {
         const { agentId } = request.params;
-        const authToken = extractAuthToken(request);
+        // Get authenticated user context (set by auth middleware)
+        const authContext = request.auth;
+        if (!authContext) {
+          throw new Error('Authentication required');
+        }
+        const authToken = authContext.token;
 
         const response = await agentsManager.executeAgent(agentId, {
           message: request.body.message,
@@ -141,7 +146,12 @@ export async function agentRoutes(fastify: FastifyInstance) {
     ) => {
       try {
         const { agentId } = request.params;
-        const authToken = extractAuthToken(request);
+        // Get authenticated user context (set by auth middleware)
+        const authContext = request.auth;
+        if (!authContext) {
+          throw new Error('Authentication required');
+        }
+        const authToken = authContext.token;
 
         const response = await agentsManager.executeAgent(agentId, {
           message: request.body.message,
@@ -257,15 +267,4 @@ export async function agentRoutes(fastify: FastifyInstance) {
       }
     }
   );
-}
-
-/**
- * Extract JWT token from request headers
- */
-function extractAuthToken(request: FastifyRequest): string | undefined {
-  const authHeader = request.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-  return undefined;
 }

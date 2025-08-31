@@ -6,7 +6,7 @@ export const agentConfig: AgentConfig = {
   description: 'Converts natural language to SQL queries',
   type: 'chat',
   modelProvider: 'groq',
-  model: 'openai/gpt-oss-120b',
+  model: 'moonshotai/kimi-k2-instruct',
   temperature: 1,
   maxTokens: 1000,
   responseFormat: 'structured',

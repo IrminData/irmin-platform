@@ -1,6 +1,9 @@
 /* eslint-disable import-x/no-unused-modules */
+import { authMiddleware } from '@/middleware/auth';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
 import Fastify from 'fastify';
+import type { IncomingMessage } from 'http';
 
 import { analyticsService } from '@/services/analytics';
 
@@ -11,6 +14,8 @@ import { conversationRoutes } from '@/routes/conversations';
 import { env } from '@/config/env';
 import { seedDefaultModels } from '@/config/models';
 
+import type { AuthenticatedUser, AuthenticationError } from '@/types/auth';
+
 import { sendErrorResponse } from '@/utils/errors';
 
 // Create Fastify instance
@@ -18,6 +23,11 @@ const server = Fastify({
   logger: {
     level: env.LOG_LEVEL,
   },
+});
+
+// Register helmet middleware
+server.register(helmet, {
+  global: true,
 });
 
 // Register CORS
@@ -60,10 +70,51 @@ server.get('/health', async () => {
   };
 });
 
-// API routes
-server.register(chatRoutes, { prefix: '/api' });
-server.register(conversationRoutes, { prefix: '/api' });
-server.register(agentRoutes, { prefix: '/api' });
+// Add authentication hook for /api routes
+server.addHook('onRequest', async (request, reply) => {
+  // Only apply auth to /api routes
+  if (request.url.startsWith('/api/')) {
+    return new Promise<void>((resolve) => {
+      const req = request.raw as IncomingMessage & {
+        auth?: AuthenticatedUser;
+        log: typeof request.log;
+      };
+      const res = reply.raw;
+      req.log = request.log;
+
+      authMiddleware(req, res, (error?: Error) => {
+        if (error) {
+          const statusCode = (error as AuthenticationError).statusCode || 401;
+          reply
+            .code(statusCode)
+            .type('application/json')
+            .send({
+              error: 'AuthenticationError',
+              message: error.message || 'Authentication failed',
+              statusCode,
+            });
+          // Don't resolve - let Fastify handle the response termination
+        } else {
+          // Copy auth from raw request to Fastify request
+          if (req.auth) {
+            request.auth = req.auth;
+          }
+          resolve();
+        }
+      });
+    });
+  }
+});
+
+// Register API routes
+server.register(
+  async function (fastify) {
+    await fastify.register(chatRoutes);
+    await fastify.register(conversationRoutes);
+    await fastify.register(agentRoutes);
+  },
+  { prefix: '/api' }
+);
 
 // 404 handler
 server.setNotFoundHandler(async (request, reply) => {
