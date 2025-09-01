@@ -404,9 +404,94 @@ When `stream: false`, returns a complete response:
 }
 ```
 
+## Information Endpoints
+
+### Get User Profile
+
+**GET** `/info/user`
+
+Retrieve the authenticated user's profile information.
+
+#### Headers
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| `Authorization` | string | Yes | Bearer token for authentication |
+
+#### Response
+
+```json
+{
+  "user": {
+    "id": "user-uuid",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@example.com",
+    "phone": "+1234567890",
+    "company": "Example Corp",
+    "profile_picture": "https://example.com/avatar.jpg",
+    "roles": [
+      {
+        "id": "role-uuid",
+        "name": "admin",
+        "description": "Administrator role"
+      }
+    ]
+  },
+  "token": "jwt-token-string"
+}
+```
+
+### Get Workspace Information
+
+**GET** `/info/workspace`
+
+Retrieve information about the currently selected workspace.
+
+#### Headers
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| `Authorization` | string | Yes | Bearer token for authentication |
+| `X-Workspace-Slug` | string | Yes | Workspace slug for workspace selection |
+
+#### Response
+
+```json
+{
+  "workspace": {
+    "id": "workspace-uuid",
+    "name": "My Workspace",
+    "slug": "my-workspace",
+    "description": "A sample workspace for development",
+    "owner": {
+      "id": "user-uuid",
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john.doe@example.com",
+      "phone": "+1234567890",
+      "company": "Example Corp",
+      "profile_picture": "https://example.com/avatar.jpg"
+    },
+    "users": [
+      {
+        "id": "user-uuid",
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com",
+        "phone": "+1234567890",
+        "company": "Example Corp",
+        "profile_picture": "https://example.com/avatar.jpg"
+      }
+    ]
+  },
+  "slug": "my-workspace"
+}
+```
+
 ### List Available Models
 
-**GET** `/chat/models`
+**GET** `/info/models`
 
 Retrieve a list of available AI models with pricing and capabilities.
 
@@ -429,7 +514,7 @@ Retrieve a list of available AI models with pricing and capabilities.
 
 ### List Available Tools
 
-**GET** `/chat/tools`
+**GET** `/info/tools`
 
 Retrieve detailed information about all available MCP tools for the authenticated user, including tool schemas, server information, and authentication requirements.
 

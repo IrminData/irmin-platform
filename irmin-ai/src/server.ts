@@ -10,6 +10,7 @@ import { analyticsService } from '@/services/analytics';
 import { agentRoutes } from '@/routes/agents';
 import { chatRoutes } from '@/routes/chat';
 import { conversationRoutes } from '@/routes/conversations';
+import { infoRoutes } from '@/routes/info';
 
 import { env } from '@/config/env';
 import { seedDefaultModels } from '@/config/models';
@@ -80,6 +81,7 @@ server.register(
     await fastify.register(chatRoutes);
     await fastify.register(conversationRoutes);
     await fastify.register(agentRoutes);
+    await fastify.register(infoRoutes);
   },
   { prefix: '/api' }
 );

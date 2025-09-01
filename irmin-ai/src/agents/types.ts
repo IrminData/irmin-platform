@@ -5,7 +5,7 @@ import type { IterableReadableStream } from '@langchain/core/utils/stream';
 
 import type { LLMProvider } from '@/services/llm';
 
-import { type ToolSelection } from '@/types/chat';
+import { type ToolSelection } from '@/types/agents';
 
 export interface ContextRequirement {
   type: 'string' | 'vector' | 'memory' | 'conversation' | 'schema';

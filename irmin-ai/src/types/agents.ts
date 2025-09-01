@@ -1,6 +1,28 @@
 import { z } from 'zod';
 
-import { ToolSelectionSchema } from './chat';
+// Tool selection schema - allows specifying which tools to include
+export const ToolSelectionSchema = z.object({
+  // Include all tools from specific MCP servers
+  includeServers: z
+    .array(z.string())
+    .optional()
+    .describe('Include all tools from specific MCP servers'),
+  // Include specific tools by name
+  includeTools: z
+    .array(z.string())
+    .optional()
+    .describe('Include specific tools by name'),
+  // Exclude specific tools by name
+  excludeTools: z
+    .array(z.string())
+    .optional()
+    .describe('Exclude specific tools by name'),
+  // Include all available tools (legacy behavior)
+  includeAll: z
+    .boolean()
+    .optional()
+    .describe('Include all available tools (legacy behavior)'),
+});
 
 // Agent request schema
 export const AgentRequestSchema = z.object({
@@ -59,3 +81,4 @@ export type AgentRequest = z.infer<typeof AgentRequestSchema>;
 export type AgentResponse = z.infer<typeof AgentResponseSchema>;
 export type AgentConfig = z.infer<typeof AgentConfigSchema>;
 export type ListAgentsResponse = z.infer<typeof ListAgentsResponseSchema>;
+export type ToolSelection = z.infer<typeof ToolSelectionSchema>;

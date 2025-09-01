@@ -7,7 +7,7 @@ import { analyticsService } from '@/services/analytics';
 import { type LLMProvider, llmService, type ModelInfo } from '@/services/llm';
 import { mcpService } from '@/services/mcp';
 
-import { type ToolSelection } from '@/types/chat';
+import { type ToolSelection } from '@/types/agents';
 
 interface CompletionOptions {
   messages: Message[];

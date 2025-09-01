@@ -9,7 +9,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { defaultMcpConfig } from '@/config/mcp';
 
-import { type ToolSelection } from '@/types/chat';
+import { type ToolSelection } from '@/types/agents';
 
 class McpService {
   /**
