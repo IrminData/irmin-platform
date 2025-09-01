@@ -16,6 +16,33 @@ Most endpoints require authentication via JWT Bearer token in the Authorization 
 Authorization: Bearer <your-irmin-jwt-token>
 ```
 
+### Token Validation
+
+The authentication middleware validates JWT tokens by making a request to the main Irmin API's profile endpoint (`/v1/profile`). This ensures that:
+
+- The token is valid and not expired
+- The user account is still active
+- The user profile information is up-to-date
+- The token has the necessary permissions for API access
+
+If the token validation fails (invalid token, expired, or user not found), the API will return a 401 Unauthorized error. The validated user profile is then attached to the request context and made available to route handlers.
+
+## Workspace Selection
+
+All API endpoints require workspace selection via the `X-Workspace-Slug` header. This ensures proper billing attribution and access control for all operations.
+
+```
+X-Workspace-Slug: <workspace-slug>
+```
+
+The workspace selection middleware:
+- Validates that the authenticated user has access to the specified workspace
+- Fetches the complete workspace details from the main Irmin API
+- Attaches the workspace context to the request for use by route handlers
+- Ensures all API operations are properly attributed to the correct workspace for billing purposes
+
+If the workspace doesn't exist, the user doesn't have access, or the header is missing, the API will return an appropriate error (400, 403, or 404).
+
 ## Conversation Management
 
 ### List Conversations
@@ -409,6 +436,7 @@ Retrieve detailed information about all available MCP tools for the authenticate
 | Header | Type | Required | Description |
 |--------|------|----------|-------------|
 | `Authorization` | string | Yes | Bearer token for authentication |
+| `X-Workspace-Slug` | string | Yes | Workspace slug for workspace-specific tool filtering and billing |
 
 #### Response
 

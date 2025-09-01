@@ -1,9 +1,9 @@
 /* eslint-disable import-x/no-unused-modules */
-import { authMiddleware } from '@/middleware/auth';
+import { authMiddlewareOnRequestHook } from '@/middleware/auth';
+import { workspaceMiddlewareOnRequestHook } from '@/middleware/workspace';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import Fastify from 'fastify';
-import type { IncomingMessage } from 'http';
 
 import { analyticsService } from '@/services/analytics';
 
@@ -13,8 +13,6 @@ import { conversationRoutes } from '@/routes/conversations';
 
 import { env } from '@/config/env';
 import { seedDefaultModels } from '@/config/models';
-
-import type { AuthenticatedUser, AuthenticationError } from '@/types/auth';
 
 import { sendErrorResponse } from '@/utils/errors';
 
@@ -71,40 +69,10 @@ server.get('/health', async () => {
 });
 
 // Add authentication hook for /api routes
-server.addHook('onRequest', async (request, reply) => {
-  // Only apply auth to /api routes
-  if (request.url.startsWith('/api/')) {
-    return new Promise<void>((resolve) => {
-      const req = request.raw as IncomingMessage & {
-        auth?: AuthenticatedUser;
-        log: typeof request.log;
-      };
-      const res = reply.raw;
-      req.log = request.log;
+server.addHook('onRequest', authMiddlewareOnRequestHook);
 
-      authMiddleware(req, res, (error?: Error) => {
-        if (error) {
-          const statusCode = (error as AuthenticationError).statusCode || 401;
-          reply
-            .code(statusCode)
-            .type('application/json')
-            .send({
-              error: 'AuthenticationError',
-              message: error.message || 'Authentication failed',
-              statusCode,
-            });
-          // Don't resolve - let Fastify handle the response termination
-        } else {
-          // Copy auth from raw request to Fastify request
-          if (req.auth) {
-            request.auth = req.auth;
-          }
-          resolve();
-        }
-      });
-    });
-  }
-});
+// Add workspace selection hook for /api routes (runs after auth)
+server.addHook('onRequest', workspaceMiddlewareOnRequestHook);
 
 // Register API routes
 server.register(

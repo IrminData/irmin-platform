@@ -1,4 +1,5 @@
 import type { User } from '@/irmin-api/types/user';
+import type { Workspace } from '@/irmin-api/types/workspace';
 
 /**
  * Authenticated user context attached to Fastify request
@@ -6,6 +7,14 @@ import type { User } from '@/irmin-api/types/user';
 export interface AuthenticatedUser {
   user: User;
   token: string;
+}
+
+/**
+ * Selected workspace context attached to Fastify request
+ */
+export interface SelectedWorkspace {
+  workspace: Workspace;
+  slug: string;
 }
 
 /**
@@ -22,10 +31,11 @@ export class AuthenticationError extends Error {
 }
 
 /**
- * Extended Fastify request interface with authentication context
+ * Extended Fastify request interface with authentication and workspace context
  */
 declare module 'fastify' {
   interface FastifyRequest {
     auth?: AuthenticatedUser;
+    workspace?: SelectedWorkspace;
   }
 }

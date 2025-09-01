@@ -1,4 +1,5 @@
 import IrminCore from '@/irmin-api';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 import type { AuthenticatedUser } from '@/types/auth';
@@ -11,9 +12,9 @@ import { AuthenticationError } from '@/types/auth';
  * fetches the user profile from the main Irmin API, and attaches the
  * authenticated user context to the request.
  */
-export const authMiddleware = async (
+const authMiddleware = async (
   req: IncomingMessage & { auth?: AuthenticatedUser; log: unknown },
-  res: ServerResponse,
+  _res: ServerResponse,
   next: (error?: Error) => void
 ): Promise<void> => {
   try {
@@ -77,5 +78,43 @@ export const authMiddleware = async (
     const authError = new AuthenticationError(message, statusCode);
     next(authError);
     return;
+  }
+};
+
+export const authMiddlewareOnRequestHook = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  // Only apply auth to /api routes
+  if (request.url.startsWith('/api/')) {
+    return new Promise<void>((resolve) => {
+      const req = request.raw as IncomingMessage & {
+        auth?: AuthenticatedUser;
+        log: typeof request.log;
+      };
+      const res = reply.raw;
+      req.log = request.log;
+
+      authMiddleware(req, res, (error?: Error) => {
+        if (error) {
+          const statusCode = (error as AuthenticationError).statusCode || 401;
+          reply
+            .code(statusCode)
+            .type('application/json')
+            .send({
+              error: 'AuthenticationError',
+              message: error.message || 'Authentication failed',
+              statusCode,
+            });
+          // Don't resolve - let Fastify handle the response termination
+        } else {
+          // Copy auth from raw request to Fastify request
+          if (req.auth) {
+            request.auth = req.auth;
+          }
+          resolve();
+        }
+      });
+    });
   }
 };
