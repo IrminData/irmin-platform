@@ -297,7 +297,8 @@ class McpService {
                   tool.schema &&
                   typeof tool.schema === 'object' &&
                   '_def' in tool.schema
-                    ? zodToJsonSchema(tool.schema as import('zod').ZodType)
+                    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      zodToJsonSchema(tool.schema as any)
                     : tool.schema,
                 serverId,
                 requiresAuth,

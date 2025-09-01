@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "346a3127-bb4d-4e05-8a4e-dfffd3c40374",
+  "id": "7a7c6d88-74be-40d2-aa2d-17ef191dd5f2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ai_models": {
@@ -173,44 +173,6 @@
           "autoincrement": false,
           "default": 0
         },
-        "response_time_ms": {
-          "name": "response_time_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "request_size": {
-          "name": "request_size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "response_size": {
-          "name": "response_size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -290,6 +252,20 @@
           "notNull": false,
           "autoincrement": false
         },
+        "workspace_slug": {
+          "name": "workspace_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -367,6 +343,13 @@
         },
         "model_name": {
           "name": "model_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "agent_name": {
+          "name": "agent_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

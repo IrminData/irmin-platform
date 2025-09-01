@@ -58,10 +58,11 @@ export async function agentRoutes(fastify: FastifyInstance) {
     ) => {
       try {
         const { agentId } = request.params;
-        // Get authenticated user context (set by auth middleware)
+        // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
-        if (!authContext) {
-          throw new Error('Authentication required');
+        const workspaceContext = request.workspace;
+        if (!authContext || !workspaceContext) {
+          throw new Error('Authentication and workspace context required');
         }
         const authToken = authContext.token;
 
@@ -75,6 +76,8 @@ export async function agentRoutes(fastify: FastifyInstance) {
           },
           toolSelection: request.body.toolSelection,
           authToken,
+          workspace: workspaceContext.workspace,
+          user: authContext.user,
         });
 
         // Add conversation ID to response headers if available
@@ -146,10 +149,11 @@ export async function agentRoutes(fastify: FastifyInstance) {
     ) => {
       try {
         const { agentId } = request.params;
-        // Get authenticated user context (set by auth middleware)
+        // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
-        if (!authContext) {
-          throw new Error('Authentication required');
+        const workspaceContext = request.workspace;
+        if (!authContext || !workspaceContext) {
+          throw new Error('Authentication and workspace context required');
         }
         const authToken = authContext.token;
 
@@ -163,6 +167,8 @@ export async function agentRoutes(fastify: FastifyInstance) {
           },
           toolSelection: request.body.toolSelection,
           authToken,
+          workspace: workspaceContext.workspace,
+          user: authContext.user,
         });
 
         if (response.stream) {

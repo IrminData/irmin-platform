@@ -45,11 +45,13 @@ If the workspace doesn't exist, the user doesn't have access, or the header is m
 
 ## Conversation Management
 
+All conversation operations are scoped to the authenticated user and specified workspace. Users can only access conversations they created within workspaces they have permission to access.
+
 ### List Conversations
 
 **GET** `/conversations`
 
-Retrieve a paginated list of all conversations with message statistics.
+Retrieve a paginated list of conversations for the authenticated user in the specified workspace.
 
 #### Query Parameters
 
@@ -100,7 +102,7 @@ Retrieve a paginated list of all conversations with message statistics.
 
 **GET** `/conversations/:id`
 
-Retrieve a specific conversation by ID.
+Retrieve a specific conversation by ID. Only returns the conversation if it belongs to the authenticated user and specified workspace.
 
 #### Path Parameters
 
@@ -124,7 +126,7 @@ Retrieve a specific conversation by ID.
 
 **GET** `/conversations/:id/messages`
 
-Retrieve messages for a specific conversation with pagination.
+Retrieve messages for a specific conversation with pagination. Only returns messages if the conversation belongs to the authenticated user and specified workspace.
 
 #### Path Parameters
 
@@ -176,7 +178,7 @@ Retrieve messages for a specific conversation with pagination.
 
 **POST** `/conversations`
 
-Create a new conversation.
+Create a new conversation in the specified workspace for the authenticated user.
 
 #### Request Body
 
@@ -205,7 +207,7 @@ Create a new conversation.
 
 **PUT** `/conversations/:id`
 
-Update an existing conversation.
+Update an existing conversation. Only allows updates to conversations owned by the authenticated user in the specified workspace.
 
 #### Path Parameters
 
@@ -238,7 +240,7 @@ Update an existing conversation.
 
 **DELETE** `/conversations/:id`
 
-Delete a conversation and all associated messages.
+Delete a conversation and all associated messages. Only allows deletion of conversations owned by the authenticated user in the specified workspace.
 
 #### Path Parameters
 

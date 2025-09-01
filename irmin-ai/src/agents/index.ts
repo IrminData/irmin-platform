@@ -10,7 +10,7 @@ import {
 } from '@/agents/types';
 import { conversations, db, messages, type NewMessage } from '@/database';
 import { randomUUID } from 'crypto';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { analyticsService } from '@/services/analytics';
 import { llmService } from '@/services/llm';
@@ -60,12 +60,25 @@ export class AgentsManager {
     const startTime = Date.now();
 
     try {
+      // Validate workspace and user context
+      if (!input.workspace || !input.user) {
+        throw new Error(
+          'Workspace and user context required for agent execution'
+        );
+      }
+
       // Create or get existing conversation
       if (input.conversationId) {
         const existingConversation = await db
           .select()
           .from(conversations)
-          .where(eq(conversations.id, input.conversationId));
+          .where(
+            and(
+              eq(conversations.id, input.conversationId),
+              eq(conversations.workspaceSlug, input.workspace.slug),
+              eq(conversations.userId, input.user.id)
+            )
+          );
         if (!existingConversation.length) {
           throw new Error('Conversation not found');
         }
@@ -80,6 +93,8 @@ export class AgentsManager {
             input.message.substring(0, 50) +
             (input.message.length > 50 ? '...' : ''),
           metadata: {},
+          workspaceSlug: input.workspace.slug,
+          userId: input.user.id,
           createdAt: now,
           updatedAt: now,
         };

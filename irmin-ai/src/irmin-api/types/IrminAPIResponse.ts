@@ -22,7 +22,7 @@ export const IrminAPIResponseSchema = z.object({
     'Pagination metadata'
   ),
   metadata: z
-    .record(z.unknown())
+    .record(z.string(), z.unknown())
     .optional()
     .describe('Additional metadata from the API response'),
   message: z.string().optional().describe('Message from the API response'),

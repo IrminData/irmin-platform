@@ -8,7 +8,7 @@ import {
 } from '@/database';
 import { toUIMessageStream } from '@ai-sdk/langchain';
 import { randomUUID } from 'crypto';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -56,10 +56,11 @@ export async function chatRoutes(fastify: FastifyInstance) {
           stream = true,
         } = request.body;
 
-        // Get authenticated user context (set by auth middleware)
+        // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
-        if (!authContext) {
-          throw new Error('Authentication required');
+        const workspaceContext = request.workspace;
+        if (!authContext || !workspaceContext) {
+          throw new Error('Authentication and workspace context required');
         }
         const authToken = authContext.token;
 
@@ -72,7 +73,13 @@ export async function chatRoutes(fastify: FastifyInstance) {
           const existingConversation = await db
             .select()
             .from(conversations)
-            .where(eq(conversations.id, conversationId));
+            .where(
+              and(
+                eq(conversations.id, conversationId),
+                eq(conversations.workspaceSlug, workspaceContext.slug),
+                eq(conversations.userId, authContext.user.id)
+              )
+            );
           if (!existingConversation.length) {
             sendNotFoundError(reply, 'Conversation not found', fastify.log);
             return;
@@ -86,6 +93,8 @@ export async function chatRoutes(fastify: FastifyInstance) {
             id,
             title:
               message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+            workspaceSlug: workspaceContext.slug,
+            userId: authContext.user.id,
             createdAt: now,
             updatedAt: now,
           };
@@ -390,10 +399,11 @@ export async function chatRoutes(fastify: FastifyInstance) {
   // GET /api/chat/tools - List available MCP tools
   fastify.get('/chat/tools', async (request, reply) => {
     try {
-      // Get authenticated user context (set by auth middleware)
+      // Get authenticated user and workspace context (set by middleware)
       const authContext = request.auth;
-      if (!authContext) {
-        throw new Error('Authentication required');
+      const workspaceContext = request.workspace;
+      if (!authContext || !workspaceContext) {
+        throw new Error('Authentication and workspace context required');
       }
       const authToken = authContext.token;
 

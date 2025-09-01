@@ -2,8 +2,11 @@ import IrminCore from '@/irmin-api';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
 
-import type { AuthenticatedUser, SelectedWorkspace } from '@/types/auth';
-import { AuthenticationError } from '@/types/auth';
+import type {
+  AuthenticatedUser,
+  SelectedWorkspace,
+} from '@/types/request-context';
+import { AuthenticationError } from '@/types/request-context';
 
 /**
  * Workspace Selection Middleware

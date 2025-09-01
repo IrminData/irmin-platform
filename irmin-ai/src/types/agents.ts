@@ -5,9 +5,9 @@ import { ToolSelectionSchema } from './chat';
 // Agent request schema
 export const AgentRequestSchema = z.object({
   message: z.string().min(1, 'Message is required'),
-  context: z.record(z.unknown()).optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
   conversationId: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   toolSelection: ToolSelectionSchema.optional(),
 });
 
@@ -15,7 +15,7 @@ export const AgentRequestSchema = z.object({
 export const AgentResponseSchema = z.object({
   content: z.string(),
   stream: z.unknown().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   toolCalls: z.array(z.unknown()).optional(),
   usage: z
     .object({
@@ -42,7 +42,7 @@ export const AgentConfigSchema = z.object({
       type: z.enum(['string', 'vector', 'memory', 'conversation', 'schema']),
       name: z.string(),
       required: z.boolean(),
-      config: z.record(z.unknown()).optional(),
+      config: z.record(z.string(), z.unknown()).optional(),
     })
   ),
   toolSelection: ToolSelectionSchema.optional(),

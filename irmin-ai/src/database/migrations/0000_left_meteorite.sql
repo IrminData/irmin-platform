@@ -23,11 +23,6 @@ CREATE TABLE `analytics` (
 	`token_count` integer DEFAULT 0,
 	`cost_dollars` real DEFAULT 0,
 	`processing_time_ms` integer DEFAULT 0,
-	`response_time_ms` integer DEFAULT 0,
-	`request_size` integer DEFAULT 0,
-	`response_size` integer DEFAULT 0,
-	`user_id` text,
-	`session_id` text,
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
 	FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON UPDATE no action ON DELETE cascade,
@@ -38,6 +33,8 @@ CREATE TABLE `conversations` (
 	`id` text PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,
 	`metadata` text,
+	`workspace_slug` text NOT NULL,
+	`user_id` text NOT NULL,
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
 	`updated_at` integer DEFAULT (unixepoch()) NOT NULL
 );
@@ -51,6 +48,7 @@ CREATE TABLE `messages` (
 	`ai_model_id` text,
 	`model_provider` text,
 	`model_name` text,
+	`agent_name` text,
 	`input_tokens` integer DEFAULT 0,
 	`output_tokens` integer DEFAULT 0,
 	`total_tokens` integer DEFAULT 0,

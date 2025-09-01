@@ -1,3 +1,5 @@
+import type { User } from '@/irmin-api/types/user';
+import type { Workspace } from '@/irmin-api/types/workspace';
 import type { AIMessageChunk } from '@langchain/core/messages';
 import type { IterableReadableStream } from '@langchain/core/utils/stream';
 
@@ -5,33 +7,26 @@ import type { LLMProvider } from '@/services/llm';
 
 import { type ToolSelection } from '@/types/chat';
 
-export type AgentType = 'chat' | 'single-shot';
-export type ResponseFormat =
-  | 'structured'
-  | 'unstructured'
-  | 'json'
-  | 'markdown';
-
-export interface AgentConfig {
-  id: string;
-  name: string;
-  description: string;
-  type: AgentType;
-  modelProvider: LLMProvider;
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  responseFormat: ResponseFormat;
-  contextRequirements: ContextRequirement[];
-  toolSelection?: ToolSelection;
-  streaming: boolean;
-}
-
 export interface ContextRequirement {
   type: 'string' | 'vector' | 'memory' | 'conversation' | 'schema';
   name: string;
   required: boolean;
   config?: Record<string, unknown>;
+}
+
+export interface AgentConfig {
+  id: string;
+  name: string;
+  description: string;
+  type: 'chat' | 'single-shot';
+  modelProvider: LLMProvider;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  responseFormat: 'structured' | 'unstructured' | 'json' | 'markdown';
+  contextRequirements: ContextRequirement[];
+  toolSelection?: ToolSelection;
+  streaming: boolean;
 }
 
 export interface AgentInput {
@@ -41,6 +36,8 @@ export interface AgentInput {
   conversationId?: string;
   metadata?: Record<string, unknown>;
   toolSelection?: ToolSelection;
+  workspace: Workspace;
+  user: User;
 }
 
 export interface AgentResponse {

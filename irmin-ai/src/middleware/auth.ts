@@ -2,8 +2,8 @@ import IrminCore from '@/irmin-api';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
 
-import type { AuthenticatedUser } from '@/types/auth';
-import { AuthenticationError } from '@/types/auth';
+import type { AuthenticatedUser } from '@/types/request-context';
+import { AuthenticationError } from '@/types/request-context';
 
 /**
  * JWT Authentication Middleware

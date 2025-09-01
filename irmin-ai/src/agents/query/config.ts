@@ -23,7 +23,6 @@ export const agentConfig: AgentConfig = {
       'get_docs',
       'execute_sql',
       'get_repository_object_schema',
-      'list_workspaces', // TODO: This is temporary, since we will want to provide the workspace to the agent in the context.
       'list_repositories',
       'list_repository_objects',
     ],

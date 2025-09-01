@@ -10,7 +10,7 @@ LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with st
 - **Multiple AI providers** (Groq, OpenAI) with model switching
 - **Granular MCP tools integration** with selective tool access
 - **AI agents** for specialized AI tasks
-- **Conversation management** with SQLite storage
+- **Workspace-based conversation management** with user isolation and access control
 - **Token tracking** and cost analytics
 
 ## Quick Start
@@ -46,16 +46,18 @@ curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello", "provider": "groq"}'
 
-# With MCP tools (all tools)
+# With MCP tools (all tools) - requires workspace context
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-irmin-jwt-token>" \
+  -H "X-Workspace-Slug: your-workspace-slug" \
   -d '{"message": "List repositories", "toolSelection": {"includeAll": true}}'
 
 # With selective MCP tools
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-irmin-jwt-token>" \
+  -H "X-Workspace-Slug: your-workspace-slug" \
   -d '{"message": "List workspaces", "toolSelection": {"includeTools": ["list_workspaces"]}}'
 ```
 
@@ -123,10 +125,18 @@ See [agents/README.md](src/agents/README.md) for more details.
 ## Database
 
 Uses SQLite with Drizzle ORM. Tables:
-- `conversations` - Chat conversations
+- `conversations` - Chat conversations (isolated by workspace and user)
 - `messages` - Individual messages with token usage
 - `ai_models` - Available AI models and pricing
 - `analytics` - Usage tracking and events
+
+### Workspace-Based Access Control
+
+All conversations are associated with a specific workspace and user:
+- **User Isolation**: Users can only access conversations they created
+- **Workspace Isolation**: Conversations are scoped to the workspace specified in the `X-Workspace-Slug` header
+- **Access Control**: All API endpoints verify workspace access before processing requests
+- **Billing Attribution**: All operations are properly attributed to the correct workspace for billing purposes
 
 ## MCP Tools
 

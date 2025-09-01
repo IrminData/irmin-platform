@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1756498237428,
-      "tag": "0000_chunky_landau",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1756502194363,
-      "tag": "0001_demonic_skullbuster",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1756505022080,
-      "tag": "0002_lonely_kid_colt",
+      "when": 1756716650932,
+      "tag": "0000_left_meteorite",
       "breakpoints": true
     }
   ]

@@ -5,6 +5,11 @@ export const conversations = sqliteTable('conversations', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   metadata: text('metadata', { mode: 'json' }),
+
+  // Workspace and user association
+  workspaceSlug: text('workspace_slug').notNull(),
+  userId: text('user_id').notNull(),
+
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

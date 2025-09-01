@@ -1,6 +1,6 @@
 import { conversations, db, messages, type NewConversation } from '@/database';
 import { randomUUID } from 'crypto';
-import { asc, count, desc, eq, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, sum } from 'drizzle-orm';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -53,10 +53,24 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         } = request.query;
         const offset = (page - 1) * limit;
 
-        // Count total records
+        // Get workspace and user context from middleware
+        const workspaceContext = request.workspace;
+        const authContext = request.auth;
+
+        if (!workspaceContext || !authContext) {
+          throw new Error('Workspace and authentication context required');
+        }
+
+        // Count total records for this workspace and user
         const totalResult = await db
           .select({ count: count() })
-          .from(conversations);
+          .from(conversations)
+          .where(
+            and(
+              eq(conversations.workspaceSlug, workspaceContext.slug),
+              eq(conversations.userId, authContext.user.id)
+            )
+          );
         const total = totalResult[0]?.count || 0;
 
         // Get sorted column
@@ -69,7 +83,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
 
         const orderFn = sortOrder === 'asc' ? asc : desc;
 
-        // Get conversations with message stats
+        // Get conversations with message stats for this workspace and user
         const data = await db
           .select({
             id: conversations.id,
@@ -83,6 +97,12 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           })
           .from(conversations)
           .leftJoin(messages, eq(conversations.id, messages.conversationId))
+          .where(
+            and(
+              eq(conversations.workspaceSlug, workspaceContext.slug),
+              eq(conversations.userId, authContext.user.id)
+            )
+          )
           .groupBy(conversations.id)
           .orderBy(orderFn(sortColumn))
           .limit(limit)
@@ -145,10 +165,25 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     ) => {
       try {
         const { id } = request.params;
+
+        // Get workspace and user context from middleware
+        const workspaceContext = request.workspace;
+        const authContext = request.auth;
+
+        if (!workspaceContext || !authContext) {
+          throw new Error('Workspace and authentication context required');
+        }
+
         const conversation = await db
           .select()
           .from(conversations)
-          .where(eq(conversations.id, id));
+          .where(
+            and(
+              eq(conversations.id, id),
+              eq(conversations.workspaceSlug, workspaceContext.slug),
+              eq(conversations.userId, authContext.user.id)
+            )
+          );
 
         if (!conversation.length) {
           sendNotFoundError(reply, 'Conversation not found', fastify.log);
@@ -208,11 +243,25 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         const { page = 1, limit = 50, sortOrder = 'asc' } = request.query;
         const offset = (page - 1) * limit;
 
-        // Check if conversation exists
+        // Get workspace and user context from middleware
+        const workspaceContext = request.workspace;
+        const authContext = request.auth;
+
+        if (!workspaceContext || !authContext) {
+          throw new Error('Workspace and authentication context required');
+        }
+
+        // Check if conversation exists and user has access
         const conversation = await db
           .select()
           .from(conversations)
-          .where(eq(conversations.id, id));
+          .where(
+            and(
+              eq(conversations.id, id),
+              eq(conversations.workspaceSlug, workspaceContext.slug),
+              eq(conversations.userId, authContext.user.id)
+            )
+          );
         if (!conversation.length) {
           sendNotFoundError(reply, 'Conversation not found', fastify.log);
           return;
@@ -277,6 +326,15 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     ) => {
       try {
         const { title, metadata } = request.body;
+
+        // Get workspace and user context from middleware
+        const workspaceContext = request.workspace;
+        const authContext = request.auth;
+
+        if (!workspaceContext || !authContext) {
+          throw new Error('Workspace and authentication context required');
+        }
+
         const id = randomUUID();
         const now = new Date();
 
@@ -284,6 +342,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           id,
           title: title || 'New Conversation',
           metadata,
+          workspaceSlug: workspaceContext.slug,
+          userId: authContext.user.id,
           createdAt: now,
           updatedAt: now,
         };
@@ -342,11 +402,25 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         const { id } = request.params;
         const updateData = request.body;
 
-        // Check if conversation exists
+        // Get workspace and user context from middleware
+        const workspaceContext = request.workspace;
+        const authContext = request.auth;
+
+        if (!workspaceContext || !authContext) {
+          throw new Error('Workspace and authentication context required');
+        }
+
+        // Check if conversation exists and user has access
         const existing = await db
           .select()
           .from(conversations)
-          .where(eq(conversations.id, id));
+          .where(
+            and(
+              eq(conversations.id, id),
+              eq(conversations.workspaceSlug, workspaceContext.slug),
+              eq(conversations.userId, authContext.user.id)
+            )
+          );
         if (!existing.length) {
           sendNotFoundError(reply, 'Conversation not found', fastify.log);
           return;
@@ -413,11 +487,25 @@ export async function conversationRoutes(fastify: FastifyInstance) {
       try {
         const { id } = request.params;
 
-        // Check if conversation exists
+        // Get workspace and user context from middleware
+        const workspaceContext = request.workspace;
+        const authContext = request.auth;
+
+        if (!workspaceContext || !authContext) {
+          throw new Error('Workspace and authentication context required');
+        }
+
+        // Check if conversation exists and user has access
         const conversation = await db
           .select()
           .from(conversations)
-          .where(eq(conversations.id, id));
+          .where(
+            and(
+              eq(conversations.id, id),
+              eq(conversations.workspaceSlug, workspaceContext.slug),
+              eq(conversations.userId, authContext.user.id)
+            )
+          );
         if (!conversation.length) {
           sendNotFoundError(reply, 'Conversation not found', fastify.log);
           return;
