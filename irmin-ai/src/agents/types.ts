@@ -7,11 +7,10 @@ import type { LLMProvider } from '@/services/llm';
 
 import { type ToolSelection } from '@/types/agents';
 
-export interface ContextRequirement {
+interface ContextRequirement {
   type: 'string' | 'vector' | 'memory' | 'conversation' | 'schema';
   name: string;
   required: boolean;
-  config?: Record<string, unknown>;
 }
 
 export interface AgentConfig {

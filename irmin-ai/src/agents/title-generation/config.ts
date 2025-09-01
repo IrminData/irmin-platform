@@ -9,7 +9,7 @@ export const agentConfig: AgentConfig = {
   model: 'llama-3.1-8b-instant',
   temperature: 0.7,
   maxTokens: 50,
-  responseFormat: 'unstructured',
+  responseFormat: 'structured',
   contextRequirements: [],
   toolSelection: undefined,
   streaming: false,

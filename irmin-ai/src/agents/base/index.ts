@@ -12,6 +12,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { completionService } from '@/services/completion';
+import { systemPromptBuilder } from '@/services/systemPromptBuilder';
 
 export abstract class BaseAgent implements BaseAgentInterface {
   public config: AgentConfig;
@@ -31,7 +32,20 @@ export abstract class BaseAgent implements BaseAgentInterface {
     // Prepare context and messages
     const context = await this.prepareContext(input);
     const conversationMessages = await this.buildMessages(input);
-    const systemPrompt = await this.loadSystemPrompt();
+    const baseSystemPrompt = await this.loadSystemPrompt();
+
+    // Build system prompt with context using the system prompt builder
+    // Convert AgentInput types to SystemPromptBuilder types
+    const systemPrompt = systemPromptBuilder.buildSystemPrompt(
+      baseSystemPrompt,
+      {
+        user: input.user,
+        workspace: input.workspace,
+        conversationId: input.conversationId,
+        agentId: this.config.id,
+        customContext: context,
+      }
+    );
 
     // Check if this is a streaming request based on input metadata and agent ability to stream
     const isStreamingRequest =

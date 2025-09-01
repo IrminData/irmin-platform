@@ -9,15 +9,14 @@ import { toUIMessageStream } from '@ai-sdk/langchain';
 import { randomUUID } from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { analyticsService } from '@/services/analytics';
 import { completionService } from '@/services/completion';
 import { llmService } from '@/services/llm';
+import { systemPromptBuilder } from '@/services/systemPromptBuilder';
 
 import {
   type ChatRequest,
-  ChatRequestSchema,
   type ChatResponse,
   ChatResponseSchema,
 } from '@/types/chat';
@@ -31,7 +30,21 @@ export async function chatRoutes(fastify: FastifyInstance) {
     '/chat',
     {
       schema: {
-        body: zodToJsonSchema(ChatRequestSchema),
+        body: {
+          type: 'object',
+          properties: {
+            conversationId: { type: 'string' },
+            message: { type: 'string', minLength: 1 },
+            provider: { type: 'string', enum: ['groq', 'openai'] },
+            model: { type: 'string' },
+            temperature: { type: 'number', minimum: 0, maximum: 2 },
+            maxTokens: { type: 'number', minimum: 1, maximum: 4000 },
+            toolSelection: { type: 'object' },
+            stream: { type: 'boolean' },
+          },
+          required: ['message'],
+          additionalProperties: false,
+        },
       },
     },
     async (
@@ -130,8 +143,15 @@ export async function chatRoutes(fastify: FastifyInstance) {
           .orderBy(desc(messages.createdAt))
           .limit(20);
 
-        // System prompts not yet implemented
-        let systemPrompt: string | undefined;
+        // Build system prompt with context
+        const systemPrompt = systemPromptBuilder.buildSystemPrompt(
+          undefined, // Use default system prompt for chat
+          {
+            user: authContext.user,
+            workspace: workspaceContext.workspace,
+            conversationId: conversation.id,
+          }
+        );
 
         // Handle streaming vs non-streaming responses
         if (stream) {

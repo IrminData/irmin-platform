@@ -23,33 +23,6 @@ const ConversationWithStatsSchema = z.object({
   totalCost: z.union([z.number(), z.string()]).nullable(),
 });
 
-// Create conversation request schema
-export const ConversationCreateRequestSchema = z.object({
-  title: z.string().optional(),
-  metadata: z.unknown().optional(),
-});
-
-// Update conversation request schema
-export const ConversationUpdateRequestSchema = z.object({
-  title: z.string().optional(),
-  metadata: z.unknown().optional(),
-});
-
-// Conversation query parameters schema
-export const ConversationQuerySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
-  sortBy: z.enum(['title', 'createdAt', 'updatedAt']).default('updatedAt'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
-});
-
-// Conversation messages query parameters schema
-export const ConversationMessagesQuerySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(50),
-  sortOrder: z.enum(['asc', 'desc']).default('asc'),
-});
-
 // Paginated conversations response schema
 export const PaginatedConversationsResponseSchema = z.object({
   data: z.array(ConversationWithStatsSchema),
@@ -75,16 +48,14 @@ export const PaginatedMessagesResponseSchema = z.object({
 // Type exports
 export type Conversation = z.infer<typeof ConversationSchema>;
 export type ConversationWithStats = z.infer<typeof ConversationWithStatsSchema>;
-export type ConversationCreateRequest = z.infer<
-  typeof ConversationCreateRequestSchema
->;
-export type ConversationUpdateRequest = z.infer<
-  typeof ConversationUpdateRequestSchema
->;
-export type ConversationQuery = z.infer<typeof ConversationQuerySchema>;
-export type ConversationMessagesQuery = z.infer<
-  typeof ConversationMessagesQuerySchema
->;
+export type ConversationCreateRequest = {
+  title?: string;
+  metadata?: unknown;
+};
+export type ConversationUpdateRequest = {
+  title?: string;
+  metadata?: unknown;
+};
 export type PaginatedConversationsResponse = z.infer<
   typeof PaginatedConversationsResponseSchema
 >;

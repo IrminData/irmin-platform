@@ -1,15 +1,12 @@
 import { AgentsManager } from '@/agents';
 import { toUIMessageStream } from '@ai-sdk/langchain';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { analyticsService } from '@/services/analytics';
 
 import {
   AgentConfigSchema,
   type AgentRequest,
-  AgentRequestSchema,
   AgentResponseSchema,
   ListAgentsResponseSchema,
 } from '@/types/agents';
@@ -41,12 +38,25 @@ export async function agentRoutes(fastify: FastifyInstance) {
     '/agents/:agentId',
     {
       schema: {
-        params: zodToJsonSchema(
-          z.object({
-            agentId: z.string().min(1, 'Agent ID is required'),
-          })
-        ),
-        body: zodToJsonSchema(AgentRequestSchema),
+        params: {
+          type: 'object',
+          properties: {
+            agentId: { type: 'string', minLength: 1 },
+          },
+          required: ['agentId'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', minLength: 1 },
+            context: { type: 'object' },
+            conversationId: { type: 'string' },
+            metadata: { type: 'object' },
+            toolSelection: { type: 'object' },
+          },
+          required: ['message'],
+          additionalProperties: false,
+        },
       },
     },
     async (
@@ -132,12 +142,25 @@ export async function agentRoutes(fastify: FastifyInstance) {
     '/agents/:agentId/stream',
     {
       schema: {
-        params: zodToJsonSchema(
-          z.object({
-            agentId: z.string().min(1, 'Agent ID is required'),
-          })
-        ),
-        body: zodToJsonSchema(AgentRequestSchema),
+        params: {
+          type: 'object',
+          properties: {
+            agentId: { type: 'string', minLength: 1 },
+          },
+          required: ['agentId'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', minLength: 1 },
+            context: { type: 'object' },
+            conversationId: { type: 'string' },
+            metadata: { type: 'object' },
+            toolSelection: { type: 'object' },
+          },
+          required: ['message'],
+          additionalProperties: false,
+        },
       },
     },
     async (
@@ -240,11 +263,13 @@ export async function agentRoutes(fastify: FastifyInstance) {
     '/agents/:agentId/config',
     {
       schema: {
-        params: zodToJsonSchema(
-          z.object({
-            agentId: z.string().min(1, 'Agent ID is required'),
-          })
-        ),
+        params: {
+          type: 'object',
+          properties: {
+            agentId: { type: 'string', minLength: 1 },
+          },
+          required: ['agentId'],
+        },
       },
     },
     async (

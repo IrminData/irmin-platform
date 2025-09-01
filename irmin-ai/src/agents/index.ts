@@ -35,24 +35,10 @@ export class AgentsManager {
   ): Promise<AgentResponse> {
     const agent = this.agents.get(agentId);
     if (!agent) {
-      // Log error analytics
-      await analyticsService.logError(
-        'agent_execution',
-        `Agent ${agentId} not found`,
-        input.conversationId,
-        undefined
-      );
       throw new Error(`Agent ${agentId} not found`);
     }
 
     if (!agent.validateInput(input)) {
-      // Log error analytics
-      await analyticsService.logError(
-        'agent_execution',
-        'Invalid input for agent',
-        input.conversationId,
-        undefined
-      );
       throw new Error('Invalid input for agent');
     }
 

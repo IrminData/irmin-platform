@@ -2,20 +2,13 @@ import { conversations, db, messages, type NewConversation } from '@/database';
 import { randomUUID } from 'crypto';
 import { and, asc, count, desc, eq, sum } from 'drizzle-orm';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { analyticsService } from '@/services/analytics';
 
 import {
   type ConversationCreateRequest,
-  ConversationCreateRequestSchema,
-  type ConversationMessagesQuery,
-  ConversationMessagesQuerySchema,
-  type ConversationQuery,
-  ConversationQuerySchema,
   ConversationSchema,
   type ConversationUpdateRequest,
-  ConversationUpdateRequestSchema,
   PaginatedConversationsResponseSchema,
   PaginatedMessagesResponseSchema,
 } from '@/types/conversation';
@@ -33,24 +26,60 @@ interface ConversationParams {
 
 export async function conversationRoutes(fastify: FastifyInstance) {
   // GET /api/conversations - List all conversations with pagination
-  fastify.get<{ Querystring: ConversationQuery }>(
+  fastify.get<{
+    Querystring: {
+      page?: string;
+      limit?: string;
+      sortBy?: string;
+      sortOrder?: string;
+    };
+  }>(
     '/conversations',
     {
       schema: {
-        querystring: zodToJsonSchema(ConversationQuerySchema),
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'string', pattern: '^[1-9]\\d*$' },
+            limit: { type: 'string', pattern: '^[1-9]\\d*$' },
+            sortBy: {
+              type: 'string',
+              enum: ['title', 'createdAt', 'updatedAt'],
+            },
+            sortOrder: { type: 'string', enum: ['asc', 'desc'] },
+          },
+          additionalProperties: false,
+        },
       },
     },
     async (
-      request: FastifyRequest<{ Querystring: ConversationQuery }>,
+      request: FastifyRequest<{
+        Querystring: {
+          page?: string;
+          limit?: string;
+          sortBy?: string;
+          sortOrder?: string;
+        };
+      }>,
       reply: FastifyReply
     ) => {
       try {
-        const {
-          page = 1,
-          limit = 20,
-          sortBy = 'updatedAt',
-          sortOrder = 'desc',
-        } = request.query;
+        // Parse query parameters manually since we're using JSON schema validation
+        const page = request.query.page ? parseInt(request.query.page, 10) : 1;
+        const limit = request.query.limit
+          ? parseInt(request.query.limit, 10)
+          : 20;
+        const sortBy = request.query.sortBy || 'updatedAt';
+        const sortOrder = request.query.sortOrder || 'desc';
+
+        // Validate parsed values
+        if (page < 1) {
+          throw new Error('Page must be at least 1');
+        }
+        if (limit < 1 || limit > 100) {
+          throw new Error('Limit must be between 1 and 100');
+        }
+
         const offset = (page - 1) * limit;
 
         // Get workspace and user context from middleware
@@ -131,14 +160,6 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             : 'Failed to fetch conversations';
         fastify.log.error('List conversations error: %s', errorMessage);
 
-        // Log error analytics
-        await analyticsService.logError(
-          'list_conversations_failed',
-          errorMessage,
-          undefined,
-          undefined
-        );
-
         sendInternalServerError(reply, errorMessage, fastify.log);
         return;
       }
@@ -198,15 +219,6 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             ? error.message
             : 'Failed to fetch conversation';
         fastify.log.error('Get conversation error: %s', errorMessage);
-
-        // Log error analytics
-        await analyticsService.logError(
-          'get_conversation_failed',
-          errorMessage,
-          undefined,
-          undefined
-        );
-
         sendInternalServerError(reply, errorMessage, fastify.log);
         return;
       }
@@ -216,7 +228,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   // GET /api/conversations/:id/messages - Get conversation messages
   fastify.get<{
     Params: ConversationParams;
-    Querystring: ConversationMessagesQuery;
+    Querystring: { page?: string; limit?: string; sortOrder?: string };
   }>(
     '/conversations/:id/messages',
     {
@@ -228,19 +240,42 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           },
           required: ['id'],
         },
-        querystring: zodToJsonSchema(ConversationMessagesQuerySchema),
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'string', pattern: '^[1-9]\\d*$' },
+            limit: { type: 'string', pattern: '^[1-9]\\d*$' },
+            sortOrder: { type: 'string', enum: ['asc', 'desc'] },
+          },
+          additionalProperties: false,
+        },
       },
     },
     async (
       request: FastifyRequest<{
         Params: ConversationParams;
-        Querystring: ConversationMessagesQuery;
+        Querystring: { page?: string; limit?: string; sortOrder?: string };
       }>,
       reply: FastifyReply
     ) => {
       try {
         const { id } = request.params;
-        const { page = 1, limit = 50, sortOrder = 'asc' } = request.query;
+
+        // Parse query parameters manually since we're using JSON schema validation
+        const page = request.query.page ? parseInt(request.query.page, 10) : 1;
+        const limit = request.query.limit
+          ? parseInt(request.query.limit, 10)
+          : 50;
+        const sortOrder = request.query.sortOrder || 'asc';
+
+        // Validate parsed values
+        if (page < 1) {
+          throw new Error('Page must be at least 1');
+        }
+        if (limit < 1 || limit > 100) {
+          throw new Error('Limit must be between 1 and 100');
+        }
+
         const offset = (page - 1) * limit;
 
         // Get workspace and user context from middleware
@@ -317,7 +352,14 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     '/conversations',
     {
       schema: {
-        body: zodToJsonSchema(ConversationCreateRequestSchema),
+        body: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            metadata: { type: 'object' },
+          },
+          additionalProperties: false,
+        },
       },
     },
     async (
@@ -388,7 +430,14 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           },
           required: ['id'],
         },
-        body: zodToJsonSchema(ConversationUpdateRequestSchema),
+        body: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            metadata: { type: 'object' },
+          },
+          additionalProperties: false,
+        },
       },
     },
     async (

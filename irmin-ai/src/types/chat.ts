@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { ToolSelectionSchema } from './agents';
-
 // Shared message schema
 export const MessageSchema = z.object({
   id: z.string(),
@@ -21,18 +19,6 @@ export const MessageSchema = z.object({
   updatedAt: z.date(),
 });
 
-// Chat request schema
-export const ChatRequestSchema = z.object({
-  conversationId: z.string().optional(),
-  message: z.string().min(1, 'Message is required'),
-  provider: z.enum(['groq', 'openai']).default('groq'),
-  model: z.string().optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().min(1).max(4000).optional(),
-  toolSelection: ToolSelectionSchema.optional(),
-  stream: z.boolean().default(true),
-});
-
 // Chat response schema
 export const ChatResponseSchema = z.object({
   conversationId: z.string(),
@@ -48,5 +34,19 @@ export const ChatResponseSchema = z.object({
 
 // Type exports
 export type Message = z.infer<typeof MessageSchema>;
-export type ChatRequest = z.infer<typeof ChatRequestSchema>;
+export type ChatRequest = {
+  conversationId?: string;
+  message: string;
+  provider?: 'groq' | 'openai';
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  toolSelection?: {
+    includeServers?: string[];
+    includeTools?: string[];
+    excludeTools?: string[];
+    includeAll?: boolean;
+  };
+  stream?: boolean;
+};
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;

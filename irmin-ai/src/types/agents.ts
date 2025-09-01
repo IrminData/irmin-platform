@@ -24,15 +24,6 @@ export const ToolSelectionSchema = z.object({
     .describe('Include all available tools (legacy behavior)'),
 });
 
-// Agent request schema
-export const AgentRequestSchema = z.object({
-  message: z.string().min(1, 'Message is required'),
-  context: z.record(z.string(), z.unknown()).optional(),
-  conversationId: z.string().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  toolSelection: ToolSelectionSchema.optional(),
-});
-
 // Agent response schema
 export const AgentResponseSchema = z.object({
   content: z.string(),
@@ -77,7 +68,13 @@ export const ListAgentsResponseSchema = z.object({
 });
 
 // Type exports
-export type AgentRequest = z.infer<typeof AgentRequestSchema>;
+export type AgentRequest = {
+  message: string;
+  context?: Record<string, unknown>;
+  conversationId?: string;
+  metadata?: Record<string, unknown>;
+  toolSelection?: ToolSelection;
+};
 export type AgentResponse = z.infer<typeof AgentResponseSchema>;
 export type AgentConfig = z.infer<typeof AgentConfigSchema>;
 export type ListAgentsResponse = z.infer<typeof ListAgentsResponseSchema>;

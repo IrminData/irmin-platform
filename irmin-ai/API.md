@@ -267,7 +267,7 @@ Send a message and receive an AI response. Supports both streaming and non-strea
   "conversationId": "uuid",
   "message": "Hello, how are you?",
   "provider": "groq",
-  "model": "llama3-8b-8192",
+  "model": "llama-3.1-8b-instant",
   "temperature": 0.7,
   "maxTokens": 1000,
   "toolSelection": {
@@ -503,8 +503,8 @@ Retrieve a list of available AI models with pricing and capabilities.
     {
       "name": "Llama 3 8B",
       "provider": "groq",
-      "modelId": "llama3-8b-8192",
-      "description": "llama3-8b-8192",
+      "modelId": "llama-3.1-8b-instant",
+      "description": "llama-3.1-8b-instant",
       "inputPricePerMillionTokens": 0.0000001,
       "outputPricePerMillionTokens": 0.0000002
     }

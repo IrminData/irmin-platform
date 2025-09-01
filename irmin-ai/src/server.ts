@@ -88,14 +88,6 @@ server.register(
 
 // 404 handler
 server.setNotFoundHandler(async (request, reply) => {
-  // Log 404 analytics
-  await analyticsService.logError(
-    'not_found',
-    `Route ${request.method} ${request.url} not found`,
-    undefined,
-    undefined
-  );
-
   sendErrorResponse(
     reply,
     404,
