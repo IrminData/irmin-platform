@@ -1,5 +1,6 @@
 import { AgentsManager } from '@/agents';
-import { toUIMessageStream } from '@ai-sdk/langchain';
+import { db, messages } from '@/database';
+import { desc, eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
@@ -16,6 +17,7 @@ import {
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
 import { sendOkResponse } from '@/utils/responses';
+import { createStoredUIMessageStream } from '@/utils/streaming';
 
 export async function agentRoutes(fastify: FastifyInstance) {
   const agentsManager = new AgentsManager();
@@ -72,18 +74,19 @@ export async function agentRoutes(fastify: FastifyInstance) {
           authToken,
           workspace: workspaceContext.workspace,
           user: authContext.user,
+          messageHistoryLimit: agentRequest.messageHistoryLimit,
         });
 
         // Add conversation ID to response headers if available
-        if (agentRequest.conversationId) {
-          reply.header('X-Conversation-Id', agentRequest.conversationId);
+        if (response.conversationId) {
+          reply.header('X-Conversation-Id', response.conversationId);
         }
 
         // Log successful API request
         analyticsService
           .logCustomEvent({
             eventType: 'model_used',
-            conversationId: agentRequest.conversationId,
+            conversationId: response.conversationId,
             eventData: { agentId, success: true },
           })
           .catch((error: unknown) => {
@@ -93,7 +96,12 @@ export async function agentRoutes(fastify: FastifyInstance) {
             );
           });
 
-        sendOkResponse(reply, AgentResponseSchema, response, fastify.log);
+        sendOkResponse(
+          reply,
+          AgentResponseSchema,
+          response.agentResponse,
+          fastify.log
+        );
         return;
       } catch (error) {
         const errorMessage =
@@ -139,6 +147,24 @@ export async function agentRoutes(fastify: FastifyInstance) {
         }
         const authToken = authContext.token;
 
+        // Capture start time at the beginning of the request for accurate processing time
+        const requestStartTime = Date.now();
+
+        // Fetch conversation history AFTER the user message is saved to include it
+        // This ensures we get the complete conversation context including the current user message
+        let conversationHistory: (typeof messages.$inferSelect)[] = [];
+        if (agentRequest.conversationId) {
+          conversationHistory = await db
+            .select()
+            .from(messages)
+            .where(eq(messages.conversationId, agentRequest.conversationId))
+            .orderBy(desc(messages.createdAt))
+            .limit(agentRequest.messageHistoryLimit || 20);
+
+          // Reverse the history to chronological order for LLM processing
+          conversationHistory = conversationHistory.reverse();
+        }
+
         const response = await agentsManager.executeAgent(agentId, {
           message: agentRequest.message,
           context: agentRequest.context,
@@ -151,44 +177,44 @@ export async function agentRoutes(fastify: FastifyInstance) {
           authToken,
           workspace: workspaceContext.workspace,
           user: authContext.user,
+          messageHistoryLimit: agentRequest.messageHistoryLimit,
         });
 
-        if (response.stream) {
+        if (response.agentResponse.stream) {
           // Add custom headers
           reply.header('X-Agent-Id', agentId);
-          if (agentRequest.conversationId) {
-            reply.header('X-Conversation-Id', agentRequest.conversationId);
+          if (response.conversationId) {
+            reply.header('X-Conversation-Id', response.conversationId);
           }
 
-          // Use Vercel's AI SDK to convert the stream to a UI message stream
-          const uiMessageStream = toUIMessageStream(response.stream);
+          // Get the agent info for model details
+          const agent = agentsManager
+            .listAgents()
+            .find((a) => a.id === agentId);
 
-          // Convert the UI message stream to a format that Fastify can handle
-          const readableStream = new ReadableStream({
-            async start(controller) {
-              try {
-                // Consume the UI message stream and convert it to chunks
-                for await (const chunk of uiMessageStream) {
-                  if (chunk && typeof chunk === 'object') {
-                    // Convert the chunk to a JSON string
-                    const chunkData = JSON.stringify(chunk);
-                    controller.enqueue(
-                      new TextEncoder().encode(chunkData + '\n')
-                    );
-                  }
-                }
-                controller.close();
-              } catch (error) {
-                console.error('Error processing UI message stream:', error);
-                controller.error(error);
-              }
-            },
-          });
+          // Create the stored UI message stream using the shared utility
+          const readableStream = createStoredUIMessageStream(
+            response.agentResponse.stream,
+            {
+              conversationId: response.conversationId,
+              modelProvider: agent?.modelProvider,
+              model: agent?.model,
+              agentName: agent?.name,
+              usage: response.agentResponse.usage,
+              history: conversationHistory, // Use chronological history including the current user message
+              startTime: requestStartTime, // Use the start time from the beginning of the request
+            }
+          );
 
           // Return streaming response
           return reply.send(readableStream);
         } else {
-          sendOkResponse(reply, AgentResponseSchema, response, fastify.log);
+          sendOkResponse(
+            reply,
+            AgentResponseSchema,
+            response.agentResponse,
+            fastify.log
+          );
           return;
         }
       } catch (error) {

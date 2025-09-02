@@ -1,27 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
-
-import { db } from '@/database/connection';
-import { Message, messages } from '@/database/schema';
-
 export class ContextManager {
-  /**
-   * Get conversation history from database
-   */
-  async getConversationContext(conversationId?: string): Promise<Message[]> {
-    // Fetch conversation history from database if conversationId is provided
-    if (conversationId) {
-      const history = await db
-        .select()
-        .from(messages)
-        .where(eq(messages.conversationId, conversationId))
-        .orderBy(desc(messages.createdAt))
-        .limit(20);
-      return history;
-    } else {
-      return [];
-    }
-  }
-
   /**
    * Get vector context for a query (placeholder for vector store integration)
    */

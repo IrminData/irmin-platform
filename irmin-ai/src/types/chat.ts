@@ -12,6 +12,7 @@ export const ChatRequestSchema = z.object({
   maxTokens: z.number().optional(),
   toolSelection: ToolSelectionSchema.optional(),
   stream: z.boolean().optional(),
+  messageHistoryLimit: z.number().optional(),
 });
 
 // Shared message schema

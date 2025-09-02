@@ -11,13 +11,7 @@ export const agentConfig: AgentConfig = {
   temperature: 0.7,
   maxTokens: 4000,
   responseFormat: 'markdown',
-  contextRequirements: [
-    {
-      type: 'conversation',
-      name: 'conversation_history',
-      required: false,
-    },
-  ],
+  contextRequirements: [],
   toolSelection: {
     includeAll: true,
   },

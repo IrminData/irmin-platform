@@ -1,3 +1,4 @@
+/* eslint-disable import-x/no-unused-modules */
 import * as Sentry from '@sentry/node';
 
 import { env } from './config/env';

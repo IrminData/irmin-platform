@@ -5,7 +5,6 @@ import {
   type NewConversation,
   type NewMessage,
 } from '@/database';
-import { toUIMessageStream } from '@ai-sdk/langchain';
 import { randomUUID } from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
@@ -27,6 +26,7 @@ import {
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
 import { sendOkResponse } from '@/utils/responses';
+import { createStoredUIMessageStream } from '@/utils/streaming';
 
 export async function chatRoutes(fastify: FastifyInstance) {
   // POST /api/chat - Send a message and get AI response (with streaming support)
@@ -49,6 +49,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
           maxTokens,
           toolSelection,
           stream = true,
+          messageHistoryLimit,
         } = chatRequest;
 
         // Get authenticated user and workspace context (set by middleware)
@@ -119,7 +120,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
             });
         }
 
-        // Save user message
+        // Save user message first
         const userMessageId = randomUUID();
         const now = new Date();
         const userMessage: NewMessage = {
@@ -136,13 +137,17 @@ export async function chatRoutes(fastify: FastifyInstance) {
         // Log user message analytics
         await analyticsService.logMessageSent(conversation.id, userMessageId);
 
-        // Get conversation history
-        const history = await db
+        // Fetch conversation history AFTER saving the user message to include it
+        // This ensures we get the complete conversation context including the current user message
+        const conversationHistory = await db
           .select()
           .from(messages)
           .where(eq(messages.conversationId, conversation.id))
           .orderBy(desc(messages.createdAt))
-          .limit(20);
+          .limit(messageHistoryLimit || 20);
+
+        // Reverse the history to chronological order for LLM processing
+        const chronologicalHistory = conversationHistory.reverse();
 
         // Build system prompt with context
         const systemPrompt = systemPromptBuilder.buildSystemPrompt(
@@ -159,7 +164,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
           // Create streaming response
           const streamResponse =
             await completionService.createStreamingResponse({
-              messages: history,
+              messages: chronologicalHistory,
               provider,
               model,
               temperature,
@@ -187,82 +192,14 @@ export async function chatRoutes(fastify: FastifyInstance) {
           reply.header('X-Conversation-Id', conversation.id);
           reply.header('X-Message-Id', userMessageId);
 
-          // Use Vercel's AI SDK to convert the stream to a UI message stream
-          const uiMessageStream = toUIMessageStream(streamResponse);
-
-          // Convert the UI message stream to a format that Fastify can handle
-          const readableStream = new ReadableStream({
-            async start(controller) {
-              let fullContent = '';
-
-              try {
-                // Consume the UI message stream and convert it to chunks
-                for await (const chunk of uiMessageStream) {
-                  if (chunk && typeof chunk === 'object') {
-                    // Extract content from the chunk
-                    if (chunk.type === 'text-delta' && chunk.delta) {
-                      fullContent += chunk.delta;
-                    }
-
-                    // Convert the chunk to a JSON string
-                    const chunkData = JSON.stringify(chunk);
-                    controller.enqueue(
-                      new TextEncoder().encode(chunkData + '\n')
-                    );
-                  }
-                }
-
-                // Store the assistant message in the database once stream is complete
-                if (fullContent) {
-                  const assistantMessageId = randomUUID();
-                  const assistantMessage: NewMessage = {
-                    id: assistantMessageId,
-                    conversationId: conversation.id,
-                    role: 'assistant',
-                    content: fullContent,
-                    aiModelId: model,
-                    modelProvider: provider,
-                    modelName: model,
-                    processingTimeMs: Date.now() - startTime,
-                    createdAt: now,
-                    updatedAt: now,
-                  };
-
-                  // Calculate cost based on usage
-                  const costCalculation = llmService.calculateUsage(
-                    history,
-                    fullContent,
-                    provider,
-                    model || llmService.getDefaultModels()[provider]
-                  );
-
-                  // Update the message with calculated cost and tokens
-                  assistantMessage.costUSD = costCalculation.totalCost;
-                  assistantMessage.inputTokens = costCalculation.inputTokens;
-                  assistantMessage.outputTokens = costCalculation.outputTokens;
-                  assistantMessage.totalTokens = costCalculation.totalTokens;
-
-                  await db.insert(messages).values(assistantMessage);
-
-                  // Update conversation updated timestamp
-                  await db
-                    .update(conversations)
-                    .set({ updatedAt: now })
-                    .where(eq(conversations.id, conversation.id));
-
-                  // Log assistant message analytics
-                  await analyticsService.logAgentUsed(
-                    conversation.id,
-                    assistantMessageId
-                  );
-                }
-
-                controller.close();
-              } catch (error) {
-                console.error('Error stringifying UI message stream:', error);
-                controller.error(error);
-              }
-            },
+          // Create the stored UI message stream using the shared utility
+          const streamStartTime = Date.now(); // Capture start time for accurate processing time calculation
+          const readableStream = createStoredUIMessageStream(streamResponse, {
+            conversationId: conversation.id,
+            startTime: streamStartTime, // Pass start time for accurate processing time calculation
+            modelProvider: provider,
+            model: model || llmService.getDefaultModels()[provider],
+            history: chronologicalHistory, // Use chronological history including the current user message
           });
 
           // Return streaming response
@@ -270,7 +207,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
         } else {
           // Create non-streaming response
           const aiResponse = await completionService.createResponse({
-            messages: history,
+            messages: chronologicalHistory,
             provider,
             model,
             temperature,
@@ -284,7 +221,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
 
           // Calculate cost based on usage
           const costCalculation = llmService.calculateUsage(
-            history,
+            chronologicalHistory,
             aiResponse.content,
             provider,
             model || llmService.getDefaultModels()[provider],

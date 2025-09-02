@@ -9,7 +9,7 @@ import type { Workspace } from '@/irmin-api/types/workspace';
 import { type ToolSelection } from '@/types/agents';
 
 interface ContextRequirement {
-  type: 'string' | 'vector' | 'memory' | 'conversation' | 'schema';
+  type: 'string' | 'vector' | 'memory' | 'schema';
   name: string;
   required: boolean;
 }
@@ -38,6 +38,7 @@ export interface AgentInput {
   toolSelection?: ToolSelection;
   workspace: Workspace;
   user: User;
+  messageHistoryLimit?: number;
 }
 
 export interface AgentResponse {

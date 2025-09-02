@@ -34,7 +34,7 @@ export class AgentsManager {
   async executeAgent(
     agentId: string,
     input: AgentInput
-  ): Promise<AgentResponse> {
+  ): Promise<{ agentResponse: AgentResponse; conversationId: string }> {
     const agent = this.agents.get(agentId);
     if (!agent) {
       throw new Error(`Agent ${agentId} not found`);
@@ -135,7 +135,10 @@ export class AgentsManager {
       });
       const processingTimeMs = Date.now() - startTime;
 
-      // Calculate cost for agent execution
+      // Check if this is a streaming response
+      const isStreamingResponse = !!response.stream;
+
+      // Calculate cost for agent execution (for both streaming and non-streaming)
       let costUSD = 0;
       if (response.usage && agent.config.modelProvider && agent.config.model) {
         const costCalculation = llmService.calculateUsage(
@@ -149,35 +152,39 @@ export class AgentsManager {
         costUSD = costCalculation.totalCost;
       }
 
-      // Save assistant message
-      const assistantMessageId = randomUUID();
-      const assistantMessage: NewMessage = {
-        id: assistantMessageId,
-        conversationId: conversation.id,
-        role: 'assistant',
-        content: response.content,
-        aiModelId: agent.config.model,
-        modelProvider: agent.config.modelProvider,
-        modelName: agent.config.model,
-        agentName: agent.config.name,
-        inputTokens: response.usage?.promptTokens || 0,
-        outputTokens: response.usage?.completionTokens || 0,
-        totalTokens: response.usage?.totalTokens || 0,
-        processingTimeMs,
-        costUSD,
-        createdAt: now,
-        updatedAt: now,
-      };
+      // For non-streaming responses, save the assistant message immediately
+      if (!isStreamingResponse) {
+        // Save assistant message
+        const assistantMessageId = randomUUID();
+        const assistantMessage: NewMessage = {
+          id: assistantMessageId,
+          conversationId: conversation.id,
+          role: 'assistant',
+          content: response.content,
+          aiModelId: agent.config.model,
+          modelProvider: agent.config.modelProvider,
+          modelName: agent.config.model,
+          agentName: agent.config.name,
+          inputTokens: response.usage?.promptTokens || 0,
+          outputTokens: response.usage?.completionTokens || 0,
+          totalTokens: response.usage?.totalTokens || 0,
+          processingTimeMs,
+          costUSD,
+          createdAt: now,
+          updatedAt: now,
+        };
 
-      await db.insert(messages).values(assistantMessage);
+        await db.insert(messages).values(assistantMessage);
 
-      // Update conversation updated timestamp
-      await db
-        .update(conversations)
-        .set({ updatedAt: now })
-        .where(eq(conversations.id, conversation.id));
+        // Log assistant message analytics
+        await analyticsService.logAgentUsed(
+          conversation.id,
+          assistantMessageId,
+          agent.config.name
+        );
+      }
 
-      // Log successful agent execution analytics
+      // Log successful agent execution analytics (for both streaming and non-streaming)
       if (response.usage && agent.config.model) {
         await analyticsService.logModelUsage(
           agent.config.model,
@@ -187,37 +194,22 @@ export class AgentsManager {
         );
       }
 
-      // Log agent execution event
-      await analyticsService.logCustomEvent({
-        eventType: 'agent_used',
-        conversationId: conversation.id,
-        processingTimeMs,
-        eventData: {
-          agentId,
-          agentType: agent.config.type,
-          modelProvider: agent.config.modelProvider,
-          model: agent.config.model,
-          streaming: agent.config.streaming,
-          tokenCount: response.usage?.totalTokens,
-          costUSD,
-          eventSubType: 'agent_executed',
-        },
-      });
-
-      // Log assistant message analytics
-      await analyticsService.logAgentUsed(
-        conversation.id,
-        assistantMessageId,
-        agent.config.name
-      );
+      // Update conversation updated timestamp
+      await db
+        .update(conversations)
+        .set({ updatedAt: now })
+        .where(eq(conversations.id, conversation.id));
 
       // Add conversation ID to response metadata
       return {
-        ...response,
-        metadata: {
-          ...response.metadata,
-          conversationId: conversation.id,
+        agentResponse: {
+          ...response,
+          metadata: {
+            ...response.metadata,
+            conversationId: conversation.id,
+          },
         },
+        conversationId: conversation.id,
       };
     } catch (error) {
       // Log error analytics only if we have a valid conversation ID

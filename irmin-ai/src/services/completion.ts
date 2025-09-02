@@ -69,7 +69,7 @@ class CompletionService {
 
       const processingTimeMs = Date.now() - startTime;
 
-      // TODO: We need to track the model usage here as well, just not sure how, since it's a stream.
+      // Usage tracking for streaming is handled at the route level where the full content is accumulated
 
       // Log custom event for streaming performance
       await analyticsService.logCustomEvent({

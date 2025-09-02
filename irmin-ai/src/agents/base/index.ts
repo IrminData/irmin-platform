@@ -127,12 +127,6 @@ export abstract class BaseAgent implements BaseAgentInterface {
         case 'string':
           context[requirement.name] = input.context?.[requirement.name] || '';
           break;
-        case 'conversation':
-          context[requirement.name] =
-            await this.contextManager.getConversationContext(
-              input.conversationId
-            );
-          break;
         case 'vector':
           context[requirement.name] =
             await this.contextManager.getVectorContext(
@@ -165,7 +159,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
         .from(messagesTable)
         .where(eq(messagesTable.conversationId, input.conversationId))
         .orderBy(desc(messagesTable.createdAt))
-        .limit(20);
+        .limit(input.messageHistoryLimit || 20);
 
       // Reverse to get chronological order
       conversationMessages.push(...history.reverse());

@@ -31,6 +31,7 @@ export const AgentRequestSchema = z.object({
   conversationId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   toolSelection: ToolSelectionSchema.optional(),
+  messageHistoryLimit: z.number().optional(),
 });
 
 // Agent response schema
@@ -61,7 +62,7 @@ export const AgentConfigSchema = z.object({
   responseFormat: z.enum(['structured', 'unstructured', 'json', 'markdown']),
   contextRequirements: z.array(
     z.object({
-      type: z.enum(['string', 'vector', 'memory', 'conversation', 'schema']),
+      type: z.enum(['string', 'vector', 'memory', 'schema']),
       name: z.string(),
       required: z.boolean(),
       config: z.record(z.string(), z.unknown()).optional(),

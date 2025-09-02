@@ -358,6 +358,11 @@ export const swaggerSchemas = {
           type: 'object',
           description: 'Additional metadata for the request',
         },
+        messageHistoryLimit: {
+          type: 'number',
+          description: 'Limit the number of messages to include in the history',
+          default: 20,
+        },
         toolSelection: toolSelectionSchema,
       },
       required: ['message'],
@@ -414,6 +419,11 @@ export const swaggerSchemas = {
         metadata: {
           type: 'object',
           description: 'Additional metadata for the request',
+        },
+        messageHistoryLimit: {
+          type: 'number',
+          description: 'Limit the number of messages to include in the history',
+          default: 20,
         },
         toolSelection: toolSelectionSchema,
       },
