@@ -4,9 +4,9 @@ import { env } from './src/config/env';
 export default defineConfig({
   schema: './src/database/schema.ts',
   out: './src/database/migrations',
-  dialect: 'sqlite',
+  dialect: 'postgresql',
   dbCredentials: {
-    url: env.DB_FILE_NAME,
+    url: env.DATABASE_URL,
   },
   verbose: true,
   strict: true,

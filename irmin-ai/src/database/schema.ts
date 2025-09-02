@@ -1,31 +1,38 @@
-import { sql } from 'drizzle-orm';
-import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  real,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 
-export const conversations = sqliteTable('conversations', {
+export const conversations = pgTable('conversations', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
-  metadata: text('metadata', { mode: 'json' }),
+  metadata: jsonb('metadata').default({}),
 
   // Workspace and user association
   workspaceSlug: text('workspace_slug').notNull(),
   userId: text('user_id').notNull(),
 
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-export const messages = sqliteTable('messages', {
+export const messages = pgTable('messages', {
   id: text('id').primaryKey(),
   conversationId: text('conversation_id')
     .notNull()
     .references(() => conversations.id, { onDelete: 'cascade' }),
   role: text('role', { enum: ['user', 'assistant', 'system'] }).notNull(),
   content: text('content').notNull(),
-  metadata: text('metadata', { mode: 'json' }),
+  metadata: jsonb('metadata').default({}),
 
   // AI model information
   aiModelId: text('ai_model_id'),
@@ -45,16 +52,16 @@ export const messages = sqliteTable('messages', {
   processingTimeMs: integer('processing_time_ms').default(0),
 
   // Timestamps
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-export const aiModels = sqliteTable('ai_models', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const aiModels = pgTable('ai_models', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   name: text('name').notNull(),
   provider: text('provider').notNull(), // 'openai', 'groq', etc.
   modelId: text('model_id').notNull().unique(), // actual model identifier
@@ -67,21 +74,21 @@ export const aiModels = sqliteTable('ai_models', {
   ),
 
   // Metadata
-  metadata: text('metadata', { mode: 'json' }),
+  metadata: jsonb('metadata').default({}),
 
   // Status
-  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  isActive: boolean('is_active').default(true),
 
   // Timestamps
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-export const analytics = sqliteTable('analytics', {
+export const analytics = pgTable('analytics', {
   id: text('id').primaryKey(),
 
   // Event information
@@ -97,7 +104,7 @@ export const analytics = sqliteTable('analytics', {
       'vector_operation',
     ],
   }).notNull(),
-  eventData: text('event_data', { mode: 'json' }),
+  eventData: jsonb('event_data').default({}),
 
   // Optional references
   conversationId: text('conversation_id').references(() => conversations.id, {
@@ -116,9 +123,9 @@ export const analytics = sqliteTable('analytics', {
   processingTimeMs: integer('processing_time_ms').default(0),
 
   // Timestamps
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
 // Export types

@@ -9,7 +9,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  DB_FILE_NAME: z.string().default('file:local.db'),
+  DATABASE_URL: z.string().min(1, 'Database URL is required'),
   GROQ_API_KEY: z.string().min(1, 'Groq API key is required to run inference'),
   OPENAI_API_KEY: z
     .string()

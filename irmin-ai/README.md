@@ -275,11 +275,16 @@ See [agents/README.md](src/agents/README.md) for more details.
 
 ## Database
 
-Uses SQLite with Drizzle ORM. Tables:
+Uses PostgreSQL with Drizzle ORM. Tables:
 - `conversations` - Chat conversations (isolated by workspace and user)
 - `messages` - Individual messages with token usage
 - `ai_models` - Available AI models and pricing
 - `analytics` - Usage tracking and events
+
+**Setup:**
+1. Set up a PostgreSQL database
+2. Set the `DATABASE_URL` environment variable
+3. Run migrations: `pnpm db:generate && pnpm db:migrate`
 
 ### Workspace-Based Access Control
 

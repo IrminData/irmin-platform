@@ -1,5 +1,5 @@
 /* eslint-disable import-x/no-unused-modules */
-import { migrate } from 'drizzle-orm/libsql/migrator';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
 
 import { db } from './connection';
 
