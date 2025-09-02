@@ -5,7 +5,7 @@ import { z } from 'zod';
  * Safely sends a structured response validated against a Zod schema
  * Uses safeParse to avoid throwing errors during response handling
  */
-export function sendStructuredResponse<T extends z.ZodTypeAny>(
+function sendStructuredResponse<T extends z.ZodTypeAny>(
   reply: FastifyReply,
   statusCode: number,
   schema: T,
@@ -64,38 +64,4 @@ export function sendCreatedResponse<T extends z.ZodTypeAny>(
  */
 export function sendNoContentResponse(reply: FastifyReply): void {
   reply.status(204).send();
-}
-
-/**
- * Convenience function for paginated responses
- */
-export function sendPaginatedResponse<T extends z.ZodTypeAny>(
-  reply: FastifyReply,
-  schema: T,
-  data: z.infer<T>[],
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  },
-  logger?: { error: (msg: string, ...args: unknown[]) => void }
-): void {
-  const response = {
-    data,
-    pagination,
-  };
-
-  // Create a paginated response schema
-  const paginatedSchema = z.object({
-    data: z.array(schema),
-    pagination: z.object({
-      page: z.number(),
-      limit: z.number(),
-      total: z.number(),
-      totalPages: z.number(),
-    }),
-  });
-
-  sendStructuredResponse(reply, 200, paginatedSchema, response, logger);
 }

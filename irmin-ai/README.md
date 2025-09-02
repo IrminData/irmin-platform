@@ -1,4 +1,4 @@
-<img src="https://github.com/IrminData/irmin-frontend/blob/development/public/irmin-logo-light.svg" width="200" alt="Irmin Logo">
+<img src="https://github.com/IrminData/irmin-console/blob/development/public/irmin-logo-light.svg" width="200" alt="Irmin Logo">
 
 # Irmin AI
 
@@ -38,6 +38,42 @@ pnpm build && pnpm start  # Production
 ## API Routes
 
 See [API.md](API.md) for detailed API documentation.
+
+### Swagger/OpenAPI Documentation
+
+The API includes comprehensive Swagger/OpenAPI documentation with interactive testing capabilities.
+
+**Access Swagger UI:**
+```bash
+# Start the development server
+pnpm dev
+
+# Open Swagger UI in your browser
+open http://localhost:3000/docs
+```
+
+**Features:**
+- 📊 **Interactive API Explorer** - Test all endpoints directly from the browser
+- 🔐 **Authentication Support** - Built-in JWT and workspace header authentication
+- 📝 **Complete Schema Documentation** - All request/response schemas with examples
+- 🏷️ **Organized by Tags** - Endpoints grouped by Chat, Conversations, Agents, and Info
+- ⚡ **Real-time Testing** - Test streaming responses and file uploads
+
+**Using Authentication in Swagger:**
+1. Click the "Authorize" button in Swagger UI
+2. Enter your JWT token in the `bearerAuth` field
+3. Add your workspace slug in the `workspaceHeader` field
+4. Test authenticated endpoints directly
+
+**API Endpoints Overview:**
+- **Chat** (`/api/chat`) - Send messages and get AI responses with streaming support
+- **Conversations** (`/api/conversations`) - Manage conversation history and messages
+- **Agents** (`/api/agents`) - Execute specialized AI agents for specific tasks
+- **Info** (`/api/info`) - Get user profile, workspace info, available models, and MCP tools
+
+**OpenAPI Specification:**
+- JSON: `http://localhost:3000/docs/json`
+- YAML: `http://localhost:3000/docs/yaml`
 
 ## Usage
 

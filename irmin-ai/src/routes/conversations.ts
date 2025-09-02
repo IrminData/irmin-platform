@@ -1,15 +1,17 @@
 import { conversations, db, messages, type NewConversation } from '@/database';
 import { randomUUID } from 'crypto';
 import { and, asc, count, desc, eq, sum } from 'drizzle-orm';
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
 import { titleGenerationService } from '@/services/titleGeneration';
 
+import { swaggerSchemas } from '@/config/swagger';
+
 import {
-  type ConversationCreateRequest,
+  type ConversationRequest,
+  ConversationRequestSchema,
   ConversationSchema,
-  type ConversationUpdateRequest,
   PaginatedConversationsResponseSchema,
   PaginatedMessagesResponseSchema,
 } from '@/types/conversation';
@@ -37,33 +39,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   }>(
     '/conversations',
     {
-      schema: {
-        querystring: {
-          type: 'object',
-          properties: {
-            page: { type: 'string', pattern: '^[1-9]\\d*$' },
-            limit: { type: 'string', pattern: '^[1-9]\\d*$' },
-            sortBy: {
-              type: 'string',
-              enum: ['title', 'createdAt', 'updatedAt'],
-            },
-            sortOrder: { type: 'string', enum: ['asc', 'desc'] },
-          },
-          additionalProperties: false,
-        },
-      },
+      schema: swaggerSchemas.listConversations,
     },
-    async (
-      request: FastifyRequest<{
-        Querystring: {
-          page?: string;
-          limit?: string;
-          sortBy?: string;
-          sortOrder?: string;
-        };
-      }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
         // Parse query parameters manually since we're using JSON schema validation
         const page = request.query.page ? parseInt(request.query.page, 10) : 1;
@@ -171,20 +149,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: ConversationParams }>(
     '/conversations/:id',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-          },
-          required: ['id'],
-        },
-      },
+      schema: swaggerSchemas.getConversation,
     },
-    async (
-      request: FastifyRequest<{ Params: ConversationParams }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
         const { id } = request.params;
 
@@ -233,32 +200,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   }>(
     '/conversations/:id/messages',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-          },
-          required: ['id'],
-        },
-        querystring: {
-          type: 'object',
-          properties: {
-            page: { type: 'string', pattern: '^[1-9]\\d*$' },
-            limit: { type: 'string', pattern: '^[1-9]\\d*$' },
-            sortOrder: { type: 'string', enum: ['asc', 'desc'] },
-          },
-          additionalProperties: false,
-        },
-      },
+      schema: swaggerSchemas.getMessages,
     },
-    async (
-      request: FastifyRequest<{
-        Params: ConversationParams;
-        Querystring: { page?: string; limit?: string; sortOrder?: string };
-      }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
         const { id } = request.params;
 
@@ -349,26 +293,16 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   );
 
   // POST /api/conversations - Create new conversation
-  fastify.post<{ Body: ConversationCreateRequest }>(
+  fastify.post<{ Body: ConversationRequest }>(
     '/conversations',
     {
-      schema: {
-        body: {
-          type: 'object',
-          properties: {
-            title: { type: 'string' },
-            metadata: { type: 'object' },
-          },
-          additionalProperties: false,
-        },
-      },
+      schema: swaggerSchemas.createConversation,
     },
-    async (
-      request: FastifyRequest<{ Body: ConversationCreateRequest }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
-        const { title, metadata } = request.body;
+        const { title, metadata } = ConversationRequestSchema.parse(
+          request.body
+        );
 
         // Get workspace and user context from middleware
         const workspaceContext = request.workspace;
@@ -420,37 +354,15 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   );
 
   // PUT /api/conversations/:id - Update conversation
-  fastify.put<{ Params: ConversationParams; Body: ConversationUpdateRequest }>(
+  fastify.put<{ Params: ConversationParams; Body: ConversationRequest }>(
     '/conversations/:id',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-          },
-          required: ['id'],
-        },
-        body: {
-          type: 'object',
-          properties: {
-            title: { type: 'string' },
-            metadata: { type: 'object' },
-          },
-          additionalProperties: false,
-        },
-      },
+      schema: swaggerSchemas.updateConversation,
     },
-    async (
-      request: FastifyRequest<{
-        Params: ConversationParams;
-        Body: ConversationUpdateRequest;
-      }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
         const { id } = request.params;
-        const updateData = request.body;
+        const updateData = ConversationRequestSchema.parse(request.body);
 
         // Get workspace and user context from middleware
         const workspaceContext = request.workspace;
@@ -520,20 +432,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: ConversationParams }>(
     '/conversations/:id/generate-title',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-          },
-          required: ['id'],
-        },
-      },
+      schema: swaggerSchemas.generateConversationTitle,
     },
-    async (
-      request: FastifyRequest<{ Params: ConversationParams }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
         const { id } = request.params;
 
@@ -634,20 +535,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   fastify.delete<{ Params: ConversationParams }>(
     '/conversations/:id',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-          },
-          required: ['id'],
-        },
-      },
+      schema: swaggerSchemas.deleteConversation,
     },
-    async (
-      request: FastifyRequest<{ Params: ConversationParams }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
         const { id } = request.params;
 

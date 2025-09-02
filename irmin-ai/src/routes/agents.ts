@@ -1,12 +1,15 @@
 import { AgentsManager } from '@/agents';
 import { toUIMessageStream } from '@ai-sdk/langchain';
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
+
+import { swaggerSchemas } from '@/config/swagger';
 
 import {
   AgentConfigSchema,
   type AgentRequest,
+  AgentRequestSchema,
   AgentResponseSchema,
   ListAgentsResponseSchema,
 } from '@/types/agents';
@@ -18,55 +21,36 @@ export async function agentRoutes(fastify: FastifyInstance) {
   const agentsManager = new AgentsManager();
 
   // GET /api/agents - List available agents
-  fastify.get('/agents', async (_, reply) => {
-    try {
-      const agents = agentsManager.listAgents();
-      const response = { agents };
-      sendOkResponse(reply, ListAgentsResponseSchema, response, fastify.log);
-      return;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to fetch agents';
-      fastify.log.error('Agents list error: %s', errorMessage);
-      sendInternalServerError(reply, errorMessage, fastify.log);
-      return;
+  fastify.get(
+    '/agents',
+    {
+      schema: swaggerSchemas.listAgents,
+    },
+    async (_, reply) => {
+      try {
+        const agents = agentsManager.listAgents();
+        const response = { agents };
+        sendOkResponse(reply, ListAgentsResponseSchema, response, fastify.log);
+        return;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to fetch agents';
+        fastify.log.error('Agents list error: %s', errorMessage);
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
+      }
     }
-  });
+  );
 
   // POST /api/agents/:agentId - Execute a single agent (non-streaming)
   fastify.post<{ Params: { agentId: string }; Body: AgentRequest }>(
     '/agents/:agentId',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            agentId: { type: 'string', minLength: 1 },
-          },
-          required: ['agentId'],
-        },
-        body: {
-          type: 'object',
-          properties: {
-            message: { type: 'string', minLength: 1 },
-            context: { type: 'object' },
-            conversationId: { type: 'string' },
-            metadata: { type: 'object' },
-            toolSelection: { type: 'object' },
-          },
-          required: ['message'],
-          additionalProperties: false,
-        },
-      },
+      schema: swaggerSchemas.executeAgent,
     },
-    async (
-      request: FastifyRequest<{
-        Params: { agentId: string };
-        Body: AgentRequest;
-      }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
+        const agentRequest = AgentRequestSchema.parse(request.body);
         const { agentId } = request.params;
         // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
@@ -77,29 +61,29 @@ export async function agentRoutes(fastify: FastifyInstance) {
         const authToken = authContext.token;
 
         const response = await agentsManager.executeAgent(agentId, {
-          message: request.body.message,
-          context: request.body.context,
-          conversationId: request.body.conversationId,
+          message: agentRequest.message,
+          context: agentRequest.context,
+          conversationId: agentRequest.conversationId,
           metadata: {
-            ...request.body.metadata,
+            ...agentRequest.metadata,
             streaming: false, // Non-streaming request
           },
-          toolSelection: request.body.toolSelection,
+          toolSelection: agentRequest.toolSelection,
           authToken,
           workspace: workspaceContext.workspace,
           user: authContext.user,
         });
 
         // Add conversation ID to response headers if available
-        if (request.body.conversationId) {
-          reply.header('X-Conversation-Id', request.body.conversationId);
+        if (agentRequest.conversationId) {
+          reply.header('X-Conversation-Id', agentRequest.conversationId);
         }
 
         // Log successful API request
         analyticsService
           .logCustomEvent({
             eventType: 'model_used',
-            conversationId: request.body.conversationId,
+            conversationId: agentRequest.conversationId,
             eventData: { agentId, success: true },
           })
           .catch((error: unknown) => {
@@ -141,36 +125,11 @@ export async function agentRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: { agentId: string }; Body: AgentRequest }>(
     '/agents/:agentId/stream',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            agentId: { type: 'string', minLength: 1 },
-          },
-          required: ['agentId'],
-        },
-        body: {
-          type: 'object',
-          properties: {
-            message: { type: 'string', minLength: 1 },
-            context: { type: 'object' },
-            conversationId: { type: 'string' },
-            metadata: { type: 'object' },
-            toolSelection: { type: 'object' },
-          },
-          required: ['message'],
-          additionalProperties: false,
-        },
-      },
+      schema: swaggerSchemas.executeAgentStream,
     },
-    async (
-      request: FastifyRequest<{
-        Params: { agentId: string };
-        Body: AgentRequest;
-      }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
+        const agentRequest = AgentRequestSchema.parse(request.body);
         const { agentId } = request.params;
         // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
@@ -181,14 +140,14 @@ export async function agentRoutes(fastify: FastifyInstance) {
         const authToken = authContext.token;
 
         const response = await agentsManager.executeAgent(agentId, {
-          message: request.body.message,
-          context: request.body.context,
-          conversationId: request.body.conversationId,
+          message: agentRequest.message,
+          context: agentRequest.context,
+          conversationId: agentRequest.conversationId,
           metadata: {
-            ...request.body.metadata,
+            ...agentRequest.metadata,
             streaming: true, // Streaming request
           },
-          toolSelection: request.body.toolSelection,
+          toolSelection: agentRequest.toolSelection,
           authToken,
           workspace: workspaceContext.workspace,
           user: authContext.user,
@@ -197,8 +156,8 @@ export async function agentRoutes(fastify: FastifyInstance) {
         if (response.stream) {
           // Add custom headers
           reply.header('X-Agent-Id', agentId);
-          if (request.body.conversationId) {
-            reply.header('X-Conversation-Id', request.body.conversationId);
+          if (agentRequest.conversationId) {
+            reply.header('X-Conversation-Id', agentRequest.conversationId);
           }
 
           // Use Vercel's AI SDK to convert the stream to a UI message stream
@@ -262,20 +221,9 @@ export async function agentRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { agentId: string } }>(
     '/agents/:agentId/config',
     {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            agentId: { type: 'string', minLength: 1 },
-          },
-          required: ['agentId'],
-        },
-      },
+      schema: swaggerSchemas.agentConfig,
     },
-    async (
-      request: FastifyRequest<{ Params: { agentId: string } }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
       try {
         const { agentId } = request.params;
         const config = agentsManager.getAgentConfig(agentId);

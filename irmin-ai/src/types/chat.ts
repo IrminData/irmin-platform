@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+import { ToolSelectionSchema } from './agents';
+
+// Chat request schema
+export const ChatRequestSchema = z.object({
+  conversationId: z.string().optional(),
+  message: z.string(),
+  provider: z.enum(['groq', 'openai']).optional(),
+  model: z.string().optional(),
+  temperature: z.number().optional(),
+  maxTokens: z.number().optional(),
+  toolSelection: ToolSelectionSchema.optional(),
+  stream: z.boolean().optional(),
+});
+
 // Shared message schema
 export const MessageSchema = z.object({
   id: z.string(),
@@ -32,21 +46,6 @@ export const ChatResponseSchema = z.object({
     .optional(),
 });
 
-// Type exports
-export type Message = z.infer<typeof MessageSchema>;
-export type ChatRequest = {
-  conversationId?: string;
-  message: string;
-  provider?: 'groq' | 'openai';
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  toolSelection?: {
-    includeServers?: string[];
-    includeTools?: string[];
-    excludeTools?: string[];
-    includeAll?: boolean;
-  };
-  stream?: boolean;
-};
+// Type exports - keep ChatRequest as it's used in route handlers
+export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;

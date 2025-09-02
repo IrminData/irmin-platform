@@ -3,6 +3,8 @@ import { authMiddlewareOnRequestHook } from '@/middleware/auth';
 import { workspaceMiddlewareOnRequestHook } from '@/middleware/workspace';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import swagger from '@fastify/swagger';
+import swaggerUI from '@fastify/swagger-ui';
 import Fastify from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
@@ -33,6 +35,87 @@ server.register(helmet, {
 server.register(cors, {
   origin: env.CORS_ORIGINS === '*' ? true : env.CORS_ORIGINS.split(','),
   credentials: env.CORS_CREDENTIALS,
+});
+
+// Register Swagger
+server.register(swagger, {
+  openapi: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Irmin AI API',
+      description:
+        'LangChain-based AI chat and agents API for Irmin, with streaming responses, Groq/OpenAI integration, and MCP tools support.',
+      version: process.env.npm_package_version || '1.0.0',
+      contact: {
+        name: 'Irmin Team',
+        email: 'hello@irmin.co',
+      },
+    },
+    externalDocs: {
+      url: 'https://docs.irmin.co',
+      description: 'Find more info here',
+    },
+    servers: [
+      {
+        url: `http://${env.HOST}:${env.PORT}`,
+        description: 'Development server',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+        workspaceHeader: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'X-Workspace-Slug',
+        },
+      },
+      schemas: {
+        Error: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' },
+            statusCode: { type: 'number' },
+          },
+          required: ['error', 'message', 'statusCode'],
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+        workspaceHeader: [],
+      },
+    ],
+  },
+});
+
+// Register Swagger UI
+server.register(swaggerUI, {
+  routePrefix: '/docs',
+  uiConfig: {
+    docExpansion: 'list',
+    deepLinking: false,
+  },
+  uiHooks: {
+    onRequest: function (_request, _reply, next) {
+      next();
+    },
+    preHandler: function (_request, _reply, next) {
+      next();
+    },
+  },
+  staticCSP: true,
+  transformStaticCSP: (header) => header,
+  transformSpecification: (swaggerObject) => {
+    return swaggerObject;
+  },
+  transformSpecificationClone: true,
 });
 
 // Global error handler
@@ -112,6 +195,7 @@ async function start() {
 
     server.log.info(`Server listening on http://${env.HOST}:${env.PORT}`);
     server.log.info(`Health check: http://${env.HOST}:${env.PORT}/health`);
+    server.log.info(`API Documentation: http://${env.HOST}:${env.PORT}/docs`);
   } catch (error) {
     server.log.error(error as Error, 'Failed to start server');
     process.exit(1);

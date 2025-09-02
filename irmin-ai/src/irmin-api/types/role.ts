@@ -8,6 +8,3 @@ export const RoleSchema = z.object({
   isOwner: z.boolean().describe('Whether the role is the owner role'),
   isDefault: z.boolean().describe('Whether the role is the default role'),
 });
-
-// Type exports
-export type Role = z.infer<typeof RoleSchema>;

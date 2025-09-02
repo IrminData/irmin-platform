@@ -14,14 +14,6 @@ export const WorkspaceInfoResponseSchema = z.object({
   slug: z.string().describe('Workspace slug'),
 });
 
-// Combined user and workspace info response schema
-export const UserWorkspaceInfoResponseSchema = z.object({
-  user: UserSchema,
-  workspace: WorkspaceSchema,
-  token: z.string().describe('JWT token for authentication'),
-  slug: z.string().describe('Workspace slug'),
-});
-
 // Models response schema
 export const ModelsResponseSchema = z.object({
   models: z.array(
@@ -60,12 +52,3 @@ export const McpToolsResponseSchema = z.object({
   ),
   totalServers: z.number(),
 });
-
-// Type exports
-export type UserProfileResponse = z.infer<typeof UserProfileResponseSchema>;
-export type WorkspaceInfoResponse = z.infer<typeof WorkspaceInfoResponseSchema>;
-export type UserWorkspaceInfoResponse = z.infer<
-  typeof UserWorkspaceInfoResponseSchema
->;
-export type ModelsResponse = z.infer<typeof ModelsResponseSchema>;
-export type McpToolsResponse = z.infer<typeof McpToolsResponseSchema>;

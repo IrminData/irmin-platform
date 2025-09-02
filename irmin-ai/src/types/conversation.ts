@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 import { MessageSchema } from './chat';
 
+// Conversation request schema
+export const ConversationRequestSchema = z.object({
+  title: z.string().optional(),
+  metadata: z.unknown().optional(),
+});
+
 // Conversation schema
 export const ConversationSchema = z.object({
   id: z.string(),
@@ -46,19 +52,4 @@ export const PaginatedMessagesResponseSchema = z.object({
 });
 
 // Type exports
-export type Conversation = z.infer<typeof ConversationSchema>;
-export type ConversationWithStats = z.infer<typeof ConversationWithStatsSchema>;
-export type ConversationCreateRequest = {
-  title?: string;
-  metadata?: unknown;
-};
-export type ConversationUpdateRequest = {
-  title?: string;
-  metadata?: unknown;
-};
-export type PaginatedConversationsResponse = z.infer<
-  typeof PaginatedConversationsResponseSchema
->;
-export type PaginatedMessagesResponse = z.infer<
-  typeof PaginatedMessagesResponseSchema
->;
+export type ConversationRequest = z.infer<typeof ConversationRequestSchema>;

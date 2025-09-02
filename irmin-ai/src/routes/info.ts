@@ -1,8 +1,10 @@
 import { aiModels, db } from '@/database';
 import { eq } from 'drizzle-orm';
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 
 import { mcpService } from '@/services/mcp';
+
+import { swaggerSchemas } from '@/config/swagger';
 
 import {
   McpToolsResponseSchema,
@@ -18,7 +20,10 @@ export async function infoRoutes(fastify: FastifyInstance) {
   // GET /api/info/user - Get authenticated user profile
   fastify.get(
     '/info/user',
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    {
+      schema: swaggerSchemas.userProfile,
+    },
+    async (request, reply) => {
       try {
         // Get authenticated user context (set by middleware)
         const authContext = request.auth;
@@ -51,7 +56,10 @@ export async function infoRoutes(fastify: FastifyInstance) {
   // GET /api/info/workspace - Get selected workspace information
   fastify.get(
     '/info/workspace',
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    {
+      schema: swaggerSchemas.workspaceInfo,
+    },
+    async (request, reply) => {
       try {
         // Get workspace context (set by middleware)
         const workspaceContext = request.workspace;
@@ -82,39 +90,48 @@ export async function infoRoutes(fastify: FastifyInstance) {
   );
 
   // GET /api/info/models - List available AI models
-  fastify.get('/info/models', async (_, reply: FastifyReply) => {
-    try {
-      // Get models from database with pricing and capabilities
-      const dbModels = await db
-        .select()
-        .from(aiModels)
-        .where(eq(aiModels.isActive, true));
+  fastify.get(
+    '/info/models',
+    {
+      schema: swaggerSchemas.listModels,
+    },
+    async (_, reply) => {
+      try {
+        // Get models from database with pricing and capabilities
+        const dbModels = await db
+          .select()
+          .from(aiModels)
+          .where(eq(aiModels.isActive, true));
 
-      // Transform to match expected format
-      const models = dbModels.map((model) => ({
-        name: model.name,
-        provider: model.provider,
-        modelId: model.modelId,
-        description: model.description,
-        inputPricePerMillionTokens: model.inputPricePerMillionTokens,
-        outputPricePerMillionTokens: model.outputPricePerMillionTokens,
-      }));
+        // Transform to match expected format
+        const models = dbModels.map((model) => ({
+          name: model.name,
+          provider: model.provider,
+          modelId: model.modelId,
+          description: model.description,
+          inputPricePerMillionTokens: model.inputPricePerMillionTokens,
+          outputPricePerMillionTokens: model.outputPricePerMillionTokens,
+        }));
 
-      sendOkResponse(reply, ModelsResponseSchema, { models }, fastify.log);
-      return;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to fetch models';
-      fastify.log.error('Models endpoint error: %s', errorMessage);
-      sendInternalServerError(reply, errorMessage, fastify.log);
-      return;
+        sendOkResponse(reply, ModelsResponseSchema, { models }, fastify.log);
+        return;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to fetch models';
+        fastify.log.error('Models endpoint error: %s', errorMessage);
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
+      }
     }
-  });
+  );
 
   // GET /api/info/tools - List available MCP tools
   fastify.get(
     '/info/tools',
-    async (request: FastifyRequest, reply: FastifyReply) => {
+    {
+      schema: swaggerSchemas.listMcpTools,
+    },
+    async (request, reply) => {
       try {
         // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;

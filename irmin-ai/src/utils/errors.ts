@@ -2,13 +2,6 @@ import { FastifyReply } from 'fastify';
 
 import { ApiErrorSchema } from '@/types/errors';
 
-export interface ErrorResponseData {
-  error: string;
-  message: string;
-  statusCode: number;
-  timestamp: string;
-}
-
 /**
  * Safely creates and sends a standardized error response
  * Uses safeParse to avoid throwing errors during error handling
@@ -39,7 +32,7 @@ export function sendErrorResponse(
     }
 
     // Fallback to basic error if parsing fails
-    const fallbackError: ErrorResponseData = {
+    const fallbackError = {
       error: 'Internal Server Error',
       message: 'An unexpected error occurred',
       statusCode: 500,
@@ -77,37 +70,4 @@ export function sendNotFoundError(
   logger?: { error: (msg: string, ...args: unknown[]) => void }
 ): void {
   sendErrorResponse(reply, 404, 'Not Found', message, logger);
-}
-
-/**
- * Convenience function for 400 Bad Request responses
- */
-export function sendBadRequestError(
-  reply: FastifyReply,
-  message: string,
-  logger?: { error: (msg: string, ...args: unknown[]) => void }
-): void {
-  sendErrorResponse(reply, 400, 'Bad Request', message, logger);
-}
-
-/**
- * Convenience function for 401 Unauthorized responses
- */
-export function sendUnauthorizedError(
-  reply: FastifyReply,
-  message: string,
-  logger?: { error: (msg: string, ...args: unknown[]) => void }
-): void {
-  sendErrorResponse(reply, 401, 'Unauthorized', message, logger);
-}
-
-/**
- * Convenience function for 403 Forbidden responses
- */
-export function sendForbiddenError(
-  reply: FastifyReply,
-  message: string,
-  logger?: { error: (msg: string, ...args: unknown[]) => void }
-): void {
-  sendErrorResponse(reply, 403, 'Forbidden', message, logger);
 }

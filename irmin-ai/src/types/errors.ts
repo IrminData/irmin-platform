@@ -7,6 +7,3 @@ export const ApiErrorSchema = z.object({
   statusCode: z.number(),
   timestamp: z.string(),
 });
-
-// Type exports
-export type ApiError = z.infer<typeof ApiErrorSchema>;

@@ -8,7 +8,7 @@ import {
 import { toUIMessageStream } from '@ai-sdk/langchain';
 import { randomUUID } from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
 import { completionService } from '@/services/completion';
@@ -16,8 +16,11 @@ import { llmService } from '@/services/llm';
 import { systemPromptBuilder } from '@/services/systemPromptBuilder';
 import { titleGenerationService } from '@/services/titleGeneration';
 
+import { swaggerSchemas } from '@/config/swagger';
+
 import {
   type ChatRequest,
+  ChatRequestSchema,
   type ChatResponse,
   ChatResponseSchema,
 } from '@/types/chat';
@@ -30,28 +33,10 @@ export async function chatRoutes(fastify: FastifyInstance) {
   fastify.post<{ Body: ChatRequest }>(
     '/chat',
     {
-      schema: {
-        body: {
-          type: 'object',
-          properties: {
-            conversationId: { type: 'string' },
-            message: { type: 'string', minLength: 1 },
-            provider: { type: 'string', enum: ['groq', 'openai'] },
-            model: { type: 'string' },
-            temperature: { type: 'number', minimum: 0, maximum: 2 },
-            maxTokens: { type: 'number', minimum: 1, maximum: 4000 },
-            toolSelection: { type: 'object' },
-            stream: { type: 'boolean' },
-          },
-          required: ['message'],
-          additionalProperties: false,
-        },
-      },
+      schema: swaggerSchemas.chatRequest,
     },
-    async (
-      request: FastifyRequest<{ Body: ChatRequest }>,
-      reply: FastifyReply
-    ) => {
+    async (request, reply) => {
+      const chatRequest = ChatRequestSchema.parse(request.body);
       const startTime = Date.now();
       let conversation: typeof conversations.$inferSelect | undefined;
       try {
@@ -64,7 +49,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
           maxTokens,
           toolSelection,
           stream = true,
-        } = request.body;
+        } = chatRequest;
 
         // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
