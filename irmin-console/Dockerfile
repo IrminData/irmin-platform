@@ -8,7 +8,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 ENV GENERATE_SOURCEMAP=false
-ENV NODE_OPTIONS=--max-old-space-size=3000
+ENV NODE_OPTIONS=--max-old-space-size=8192
 
 # Set environment variable placeholders (variable name = variable name)
 ENV NEXT_PUBLIC_BASE_URL=NEXT_PUBLIC_BASE_URL
@@ -40,6 +40,7 @@ WORKDIR /app
 
 # Set the environment to production
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max-old-space-size=8192
 
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED=1
@@ -71,4 +72,4 @@ ENV HOSTNAME="0.0.0.0"
 
 # Use entrypoint script
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["node", "server.js"]
+CMD ["node", "--max-old-space-size=8192", "server.js"]
