@@ -83,11 +83,5 @@
   "validation_failed": "Validointi epäonnistui",
   "response_validation_failed": "Vastauksen validointi epäonnistui",
   "search_failed": "Haku epäonnistui",
-  "system_only_action": "Tämä toiminto on saatavilla vain järjestelmäkäyttäjille",
-  "assistant_conversation_created": "Keskustelu luotu",
-  "assistant_conversation_deleted": "Keskustelu poistettu",
-  "assistant_conversation_updated": "Keskustelu päivitetty",
-  "assistant_conversation_retrieved": "Keskustelu haettu",
-  "assistant_conversation_cleared": "Keskustelu tyhjennetty",
-  "assistant_message_sent": "Keskusteluun lähetetty viesti"
+  "system_only_action": "Tämä toiminto on saatavilla vain järjestelmäkäyttäjille"
 }

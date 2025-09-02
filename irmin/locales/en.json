@@ -83,11 +83,5 @@
   "validation_failed": "Validation failed",
   "response_validation_failed": "Response validation failed",
   "search_failed": "Search failed",
-  "system_only_action": "This action is only available to system users",
-  "assistant_conversation_created": "Assistant conversation created",
-  "assistant_conversation_deleted": "Assistant conversation deleted",
-  "assistant_conversation_updated": "Assistant conversation updated",
-  "assistant_conversation_retrieved": "Assistant conversation retrieved",
-  "assistant_conversation_cleared": "Assistant conversation cleared",
-  "assistant_message_sent": "Assistant message sent"
+  "system_only_action": "This action is only available to system users"
 }

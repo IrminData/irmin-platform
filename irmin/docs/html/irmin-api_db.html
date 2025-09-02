@@ -158,89 +158,6 @@ type ActionWorkflowableInput struct {
 	ActionWorkflowableID *uint               `json:"action_workflowable_id"`
 }
 
-type AssistantConversation struct {
-	gorm.Model
-
-	// Conversation title (auto-generated or user-defined)
-	Title string `gorm:"type:varchar(255);not null;default:''" json:"title"`
-
-	// Assistant type (assistant, scripting, etc.)
-	AssistantType ai.IrminAIType `gorm:"type:varchar(50);not null;default:'assistant'" json:"assistant_type"`
-
-	// Hidden from user
-	Hidden bool `gorm:"default:false" json:"hidden"`
-
-	// Workspace this conversation belongs to
-	WorkspaceID uint      `gorm:"index;not null"         json:"workspace_id"`
-	Workspace   Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace"`
-
-	// User who owns this conversation
-	UserID uint `gorm:"not null"          json:"user_id"`
-	User   User `gorm:"foreignKey:UserID" json:"user"`
-
-	// Conversation metadata (stored as JSON)
-	Metadata map[string]any `gorm:"type:jsonb;serializer:json" json:"metadata"`
-
-	// Messages in this conversation
-	Messages []AssistantMessage `json:"messages" gorm:"foreignKey:ConversationID"`
-
-	// Statistics
-	TotalMessages     int `gorm:"default:0" json:"total_messages"`
-	UserMessages      int `gorm:"default:0" json:"user_messages"`
-	AssistantMessages int `gorm:"default:0" json:"assistant_messages"`
-	EstimatedTokens   int `gorm:"default:0" json:"estimated_tokens"`
-
-	// Timestamps
-	LastMessageAt *time.Time `json:"last_message_at"`
-}
-    AssistantConversation represents a conversation with the AI assistant
-
-type AssistantMessage struct {
-	gorm.Model
-
-	// Conversation this message belongs to
-	ConversationID *uint                  `json:"conversation_id" gorm:"column:conversation_id;index"`
-	Conversation   *AssistantConversation `json:"conversation"    gorm:"foreignKey:ConversationID"`
-
-	// Message role (user or assistant)
-	Role anthropic.BetaMessageParamRole `gorm:"not null" json:"role"`
-
-	// Message content
-	Content string `gorm:"type:text;not null" json:"content"`
-
-	// System prompt used for this message (user message only)
-	SystemPrompt *string `gorm:"type:text" json:"system_prompt"`
-
-	// Content type (text, image, tool_call, etc.)
-	ContentType irminmodels.AssistantMessageContentType `gorm:"type:varchar(50);not null;default:'text'" json:"content_type"`
-
-	// Block index within the AI response (0-based, for ordering multiple blocks)
-	BlockIndex *int `gorm:"default:0" json:"block_index"`
-
-	// Message status (pending, sent, error, etc.)
-	Status irminmodels.AssistantMessageStatus `gorm:"type:varchar(50);not null;default:'pending'" json:"status"`
-
-	// Error message if status is error
-	ErrorMessage *string `gorm:"type:text" json:"error_message"`
-
-	// Message metadata (stored as JSON)
-	Metadata map[string]any `gorm:"type:jsonb;serializer:json" json:"metadata"`
-
-	// Token usage information
-	InputTokens  *int `json:"input_tokens"`
-	OutputTokens *int `json:"output_tokens"`
-
-	// AI model used for this message
-	AIModel string `json:"ai_model"`
-
-	// Anthropic ID (for AI responses only)
-	AnthropicID string `json:"anthropic_id"`
-
-	// Timestamps
-	SentAt time.Time `json:"sent_at"`
-}
-    AssistantMessage represents a single message in a conversation
-
 type BatchLoadResult struct {
 	Entities map[uint]any   // Map of entity ID to entity
 	Tags     map[uint][]Tag // Map of entity ID to tags
@@ -356,29 +273,14 @@ func (d *Database) AddUserToWorkspace(tx *gorm.DB, userID, workspaceID uint, rol
 
 func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 
-func (d *Database) ClearAssistantConversationMessages(conversationID uint) error
-    ClearAssistantConversationMessages removes all messages from a conversation
-
 func (d *Database) Close()
     Close closes the shared database connection pool.
-
-func (d *Database) CreateAssistantConversation(conversation *AssistantConversation) error
-    CreateAssistantConversation creates a new conversation
-
-func (d *Database) CreateAssistantMessage(message *AssistantMessage) error
-    CreateAssistantMessage creates a new message in a conversation
 
 func (d *Database) CreateSearchIndexes() error
     CreateSearchIndexes creates indexes to optimize search performance.
 
 func (d *Database) DeleteAPIToken(id uint) error
     DeleteAPIToken deletes an API token by its ID.
-
-func (d *Database) DeleteAssistantConversation(conversationID uint) error
-    DeleteAssistantConversation deletes a conversation and all its messages
-
-func (d *Database) DeleteAssistantMessage(messageID uint) error
-    DeleteAssistantMessage deletes a message and updates conversation statistics
 
 func (d *Database) DeleteConnection(tx *gorm.DB, id uint) error
     DeleteConnection deletes a connection and its associated schema cache from
@@ -451,27 +353,6 @@ func (d *Database) GetAllConnectors() ([]Connector, error)
 
 func (d *Database) GetAllWorkspaces() ([]Workspace, error)
     GetAllWorkspaces retrieves all workspaces from the database.
-
-func (d *Database) GetAssistantConversationByID(conversationID uint) (*AssistantConversation, error)
-    GetAssistantConversationByID retrieves a conversation by its ID
-
-func (d *Database) GetAssistantConversationStats(
-	conversationID uint,
-) (*irminmodels.AssistantConversationStats, error)
-    GetAssistantConversationStats retrieves statistics for a conversation
-
-func (d *Database) GetAssistantConversationWithMessages(conversationID uint) (*AssistantConversation, error)
-    GetAssistantConversationWithMessages retrieves a conversation by its ID with
-    all messages
-
-func (d *Database) GetAssistantConversationsByUserAndType(
-	workspaceID uint,
-	userID uint,
-	includeHidden bool,
-	assistantType ai.IrminAIType,
-) ([]AssistantConversation, error)
-    GetAssistantConversationsByUserAndType retrieves all conversations for a
-    specific user in a workspace by type
 
 func (d *Database) GetConnectionByID(id uint) (*Connection, error)
     GetConnectionByID finds a connection by its ID.
@@ -706,26 +587,6 @@ func (d *Database) SearchWorkspaceCount(
 ) (int, error)
     SearchWorkspaceCount performs a search and returns only the total count of
     results with timeout protection.
-
-func (d *Database) TrackNewMessageUsage(
-	conversation *AssistantConversation,
-	inputTokens int,
-	outputTokens int,
-	assistantMessageCount int,
-	userMessageCount int,
-) error
-    TrackNewMessageUsage updates the conversation statistics with the new
-    message usage
-
-func (d *Database) UpdateAssistantConversation(conversation *AssistantConversation) error
-    UpdateAssistantConversation updates an existing conversation
-
-func (d *Database) UpdateAssistantMessageStatus(
-	messageID uint,
-	status irminmodels.AssistantMessageStatus,
-	errorMessage *string,
-) error
-    UpdateAssistantMessageStatus updates the status of a message
 
 func (d *Database) UpdateWorkspaceUserRoles(
 	tx *gorm.DB,
@@ -1002,8 +863,6 @@ const (
 	PolicyResourceBilling PolicyResource = "billing" // Billing is not stored in the database, so policies are not billing specific.
 	// PolicyResourceWorkspaceTag represents a workspace tag resource.
 	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
-	// PolicyResourceAssistant represents an AI assistant resource.
-	PolicyResourceAssistant PolicyResource = "assistant"
 )
 type QueryNormalizationOptions struct {
 	RemoveStopWords bool

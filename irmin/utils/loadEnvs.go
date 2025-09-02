@@ -20,7 +20,6 @@ type CoreAPIEnv struct {
 	IdempotencyEnabled           bool   // Flag to enable idempotency
 	AllowedOrigins               string // Allowed origins for CORS
 	MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
-	AnthropicAPIKey              string // Anthropic API key to run inference
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs
 	DatabaseConnectionString     string // Postgres DB connection string
@@ -155,11 +154,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 	}
 
 	mcpHTTPPath, err := getEnv("MCP_HTTP_PATH", false, "/mcp")
-	if err != nil {
-		return nil, err
-	}
-
-	anthropicAPIKey, err := getEnv("ANTHROPIC_API_KEY", true, "")
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +322,6 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		IdempotencyEnabled:           idempotencyEnabled,
 		AllowedOrigins:               allowedOrigins,
 		MCPHTTPPath:                  mcpHTTPPath,
-		AnthropicAPIKey:              anthropicAPIKey,
 		OrchestratorEnabled:          orchestratorEnabled,
 		SqidAlphabet:                 sqidAlphabet,
 		DatabaseConnectionString:     databaseConnectionString,

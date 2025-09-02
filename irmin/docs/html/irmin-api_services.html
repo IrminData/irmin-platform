@@ -131,16 +131,6 @@ func (api *APIServices) CheckPolicyPermission(
 	action db.PolicyAction,
 ) (bool, error)
 
-func (api *APIServices) ClearAssistantConversation(
-	c context.Context,
-	_ *string,
-	user *db.User,
-	workspace *db.Workspace,
-	_ *string,
-	conversation *db.AssistantConversation,
-) error
-    ClearAssistantConversation clears all messages from a conversation
-
 func (api *APIServices) CompareRepositoryRefs(
 	c context.Context,
 	locale string,
@@ -173,14 +163,6 @@ func (api *APIServices) CreateAPIToken(
 	user *db.User,
 	req irmincore.CreateCredentialRequest,
 ) (*db.APIToken, error)
-
-func (api *APIServices) CreateAssistantConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	req irmincore.CreateAssistantConversationRequest,
-) (*db.AssistantConversation, error)
-    CreateAssistantConversation creates a new conversation
 
 func (api *APIServices) CreateConnection(
 	c context.Context,
@@ -275,16 +257,6 @@ func (api *APIServices) CreateWorkspaceTag(
 func (api *APIServices) DeclineInvite(c context.Context, user *db.User, invite *db.Invite) error
 
 func (api *APIServices) DeleteAPIToken(c context.Context, user *db.User, tokenID uint) error
-
-func (api *APIServices) DeleteAssistantConversation(
-	c context.Context,
-	_ *string,
-	user *db.User,
-	workspace *db.Workspace,
-	_ *string,
-	conversation *db.AssistantConversation,
-) error
-    DeleteAssistantConversation deletes a conversation and all its messages
 
 func (api *APIServices) DeleteConnection(
 	c context.Context,
@@ -387,41 +359,6 @@ func (api *APIServices) ExecuteSQL(
 	workspace *db.Workspace,
 	req irmincore.ExecuteSQLRequest,
 ) (*irminmodels.QueryResult, error)
-
-func (api *APIServices) GenerateQuery(
-	c context.Context,
-	userToken *string,
-	user *db.User,
-	workspace *db.Workspace,
-	req *irmincore.QueryGenerationRequest,
-) ([]*db.AssistantMessage, error)
-    GenerateQuery generates a SQL query from natural language using the QueryAI
-
-func (api *APIServices) GenerateScript(
-	c context.Context,
-	userToken *string,
-	user *db.User,
-	workspace *db.Workspace,
-	req *irmincore.ScriptGenerationRequest,
-) ([]*db.AssistantMessage, error)
-    GenerateScript generates a Go script from natural language using the
-    ScriptingAI
-
-func (api *APIServices) GetAssistantConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) (*db.AssistantConversation, error)
-    GetAssistantConversation retrieves a conversation by ID with all messages
-
-func (api *APIServices) GetAssistantConversationStats(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	conversation *db.AssistantConversation,
-) (*irminmodels.AssistantConversationStats, error)
-    GetAssistantConversationStats returns statistics about a conversation
 
 func (api *APIServices) GetConnection(
 	c context.Context,
@@ -664,13 +601,6 @@ func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) e
 
 func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.APIToken, error)
 
-func (api *APIServices) ListAssistantConversations(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-) ([]db.AssistantConversation, error)
-    ListAssistantConversations lists all conversations for a user
-
 func (api *APIServices) ListConnections(
 	c context.Context,
 	user *db.User,
@@ -721,14 +651,6 @@ func (api *APIServices) ListLogEventsForWorkspaceAndAsset(
     ListLogEventsForWorkspaceAndAsset retrieves log events for a specific asset
     within a workspace.
 
-func (api *APIServices) ListQueryGenerationConversations(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-) ([]db.AssistantConversation, error)
-    ListQueryGenerationConversations lists all query generation conversations
-    for a user
-
 func (api *APIServices) ListRepositories(
 	c context.Context,
 	user *db.User,
@@ -763,14 +685,6 @@ func (api *APIServices) ListRepositoryTags(
 ) ([]irminmodels.GitTag, error)
 
 func (api *APIServices) ListRoles(c context.Context) ([]irminmodels.Role, error)
-
-func (api *APIServices) ListScriptGenerationConversations(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-) ([]db.AssistantConversation, error)
-    ListScriptGenerationConversations lists all script generation conversations
-    for a user
 
 func (api *APIServices) ListWorkflowRuns(
 	c context.Context,
@@ -890,18 +804,6 @@ func (api *APIServices) SearchWorkspace(
 	filters db.SearchFilters,
 ) (*irminmodels.SearchResponse, error)
 
-func (api *APIServices) SendAssistantMessage(
-	c context.Context,
-	userToken *string,
-	user *db.User,
-	workspace *db.Workspace,
-	message string,
-	conversation *db.AssistantConversation,
-	opts *ai.MessageRequest,
-) ([]*db.AssistantMessage, error)
-    SendAssistantMessage sends a message to the AI assistant and returns the
-    response
-
 func (api *APIServices) SendInvite(
 	c context.Context,
 	locale string,
@@ -963,16 +865,6 @@ func (api *APIServices) TransferWorkspaceOwnership(
 	workspace *db.Workspace,
 	req irmincore.TransferOwnershipRequest,
 ) (*db.Workspace, error)
-
-func (api *APIServices) UpdateAssistantConversation(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	_ *string,
-	conversation *db.AssistantConversation,
-	req irmincore.UpdateAssistantConversationRequest,
-) (*db.AssistantConversation, error)
-    UpdateAssistantConversation updates an existing conversation
 
 func (api *APIServices) UpdateConnection(
 	c context.Context,

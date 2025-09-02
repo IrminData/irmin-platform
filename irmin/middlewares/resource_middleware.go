@@ -10,8 +10,6 @@ import (
 )
 
 // resourceMiddleware is a generic middleware that verifies access to a resource.
-//
-//nolint:funlen // This is a generic middleware, with different resource types, so it's expected to be long.
 func resourceMiddleware[T any](
 	api *APIMiddlewares,
 	c fiber.Ctx,
@@ -22,13 +20,12 @@ func resourceMiddleware[T any](
 	// Get the dictionary and workspace from the request context.
 	dict, dictOk := c.Locals("dict").(locales.Dictionary)
 	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
-	user, userOk := c.Locals("user").(*db.User)
-	if !dictOk || !workspaceOk || !userOk {
+	if !dictOk || !workspaceOk {
 		api.Logger.Error("Error getting locals in resourceMiddleware",
 			"resourceType", resourceType,
 			"dictOk", dictOk,
 			"workspaceOk", workspaceOk,
-			"userOk", userOk)
+		)
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
@@ -88,20 +85,6 @@ func resourceMiddleware[T any](
 	case *db.TagWithAssets:
 		if r.Tag.WorkspaceID != workspace.ID {
 			api.Logger.Error(resourceType + " does not belong to the workspace")
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
-		}
-		c.Locals(resourceType, r)
-	case *db.AssistantConversation:
-		if r.WorkspaceID != workspace.ID {
-			api.Logger.Error(resourceType + " does not belong to the workspace")
-			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
-				Errors: []string{api.lm.T(dict, "access_denied")},
-			})
-		}
-		if r.UserID != user.ID {
-			api.Logger.Error(resourceType + " does not belong to the user")
 			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
 				Errors: []string{api.lm.T(dict, "access_denied")},
 			})

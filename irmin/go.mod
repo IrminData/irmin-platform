@@ -3,8 +3,7 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250826165458-29ea7d16a707
-	github.com/anthropics/anthropic-sdk-go v1.10.0
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250902210510-5faf607d5692
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.3
 	github.com/clerk/clerk-sdk-go/v2 v2.3.1
 	github.com/gofiber/fiber/v3 v3.0.0-rc.1
@@ -91,10 +90,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sqids/sqids-go v0.4.1 // indirect
-	github.com/tidwall/gjson v1.18.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tinylib/msgp v1.4.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.65.0 // indirect

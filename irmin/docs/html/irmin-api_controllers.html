@@ -35,125 +35,6 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /invites/{invite_id}/accept [post]
 
-func (api *APIControllers) AssistantConversationsClear(c fiber.Ctx) error
-    AssistantConversationsClear godoc @Summary Clear assistant conversation
-    messages @Description Clear all messages from an existing assistant
-    conversation @Tags assistant @Security ApiKeyAuth @Accept json @Produce
-    json @Param workspace_slug path string true "Workspace slug" @Param
-    conversation_id path string true "Conversation ID" @Success 200
-    {object} irminmodels.IrminAPIResponse "Conversation messages cleared
-    successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}/clear
-    [post]
-
-func (api *APIControllers) AssistantConversationsDestroy(c fiber.Ctx) error
-    AssistantConversationsDestroy godoc @Summary Delete assistant
-    conversation @Description Delete an existing assistant conversation
-    from the workspace @Tags assistant @Security ApiKeyAuth @Accept json
-    @Produce json @Param workspace_slug path string true "Workspace slug"
-    @Param conversation_id path string true "Conversation ID" @Success
-    200 {object} irminmodels.IrminAPIResponse "Conversation deleted
-    successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}
-    [delete]
-
-func (api *APIControllers) AssistantConversationsIndex(c fiber.Ctx) error
-    AssistantConversationsIndex godoc @Summary List assistant conversations
-    in workspace @Description Get all assistant conversations in the
-    specified workspace that the user has permission to read @Tags
-    assistant @Security ApiKeyAuth @Accept json @Produce json @Param
-    workspace_slug path string true "Workspace slug" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=[]irminmodels.AssistantConversation}
-    "Conversations retrieved successfully" @Failure 401
-    {object} irminmodels.IrminAPIResponse "Unauthorized -
-    invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Workspace not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/conversations [get]
-
-func (api *APIControllers) AssistantConversationsShow(c fiber.Ctx) error
-    AssistantConversationsShow godoc @Summary Get assistant conversation
-    details @Description Get details of a specific assistant conversation
-    by its ID @Tags assistant @Security ApiKeyAuth @Accept json @Produce
-    json @Param workspace_slug path string true "Workspace slug" @Param
-    conversation_id path string true "Conversation ID" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=irminmodels.AssistantConversation}
-    "Conversation retrieved successfully" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse
-    "Conversation not found" @Failure 500 {object}
-    irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/conversations/{conversation_id} [get]
-
-func (api *APIControllers) AssistantConversationsStats(c fiber.Ctx) error
-    AssistantConversationsStats godoc @Summary Get assistant conversation
-    statistics @Description Get statistics for a specific assistant
-    conversation @Tags assistant @Security ApiKeyAuth @Accept json @Produce
-    json @Param workspace_slug path string true "Workspace slug" @Param
-    conversation_id path string true "Conversation ID" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=object} "Conversation statistics
-    retrieved successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
-    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}/stats
-    [get]
-
-func (api *APIControllers) AssistantConversationsStore(c fiber.Ctx) error
-    AssistantConversationsStore godoc @Summary Create a new assistant
-    conversation @Description Create a new assistant conversation in the
-    specified workspace @Tags assistant @Security ApiKeyAuth @Accept json
-    @Produce json @Param workspace_slug path string true "Workspace slug"
-    @Param request body irmincore.CreateAssistantConversationRequest
-    true "Conversation creation parameters" @Success 201 {object}
-    irminmodels.IrminAPIResponse{data=irminmodels.AssistantConversation}
-    "Conversation created successfully" @Failure 400 {object}
-    irminmodels.IrminAPIResponse "Bad request - invalid request body" @Failure
-    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/assistant/conversations
-    [post]
-
-func (api *APIControllers) AssistantConversationsUpdate(c fiber.Ctx) error
-    AssistantConversationsUpdate godoc @Summary Update assistant
-    conversation @Description Update an existing assistant conversation
-    @Tags assistant @Security ApiKeyAuth @Accept json @Produce json
-    @Param workspace_slug path string true "Workspace slug" @Param
-    conversation_id path string true "Conversation ID" @Param request
-    body irmincore.UpdateAssistantConversationRequest true "Conversation
-    update parameters" @Success 200 {object} irminmodels.IrminAPIResponse
-    "Conversation updated successfully" @Failure 400 {object}
-    irminmodels.IrminAPIResponse "Bad request - invalid request body"
-    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
-    - invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Conversation not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}
-    [patch]
-
-func (api *APIControllers) AssistantMessagesStore(c fiber.Ctx) error
-    AssistantMessagesStore godoc @Summary Send message to assistant
-    @Description Send a message to the AI assistant and get a
-    response @Tags assistant @Security ApiKeyAuth @Accept json
-    @Produce json @Param workspace_slug path string true "Workspace
-    slug" @Param conversation_id path string true "Conversation ID"
-    @Param request body irmincore.CreateAssistantMessageRequest
-    true "Message parameters" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=[]irminmodels.AssistantMessage}
-    "Message sent successfully" @Failure 400 {object}
-    irminmodels.IrminAPIResponse "Bad request - invalid request body"
-    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
-    - invalid or missing authentication" @Failure 500 {object}
-    irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/conversations/{conversation_id}/messages
-    [post]
-
 func (api *APIControllers) CheckPermission(c fiber.Ctx) error
     CheckPermission godoc @Summary Check user permission @Description Check if
     the current user has permission to perform a specific action on a resource
@@ -809,34 +690,6 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error
     server error" @Router /workspaces/{workspace_slug}/queries/{query_id}
     [patch]
 
-func (api *APIControllers) QueryGenerationIndex(c fiber.Ctx) error
-    QueryGenerationIndex godoc @Summary List query generation
-    conversations @Description Get all query generation conversations in
-    the specified workspace that the user has permission to read @Tags
-    assistant-query @Security ApiKeyAuth @Accept json @Produce json @Param
-    workspace_slug path string true "Workspace slug" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=[]irminmodels.AssistantConversation}
-    "Query generation conversations retrieved successfully" @Failure 401
-    {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse
-    "Workspace not found" @Failure 500 {object} irminmodels.IrminAPIResponse
-    "Internal server error" @Router /workspaces/{workspace_slug}/assistant/query
-    [get]
-
-func (api *APIControllers) QueryGenerationStore(c fiber.Ctx) error
-    QueryGenerationStore godoc @Summary Generate a SQL query from natural
-    language @Description Generate a SQL query from natural language using
-    the QueryAI assistant @Tags assistant-query @Security ApiKeyAuth
-    @Accept json @Produce json @Param workspace_slug path string true
-    "Workspace slug" @Param request body irmincore.QueryGenerationRequest
-    true "Query generation parameters" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=[]irminmodels.AssistantMessage} "Query
-    generated successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - invalid request body" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/assistant/query [post]
-
 func (api *APIControllers) RepositoriesDestroy(c fiber.Ctx) error
     RepositoriesDestroy godoc @Summary Delete repository @Description
     Delete an existing repository and all its data from the workspace
@@ -1370,34 +1223,6 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Workflow not found" @Failure 500
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/workflows/{workflow_slug}/schedule [patch]
-
-func (api *APIControllers) ScriptGenerationIndex(c fiber.Ctx) error
-    ScriptGenerationIndex godoc @Summary List script generation
-    conversations @Description Get all script generation conversations
-    in the specified workspace that the user has permission to read @Tags
-    assistant-script @Security ApiKeyAuth @Accept json @Produce json @Param
-    workspace_slug path string true "Workspace slug" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=[]irminmodels.AssistantConversation}
-    "Script generation conversations retrieved successfully"
-    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
-    - invalid or missing authentication" @Failure 404 {object}
-    irminmodels.IrminAPIResponse "Workspace not found" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/assistant/script [get]
-
-func (api *APIControllers) ScriptGenerationStore(c fiber.Ctx) error
-    ScriptGenerationStore godoc @Summary Generate a SQL script from natural
-    language @Description Generate a SQL script from natural language using
-    the ScriptAI assistant @Tags assistant-script @Security ApiKeyAuth
-    @Accept json @Produce json @Param workspace_slug path string true
-    "Workspace slug" @Param request body irmincore.ScriptGenerationRequest
-    true "Script generation parameters" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=[]irminmodels.AssistantMessage} "Script
-    generated successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - invalid request body" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/assistant/script [post]
 
 func (api *APIControllers) SendInvite(c fiber.Ctx) error
     SendInvite godoc @Summary Send workspace invite @Description Send

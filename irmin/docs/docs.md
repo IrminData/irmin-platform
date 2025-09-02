@@ -24,255 +24,6 @@ const (
 )
 ```
 
-# ai
-
-```go
-import "irmin-api/ai"
-```
-
-## Index
-
-- [Constants](<#constants>)
-- [func ExtractResponseContent\(content \[\]anthropic.BetaContentBlockUnion\) string](<#ExtractResponseContent>)
-- [func GetSystemPrompt\(aiType IrminAIType\) string](<#GetSystemPrompt>)
-- [type AI](<#AI>)
-  - [func NewAI\(config \*Config\) \(\*AI, error\)](<#NewAI>)
-  - [func NewAIFromEnv\(env \*utils.CoreAPIEnv, userToken \*string, logger \*slog.Logger\) \(\*AI, error\)](<#NewAIFromEnv>)
-  - [func \(a \*AI\) GenerateConversationTitle\(ctx context.Context, firstMessage string\) \(string, error\)](<#AI.GenerateConversationTitle>)
-  - [func \(a \*AI\) SelectModel\(ctx context.Context, userPrompt string\) \(anthropic.Model, error\)](<#AI.SelectModel>)
-  - [func \(a \*AI\) SendMessage\(ctx context.Context, req \*MessageRequest\) \(\*anthropic.BetaMessage, string, error\)](<#AI.SendMessage>)
-- [type Config](<#Config>)
-  - [func DefaultConfig\(\) \*Config](<#DefaultConfig>)
-- [type ContentBlock](<#ContentBlock>)
-  - [func ExtractResponseBlocks\(content \[\]anthropic.BetaContentBlockUnion\) \[\]ContentBlock](<#ExtractResponseBlocks>)
-- [type ConversationMessage](<#ConversationMessage>)
-- [type IrminAIType](<#IrminAIType>)
-- [type MessageRequest](<#MessageRequest>)
-
-
-## Constants
-
-<a name="DefaultMainModel"></a>
-
-```go
-const (
-    // DefaultMainModel is the default model to use for AI messages
-    DefaultMainModel = anthropic.ModelClaudeSonnet4_20250514
-    // DefaultSmallModel is the smaller, cheaper and faster model to use for AI messages
-    DefaultSmallModel = anthropic.ModelClaude3_5HaikuLatest
-
-    // DefaultTemperature is the default temperature for AI messages
-    DefaultTemperature = 0.8
-
-    // DefaultMaxTokens is the default maximum number of tokens for a message
-    DefaultMaxTokens = 8192
-
-    // DefaultThinkingMaxTokens is the default maximum number of tokens for thinking
-    DefaultThinkingMaxTokens = 2048
-
-    // MaxRetries is the maximum number of retries for overloaded errors
-    MaxRetries = 3
-    // BaseDelay is the base delay for overloaded errors
-    BaseDelay = time.Second * 2
-    // DelayBackoffFactor is the factor to multiply the delay by
-    DelayBackoffFactor = 2
-
-    // MaxTitleLength is the maximum length for conversation titles
-    MaxTitleLength = 50
-    // TitleMaxTokens is the maximum tokens for title generation
-    TitleMaxTokens = 50
-
-    // ModelRouterMaxTokens is the maximum tokens for model router decisions
-    ModelRouterMaxTokens = 50
-)
-```
-
-<a name="ExtractResponseContent"></a>
-## func ExtractResponseContent
-
-```go
-func ExtractResponseContent(content []anthropic.BetaContentBlockUnion) string
-```
-
-ExtractResponseContent extracts content from AI response \(kept for backward compatibility\)
-
-<a name="GetSystemPrompt"></a>
-## func GetSystemPrompt
-
-```go
-func GetSystemPrompt(aiType IrminAIType) string
-```
-
-GetSystemPrompt returns the system prompt for the specified AI type
-
-<a name="AI"></a>
-## type AI
-
-AI represents the AI service for sending messages
-
-```go
-type AI struct {
-    // contains filtered or unexported fields
-}
-```
-
-<a name="NewAI"></a>
-### func NewAI
-
-```go
-func NewAI(config *Config) (*AI, error)
-```
-
-NewAI creates a new AI service instance with the given configuration
-
-<a name="NewAIFromEnv"></a>
-### func NewAIFromEnv
-
-```go
-func NewAIFromEnv(env *utils.CoreAPIEnv, userToken *string, logger *slog.Logger) (*AI, error)
-```
-
-NewAIFromEnv creates a new AI service from environment configuration
-
-<a name="AI.GenerateConversationTitle"></a>
-### func \(\*AI\) GenerateConversationTitle
-
-```go
-func (a *AI) GenerateConversationTitle(ctx context.Context, firstMessage string) (string, error)
-```
-
-GenerateConversationTitle generates a title for a conversation based on the first user message
-
-<a name="AI.SelectModel"></a>
-### func \(\*AI\) SelectModel
-
-```go
-func (a *AI) SelectModel(ctx context.Context, userPrompt string) (anthropic.Model, error)
-```
-
-SelectModel selects the appropriate model for a given user prompt using the model router AI
-
-<a name="AI.SendMessage"></a>
-### func \(\*AI\) SendMessage
-
-```go
-func (a *AI) SendMessage(ctx context.Context, req *MessageRequest) (*anthropic.BetaMessage, string, error)
-```
-
-SendMessage sends a message and returns the response Returns the response, the system prompt used for the message, and an error if it occurs
-
-<a name="Config"></a>
-## type Config
-
-Config holds AI service configuration
-
-```go
-type Config struct {
-    AnthropicAPIKey string
-    IrminBaseURL    string
-    IrminMCPPath    string
-    UserToken       *string
-    DefaultModel    anthropic.Model
-    MaxTokens       int64
-    Temperature     float64
-    MaxRetries      int
-    BaseDelay       time.Duration
-    Logger          *slog.Logger
-}
-```
-
-<a name="DefaultConfig"></a>
-### func DefaultConfig
-
-```go
-func DefaultConfig() *Config
-```
-
-DefaultConfig returns sensible default configuration
-
-<a name="ContentBlock"></a>
-## type ContentBlock
-
-ContentBlock represents a single content block from the AI response
-
-```go
-type ContentBlock struct {
-    Type    irminmodels.AssistantMessageContentType `json:"type"`
-    Content string                                  `json:"content"`
-    Index   int                                     `json:"index"`
-}
-```
-
-<a name="ExtractResponseBlocks"></a>
-### func ExtractResponseBlocks
-
-```go
-func ExtractResponseBlocks(content []anthropic.BetaContentBlockUnion) []ContentBlock
-```
-
-ExtractResponseBlocks extracts all content blocks from AI response
-
-<a name="ConversationMessage"></a>
-## type ConversationMessage
-
-ConversationMessage represents a message in conversation history
-
-```go
-type ConversationMessage struct {
-    Role    anthropic.BetaMessageParamRole
-    Content string
-}
-```
-
-<a name="IrminAIType"></a>
-## type IrminAIType
-
-IrminAIType represents the type of AI system
-
-```go
-type IrminAIType string
-```
-
-<a name="ModelRouterAI"></a>
-
-```go
-const (
-    // ModelRouterAI represents the Irmin Model Router AI
-    ModelRouterAI IrminAIType = "model-router"
-    // ConversationTitleGenerator represents the Irmin Conversation Title Generator AI
-    ConversationTitleGenerator IrminAIType = "conversation-title-generator"
-    // AssistantAI represents the Irmin Assistant AI
-    AssistantAI IrminAIType = "assistant"
-    // QueryAI represents the Irmin Query AI
-    QueryAI IrminAIType = "query"
-    // ScriptingAI represents the Irmin Scripting AI
-    ScriptingAI IrminAIType = "scripting"
-)
-```
-
-<a name="MessageRequest"></a>
-## type MessageRequest
-
-MessageRequest represents a message request with options
-
-```go
-type MessageRequest struct {
-    Content                string
-    ConversationID         string
-    ConversationHistory    []ConversationMessage
-    MaxTokens              *int64
-    Model                  *anthropic.Model
-    Temperature            *float64
-    TopP                   *float64
-    Stream                 bool
-    Metadata               map[string]any
-    ThinkingEnabled        bool
-    DocsToolsOnly          bool
-    AIType                 *IrminAIType
-    AdditionalSystemPrompt string
-}
-```
-
 # bucket
 
 ```go
@@ -695,14 +446,6 @@ import "irmin-api/controllers"
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
   - [func \(api \*APIControllers\) AcceptInvite\(c fiber.Ctx\) error](<#APIControllers.AcceptInvite>)
-  - [func \(api \*APIControllers\) AssistantConversationsClear\(c fiber.Ctx\) error](<#APIControllers.AssistantConversationsClear>)
-  - [func \(api \*APIControllers\) AssistantConversationsDestroy\(c fiber.Ctx\) error](<#APIControllers.AssistantConversationsDestroy>)
-  - [func \(api \*APIControllers\) AssistantConversationsIndex\(c fiber.Ctx\) error](<#APIControllers.AssistantConversationsIndex>)
-  - [func \(api \*APIControllers\) AssistantConversationsShow\(c fiber.Ctx\) error](<#APIControllers.AssistantConversationsShow>)
-  - [func \(api \*APIControllers\) AssistantConversationsStats\(c fiber.Ctx\) error](<#APIControllers.AssistantConversationsStats>)
-  - [func \(api \*APIControllers\) AssistantConversationsStore\(c fiber.Ctx\) error](<#APIControllers.AssistantConversationsStore>)
-  - [func \(api \*APIControllers\) AssistantConversationsUpdate\(c fiber.Ctx\) error](<#APIControllers.AssistantConversationsUpdate>)
-  - [func \(api \*APIControllers\) AssistantMessagesStore\(c fiber.Ctx\) error](<#APIControllers.AssistantMessagesStore>)
   - [func \(api \*APIControllers\) CheckPermission\(c fiber.Ctx\) error](<#APIControllers.CheckPermission>)
   - [func \(api \*APIControllers\) CompareRefs\(c fiber.Ctx\) error](<#APIControllers.CompareRefs>)
   - [func \(api \*APIControllers\) ConnectionSchema\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchema>)
@@ -752,8 +495,6 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) QueriesShow\(c fiber.Ctx\) error](<#APIControllers.QueriesShow>)
   - [func \(api \*APIControllers\) QueriesStore\(c fiber.Ctx\) error](<#APIControllers.QueriesStore>)
   - [func \(api \*APIControllers\) QueriesUpdate\(c fiber.Ctx\) error](<#APIControllers.QueriesUpdate>)
-  - [func \(api \*APIControllers\) QueryGenerationIndex\(c fiber.Ctx\) error](<#APIControllers.QueryGenerationIndex>)
-  - [func \(api \*APIControllers\) QueryGenerationStore\(c fiber.Ctx\) error](<#APIControllers.QueryGenerationStore>)
   - [func \(api \*APIControllers\) RepositoriesDestroy\(c fiber.Ctx\) error](<#APIControllers.RepositoriesDestroy>)
   - [func \(api \*APIControllers\) RepositoriesIndex\(c fiber.Ctx\) error](<#APIControllers.RepositoriesIndex>)
   - [func \(api \*APIControllers\) RepositoriesShow\(c fiber.Ctx\) error](<#APIControllers.RepositoriesShow>)
@@ -787,8 +528,6 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ResendInvite\(c fiber.Ctx\) error](<#APIControllers.ResendInvite>)
   - [func \(api \*APIControllers\) RolesIndex\(c fiber.Ctx\) error](<#APIControllers.RolesIndex>)
   - [func \(api \*APIControllers\) ScheduleUpdate\(c fiber.Ctx\) error](<#APIControllers.ScheduleUpdate>)
-  - [func \(api \*APIControllers\) ScriptGenerationIndex\(c fiber.Ctx\) error](<#APIControllers.ScriptGenerationIndex>)
-  - [func \(api \*APIControllers\) ScriptGenerationStore\(c fiber.Ctx\) error](<#APIControllers.ScriptGenerationStore>)
   - [func \(api \*APIControllers\) SendInvite\(c fiber.Ctx\) error](<#APIControllers.SendInvite>)
   - [func \(api \*APIControllers\) ShowConnectorConfigurationFields\(c fiber.Ctx\) error](<#APIControllers.ShowConnectorConfigurationFields>)
   - [func \(api \*APIControllers\) StartWorkflow\(c fiber.Ctx\) error](<#APIControllers.StartWorkflow>)
@@ -866,78 +605,6 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error
 ```
 
 AcceptInvite godoc @Summary Accept invite @Description Accept an invite and join the workspace with the specified role @Tags invites @Security ApiKeyAuth @Accept json @Produce json @Param invite\_id path string true "Invite ID \(SQID\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Invite accepted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- user not allowed to accept this invite" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Invite not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /invites/\{invite\_id\}/accept \[post\]
-
-<a name="APIControllers.AssistantConversationsClear"></a>
-### func \(\*APIControllers\) AssistantConversationsClear
-
-```go
-func (api *APIControllers) AssistantConversationsClear(c fiber.Ctx) error
-```
-
-AssistantConversationsClear godoc @Summary Clear assistant conversation messages @Description Clear all messages from an existing assistant conversation @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Conversation messages cleared successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations/\{conversation\_id\}/clear \[post\]
-
-<a name="APIControllers.AssistantConversationsDestroy"></a>
-### func \(\*APIControllers\) AssistantConversationsDestroy
-
-```go
-func (api *APIControllers) AssistantConversationsDestroy(c fiber.Ctx) error
-```
-
-AssistantConversationsDestroy godoc @Summary Delete assistant conversation @Description Delete an existing assistant conversation from the workspace @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Conversation deleted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations/\{conversation\_id\} \[delete\]
-
-<a name="APIControllers.AssistantConversationsIndex"></a>
-### func \(\*APIControllers\) AssistantConversationsIndex
-
-```go
-func (api *APIControllers) AssistantConversationsIndex(c fiber.Ctx) error
-```
-
-AssistantConversationsIndex godoc @Summary List assistant conversations in workspace @Description Get all assistant conversations in the specified workspace that the user has permission to read @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantConversation\} "Conversations retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations \[get\]
-
-<a name="APIControllers.AssistantConversationsShow"></a>
-### func \(\*APIControllers\) AssistantConversationsShow
-
-```go
-func (api *APIControllers) AssistantConversationsShow(c fiber.Ctx) error
-```
-
-AssistantConversationsShow godoc @Summary Get assistant conversation details @Description Get details of a specific assistant conversation by its ID @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AssistantConversation\} "Conversation retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations/\{conversation\_id\} \[get\]
-
-<a name="APIControllers.AssistantConversationsStats"></a>
-### func \(\*APIControllers\) AssistantConversationsStats
-
-```go
-func (api *APIControllers) AssistantConversationsStats(c fiber.Ctx) error
-```
-
-AssistantConversationsStats godoc @Summary Get assistant conversation statistics @Description Get statistics for a specific assistant conversation @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Conversation statistics retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations/\{conversation\_id\}/stats \[get\]
-
-<a name="APIControllers.AssistantConversationsStore"></a>
-### func \(\*APIControllers\) AssistantConversationsStore
-
-```go
-func (api *APIControllers) AssistantConversationsStore(c fiber.Ctx) error
-```
-
-AssistantConversationsStore godoc @Summary Create a new assistant conversation @Description Create a new assistant conversation in the specified workspace @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param request body irmincore.CreateAssistantConversationRequest true "Conversation creation parameters" @Success 201 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AssistantConversation\} "Conversation created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations \[post\]
-
-<a name="APIControllers.AssistantConversationsUpdate"></a>
-### func \(\*APIControllers\) AssistantConversationsUpdate
-
-```go
-func (api *APIControllers) AssistantConversationsUpdate(c fiber.Ctx) error
-```
-
-AssistantConversationsUpdate godoc @Summary Update assistant conversation @Description Update an existing assistant conversation @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Param request body irmincore.UpdateAssistantConversationRequest true "Conversation update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse "Conversation updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Conversation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations/\{conversation\_id\} \[patch\]
-
-<a name="APIControllers.AssistantMessagesStore"></a>
-### func \(\*APIControllers\) AssistantMessagesStore
-
-```go
-func (api *APIControllers) AssistantMessagesStore(c fiber.Ctx) error
-```
-
-AssistantMessagesStore godoc @Summary Send message to assistant @Description Send a message to the AI assistant and get a response @Tags assistant @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param conversation\_id path string true "Conversation ID" @Param request body irmincore.CreateAssistantMessageRequest true "Message parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantMessage\} "Message sent successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/conversations/\{conversation\_id\}/messages \[post\]
 
 <a name="APIControllers.CheckPermission"></a>
 ### func \(\*APIControllers\) CheckPermission
@@ -1380,24 +1047,6 @@ func (api *APIControllers) QueriesUpdate(c fiber.Ctx) error
 
 QueriesUpdate godoc @Summary Update stored query @Description Update an existing stored query's properties @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param query\_id path string true "Query ID \(SQID\)" @Param request body irmincore.UpdateQueryRequest true "Query update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredQuery\} "Query updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Query not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/queries/\{query\_id\} \[patch\]
 
-<a name="APIControllers.QueryGenerationIndex"></a>
-### func \(\*APIControllers\) QueryGenerationIndex
-
-```go
-func (api *APIControllers) QueryGenerationIndex(c fiber.Ctx) error
-```
-
-QueryGenerationIndex godoc @Summary List query generation conversations @Description Get all query generation conversations in the specified workspace that the user has permission to read @Tags assistant\-query @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantConversation\} "Query generation conversations retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/query \[get\]
-
-<a name="APIControllers.QueryGenerationStore"></a>
-### func \(\*APIControllers\) QueryGenerationStore
-
-```go
-func (api *APIControllers) QueryGenerationStore(c fiber.Ctx) error
-```
-
-QueryGenerationStore godoc @Summary Generate a SQL query from natural language @Description Generate a SQL query from natural language using the QueryAI assistant @Tags assistant\-query @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param request body irmincore.QueryGenerationRequest true "Query generation parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantMessage\} "Query generated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/query \[post\]
-
 <a name="APIControllers.RepositoriesDestroy"></a>
 ### func \(\*APIControllers\) RepositoriesDestroy
 
@@ -1694,24 +1343,6 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error
 ```
 
 ScheduleUpdate godoc @Summary Update workflow schedule @Description Update the scheduling configuration and triggers for a workflow @Tags workflows @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Param body body irminmodels.Schedule true "Schedule configuration update" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Workflow\} "Workflow schedule updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid schedule configuration" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/schedule \[patch\]
-
-<a name="APIControllers.ScriptGenerationIndex"></a>
-### func \(\*APIControllers\) ScriptGenerationIndex
-
-```go
-func (api *APIControllers) ScriptGenerationIndex(c fiber.Ctx) error
-```
-
-ScriptGenerationIndex godoc @Summary List script generation conversations @Description Get all script generation conversations in the specified workspace that the user has permission to read @Tags assistant\-script @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantConversation\} "Script generation conversations retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/script \[get\]
-
-<a name="APIControllers.ScriptGenerationStore"></a>
-### func \(\*APIControllers\) ScriptGenerationStore
-
-```go
-func (api *APIControllers) ScriptGenerationStore(c fiber.Ctx) error
-```
-
-ScriptGenerationStore godoc @Summary Generate a SQL script from natural language @Description Generate a SQL script from natural language using the ScriptAI assistant @Tags assistant\-script @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param request body irmincore.ScriptGenerationRequest true "Script generation parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AssistantMessage\} "Script generated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/assistant/script \[post\]
 
 <a name="APIControllers.SendInvite"></a>
 ### func \(\*APIControllers\) SendInvite
@@ -2103,8 +1734,6 @@ import "irmin-api/db"
 - [type APIToken](<#APIToken>)
 - [type ActionWorkflowable](<#ActionWorkflowable>)
 - [type ActionWorkflowableInput](<#ActionWorkflowableInput>)
-- [type AssistantConversation](<#AssistantConversation>)
-- [type AssistantMessage](<#AssistantMessage>)
 - [type BatchLoadResult](<#BatchLoadResult>)
 - [type Connection](<#Connection>)
 - [type ConnectionSchemaCache](<#ConnectionSchemaCache>)
@@ -2121,14 +1750,9 @@ import "irmin-api/db"
   - [func \(d \*Database\) AddTagToWorkflow\(workflowID, tagID uint\) error](<#Database.AddTagToWorkflow>)
   - [func \(d \*Database\) AddUserToWorkspace\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.AddUserToWorkspace>)
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
-  - [func \(d \*Database\) ClearAssistantConversationMessages\(conversationID uint\) error](<#Database.ClearAssistantConversationMessages>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
-  - [func \(d \*Database\) CreateAssistantConversation\(conversation \*AssistantConversation\) error](<#Database.CreateAssistantConversation>)
-  - [func \(d \*Database\) CreateAssistantMessage\(message \*AssistantMessage\) error](<#Database.CreateAssistantMessage>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
   - [func \(d \*Database\) DeleteAPIToken\(id uint\) error](<#Database.DeleteAPIToken>)
-  - [func \(d \*Database\) DeleteAssistantConversation\(conversationID uint\) error](<#Database.DeleteAssistantConversation>)
-  - [func \(d \*Database\) DeleteAssistantMessage\(messageID uint\) error](<#Database.DeleteAssistantMessage>)
   - [func \(d \*Database\) DeleteConnection\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnection>)
   - [func \(d \*Database\) DeleteConnector\(tx \*gorm.DB, id uint\) error](<#Database.DeleteConnector>)
   - [func \(d \*Database\) DeleteInvite\(id uint\) error](<#Database.DeleteInvite>)
@@ -2151,10 +1775,6 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetAllAssetsByTag\(tagID uint\) \(\*TaggedAssets, error\)](<#Database.GetAllAssetsByTag>)
   - [func \(d \*Database\) GetAllConnectors\(\) \(\[\]Connector, error\)](<#Database.GetAllConnectors>)
   - [func \(d \*Database\) GetAllWorkspaces\(\) \(\[\]Workspace, error\)](<#Database.GetAllWorkspaces>)
-  - [func \(d \*Database\) GetAssistantConversationByID\(conversationID uint\) \(\*AssistantConversation, error\)](<#Database.GetAssistantConversationByID>)
-  - [func \(d \*Database\) GetAssistantConversationStats\(conversationID uint\) \(\*irminmodels.AssistantConversationStats, error\)](<#Database.GetAssistantConversationStats>)
-  - [func \(d \*Database\) GetAssistantConversationWithMessages\(conversationID uint\) \(\*AssistantConversation, error\)](<#Database.GetAssistantConversationWithMessages>)
-  - [func \(d \*Database\) GetAssistantConversationsByUserAndType\(workspaceID uint, userID uint, includeHidden bool, assistantType ai.IrminAIType\) \(\[\]AssistantConversation, error\)](<#Database.GetAssistantConversationsByUserAndType>)
   - [func \(d \*Database\) GetConnectionByID\(id uint\) \(\*Connection, error\)](<#Database.GetConnectionByID>)
   - [func \(d \*Database\) GetConnectionTags\(connectionID uint\) \(\[\]Tag, error\)](<#Database.GetConnectionTags>)
   - [func \(d \*Database\) GetConnectionsByTag\(tagID uint\) \(\[\]Connection, error\)](<#Database.GetConnectionsByTag>)
@@ -2219,9 +1839,6 @@ import "irmin-api/db"
   - [func \(d \*Database\) SearchWithCursor\(ctx context.Context, workspaceID uint, filters SearchFilters, pagination CursorPagination\) \(\[\]SearchResult, \*string, \*string, error\)](<#Database.SearchWithCursor>)
   - [func \(d \*Database\) SearchWorkspace\(workspaceID uint, filters SearchFilters\) \(\[\]SearchResult, int, error\)](<#Database.SearchWorkspace>)
   - [func \(d \*Database\) SearchWorkspaceCount\(workspaceID uint, filters SearchFilters\) \(int, error\)](<#Database.SearchWorkspaceCount>)
-  - [func \(d \*Database\) TrackNewMessageUsage\(conversation \*AssistantConversation, inputTokens int, outputTokens int, assistantMessageCount int, userMessageCount int\) error](<#Database.TrackNewMessageUsage>)
-  - [func \(d \*Database\) UpdateAssistantConversation\(conversation \*AssistantConversation\) error](<#Database.UpdateAssistantConversation>)
-  - [func \(d \*Database\) UpdateAssistantMessageStatus\(messageID uint, status irminmodels.AssistantMessageStatus, errorMessage \*string\) error](<#Database.UpdateAssistantMessageStatus>)
   - [func \(d \*Database\) UpdateWorkspaceUserRoles\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.UpdateWorkspaceUserRoles>)
   - [func \(d \*Database\) WaitForNotification\(ctx context.Context, channel string\) \(\*pgconn.Notification, error\)](<#Database.WaitForNotification>)
 - [type EntityLoader](<#EntityLoader>)
@@ -2520,101 +2137,6 @@ type ActionWorkflowableInput struct {
 }
 ```
 
-<a name="AssistantConversation"></a>
-## type AssistantConversation
-
-AssistantConversation represents a conversation with the AI assistant
-
-```go
-type AssistantConversation struct {
-    gorm.Model
-
-    // Conversation title (auto-generated or user-defined)
-    Title string `gorm:"type:varchar(255);not null;default:''" json:"title"`
-
-    // Assistant type (assistant, scripting, etc.)
-    AssistantType ai.IrminAIType `gorm:"type:varchar(50);not null;default:'assistant'" json:"assistant_type"`
-
-    // Hidden from user
-    Hidden bool `gorm:"default:false" json:"hidden"`
-
-    // Workspace this conversation belongs to
-    WorkspaceID uint      `gorm:"index;not null"         json:"workspace_id"`
-    Workspace   Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace"`
-
-    // User who owns this conversation
-    UserID uint `gorm:"not null"          json:"user_id"`
-    User   User `gorm:"foreignKey:UserID" json:"user"`
-
-    // Conversation metadata (stored as JSON)
-    Metadata map[string]any `gorm:"type:jsonb;serializer:json" json:"metadata"`
-
-    // Messages in this conversation
-    Messages []AssistantMessage `json:"messages" gorm:"foreignKey:ConversationID"`
-
-    // Statistics
-    TotalMessages     int `gorm:"default:0" json:"total_messages"`
-    UserMessages      int `gorm:"default:0" json:"user_messages"`
-    AssistantMessages int `gorm:"default:0" json:"assistant_messages"`
-    EstimatedTokens   int `gorm:"default:0" json:"estimated_tokens"`
-
-    // Timestamps
-    LastMessageAt *time.Time `json:"last_message_at"`
-}
-```
-
-<a name="AssistantMessage"></a>
-## type AssistantMessage
-
-AssistantMessage represents a single message in a conversation
-
-```go
-type AssistantMessage struct {
-    gorm.Model
-
-    // Conversation this message belongs to
-    ConversationID *uint                  `json:"conversation_id" gorm:"column:conversation_id;index"`
-    Conversation   *AssistantConversation `json:"conversation"    gorm:"foreignKey:ConversationID"`
-
-    // Message role (user or assistant)
-    Role anthropic.BetaMessageParamRole `gorm:"not null" json:"role"`
-
-    // Message content
-    Content string `gorm:"type:text;not null" json:"content"`
-
-    // System prompt used for this message (user message only)
-    SystemPrompt *string `gorm:"type:text" json:"system_prompt"`
-
-    // Content type (text, image, tool_call, etc.)
-    ContentType irminmodels.AssistantMessageContentType `gorm:"type:varchar(50);not null;default:'text'" json:"content_type"`
-
-    // Block index within the AI response (0-based, for ordering multiple blocks)
-    BlockIndex *int `gorm:"default:0" json:"block_index"`
-
-    // Message status (pending, sent, error, etc.)
-    Status irminmodels.AssistantMessageStatus `gorm:"type:varchar(50);not null;default:'pending'" json:"status"`
-
-    // Error message if status is error
-    ErrorMessage *string `gorm:"type:text" json:"error_message"`
-
-    // Message metadata (stored as JSON)
-    Metadata map[string]any `gorm:"type:jsonb;serializer:json" json:"metadata"`
-
-    // Token usage information
-    InputTokens  *int `json:"input_tokens"`
-    OutputTokens *int `json:"output_tokens"`
-
-    // AI model used for this message
-    AIModel string `json:"ai_model"`
-
-    // Anthropic ID (for AI responses only)
-    AnthropicID string `json:"anthropic_id"`
-
-    // Timestamps
-    SentAt time.Time `json:"sent_at"`
-}
-```
-
 <a name="BatchLoadResult"></a>
 ## type BatchLoadResult
 
@@ -2829,15 +2351,6 @@ func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 
 
 
-<a name="Database.ClearAssistantConversationMessages"></a>
-### func \(\*Database\) ClearAssistantConversationMessages
-
-```go
-func (d *Database) ClearAssistantConversationMessages(conversationID uint) error
-```
-
-ClearAssistantConversationMessages removes all messages from a conversation
-
 <a name="Database.Close"></a>
 ### func \(\*Database\) Close
 
@@ -2846,24 +2359,6 @@ func (d *Database) Close()
 ```
 
 Close closes the shared database connection pool.
-
-<a name="Database.CreateAssistantConversation"></a>
-### func \(\*Database\) CreateAssistantConversation
-
-```go
-func (d *Database) CreateAssistantConversation(conversation *AssistantConversation) error
-```
-
-CreateAssistantConversation creates a new conversation
-
-<a name="Database.CreateAssistantMessage"></a>
-### func \(\*Database\) CreateAssistantMessage
-
-```go
-func (d *Database) CreateAssistantMessage(message *AssistantMessage) error
-```
-
-CreateAssistantMessage creates a new message in a conversation
 
 <a name="Database.CreateSearchIndexes"></a>
 ### func \(\*Database\) CreateSearchIndexes
@@ -2882,24 +2377,6 @@ func (d *Database) DeleteAPIToken(id uint) error
 ```
 
 DeleteAPIToken deletes an API token by its ID.
-
-<a name="Database.DeleteAssistantConversation"></a>
-### func \(\*Database\) DeleteAssistantConversation
-
-```go
-func (d *Database) DeleteAssistantConversation(conversationID uint) error
-```
-
-DeleteAssistantConversation deletes a conversation and all its messages
-
-<a name="Database.DeleteAssistantMessage"></a>
-### func \(\*Database\) DeleteAssistantMessage
-
-```go
-func (d *Database) DeleteAssistantMessage(messageID uint) error
-```
-
-DeleteAssistantMessage deletes a message and updates conversation statistics
 
 <a name="Database.DeleteConnection"></a>
 ### func \(\*Database\) DeleteConnection
@@ -3098,42 +2575,6 @@ func (d *Database) GetAllWorkspaces() ([]Workspace, error)
 ```
 
 GetAllWorkspaces retrieves all workspaces from the database.
-
-<a name="Database.GetAssistantConversationByID"></a>
-### func \(\*Database\) GetAssistantConversationByID
-
-```go
-func (d *Database) GetAssistantConversationByID(conversationID uint) (*AssistantConversation, error)
-```
-
-GetAssistantConversationByID retrieves a conversation by its ID
-
-<a name="Database.GetAssistantConversationStats"></a>
-### func \(\*Database\) GetAssistantConversationStats
-
-```go
-func (d *Database) GetAssistantConversationStats(conversationID uint) (*irminmodels.AssistantConversationStats, error)
-```
-
-GetAssistantConversationStats retrieves statistics for a conversation
-
-<a name="Database.GetAssistantConversationWithMessages"></a>
-### func \(\*Database\) GetAssistantConversationWithMessages
-
-```go
-func (d *Database) GetAssistantConversationWithMessages(conversationID uint) (*AssistantConversation, error)
-```
-
-GetAssistantConversationWithMessages retrieves a conversation by its ID with all messages
-
-<a name="Database.GetAssistantConversationsByUserAndType"></a>
-### func \(\*Database\) GetAssistantConversationsByUserAndType
-
-```go
-func (d *Database) GetAssistantConversationsByUserAndType(workspaceID uint, userID uint, includeHidden bool, assistantType ai.IrminAIType) ([]AssistantConversation, error)
-```
-
-GetAssistantConversationsByUserAndType retrieves all conversations for a specific user in a workspace by type
 
 <a name="Database.GetConnectionByID"></a>
 ### func \(\*Database\) GetConnectionByID
@@ -3715,33 +3156,6 @@ func (d *Database) SearchWorkspaceCount(workspaceID uint, filters SearchFilters)
 
 SearchWorkspaceCount performs a search and returns only the total count of results with timeout protection.
 
-<a name="Database.TrackNewMessageUsage"></a>
-### func \(\*Database\) TrackNewMessageUsage
-
-```go
-func (d *Database) TrackNewMessageUsage(conversation *AssistantConversation, inputTokens int, outputTokens int, assistantMessageCount int, userMessageCount int) error
-```
-
-TrackNewMessageUsage updates the conversation statistics with the new message usage
-
-<a name="Database.UpdateAssistantConversation"></a>
-### func \(\*Database\) UpdateAssistantConversation
-
-```go
-func (d *Database) UpdateAssistantConversation(conversation *AssistantConversation) error
-```
-
-UpdateAssistantConversation updates an existing conversation
-
-<a name="Database.UpdateAssistantMessageStatus"></a>
-### func \(\*Database\) UpdateAssistantMessageStatus
-
-```go
-func (d *Database) UpdateAssistantMessageStatus(messageID uint, status irminmodels.AssistantMessageStatus, errorMessage *string) error
-```
-
-UpdateAssistantMessageStatus updates the status of a message
-
 <a name="Database.UpdateWorkspaceUserRoles"></a>
 ### func \(\*Database\) UpdateWorkspaceUserRoles
 
@@ -4164,8 +3578,6 @@ const (
     PolicyResourceBilling PolicyResource = "billing" // Billing is not stored in the database, so policies are not billing specific.
     // PolicyResourceWorkspaceTag represents a workspace tag resource.
     PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
-    // PolicyResourceAssistant represents an AI assistant resource.
-    PolicyResourceAssistant PolicyResource = "assistant"
 )
 ```
 
@@ -5726,8 +5138,6 @@ import "irmin-api/formatter"
 ## Index
 
 - [func FormatAPITokenResponse\(token \*db.APIToken, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.APIToken, error\)](<#FormatAPITokenResponse>)
-- [func FormatAssistantConversationResponse\(assistantConversation \*db.AssistantConversation, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.AssistantConversation, error\)](<#FormatAssistantConversationResponse>)
-- [func FormatAssistantMessageResponse\(assistantMessage \*db.AssistantMessage, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.AssistantMessage, error\)](<#FormatAssistantMessageResponse>)
 - [func FormatConnectionResponse\(connection \*db.Connection, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connection, error\)](<#FormatConnectionResponse>)
 - [func FormatConnectorResponse\(connector \*db.Connector, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connector, error\)](<#FormatConnectorResponse>)
 - [func FormatEditorItemsResponse\(items \[\]types.Object, workspace \*db.Workspace\) \(\[\]irminmodels.EditorItem, error\)](<#FormatEditorItemsResponse>)
@@ -5761,24 +5171,6 @@ func FormatAPITokenResponse(token *db.APIToken, sqidManager *irminsqids.SQIDMana
 ```
 
 FormatAPITokenResponse formats an API token for the response.
-
-<a name="FormatAssistantConversationResponse"></a>
-## func FormatAssistantConversationResponse
-
-```go
-func FormatAssistantConversationResponse(assistantConversation *db.AssistantConversation, sqidManager *irminsqids.SQIDManager) (*irminmodels.AssistantConversation, error)
-```
-
-FormatAssistantConversationResponse creates a assistant conversation response object from a assistant conversation object.
-
-<a name="FormatAssistantMessageResponse"></a>
-## func FormatAssistantMessageResponse
-
-```go
-func FormatAssistantMessageResponse(assistantMessage *db.AssistantMessage, sqidManager *irminsqids.SQIDManager) (*irminmodels.AssistantMessage, error)
-```
-
-FormatAssistantMessageResponse creates a assistant message response object from a assistant message object.
 
 <a name="FormatConnectionResponse"></a>
 ## func FormatConnectionResponse
@@ -8922,8 +8314,6 @@ import "irmin-api/middlewares"
 
 - [type APIMiddlewares](<#APIMiddlewares>)
   - [func NewAPIMiddlewares\(apiServices \*services.APIServices\) \*APIMiddlewares](<#NewAPIMiddlewares>)
-  - [func \(api \*APIMiddlewares\) AssistantConversationMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AssistantConversationMiddleware>)
-  - [func \(api \*APIMiddlewares\) AssistantPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.AssistantPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) AuditLogPermissionMiddleware\(\) fiber.Handler](<#APIMiddlewares.AuditLogPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) AuthMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.AuthMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectionMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectionMiddleware>)
@@ -8985,24 +8375,6 @@ func NewAPIMiddlewares(apiServices *services.APIServices) *APIMiddlewares
 ```
 
 
-
-<a name="APIMiddlewares.AssistantConversationMiddleware"></a>
-### func \(\*APIMiddlewares\) AssistantConversationMiddleware
-
-```go
-func (api *APIMiddlewares) AssistantConversationMiddleware(c fiber.Ctx) error
-```
-
-AssistantConversationMiddleware verifies that the user has access to the assistant conversation they are trying to access.
-
-<a name="APIMiddlewares.AssistantPermissionMiddleware"></a>
-### func \(\*APIMiddlewares\) AssistantPermissionMiddleware
-
-```go
-func (api *APIMiddlewares) AssistantPermissionMiddleware(action db.PolicyAction) fiber.Handler
-```
-
-AssistantPermissionMiddleware creates a middleware for assistant\-level permissions.
 
 <a name="APIMiddlewares.AuditLogPermissionMiddleware"></a>
 ### func \(\*APIMiddlewares\) AuditLogPermissionMiddleware
@@ -9538,12 +8910,10 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) AddTagToEntity\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag, entityType string, entityID uint\) error](<#APIServices.AddTagToEntity>)
   - [func \(api \*APIServices\) CancelWorkflowRun\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, runSqid string\) \(\*db.WorkflowRun, error\)](<#APIServices.CancelWorkflowRun>)
   - [func \(api \*APIServices\) CheckPolicyPermission\(c context.Context, user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, resourceID string, action db.PolicyAction\) \(bool, error\)](<#APIServices.CheckPolicyPermission>)
-  - [func \(api \*APIServices\) ClearAssistantConversation\(c context.Context, \_ \*string, user \*db.User, workspace \*db.Workspace, \_ \*string, conversation \*db.AssistantConversation\) error](<#APIServices.ClearAssistantConversation>)
   - [func \(api \*APIServices\) CompareRepositoryRefs\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#APIServices.CompareRepositoryRefs>)
   - [func \(api \*APIServices\) CopyEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, sourcePath string, destinationPath string\) \(\*irminmodels.EditorItem, error\)](<#APIServices.CopyEditorItem>)
   - [func \(api \*APIServices\) CopyRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, req irmincore.MoveObjectRequest\) \(\*db.RepositoryObject, error\)](<#APIServices.CopyRepositoryObject>)
   - [func \(api \*APIServices\) CreateAPIToken\(c context.Context, user \*db.User, req irmincore.CreateCredentialRequest\) \(\*db.APIToken, error\)](<#APIServices.CreateAPIToken>)
-  - [func \(api \*APIServices\) CreateAssistantConversation\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateAssistantConversationRequest\) \(\*db.AssistantConversation, error\)](<#APIServices.CreateAssistantConversation>)
   - [func \(api \*APIServices\) CreateConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.CreateConnection>)
   - [func \(api \*APIServices\) CreateConnector\(c context.Context, locale string, isSystem bool, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.CreateConnector>)
   - [func \(api \*APIServices\) CreatePolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreatePolicyRequest\) \(\*db.Policy, error\)](<#APIServices.CreatePolicy>)
@@ -9558,7 +8928,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) CreateWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateTagRequest\) \(\*db.Tag, error\)](<#APIServices.CreateWorkspaceTag>)
   - [func \(api \*APIServices\) DeclineInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.DeclineInvite>)
   - [func \(api \*APIServices\) DeleteAPIToken\(c context.Context, user \*db.User, tokenID uint\) error](<#APIServices.DeleteAPIToken>)
-  - [func \(api \*APIServices\) DeleteAssistantConversation\(c context.Context, \_ \*string, user \*db.User, workspace \*db.Workspace, \_ \*string, conversation \*db.AssistantConversation\) error](<#APIServices.DeleteAssistantConversation>)
   - [func \(api \*APIServices\) DeleteConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection\) error](<#APIServices.DeleteConnection>)
   - [func \(api \*APIServices\) DeleteConnector\(c context.Context, connector \*db.Connector, isSystem bool\) error](<#APIServices.DeleteConnector>)
   - [func \(api \*APIServices\) DeleteEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) error](<#APIServices.DeleteEditorItem>)
@@ -9574,10 +8943,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) DeleteWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagWithAssets \*db.TagWithAssets\) error](<#APIServices.DeleteWorkspaceTag>)
   - [func \(api \*APIServices\) ExecuteEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string, inputData \[\]irminmodels.ActionInputData, locale string\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteEditorItem>)
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
-  - [func \(api \*APIServices\) GenerateQuery\(c context.Context, userToken \*string, user \*db.User, workspace \*db.Workspace, req \*irmincore.QueryGenerationRequest\) \(\[\]\*db.AssistantMessage, error\)](<#APIServices.GenerateQuery>)
-  - [func \(api \*APIServices\) GenerateScript\(c context.Context, userToken \*string, user \*db.User, workspace \*db.Workspace, req \*irmincore.ScriptGenerationRequest\) \(\[\]\*db.AssistantMessage, error\)](<#APIServices.GenerateScript>)
-  - [func \(api \*APIServices\) GetAssistantConversation\(c context.Context, user \*db.User, workspace \*db.Workspace, conversation \*db.AssistantConversation\) \(\*db.AssistantConversation, error\)](<#APIServices.GetAssistantConversation>)
-  - [func \(api \*APIServices\) GetAssistantConversationStats\(c context.Context, user \*db.User, workspace \*db.Workspace, conversation \*db.AssistantConversation\) \(\*irminmodels.AssistantConversationStats, error\)](<#APIServices.GetAssistantConversationStats>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
   - [func \(api \*APIServices\) GetConnectionSchema\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, method string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
   - [func \(api \*APIServices\) GetConnector\(c context.Context, connectorID uint\) \(\*db.Connector, error\)](<#APIServices.GetConnector>)
@@ -9611,7 +8976,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) IdentifyUserFromToken\(c context.Context, token, locale string\) \(\*db.User, bool, error\)](<#APIServices.IdentifyUserFromToken>)
   - [func \(api \*APIServices\) LeaveWorkspace\(user \*db.User, workspace \*db.Workspace\) error](<#APIServices.LeaveWorkspace>)
   - [func \(api \*APIServices\) ListAPITokens\(c context.Context, user \*db.User\) \(\[\]db.APIToken, error\)](<#APIServices.ListAPITokens>)
-  - [func \(api \*APIServices\) ListAssistantConversations\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.AssistantConversation, error\)](<#APIServices.ListAssistantConversations>)
   - [func \(api \*APIServices\) ListConnections\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Connection, error\)](<#APIServices.ListConnections>)
   - [func \(api \*APIServices\) ListConnectors\(c context.Context\) \(\[\]db.Connector, error\)](<#APIServices.ListConnectors>)
   - [func \(api \*APIServices\) ListEditorItems\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) \(\[\]irminmodels.EditorItem, error\)](<#APIServices.ListEditorItems>)
@@ -9619,13 +8983,11 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListInvitesToWorkspace\(c context.Context, workspace \*db.Workspace, user \*db.User\) \(\[\]db.Invite, error\)](<#APIServices.ListInvitesToWorkspace>)
   - [func \(api \*APIServices\) ListLogEventsForWorkspace\(c context.Context, workspace \*db.Workspace, user \*db.User, searchTerm string, limit, offset int\) \(\[\]db.LogEvent, int64, error\)](<#APIServices.ListLogEventsForWorkspace>)
   - [func \(api \*APIServices\) ListLogEventsForWorkspaceAndAsset\(c context.Context, workspace \*db.Workspace, user \*db.User, assetType string, assetID uint, searchTerm string, limit, offset int\) \(\[\]db.LogEvent, int64, error\)](<#APIServices.ListLogEventsForWorkspaceAndAsset>)
-  - [func \(api \*APIServices\) ListQueryGenerationConversations\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.AssistantConversation, error\)](<#APIServices.ListQueryGenerationConversations>)
   - [func \(api \*APIServices\) ListRepositories\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Repository, error\)](<#APIServices.ListRepositories>)
   - [func \(api \*APIServices\) ListRepositoryBranches\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository\) \(\[\]irminmodels.Branch, error\)](<#APIServices.ListRepositoryBranches>)
   - [func \(api \*APIServices\) ListRepositoryCommits\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, ref string, after \*string, perPage \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#APIServices.ListRepositoryCommits>)
   - [func \(api \*APIServices\) ListRepositoryTags\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository\) \(\[\]irminmodels.GitTag, error\)](<#APIServices.ListRepositoryTags>)
   - [func \(api \*APIServices\) ListRoles\(c context.Context\) \(\[\]irminmodels.Role, error\)](<#APIServices.ListRoles>)
-  - [func \(api \*APIServices\) ListScriptGenerationConversations\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.AssistantConversation, error\)](<#APIServices.ListScriptGenerationConversations>)
   - [func \(api \*APIServices\) ListWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListWorkflowRuns>)
   - [func \(api \*APIServices\) ListWorkflows\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowType string\) \(\[\]db.Workflow, error\)](<#APIServices.ListWorkflows>)
   - [func \(api \*APIServices\) ListWorkspaceQueries\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredQuery, error\)](<#APIServices.ListWorkspaceQueries>)
@@ -9643,7 +9005,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) RevertRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.RevertUncommittedChangesRequest\) error](<#APIServices.RevertRepositoryUncommittedChanges>)
   - [func \(api \*APIServices\) SaveEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string, req irmincore.CreateEditorItemRequest\) \(\*irminmodels.EditorItem, error\)](<#APIServices.SaveEditorItem>)
   - [func \(api \*APIServices\) SearchWorkspace\(c context.Context, user \*db.User, workspace \*db.Workspace, filters db.SearchFilters\) \(\*irminmodels.SearchResponse, error\)](<#APIServices.SearchWorkspace>)
-  - [func \(api \*APIServices\) SendAssistantMessage\(c context.Context, userToken \*string, user \*db.User, workspace \*db.Workspace, message string, conversation \*db.AssistantConversation, opts \*ai.MessageRequest\) \(\[\]\*db.AssistantMessage, error\)](<#APIServices.SendAssistantMessage>)
   - [func \(api \*APIServices\) SendInvite\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.SendInviteRequest\) \(\*InviteTransactionResult, error\)](<#APIServices.SendInvite>)
   - [func \(api \*APIServices\) StartWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.StartWorkflow>)
   - [func \(api \*APIServices\) SyncUserWithClerkAndNovu\(c context.Context, irminUser \*db.User, clerkID, locale string\) \(\*db.User, error\)](<#APIServices.SyncUserWithClerkAndNovu>)
@@ -9652,7 +9013,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) TransferRepositoryOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.TransferRepositoryOwnershipRequest\) \(\*db.Repository, error\)](<#APIServices.TransferRepositoryOwnership>)
   - [func \(api \*APIServices\) TransferWorkflowOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, req irmincore.TransferWorkflowOwnershipRequest\) \(\*db.Workflow, error\)](<#APIServices.TransferWorkflowOwnership>)
   - [func \(api \*APIServices\) TransferWorkspaceOwnership\(ctx context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.TransferOwnershipRequest\) \(\*db.Workspace, error\)](<#APIServices.TransferWorkspaceOwnership>)
-  - [func \(api \*APIServices\) UpdateAssistantConversation\(c context.Context, user \*db.User, workspace \*db.Workspace, \_ \*string, conversation \*db.AssistantConversation, req irmincore.UpdateAssistantConversationRequest\) \(\*db.AssistantConversation, error\)](<#APIServices.UpdateAssistantConversation>)
   - [func \(api \*APIServices\) UpdateConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnection>)
   - [func \(api \*APIServices\) UpdateConnector\(c context.Context, locale string, isSystem bool, connector \*db.Connector, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.UpdateConnector>)
   - [func \(api \*APIServices\) UpdateInvite\(c context.Context, user \*db.User, invite \*db.Invite, req irmincore.UpdateInviteRequest\) \(\*db.Invite, error\)](<#APIServices.UpdateInvite>)
@@ -9822,15 +9182,6 @@ func (api *APIServices) CheckPolicyPermission(c context.Context, user *db.User, 
 
 
 
-<a name="APIServices.ClearAssistantConversation"></a>
-### func \(\*APIServices\) ClearAssistantConversation
-
-```go
-func (api *APIServices) ClearAssistantConversation(c context.Context, _ *string, user *db.User, workspace *db.Workspace, _ *string, conversation *db.AssistantConversation) error
-```
-
-ClearAssistantConversation clears all messages from a conversation
-
 <a name="APIServices.CompareRepositoryRefs"></a>
 ### func \(\*APIServices\) CompareRepositoryRefs
 
@@ -9866,15 +9217,6 @@ func (api *APIServices) CreateAPIToken(c context.Context, user *db.User, req irm
 ```
 
 
-
-<a name="APIServices.CreateAssistantConversation"></a>
-### func \(\*APIServices\) CreateAssistantConversation
-
-```go
-func (api *APIServices) CreateAssistantConversation(c context.Context, user *db.User, workspace *db.Workspace, req irmincore.CreateAssistantConversationRequest) (*db.AssistantConversation, error)
-```
-
-CreateAssistantConversation creates a new conversation
 
 <a name="APIServices.CreateConnection"></a>
 ### func \(\*APIServices\) CreateConnection
@@ -10001,15 +9343,6 @@ func (api *APIServices) DeleteAPIToken(c context.Context, user *db.User, tokenID
 ```
 
 
-
-<a name="APIServices.DeleteAssistantConversation"></a>
-### func \(\*APIServices\) DeleteAssistantConversation
-
-```go
-func (api *APIServices) DeleteAssistantConversation(c context.Context, _ *string, user *db.User, workspace *db.Workspace, _ *string, conversation *db.AssistantConversation) error
-```
-
-DeleteAssistantConversation deletes a conversation and all its messages
 
 <a name="APIServices.DeleteConnection"></a>
 ### func \(\*APIServices\) DeleteConnection
@@ -10145,42 +9478,6 @@ func (api *APIServices) ExecuteSQL(c context.Context, locale string, user *db.Us
 ```
 
 
-
-<a name="APIServices.GenerateQuery"></a>
-### func \(\*APIServices\) GenerateQuery
-
-```go
-func (api *APIServices) GenerateQuery(c context.Context, userToken *string, user *db.User, workspace *db.Workspace, req *irmincore.QueryGenerationRequest) ([]*db.AssistantMessage, error)
-```
-
-GenerateQuery generates a SQL query from natural language using the QueryAI
-
-<a name="APIServices.GenerateScript"></a>
-### func \(\*APIServices\) GenerateScript
-
-```go
-func (api *APIServices) GenerateScript(c context.Context, userToken *string, user *db.User, workspace *db.Workspace, req *irmincore.ScriptGenerationRequest) ([]*db.AssistantMessage, error)
-```
-
-GenerateScript generates a Go script from natural language using the ScriptingAI
-
-<a name="APIServices.GetAssistantConversation"></a>
-### func \(\*APIServices\) GetAssistantConversation
-
-```go
-func (api *APIServices) GetAssistantConversation(c context.Context, user *db.User, workspace *db.Workspace, conversation *db.AssistantConversation) (*db.AssistantConversation, error)
-```
-
-GetAssistantConversation retrieves a conversation by ID with all messages
-
-<a name="APIServices.GetAssistantConversationStats"></a>
-### func \(\*APIServices\) GetAssistantConversationStats
-
-```go
-func (api *APIServices) GetAssistantConversationStats(c context.Context, user *db.User, workspace *db.Workspace, conversation *db.AssistantConversation) (*irminmodels.AssistantConversationStats, error)
-```
-
-GetAssistantConversationStats returns statistics about a conversation
 
 <a name="APIServices.GetConnection"></a>
 ### func \(\*APIServices\) GetConnection
@@ -10479,15 +9776,6 @@ func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.AP
 
 
 
-<a name="APIServices.ListAssistantConversations"></a>
-### func \(\*APIServices\) ListAssistantConversations
-
-```go
-func (api *APIServices) ListAssistantConversations(c context.Context, user *db.User, workspace *db.Workspace) ([]db.AssistantConversation, error)
-```
-
-ListAssistantConversations lists all conversations for a user
-
 <a name="APIServices.ListConnections"></a>
 ### func \(\*APIServices\) ListConnections
 
@@ -10551,15 +9839,6 @@ func (api *APIServices) ListLogEventsForWorkspaceAndAsset(c context.Context, wor
 
 ListLogEventsForWorkspaceAndAsset retrieves log events for a specific asset within a workspace.
 
-<a name="APIServices.ListQueryGenerationConversations"></a>
-### func \(\*APIServices\) ListQueryGenerationConversations
-
-```go
-func (api *APIServices) ListQueryGenerationConversations(c context.Context, user *db.User, workspace *db.Workspace) ([]db.AssistantConversation, error)
-```
-
-ListQueryGenerationConversations lists all query generation conversations for a user
-
 <a name="APIServices.ListRepositories"></a>
 ### func \(\*APIServices\) ListRepositories
 
@@ -10604,15 +9883,6 @@ func (api *APIServices) ListRoles(c context.Context) ([]irminmodels.Role, error)
 ```
 
 
-
-<a name="APIServices.ListScriptGenerationConversations"></a>
-### func \(\*APIServices\) ListScriptGenerationConversations
-
-```go
-func (api *APIServices) ListScriptGenerationConversations(c context.Context, user *db.User, workspace *db.Workspace) ([]db.AssistantConversation, error)
-```
-
-ListScriptGenerationConversations lists all script generation conversations for a user
 
 <a name="APIServices.ListWorkflowRuns"></a>
 ### func \(\*APIServices\) ListWorkflowRuns
@@ -10767,15 +10037,6 @@ func (api *APIServices) SearchWorkspace(c context.Context, user *db.User, worksp
 
 
 
-<a name="APIServices.SendAssistantMessage"></a>
-### func \(\*APIServices\) SendAssistantMessage
-
-```go
-func (api *APIServices) SendAssistantMessage(c context.Context, userToken *string, user *db.User, workspace *db.Workspace, message string, conversation *db.AssistantConversation, opts *ai.MessageRequest) ([]*db.AssistantMessage, error)
-```
-
-SendAssistantMessage sends a message to the AI assistant and returns the response
-
 <a name="APIServices.SendInvite"></a>
 ### func \(\*APIServices\) SendInvite
 
@@ -10847,15 +10108,6 @@ func (api *APIServices) TransferWorkspaceOwnership(ctx context.Context, user *db
 ```
 
 
-
-<a name="APIServices.UpdateAssistantConversation"></a>
-### func \(\*APIServices\) UpdateAssistantConversation
-
-```go
-func (api *APIServices) UpdateAssistantConversation(c context.Context, user *db.User, workspace *db.Workspace, _ *string, conversation *db.AssistantConversation, req irmincore.UpdateAssistantConversationRequest) (*db.AssistantConversation, error)
-```
-
-UpdateAssistantConversation updates an existing conversation
 
 <a name="APIServices.UpdateConnection"></a>
 ### func \(\*APIServices\) UpdateConnection
@@ -11502,7 +10754,6 @@ type CoreAPIEnv struct {
     IdempotencyEnabled           bool   // Flag to enable idempotency
     AllowedOrigins               string // Allowed origins for CORS
     MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
-    AnthropicAPIKey              string // Anthropic API key to run inference
     OrchestratorEnabled          bool   // Flag to enable the orchestrator
     SqidAlphabet                 string // Alphabet to use for SQIDs
     DatabaseConnectionString     string // Postgres DB connection string

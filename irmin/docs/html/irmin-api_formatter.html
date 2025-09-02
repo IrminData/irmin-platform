@@ -10,20 +10,6 @@ FUNCTIONS
 func FormatAPITokenResponse(token *db.APIToken, sqidManager *irminsqids.SQIDManager) (*irminmodels.APIToken, error)
     FormatAPITokenResponse formats an API token for the response.
 
-func FormatAssistantConversationResponse(
-	assistantConversation *db.AssistantConversation,
-	sqidManager *irminsqids.SQIDManager,
-) (*irminmodels.AssistantConversation, error)
-    FormatAssistantConversationResponse creates a assistant conversation
-    response object from a assistant conversation object.
-
-func FormatAssistantMessageResponse(
-	assistantMessage *db.AssistantMessage,
-	sqidManager *irminsqids.SQIDManager,
-) (*irminmodels.AssistantMessage, error)
-    FormatAssistantMessageResponse creates a assistant message response object
-    from a assistant message object.
-
 func FormatConnectionResponse(
 	connection *db.Connection,
 	sqidManager *irminsqids.SQIDManager,

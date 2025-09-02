@@ -22,14 +22,6 @@ func NewAPIMiddlewares(
 	apiServices *services.APIServices,
 ) *APIMiddlewares
 
-func (api *APIMiddlewares) AssistantConversationMiddleware(c fiber.Ctx) error
-    AssistantConversationMiddleware verifies that the user has access to the
-    assistant conversation they are trying to access.
-
-func (api *APIMiddlewares) AssistantPermissionMiddleware(action db.PolicyAction) fiber.Handler
-    AssistantPermissionMiddleware creates a middleware for assistant-level
-    permissions.
-
 func (api *APIMiddlewares) AuditLogPermissionMiddleware() fiber.Handler
     AuditLogPermissionMiddleware creates a middleware for audit log permissions.
 
