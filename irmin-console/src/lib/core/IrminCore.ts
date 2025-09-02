@@ -48,7 +48,8 @@ class IrminCore {
   private locale: Locale;
   private token: string;
 
-  public apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev';
+  public apiBase =
+    process.env.NEXT_PUBLIC_API_URL ?? 'https://api.irmin.dev/api';
   public appBase = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
 
   public editorItemService: EditorItemsService;
