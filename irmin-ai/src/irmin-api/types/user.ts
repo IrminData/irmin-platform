@@ -1,5 +1,6 @@
-import { RoleSchema } from '@/irmin-api/types/role';
 import { z } from 'zod';
+
+import { RoleSchema } from '@/irmin-api/types/role';
 
 // User schema
 export const UserSchema = z.object({

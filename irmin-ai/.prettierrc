@@ -7,9 +7,13 @@
   "jsxSingleQuote": true,
   "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrder": [
+    "./instrument",
     "<THIRD_PARTY_MODULES>",
     "^@/database/(.*)$",
     "^@/services/(.*)$",
+    "^@/irmin-api/(.*)$",
+    "^@/agents/(.*)$",
+    "^@/middleware/(.*)$",
     "^@/routes/(.*)$",
     "^@/config/(.*)$",
     "^@/types/(.*)$",

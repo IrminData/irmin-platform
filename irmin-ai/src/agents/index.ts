@@ -1,3 +1,11 @@
+import { conversations, db, messages, type NewMessage } from '@/database';
+import { randomUUID } from 'crypto';
+import { and, eq } from 'drizzle-orm';
+
+import { analyticsService } from '@/services/analytics';
+import { llmService } from '@/services/llm';
+import { titleGenerationService } from '@/services/titleGeneration';
+
 import { ChatAgent } from '@/agents/chat';
 import { QueryAgent } from '@/agents/query';
 import { ScriptingAgent } from '@/agents/scripting';
@@ -8,13 +16,6 @@ import {
   AgentResponse,
   BaseAgentInterface,
 } from '@/agents/types';
-import { conversations, db, messages, type NewMessage } from '@/database';
-import { randomUUID } from 'crypto';
-import { and, eq } from 'drizzle-orm';
-
-import { analyticsService } from '@/services/analytics';
-import { llmService } from '@/services/llm';
-import { titleGenerationService } from '@/services/titleGeneration';
 
 export class AgentsManager {
   private agents: Map<string, BaseAgentInterface> = new Map();

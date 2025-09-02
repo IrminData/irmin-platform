@@ -1,10 +1,3 @@
-import {
-  AgentConfig,
-  AgentInput,
-  AgentResponse,
-  BaseAgentInterface,
-} from '@/agents/types';
-import { ContextManager } from '@/agents/utils/context-manager';
 import type { Message } from '@/database';
 import { db, messages as messagesTable } from '@/database';
 import { desc, eq } from 'drizzle-orm';
@@ -13,6 +6,14 @@ import path from 'path';
 
 import { completionService } from '@/services/completion';
 import { systemPromptBuilder } from '@/services/systemPromptBuilder';
+
+import {
+  AgentConfig,
+  AgentInput,
+  AgentResponse,
+  BaseAgentInterface,
+} from '@/agents/types';
+import { ContextManager } from '@/agents/utils/context-manager';
 
 export abstract class BaseAgent implements BaseAgentInterface {
   public config: AgentConfig;

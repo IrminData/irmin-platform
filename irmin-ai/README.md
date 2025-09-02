@@ -14,6 +14,10 @@ LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with st
 - **Workspace-based conversation management** with user isolation and access control
 - **Token tracking** and cost analytics
 
+## Monitoring and Observability
+
+This project integrates with [Sentry](https://sentry.io) for error tracking and performance monitoring, and [LangSmith](https://smith.langchain.com/) for LLM observability and debugging. These tools provide comprehensive insights into application performance, error tracking, and LLM chain execution for better debugging and optimization.
+
 ## Quick Start
 
 1. **Install dependencies:**
@@ -34,10 +38,6 @@ cp .env.example .env
 pnpm dev          # Development
 pnpm build && pnpm start  # Production
 ```
-
-## API Routes
-
-See [API.md](API.md) for detailed API documentation.
 
 ### Swagger/OpenAPI Documentation
 
@@ -147,7 +147,13 @@ The Analytics Service provides comprehensive analytics tracking for the Irmin AI
 
 ### Vector Service
 
-The Vector Service provides vector embeddings and similarity search capabilities using Qdrant and LangChain. It supports document storage, retrieval, and semantic search with OpenAI embeddings.
+The Vector Service provides vector embeddings and similarity search capabilities using [Qdrant](https://qdrant.tech/documentation/quickstart/) and LangChain. It supports document storage, retrieval, and semantic search with OpenAI embeddings.
+
+**Qdrant Setup:**
+- **Docker Image**: Run Qdrant locally using `docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant`
+- **Web UI**: Access the Qdrant dashboard at `http://localhost:6333/dashboard`
+- **API Key**: Configure authentication by setting `QDRANT__SERVICE__API_KEY` environment variable
+- **Documentation**: See [Qdrant Quickstart Guide](https://qdrant.tech/documentation/quickstart/) for detailed setup instructions
 
 **Key Features:**
 - **Vector Store Management**: Create and manage Qdrant vector collections

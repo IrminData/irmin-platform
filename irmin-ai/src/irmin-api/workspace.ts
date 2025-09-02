@@ -1,4 +1,5 @@
 import type IrminCore from '@/irmin-api';
+
 import type { IrminAPIResponse } from '@/irmin-api/types/IrminAPIResponse';
 import type { Workspace } from '@/irmin-api/types/workspace';
 

@@ -18,6 +18,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
+
     "paths": {
       "@/*": ["src/*"],
       "@/config/*": ["src/config/*"],
@@ -26,15 +27,15 @@
       "@/types/*": ["src/types/*"],
       "@/utils/*": ["src/utils/*"]
     },
-    "typeRoots": ["./node_modules/@types"]
+
+    "typeRoots": ["./node_modules/@types"],
+    "inlineSources": true,
+
+    // Set `sourceRoot` to  "/" to strip the build path prefix
+    // from generated source code references.
+    // This improves issue grouping in Sentry.
+    "sourceRoot": "/"
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

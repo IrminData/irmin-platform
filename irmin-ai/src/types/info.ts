@@ -1,6 +1,7 @@
+import { z } from 'zod';
+
 import { UserSchema } from '@/irmin-api/types/user';
 import { WorkspaceSchema } from '@/irmin-api/types/workspace';
-import { z } from 'zod';
 
 // User profile response schema
 export const UserProfileResponseSchema = z.object({

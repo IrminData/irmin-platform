@@ -1,13 +1,16 @@
-/* eslint-disable import-x/no-unused-modules */
-import { authMiddlewareOnRequestHook } from '@/middleware/auth';
-import { workspaceMiddlewareOnRequestHook } from '@/middleware/workspace';
+import './instrument';
+
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
+import * as Sentry from '@sentry/node';
 import Fastify from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
+
+import { authMiddlewareOnRequestHook } from '@/middleware/auth';
+import { workspaceMiddlewareOnRequestHook } from '@/middleware/workspace';
 
 import { agentRoutes } from '@/routes/agents';
 import { chatRoutes } from '@/routes/chat';
@@ -118,10 +121,16 @@ server.register(swaggerUI, {
   transformSpecificationClone: true,
 });
 
+// Register Sentry error handler FIRST (before custom error handler)
+Sentry.setupFastifyErrorHandler(server);
+
 // Global error handler
-server.setErrorHandler(async (error, request, reply) => {
+server.setErrorHandler(async (error, _, reply) => {
   const statusCode = error.statusCode || 500;
   const message = error.message || 'Internal Server Error';
+
+  // Capture error in Sentry before handling
+  Sentry.captureException(error);
 
   server.log.error(error);
 
@@ -225,4 +234,5 @@ if (import.meta.url === new URL(process.argv[1], 'file://').href) {
   start();
 }
 
+// eslint-disable-next-line import-x/no-unused-modules
 export { server };

@@ -1,9 +1,10 @@
-import type { User } from '@/irmin-api/types/user';
-import type { Workspace } from '@/irmin-api/types/workspace';
 import type { AIMessageChunk } from '@langchain/core/messages';
 import type { IterableReadableStream } from '@langchain/core/utils/stream';
 
 import type { LLMProvider } from '@/services/llm';
+
+import type { User } from '@/irmin-api/types/user';
+import type { Workspace } from '@/irmin-api/types/workspace';
 
 import { type ToolSelection } from '@/types/agents';
 
