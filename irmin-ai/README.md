@@ -10,6 +10,7 @@ LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with st
 - **Multiple AI providers** (Groq, OpenAI) with model switching
 - **Granular MCP tools integration** with selective tool access
 - **AI agents** for specialized AI tasks
+- **Automatic conversation title generation** using AI for better organization
 - **Workspace-based conversation management** with user isolation and access control
 - **Token tracking** and cost analytics
 
@@ -183,6 +184,44 @@ See [systemPromptBuilder.ts](src/services/systemPromptBuilder.ts) for more detai
 The Completion service is responsible for LLM completion requests, eg. streaming the completion response and sending messages to the LLM service.
 
 See [completion.ts](src/services/completion.ts) for more details.
+
+### Title Generation Service
+
+The Title Generation Service provides automatic conversation title generation using AI. It generates concise, descriptive titles based on the first user message in a conversation and includes smart fallback handling when AI generation fails.
+
+**Key Features:**
+- **Automatic Title Generation**: Generates titles for new conversations asynchronously
+- **Smart Fallback Detection**: Identifies conversations with placeholder titles that need updating
+- **Title Validation**: Validates generated titles to avoid AI artifacts or inappropriate content
+- **Manual Title Generation**: Provides API endpoint for manual title regeneration
+- **Analytics Integration**: Tracks title generation success/failure rates for monitoring
+
+**Usage Example:**
+```typescript
+import { titleGenerationService } from '@/services/titleGeneration';
+
+// Generate a title for a conversation
+const result = await titleGenerationService.generateTitle({
+  message: 'How do I implement authentication?',
+  authToken: 'user-jwt-token',
+  user: { id: 'user-123' },
+  workspace: { slug: 'my-workspace' }
+});
+
+// Update conversation title if needed
+const updated = await titleGenerationService.updateConversationTitleIfNeeded(
+  'conversation-id',
+  titleOptions
+);
+```
+
+The service automatically:
+- Generates titles for new conversations created via chat or agents
+- Uses the existing title-generation agent configuration
+- Handles errors gracefully without affecting the main conversation flow
+- Logs analytics events for monitoring and debugging
+
+See [titleGeneration.ts](src/services/titleGeneration.ts) for more details.
 
 ## Agents
 

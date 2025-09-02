@@ -14,6 +14,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { analyticsService } from '@/services/analytics';
 import { llmService } from '@/services/llm';
+import { titleGenerationService } from '@/services/titleGeneration';
 
 export class AgentsManager {
   private agents: Map<string, BaseAgentInterface> = new Map();
@@ -70,7 +71,7 @@ export class AgentsManager {
         }
         conversation = existingConversation[0];
       } else {
-        // Create new conversation
+        // Create new conversation with initial fallback title
         const id = randomUUID();
         const now = new Date();
         const newConversation = {
@@ -90,6 +91,23 @@ export class AgentsManager {
 
         // Log analytics
         await analyticsService.logConversationEvent('conversation_created', id);
+
+        // Generate proper title asynchronously (don't wait for it) - but only for non-title-generation agents
+        if (agentId !== 'title-generation' && input.authToken) {
+          titleGenerationService
+            .updateConversationTitleIfNeeded(id, {
+              message: input.message,
+              user: input.user,
+              workspace: input.workspace,
+              authToken: input.authToken,
+            })
+            .catch((error) => {
+              console.warn(
+                'Failed to generate conversation title:',
+                error instanceof Error ? error.message : 'Unknown error'
+              );
+            });
+        }
       }
 
       // Save user message

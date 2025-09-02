@@ -236,6 +236,35 @@ Update an existing conversation. Only allows updates to conversations owned by t
 }
 ```
 
+### Generate Conversation Title
+
+**POST** `/conversations/:id/generate-title`
+
+Generate a new title for an existing conversation using AI. The title is generated based on the first user message in the conversation. Only allows title generation for conversations owned by the authenticated user in the specified workspace.
+
+#### Path Parameters
+
+| Parameter | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| `id`      | string | Yes      | Conversation UUID              |
+
+#### Response
+
+```json
+{
+  "id": "uuid",
+  "title": "Generated Conversation Title",
+  "metadata": {},
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+#### Error Responses
+
+- **404 Not Found**: Conversation not found or no user messages exist
+- **500 Internal Server Error**: Title generation failed
+
 ### Delete Conversation
 
 **DELETE** `/conversations/:id`

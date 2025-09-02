@@ -14,6 +14,7 @@ import { analyticsService } from '@/services/analytics';
 import { completionService } from '@/services/completion';
 import { llmService } from '@/services/llm';
 import { systemPromptBuilder } from '@/services/systemPromptBuilder';
+import { titleGenerationService } from '@/services/titleGeneration';
 
 import {
   type ChatRequest,
@@ -95,7 +96,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
           }
           conversation = existingConversation[0];
         } else {
-          // Create new conversation
+          // Create new conversation with initial fallback title
           const id = randomUUID();
           const now = new Date();
           const newConversation: NewConversation = {
@@ -116,6 +117,21 @@ export async function chatRoutes(fastify: FastifyInstance) {
             'conversation_created',
             id
           );
+
+          // Generate proper title asynchronously (don't wait for it)
+          titleGenerationService
+            .updateConversationTitleIfNeeded(id, {
+              message,
+              user: authContext.user,
+              workspace: workspaceContext.workspace,
+              authToken,
+            })
+            .catch((error) => {
+              fastify.log.warn(
+                'Failed to generate conversation title: %s',
+                error instanceof Error ? error.message : 'Unknown error'
+              );
+            });
         }
 
         // Save user message

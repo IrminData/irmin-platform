@@ -4,6 +4,7 @@ import { and, asc, count, desc, eq, sum } from 'drizzle-orm';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
+import { titleGenerationService } from '@/services/titleGeneration';
 
 import {
   type ConversationCreateRequest,
@@ -509,6 +510,120 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             ? error.message
             : 'Failed to update conversation';
         fastify.log.error('Update conversation error: %s', errorMessage);
+        sendInternalServerError(reply, errorMessage, fastify.log);
+        return;
+      }
+    }
+  );
+
+  // POST /api/conversations/:id/generate-title - Generate a new title for the conversation
+  fastify.post<{ Params: ConversationParams }>(
+    '/conversations/:id/generate-title',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+          },
+          required: ['id'],
+        },
+      },
+    },
+    async (
+      request: FastifyRequest<{ Params: ConversationParams }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const { id } = request.params;
+
+        // Get workspace and user context from middleware
+        const workspaceContext = request.workspace;
+        const authContext = request.auth;
+
+        if (!workspaceContext || !authContext) {
+          throw new Error('Workspace and authentication context required');
+        }
+
+        // Check if conversation exists and user has access
+        const conversation = await db
+          .select()
+          .from(conversations)
+          .where(
+            and(
+              eq(conversations.id, id),
+              eq(conversations.workspaceSlug, workspaceContext.slug),
+              eq(conversations.userId, authContext.user.id)
+            )
+          );
+        if (!conversation.length) {
+          sendNotFoundError(reply, 'Conversation not found', fastify.log);
+          return;
+        }
+
+        // Get the first user message to use for title generation
+        const firstUserMessage = await db
+          .select()
+          .from(messages)
+          .where(
+            and(eq(messages.conversationId, id), eq(messages.role, 'user'))
+          )
+          .orderBy(asc(messages.createdAt))
+          .limit(1);
+
+        if (!firstUserMessage.length) {
+          sendInternalServerError(
+            reply,
+            'No user messages found in conversation',
+            fastify.log
+          );
+          return;
+        }
+
+        // Generate new title
+        const titleResult = await titleGenerationService.generateTitle({
+          message: firstUserMessage[0].content,
+          user: authContext.user,
+          workspace: workspaceContext.workspace,
+          authToken: authContext.token,
+          conversationId: id,
+        });
+
+        // Update conversation with new title
+        await db
+          .update(conversations)
+          .set({
+            title: titleResult.title,
+            updatedAt: new Date(),
+          })
+          .where(eq(conversations.id, id));
+
+        // Log analytics
+        await analyticsService.logConversationEvent(
+          'conversation_updated',
+          id,
+          {
+            titleGenerated: true,
+            oldTitle: conversation[0].title,
+            newTitle: titleResult.title,
+            generated: titleResult.generated,
+          }
+        );
+
+        // Get updated conversation
+        const updated = await db
+          .select()
+          .from(conversations)
+          .where(eq(conversations.id, id));
+
+        sendOkResponse(reply, ConversationSchema, updated[0], fastify.log);
+        return;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Failed to generate conversation title';
+        fastify.log.error('Generate title error: %s', errorMessage);
         sendInternalServerError(reply, errorMessage, fastify.log);
         return;
       }
