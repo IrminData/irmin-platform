@@ -60,8 +60,8 @@ server.register(swagger, {
     },
     servers: [
       {
-        url: `http://${env.HOST}:${env.PORT}`,
-        description: 'Development server',
+        url: env.URL,
+        description: 'Server',
       },
     ],
     components: {
