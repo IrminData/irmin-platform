@@ -123,22 +123,14 @@ export abstract class BaseAgent implements BaseAgentInterface {
 
     for (const requirement of this.config.contextRequirements) {
       switch (requirement.type) {
-        case 'conversation':
-          // Fetch conversation history from database if conversationId is provided
-          if (input.conversationId) {
-            const history = await db
-              .select()
-              .from(messagesTable)
-              .where(eq(messagesTable.conversationId, input.conversationId))
-              .orderBy(desc(messagesTable.createdAt))
-              .limit(20);
-            context[requirement.name] = history;
-          } else {
-            context[requirement.name] = [];
-          }
-          break;
         case 'string':
           context[requirement.name] = input.context?.[requirement.name] || '';
+          break;
+        case 'conversation':
+          context[requirement.name] =
+            await this.contextManager.getConversationContext(
+              input.conversationId
+            );
           break;
         case 'vector':
           context[requirement.name] =

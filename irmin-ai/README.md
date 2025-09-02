@@ -108,6 +108,76 @@ See [analytics.ts](src/services/analytics.ts) for more details.
 
 The Analytics Service provides comprehensive analytics tracking for the Irmin AI application, covering user interactions, performance metrics, error tracking, and system events.
 
+### Vector Service
+
+The Vector Service provides vector embeddings and similarity search capabilities using Qdrant and LangChain. It supports document storage, retrieval, and semantic search with OpenAI embeddings.
+
+**Key Features:**
+- **Vector Store Management**: Create and manage Qdrant vector collections
+- **Document Operations**: Add documents with metadata to vector stores
+- **Similarity Search**: Search with filters, score thresholds, and custom parameters
+- **Embedding Creation**: Generate embeddings for single texts or batches using OpenAI's `text-embedding-3-small` model
+- **Analytics Integration**: Track all vector operations for monitoring and debugging
+- **Type Safety**: Full Zod validation and TypeScript types
+
+**Usage Example:**
+```typescript
+import { vectorService } from '@/services/vector';
+
+// Create a vector store
+const vectorStore = await vectorService.createNewVectorStore({
+  collectionName: 'my-documents',
+  url: process.env.QDRANT_URL,
+});
+
+// Add documents
+await vectorService.addDocuments(vectorStore, [
+  {
+    pageContent: 'Your document content here',
+    metadata: { source: 'document.pdf', topic: 'ai' }
+  }
+]);
+
+// Search for similar documents
+const results = await vectorService.searchSimilar(vectorStore, {
+  query: 'search query',
+  k: 5,
+  scoreThreshold: 0.8
+});
+```
+
+See [vector.ts](src/services/vector.ts) for more details.
+
+### SystemPromptBuilder Service
+
+The SystemPromptBuilder service provides dynamic system prompt generation with context injection. It builds comprehensive system prompts by combining base prompts with contextual information about users, workspaces, conversations, and agents.
+
+**Key Features:**
+- **Context-Aware Prompts**: Automatically injects user, workspace, and conversation context
+- **Timestamp Integration**: Includes current time information in prompts
+- **Custom Context Support**: Allows injection of custom context data
+- **Default Prompt Fallback**: Provides sensible defaults when no base prompt is specified
+- **Structured Output**: Generates well-formatted, readable system prompts
+
+**Usage Example:**
+```typescript
+import { systemPromptBuilder } from '@/services/systemPromptBuilder';
+
+// Build system prompt with context
+const systemPrompt = systemPromptBuilder.buildSystemPrompt(
+  'You are a helpful AI assistant.',
+  {
+    user: { first_name: 'John', last_name: 'Doe', email: 'john@example.com' },
+    workspace: { name: 'My Workspace', slug: 'my-workspace' },
+    conversationId: 'conv-123',
+    agentId: 'data-analyst',
+    customContext: { currentTask: 'analyze sales data' }
+  }
+);
+```
+
+See [systemPromptBuilder.ts](src/services/systemPromptBuilder.ts) for more details.
+
 ### Completion Service
 
 The Completion service is responsible for LLM completion requests, eg. streaming the completion response and sending messages to the LLM service.

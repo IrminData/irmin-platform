@@ -26,6 +26,8 @@ const envSchema = z.object({
     .transform((val) => val === 'true'),
   LANGSMITH_API_KEY: z.string().min(1, 'Langsmith API key is required'),
   LANGSMITH_PROJECT: z.string().default('irmin-ai-agents-dev'),
+  QDRANT_URL: z.string().default('http://localhost:6333'),
+  QDRANT_API_KEY: z.string().optional(),
   CORS_ORIGINS: z
     .string()
     .default('https://localhost:3000,http://localhost:8082'),

@@ -94,6 +94,7 @@ export const analytics = sqliteTable('analytics', {
       'agent_used',
       'model_used',
       'error_occurred',
+      'vector_operation',
     ],
   }).notNull(),
   eventData: text('event_data', { mode: 'json' }),

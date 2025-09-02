@@ -9,7 +9,8 @@ type AnalyticsEventType =
   | 'message_sent'
   | 'agent_used'
   | 'model_used'
-  | 'error_occurred';
+  | 'error_occurred'
+  | 'vector_operation';
 
 interface AnalyticsEvent {
   eventType: AnalyticsEventType;

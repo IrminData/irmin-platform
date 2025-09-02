@@ -25,7 +25,7 @@ importers:
         version: 0.3.6(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))
       '@langchain/community':
         specifier: ^0.3.24
-        version: 0.3.53(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(zod@4.1.5))(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))(@langchain/groq@0.2.3(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))))(@libsql/client@0.15.14)(@opentelemetry/api@1.9.0)(axios@1.11.0)(better-sqlite3@11.10.0)(ibm-cloud-sdk-core@5.4.2)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)
+        version: 0.3.53(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(zod@4.1.5))(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))(@langchain/groq@0.2.3(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))))(@libsql/client@0.15.14)(@opentelemetry/api@1.9.0)(@qdrant/js-client-rest@1.15.1(typescript@5.9.2))(axios@1.11.0)(better-sqlite3@11.10.0)(ibm-cloud-sdk-core@5.4.2)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)
       '@langchain/core':
         specifier: ^0.3.24
         version: 0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))
@@ -35,6 +35,9 @@ importers:
       '@langchain/openai':
         specifier: ^0.6.9
         version: 0.6.9(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))(ws@8.18.3)
+      '@langchain/qdrant':
+        specifier: ^0.1.3
+        version: 0.1.3(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))(typescript@5.9.2)
       '@libsql/client':
         specifier: ^0.15.14
         version: 0.15.14
@@ -1037,6 +1040,12 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.3.68 <0.4.0'
 
+  '@langchain/qdrant@0.1.3':
+    resolution: {integrity: sha512-3cay+u3Ri7KPEwBrn/e0V2GPJDHz8U/ZetSjexB7kbgBJeljzEoRxXEeoDCd4pok48GA+n+j0/p+rPA0K7zedQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': '>=0.2.21 <0.4.0'
+
   '@langchain/textsplitters@0.1.0':
     resolution: {integrity: sha512-djI4uw9rlkAb5iMhtLED+xJebDdAG935AdP4eRTB02R7OB/act55Bj9wsskhZsvuyQRpO4O1wQOp85s6T6GWmw==}
     engines: {node: '>=18'}
@@ -1179,6 +1188,16 @@ packages:
   '@protobufjs/utf8@1.1.0':
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
 
+  '@qdrant/js-client-rest@1.15.1':
+    resolution: {integrity: sha512-FAPMz6Z7RFj9vUun8R9e8SYcX6EkZtdfYfnh5lFXWcjEaat9q/jce1baAJCWAr3k8yHh62HpzCRYOatLVII28g==}
+    engines: {node: '>=18.17.0', pnpm: '>=8'}
+    peerDependencies:
+      typescript: '>=4.7'
+
+  '@qdrant/openapi-typescript-fetch@1.2.6':
+    resolution: {integrity: sha512-oQG/FejNpItrxRHoyctYvT3rwGZOnK4jr3JdppO/c78ktDvkWiPXPHNsrDf33K9sZdRb6PR7gi4noIapu5q4HA==}
+    engines: {node: '>=18.0.0', pnpm: '>=8'}
+
   '@rollup/rollup-android-arm-eabi@4.49.0':
     resolution: {integrity: sha512-rlKIeL854Ed0e09QGYFlmDNbka6I3EQFw7iZuugQjMb11KMpJCLPFL4ZPbMfaEhLADEL1yx0oujGkBQ7+qW3eA==}
     cpu: [arm]
@@ -1278,6 +1297,9 @@ packages:
     resolution: {integrity: sha512-gEtqFbzmZLFk2xKh7g0Rlo8xzho8KrEFEkzvHbfUGkrgXOpZ4XagQ6n+wIZFNh1nTb8UD16J4nFSFKXYgnbdBg==}
     cpu: [x64]
     os: [win32]
+
+  '@sevinf/maybe@0.5.0':
+    resolution: {integrity: sha512-ARhyoYDnY1LES3vYI0fiG6e9esWfTNcXcO6+MPJJXcnyMV3bim4lnFt45VXouV7y82F4x3YH8nOQ6VztuvUiWg==}
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
@@ -1399,9 +1421,6 @@ packages:
 
   '@types/node@18.19.123':
     resolution: {integrity: sha512-K7DIaHnh0mzVxreCR9qwgNxp3MH9dltPNIEddW9MYUlcKAzm+3grKNSTe2vCJHI1FaLpvpL5JGJrz1UZDKYvDg==}
-
-  '@types/node@20.19.11':
-    resolution: {integrity: sha512-uug3FEEGv0r+jrecvUUpbY8lLisvIjg6AAic6a2bSP5OEOLeJsDSnvhCDov7ipFFMXS3orMpzlmi0ZcuGkBbow==}
 
   '@types/node@24.3.0':
     resolution: {integrity: sha512-aPTXCrfwnDLj4VvXrm+UUCQjNEvJgNA8s5F1cvwQU+3KNltTOkBm1j30uNLyqqPNe7gE3KFzImYoZEfLhp4Yow==}
@@ -3408,11 +3427,12 @@ packages:
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
-
   undici-types@7.10.0:
     resolution: {integrity: sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag==}
+
+  undici@6.21.3:
+    resolution: {integrity: sha512-gBLkYIlEnSp8pFbT64yFgGE6UIB9tAkhukC23PmMDCe5Nd+cRqKxSjw5y54MK2AZMgZfJWMaNE4nYUHgi1XEOw==}
+    engines: {node: '>=18.17'}
 
   universalify@0.2.0:
     resolution: {integrity: sha512-CJ1QgKmNg3CwvAv/kOFmtnEN05f0D/cn9QntgNOQlQF9dgvVTHj3t+8JPdjqawCHk7V/KA+fbUqzZ9XWhcqPUg==}
@@ -3990,7 +4010,7 @@ snapshots:
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
-  '@langchain/community@0.3.53(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(zod@4.1.5))(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))(@langchain/groq@0.2.3(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))))(@libsql/client@0.15.14)(@opentelemetry/api@1.9.0)(axios@1.11.0)(better-sqlite3@11.10.0)(ibm-cloud-sdk-core@5.4.2)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)':
+  '@langchain/community@0.3.53(@browserbasehq/sdk@2.6.0)(@browserbasehq/stagehand@1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(zod@4.1.5))(@ibm-cloud/watsonx-ai@1.6.12)(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))(@langchain/groq@0.2.3(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))))(@libsql/client@0.15.14)(@opentelemetry/api@1.9.0)(@qdrant/js-client-rest@1.15.1(typescript@5.9.2))(axios@1.11.0)(better-sqlite3@11.10.0)(ibm-cloud-sdk-core@5.4.2)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(playwright@1.55.0)(weaviate-client@3.8.1)(ws@8.18.3)':
     dependencies:
       '@browserbasehq/stagehand': 1.14.0(@playwright/test@1.55.0)(deepmerge@4.3.1)(dotenv@17.2.1)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))(zod@4.1.5)
       '@ibm-cloud/watsonx-ai': 1.6.12
@@ -4010,6 +4030,7 @@ snapshots:
     optionalDependencies:
       '@browserbasehq/sdk': 2.6.0
       '@libsql/client': 0.15.14
+      '@qdrant/js-client-rest': 1.15.1(typescript@5.9.2)
       better-sqlite3: 11.10.0
       ignore: 5.3.2
       jsonwebtoken: 9.0.2
@@ -4074,6 +4095,14 @@ snapshots:
       zod: 3.25.76
     transitivePeerDependencies:
       - ws
+
+  '@langchain/qdrant@0.1.3(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))(typescript@5.9.2)':
+    dependencies:
+      '@langchain/core': 0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5))
+      '@qdrant/js-client-rest': 1.15.1(typescript@5.9.2)
+      uuid: 10.0.0
+    transitivePeerDependencies:
+      - typescript
 
   '@langchain/textsplitters@0.1.0(@langchain/core@0.3.72(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.5)))':
     dependencies:
@@ -4222,6 +4251,15 @@ snapshots:
 
   '@protobufjs/utf8@1.1.0': {}
 
+  '@qdrant/js-client-rest@1.15.1(typescript@5.9.2)':
+    dependencies:
+      '@qdrant/openapi-typescript-fetch': 1.2.6
+      '@sevinf/maybe': 0.5.0
+      typescript: 5.9.2
+      undici: 6.21.3
+
+  '@qdrant/openapi-typescript-fetch@1.2.6': {}
+
   '@rollup/rollup-android-arm-eabi@4.49.0':
     optional: true
 
@@ -4281,6 +4319,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.49.0':
     optional: true
+
+  '@sevinf/maybe@0.5.0': {}
 
   '@standard-schema/spec@1.0.0': {}
 
@@ -4357,7 +4397,7 @@ snapshots:
 
   '@types/better-sqlite3@7.6.13':
     dependencies:
-      '@types/node': 20.19.11
+      '@types/node': 24.3.0
     optional: true
 
   '@types/debug@4.1.12':
@@ -4378,11 +4418,6 @@ snapshots:
   '@types/node@18.19.123':
     dependencies:
       undici-types: 5.26.5
-
-  '@types/node@20.19.11':
-    dependencies:
-      undici-types: 6.21.0
-    optional: true
 
   '@types/node@24.3.0':
     dependencies:
@@ -6395,10 +6430,9 @@ snapshots:
 
   undici-types@5.26.5: {}
 
-  undici-types@6.21.0:
-    optional: true
-
   undici-types@7.10.0: {}
+
+  undici@6.21.3: {}
 
   universalify@0.2.0: {}
 
