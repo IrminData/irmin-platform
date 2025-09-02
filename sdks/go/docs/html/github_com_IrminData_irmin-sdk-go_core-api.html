@@ -64,10 +64,6 @@ func (c *Client) CheckPermission(
     CheckPermission checks if a user has permission to perform an action on a
     resource.
 
-func (c *Client) ClearAssistantConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
-    ClearAssistantConversation clears all messages from an assistant
-    conversation.
-
 func (c *Client) CompareRefs(
 	workspace, repository, baseRef, compareRef string,
 ) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
@@ -82,11 +78,6 @@ func (c *Client) CopyObject(
 	workspace, repository, path, ref string,
 	req MoveObjectRequest,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) CreateAssistantConversation(
-	workspace string,
-	req CreateAssistantConversationRequest,
-) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) CreateBranch(
 	workspace, repository string,
@@ -150,9 +141,6 @@ func (c *Client) CreateWorkspaceTag(
     CreateWorkspaceTag creates a new workspace tag.
 
 func (c *Client) DeclineInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) DeleteAssistantConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
-    DeleteAssistantConversation deletes an assistant conversation by its ID.
 
 func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminmodels.IrminAPIResponse, error)
     DeleteBranch deletes a branch in the repository.
@@ -274,30 +262,6 @@ func (c *Client) FetchLogEventsForWorkflow(
 ) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
     FetchLogEventsForWorkflow retrieves general audit log events for a workflow.
 
-func (c *Client) GenerateQuery(
-	workspace string,
-	req QueryGenerationRequest,
-) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
-    GenerateQuery generates a SQL query from natural language using the QueryAI
-    assistant.
-
-func (c *Client) GenerateScript(
-	workspace string,
-	req ScriptGenerationRequest,
-) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
-    GenerateScript generates a Go script from natural language using the
-    ScriptingAI assistant.
-
-func (c *Client) GetAssistantConversation(
-	workspace, conversationID string,
-) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) GetAssistantConversationStats(
-	workspace, conversationID string,
-) (map[string]any, *irminmodels.IrminAPIResponse, error)
-    GetAssistantConversationStats retrieves statistics for a specific assistant
-    conversation.
-
 func (c *Client) GetBranch(
 	workspace, repository, branchName string,
 ) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
@@ -402,10 +366,6 @@ func (c *Client) GetWorkspaceTag(
 
 func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, error)
 
-func (c *Client) ListAssistantConversations(
-	workspace string,
-) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-
 func (c *Client) ListBranches(
 	workspace, repository string,
 ) ([]irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
@@ -433,21 +393,9 @@ func (c *Client) ListPolicies(
 ) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
     ListPolicies returns a list of all policies for a workspace.
 
-func (c *Client) ListQueryGenerationConversations(
-	workspace string,
-) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-    ListQueryGenerationConversations retrieves all query generation
-    conversations in a workspace.
-
 func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 
 func (c *Client) ListRoles() ([]irminmodels.Role, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) ListScriptGenerationConversations(
-	workspace string,
-) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-    ListScriptGenerationConversations retrieves all script generation
-    conversations in a workspace.
 
 func (c *Client) ListStoredQueries(workspace string) ([]irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
 
@@ -534,14 +482,6 @@ func (c *Client) Search(
 ) (*irminmodels.SearchResponse, *irminmodels.IrminAPIResponse, error)
     Search performs a workspace-wide search using the provided filters.
 
-func (c *Client) SendAssistantMessage(
-	workspace string,
-	conversationID string,
-	req CreateAssistantMessageRequest,
-) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
-    SendAssistantMessage sends a message to the AI assistant and gets a
-    response.
-
 func (c *Client) SendInvite(
 	workspace string,
 	req SendInviteRequest,
@@ -579,12 +519,6 @@ func (c *Client) TransferWorkspace(
 func (c *Client) TriggerWorkflowRun(
 	workspace, workflowID string,
 ) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
-
-func (c *Client) UpdateAssistantConversation(
-	workspace, conversationID string,
-	req UpdateAssistantConversationRequest,
-) (*irminmodels.IrminAPIResponse, error)
-    UpdateAssistantConversation updates an assistant conversation.
 
 func (c *Client) UpdateBranch(
 	workspace, repository, oldName string,
@@ -710,19 +644,6 @@ type ConnectorRequest struct {
 }
     ConnectorRequest represents the JSON request body for creating/updating
     connectors.
-
-type CreateAssistantConversationRequest struct {
-	Title    string         `json:"title"    example:"My conversation"`
-	Metadata map[string]any `json:"metadata"`
-}
-    CreateAssistantConversationRequest represents the JSON request body for
-    creating assistant conversations.
-
-type CreateAssistantMessageRequest struct {
-	Message string `json:"message" validate:"required,max=100" example:"What is the capital of France?"`
-}
-    CreateAssistantMessageRequest represents the JSON request body for creating
-    assistant messages.
 
 type CreateBranchRequest struct {
 	Name        string `json:"name"                   validate:"required" example:"feature/add-customer-data"`
@@ -872,25 +793,6 @@ type MoveObjectRequest struct {
     MoveObjectRequest represents the JSON request body for moving/copying
     repository objects.
 
-type QueryGenerationRequest struct {
-	// Natural language prompt describing the desired query
-	Prompt string `json:"prompt" validate:"required,min=1,max=1000"`
-
-	// Optional repository slug for repository-specific queries
-	RepositorySlug *string `json:"repository_slug,omitempty"`
-
-	// Optional repository reference (branch, tag, commit)
-	RepositoryRef *string `json:"repository_ref,omitempty"`
-
-	// Optional conversation ID to continue an existing conversation
-	ConversationID *string `json:"conversation_id,omitempty" validate:"validsqid=assistant_conversations"`
-
-	// Optional metadata for the request
-	Metadata map[string]any `json:"metadata,omitempty"`
-}
-    QueryGenerationRequest represents a request to generate a query from natural
-    language
-
 type RequestOptions struct {
 	Method        string
 	Endpoint      string
@@ -911,19 +813,6 @@ type RevertUncommittedChangesRequest struct {
 }
     RevertUncommittedChangesRequest represents the JSON request body for
     reverting uncommitted changes.
-
-type ScriptGenerationRequest struct {
-	// Natural language prompt describing the desired script
-	Prompt string `json:"prompt" validate:"required,min=1,max=1000"`
-
-	// Optional conversation ID to continue an existing conversation
-	ConversationID *string `json:"conversation_id,omitempty" validate:"validsqid=assistant_conversations"`
-
-	// Optional metadata for the request
-	Metadata map[string]any `json:"metadata,omitempty"`
-}
-    ScriptGenerationRequest represents a request to generate a script from
-    natural language
 
 type SendInviteRequest struct {
 	Email string `json:"email" validate:"required,email"  example:"john.doe@example.com"`
@@ -960,13 +849,6 @@ type TransferWorkflowOwnershipRequest struct {
 }
     TransferWorkflowOwnershipRequest represents the JSON request body for
     transferring workflow ownership.
-
-type UpdateAssistantConversationRequest struct {
-	Title    string         `json:"title"    example:"My conversation"`
-	Metadata map[string]any `json:"metadata"`
-}
-    UpdateAssistantConversationRequest represents the request to update an
-    assistant conversation.
 
 type UpdateBranchRequest struct {
 	Name        string `json:"name,omitempty"         example:"feature/add-customer-data"`

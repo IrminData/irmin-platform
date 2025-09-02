@@ -521,11 +521,9 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) CallSystemWebhook\(webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
   - [func \(c \*Client\) CancelWorkflowRun\(workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
   - [func \(c \*Client\) CheckPermission\(workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
-  - [func \(c \*Client\) ClearAssistantConversation\(workspace, conversationID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.ClearAssistantConversation>)
   - [func \(c \*Client\) CompareRefs\(workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.CompareRefs>)
   - [func \(c \*Client\) CopyEditorItem\(workspace, path string, req MoveEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CopyEditorItem>)
   - [func \(c \*Client\) CopyObject\(workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CopyObject>)
-  - [func \(c \*Client\) CreateAssistantConversation\(workspace string, req CreateAssistantConversationRequest\) \(\*irminmodels.AssistantConversation, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateAssistantConversation>)
   - [func \(c \*Client\) CreateBranch\(workspace, repository string, req CreateBranchRequest\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateCommit\(workspace, repository string, req CreateCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateCommit>)
   - [func \(c \*Client\) CreateConnection\(workspace string, req CreateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnection>)
@@ -539,7 +537,6 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) CreateWorkspace\(req CreateWorkspaceRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspace>)
   - [func \(c \*Client\) CreateWorkspaceTag\(workspace string, req CreateTagRequest\) \(\*irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspaceTag>)
   - [func \(c \*Client\) DeclineInvite\(inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.DeclineInvite>)
-  - [func \(c \*Client\) DeleteAssistantConversation\(workspace, conversationID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteAssistantConversation>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteConnection\(workspace, connectionID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnection>)
   - [func \(c \*Client\) DeleteConnector\(connectorID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnector>)
@@ -569,10 +566,6 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) FetchLogEventsForStoredQuery\(workspace, storedQueryID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForStoredQuery>)
   - [func \(c \*Client\) FetchLogEventsForUser\(workspace, userID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForUser>)
   - [func \(c \*Client\) FetchLogEventsForWorkflow\(workspace, workflowID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForWorkflow>)
-  - [func \(c \*Client\) GenerateQuery\(workspace string, req QueryGenerationRequest\) \(\[\]irminmodels.AssistantMessage, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateQuery>)
-  - [func \(c \*Client\) GenerateScript\(workspace string, req ScriptGenerationRequest\) \(\[\]irminmodels.AssistantMessage, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateScript>)
-  - [func \(c \*Client\) GetAssistantConversation\(workspace, conversationID string\) \(\*irminmodels.AssistantConversation, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAssistantConversation>)
-  - [func \(c \*Client\) GetAssistantConversationStats\(workspace, conversationID string\) \(map\[string\]any, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetAssistantConversationStats>)
   - [func \(c \*Client\) GetBranch\(workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
@@ -601,7 +594,6 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) GetWorkspaceSchema\(slug string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceSchema>)
   - [func \(c \*Client\) GetWorkspaceTag\(workspace, tagID string\) \(\*irminmodels.TagWithAssets, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceTag>)
   - [func \(c \*Client\) LeaveWorkspace\(slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.LeaveWorkspace>)
-  - [func \(c \*Client\) ListAssistantConversations\(workspace string\) \(\[\]irminmodels.AssistantConversation, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAssistantConversations>)
   - [func \(c \*Client\) ListBranches\(workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListConnections\(workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
@@ -610,10 +602,8 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) ListInviteInbox\(\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInviteInbox>)
   - [func \(c \*Client\) ListInvitesToWorkspace\(workspace string\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInvitesToWorkspace>)
   - [func \(c \*Client\) ListPolicies\(workspace string, params ListPoliciesParams\) \(\[\]irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListPolicies>)
-  - [func \(c \*Client\) ListQueryGenerationConversations\(workspace string\) \(\[\]irminmodels.AssistantConversation, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListQueryGenerationConversations>)
   - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRepositories>)
   - [func \(c \*Client\) ListRoles\(\) \(\[\]irminmodels.Role, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRoles>)
-  - [func \(c \*Client\) ListScriptGenerationConversations\(workspace string\) \(\[\]irminmodels.AssistantConversation, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListScriptGenerationConversations>)
   - [func \(c \*Client\) ListStoredQueries\(workspace string\) \(\[\]irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListStoredQueries>)
   - [func \(c \*Client\) ListTags\(workspace, repository string\) \(\[\]irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTags>)
   - [func \(c \*Client\) ListTokens\(\) \(\[\]irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTokens>)
@@ -636,7 +626,6 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) RunScript\(workspace, path string, inputs \[\]irminmodels.ActionInputData\) \(\*irminmodels.ScriptResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.RunScript>)
   - [func \(c \*Client\) SaveEditorItem\(workspace, path string, req CreateEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.SaveEditorItem>)
   - [func \(c \*Client\) Search\(workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
-  - [func \(c \*Client\) SendAssistantMessage\(workspace string, conversationID string, req CreateAssistantMessageRequest\) \(\[\]irminmodels.AssistantMessage, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendAssistantMessage>)
   - [func \(c \*Client\) SendInvite\(workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
   - [func \(c \*Client\) StartWorkflow\(workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.StartWorkflow>)
   - [func \(c \*Client\) TransferConnection\(workspace, connectionID string, req TransferConnectionOwnershipRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferConnection>)
@@ -645,7 +634,6 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) TransferWorkflow\(workspace, workflowID, newOwnerID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkflow>)
   - [func \(c \*Client\) TransferWorkspace\(workspaceSlug string, req TransferOwnershipRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkspace>)
   - [func \(c \*Client\) TriggerWorkflowRun\(workspace, workflowID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.TriggerWorkflowRun>)
-  - [func \(c \*Client\) UpdateAssistantConversation\(workspace, conversationID string, req UpdateAssistantConversationRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateAssistantConversation>)
   - [func \(c \*Client\) UpdateBranch\(workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateConnection\(workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
   - [func \(c \*Client\) UpdateInvite\(inviteID string, req UpdateInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateInvite>)
@@ -669,8 +657,6 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) ValidateVarEnhanced\(field any, tag string\) \*irminvalidator.ValidationResultError](<#Client.ValidateVarEnhanced>)
 - [type ConnectorConfigurationRequest](<#ConnectorConfigurationRequest>)
 - [type ConnectorRequest](<#ConnectorRequest>)
-- [type CreateAssistantConversationRequest](<#CreateAssistantConversationRequest>)
-- [type CreateAssistantMessageRequest](<#CreateAssistantMessageRequest>)
 - [type CreateBranchRequest](<#CreateBranchRequest>)
 - [type CreateCommitRequest](<#CreateCommitRequest>)
 - [type CreateConnectionRequest](<#CreateConnectionRequest>)
@@ -690,17 +676,14 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
 - [type MergeRefsRequest](<#MergeRefsRequest>)
 - [type MoveEditorItemRequest](<#MoveEditorItemRequest>)
 - [type MoveObjectRequest](<#MoveObjectRequest>)
-- [type QueryGenerationRequest](<#QueryGenerationRequest>)
 - [type RequestOptions](<#RequestOptions>)
 - [type RevertUncommittedChangesRequest](<#RevertUncommittedChangesRequest>)
-- [type ScriptGenerationRequest](<#ScriptGenerationRequest>)
 - [type SendInviteRequest](<#SendInviteRequest>)
 - [type TransferConnectionOwnershipRequest](<#TransferConnectionOwnershipRequest>)
 - [type TransferOwnershipRequest](<#TransferOwnershipRequest>)
 - [type TransferQueryOwnershipRequest](<#TransferQueryOwnershipRequest>)
 - [type TransferRepositoryOwnershipRequest](<#TransferRepositoryOwnershipRequest>)
 - [type TransferWorkflowOwnershipRequest](<#TransferWorkflowOwnershipRequest>)
-- [type UpdateAssistantConversationRequest](<#UpdateAssistantConversationRequest>)
 - [type UpdateBranchRequest](<#UpdateBranchRequest>)
 - [type UpdateConnectionRequest](<#UpdateConnectionRequest>)
 - [type UpdateInviteRequest](<#UpdateInviteRequest>)
@@ -805,15 +788,6 @@ func (c *Client) CheckPermission(workspace string, resource irminmodels.PolicyRe
 
 CheckPermission checks if a user has permission to perform an action on a resource.
 
-<a name="Client.ClearAssistantConversation"></a>
-### func \(\*Client\) ClearAssistantConversation
-
-```go
-func (c *Client) ClearAssistantConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
-```
-
-ClearAssistantConversation clears all messages from an assistant conversation.
-
 <a name="Client.CompareRefs"></a>
 ### func \(\*Client\) CompareRefs
 
@@ -837,15 +811,6 @@ func (c *Client) CopyEditorItem(workspace, path string, req MoveEditorItemReques
 
 ```go
 func (c *Client) CopyObject(workspace, repository, path, ref string, req MoveObjectRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
-```
-
-
-
-<a name="Client.CreateAssistantConversation"></a>
-### func \(\*Client\) CreateAssistantConversation
-
-```go
-func (c *Client) CreateAssistantConversation(workspace string, req CreateAssistantConversationRequest) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -966,15 +931,6 @@ func (c *Client) DeclineInvite(inviteID string) (*irminmodels.Invite, *irminmode
 ```
 
 
-
-<a name="Client.DeleteAssistantConversation"></a>
-### func \(\*Client\) DeleteAssistantConversation
-
-```go
-func (c *Client) DeleteAssistantConversation(workspace, conversationID string) (*irminmodels.IrminAPIResponse, error)
-```
-
-DeleteAssistantConversation deletes an assistant conversation by its ID.
 
 <a name="Client.DeleteBranch"></a>
 ### func \(\*Client\) DeleteBranch
@@ -1237,42 +1193,6 @@ func (c *Client) FetchLogEventsForWorkflow(workspace, workflowID, search string,
 
 FetchLogEventsForWorkflow retrieves general audit log events for a workflow.
 
-<a name="Client.GenerateQuery"></a>
-### func \(\*Client\) GenerateQuery
-
-```go
-func (c *Client) GenerateQuery(workspace string, req QueryGenerationRequest) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
-```
-
-GenerateQuery generates a SQL query from natural language using the QueryAI assistant.
-
-<a name="Client.GenerateScript"></a>
-### func \(\*Client\) GenerateScript
-
-```go
-func (c *Client) GenerateScript(workspace string, req ScriptGenerationRequest) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
-```
-
-GenerateScript generates a Go script from natural language using the ScriptingAI assistant.
-
-<a name="Client.GetAssistantConversation"></a>
-### func \(\*Client\) GetAssistantConversation
-
-```go
-func (c *Client) GetAssistantConversation(workspace, conversationID string) (*irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-```
-
-
-
-<a name="Client.GetAssistantConversationStats"></a>
-### func \(\*Client\) GetAssistantConversationStats
-
-```go
-func (c *Client) GetAssistantConversationStats(workspace, conversationID string) (map[string]any, *irminmodels.IrminAPIResponse, error)
-```
-
-GetAssistantConversationStats retrieves statistics for a specific assistant conversation.
-
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
 
@@ -1525,15 +1445,6 @@ func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, err
 
 
 
-<a name="Client.ListAssistantConversations"></a>
-### func \(\*Client\) ListAssistantConversations
-
-```go
-func (c *Client) ListAssistantConversations(workspace string) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-```
-
-
-
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
 
@@ -1606,15 +1517,6 @@ func (c *Client) ListPolicies(workspace string, params ListPoliciesParams) ([]ir
 
 ListPolicies returns a list of all policies for a workspace.
 
-<a name="Client.ListQueryGenerationConversations"></a>
-### func \(\*Client\) ListQueryGenerationConversations
-
-```go
-func (c *Client) ListQueryGenerationConversations(workspace string) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-```
-
-ListQueryGenerationConversations retrieves all query generation conversations in a workspace.
-
 <a name="Client.ListRepositories"></a>
 ### func \(\*Client\) ListRepositories
 
@@ -1632,15 +1534,6 @@ func (c *Client) ListRoles() ([]irminmodels.Role, *irminmodels.IrminAPIResponse,
 ```
 
 
-
-<a name="Client.ListScriptGenerationConversations"></a>
-### func \(\*Client\) ListScriptGenerationConversations
-
-```go
-func (c *Client) ListScriptGenerationConversations(workspace string) ([]irminmodels.AssistantConversation, *irminmodels.IrminAPIResponse, error)
-```
-
-ListScriptGenerationConversations retrieves all script generation conversations in a workspace.
 
 <a name="Client.ListStoredQueries"></a>
 ### func \(\*Client\) ListStoredQueries
@@ -1840,15 +1733,6 @@ func (c *Client) Search(workspace string, params irminmodels.SearchFilters) (*ir
 
 Search performs a workspace\-wide search using the provided filters.
 
-<a name="Client.SendAssistantMessage"></a>
-### func \(\*Client\) SendAssistantMessage
-
-```go
-func (c *Client) SendAssistantMessage(workspace string, conversationID string, req CreateAssistantMessageRequest) ([]irminmodels.AssistantMessage, *irminmodels.IrminAPIResponse, error)
-```
-
-SendAssistantMessage sends a message to the AI assistant and gets a response.
-
 <a name="Client.SendInvite"></a>
 ### func \(\*Client\) SendInvite
 
@@ -1920,15 +1804,6 @@ func (c *Client) TriggerWorkflowRun(workspace, workflowID string) (*irminmodels.
 ```
 
 
-
-<a name="Client.UpdateAssistantConversation"></a>
-### func \(\*Client\) UpdateAssistantConversation
-
-```go
-func (c *Client) UpdateAssistantConversation(workspace, conversationID string, req UpdateAssistantConversationRequest) (*irminmodels.IrminAPIResponse, error)
-```
-
-UpdateAssistantConversation updates an assistant conversation.
 
 <a name="Client.UpdateBranch"></a>
 ### func \(\*Client\) UpdateBranch
@@ -2140,29 +2015,6 @@ ConnectorRequest represents the JSON request body for creating/updating connecto
 type ConnectorRequest struct {
     URL         string `json:"url"          validate:"required,validurl" example:"https://example.com/connector"`
     SystemToken string `json:"system_token" validate:"required,max=100"  example:"system_token_123"`
-}
-```
-
-<a name="CreateAssistantConversationRequest"></a>
-## type CreateAssistantConversationRequest
-
-CreateAssistantConversationRequest represents the JSON request body for creating assistant conversations.
-
-```go
-type CreateAssistantConversationRequest struct {
-    Title    string         `json:"title"    example:"My conversation"`
-    Metadata map[string]any `json:"metadata"`
-}
-```
-
-<a name="CreateAssistantMessageRequest"></a>
-## type CreateAssistantMessageRequest
-
-CreateAssistantMessageRequest represents the JSON request body for creating assistant messages.
-
-```go
-type CreateAssistantMessageRequest struct {
-    Message string `json:"message" validate:"required,max=100" example:"What is the capital of France?"`
 }
 ```
 
@@ -2424,30 +2276,6 @@ type MoveObjectRequest struct {
 }
 ```
 
-<a name="QueryGenerationRequest"></a>
-## type QueryGenerationRequest
-
-QueryGenerationRequest represents a request to generate a query from natural language
-
-```go
-type QueryGenerationRequest struct {
-    // Natural language prompt describing the desired query
-    Prompt string `json:"prompt" validate:"required,min=1,max=1000"`
-
-    // Optional repository slug for repository-specific queries
-    RepositorySlug *string `json:"repository_slug,omitempty"`
-
-    // Optional repository reference (branch, tag, commit)
-    RepositoryRef *string `json:"repository_ref,omitempty"`
-
-    // Optional conversation ID to continue an existing conversation
-    ConversationID *string `json:"conversation_id,omitempty" validate:"validsqid=assistant_conversations"`
-
-    // Optional metadata for the request
-    Metadata map[string]any `json:"metadata,omitempty"`
-}
-```
-
 <a name="RequestOptions"></a>
 ## type RequestOptions
 
@@ -2476,24 +2304,6 @@ type RevertUncommittedChangesRequest struct {
     Branch   string `json:"branch"              validate:"required" example:"main"`
     Path     string `json:"path,omitempty"                          example:"path/to/file.txt"`
     PathType string `json:"path_type,omitempty"                     example:"file"`
-}
-```
-
-<a name="ScriptGenerationRequest"></a>
-## type ScriptGenerationRequest
-
-ScriptGenerationRequest represents a request to generate a script from natural language
-
-```go
-type ScriptGenerationRequest struct {
-    // Natural language prompt describing the desired script
-    Prompt string `json:"prompt" validate:"required,min=1,max=1000"`
-
-    // Optional conversation ID to continue an existing conversation
-    ConversationID *string `json:"conversation_id,omitempty" validate:"validsqid=assistant_conversations"`
-
-    // Optional metadata for the request
-    Metadata map[string]any `json:"metadata,omitempty"`
 }
 ```
 
@@ -2561,18 +2371,6 @@ TransferWorkflowOwnershipRequest represents the JSON request body for transferri
 ```go
 type TransferWorkflowOwnershipRequest struct {
     NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
-}
-```
-
-<a name="UpdateAssistantConversationRequest"></a>
-## type UpdateAssistantConversationRequest
-
-UpdateAssistantConversationRequest represents the request to update an assistant conversation.
-
-```go
-type UpdateAssistantConversationRequest struct {
-    Title    string         `json:"title"    example:"My conversation"`
-    Metadata map[string]any `json:"metadata"`
 }
 ```
 
@@ -3052,12 +2850,6 @@ import "github.com/IrminData/irmin-sdk-go/models"
 
 - [type APIToken](<#APIToken>)
 - [type ActionInputData](<#ActionInputData>)
-- [type AssistantConversation](<#AssistantConversation>)
-- [type AssistantConversationStats](<#AssistantConversationStats>)
-- [type AssistantMessage](<#AssistantMessage>)
-- [type AssistantMessageContentType](<#AssistantMessageContentType>)
-- [type AssistantMessageRole](<#AssistantMessageRole>)
-- [type AssistantMessageStatus](<#AssistantMessageStatus>)
 - [type Branch](<#Branch>)
 - [type BranchGarbageCollectionRules](<#BranchGarbageCollectionRules>)
 - [type ChangeItem](<#ChangeItem>)
@@ -3159,135 +2951,6 @@ type ActionInputData struct {
     RepositoryRef  string `json:"repository_ref"  validate:"required" example:"main"`
     RepositoryPath string `json:"repository_path" validate:"required" example:"/data/customers.csv"`
 }
-```
-
-<a name="AssistantConversation"></a>
-## type AssistantConversation
-
-AssistantConversation represents a conversation with the AI assistant
-
-```go
-type AssistantConversation struct {
-    ID                string             `json:"id"                 validate:"required,validsqid=assistant_conversations" example:"assistant_conversation_1a2b3c"`
-    Title             string             `json:"title"              validate:"required"                                   example:"My conversation"`
-    WorkspaceID       string             `json:"workspace_id"       validate:"required,validsqid=workspaces"              example:"workspace_1a2b3c"`
-    UserID            string             `json:"user_id"            validate:"required,validsqid=users"                   example:"user_1a2b3c"`
-    Metadata          map[string]any     `json:"metadata"`
-    Messages          []AssistantMessage `json:"messages,omitempty"`
-    TotalMessages     int                `json:"total_messages"`
-    UserMessages      int                `json:"user_messages"`
-    AssistantMessages int                `json:"assistant_messages"`
-    EstimatedTokens   int                `json:"estimated_tokens"`
-    LastMessageAt     *time.Time         `json:"last_message_at"`
-    CreatedAt         time.Time          `json:"created_at"         validate:"required"                                   example:"2025-01-15T10:30:00Z"`
-    UpdatedAt         time.Time          `json:"updated_at"         validate:"required"                                   example:"2025-12-01T14:22:30Z"`
-}
-```
-
-<a name="AssistantConversationStats"></a>
-## type AssistantConversationStats
-
-
-
-```go
-type AssistantConversationStats struct {
-    TotalMessages     int       `json:"total_messages"`
-    UserMessages      int       `json:"user_messages"`
-    AssistantMessages int       `json:"assistant_messages"`
-    EstimatedTokens   int       `json:"estimated_tokens"`
-    CreatedAt         time.Time `json:"created_at"`
-    LastUpdated       time.Time `json:"last_updated"`
-    DurationMinutes   int       `json:"duration_minutes"`
-}
-```
-
-<a name="AssistantMessage"></a>
-## type AssistantMessage
-
-
-
-```go
-type AssistantMessage struct {
-    ID             string                      `json:"id"                      validate:"required,validsqid=assistant_messages"      example:"assistant_message_1a2b3c"`
-    ConversationID string                      `json:"conversation_id"         validate:"required,validsqid=assistant_conversations" example:"assistant_conversation_1a2b3c"`
-    Role           AssistantMessageRole        `json:"role"`
-    Content        string                      `json:"content"`
-    ContentType    AssistantMessageContentType `json:"content_type"                                                                  example:"text"`
-    BlockIndex     *int                        `json:"block_index,omitempty"`
-    Metadata       map[string]any              `json:"metadata"`
-    InputTokens    *int                        `json:"input_tokens"`
-    OutputTokens   *int                        `json:"output_tokens"`
-    AIModel        string                      `json:"ai_model"`
-    Status         AssistantMessageStatus      `json:"status"                  validate:"required,oneof=pending sent error failed"`
-    ErrorMessage   *string                     `json:"error_message,omitempty"`
-    SentAt         time.Time                   `json:"sent_at"`
-    CreatedAt      time.Time                   `json:"created_at"              validate:"required"                                   example:"2025-01-15T10:30:00Z"`
-    UpdatedAt      time.Time                   `json:"updated_at"              validate:"required"                                   example:"2025-01-15T10:30:00Z"`
-}
-```
-
-<a name="AssistantMessageContentType"></a>
-## type AssistantMessageContentType
-
-
-
-```go
-type AssistantMessageContentType string
-```
-
-<a name="AssistantMessageContentTypeText"></a>
-
-```go
-const (
-    AssistantMessageContentTypeText                    AssistantMessageContentType = "text"
-    AssistantMessageContentTypeThinking                AssistantMessageContentType = "thinking"
-    AssistantMessageContentTypeRedactedThinking        AssistantMessageContentType = "redacted_thinking"
-    AssistantMessageContentTypeToolUse                 AssistantMessageContentType = "tool_use"
-    AssistantMessageContentTypeServerToolUse           AssistantMessageContentType = "server_tool_use"
-    AssistantMessageContentTypeWebSearchToolResult     AssistantMessageContentType = "web_search_tool_result"
-    AssistantMessageContentTypeCodeExecutionToolResult AssistantMessageContentType = "code_execution_tool_result"
-    AssistantMessageContentTypeMCPToolUse              AssistantMessageContentType = "mcp_tool_use"
-    AssistantMessageContentTypeMCPToolResult           AssistantMessageContentType = "mcp_tool_result"
-    AssistantMessageContentTypeContainerUpload         AssistantMessageContentType = "container_upload"
-)
-```
-
-<a name="AssistantMessageRole"></a>
-## type AssistantMessageRole
-
-
-
-```go
-type AssistantMessageRole string
-```
-
-<a name="AssistantMessageRoleUser"></a>
-
-```go
-const (
-    AssistantMessageRoleUser      AssistantMessageRole = "user"
-    AssistantMessageRoleAssistant AssistantMessageRole = "assistant"
-)
-```
-
-<a name="AssistantMessageStatus"></a>
-## type AssistantMessageStatus
-
-
-
-```go
-type AssistantMessageStatus string
-```
-
-<a name="AssistantMessageStatusPending"></a>
-
-```go
-const (
-    AssistantMessageStatusPending AssistantMessageStatus = "pending"
-    AssistantMessageStatusSent    AssistantMessageStatus = "sent"
-    AssistantMessageStatusError   AssistantMessageStatus = "error"
-    AssistantMessageStatusFailed  AssistantMessageStatus = "failed"
-)
 ```
 
 <a name="Branch"></a>
@@ -4017,13 +3680,13 @@ Policy represents a policy in the API response.
 ```go
 type Policy struct {
     // ID is the unique identifier for the policy
-    ID  string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                              example:"pol_8x2m9k4n7p5q"`
+    ID  string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                    example:"pol_8x2m9k4n7p5q"`
     // Effect specifies whether the policy is an allow or deny policy
-    Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                                example:"allow"`
+    Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
     // Action specifies the action that the policy is applied to
-    Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                                 example:"read"`
+    Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                       example:"read"`
     // Resource specifies the resource type that the policy is applied to
-    Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag assistant" example:"repository"`
+    Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
     // ResourceID is used to specify which resource the policy is applied to.
     // When undefined, the policy is applied to all resources of the given type.
     //
@@ -4032,6 +3695,7 @@ type Policy struct {
     // - workflows
     // - connections
     // - repositories
+    // - workspace tags
     // - users
     //
     // It is not applicable for:
@@ -4046,9 +3710,9 @@ type Policy struct {
     // Note that some resources point to their parent resource's ID:
     // - repository objects, branches, tags, and commits point to their repository's ID
     // - workflow runs point to their workflow's ID
-    ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                                     example:"repo_8x2m9k4n7p5q"`
+    ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                           example:"repo_8x2m9k4n7p5q"`
     // Principal specifies which group of users the policy is applied to
-    Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                              example:"role"`
+    Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                    example:"role"`
     // Role is used to give a policy to a specific role
     Role *Role `json:"role,omitempty"`
     // User is used to give a policy to a specific workspace user
@@ -4171,8 +3835,6 @@ const (
     PolicyResourceBilling PolicyResource = "billing"
     // PolicyResourceWorkspaceTag represents a workspace tag resource.
     PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
-    // PolicyResourceAssistant represents an assistant resource.
-    PolicyResourceAssistant PolicyResource = "assistant"
 )
 ```
 

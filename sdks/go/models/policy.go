@@ -64,8 +64,6 @@ const (
 	PolicyResourceBilling PolicyResource = "billing"
 	// PolicyResourceWorkspaceTag represents a workspace tag resource.
 	PolicyResourceWorkspaceTag PolicyResource = "workspace_tag"
-	// PolicyResourceAssistant represents an assistant resource.
-	PolicyResourceAssistant PolicyResource = "assistant"
 )
 
 // PolicyPrincipal specifies which group of users the policy is applied to.
@@ -83,13 +81,13 @@ const (
 // Policy represents a policy in the API response.
 type Policy struct {
 	// ID is the unique identifier for the policy
-	ID string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                              example:"pol_8x2m9k4n7p5q"`
+	ID string `json:"id"                    validate:"required,validsqid=policies"                                                                                                                                                                                                    example:"pol_8x2m9k4n7p5q"`
 	// Effect specifies whether the policy is an allow or deny policy
-	Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                                example:"allow"`
+	Effect PolicyEffect `json:"effect"                validate:"required,oneof=allow deny"                                                                                                                                                                                                      example:"allow"`
 	// Action specifies the action that the policy is applied to
-	Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                                 example:"read"`
+	Action PolicyAction `json:"action"                validate:"required,oneof=create read update delete"                                                                                                                                                                                       example:"read"`
 	// Resource specifies the resource type that the policy is applied to
-	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag assistant" example:"repository"`
+	Resource PolicyResource `json:"resource"              validate:"required,oneof=workspace editor_script query workflow workflow_run connection repository repository_branch repository_tag repository_commit repository_object user policy invite audit_log documentation billing workspace_tag" example:"repository"`
 	// ResourceID is used to specify which resource the policy is applied to.
 	// When undefined, the policy is applied to all resources of the given type.
 	//
@@ -98,6 +96,7 @@ type Policy struct {
 	// - workflows
 	// - connections
 	// - repositories
+	// - workspace tags
 	// - users
 	//
 	// It is not applicable for:
@@ -112,9 +111,9 @@ type Policy struct {
 	// Note that some resources point to their parent resource's ID:
 	// - repository objects, branches, tags, and commits point to their repository's ID
 	// - workflow runs point to their workflow's ID
-	ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                                     example:"repo_8x2m9k4n7p5q"`
+	ResourceID *string `json:"resource_id,omitempty"                                                                                                                                                                                                                                           example:"repo_8x2m9k4n7p5q"`
 	// Principal specifies which group of users the policy is applied to
-	Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                              example:"role"`
+	Principal PolicyPrincipal `json:"principal"             validate:"required,oneof=workspace_user role everyone"                                                                                                                                                                                    example:"role"`
 	// Role is used to give a policy to a specific role
 	Role *Role `json:"role,omitempty"`
 	// User is used to give a policy to a specific workspace user
