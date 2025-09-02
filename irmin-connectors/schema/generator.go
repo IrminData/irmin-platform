@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -34,11 +35,12 @@ type Field struct {
 type Generator struct {
 	duckdbClient *duckdb.InMemoryClient
 	logger       *slog.Logger
+	ctx          context.Context
 }
 
 // NewGenerator creates a new schema generator with DuckDB backend.
-func NewGenerator(logger *slog.Logger) (*Generator, error) {
-	client, err := duckdb.NewInMemoryClient(logger)
+func NewGenerator(c context.Context, logger *slog.Logger) (*Generator, error) {
+	client, err := duckdb.NewInMemoryClient(c, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DuckDB client: %w", err)
 	}
@@ -46,6 +48,7 @@ func NewGenerator(logger *slog.Logger) (*Generator, error) {
 	return &Generator{
 		duckdbClient: client,
 		logger:       logger,
+		ctx:          c,
 	}, nil
 }
 
@@ -86,7 +89,7 @@ func (g *Generator) GenerateObjectSchema(
 	tableName := fmt.Sprintf("schema_analysis_%d", time.Now().UnixNano())
 
 	// Load the data into DuckDB
-	err := g.duckdbClient.LoadFileFromBytes(data, filename, tableName)
+	err := g.duckdbClient.LoadFileFromBytes(g.ctx, data, filename, tableName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load data into DuckDB: %w", err)
 	}
@@ -116,7 +119,7 @@ func (g *Generator) GenerateObjectSchemaFromData(
 	tableName := fmt.Sprintf("schema_analysis_%d", time.Now().UnixNano())
 
 	// Load the data into DuckDB
-	err := g.duckdbClient.CreateTableFromData(tableName, data)
+	err := g.duckdbClient.CreateTableFromData(g.ctx, tableName, data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create table from data: %w", err)
 	}
@@ -159,7 +162,7 @@ func (g *Generator) generateStructuredObjectSchema(
 	schema.Schema = &jsonSchema
 
 	// Clean up the temporary table
-	_, err = g.duckdbClient.ExecuteNonQuery(fmt.Sprintf("DROP TABLE IF EXISTS %s", tableName))
+	_, err = g.duckdbClient.ExecuteNonQuery(g.ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", tableName))
 	if err != nil {
 		g.logger.Warn("failed to clean up temporary table", "table", tableName, "error", err)
 	}
@@ -178,7 +181,7 @@ func (g *Generator) getDuckDBSchema(tableName string) ([]Field, error) {
 		ORDER BY ordinal_position
 	`, tableName)
 
-	rows, err := g.duckdbClient.ExecuteQuery(query)
+	rows, err := g.duckdbClient.ExecuteQuery(g.ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query schema information: %w", err)
 	}

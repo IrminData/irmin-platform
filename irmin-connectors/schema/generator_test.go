@@ -11,7 +11,7 @@ import (
 func TestNewGenerator(t *testing.T) {
 	logger := slog.Default()
 
-	generator, err := schema.NewGenerator(logger)
+	generator, err := schema.NewGenerator(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create schema generator: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestNewGenerator(t *testing.T) {
 
 func TestGenerateSchemaFromData(t *testing.T) {
 	logger := slog.Default()
-	generator, err := schema.NewGenerator(logger)
+	generator, err := schema.NewGenerator(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create schema generator: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestGenerateSchemaFromData(t *testing.T) {
 
 func TestGenerateSchemaFromBytes(t *testing.T) {
 	logger := slog.Default()
-	generator, err := schema.NewGenerator(logger)
+	generator, err := schema.NewGenerator(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create schema generator: %v", err)
 	}
@@ -118,7 +118,7 @@ Bob,35,Chicago,68000.75`)
 
 func TestGenerateSchemaFromJSON(t *testing.T) {
 	logger := slog.Default()
-	generator, err := schema.NewGenerator(logger)
+	generator, err := schema.NewGenerator(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create schema generator: %v", err)
 	}
@@ -217,7 +217,7 @@ func TestCoreAPIObjectTypeDetection(t *testing.T) {
 
 func TestParseObjectDetailsIntegration(t *testing.T) {
 	logger := slog.Default()
-	generator, err := schema.NewGenerator(logger)
+	generator, err := schema.NewGenerator(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create schema generator: %v", err)
 	}
@@ -266,7 +266,7 @@ func TestParseObjectDetailsIntegration(t *testing.T) {
 
 func TestGenerateSchemaFromBytesWithBinaryData(t *testing.T) {
 	logger := slog.Default()
-	generator, err := schema.NewGenerator(logger)
+	generator, err := schema.NewGenerator(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create schema generator: %v", err)
 	}
@@ -302,7 +302,7 @@ func TestGenerateSchemaFromBytesWithBinaryData(t *testing.T) {
 
 func TestEnhancedMetadata(t *testing.T) {
 	logger := slog.Default()
-	generator, err := schema.NewGenerator(logger)
+	generator, err := schema.NewGenerator(t.Context(), logger)
 	if err != nil {
 		t.Fatalf("Failed to create schema generator: %v", err)
 	}

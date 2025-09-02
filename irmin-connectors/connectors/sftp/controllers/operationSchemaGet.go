@@ -265,12 +265,12 @@ func (p *SFTPSchemaProvider) getPushSchema() *irminmodels.ObjectSchema {
 
 // analyzeFilesInPath analyzes files in the specified SFTP path and returns their schemas.
 func (p *SFTPSchemaProvider) analyzeFilesInPath(
-	_ context.Context,
+	ctx context.Context,
 	sftpClient *sftpclient.SftpClient,
 	path string,
 ) ([]*irminmodels.ObjectSchema, error) {
 	// Create schema generator
-	generator, err := schema.NewGenerator(slog.Default())
+	generator, err := schema.NewGenerator(ctx, slog.Default())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create schema generator: %w", err)
 	}
