@@ -102,6 +102,14 @@ curl -X POST http://localhost:3000/api/chat \
 
 See [.env.example](.env.example) for required and optional variables.
 
+To set environment variables, copy the `.env.example` file and update the variables as required.
+```bash
+cp .env.example .env
+# Add your API keys and update other variables as required:
+# GROQ_API_KEY=your_groq_api_key
+# OPENAI_API_KEY=your_openai_api_key
+```
+
 ## Commands
 
 ```bash
