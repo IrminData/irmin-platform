@@ -71,6 +71,22 @@ export class AgentsManager {
           throw new Error('Conversation not found');
         }
         conversation = existingConversation[0];
+
+        // Check if conversation has an agentId set
+        if (conversation.agentId && conversation.agentId !== agentId) {
+          throw new Error(
+            `This conversation is associated with agent '${conversation.agentId}' and cannot be used with agent '${agentId}'`
+          );
+        }
+
+        // If conversation doesn't have an agentId set, update it to the current agent
+        if (!conversation.agentId) {
+          await db
+            .update(conversations)
+            .set({ agentId, updatedAt: new Date() })
+            .where(eq(conversations.id, conversation.id));
+          conversation.agentId = agentId;
+        }
       } else {
         // Create new conversation with initial fallback title
         const id = randomUUID();
@@ -81,6 +97,7 @@ export class AgentsManager {
             input.message.substring(0, 50) +
             (input.message.length > 50 ? '...' : ''),
           metadata: {},
+          agentId,
           workspaceSlug: input.workspace.slug,
           userId: input.user.id,
           createdAt: now,

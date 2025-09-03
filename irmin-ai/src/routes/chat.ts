@@ -81,6 +81,17 @@ export async function chatRoutes(fastify: FastifyInstance) {
             return;
           }
           conversation = existingConversation[0];
+
+          // For chat route, ensure the conversation doesn't have an agentId set
+          // (chat route is for regular chat, not agent-specific conversations)
+          if (conversation.agentId) {
+            sendInternalServerError(
+              reply,
+              'This conversation is associated with a specific agent and cannot be used for regular chat',
+              fastify.log
+            );
+            return;
+          }
         } else {
           // Create new conversation with initial fallback title
           const id = randomUUID();

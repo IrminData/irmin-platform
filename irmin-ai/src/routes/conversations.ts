@@ -1,6 +1,6 @@
 import { conversations, db, messages, type NewConversation } from '@/database';
 import { randomUUID } from 'crypto';
-import { and, asc, count, desc, eq, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, sum } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
@@ -35,6 +35,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
       limit?: string;
       sortBy?: string;
       sortOrder?: string;
+      agentId?: string;
     };
   }>(
     '/conversations',
@@ -50,6 +51,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           : 20;
         const sortBy = request.query.sortBy || 'updatedAt';
         const sortOrder = request.query.sortOrder || 'desc';
+        const agentId = request.query.agentId;
 
         // Validate parsed values
         if (page < 1) {
@@ -69,16 +71,31 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           throw new Error('Workspace and authentication context required');
         }
 
-        // Count total records for this workspace and user
+        // Build base where conditions
+        const baseConditions = and(
+          eq(conversations.workspaceSlug, workspaceContext.slug),
+          eq(conversations.userId, authContext.user.id)
+        );
+
+        // Add agentId filtering
+        let whereConditions = baseConditions;
+        if (agentId === '') {
+          // Empty string means "chat only" (null agentId)
+          whereConditions = and(baseConditions, isNull(conversations.agentId));
+        } else if (agentId !== undefined) {
+          // Specific agentId filter
+          whereConditions = and(
+            baseConditions,
+            eq(conversations.agentId, agentId)
+          );
+        }
+        // If agentId is undefined, no additional filtering (show all conversations)
+
+        // Count total records for this workspace and user with agentId filter
         const totalResult = await db
           .select({ count: count() })
           .from(conversations)
-          .where(
-            and(
-              eq(conversations.workspaceSlug, workspaceContext.slug),
-              eq(conversations.userId, authContext.user.id)
-            )
-          );
+          .where(whereConditions);
         const total = totalResult[0]?.count || 0;
 
         // Get sorted column
@@ -97,6 +114,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             id: conversations.id,
             title: conversations.title,
             metadata: conversations.metadata,
+            agentId: conversations.agentId,
             createdAt: conversations.createdAt,
             updatedAt: conversations.updatedAt,
             messageCount: count(messages.id),
@@ -105,12 +123,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           })
           .from(conversations)
           .leftJoin(messages, eq(conversations.id, messages.conversationId))
-          .where(
-            and(
-              eq(conversations.workspaceSlug, workspaceContext.slug),
-              eq(conversations.userId, authContext.user.id)
-            )
-          )
+          .where(whereConditions)
           .groupBy(conversations.id)
           .orderBy(orderFn(sortColumn))
           .limit(limit)
@@ -266,7 +279,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const { title, metadata } = ConversationRequestSchema.parse(
+        const { title, metadata, agentId } = ConversationRequestSchema.parse(
           request.body
         );
 
@@ -281,15 +294,16 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         const id = randomUUID();
         const now = new Date();
 
-        const newConversation: NewConversation = {
+        const newConversation = {
           id,
           title: title || 'New Conversation',
           metadata,
+          agentId: agentId ?? null,
           workspaceSlug: workspaceContext.slug,
           userId: authContext.user.id,
           createdAt: now,
           updatedAt: now,
-        };
+        } satisfies NewConversation;
 
         await db.insert(conversations).values(newConversation);
 
@@ -359,6 +373,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         if (updateData.title !== undefined) updates.title = updateData.title;
         if (updateData.metadata !== undefined)
           updates.metadata = updateData.metadata;
+        if (updateData.agentId !== undefined)
+          updates.agentId = updateData.agentId ?? null;
 
         await db
           .update(conversations)

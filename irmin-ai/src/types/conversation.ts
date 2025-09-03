@@ -6,6 +6,7 @@ import { MessageSchema } from './chat';
 export const ConversationRequestSchema = z.object({
   title: z.string().optional(),
   metadata: z.unknown().optional(),
+  agentId: z.string().optional(),
 });
 
 // Conversation schema
@@ -13,6 +14,7 @@ export const ConversationSchema = z.object({
   id: z.string(),
   title: z.string(),
   metadata: z.unknown().optional(),
+  agentId: z.string().nullable(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
@@ -22,6 +24,7 @@ const ConversationWithStatsSchema = z.object({
   id: z.string(),
   title: z.string(),
   metadata: z.unknown().optional(),
+  agentId: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   messageCount: z.number(),

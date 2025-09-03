@@ -63,6 +63,7 @@ const conversationSchema = {
     id: { type: 'string' },
     title: { type: 'string' },
     metadata: { type: 'object' },
+    agentId: { type: 'string', nullable: true },
     workspaceSlug: { type: 'string' },
     userId: { type: 'string' },
     createdAt: { type: 'string', format: 'date-time' },
@@ -503,6 +504,11 @@ export const swaggerSchemas = {
           description: 'Sort order',
           default: 'desc',
         },
+        agentId: {
+          type: 'string',
+          description:
+            'Filter by agent ID. Empty string for chat-only conversations (null agentId), specific agentId for agent-specific conversations, or omit for all conversations',
+        },
       },
       additionalProperties: false,
     },
@@ -594,6 +600,7 @@ export const swaggerSchemas = {
       properties: {
         title: { type: 'string' },
         metadata: { type: 'object' },
+        agentId: { type: 'string' },
       },
       additionalProperties: false,
     },
@@ -623,6 +630,7 @@ export const swaggerSchemas = {
       properties: {
         title: { type: 'string' },
         metadata: { type: 'object' },
+        agentId: { type: 'string' },
       },
       additionalProperties: false,
     },

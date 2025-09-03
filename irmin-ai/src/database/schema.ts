@@ -13,6 +13,9 @@ export const conversations = pgTable('conversations', {
   title: text('title').notNull(),
   metadata: jsonb('metadata').default({}),
 
+  // Agent association (null for regular chat conversations)
+  agentId: text('agent_id'),
+
   // Workspace and user association
   workspaceSlug: text('workspace_slug').notNull(),
   userId: text('user_id').notNull(),
