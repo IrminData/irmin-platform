@@ -17,7 +17,10 @@ import {
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
 import { sendOkResponse } from '@/utils/responses';
-import { createStoredUIMessageStream } from '@/utils/streaming';
+import {
+  applyStreamingHeaders,
+  createStoredUIMessageStream,
+} from '@/utils/streaming';
 
 export async function agentRoutes(fastify: FastifyInstance) {
   const agentsManager = new AgentsManager();
@@ -181,11 +184,16 @@ export async function agentRoutes(fastify: FastifyInstance) {
         });
 
         if (response.agentResponse.stream) {
-          // Add custom headers
-          reply.header('X-Agent-Id', agentId);
-          if (response.conversationId) {
-            reply.header('X-Conversation-Id', response.conversationId);
-          }
+          // Add custom and streaming-friendly headers
+          applyStreamingHeaders(reply, {
+            'X-Agent-Id': agentId,
+            ...(response.conversationId
+              ? { 'X-Conversation-Id': response.conversationId }
+              : {}),
+            ...(response.userMessageId
+              ? { 'X-Message-Id': response.userMessageId }
+              : {}),
+          });
 
           // Get the agent info for model details
           const agent = agentsManager

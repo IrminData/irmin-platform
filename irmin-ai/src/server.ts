@@ -38,6 +38,8 @@ server.register(helmet, {
 server.register(cors, {
   origin: env.CORS_ORIGINS === '*' ? true : env.CORS_ORIGINS.split(','),
   credentials: env.CORS_CREDENTIALS,
+  // Ensure custom headers are exposed so the browser can read them
+  exposedHeaders: ['X-Conversation-Id', 'X-Agent-Id', 'X-Message-Id'],
 });
 
 // Register Swagger

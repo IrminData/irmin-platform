@@ -34,7 +34,11 @@ export class AgentsManager {
   async executeAgent(
     agentId: string,
     input: AgentInput
-  ): Promise<{ agentResponse: AgentResponse; conversationId: string }> {
+  ): Promise<{
+    agentResponse: AgentResponse;
+    conversationId: string;
+    userMessageId: string;
+  }> {
     const agent = this.agents.get(agentId);
     if (!agent) {
       throw new Error(`Agent ${agentId} not found`);
@@ -227,6 +231,7 @@ export class AgentsManager {
           },
         },
         conversationId: conversation.id,
+        userMessageId,
       };
     } catch (error) {
       // Log error analytics only if we have a valid conversation ID

@@ -73,11 +73,20 @@ export function createStoredUIMessageStream(
                     fullContent += chunk.delta;
                   }
 
+                  // Skip empty text-delta chunks to reduce noise
+                  if (chunk.type === 'text-delta' && !chunk.delta) {
+                    continue;
+                  }
+
                   // Convert the chunk to a JSON string and enqueue immediately
                   const chunkData = JSON.stringify(chunk);
-                  controller.enqueue(
-                    new TextEncoder().encode(chunkData + '\n')
+                  const encodedChunk = new TextEncoder().encode(
+                    chunkData + '\n'
                   );
+                  controller.enqueue(encodedChunk);
+
+                  // Force immediate delivery without buffering
+                  await new Promise((resolve) => setImmediate(resolve));
                 }
               }
             }
@@ -163,4 +172,26 @@ export function createStoredUIMessageStream(
       }
     },
   });
+}
+
+/**
+ * Apply standard streaming headers to a Fastify reply.
+ * Keeps streaming behavior consistent and avoids proxy buffering.
+ */
+export function applyStreamingHeaders(
+  reply: import('fastify').FastifyReply,
+  extraHeaders?: Record<string, string | number | boolean>
+) {
+  reply
+    .header('Content-Type', 'application/x-ndjson; charset=utf-8')
+    .header('Cache-Control', 'no-cache, no-transform')
+    .header('Connection', 'keep-alive')
+    // Disable proxy buffering for Nginx
+    .header('X-Accel-Buffering', 'no');
+
+  if (extraHeaders) {
+    for (const [key, value] of Object.entries(extraHeaders)) {
+      reply.header(key, value);
+    }
+  }
 }

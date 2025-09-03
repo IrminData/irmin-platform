@@ -7,7 +7,7 @@ export const agentConfig: AgentConfig = {
     'General purpose chat agent that can answer questions and help with tasks',
   type: 'chat',
   modelProvider: 'groq',
-  model: 'qwen/qwen3-32b',
+  model: 'moonshotai/kimi-k2-instruct',
   temperature: 0.7,
   maxTokens: 4000,
   responseFormat: 'markdown',

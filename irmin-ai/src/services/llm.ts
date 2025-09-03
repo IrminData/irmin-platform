@@ -55,6 +55,7 @@ class LlmService {
           model: model || this.defaultGroqModel,
           temperature,
           maxTokens,
+          streaming: true, // Explicit streaming optimization
         })
       );
     } else {
@@ -64,6 +65,7 @@ class LlmService {
           model: model || this.defaultOpenAIModel,
           temperature,
           maxTokens,
+          streaming: true, // Explicit streaming optimization
         })
       );
     }

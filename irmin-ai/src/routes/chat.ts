@@ -26,7 +26,10 @@ import {
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
 import { sendOkResponse } from '@/utils/responses';
-import { createStoredUIMessageStream } from '@/utils/streaming';
+import {
+  applyStreamingHeaders,
+  createStoredUIMessageStream,
+} from '@/utils/streaming';
 
 export async function chatRoutes(fastify: FastifyInstance) {
   // POST /api/chat - Send a message and get AI response (with streaming support)
@@ -199,9 +202,11 @@ export async function chatRoutes(fastify: FastifyInstance) {
             },
           });
 
-          // Add custom headers
-          reply.header('X-Conversation-Id', conversation.id);
-          reply.header('X-Message-Id', userMessageId);
+          // Add custom and streaming-friendly headers
+          applyStreamingHeaders(reply, {
+            'X-Conversation-Id': conversation.id,
+            'X-Message-Id': userMessageId,
+          });
 
           // Create the stored UI message stream using the shared utility
           const streamStartTime = Date.now(); // Capture start time for accurate processing time calculation
