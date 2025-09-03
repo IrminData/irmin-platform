@@ -12,6 +12,7 @@ import {
   type ConversationRequest,
   ConversationRequestSchema,
   ConversationSchema,
+  ConversationWithStatsSchema,
   MessagesResponseSchema,
   PaginatedConversationsResponseSchema,
 } from '@/types/conversation';
@@ -115,6 +116,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             title: conversations.title,
             metadata: conversations.metadata,
             agentId: conversations.agentId,
+            workspaceSlug: conversations.workspaceSlug,
+            userId: conversations.userId,
             createdAt: conversations.createdAt,
             updatedAt: conversations.updatedAt,
             messageCount: count(messages.id),
@@ -177,22 +180,41 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         }
 
         const conversation = await db
-          .select()
+          .select({
+            id: conversations.id,
+            title: conversations.title,
+            metadata: conversations.metadata,
+            agentId: conversations.agentId,
+            workspaceSlug: conversations.workspaceSlug,
+            userId: conversations.userId,
+            createdAt: conversations.createdAt,
+            updatedAt: conversations.updatedAt,
+            messageCount: count(messages.id),
+            totalTokens: sum(messages.totalTokens),
+            totalCost: sum(messages.costUSD),
+          })
           .from(conversations)
+          .leftJoin(messages, eq(conversations.id, messages.conversationId))
           .where(
             and(
               eq(conversations.id, id),
               eq(conversations.workspaceSlug, workspaceContext.slug),
               eq(conversations.userId, authContext.user.id)
             )
-          );
+          )
+          .groupBy(conversations.id);
 
         if (!conversation.length) {
           sendNotFoundError(reply, 'Conversation not found', fastify.log);
           return;
         }
 
-        sendOkResponse(reply, ConversationSchema, conversation[0], fastify.log);
+        sendOkResponse(
+          reply,
+          ConversationWithStatsSchema,
+          conversation[0],
+          fastify.log
+        );
         return;
       } catch (error) {
         const errorMessage =

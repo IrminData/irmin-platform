@@ -20,11 +20,13 @@ export const ConversationSchema = z.object({
 });
 
 // Conversation with stats schema
-const ConversationWithStatsSchema = z.object({
+export const ConversationWithStatsSchema = z.object({
   id: z.string(),
   title: z.string(),
   metadata: z.unknown().optional(),
   agentId: z.string().nullable(),
+  workspaceSlug: z.string(),
+  userId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   messageCount: z.number(),
