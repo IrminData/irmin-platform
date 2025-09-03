@@ -721,6 +721,11 @@ const fi = {
     forward: 'Eteenpäin',
     thisIsDetailedExplanation:
       'Tämä on yksityiskohtainen selitys {approach} lähestymistavasta.',
+
+    // Message Actions
+    copyMessage: 'Kopioi viesti',
+    messageCopied: 'Viesti kopioitu leikepöydälle',
+    copyFailed: 'Viestin kopiointi epäonnistui',
   },
 
   // === USER MANAGEMENT ===

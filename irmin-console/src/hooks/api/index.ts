@@ -50,11 +50,12 @@ export * from './useRoles';
 export * from './useInvite';
 export * from './useInvites';
 
-// Assistant hooks
-export * from './useAssistantConversations';
-export * from './useAssistantConversation';
-export * from './useAssistantQuery';
-export * from './useAssistantScripting';
+// AI hooks
+export * from './useAIAgent';
+export * from './useAIChat';
+export * from './useAIConversations';
+export * from './useAIConversation';
+export * from './useAIInfo';
 
 // Other API hooks
 export * from './useCredentials';

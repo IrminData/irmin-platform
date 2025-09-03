@@ -1,4 +1,4 @@
-name: Workflow
+name: Format, Lint & Build
 on:
   workflow_dispatch:
   pull_request:

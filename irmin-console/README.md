@@ -15,51 +15,14 @@ Ensure you have the following installed:
 
 ## Environment Configuration (.env)
 
-Create a `.env` file in the project root. Add the following environment variables:
+See [.env.example](.env.example) for required and optional variables.
 
-```text
-# Basic settings
-NEXT_PUBLIC_BASE_URL=https://console.irmin.dev  # Base URL of the console
-NEXT_PUBLIC_WEBSITE_URL=https://irmin.dev  # Website URL
-NODE_ENV=development  # Environment type. Can be development, staging or production.
-NEXT_PUBLIC_REVALIDATE="60" # Revalidation time in seconds for ISR (Incremental Static Regeneration)
-
-# Vercel
-ENABLE_EXPERIMENTAL_COREPACK=1
-
-# API settings
-NEXT_PUBLIC_API_URL=https://api.irmin.dev/api  # API endpoint URL
-API_SYSTEM_TOKEN=abcxyz  # System token for API requests
-
-# Environment authentication requirements (eg. password protection for staging)
-REQUIRE_ENV_AUTH=true  # Enable environment-specific authentication
-ENV_PASSWORD=devpassword  # Password for environment authentication
-
-# Sentry for error tracking
-SENTRY_AUTH_TOKEN=sntryu_xxxxx  # Sentry token for error tracking
-NEXT_PUBLIC_SENTRY_DSN=https://ingest.de.sentry.io/xxxxx  # Sentry DSN for error tracking
-SENTRY_SUPPRESS_TURBOPACK_WARNING=1 # Suppress Turbopack warning in Sentry
-
-# Posthog key for analytics
-NEXT_PUBLIC_POSTHOG_KEY="phc_abc123" # Posthog project key
-NEXT_PUBLIC_POSTHOG_HOST="https://eu.i.posthog.com" # Posthog host URL
-
-# Clerk for authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-CLERK_SECRET_KEY=YOUR_SECRET_KEY
-
-# Novu for notifications
-NEXT_PUBLIC_NOVU_APP_ID=1234 # Novu app ID
-NOVU_SECRET_KEY=abc123 # Novu secret key
-
-# Environmant variables for e2e testing
-TEST_USER_EMAIL=example@example.com # Irmin user email to run tests with
-TEST_USER_PASSWORD=12345678 # Irmin user password to run tests with
-TEST_USER_WORKSPACE="Example Core" # Workspace available for the test user
-TEST_USER_WORKSPACE_SLUG="example-core" # Slug of the workspace available for the test user
-TEST_USER_REPOSITORY="KPIs and Performance Metrics" # Repository available for the test user
-TEST_USER_REPOSITORY_SLUG="kpi-and-performance-metrics" # Slug of the repository available for the test user
-
+To set environment variables, copy the `.env.example` file and update the variables as required.
+```bash
+cp .env.example .env
+# Add your API keys and update other variables as required:
+# API_SYSTEM_TOKEN=your_irmin_system_token
+# CLERK_SECRET_KEY=your_clerk_secret_key
 ```
 
 ## Running the Project

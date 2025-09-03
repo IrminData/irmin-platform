@@ -95,7 +95,6 @@ const useConsoleNavigationLinks = (): {
           title: dict.assistant.title,
           href: `${workspaceUrl}/assistant`,
           icon: <TbCircle />,
-          hide: !isResourceAllowed('assistant', 'read'),
         },
         {
           title: dict.consoleNavigation.editor,

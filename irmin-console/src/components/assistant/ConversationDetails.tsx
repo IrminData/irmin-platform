@@ -14,14 +14,14 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useAssistantConversation } from '@/hooks/api/useAssistantConversation';
+import { useAIConversation } from '@/hooks/api/useAIConversation';
 
 import { formatTimestamp } from '@/utils/formatTimestamp';
 
-import type { AssistantConversation } from '@/types/core/Assistant';
+import type { AIConversation } from '@/types/ai/base';
 
 interface ConversationDetailsProps {
-  conversation?: AssistantConversation | null;
+  conversation?: AIConversation | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCloseConversation: () => void;
@@ -35,16 +35,9 @@ export default function ConversationDetails({
 }: ConversationDetailsProps) {
   const { locale, dict } = useLocale();
   const {
-    clearAssistantConversationMutation,
-    deleteAssistantConversationMutation,
+    deleteAIConversationMutation,
     handleDeleteConversation: deleteConversation,
-  } = useAssistantConversation(conversation?.id || '');
-
-  const handleClearConversation = () => {
-    if (conversation?.id) {
-      clearAssistantConversationMutation.mutate(conversation.id);
-    }
-  };
+  } = useAIConversation(conversation?.id || '');
 
   const handleDeleteConversation = () => {
     deleteConversation();
@@ -60,17 +53,10 @@ export default function ConversationDetails({
           {conversation && (
             <SheetDescription>
               {dict.assistant.created}:{' '}
-              {formatTimestamp(conversation.created_at, locale)}
+              {formatTimestamp(conversation.createdAt, locale)}
               <br />
               {dict.assistant.lastUpdated}:{' '}
-              {formatTimestamp(conversation.updated_at, locale)}
-              {conversation.last_message_at && (
-                <>
-                  <br />
-                  {dict.assistant.lastMessage}:{' '}
-                  {formatTimestamp(conversation.last_message_at, locale)}
-                </>
-              )}
+              {formatTimestamp(conversation.updatedAt, locale)}
             </SheetDescription>
           )}
         </SheetHeader>
@@ -81,50 +67,29 @@ export default function ConversationDetails({
                 {dict.assistant.totalMessages}:
               </span>
               <Badge variant='secondary'>
-                {conversation?.total_messages ?? 0}
-              </Badge>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-sm font-medium'>
-                {dict.assistant.userMessages}:
-              </span>
-              <Badge variant='outline'>
-                {conversation?.user_messages ?? 0}
-              </Badge>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-sm font-medium'>
-                {dict.assistant.assistantMessages}:
-              </span>
-              <Badge variant='outline'>
-                {conversation?.assistant_messages ?? 0}
+                {conversation?.messageCount ?? 0}
               </Badge>
             </div>
             <div className='flex justify-between'>
               <span className='text-sm font-medium'>
                 {dict.assistant.estimatedTokens}:
               </span>
+              <Badge variant='outline'>{conversation?.totalTokens ?? 0}</Badge>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-sm font-medium'>Total Cost:</span>
               <Badge variant='outline'>
-                {conversation?.estimated_tokens ?? 0}
+                ${(conversation?.totalCost ?? 0).toFixed(4)}
               </Badge>
             </div>
           </div>
         </div>
         <SheetFooter className='flex-col gap-2'>
           <Button
-            variant='ghost'
-            size='sm'
-            onClick={handleClearConversation}
-            loading={clearAssistantConversationMutation.isPending}
-            disabled={!conversation}
-          >
-            {dict.assistant.clearConversation}
-          </Button>
-          <Button
             variant='destructive'
             size='sm'
             onClick={handleDeleteConversation}
-            loading={deleteAssistantConversationMutation.isPending}
+            loading={deleteAIConversationMutation.isPending}
             disabled={!conversation}
           >
             {dict.assistant.deleteConversation}

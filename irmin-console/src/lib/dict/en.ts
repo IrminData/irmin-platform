@@ -736,6 +736,11 @@ const en = {
     forward: 'Forward',
     thisIsDetailedExplanation:
       'This is a detailed explanation of the {approach} approach.',
+
+    // Message Actions
+    copyMessage: 'Copy message',
+    messageCopied: 'Message copied to clipboard',
+    copyFailed: 'Failed to copy message',
   },
 
   // === USER MANAGEMENT ===

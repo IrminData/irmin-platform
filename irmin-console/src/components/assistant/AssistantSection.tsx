@@ -2,12 +2,11 @@
 
 import { useState } from 'react';
 
-import { TbMessageCircle, TbX } from 'react-icons/tb';
+import { TbMenu2, TbX } from 'react-icons/tb';
 
-import AssistantChat from '@/components/assistant/AssistantChat';
+import AgentChat from '@/components/assistant/AgentChat';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/EmptyState';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import {
   Sheet,
@@ -16,9 +15,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import type { AssistantConversation } from '@/types/core/Assistant';
+import type { AIConversation } from '@/types/ai/base';
 
 import ConversationDetails from './ConversationDetails';
 import ConversationsList from './ConversationsList';
@@ -30,10 +31,31 @@ import ConversationsList from './ConversationsList';
  */
 export default function AssistantSection() {
   const { dict } = useLocale();
+  const { workspaceSlug } = useWorkspaceContext();
+  const { profile } = useIAM();
   const [selectedConversation, setSelectedConversation] =
-    useState<AssistantConversation | null>(null);
+    useState<AIConversation | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  // Handle when a new conversation is created
+  const handleConversationCreated = (conversationId: string) => {
+    // Create a temporary conversation object to select
+    const newConversation: AIConversation = {
+      id: conversationId,
+      title: 'New Conversation',
+      workspaceSlug,
+      userId: profile?.id ?? '',
+      metadata: {},
+      agentId: 'chat', // Chat agent conversation
+      messageCount: 1,
+      totalTokens: 0,
+      totalCost: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setSelectedConversation(newConversation);
+  };
 
   return (
     <SafeComponent
@@ -90,12 +112,29 @@ export default function AssistantSection() {
             `}
           >
             <Card className='flex h-full flex-col shadow-none'>
-              <CardHeader className='flex flex-row items-center justify-between'>
-                <CardTitle>
-                  {selectedConversation
-                    ? selectedConversation.title
-                    : dict.assistant.title}
-                </CardTitle>
+              <CardHeader
+                className={`
+                  flex flex-row items-center justify-between border-b
+                  border-border p-2
+                  xl:p-6
+                `}
+              >
+                <div className='flex items-center gap-2'>
+                  {/* Mobile conversation list toggle button */}
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => setSidebarOpen(true)}
+                    className='xl:hidden'
+                  >
+                    <TbMenu2 size={16} />
+                  </Button>
+                  <CardTitle>
+                    {selectedConversation
+                      ? selectedConversation.title || 'Untitled Conversation'
+                      : dict.assistant.title}
+                  </CardTitle>
+                </div>
                 {/* Mobile conversation details toggle */}
                 {selectedConversation && (
                   <Button
@@ -108,36 +147,12 @@ export default function AssistantSection() {
                   </Button>
                 )}
               </CardHeader>
-              <CardContent className='flex-1 overflow-hidden'>
-                {selectedConversation ? (
-                  <AssistantChat conversationID={selectedConversation.id} />
-                ) : (
-                  <div className='flex h-full flex-col overflow-y-auto'>
-                    <EmptyState
-                      icon={<TbMessageCircle className='size-full' />}
-                      title={dict.assistant.noConversationSelected}
-                      description={
-                        dict.assistant.noConversationSelectedDescription
-                      }
-                      size='md'
-                      className='mt-6'
-                    />
-                    {/* Mobile conversation list when no conversation selected */}
-                    <div
-                      className={`
-                        mt-6 max-h-96
-                        xl:hidden
-                      `}
-                    >
-                      <ConversationsList
-                        selectedConversation={selectedConversation}
-                        onSelectConversation={setSelectedConversation}
-                        onSidebarClose={() => {}}
-                        onDetailsOpen={() => setDetailsOpen(true)}
-                      />
-                    </div>
-                  </div>
-                )}
+              <CardContent className='flex-1 overflow-hidden p-0'>
+                <AgentChat
+                  conversationID={selectedConversation?.id || null}
+                  agentId='chat' // Use the general assistant agent
+                  onConversationCreated={handleConversationCreated}
+                />
               </CardContent>
             </Card>
           </div>

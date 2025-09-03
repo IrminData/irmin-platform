@@ -23,8 +23,7 @@ export type PolicyResource =
   | 'audit_log'
   | 'documentation'
   | 'billing'
-  | 'workspace_tag'
-  | 'assistant';
+  | 'workspace_tag';
 
 export type PolicyPrincipal = 'workspace_user' | 'role' | 'everyone';
 

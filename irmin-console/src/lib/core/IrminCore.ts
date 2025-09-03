@@ -8,9 +8,6 @@ import type {
   IrminAPIResponse,
 } from '@/types/core/IrminAPIResponse';
 
-import AssistantQueryService from './resources/AssistantQueryService';
-import AssistantScriptingService from './resources/AssistantScriptingService';
-import AssistantService from './resources/AssistantService';
 import ConnectionService from './resources/ConnectionService';
 import ConnectorService from './resources/ConnectorService';
 import CredentialService from './resources/CredentialService';
@@ -74,9 +71,6 @@ class IrminCore {
   public credentialService: CredentialService;
   public policyService: PolicyService;
   public tagService: TagService;
-  public assistantService: AssistantService;
-  public assistantScriptingService: AssistantScriptingService;
-  public assistantQueryService: AssistantQueryService;
 
   /**
    * Creates an instance of IrminCore.
@@ -113,9 +107,6 @@ class IrminCore {
     this.credentialService = new CredentialService(this);
     this.policyService = new PolicyService(this);
     this.tagService = new TagService(this);
-    this.assistantService = new AssistantService(this);
-    this.assistantScriptingService = new AssistantScriptingService(this);
-    this.assistantQueryService = new AssistantQueryService(this);
   }
 
   /**

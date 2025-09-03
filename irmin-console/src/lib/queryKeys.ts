@@ -265,30 +265,36 @@ export const logEventsQueryKey = (
 export const storedQueriesQueryKey = (workspaceSlug: string) =>
   ['stored-queries', workspaceSlug] as const;
 
-// Assistant related query keys
-export const assistantConversationsQueryKey = (workspaceSlug: string) =>
-  ['assistant-conversations', workspaceSlug] as const;
+// Agent related query keys
+export const aiConversationsQueryKey = (
+  workspaceSlug: string,
+  pagination?: {
+    page?: number;
+    limit?: number;
+    sortBy?: 'title' | 'createdAt' | 'updatedAt';
+    sortOrder?: 'asc' | 'desc';
+    agentId?: string;
+  }
+) => ['ai-conversations', workspaceSlug, pagination] as const;
 
-export const assistantConversationQueryKey = (
+export const aiConversationQueryKey = (
   workspaceSlug: string,
   conversationID: string
-) =>
-  [
-    'assistant-conversation-with-messages',
-    workspaceSlug,
-    conversationID,
-  ] as const;
+) => ['ai-conversation', workspaceSlug, conversationID] as const;
 
-export const assistantConversationStatsQueryKey = (
+export const aiConversationMessagesQueryKey = (
   workspaceSlug: string,
   conversationID: string
-) => ['assistant-conversation-stats', workspaceSlug, conversationID] as const;
+) => ['ai-conversation-messages', workspaceSlug, conversationID] as const;
 
-// Assistant Query related query keys
-export const assistantQueryConversationsQueryKey = (workspaceSlug: string) =>
-  ['assistant-query-conversations', workspaceSlug] as const;
+export const aiAgentsListQueryKey = (workspaceSlug: string) =>
+  ['ai-agents', workspaceSlug] as const;
 
-// Assistant Scripting related query keys
-export const assistantScriptingConversationsQueryKey = (
-  workspaceSlug: string
-) => ['assistant-scripting-conversations', workspaceSlug] as const;
+export const aiAgentConfigQueryKey = (workspaceSlug: string, agentId: string) =>
+  ['ai-agent-config', workspaceSlug, agentId] as const;
+
+export const aiModelsQueryKey = (workspaceSlug: string) =>
+  ['ai-models', workspaceSlug] as const;
+
+export const aiToolsQueryKey = (workspaceSlug: string) =>
+  ['ai-tools', workspaceSlug] as const;
