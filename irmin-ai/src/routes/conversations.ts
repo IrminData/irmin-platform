@@ -12,8 +12,8 @@ import {
   type ConversationRequest,
   ConversationRequestSchema,
   ConversationSchema,
+  MessagesResponseSchema,
   PaginatedConversationsResponseSchema,
-  PaginatedMessagesResponseSchema,
 } from '@/types/conversation';
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
@@ -196,7 +196,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   // GET /api/conversations/:id/messages - Get conversation messages
   fastify.get<{
     Params: ConversationParams;
-    Querystring: { page?: string; limit?: string; sortOrder?: string };
+    Querystring: { sortOrder?: string };
   }>(
     '/conversations/:id/messages',
     {
@@ -207,21 +207,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         const { id } = request.params;
 
         // Parse query parameters manually since we're using JSON schema validation
-        const page = request.query.page ? parseInt(request.query.page, 10) : 1;
-        const limit = request.query.limit
-          ? parseInt(request.query.limit, 10)
-          : 50;
         const sortOrder = request.query.sortOrder || 'asc';
-
-        // Validate parsed values
-        if (page < 1) {
-          throw new Error('Page must be at least 1');
-        }
-        if (limit < 1 || limit > 100) {
-          throw new Error('Limit must be between 1 and 100');
-        }
-
-        const offset = (page - 1) * limit;
 
         // Get workspace and user context from middleware
         const workspaceContext = request.workspace;
@@ -247,38 +233,18 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           return;
         }
 
-        // Count messages
-        const totalResult = await db
-          .select({ count: count() })
-          .from(messages)
-          .where(eq(messages.conversationId, id));
-        const total = totalResult[0]?.count || 0;
-
-        // Get messages
+        // Get all messages
         const orderFn = sortOrder === 'asc' ? asc : desc;
         const data = await db
           .select()
           .from(messages)
           .where(eq(messages.conversationId, id))
-          .orderBy(orderFn(messages.createdAt))
-          .limit(limit)
-          .offset(offset);
+          .orderBy(orderFn(messages.createdAt));
 
         const response = {
           data,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-          },
         };
-        sendOkResponse(
-          reply,
-          PaginatedMessagesResponseSchema,
-          response,
-          fastify.log
-        );
+        sendOkResponse(reply, MessagesResponseSchema, response, fastify.log);
         return;
       } catch (error) {
         const errorMessage =

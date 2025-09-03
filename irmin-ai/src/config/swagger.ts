@@ -548,8 +548,7 @@ export const swaggerSchemas = {
   getMessages: {
     tags: ['Conversations'],
     summary: 'Get messages by conversation ID',
-    description:
-      'Retrieves a paginated list of messages for a specific conversation by its ID',
+    description: 'Retrieves all messages for a specific conversation by its ID',
     security: [{ bearerAuth: [], workspaceHeader: [] }],
     params: {
       type: 'object',
@@ -561,22 +560,24 @@ export const swaggerSchemas = {
     querystring: {
       type: 'object',
       properties: {
-        page: { type: 'string', pattern: '^[1-9]\\d*$' },
-        limit: { type: 'string', pattern: '^[1-9]\\d*$' },
-        sortOrder: { type: 'string', enum: ['asc', 'desc'] },
+        sortOrder: {
+          type: 'string',
+          enum: ['asc', 'desc'],
+          description: 'Sort order for messages',
+          default: 'asc',
+        },
       },
       additionalProperties: false,
     },
     response: {
       200: {
-        description: 'Paginated list of messages',
+        description: 'List of messages',
         type: 'object',
         properties: {
           data: {
             type: 'array',
             items: messageSchema,
           },
-          pagination: paginationSchema,
         },
       },
     },

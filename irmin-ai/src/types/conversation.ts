@@ -40,15 +40,9 @@ export const PaginatedConversationsResponseSchema = z.object({
   }),
 });
 
-// Paginated messages response schema
-export const PaginatedMessagesResponseSchema = z.object({
+// Messages response schema (non-paginated)
+export const MessagesResponseSchema = z.object({
   data: z.array(MessageSchema),
-  pagination: z.object({
-    page: z.number(),
-    limit: z.number(),
-    total: z.number(),
-    totalPages: z.number(),
-  }),
 });
 
 // Type exports
