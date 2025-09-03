@@ -5,7 +5,6 @@ import { env } from './config/env';
 
 Sentry.init({
   dsn: env.SENTRY_DSN,
-  debug: env.NODE_ENV === 'production' ? false : true,
   environment: env.NODE_ENV,
   release: process.env.npm_package_version || '1.0.0',
 
