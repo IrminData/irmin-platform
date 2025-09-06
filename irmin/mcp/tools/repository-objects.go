@@ -13,70 +13,63 @@ import (
 )
 
 type listRepositoryObjectsArgs struct {
-	WorkspaceSlug  string `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to list repository objects in"`
-	RepositorySlug string `json:"repository_slug" jsonschema:"required,The slug of the repository to list objects in"`
-	Ref            string `json:"ref"             jsonschema:"The reference to list objects from. Can be branches, tags or commit hashes. If not provided, the default branch will be used."`
+	WorkspaceSlug  string  `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to list repository objects in"`
+	RepositorySlug string  `json:"repository_slug" jsonschema:"required,The slug of the repository to list objects in"`
+	Ref            *string `json:"ref"             jsonschema:"The reference to list objects from. Can be branches, tags or commit hashes. If not provided, the default branch will be used."`
 }
 
 type getRepositoryObjectSchemaArgs struct {
-	WorkspaceSlug  string `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to get the repository object schema in"`
-	RepositorySlug string `json:"repository_slug" jsonschema:"required,The slug of the repository to get the repository object schema in"`
-	Branch         string `json:"branch"          jsonschema:"optional,The branch to get the repository object schema from. If not provided, the default branch will be used."`
-	Path           string `json:"path"            jsonschema:"The path to get the repository object schema from. For example, 'users.json' or 'users/user_123.json'"`
+	WorkspaceSlug  string  `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to get the repository object schema in"`
+	RepositorySlug string  `json:"repository_slug" jsonschema:"required,The slug of the repository to get the repository object schema in"`
+	Branch         *string `json:"branch"          jsonschema:"optional,The branch to get the repository object schema from. If not provided, the default branch will be used."`
+	Path           string  `json:"path"            jsonschema:"The path to get the repository object schema from. For example, 'users.json' or 'users/user_123.json'"`
 }
 
 type getRepositoryObjectContentArgs struct {
-	WorkspaceSlug  string `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to get the repository object content in"`
-	RepositorySlug string `json:"repository_slug" jsonschema:"required,The slug of the repository to get the repository object content in"`
-	Branch         string `json:"branch"          jsonschema:"optional,The branch to get the repository object content from. If not provided, the default branch will be used."`
-	Path           string `json:"path"            jsonschema:"required,The path to get the repository object content from. For example, 'users.json' or 'users/user_123.json'"`
+	WorkspaceSlug  string  `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to get the repository object content in"`
+	RepositorySlug string  `json:"repository_slug" jsonschema:"required,The slug of the repository to get the repository object content in"`
+	Branch         *string `json:"branch"          jsonschema:"optional,The branch to get the repository object content from. If not provided, the default branch will be used."`
+	Path           string  `json:"path"            jsonschema:"required,The path to get the repository object content from. For example, 'users.json' or 'users/user_123.json'"`
 }
 
 type getRepositoryObjectHistoryArgs struct {
-	WorkspaceSlug  string `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to get the repository object history in"`
-	RepositorySlug string `json:"repository_slug" jsonschema:"required,The slug of the repository to get the repository object history in"`
-	Branch         string `json:"branch"          jsonschema:"required,The branch to get the repository object history from. If not provided, the default branch will be used."`
-	Path           string `json:"path"            jsonschema:"required,The path to get the repository object history from. For example, 'users.json' or 'users/user_123.json'"`
+	WorkspaceSlug  string  `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to get the repository object history in"`
+	RepositorySlug string  `json:"repository_slug" jsonschema:"required,The slug of the repository to get the repository object history in"`
+	Branch         *string `json:"branch"          jsonschema:"required,The branch to get the repository object history from. If not provided, the default branch will be used."`
+	Path           string  `json:"path"            jsonschema:"required,The path to get the repository object history from. For example, 'users.json' or 'users/user_123.json'"`
 }
 
-type moveOrCopyAction string
-
-const (
-	moveOrCopyActionMove moveOrCopyAction = "move"
-	moveOrCopyActionCopy moveOrCopyAction = "copy"
-)
-
 type moveOrCopyRepositoryObjectArgs struct {
-	WorkspaceSlug  string           `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to move or copy the repository object in"`
-	RepositorySlug string           `json:"repository_slug" jsonschema:"required,The slug of the repository to move or copy the repository object in"`
-	Branch         string           `json:"branch"          jsonschema:"required,The branch where the object being moved or copied is located. Can be branches, tags or commit hashes. If not provided, the default branch will be used."`
-	Action         moveOrCopyAction `json:"action"          jsonschema:"required,The action to perform on the repository object. Can be 'move' or 'copy'. If not provided, the object will be moved or copied to the root of the repository."`
-	Path           string           `json:"path"            jsonschema:"required,The path to move or copy the repository object from. If not provided, the object will be moved or copied from the root of the repository."`
-	NewPath        string           `json:"new_path"        jsonschema:"required,The path to move or copy the repository object to. If not provided, the object will be moved or copied to the root of the repository."`
+	WorkspaceSlug  string  `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to move or copy the repository object in"`
+	RepositorySlug string  `json:"repository_slug" jsonschema:"required,The slug of the repository to move or copy the repository object in"`
+	Branch         *string `json:"branch"          jsonschema:"required,The branch where the object being moved or copied is located. Can be branches, tags or commit hashes. If not provided, the default branch will be used."`
+	Action         string  `json:"action"          jsonschema:"required,The action to perform on the repository object. Can be 'move' or 'copy'. If not provided, the object will be moved or copied to the root of the repository."`
+	Path           string  `json:"path"            jsonschema:"required,The path to move or copy the repository object from. If not provided, the object will be moved or copied from the root of the repository."`
+	NewPath        string  `json:"new_path"        jsonschema:"required,The path to move or copy the repository object to. If not provided, the object will be moved or copied to the root of the repository."`
 }
 
 type saveTextRepositoryObjectArgs struct {
-	WorkspaceSlug  string `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to save the text repository object in"`
-	RepositorySlug string `json:"repository_slug" jsonschema:"required,The slug of the repository to save the text repository object in"`
-	Branch         string `json:"branch"          jsonschema:"required,The branch to save the text repository object to. If not provided, the default branch will be used."`
-	Path           string `json:"path"            jsonschema:"required,The full path, with a filename, to save the new object to. For example, 'users.json' or 'users/user_123.json'"`
-	Content        string `json:"content"         jsonschema:"required,The text content to save to the repository object, which could be a JSON, YAML, XML, TXT, CSV, etc."`
+	WorkspaceSlug  string  `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to save the text repository object in"`
+	RepositorySlug string  `json:"repository_slug" jsonschema:"required,The slug of the repository to save the text repository object in"`
+	Branch         *string `json:"branch"          jsonschema:"required,The branch to save the text repository object to. If not provided, the default branch will be used."`
+	Path           string  `json:"path"            jsonschema:"required,The full path, with a filename, to save the new object to. For example, 'users.json' or 'users/user_123.json'"`
+	Content        string  `json:"content"         jsonschema:"required,The text content to save to the repository object, which could be a JSON, YAML, XML, TXT, CSV, etc."`
 }
 
 type uploadRepositoryObjectFromURLArgs struct {
 	WorkspaceSlug  string            `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to upload the repository object from a URL in"`
 	RepositorySlug string            `json:"repository_slug" jsonschema:"required,The slug of the repository to upload the repository object from a URL in"`
-	Branch         string            `json:"branch"          jsonschema:"required,The branch to upload the repository object from a URL to. If not provided, the default branch will be used."`
+	Branch         *string           `json:"branch"          jsonschema:"required,The branch to upload the repository object from a URL to. If not provided, the default branch will be used."`
 	Path           string            `json:"path"            jsonschema:"required,The path to upload the repository object from a URL to. For example, 'users.json' or 'users/user_123.json'"`
 	URL            string            `json:"url"             jsonschema:"required,The URL to GET the repository object from. For example, 'https://example.com/users.json' or 'https://example.com/users/user_123.json'"`
 	Headers        map[string]string `json:"headers"         jsonschema:"optional,The headers to pass to the URL. For example, 'Authorization: Bearer <token>', would be a JSON object with the key 'Authorization' and the value 'Bearer <token>'"`
 }
 
 type deleteRepositoryObjectArgs struct {
-	WorkspaceSlug  string `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to delete the repository object in"`
-	RepositorySlug string `json:"repository_slug" jsonschema:"required,The slug of the repository to delete the repository object in"`
-	Branch         string `json:"branch"          jsonschema:"required,The branch to delete the repository object from. If not provided, the default branch will be used."`
-	Path           string `json:"path"            jsonschema:"required,The path to delete the repository object from. For example, 'users.json' or 'users/user_123.json'"`
+	WorkspaceSlug  string  `json:"workspace_slug"  jsonschema:"required,The slug of the workspace to delete the repository object in"`
+	RepositorySlug string  `json:"repository_slug" jsonschema:"required,The slug of the repository to delete the repository object in"`
+	Branch         *string `json:"branch"          jsonschema:"required,The branch to delete the repository object from. If not provided, the default branch will be used."`
+	Path           string  `json:"path"            jsonschema:"required,The path to delete the repository object from. For example, 'users.json' or 'users/user_123.json'"`
 }
 
 // RegisterRepositoryObjectsTools registers all repository object-related tools.
@@ -126,6 +119,12 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
+			// Determine the ref to list the objects from
+			ref := args.Ref
+			if ref == nil {
+				ref = &repository.DefaultBranch
+			}
+
 			// List the objects in the repository
 			rootObject, _, _, err := mcpTools.apiServices.GetRepositoryObject(
 				ctx,
@@ -134,7 +133,7 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 				workspace,
 				repository,
 				"",
-				args.Ref,
+				*ref,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error listing repository objects", "error", err)
@@ -197,8 +196,8 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 
 			// Determine the branch to get the repository object schema from
 			branch := args.Branch
-			if branch == "" {
-				branch = repository.DefaultBranch
+			if branch == nil {
+				branch = &repository.DefaultBranch
 			}
 
 			// Get the repository object
@@ -209,7 +208,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 				workspace,
 				repository,
 				args.Path,
-				branch,
+				*branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
@@ -224,7 +223,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 				workspace,
 				repository,
 				object,
-				branch,
+				*branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object schema", "error", err)
@@ -307,8 +306,8 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 
 			// Determine the branch to get the repository object content from
 			branch := args.Branch
-			if branch == "" {
-				branch = repository.DefaultBranch
+			if branch == nil {
+				branch = &repository.DefaultBranch
 			}
 
 			// Get the repository object
@@ -319,7 +318,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 				workspace,
 				repository,
 				args.Path,
-				args.Branch,
+				*branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
@@ -406,6 +405,12 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
+			// Determine the branch to get the repository object history from
+			branch := args.Branch
+			if branch == nil {
+				branch = &repository.DefaultBranch
+			}
+
 			// Get the repository object
 			object, _, _, err := mcpTools.apiServices.GetRepositoryObject(
 				ctx,
@@ -414,7 +419,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 				workspace,
 				repository,
 				args.Path,
-				args.Branch,
+				*branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
@@ -479,6 +484,12 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
+			// Determine the branch to save the text repository object to
+			branch := args.Branch
+			if branch == nil {
+				branch = &repository.DefaultBranch
+			}
+
 			// Create a file from the content
 			fileContent := irminutils.NewFile(args.Content, args.Path)
 			file := fileContent.MultipartFile()
@@ -491,7 +502,7 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 				workspace,
 				repository,
 				args.Path,
-				args.Branch,
+				*branch,
 				file,
 			)
 			if err != nil {
@@ -553,6 +564,12 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
+			// Determine the branch to upload the repository object from the URL to
+			branch := args.Branch
+			if branch == nil {
+				branch = &repository.DefaultBranch
+			}
+
 			// Upload the object from the URL to the path in the repository at ref
 			object, err := mcpTools.apiServices.UploadRepositoryObjectFromURL(
 				ctx,
@@ -561,7 +578,7 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 				workspace,
 				repository,
 				args.Path,
-				args.Branch,
+				*branch,
 				args.URL,
 				args.Headers,
 			)
@@ -590,6 +607,8 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 }
 
 // registerMoveOrCopyRepositoryObjectTool registers the move_or_copy_repository_object tool for moving or copying a repository object in a workspace
+//
+//nolint:gocognit // Nothing complex, just wanted to put both copy and move in the same tool
 func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
@@ -624,6 +643,12 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
+			// Determine the branch to move or copy the repository object from
+			branch := args.Branch
+			if branch == nil {
+				branch = &repository.DefaultBranch
+			}
+
 			// Get the object
 			object, _, _, err := mcpTools.apiServices.GetRepositoryObject(
 				ctx,
@@ -632,7 +657,7 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 				workspace,
 				repository,
 				args.Path,
-				args.Branch,
+				*branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
@@ -640,7 +665,7 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 			}
 
 			// Move or copy the object
-			if args.Action == moveOrCopyActionMove {
+			if args.Action == "move" {
 				// Move the object
 				object, err = mcpTools.apiServices.MoveRepositoryObject(
 					ctx,
@@ -719,6 +744,12 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
 			}
 
+			// Determine the branch to delete the repository object from
+			branch := args.Branch
+			if branch == nil {
+				branch = &repository.DefaultBranch
+			}
+
 			// Get the object
 			object, _, _, err := mcpTools.apiServices.GetRepositoryObject(
 				ctx,
@@ -727,7 +758,7 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 				workspace,
 				repository,
 				args.Path,
-				args.Branch,
+				*branch,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
