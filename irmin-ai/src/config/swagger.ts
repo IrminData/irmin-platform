@@ -43,14 +43,41 @@ const messageSchema = {
     role: { type: 'string', enum: ['user', 'assistant', 'system'] },
     content: { type: 'string' },
     metadata: { type: 'object' },
+
+    // Message block structure
+    messageType: {
+      type: 'string',
+      enum: [
+        'text',
+        'tool_call',
+        'tool_result',
+        'reasoning',
+        'source',
+        'file',
+        'error',
+        'system',
+      ],
+      default: 'text',
+    },
+    blockId: { type: 'string', nullable: true },
+    parentBlockId: { type: 'string', nullable: true },
+    blockOrder: { type: 'number', default: 0 },
+
+    // AI model information
     aiModelId: { type: 'string', nullable: true },
     modelProvider: { type: 'string', nullable: true },
     modelName: { type: 'string', nullable: true },
+
+    // Token usage and costs
     inputTokens: { type: 'number', nullable: true },
     outputTokens: { type: 'number', nullable: true },
     totalTokens: { type: 'number', nullable: true },
     costUSD: { type: 'number', nullable: true },
+
+    // Performance metrics
     processingTimeMs: { type: 'number', nullable: true },
+
+    // Timestamps
     createdAt: { type: 'string', format: 'date-time' },
     updatedAt: { type: 'string', format: 'date-time' },
   },
@@ -152,7 +179,7 @@ export const swaggerSchemas = {
     tags: ['Chat'],
     summary: 'Send a chat message',
     description:
-      'Sends a message to the AI assistant and receives a response. Supports both streaming and non-streaming modes.',
+      'Sends a message to the AI assistant and receives a response. Supports both streaming and non-streaming modes. When toolSelection is provided, enables iterative tool calling via LangGraph for enhanced problem-solving capabilities.',
     security: [{ bearerAuth: [], workspaceHeader: [] }],
     body: {
       type: 'object',
@@ -207,7 +234,11 @@ export const swaggerSchemas = {
         type: 'object',
         properties: {
           conversationId: { type: 'string' },
-          message: messageSchema,
+          messages: {
+            type: 'array',
+            items: messageSchema,
+            description: 'Array of message blocks representing the AI response',
+          },
           usage: usageSchema,
         },
       },
@@ -326,7 +357,7 @@ export const swaggerSchemas = {
     tags: ['Agents'],
     summary: 'Execute an agent (non-streaming)',
     description:
-      'Executes a specific agent with the provided message and context. Returns a complete response.',
+      'Executes a specific agent with the provided message and context. Returns a complete response. Supports iterative tool calling via LangGraph when tools are available.',
     security: [{ bearerAuth: [], workspaceHeader: [] }],
     params: {
       type: 'object',
@@ -379,6 +410,14 @@ export const swaggerSchemas = {
           conversationId: { type: 'string' },
           usage: usageSchema,
           processingTimeMs: { type: 'number' },
+          toolCalls: {
+            type: 'number',
+            description: 'Number of tool calls made during execution',
+          },
+          iterations: {
+            type: 'number',
+            description: 'Number of thinking iterations performed',
+          },
         },
       },
     },
@@ -388,7 +427,7 @@ export const swaggerSchemas = {
     tags: ['Agents'],
     summary: 'Execute an agent (streaming)',
     description:
-      'Executes a specific agent with streaming response. Returns a stream of response chunks.',
+      'Executes a specific agent with streaming response. Returns a stream of response chunks including tool calls, thinking steps, and final results. Supports iterative tool calling via LangGraph when tools are available.',
     security: [{ bearerAuth: [], workspaceHeader: [] }],
     params: {
       type: 'object',
@@ -433,12 +472,14 @@ export const swaggerSchemas = {
     },
     response: {
       200: {
-        description: 'Streaming response (text/plain)',
+        description:
+          'Streaming response (text/plain) with JSON chunks for different event types',
         content: {
           'text/plain': {
             schema: {
               type: 'string',
-              description: 'Stream of JSON chunks separated by newlines',
+              description:
+                'Stream of JSON chunks separated by newlines. Event types include: iteration, tool_calls, tool_result, thinking, completed, error',
             },
           },
         },

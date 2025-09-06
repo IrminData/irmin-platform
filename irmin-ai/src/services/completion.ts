@@ -1,98 +1,101 @@
 import type { Message } from '@/database';
-import type { AIMessageChunk } from '@langchain/core/messages';
+import { AIMessageChunk } from '@langchain/core/messages';
 import type { StructuredTool } from '@langchain/core/tools';
 import type { IterableReadableStream } from '@langchain/core/utils/stream';
 
+import { agentGraphService } from '@/services/agentGraph';
 import { analyticsService } from '@/services/analytics';
 import { type LLMProvider, llmService, type ModelInfo } from '@/services/llm';
 import { mcpService } from '@/services/mcp';
 
-import { type ToolSelection } from '@/types/agents';
+import { DEFAULT_LLM_CONFIG } from '@/config/defaults';
 
-interface CompletionOptions {
+import type { ToolSelection } from '@/types/agents';
+import type { MessageBlock } from '@/types/blocks';
+
+import { processStreamingResponse } from '@/utils/streaming';
+
+export interface CompletionOptions {
   messages: Message[];
+  conversationId: string;
+  userMessageId?: string; // Optional, used for analytics
   provider?: LLMProvider;
   model?: string;
   temperature?: number;
   maxTokens?: number;
   systemPrompt?: string;
   toolSelection?: ToolSelection;
-  authToken?: string;
+  authToken?: string; // Only needed when Irmin MCP is used
+  useAgentGraph?: boolean; // Use LangGraph for iterative tool calling
+  maxToolCalls?: number; // Maximum tool calls for agent graph
 }
 
 class CompletionService {
   /**
-   * Create a streaming response for agents (returns AIMessageChunk)
+   * Create a streaming response with tools support
    */
   async createStreamingResponse(
     options: CompletionOptions
-  ): Promise<IterableReadableStream<AIMessageChunk>> {
-    const {
-      messages,
-      provider = 'groq',
-      model,
-      temperature = 0.7,
-      maxTokens = 1000,
-      systemPrompt,
-      toolSelection,
-      authToken,
-    } = options;
-
+  ): Promise<ReadableStream<AIMessageChunk>> {
     const startTime = Date.now();
 
-    // Get the model used for the completion
-    const usedModel = model || llmService.getDefaultModels()[provider];
+    const usedModel =
+      options.model ||
+      llmService.getDefaultModels()[
+        options.provider || DEFAULT_LLM_CONFIG.provider
+      ];
+
+    // Use agent graph for iterative tool calling if requested and tools are available
+    if (options.useAgentGraph) {
+      const agentStream = await agentGraphService.executeAgentStream(options);
+      return this.wrapStreamWithAnalytics(
+        agentStream,
+        options,
+        usedModel,
+        startTime,
+        DEFAULT_LLM_CONFIG.provider
+      );
+    }
 
     try {
-      // Get MCP tools if enabled (per-request)
-      const tools = toolSelection
-        ? await this.createMcpTools(authToken, toolSelection)
+      // Get MCP tools if enabled
+      const tools = options.toolSelection
+        ? await this.createMcpTools(options.authToken, options.toolSelection)
         : [];
 
       // Create model with tools
       const llm = llmService.createModel({
-        provider,
+        provider: options.provider || DEFAULT_LLM_CONFIG.provider,
         model: usedModel,
-        temperature,
-        maxTokens,
+        temperature: options.temperature || DEFAULT_LLM_CONFIG.temperature,
+        maxTokens: options.maxTokens || DEFAULT_LLM_CONFIG.maxTokens,
         tools,
       });
 
       // Convert messages to LangChain format
       const langchainMessages = llmService.convertMessagesToLangChain(
-        messages,
-        systemPrompt
+        options.messages,
+        options.systemPrompt
       );
 
       // Create streaming response
       const stream = await llm.stream(langchainMessages);
 
-      const processingTimeMs = Date.now() - startTime;
-
-      // Usage tracking for streaming is handled at the route level where the full content is accumulated
-
-      // Log custom event for streaming performance
-      await analyticsService.logCustomEvent({
-        eventType: 'model_used',
-        tokenCount: 0, // Will be calculated later
-        costUSD: 0, // Will be calculated later
-        processingTimeMs,
-        eventData: {
-          provider,
-          model: usedModel,
-          streaming: true,
-          messageCount: messages.length,
-        },
-      });
-
-      return stream;
+      // Wrap the stream to capture analytics when it completes
+      return this.wrapStreamWithAnalytics(
+        stream,
+        options,
+        usedModel,
+        startTime,
+        DEFAULT_LLM_CONFIG.provider
+      );
     } catch (error) {
       // Log error analytics
       await analyticsService.logError(
         'completion_streaming',
         error instanceof Error ? error.message : 'Unknown error',
-        undefined,
-        undefined
+        options.conversationId,
+        options.userMessageId
       );
 
       console.error('Completion service error:', error);
@@ -103,89 +106,66 @@ class CompletionService {
   }
 
   /**
-   * Create a non-streaming response (fallback)
+   * Create a non-streaming response with block information
    */
   async createResponse(options: CompletionOptions): Promise<{
     content: string;
-    usage: {
-      promptTokens: number;
-      completionTokens: number;
-      totalTokens: number;
-    };
+    blocks: MessageBlock[];
   }> {
-    const {
-      messages,
-      provider = 'groq',
-      model,
-      temperature = 0.7,
-      maxTokens = 1000,
-      systemPrompt,
-      toolSelection,
-      authToken,
-    } = options;
-
-    const startTime = Date.now();
-
-    // Get the model used for the completion
-    const usedModel = model || llmService.getDefaultModels()[provider];
-
     try {
-      // Get MCP tools if enabled (per-request)
-      const tools = toolSelection
-        ? await this.createMcpTools(authToken, toolSelection)
-        : [];
+      // Use streaming response internally to handle all cases including agent graph
+      const stream = await this.createStreamingResponse(options);
 
-      // Create model with tools
-      const llm = llmService.createModel({
-        provider,
-        model: usedModel,
-        temperature,
-        maxTokens,
-        tools,
+      // Use the centralized stream processing logic
+      const result = await processStreamingResponse(stream, {
+        conversationId: options.conversationId,
+        startTime: Date.now(),
+        modelProvider: options.provider || DEFAULT_LLM_CONFIG.provider,
+        model:
+          options.model ||
+          llmService.getDefaultModels()[
+            options.provider || DEFAULT_LLM_CONFIG.provider
+          ],
+        history: options.messages,
+        returnStream: false,
       });
 
-      // Convert messages to LangChain format
-      const langchainMessages = llmService.convertMessagesToLangChain(
-        messages,
-        systemPrompt
-      );
+      // Convert the result to the expected format
+      const blocks: MessageBlock[] = (result.messages || []).map((msg) => ({
+        id: msg.blockId || `block-${Date.now()}-${Math.random()}`,
+        type: msg.messageType as
+          | 'text'
+          | 'tool_call'
+          | 'tool_result'
+          | 'reasoning'
+          | 'source'
+          | 'file'
+          | 'error'
+          | 'system',
+        content: msg.content,
+        order: msg.blockOrder,
+        metadata: msg.metadata,
+        parentBlockId: msg.parentBlockId || undefined,
+        toolCallId: msg.metadata?.toolCallId as string,
+        toolName: msg.metadata?.toolName as string,
+        sourceId: msg.metadata?.sourceId as string,
+        url: msg.metadata?.url as string,
+      }));
 
-      // Get response
-      const result = await llm.invoke(langchainMessages);
-      const content = result.content as string;
-
-      // Calculate usage
-      const calculatedUsage = llmService.calculateUsage(
-        messages,
-        content,
-        provider,
-        usedModel
-      );
-      const processingTimeMs = Date.now() - startTime;
-
-      // Log model usage analytics
-      await analyticsService.logModelUsage(
-        usedModel,
-        calculatedUsage.totalTokens,
-        calculatedUsage.totalCost,
-        processingTimeMs
-      );
+      // Extract full content from blocks
+      const fullContent = blocks.map((block) => block.content).join('\n');
 
       return {
-        content,
-        usage: {
-          promptTokens: calculatedUsage.inputTokens,
-          completionTokens: calculatedUsage.outputTokens,
-          totalTokens: calculatedUsage.totalTokens,
-        },
+        content: fullContent,
+        blocks,
       };
     } catch (error) {
       // Log error analytics
       await analyticsService.logError(
         'completion_non_streaming',
         error instanceof Error ? error.message : 'Unknown error',
-        undefined,
-        undefined
+        options.conversationId,
+        options.userMessageId
       );
 
       console.error('Non-streaming completion service error:', error);
@@ -193,6 +173,95 @@ class CompletionService {
         `Failed to create completion response: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+
+  /**
+   * Wrap a stream with analytics logging when it completes
+   */
+  private wrapStreamWithAnalytics(
+    stream: IterableReadableStream<AIMessageChunk>,
+    options: CompletionOptions,
+    usedModel: string,
+    startTime: number,
+    defaultProvider: string
+  ): ReadableStream<AIMessageChunk> {
+    let fullContent = '';
+    let hasLoggedAnalytics = false;
+
+    // Convert the async generator to a proper ReadableStream
+    return new ReadableStream<AIMessageChunk>({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            // Collect content for analytics
+            if (chunk.content) {
+              fullContent += chunk.content;
+            }
+            controller.enqueue(chunk);
+          }
+
+          // Log analytics when stream completes (only once)
+          if (!hasLoggedAnalytics) {
+            hasLoggedAnalytics = true;
+            try {
+              const processingTimeMs = Date.now() - startTime;
+              const calculatedUsage = llmService.calculateUsage(
+                options.messages,
+                fullContent,
+                (options.provider || defaultProvider) as LLMProvider,
+                usedModel
+              );
+
+              await analyticsService.logModelUsage(
+                usedModel,
+                calculatedUsage.totalTokens,
+                calculatedUsage.totalCost,
+                processingTimeMs,
+                options.conversationId,
+                options.userMessageId,
+                {
+                  provider: options.provider || defaultProvider,
+                  model: usedModel,
+                  temperature: options.temperature,
+                  toolSelection: options.toolSelection,
+                  useAgentGraph: options.useAgentGraph,
+                  maxToolCalls: options.maxToolCalls,
+                }
+              );
+            } catch (analyticsError) {
+              console.error('Analytics logging error:', analyticsError);
+              // Don't throw - analytics errors shouldn't break the stream
+            }
+          }
+
+          // Send completion event before closing
+          const completionEventChunk = new AIMessageChunk({
+            content: '',
+            additional_kwargs: {
+              stream_complete: true,
+            },
+          });
+          controller.enqueue(completionEventChunk);
+
+          controller.close();
+        } catch (error) {
+          console.error('Stream processing error:', error);
+
+          // Send error event before closing
+          const errorEventChunk = new AIMessageChunk({
+            content: '',
+            additional_kwargs: {
+              stream_error: true,
+              error_message:
+                error instanceof Error ? error.message : 'Unknown error',
+            },
+          });
+          controller.enqueue(errorEventChunk);
+
+          controller.error(error);
+        }
+      },
+    });
   }
 
   /**
@@ -218,20 +287,12 @@ class CompletionService {
 
   /**
    * Create MCP tools for a specific request
-   * This is per-request and doesn't maintain global state
    */
   async createMcpTools(
     authToken?: string,
     toolSelection?: ToolSelection
   ): Promise<StructuredTool[]> {
     return await mcpService.createMcpTools(authToken, toolSelection);
-  }
-
-  /**
-   * Cleanup resources
-   */
-  async cleanup(): Promise<void> {
-    // No cleanup needed for per-request MCP tools
   }
 }
 

@@ -1,5 +1,4 @@
 import type { AIMessageChunk } from '@langchain/core/messages';
-import type { IterableReadableStream } from '@langchain/core/utils/stream';
 
 import type { LLMProvider } from '@/services/llm';
 
@@ -7,6 +6,7 @@ import type { User } from '@/irmin-api/types/user';
 import type { Workspace } from '@/irmin-api/types/workspace';
 
 import { type ToolSelection } from '@/types/agents';
+import type { MessageBlock } from '@/types/blocks';
 
 interface ContextRequirement {
   type: 'string' | 'vector' | 'memory' | 'schema';
@@ -27,13 +27,15 @@ export interface AgentConfig {
   contextRequirements: ContextRequirement[];
   toolSelection?: ToolSelection;
   streaming: boolean;
+  useAgentGraph: boolean;
+  maxToolCalls: number;
 }
 
 export interface AgentInput {
   message: string;
+  conversationId: string;
   context?: Record<string, unknown>;
   authToken?: string;
-  conversationId?: string;
   metadata?: Record<string, unknown>;
   toolSelection?: ToolSelection;
   workspace: Workspace;
@@ -43,14 +45,10 @@ export interface AgentInput {
 
 export interface AgentResponse {
   content: string;
-  stream?: IterableReadableStream<AIMessageChunk>;
+  blocks?: MessageBlock[];
+  stream?: ReadableStream<AIMessageChunk>;
   metadata?: Record<string, unknown>;
   toolCalls?: unknown[];
-  usage?: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
 }
 
 export interface BaseAgentInterface {

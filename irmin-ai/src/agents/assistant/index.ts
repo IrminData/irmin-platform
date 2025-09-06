@@ -2,7 +2,7 @@ import { BaseAgent } from '@/agents/base';
 
 import { agentConfig } from './config';
 
-export class TitleGenerationAgent extends BaseAgent {
+export class AssistantAgent extends BaseAgent {
   constructor() {
     super(agentConfig);
   }

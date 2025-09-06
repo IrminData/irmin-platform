@@ -1,13 +1,14 @@
 import { AgentConfig } from '@/agents/types';
 
+import { DEFAULT_MODELS } from '@/config/defaults';
+
 export const agentConfig: AgentConfig = {
   id: 'scripting',
   name: 'Go Script Generator',
   description: 'Generates Go scripts from natural language descriptions',
   type: 'chat',
   modelProvider: 'groq',
-  model: 'moonshotai/kimi-k2-instruct',
-  temperature: 1,
+  model: DEFAULT_MODELS.groq,
   maxTokens: 2000,
   responseFormat: 'structured',
   contextRequirements: [],
@@ -15,4 +16,6 @@ export const agentConfig: AgentConfig = {
     includeAll: true,
   },
   streaming: false,
+  useAgentGraph: true,
+  maxToolCalls: 5,
 };

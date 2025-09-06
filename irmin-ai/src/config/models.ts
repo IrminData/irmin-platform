@@ -2,7 +2,7 @@ import type { NewAIModel } from '@/database';
 
 // TODO: Define maxContextTokens and maxOutputTokens for each model. This can then be used to validate model requests. Make sure this is used in LLM service and returned by the routes.
 
-export const defaultAIModels: NewAIModel[] = [
+export const availableAIModels: NewAIModel[] = [
   // OpenAI Models
   {
     name: 'GPT-5',
@@ -132,7 +132,7 @@ export async function seedDefaultModels() {
   const { db, aiModels } = await import('@/database');
   const { eq } = await import('drizzle-orm');
 
-  for (const modelData of defaultAIModels) {
+  for (const modelData of availableAIModels) {
     const existing = await db
       .select()
       .from(aiModels)

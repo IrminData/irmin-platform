@@ -6,7 +6,6 @@ import { completionService } from './completion';
 
 interface TitleGenerationOptions {
   message: string;
-  authToken: string;
   user: { id: string };
   workspace: { slug: string };
   conversationId?: string;
@@ -18,11 +17,11 @@ interface TitleGenerationResult {
 }
 
 class TitleGenerationService {
-  private readonly titleGenerationPrompt = `You are a title generator utility.
+  private readonly titleGenerationSystemPrompt = `You are a title generator utility.
 
 Instructions
 - Input: a user prompt, the first message in the conversation.
-- Output: a short, descriptive conversation title.
+- Output: a short, descriptive conversation title. Don't repeat the user's message in the title directly.
 - Constraints:
   - Max 50 characters.
   - No quotes, punctuation at ends, or extra text.
@@ -39,27 +38,45 @@ Instructions
   async generateTitle(
     options: TitleGenerationOptions
   ): Promise<TitleGenerationResult> {
-    const { message, authToken } = options;
+    const { message } = options;
 
     // Create fallback title
     const fallbackTitle = this.createFallbackTitle(message);
 
     try {
-      // Create a simple prompt for title generation
-      const titlePrompt = `${this.titleGenerationPrompt}
-
-User message: ${message}
-
-Title:`;
-
+      // Call the completion service
       const response = await completionService.createResponse({
-        messages: [],
+        messages: [
+          {
+            id: '1',
+            conversationId: options.conversationId || 'temp',
+            metadata: {},
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            role: 'user',
+            content: message,
+            messageType: 'text',
+            blockId: null,
+            parentBlockId: null,
+            blockOrder: 0,
+            aiModelId: null,
+            modelProvider: null,
+            modelName: null,
+            agentName: null,
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
+            costUSD: 0,
+            processingTimeMs: 0,
+          },
+        ],
+        conversationId: options.conversationId || 'temp',
         provider: 'groq',
         model: 'llama-3.1-8b-instant',
-        temperature: 0.7,
+        temperature: 1,
         maxTokens: 50,
-        systemPrompt: titlePrompt,
-        authToken,
+        systemPrompt: this.titleGenerationSystemPrompt,
+        useAgentGraph: false,
       });
 
       let generatedTitle = response.content.trim();

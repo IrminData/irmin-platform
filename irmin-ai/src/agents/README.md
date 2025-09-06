@@ -25,8 +25,8 @@ import { AgentsManager } from './agents';
 
 const agentsManager = new AgentsManager();
 
-// Execute chat agent
-const response = await agentsManager.executeAgent('chat', {
+// Execute assistant agent
+const response = await agentsManager.executeAgent('assistant', {
   message: "Help me understand microservices architecture",
   authToken: "your-irmin-auth-token",
   conversationId: "conv-123"
@@ -76,11 +76,11 @@ The agents now pass through LangChain streams directly instead of converting the
 
 ## Built-in Agents
 
-### Chat Agent
-General-purpose chat agent with full MCP tools access.
+### Assistant Agent
+General-purpose assistant agent with full MCP tools access.
 
 ```typescript
-const response = await agentsManager.executeAgent('chat', {
+const response = await agentsManager.executeAgent('assistant', {
   message: "What's the weather like and can you help me write some code?",
   authToken: token,
   conversationHistory: messages,
@@ -131,22 +131,6 @@ const response = await agentsManager.executeAgent('scripting', {
 - Project context awareness
 - Code best practices
 - Thinking enabled for complex logic
-
-### Title Generation Agent
-Creates concise titles for conversations.
-
-```typescript
-const response = await agentsManager.executeAgent('title-generation', {
-  message: "How do I optimize database queries for large datasets?",
-  conversationId: "conv-123"
-});
-```
-
-**Features:**
-- Ultra-fast responses
-- Minimal token usage
-- No tools required
-- Optimized for brevity
 
 ## Creating Custom Agents
 
@@ -395,7 +379,7 @@ Each agent can have a default `toolSelection` in its configuration:
 export const agentConfig: AgentConfig = {
   // ... other config
   toolSelection: {
-    includeAll: true  // Chat agent gets all tools by default
+    includeAll: true  // Assistant agent gets all tools by default
   },
 };
 ```
@@ -406,7 +390,7 @@ You can override the agent's default tool selection per request:
 
 ```typescript
 // Override to use only specific tools
-const response = await agentsManager.executeAgent('chat', {
+const response = await agentsManager.executeAgent('assistant', {
   message: "List workspaces",
   toolSelection: {
     includeTools: ["list_workspaces", "list_docs"]
@@ -414,7 +398,7 @@ const response = await agentsManager.executeAgent('chat', {
 });
 
 // Override to exclude specific tools
-const response = await agentsManager.executeAgent('chat', {
+const response = await agentsManager.executeAgent('assistant', {
   message: "Create a workspace",
   toolSelection: {
     excludeTools: ["delete_workspace", "delete_repository"]
@@ -422,7 +406,7 @@ const response = await agentsManager.executeAgent('chat', {
 });
 
 // Override to use no tools
-const response = await agentsManager.executeAgent('chat', {
+const response = await agentsManager.executeAgent('assistant', {
   message: "General question",
   toolSelection: undefined  // No tools
 });

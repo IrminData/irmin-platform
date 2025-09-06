@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { MessageBlockSchema } from '@/types/blocks';
+
 // Tool selection schema - allows specifying which tools to include
 export const ToolSelectionSchema = z.object({
   // Include all tools from specific MCP servers
@@ -37,16 +39,10 @@ export const AgentRequestSchema = z.object({
 // Agent response schema
 export const AgentResponseSchema = z.object({
   content: z.string(),
+  blocks: z.array(MessageBlockSchema).optional(),
   stream: z.unknown().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   toolCalls: z.array(z.unknown()).optional(),
-  usage: z
-    .object({
-      promptTokens: z.number(),
-      completionTokens: z.number(),
-      totalTokens: z.number(),
-    })
-    .optional(),
 });
 
 // Agent config schema

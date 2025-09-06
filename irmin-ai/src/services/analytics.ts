@@ -103,7 +103,10 @@ class AnalyticsService {
     modelId: string,
     tokenCount: number,
     costUSD: number,
-    processingTimeMs: number
+    processingTimeMs: number,
+    conversationId?: string,
+    messageId?: string,
+    additionalEventData?: Record<string, unknown>
   ): Promise<void> {
     try {
       let modelID: number | undefined;
@@ -126,8 +129,10 @@ class AnalyticsService {
         tokenCount,
         costUSD,
         processingTimeMs,
+        conversationId,
+        messageId,
         eventData: {
-          model: modelId,
+          ...additionalEventData,
         },
         createdAt: new Date(),
       };

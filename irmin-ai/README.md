@@ -2,14 +2,16 @@
 
 # Irmin AI
 
-LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with streaming responses, Groq/OpenAI integration, and MCP tools support.
+LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with streaming responses, Groq/OpenAI integration, MCP tools support, and **LangGraph.js-powered iterative tool calling**.
 
 ## What it does
 
 - **Streaming chat API** with real-time AI responses
 - **Multiple AI providers** (Groq, OpenAI) with model switching
 - **Granular MCP tools integration** with selective tool access
-- **AI agents** for specialized AI tasks
+- **AI agents** for specialized AI tasks with **iterative problem-solving**
+- **LangGraph.js integration** for ReAct pattern (Reasoning + Acting) workflows
+- **Real-time tool call streaming** with thinking steps and iteration tracking
 - **Automatic conversation title generation** using AI for better organization
 - **Workspace-based conversation management** with user isolation and access control
 - **Token tracking** and cost analytics
@@ -66,9 +68,9 @@ open http://localhost:3000/docs
 4. Test authenticated endpoints directly
 
 **API Endpoints Overview:**
-- **Chat** (`/api/chat`) - Send messages and get AI responses with streaming support
+- **Chat** (`/api/chat`) - Send messages and get AI responses with streaming support and **iterative tool calling**
 - **Conversations** (`/api/conversations`) - Manage conversation history and messages
-- **Agents** (`/api/agents`) - Execute specialized AI agents for specific tasks
+- **Agents** (`/api/agents`) - Execute specialized AI agents for specific tasks with **LangGraph-powered workflows**
 - **Info** (`/api/info`) - Get user profile, workspace info, available models, and MCP tools
 
 **OpenAPI Specification:**
@@ -96,6 +98,39 @@ curl -X POST http://localhost:3000/api/chat \
   -H "Authorization: Bearer <your-irmin-jwt-token>" \
   -H "X-Workspace-Slug: your-workspace-slug" \
   -d '{"message": "List workspaces", "toolSelection": {"includeTools": ["list_workspaces"]}}'
+```
+
+## LangGraph.js Integration
+
+The service now includes **LangGraph.js-powered iterative tool calling** for enhanced problem-solving capabilities:
+
+### Iterative Agent Workflows
+
+When tools are available, agents automatically use LangGraph.js to:
+- **Think → Act → Think**: Follow ReAct pattern for complex problem-solving
+- **Stream Real-time Updates**: Show tool calls, thinking steps, and results as they happen
+- **Track Iterations**: Monitor the agent's reasoning process through multiple steps
+- **Limit Execution**: Prevent infinite loops with configurable maximum tool calls (default: 10)
+
+### Streaming Event Types
+
+The streaming API now provides rich event types:
+
+```json
+// Iteration tracking
+{"type": "iteration", "data": {"iteration": 1, "totalToolCalls": 2}}
+
+// Tool calls
+{"type": "tool_calls", "data": {"toolCalls": [...], "iteration": 1}}
+
+// Tool results  
+{"type": "tool_result", "data": {"toolName": "search", "content": "...", "iteration": 1}}
+
+// Thinking steps
+{"type": "thinking", "data": {"content": "Based on the search results...", "iteration": 2}}
+
+// Completion
+{"type": "completed", "data": {"toolCalls": 3, "iterations": 2, "finalMessage": "..."}}
 ```
 
 ## Environment Variables
@@ -253,7 +288,6 @@ import { titleGenerationService } from '@/services/titleGeneration';
 // Generate a title for a conversation
 const result = await titleGenerationService.generateTitle({
   message: 'How do I implement authentication?',
-  authToken: 'user-jwt-token',
   user: { id: 'user-123' },
   workspace: { slug: 'my-workspace' }
 });
@@ -267,7 +301,6 @@ const updated = await titleGenerationService.updateConversationTitleIfNeeded(
 
 The service automatically:
 - Generates titles for new conversations created via chat or agents
-- Uses the existing title-generation agent configuration
 - Handles errors gracefully without affecting the main conversation flow
 - Logs analytics events for monitoring and debugging
 

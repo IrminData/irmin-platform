@@ -1,12 +1,14 @@
 import { AgentConfig } from '@/agents/types';
 
+import { DEFAULT_MODELS } from '@/config/defaults';
+
 export const agentConfig: AgentConfig = {
   id: 'query',
   name: 'SQL Query Generator',
   description: 'Converts natural language to SQL queries',
   type: 'chat',
   modelProvider: 'groq',
-  model: 'moonshotai/kimi-k2-instruct',
+  model: DEFAULT_MODELS.groq,
   temperature: 1,
   maxTokens: 1000,
   responseFormat: 'structured',
@@ -28,4 +30,6 @@ export const agentConfig: AgentConfig = {
     ],
   },
   streaming: false,
+  useAgentGraph: true,
+  maxToolCalls: 5,
 };

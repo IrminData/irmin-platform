@@ -29,6 +29,7 @@ import { sendOkResponse } from '@/utils/responses';
 import {
   applyStreamingHeaders,
   createStoredUIMessageStream,
+  processStreamingResponse,
 } from '@/utils/streaming';
 
 export async function chatRoutes(fastify: FastifyInstance) {
@@ -40,7 +41,6 @@ export async function chatRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const chatRequest = ChatRequestSchema.parse(request.body);
-      const startTime = Date.now();
       let conversation: typeof conversations.$inferSelect | undefined;
       try {
         const {
@@ -124,7 +124,6 @@ export async function chatRoutes(fastify: FastifyInstance) {
               message,
               user: authContext.user,
               workspace: workspaceContext.workspace,
-              authToken,
             })
             .catch((error) => {
               fastify.log.warn(
@@ -173,142 +172,53 @@ export async function chatRoutes(fastify: FastifyInstance) {
           }
         );
 
-        // Handle streaming vs non-streaming responses
+        // Always use streaming internally for consistency
+        const streamResponse = await completionService.createStreamingResponse({
+          messages: chronologicalHistory,
+          provider,
+          model,
+          temperature,
+          maxTokens,
+          systemPrompt,
+          toolSelection,
+          authToken,
+          conversationId: conversation.id,
+          useAgentGraph: !!toolSelection, // Use LangGraph when tools are being used
+          maxToolCalls: 5,
+        });
+
         if (stream) {
-          // Create streaming response
-          const streamResponse =
-            await completionService.createStreamingResponse({
-              messages: chronologicalHistory,
-              provider,
-              model,
-              temperature,
-              maxTokens,
-              systemPrompt,
-              toolSelection,
-              authToken,
-            });
-
-          // Log performance analytics for streaming
-          const responseTime = Date.now() - startTime;
-          await analyticsService.logCustomEvent({
-            eventType: 'model_used',
-            conversationId: conversation.id,
-            processingTimeMs: responseTime,
-            eventData: {
-              provider,
-              model,
-              stream: true,
-              toolSelection,
-            },
-          });
-
-          // Add custom and streaming-friendly headers
+          // Return streaming response directly
           applyStreamingHeaders(reply, {
             'X-Conversation-Id': conversation.id,
             'X-Message-Id': userMessageId,
           });
 
-          // Create the stored UI message stream using the shared utility
-          const streamStartTime = Date.now(); // Capture start time for accurate processing time calculation
+          const streamStartTime = Date.now();
           const readableStream = createStoredUIMessageStream(streamResponse, {
             conversationId: conversation.id,
-            startTime: streamStartTime, // Pass start time for accurate processing time calculation
+            startTime: streamStartTime,
             modelProvider: provider,
             model: model || llmService.getDefaultModels()[provider],
-            history: chronologicalHistory, // Use chronological history including the current user message
+            history: chronologicalHistory,
           });
 
-          // Return streaming response
           return reply.send(readableStream);
         } else {
-          // Create non-streaming response
-          const aiResponse = await completionService.createResponse({
-            messages: chronologicalHistory,
-            provider,
-            model,
-            temperature,
-            maxTokens,
-            systemPrompt,
-            toolSelection,
-            authToken,
-          });
-
-          const processingTime = Date.now() - startTime;
-
-          // Calculate cost based on usage
-          const costCalculation = llmService.calculateUsage(
-            chronologicalHistory,
-            aiResponse.content,
-            provider,
-            model || llmService.getDefaultModels()[provider],
-            aiResponse.usage?.promptTokens,
-            aiResponse.usage?.completionTokens
-          );
-
-          // Save AI response
-          const assistantMessageId = randomUUID();
-          const assistantMessage: NewMessage = {
-            id: assistantMessageId,
+          // Collect streaming results for non-streaming response
+          const result = await processStreamingResponse(streamResponse, {
             conversationId: conversation.id,
-            role: 'assistant',
-            content: aiResponse.content,
-            aiModelId: model,
+            startTime: Date.now(),
             modelProvider: provider,
-            modelName: model,
-            inputTokens: costCalculation.inputTokens,
-            outputTokens: costCalculation.outputTokens,
-            totalTokens: costCalculation.totalTokens,
-            processingTimeMs: processingTime,
-            costUSD: costCalculation.totalCost,
-            createdAt: now,
-            updatedAt: now,
-          };
-
-          await db.insert(messages).values(assistantMessage);
-
-          // Update conversation updated timestamp
-          await db
-            .update(conversations)
-            .set({ updatedAt: now })
-            .where(eq(conversations.id, conversation.id));
+            model: model || llmService.getDefaultModels()[provider],
+            history: chronologicalHistory,
+            returnStream: false,
+          });
 
           const response: ChatResponse = {
             conversationId: conversation.id,
-            message: {
-              id: assistantMessage.id,
-              conversationId: assistantMessage.conversationId,
-              role: assistantMessage.role,
-              content: assistantMessage.content,
-              metadata: assistantMessage.metadata as
-                | Record<string, unknown>
-                | undefined,
-              aiModelId: assistantMessage.aiModelId || null,
-              modelProvider: assistantMessage.modelProvider || null,
-              modelName: assistantMessage.modelName || null,
-              inputTokens: assistantMessage.inputTokens || null,
-              outputTokens: assistantMessage.outputTokens || null,
-              totalTokens: assistantMessage.totalTokens || null,
-              costUSD: assistantMessage.costUSD || null,
-              processingTimeMs: assistantMessage.processingTimeMs || null,
-              createdAt: assistantMessage.createdAt!,
-              updatedAt: assistantMessage.updatedAt!,
-            },
-            usage: aiResponse.usage,
+            messages: result.messages || [],
           };
-
-          // Log performance analytics
-          const responseTime = Date.now() - startTime;
-          await analyticsService.logCustomEvent({
-            eventType: 'model_used',
-            conversationId: conversation.id,
-            processingTimeMs: responseTime,
-            eventData: {
-              provider,
-              model,
-              toolSelection,
-              stream: false,
-            },
-          });
 
           sendOkResponse(reply, ChatResponseSchema, response, fastify.log);
           return;

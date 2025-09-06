@@ -6,10 +6,9 @@ import { analyticsService } from '@/services/analytics';
 import { llmService } from '@/services/llm';
 import { titleGenerationService } from '@/services/titleGeneration';
 
-import { ChatAgent } from '@/agents/chat';
+import { AssistantAgent } from '@/agents/assistant';
 import { QueryAgent } from '@/agents/query';
 import { ScriptingAgent } from '@/agents/scripting';
-import { TitleGenerationAgent } from '@/agents/title-generation';
 import {
   AgentConfig,
   AgentInput,
@@ -21,10 +20,9 @@ export class AgentsManager {
   private agents: Map<string, BaseAgentInterface> = new Map();
 
   constructor() {
-    this.registerAgent(new ChatAgent());
+    this.registerAgent(new AssistantAgent());
     this.registerAgent(new QueryAgent());
     this.registerAgent(new ScriptingAgent());
-    this.registerAgent(new TitleGenerationAgent());
   }
 
   private registerAgent(agent: BaseAgentInterface): void {
@@ -114,22 +112,18 @@ export class AgentsManager {
         // Log analytics
         await analyticsService.logConversationEvent('conversation_created', id);
 
-        // Generate proper title asynchronously (don't wait for it) - but only for non-title-generation agents
-        if (agentId !== 'title-generation' && input.authToken) {
-          titleGenerationService
-            .updateConversationTitleIfNeeded(id, {
-              message: input.message,
-              user: input.user,
-              workspace: input.workspace,
-              authToken: input.authToken,
-            })
-            .catch((error) => {
-              console.warn(
-                'Failed to generate conversation title:',
-                error instanceof Error ? error.message : 'Unknown error'
-              );
-            });
-        }
+        titleGenerationService
+          .updateConversationTitleIfNeeded(id, {
+            message: input.message,
+            user: input.user,
+            workspace: input.workspace,
+          })
+          .catch((error) => {
+            console.warn(
+              'Failed to generate conversation title:',
+              error instanceof Error ? error.message : 'Unknown error'
+            );
+          });
       }
 
       // Save user message
@@ -161,57 +155,69 @@ export class AgentsManager {
 
       // Calculate cost for agent execution (for both streaming and non-streaming)
       let costUSD = 0;
-      if (response.usage && agent.config.modelProvider && agent.config.model) {
-        const costCalculation = llmService.calculateUsage(
+      let costCalculation = {
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        totalCost: 0,
+      };
+      if (agent.config.modelProvider && agent.config.model) {
+        costCalculation = llmService.calculateUsage(
           [],
           response.content,
           agent.config.modelProvider,
-          agent.config.model,
-          response.usage.promptTokens,
-          response.usage.completionTokens
+          agent.config.model
         );
         costUSD = costCalculation.totalCost;
       }
 
       // For non-streaming responses, save the assistant message immediately
       if (!isStreamingResponse) {
-        // Save assistant message
-        const assistantMessageId = randomUUID();
-        const assistantMessage: NewMessage = {
-          id: assistantMessageId,
-          conversationId: conversation.id,
-          role: 'assistant',
-          content: response.content,
-          aiModelId: agent.config.model,
-          modelProvider: agent.config.modelProvider,
-          modelName: agent.config.model,
-          agentName: agent.config.name,
-          inputTokens: response.usage?.promptTokens || 0,
-          outputTokens: response.usage?.completionTokens || 0,
-          totalTokens: response.usage?.totalTokens || 0,
-          processingTimeMs,
-          costUSD,
-          createdAt: now,
-          updatedAt: now,
-        };
+        // Save assistant message blocks
+        const now = new Date();
+        const blocks = response.blocks || [];
+        const assistantMessagePromises = blocks.map((block) => {
+          const messageId = randomUUID();
+          const message: NewMessage = {
+            id: messageId,
+            conversationId: conversation.id,
+            role: 'assistant',
+            content: block.content,
+            messageType: block.type,
+            blockId: block.id,
+            parentBlockId: block.parentBlockId,
+            blockOrder: block.order,
+            aiModelId: agent.config.model,
+            modelProvider: agent.config.modelProvider,
+            modelName: agent.config.model,
+            agentName: agent.config.name,
+            inputTokens: Math.floor(
+              costCalculation.inputTokens / Math.max(blocks.length, 1)
+            ),
+            outputTokens: Math.floor(
+              costCalculation.outputTokens / Math.max(blocks.length, 1)
+            ),
+            totalTokens: Math.floor(
+              costCalculation.totalTokens / Math.max(blocks.length, 1)
+            ),
+            processingTimeMs: Math.floor(
+              processingTimeMs / Math.max(blocks.length, 1)
+            ),
+            costUSD: costUSD / Math.max(blocks.length, 1),
+            metadata: block.metadata || {},
+            createdAt: now,
+            updatedAt: now,
+          };
+          return db.insert(messages).values(message);
+        });
 
-        await db.insert(messages).values(assistantMessage);
+        await Promise.all(assistantMessagePromises);
 
         // Log assistant message analytics
         await analyticsService.logAgentUsed(
           conversation.id,
-          assistantMessageId,
+          userMessageId,
           agent.config.name
-        );
-      }
-
-      // Log successful agent execution analytics (for both streaming and non-streaming)
-      if (response.usage && agent.config.model) {
-        await analyticsService.logModelUsage(
-          agent.config.model,
-          response.usage.totalTokens,
-          costUSD,
-          processingTimeMs
         );
       }
 

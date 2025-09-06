@@ -37,6 +37,23 @@ export const messages = pgTable('messages', {
   content: text('content').notNull(),
   metadata: jsonb('metadata').default({}),
 
+  // Message block structure
+  messageType: text('message_type', {
+    enum: [
+      'text',
+      'tool_call',
+      'tool_result',
+      'reasoning',
+      'source',
+      'file',
+      'error',
+      'system',
+    ],
+  }).default('text'),
+  blockId: text('block_id'), // For grouping related blocks (e.g., tool call + result)
+  parentBlockId: text('parent_block_id'), // For nested blocks
+  blockOrder: integer('block_order').default(0), // For ordering within a response
+
   // AI model information
   aiModelId: text('ai_model_id'),
   modelProvider: text('model_provider'), // 'openai', 'groq', etc.

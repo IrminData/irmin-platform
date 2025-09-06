@@ -60,9 +60,12 @@ export abstract class BaseAgent implements BaseAgentInterface {
         model: this.config.model,
         temperature: this.config.temperature,
         maxTokens: this.config.maxTokens,
+        useAgentGraph: this.config.useAgentGraph,
+        maxToolCalls: this.config.maxToolCalls,
         systemPrompt,
         toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
+        conversationId: input.conversationId,
       });
 
       return {
@@ -81,14 +84,17 @@ export abstract class BaseAgent implements BaseAgentInterface {
         model: this.config.model,
         temperature: this.config.temperature,
         maxTokens: this.config.maxTokens,
+        useAgentGraph: this.config.useAgentGraph,
+        maxToolCalls: this.config.maxToolCalls,
         systemPrompt,
         toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
+        conversationId: input.conversationId,
       });
 
       return {
         content: response.content,
-        usage: response.usage,
+        blocks: response.blocks,
         metadata: {
           agentId: this.config.id,
           type: this.config.type,
@@ -183,5 +189,14 @@ export abstract class BaseAgent implements BaseAgentInterface {
       );
       return `You are ${this.config.name}. ${this.config.description}`;
     }
+  }
+
+  /**
+   * Determine if this agent should use the agent graph for iterative tool calling
+   * By default, use agent graph if tools are available
+   */
+  protected shouldUseAgentGraph(input: AgentInput): boolean {
+    const hasTools = !!(input.toolSelection || this.config.toolSelection);
+    return hasTools;
   }
 }

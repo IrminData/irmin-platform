@@ -1,5 +1,5 @@
 {
-  "id": "fcdca1a0-5b81-42f8-b069-9109890b8ac7",
+  "id": "df7c9698-cc06-4924-9b65-c154949088fa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -249,6 +249,12 @@
           "notNull": false,
           "default": "'{}'::jsonb"
         },
+        "agent_id": {
+          "name": "agent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "workspace_slug": {
           "name": "workspace_slug",
           "type": "text",
@@ -318,6 +324,32 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'{}'::jsonb"
+        },
+        "message_type": {
+          "name": "message_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'text'"
+        },
+        "block_id": {
+          "name": "block_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_block_id": {
+          "name": "parent_block_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "block_order": {
+          "name": "block_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         },
         "ai_model_id": {
           "name": "ai_model_id",

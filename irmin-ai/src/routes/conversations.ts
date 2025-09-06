@@ -490,7 +490,6 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           message: firstUserMessage[0].content,
           user: authContext.user,
           workspace: workspaceContext.workspace,
-          authToken: authContext.token,
           conversationId: id,
         });
 

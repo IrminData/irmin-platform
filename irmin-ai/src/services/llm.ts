@@ -9,8 +9,9 @@ import { ChatGroq } from '@langchain/groq';
 import { ChatOpenAI } from '@langchain/openai';
 import { wrapSDK } from 'langsmith/wrappers';
 
+import { DEFAULT_MODELS } from '@/config/defaults';
 import { env } from '@/config/env';
-import { defaultAIModels } from '@/config/models';
+import { availableAIModels } from '@/config/models';
 
 export type LLMProvider = 'groq' | 'openai';
 
@@ -31,8 +32,8 @@ export interface ModelInfo {
 }
 
 class LlmService {
-  private defaultGroqModel = 'openai/gpt-oss-120b';
-  private defaultOpenAIModel = 'gpt-5';
+  private defaultGroqModel = DEFAULT_MODELS.groq;
+  private defaultOpenAIModel = DEFAULT_MODELS.openai;
 
   /**
    * Create a new model instance with custom parameters and tools
@@ -112,10 +113,10 @@ class LlmService {
    */
   getAvailableModels(): Record<LLMProvider, string[]> {
     return {
-      groq: defaultAIModels
+      groq: availableAIModels
         .filter((m) => m.provider === 'groq')
         .map((m) => m.modelId),
-      openai: defaultAIModels
+      openai: availableAIModels
         .filter((m) => m.provider === 'openai')
         .map((m) => m.modelId),
     };
@@ -125,7 +126,7 @@ class LlmService {
    * Get model info for a specific model
    */
   getModelInfo(provider: LLMProvider, modelId: string): ModelInfo {
-    const modelInfo = defaultAIModels.find(
+    const modelInfo = availableAIModels.find(
       (m) => m.modelId === modelId && m.provider === provider
     );
 

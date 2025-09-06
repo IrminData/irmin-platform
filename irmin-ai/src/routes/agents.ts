@@ -3,8 +3,6 @@ import { db, messages } from '@/database';
 import { desc, eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
-import { analyticsService } from '@/services/analytics';
-
 import { swaggerSchemas } from '@/config/swagger';
 
 import {
@@ -68,7 +66,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
         const response = await agentsManager.executeAgent(agentId, {
           message: agentRequest.message,
           context: agentRequest.context,
-          conversationId: agentRequest.conversationId,
+          conversationId: agentRequest.conversationId ?? '', // The actual conversation creation, if needed, will be handled in the agents manager
           metadata: {
             ...agentRequest.metadata,
             streaming: false, // Non-streaming request
@@ -84,20 +82,6 @@ export async function agentRoutes(fastify: FastifyInstance) {
         if (response.conversationId) {
           reply.header('X-Conversation-Id', response.conversationId);
         }
-
-        // Log successful API request
-        analyticsService
-          .logCustomEvent({
-            eventType: 'model_used',
-            conversationId: response.conversationId,
-            eventData: { agentId, success: true },
-          })
-          .catch((error: unknown) => {
-            fastify.log.warn(
-              'Analytics logging failed: %s',
-              error instanceof Error ? error.message : 'Unknown error'
-            );
-          });
 
         sendOkResponse(
           reply,
@@ -171,7 +155,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
         const response = await agentsManager.executeAgent(agentId, {
           message: agentRequest.message,
           context: agentRequest.context,
-          conversationId: agentRequest.conversationId,
+          conversationId: agentRequest.conversationId ?? '', // The actual conversation creation, if needed, will be handled in the agents manager
           metadata: {
             ...agentRequest.metadata,
             streaming: true, // Streaming request
@@ -200,7 +184,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
             .listAgents()
             .find((a) => a.id === agentId);
 
-          // Create the stored UI message stream using the shared utility
+          // Use regular UI message stream handler for all streams
           const readableStream = createStoredUIMessageStream(
             response.agentResponse.stream,
             {
@@ -208,9 +192,8 @@ export async function agentRoutes(fastify: FastifyInstance) {
               modelProvider: agent?.modelProvider,
               model: agent?.model,
               agentName: agent?.name,
-              usage: response.agentResponse.usage,
-              history: conversationHistory, // Use chronological history including the current user message
-              startTime: requestStartTime, // Use the start time from the beginning of the request
+              history: conversationHistory,
+              startTime: requestStartTime,
             }
           );
 
