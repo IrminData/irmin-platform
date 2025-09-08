@@ -90,14 +90,16 @@ export class AgentsManager {
           conversation.agentId = agentId;
         }
       } else {
-        // Create new conversation with initial fallback title
+        // Create new conversation with fallback title
         const id = randomUUID();
         const now = new Date();
+
+        // Use titleGenerationService to create fallback title
+        const fallbackTitle = titleGenerationService.createFallbackTitle();
+
         const newConversation = {
           id,
-          title:
-            input.message.substring(0, 50) +
-            (input.message.length > 50 ? '...' : ''),
+          title: fallbackTitle,
           metadata: {},
           agentId,
           workspaceSlug: input.workspace.slug,
@@ -111,19 +113,6 @@ export class AgentsManager {
 
         // Log analytics
         await analyticsService.logConversationEvent('conversation_created', id);
-
-        titleGenerationService
-          .updateConversationTitleIfNeeded(id, {
-            message: input.message,
-            user: input.user,
-            workspace: input.workspace,
-          })
-          .catch((error) => {
-            console.warn(
-              'Failed to generate conversation title:',
-              error instanceof Error ? error.message : 'Unknown error'
-            );
-          });
       }
 
       // Save user message
@@ -219,6 +208,26 @@ export class AgentsManager {
           userMessageId,
           agent.config.name
         );
+
+        // Update conversation title with AI response context (async, don't wait)
+        if (response.content) {
+          titleGenerationService
+            .updateTitleWithAIResponse(
+              conversation.id,
+              input.message,
+              response.content,
+              {
+                user: input.user,
+                workspace: input.workspace,
+              }
+            )
+            .catch((error) => {
+              console.warn(
+                'Failed to update conversation title with AI response:',
+                error instanceof Error ? error.message : 'Unknown error'
+              );
+            });
+        }
       }
 
       // Update conversation updated timestamp

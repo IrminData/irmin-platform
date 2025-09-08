@@ -96,13 +96,16 @@ export async function chatRoutes(fastify: FastifyInstance) {
             return;
           }
         } else {
-          // Create new conversation with initial fallback title
+          // Create new conversation with fallback title
           const id = randomUUID();
           const now = new Date();
+
+          // Use titleGenerationService to create fallback title
+          const fallbackTitle = titleGenerationService.createFallbackTitle();
+
           const newConversation: NewConversation = {
             id,
-            title:
-              message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+            title: fallbackTitle,
             workspaceSlug: workspaceContext.slug,
             userId: authContext.user.id,
             createdAt: now,
@@ -117,20 +120,6 @@ export async function chatRoutes(fastify: FastifyInstance) {
             'conversation_created',
             id
           );
-
-          // Generate proper title asynchronously (don't wait for it)
-          titleGenerationService
-            .updateConversationTitleIfNeeded(id, {
-              message,
-              user: authContext.user,
-              workspace: workspaceContext.workspace,
-            })
-            .catch((error) => {
-              fastify.log.warn(
-                'Failed to generate conversation title: %s',
-                error instanceof Error ? error.message : 'Unknown error'
-              );
-            });
         }
 
         // Save user message first
@@ -201,6 +190,9 @@ export async function chatRoutes(fastify: FastifyInstance) {
             modelProvider: provider,
             model: model || llmService.getDefaultModels()[provider],
             history: chronologicalHistory,
+            userMessage: message,
+            user: authContext.user,
+            workspace: workspaceContext.workspace,
           });
 
           return reply.send(readableStream);
@@ -213,6 +205,9 @@ export async function chatRoutes(fastify: FastifyInstance) {
             model: model || llmService.getDefaultModels()[provider],
             history: chronologicalHistory,
             returnStream: false,
+            userMessage: message,
+            user: authContext.user,
+            workspace: workspaceContext.workspace,
           });
 
           const response: ChatResponse = {

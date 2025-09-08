@@ -12,6 +12,8 @@ import { eq } from 'drizzle-orm';
 import { analyticsService } from '@/services/analytics';
 import { llmService } from '@/services/llm';
 import type { LLMProvider } from '@/services/llm';
+// eslint-disable-next-line import-x/no-cycle
+import { titleGenerationService } from '@/services/titleGeneration';
 
 interface StreamingMessageOptions {
   conversationId: string;
@@ -19,8 +21,12 @@ interface StreamingMessageOptions {
   modelProvider?: LLMProvider;
   model?: string;
   agentName?: string;
-  history?: Message[];
+  history?: NewMessage[] | Message[];
   skipMessageStorage?: boolean;
+  // Title generation options
+  userMessage?: string;
+  user?: { id: string };
+  workspace?: { slug: string };
 }
 
 interface MessageBlock {
@@ -731,6 +737,35 @@ export function createStoredUIMessageStream(
         const blocksToStore = Array.from(currentBlocks.values());
         if (blocksToStore.length > 0) {
           await storeBlocks(blocksToStore);
+
+          // Generate title with AI response context (async, don't wait)
+          if (options.userMessage && options.user && options.workspace) {
+            const textBlocks = blocksToStore.filter(
+              (block) => block.type === 'text'
+            );
+            const aiResponse = textBlocks
+              .map((block) => block.content)
+              .join('\n');
+
+            if (aiResponse.trim()) {
+              titleGenerationService
+                .updateTitleWithAIResponse(
+                  options.conversationId,
+                  options.userMessage,
+                  aiResponse,
+                  {
+                    user: options.user,
+                    workspace: options.workspace,
+                  }
+                )
+                .catch((error) => {
+                  console.warn(
+                    'Failed to update conversation title with AI response in streaming:',
+                    error instanceof Error ? error.message : 'Unknown error'
+                  );
+                });
+            }
+          }
         }
 
         controller.close();
@@ -867,6 +902,33 @@ export async function processStreamingResponse(
       createdAt: new Date(),
       updatedAt: new Date(),
     }));
+
+    // Generate title with AI response context (async, don't wait)
+    if (options.userMessage && options.user && options.workspace) {
+      const textBlocks = Array.from(currentBlocks.values()).filter(
+        (block) => block.type === 'text'
+      );
+      const aiResponse = textBlocks.map((block) => block.content).join('\n');
+
+      if (aiResponse.trim()) {
+        titleGenerationService
+          .updateTitleWithAIResponse(
+            options.conversationId,
+            options.userMessage,
+            aiResponse,
+            {
+              user: options.user,
+              workspace: options.workspace,
+            }
+          )
+          .catch((error) => {
+            console.warn(
+              'Failed to update conversation title with AI response in non-streaming:',
+              error instanceof Error ? error.message : 'Unknown error'
+            );
+          });
+      }
+    }
 
     return { messages };
   }

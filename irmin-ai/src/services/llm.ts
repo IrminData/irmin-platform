@@ -1,4 +1,4 @@
-import type { Message } from '@/database';
+import type { Message, NewMessage } from '@/database';
 import {
   AIMessage,
   HumanMessage,
@@ -82,7 +82,10 @@ class LlmService {
   /**
    * Convert our Message format to LangChain messages
    */
-  convertMessagesToLangChain(messages: Message[], systemPrompt?: string) {
+  convertMessagesToLangChain(
+    messages: NewMessage[] | Message[],
+    systemPrompt?: string
+  ) {
     const langchainMessages: (HumanMessage | SystemMessage | AIMessage)[] = [];
 
     // Add system message if provided
@@ -165,7 +168,7 @@ class LlmService {
    * Calculate usage statistics and costs
    */
   calculateUsage(
-    messages: Message[],
+    messages: NewMessage[],
     response: string,
     provider: LLMProvider,
     modelId: string,

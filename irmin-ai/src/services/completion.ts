@@ -1,4 +1,4 @@
-import type { Message } from '@/database';
+import type { Message, NewMessage } from '@/database';
 import { AIMessageChunk } from '@langchain/core/messages';
 import type { StructuredTool } from '@langchain/core/tools';
 import type { IterableReadableStream } from '@langchain/core/utils/stream';
@@ -13,10 +13,11 @@ import { DEFAULT_LLM_CONFIG } from '@/config/defaults';
 import type { ToolSelection } from '@/types/agents';
 import type { MessageBlock } from '@/types/blocks';
 
+// eslint-disable-next-line import-x/no-cycle
 import { processStreamingResponse } from '@/utils/streaming';
 
 export interface CompletionOptions {
-  messages: Message[];
+  messages: NewMessage[] | Message[];
   conversationId: string;
   userMessageId?: string; // Optional, used for analytics
   provider?: LLMProvider;

@@ -2,6 +2,7 @@ import { conversations, db } from '@/database';
 import { eq } from 'drizzle-orm';
 
 import { analyticsService } from './analytics';
+// eslint-disable-next-line import-x/no-cycle
 import { completionService } from './completion';
 
 interface TitleGenerationOptions {
@@ -9,6 +10,7 @@ interface TitleGenerationOptions {
   user: { id: string };
   workspace: { slug: string };
   conversationId?: string;
+  aiResponse?: string; // Optional AI response content to help generate better titles
 }
 
 interface TitleGenerationResult {
@@ -17,16 +19,33 @@ interface TitleGenerationResult {
 }
 
 class TitleGenerationService {
-  private readonly titleGenerationSystemPrompt = `You are a title generator utility.
+  private readonly titleGenerationSystemPrompt = `You are a conversation title generator.
 
-Instructions
-- Input: a user prompt, the first message in the conversation.
-- Output: a short, descriptive conversation title. Don't repeat the user's message in the title directly.
-- Constraints:
-  - Max 50 characters.
-  - No quotes, punctuation at ends, or extra text.
-  - Title case or concise noun phrase is fine.
-  - Return only the title.`;
+Your task is to create a concise, descriptive title for a conversation based on the user's message and optionally the AI's response.
+
+Rules:
+- Create a title that summarizes the main topic or intent
+- Maximum 50 characters
+- Use title case or concise noun phrases
+- Do NOT repeat the user's exact words
+- Do NOT include quotes, punctuation at the end, or extra text
+- Do NOT say "Title Generator" or similar meta-text
+- Focus on the core subject matter
+- If AI response is provided, use it to better understand the conversation context
+
+Examples:
+- User: "How do I connect to my PostgreSQL database?"
+- Title: "PostgreSQL Connection Help"
+
+- User: "Can you help me write a Python script to process CSV files?"
+- AI Response: "I'll help you create a Python script using pandas to read and process CSV files..."
+- Title: "Python CSV Processing Script"
+
+- User: "What's the best way to optimize my React app performance?"
+- AI Response: "Here are several optimization techniques for React apps: code splitting, memoization, lazy loading..."
+- Title: "React Performance Optimization"
+
+Return only the title, nothing else.`;
 
   constructor() {
     // No need for any initialization
@@ -38,39 +57,34 @@ Instructions
   async generateTitle(
     options: TitleGenerationOptions
   ): Promise<TitleGenerationResult> {
-    const { message } = options;
-
     // Create fallback title
-    const fallbackTitle = this.createFallbackTitle(message);
+    const fallbackTitle = this.createFallbackTitle();
 
     try {
+      // Build the prompt for title generation
+      let titlePrompt = `User message: "${options.message}"`;
+
+      if (options.aiResponse) {
+        // Truncate AI response if too long to avoid token limits
+        const truncatedResponse =
+          options.aiResponse.length > 500
+            ? options.aiResponse.substring(0, 500) + '...'
+            : options.aiResponse;
+        titlePrompt += `\n\nAI response: "${truncatedResponse}"`;
+      }
+
       // Call the completion service
       const response = await completionService.createResponse({
         messages: [
           {
             id: '1',
-            conversationId: options.conversationId || 'temp',
-            metadata: {},
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            conversationId: options.conversationId || '',
             role: 'user',
-            content: message,
+            content: titlePrompt,
             messageType: 'text',
-            blockId: null,
-            parentBlockId: null,
-            blockOrder: 0,
-            aiModelId: null,
-            modelProvider: null,
-            modelName: null,
-            agentName: null,
-            inputTokens: 0,
-            outputTokens: 0,
-            totalTokens: 0,
-            costUSD: 0,
-            processingTimeMs: 0,
           },
         ],
-        conversationId: options.conversationId || 'temp',
+        conversationId: options.conversationId || '',
         provider: 'groq',
         model: 'llama-3.1-8b-instant',
         temperature: 1,
@@ -91,18 +105,12 @@ Instructions
           generated: true,
         };
       } else {
-        console.warn(
-          'Generated title is invalid, using fallback:',
-          generatedTitle
-        );
         return {
           title: fallbackTitle,
           generated: false,
         };
       }
     } catch (error) {
-      console.error('Failed to generate title:', error);
-
       // Log analytics for title generation failure
       if (options.conversationId) {
         await analyticsService.logError(
@@ -135,15 +143,26 @@ Instructions
         .limit(1);
 
       if (!conversation.length) {
+        console.log(
+          `[TitleGeneration] ❌ Conversation ${conversationId} not found`
+        );
         return false;
       }
 
       const currentTitle = conversation[0].title;
+      console.log(`[TitleGeneration] Current title: "${currentTitle}"`);
 
       // Check if the title looks like a fallback/default title
       if (!this.shouldUpdateTitle(currentTitle)) {
+        console.log(
+          `[TitleGeneration] ✅ Title "${currentTitle}" doesn't need updating`
+        );
         return false;
       }
+
+      console.log(
+        `[TitleGeneration] 🔄 Title "${currentTitle}" needs updating, generating new title...`
+      );
 
       // Generate new title
       const result = await this.generateTitle({
@@ -153,6 +172,10 @@ Instructions
 
       // Only update if we got a generated title (not fallback)
       if (result.generated) {
+        console.log(
+          `[TitleGeneration] ✅ Updating conversation ${conversationId} title from "${currentTitle}" to "${result.title}"`
+        );
+
         await db
           .update(conversations)
           .set({
@@ -174,27 +197,100 @@ Instructions
         });
 
         return true;
+      } else {
+        console.log(
+          `[TitleGeneration] ❌ Title generation failed, keeping current title: "${currentTitle}"`
+        );
       }
 
       return false;
     } catch (error) {
-      console.error('Failed to update conversation title:', error);
+      console.error(
+        `[TitleGeneration] ❌ Failed to update conversation title for ${conversationId}:`,
+        error
+      );
       return false;
     }
   }
 
   /**
-   * Creates a fallback title from the message
+   * Creates a fallback title
    */
-  private createFallbackTitle(message: string): string {
-    const maxLength = 50;
-    const cleaned = message.trim();
+  createFallbackTitle(): string {
+    const timestamp = new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `untitled - ${timestamp}`;
+  }
 
-    if (cleaned.length <= maxLength) {
-      return cleaned;
+  /**
+   * Updates a conversation title with AI response context
+   * This should be called after the AI has responded to get a better title
+   */
+  async updateTitleWithAIResponse(
+    conversationId: string,
+    userMessage: string,
+    aiResponse: string,
+    options: Omit<
+      TitleGenerationOptions,
+      'message' | 'conversationId' | 'aiResponse'
+    >
+  ): Promise<boolean> {
+    console.log(
+      `[TitleGeneration] Updating title for conversation ${conversationId} with AI response context`
+    );
+
+    try {
+      const result = await this.generateTitle({
+        message: userMessage,
+        aiResponse,
+        conversationId,
+        ...options,
+      });
+
+      if (result.generated) {
+        // Update the conversation title
+        await db
+          .update(conversations)
+          .set({
+            title: result.title,
+            updatedAt: new Date(),
+          })
+          .where(eq(conversations.id, conversationId));
+
+        console.log(
+          `[TitleGeneration] ✅ Updated conversation ${conversationId} title to: "${result.title}"`
+        );
+
+        // Log analytics for successful title update
+        await analyticsService.logCustomEvent({
+          eventType: 'conversation_updated',
+          conversationId,
+          eventData: {
+            titleUpdated: true,
+            newTitle: result.title,
+            automated: true,
+            withAIResponse: true,
+          },
+        });
+
+        return true;
+      } else {
+        console.log(
+          `[TitleGeneration] ❌ Title generation with AI response failed for conversation ${conversationId}`
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error(
+        `[TitleGeneration] ❌ Failed to update title with AI response for conversation ${conversationId}:`,
+        error
+      );
+      return false;
     }
-
-    return cleaned.substring(0, maxLength - 3) + '...';
   }
 
   /**
@@ -235,7 +331,6 @@ Instructions
       'as an ai',
       'as a language model',
       'no title',
-      'untitled',
     ];
 
     return !invalidPatterns.some((pattern) => lowerTitle.includes(pattern));
@@ -249,16 +344,31 @@ Instructions
       return true;
     }
 
-    // Check for common fallback patterns
-    const fallbackPatterns = [
-      /^new conversation/i,
-      /^\w+\.\.\.$/, // Short text ending with ...
-      /^query generation:/i,
-      /^script generation:/i,
-      /^untitled/i,
+    const lowerTitle = currentTitle.toLowerCase();
+
+    // Check if title starts with common fallback patterns
+    const fallbackPrefixes = [
+      'untitled',
+      'new conversation',
+      'query generation:',
+      'script generation:',
     ];
 
-    return fallbackPatterns.some((pattern) => pattern.test(currentTitle));
+    const isFallback = fallbackPrefixes.some((prefix) =>
+      lowerTitle.startsWith(prefix)
+    );
+
+    // Additional check: if title is very long (>50 chars) or ends with "...", it might be a truncated user message
+    const isLikelyUserMessage =
+      currentTitle.length > 50 || currentTitle.endsWith('...');
+
+    const shouldUpdate = isFallback || isLikelyUserMessage;
+
+    console.log(
+      `[TitleGeneration] Title "${currentTitle}" - isFallback: ${isFallback}, isLikelyUserMessage: ${isLikelyUserMessage}, shouldUpdate: ${shouldUpdate}`
+    );
+
+    return shouldUpdate;
   }
 }
 

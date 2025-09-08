@@ -194,6 +194,9 @@ export async function agentRoutes(fastify: FastifyInstance) {
               agentName: agent?.name,
               history: conversationHistory,
               startTime: requestStartTime,
+              userMessage: agentRequest.message,
+              user: authContext.user,
+              workspace: workspaceContext.workspace,
             }
           );
 
