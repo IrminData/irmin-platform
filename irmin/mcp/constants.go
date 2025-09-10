@@ -1,11 +1,4 @@
-<!doctype html>
-<html><head><meta charset="utf-8"/><title>irmin-api/mcp</title></head><body>
-<h1>Package irmin-api/mcp</h1>
-<pre>
-package mcp // import "irmin-api/mcp"
-
-
-CONSTANTS
+package mcp
 
 const (
 	// MCPProtocolVersion is the Model Context Protocol version used by this server
@@ -26,18 +19,3 @@ const (
 	// MCPClientVersion is the version used for MCP client connections
 	MCPClientVersion = "1.0.0"
 )
-const (
-	HTTPClientTimeout = 10 * time.Second
-)
-
-FUNCTIONS
-
-func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServices) (*mcp.ClientSession, error)
-    CreateMCPClientSession creates a new MCP client session
-
-func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
-    RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP-only
-    attach endpoint.
-
-</pre>
-</body></html>

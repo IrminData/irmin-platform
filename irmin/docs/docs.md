@@ -8278,6 +8278,30 @@ import "irmin-api/mcp"
 
 ## Constants
 
+<a name="MCPProtocolVersion"></a>
+
+```go
+const (
+    // MCPProtocolVersion is the Model Context Protocol version used by this server
+    MCPProtocolVersion = "2025-06-18"
+
+    // MCPServerName is the name of the MCP server implementation
+    MCPServerName = "irmin-mcp"
+
+    // MCPServerTitle is the title of the MCP server implementation
+    MCPServerTitle = "Irmin MCP for data management"
+
+    // MCPServerVersion is the version of the MCP server implementation
+    MCPServerVersion = "1.0.0"
+
+    // MCPClientName is the name used for MCP client connections
+    MCPClientName = "irmin-http-attach"
+
+    // MCPClientVersion is the version used for MCP client connections
+    MCPClientVersion = "1.0.0"
+)
+```
+
 <a name="HTTPClientTimeout"></a>
 
 ```go
@@ -8302,7 +8326,7 @@ CreateMCPClientSession creates a new MCP client session
 func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
 ```
 
-RegisterFiber mounts the MCP streamable HTTP handler inside the main app, using env.MCPHTTPPath.
+RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP\-only attach endpoint.
 
 # middlewares
 

@@ -17,7 +17,10 @@ const (
 // CreateMCPClientSession creates a new MCP client session
 func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServices) (*mcp.ClientSession, error) {
 	mcpURL := fmt.Sprintf("%s%s", apiServices.Env.URL, apiServices.Env.MCPHTTPPath)
-	client := mcp.NewClient(&mcp.Implementation{Name: "irmin-mcp-client", Version: "v1.0.0"}, &mcp.ClientOptions{})
+	client := mcp.NewClient(
+		&mcp.Implementation{Name: MCPClientName, Version: MCPClientVersion},
+		&mcp.ClientOptions{},
+	)
 	streamableClientTransport := &mcp.StreamableClientTransport{
 		Endpoint: mcpURL,
 		HTTPClient: &http.Client{
