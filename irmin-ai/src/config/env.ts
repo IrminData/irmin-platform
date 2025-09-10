@@ -39,6 +39,8 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   SENTRY_DSN: z.string().optional(),
   SENTRY_AUTH_TOKEN: z.string().optional(),
+  TEST_IRMIN_AUTH_TOKEN: z.string().optional(),
+  TEST_WORKSPACE_SLUG: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);

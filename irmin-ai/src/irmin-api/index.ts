@@ -42,7 +42,8 @@ class IrminCore {
    */
   private _fetch = async (
     url: string,
-    options: RequestInit
+    options: RequestInit,
+    retries: number = 2
   ): Promise<Response> => {
     const requestOptions: RequestInit = {
       credentials: 'include',
@@ -56,9 +57,26 @@ class IrminCore {
 
     const requestURL = `${this.apiBase}${url}`;
 
-    const response = await fetch(requestURL, requestOptions);
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const response = await fetch(requestURL, requestOptions);
+        return response;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown fetch error';
 
-    return response;
+        // If this is the last attempt, throw the error
+        if (attempt === retries - 1) {
+          throw new Error(`fetch failed ${errorMessage}`);
+        }
+
+        // Wait before retrying (exponential backoff)
+        const delay = Math.pow(2, attempt) * 50; // 50ms, 100ms
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    throw new Error('fetch failed after all retries');
   };
 
   /**

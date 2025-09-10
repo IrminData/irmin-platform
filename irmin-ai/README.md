@@ -161,6 +161,72 @@ pnpm run db:studio # Open database studio
 pnpm run clean # Clean build files
 ```
 
+## API Testing
+
+The project includes comprehensive API test utilities located in `src/tests/`. These tests cover all major endpoints including chat, agents, and conversation flows.
+
+### Setup
+
+1. **Environment Configuration**: Add your test credentials to the environment:
+
+```bash
+# Add to your .env file
+TEST_IRMIN_AUTH_TOKEN=your_test_token_here
+TEST_WORKSPACE_SLUG=your-workspace-slug
+IRMIN_API_BASE_URL=http://localhost:3000  # or your API URL
+```
+
+2. **Server Running**: Make sure the Irmin AI server is running on the configured port and that it has access to the Irmin API with MCP.
+
+### Test Utilities
+
+#### Comprehensive Test Suite (`src/tests/comprehensive.test.ts`)
+
+Runs a complete test suite covering all API endpoints with proper conversation management and cleanup:
+
+```bash
+npx tsx src/tests/comprehensive.test.ts
+```
+
+**Step-by-Step Test Flow:**
+
+1. **Agent Management Tests**
+   - **Agent Listing**: Tests `GET /api/agents` to retrieve available agents
+   - **Agent Configuration**: Tests `GET /api/agents/:id/config` to get agent settings and capabilities
+
+2. **Chat Endpoint Tests**
+   - **Non-Streaming Chat**: 
+     - Creates a test conversation
+     - Sends: `"Hello! Can you tell me about Irmin?"` (generic question, no tool calls)
+     - Tests `POST /api/chat` endpoint
+     - Validates response structure and message content
+   - **Streaming Chat**:
+     - Uses the same conversation from non-streaming test
+     - Sends: `"What are the main features of Irmin?"` (generic question, no tool calls)
+     - Tests streaming response handling
+     - Processes and validates stream chunks
+
+3. **Agent Execution Tests**
+   - **Agent Execution**:
+     - Creates a new test conversation
+     - Sends: `"Help me understand how to use Irmin for data management"` (likely triggers tool calls)
+     - Tests `POST /api/agents/:id` with a specific agent
+     - Validates agent response content and structure
+     - Cleans up the test conversation
+   - **Agent Streaming**:
+     - Creates another test conversation
+     - Sends: `"Show me how to create a repository in Irmin"` (likely triggers tool calls)
+     - Tests `POST /api/agents/:id/stream` for streaming agent responses
+     - Processes streaming data and validates chunks
+     - Cleans up the test conversation
+
+4. **Conversation Flow Test**
+   - Creates a test conversation
+   - Sends: `"I want to learn about Irmin data versioning"` (generic question, no tool calls)
+   - Sends: `"Can you show me how to create a branch?"` (likely triggers tool calls)
+   - Validates conversation continuity and message threading
+   - Cleans up the test conversation
+   
 ## Services
 
 ### LLM Service
