@@ -43,6 +43,43 @@ export const AgentResponseSchema = z.object({
   stream: z.unknown().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   toolCalls: z.array(z.unknown()).optional(),
+  messages: z
+    .array(
+      z.object({
+        id: z.string(),
+        conversationId: z.string(),
+        role: z.enum(['user', 'assistant', 'system']),
+        content: z.string(),
+        metadata: z.unknown().optional(),
+        messageType: z
+          .enum([
+            'text',
+            'tool_call',
+            'tool_result',
+            'reasoning',
+            'source',
+            'file',
+            'error',
+            'system',
+          ])
+          .nullable()
+          .default('text'),
+        blockId: z.string().nullable().optional(),
+        parentBlockId: z.string().nullable().optional(),
+        blockOrder: z.number().nullable().default(0),
+        aiModelId: z.string().nullable().optional(),
+        modelProvider: z.string().nullable().optional(),
+        modelName: z.string().nullable().optional(),
+        inputTokens: z.number().nullable().optional(),
+        outputTokens: z.number().nullable().optional(),
+        totalTokens: z.number().nullable().optional(),
+        costUSD: z.number().nullable().optional(),
+        processingTimeMs: z.number().nullable().optional(),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      })
+    )
+    .optional(),
 });
 
 // Agent config schema

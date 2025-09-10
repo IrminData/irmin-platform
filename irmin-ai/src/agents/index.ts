@@ -236,15 +236,34 @@ export class AgentsManager {
         .set({ updatedAt: now })
         .where(eq(conversations.id, conversation.id));
 
-      // Add conversation ID to response metadata
-      return {
-        agentResponse: {
-          ...response,
-          metadata: {
-            ...response.metadata,
-            conversationId: conversation.id,
-          },
+      // Add conversation ID to response metadata and include messages for non-streaming responses
+      const agentResponse: AgentResponse = {
+        ...response,
+        metadata: {
+          ...response.metadata,
+          conversationId: conversation.id,
         },
+      };
+
+      // For non-streaming responses, include the messages array
+      if (!isStreamingResponse) {
+        // Fetch the messages that were just created
+        const createdMessages = await db
+          .select()
+          .from(messages)
+          .where(eq(messages.conversationId, conversation.id))
+          .orderBy(messages.createdAt);
+
+        // Filter to only include assistant messages from this execution
+        const assistantMessages = createdMessages.filter(
+          (msg) => msg.role === 'assistant' && msg.createdAt >= now
+        );
+
+        agentResponse.messages = assistantMessages;
+      }
+
+      return {
+        agentResponse,
         conversationId: conversation.id,
         userMessageId,
       };

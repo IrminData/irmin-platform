@@ -49,6 +49,36 @@ export interface AgentResponse {
   stream?: ReadableStream<AIMessageChunk>;
   metadata?: Record<string, unknown>;
   toolCalls?: unknown[];
+  messages?: Array<{
+    id: string;
+    conversationId: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    metadata?: unknown;
+    messageType:
+      | 'text'
+      | 'tool_call'
+      | 'tool_result'
+      | 'reasoning'
+      | 'source'
+      | 'file'
+      | 'error'
+      | 'system'
+      | null;
+    blockId?: string | null;
+    parentBlockId?: string | null;
+    blockOrder: number | null;
+    aiModelId?: string | null | undefined;
+    modelProvider?: string | null | undefined;
+    modelName?: string | null | undefined;
+    inputTokens?: number | null | undefined;
+    outputTokens?: number | null | undefined;
+    totalTokens?: number | null | undefined;
+    costUSD?: number | null | undefined;
+    processingTimeMs?: number | null | undefined;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
 }
 
 export interface BaseAgentInterface {

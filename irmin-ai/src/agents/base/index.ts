@@ -49,8 +49,10 @@ export abstract class BaseAgent implements BaseAgentInterface {
     );
 
     // Check if this is a streaming request based on input metadata and agent ability to stream
+    // If metadata.streaming is explicitly set to false, respect that even if agent supports streaming
     const isStreamingRequest =
-      input.metadata?.streaming === true && this.config.streaming;
+      input.metadata?.streaming !== false && // Allow streaming unless explicitly disabled
+      this.config.streaming; // Agent must support streaming
 
     // Execute with the completion service
     if (isStreamingRequest) {
