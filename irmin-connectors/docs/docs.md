@@ -508,7 +508,7 @@ import "irmin-connectors/schema"
 - [type GenerationOptions](<#GenerationOptions>)
   - [func DefaultSchemaGenerationOptions\(\) GenerationOptions](<#DefaultSchemaGenerationOptions>)
 - [type Generator](<#Generator>)
-  - [func NewGenerator\(logger \*slog.Logger\) \(\*Generator, error\)](<#NewGenerator>)
+  - [func NewGenerator\(c context.Context, logger \*slog.Logger\) \(\*Generator, error\)](<#NewGenerator>)
   - [func \(g \*Generator\) Close\(\) error](<#Generator.Close>)
   - [func \(g \*Generator\) GenerateObjectSchema\(data \[\]byte, filename string\) \(\*irminmodels.ObjectSchema, error\)](<#Generator.GenerateObjectSchema>)
   - [func \(g \*Generator\) GenerateObjectSchemaFromData\(data \[\]map\[string\]any\) \(\*irminmodels.ObjectSchema, error\)](<#Generator.GenerateObjectSchemaFromData>)
@@ -580,7 +580,7 @@ type Generator struct {
 ### func NewGenerator
 
 ```go
-func NewGenerator(logger *slog.Logger) (*Generator, error)
+func NewGenerator(c context.Context, logger *slog.Logger) (*Generator, error)
 ```
 
 NewGenerator creates a new schema generator with DuckDB backend.

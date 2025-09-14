@@ -45,7 +45,7 @@ type Generator struct {
     Generator provides schema generation capabilities for in-memory data
     processing.
 
-func NewGenerator(logger *slog.Logger) (*Generator, error)
+func NewGenerator(c context.Context, logger *slog.Logger) (*Generator, error)
     NewGenerator creates a new schema generator with DuckDB backend.
 
 func (g *Generator) Close() error
