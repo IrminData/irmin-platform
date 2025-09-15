@@ -151,18 +151,18 @@ export default clerkMiddleware(async (auth, req) => {
   // Get locale from the URL using the detectLocaleFromURL function
   const urlLocale = detectLocaleFromURL(req.url);
 
-  // Get the locale from cookies or headers as fallback
-  let locale = getLocaleFromCookies(req);
-  if (!locale) {
-    locale = getLocaleFromHeader(req);
-  }
-
   const response = NextResponse.next();
 
   // If URL has a locale, use it and update the cookie
   if (urlLocale) {
     setLocaleCookie(response, urlLocale);
     return response;
+  }
+
+  // Get the locale from cookies (user preference), then headers as fallback
+  let locale = getLocaleFromCookies(req);
+  if (!locale) {
+    locale = getLocaleFromHeader(req);
   }
 
   // Redirect to the correct locale if not found in the URL
