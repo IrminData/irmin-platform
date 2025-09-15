@@ -255,9 +255,7 @@ export default function ConsoleSearch() {
     <div ref={searchRef} className='relative' id='console-search'>
       <form
         className={`
-          relative flex size-full flex-row items-center rounded-full border
-          border-gray-200 transition-all
-          dark:border-gray-800
+          relative flex size-full flex-row items-center transition-all
         `}
         onFocus={() => setIsFocused(true)} // Set focus state on input focus
       >

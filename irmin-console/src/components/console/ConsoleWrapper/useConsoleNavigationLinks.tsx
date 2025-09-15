@@ -5,25 +5,18 @@ import { useCallback, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
-import { MdCode, MdOutlinePrivacyTip } from 'react-icons/md';
+import { MdCode } from 'react-icons/md';
 import {
   TbBook,
   TbChevronLeft,
-  TbCircle,
-  TbDashboard,
   TbDatabase,
   TbFile,
   TbHelp,
-  TbLogout,
-  TbLogs,
+  TbLayoutDashboard,
   TbRun,
-  TbSchema,
-  TbSettings,
   TbSql,
-  TbUser,
 } from 'react-icons/tb';
 
-import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
@@ -46,12 +39,10 @@ const websiteURL = process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://irmin.dev';
 const useConsoleNavigationLinks = (): {
   hasWorkspace: ConsoleNavigationLinkType[];
   noWorkspace: ConsoleNavigationLinkType[];
-  settings: ConsoleNavigationLinkType[];
   useful: ConsoleNavigationLinkType[];
   loadingPermissions: boolean;
 } => {
   const { locale, dict } = useLocale();
-  const { signOut } = useIAM();
   const { isResourceAllowed, loading: loadingPermissions } =
     useResourceAllowed();
   const pathname = usePathname();
@@ -74,6 +65,12 @@ const useConsoleNavigationLinks = (): {
     () =>
       [
         {
+          title: dict.workspaceSwitcher.workspace,
+          href: `${workspaceUrl}/home`,
+          icon: <TbLayoutDashboard />,
+          hide: !isResourceAllowed('workspace', 'read'),
+        },
+        {
           title: dict.repository.repositories,
           href: `${workspaceUrl}/repositories`,
           icon: <TbDatabase />,
@@ -92,11 +89,6 @@ const useConsoleNavigationLinks = (): {
           hide: !isResourceAllowed('workflow', 'read'),
         },
         {
-          title: dict.assistant.title,
-          href: `${workspaceUrl}/assistant`,
-          icon: <TbCircle />,
-        },
-        {
           title: dict.consoleNavigation.editor,
           href: `${workspaceUrl}/editor`,
           icon: <TbFile />,
@@ -107,18 +99,6 @@ const useConsoleNavigationLinks = (): {
           href: `${workspaceUrl}/queries`,
           icon: <TbSql />,
           hide: !isResourceAllowed('query', 'read'),
-        },
-        {
-          title: dict.common.logs,
-          href: `${workspaceUrl}/logs`,
-          icon: <TbLogs />,
-          hide: !isResourceAllowed('audit_log', 'read'),
-        },
-        {
-          title: dict.documentation.documentation,
-          href: `${workspaceUrl}/documentation`,
-          icon: <TbSchema />,
-          hide: !isResourceAllowed('documentation', 'read'),
         },
       ].map((link) => ({
         ...link,
@@ -133,7 +113,7 @@ const useConsoleNavigationLinks = (): {
         {
           title: dict.consoleNavigation.workspaces,
           href: `/${locale}/workspace`,
-          icon: <TbDashboard />,
+          icon: <TbLayoutDashboard />,
         },
         {
           title: dict.consoleNavigation.goToWebsite,
@@ -145,32 +125,6 @@ const useConsoleNavigationLinks = (): {
         active: isActiveLink(link.href),
       })),
     [locale, isActiveLink, dict]
-  );
-
-  const settingsLinks: ConsoleNavigationLinkType[] = useMemo(
-    () => [
-      {
-        title: dict.consoleNavigation.workspaceSettings,
-        href: `${workspaceUrl}/settings`,
-        icon: <TbSettings />,
-        active: isActiveLink(`${workspaceUrl}/settings`),
-        workspaceOnly: true,
-        hide: !isResourceAllowed('workspace', 'read'),
-      },
-      {
-        title: dict.consoleNavigation.myProfile,
-        href: `/${locale}/profile`,
-        icon: <TbUser />,
-        active: isActiveLink(`/${locale}/profile`),
-      },
-      {
-        title: dict.consoleNavigation.signOut,
-        action: signOut,
-        icon: <TbLogout />,
-        active: false,
-      },
-    ],
-    [locale, isActiveLink, signOut, workspaceUrl, dict, isResourceAllowed]
   );
 
   const usefulLinks: ConsoleNavigationLinkType[] = useMemo(
@@ -202,15 +156,6 @@ const useConsoleNavigationLinks = (): {
         },
         active: false,
       },
-      {
-        title: dict.consoleNavigation.termsAndPrivacy,
-        href: `${websiteURL}/${locale}/legal`,
-        icon: <MdOutlinePrivacyTip />,
-        props: {
-          target: '_blank',
-        },
-        active: false,
-      },
     ],
     [locale, dict]
   );
@@ -218,7 +163,6 @@ const useConsoleNavigationLinks = (): {
   return {
     hasWorkspace: workspaceLinks.filter((link) => !link.hide),
     noWorkspace: noWorkspaceLinks.filter((link) => !link.hide),
-    settings: settingsLinks.filter((link) => !link.hide),
     useful: usefulLinks.filter((link) => !link.hide),
     loadingPermissions,
   };

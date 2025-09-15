@@ -4,9 +4,17 @@ import { memo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { Inbox } from '@novu/react';
+import { Inbox, Notifications } from '@novu/react';
 import { dark } from '@novu/react/themes';
 import { useTheme } from 'next-themes';
+
+import { TbBell } from 'react-icons/tb';
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 import type { User } from '@/types/core/User';
 
@@ -35,15 +43,28 @@ const NotificationsButton = ({ profile }: { profile: User }) => {
         },
         baseTheme: resolvedTheme === 'dark' ? dark : undefined,
       }}
-      onPrimaryActionClick={(_notification) => {
-        // TODO: Implement primary action click handler - should navigate to relevant page or perform action based on notification type
-        // console.log('Primary action clicked', notification);
-      }}
-      onSecondaryActionClick={(_notification) => {
-        // TODO: Implement secondary action click handler - typically for dismissing, marking as read, or alternative action
-        // console.log('Secondary action clicked', notification);
-      }}
-    />
+    >
+      <Popover>
+        <PopoverTrigger>
+          <TbBell
+            className='size-4 w-full opacity-60'
+            aria-label='Notifications'
+          />
+        </PopoverTrigger>
+        <PopoverContent className='h-[600px] w-[400px] p-0'>
+          <Notifications
+            onPrimaryActionClick={(_notification) => {
+              // TODO: Implement primary action click handler - should navigate to relevant page or perform action based on notification type
+              // console.log('Primary action clicked', notification);
+            }}
+            onSecondaryActionClick={(_notification) => {
+              // TODO: Implement secondary action click handler - typically for dismissing, marking as read, or alternative action
+              // console.log('Secondary action clicked', notification);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </Inbox>
   );
 };
 

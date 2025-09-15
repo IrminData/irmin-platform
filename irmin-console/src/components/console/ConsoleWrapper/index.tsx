@@ -7,19 +7,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
-import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
+import { TbChevronLeft, TbChevronRight, TbCircle } from 'react-icons/tb';
 
 import ConsoleSearch from '@/components/search/ConsoleSearch';
 import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { ErrorBoundary } from '@/components/ui/error/ErrorBoundary';
-import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
-import ThemeSwitch from '@/components/ui/ThemeSwitch';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkspaces } from '@/hooks/api';
-import { useBreakpoint } from '@/hooks/utils';
+import { useBaseUrl, useBreakpoint } from '@/hooks/utils';
 
 import ConsoleNavigationLink from './ConsoleNavigationLink';
 import ConsoleNavigationProfile from './ConsoleNavigationProfile';
@@ -62,6 +61,15 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   const { loadingPermissions, ...links } = useConsoleNavigationLinks();
 
   const isLargeScreen = useBreakpoint('@lg');
+
+  // Assistant URL for floating button
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+  const assistantUrl = `${workspaceUrl}/assistant`;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
@@ -120,7 +128,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               >
                 <div
                   className={`
-                    block transition-all duration-300
+                    block pt-2 transition-all duration-300
                     ${foldMenu ? `hidden opacity-0` : `opacity-100`}
                   `}
                 >
@@ -147,16 +155,11 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                     />
                   </Link>
                 </div>
-                {!foldMenu && (
-                  <div className='pl-4'>
-                    <ThemeSwitch />
-                  </div>
-                )}
                 <Button
                   className={`
                     absolute top-[12px] hidden
                     lg:block
-                    ${!foldMenu ? 'right-0' : 'left-6'}
+                    ${!foldMenu ? 'right-0' : 'left-7'}
                   `}
                   aria-label='Fold the side navigation'
                   onClick={() => setIsMenuFolded(!foldMenu)}
@@ -164,23 +167,33 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                   variant={'link'}
                 >
                   {foldMenu ? (
-                    <TbChevronRight className='text-3xl' />
+                    <TbChevronRight className='size-6 opacity-60' />
                   ) : (
-                    <TbChevronLeft className='text-3xl' />
+                    <TbChevronLeft className='size-6 opacity-60' />
                   )}
                 </Button>
               </div>
 
-              {/* Profile and workspace switcher */}
+              {/* Profile, theme switch, and notifications button */}
               <div
-                id='console-sidebar-profile-and-workspace'
+                id='console-sidebar-profile-theme-switch-notifications'
+                className={`
+                  flex w-full items-center justify-center px-4
+                  ${foldMenu ? `mt-14` : ''}
+                `}
+              >
+                <ConsoleNavigationProfile isMenuFolded={foldMenu} />
+              </div>
+
+              {/* Workspace switcher */}
+              <div
+                id='console-sidebar-workspace-switcher'
                 className={`
                   transition-all
                   ${foldMenu ? 'hidden w-0' : `block w-full`}
                 `}
               >
-                <div className='w-full min-w-36 px-4'>
-                  <ConsoleNavigationProfile />
+                <div className='flex w-full min-w-36 flex-col gap-4 px-4'>
                   <ConsoleNavigationWorkspaceSwitcher
                     workspaces={workspaces}
                     currentWorkspace={currentWorkspace}
@@ -256,61 +269,31 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                   </ul>
                 </div>
               )}
-
-              {/* Settings links */}
-              <div id='console-sidebar-links-settings'>
-                <p
-                  className={`
-                    mb-2 w-max pl-8 text-xs font-medium text-accent uppercase
-                    transition-all duration-300
-                    ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
-                  `}
-                >
-                  {dict.consoleNavigation.settings}
-                </p>
-                <ul className='px-4'>
-                  {links.settings.map((link) => (
-                    <ConsoleNavigationLink
-                      key={`console-nav-hasWorkspace-${link.title}`}
-                      link={link}
-                      isMenuFolded={foldMenu}
-                      hasWorkspace={currentWorkspace !== undefined}
-                      setIsMenuOpen={setIsMenuOpen}
-                    />
-                  ))}
-                </ul>
-              </div>
             </div>
             <div className='grow' />
-            {foldMenu && (
-              <div className='mx-auto mt-auto mb-8'>
-                <ThemeSwitch />
-              </div>
-            )}
             <div
               id='console-sidebar-footer'
               className={`
                 mt-auto transition-all
-                ${foldMenu ? 'hidden w-0' : `block w-full`}
+                ${foldMenu ? `mt-24 gap-0` : `gap-6`}
               `}
             >
-              <div className='px-6'>
-                <LanguageSwitcher />
-              </div>
               <div
-                className='w-full min-w-64 pt-8'
+                className={`
+                  w-full min-w-64 pt-8
+                  ${foldMenu ? `hidden w-0 opacity-0` : `block opacity-100`}
+                `}
                 id='console-sidebar-useful-links'
               >
                 <p
                   className={`
-                    w-max pl-8 text-xs font-medium text-accent uppercase
+                    w-max pl-7 text-xs font-medium text-accent uppercase
                     transition-all duration-300
-                    ${foldMenu ? 'hidden opacity-0' : 'opacity-100'}
                   `}
                 >
                   {dict.consoleNavigation.usefulLinks}
                 </p>
-                <div className='flex flex-col p-4 pl-8'>
+                <div className={`flex flex-col p-4 pl-7`}>
                   {links.useful.map((link) => (
                     <Link
                       key={`console-nav-useful-${link.title}`}
@@ -469,6 +452,25 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
           </div>
         </Button>
       </div>
+
+      {/* Floating Assistant Button */}
+      {currentWorkspace && (
+        <div className='fixed right-6 bottom-6 z-50'>
+          <ButtonWithTooltip
+            href={assistantUrl}
+            size='icon'
+            variant='gradient'
+            tooltip={dict.assistant.title}
+            className={`
+              size-12 rounded-full shadow-lg transition-all duration-200
+              hover:shadow-xl
+            `}
+            aria-label={dict.assistant.title}
+          >
+            <TbCircle className='size-6' />
+          </ButtonWithTooltip>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,10 +5,13 @@ import { useCallback, useState } from 'react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 
+import { TbLogout } from 'react-icons/tb';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -26,7 +29,7 @@ type ProfileFormInputs = {
  * Form component to edit user profile
  */
 export default function UserProfileForm() {
-  const { profile, updateProfile } = useIAM();
+  const { profile, updateProfile, signOut } = useIAM();
   const { dict } = useLocale();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(
@@ -173,15 +176,31 @@ export default function UserProfileForm() {
         </Label>
         <Input id='company' {...register('company')} className='w-full' />
       </div>
-      <Button
-        type='submit'
-        disabled={isSubmitting}
-        className='w-full'
-        size={'sm'}
-        variant={'accent'}
-      >
-        {dict.users.updateProfile}
-      </Button>
+      <div className='space-y-2'>
+        <Label className='text-sm'>{dict.common.selectLanguage}</Label>
+        <LanguageSwitcher />
+      </div>
+      <div className='flex gap-2'>
+        <Button
+          type='submit'
+          disabled={isSubmitting}
+          className='flex-1'
+          size={'sm'}
+          variant={'accent'}
+        >
+          {dict.users.updateProfile}
+        </Button>
+        <Button
+          type='button'
+          onClick={signOut}
+          className='flex-1'
+          size={'sm'}
+          variant={'outline'}
+        >
+          <TbLogout className='mr-2 size-4' />
+          {dict.consoleNavigation.signOut}
+        </Button>
+      </div>
     </form>
   );
 }

@@ -1,8 +1,16 @@
 'use client';
 
 import { GoWorkflow } from 'react-icons/go';
-import { TbDatabase, TbPlayerPlay, TbRun } from 'react-icons/tb';
+import {
+  TbDatabase,
+  TbLogs,
+  TbPlayerPlay,
+  TbRun,
+  TbSchema,
+  TbSettings,
+} from 'react-icons/tb';
 
+import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
 import LinkCard from '@/components/ui/LinkCard';
@@ -11,7 +19,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useBaseUrl } from '@/hooks/utils';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Home page section for the workspace.
@@ -19,6 +27,8 @@ import { useBaseUrl } from '@/hooks/utils';
 const WorkspaceHomeSection = () => {
   const { dict } = useLocale();
   const { workspaceQuery } = useWorkspaceContext();
+
+  const { isResourceAllowed } = useResourceAllowed();
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -63,30 +73,70 @@ const WorkspaceHomeSection = () => {
           <div
             className={`flex w-full flex-wrap items-center justify-center gap-8`}
           >
-            <LinkCard
-              href={`${workspaceUrl}/connections?create`}
-              title={dict.consoleHome.createNewConnection}
-              description={dict.consoleHome.createNewConnectionDescription}
-              icon={<GoWorkflow />}
-            />
-            <LinkCard
-              href={`${workspaceUrl}/editor`}
-              title={dict.consoleHome.runScriptOnData}
-              description={dict.consoleHome.runScriptOnDataDescription}
-              icon={<TbPlayerPlay />}
-            />
-            <LinkCard
-              href={`${workspaceUrl}/workflows?create`}
-              title={dict.consoleHome.setupWorkflow}
-              description={dict.consoleHome.setupWorkflowDescription}
-              icon={<TbRun />}
-            />
-            <LinkCard
-              href={`${workspaceUrl}/repositories`}
-              title={dict.consoleHome.browseRepositories}
-              description={dict.consoleHome.browseRepositoriesDescription}
-              icon={<TbDatabase />}
-            />
+            {isResourceAllowed('connection', 'read') && (
+              <LinkCard
+                href={`${workspaceUrl}/connections`}
+                title={dict.consoleHome.createNewConnection}
+                description={dict.consoleHome.createNewConnectionDescription}
+                icon={<GoWorkflow />}
+              />
+            )}
+            {isResourceAllowed('editor_script', 'read') && (
+              <LinkCard
+                href={`${workspaceUrl}/editor`}
+                title={dict.consoleHome.runScriptOnData}
+                description={dict.consoleHome.runScriptOnDataDescription}
+                icon={<TbPlayerPlay />}
+              />
+            )}
+            {isResourceAllowed('workflow', 'read') && (
+              <LinkCard
+                href={`${workspaceUrl}/workflows`}
+                title={dict.consoleHome.setupWorkflow}
+                description={dict.consoleHome.setupWorkflowDescription}
+                icon={<TbRun />}
+              />
+            )}
+            {isResourceAllowed('repository', 'read') && (
+              <LinkCard
+                href={`${workspaceUrl}/repositories`}
+                title={dict.consoleHome.browseRepositories}
+                description={dict.consoleHome.browseRepositoriesDescription}
+                icon={<TbDatabase />}
+              />
+            )}
+          </div>
+          <div className='flex flex-row justify-center gap-2 pb-12'>
+            {isResourceAllowed('workspace', 'read') && (
+              <Button
+                href={`${workspaceUrl}/settings`}
+                variant='gray'
+                size='sm'
+                icon={<TbSettings className='size-4' />}
+              >
+                {dict.consoleNavigation.settings}
+              </Button>
+            )}
+            {isResourceAllowed('audit_log', 'read') && (
+              <Button
+                href={`${workspaceUrl}/logs`}
+                variant='gray'
+                size='sm'
+                icon={<TbLogs className='size-4' />}
+              >
+                {dict.common.logs}
+              </Button>
+            )}
+            {isResourceAllowed('documentation', 'read') && (
+              <Button
+                href={`${workspaceUrl}/documentation`}
+                variant='gray'
+                size='sm'
+                icon={<TbSchema className='size-4' />}
+              >
+                {dict.documentation.documentation}
+              </Button>
+            )}
           </div>
         </div>
       </div>

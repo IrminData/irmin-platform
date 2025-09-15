@@ -88,7 +88,7 @@ export default function ConsoleNavigationWorkspaceSwitcher({
   }
 
   return (
-    <div className='mt-2' id='console-nav-workspace-switcher'>
+    <div id='console-nav-workspace-switcher'>
       <Select
         value={currentValue}
         onValueChange={onChange}

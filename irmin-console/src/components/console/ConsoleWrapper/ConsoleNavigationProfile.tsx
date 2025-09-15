@@ -4,25 +4,35 @@ import React from 'react';
 
 import NotificationsButton from '@/components/NotificationsButton';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import ThemeSwitch from '@/components/ui/ThemeSwitch';
 import IrminUserButton from '@/components/user/IrminUserButton';
 
 import { useIAM } from '@/context/IAMContext';
 
 /**
- * Profile UI for the console navigation
- *
- * @remarks
- *
- * This component is used to display the profile information in the console navigation sidebar.
- * Uses {@link useIAM} to interact with the user's identity and APIs.
+ * Profile, theme switch, and notifications button UI for the console navigation sidebar
  */
-export default function ConsoleNavigationProfile() {
+export default function ConsoleNavigationProfile({
+  isMenuFolded,
+}: {
+  isMenuFolded: boolean;
+}) {
   const { profile, isLoading } = useIAM();
 
   if (!profile || isLoading) {
     return (
       <div id='console-nav-profile-loading-skeleton'>
         <LoadingSkeleton className='h-8 w-full' />
+      </div>
+    );
+  }
+
+  if (isMenuFolded) {
+    return (
+      <div className='flex flex-col gap-2'>
+        <IrminUserButton />
+        <ThemeSwitch />
+        <NotificationsButton profile={profile} />
       </div>
     );
   }
@@ -35,14 +45,15 @@ export default function ConsoleNavigationProfile() {
       <div className='w-auto overflow-hidden p-1'>
         <p
           className={`
-            text-sm font-normal text-foreground
+            text-xs font-normal text-foreground
             dark:text-gray-200
           `}
         >
           {`${profile.first_name} ${profile.last_name}`}
         </p>
       </div>
-      <div className='ml-auto'>
+      <div className='ml-auto flex items-center'>
+        <ThemeSwitch />
         <NotificationsButton profile={profile} />
       </div>
     </div>
