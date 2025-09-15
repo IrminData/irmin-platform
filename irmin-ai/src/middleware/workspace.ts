@@ -8,6 +8,8 @@ import type {
 } from '@/types/request-context';
 import { AuthenticationError } from '@/types/request-context';
 
+import { workspaceCache } from './cache';
+
 /**
  * Workspace Selection Middleware
  *
@@ -40,6 +42,14 @@ const workspaceMiddleware = async (
       throw new AuthenticationError(
         'Authentication required for workspace selection'
       );
+    }
+
+    // Check cache first for performance optimization
+    const cachedWorkspace = workspaceCache.get(workspaceSlug, req.auth.user.id);
+    if (cachedWorkspace) {
+      req.workspace = cachedWorkspace;
+      next();
+      return;
     }
 
     // Create Irmin Core client with the user's token
@@ -98,6 +108,9 @@ const workspaceMiddleware = async (
       slug: workspaceSlug,
     };
     req.workspace = workspaceContext;
+
+    // Cache the successful workspace result
+    workspaceCache.set(workspaceSlug, req.auth.user.id, workspaceContext);
 
     // Continue to next middleware/route handler
     next();

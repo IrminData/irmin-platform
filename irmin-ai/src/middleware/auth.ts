@@ -5,6 +5,8 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { AuthenticatedUser } from '@/types/request-context';
 import { AuthenticationError } from '@/types/request-context';
 
+import { authCache } from './cache';
+
 /**
  * JWT Authentication Middleware
  *
@@ -35,6 +37,14 @@ const authMiddleware = async (
       throw new AuthenticationError('JWT token is required');
     }
 
+    // Check cache first for performance optimization
+    const cachedAuth = authCache.get(token);
+    if (cachedAuth) {
+      req.auth = cachedAuth;
+      next();
+      return;
+    }
+
     // Create Irmin Core client with the token
     const irminCore = new IrminCore(token);
 
@@ -52,6 +62,9 @@ const authMiddleware = async (
         isTimeout: apiErrorMessage.includes('timeout'),
       });
 
+      // Invalidate cache if token is invalid
+      authCache.invalidate(token);
+
       throw new AuthenticationError(
         `Failed to fetch user profile: ${apiErrorMessage}`,
         apiErrorMessage.includes('401') ||
@@ -62,6 +75,7 @@ const authMiddleware = async (
     }
 
     if (!profileResponse.data) {
+      authCache.invalidate(token);
       throw new AuthenticationError('User profile not found in API response');
     }
 
@@ -71,6 +85,9 @@ const authMiddleware = async (
       token,
     };
     req.auth = authContext;
+
+    // Cache the successful authentication result
+    authCache.set(token, authContext);
 
     // Continue to next middleware/route handler
     next();
