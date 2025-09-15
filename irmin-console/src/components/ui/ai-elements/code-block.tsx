@@ -41,8 +41,8 @@ export const CodeBlock = ({
     <div
       className={cn(
         `
-          relative w-full overflow-hidden rounded-md border bg-background
-          text-foreground
+          relative w-full max-w-full overflow-hidden rounded-md border
+          bg-background text-foreground
         `,
         className
       )}
@@ -51,7 +51,7 @@ export const CodeBlock = ({
       <div className='relative'>
         <SyntaxHighlighter
           className={`
-            overflow-hidden
+            max-w-full overflow-x-auto overflow-y-hidden
             dark:hidden
           `}
           codeTagProps={{
@@ -77,7 +77,7 @@ export const CodeBlock = ({
         </SyntaxHighlighter>
         <SyntaxHighlighter
           className={`
-            hidden overflow-hidden
+            hidden max-w-full overflow-x-auto overflow-y-hidden
             dark:block
           `}
           codeTagProps={{

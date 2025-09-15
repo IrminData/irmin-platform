@@ -1,5 +1,5 @@
-import FormPageSkeleton from '@/components/ui/loading/FormPageSkeleton';
+import DetailPageSkeleton from '@/components/ui/loading/DetailPageSkeleton';
 
 export default function AssistantLoading() {
-  return <FormPageSkeleton />;
+  return <DetailPageSkeleton />;
 }

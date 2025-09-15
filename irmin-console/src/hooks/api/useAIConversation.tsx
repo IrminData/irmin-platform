@@ -22,26 +22,44 @@ type AIConversationInput = {
   metadata?: Record<string, unknown>;
 };
 
-export function useAIConversation(conversationID: string) {
+type UseAIConversationOptions = {
+  enabled?: boolean;
+};
+
+export function useAIConversation(
+  conversationID: string,
+  options?: UseAIConversationOptions
+) {
   const { getToken } = useIAM();
   const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const { irminAlert, irminConfirm } = usePopup();
 
-  // Query for fetching a single agent conversation by ID
   const aiConversationQuery = useQuery<AIConversation>({
     queryKey: aiConversationQueryKey(workspaceSlug, conversationID),
     queryFn: async () => {
       const token = await getToken();
       const client = new IrminAIClient(token, workspaceSlug);
-      const conversation =
-        await client.conversations.getConversation(conversationID);
-      return conversation;
+      return await client.conversations.getConversation(conversationID);
     },
-    enabled: !!conversationID,
+    enabled: !!conversationID && options?.enabled !== false,
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message.includes('404')) {
+        return failureCount < 5;
+      }
+      return failureCount < 1;
+    },
+    retryDelay: (attemptIndex) => {
+      return Math.min(1000 * 2 ** attemptIndex, 10000);
+    },
+    staleTime: 30000,
+    gcTime: 300000,
+    networkMode: 'online',
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
   });
 
-  // Query for fetching conversation messages
   const aiConversationMessagesQuery = useQuery<AIMessagesListResponse>({
     queryKey: aiConversationMessagesQueryKey(workspaceSlug, conversationID),
     queryFn: async () => {
@@ -51,10 +69,9 @@ export function useAIConversation(conversationID: string) {
         await client.conversations.getConversationMessages(conversationID);
       return messages;
     },
-    enabled: !!conversationID,
+    enabled: !!conversationID && options?.enabled !== false,
   });
 
-  // Mutation for deleting an agent conversation
   const deleteAIConversationMutation = useMutation<void, Error, string>({
     mutationFn: async (convId: string) => {
       const token = await getToken();
@@ -69,7 +86,6 @@ export function useAIConversation(conversationID: string) {
     },
   });
 
-  // Handler for deleting a conversation
   const { mutate: deleteAIConversation } = deleteAIConversationMutation;
   const handleDeleteConversation = useCallback(async () => {
     if (!conversationID) return;
@@ -88,7 +104,6 @@ export function useAIConversation(conversationID: string) {
     conversationID,
   ]);
 
-  // Mutation for updating an agent conversation
   const updateAIConversationMutation = useMutation<
     AIConversation,
     Error,
@@ -118,7 +133,6 @@ export function useAIConversation(conversationID: string) {
     },
   });
 
-  // Mutation for generating conversation title
   const generateTitleMutation = useMutation<AIConversation, Error, void>({
     mutationFn: async () => {
       if (!conversationID) throw new Error('Conversation ID is required');
@@ -137,16 +151,11 @@ export function useAIConversation(conversationID: string) {
   });
 
   return {
-    // Queries
     aiConversationQuery,
     aiConversationMessagesQuery,
-
-    // Mutations
     deleteAIConversationMutation,
     updateAIConversationMutation,
     generateTitleMutation,
-
-    // Handlers
     handleDeleteConversation,
   };
 }

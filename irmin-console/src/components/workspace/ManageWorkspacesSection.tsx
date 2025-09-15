@@ -240,7 +240,7 @@ const ManageWorkspacesSection = () => {
 
                 {/* Create workspace form - below */}
                 <div className='w-full max-w-2xl'>
-                  <div className='rounded-xl bg-card p-6 ring-1 ring-border/20'>
+                  <div className='rounded-xl bg-card p-6'>
                     <h2 className='mb-6 text-lg font-semibold'>
                       {dict.workspaceSwitcher.createNewWorkspace}
                     </h2>

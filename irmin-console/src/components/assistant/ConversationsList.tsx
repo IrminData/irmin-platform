@@ -51,13 +51,13 @@ export default function ConversationsList({
   } = useAIConversations({
     sortBy: 'createdAt',
     sortOrder: 'desc',
-    agentId: 'chat', // Filter for chat agent conversations
+    agentId: 'assistant', // Filter for chat agent conversations
   });
 
   const handleCreateConversation = async () => {
     try {
       const result = await createAIConversationMutation.mutateAsync({
-        agentId: 'chat', // Create as chat agent conversation
+        agentId: 'assistant', // Create as chat agent conversation
       });
       onSelectConversation(result);
       onSidebarClose();

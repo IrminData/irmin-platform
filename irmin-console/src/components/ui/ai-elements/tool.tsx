@@ -27,7 +27,10 @@ export type ToolProps = ComponentProps<typeof Collapsible>;
 
 export const Tool = ({ className, ...props }: ToolProps) => (
   <Collapsible
-    className={cn('mb-4 w-full rounded-md border', className)}
+    className={cn(
+      'mb-4 w-full max-w-full overflow-hidden rounded-md border',
+      className
+    )}
     {...props}
   />
 );
@@ -94,7 +97,7 @@ export const ToolContent = ({ className, ...props }: ToolContentProps) => (
   <CollapsibleContent
     className={cn(
       `
-        text-popover-foreground outline-none
+        overflow-hidden text-popover-foreground outline-none
         data-[state=closed]:animate-out data-[state=closed]:fade-out-0
         data-[state=closed]:slide-out-to-top-2
         data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2
@@ -118,7 +121,7 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
     >
       Parameters
     </h4>
-    <div className='rounded-md bg-muted/50'>
+    <div className='overflow-hidden rounded-md bg-muted/50'>
       <CodeBlock code={JSON.stringify(input, null, 2)} language='json' />
     </div>
   </div>
@@ -151,7 +154,7 @@ export const ToolOutput = ({
       <div
         className={cn(
           `
-            overflow-x-auto rounded-md text-xs
+            max-w-full overflow-x-auto rounded-md text-xs
             [&_table]:w-full
           `,
           errorText
@@ -159,8 +162,16 @@ export const ToolOutput = ({
             : 'bg-muted/50 text-foreground'
         )}
       >
-        {errorText && <div>{errorText}</div>}
-        {output && <div>{output}</div>}
+        {errorText && (
+          <div className='break-words break-all whitespace-pre-wrap'>
+            {errorText}
+          </div>
+        )}
+        {output && (
+          <div className='break-words break-all whitespace-pre-wrap'>
+            {output}
+          </div>
+        )}
       </div>
     </div>
   );

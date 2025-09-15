@@ -58,11 +58,34 @@ export class ConversationsClient extends BaseClient {
   }
 
   async getConversation(id: string) {
-    const response = await fetch(`${this.baseUrl}/api/conversations/${id}`, {
-      headers: this.getHeaders(),
-    });
+    const url = `${this.baseUrl}/api/conversations/${id}`;
 
-    return this.handleResponse(response, AIConversationSchema);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(url, {
+        headers: this.getHeaders(),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', response.status, errorText);
+      }
+
+      return await this.handleResponse(response, AIConversationSchema);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(
+          `Request timeout: Conversation ${id} took too long to fetch`
+        );
+      }
+
+      throw error;
+    }
   }
 
   async updateConversation(id: string, request: AIUpdateConversationRequest) {

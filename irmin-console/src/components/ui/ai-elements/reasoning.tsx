@@ -102,7 +102,7 @@ export const Reasoning = memo(
         value={{ isStreaming, isOpen, setIsOpen, duration }}
       >
         <Collapsible
-          className={cn('mb-4', className)}
+          className={cn('mb-4 w-full max-w-full overflow-hidden', className)}
           onOpenChange={handleOpenChange}
           open={isOpen}
           {...props}
@@ -163,7 +163,7 @@ export const ReasoningContent = memo(
   ({ className, children, ...props }: ReasoningContentProps) => (
     <CollapsibleContent
       className={cn(
-        'mt-4 text-sm',
+        'mt-4 overflow-hidden text-sm',
         `
           text-popover-foreground outline-none
           data-[state=closed]:animate-out data-[state=closed]:fade-out-0
@@ -174,7 +174,7 @@ export const ReasoningContent = memo(
       )}
       {...props}
     >
-      <Response className='grid gap-2'>{children}</Response>
+      <Response className='grid gap-2 overflow-hidden'>{children}</Response>
     </CollapsibleContent>
   )
 );

@@ -15,8 +15,8 @@ export const WorkspaceCardSkeleton = ({
     >
       <div
         className={`
-          flex h-full min-h-[140px] flex-col rounded-xl border border-border/30
-          bg-card p-4 text-card-foreground
+          flex h-full min-h-[140px] flex-col rounded-xl bg-card p-4
+          text-card-foreground
         `}
       >
         {/* Header with label and icon */}

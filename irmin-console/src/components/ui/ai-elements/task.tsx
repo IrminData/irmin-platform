@@ -51,6 +51,7 @@ export const Task = ({
   <Collapsible
     className={cn(
       `
+        w-full max-w-full overflow-hidden
         data-[state=closed]:animate-out data-[state=closed]:fade-out-0
         data-[state=closed]:slide-out-to-top-2
         data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2
@@ -103,7 +104,7 @@ export const TaskContent = ({
   <CollapsibleContent
     className={cn(
       `
-        text-popover-foreground outline-none
+        overflow-hidden text-popover-foreground outline-none
         data-[state=closed]:animate-out data-[state=closed]:fade-out-0
         data-[state=closed]:slide-out-to-top-2
         data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2
@@ -112,7 +113,7 @@ export const TaskContent = ({
     )}
     {...props}
   >
-    <div className='mt-4 space-y-2 border-l-2 border-muted pl-4'>
+    <div className='mt-4 space-y-2 overflow-hidden border-l-2 border-muted pl-4'>
       {children}
     </div>
   </CollapsibleContent>

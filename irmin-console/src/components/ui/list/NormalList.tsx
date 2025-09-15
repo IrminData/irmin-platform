@@ -116,9 +116,8 @@ const NormalList = ({
     <div className='scrollbar-hide size-full overflow-auto' id='list'>
       <table
         className={`
-          w-full max-w-full border-collapse rounded-lg border bg-popover/10 p-2
-          text-sm shadow-xs transition-all
-          dark:border-gray-800
+          w-full max-w-full border-collapse rounded-lg bg-popover/10 p-2 text-sm
+          shadow-xs transition-all
         `}
       >
         {/* Table head */}

@@ -76,12 +76,6 @@ export default function ConversationDetails({
               </span>
               <Badge variant='outline'>{conversation?.totalTokens ?? 0}</Badge>
             </div>
-            <div className='flex justify-between'>
-              <span className='text-sm font-medium'>Total Cost:</span>
-              <Badge variant='outline'>
-                ${(conversation?.totalCost ?? 0).toFixed(4)}
-              </Badge>
-            </div>
           </div>
         </div>
         <SheetFooter className='flex-col gap-2'>

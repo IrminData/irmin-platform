@@ -247,7 +247,7 @@ const components: Options['components'] = {
     </h6>
   ),
   table: ({ node: _node, children, className, ...props }) => (
-    <div className='my-4 overflow-x-auto'>
+    <div className='my-4 max-w-full overflow-x-auto'>
       <table
         className={cn('w-full border-collapse border border-border', className)}
         {...props}
@@ -370,7 +370,7 @@ export const Response = memo(
       <div
         className={cn(
           `
-            size-full
+            size-full max-w-full overflow-hidden
             [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
           `,
           className

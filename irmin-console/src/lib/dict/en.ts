@@ -741,6 +741,19 @@ const en = {
     copyMessage: 'Copy message',
     messageCopied: 'Message copied to clipboard',
     copyFailed: 'Failed to copy message',
+
+    // Tool and Reasoning Elements
+    toolCalls: 'Tool Calls',
+    thinkingSteps: 'Thinking Steps',
+    iteration: 'Iteration',
+    iterations: 'iterations',
+    systemMessage: 'System Message',
+    streamCompleted: 'Stream completed',
+    error: 'Error',
+    likeThisResponse: 'Like this response',
+    dislikeThisResponse: 'Dislike this response',
+    thisResponseWasGeneratedThrough: 'This response was generated through',
+    ofReasoningAndToolUsage: 'of reasoning and tool usage',
   },
 
   // === USER MANAGEMENT ===

@@ -53,9 +53,9 @@ const WorkspaceCard = ({
     >
       <div
         className={`
-          flex h-full min-h-[140px] flex-col rounded-xl border border-border/30
-          bg-card p-4 text-card-foreground transition-all duration-200
-          group-hover:border-primary/20 group-hover:shadow-sm
+          flex h-full min-h-[140px] flex-col rounded-xl bg-card p-4
+          text-card-foreground transition-all duration-200
+          group-hover:shadow-sm
         `}
       >
         <div className='flex items-start justify-between'>

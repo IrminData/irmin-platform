@@ -89,9 +89,8 @@ const CardList = ({
   return (
     <div
       className={`
-        scrollbar-hide size-full max-w-3xl overflow-scroll rounded-lg border
+        scrollbar-hide size-full max-w-3xl overflow-scroll rounded-lg
         bg-popover/10 p-2
-        dark:border-gray-800
       `}
       id='list'
     >

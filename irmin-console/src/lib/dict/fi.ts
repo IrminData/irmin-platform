@@ -726,6 +726,19 @@ const fi = {
     copyMessage: 'Kopioi viesti',
     messageCopied: 'Viesti kopioitu leikepöydälle',
     copyFailed: 'Viestin kopiointi epäonnistui',
+
+    // Tool and Reasoning Elements
+    toolCalls: 'Työkalukutsut',
+    thinkingSteps: 'Ajatteluvaiheet',
+    iteration: 'Iteraatio',
+    iterations: 'iteraatiota',
+    systemMessage: 'Järjestelmäviesti',
+    streamCompleted: 'Virta valmis',
+    error: 'Virhe',
+    likeThisResponse: 'Tykkää tästä vastauksesta',
+    dislikeThisResponse: 'Älä tykkää tästä vastauksesta',
+    thisResponseWasGeneratedThrough: 'Tämä vastaus luotiin',
+    ofReasoningAndToolUsage: 'ajattelun ja työkalujen avulla',
   },
 
   // === USER MANAGEMENT ===

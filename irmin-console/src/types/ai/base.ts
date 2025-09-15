@@ -6,43 +6,65 @@ export const AIErrorSchema = z.object({
   statusCode: z.number(),
 });
 
-export const AIPaginationSchema = z.object({
-  page: z.number(),
-  limit: z.number(),
-  total: z.number(),
-  totalPages: z.number(),
-});
-
 export const AIMessageSchema = z.object({
   id: z.string(),
   conversationId: z.string(),
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+
+  // Message block structure
+  messageType: z
+    .enum([
+      'text',
+      'tool_call',
+      'tool_result',
+      'reasoning',
+      'source',
+      'file',
+      'error',
+      'system',
+    ])
+    .default('text')
+    .nullable(),
+  blockId: z.string().nullable().optional(),
+  parentBlockId: z.string().nullable().optional(),
+  blockOrder: z.number().default(0).nullable(),
+
+  // AI model information
   aiModelId: z.string().nullable().optional(),
   modelProvider: z.string().nullable().optional(),
   modelName: z.string().nullable().optional(),
-  inputTokens: z.number().nullable().optional(),
-  outputTokens: z.number().nullable().optional(),
-  totalTokens: z.number().nullable().optional(),
-  costUSD: z.number().nullable().optional(),
-  processingTimeMs: z.number().nullable().optional(),
+
+  // Agent information
+  agentName: z.string().nullable().optional(),
+
+  // Token usage and costs
+  inputTokens: z.number().default(0).nullable(),
+  outputTokens: z.number().default(0).nullable(),
+  totalTokens: z.number().default(0).nullable(),
+  costUSD: z.number().default(0).nullable(),
+
+  // Performance metrics
+  processingTimeMs: z.number().default(0).nullable(),
+
+  // Timestamps - accept any string and transform to Date
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
 
 export const AIConversationSchema = z.object({
   id: z.string(),
-  title: z.string().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  title: z.string(),
+  metadata: z.record(z.string(), z.unknown()).default({}),
   agentId: z.string().nullable().optional(),
   workspaceSlug: z.string().optional(),
   userId: z.string().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
-  messageCount: z.number(),
-  totalTokens: z.number(),
-  totalCost: z.number(),
+  messageCount: z.number().optional(),
+  totalTokens: z.union([z.number(), z.string()]).nullable().optional(),
+  totalCost: z.union([z.number(), z.string()]).nullable().optional(),
 });
 
 export const AIUsageSchema = z.object({
@@ -52,9 +74,22 @@ export const AIUsageSchema = z.object({
 });
 
 export const AIToolSelectionSchema = z.object({
-  includeAll: z.boolean().optional(),
-  includeTools: z.array(z.string()).optional(),
-  excludeTools: z.array(z.string()).optional(),
+  includeServers: z
+    .array(z.string())
+    .optional()
+    .describe('Include all tools from specific MCP servers'),
+  includeTools: z
+    .array(z.string())
+    .optional()
+    .describe('Include specific tools by name'),
+  excludeTools: z
+    .array(z.string())
+    .optional()
+    .describe('Exclude specific tools by name'),
+  includeAll: z
+    .boolean()
+    .optional()
+    .describe('Include all available tools (legacy behavior)'),
 });
 
 export const AIAgentSchema = z.object({
@@ -62,12 +97,28 @@ export const AIAgentSchema = z.object({
   name: z.string(),
   description: z.string(),
   type: z.enum(['chat', 'single-shot']),
-  capabilities: z.array(z.string()),
-  systemPrompt: z.string(),
-  defaultModel: z.string(),
-  defaultProvider: z.string(),
-  supportsMCP: z.boolean(),
-  supportsStreaming: z.boolean(),
+  modelProvider: z.enum(['groq', 'openai']),
+  model: z.string().optional(),
+  temperature: z.number().optional(),
+  maxTokens: z.number().optional(),
+  responseFormat: z.enum(['structured', 'unstructured', 'json', 'markdown']),
+  contextRequirements: z.array(
+    z.object({
+      type: z.enum(['string', 'vector', 'memory', 'schema']),
+      name: z.string(),
+      required: z.boolean(),
+      config: z.record(z.string(), z.unknown()).optional(),
+    })
+  ),
+  toolSelection: AIToolSelectionSchema.optional(),
+  streaming: z.boolean(),
+  // Legacy fields for backward compatibility
+  capabilities: z.array(z.string()).optional(),
+  systemPrompt: z.string().optional(),
+  defaultModel: z.string().optional(),
+  defaultProvider: z.string().optional(),
+  supportsMCP: z.boolean().optional(),
+  supportsStreaming: z.boolean().optional(),
 });
 
 export const AIModelSchema = z.object({
@@ -75,19 +126,8 @@ export const AIModelSchema = z.object({
   provider: z.string(),
   modelId: z.string(),
   description: z.string(),
-  inputPricePerMillionTokens: z.number(),
-  outputPricePerMillionTokens: z.number(),
-});
-
-export const AIToolSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  inputSchema: z.record(z.string(), z.any()),
-});
-
-export const AIServerSchema = z.object({
-  name: z.string(),
-  version: z.string(),
+  inputPricePerMillionTokens: z.number().nullable(),
+  outputPricePerMillionTokens: z.number().nullable(),
 });
 
 // Type exports
