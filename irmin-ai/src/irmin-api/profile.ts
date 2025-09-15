@@ -25,16 +25,22 @@ class ProfileService {
   /**
    * Get the user's profile information.
    *
+   * @param timeoutMs - Timeout in milliseconds (default: 5 seconds for middleware).
    * @returns IrminAPIResponse containing the user's profile.
    */
-  async getProfile(): Promise<IrminAPIResponse<User>> {
+  async getProfile(timeoutMs: number = 5000): Promise<IrminAPIResponse<User>> {
     try {
-      const response = (await this.irminCore.fetchAPI(`/v1/profile`, {
-        method: 'GET',
-      })) as IrminAPIResponse<User>;
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/profile`,
+        {
+          method: 'GET',
+        },
+        undefined, // allowedStatusCodes
+        timeoutMs
+      )) as IrminAPIResponse<User>;
       return response;
     } catch (error) {
-      console.error((error as Error).message, 'Get profile error');
+      console.error('Get profile error:', (error as Error).message);
       throw error;
     }
   }

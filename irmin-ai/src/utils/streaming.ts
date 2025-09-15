@@ -678,24 +678,38 @@ export function createStoredUIMessageStream(
             return db.insert(messages).values(message);
           });
 
-          await Promise.all(messagePromises);
+          // Add timeout to database operations to prevent hanging
+          const dbOperations = Promise.all([
+            Promise.all(messagePromises),
+            db
+              .update(conversations)
+              .set({ updatedAt: now })
+              .where(eq(conversations.id, conversationId)),
+          ]);
 
-          // Update conversation updated timestamp
-          await db
-            .update(conversations)
-            .set({ updatedAt: now })
-            .where(eq(conversations.id, conversationId));
+          // Race against timeout
+          await Promise.race([
+            dbOperations,
+            new Promise((_resolve, reject) =>
+              setTimeout(
+                () => reject(new Error('Database operation timeout')),
+                5000
+              )
+            ),
+          ]);
 
           // Log analytics for the first block (representing the overall response)
           if (blocks.length > 0 && firstMessageId) {
-            await analyticsService.logAgentUsed(
-              conversationId,
-              firstMessageId,
-              options.agentName
-            );
+            // Don't await analytics to prevent blocking
+            analyticsService
+              .logAgentUsed(conversationId, firstMessageId, options.agentName)
+              .catch((error) => {
+                console.error('Error logging analytics:', error);
+              });
           }
         } catch (error) {
           console.error('Error storing message blocks:', error);
+          // Don't throw the error to prevent stream hanging
         }
       };
 
@@ -703,26 +717,35 @@ export function createStoredUIMessageStream(
         const reader = stream.getReader();
         let done = false;
 
-        while (!done) {
-          const { value, done: readerDone } = await reader.read();
-          done = readerDone;
+        try {
+          while (!done) {
+            const { value, done: readerDone } = await reader.read();
+            done = readerDone;
 
-          if (!done && value) {
-            // Process all possible content types in priority order
-            const processed = processContentChunk(value, {
-              currentBlocks,
-              currentTextBlockId,
-              blockOrder,
-              controller,
-            });
+            if (!done && value) {
+              // Process all possible content types in priority order
+              const processed = processContentChunk(value, {
+                currentBlocks,
+                currentTextBlockId,
+                blockOrder,
+                controller,
+              });
 
-            // Update state based on processing results
-            if (processed.newTextBlockId) {
-              currentTextBlockId = processed.newTextBlockId;
+              // Update state based on processing results
+              if (processed.newTextBlockId) {
+                currentTextBlockId = processed.newTextBlockId;
+              }
+              if (processed.incrementBlockOrder) {
+                blockOrder++;
+              }
             }
-            if (processed.incrementBlockOrder) {
-              blockOrder++;
-            }
+          }
+        } finally {
+          // Always release the reader lock
+          try {
+            reader.releaseLock();
+          } catch (releaseError) {
+            console.error('Error releasing stream reader:', releaseError);
           }
         }
 
@@ -733,49 +756,76 @@ export function createStoredUIMessageStream(
           );
         }
 
-        // Store all blocks
+        // Send completion signal
+        controller.enqueue(`{"type":"stream-complete"}\n`);
+
+        // Close the controller immediately to free up the response
+        controller.close();
+
+        // Store all blocks asynchronously AFTER closing the stream
+        // This prevents database operations from blocking the server
         const blocksToStore = Array.from(currentBlocks.values());
         if (blocksToStore.length > 0) {
-          await storeBlocks(blocksToStore);
+          // Use setImmediate to ensure this runs after the stream is fully closed
+          setImmediate(() => {
+            storeBlocks(blocksToStore).catch((error) => {
+              console.error(
+                'Error storing blocks after stream completion:',
+                error
+              );
+            });
 
-          // Generate title with AI response context (async, don't wait)
-          if (options.userMessage && options.user && options.workspace) {
-            const textBlocks = blocksToStore.filter(
-              (block) => block.type === 'text'
-            );
-            const aiResponse = textBlocks
-              .map((block) => block.content)
-              .join('\n');
+            // Generate title with AI response context (async, don't wait)
+            if (options.userMessage && options.user && options.workspace) {
+              const textBlocks = blocksToStore.filter(
+                (block) => block.type === 'text'
+              );
+              const aiResponse = textBlocks
+                .map((block) => block.content)
+                .join('\n');
 
-            if (aiResponse.trim()) {
-              titleGenerationService
-                .updateTitleWithAIResponse(
-                  options.conversationId,
-                  options.userMessage,
-                  aiResponse,
-                  {
-                    user: options.user,
-                    workspace: options.workspace,
-                  }
-                )
-                .catch((error) => {
-                  console.warn(
-                    'Failed to update conversation title with AI response in streaming:',
-                    error instanceof Error ? error.message : 'Unknown error'
-                  );
-                });
+              if (aiResponse.trim()) {
+                titleGenerationService
+                  .updateTitleWithAIResponse(
+                    options.conversationId,
+                    options.userMessage,
+                    aiResponse,
+                    {
+                      user: options.user,
+                      workspace: options.workspace,
+                    }
+                  )
+                  .catch((error) => {
+                    console.warn(
+                      'Failed to update conversation title with AI response in streaming:',
+                      error instanceof Error ? error.message : 'Unknown error'
+                    );
+                  });
+              }
             }
-          }
+          });
         }
-
-        controller.close();
       } catch (error) {
         console.error('Error processing stream:', error);
-        // Send error event before closing
-        controller.enqueue(
-          `{"type":"stream-error","error":"${String(error).replace(/"/g, '\\"')}"}\n`
-        );
-        controller.error(error);
+        try {
+          // Send error event before closing
+          controller.enqueue(
+            `{"type":"stream-error","error":"${String(error).replace(/"/g, '\\"')}"}\n`
+          );
+          // Close the controller instead of erroring it to prevent server hanging
+          controller.close();
+        } catch (closeError) {
+          console.error('Error closing stream controller:', closeError);
+          // Only call controller.error as last resort and catch any exceptions
+          try {
+            controller.error(error);
+          } catch (controllerError) {
+            console.error(
+              'Failed to error stream controller:',
+              controllerError
+            );
+          }
+        }
       }
     },
   });

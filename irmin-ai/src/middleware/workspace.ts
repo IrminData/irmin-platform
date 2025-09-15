@@ -45,15 +45,23 @@ const workspaceMiddleware = async (
     // Create Irmin Core client with the user's token
     const irminCore = new IrminCore(req.auth.token);
 
-    // Fetch workspace details from the main Irmin API
+    // Fetch workspace details from the main Irmin API with 5-second timeout
     let workspaceResponse;
     try {
       workspaceResponse = await irminCore.workspaceService.fetchWorkspace({
         workspaceSlug,
+        timeoutMs: 5000,
       });
     } catch (apiError) {
       const apiErrorMessage =
         apiError instanceof Error ? apiError.message : 'Unknown API error';
+
+      // Log the error for debugging
+      console.error('Workspace middleware: Failed to fetch workspace:', {
+        workspaceSlug,
+        error: apiErrorMessage,
+        isTimeout: apiErrorMessage.includes('timeout'),
+      });
 
       // Handle different error scenarios
       if (

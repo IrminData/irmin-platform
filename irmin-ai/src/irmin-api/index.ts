@@ -38,12 +38,14 @@ class IrminCore {
    *
    * @param url - The API endpoint URL.
    * @param options - Request options for the fetch call.
+   * @param timeoutMs - Timeout in milliseconds (default: 10 seconds).
    * @returns A promise that resolves with the response.
    */
   private _fetch = async (
     url: string,
     options: RequestInit,
-    retries: number = 2
+    retries: number = 2,
+    timeoutMs: number = 10000
   ): Promise<Response> => {
     const requestOptions: RequestInit = {
       credentials: 'include',
@@ -58,16 +60,40 @@ class IrminCore {
     const requestURL = `${this.apiBase}${url}`;
 
     for (let attempt = 0; attempt < retries; attempt++) {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
       try {
-        const response = await fetch(requestURL, requestOptions);
+        const response = await fetch(requestURL, {
+          ...requestOptions,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
         return response;
       } catch (error) {
+        clearTimeout(timeoutId);
+
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown fetch error';
 
+        // Log the error for debugging
+        console.error(
+          `Irmin API request failed (attempt ${attempt + 1}/${retries}):`,
+          {
+            url: requestURL,
+            error: errorMessage,
+            isTimeout: error instanceof Error && error.name === 'AbortError',
+          }
+        );
+
         // If this is the last attempt, throw the error
         if (attempt === retries - 1) {
-          throw new Error(`fetch failed ${errorMessage}`);
+          const finalError =
+            error instanceof Error && error.name === 'AbortError'
+              ? `Irmin API request timeout after ${timeoutMs}ms: ${requestURL}`
+              : `Irmin API request failed: ${errorMessage}`;
+          throw new Error(finalError);
         }
 
         // Wait before retrying (exponential backoff)
@@ -85,14 +111,16 @@ class IrminCore {
    * @param url - The API endpoint URL.
    * @param options - Request options for the fetch call.
    * @param allowedStatusCodes - An optional list of allowed status codes.
+   * @param timeoutMs - Timeout in milliseconds (default: 10 seconds).
    * @returns A promise that resolves with the parsed API response.
    */
   public fetchAPI = async (
     url: string,
     options: RequestInit,
-    allowedStatusCodes?: number[]
+    allowedStatusCodes?: number[],
+    timeoutMs?: number
   ): Promise<IrminAPIResponse> => {
-    const response = await this._fetch(url, options);
+    const response = await this._fetch(url, options, 2, timeoutMs);
 
     // Check status codes if provided
     if (
@@ -145,19 +173,26 @@ class IrminCore {
    * @param url - The API endpoint URL.
    * @param options - Request options for the fetch call.
    * @param allowedStatusCodes - Optional list of allowed status codes.
+   * @param timeoutMs - Timeout in milliseconds (default: 10 seconds).
    * @returns A promise that resolves with binary response data.
    */
   public fetchBinary = async (
     url: string,
     options: RequestInit,
-    allowedStatusCodes?: number[]
+    allowedStatusCodes?: number[],
+    timeoutMs?: number
   ): Promise<IrminAPIBinaryResponse> => {
     const headers = {
       ...options.headers,
       Accept: '*/*',
     };
 
-    const response = await this._fetch(url, { ...options, headers });
+    const response = await this._fetch(
+      url,
+      { ...options, headers },
+      2,
+      timeoutMs
+    );
 
     if (allowedStatusCodes && !allowedStatusCodes.includes(response.status)) {
       throw new Error(

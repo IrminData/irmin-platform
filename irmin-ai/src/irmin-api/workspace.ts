@@ -45,23 +45,28 @@ class WorkspaceService {
    *
    * @param props - The parameters.
    * @param props.workspaceSlug - The workspace slug.
+   * @param props.timeoutMs - Timeout in milliseconds (default: 5 seconds for middleware).
    * @returns IrminAPIResponse containing the Workspace.
    */
   async fetchWorkspace({
     workspaceSlug,
+    timeoutMs = 5000,
   }: {
     workspaceSlug: string;
+    timeoutMs?: number;
   }): Promise<IrminAPIResponse<Workspace>> {
     try {
       const res = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspaceSlug}`,
         {
           method: 'GET',
-        }
+        },
+        undefined, // allowedStatusCodes
+        timeoutMs
       )) as IrminAPIResponse<Workspace>;
       return res;
     } catch (error) {
-      console.error((error as Error).message, 'Fetch workspace error');
+      console.error('Fetch workspace error:', (error as Error).message);
       throw error;
     }
   }

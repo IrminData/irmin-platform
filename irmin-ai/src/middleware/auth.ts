@@ -38,13 +38,20 @@ const authMiddleware = async (
     // Create Irmin Core client with the token
     const irminCore = new IrminCore(token);
 
-    // Fetch user profile from the main Irmin API
+    // Fetch user profile from the main Irmin API with 5-second timeout
     let profileResponse;
     try {
-      profileResponse = await irminCore.profileService.getProfile();
+      profileResponse = await irminCore.profileService.getProfile(5000);
     } catch (apiError) {
       const apiErrorMessage =
         apiError instanceof Error ? apiError.message : 'Unknown API error';
+
+      // Log the error for debugging
+      console.error('Auth middleware: Failed to fetch user profile:', {
+        error: apiErrorMessage,
+        isTimeout: apiErrorMessage.includes('timeout'),
+      });
+
       throw new AuthenticationError(
         `Failed to fetch user profile: ${apiErrorMessage}`,
         apiErrorMessage.includes('401') ||
