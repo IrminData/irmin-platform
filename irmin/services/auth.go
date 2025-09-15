@@ -14,6 +14,29 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2/user"
 )
 
+const (
+	// UserDetailsCacheMaxAge is the maximum age for cached user details before refresh
+	UserDetailsCacheMaxAge = 24 * time.Hour
+
+	// NovuSubscriberTimeout is the timeout for Novu subscriber operations
+	NovuSubscriberTimeout = 30 * time.Second
+
+	// BackgroundSyncTimeout is the timeout for background user sync operations
+	BackgroundSyncTimeout = 30 * time.Second
+
+	// UserCreationTimeout is the timeout for new user creation operations
+	UserCreationTimeout = 10 * time.Second
+
+	// SyncLockTimeout is the timeout for acquiring sync locks
+	SyncLockTimeout = 100 * time.Millisecond
+
+	// UserCreationLockTimeout is the timeout for acquiring user creation locks
+	UserCreationLockTimeout = 500 * time.Millisecond
+
+	// AuthCacheTTL is how long to cache auth results
+	AuthCacheTTL = 5 * time.Minute
+)
+
 // AuthCacheEntry represents a cached authentication result.
 type AuthCacheEntry struct {
 	User      *db.User
@@ -26,16 +49,11 @@ type AuthCache struct {
 	mu    sync.RWMutex
 }
 
-const (
-	// UserDetailsCacheMaxAge is the maximum age of a user details cache entry used to decide refresh from Clerk
-	UserDetailsCacheMaxAge = 5 * time.Minute
-
-	// NovuSubscriberTimeout is the timeout for ensuring a Novu subscriber.
-	NovuSubscriberTimeout = 30 * time.Second
-
-	// AuthCacheTTL is how long to cache auth results.
-	AuthCacheTTL = 5 * time.Minute
-)
+// PerUserLockManager provides thread-safe per-user locking for sync operations.
+type PerUserLockManager struct {
+	locks map[string]*sync.Mutex
+	mu    sync.RWMutex
+}
 
 // getCachedAuth retrieves a cached authentication result.
 func (api *APIServices) getCachedAuth(token string) *db.User {
@@ -84,6 +102,7 @@ func (api *APIServices) invalidateCachedAuth(token string) {
 // IdentifyUserFromToken validates the provided token and returns the associated user.
 // It supports system token, credentials token (cred_ prefix), and JWT from Clerk.
 // Uses caching to avoid expensive validation and sync operations for recently authenticated tokens.
+// External API operations (Clerk/Novu sync) happen asynchronously in the background.
 // Returns: user, isSystem, error
 func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, bool, error) {
 	if token == "" {
@@ -97,8 +116,10 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
 
 	// Check cache first for performance optimization
 	if cachedUser := api.getCachedAuth(token); cachedUser != nil {
-		// Return cached user with empty clerkID since we don't store it in cache
-		// The clerkID is only needed for initial sync operations
+		// Schedule background sync if user data is stale (but don't block)
+		if api.isUserDataStale(cachedUser) {
+			go api.backgroundUserSync(context.Background(), cachedUser, cachedUser.ClerkID, locale, token)
+		}
 		return cachedUser, false, nil
 	}
 
@@ -110,19 +131,33 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
 		return nil, false, err
 	}
 
-	// If user not found locally yet, or stale, sync from Clerk/Novu
+	// If user exists locally, return immediately and sync in background
+	if irminUser != nil && irminUser.ID != 0 {
+		// Cache the user for future requests
+		api.setCachedAuth(token, irminUser)
+
+		// Schedule background sync if needed (don't block)
+		if api.isUserDataStale(irminUser) {
+			go api.backgroundUserSync(context.Background(), irminUser, clerkID, locale, token)
+		}
+
+		return irminUser, false, nil
+	}
+
+	// User doesn't exist locally - we need to create them
+	// This is the only case where we need to block (for new users)
 	if locale == "" {
 		locale = "en"
 	}
-	syncedUser, syncErr := api.SyncUserWithClerkAndNovu(c, irminUser, clerkID, locale)
+	newUser, syncErr := api.createUserFromClerk(c, clerkID, locale)
 	if syncErr != nil {
 		return nil, false, syncErr
 	}
 
-	// Cache the authenticated user for future requests
-	api.setCachedAuth(token, syncedUser)
+	// Cache the newly created user
+	api.setCachedAuth(token, newUser)
 
-	return syncedUser, false, nil
+	return newUser, false, nil
 }
 
 // validateSystemToken checks if token equals configured system token
@@ -168,12 +203,25 @@ func (api *APIServices) validateAndGetUserFromToken(token string) (*db.User, str
 	return irminUser, clerkID, nil
 }
 
-// SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu under a lock and persists in DB.
+// SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu with per-user locking and persists in DB.
+// This function should only be called from background goroutines, never from the main auth path.
 func (api *APIServices) SyncUserWithClerkAndNovu(
 	c context.Context,
 	irminUser *db.User,
 	clerkID, locale string,
 ) (*db.User, error) {
+	// Use per-user locking to prevent duplicate sync operations for the same user
+	userLockKey := fmt.Sprintf("user_sync_%s", clerkID)
+
+	// Try to acquire lock with timeout - if we can't get it quickly, skip sync
+	lockAcquired := api.perUserLocks.TryLock(userLockKey, SyncLockTimeout)
+	if !lockAcquired {
+		// Another sync is already in progress for this user, skip this one
+		api.Logger.InfoContext(c, "Skipping user sync - already in progress", "clerk_id", clerkID)
+		return irminUser, nil
+	}
+	defer api.perUserLocks.Unlock(userLockKey)
+
 	// Set Clerk API key
 	clerk.SetKey(api.Env.ClerkSecretKey)
 
@@ -182,9 +230,6 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 	if err != nil {
 		return nil, fmt.Errorf("error getting user details from Clerk: %w", err)
 	}
-
-	api.userSyncMutex.Lock()
-	defer api.userSyncMutex.Unlock()
 
 	// Refresh fields periodically if user exists
 	if irminUser != nil && irminUser.ID != 0 && irminUser.UpdatedAt.Before(time.Now().Add(-UserDetailsCacheMaxAge)) {
@@ -276,4 +321,185 @@ func valueOrDefault(ptr *string) string {
 		return ""
 	}
 	return *ptr
+}
+
+// isUserDataStale checks if user data needs to be refreshed from Clerk.
+func (api *APIServices) isUserDataStale(user *db.User) bool {
+	if user == nil {
+		return true
+	}
+	return user.UpdatedAt.Before(time.Now().Add(-UserDetailsCacheMaxAge))
+}
+
+// backgroundUserSync performs user synchronization with Clerk/Novu in the background.
+// This runs asynchronously and doesn't block authentication.
+func (api *APIServices) backgroundUserSync(ctx context.Context, user *db.User, clerkID, locale, token string) {
+	// Use a timeout context to prevent hanging
+	syncCtx, cancel := context.WithTimeout(ctx, BackgroundSyncTimeout)
+	defer cancel()
+
+	// Perform the sync operation
+	syncedUser, err := api.SyncUserWithClerkAndNovu(syncCtx, user, clerkID, locale)
+	if err != nil {
+		api.Logger.ErrorContext(
+			syncCtx,
+			"Background user sync failed",
+			"error",
+			err,
+			"user_id",
+			user.ID,
+			"clerk_id",
+			clerkID,
+		)
+		return
+	}
+
+	// Update cache with fresh data
+	if syncedUser != nil {
+		api.setCachedAuth(token, syncedUser)
+	}
+}
+
+// createUserFromClerk creates a new user by fetching data from Clerk.
+// This is only used for completely new users and uses fast locking to prevent duplicates.
+func (api *APIServices) createUserFromClerk(ctx context.Context, clerkID, locale string) (*db.User, error) {
+	// Use a shorter timeout for new user creation
+	createCtx, cancel := context.WithTimeout(ctx, UserCreationTimeout)
+	defer cancel()
+
+	// Use per-user locking for user creation to prevent duplicates
+	// But use a very short timeout - if we can't get the lock quickly,
+	// assume another request is creating the user and check the DB
+	userLockKey := fmt.Sprintf("user_creation_%s", clerkID)
+	lockAcquired := api.perUserLocks.TryLock(userLockKey, UserCreationLockTimeout)
+
+	if !lockAcquired {
+		// Another user creation is in progress, check if user was created
+		if existingUser, _ := api.DB.GetUserByClerkID(clerkID); existingUser != nil && existingUser.ID != 0 {
+			return existingUser, nil
+		}
+		// If still not found, return error - avoid waiting
+		return nil, fmt.Errorf("user creation in progress for clerk ID: %s", clerkID)
+	}
+	defer api.perUserLocks.Unlock(userLockKey)
+
+	// Double-check if user was created by another goroutine
+	if existingUser, _ := api.DB.GetUserByClerkID(clerkID); existingUser != nil && existingUser.ID != 0 {
+		return existingUser, nil
+	}
+
+	// Set Clerk API key
+	clerk.SetKey(api.Env.ClerkSecretKey)
+
+	// Get Clerk user data
+	clerkUser, primaryEmail, primaryPhone, err := api.getUserFromClerk(createCtx, clerkID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user details from Clerk: %w", err)
+	}
+
+	newUser := &db.User{
+		ClerkID:        clerkID,
+		FirstName:      valueOrDefault(clerkUser.FirstName),
+		LastName:       valueOrDefault(clerkUser.LastName),
+		Email:          primaryEmail,
+		Phone:          primaryPhone,
+		ProfilePicture: valueOrDefault(clerkUser.ImageURL),
+	}
+
+	if createErr := api.DB.Create(&newUser).Error; createErr != nil {
+		api.Logger.ErrorContext(createCtx, "Error creating user in database", "error", createErr, "clerk_id", clerkID)
+		return nil, fmt.Errorf("error creating user: %w", createErr)
+	}
+
+	// Schedule Novu subscriber creation in background (don't block)
+	go api.ensureNovuSubscriberAsync(context.Background(), newUser, locale)
+
+	return newUser, nil
+}
+
+// ensureNovuSubscriberAsync ensures Novu subscriber exists without blocking.
+func (api *APIServices) ensureNovuSubscriberAsync(ctx context.Context, user *db.User, locale string) {
+	novuCtx, cancel := context.WithTimeout(ctx, NovuSubscriberTimeout)
+	defer cancel()
+
+	subscriber, err := lib.EnsureNovuSubscriber(novuCtx, api.SQIDManager, api.Env, locale, user)
+	if err != nil {
+		api.Logger.ErrorContext(novuCtx, "Background Novu subscriber creation failed", "error", err, "user_id", user.ID)
+		return
+	}
+
+	// Update user with Novu subscriber ID if successful
+	if subscriber != nil && subscriber.ID != nil && user.NovuSubscriberID == "" {
+		user.NovuSubscriberID = *subscriber.ID
+		if saveErr := api.DB.Save(&user).Error; saveErr != nil {
+			api.Logger.ErrorContext(novuCtx, "Error saving Novu subscriber ID", "error", saveErr, "user_id", user.ID)
+		}
+	}
+}
+
+// Lock acquires a lock for a specific key (e.g., user ID).
+func (pm *PerUserLockManager) Lock(key string) {
+	pm.mu.Lock()
+	if pm.locks == nil {
+		pm.locks = make(map[string]*sync.Mutex)
+	}
+	if _, exists := pm.locks[key]; !exists {
+		pm.locks[key] = &sync.Mutex{}
+	}
+	userMutex := pm.locks[key]
+	pm.mu.Unlock()
+
+	// Acquire the per-user lock (only blocks this specific user)
+	userMutex.Lock()
+}
+
+// TryLock attempts to acquire a lock for a specific key with a timeout.
+// Returns true if lock was acquired, false if timeout occurred.
+func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) bool {
+	pm.mu.Lock()
+	if pm.locks == nil {
+		pm.locks = make(map[string]*sync.Mutex)
+	}
+	if _, exists := pm.locks[key]; !exists {
+		pm.locks[key] = &sync.Mutex{}
+	}
+	userMutex := pm.locks[key]
+	pm.mu.Unlock()
+
+	// Try to acquire the lock with timeout
+	lockChan := make(chan bool, 1)
+	done := make(chan struct{})
+
+	go func() {
+		userMutex.Lock()
+		select {
+		case lockChan <- true:
+			// Lock acquired and sent, wait for done signal
+			<-done
+			userMutex.Unlock()
+		case <-done:
+			// Timeout occurred, release lock immediately
+			userMutex.Unlock()
+		}
+	}()
+
+	select {
+	case <-lockChan:
+		close(done)
+		return true
+	case <-time.After(timeout):
+		close(done)
+		return false
+	}
+}
+
+// Unlock releases the lock for a specific key.
+func (pm *PerUserLockManager) Unlock(key string) {
+	pm.mu.RLock()
+	userMutex := pm.locks[key]
+	pm.mu.RUnlock()
+
+	if userMutex != nil {
+		userMutex.Unlock()
+	}
 }

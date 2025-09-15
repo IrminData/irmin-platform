@@ -1,5 +1,7 @@
 package mcp
 
+import "time"
+
 const (
 	// MCPProtocolVersion is the Model Context Protocol version used by this server
 	MCPProtocolVersion = "2025-06-18"
@@ -18,4 +20,19 @@ const (
 
 	// MCPClientVersion is the version used for MCP client connections
 	MCPClientVersion = "1.0.0"
+
+	// MCPAttachTimeout is the timeout for MCP attach streaming operations
+	MCPAttachTimeout = 30 * time.Second
+
+	// MCPAuthTimeout is the timeout for MCP authentication operations
+	MCPAuthTimeout = 10 * time.Second
+
+	// TokenPrefixLength is the number of characters to show in token logs for debugging
+	TokenPrefixLength = 10
+
+	// ErrorStatusCodeThreshold is the HTTP status code threshold for error logging
+	ErrorStatusCodeThreshold = 400
+
+	// LargeResponseThreshold is the byte threshold for logging large responses
+	LargeResponseThreshold = 10000
 )

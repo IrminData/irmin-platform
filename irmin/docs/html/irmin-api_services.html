@@ -8,13 +8,25 @@ package services // import "irmin-api/services"
 CONSTANTS
 
 const (
-	// UserDetailsCacheMaxAge is the maximum age of a user details cache entry used to decide refresh from Clerk
-	UserDetailsCacheMaxAge = 5 * time.Minute
+	// UserDetailsCacheMaxAge is the maximum age for cached user details before refresh
+	UserDetailsCacheMaxAge = 24 * time.Hour
 
-	// NovuSubscriberTimeout is the timeout for ensuring a Novu subscriber.
+	// NovuSubscriberTimeout is the timeout for Novu subscriber operations
 	NovuSubscriberTimeout = 30 * time.Second
 
-	// AuthCacheTTL is how long to cache auth results.
+	// BackgroundSyncTimeout is the timeout for background user sync operations
+	BackgroundSyncTimeout = 30 * time.Second
+
+	// UserCreationTimeout is the timeout for new user creation operations
+	UserCreationTimeout = 10 * time.Second
+
+	// SyncLockTimeout is the timeout for acquiring sync locks
+	SyncLockTimeout = 100 * time.Millisecond
+
+	// UserCreationLockTimeout is the timeout for acquiring user creation locks
+	UserCreationLockTimeout = 500 * time.Millisecond
+
+	// AuthCacheTTL is how long to cache auth results
 	AuthCacheTTL = 5 * time.Minute
 )
 const (
@@ -595,7 +607,9 @@ func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale s
     IdentifyUserFromToken validates the provided token and returns the
     associated user. It supports system token, credentials token (cred_ prefix),
     and JWT from Clerk. Uses caching to avoid expensive validation and sync
-    operations for recently authenticated tokens. Returns: user, isSystem, error
+    operations for recently authenticated tokens. External API operations
+    (Clerk/Novu sync) happen asynchronously in the background. Returns: user,
+    isSystem, error
 
 func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) error
 
@@ -824,8 +838,9 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 	irminUser *db.User,
 	clerkID, locale string,
 ) (*db.User, error)
-    SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu under a
-    lock and persists in DB.
+    SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu with
+    per-user locking and persists in DB. This function should only be called
+    from background goroutines, never from the main auth path.
 
 func (api *APIServices) TransferConnectionOwnership(
 	c context.Context,
@@ -1036,6 +1051,22 @@ type InviteTransactionResult struct {
 }
     InviteTransactionResult contains the result of invitation creation including
     notification status.
+
+type PerUserLockManager struct {
+	// Has unexported fields.
+}
+    PerUserLockManager provides thread-safe per-user locking for sync
+    operations.
+
+func (pm *PerUserLockManager) Lock(key string)
+    Lock acquires a lock for a specific key (e.g., user ID).
+
+func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) bool
+    TryLock attempts to acquire a lock for a specific key with a timeout.
+    Returns true if lock was acquired, false if timeout occurred.
+
+func (pm *PerUserLockManager) Unlock(key string)
+    Unlock releases the lock for a specific key.
 
 type PolicyFilters struct {
 	Effect     string

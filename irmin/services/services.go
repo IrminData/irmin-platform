@@ -24,8 +24,8 @@ type APIServices struct {
 	PermissionService  *lib.PermissionService
 	Validator          *irminvalidator.Validator
 	CacheStorage       fiber.Storage
-	userSyncMutex      sync.RWMutex // Protects user operations to prevent race conditions
 	authCache          *AuthCache
+	perUserLocks       *PerUserLockManager // Per-user locks for sync operations
 	schemaCacheManager *lib.SchemaCacheManager
 }
 
@@ -40,6 +40,7 @@ func NewAPIServices(
 	cacheStorage fiber.Storage,
 ) *APIServices {
 	authCache := &AuthCache{cache: make(map[string]*AuthCacheEntry)}
+	perUserLocks := &PerUserLockManager{locks: make(map[string]*sync.Mutex)}
 	schemaCacheManager := lib.NewSchemaCacheManager(env, logger, db)
 	return &APIServices{
 		DB:                 db,
@@ -51,8 +52,8 @@ func NewAPIServices(
 		PermissionService:  permissionService,
 		Validator:          irminvalidator.NewValidator(sqidManager),
 		CacheStorage:       cacheStorage,
-		userSyncMutex:      sync.RWMutex{},
 		authCache:          authCache,
+		perUserLocks:       perUserLocks,
 		schemaCacheManager: schemaCacheManager,
 	}
 }

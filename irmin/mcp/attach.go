@@ -44,12 +44,17 @@ func registerAttachRoute(
 	})
 }
 
+//nolint:gocognit // It's OK, maybe someday we'll refactor this
 func handleAttachRequest(
 	c fiber.Ctx,
 	apiServices *services.APIServices,
 	httpHandler http.Handler,
 	cfg *authConfig,
 ) error {
+	// Create a context with timeout for the entire operation
+	ctx, cancel := context.WithTimeout(c, MCPAttachTimeout)
+	defer cancel()
+
 	// 1) Authenticate
 	user, err := authenticateUser(c, cfg, apiServices)
 	if err != nil {
@@ -57,16 +62,16 @@ func handleAttachRequest(
 	}
 
 	// 2) Create session (POST initialize) -> get Mcp-Session-Id
-	sessionID, err := internalCreateSession(apiServices, httpHandler, user)
+	sessionID, err := internalCreateSession(ctx, apiServices, httpHandler, user)
 	if err != nil {
-		apiServices.Logger.Error("attach: initialize failed", "error", err)
+		apiServices.Logger.ErrorContext(ctx, "attach: initialize failed", "error", err)
 		return fiber.NewError(fiber.StatusBadGateway, "attach: init failed")
 	}
 
 	// 3) Open SSE with session id
 	reader, closer, err := internalOpenSSE(apiServices, httpHandler, user, sessionID)
 	if err != nil {
-		apiServices.Logger.Error("attach: open SSE failed", "error", err)
+		apiServices.Logger.ErrorContext(ctx, "attach: open SSE failed", "error", err)
 		return fiber.NewError(fiber.StatusBadGateway, "attach: stream failed")
 	}
 	defer closer.Close()
@@ -87,29 +92,52 @@ data: {"jsonrpc":"2.0","method":"ping","params":{}}
 `
 	_, _ = c.Write([]byte(initialNotification))
 
-	// Stream data directly in the main goroutine
+	// Stream data with proper timeout and cancellation handling
 	buf := make([]byte, bufferSize)
+	heartbeatTicker := time.NewTicker(heartbeatInterval)
+	defer heartbeatTicker.Stop()
+
 	for {
-		// Use heartbeatInterval as the read deadline
-		_ = reader.SetReadDeadline(time.Now().Add(heartbeatInterval))
-		n, readBodyErr := reader.Read(buf)
-		if n > 0 {
-			// Stream the actual MCP SSE data directly
-			_, _ = c.Write(buf[:n])
-		}
-		if readBodyErr != nil {
-			var ne net.Error
-			if errors.As(readBodyErr, &ne) && ne.Timeout() {
-				// Send a proper MCP heartbeat notification
-				heartbeat := `event: notification
+		select {
+		case <-ctx.Done():
+			// Context cancelled or timed out
+			apiServices.Logger.InfoContext(ctx, "attach: context cancelled", "error", ctx.Err())
+			return nil
+		case <-heartbeatTicker.C:
+			// Send heartbeat
+			heartbeat := `event: notification
 data: {"jsonrpc":"2.0","method":"ping","params":{}}
 
 `
-				_, _ = c.Write([]byte(heartbeat))
-				continue
+			if _, writeErr := c.Write([]byte(heartbeat)); writeErr != nil {
+				apiServices.Logger.ErrorContext(ctx, "attach: heartbeat write failed", "error", writeErr)
+				return nil
 			}
-			apiServices.Logger.Error("attach: read body failed", "error", readBodyErr)
-			return nil
+		default:
+			// Try to read data with a short timeout
+			_ = reader.SetReadDeadline(time.Now().Add(1 * time.Second))
+			n, readBodyErr := reader.Read(buf)
+			if n > 0 {
+				// Stream the actual MCP SSE data directly
+				if _, writeErr := c.Write(buf[:n]); writeErr != nil {
+					apiServices.Logger.ErrorContext(ctx, "attach: data write failed", "error", writeErr)
+					return nil
+				}
+			}
+			if readBodyErr != nil {
+				var ne net.Error
+				if errors.As(readBodyErr, &ne) && ne.Timeout() {
+					// Timeout is expected, continue to next iteration
+					continue
+				}
+				if errors.Is(readBodyErr, io.EOF) {
+					// End of stream
+					apiServices.Logger.InfoContext(ctx, "attach: stream ended normally")
+					return nil
+				}
+				apiServices.Logger.ErrorContext(ctx, "attach: read body failed", "error", readBodyErr)
+				return nil
+			}
 		}
 	}
 }
@@ -119,7 +147,7 @@ func authenticateUser(c fiber.Ctx, cfg *authConfig, apiServices *services.APISer
 	authHeader := c.Get("Authorization")
 	user, err := validateAuthAndGetUser(cfg, authHeader)
 	if err != nil {
-		apiServices.Logger.Error("attach: auth failed", "error", err)
+		apiServices.Logger.ErrorContext(c, "attach: auth failed", "error", err)
 		return nil, err
 	}
 	return user, nil
@@ -146,6 +174,7 @@ type jsonrpcReq struct {
 // internalCreateSession performs the POST initialize against the in-process
 // SDK handler and extracts Mcp-Session-Id from the response headers.
 func internalCreateSession(
+	ctx context.Context,
 	apiServices *services.APIServices,
 	httpHandler http.Handler,
 	user *db.User,
@@ -164,7 +193,7 @@ func internalCreateSession(
 	reqObj.Params.ClientInfo.Name = MCPClientName
 	reqObj.Params.ClientInfo.Version = MCPClientVersion
 	if err := json.NewEncoder(&body).Encode(reqObj); err != nil {
-		apiServices.Logger.Error("internalCreateSession: failed to encode request", "error", err)
+		apiServices.Logger.ErrorContext(ctx, "internalCreateSession: failed to encode request", "error", err)
 		return "", err
 	}
 
@@ -176,11 +205,11 @@ func internalCreateSession(
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		Body:       io.NopCloser(bytes.NewReader(body.Bytes())),
-	}).WithContext(withUserInContext(context.Background(), user))
+	}).WithContext(withUserInContext(ctx, user))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.ContentLength = int64(body.Len())
-	apiServices.Logger.Info("internalCreateSession: request created", "path", apiServices.Env.MCPHTTPPath)
+	apiServices.Logger.InfoContext(ctx, "internalCreateSession: request created", "path", apiServices.Env.MCPHTTPPath)
 
 	// Serve handler via in-memory pipe
 	srvConn, cliConn := net.Pipe()
@@ -198,7 +227,12 @@ func internalCreateSession(
 	for {
 		line, findSessionIDErr := reader.ReadString('\n')
 		if findSessionIDErr != nil {
-			apiServices.Logger.Error("internalCreateSession: failed to read header line", "error", findSessionIDErr)
+			apiServices.Logger.ErrorContext(
+				ctx,
+				"internalCreateSession: failed to read header line",
+				"error",
+				findSessionIDErr,
+			)
 			_ = cliConn.Close()
 			return "", findSessionIDErr
 		}
@@ -212,7 +246,7 @@ func internalCreateSession(
 	}
 	if sessionID == "" {
 		// Best-effort drain then close; return a clear error
-		apiServices.Logger.Error("internalCreateSession: no session ID found")
+		apiServices.Logger.ErrorContext(ctx, "internalCreateSession: no session ID found")
 		_, _ = io.Copy(io.Discard, reader)
 		_ = cliConn.Close()
 		return "", errors.New("no Mcp-Session-Id in initialize response")

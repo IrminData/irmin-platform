@@ -29,12 +29,26 @@ func validateAuthAndGetUser(cfg *authConfig, authHeader string) (*db.User, error
 	if token == "" {
 		return nil, errors.New("missing token")
 	}
-	user, isSystem, err := cfg.apiServices.IdentifyUserFromToken(context.Background(), token, "en")
+
+	// Use a timeout context to prevent hanging
+	ctx, cancel := context.WithTimeout(context.Background(), MCPAuthTimeout)
+	defer cancel()
+
+	// Monitor for auth timeout
+	go func() {
+		<-ctx.Done()
+		if ctx.Err() == context.DeadlineExceeded {
+			cfg.apiServices.Logger.Error("MCP auth: IdentifyUserFromToken timed out")
+		}
+	}()
+
+	user, isSystem, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
 	if err != nil {
 		return nil, err
 	}
 	if isSystem {
 		return nil, errors.New("system token not permitted for MCP")
 	}
+
 	return user, nil
 }

@@ -8299,6 +8299,21 @@ const (
 
     // MCPClientVersion is the version used for MCP client connections
     MCPClientVersion = "1.0.0"
+
+    // MCPAttachTimeout is the timeout for MCP attach streaming operations
+    MCPAttachTimeout = 30 * time.Second
+
+    // MCPAuthTimeout is the timeout for MCP authentication operations
+    MCPAuthTimeout = 10 * time.Second
+
+    // TokenPrefixLength is the number of characters to show in token logs for debugging
+    TokenPrefixLength = 10
+
+    // ErrorStatusCodeThreshold is the HTTP status code threshold for error logging
+    ErrorStatusCodeThreshold = 400
+
+    // LargeResponseThreshold is the byte threshold for logging large responses
+    LargeResponseThreshold = 10000
 )
 ```
 
@@ -9058,6 +9073,10 @@ import "irmin-api/services"
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
 - [type InviteTransactionResult](<#InviteTransactionResult>)
+- [type PerUserLockManager](<#PerUserLockManager>)
+  - [func \(pm \*PerUserLockManager\) Lock\(key string\)](<#PerUserLockManager.Lock>)
+  - [func \(pm \*PerUserLockManager\) TryLock\(key string, timeout time.Duration\) bool](<#PerUserLockManager.TryLock>)
+  - [func \(pm \*PerUserLockManager\) Unlock\(key string\)](<#PerUserLockManager.Unlock>)
 - [type PolicyFilters](<#PolicyFilters>)
 - [type TagEntityOperation](<#TagEntityOperation>)
 
@@ -9068,13 +9087,25 @@ import "irmin-api/services"
 
 ```go
 const (
-    // UserDetailsCacheMaxAge is the maximum age of a user details cache entry used to decide refresh from Clerk
-    UserDetailsCacheMaxAge = 5 * time.Minute
+    // UserDetailsCacheMaxAge is the maximum age for cached user details before refresh
+    UserDetailsCacheMaxAge = 24 * time.Hour
 
-    // NovuSubscriberTimeout is the timeout for ensuring a Novu subscriber.
+    // NovuSubscriberTimeout is the timeout for Novu subscriber operations
     NovuSubscriberTimeout = 30 * time.Second
 
-    // AuthCacheTTL is how long to cache auth results.
+    // BackgroundSyncTimeout is the timeout for background user sync operations
+    BackgroundSyncTimeout = 30 * time.Second
+
+    // UserCreationTimeout is the timeout for new user creation operations
+    UserCreationTimeout = 10 * time.Second
+
+    // SyncLockTimeout is the timeout for acquiring sync locks
+    SyncLockTimeout = 100 * time.Millisecond
+
+    // UserCreationLockTimeout is the timeout for acquiring user creation locks
+    UserCreationLockTimeout = 500 * time.Millisecond
+
+    // AuthCacheTTL is how long to cache auth results
     AuthCacheTTL = 5 * time.Minute
 )
 ```
@@ -9780,7 +9811,7 @@ func (api *APIServices) GetWorkspaceUser(c context.Context, user *db.User, works
 func (api *APIServices) IdentifyUserFromToken(c context.Context, token, locale string) (*db.User, bool, error)
 ```
 
-IdentifyUserFromToken validates the provided token and returns the associated user. It supports system token, credentials token \(cred\_ prefix\), and JWT from Clerk. Uses caching to avoid expensive validation and sync operations for recently authenticated tokens. Returns: user, isSystem, error
+IdentifyUserFromToken validates the provided token and returns the associated user. It supports system token, credentials token \(cred\_ prefix\), and JWT from Clerk. Uses caching to avoid expensive validation and sync operations for recently authenticated tokens. External API operations \(Clerk/Novu sync\) happen asynchronously in the background. Returns: user, isSystem, error
 
 <a name="APIServices.LeaveWorkspace"></a>
 ### func \(\*APIServices\) LeaveWorkspace
@@ -10086,7 +10117,7 @@ func (api *APIServices) StartWorkflow(c context.Context, user *db.User, workspac
 func (api *APIServices) SyncUserWithClerkAndNovu(c context.Context, irminUser *db.User, clerkID, locale string) (*db.User, error)
 ```
 
-SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu under a lock and persists in DB.
+SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu with per\-user locking and persists in DB. This function should only be called from background goroutines, never from the main auth path.
 
 <a name="APIServices.TransferConnectionOwnership"></a>
 ### func \(\*APIServices\) TransferConnectionOwnership
@@ -10330,6 +10361,44 @@ type InviteTransactionResult struct {
     NotificationResult *lib.InviteNotificationResult `json:"notification_result,omitempty"`
 }
 ```
+
+<a name="PerUserLockManager"></a>
+## type PerUserLockManager
+
+PerUserLockManager provides thread\-safe per\-user locking for sync operations.
+
+```go
+type PerUserLockManager struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="PerUserLockManager.Lock"></a>
+### func \(\*PerUserLockManager\) Lock
+
+```go
+func (pm *PerUserLockManager) Lock(key string)
+```
+
+Lock acquires a lock for a specific key \(e.g., user ID\).
+
+<a name="PerUserLockManager.TryLock"></a>
+### func \(\*PerUserLockManager\) TryLock
+
+```go
+func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) bool
+```
+
+TryLock attempts to acquire a lock for a specific key with a timeout. Returns true if lock was acquired, false if timeout occurred.
+
+<a name="PerUserLockManager.Unlock"></a>
+### func \(\*PerUserLockManager\) Unlock
+
+```go
+func (pm *PerUserLockManager) Unlock(key string)
+```
+
+Unlock releases the lock for a specific key.
 
 <a name="PolicyFilters"></a>
 ## type PolicyFilters
