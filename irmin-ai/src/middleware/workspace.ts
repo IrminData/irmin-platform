@@ -2,6 +2,8 @@ import IrminCore from '@/irmin-api';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
 
+import { TIMEOUTS } from '@/config/timeouts';
+
 import type {
   AuthenticatedUser,
   SelectedWorkspace,
@@ -55,12 +57,12 @@ const workspaceMiddleware = async (
     // Create Irmin Core client with the user's token
     const irminCore = new IrminCore(req.auth.token);
 
-    // Fetch workspace details from the main Irmin API with 5-second timeout
+    // Fetch workspace details from the main Irmin API with 30-second timeout
     let workspaceResponse;
     try {
       workspaceResponse = await irminCore.workspaceService.fetchWorkspace({
         workspaceSlug,
-        timeoutMs: 5000,
+        timeoutMs: TIMEOUTS.IRMIN_API_MIDDLEWARE,
       });
     } catch (apiError) {
       const apiErrorMessage =

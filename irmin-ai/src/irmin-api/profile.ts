@@ -3,6 +3,8 @@ import type IrminCore from '@/irmin-api';
 import type { IrminAPIResponse } from '@/irmin-api/types/IrminAPIResponse';
 import type { User } from '@/irmin-api/types/user';
 
+import { TIMEOUTS } from '@/config/timeouts';
+
 /**
  * Profile API service
  *
@@ -25,10 +27,12 @@ class ProfileService {
   /**
    * Get the user's profile information.
    *
-   * @param timeoutMs - Timeout in milliseconds (default: 5 seconds for middleware).
+   * @param timeoutMs - Timeout in milliseconds (default: 30 seconds for middleware).
    * @returns IrminAPIResponse containing the user's profile.
    */
-  async getProfile(timeoutMs: number = 5000): Promise<IrminAPIResponse<User>> {
+  async getProfile(
+    timeoutMs: number = TIMEOUTS.IRMIN_API_MIDDLEWARE
+  ): Promise<IrminAPIResponse<User>> {
     try {
       const response = (await this.irminCore.fetchAPI(
         `/v1/profile`,

@@ -14,6 +14,7 @@ import { type LLMProvider, llmService } from '@/services/llm';
 import { mcpService } from '@/services/mcp';
 
 import { DEFAULT_LLM_CONFIG } from '@/config/defaults';
+import { TIMEOUTS } from '@/config/timeouts';
 
 import type { CompletionOptions } from './completion';
 
@@ -41,6 +42,8 @@ class AgentGraphService {
             options.toolSelection
           )
         : [];
+
+      console.log(`Agent graph: Loaded ${tools.length} MCP tools`);
 
       // Convert messages to LangChain format
       const langchainMessages = llmService.convertMessagesToLangChain(
@@ -110,8 +113,6 @@ class AgentGraphService {
 
         try {
           for await (const chunk of agentStream) {
-            console.log('Agent graph chunk:', JSON.stringify(chunk, null, 2));
-
             // Handle LangGraph stream format: ["messages", [messages_array]]
             if (
               Array.isArray(chunk) &&
@@ -125,50 +126,10 @@ class AgentGraphService {
                   // Only process if it's an actual message type we expect
                   if (!(msg instanceof BaseMessage)) {
                     // BaseMessage is the common ancestor for AIMessage, ToolMessage etc.
-                    console.log(
-                      'Skipping non-message object in LangGraph chunk:',
-                      msg
-                    );
-                    // If it's a metadata object, we can extract info here if needed
-                    if (typeof msg === 'object' && msg !== null) {
-                      const metadata = msg as Record<string, unknown>;
-                      if (typeof metadata.toolCalls === 'number') {
-                        toolCallCount = Math.max(
-                          toolCallCount,
-                          metadata.toolCalls
-                        );
-                      }
-                      if (typeof metadata.currentIteration === 'number') {
-                        iterationCount = Math.max(
-                          iterationCount,
-                          metadata.currentIteration
-                        );
-                      }
-                    }
                     continue; // Skip to the next item in newMessages
                   }
 
                   let chunkToEnqueue: AIMessageChunk;
-
-                  // Add debug logging for the message being processed
-                  console.log('Processing message from LangGraph chunk:', {
-                    messageType: msg.constructor?.name,
-                    hasContent: !!msg.content,
-                    contentLength: msg.content?.length || 0,
-                    hasToolCalls: !!(
-                      msg as BaseMessage & { tool_calls?: unknown[] }
-                    ).tool_calls?.length,
-                    hasToolCallId: !!(
-                      msg as BaseMessage & { tool_call_id?: string }
-                    ).tool_call_id,
-                    additionalKwargs: Object.keys(
-                      (
-                        msg as BaseMessage & {
-                          additional_kwargs?: Record<string, unknown>;
-                        }
-                      ).additional_kwargs || {}
-                    ),
-                  });
 
                   // Check if it's a ToolMessage (result of tool execution)
                   if (msg instanceof ToolMessage) {
@@ -181,24 +142,12 @@ class AgentGraphService {
                         ...msg.additional_kwargs,
                       },
                     });
-                    console.log('Converted ToolMessage to AIMessageChunk:', {
-                      content: chunkToEnqueue.content,
-                      tool_call_id:
-                        chunkToEnqueue.additional_kwargs.tool_call_id,
-                    });
                   } else if (
                     msg instanceof AIMessageChunk ||
                     msg instanceof AIMessage
                   ) {
                     // It's already an AIMessageChunk or AIMessage, just enqueue it
                     chunkToEnqueue = msg as AIMessageChunk;
-                    console.log(
-                      'Enqueuing existing AIMessageChunk/AIMessage:',
-                      {
-                        hasContent: !!chunkToEnqueue.content,
-                        hasToolCalls: !!chunkToEnqueue.tool_calls?.length,
-                      }
-                    );
                   } else {
                     // Fallback for other unexpected message types, convert to generic AIMessageChunk
                     console.warn(
@@ -270,12 +219,9 @@ class AgentGraphService {
     const { provider, model, temperature, maxTokens, tools } = options;
 
     // Create the LLM with tools
-    console.log('🔧 Creating agent graph with tools:', {
-      toolCount: tools.length,
-      toolNames: tools.map((t) => t.name),
-      provider,
-      model,
-    });
+    console.log(
+      `🔧 Creating agent graph with ${tools.length} tools (${provider}/${model})`
+    );
 
     const llm = llmService.createModel({
       provider,
@@ -290,26 +236,37 @@ class AgentGraphService {
 
     // Create a custom tool execution function that handles errors
     async function callTools(state: AgentState) {
-      console.log('callTools: Starting tool execution with state:', {
-        messageCount: state.messages.length,
-        toolCalls: state.toolCalls,
-        maxToolCalls: state.maxToolCalls,
-        currentIteration: state.currentIteration,
-      });
-
       if (!toolNode) {
-        console.log('callTools: No tool node available');
         return { messages: [] };
       }
 
       try {
+        // Get the last message to see what tool calls need to be executed
+        const lastMessage = state.messages[
+          state.messages.length - 1
+        ] as AIMessage;
+        const toolCallsToExecute =
+          lastMessage.tool_calls?.map((tc) => tc.name) || [];
+
+        if (toolCallsToExecute.length > 0) {
+          console.log(
+            `callTools: Executing ${toolCallsToExecute.length} tool(s): ${toolCallsToExecute.join(', ')}`
+          );
+        }
+
         // Execute tools using the ToolNode
-        console.log('callTools: Invoking tool node...');
-        const result = await toolNode.invoke(state);
-        console.log(
-          'callTools: Tool execution completed successfully, result:',
-          result
-        );
+        const startTime = Date.now();
+        const result = await toolNode.invoke(state, {
+          maxConcurrency: 5,
+          timeout: TIMEOUTS.MCP_TOOL_EXECUTION,
+        });
+        const executionTime = Date.now() - startTime;
+
+        if (result.messages?.length) {
+          console.log(
+            `callTools: Completed in ${executionTime}ms, got ${result.messages.length} result(s)`
+          );
+        }
 
         // Increment tool calls counter
         return {
@@ -325,7 +282,7 @@ class AgentGraphService {
 
         // Create a system message that explains the error and asks the LLM to retry
         const feedbackMessage = new AIMessage({
-          content: `Tool call failed with error: ${errorMessage}. Please analyze the error and retry the tool call with the correct parameters. Make sure to include all required parameters in the proper format.`,
+          content: `Tool call failed with error: ${errorMessage}. Please analyze the error and retry the tool call with the correct parameters. Make sure to include all required parameters in the proper format. Use the proper tool calling mechanism, not JSON text.`,
           additional_kwargs: {
             tool_call_feedback: true,
             original_error: errorMessage,
@@ -347,17 +304,6 @@ class AgentGraphService {
         state.messages.length - 1
       ] as AIMessage;
 
-      console.log('shouldContinue: Evaluating state:', {
-        messageCount: state.messages.length,
-        toolCalls: state.toolCalls,
-        maxToolCalls: state.maxToolCalls,
-        lastMessageType: lastMessage?.constructor?.name,
-        hasToolCalls: !!lastMessage?.tool_calls?.length,
-        toolCallsLength: lastMessage?.tool_calls?.length || 0,
-        hasToolCallFeedback:
-          !!lastMessage?.additional_kwargs?.tool_call_feedback,
-      });
-
       // Check if we've hit the max tool calls limit
       if (state.toolCalls >= state.maxToolCalls) {
         console.log('shouldContinue: Max tool calls reached, ending');
@@ -366,19 +312,14 @@ class AgentGraphService {
 
       // If the last message is feedback for retry, stay in agent node for retry
       if (lastMessage.additional_kwargs?.tool_call_feedback) {
-        console.log(
-          'shouldContinue: Tool call feedback detected, staying in agent'
-        );
         return 'agent';
       }
 
       // If the LLM makes a tool call, then we route to the "tools" node
       if (lastMessage.tool_calls?.length) {
-        console.log('shouldContinue: Tool calls detected, routing to tools');
         return 'tools';
       }
       // Otherwise, we stop (reply to the user) using the special "__end__" node
-      console.log('shouldContinue: No tool calls, ending');
       return '__end__';
     }
 
@@ -388,23 +329,8 @@ class AgentGraphService {
         state.messages.length - 1
       ] as AIMessage;
 
-      console.log(
-        'shouldContinueAfterTools: Evaluating state after tool execution:',
-        {
-          messageCount: state.messages.length,
-          toolCalls: state.toolCalls,
-          maxToolCalls: state.maxToolCalls,
-          lastMessageType: lastMessage?.constructor?.name,
-          hasToolCallFeedback:
-            !!lastMessage?.additional_kwargs?.tool_call_feedback,
-        }
-      );
-
       // If the last message is feedback for retry, go back to agent
       if (lastMessage.additional_kwargs?.tool_call_feedback) {
-        console.log(
-          'shouldContinueAfterTools: Tool call feedback detected, going back to agent'
-        );
         return 'agent';
       }
 
@@ -416,32 +342,52 @@ class AgentGraphService {
 
       // For successful tool results, continue back to agent to process the result
       // The agent can then decide whether to make another tool call or respond to user
-      console.log(
-        'shouldContinueAfterTools: Tool execution successful, continuing to agent'
-      );
       return 'agent';
     }
 
     // Define the function that calls the model with streaming support
     async function callModel(state: AgentState) {
-      console.log('callModel: Starting model call with state:', {
-        messageCount: state.messages.length,
-        toolCalls: state.toolCalls,
-        maxToolCalls: state.maxToolCalls,
-        currentIteration: state.currentIteration,
-      });
-
       try {
         // For real-time streaming, we need to handle this differently
         // LangGraph doesn't support streaming within nodes, so we'll use invoke
         // and handle streaming at the graph level
         const response = await llm.invoke(state.messages);
-        console.log('callModel: Model response received:', {
-          hasContent: !!response.content,
-          hasToolCalls: !!response.tool_calls?.length,
-          toolCallsCount: response.tool_calls?.length || 0,
-          responseType: response.constructor?.name,
-        });
+        // Log tool calls if any
+        if (response.tool_calls?.length) {
+          const toolNames = response.tool_calls.map((tc) => tc.name);
+          console.log(
+            `callModel: Generated ${response.tool_calls.length} tool call(s): ${toolNames.join(', ')}`
+          );
+        }
+
+        // Check if the model is generating JSON tool calls as text content instead of using proper tool_calls
+        if (
+          response.content &&
+          typeof response.content === 'string' &&
+          !response.tool_calls?.length &&
+          (response.content.includes('{"name"') ||
+            response.content.includes('"type":"tool_call"'))
+        ) {
+          console.warn(
+            'callModel: Model generated JSON tool call as text instead of using proper tool_calls mechanism'
+          );
+
+          // Create feedback message to instruct the model to use proper tool calling
+          const feedbackMessage = new AIMessage({
+            content: `Please use the proper tool calling mechanism instead of generating JSON as text. When you need to call a tool, use the structured tool calling format, not JSON text output.`,
+            additional_kwargs: {
+              tool_call_feedback: true,
+              original_error:
+                'Model generated JSON tool call as text instead of using proper tool_calls',
+            },
+          });
+
+          return {
+            messages: [feedbackMessage],
+            currentIteration: state.currentIteration + 1,
+            toolCalls: state.toolCalls + 1,
+          };
+        }
 
         return {
           messages: [response],
@@ -516,19 +462,13 @@ class AgentGraphService {
     workflow.addNode('agent', callModel);
 
     if (tools.length > 0 && toolNode) {
-      console.log('🔧 Adding tools node to workflow');
       workflow.addNode('tools', callTools);
-    } else {
-      console.log(
-        '⚠️ No tools available - workflow will end immediately after agent'
-      );
     }
 
     // Set entry point and add edges with proper type handling
     workflow.addEdge(START, 'agent' as never);
 
     if (tools.length > 0 && toolNode) {
-      console.log('🔧 Setting up conditional edges for tool execution');
       workflow.addConditionalEdges('agent' as never, shouldContinue, {
         agent: 'agent' as never, // Allow agent to route back to itself for retries
         tools: 'tools' as never,
@@ -541,9 +481,6 @@ class AgentGraphService {
         __end__: END,
       } as never);
     } else {
-      console.log(
-        '⚠️ No conditional edges - adding direct edge from agent to END'
-      );
       workflow.addEdge('agent' as never, END);
     }
 

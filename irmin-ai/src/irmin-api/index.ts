@@ -6,6 +6,7 @@ import type {
 import WorkspaceService from '@/irmin-api/workspace';
 
 import { env } from '@/config/env';
+import { TIMEOUTS } from '@/config/timeouts';
 
 /**
  * Simplified Core API client for Irmin AI.
@@ -38,14 +39,14 @@ class IrminCore {
    *
    * @param url - The API endpoint URL.
    * @param options - Request options for the fetch call.
-   * @param timeoutMs - Timeout in milliseconds (default: 10 seconds).
+   * @param timeoutMs - Timeout in milliseconds (default: 30 seconds).
    * @returns A promise that resolves with the response.
    */
   private _fetch = async (
     url: string,
     options: RequestInit,
     retries: number = 2,
-    timeoutMs: number = 10000
+    timeoutMs: number = TIMEOUTS.IRMIN_API_DEFAULT
   ): Promise<Response> => {
     const requestOptions: RequestInit = {
       credentials: 'include',
@@ -111,7 +112,7 @@ class IrminCore {
    * @param url - The API endpoint URL.
    * @param options - Request options for the fetch call.
    * @param allowedStatusCodes - An optional list of allowed status codes.
-   * @param timeoutMs - Timeout in milliseconds (default: 10 seconds).
+   * @param timeoutMs - Timeout in milliseconds (default: 30 seconds).
    * @returns A promise that resolves with the parsed API response.
    */
   public fetchAPI = async (
@@ -173,7 +174,7 @@ class IrminCore {
    * @param url - The API endpoint URL.
    * @param options - Request options for the fetch call.
    * @param allowedStatusCodes - Optional list of allowed status codes.
-   * @param timeoutMs - Timeout in milliseconds (default: 10 seconds).
+   * @param timeoutMs - Timeout in milliseconds (default: 30 seconds).
    * @returns A promise that resolves with binary response data.
    */
   public fetchBinary = async (

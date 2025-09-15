@@ -3,6 +3,8 @@ import type IrminCore from '@/irmin-api';
 import type { IrminAPIResponse } from '@/irmin-api/types/IrminAPIResponse';
 import type { Workspace } from '@/irmin-api/types/workspace';
 
+import { TIMEOUTS } from '@/config/timeouts';
+
 /**
  * Workspace API service
  *
@@ -45,12 +47,12 @@ class WorkspaceService {
    *
    * @param props - The parameters.
    * @param props.workspaceSlug - The workspace slug.
-   * @param props.timeoutMs - Timeout in milliseconds (default: 5 seconds for middleware).
+   * @param props.timeoutMs - Timeout in milliseconds (default: 30 seconds for middleware).
    * @returns IrminAPIResponse containing the Workspace.
    */
   async fetchWorkspace({
     workspaceSlug,
-    timeoutMs = 5000,
+    timeoutMs = TIMEOUTS.IRMIN_API_MIDDLEWARE,
   }: {
     workspaceSlug: string;
     timeoutMs?: number;

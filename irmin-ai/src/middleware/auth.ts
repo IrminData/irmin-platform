@@ -2,6 +2,8 @@ import IrminCore from '@/irmin-api';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
 
+import { TIMEOUTS } from '@/config/timeouts';
+
 import type { AuthenticatedUser } from '@/types/request-context';
 import { AuthenticationError } from '@/types/request-context';
 
@@ -48,10 +50,12 @@ const authMiddleware = async (
     // Create Irmin Core client with the token
     const irminCore = new IrminCore(token);
 
-    // Fetch user profile from the main Irmin API with 5-second timeout
+    // Fetch user profile from the main Irmin API with 30-second timeout
     let profileResponse;
     try {
-      profileResponse = await irminCore.profileService.getProfile(5000);
+      profileResponse = await irminCore.profileService.getProfile(
+        TIMEOUTS.IRMIN_API_MIDDLEWARE
+      );
     } catch (apiError) {
       const apiErrorMessage =
         apiError instanceof Error ? apiError.message : 'Unknown API error';

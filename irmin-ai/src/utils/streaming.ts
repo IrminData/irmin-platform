@@ -15,6 +15,8 @@ import type { LLMProvider } from '@/services/llm';
 // eslint-disable-next-line import-x/no-cycle
 import { titleGenerationService } from '@/services/titleGeneration';
 
+import { TIMEOUTS } from '@/config/timeouts';
+
 interface StreamingMessageOptions {
   conversationId: string;
   startTime?: number;
@@ -693,7 +695,7 @@ export function createStoredUIMessageStream(
             new Promise((_resolve, reject) =>
               setTimeout(
                 () => reject(new Error('Database operation timeout')),
-                5000
+                TIMEOUTS.DATABASE_OPERATION
               )
             ),
           ]);
