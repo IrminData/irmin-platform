@@ -63,6 +63,7 @@ const TabsWithBackButton = ({
                 size='lg'
                 variant={'ghost'}
                 href={tab.link}
+                onClick={tab.onClick}
                 aria-label={`Tab ${tab.name}`}
                 icon={tab.icon}
               >

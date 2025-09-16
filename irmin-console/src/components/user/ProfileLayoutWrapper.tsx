@@ -4,11 +4,12 @@ import { useMemo } from 'react';
 
 import { usePathname } from 'next/navigation';
 
-import { TbKey, TbSettings } from 'react-icons/tb';
+import { TbKey, TbLogout, TbSettings } from 'react-icons/tb';
 
 import DisplayTitle from '@/components/ui/display-title';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 
 /**
@@ -25,7 +26,7 @@ export default function ProfileLayoutWrapper({
 }) {
   const pathname = usePathname();
   const { dict, locale } = useLocale();
-
+  const { signOut } = useIAM();
   const tabs = useMemo(
     () => [
       {
@@ -40,8 +41,13 @@ export default function ProfileLayoutWrapper({
         active: pathname === `/${locale}/profile/tokens`,
         icon: <TbKey size={14} />,
       },
+      {
+        name: dict.consoleNavigation.signOut,
+        icon: <TbLogout size={14} />,
+        onClick: signOut,
+      },
     ],
-    [pathname, dict, locale]
+    [pathname, dict, locale, signOut]
   );
 
   return (

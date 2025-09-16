@@ -12,6 +12,8 @@ export interface TabDetails {
   content?: React.JSX.Element;
   /** The link of the tab */
   link?: string;
+  /** The onClick of the tab */
+  onClick?: () => void;
   /** Whether the tab is hidden */
   hidden?: boolean;
   /** Whether the tab is active */
