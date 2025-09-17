@@ -359,6 +359,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.WorkflowsStore,
 	)
+	workflows.Get(
+		"/runs",
+		apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.AllWorkflowRunsIndex,
+	)
 	workflow := workflows.Group("/:workflow", apiMiddlewares.WorkflowMiddleware)
 	workflow.Get("/", apiMiddlewares.WorkflowPermissionMiddleware(db.PolicyActionRead), apiControllers.WorkflowsShow)
 	workflow.Patch(

@@ -65,3 +65,30 @@ func (d *Database) GetWorkflowRunByID(id uint) (*WorkflowRun, error) {
 	result := d.Preload("TriggeredBy").Preload("TriggeredByUser").Preload("Workflow").First(&workflowRun, id)
 	return &workflowRun, result.Error
 }
+
+// GetWorkflowRunsByWorkspaceID returns workflow runs for all workflows in the given workspace,
+// sorted by creation time, along with the total count of matching runs for pagination.
+func (d *Database) GetWorkflowRunsByWorkspaceID(workspaceID uint, limit, offset int) ([]WorkflowRun, int, error) {
+	// Count total number of matching workflow runs
+	var total int64
+	if err := d.Model(&WorkflowRun{}).
+		Joins("JOIN workflows ON workflow_runs.workflow_id = workflows.id").
+		Where("workflows.workspace_id = ?", workspaceID).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Find workflow runs based on the provided parameters
+	var workflowRuns []WorkflowRun
+	result := d.Preload("TriggeredBy").
+		Preload("TriggeredByUser").
+		Preload("Workflow").
+		Joins("JOIN workflows ON workflow_runs.workflow_id = workflows.id").
+		Where("workflows.workspace_id = ?", workspaceID).
+		Order("workflow_runs.created_at desc").
+		Limit(limit).
+		Offset(offset).
+		Find(&workflowRuns)
+
+	return workflowRuns, int(total), result.Error
+}

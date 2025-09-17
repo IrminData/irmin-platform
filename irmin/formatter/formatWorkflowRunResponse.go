@@ -67,5 +67,7 @@ func FormatWorkflowRunResponse(
 		TriggeredBy:     triggeredByResponse,
 		TriggeredByUser: triggeredByUserResponse,
 		WorkflowID:      workflowSqid,
+		WorkflowName:    workflowRun.Workflow.Name,
+		WorkflowType:    workflowRun.Workflow.Type,
 	}, nil
 }

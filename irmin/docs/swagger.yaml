@@ -674,7 +674,6 @@ definitions:
         type: string
     required:
     - repository
-    - repository_path
     - repository_ref
     type: object
   irminmodels.Branch:
@@ -1468,8 +1467,6 @@ definitions:
         - binary
         example: structured
     required:
-    - name
-    - path
     - type
     type: object
   irminmodels.ObjectType:
@@ -2328,12 +2325,21 @@ definitions:
       workflow_id:
         example: wf_8x2m9k4n7p5q
         type: string
+      workflow_name:
+        example: Customer Data Import
+        type: string
+      workflow_type:
+        allOf:
+        - $ref: '#/definitions/irminmodels.WorkflowableType'
+        example: import
     required:
     - created_at
     - id
     - status
     - updated_at
     - workflow_id
+    - workflow_name
+    - workflow_type
     type: object
   irminmodels.WorkflowRunEvent:
     enum:
@@ -8679,6 +8685,69 @@ paths:
       summary: Update workflow configuration
       tags:
       - workflows
+  /workspaces/{workspace_slug}/workflows/runs:
+    get:
+      consumes:
+      - application/json
+      description: Get all workflow runs for all workflows in the workspace with pagination
+        and permission filtering
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All workflow runs retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.WorkflowRun'
+                  type: array
+                pagination:
+                  $ref: '#/definitions/irminmodels.IrminAPIPaginationMetadata'
+              type: object
+        "400":
+          description: Bad request - invalid pagination parameters
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "403":
+          description: Forbidden - insufficient permissions
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Workspace not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List all workflow runs in workspace
+      tags:
+      - workflow-runs
 schemes:
 - https
 securityDefinitions:

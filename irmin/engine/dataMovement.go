@@ -62,6 +62,19 @@ func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*
 	// Ensure operation is cancelled when done.
 	defer cancel()
 
+	// If empty method, use "pull"
+	if method == "" {
+		method = string(irminmodels.ConnectorCapabilityPull)
+	}
+
+	// Legacy support, convert "read" to "pull" and "write" to "push"
+	if method == "read" {
+		method = string(irminmodels.ConnectorCapabilityPull)
+	}
+	if method == "write" {
+		method = string(irminmodels.ConnectorCapabilityPush)
+	}
+
 	// Retrieve method schema.
 	schema, err := opClient.GetSchema(method)
 	if err != nil {

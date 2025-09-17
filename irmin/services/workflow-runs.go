@@ -264,3 +264,39 @@ func (api *APIServices) CancelWorkflowRun(
 	// Return the workflow run.
 	return workflowRun, nil
 }
+
+func (api *APIServices) ListAllWorkflowRuns(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	perPage, offset int,
+) ([]db.WorkflowRun, int, error) {
+	// Get all workflow runs for the workspace
+	runs, count, getWorkflowRunsErr := api.DB.GetWorkflowRunsByWorkspaceID(
+		workspace.ID,
+		perPage,
+		offset,
+	)
+	if getWorkflowRunsErr != nil {
+		api.Logger.ErrorContext(c, "error getting workflow runs", "error", getWorkflowRunsErr)
+		return nil, 0, getWorkflowRunsErr
+	}
+
+	// Filter workflow runs based on user permissions for the associated workflows
+	filteredRuns, err := lib.IsAllowedFilter(
+		api.PermissionService,
+		user,
+		workspace,
+		db.PolicyResourceWorkflowRun,
+		db.PolicyActionRead,
+		runs,
+		func(run db.WorkflowRun) uint { return run.WorkflowID },
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error filtering workflow runs by permissions", "error", err)
+		return nil, 0, err
+	}
+
+	// Return the filtered workflow runs
+	return filteredRuns, count, nil
+}

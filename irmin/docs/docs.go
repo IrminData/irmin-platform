@@ -8763,6 +8763,105 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/workflows/runs": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all workflow runs for all workflows in the workspace with pagination and permission filtering",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workflow-runs"
+                ],
+                "summary": "List all workflow runs in workspace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All workflow runs retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.WorkflowRun"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/definitions/irminmodels.IrminAPIPaginationMetadata"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid pagination parameters",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - insufficient permissions",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/workflows/{workflow_slug}": {
             "get": {
                 "security": [
@@ -10747,7 +10846,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "repository",
-                "repository_path",
                 "repository_ref"
             ],
             "properties": {
@@ -11753,8 +11851,6 @@ const docTemplate = `{
         "irminmodels.ObjectSchema": {
             "type": "object",
             "required": [
-                "name",
-                "path",
                 "type"
             ],
             "properties": {
@@ -12902,7 +12998,9 @@ const docTemplate = `{
                 "id",
                 "status",
                 "updated_at",
-                "workflow_id"
+                "workflow_id",
+                "workflow_name",
+                "workflow_type"
             ],
             "properties": {
                 "created_at": {
@@ -12962,6 +13060,18 @@ const docTemplate = `{
                 "workflow_id": {
                     "type": "string",
                     "example": "wf_8x2m9k4n7p5q"
+                },
+                "workflow_name": {
+                    "type": "string",
+                    "example": "Customer Data Import"
+                },
+                "workflow_type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/irminmodels.WorkflowableType"
+                        }
+                    ],
+                    "example": "import"
                 }
             }
         },

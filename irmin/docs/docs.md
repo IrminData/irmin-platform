@@ -446,6 +446,7 @@ import "irmin-api/controllers"
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
   - [func \(api \*APIControllers\) AcceptInvite\(c fiber.Ctx\) error](<#APIControllers.AcceptInvite>)
+  - [func \(api \*APIControllers\) AllWorkflowRunsIndex\(c fiber.Ctx\) error](<#APIControllers.AllWorkflowRunsIndex>)
   - [func \(api \*APIControllers\) CheckPermission\(c fiber.Ctx\) error](<#APIControllers.CheckPermission>)
   - [func \(api \*APIControllers\) CompareRefs\(c fiber.Ctx\) error](<#APIControllers.CompareRefs>)
   - [func \(api \*APIControllers\) ConnectionSchema\(c fiber.Ctx\) error](<#APIControllers.ConnectionSchema>)
@@ -605,6 +606,15 @@ func (api *APIControllers) AcceptInvite(c fiber.Ctx) error
 ```
 
 AcceptInvite godoc @Summary Accept invite @Description Accept an invite and join the workspace with the specified role @Tags invites @Security ApiKeyAuth @Accept json @Produce json @Param invite\_id path string true "Invite ID \(SQID\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Invite accepted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- user not allowed to accept this invite" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Invite not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /invites/\{invite\_id\}/accept \[post\]
+
+<a name="APIControllers.AllWorkflowRunsIndex"></a>
+### func \(\*APIControllers\) AllWorkflowRunsIndex
+
+```go
+func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error
+```
+
+AllWorkflowRunsIndex godoc @Summary List all workflow runs in workspace @Description Get all workflow runs for all workflows in the workspace with pagination and permission filtering @Tags workflow\-runs @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param page query int false "Page number for pagination" default\(1\) @Param per\_page query int false "Number of items per page" default\(10\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata\} "All workflow runs retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid pagination parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/runs \[get\]
 
 <a name="APIControllers.CheckPermission"></a>
 ### func \(\*APIControllers\) CheckPermission
@@ -1818,6 +1828,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetWorkflowByID\(id uint\) \(\*Workflow, error\)](<#Database.GetWorkflowByID>)
   - [func \(d \*Database\) GetWorkflowRunByID\(id uint\) \(\*WorkflowRun, error\)](<#Database.GetWorkflowRunByID>)
   - [func \(d \*Database\) GetWorkflowRunsByWorkflowID\(workflowID uint, limit, offset int\) \(\[\]WorkflowRun, int, error\)](<#Database.GetWorkflowRunsByWorkflowID>)
+  - [func \(d \*Database\) GetWorkflowRunsByWorkspaceID\(workspaceID uint, limit, offset int\) \(\[\]WorkflowRun, int, error\)](<#Database.GetWorkflowRunsByWorkspaceID>)
   - [func \(d \*Database\) GetWorkflowTags\(workflowID uint\) \(\[\]Tag, error\)](<#Database.GetWorkflowTags>)
   - [func \(d \*Database\) GetWorkflowsByTag\(tagID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByTag>)
   - [func \(d \*Database\) GetWorkflowsByWorkspaceID\(workspaceID uint\) \(\[\]Workflow, error\)](<#Database.GetWorkflowsByWorkspaceID>)
@@ -2966,6 +2977,15 @@ func (d *Database) GetWorkflowRunsByWorkflowID(workflowID uint, limit, offset in
 ```
 
 GetWorkflowRunsByWorkflowID returns workflow runs for the given workflow ID, sorted by creation time, along with the total count of matching runs for pagination.
+
+<a name="Database.GetWorkflowRunsByWorkspaceID"></a>
+### func \(\*Database\) GetWorkflowRunsByWorkspaceID
+
+```go
+func (d *Database) GetWorkflowRunsByWorkspaceID(workspaceID uint, limit, offset int) ([]WorkflowRun, int, error)
+```
+
+GetWorkflowRunsByWorkspaceID returns workflow runs for all workflows in the given workspace, sorted by creation time, along with the total count of matching runs for pagination.
 
 <a name="Database.GetWorkflowTags"></a>
 ### func \(\*Database\) GetWorkflowTags
@@ -9015,6 +9035,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) IdentifyUserFromToken\(c context.Context, token, locale string\) \(\*db.User, bool, error\)](<#APIServices.IdentifyUserFromToken>)
   - [func \(api \*APIServices\) LeaveWorkspace\(user \*db.User, workspace \*db.Workspace\) error](<#APIServices.LeaveWorkspace>)
   - [func \(api \*APIServices\) ListAPITokens\(c context.Context, user \*db.User\) \(\[\]db.APIToken, error\)](<#APIServices.ListAPITokens>)
+  - [func \(api \*APIServices\) ListAllWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListAllWorkflowRuns>)
   - [func \(api \*APIServices\) ListConnections\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Connection, error\)](<#APIServices.ListConnections>)
   - [func \(api \*APIServices\) ListConnectors\(c context.Context\) \(\[\]db.Connector, error\)](<#APIServices.ListConnectors>)
   - [func \(api \*APIServices\) ListEditorItems\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) \(\[\]irminmodels.EditorItem, error\)](<#APIServices.ListEditorItems>)
@@ -9827,6 +9848,15 @@ func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) e
 
 ```go
 func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.APIToken, error)
+```
+
+
+
+<a name="APIServices.ListAllWorkflowRuns"></a>
+### func \(\*APIServices\) ListAllWorkflowRuns
+
+```go
+func (api *APIServices) ListAllWorkflowRuns(c context.Context, user *db.User, workspace *db.Workspace, perPage, offset int) ([]db.WorkflowRun, int, error)
 ```
 
 

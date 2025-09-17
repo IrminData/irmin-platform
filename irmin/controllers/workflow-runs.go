@@ -309,3 +309,90 @@ func (api *APIControllers) WorkflowRunsDestroy(c fiber.Ctx) error {
 		Data: formattedRun,
 	})
 }
+
+// AllWorkflowRunsIndex godoc
+// @Summary List all workflow runs in workspace
+// @Description Get all workflow runs for all workflows in the workspace with pagination and permission filtering
+// @Tags workflow-runs
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param page query int false "Page number for pagination" default(1)
+// @Param per_page query int false "Number of items per page" default(10)
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=[]irminmodels.WorkflowRun,pagination=irminmodels.IrminAPIPaginationMetadata} "All workflow runs retrieved successfully"
+// @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid pagination parameters"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Workspace not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/workflows/runs [get]
+func (api *APIControllers) AllWorkflowRunsIndex(c fiber.Ctx) error {
+	// Get the dictionary, user and workspace from the request context.
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+
+	if !dictOk || !userOk || !workspaceOk {
+		api.Logger.Error(
+			"Error getting user or workspace from context",
+			"userOk",
+			userOk,
+			"workspaceOk",
+			workspaceOk,
+		)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Get the query parameters from the request.
+	params, parseQueryParamsErr := utils.ParseQueryParams(c, nil, []string{
+		"page",
+		"per_page",
+	})
+	if parseQueryParamsErr != nil {
+		api.Logger.Error("Error parsing query parameters", "error", parseQueryParamsErr)
+		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Parse pagination parameters using the helper
+	pagination := parsePaginationParams(params)
+
+	// Get all workflow runs for the workspace.
+	runs, count, err := api.Services.ListAllWorkflowRuns(
+		c,
+		user,
+		workspace,
+		pagination.perPage,
+		pagination.offset,
+	)
+	if err != nil {
+		api.Logger.Error("error getting all workflow runs", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Message: api.lm.T(dict, "error_occurred"),
+		})
+	}
+
+	// Format the workflow runs for the response.
+	formattedRuns, formatErr := formatter.FormatIndexResponse(
+		runs,
+		formatter.FormatWorkflowRunResponse,
+		api.SQIDManager,
+	)
+	if formatErr != nil {
+		api.Logger.Error("error formatting workflow runs", "error", formatErr)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Message: api.lm.T(dict, "error_occurred"),
+		})
+	}
+
+	// Build pagination response using the helper
+	paginationResponse := buildPaginationResponse(count, pagination)
+
+	// Return the formatted workflow runs.
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Pagination: paginationResponse,
+		Data:       formattedRuns,
+	})
+}

@@ -3,7 +3,7 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250908194405-0e0cc69d29ba
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250917201227-b6f21de8fc39
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.1
 	github.com/clerk/clerk-sdk-go/v2 v2.4.0
 	github.com/gofiber/fiber/v3 v3.0.0-rc.1
@@ -83,7 +83,7 @@ require (
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/mailru/easyjson v0.9.0 // indirect
+	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect

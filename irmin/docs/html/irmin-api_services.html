@@ -615,6 +615,13 @@ func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) e
 
 func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.APIToken, error)
 
+func (api *APIServices) ListAllWorkflowRuns(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	perPage, offset int,
+) ([]db.WorkflowRun, int, error)
+
 func (api *APIServices) ListConnections(
 	c context.Context,
 	user *db.User,
