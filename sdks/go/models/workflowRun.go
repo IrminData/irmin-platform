@@ -9,8 +9,10 @@ type WorkflowRun struct {
 	StartedAt       *time.Time       `json:"started_at,omitempty"                                                                                             example:"2025-01-15T10:30:30Z"`
 	FinishedAt      *time.Time       `json:"finished_at,omitempty"                                                                                            example:"2025-01-15T10:35:00Z"`
 	Status          WorkflowStatus   `json:"status"                      validate:"required,oneof=paused pending initiating running complete error cancelled" example:"complete"`
+	Logs            []string         `json:"logs,omitempty"              validate:"dive"                                                                      example:"Starting workflow execution,Processing customer data,Workflow completed successfully"`
 	TriggeredBy     *ScheduleTrigger `json:"triggered_by,omitempty"`
 	TriggeredByUser *User            `json:"triggered_by_user,omitempty"`
 	WorkflowID      string           `json:"workflow_id"                 validate:"required,validsqid=workflows"                                              example:"wf_8x2m9k4n7p5q"`
-	Logs            []string         `json:"logs,omitempty"              validate:"dive"                                                                      example:"Starting workflow execution,Processing customer data,Workflow completed successfully"`
+	WorkflowName    string           `json:"workflow_name"               validate:"required"                                                                  example:"Customer Data Import"`
+	WorkflowType    WorkflowableType `json:"workflow_type"               validate:"required"                                                                  example:"import"`
 }

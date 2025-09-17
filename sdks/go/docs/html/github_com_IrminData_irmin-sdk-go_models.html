@@ -17,9 +17,9 @@ type APIToken struct {
 }
 
 type ActionInputData struct {
-	Repository     string `json:"repository"      validate:"required" example:"customer-analytics"`
-	RepositoryRef  string `json:"repository_ref"  validate:"required" example:"main"`
-	RepositoryPath string `json:"repository_path" validate:"required" example:"/data/customers.csv"`
+	Repository     string `json:"repository"      validate:"required"  example:"customer-analytics"`
+	RepositoryRef  string `json:"repository_ref"  validate:"required"  example:"main"`
+	RepositoryPath string `json:"repository_path" validate:"omitempty" example:"/data/customers.csv"`
 }
 
 type Branch struct {
@@ -454,7 +454,7 @@ type PipelineStage struct {
 	// Repository stage specific
 	Repository          *string   `json:"repository,omitempty"            example:"customer-analytics"`
 	RepositoryBranch    *string   `json:"repository_branch,omitempty"     example:"main"`
-	RepositoryWritePath *string   `json:"repository_write_path,omitempty" example:"/processed/customers.json"`
+	RepositoryWritePath *string   `json:"repository_write_path,omitempty" example:"/processed/customers.json"              validate:"omitempty"`
 	RepositoryReadPaths *[]string `json:"repository_read_paths,omitempty" example:"/raw/customers.csv,/config/schema.json" validate:"dive"`
 }
 
@@ -817,10 +817,12 @@ type WorkflowRun struct {
 	StartedAt       *time.Time       `json:"started_at,omitempty"                                                                                             example:"2025-01-15T10:30:30Z"`
 	FinishedAt      *time.Time       `json:"finished_at,omitempty"                                                                                            example:"2025-01-15T10:35:00Z"`
 	Status          WorkflowStatus   `json:"status"                      validate:"required,oneof=paused pending initiating running complete error cancelled" example:"complete"`
+	Logs            []string         `json:"logs,omitempty"              validate:"dive"                                                                      example:"Starting workflow execution,Processing customer data,Workflow completed successfully"`
 	TriggeredBy     *ScheduleTrigger `json:"triggered_by,omitempty"`
 	TriggeredByUser *User            `json:"triggered_by_user,omitempty"`
 	WorkflowID      string           `json:"workflow_id"                 validate:"required,validsqid=workflows"                                              example:"wf_8x2m9k4n7p5q"`
-	Logs            []string         `json:"logs,omitempty"              validate:"dive"                                                                      example:"Starting workflow execution,Processing customer data,Workflow completed successfully"`
+	WorkflowName    string           `json:"workflow_name"               validate:"required"                                                                  example:"Customer Data Import"`
+	WorkflowType    WorkflowableType `json:"workflow_type"               validate:"required"                                                                  example:"import"`
 }
 
 type WorkflowRunEvent string
@@ -858,10 +860,10 @@ type Workflowable struct {
 	RepositoryBranch string         `json:"repository_branch,omitempty" validate:"required_if=Type import,required_if=Type export"                       example:"main"`
 
 	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" validate:"dive,required_if=Type import" example:"/exports/customers.csv,/exports/metadata.json"`
-	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    validate:"required_if=Type import"      example:"/imported/customers.json"`
+	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    validate:"omitempty"                    example:"/imported/customers.json"`
 
 	ExportFromRepositoryPaths []string `json:"export_from_repository_paths,omitempty" validate:"dive,required_if=Type export" example:"/processed/customers.json,/processed/summary.json"`
-	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"    validate:"required_if=Type export"      example:"/exports/final_data.csv"`
+	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"    validate:"omitempty"                    example:"/exports/final_data.csv"`
 
 	Live   bool            `json:"live,omitempty"   example:"true"`
 	Stages []PipelineStage `json:"stages,omitempty"                validate:"dive"`
@@ -870,7 +872,7 @@ type Workflowable struct {
 	Input                   []ActionInputData `json:"input,omitempty"                     validate:"dive"`
 	ResultsRepository       *string           `json:"results_repository,omitempty"                                           example:"analytics-results"`
 	ResultsRepositoryBranch *string           `json:"results_repository_branch,omitempty"                                    example:"main"`
-	ResultsRepositoryPath   *string           `json:"results_repository_path,omitempty"                                      example:"/results/analysis.json"`
+	ResultsRepositoryPath   *string           `json:"results_repository_path,omitempty"   validate:"omitempty"               example:"/results/analysis.json"`
 }
 
 type WorkflowableType string
