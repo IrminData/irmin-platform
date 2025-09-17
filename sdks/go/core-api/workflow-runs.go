@@ -69,3 +69,23 @@ func (c *Client) TriggerWorkflowRun(
 	}
 	return &run, apiResp, nil
 }
+
+func (c *Client) ListAllWorkflowRuns(
+	workspace string,
+	page, perPage int,
+) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
+	var runs []irminmodels.WorkflowRun
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method: http.MethodGet,
+		Endpoint: fmt.Sprintf(
+			"/v1/workspaces/%s/workflows/runs?page=%d&per_page=%d",
+			workspace,
+			page,
+			perPage,
+		),
+	}, &runs)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list all workflow runs error: %w", err)
+	}
+	return runs, apiResp, nil
+}

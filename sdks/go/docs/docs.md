@@ -594,6 +594,7 @@ import "github.com/IrminData/irmin-sdk-go/core-api"
   - [func \(c \*Client\) GetWorkspaceSchema\(slug string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceSchema>)
   - [func \(c \*Client\) GetWorkspaceTag\(workspace, tagID string\) \(\*irminmodels.TagWithAssets, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceTag>)
   - [func \(c \*Client\) LeaveWorkspace\(slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.LeaveWorkspace>)
+  - [func \(c \*Client\) ListAllWorkflowRuns\(workspace string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRuns>)
   - [func \(c \*Client\) ListBranches\(workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListConnections\(workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
@@ -1441,6 +1442,15 @@ GetWorkspaceTag retrieves a specific workspace tag with all its associated asset
 
 ```go
 func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, error)
+```
+
+
+
+<a name="Client.ListAllWorkflowRuns"></a>
+### func \(\*Client\) ListAllWorkflowRuns
+
+```go
+func (c *Client) ListAllWorkflowRuns(workspace string, page, perPage int) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 ```
 
 

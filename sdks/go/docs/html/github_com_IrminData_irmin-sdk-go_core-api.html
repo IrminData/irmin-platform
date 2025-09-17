@@ -366,6 +366,11 @@ func (c *Client) GetWorkspaceTag(
 
 func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, error)
 
+func (c *Client) ListAllWorkflowRuns(
+	workspace string,
+	page, perPage int,
+) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+
 func (c *Client) ListBranches(
 	workspace, repository string,
 ) ([]irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
