@@ -686,6 +686,7 @@ const fi = {
     failedToLoadAssistantInterface:
       'Avustajakäyttöliittymän lataaminen epäonnistui',
     openSidebar: 'Avaa sivupalkki',
+    openInFullPage: 'Avaa täysikokoisessa sivussa',
 
     // Conversations List
     newConversation: 'Uusi keskustelu',

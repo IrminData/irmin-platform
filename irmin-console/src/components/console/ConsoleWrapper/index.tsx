@@ -1,21 +1,24 @@
 'use client';
 
 import type { ComponentPropsWithoutRef } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 
 import { TbChevronLeft, TbChevronRight, TbCircle } from 'react-icons/tb';
 
+import AssistantSection from '@/components/assistant/AssistantSection';
 import ConsoleSearch from '@/components/search/ConsoleSearch';
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { ErrorBoundary } from '@/components/ui/error/ErrorBoundary';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 import { useLocale } from '@/context/LocaleContext';
+import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
 import { useWorkspaces } from '@/hooks/api';
 import { useBaseUrl, useBreakpoint } from '@/hooks/utils';
@@ -58,6 +61,7 @@ export default function ConsoleWrapper({
 function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   const { dict } = useLocale();
   const params = useParams<{ workspace?: string }>();
+  const pathname = usePathname();
   const { loadingPermissions, ...links } = useConsoleNavigationLinks();
 
   const isLargeScreen = useBreakpoint('@lg');
@@ -73,6 +77,10 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
+  const [isAssistantSheetOpen, setIsAssistantSheetOpen] = useState(false);
+
+  // Check if we're on the assistant page
+  const isOnAssistantPage = pathname.startsWith(assistantUrl);
 
   const { workspacesQuery } = useWorkspaces();
 
@@ -83,6 +91,13 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   );
 
   const foldMenu = isLargeScreen ? isMenuFolded : false;
+
+  // Close assistant sheet when navigating to assistant page
+  useEffect(() => {
+    if (isOnAssistantPage && isAssistantSheetOpen) {
+      setIsAssistantSheetOpen(false);
+    }
+  }, [isOnAssistantPage, isAssistantSheetOpen]);
 
   return (
     <div className='contents' id='console-wrapper'>
@@ -454,10 +469,10 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Floating Assistant Button */}
-      {currentWorkspace && (
+      {currentWorkspace && !isOnAssistantPage && (
         <div className='fixed right-6 bottom-6 z-50'>
           <ButtonWithTooltip
-            href={assistantUrl}
+            onClick={() => setIsAssistantSheetOpen(true)}
             size='icon'
             variant='gradient'
             tooltip={dict.assistant.title}
@@ -470,6 +485,27 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
             <TbCircle className='size-6' />
           </ButtonWithTooltip>
         </div>
+      )}
+
+      {/* AI Assistant Sheet */}
+      {currentWorkspace && !isOnAssistantPage && (
+        <Sheet
+          open={isAssistantSheetOpen}
+          onOpenChange={setIsAssistantSheetOpen}
+        >
+          <SheetContent
+            side='right'
+            className='w-full max-w-4xl p-0'
+            hideCloseButton
+          >
+            <WorkspaceProvider workspaceSlug={currentWorkspace.slug}>
+              <AssistantSection
+                compact={true}
+                onClose={() => setIsAssistantSheetOpen(false)}
+              />
+            </WorkspaceProvider>
+          </SheetContent>
+        </Sheet>
       )}
     </div>
   );

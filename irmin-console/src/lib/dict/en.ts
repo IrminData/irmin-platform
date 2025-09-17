@@ -701,6 +701,7 @@ const en = {
     assistantInterfaceError: 'Assistant Interface Error',
     failedToLoadAssistantInterface: 'Failed to load assistant interface',
     openSidebar: 'Open sidebar',
+    openInFullPage: 'Open in full page',
 
     // Conversations List
     newConversation: 'New Conversation',

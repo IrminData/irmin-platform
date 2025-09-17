@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { TbMenu2, TbX } from 'react-icons/tb';
+import { TbExternalLink, TbMenu2, TbPlus, TbX } from 'react-icons/tb';
 
 import { aiConversationQueryKey } from '@/lib/queryKeys';
 
@@ -24,18 +24,35 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useAIConversation } from '@/hooks/api/useAIConversation';
 import { useAIConversations } from '@/hooks/api/useAIConversations';
+import { useBaseUrl } from '@/hooks/utils';
 
 import type { AIConversation } from '@/types/ai/base';
 
+import { ButtonWithTooltip } from '../ui/button-with-tooltip';
 import ConversationDetails from './ConversationDetails';
 import ConversationsList from './ConversationsList';
+
+interface AssistantSectionProps {
+  /**
+   * Whether to render in compact mode (no sidebar, no conversation details)
+   * Used when displaying in a sheet or modal
+   */
+  compact?: boolean;
+  /**
+   * Callback to close the sheet/modal when in compact mode
+   */
+  onClose?: () => void;
+}
 
 /**
  * Assistant section
  *
  * Provides a section to chat with the AI assistant and manage conversations
  */
-export default function AssistantSection() {
+export default function AssistantSection({
+  compact = false,
+  onClose,
+}: AssistantSectionProps) {
   const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
@@ -45,6 +62,15 @@ export default function AssistantSection() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Assistant page URL to open in full page
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+  const assistantUrl = `${workspaceUrl}/assistant`;
 
   // Fetch conversations list to enable refetching
   const { aiConversationsQuery: _aiConversationsQuery } = useAIConversations({
@@ -124,6 +150,79 @@ export default function AssistantSection() {
     setSelectedConversationId(conversation?.id || null);
   };
 
+  // Handle starting a new conversation in compact mode
+  const handleNewConversation = () => {
+    setSelectedConversationId(null);
+  };
+
+  if (compact) {
+    // Compact mode: only show chat area with new conversation button
+    return (
+      <SafeComponent
+        level='section'
+        title={dict.assistant.assistantInterfaceError}
+        description={dict.assistant.failedToLoadAssistantInterface}
+      >
+        <div className='flex h-full flex-col bg-background'>
+          <Card className='flex h-full flex-col rounded-none shadow-none'>
+            <CardHeader
+              className={`
+                flex flex-row items-center justify-between border-b
+                border-border p-4
+              `}
+            >
+              <div className='flex items-center gap-2'>
+                <CardTitle>
+                  {selectedConversationId && aiConversationQuery.isLoading
+                    ? dict.common.loading
+                    : selectedConversation
+                      ? selectedConversation.title ||
+                        dict.assistant.newConversation
+                      : dict.assistant.title}
+                </CardTitle>
+              </div>
+              <div className='flex items-center gap-2'>
+                <ButtonWithTooltip
+                  variant='ghost'
+                  icon={<TbPlus size={16} />}
+                  size='icon'
+                  onClick={handleNewConversation}
+                  disabled={!selectedConversationId}
+                  tooltip={dict.assistant.newConversation}
+                />
+                <ButtonWithTooltip
+                  href={assistantUrl}
+                  variant='ghost'
+                  size='icon'
+                  icon={<TbExternalLink size={16} />}
+                  tooltip={dict.assistant.openInFullPage}
+                />
+                {onClose && (
+                  <ButtonWithTooltip
+                    variant='ghost'
+                    icon={<TbX size={16} />}
+                    size='icon'
+                    onClick={onClose}
+                    tooltip={dict.common.close}
+                  />
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className='flex-1 overflow-hidden p-0'>
+              <AgentChat
+                conversationID={selectedConversationId}
+                agentId='assistant'
+                onConversationCreated={handleConversationCreated}
+                onConversationUpdated={handleConversationUpdated}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </SafeComponent>
+    );
+  }
+
+  // Full mode: show sidebar and all features
   return (
     <SafeComponent
       level='section'
@@ -198,7 +297,7 @@ export default function AssistantSection() {
                   </Button>
                   <CardTitle>
                     {selectedConversationId && aiConversationQuery.isLoading
-                      ? 'Loading conversation...'
+                      ? dict.common.loading
                       : selectedConversation
                         ? selectedConversation.title ||
                           dict.assistant.newConversation
