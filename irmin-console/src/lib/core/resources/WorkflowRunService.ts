@@ -23,6 +23,7 @@ class WorkflowRunService {
     this.fetchWorkflowRun = this.fetchWorkflowRun.bind(this);
     this.cancelWorkflowRun = this.cancelWorkflowRun.bind(this);
     this.triggerWorkflowRun = this.triggerWorkflowRun.bind(this);
+    this.fetchAllWorkflowRuns = this.fetchAllWorkflowRuns.bind(this);
   }
 
   /**
@@ -141,6 +142,36 @@ class WorkflowRunService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Trigger workflow run error');
+      throw error;
+    }
+  }
+
+  /**
+   * List all workflow runs for all workflows in a workspace.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.perPage - (Optional) Number of items per page.
+   * @param props.page - (Optional) Page number.
+   * @returns IrminAPIResponse containing an array of WorkflowRun.
+   */
+  async fetchAllWorkflowRuns({
+    workspace,
+    perPage = 100,
+    page = 1,
+  }: {
+    workspace: string;
+    perPage?: number;
+    page?: number;
+  }): Promise<IrminAPIResponse<WorkflowRun[]>> {
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/workflows/runs?per_page=${perPage}&page=${page}`,
+        { method: 'GET' }
+      )) as IrminAPIResponse<WorkflowRun[]>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Fetch all workflow runs error');
       throw error;
     }
   }

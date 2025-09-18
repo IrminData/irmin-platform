@@ -425,6 +425,7 @@ const en = {
   // === WORKFLOWS ===
   workflow: {
     workflows: 'Workflows',
+    allWorkflowRuns: 'All workflow runs',
     importWorkflows: 'Import workflows',
     actionWorkflows: 'Action workflows',
     exportWorkflows: 'Export workflows',
@@ -906,6 +907,16 @@ const en = {
         title: 'No workflows yet',
         description:
           'Workflows automate your data tasks. Create import, export, action, or pipeline workflows to get started.',
+      },
+      workflowRunsForWorkflow: {
+        title: 'This workflow has not yet been run',
+        description:
+          'Start by triggering a workflow run or wait until it is triggered by the schedule.',
+      },
+      allWorkflowRuns: {
+        title: 'No workflow runs yet',
+        description:
+          'Workflow runs will appear here once workflows are executed. Trigger a workflow run or wait for scheduled workflows to run.',
       },
       connections: {
         title: 'No connections yet',

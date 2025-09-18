@@ -416,6 +416,7 @@ const fi = {
   // === WORKFLOWS ===
   workflow: {
     workflows: 'Prosessit',
+    allWorkflowRuns: 'Kaikki prosessin ajot',
     importWorkflows: 'Tuontiprosessit',
     actionWorkflows: 'Toimintoprosessit',
     exportWorkflows: 'Vientiprosessit',
@@ -891,6 +892,16 @@ const fi = {
         title: 'Ei vielä työnkulkuja',
         description:
           'Työnkulut automatisoivat data-tehtäviäsi. Luo tuonti-, vienti-, toiminto- tai putki-työnkulkuja aloittaaksesi.',
+      },
+      workflowRunsForWorkflow: {
+        title: 'Tämä prosessi ei ole vielä suoritettu',
+        description:
+          'Aloita käynnistämällä prosessin ajo tai odota, kunnes se on laukautunut aikataulun mukaan.',
+      },
+      allWorkflowRuns: {
+        title: 'Ei vielä prosessin ajoja',
+        description:
+          'Prosessin ajot näkyvät täällä kun prosesseja suoritetaan. Käynnistä prosessin ajo tai odota aikataulutettujen prosessien ajamista.',
       },
       connections: {
         title: 'Ei vielä yhteyksiä',

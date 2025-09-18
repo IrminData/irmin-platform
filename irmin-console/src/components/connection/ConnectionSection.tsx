@@ -3,6 +3,8 @@
 import { useMemo } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
+import DisplayTitle from '@/components/ui/display-title';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import WorkflowList from '@/components/workflow/WorkflowList';
@@ -11,7 +13,7 @@ import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkflows } from '@/hooks/api';
-import { useResourceAllowed } from '@/hooks/utils';
+import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 /**
  * Connection Settings section component
@@ -22,6 +24,14 @@ const ConnectionSection = () => {
   const { connectionID, connectionQuery } = useConnectionContext();
   const { workflowsQuery } = useWorkflows();
 
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
+
   const canViewConnection = useMemo(
     () => isResourceAllowed('connection', 'read', connectionID),
     [isResourceAllowed, connectionID]
@@ -29,6 +39,11 @@ const ConnectionSection = () => {
 
   const canViewWorkflows = useMemo(
     () => isResourceAllowed('workflow', 'read'),
+    [isResourceAllowed]
+  );
+
+  const canCreateWorkflow = useMemo(
+    () => isResourceAllowed('workflow', 'create'),
     [isResourceAllowed]
   );
 
@@ -52,20 +67,18 @@ const ConnectionSection = () => {
 
   if (!canViewConnection) {
     return (
-      <SafeComponent
-        level='section'
-        title='Connection Access Error'
-        description='Failed to load connection due to permissions'
-      >
-        <div className='relative container mx-auto max-w-7xl'>
-          <div className='my-4 flex flex-col gap-4 p-4'>
-            <p className='text-sm opacity-60'>{dict.common.error}</p>
-            <p className='text-sm opacity-60'>
-              {dict.common.insufficientPermissions}
-            </p>
-          </div>
+      <div className='relative container mx-auto max-w-7xl px-4 py-8'>
+        <div className='my-4 flex flex-row items-center justify-between gap-4'>
+          <DisplayTitle>{dict.connections.connection}</DisplayTitle>
         </div>
-      </SafeComponent>
+        <CommonErrorDisplay
+          variant='section'
+          title={dict.common.error}
+          description={dict.common.insufficientPermissions}
+          showReload={false}
+          showDetails={false}
+        />
+      </div>
     );
   }
 
@@ -136,6 +149,15 @@ const ConnectionSection = () => {
             <WorkflowList
               workflows={relatedWorkflows ?? []}
               loading={workflowsQuery.isLoading}
+              emptyStateAction={
+                canCreateWorkflow
+                  ? {
+                      label: dict.workflow.create.createNewWorkflow,
+                      href: `${workspaceUrl}/workflows?create`,
+                      variant: 'gradient',
+                    }
+                  : undefined
+              }
             />
           )}
         </div>

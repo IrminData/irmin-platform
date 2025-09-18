@@ -1,6 +1,6 @@
 import type { ScheduleTrigger } from '@/types/core/Schedule';
 import type { User } from '@/types/core/User';
-import type { WorkflowStatus } from '@/types/core/Workflow';
+import type { WorkflowableType, WorkflowStatus } from '@/types/core/Workflow';
 
 /**
  * Represents a workflow run.
@@ -24,6 +24,10 @@ export interface WorkflowRun {
   triggered_by_user?: User;
   /** Identifier of the workflow */
   workflow_id: string;
+  /** Name of the workflow */
+  workflow_name: string;
+  /** Type of the workflow */
+  workflow_type: WorkflowableType;
   /** (optional) Logs for the workflow run */
   logs?: string[];
 }

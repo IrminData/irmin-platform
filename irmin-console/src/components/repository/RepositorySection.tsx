@@ -19,6 +19,8 @@ import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
 import QueryResults from '@/components/query/QueryResults';
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import DisplayTitle from '@/components/ui/display-title';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -198,13 +200,17 @@ function RepositorySectionContent({
 
   if (!canViewRepository) {
     return (
-      <div className='relative container mx-auto max-w-7xl'>
-        <div className='my-4 flex flex-col gap-4 p-4'>
-          <p className='text-sm opacity-60'>{dict.common.error}</p>
-          <p className='text-sm opacity-60'>
-            {dict.common.insufficientPermissions}
-          </p>
+      <div className='relative container mx-auto max-w-7xl px-4 py-8'>
+        <div className='my-4 flex flex-row items-center justify-between gap-4'>
+          <DisplayTitle>{dict.repository.repository}</DisplayTitle>
         </div>
+        <CommonErrorDisplay
+          variant='section'
+          title={dict.common.error}
+          description={dict.common.insufficientPermissions}
+          showReload={false}
+          showDetails={false}
+        />
       </div>
     );
   }

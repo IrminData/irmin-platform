@@ -533,6 +533,12 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                 loading={workflowRunsQuery.isLoading}
                 hideHeaders={false}
                 rows={runRows}
+                emptyStateTitle={
+                  dict.list.emptyState.workflowRunsForWorkflow.title
+                }
+                emptyStateDescription={
+                  dict.list.emptyState.workflowRunsForWorkflow.description
+                }
               />
             </Tooltip.TooltipProvider>
             <PaginationControls

@@ -65,6 +65,12 @@ export default function WorkflowsLayoutWrapper({
         slug: 'pipeline-workflows',
         link: `${baseUrl}/pipelines`,
       },
+      {
+        icon: <TbPlayerPlay />,
+        name: dict.list.runs,
+        slug: 'workflow-runs',
+        link: `${baseUrl}/runs`,
+      },
     ],
     [dict, baseUrl]
   );

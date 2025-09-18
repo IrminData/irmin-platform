@@ -306,18 +306,15 @@ const SchemaFieldMapper = ({
         `}
       >
         <div
-          className={`
-            border-b border-border bg-linear-to-r from-irmin-green-100
-            to-irmin-teal-100 px-6 py-4
-          `}
+          className={`border-b border-border bg-linear-to-r from-card px-4 py-2`}
         >
           <h3 className='text-lg font-medium text-foreground'>
             {dict.schemaFieldMapper.fieldMappings}
             <span
               className={`
                 ml-2 inline-flex items-center justify-center rounded-full
-                bg-irmin-green-200 px-2.5 py-0.5 text-sm font-medium
-                text-irmin-green-700
+                bg-primary px-2.5 py-0.5 text-sm font-medium
+                text-primary-foreground
               `}
             >
               {mappingsCount}
