@@ -9094,10 +9094,12 @@ import "irmin-api/services"
 - [type AuthCache](<#AuthCache>)
 - [type AuthCacheEntry](<#AuthCacheEntry>)
 - [type InviteTransactionResult](<#InviteTransactionResult>)
+- [type LockInfo](<#LockInfo>)
 - [type PerUserLockManager](<#PerUserLockManager>)
   - [func \(pm \*PerUserLockManager\) Lock\(key string\)](<#PerUserLockManager.Lock>)
-  - [func \(pm \*PerUserLockManager\) TryLock\(key string, timeout time.Duration\) bool](<#PerUserLockManager.TryLock>)
+  - [func \(pm \*PerUserLockManager\) TryLock\(key string, timeout time.Duration\) LockInfo](<#PerUserLockManager.TryLock>)
   - [func \(pm \*PerUserLockManager\) Unlock\(key string\)](<#PerUserLockManager.Unlock>)
+  - [func \(pm \*PerUserLockManager\) UnlockLockInfo\(lockInfo LockInfo\)](<#PerUserLockManager.UnlockLockInfo>)
 - [type PolicyFilters](<#PolicyFilters>)
 - [type TagEntityOperation](<#TagEntityOperation>)
 
@@ -10392,6 +10394,17 @@ type InviteTransactionResult struct {
 }
 ```
 
+<a name="LockInfo"></a>
+## type LockInfo
+
+LockInfo tracks whether a lock was acquired for a specific key.
+
+```go
+type LockInfo struct {
+    // contains filtered or unexported fields
+}
+```
+
 <a name="PerUserLockManager"></a>
 ## type PerUserLockManager
 
@@ -10416,10 +10429,10 @@ Lock acquires a lock for a specific key \(e.g., user ID\).
 ### func \(\*PerUserLockManager\) TryLock
 
 ```go
-func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) bool
+func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) LockInfo
 ```
 
-TryLock attempts to acquire a lock for a specific key with a timeout. Returns true if lock was acquired, false if timeout occurred.
+TryLock attempts to acquire a lock for a specific key with a timeout. Returns LockInfo with acquisition status and the mutex.
 
 <a name="PerUserLockManager.Unlock"></a>
 ### func \(\*PerUserLockManager\) Unlock
@@ -10429,6 +10442,15 @@ func (pm *PerUserLockManager) Unlock(key string)
 ```
 
 Unlock releases the lock for a specific key.
+
+<a name="PerUserLockManager.UnlockLockInfo"></a>
+### func \(\*PerUserLockManager\) UnlockLockInfo
+
+```go
+func (pm *PerUserLockManager) UnlockLockInfo(lockInfo LockInfo)
+```
+
+UnlockLockInfo safely unlocks only if the lock was actually acquired.
 
 <a name="PolicyFilters"></a>
 ## type PolicyFilters

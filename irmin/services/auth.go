@@ -55,6 +55,12 @@ type PerUserLockManager struct {
 	mu    sync.RWMutex
 }
 
+// LockInfo tracks whether a lock was acquired for a specific key.
+type LockInfo struct {
+	acquired bool
+	mutex    *sync.Mutex
+}
+
 // getCachedAuth retrieves a cached authentication result.
 func (api *APIServices) getCachedAuth(token string) *db.User {
 	api.authCache.mu.RLock()
@@ -214,13 +220,13 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 	userLockKey := fmt.Sprintf("user_sync_%s", clerkID)
 
 	// Try to acquire lock with timeout - if we can't get it quickly, skip sync
-	lockAcquired := api.perUserLocks.TryLock(userLockKey, SyncLockTimeout)
-	if !lockAcquired {
+	lockInfo := api.perUserLocks.TryLock(userLockKey, SyncLockTimeout)
+	if !lockInfo.acquired {
 		// Another sync is already in progress for this user, skip this one
 		api.Logger.InfoContext(c, "Skipping user sync - already in progress", "clerk_id", clerkID)
 		return irminUser, nil
 	}
-	defer api.perUserLocks.Unlock(userLockKey)
+	defer api.perUserLocks.UnlockLockInfo(lockInfo)
 
 	// Set Clerk API key
 	clerk.SetKey(api.Env.ClerkSecretKey)
@@ -371,9 +377,9 @@ func (api *APIServices) createUserFromClerk(ctx context.Context, clerkID, locale
 	// But use a very short timeout - if we can't get the lock quickly,
 	// assume another request is creating the user and check the DB
 	userLockKey := fmt.Sprintf("user_creation_%s", clerkID)
-	lockAcquired := api.perUserLocks.TryLock(userLockKey, UserCreationLockTimeout)
+	lockInfo := api.perUserLocks.TryLock(userLockKey, UserCreationLockTimeout)
 
-	if !lockAcquired {
+	if !lockInfo.acquired {
 		// Another user creation is in progress, check if user was created
 		if existingUser, _ := api.DB.GetUserByClerkID(clerkID); existingUser != nil && existingUser.ID != 0 {
 			return existingUser, nil
@@ -381,7 +387,7 @@ func (api *APIServices) createUserFromClerk(ctx context.Context, clerkID, locale
 		// If still not found, return error - avoid waiting
 		return nil, fmt.Errorf("user creation in progress for clerk ID: %s", clerkID)
 	}
-	defer api.perUserLocks.Unlock(userLockKey)
+	defer api.perUserLocks.UnlockLockInfo(lockInfo)
 
 	// Double-check if user was created by another goroutine
 	if existingUser, _ := api.DB.GetUserByClerkID(clerkID); existingUser != nil && existingUser.ID != 0 {
@@ -454,8 +460,8 @@ func (pm *PerUserLockManager) Lock(key string) {
 }
 
 // TryLock attempts to acquire a lock for a specific key with a timeout.
-// Returns true if lock was acquired, false if timeout occurred.
-func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) bool {
+// Returns LockInfo with acquisition status and the mutex.
+func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) LockInfo {
 	pm.mu.Lock()
 	if pm.locks == nil {
 		pm.locks = make(map[string]*sync.Mutex)
@@ -466,30 +472,35 @@ func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) bool {
 	userMutex := pm.locks[key]
 	pm.mu.Unlock()
 
-	// Try to acquire the lock with timeout
-	lockChan := make(chan bool, 1)
-	done := make(chan struct{})
+	// Use a channel to signal lock acquisition
+	lockAcquired := make(chan struct{})
+	lockFailed := make(chan struct{})
 
 	go func() {
+		// Try to acquire the lock
 		userMutex.Lock()
+
+		// Signal that we acquired the lock
 		select {
-		case lockChan <- true:
-			// Lock acquired and sent, wait for done signal
-			<-done
+		case lockAcquired <- struct{}{}:
+			// Successfully signaled acquisition, wait for completion
+			<-lockFailed
 			userMutex.Unlock()
-		case <-done:
-			// Timeout occurred, release lock immediately
+		case <-lockFailed:
+			// Timeout occurred before we could signal, release lock
 			userMutex.Unlock()
 		}
 	}()
 
 	select {
-	case <-lockChan:
-		close(done)
-		return true
+	case <-lockAcquired:
+		// Lock was successfully acquired
+		close(lockFailed) // Signal goroutine to keep the lock
+		return LockInfo{acquired: true, mutex: userMutex}
 	case <-time.After(timeout):
-		close(done)
-		return false
+		// Timeout occurred
+		close(lockFailed) // Signal goroutine to release the lock
+		return LockInfo{acquired: false, mutex: userMutex}
 	}
 }
 
@@ -501,5 +512,12 @@ func (pm *PerUserLockManager) Unlock(key string) {
 
 	if userMutex != nil {
 		userMutex.Unlock()
+	}
+}
+
+// UnlockLockInfo safely unlocks only if the lock was actually acquired.
+func (pm *PerUserLockManager) UnlockLockInfo(lockInfo LockInfo) {
+	if lockInfo.acquired && lockInfo.mutex != nil {
+		lockInfo.mutex.Unlock()
 	}
 }

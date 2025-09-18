@@ -1059,6 +1059,11 @@ type InviteTransactionResult struct {
     InviteTransactionResult contains the result of invitation creation including
     notification status.
 
+type LockInfo struct {
+	// Has unexported fields.
+}
+    LockInfo tracks whether a lock was acquired for a specific key.
+
 type PerUserLockManager struct {
 	// Has unexported fields.
 }
@@ -1068,12 +1073,15 @@ type PerUserLockManager struct {
 func (pm *PerUserLockManager) Lock(key string)
     Lock acquires a lock for a specific key (e.g., user ID).
 
-func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) bool
+func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) LockInfo
     TryLock attempts to acquire a lock for a specific key with a timeout.
-    Returns true if lock was acquired, false if timeout occurred.
+    Returns LockInfo with acquisition status and the mutex.
 
 func (pm *PerUserLockManager) Unlock(key string)
     Unlock releases the lock for a specific key.
+
+func (pm *PerUserLockManager) UnlockLockInfo(lockInfo LockInfo)
+    UnlockLockInfo safely unlocks only if the lock was actually acquired.
 
 type PolicyFilters struct {
 	Effect     string
