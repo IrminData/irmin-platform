@@ -5,7 +5,7 @@ import type { User } from '@/types/core/User';
 /**
  * Represents a map of custom field values.
  */
-export interface CustomFieldValues {
+export interface ConnectionFieldValues {
   /** Custom field key-value pairs */
   [key: string]: string;
 }
@@ -23,9 +23,9 @@ export interface Connection {
   /** Documentation for the connection */
   documentation: string;
   /** Custom details for the connection */
-  details: CustomFieldValues;
+  details: ConnectionFieldValues;
   /** Custom settings for the connection */
-  settings: CustomFieldValues;
+  settings: ConnectionFieldValues;
   /** Owner of the connection */
   owner: User;
   /** Connector associated with the connection */

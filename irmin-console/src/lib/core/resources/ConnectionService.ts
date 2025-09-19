@@ -1,9 +1,11 @@
 import type IrminCore from '@/lib/core';
 
-import type { Connection } from '@/types/core/Connection';
+import type {
+  Connection,
+  ConnectionFieldValues,
+} from '@/types/core/Connection';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
-import type { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 /**
  * Interface for creating a new connection
@@ -13,8 +15,8 @@ interface CreateConnectionRequest {
   connector: string;
   description?: string;
   documentation?: string;
-  details: DynamicFieldValues;
-  settings: DynamicFieldValues;
+  details: ConnectionFieldValues;
+  settings: ConnectionFieldValues;
 }
 
 /**
@@ -25,8 +27,8 @@ interface UpdateConnectionRequest {
   connector?: string;
   description?: string;
   documentation?: string;
-  details?: DynamicFieldValues;
-  settings?: DynamicFieldValues;
+  details?: ConnectionFieldValues;
+  settings?: ConnectionFieldValues;
 }
 
 /**
@@ -141,8 +143,8 @@ class ConnectionService {
     name: string;
     description: string;
     documentation: string;
-    connectionDetails: DynamicFieldValues;
-    connectionSettings: DynamicFieldValues;
+    connectionDetails: ConnectionFieldValues;
+    connectionSettings: ConnectionFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
     try {
       const requestBody: CreateConnectionRequest = {
@@ -202,8 +204,8 @@ class ConnectionService {
     name?: string;
     description?: string;
     documentation?: string;
-    connectionDetails?: DynamicFieldValues;
-    connectionSettings?: DynamicFieldValues;
+    connectionDetails?: ConnectionFieldValues;
+    connectionSettings?: ConnectionFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
     try {
       const requestBody: UpdateConnectionRequest = {};

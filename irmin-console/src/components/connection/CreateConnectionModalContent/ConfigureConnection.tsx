@@ -12,7 +12,8 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useConnections } from '@/hooks/api';
 
-import type { CustomFieldValues } from '@/types/core/Connection';
+import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
+
 import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 import type {
   DynamicFields,
@@ -49,10 +50,12 @@ export default function ConfigureConnection({
           name: connectionData.name,
           description: formValues.description as string,
           documentation: '',
-          details: (connectionData.connectionDetails ??
-            {}) as CustomFieldValues,
-          settings: (connectionData.connectionSettings ??
-            {}) as CustomFieldValues,
+          details: convertToConnectionFieldValues(
+            connectionData.connectionDetails
+          ),
+          settings: convertToConnectionFieldValues(
+            connectionData.connectionSettings
+          ),
         });
         if (!res.data) {
           throw new Error(res.message ?? 'Failed to create connection');

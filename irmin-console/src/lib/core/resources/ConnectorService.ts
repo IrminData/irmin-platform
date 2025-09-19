@@ -1,14 +1,12 @@
 import type IrminCore from '@/lib/core';
 
+import type { ConnectionFieldValues } from '@/types/core/Connection';
 import type {
   Connector,
   ConnectorConfigurationValidationResult,
 } from '@/types/core/Connector';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import type {
-  DynamicFields,
-  DynamicFieldValues,
-} from '@/types/internal/DynamicField';
+import type { DynamicFields } from '@/types/internal/DynamicField';
 
 /**
  * Interface for creating/updating connectors
@@ -22,8 +20,8 @@ interface ConnectorRequest {
  * Interface for connector configuration operations
  */
 interface ConnectorConfigurationRequest {
-  details: DynamicFieldValues;
-  settings: DynamicFieldValues;
+  details: ConnectionFieldValues;
+  settings: ConnectionFieldValues;
 }
 
 /**
@@ -112,8 +110,8 @@ class ConnectorService {
   }: {
     connectorId: string;
     configurationType: 'details' | 'settings';
-    currentDetails?: DynamicFieldValues;
-    currentSettings?: DynamicFieldValues;
+    currentDetails?: ConnectionFieldValues;
+    currentSettings?: ConnectionFieldValues;
   }): Promise<IrminAPIResponse<DynamicFields>> {
     try {
       const requestBody: ConnectorConfigurationRequest = {
@@ -153,8 +151,8 @@ class ConnectorService {
     settings,
   }: {
     connectorId: string;
-    details?: DynamicFieldValues;
-    settings?: DynamicFieldValues;
+    details?: ConnectionFieldValues;
+    settings?: ConnectionFieldValues;
   }): Promise<IrminAPIResponse<ConnectorConfigurationValidationResult>> {
     try {
       const requestBody: ConnectorConfigurationRequest = {

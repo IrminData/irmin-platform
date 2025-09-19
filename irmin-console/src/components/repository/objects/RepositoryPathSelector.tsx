@@ -19,7 +19,7 @@ import type { RepositoryObject } from '@/types/core/RepositoryObject';
 interface RepositoryPathSelectorProps {
   rootObject?: RepositoryObject;
   repositorySlug: string;
-  ref: string;
+  repositoryRef: string;
   defaultPath?: string;
   onPathChange: (path: string) => void;
   defaultExpanded?: boolean;
@@ -157,7 +157,7 @@ const SkeletonTree = () => (
 const RepositoryPathSelector = ({
   rootObject: initialRootObject,
   repositorySlug,
-  ref,
+  repositoryRef,
   defaultPath,
   onPathChange,
   defaultExpanded = true,
@@ -182,7 +182,7 @@ const RepositoryPathSelector = ({
 
   const { repositoryObjectQuery } = useRepositoryObject(
     repositorySlug,
-    ref,
+    repositoryRef,
     '/'
   );
   const rootObject = useMemo(
@@ -487,7 +487,7 @@ const RepositoryPathSelector = ({
   }
 
   // Don't render anything if repositorySlug or ref are empty
-  if (!repositorySlug || !ref) {
+  if (!repositorySlug || !repositoryRef) {
     return <></>;
   }
 
@@ -538,7 +538,7 @@ const RepositoryPathSelector = ({
         rootObject &&
         findObjectByPath(rootObject, selectedPath) && (
           <ButtonWithTooltip
-            href={`${workspaceUrl}/repositories/${repositorySlug}/object?path=${selectedPath}&ref=${ref}`}
+            href={`${workspaceUrl}/repositories/${repositorySlug}/object?path=${selectedPath}&ref=${repositoryRef}`}
             target='_blank'
             variant='gray'
             tooltip={selectedPath}

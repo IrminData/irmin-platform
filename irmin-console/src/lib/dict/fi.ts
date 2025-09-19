@@ -25,6 +25,7 @@ const fi = {
     open: 'Avaa',
     refresh: 'Päivitä',
     tryAgain: 'Yritä uudelleen',
+    comingSoon: 'Tulossa pian!',
 
     // Search and navigation
     search: 'Hae',
@@ -472,7 +473,7 @@ const fi = {
       createNewImportWorkflow: 'Luo uusi tuontiprosessi',
       createNewExportWorkflow: 'Luo uusi vientiprosessi',
       createNewPipelineWorkflow: 'Luo uusi dataputkiprosessi',
-      configureFieldMappings: 'Määritä kenttien kartoitus',
+      configureFieldMappings: 'Kenttien kartoitus',
       configureImport: 'Määritä tuonti',
       configureAction: 'Määritä toiminto',
       configureExport: 'Määritä vienti',
@@ -658,6 +659,86 @@ const fi = {
       pathExists: 'Polku on jo olemassa',
       parentPathNotExist: 'Yläkansiota ei ole olemassa',
     },
+  },
+
+  // === WIZARDS ===
+  wizard: {
+    // Wizard Selector
+    dataImport: 'Datan tuonti',
+    dataImportDescription: 'Tuo dataa ulkoisista lähteistä data-arkistoihisi',
+    dataExport: 'Datan vienti',
+    dataExportDescription: 'Vie dataa data-arkistoista ulkoisiin kohteisiin',
+    dataExportWizardComingSoon: 'Datan vientiohjattu tulee pian!',
+
+    // Data Import Wizard Steps
+    connectDataSource: 'Tietolähde',
+    setupRepository: 'Säilytys',
+    configure: 'Konfiguroi',
+    reviewAndCreate: 'Tarkista ja luo',
+    setupDataImportWizard: 'Aseta datan tuontiohjattu',
+    setupDataExportWizard: 'Aseta datan vientiohjattu',
+
+    // Connect Data Source Step
+    connectToDataSource: 'Yhdistä tietolähteeseesi',
+    connectToDataSourceDescription:
+      'Valitse miten haluat yhdistää tietolähteeseesi. Voit käyttää olemassa olevaa yhteyttä tai luoda uuden.',
+    useExistingConnection: 'Käytä olemassa olevaa yhteyttä',
+    createNewConnection: 'Luo uusi yhteys',
+    selectFromExistingConnections: 'Valitse olemassa olevista yhteyksistä',
+    setupNewConnectionToDataSource: 'Aseta uusi yhteys tietolähteeseesi',
+    selectConnection: 'Valitse yhteys',
+    searchConnections: 'Hae yhteyksiä...',
+    pleaseSelectConnection: 'Valitse yhteys',
+    noConnectionsFound: 'Yhteyksiä ei löytynyt hakuasi vastaavasti.',
+    noConnectionsAvailable: 'Ei yhteyksiä saatavilla.',
+    noDescription: 'Ei kuvausta',
+    goToSupportPage: 'Siirry tukisivulle',
+
+    // Setup Repository Step
+    setupRepositoryDescription:
+      'Valitse mihin haluat tallentaa tuotavan datan. Voit käyttää olemassa olevaa data-arkistoa tai luoda uuden.',
+    selectFromExistingRepositories:
+      'Valitse olemassa olevista data-arkistoista',
+    searchRepositories: 'Hae data-arkistoja...',
+    defaultBranch: 'Oletushaara:',
+    failedToCreateRepository: 'Data-arkiston luominen epäonnistui',
+    pleaseSelectRepository: 'Valitse data-arkisto',
+    createNewRepositoryDescription: 'Luo uusi data-arkisto datallesi',
+    noRepositoriesFound: 'Data-arkistoja ei löytynyt hakuasi vastaavasti.',
+    noRepositoriesAvailable: 'Ei data-arkistoja saatavilla.',
+
+    // Configure Import Step
+    pleaseSpecifyImportPath: 'Määritä vähintään yksi tuontipolku',
+    failedToConfigureImport: 'Tuontiasetusten määrittäminen epäonnistui',
+    importDestinationPath: 'Tuonnin kohdepolku',
+
+    // Review and Create Step
+    reviewYourSetup: 'Tarkista asetuksesi',
+    reviewConfigurationDescription:
+      'Tarkista asetuksesi ennen tuontiprosessin luomista.',
+    importPaths: 'Tuontipolut:',
+    connector: 'Yhdistin:',
+    destination: 'Kohde:',
+    branch: 'Haara:',
+    settingUpDataImport: 'Asetetaan datan tuonti...',
+    creatingConnection: 'Luodaan yhteyttä',
+    creatingRepository: 'Luodaan data-arkistoa',
+    creatingImportWorkflow: 'Luodaan tuontiprosessia',
+    dataImportSetupCompleted:
+      'Datan tuontiasetukset valmistuivat onnistuneesti!',
+    failedToCompleteSetup:
+      'Asetusten valmistuminen epäonnistui. Yritä uudelleen.',
+
+    // Common wizard strings
+    configureImportDescription:
+      'Määritä kuinka data tuodaan yhteydestäsi data-arkistoon.',
+    workflowInformation: 'Prosessin tiedot',
+    repositorySettings: 'Data-arkiston asetukset',
+    repositoryBranch: 'Data-arkiston haara',
+    fieldMappingsDescription:
+      'Kenttien yhdistäminen mahdollistaa datan muuntamisen tuonnin aikana. Tämä ominaisuus on saatavilla seuraavassa vaiheessa.',
+    useExistingRepository: 'Käytä olemassa olevaa data-arkistoa',
+    selectRepository: 'Valitse data-arkisto',
   },
 
   // === ASSISTANT ===

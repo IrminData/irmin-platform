@@ -630,7 +630,7 @@ function Stage({
                   {!readOnly && stage.repository && stage.repository_branch ? (
                     <RepositoryPathSelector
                       repositorySlug={stage.repository}
-                      ref={stage.repository_branch}
+                      repositoryRef={stage.repository_branch}
                       defaultPath={stage.repository_write_path ?? ''}
                       onPathChange={(path) =>
                         setStage((prevStage) => ({
@@ -669,7 +669,7 @@ function Stage({
                       renderPathSelector={(path, onPathChange) => (
                         <RepositoryPathSelector
                           repositorySlug={stage.repository}
-                          ref={stage.repository_branch}
+                          repositoryRef={stage.repository_branch}
                           defaultPath={path}
                           onPathChange={onPathChange}
                         />

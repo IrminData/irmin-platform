@@ -68,8 +68,8 @@ export default function SideModal({
             >
               <h3
                 className={`
-                  text-xl font-semibold
-                  lg:text-2xl
+                  text-lg font-semibold
+                  lg:text-xl
                 `}
               >
                 {title}
@@ -92,7 +92,7 @@ export default function SideModal({
               <div
                 className={`
                   mx-6 mb-6 rounded-lg bg-gray-50 p-4
-                  dark:bg-gray-900
+                  dark:bg-gray-800
                 `}
               >
                 <div className='flex items-center justify-between'>
@@ -140,7 +140,7 @@ export default function SideModal({
                       {index < steps.length - 1 && (
                         <div
                           className={`
-                            ml-4 flex-1 border-t-2
+                            mx-3 flex-1 border-t
                             ${
                               currentStep > index + 1
                                 ? 'border-accent'

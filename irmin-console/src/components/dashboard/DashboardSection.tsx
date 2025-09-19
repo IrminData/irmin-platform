@@ -6,6 +6,7 @@ import AssistantSection from '@/components/assistant/AssistantSection';
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
 import WorkspaceDashboardSkeleton from '@/components/ui/loading/WorkspaceDashboardSkeleton';
+import WizardSelector from '@/components/wizards/WizardSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
@@ -110,11 +111,17 @@ const DashboardSection = () => {
             <div className={`w-full overflow-hidden rounded-xl border`}>
               <AssistantSection compact={true} noBorder={true} />
             </div>
-            <div className='flex w-full flex-col'>
+            <div className='flex w-full max-w-md flex-col'>
               {isResourceAllowed('workflow_run', 'read') && (
                 <DashboardWorkflowRunsFeed workspaceUrl={workspaceUrl} />
               )}
             </div>
+          </div>
+          {/* Wizard Selector */}
+          <div
+            className={`flex w-full flex-row items-stretch justify-start gap-2`}
+          >
+            <WizardSelector />
           </div>
           {/* List cards */}
           <div

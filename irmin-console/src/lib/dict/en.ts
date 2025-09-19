@@ -25,6 +25,7 @@ const en = {
     open: 'Open',
     refresh: 'Refresh',
     tryAgain: 'Try again',
+    comingSoon: 'Coming Soon!',
 
     // Search and navigation
     search: 'Search',
@@ -485,7 +486,7 @@ const en = {
       createNewImportWorkflow: 'Create new import workflow',
       createNewExportWorkflow: 'Create new export workflow',
       createNewPipelineWorkflow: 'Create new pipeline workflow',
-      configureFieldMappings: 'Configure field mappings',
+      configureFieldMappings: 'Field mappings',
       configureImport: 'Configure import',
       configureAction: 'Configure action',
       configureExport: 'Configure export',
@@ -674,6 +675,86 @@ const en = {
       pathExists: 'Path already exists',
       parentPathNotExist: 'Parent path does not exist',
     },
+  },
+
+  // === WIZARDS ===
+  wizard: {
+    // Wizard Selector
+    dataImport: 'Configure data import',
+    dataImportDescription:
+      'Import data from external sources into your repositories',
+    dataExport: 'Configure data export',
+    dataExportDescription:
+      'Export data from repositories to external destinations',
+    dataExportWizardComingSoon: 'Data Export Wizard is coming soon!',
+
+    // Data Import Wizard Steps
+    connectDataSource: 'Connect',
+    setupRepository: 'Store',
+    configure: 'Configure',
+    reviewAndCreate: 'Review & create',
+    setupDataImportWizard: 'Setup data import wizard',
+    setupDataExportWizard: 'Setup data export wizard',
+
+    // Connect Data Source Step
+    connectToDataSource: 'Connect to Your Data Source',
+    connectToDataSourceDescription:
+      'Choose how you want to connect to your data source. You can use an existing connection or create a new one.',
+    useExistingConnection: 'Use Existing Connection',
+    createNewConnection: 'Create New Connection',
+    selectFromExistingConnections: 'Select from your existing connections',
+    setupNewConnectionToDataSource:
+      'Set up a new connection to your data source',
+    selectConnection: 'Select Connection',
+    searchConnections: 'Search connections...',
+    pleaseSelectConnection: 'Please select a connection',
+    noConnectionsFound: 'No connections found matching your search.',
+    noConnectionsAvailable: 'No connections available.',
+    noDescription: 'No description',
+    goToSupportPage: 'Go to support page',
+
+    // Setup Repository Step
+    setupRepositoryDescription:
+      'Choose where to store your imported data. You can use an existing repository or create a new one.',
+    selectFromExistingRepositories: 'Select from your existing repositories',
+    searchRepositories: 'Search repositories...',
+    defaultBranch: 'Default branch:',
+    failedToCreateRepository: 'Failed to create repository',
+    pleaseSelectRepository: 'Please select a repository',
+    createNewRepositoryDescription: 'Create a new repository for your data',
+    noRepositoriesFound: 'No repositories found matching your search.',
+    noRepositoriesAvailable: 'No repositories available.',
+
+    // Configure Import Step
+    pleaseSpecifyImportPath: 'Please specify at least one import path',
+    failedToConfigureImport: 'Failed to configure import settings',
+    importDestinationPath: 'Import Destination Path',
+
+    // Review and Create Step
+    reviewYourSetup: 'Review Your Setup',
+    reviewConfigurationDescription:
+      'Review your configuration before creating the import workflow.',
+    importPaths: 'Import paths:',
+    connector: 'Connector:',
+    destination: 'Destination:',
+    branch: 'Branch:',
+    settingUpDataImport: 'Setting up your data import...',
+    creatingConnection: 'Creating connection',
+    creatingRepository: 'Creating repository',
+    creatingImportWorkflow: 'Creating import workflow',
+    dataImportSetupCompleted: 'Data import setup completed successfully!',
+    failedToCompleteSetup: 'Failed to complete setup. Please try again.',
+
+    // Common wizard strings
+    configureImportDescription:
+      'Configure how data will be imported from your connection to the repository.',
+    workflowInformation: 'Workflow Information',
+    repositorySettings: 'Repository Settings',
+    repositoryBranch: 'Repository Branch',
+    fieldMappingsDescription:
+      'Field mappings allow you to transform data during import. This feature will be available in the next step.',
+    useExistingRepository: 'Use Existing Repository',
+    selectRepository: 'Select Repository',
   },
 
   // === ASSISTANT ===

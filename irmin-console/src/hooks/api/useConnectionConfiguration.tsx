@@ -7,23 +7,21 @@ import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
+import type { ConnectionFieldValues } from '@/types/core/Connection';
 import type { ConnectorConfigurationValidationResult } from '@/types/core/Connector';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
-import type {
-  DynamicFields,
-  DynamicFieldValues,
-} from '@/types/internal/DynamicField';
+import type { DynamicFields } from '@/types/internal/DynamicField';
 
 interface ValidateConnectorConfigurationInput {
-  details?: DynamicFieldValues;
-  settings?: DynamicFieldValues;
+  details?: ConnectionFieldValues;
+  settings?: ConnectionFieldValues;
 }
 
 export function useConnectionConfiguration(
   type: 'details' | 'settings',
   connectorID?: string,
-  details?: DynamicFieldValues,
-  settings?: DynamicFieldValues
+  details?: ConnectionFieldValues,
+  settings?: ConnectionFieldValues
 ) {
   const { getToken } = useIAM();
   const { locale } = useLocale();

@@ -183,7 +183,7 @@ function ActionInputEditor({
                 </Label>
                 <RepositoryPathSelector
                   repositorySlug={inputFile.repository}
-                  ref={inputFile.repository_ref}
+                  repositoryRef={inputFile.repository_ref}
                   defaultPath={inputFile.repository_path}
                   defaultExpanded={false}
                   nonGroupOnly={true}

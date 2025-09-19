@@ -13,6 +13,8 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useConnectionConfiguration } from '@/hooks/api';
 
+import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
+
 import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 import type { DynamicFieldValues } from '@/types/internal/DynamicField';
 
@@ -37,6 +39,8 @@ export default function DefineSettings({
     'settings',
     connectionData.connector?.id,
     connectionData.connectionDetails
+      ? convertToConnectionFieldValues(connectionData.connectionDetails)
+      : undefined
   );
 
   const handleContinue = useCallback(
@@ -44,8 +48,10 @@ export default function DefineSettings({
       try {
         // Validate the connector configuration
         const res = await validateConnectorConfigurationMutation.mutateAsync({
-          details: connectionData.connectionDetails,
-          settings: formValues,
+          details: connectionData.connectionDetails
+            ? convertToConnectionFieldValues(connectionData.connectionDetails)
+            : undefined,
+          settings: convertToConnectionFieldValues(formValues),
         });
         if (res.data?.can_connect && res.data.connection_settings_valid) {
           irminAlert('success', dict.connections.create.configuration_valid);

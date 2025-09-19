@@ -13,6 +13,8 @@ import { usePopup } from '@/context/PopupContext';
 
 import { useConnectionConfiguration } from '@/hooks/api';
 
+import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
+
 import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 import type {
   DynamicFields,
@@ -48,8 +50,10 @@ export default function DefineDetails({
           `${connectionData.connector?.name} ${Date.now()}`;
         // Validate the connector configuration
         const res = await validateConnectorConfigurationMutation.mutateAsync({
-          details: connectionDetails,
-          settings: connectionData.connectionSettings,
+          details: convertToConnectionFieldValues(connectionDetails),
+          settings: connectionData.connectionSettings
+            ? convertToConnectionFieldValues(connectionData.connectionSettings)
+            : undefined,
         });
         if (res.data?.can_connect && res.data.connection_details_valid) {
           irminAlert('success', dict.connections.create.success);

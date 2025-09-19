@@ -207,7 +207,7 @@ export default function ExportWorkflow({
           renderPathSelector={(path, onPathChange) => (
             <RepositoryPathSelector
               repositorySlug={workflowable.repository}
-              ref={workflowable.repository_branch}
+              repositoryRef={workflowable.repository_branch}
               defaultPath={path}
               onPathChange={onPathChange}
               defaultExpanded={path === ''}

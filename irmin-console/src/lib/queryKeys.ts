@@ -6,8 +6,8 @@
  */
 import type { LogsForType } from '@/hooks/api/useLogEvents';
 
+import type { ConnectionFieldValues } from '@/types/core/Connection';
 import type { SearchFilters } from '@/types/core/Search';
-import type { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 // Workspace related query keys
 export const workspacesQueryKey = ['workspaces'] as const;
@@ -181,8 +181,8 @@ export const connectionSchemaQueryKey = (
 export const connectorConfigurationQueryKey = (
   type: 'details' | 'settings',
   connectorID?: string,
-  details?: DynamicFieldValues,
-  settings?: DynamicFieldValues
+  details?: ConnectionFieldValues,
+  settings?: ConnectionFieldValues
 ) => ['connector-configuration', connectorID, type, details, settings] as const;
 
 // Connector related query keys

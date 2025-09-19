@@ -200,7 +200,7 @@ export default function ImportWorkflow({
           <Label>{dict.workflow.importDestinationPath}</Label>
           <RepositoryPathSelector
             repositorySlug={workflowable.repository}
-            ref={workflowable.repository_branch}
+            repositoryRef={workflowable.repository_branch}
             defaultPath={workflowable.import_to_repository_path}
             onPathChange={(path) =>
               setWorkflowData((prev) => ({

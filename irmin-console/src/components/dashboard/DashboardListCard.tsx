@@ -188,21 +188,20 @@ export function DashboardListCard({
                   {items.map((item) => {
                     const itemDetails = getItemDetails(item, type);
                     return (
-                      <Link
+                      <div
                         key={itemDetails.id}
                         className={`
-                          flex h-auto cursor-pointer items-center
-                          justify-between rounded-lg border border-border p-1.5
-                          transition-colors
-                          hover:bg-muted/50
+                          flex h-auto items-center justify-between rounded-lg
+                          border border-border p-1.5
                         `}
-                        href={`${workspaceUrl}/${type}/${itemDetails.href}`}
                       >
                         <div className='min-w-0 flex-1'>
                           <div className='mb-0.5 flex items-center gap-2'>
-                            <h4 className='truncate text-sm font-medium'>
+                            <Link
+                              href={`${workspaceUrl}/${type}/${itemDetails.href}`}
+                            >
                               {itemDetails.name}
-                            </h4>
+                            </Link>
                             {type === 'workflows' && (
                               <Badge className='px-1 py-0 text-xs'>
                                 {itemDetails.type === 'action' &&
@@ -231,7 +230,7 @@ export function DashboardListCard({
                         >
                           <TbDots className='size-3' />
                         </Button>
-                      </Link>
+                      </div>
                     );
                   })}
                 </div>

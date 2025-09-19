@@ -152,7 +152,7 @@ export default function ActionWorkflow({
             <Label>{dict.workflow.scriptResultDestinationPath}</Label>
             <RepositoryPathSelector
               repositorySlug={workflowable.results_repository!}
-              ref={workflowable.results_repository_branch!}
+              repositoryRef={workflowable.results_repository_branch!}
               defaultPath={workflowable.results_repository_path}
               onPathChange={(path) =>
                 setWorkflowData((prev) => ({
