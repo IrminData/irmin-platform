@@ -2,9 +2,11 @@
 
 import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 
-import { TbClock, TbHourglassLow } from 'react-icons/tb';
+import { TbClock, TbFileText, TbHourglassLow } from 'react-icons/tb';
 
 import LogFeed from '@/components/logs/LogFeed';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 
@@ -40,11 +42,29 @@ export default function WorkflowRunLogsSection({
   }
 
   if (workflowRunQuery.error) {
-    return <div>Error: {workflowRunQuery.error.message}</div>;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <QueryError
+          error={workflowRunQuery.error}
+          onRetry={() => workflowRunQuery.refetch()}
+          title={dict.common.somethingWentWrong}
+          description={dict.common.somethingWentWrong}
+        />
+      </div>
+    );
   }
 
   if (!workflowRunQuery.data?.data) {
-    return <div>No data</div>;
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <EmptyState
+          title={dict.list.emptyState.generic.title}
+          description={dict.list.emptyState.generic.description}
+          icon={<TbFileText className='size-full' />}
+          size='md'
+        />
+      </div>
+    );
   }
 
   const workflowRun = workflowRunQuery.data.data;
@@ -139,14 +159,12 @@ export default function WorkflowRunLogsSection({
           <LogFeed logs={workflowRun.logs ?? []} />
         </div>
       ) : (
-        <p
-          className={`
-            text-center text-lg text-gray-600
-            dark:text-gray-400
-          `}
-        >
-          {dict.logs.noLogsFound}
-        </p>
+        <EmptyState
+          title={dict.logs.noLogsFound}
+          description={dict.list.emptyState.generic.description}
+          icon={<TbFileText className='size-full' />}
+          size='md'
+        />
       )}
     </div>
   );

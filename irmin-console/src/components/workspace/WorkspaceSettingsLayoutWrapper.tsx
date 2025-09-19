@@ -112,20 +112,18 @@ export default function WorkspaceSettingsLayoutWrapper({
             md:px-4
           `}
         >
-          <DisplayTitle>
-            {dict.consoleNavigation.workspaceSettings}
-          </DisplayTitle>
+          <DisplayTitle>{workspaceQuery?.data?.data?.name ?? ''}</DisplayTitle>
           <p
             className={`
               max-w-lg text-base text-gray-400
               lg:text-lg
             `}
           >
-            {workspaceQuery?.data?.data?.name ?? ''}
+            {dict.consoleNavigation.workspaceSettings}
           </p>
         </div>
         <TabsWithBackButton
-          backHref={`${workspaceUrl}/home`}
+          backHref={`${workspaceUrl}/dashboard`}
           backTooltip={dict.consoleNavigation.workspace}
           tabs={tabs}
         />

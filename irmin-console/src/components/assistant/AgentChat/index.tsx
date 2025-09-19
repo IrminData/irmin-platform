@@ -2,9 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { GlobeIcon } from 'lucide-react';
-
-import { TbMessageCircle } from 'react-icons/tb';
+import { TbGlobe, TbMessageCircle } from 'react-icons/tb';
 
 import {
   Conversation,
@@ -53,7 +51,9 @@ const AgentChat = ({
 }: AgentChatProps) => {
   const { dict } = useLocale();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const conversationUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const conversationUpdateTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const [webSearch, setWebSearch] = useState(false);
   const [input, setInput] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<
@@ -371,7 +371,7 @@ const AgentChat = ({
                     ? dict.assistant.noConversationSelectedDescription
                     : dict.assistant.noMessagesInTheConversationDescription
                 }
-                size='md'
+                size='sm'
               />
             </div>
           )}
@@ -394,7 +394,7 @@ const AgentChat = ({
               onClick={handleToggleWebSearch}
               title={dict.assistant.toggleWebSearch}
             >
-              <GlobeIcon size={16} />
+              <TbGlobe size={16} />
               <span>{dict.assistant.search}</span>
             </PromptInputButton>
           </PromptInputTools>
@@ -422,18 +422,17 @@ const AgentChat = ({
         <Suggestion
           suggestion={dict.assistant.showCodeExamples}
           onClick={handleSuggestionClick}
+          size='sm'
         />
         <Suggestion
           suggestion={dict.assistant.explainBusinessConcepts}
           onClick={handleSuggestionClick}
-        />
-        <Suggestion
-          suggestion={dict.assistant.helpWithWriting}
-          onClick={handleSuggestionClick}
+          size='sm'
         />
         <Suggestion
           suggestion={dict.assistant.analyzeMarketTrends}
           onClick={handleSuggestionClick}
+          size='sm'
         />
       </Suggestions>
     </div>

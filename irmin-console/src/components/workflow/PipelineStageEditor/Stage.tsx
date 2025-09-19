@@ -85,7 +85,7 @@ function Stage({
     initialStage ?? defaultStage
   );
   const prevStageRef = useRef<PipelineStage>(stage);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced update function
   const debouncedUpdate = useCallback(

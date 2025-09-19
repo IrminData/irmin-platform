@@ -1,6 +1,6 @@
 import { JSX, useState } from 'react';
 
-import { CopyIcon, ThumbsDownIcon, ThumbsUpIcon } from 'lucide-react';
+import { TbCopy, TbThumbDown, TbThumbUp } from 'react-icons/tb';
 
 import { Action, Actions } from '@/components/ui/ai-elements/actions';
 
@@ -53,20 +53,20 @@ export const useMessageActions = (): UseMessageActionsReturn => {
           onClick={() => handleLike(messageId)}
           variant={messageState.liked ? 'default' : 'ghost'}
         >
-          <ThumbsUpIcon size={16} />
+          <TbThumbUp size={16} />
         </Action>
         <Action
           tooltip={dict.assistant.dislikeThisResponse}
           onClick={() => handleDislike(messageId)}
           variant={messageState.disliked ? 'default' : 'ghost'}
         >
-          <ThumbsDownIcon size={16} />
+          <TbThumbDown size={16} />
         </Action>
         <Action
           tooltip={dict.assistant.copyMessage}
           onClick={() => handleCopy(content)}
         >
-          <CopyIcon size={16} />
+          <TbCopy size={16} />
         </Action>
       </Actions>
     );

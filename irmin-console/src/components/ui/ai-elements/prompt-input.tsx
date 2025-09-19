@@ -8,7 +8,8 @@ import type {
 import { Children } from 'react';
 
 import type { ChatStatus } from 'ai';
-import { Loader2Icon, SendIcon, SquareIcon, XIcon } from 'lucide-react';
+
+import { TbLoader2, TbSend, TbSquare, TbX } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -70,7 +71,6 @@ export const PromptInputTextarea = ({
         `
           w-full resize-none rounded-none border-none p-3 text-sm shadow-none
           ring-0 outline-none
-          xl:text-base
         `,
         `
           field-sizing-content max-h-[6lh] bg-transparent
@@ -157,14 +157,14 @@ export const PromptInputSubmit = ({
   children,
   ...props
 }: PromptInputSubmitProps) => {
-  let Icon = <SendIcon className='size-4' />;
+  let Icon = <TbSend className='size-4' />;
 
   if (status === 'submitted') {
-    Icon = <Loader2Icon className='size-4 animate-spin' />;
+    Icon = <TbLoader2 className='size-4 animate-spin' />;
   } else if (status === 'streaming') {
-    Icon = <SquareIcon className='size-4' />;
+    Icon = <TbSquare className='size-4' />;
   } else if (status === 'error') {
-    Icon = <XIcon className='size-4' />;
+    Icon = <TbX className='size-4' />;
   }
 
   return (

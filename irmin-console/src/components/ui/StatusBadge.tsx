@@ -15,17 +15,32 @@ const statusBadgeVariants = cva(
   {
     variants: {
       status: {
-        '': 'bg-gray-400',
+        '': `
+          bg-gray-400
+          dark:bg-gray-600
+        `,
         private: 'bg-irmin-teal-400',
         public: 'bg-irmin-teal-500',
         connected: 'bg-irmin-teal-600',
-        cancelled: 'bg-gray-200 text-gray-800',
-        error: 'bg-destructive',
+        cancelled: `
+          bg-gray-200 text-gray-800
+          dark:bg-gray-800 dark:text-gray-200
+        `,
+        error: `bg-destructive text-destructive-foreground`,
         complete: 'bg-accent/80 text-accent-foreground',
         running: 'bg-irmin-blue-500',
-        paused: 'bg-gray-400',
-        pending: 'bg-gray-400',
-        initiating: 'bg-gray-400',
+        paused: `
+          bg-gray-400
+          dark:bg-gray-600
+        `,
+        pending: `
+          bg-gray-400
+          dark:bg-gray-600
+        `,
+        initiating: `
+          bg-gray-400
+          dark:bg-gray-600
+        `,
         default: 'bg-irmin-green-500 text-black',
       },
     },

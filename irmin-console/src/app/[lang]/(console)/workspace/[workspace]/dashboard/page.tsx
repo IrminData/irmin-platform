@@ -1,8 +1,8 @@
 import DashboardSection from '@/components/dashboard/DashboardSection';
 
 /**
- * Workspace index page - just going to show the dashboard
+ * Workspace dashboard page
  */
-export default async function WorkspaceIndexPage() {
+export default async function WorkspaceDashboardPage() {
   return <DashboardSection />;
 }

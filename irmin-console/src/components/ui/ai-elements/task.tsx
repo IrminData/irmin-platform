@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from 'react';
 
-import { ChevronDownIcon, SearchIcon } from 'lucide-react';
+import { TbChevronDown, TbSearch } from 'react-icons/tb';
 
 import {
   Collapsible,
@@ -81,9 +81,9 @@ export const TaskTrigger = ({
           hover:text-foreground
         `}
       >
-        <SearchIcon className='size-4' />
+        <TbSearch className='size-4' />
         <p className='text-sm'>{title}</p>
-        <ChevronDownIcon
+        <TbChevronDown
           className={`
             size-4 transition-transform
             group-data-[state=open]:rotate-180

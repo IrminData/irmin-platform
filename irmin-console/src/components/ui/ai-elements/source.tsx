@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from 'react';
 
-import { BookIcon, ChevronDownIcon } from 'lucide-react';
+import { TbBook, TbChevronDown } from 'react-icons/tb';
 
 import {
   Collapsible,
@@ -38,7 +38,7 @@ export const SourcesTrigger = ({
     {children ?? (
       <>
         <p className='font-medium'>Used {count} sources</p>
-        <ChevronDownIcon className='size-4' />
+        <TbChevronDown className='size-4' />
       </>
     )}
   </CollapsibleTrigger>
@@ -77,7 +77,7 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   >
     {children ?? (
       <>
-        <BookIcon className='size-4' />
+        <TbBook className='size-4' />
         <span className='block font-medium'>{title}</span>
       </>
     )}

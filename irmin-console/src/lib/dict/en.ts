@@ -216,22 +216,6 @@ const en = {
     leaveWorkspaceConfirm: 'Are you sure you want to leave this workspace?',
   },
 
-  consoleHome: {
-    welcomeToWorkspace: 'Get started on Irmin with these quick actions:',
-    createNewConnection: 'Create new connection',
-    createNewConnectionDescription:
-      'Connect a new data source or export destination for your workspace',
-    runScriptOnData: 'Run script on data',
-    runScriptOnDataDescription:
-      'Write and run scripts on your data to automate tasks or find insights',
-    setupWorkflow: 'Setup a workflow',
-    setupWorkflowDescription:
-      'Automate data tasks with workflows. Data ingestion, transformation, and export',
-    browseRepositories: 'Data and repositories',
-    browseRepositoriesDescription:
-      'Browse, query, and manage your data, in a Git-like environment',
-  },
-
   // === DATA MANAGEMENT ===
   repository: {
     repository: 'Repository',
@@ -426,6 +410,7 @@ const en = {
   workflow: {
     workflows: 'Workflows',
     allWorkflowRuns: 'All workflow runs',
+    recentRuns: 'Recent runs',
     importWorkflows: 'Import workflows',
     actionWorkflows: 'Action workflows',
     exportWorkflows: 'Export workflows',
@@ -629,6 +614,9 @@ const en = {
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:
       'Start writing your script in your preferred language and save it as a workflow',
+    browseRepositories: 'Browse repositories',
+    browseRepositoriesDescription:
+      'Browse repositories to find the one you want to write your script in',
     scriptExecutionStarted: 'Script execution started',
     scriptNeedsToBeSaved:
       'Script needs to be saved before running. Save the script in the editor and run it again.',
@@ -728,7 +716,6 @@ const en = {
     // Chat Suggestions
     showCodeExamples: 'Show me code examples',
     explainBusinessConcepts: 'Explain business concepts',
-    helpWithWriting: 'Help with writing',
     analyzeMarketTrends: 'Analyze market trends',
 
     // Chat Elements
@@ -885,6 +872,7 @@ const en = {
     runs: 'Runs',
     actions: 'Actions',
     view: 'View',
+    viewAll: 'View all',
     delete: 'Delete',
     edit: 'Edit',
     owner: 'Owner',

@@ -3,7 +3,8 @@
 import * as React from 'react';
 
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { XIcon } from 'lucide-react';
+
+import { TbX } from 'react-icons/tb';
 
 import { cn } from '@/utils/tw';
 
@@ -114,7 +115,7 @@ function SheetContent({
               data-[state=open]:bg-secondary
             `}
           >
-            <XIcon className='size-4' />
+            <TbX className='size-4' />
             <span className='sr-only'>Close</span>
           </SheetPrimitive.Close>
         )}

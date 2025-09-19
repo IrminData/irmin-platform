@@ -42,6 +42,10 @@ interface AssistantSectionProps {
    * Callback to close the sheet/modal when in compact mode
    */
   onClose?: () => void;
+  /**
+   * Whether to render without a border
+   */
+  noBorder?: boolean;
 }
 
 /**
@@ -51,6 +55,7 @@ interface AssistantSectionProps {
  */
 export default function AssistantSection({
   compact = false,
+  noBorder = false,
   onClose,
 }: AssistantSectionProps) {
   const { dict } = useLocale();
@@ -61,7 +66,7 @@ export default function AssistantSection({
   >(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const refetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Assistant page URL to open in full page
   const workspaceUrl = useBaseUrl({
@@ -164,7 +169,12 @@ export default function AssistantSection({
         description={dict.assistant.failedToLoadAssistantInterface}
       >
         <div className='flex h-full flex-col bg-background'>
-          <Card className='flex h-full flex-col rounded-none shadow-none'>
+          <Card
+            className={`
+              flex h-full flex-col rounded-none shadow-none
+              ${noBorder ? 'border-0' : ''}
+            `}
+          >
             <CardHeader
               className={`
                 flex flex-row items-center justify-between border-b

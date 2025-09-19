@@ -4,7 +4,8 @@ import type { ComponentProps, HTMLAttributes, ReactElement } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { UIMessage } from 'ai';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+
+import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
@@ -174,7 +175,7 @@ export const BranchPrevious = ({
       variant='ghost'
       {...props}
     >
-      {children ?? <ChevronLeftIcon size={14} />}
+      {children ?? <TbChevronLeft size={14} />}
     </Button>
   );
 };
@@ -204,7 +205,7 @@ export const BranchNext = ({
       variant='ghost'
       {...props}
     >
-      {children ?? <ChevronRightIcon size={14} />}
+      {children ?? <TbChevronRight size={14} />}
     </Button>
   );
 };

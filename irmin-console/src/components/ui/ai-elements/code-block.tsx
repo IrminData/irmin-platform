@@ -3,12 +3,13 @@
 import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
 
-import { CheckIcon, CopyIcon } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
   oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+import { TbCheck, TbCopy } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
@@ -144,7 +145,7 @@ export const CodeBlockCopyButton = ({
     }
   };
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const Icon = isCopied ? TbCheck : TbCopy;
 
   return (
     <Button

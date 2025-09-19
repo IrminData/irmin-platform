@@ -27,6 +27,8 @@ export function usePolicySummary(workspaceSlug?: string) {
       });
     },
     enabled: !!workspaceSlug,
+    staleTime: 5 * 60 * 1000, // 5 minutes - policy summaries don't change frequently
+    gcTime: 15 * 60 * 1000, // 15 minutes - keep in cache longer
   });
 
   return {

@@ -82,6 +82,11 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   // Check if we're on the assistant page
   const isOnAssistantPage = pathname.startsWith(assistantUrl);
 
+  // Check if we're on the dashboard page
+  const isOnDashboardPage =
+    pathname.startsWith(`${workspaceUrl}/dashboard`) ||
+    pathname == workspaceUrl;
+
   const { workspacesQuery } = useWorkspaces();
 
   const loadingWorkspaces = workspacesQuery.isLoading;
@@ -469,7 +474,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Floating Assistant Button */}
-      {currentWorkspace && !isOnAssistantPage && (
+      {currentWorkspace && !isOnAssistantPage && !isOnDashboardPage && (
         <div className='fixed right-6 bottom-6 z-50'>
           <ButtonWithTooltip
             onClick={() => setIsAssistantSheetOpen(true)}
@@ -488,7 +493,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
       )}
 
       {/* AI Assistant Sheet */}
-      {currentWorkspace && !isOnAssistantPage && (
+      {currentWorkspace && !isOnAssistantPage && !isOnDashboardPage && (
         <Sheet
           open={isAssistantSheetOpen}
           onOpenChange={setIsAssistantSheetOpen}

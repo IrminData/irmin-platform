@@ -179,7 +179,7 @@ export const useLogEvents = (
   }, [queryClient, workspaceSlug, logsForType, logsFor]);
 
   // Debounced search query effect
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearchQueryChange = useCallback((query: string) => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);

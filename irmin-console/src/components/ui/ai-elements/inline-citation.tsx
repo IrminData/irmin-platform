@@ -2,7 +2,7 @@
 
 import { type ComponentProps, useCallback, useEffect, useState } from 'react';
 
-import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
+import { TbArrowLeft, TbArrowRight } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -206,7 +206,7 @@ export const InlineCitationCarouselPrev = ({
       type='button'
       {...props}
     >
-      <ArrowLeftIcon className='size-4 text-muted-foreground' />
+      <TbArrowLeft className='size-4 text-muted-foreground' />
     </button>
   );
 };
@@ -233,7 +233,7 @@ export const InlineCitationCarouselNext = ({
       type='button'
       {...props}
     >
-      <ArrowRightIcon className='size-4 text-muted-foreground' />
+      <TbArrowRight className='size-4 text-muted-foreground' />
     </button>
   );
 };

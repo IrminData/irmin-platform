@@ -3,14 +3,15 @@
 import type { ComponentProps, ReactNode } from 'react';
 
 import type { ToolUIPart } from 'ai';
+
 import {
-  CheckCircleIcon,
-  ChevronDownIcon,
-  CircleIcon,
-  ClockIcon,
-  WrenchIcon,
-  XCircleIcon,
-} from 'lucide-react';
+  TbCheck,
+  TbChevronDown,
+  TbCircle,
+  TbClock,
+  TbTools,
+  TbX,
+} from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -50,10 +51,10 @@ const getStatusBadge = (status: ToolUIPart['state']) => {
   } as const;
 
   const icons = {
-    'input-streaming': <CircleIcon className='size-4' />,
-    'input-available': <ClockIcon className='size-4 animate-pulse' />,
-    'output-available': <CheckCircleIcon className='size-4 text-green-600' />,
-    'output-error': <XCircleIcon className='size-4 text-red-600' />,
+    'input-streaming': <TbCircle className='size-4' />,
+    'input-available': <TbClock className='size-4 animate-pulse' />,
+    'output-available': <TbCheck className='size-4 text-green-600' />,
+    'output-error': <TbX className='size-4 text-red-600' />,
   } as const;
 
   return (
@@ -78,11 +79,11 @@ export const ToolHeader = ({
     {...props}
   >
     <div className='flex items-center gap-2'>
-      <WrenchIcon className='size-4 text-muted-foreground' />
+      <TbTools className='size-4 text-muted-foreground' />
       <span className='text-sm font-medium'>{type}</span>
       {getStatusBadge(state)}
     </div>
-    <ChevronDownIcon
+    <TbChevronDown
       className={`
         size-4 text-muted-foreground transition-transform
         group-data-[state=open]:rotate-180

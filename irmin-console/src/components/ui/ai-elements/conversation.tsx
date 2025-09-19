@@ -3,7 +3,7 @@
 import type { ComponentProps } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ArrowDownIcon } from 'lucide-react';
+import { TbArrowDown } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
@@ -161,7 +161,7 @@ export const ConversationScrollButton = ({
         variant='gray'
         {...props}
       >
-        <ArrowDownIcon className='size-4' />
+        <TbArrowDown className='size-4' />
       </Button>
     </div>
   );

@@ -4,7 +4,8 @@ import type { ComponentProps } from 'react';
 import { createContext, memo, useContext, useEffect, useState } from 'react';
 
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
-import { BrainIcon, ChevronDownIcon } from 'lucide-react';
+
+import { TbBrain, TbChevronDown } from 'react-icons/tb';
 
 import {
   Collapsible,
@@ -134,13 +135,13 @@ export const ReasoningTrigger = memo(
       >
         {children ?? (
           <>
-            <BrainIcon className='size-4' />
+            <TbBrain className='size-4' />
             {isStreaming || duration === 0 ? (
               <p>Thinking...</p>
             ) : (
               <p>Thought for {duration} seconds</p>
             )}
-            <ChevronDownIcon
+            <TbChevronDown
               className={cn(
                 'size-4 text-muted-foreground transition-transform',
                 isOpen ? 'rotate-180' : 'rotate-0'

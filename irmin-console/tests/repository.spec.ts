@@ -11,7 +11,7 @@ const repositorySlug =
 const workspace = process.env.TEST_USER_WORKSPACE_SLUG ?? 'test-workspace';
 
 test('can open repositories page', async ({ page }) => {
-  await page.goto(`/en/workspace/${workspace}/home`);
+  await page.goto(`/en/workspace/${workspace}/dashboard`);
   await page.getByRole('link', { name: 'Repositories', exact: true }).click();
 
   // Wait for the URL to change to the repositories page

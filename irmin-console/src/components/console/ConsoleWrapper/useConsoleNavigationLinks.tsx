@@ -66,7 +66,10 @@ const useConsoleNavigationLinks = (): {
       [
         {
           title: dict.workspaceSwitcher.workspace,
-          href: `${workspaceUrl}/home`,
+          href: `${workspaceUrl}/dashboard`,
+          active:
+            pathname.startsWith(`${workspaceUrl}/dashboard`) ||
+            pathname == workspaceUrl,
           icon: <TbLayoutDashboard />,
           hide: !isResourceAllowed('workspace', 'read'),
         },
@@ -102,9 +105,10 @@ const useConsoleNavigationLinks = (): {
         },
       ].map((link) => ({
         ...link,
-        active: isActiveLink(link.href),
+        active:
+          link.active === undefined ? isActiveLink(link.href) : link.active,
       })),
-    [workspaceUrl, dict, isActiveLink, isResourceAllowed]
+    [workspaceUrl, dict, isActiveLink, isResourceAllowed, pathname]
   );
 
   const noWorkspaceLinks: ConsoleNavigationLinkType[] = useMemo(

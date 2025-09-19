@@ -3,7 +3,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
 
-import { ChevronDownIcon } from 'lucide-react';
+import { TbChevronDown } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -218,7 +218,7 @@ export const WebPreviewConsole = ({
           variant='ghost'
         >
           Console
-          <ChevronDownIcon
+          <TbChevronDown
             className={cn(
               'size-4 transition-transform duration-200',
               consoleOpen && 'rotate-180'

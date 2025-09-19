@@ -24,8 +24,8 @@ const NewTabContent = ({ addNewTab }: { addNewTab: () => void }) => {
         />
         <LinkCard
           href='repositories'
-          title={dict.consoleHome.browseRepositories}
-          description={dict.consoleHome.browseRepositoriesDescription}
+          title={dict.editor.browseRepositories}
+          description={dict.editor.browseRepositoriesDescription}
           icon={<TbDatabase />}
         />
       </div>

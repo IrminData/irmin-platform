@@ -217,22 +217,6 @@ const fi = {
       'Oletko varma, että haluat poistua tästä työtilasta?',
   },
 
-  consoleHome: {
-    welcomeToWorkspace: 'Aloita työskentely valitsemalla näistä toiminnoista:',
-    createNewConnection: 'Luo uusi yhteys',
-    createNewConnectionDescription:
-      'Yhdistä työtilallesi uusi tietolähde tai vientikohde ja aloita datan siirtäminen',
-    runScriptOnData: 'Suorita skripti',
-    runScriptOnDataDescription:
-      'Kirjoita ja suorita skripti automatisoidaksesi tehtäviä tai saadaksesi oivalluksia',
-    setupWorkflow: 'Luo prosessi',
-    setupWorkflowDescription:
-      'Automatisoi tietotehtäviä prosessien avulla: tiedon keräys, muuntaminen ja vienti',
-    browseRepositories: 'Data ja data-arkistot',
-    browseRepositoriesDescription:
-      'Selaa, käsittele ja hallinnoi tietojasi Git-tyyppisessä ympäristössä',
-  },
-
   // === DATA MANAGEMENT ===
   repository: {
     repository: 'Data-arkisto',
@@ -417,6 +401,7 @@ const fi = {
   workflow: {
     workflows: 'Prosessit',
     allWorkflowRuns: 'Kaikki prosessin ajot',
+    recentRuns: 'Viimeisimmät ajot',
     importWorkflows: 'Tuontiprosessit',
     actionWorkflows: 'Toimintoprosessit',
     exportWorkflows: 'Vientiprosessit',
@@ -612,6 +597,9 @@ const fi = {
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:
       'Kirjoita skripti haluamallasi kielellä ja tallenna se prosessina',
+    browseRepositories: 'Selaa data-arkistoja',
+    browseRepositoriesDescription:
+      'Selaa data-arkistoja löytääksesi ne, joissa haluat kirjoittaa skriptin',
     scriptExecutionStarted: 'Skriptin suoritus aloitettu',
     scriptNeedsToBeSaved:
       'Skripti on tallennettava ennen suorittamista. Tallenna skripti editoriin ja suorita se uudelleen.',
@@ -713,7 +701,6 @@ const fi = {
     // Chat Suggestions
     showCodeExamples: 'Näytä koodiesimerkkejä',
     explainBusinessConcepts: 'Selitä liiketoimintakäsitteitä',
-    helpWithWriting: 'Auta kirjoittamisessa',
     analyzeMarketTrends: 'Analysoi markkinatrendejä',
 
     // Chat Elements
@@ -871,6 +858,7 @@ const fi = {
     runs: 'Ajot',
     actions: 'Toiminnot',
     view: 'Katso',
+    viewAll: 'Näytä kaikki',
     delete: 'Poista',
     edit: 'Muokkaa',
     owner: 'Omistaja',

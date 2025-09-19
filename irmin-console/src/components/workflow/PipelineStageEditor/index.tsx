@@ -40,7 +40,7 @@ function PipelineStageEditor({
   const [stages, setStages] = useState<PipelineStage[]>(initialStages);
 
   const prevStagesRef = useRef<PipelineStage[]>(stages);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Watch for changes and trigger onSubmit if the save button is disabled
   useEffect(() => {
