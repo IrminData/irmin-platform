@@ -105,13 +105,13 @@ const DashboardSection = () => {
           <div
             className={`
               flex flex-col gap-4
-              lg:flex-row
+              lg:max-h-[550px] lg:flex-row
             `}
           >
             <div className={`w-full overflow-hidden rounded-xl border`}>
               <AssistantSection compact={true} noBorder={true} />
             </div>
-            <div className='flex w-full max-w-md flex-col'>
+            <div className='flex w-full max-w-md flex-col overflow-hidden'>
               {isResourceAllowed('workflow_run', 'read') && (
                 <DashboardWorkflowRunsFeed workspaceUrl={workspaceUrl} />
               )}

@@ -86,7 +86,7 @@ export const ConversationScrollButton = ({
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [buttonPosition, setButtonPosition] = useState({
     left: '50%',
-    bottom: '8rem',
+    bottom: '6rem',
   });
 
   const checkIfAtBottom = useCallback(() => {
@@ -161,7 +161,7 @@ export const ConversationScrollButton = ({
         variant='gray'
         {...props}
       >
-        <TbArrowDown className='size-4' />
+        <TbArrowDown className='size-3' />
       </Button>
     </div>
   );

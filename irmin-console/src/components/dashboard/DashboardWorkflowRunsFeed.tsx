@@ -93,7 +93,7 @@ export function DashboardWorkflowRunsFeed({
       </CardHeader>
       <CardContent
         className={`
-          flex flex-1 flex-col px-2 pt-0 pb-2
+          flex flex-1 flex-col overflow-y-auto px-2 pt-0 pb-2
           lg:px-4
         `}
       >
