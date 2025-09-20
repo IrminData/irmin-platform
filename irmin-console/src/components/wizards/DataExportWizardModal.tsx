@@ -34,7 +34,12 @@ export default function DataExportWizardModal({
       isOpen={isOpen}
       closeModal={closeModal}
       currentStep={currentStep}
-      steps={[dict.common.comingSoon]}
+      steps={[
+        dict.wizard.selectDestination,
+        dict.wizard.selectRepository,
+        dict.wizard.configure,
+        dict.wizard.reviewAndCreate,
+      ]}
       title={dict.wizard.setupDataExportWizard}
     >
       <DataExportWizard

@@ -21,6 +21,7 @@ const en = {
     back: 'Back',
     next: 'Next',
     previous: 'Previous',
+    continue: 'Continue',
     close: 'Close',
     open: 'Open',
     refresh: 'Refresh',
@@ -700,6 +701,22 @@ const en = {
     setupDataImportWizard: 'Setup data import wizard',
     setupDataExportWizard: 'Setup data export wizard',
 
+    // Data Export Wizard Steps
+    selectDestination: 'Destination',
+    selectRepository: 'Repository',
+    selectExportDestination: 'Select Export Destination',
+    selectExportDestinationDescription:
+      'Choose where you want to export your data to',
+    selectSourceRepository: 'Select Source Repository',
+    selectSourceRepositoryDescription:
+      'Choose the repository you want to export data from',
+    configureExportSettings: 'Configure Export Settings',
+    configureExportSettingsDescription:
+      'Configure how data will be exported from your repository to the destination',
+    reviewAndCreateExportWorkflow: 'Review & Create Export Workflow',
+    reviewAndCreateExportWorkflowDescription:
+      'Review your configuration and create the export workflow',
+
     // Connect Data Source Step
     connectToDataSource: 'Connect to Your Data Source',
     connectToDataSourceDescription:
@@ -758,7 +775,38 @@ const en = {
     fieldMappingsDescription:
       'Field mappings allow you to transform data during import. This feature will be available in the next step.',
     useExistingRepository: 'Use Existing Repository',
-    selectRepository: 'Select Repository',
+
+    // Export-specific strings
+    exportFromRepositoryPaths: 'Export From Repository Paths',
+    exportToConnectionPath: 'Export To Connection Path',
+    exportPath: 'Export Path',
+    exportPaths: 'Export Paths',
+    exportDestination: 'Export Destination',
+    sourceRepository: 'Source Repository',
+    workflowDetails: 'Workflow Details',
+    workflowName: 'Workflow Name',
+    creatingExportWorkflow: 'Creating Export Workflow',
+    creatingWorkflow: 'Creating Workflow',
+    createExportWorkflow: 'Create Export Workflow',
+    exportWorkflowCreatedSuccessfully: 'Export workflow created successfully!',
+
+    // Additional missing translations
+    pleaseEnterWorkflowName: 'Please enter a workflow name',
+    pleaseEnterWorkflowDescription: 'Please enter a workflow description',
+    pleaseSelectRepositoryBranch: 'Please select a repository branch',
+    pleaseSelectRepositoryPaths: 'Please select repository paths',
+    pleaseSelectConnectionPath: 'Please select a connection path',
+    workflowNamePlaceholder: 'Enter workflow name',
+    workflowDescriptionPlaceholder: 'Enter workflow description',
+    workflowDocumentationPlaceholder: 'Enter workflow documentation',
+    repositoryBranchPlaceholder: 'Enter repository branch',
+    selectRepositoryPaths: 'Select repository paths',
+    selectConnectionPath: 'Select connection path',
+    workflowDocumentation: 'Workflow Documentation',
+    connection: 'Connection',
+    repository: 'Repository',
+    description: 'Description',
+    documentation: 'Documentation',
   },
 
   // === ASSISTANT ===

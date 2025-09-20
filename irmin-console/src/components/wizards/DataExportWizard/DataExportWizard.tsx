@@ -1,32 +1,116 @@
-import { type Dispatch, type SetStateAction } from 'react';
+'use client';
 
-import { useLocale } from '@/context/LocaleContext';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface DataExportWizardProps {
+import ConfigureExportStep from './steps/ConfigureExportStep';
+import ReviewAndCreateStep from './steps/ReviewAndCreateStep';
+import SelectDestinationStep from './steps/SelectDestinationStep';
+import SelectRepositoryStep from './steps/SelectRepositoryStep';
+import type { DataExportWizardData } from './types';
+
+/**
+ * Initial data export wizard data state
+ */
+const initialWizardData: DataExportWizardData = {
+  connection: null,
+  createNewConnection: false,
+
+  repository: null,
+
+  workflowData: {
+    name: '',
+    description: '',
+    documentation: '',
+    export_from_repository_paths: [],
+    repository_branch: 'main',
+    export_to_connection_path: '',
+    field_mappings: [],
+  },
+};
+
+/**
+ * Main content component for the Data Export Wizard
+ *
+ * Manages the wizard state and renders the appropriate step component
+ */
+export default function DataExportWizard({
+  closeModal,
+  currentStep,
+  setCurrentStep,
+}: {
   closeModal: () => void;
   currentStep: number;
   setCurrentStep: Dispatch<SetStateAction<number>>;
-}
+}) {
+  const [wizardData, setWizardData] =
+    useState<DataExportWizardData>(initialWizardData);
+  const isFirstRender = useRef(true);
 
-/**
- * Data export wizard component
- *
- * @todo Implement the data export wizard
- */
-export default function DataExportWizard(_props: DataExportWizardProps) {
-  const { dict } = useLocale();
+  // Reset wizard data only when modal is opened for the first time
+  useEffect(() => {
+    if (currentStep === 1 && isFirstRender.current) {
+      setWizardData(initialWizardData);
+      isFirstRender.current = false;
+    } else if (currentStep !== 1) {
+      isFirstRender.current = true;
+    }
+  }, [currentStep]);
+
+  // Function to go to the next step
+  const goNext = useCallback(() => {
+    if (currentStep < 4) {
+      setCurrentStep((prev) => prev + 1);
+    }
+  }, [currentStep, setCurrentStep]);
+
+  // Function to go back to the previous step
+  const goBack = useCallback(() => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  }, [currentStep, setCurrentStep]);
+
+  // Function to update wizard data
+  const updateWizardData = useCallback(
+    (updates: Partial<DataExportWizardData>) => {
+      setWizardData((prev) => ({ ...prev, ...updates }));
+    },
+    []
+  );
 
   return (
-    <div className='p-6 text-center'>
-      <h1>{dict.wizard.setupDataExportWizard}</h1>
-      <p
-        className={`
-          text-gray-600
-          dark:text-gray-400
-        `}
-      >
-        {dict.wizard.dataExportWizardComingSoon}
-      </p>
-    </div>
+    <>
+      {currentStep === 1 && (
+        <SelectDestinationStep
+          wizardData={wizardData}
+          updateWizardData={updateWizardData}
+          goNext={goNext}
+        />
+      )}
+      {currentStep === 2 && (
+        <SelectRepositoryStep
+          wizardData={wizardData}
+          updateWizardData={updateWizardData}
+          goBack={goBack}
+          goNext={goNext}
+        />
+      )}
+      {currentStep === 3 && (
+        <ConfigureExportStep
+          wizardData={wizardData}
+          updateWizardData={updateWizardData}
+          goBack={goBack}
+          goNext={goNext}
+        />
+      )}
+      {currentStep === 4 && (
+        <ReviewAndCreateStep
+          wizardData={wizardData}
+          goBack={goBack}
+          closeModal={closeModal}
+        />
+      )}
+    </>
   );
 }

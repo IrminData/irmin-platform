@@ -21,6 +21,7 @@ const fi = {
     back: 'Takaisin',
     next: 'Seuraava',
     previous: 'Edellinen',
+    continue: 'Jatka',
     close: 'Sulje',
     open: 'Avaa',
     refresh: 'Päivitä',
@@ -682,6 +683,21 @@ const fi = {
     setupDataImportWizard: 'Aseta datan tuontiohjattu',
     setupDataExportWizard: 'Aseta datan vientiohjattu',
 
+    // Data Export Wizard Steps
+    selectDestination: 'Kohde',
+    selectRepository: 'Data-arkisto',
+    selectExportDestination: 'Valitse vientikohde',
+    selectExportDestinationDescription: 'Valitse mihin haluat viedä datasi',
+    selectSourceRepository: 'Valitse lähdedata-arkisto',
+    selectSourceRepositoryDescription:
+      'Valitse data-arkisto josta haluat viedä dataa',
+    configureExportSettings: 'Konfiguroi vientiasetukset',
+    configureExportSettingsDescription:
+      'Konfiguroi kuinka dataa viedään data-arkistostasi kohteeseen',
+    reviewAndCreateExportWorkflow: 'Tarkista ja luo vientityökulu',
+    reviewAndCreateExportWorkflowDescription:
+      'Tarkista konfiguraatiosi ja luo vientityökulu',
+
     // Connect Data Source Step
     connectToDataSource: 'Yhdistä tietolähteeseesi',
     connectToDataSourceDescription:
@@ -742,7 +758,38 @@ const fi = {
     fieldMappingsDescription:
       'Kenttien yhdistäminen mahdollistaa datan muuntamisen tuonnin aikana. Tämä ominaisuus on saatavilla seuraavassa vaiheessa.',
     useExistingRepository: 'Käytä olemassa olevaa data-arkistoa',
-    selectRepository: 'Valitse data-arkisto',
+
+    // Export-specific strings
+    exportFromRepositoryPaths: 'Vie data-arkiston poluista',
+    exportToConnectionPath: 'Vie yhteyden polkuun',
+    exportPath: 'Vientipolku',
+    exportPaths: 'Vientipolut',
+    exportDestination: 'Vientikohde',
+    sourceRepository: 'Lähdedata-arkisto',
+    workflowDetails: 'Prosessin tiedot',
+    workflowName: 'Prosessin nimi',
+    creatingExportWorkflow: 'Luodaan vientiprosessia',
+    creatingWorkflow: 'Luodaan prosessia',
+    createExportWorkflow: 'Luo vientiprosessi',
+    exportWorkflowCreatedSuccessfully: 'Vientiprosessi luotiin onnistuneesti!',
+
+    // Additional missing translations
+    pleaseEnterWorkflowName: 'Anna prosessin nimi',
+    pleaseEnterWorkflowDescription: 'Anna prosessin kuvaus',
+    pleaseSelectRepositoryBranch: 'Valitse data-arkiston haara',
+    pleaseSelectRepositoryPaths: 'Valitse data-arkiston polut',
+    pleaseSelectConnectionPath: 'Valitse yhteyden polku',
+    workflowNamePlaceholder: 'Anna prosessin nimi',
+    workflowDescriptionPlaceholder: 'Anna prosessin kuvaus',
+    workflowDocumentationPlaceholder: 'Anna prosessin dokumentaatio',
+    repositoryBranchPlaceholder: 'Anna data-arkiston haara',
+    selectRepositoryPaths: 'Valitse data-arkiston polut',
+    selectConnectionPath: 'Valitse yhteyden polku',
+    workflowDocumentation: 'Prosessin dokumentaatio',
+    connection: 'Yhteys',
+    repository: 'Data-arkisto',
+    description: 'Kuvaus',
+    documentation: 'Dokumentaatio',
   },
 
   // === ASSISTANT ===
