@@ -7,7 +7,7 @@ import { TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
-import SideModal from '@/components/ui/popup/SideModal';
+import WorkflowWizardModal from '@/components/wizards/WorkflowWizardModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -16,14 +16,13 @@ import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { ImportWorkflow } from '@/types/core/Workflow';
 
-import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import ImportWorkflowList from './ImportWorkflowList';
 
 /**
  * UI component to list and manage Import Workflows in the workspace
  *
  * Uses {@link ImportWorkflowList} to display the list of Import Workflows
- * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Import Workflow creation
+ * Uses {@link WorkflowWizardModal} to provide UI for new Import Workflow creation
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
@@ -38,7 +37,6 @@ export default function ImportWorkflowsSection({
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
-  const [currentStep, setCurrentStep] = useState(1);
 
   const { workflowsQuery } = useWorkflows('import');
 
@@ -80,7 +78,6 @@ export default function ImportWorkflowsSection({
   }, [setCreateParam]);
 
   const openModal = useCallback(() => {
-    setCurrentStep(1);
     setIsOpen(true);
     setCreateParam(true);
   }, [setCreateParam]);
@@ -99,46 +96,11 @@ export default function ImportWorkflowsSection({
           {dict.workflow.create.createNewImportWorkflow}
         </Button>
       </div>
-      <SideModal
+      <WorkflowWizardModal
         isOpen={isOpen && isResourceAllowed('workflow', 'create')}
         closeModal={closeModal}
-        currentStep={currentStep}
-        steps={[
-          dict.workflow.create.configureImport,
-          dict.workflow.create.configureFieldMappings,
-          dict.workflow.create.configureWorkflow,
-        ]}
-        title={dict.workflow.create.createNewImportWorkflow}
-      >
-        <CreateWorkflowModalContent
-          isOpen={isOpen && isResourceAllowed('workflow', 'create')}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          initialWorkflowData={{
-            // Workflow properties
-            name: '',
-            description: '',
-            documentation: '',
-            type: 'import',
-            schedule: {
-              triggers: [],
-              max_retries: 3,
-              max_runtime: 15,
-              min_interval: 120,
-            },
-            // Workflowable properties
-            workflowable: {
-              type: 'import',
-              connection_id: '',
-              import_from_connection_paths: [],
-              repository: '',
-              repository_branch: '',
-              import_to_repository_path: '',
-            },
-          }}
-        />
-      </SideModal>
+        workflowType='import'
+      />
       <div className='py-4'>
         <div
           className={`

@@ -486,6 +486,7 @@ const en = {
       createNewImportWorkflow: 'Create new import workflow',
       createNewExportWorkflow: 'Create new export workflow',
       createNewPipelineWorkflow: 'Create new pipeline workflow',
+      selectWorkflowType: 'Select workflow type',
       configureFieldMappings: 'Field mappings',
       configureImport: 'Configure import',
       configureAction: 'Configure action',
@@ -686,6 +687,9 @@ const en = {
     dataExport: 'Configure data export',
     dataExportDescription:
       'Export data from repositories to external destinations',
+    repositoryDescription: 'Create a new repository to store data',
+    connectionDescription: 'Connect to external data sources',
+    workflowDescription: 'Create automated data workflows',
     dataExportWizardComingSoon: 'Data Export Wizard is coming soon!',
 
     // Data Import Wizard Steps

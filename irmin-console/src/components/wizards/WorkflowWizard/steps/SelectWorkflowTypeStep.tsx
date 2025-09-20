@@ -1,8 +1,6 @@
 'use client';
 
-import { type JSX, useCallback, useMemo, useState } from 'react';
-
-import { useRouter } from 'next/navigation';
+import { type JSX, useCallback, useMemo } from 'react';
 
 import { RiFlowChart } from 'react-icons/ri';
 import {
@@ -15,43 +13,36 @@ import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
-import { useBaseUrl } from '@/hooks/utils';
-
 import type { WorkflowableType } from '@/types/core/Workflow';
 
+import type { WorkflowWizardData } from '../types';
+
 /**
- * Select the workflow type modal content and direct to the next step
+ * Step component for selecting the workflow type
  */
-export default function SelectWorkflowTypeModalContent() {
+function SelectWorkflowTypeStep({
+  wizardData,
+  updateWizardData,
+  goNext,
+}: {
+  wizardData: WorkflowWizardData;
+  updateWizardData: (updates: Partial<WorkflowWizardData>) => void;
+  goNext: () => void;
+}) {
   const { dict } = useLocale();
-  const router = useRouter();
 
-  const [workflowableType, setWorkflowableType] =
-    useState<WorkflowableType | null>(null);
-
-  // The base URL for the workspace, eg. /en/workspace/workspace-slug
-  const workspaceUrl = useBaseUrl({
-    pathname: '',
-    segment: 'workspace',
-    includeSegment: true,
-    segmentsAfter: 1,
-  });
+  const handleTypeSelect = useCallback(
+    (type: WorkflowableType) => {
+      updateWizardData({ type });
+    },
+    [updateWizardData]
+  );
 
   const handleContinue = useCallback(() => {
-    // Direct to the next step
-    if (workflowableType === 'action') {
-      router.push(`${workspaceUrl}/workflows/actions?create`);
+    if (wizardData.type) {
+      goNext();
     }
-    if (workflowableType === 'import') {
-      router.push(`${workspaceUrl}/workflows/imports?create`);
-    }
-    if (workflowableType === 'export') {
-      router.push(`${workspaceUrl}/workflows/exports?create`);
-    }
-    if (workflowableType === 'pipeline') {
-      router.push(`${workspaceUrl}/workflows/pipelines?create`);
-    }
-  }, [router, workflowableType, workspaceUrl]);
+  }, [wizardData.type, goNext]);
 
   const workflowTypeOptions: {
     type: WorkflowableType;
@@ -89,9 +80,9 @@ export default function SelectWorkflowTypeModalContent() {
         {workflowTypeOptions.map((option) => (
           <Button
             key={option.type}
-            onClick={() => setWorkflowableType(option.type)}
+            onClick={() => handleTypeSelect(option.type)}
             size='lg'
-            variant={workflowableType === option.type ? 'accent' : 'gray'}
+            variant={wizardData.type === option.type ? 'accent' : 'gray'}
           >
             {option.icon}
             {option.label}
@@ -110,6 +101,7 @@ export default function SelectWorkflowTypeModalContent() {
           variant='gradient'
           size='lg'
           onClick={handleContinue}
+          disabled={!wizardData.type}
         >
           {dict.workflow.create.confirmAndContinue}
         </Button>
@@ -117,3 +109,5 @@ export default function SelectWorkflowTypeModalContent() {
     </div>
   );
 }
+
+export default SelectWorkflowTypeStep;

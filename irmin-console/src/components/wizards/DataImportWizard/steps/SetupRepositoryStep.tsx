@@ -16,6 +16,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { useRepositories } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import type { Repository } from '@/types/core/Repository';
 
@@ -40,6 +41,7 @@ export default function SetupRepositoryStep({
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
   const { repositoriesQuery, createRepositoryMutation } = useRepositories();
+  const { isResourceAllowed } = useResourceAllowed();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRepositories, setFilteredRepositories] = useState<
@@ -147,6 +149,10 @@ export default function SetupRepositoryStep({
         <RadioGroup
           value={wizardData.createNewRepository ? 'new' : 'existing'}
           onValueChange={(value) => {
+            // Prevent selecting 'new' if user doesn't have permission
+            if (value === 'new' && !isResourceAllowed('repository', 'create')) {
+              return;
+            }
             updateWizardData({
               createNewRepository: value === 'new',
               repository: value === 'existing' ? wizardData.repository : null,
@@ -172,8 +178,17 @@ export default function SetupRepositoryStep({
               </div>
             </Label>
           </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='new' id='new' />
+          <div
+            className={
+              'flex items-center space-x-2' +
+              (!isResourceAllowed('repository', 'create') ? 'opacity-50' : '')
+            }
+          >
+            <RadioGroupItem
+              value='new'
+              id='new'
+              disabled={!isResourceAllowed('repository', 'create')}
+            />
             <Label htmlFor='new' className='flex-1'>
               <div className='flex flex-col'>
                 <span className='font-medium'>
@@ -185,7 +200,9 @@ export default function SetupRepositoryStep({
                     dark:text-gray-400
                   `}
                 >
-                  {dict.wizard.createNewRepositoryDescription}
+                  {!isResourceAllowed('repository', 'create')
+                    ? dict.common.insufficientPermissions
+                    : dict.wizard.createNewRepositoryDescription}
                 </span>
               </div>
             </Label>

@@ -1,6 +1,5 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
 import { useCallback } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
@@ -15,17 +14,21 @@ import { useConnectionConfiguration } from '@/hooks/api';
 
 import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
 
-import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 import type { DynamicFieldValues } from '@/types/internal/DynamicField';
 
-export default function DefineSettings({
-  connectionData,
-  setConnectionData,
+import type { ConnectionWizardData } from '../types';
+
+/**
+ * Step component for defining connection settings
+ */
+export default function DefineSettingsStep({
+  wizardData,
+  updateWizardData,
   goBack,
   goNext,
 }: {
-  connectionData: ConnectionSetup;
-  setConnectionData: Dispatch<SetStateAction<ConnectionSetup>>;
+  wizardData: ConnectionWizardData;
+  updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goBack: () => void;
   goNext: () => void;
 }) {
@@ -37,9 +40,9 @@ export default function DefineSettings({
     validateConnectorConfigurationMutation,
   } = useConnectionConfiguration(
     'settings',
-    connectionData.connector?.id,
-    connectionData.connectionDetails
-      ? convertToConnectionFieldValues(connectionData.connectionDetails)
+    wizardData.connector?.id,
+    wizardData.connectionDetails
+      ? convertToConnectionFieldValues(wizardData.connectionDetails)
       : undefined
   );
 
@@ -48,17 +51,16 @@ export default function DefineSettings({
       try {
         // Validate the connector configuration
         const res = await validateConnectorConfigurationMutation.mutateAsync({
-          details: connectionData.connectionDetails
-            ? convertToConnectionFieldValues(connectionData.connectionDetails)
+          details: wizardData.connectionDetails
+            ? convertToConnectionFieldValues(wizardData.connectionDetails)
             : undefined,
           settings: convertToConnectionFieldValues(formValues),
         });
         if (res.data?.can_connect && res.data.connection_settings_valid) {
           irminAlert('success', dict.connections.create.configuration_valid);
-          setConnectionData((prev) => ({
-            ...prev,
+          updateWizardData({
             connectionSettings: formValues,
-          }));
+          });
           goNext();
         } else {
           irminAlert('error', dict.connections.create.configuration_invalid);
@@ -72,10 +74,10 @@ export default function DefineSettings({
       }
     },
     [
-      connectionData.connectionDetails,
+      wizardData.connectionDetails,
       validateConnectorConfigurationMutation,
       irminAlert,
-      setConnectionData,
+      updateWizardData,
       goNext,
       dict,
     ]
@@ -96,7 +98,7 @@ export default function DefineSettings({
   return (
     <div className='space-y-6'>
       {/* Display Connector Information */}
-      {connectionData.connector && (
+      {wizardData.connector && (
         <div
           className={`
             flex flex-col justify-center border-b pb-4
@@ -106,7 +108,7 @@ export default function DefineSettings({
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
-          <ConnectorInfoSmall connector={connectionData.connector} />
+          <ConnectorInfoSmall connector={wizardData.connector} />
         </div>
       )}
 

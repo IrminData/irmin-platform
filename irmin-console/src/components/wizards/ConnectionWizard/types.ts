@@ -5,21 +5,14 @@ import type {
 } from '@/types/internal/DynamicField';
 
 /**
- * Connection setup object
+ * Connection wizard data state
  */
-export interface ConnectionSetup {
-  /** Connection name */
+export interface ConnectionWizardData {
   name: string;
-  /** Connection description */
   description: string;
-  /** Which connector to use */
   connector: Connector | undefined;
-  /** Connection details fields */
   connectionDetailsFields: DynamicFields | undefined;
-  /** Connection settings fields */
   connectionSettingsFields: DynamicFields | undefined;
-  /** Connection details with user input */
   connectionDetails: DynamicFieldValues | undefined;
-  /** Connection settings with user input */
   connectionSettings: DynamicFieldValues | undefined;
 }

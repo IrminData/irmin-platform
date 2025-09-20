@@ -22,6 +22,7 @@ import {
   useConnections,
   useConnectors,
 } from '@/hooks/api';
+import { useResourceAllowed } from '@/hooks/utils';
 
 import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
 
@@ -52,6 +53,7 @@ export default function ConnectDataSourceStep({
   const { irminAlert } = usePopup();
   const { connectionsQuery, createConnectionMutation } = useConnections();
   const { connectorsQuery } = useConnectors();
+  const { isResourceAllowed } = useResourceAllowed();
 
   const [categoryFilterOptions, setCategoryFilterOptions] = useState<string[]>(
     []
@@ -231,6 +233,10 @@ export default function ConnectDataSourceStep({
         <RadioGroup
           value={wizardData.createNewConnection ? 'new' : 'existing'}
           onValueChange={(value) => {
+            // Prevent selecting 'new' if user doesn't have permission
+            if (value === 'new' && !isResourceAllowed('connection', 'create')) {
+              return;
+            }
             updateWizardData({
               createNewConnection: value === 'new',
               connection: value === 'existing' ? wizardData.connection : null,
@@ -256,8 +262,17 @@ export default function ConnectDataSourceStep({
               </div>
             </Label>
           </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='new' id='new' />
+          <div
+            className={
+              'flex items-center space-x-2' +
+              (!isResourceAllowed('connection', 'create') ? 'opacity-50' : '')
+            }
+          >
+            <RadioGroupItem
+              value='new'
+              id='new'
+              disabled={!isResourceAllowed('connection', 'create')}
+            />
             <Label htmlFor='new' className='flex-1'>
               <div className='flex flex-col'>
                 <span className='font-medium'>
@@ -269,7 +284,9 @@ export default function ConnectDataSourceStep({
                     dark:text-gray-400
                   `}
                 >
-                  {dict.wizard.setupNewConnectionToDataSource}
+                  {!isResourceAllowed('connection', 'create')
+                    ? dict.common.insufficientPermissions
+                    : dict.wizard.setupNewConnectionToDataSource}
                 </span>
               </div>
             </Label>

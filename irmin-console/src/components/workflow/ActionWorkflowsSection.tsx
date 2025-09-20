@@ -7,7 +7,7 @@ import { TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
-import SideModal from '@/components/ui/popup/SideModal';
+import WorkflowWizardModal from '@/components/wizards/WorkflowWizardModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -17,13 +17,12 @@ import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 import type { ActionWorkflow } from '@/types/core/Workflow';
 
 import ActionWorkflowList from './ActionWorkflowList';
-import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 
 /**
  * UI component to list and manage Action Workflows in the workspace
  *
  * Uses {@link ActionWorkflowList} to display the list of Action Workflows
- * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Action Workflow creation
+ * Uses {@link WorkflowWizardModal} to provide UI for new Action Workflow creation
  *
  * @param props - The props
  * @param props.sideModalOpen - Whether the side modal is open by default or not
@@ -38,7 +37,6 @@ export default function ActionWorkflowsSection({
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
-  const [currentStep, setCurrentStep] = useState(1);
 
   const { workflowsQuery } = useWorkflows('action');
 
@@ -80,7 +78,6 @@ export default function ActionWorkflowsSection({
   }, [setCreateParam]);
 
   const openModal = useCallback(() => {
-    setCurrentStep(1);
     setIsOpen(true);
     setCreateParam(true);
   }, [setCreateParam]);
@@ -99,41 +96,11 @@ export default function ActionWorkflowsSection({
           {dict.workflow.create.createNewActionWorkflow}
         </Button>
       </div>
-      <SideModal
+      <WorkflowWizardModal
         isOpen={isOpen && isResourceAllowed('workflow', 'create')}
         closeModal={closeModal}
-        currentStep={currentStep}
-        steps={[
-          dict.workflow.create.configureAction,
-          dict.workflow.create.configureWorkflow,
-        ]}
-        title={dict.workflow.create.createNewActionWorkflow}
-      >
-        <CreateWorkflowModalContent
-          isOpen={isOpen && isResourceAllowed('workflow', 'create')}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          initialWorkflowData={{
-            // Workflow properties
-            name: '',
-            description: '',
-            documentation: '',
-            type: 'action',
-            schedule: {
-              triggers: [],
-              max_retries: 3,
-              max_runtime: 15,
-              min_interval: 120,
-            },
-            // Workflowable properties
-            workflowable: {
-              type: 'action',
-              executable: '',
-            },
-          }}
-        />
-      </SideModal>
+        workflowType='action'
+      />
       <div className='py-4'>
         <div
           className={`

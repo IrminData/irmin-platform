@@ -12,40 +12,38 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useRepositories } from '@/hooks/api';
 
+import type { RepositoryWizardData } from '../types';
+
 /**
- * Modal content to create a new repository.
- *
- * @param props - The props
- * @param props.closeModal - Callback to close the modal
+ * Step component for configuring repository details
  */
-export default function CreateRepositoryModalContent({
-  closeModal,
+export default function ConfigureRepositoryStep({
+  wizardData,
+  updateWizardData,
+  goNext,
 }: {
-  closeModal: () => void;
+  wizardData: RepositoryWizardData;
+  updateWizardData: (updates: Partial<RepositoryWizardData>) => void;
+  goNext: () => void;
 }) {
   const { dict } = useLocale();
 
   const {
     handleSubmit,
     control,
-    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: '',
-      description: '',
-      default_branch: 'main',
+      name: wizardData.name,
+      description: wizardData.description,
+      default_branch: wizardData.default_branch,
     },
   });
 
   const { createRepositoryMutation } = useRepositories();
 
   const handleCreate = useCallback(
-    async (data: {
-      name: string;
-      description: string;
-      default_branch: string;
-    }) => {
+    async (data: RepositoryWizardData) => {
       try {
         await createRepositoryMutation.mutateAsync({
           name: data.name,
@@ -54,18 +52,17 @@ export default function CreateRepositoryModalContent({
           default_branch: data.default_branch,
           isImmutable: false,
         });
-        closeModal();
-        reset();
+        updateWizardData(data);
+        goNext();
       } catch (error) {
         console.error(error);
       }
     },
-    [closeModal, reset, createRepositoryMutation]
+    [createRepositoryMutation, updateWizardData, goNext]
   );
 
   return (
     <form
-      id='create-repository-modal-content'
       onSubmit={handleSubmit(handleCreate)}
       className='flex flex-col gap-4 px-4 py-8'
     >

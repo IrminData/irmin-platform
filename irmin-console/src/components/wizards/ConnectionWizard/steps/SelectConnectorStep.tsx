@@ -1,6 +1,5 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { TbHelp } from 'react-icons/tb';
@@ -17,16 +16,17 @@ import { usePopup } from '@/context/PopupContext';
 import { useConnectors } from '@/hooks/api';
 
 import type { Connector, ConnectorCategory } from '@/types/core/Connector';
-import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
+
+import type { ConnectionWizardData } from '../types';
 
 /**
- * Component to select a connector for the connection setup.
+ * Step component for selecting a connector
  */
-export default function SelectConnector({
-  setConnectionData,
+export default function SelectConnectorStep({
+  updateWizardData,
   goNext,
 }: {
-  setConnectionData: Dispatch<SetStateAction<ConnectionSetup>>;
+  updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goNext: () => void;
 }) {
   const { connectorsQuery } = useConnectors();
@@ -79,12 +79,11 @@ export default function SelectConnector({
       irminAlert('error', 'Please select a connector');
       return;
     }
-    setConnectionData((prev) => ({
-      ...prev,
+    updateWizardData({
       connector: selectedConnector,
-    }));
+    });
     goNext();
-  }, [selectedConnector, irminAlert, goNext, setConnectionData]);
+  }, [selectedConnector, irminAlert, goNext, updateWizardData]);
 
   if (connectorsQuery.isLoading) {
     return <ConnectionCreationSkeleton variant='connectors' />;

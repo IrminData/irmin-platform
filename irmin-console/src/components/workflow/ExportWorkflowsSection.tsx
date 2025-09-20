@@ -7,7 +7,7 @@ import { TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
-import SideModal from '@/components/ui/popup/SideModal';
+import WorkflowWizardModal from '@/components/wizards/WorkflowWizardModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -16,14 +16,13 @@ import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { ExportWorkflow } from '@/types/core/Workflow';
 
-import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import ExportWorkflowList from './ExportWorkflowList';
 
 /**
  * UI component to list and manage Export Workflows in the workspace
  *
  * Uses {@link ExportWorkflowList} to display the list of Export Workflows
- * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Export Workflow creation
+ * Uses {@link WorkflowWizardModal} to provide UI for new Export Workflow creation
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
@@ -38,7 +37,6 @@ export default function ExportWorkflowsSection({
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
-  const [currentStep, setCurrentStep] = useState(1);
 
   const { workflowsQuery } = useWorkflows('export');
 
@@ -80,7 +78,6 @@ export default function ExportWorkflowsSection({
   }, [setCreateParam]);
 
   const openModal = useCallback(() => {
-    setCurrentStep(1);
     setIsOpen(true);
     setCreateParam(true);
   }, [setCreateParam]);
@@ -99,46 +96,11 @@ export default function ExportWorkflowsSection({
           {dict.workflow.create.createNewExportWorkflow}
         </Button>
       </div>
-      <SideModal
+      <WorkflowWizardModal
         isOpen={isOpen && isResourceAllowed('workflow', 'create')}
         closeModal={closeModal}
-        currentStep={currentStep}
-        steps={[
-          dict.workflow.create.configureExport,
-          dict.workflow.create.configureFieldMappings,
-          dict.workflow.create.configureWorkflow,
-        ]}
-        title={dict.workflow.create.createNewExportWorkflow}
-      >
-        <CreateWorkflowModalContent
-          isOpen={isOpen && isResourceAllowed('workflow', 'create')}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          initialWorkflowData={{
-            // Workflow properties
-            name: '',
-            description: '',
-            documentation: '',
-            type: 'export',
-            schedule: {
-              triggers: [],
-              max_retries: 3,
-              max_runtime: 15,
-              min_interval: 120,
-            },
-            // Workflowable properties
-            workflowable: {
-              type: 'export',
-              repository: '',
-              repository_branch: '',
-              export_from_repository_paths: [],
-              connection_id: '',
-              export_to_connection_path: '',
-            },
-          }}
-        />
-      </SideModal>
+        workflowType='export'
+      />
       <div className='py-4'>
         <div
           className={`

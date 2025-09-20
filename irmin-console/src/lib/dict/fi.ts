@@ -473,6 +473,7 @@ const fi = {
       createNewImportWorkflow: 'Luo uusi tuontiprosessi',
       createNewExportWorkflow: 'Luo uusi vientiprosessi',
       createNewPipelineWorkflow: 'Luo uusi dataputkiprosessi',
+      selectWorkflowType: 'Valitse prosessityyppi',
       configureFieldMappings: 'Kenttien kartoitus',
       configureImport: 'Määritä tuonti',
       configureAction: 'Määritä toiminto',
@@ -668,6 +669,9 @@ const fi = {
     dataImportDescription: 'Tuo dataa ulkoisista lähteistä data-arkistoihisi',
     dataExport: 'Datan vienti',
     dataExportDescription: 'Vie dataa data-arkistoista ulkoisiin kohteisiin',
+    repositoryDescription: 'Luo uusi data-arkisto',
+    connectionDescription: 'Yhdistä ulkoisiin tietolähteisiin',
+    workflowDescription: 'Luo automatisoituja datatyökuluja',
     dataExportWizardComingSoon: 'Datan vientiohjattu tulee pian!',
 
     // Data Import Wizard Steps

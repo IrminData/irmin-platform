@@ -8,7 +8,7 @@ import { TbSearch } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
-import SideModal from '@/components/ui/popup/SideModal';
+import RepositoryWizardModal from '@/components/wizards/RepositoryWizardModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -17,14 +17,13 @@ import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { Repository } from '@/types/core/Repository';
 
-import CreateRepositoryModalContent from './CreateRepositoryModalContent';
 import RepositoryList from './RepositoryList';
 
 /**
  * UI component to list and manage Repositories in the workspace
  *
  * Uses {@link RepositoryList} to display the list of Repositories
- * Uses {@link SideModal} and {@link CreateRepositoryModalContent} to provide UI for new Repository creation
+ * Uses {@link RepositoryWizardModal} to provide UI for new Repository creation
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
@@ -39,7 +38,6 @@ export default function RepositoriesSection({
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
-
   const { repositoriesQuery } = useRepositories();
 
   const [filteredItems, setFilteredItems] = useState<Repository[]>([]);
@@ -96,13 +94,10 @@ export default function RepositoriesSection({
           {dict.repository.createNewRepository}
         </Button>
       </div>
-      <SideModal
+      <RepositoryWizardModal
         isOpen={isOpen && isResourceAllowed('repository', 'create')}
         closeModal={closeModal}
-        title={dict.repository.createNewRepository}
-      >
-        <CreateRepositoryModalContent closeModal={closeModal} />
-      </SideModal>
+      />
       <div className='py-4'>
         <div
           className={`

@@ -7,37 +7,48 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
-import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
+import { useWorkflows } from '@/hooks/api';
+
+import type { WorkflowWizardData } from '../types';
+
 /**
- * Configure general workflow properties,
- * like name, description and sync interval
- * and confirm the creation of the workflow
- *
- * @param props - Component properties
- * @param props.setCurrentStep - Function to set the current step
- * @param props.closeModal - Function to close the modal
+ * Step component for configuring general workflow properties
+ * and confirming the creation of the workflow
  */
-function ConfigureWorkflow({
-  setCurrentStep,
+function ConfigureWorkflowStep({
+  wizardData,
+  updateWizardData,
+  goBack,
   closeModal,
 }: {
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+  wizardData: WorkflowWizardData;
+  updateWizardData: (updates: Partial<WorkflowWizardData>) => void;
+  goBack: () => void;
   closeModal: () => void;
 }) {
   const { dict } = useLocale();
-  const { workflowData, setWorkflowData, createWorkflow, processingCreation } =
-    useCreateWorkflow();
+  const { createWorkflowMutation } = useWorkflows();
 
-  const initialWorkflowSchedule = useRef(workflowData.schedule);
+  const initialWorkflowSchedule = useRef(wizardData.schedule);
 
   const handleCreate = useCallback(async () => {
-    const success = await createWorkflow();
-    if (success) {
+    try {
+      if (!wizardData.type) return;
+      await createWorkflowMutation.mutateAsync({
+        type: wizardData.type,
+        name: wizardData.name,
+        description: wizardData.description,
+        documentation: wizardData.documentation,
+        workflowable: wizardData.workflowable,
+        schedule: wizardData.schedule,
+      });
       closeModal();
+    } catch (error) {
+      console.error('Failed to create workflow:', error);
     }
-  }, [createWorkflow, closeModal]);
+  }, [createWorkflowMutation, wizardData, closeModal]);
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
@@ -47,11 +58,10 @@ function ConfigureWorkflow({
           <Input
             required
             type='text'
-            disabled={processingCreation}
-            defaultValue={workflowData.name}
+            disabled={createWorkflowMutation.isPending}
+            defaultValue={wizardData.name}
             onChange={(e) =>
-              setWorkflowData({
-                ...workflowData,
+              updateWizardData({
                 name: e.target.value,
               })
             }
@@ -65,11 +75,10 @@ function ConfigureWorkflow({
             longtext={{
               rows: 3,
             }}
-            disabled={processingCreation}
-            defaultValue={workflowData.description}
+            disabled={createWorkflowMutation.isPending}
+            defaultValue={wizardData.description}
             onChange={(e) =>
-              setWorkflowData({
-                ...workflowData,
+              updateWizardData({
                 description: e.target.value,
               })
             }
@@ -80,8 +89,7 @@ function ConfigureWorkflow({
             initialData={initialWorkflowSchedule.current}
             disableSaveButton={true}
             updateSchedule={async (newSchedule) => {
-              setWorkflowData({
-                ...workflowData,
+              updateWizardData({
                 schedule: newSchedule,
               });
             }}
@@ -99,7 +107,7 @@ function ConfigureWorkflow({
           className='mb-6 inline-block w-full'
           variant='gradient'
           size={'lg'}
-          loading={processingCreation}
+          loading={createWorkflowMutation.isPending}
           onClick={handleCreate}
         >
           {dict.workflow.create.confirmAndCreate}
@@ -108,8 +116,8 @@ function ConfigureWorkflow({
           className='mb-6 inline-block w-full'
           variant='link'
           size='sm'
-          disabled={processingCreation}
-          onClick={() => setCurrentStep(1)}
+          disabled={createWorkflowMutation.isPending}
+          onClick={goBack}
         >
           {dict.workflow.create.goBack}
         </Button>
@@ -118,4 +126,4 @@ function ConfigureWorkflow({
   );
 }
 
-export default memo(ConfigureWorkflow);
+export default memo(ConfigureWorkflowStep);

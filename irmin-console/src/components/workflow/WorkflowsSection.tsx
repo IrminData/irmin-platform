@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
-import SideModal from '@/components/ui/popup/SideModal';
+import WorkflowWizardModal from '@/components/wizards/WorkflowWizardModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -18,16 +18,13 @@ import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { Workflow } from '@/types/core/Workflow';
 
-import SelectWorkflowTypeModalContent from './SelectWorkflowTypeModalContent';
 import WorkflowList from './WorkflowList';
 
 /**
  * UI component to list and manage Workflows in the workspace
  *
  * Uses {@link WorkflowList} to display the list of Workflows.
- * Uses {@link SideModal} and {@link SelectWorkflowTypeModalContent} to provide UI for workflow type
- * selection. After selecting the workflow type, the user is redirected to the appropriate workflow
- * creation modal.
+ * Uses {@link WorkflowWizardModal} to provide creation modal for all workflow types.
  *
  * @param props - The props
  * @param props.sideModalOpen - Whether the side modal is open by default or not
@@ -104,13 +101,11 @@ export default function WorkflowsSection({
             {dict.workflow.create.createNewWorkflow}
           </Button>
         </div>
-        <SideModal
+        <WorkflowWizardModal
           isOpen={isOpen && isResourceAllowed('workflow', 'create')}
           closeModal={closeModal}
-          title={dict.workflow.create.createNewWorkflow}
-        >
-          <SelectWorkflowTypeModalContent />
-        </SideModal>
+          workflowType={undefined}
+        />
         <div className='py-4'>
           <div
             className={`

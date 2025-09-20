@@ -7,7 +7,7 @@ import { TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
-import SideModal from '@/components/ui/popup/SideModal';
+import WorkflowWizardModal from '@/components/wizards/WorkflowWizardModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -15,36 +15,14 @@ import { useWorkflows } from '@/hooks/api';
 import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { PipelineWorkflow } from '@/types/core/Workflow';
-import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
 
-import CreateWorkflowModalContent from './CreateWorkflowModalContent';
 import PipelineWorkflowList from './PipelineWorkflowList';
-
-const initialWorkflowData: WorkflowRequest = {
-  // Workflow properties
-  name: '',
-  description: '',
-  documentation: '',
-  type: 'pipeline',
-  schedule: {
-    triggers: [],
-    max_retries: 3,
-    max_runtime: 15,
-    min_interval: 120,
-  },
-  // Workflowable properties
-  workflowable: {
-    type: 'pipeline',
-    live: false,
-    stages: [],
-  },
-};
 
 /**
  * UI component to list and manage Pipeline Workflows in the workspace
  *
  * Uses {@link PipelineWorkflowList} to display the list of Pipeline Workflows
- * Uses {@link SideModal} and {@link CreateWorkflowModalContent} to provide UI for new Pipeline Workflow creation
+ * Uses {@link WorkflowWizardModal} to provide UI for new Pipeline Workflow creation
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
@@ -59,7 +37,6 @@ function PipelineWorkflowsSection({
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
-  const [currentStep, setCurrentStep] = useState(1);
 
   const { workflowsQuery } = useWorkflows('pipeline');
 
@@ -101,7 +78,6 @@ function PipelineWorkflowsSection({
   }, [setCreateParam]);
 
   const openModal = useCallback(() => {
-    setCurrentStep(1);
     setIsOpen(true);
     setCreateParam(true);
   }, [setCreateParam]);
@@ -120,24 +96,11 @@ function PipelineWorkflowsSection({
           {dict.workflow.create.createNewPipelineWorkflow}
         </Button>
       </div>
-      <SideModal
+      <WorkflowWizardModal
         isOpen={isOpen && isResourceAllowed('workflow', 'create')}
         closeModal={closeModal}
-        currentStep={currentStep}
-        steps={[
-          dict.workflow.create.configurePipeline,
-          dict.workflow.create.configureWorkflow,
-        ]}
-        title={dict.workflow.create.createNewPipelineWorkflow}
-      >
-        <CreateWorkflowModalContent
-          isOpen={isOpen && isResourceAllowed('workflow', 'create')}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          initialWorkflowData={initialWorkflowData}
-        />
-      </SideModal>
+        workflowType='pipeline'
+      />
       <div className='py-4'>
         <div
           className={`

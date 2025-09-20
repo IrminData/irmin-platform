@@ -2,136 +2,194 @@
 
 import { useCallback, useState } from 'react';
 
-import { IoArrowDownCircle, IoArrowUpCircle } from 'react-icons/io5';
-
-import SideModal from '@/components/ui/popup/SideModal';
+import {
+  IoArrowDownCircle,
+  IoArrowUpCircle,
+  IoGitBranch,
+  IoLink,
+  IoPlay,
+} from 'react-icons/io5';
 
 import { useLocale } from '@/context/LocaleContext';
 
 import { useResourceAllowed } from '@/hooks/utils';
 
-import { DataImportWizard } from './DataImportWizard';
+import ConnectionWizardModal from './ConnectionWizardModal';
+import DataExportWizardModal from './DataExportWizardModal';
+import DataImportWizardModal from './DataImportWizardModal';
+import RepositoryWizardModal from './RepositoryWizardModal';
+import WizardButton from './WizardButton';
+import WorkflowWizardModal from './WorkflowWizardModal';
+
+type WizardType =
+  | 'data-import'
+  | 'data-export'
+  | 'repository'
+  | 'connection'
+  | 'workflow';
+
+interface WizardSelectorProps {
+  /** Array of wizard types to display. If not specified, all available wizards will be shown */
+  availableWizards?: WizardType[];
+}
 
 /**
  * Wizard selector component that displays available wizards as buttons
+ *
+ * @param props0 - WizardSelector props
+ * @param props0.availableWizards - Array of wizard types to display. If not specified, all available wizards will be shown
  */
-export default function WizardSelector() {
+export default function WizardSelector({
+  availableWizards,
+}: WizardSelectorProps) {
   const { isResourceAllowed } = useResourceAllowed();
   const { dict } = useLocale();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const [selectedWizard, setSelectedWizard] = useState<string | null>(null);
+
+  // Define all possible wizard types
+  const allWizardTypes: WizardType[] = [
+    'data-import',
+    'data-export',
+    'repository',
+    'connection',
+    'workflow',
+  ];
+
+  // Use provided availableWizards or default to all wizards
+  const enabledWizards = availableWizards || allWizardTypes;
+
+  // Helper function to check if a wizard should be displayed
+  const shouldShowWizard = useCallback(
+    (wizardType: WizardType) => {
+      return enabledWizards.includes(wizardType);
+    },
+    [enabledWizards]
+  );
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
-    setCurrentStep(1);
     setSelectedWizard(null);
   }, []);
 
   const openWizard = useCallback((wizardType: string) => {
     setSelectedWizard(wizardType);
-    setCurrentStep(1);
     setIsModalOpen(true);
   }, []);
 
   return (
     <div className='contents'>
-      <button
-        onClick={() => openWizard('data-import')}
-        className={`
-          flex w-full items-center gap-3 rounded-lg border-2 bg-card p-2
-          text-left transition-colors
-          hover:border-accent
-        `}
-      >
-        <div
-          className={`
-            flex size-10 items-center justify-center rounded-full bg-accent/20
-            text-accent
-          `}
-        >
-          <IoArrowDownCircle className='text-xl' />
-        </div>
-        <div>
-          <h3 className='font-medium'>{dict.wizard.dataImport}</h3>
-          <p className='text-sm text-muted-foreground'>
-            {dict.wizard.dataImportDescription}
-          </p>
-        </div>
-      </button>
+      {/* Data Import Wizard */}
+      {shouldShowWizard('data-import') &&
+        isResourceAllowed('workflow', 'create') && (
+          <WizardButton
+            onClick={() => openWizard('data-import')}
+            icon={<IoArrowDownCircle className='text-xl' />}
+            title={dict.wizard.dataImport}
+            description={dict.wizard.dataImportDescription}
+          />
+        )}
 
-      <button
-        onClick={() => openWizard('data-export')}
-        className={`
-          flex w-full items-center gap-3 rounded-lg border-2 bg-card p-2
-          text-left transition-colors
-          hover:border-accent
-        `}
-      >
-        <div
-          className={`
-            flex size-10 items-center justify-center rounded-full bg-accent/20
-            text-accent
-          `}
-        >
-          <IoArrowUpCircle className='text-xl' />
-        </div>
-        <div>
-          <h3 className='font-medium'>{dict.wizard.dataExport}</h3>
-          <p className='text-sm text-muted-foreground'>
-            {dict.wizard.dataExportDescription}
-          </p>
-        </div>
-      </button>
+      {/* Data Export Wizard */}
+      {shouldShowWizard('data-export') &&
+        isResourceAllowed('workflow', 'create') && (
+          <WizardButton
+            onClick={() => openWizard('data-export')}
+            icon={<IoArrowUpCircle className='text-xl' />}
+            title={dict.wizard.dataExport}
+            description={dict.wizard.dataExportDescription}
+          />
+        )}
+
+      {/* Repository Wizard */}
+      {shouldShowWizard('repository') &&
+        isResourceAllowed('repository', 'create') && (
+          <WizardButton
+            onClick={() => openWizard('repository')}
+            icon={<IoGitBranch className='text-xl' />}
+            title={dict.repository.createNewRepository}
+            description={dict.wizard.repositoryDescription}
+          />
+        )}
+
+      {/* Connection Wizard */}
+      {shouldShowWizard('connection') &&
+        isResourceAllowed('connection', 'create') && (
+          <WizardButton
+            onClick={() => openWizard('connection')}
+            icon={<IoLink className='text-xl' />}
+            title={dict.connections.create.createConnection}
+            description={dict.wizard.connectionDescription}
+          />
+        )}
+
+      {/* Workflow Wizard */}
+      {shouldShowWizard('workflow') &&
+        isResourceAllowed('workflow', 'create') && (
+          <WizardButton
+            onClick={() => openWizard('workflow')}
+            icon={<IoPlay className='text-xl' />}
+            title={dict.workflow.create.createNewWorkflow}
+            description={dict.wizard.workflowDescription}
+          />
+        )}
 
       {/* Data Import Wizard Modal */}
-      <SideModal
+      <DataImportWizardModal
         isOpen={
           isModalOpen &&
           selectedWizard === 'data-import' &&
+          shouldShowWizard('data-import') &&
           isResourceAllowed('workflow', 'create')
         }
         closeModal={closeModal}
-        currentStep={currentStep}
-        steps={[
-          dict.wizard.connectDataSource,
-          dict.wizard.setupRepository,
-          dict.wizard.configure,
-          dict.workflow.create.configureFieldMappings,
-          dict.wizard.reviewAndCreate,
-        ]}
-        title={dict.wizard.setupDataImportWizard}
-      >
-        <DataImportWizard
-          isOpen={isModalOpen}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-        />
-      </SideModal>
+      />
 
-      {/* Data Export Wizard Modal - TODO: Implement */}
-      {selectedWizard === 'data-export' && (
-        <SideModal
-          isOpen={isModalOpen && selectedWizard === 'data-export'}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          steps={[dict.common.comingSoon]}
-          title={dict.wizard.setupDataExportWizard}
-        >
-          <div className='p-6 text-center'>
-            <p
-              className={`
-                text-gray-600
-                dark:text-gray-400
-              `}
-            >
-              {dict.wizard.dataExportWizardComingSoon}
-            </p>
-          </div>
-        </SideModal>
-      )}
+      {/* Data Export Wizard Modal */}
+      <DataExportWizardModal
+        isOpen={
+          isModalOpen &&
+          selectedWizard === 'data-export' &&
+          shouldShowWizard('data-export') &&
+          isResourceAllowed('workflow', 'create')
+        }
+        closeModal={closeModal}
+      />
+
+      {/* Repository Wizard Modal */}
+      <RepositoryWizardModal
+        isOpen={
+          isModalOpen &&
+          selectedWizard === 'repository' &&
+          shouldShowWizard('repository') &&
+          isResourceAllowed('repository', 'create')
+        }
+        closeModal={closeModal}
+      />
+
+      {/* Connection Wizard Modal */}
+      <ConnectionWizardModal
+        isOpen={
+          isModalOpen &&
+          selectedWizard === 'connection' &&
+          shouldShowWizard('connection') &&
+          isResourceAllowed('connection', 'create')
+        }
+        closeModal={closeModal}
+      />
+
+      {/* Workflow Wizard Modal */}
+      <WorkflowWizardModal
+        isOpen={
+          isModalOpen &&
+          selectedWizard === 'workflow' &&
+          shouldShowWizard('workflow') &&
+          isResourceAllowed('workflow', 'create')
+        }
+        closeModal={closeModal}
+        workflowType={undefined}
+      />
     </div>
   );
 }

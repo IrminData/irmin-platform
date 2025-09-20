@@ -3,54 +3,31 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import ConfigureFieldMappingsStep from './steps/ConfigureFieldMappingsStep';
-import ConfigureImportStep from './steps/ConfigureImportStep';
-import ConnectDataSourceStep from './steps/ConnectDataSourceStep';
-import ReviewAndCreateStep from './steps/ReviewAndCreateStep';
-import SetupRepositoryStep from './steps/SetupRepositoryStep';
-import type { DataImportWizardData } from './types';
+import ConfigureConnectionStep from './steps/ConfigureConnectionStep';
+import DefineDetailsStep from './steps/DefineDetailsStep';
+import DefineSettingsStep from './steps/DefineSettingsStep';
+import SelectConnectorStep from './steps/SelectConnectorStep';
+import type { ConnectionWizardData } from './types';
 
 /**
- * Initial data import wizard data state
+ * Initial connection wizard data state
  */
-const initialWizardData: DataImportWizardData = {
-  connection: null,
-  createNewConnection: false,
-  connectionData: {
-    name: '',
-    description: '',
-    connector: undefined,
-    connectionDetailsFields: undefined,
-    connectionSettingsFields: undefined,
-    connectionDetails: undefined,
-    connectionSettings: undefined,
-  },
-
-  repository: null,
-  createNewRepository: false,
-  repositoryData: {
-    name: '',
-    description: '',
-    default_branch: 'main',
-  },
-
-  workflowData: {
-    name: '',
-    description: '',
-    documentation: '',
-    import_from_connection_paths: [],
-    repository_branch: 'main',
-    import_to_repository_path: '',
-    field_mappings: [],
-  },
+const initialWizardData: ConnectionWizardData = {
+  name: '',
+  description: '',
+  connector: undefined,
+  connectionDetailsFields: undefined,
+  connectionSettingsFields: undefined,
+  connectionDetails: undefined,
+  connectionSettings: undefined,
 };
 
 /**
- * Main content component for the Data Import Wizard
+ * Main content component for the Connection Wizard
  *
  * Manages the wizard state and renders the appropriate step component
  */
-export default function DataImportWizard({
+export default function ConnectionWizard({
   closeModal,
   currentStep,
   setCurrentStep,
@@ -60,7 +37,7 @@ export default function DataImportWizard({
   setCurrentStep: Dispatch<SetStateAction<number>>;
 }) {
   const [wizardData, setWizardData] =
-    useState<DataImportWizardData>(initialWizardData);
+    useState<ConnectionWizardData>(initialWizardData);
   const isFirstRender = useRef(true);
 
   // Reset wizard data only when modal is opened for the first time
@@ -75,7 +52,7 @@ export default function DataImportWizard({
 
   // Function to go to the next step
   const goNext = useCallback(() => {
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep((prev) => prev + 1);
     }
   }, [currentStep, setCurrentStep]);
@@ -89,7 +66,7 @@ export default function DataImportWizard({
 
   // Function to update wizard data
   const updateWizardData = useCallback(
-    (updates: Partial<DataImportWizardData>) => {
+    (updates: Partial<ConnectionWizardData>) => {
       setWizardData((prev) => ({ ...prev, ...updates }));
     },
     []
@@ -98,14 +75,13 @@ export default function DataImportWizard({
   return (
     <>
       {currentStep === 1 && (
-        <ConnectDataSourceStep
-          wizardData={wizardData}
+        <SelectConnectorStep
           updateWizardData={updateWizardData}
           goNext={goNext}
         />
       )}
       {currentStep === 2 && (
-        <SetupRepositoryStep
+        <DefineDetailsStep
           wizardData={wizardData}
           updateWizardData={updateWizardData}
           goBack={goBack}
@@ -113,7 +89,7 @@ export default function DataImportWizard({
         />
       )}
       {currentStep === 3 && (
-        <ConfigureImportStep
+        <DefineSettingsStep
           wizardData={wizardData}
           updateWizardData={updateWizardData}
           goBack={goBack}
@@ -121,16 +97,9 @@ export default function DataImportWizard({
         />
       )}
       {currentStep === 4 && (
-        <ConfigureFieldMappingsStep
+        <ConfigureConnectionStep
           wizardData={wizardData}
           updateWizardData={updateWizardData}
-          goBack={goBack}
-          goNext={goNext}
-        />
-      )}
-      {currentStep === 5 && (
-        <ReviewAndCreateStep
-          wizardData={wizardData}
           goBack={goBack}
           closeModal={closeModal}
         />

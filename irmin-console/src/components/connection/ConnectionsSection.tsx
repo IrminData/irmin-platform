@@ -8,7 +8,6 @@ import { TbSearch } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
-import SideModal from '@/components/ui/popup/SideModal';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -17,14 +16,14 @@ import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
 
 import type { Connection } from '@/types/core/Connection';
 
+import ConnectionWizardModal from '../wizards/ConnectionWizardModal';
 import ConnectionList from './ConnectionList';
-import CreateConnectionModalContent from './CreateConnectionModalContent';
 
 /**
  * UI component to list and manage Connections in the workspace
  *
  * Uses {@link ConnectionList} to display the list of Connections
- * Uses {@link SideModal} and {@link CreateConnectionModalContent} to provide UI for new Connection creation
+ * Uses {@link ConnectionWizardModal} to provide UI for new Connection creation
  *
  * @param props0 - The props
  * @param props0.sideModalOpen - Whether the side modal is open by default or not
@@ -41,7 +40,6 @@ export default function ConnectionsSection({
   const { setCreateParam } = useToggleCreateParam();
 
   const [isOpen, setIsOpen] = useState(sideModalOpen);
-  const [currentStep, setCurrentStep] = useState(1);
 
   const [filteredItems, setFilteredItems] = useState<Connection[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,25 +95,10 @@ export default function ConnectionsSection({
           {dict.connections.create.createNewConnection}
         </Button>
       </div>
-      <SideModal
+      <ConnectionWizardModal
         isOpen={isOpen && isResourceAllowed('connection', 'create')}
         closeModal={closeModal}
-        currentStep={currentStep}
-        steps={[
-          dict.connections.create.selectConnector,
-          dict.connections.create.establishConnection,
-          dict.connections.create.configureSettings,
-          dict.connections.create.configureConnection,
-        ]}
-        title={dict.connections.create.createNewConnection}
-      >
-        <CreateConnectionModalContent
-          isOpen={isOpen}
-          closeModal={closeModal}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-        />
-      </SideModal>
+      />
       <div className='py-4'>
         <div
           className={`

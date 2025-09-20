@@ -1,6 +1,5 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -8,32 +7,38 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import SchemaFieldMapper from '@/components/workflow/SchemaFieldMapper';
 import { getFilteredSchema } from '@/components/workflow/SchemaFieldMapper/utils';
 
-import { useCreateWorkflow } from '@/context/CreateWorkflowContext';
 import { useLocale } from '@/context/LocaleContext';
 
 import { useConnectionSchema, useRepositoryObjectSchema } from '@/hooks/api';
 
 import type { Export, FieldMapping, Import } from '@/types/core/Workflow';
 
-interface ConfigureFieldMappingsProps {
-  setCurrentStep: Dispatch<SetStateAction<number>>;
-  closeModal: () => void;
-}
+import type { WorkflowWizardData } from '../types';
 
-function ConfigureFieldMappings({
-  setCurrentStep,
-}: ConfigureFieldMappingsProps) {
+/**
+ * Step component for configuring field mappings
+ */
+function ConfigureFieldMappingsStep({
+  wizardData,
+  updateWizardData,
+  goBack,
+  goNext,
+}: {
+  wizardData: WorkflowWizardData;
+  updateWizardData: (updates: Partial<WorkflowWizardData>) => void;
+  goBack: () => void;
+  goNext: () => void;
+}) {
   const { dict } = useLocale();
-  const { workflowData, setWorkflowData } = useCreateWorkflow();
 
   const workflowable = useMemo(() => {
     if (
-      workflowData.workflowable?.type === 'import' ||
-      workflowData.workflowable?.type === 'export'
+      wizardData.workflowable?.type === 'import' ||
+      wizardData.workflowable?.type === 'export'
     ) {
-      return workflowData.workflowable;
+      return wizardData.workflowable;
     }
-  }, [workflowData.workflowable]);
+  }, [wizardData.workflowable]);
 
   const { connectionSchemaQuery } = useConnectionSchema(
     workflowable?.connection_id ?? '',
@@ -49,60 +54,59 @@ function ConfigureFieldMappings({
   const repositorySchema = repositoryObjectSchemaQuery.data?.data;
 
   const sourceSchema = useMemo(() => {
-    if (workflowData.workflowable?.type === 'import') {
+    if (wizardData.workflowable?.type === 'import') {
       // For import workflows, source is connection schema filtered by connection_path
       return getFilteredSchema(
         connectionSchema,
-        workflowData.workflowable.import_from_connection_paths
+        wizardData.workflowable.import_from_connection_paths
       );
-    } else if (workflowData.workflowable?.type === 'export') {
+    } else if (wizardData.workflowable?.type === 'export') {
       // For export workflows, source is repository schema
       return getFilteredSchema(
         repositorySchema,
-        workflowData.workflowable.export_from_repository_paths
+        wizardData.workflowable.export_from_repository_paths
       );
     }
-  }, [workflowData.workflowable, connectionSchema, repositorySchema]);
+  }, [wizardData.workflowable, connectionSchema, repositorySchema]);
 
   const destinationSchema = useMemo(() => {
-    if (workflowData.workflowable?.type === 'import') {
+    if (wizardData.workflowable?.type === 'import') {
       // For import workflows, destination is repository schema
       return getFilteredSchema(repositorySchema, [
-        workflowData.workflowable.import_to_repository_path,
+        wizardData.workflowable.import_to_repository_path,
       ]);
-    } else if (workflowData.workflowable?.type === 'export') {
+    } else if (wizardData.workflowable?.type === 'export') {
       // For export workflows, destination is connection schema filtered by connection_path
       return getFilteredSchema(connectionSchema, [
-        workflowData.workflowable.export_to_connection_path,
+        wizardData.workflowable.export_to_connection_path,
       ]);
     }
-  }, [workflowData.workflowable, connectionSchema, repositorySchema]);
+  }, [wizardData.workflowable, connectionSchema, repositorySchema]);
 
   const isLoading =
     connectionSchemaQuery.isLoading || repositoryObjectSchemaQuery.isLoading;
 
   const handleMappingsChange = useCallback(
     (newMappings: FieldMapping[]) => {
-      if (!workflowData.workflowable) return;
+      if (!wizardData.workflowable) return;
 
-      setWorkflowData((prev) => ({
-        ...prev,
+      updateWizardData({
         workflowable: {
-          ...(prev.workflowable as Export | Import),
+          ...(wizardData.workflowable as Export | Import),
           field_mappings: newMappings,
         },
-      }));
+      });
     },
-    [workflowData.workflowable, setWorkflowData]
+    [wizardData.workflowable, updateWizardData]
   );
 
   const handleContinue = useCallback(() => {
-    setCurrentStep(3);
-  }, [setCurrentStep]);
+    goNext();
+  }, [goNext]);
 
   const handleGoBack = useCallback(() => {
-    setCurrentStep(1);
-  }, [setCurrentStep]);
+    goBack();
+  }, [goBack]);
 
   if (isLoading) {
     return <LoadingSkeleton className='h-80 w-full' />;
@@ -143,4 +147,4 @@ function ConfigureFieldMappings({
   );
 }
 
-export default ConfigureFieldMappings;
+export default ConfigureFieldMappingsStep;

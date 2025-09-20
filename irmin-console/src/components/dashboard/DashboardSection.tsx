@@ -121,7 +121,7 @@ const DashboardSection = () => {
           <div
             className={`flex w-full flex-row items-stretch justify-start gap-2`}
           >
-            <WizardSelector />
+            <WizardSelector availableWizards={['data-import', 'data-export']} />
           </div>
           {/* List cards */}
           <div

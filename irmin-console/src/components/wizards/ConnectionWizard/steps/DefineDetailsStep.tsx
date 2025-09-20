@@ -1,6 +1,5 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
 import { useCallback } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
@@ -15,20 +14,24 @@ import { useConnectionConfiguration } from '@/hooks/api';
 
 import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
 
-import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
-export default function DefineDetails({
-  connectionData,
-  setConnectionData,
+import type { ConnectionWizardData } from '../types';
+
+/**
+ * Step component for defining connection details
+ */
+export default function DefineDetailsStep({
+  wizardData,
+  updateWizardData,
   goBack,
   goNext,
 }: {
-  connectionData: ConnectionSetup;
-  setConnectionData: Dispatch<SetStateAction<ConnectionSetup>>;
+  wizardData: ConnectionWizardData;
+  updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goBack: () => void;
   goNext: () => void;
 }) {
@@ -38,7 +41,7 @@ export default function DefineDetails({
   const {
     connectionConfigurationQuery,
     validateConnectorConfigurationMutation,
-  } = useConnectionConfiguration('details', connectionData.connector?.id);
+  } = useConnectionConfiguration('details', wizardData.connector?.id);
 
   const handleContinue = useCallback(
     async (formValues: DynamicFieldValues) => {
@@ -47,21 +50,20 @@ export default function DefineDetails({
         const { irmin_connection_name, ...connectionDetails } = formValues;
         const newName =
           (irmin_connection_name as string) ||
-          `${connectionData.connector?.name} ${Date.now()}`;
+          `${wizardData.connector?.name} ${Date.now()}`;
         // Validate the connector configuration
         const res = await validateConnectorConfigurationMutation.mutateAsync({
           details: convertToConnectionFieldValues(connectionDetails),
-          settings: connectionData.connectionSettings
-            ? convertToConnectionFieldValues(connectionData.connectionSettings)
+          settings: wizardData.connectionSettings
+            ? convertToConnectionFieldValues(wizardData.connectionSettings)
             : undefined,
         });
         if (res.data?.can_connect && res.data.connection_details_valid) {
           irminAlert('success', dict.connections.create.success);
-          setConnectionData((prev) => ({
-            ...prev,
+          updateWizardData({
             name: newName,
             connectionDetails: connectionDetails,
-          }));
+          });
           goNext();
         } else {
           irminAlert('error', dict.connections.create.failed);
@@ -75,12 +77,12 @@ export default function DefineDetails({
       }
     },
     [
-      connectionData.connectionSettings,
-      connectionData.connector,
+      wizardData.connectionSettings,
+      wizardData.connector,
       validateConnectorConfigurationMutation,
       irminAlert,
       goNext,
-      setConnectionData,
+      updateWizardData,
       dict,
     ]
   );
@@ -106,8 +108,8 @@ export default function DefineDetails({
       label: dict.connections.create.connectionName,
       required: true,
       default:
-        connectionData.name ??
-        `${connectionData.connector?.name ?? 'Connection'} ${Date.now()}`,
+        wizardData.name ??
+        `${wizardData.connector?.name ?? 'Connection'} ${Date.now()}`,
       example: dict.connections.create.connectionNamePlaceholder,
     },
     ...connectionDetailsFields,
@@ -116,7 +118,7 @@ export default function DefineDetails({
   return (
     <div className='space-y-6'>
       {/* Display Connector Information */}
-      {connectionData.connector && (
+      {wizardData.connector && (
         <div
           className={`
             flex flex-col justify-center border-b pb-4
@@ -126,7 +128,7 @@ export default function DefineDetails({
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
-          <ConnectorInfoSmall connector={connectionData.connector} />
+          <ConnectorInfoSmall connector={wizardData.connector} />
         </div>
       )}
 

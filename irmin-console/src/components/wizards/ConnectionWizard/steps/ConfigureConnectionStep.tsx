@@ -1,6 +1,5 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
 import { useCallback } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
@@ -14,23 +13,24 @@ import { useConnections } from '@/hooks/api';
 
 import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
 
-import type { ConnectionSetup } from '@/types/internal/ConnectionSetup';
 import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
+import type { ConnectionWizardData } from '../types';
+
 /**
- * Configure connection component for finalizing the connection setup.
+ * Step component for configuring and creating the connection
  */
-export default function ConfigureConnection({
-  connectionData,
-  setConnectionData,
+export default function ConfigureConnectionStep({
+  wizardData,
+  updateWizardData,
   goBack,
   closeModal,
 }: {
-  connectionData: ConnectionSetup;
-  setConnectionData: Dispatch<SetStateAction<ConnectionSetup>>;
+  wizardData: ConnectionWizardData;
+  updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goBack: () => void;
   closeModal: () => void;
 }) {
@@ -41,20 +41,17 @@ export default function ConfigureConnection({
   const handleCreateConnection = useCallback(
     async (formValues: DynamicFieldValues) => {
       try {
-        setConnectionData((prev) => ({
-          ...prev,
+        updateWizardData({
           description: formValues.description as string,
-        }));
+        });
         const res = await createConnectionMutation.mutateAsync({
-          connectorID: connectionData.connector?.id ?? '',
-          name: connectionData.name,
+          connectorID: wizardData.connector?.id ?? '',
+          name: wizardData.name,
           description: formValues.description as string,
           documentation: '',
-          details: convertToConnectionFieldValues(
-            connectionData.connectionDetails
-          ),
+          details: convertToConnectionFieldValues(wizardData.connectionDetails),
           settings: convertToConnectionFieldValues(
-            connectionData.connectionSettings
+            wizardData.connectionSettings
           ),
         });
         if (!res.data) {
@@ -71,11 +68,11 @@ export default function ConfigureConnection({
       }
     },
     [
-      connectionData,
+      wizardData,
       createConnectionMutation,
       closeModal,
       irminAlert,
-      setConnectionData,
+      updateWizardData,
     ]
   );
 
@@ -85,14 +82,14 @@ export default function ConfigureConnection({
       type: 'textarea',
       label: dict.connections.create.connectionDescription,
       required: true,
-      default: connectionData.description,
+      default: wizardData.description,
       example: dict.connections.create.connectionDescriptionPlaceholder,
     },
   };
 
   return (
     <div className='space-y-6'>
-      {connectionData.connector && (
+      {wizardData.connector && (
         <div
           className={`
             flex flex-col justify-center border-b pb-4
@@ -102,7 +99,7 @@ export default function ConfigureConnection({
           <p className='mb-2 text-sm opacity-80'>
             {dict.connections.create.selectedConnector}:
           </p>
-          <ConnectorInfoSmall connector={connectionData.connector} />
+          <ConnectorInfoSmall connector={wizardData.connector} />
         </div>
       )}
 
