@@ -9,6 +9,8 @@ import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
 import NormalList from '@/components/ui/list/NormalList';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import PaginationControls from '@/components/ui/PaginationControls';
@@ -222,25 +224,28 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
   if (!canViewWorkflow) {
     return (
       <div className='relative container mx-auto max-w-7xl'>
-        <div className='my-4 flex flex-col gap-4 p-4'>
-          <p className='text-sm opacity-60'>{dict.common.error}</p>
-          <p className='text-sm opacity-60'>
-            {dict.common.insufficientPermissions}
-          </p>
-        </div>
+        <CommonErrorDisplay
+          variant='section'
+          title={dict.common.error}
+          description={dict.common.insufficientPermissions}
+          showReload={false}
+          showDetails={false}
+        />
       </div>
     );
   }
 
-  if (workflowQuery.isError)
+  if (workflowQuery.isError) {
     return (
       <div className='relative container mx-auto max-w-7xl'>
-        <div className='my-4 flex flex-col gap-4 p-4'>
-          <p className='text-sm opacity-60'>{dict.common.error}</p>
-          <p className='text-sm opacity-60'>{workflowQuery.error.message}</p>
-        </div>
+        <QueryError
+          error={workflowQuery.error}
+          onRetry={() => workflowQuery.refetch()}
+          title={dict.common.error}
+        />
       </div>
     );
+  }
 
   const workflow = workflowQuery.data?.data;
 

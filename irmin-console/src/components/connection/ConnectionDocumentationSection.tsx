@@ -1,8 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import DocumentationForm from '@/components/ui/form/DocumentationForm';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -18,15 +19,19 @@ const ConnectionDocumentationSection = () => {
   const { isResourceAllowed } = useResourceAllowed();
 
   if (connectionQuery.isLoading) {
-    return (
-      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-        <LoadingSkeleton />
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (!connectionQuery.data?.data) {
-    return <h1>{dict.common.error}</h1>;
+    return (
+      <CommonErrorDisplay
+        variant='section'
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+        showReload={false}
+        showDetails={false}
+      />
+    );
   }
 
   const connection = connectionQuery.data?.data;

@@ -3,7 +3,9 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
+import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -20,14 +22,26 @@ export default function UserLogsPage() {
 
   const { userQuery } = useUser(params.user);
 
-  if (userQuery.isLoading) return <LoadingSpinner />;
-  if (userQuery.isError)
+  if (userQuery.isLoading) return <ListSkeleton />;
+  if (userQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {userQuery.error.message}
-      </div>
+      <QueryError
+        error={userQuery.error}
+        onRetry={() => userQuery.refetch()}
+        title={dict.common.error}
+      />
     );
-  if (!userQuery.data?.data) return <div>{dict.common.error}</div>;
+  }
+  if (!userQuery.data?.data) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+        showHome={true}
+      />
+    );
+  }
 
   return (
     <LogsSection

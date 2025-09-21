@@ -3,7 +3,9 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
+import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -20,16 +22,41 @@ export default function StoredQueryLogsPage() {
 
   const { storedQueriesQuery } = useStoredQueries();
 
-  if (storedQueriesQuery.isLoading) return <LoadingSpinner />;
-  if (storedQueriesQuery.isError)
-    return <div>{storedQueriesQuery.error.message}</div>;
-  if (!storedQueriesQuery.data?.data) return <div>{dict.common.error}</div>;
+  if (storedQueriesQuery.isLoading) return <ListSkeleton />;
+  if (storedQueriesQuery.isError) {
+    return (
+      <QueryError
+        error={storedQueriesQuery.error}
+        onRetry={() => storedQueriesQuery.refetch()}
+        title={dict.common.error}
+      />
+    );
+  }
+  if (!storedQueriesQuery.data?.data) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+        showHome={true}
+      />
+    );
+  }
 
   const storedQuery = storedQueriesQuery.data?.data.find(
     (query) => query.id === params.query
   );
 
-  if (!storedQuery) return <div>{dict.common.error}</div>;
+  if (!storedQuery) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+        showHome={true}
+      />
+    );
+  }
 
   return (
     <LogsSection

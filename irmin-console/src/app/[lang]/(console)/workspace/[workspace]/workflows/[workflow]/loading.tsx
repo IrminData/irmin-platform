@@ -1,8 +1,8 @@
-import DetailPageSkeleton from '@/components/ui/loading/DetailPageSkeleton';
+import WorkflowLayoutSkeleton from '@/components/ui/loading/WorkflowLayoutSkeleton';
 
 /**
  * Workflow loading UI
  */
 export default function WorkflowLoading() {
-  return <DetailPageSkeleton />;
+  return <WorkflowLayoutSkeleton />;
 }

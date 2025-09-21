@@ -184,19 +184,11 @@ export default function RepositoryHeader() {
                 : ''}{' '}
               - {repository.owner.email}
             </span>
+            <span className='px-2'>
+              <StatusBadge status={'private'} label={'Private'} />
+            </span>
           </div>
-          <div className='flex flex-wrap items-center gap-2'>
-            <DisplayTitle>{repository.name}</DisplayTitle>
-            <StatusBadge status={'private'} label={'Private'} />
-            {/* Display tags if they exist */}
-            {repository.tags && repository.tags.length > 0 && (
-              <WorkspaceTagDisplay
-                tags={repository.tags}
-                maxVisible={3}
-                size='sm'
-              />
-            )}
-          </div>
+          <DisplayTitle>{repository.name}</DisplayTitle>
           <p
             className={`
               max-w-lg text-xs text-gray-400
@@ -205,6 +197,16 @@ export default function RepositoryHeader() {
           >
             {repository.description}
           </p>
+          {/* Display tags if they exist */}
+          {repository.tags && repository.tags.length > 0 && (
+            <div className='flex flex-wrap items-center gap-2'>
+              <WorkspaceTagDisplay
+                tags={repository.tags}
+                maxVisible={3}
+                size='sm'
+              />
+            </div>
+          )}
         </div>
         <div className='flex min-w-60 flex-col gap-2'>
           {!pathname.includes('/compare') &&

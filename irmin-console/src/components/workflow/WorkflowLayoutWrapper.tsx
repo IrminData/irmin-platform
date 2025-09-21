@@ -20,7 +20,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import WorkflowLayoutSkeleton from '@/components/ui/loading/WorkflowLayoutSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
@@ -52,7 +53,8 @@ export default function WorkflowLayoutWrapper({
   const { dict } = useLocale();
   const { createWorkflowRunMutation } = useWorkflowRuns(workflowID);
   const { workflowQuery } = useWorkflow(workflowID);
-  const { isResourceAllowed } = useResourceAllowed();
+  const { isResourceAllowed, loading: isResourceAllowedLoading } =
+    useResourceAllowed();
 
   // The base URL for the workflow, eg. /en/workspace/workspace-slug/workflows/workflow-id
   const baseUrl = useBaseUrl({
@@ -72,29 +74,48 @@ export default function WorkflowLayoutWrapper({
 
   // Make sure the user is allowed to access the workflow
   useEffect(() => {
+    if (isResourceAllowedLoading) return;
     if (!isResourceAllowed('workflow', 'read', workflowID)) {
       // Redirect to the workspace workflows page if the user is not allowed to access the workflow
       router.push(`${workspaceUrl}/workflows`);
     }
-  }, [isResourceAllowed, workflowID, workspaceUrl, router]);
+  }, [
+    isResourceAllowed,
+    isResourceAllowedLoading,
+    workflowID,
+    workspaceUrl,
+    router,
+  ]);
 
-  if (workflowQuery.isLoading)
-    return (
-      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-        <LoadingSkeleton />
-      </div>
-    );
+  if (workflowQuery.isLoading || isResourceAllowedLoading) {
+    return <WorkflowLayoutSkeleton />;
+  }
 
-  if (workflowQuery.isError)
+  if (workflowQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {workflowQuery.error.message}
-      </div>
+      <CommonErrorDisplay
+        error={workflowQuery.error}
+        variant='page'
+        showReload={true}
+        onRetry={() => workflowQuery.refetch()}
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+      />
     );
+  }
 
   const workflow = workflowQuery.data?.data;
 
-  if (!workflow) return <></>;
+  if (!workflow) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        showHome={true}
+        title={`${dict.workflow.workflow} ${dict.common.pageNotFound.toLowerCase()}`}
+        description={dict.common.tryAgainOrContactSupport}
+      />
+    );
+  }
 
   const repositorySlug =
     workflow?.type === 'import' || workflow?.type === 'export'
@@ -227,34 +248,27 @@ export default function WorkflowLayoutWrapper({
                   ? ` (${workflow.owner.company})`
                   : ''} - {workflow.owner.email}
               </span>
+              <span className='px-2 text-xs text-gray-400'>
+                {workflow ? (
+                  <>
+                    {workflow.status === '' || !workflow.status ? (
+                      <StatusBadge
+                        status='default'
+                        label={dict.workflow.noStatus}
+                      />
+                    ) : (
+                      <StatusBadge
+                        status={workflow.status}
+                        label={workflow.status ?? dict.workflow.noStatus}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <></>
+                )}
+              </span>
             </div>
-            <div className='flex flex-wrap items-center gap-2'>
-              <DisplayTitle>{workflow.name}</DisplayTitle>
-              {workflow ? (
-                <>
-                  {workflow.status === '' || !workflow.status ? (
-                    <StatusBadge
-                      status='default'
-                      label={dict.workflow.noStatus}
-                    />
-                  ) : (
-                    <StatusBadge
-                      status={workflow.status}
-                      label={workflow.status ?? dict.workflow.noStatus}
-                    />
-                  )}
-                </>
-              ) : (
-                <></>
-              )}
-              {workflow.tags && workflow.tags.length > 0 && (
-                <WorkspaceTagDisplay
-                  tags={workflow.tags}
-                  maxVisible={3}
-                  size='sm'
-                />
-              )}
-            </div>
+            <DisplayTitle>{workflow.name}</DisplayTitle>
             <p
               className={`
                 max-w-lg text-xs text-gray-400
@@ -263,6 +277,15 @@ export default function WorkflowLayoutWrapper({
             >
               {workflow.description}
             </p>
+            <div className='flex flex-wrap items-center gap-2'>
+              {workflow.tags && workflow.tags.length > 0 && (
+                <WorkspaceTagDisplay
+                  tags={workflow.tags}
+                  maxVisible={3}
+                  size='sm'
+                />
+              )}
+            </div>
           </div>
           <div className='flex min-w-60 flex-col gap-2'>
             <Button

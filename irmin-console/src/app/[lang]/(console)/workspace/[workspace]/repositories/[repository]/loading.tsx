@@ -1,5 +1,5 @@
-import DetailPageSkeleton from '@/components/ui/loading/DetailPageSkeleton';
+import RepositoryLayoutSkeleton from '@/components/ui/loading/RepositoryLayoutSkeleton';
 
 export default function RepositoryLoading() {
-  return <DetailPageSkeleton />;
+  return <RepositoryLayoutSkeleton />;
 }

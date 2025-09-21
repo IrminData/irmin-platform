@@ -8,6 +8,7 @@ import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -681,9 +682,11 @@ function ConnectionCreationFlow({
 
     if (detailsQuery.isError) {
       return (
-        <div>
-          {dict.common.error}: {detailsQuery.error.message}
-        </div>
+        <QueryError
+          error={detailsQuery.error}
+          onRetry={() => detailsQuery.refetch()}
+          title={dict.common.error}
+        />
       );
     }
 
@@ -743,9 +746,11 @@ function ConnectionCreationFlow({
 
     if (settingsQuery.isError) {
       return (
-        <div>
-          {dict.common.error}: {settingsQuery.error.message}
-        </div>
+        <QueryError
+          error={settingsQuery.error}
+          onRetry={() => settingsQuery.refetch()}
+          title={dict.common.error}
+        />
       );
     }
 

@@ -3,7 +3,9 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
+import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -20,14 +22,26 @@ export default function WorkflowLogsPage() {
 
   const { workflowQuery } = useWorkflow(params.workflow);
 
-  if (workflowQuery.isLoading) return <LoadingSpinner />;
-  if (workflowQuery.isError)
+  if (workflowQuery.isLoading) return <ListSkeleton />;
+  if (workflowQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {workflowQuery.error.message}
-      </div>
+      <QueryError
+        error={workflowQuery.error}
+        onRetry={() => workflowQuery.refetch()}
+        title={dict.common.error}
+      />
     );
-  if (!workflowQuery.data?.data) return <div>{dict.common.error}</div>;
+  }
+  if (!workflowQuery.data?.data) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+        showHome={true}
+      />
+    );
+  }
 
   return (
     <LogsSection

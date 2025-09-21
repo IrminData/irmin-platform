@@ -3,7 +3,9 @@
 import { useParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
+import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -20,10 +22,26 @@ export default function RepositoryLogsPage() {
 
   const { repositoryQuery } = useRepository(params.repository);
 
-  if (repositoryQuery.isLoading) return <LoadingSpinner />;
-  if (repositoryQuery.isError)
-    return <div>{repositoryQuery.error.message}</div>;
-  if (!repositoryQuery.data?.data) return <div>{dict.common.error}</div>;
+  if (repositoryQuery.isLoading) return <ListSkeleton />;
+  if (repositoryQuery.isError) {
+    return (
+      <QueryError
+        error={repositoryQuery.error}
+        onRetry={() => repositoryQuery.refetch()}
+        title={dict.common.error}
+      />
+    );
+  }
+  if (!repositoryQuery.data?.data) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+        showHome={true}
+      />
+    );
+  }
 
   return (
     <LogsSection

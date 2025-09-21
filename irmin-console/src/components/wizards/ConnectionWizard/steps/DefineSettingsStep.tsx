@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
+import { QueryError } from '@/components/ui/error/QueryError';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import { ConnectionCreationSkeleton } from '@/components/ui/loading/ConnectionCreationSkeleton';
 
@@ -89,9 +90,11 @@ export default function DefineSettingsStep({
 
   if (connectionConfigurationQuery.isError) {
     return (
-      <div>
-        {dict.common.error}: {connectionConfigurationQuery.error.message}
-      </div>
+      <QueryError
+        error={connectionConfigurationQuery.error}
+        onRetry={() => connectionConfigurationQuery.refetch()}
+        title={dict.common.error}
+      />
     );
   }
 

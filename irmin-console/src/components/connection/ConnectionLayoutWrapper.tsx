@@ -16,7 +16,8 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import DisplayTitle from '@/components/ui/display-title';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import ConnectionLayoutSkeleton from '@/components/ui/loading/ConnectionLayoutSkeleton';
 import TabsWithBackButton from '@/components/ui/tabs/TabsWithBackButton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
@@ -37,7 +38,8 @@ export default function ConnectionLayoutWrapper({
   const router = useRouter();
   const { dict } = useLocale();
   const { connectionID, connectionQuery } = useConnectionContext();
-  const { isResourceAllowed } = useResourceAllowed();
+  const { isResourceAllowed, loading: isResourceAllowedLoading } =
+    useResourceAllowed();
 
   // The base URL for the connection, eg. /en/workspace/workspace-slug/connections/connection-id
   const baseUrl = useBaseUrl({
@@ -57,11 +59,18 @@ export default function ConnectionLayoutWrapper({
 
   // Make sure the user is allowed to access the connection
   useEffect(() => {
+    if (isResourceAllowedLoading) return;
     if (!isResourceAllowed('connection', 'read', connectionID)) {
       // Redirect to the workspace connections page if the user is not allowed to access the connection
       router.push(`${workspaceUrl}/connections`);
     }
-  }, [isResourceAllowed, connectionID, workspaceUrl, router]);
+  }, [
+    isResourceAllowed,
+    isResourceAllowedLoading,
+    connectionID,
+    workspaceUrl,
+    router,
+  ]);
 
   const tabs = useMemo(
     () => [
@@ -113,19 +122,33 @@ export default function ConnectionLayoutWrapper({
     [pathname, dict, baseUrl, workspaceUrl, connectionID, isResourceAllowed]
   );
 
-  if (connectionQuery.isLoading)
-    return (
-      <div className='relative container mx-auto max-w-7xl py-12'>
-        <LoadingSkeleton className='h-96' />
-      </div>
-    );
+  if (connectionQuery.isLoading || isResourceAllowedLoading) {
+    return <ConnectionLayoutSkeleton />;
+  }
 
-  if (!connectionQuery.data?.data)
+  if (connectionQuery.isError) {
     return (
-      <div className='relative container mx-auto max-w-7xl py-12'>
-        <h1>{dict.common.error}</h1>
-      </div>
+      <CommonErrorDisplay
+        error={connectionQuery.error}
+        variant='page'
+        showReload={true}
+        onRetry={() => connectionQuery.refetch()}
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+      />
     );
+  }
+
+  if (!connectionQuery.data?.data) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        showHome={true}
+        title={`${dict.connections.connection} ${dict.common.pageNotFound.toLowerCase()}`}
+        description={dict.common.tryAgainOrContactSupport}
+      />
+    );
+  }
 
   const connection = connectionQuery.data?.data;
 
@@ -171,16 +194,7 @@ export default function ConnectionLayoutWrapper({
                 - {connection.owner.email}
               </span>
             </div>
-            <div className='flex flex-wrap items-center gap-2'>
-              <DisplayTitle>{connection.name}</DisplayTitle>
-              {connection.tags && connection.tags.length > 0 && (
-                <WorkspaceTagDisplay
-                  tags={connection.tags}
-                  maxVisible={3}
-                  size='sm'
-                />
-              )}
-            </div>
+            <DisplayTitle>{connection.name}</DisplayTitle>
             <p
               className={`
                 max-w-lg text-xs text-gray-400
@@ -189,6 +203,15 @@ export default function ConnectionLayoutWrapper({
             >
               {connection.description}
             </p>
+            <div className='flex flex-wrap items-center gap-2'>
+              {connection.tags && connection.tags.length > 0 && (
+                <WorkspaceTagDisplay
+                  tags={connection.tags}
+                  maxVisible={3}
+                  size='sm'
+                />
+              )}
+            </div>
           </div>
         </div>
         <TabsWithBackButton

@@ -1,5 +1,5 @@
-import DetailPageSkeleton from '@/components/ui/loading/DetailPageSkeleton';
+import ConnectionLayoutSkeleton from '@/components/ui/loading/ConnectionLayoutSkeleton';
 
 export default function ConnectionLoading() {
-  return <DetailPageSkeleton />;
+  return <ConnectionLayoutSkeleton />;
 }

@@ -3,7 +3,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
+import { QueryError } from '@/components/ui/error/QueryError';
+import PageSkeleton from '@/components/ui/loading/PageSkeleton';
 import SchemaFieldMapper from '@/components/workflow/SchemaFieldMapper';
 import { getFilteredSchema } from '@/components/workflow/SchemaFieldMapper/utils';
 
@@ -117,15 +118,17 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
     connectionSchemaQuery.isLoading ||
     repositoryObjectSchemaQuery.isLoading
   ) {
-    return (
-      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-        <LoadingSkeleton />
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (workflowQuery.isError) {
-    return <div>Error: {workflowQuery.error.message}</div>;
+    return (
+      <QueryError
+        error={workflowQuery.error}
+        onRetry={() => workflowQuery.refetch()}
+        title={dict.common.error}
+      />
+    );
   }
 
   if (

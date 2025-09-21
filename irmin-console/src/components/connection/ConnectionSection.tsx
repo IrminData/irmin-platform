@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
-import DisplayTitle from '@/components/ui/display-title';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -67,10 +66,7 @@ const ConnectionSection = () => {
 
   if (!canViewConnection) {
     return (
-      <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-        <div className='my-4 flex flex-row items-center justify-between gap-4'>
-          <DisplayTitle>{dict.connections.connection}</DisplayTitle>
-        </div>
+      <div className='relative container mx-auto max-w-7xl'>
         <CommonErrorDisplay
           variant='section'
           title={dict.common.error}
@@ -84,27 +80,23 @@ const ConnectionSection = () => {
 
   if (connectionQuery.isLoading) {
     return (
-      <SafeComponent
-        level='section'
-        title='Connection Loading'
-        description='Failed to load connection data'
-      >
-        <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-          <LoadingSkeleton />
-        </div>
-      </SafeComponent>
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
     );
   }
 
   if (!connectionQuery.data?.data) {
     return (
-      <SafeComponent
-        level='section'
-        title='Connection Data Error'
-        description='Failed to load connection data'
-      >
-        <h1>{dict.common.error}</h1>
-      </SafeComponent>
+      <div className='relative container mx-auto max-w-7xl'>
+        <CommonErrorDisplay
+          variant='section'
+          title={dict.common.error}
+          description={dict.common.weEncounteredError}
+          showReload={false}
+          showDetails={false}
+        />
+      </div>
     );
   }
 
@@ -113,8 +105,8 @@ const ConnectionSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='Connection Details Error'
-      description='Failed to load connection details'
+      title={dict.common.error}
+      description={dict.common.weEncounteredError}
     >
       <div className='relative container mx-auto max-w-7xl'>
         <div className='my-4 flex flex-col gap-4 p-4'>

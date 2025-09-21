@@ -5,7 +5,9 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import ConnectorInfoModal from '@/components/connector/ConnectorInfoModal';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
+import { QueryError } from '@/components/ui/error/QueryError';
+import FormPageSkeleton from '@/components/ui/loading/FormPageSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -32,10 +34,26 @@ export default function ConnectionConnectorPage() {
     );
   };
 
-  if (connectionQuery.isLoading) return <LoadingSpinner />;
-  if (connectionQuery.isError)
-    return <div>{connectionQuery.error.message}</div>;
-  if (!connectionQuery.data?.data) return <div>{dict.common.error}</div>;
+  if (connectionQuery.isLoading) return <FormPageSkeleton />;
+  if (connectionQuery.isError) {
+    return (
+      <QueryError
+        error={connectionQuery.error}
+        onRetry={() => connectionQuery.refetch()}
+        title={dict.common.error}
+      />
+    );
+  }
+  if (!connectionQuery.data?.data) {
+    return (
+      <CommonErrorDisplay
+        variant='page'
+        title={dict.common.error}
+        description={dict.common.weEncounteredError}
+        showHome={true}
+      />
+    );
+  }
 
   return (
     <ConnectorInfoModal

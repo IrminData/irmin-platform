@@ -3,7 +3,8 @@
 import { useParams, useSearchParams } from 'next/navigation';
 
 import LogsSection from '@/components/logs/LogsSection';
-import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
+import { QueryError } from '@/components/ui/error/QueryError';
+import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -30,11 +31,25 @@ export default function RepositoryObjectLogsPage() {
   );
 
   if (repositoryQuery.isLoading || repositoryObjectQuery.isLoading)
-    return <LoadingSpinner />;
-  if (repositoryQuery.isError)
-    return <div>{repositoryQuery.error.message}</div>;
-  if (repositoryObjectQuery.isError)
-    return <div>{repositoryObjectQuery.error.message}</div>;
+    return <ListSkeleton />;
+  if (repositoryQuery.isError) {
+    return (
+      <QueryError
+        error={repositoryQuery.error}
+        onRetry={() => repositoryQuery.refetch()}
+        title={dict.common.error}
+      />
+    );
+  }
+  if (repositoryObjectQuery.isError) {
+    return (
+      <QueryError
+        error={repositoryObjectQuery.error}
+        onRetry={() => repositoryObjectQuery.refetch()}
+        title={dict.common.error}
+      />
+    );
+  }
 
   return (
     <LogsSection
