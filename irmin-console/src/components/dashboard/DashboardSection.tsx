@@ -1,6 +1,14 @@
 'use client';
 
-import { TbLogs, TbSchema, TbSettings } from 'react-icons/tb';
+import {
+  TbInvoice,
+  TbLogs,
+  TbMail,
+  TbSchema,
+  TbSettings,
+  TbTag,
+  TbUser,
+} from 'react-icons/tb';
 
 import AssistantSection from '@/components/assistant/AssistantSection';
 import { Button } from '@/components/ui/button';
@@ -60,7 +68,7 @@ const DashboardSection = () => {
   }
 
   return (
-    <div className='pattern-bg h-full py-12'>
+    <div className='pattern-bg h-full py-4'>
       <div
         className={`
           relative container mx-auto max-w-7xl
@@ -78,6 +86,46 @@ const DashboardSection = () => {
                 icon={<TbSettings className='size-4' />}
               >
                 {dict.consoleNavigation.settings}
+              </Button>
+            )}
+            {isResourceAllowed('workspace_tag', 'read') && (
+              <Button
+                href={`${workspaceUrl}/settings/tags`}
+                variant='gray'
+                size='sm'
+                icon={<TbTag className='size-4' />}
+              >
+                {dict.workspace.tags}
+              </Button>
+            )}
+            {isResourceAllowed('user', 'read') && (
+              <Button
+                href={`${workspaceUrl}/settings/users`}
+                variant='gray'
+                size='sm'
+                icon={<TbUser className='size-4' />}
+              >
+                {dict.workspace.users}
+              </Button>
+            )}
+            {isResourceAllowed('invite', 'read') && (
+              <Button
+                href={`${workspaceUrl}/settings/invites`}
+                variant='gray'
+                size='sm'
+                icon={<TbMail className='size-4' />}
+              >
+                {dict.workspace.invites}
+              </Button>
+            )}
+            {isResourceAllowed('billing', 'read') && (
+              <Button
+                href={`${workspaceUrl}/settings/billing`}
+                variant='gray'
+                size='sm'
+                icon={<TbInvoice className='size-4' />}
+              >
+                {dict.workspace.billing}
               </Button>
             )}
             {isResourceAllowed('audit_log', 'read') && (

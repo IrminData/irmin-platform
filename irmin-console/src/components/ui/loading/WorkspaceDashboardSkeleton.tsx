@@ -23,6 +23,24 @@ const NavigationButtonsSkeleton = () => (
         dark:bg-gray-800
       `}
     />
+    <div
+      className={`
+        h-8 w-16 animate-pulse rounded bg-gray-200
+        dark:bg-gray-800
+      `}
+    />
+    <div
+      className={`
+        h-8 w-24 animate-pulse rounded bg-gray-200
+        dark:bg-gray-800
+      `}
+    />
+    <div
+      className={`
+        h-8 w-24 animate-pulse rounded bg-gray-200
+        dark:bg-gray-800
+      `}
+    />
   </div>
 );
 
