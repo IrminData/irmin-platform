@@ -232,7 +232,7 @@ The MCP server implementation using the official Go SDK is available under `mcp/
 
 Run `npx @modelcontextprotocol/inspector` to test and inspect the MCP server.
 
-## Docker Development
+## Docker
 
 > For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop. 
 

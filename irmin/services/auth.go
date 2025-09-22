@@ -35,6 +35,9 @@ const (
 
 	// AuthCacheTTL is how long to cache auth results
 	AuthCacheTTL = 5 * time.Minute
+
+	// LockPollingInterval is the interval between lock acquisition attempts
+	LockPollingInterval = 1 * time.Millisecond
 )
 
 // AuthCacheEntry represents a cached authentication result.
@@ -472,36 +475,18 @@ func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) LockInf
 	userMutex := pm.locks[key]
 	pm.mu.Unlock()
 
-	// Use a channel to signal lock acquisition
-	lockAcquired := make(chan struct{})
-	lockFailed := make(chan struct{})
+	// Use a simple polling approach with TryLock
+	deadline := time.Now().Add(timeout)
 
-	go func() {
-		// Try to acquire the lock
-		userMutex.Lock()
-
-		// Signal that we acquired the lock
-		select {
-		case lockAcquired <- struct{}{}:
-			// Successfully signaled acquisition, wait for completion
-			<-lockFailed
-			userMutex.Unlock()
-		case <-lockFailed:
-			// Timeout occurred before we could signal, release lock
-			userMutex.Unlock()
+	for time.Now().Before(deadline) {
+		if userMutex.TryLock() {
+			return LockInfo{acquired: true, mutex: userMutex}
 		}
-	}()
-
-	select {
-	case <-lockAcquired:
-		// Lock was successfully acquired
-		close(lockFailed) // Signal goroutine to keep the lock
-		return LockInfo{acquired: true, mutex: userMutex}
-	case <-time.After(timeout):
-		// Timeout occurred
-		close(lockFailed) // Signal goroutine to release the lock
-		return LockInfo{acquired: false, mutex: userMutex}
+		// Small sleep to avoid busy waiting
+		time.Sleep(LockPollingInterval)
 	}
+
+	return LockInfo{acquired: false, mutex: userMutex}
 }
 
 // Unlock releases the lock for a specific key.

@@ -9130,6 +9130,9 @@ const (
 
     // AuthCacheTTL is how long to cache auth results
     AuthCacheTTL = 5 * time.Minute
+
+    // LockPollingInterval is the interval between lock acquisition attempts
+    LockPollingInterval = 1 * time.Millisecond
 )
 ```
 
