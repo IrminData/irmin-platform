@@ -232,15 +232,79 @@ The MCP server implementation using the official Go SDK is available under `mcp/
 
 Run `npx @modelcontextprotocol/inspector` to test and inspect the MCP server.
 
-## Docker
+## Docker Development
 
-1. Build the image:
+> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop. 
 
-	docker build -t irmin .
+### Docker Compose Setup
 
-2. Run the container, injecting your local .env file for configuration:
+The project includes a `docker-compose.yml` file for running the complete Irmin infrastructure locally. This includes:
 
-	docker run -p 8080:8080 --env-file .env irmin
+- **API Service** (`api`) - The main Irmin Core API
+- **PostgreSQL Database** (`db_api`) - Main application database
+- **LakeFS Database** (`db_lakefs`) - LakeFS metadata database  
+- **MinIO** (`minio`) - S3-compatible object storage
+- **LakeFS** (`lakefs`) - Data versioning service
+
+#### Running Local Infrastructure
+
+To start only the infrastructure services (databases, storage, and LakeFS):
+
+```bash
+docker compose up -d db_api db_lakefs lakefs minio
+```
+
+This command runs the services in detached mode (`-d`) and includes:
+- PostgreSQL databases on ports 5433 and 5434
+- MinIO on ports 9000 (API) and 9001 (Console)
+- LakeFS on port 8000
+
+> Buckets need to be created manually on MinIO. One for LakeFS and one for generic Irmin workspace data.
+
+#### Running the Complete Stack
+
+To run the entire application stack including the API:
+
+```bash
+docker compose up -d
+```
+
+#### Stopping Services
+
+```bash
+# Stop all services
+docker compose down
+
+# Stop and remove volumes (WARNING: This will delete all data)
+docker compose down -v
+```
+
+### Dockerfile Usage
+
+#### Building the Image
+
+```bash
+# Build the Docker image
+docker build -t irmin .
+
+# Run the container, injecting your local .env file for configuration
+docker run -p 8080:8080 --env-file .env irmin
+```
+
+#### Multi-Platform Builds
+
+For production deployments across different architectures:
+
+```bash
+# Create and use buildx builder
+docker buildx create --use
+
+# Verify Buildx is active
+docker buildx ls
+
+# Build for multiple platforms
+docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USERNAME/irmin:latest --push .
+```
 
 ## Environment Variables
 
