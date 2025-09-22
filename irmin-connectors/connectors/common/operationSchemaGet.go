@@ -5,6 +5,7 @@ import (
 	"errors"
 	"irmin-connectors/db"
 	"log/slog"
+	"slices"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
@@ -66,13 +67,7 @@ func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, log
 
 	// Validate operation type against supported types
 	supportedTypes := provider.GetSupportedOperationTypes()
-	isSupported := false
-	for _, supportedType := range supportedTypes {
-		if operationType == supportedType {
-			isSupported = true
-			break
-		}
-	}
+	isSupported := slices.Contains(supportedTypes, operationType)
 
 	if !isSupported {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{

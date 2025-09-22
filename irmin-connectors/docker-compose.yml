@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  connectors:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: irmin/connectors:dev
+    env_file: .env
+    depends_on:
+      - db_connectors
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+
+  db_connectors:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: connectors
+      POSTGRES_PASSWORD: connectors
+      POSTGRES_DB: connectors_dev
+    ports:
+      - "5435:5432"
+    volumes:
+      - connectors_db:/var/lib/postgresql/data
+
+volumes:
+  connectors_db:

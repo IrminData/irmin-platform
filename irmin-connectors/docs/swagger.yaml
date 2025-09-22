@@ -491,8 +491,6 @@ definitions:
         - binary
         example: structured
     required:
-    - name
-    - path
     - type
     type: object
   irminmodels.ObjectType:

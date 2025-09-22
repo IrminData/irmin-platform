@@ -3083,8 +3083,6 @@ const docTemplate = `{
         "irminmodels.ObjectSchema": {
             "type": "object",
             "required": [
-                "name",
-                "path",
                 "type"
             ],
             "properties": {

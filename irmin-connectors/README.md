@@ -117,13 +117,73 @@ golangci-lint run --fix
 
 ## Docker
 
-1. Build the image:
+> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop. 
 
-	docker build -t irmin-connectors .
+### Docker Compose Setup
 
-2. Run the container, injecting your local .env file for configuration:
+The project includes a `docker-compose.yml` file for running the complete Irmin infrastructure locally. This includes:
 
-	docker run -p 8080:8080 --env-file .env irmin-connectors
+- **API Service** (`connectors`) - The main Irmin Connectors API
+- **PostgreSQL Database** (`db_connectors`) - Main application database
+
+#### Running Local Infrastructure
+
+To start only the infrastructure services (database):
+
+```bash
+docker compose up -d db_connectors
+```
+
+This command runs the services in detached mode (`-d`) and includes:
+- PostgreSQL database on port 5435
+
+#### Running the Complete Stack
+
+To run the entire application stack including the API and database:
+
+```bash
+docker compose up -d
+```
+
+#### Stopping Services
+
+```bash
+# Stop all services
+docker compose down
+
+# Stop and remove volumes (WARNING: This will delete all data)
+docker compose down -v
+```
+
+### Dockerfile Usage
+
+#### Building the Image
+
+```bash
+# Build the Docker image
+docker build -t irmin-connectors .
+
+# Run the container, injecting your local .env file for configuration
+docker run -p 8080:8080 --env-file .env irmin-connectors
+```
+
+#### Multi-Platform Builds
+
+For production deployments across different architectures:
+
+```bash
+# Create and use buildx builder
+docker buildx create --use
+
+# Verify Buildx is active
+docker buildx ls
+
+# Build for multiple platforms
+docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USERNAME/irmin-connectors:latest --push .
+
+# Run the container, injecting your local .env file for configuration
+docker run -p 8080:8080 --env-file .env irmin-connectors
+```
 
 ## API Documentation
 
