@@ -174,7 +174,7 @@ func (c *Client) GetUncommittedChanges(
 	workspace, repository, branch string,
 ) (*irminmodels.Diff, error)
 
-func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*irminconnectorclient.Client, func(), error)
+func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*connectorsclient.Client, func(), error)
     InitializeConnectorOperation sets up a connector operation and returns
     an operation client, along with a cancel function to clean up when done.
     It returns an error if initialization fails.

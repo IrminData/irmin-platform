@@ -8,7 +8,7 @@ import (
 	"irmin-api/utils"
 	"time"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 )
 
 func (api *APIServices) ListAPITokens(c context.Context, user *db.User) ([]db.APIToken, error) {

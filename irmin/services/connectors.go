@@ -3,11 +3,11 @@ package services
 import (
 	"context"
 	"errors"
+	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 )
@@ -41,7 +41,7 @@ func (api *APIServices) GetConnector(c context.Context, connectorID uint) (*db.C
 func (api *APIServices) updateConnectorFromInfo(
 	connector *db.Connector,
 	req irmincore.ConnectorRequest,
-	connectorInfo irminconnectorclient.ConnectorInfo,
+	connectorInfo connectorsclient.ConnectorInfo,
 ) {
 	connector.APIBaseURL = connectorInfo.APIBaseURL
 	connector.SystemToken = req.SystemToken
@@ -76,7 +76,7 @@ func (api *APIServices) CreateConnector(
 	}
 
 	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(req.URL, req.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken, locale)
 
 	// Request the info endpoint of the connector
 	connectorInfo, getInfoErr := connectorClient.GetInfo()
@@ -137,7 +137,7 @@ func (api *APIServices) UpdateConnector(
 	}
 
 	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(req.URL, req.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken, locale)
 
 	// Request the info endpoint of the connector
 	connectorInfo, getInfoErr := connectorClient.GetInfo()
@@ -189,7 +189,7 @@ func (api *APIServices) GetConnectorConfigurationFields(
 	settingsStr := utils.ConvertToStringMap(req.Settings)
 
 	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
 
 	// Get the connection settings
 	configurationFields, getConfigFieldsErr := connectorClient.GetConfigFields(
@@ -218,7 +218,7 @@ func (api *APIServices) ValidateConnectorConfiguration(
 	settingsStr := utils.ConvertToStringMap(req.Settings)
 
 	// Create new connector client
-	connectorClient := irminconnectorclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+	connectorClient := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
 
 	// Test the connection
 	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(detailsStr, settingsStr)

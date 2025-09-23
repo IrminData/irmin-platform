@@ -9,7 +9,7 @@ import (
 
 	irmincache "irmin-api/cache"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/gofiber/fiber/v3"
 )

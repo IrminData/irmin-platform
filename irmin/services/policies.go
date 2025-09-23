@@ -11,7 +11,7 @@ import (
 	"slices"
 	"strconv"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
 )

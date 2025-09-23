@@ -8,12 +8,12 @@ import (
 	"path"
 	"strings"
 
+	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/duckdb"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
-	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
@@ -21,9 +21,9 @@ import (
 // InitializeConnectorOperation sets up a connector operation and returns an operation client,
 // along with a cancel function to clean up when done.
 // It returns an error if initialization fails.
-func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*irminconnectorclient.Client, func(), error) {
+func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*connectorsclient.Client, func(), error) {
 	// Create base connector client.
-	baseClient := irminconnectorclient.NewClient(
+	baseClient := connectorsclient.NewClient(
 		connection.Connector.APIBaseURL,
 		connection.Connector.SystemToken,
 		c.Locale,
@@ -43,7 +43,7 @@ func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*irmin
 	}
 
 	// Create operation-specific client (always in English for schema retrieval/actions).
-	opClient := irminconnectorclient.NewClient(
+	opClient := connectorsclient.NewClient(
 		connection.Connector.APIBaseURL,
 		op.Token,
 		"en",
@@ -295,7 +295,7 @@ func (c *Client) PullFilesFromConnector(
 	defer cancel()
 
 	// Pull the matching files from the connector.
-	pulled := make([]irminconnectorclient.PulledFile, 0)
+	pulled := make([]connectorsclient.PulledFile, 0)
 	for _, connectionPath := range connectionPaths {
 		pulledFiles, pullErr := opClient.OperationPull(connectionPath)
 		if pullErr != nil {
@@ -495,7 +495,7 @@ func (c *Client) PushFilesToConnector(
 	// Push the zip to the correct path in the connector.
 	_, pushFilesErr := opClient.OperationPush(
 		connPath,
-		irminconnectorclient.FormFile{Reader: bytes.NewBuffer(zip)},
+		connectorsclient.FormFile{Reader: bytes.NewBuffer(zip)},
 	)
 	if pushFilesErr != nil {
 		return nil, fmt.Errorf("failed to push files: %w", pushFilesErr)

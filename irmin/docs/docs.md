@@ -435,6 +435,384 @@ type ResourceUsageMetrics struct {
 }
 ```
 
+# connectorsclient
+
+```go
+import "irmin-api/connectors-client"
+```
+
+## Index
+
+- [type Client](<#Client>)
+  - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
+  - [func \(c \*Client\) CancelOperation\(operationID uint\) error](<#Client.CancelOperation>)
+  - [func \(c \*Client\) FetchAPI\(opts RequestOptions, out any\) error](<#Client.FetchAPI>)
+  - [func \(c \*Client\) FetchStreamFiles\(opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
+  - [func \(c \*Client\) GetConfigFields\(configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
+  - [func \(c \*Client\) GetInfo\(\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
+  - [func \(c \*Client\) GetOperationStatus\(operationID uint\) \(\*OperationStatus, error\)](<#Client.GetOperationStatus>)
+  - [func \(c \*Client\) GetSchema\(method string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
+  - [func \(c \*Client\) InitOperation\(details map\[string\]string, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
+  - [func \(c \*Client\) OperationPatch\(patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
+  - [func \(c \*Client\) OperationPull\(path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
+  - [func \(c \*Client\) OperationPush\(path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
+  - [func \(c \*Client\) Request\(opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
+  - [func \(c \*Client\) SubscribeToChanges\(webhook, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
+  - [func \(c \*Client\) ValidateConfigFields\(details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
+- [type ConnectorInfo](<#ConnectorInfo>)
+- [type FormFile](<#FormFile>)
+- [type Operation](<#Operation>)
+- [type OperationStatus](<#OperationStatus>)
+- [type PulledFile](<#PulledFile>)
+- [type RequestOptions](<#RequestOptions>)
+- [type Subscription](<#Subscription>)
+
+
+<a name="Client"></a>
+## type Client
+
+Client represents the Connector API client.
+
+```go
+type Client struct {
+    // BaseURL is your Connector's API base: e.g. "https://connectors.irmin.dev/postgres"
+    BaseURL string
+
+    // Token is the operation or system token for the Connector, depending on what you're doing.
+    Token string
+
+    // Locale is used to request localised messages from the Connector API.
+    Locale string
+
+    // HTTPClient is a customisable HTTP client. You can set timeouts, proxies, etc.
+    HTTPClient *http.Client
+}
+```
+
+<a name="NewClient"></a>
+### func NewClient
+
+```go
+func NewClient(baseURL, token, locale string) *Client
+```
+
+NewClient creates a new Connector API client with default settings.
+
+<a name="Client.CancelOperation"></a>
+### func \(\*Client\) CancelOperation
+
+```go
+func (c *Client) CancelOperation(operationID uint) error
+```
+
+CancelOperation cancels an operation with the connector. Cancellation is used to revoke the operation token and stop any ongoing processes, like event listeners.
+
+Note: System token is required for this operation.
+
+Parameters: \- operationID: The ID of the operation to cancel.
+
+Returns: \- An error if the operation cannot be cancelled.
+
+<a name="Client.FetchAPI"></a>
+### func \(\*Client\) FetchAPI
+
+```go
+func (c *Client) FetchAPI(opts RequestOptions, out any) error
+```
+
+FetchAPI sends a request and attempts to parse the JSON response into a struct if provided.
+
+<a name="Client.FetchStreamFiles"></a>
+### func \(\*Client\) FetchStreamFiles
+
+```go
+func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error)
+```
+
+FetchStreamFiles sends a request based on the provided RequestOptions and returns a slice of PulledFile. If the response is multipart, each part is parsed as a separate file. Otherwise, the response is treated as a single file.
+
+<a name="Client.GetConfigFields"></a>
+### func \(\*Client\) GetConfigFields
+
+```go
+func (c *Client) GetConfigFields(configType string, details map[string]string, settings map[string]string) (map[string]irminmodels.DynamicField, error)
+```
+
+GetConfigFields fetches the configuration fields for a given configuration type.
+
+Note: System token is required for this operation.
+
+Parameters: \- configType: The type of configuration, e.g. "details" or "settings". \- details: A map containing prefilled configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing prefilled configuration settings \(e.g. database, schema, table, etc.\).
+
+Returns: \- A list of DynamicField objects representing the configuration fields if the request is successful. \- An error if the request fails.
+
+<a name="Client.GetInfo"></a>
+### func \(\*Client\) GetInfo
+
+```go
+func (c *Client) GetInfo() (*ConnectorInfo, error)
+```
+
+GetInfo fetches the connector's information from the /info endpoint.
+
+Note: System token is required for this operation.
+
+Returns: \- A pointer to ConnectorInfo if the request is successful. \- An error if the API call fails or the response cannot be unmarshalled.
+
+<a name="Client.GetOperationStatus"></a>
+### func \(\*Client\) GetOperationStatus
+
+```go
+func (c *Client) GetOperationStatus(operationID uint) (*OperationStatus, error)
+```
+
+GetOperationStatus retrieves the status of an operation with the connector.
+
+Note: System token is required for this operation.
+
+Parameters: \- operationID: The ID of the operation to get the status of.
+
+Returns: \- The status of the operation if the request is successful. \- An error if the operation cannot be retrieved.
+
+<a name="Client.GetSchema"></a>
+### func \(\*Client\) GetSchema
+
+```go
+func (c *Client) GetSchema(method string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchema retrieves the schema for a specific operation method.
+
+Note: Operation token is required for this operation.
+
+Parameters: \- method: The operation method for which to retrieve the schema, e.g. "pull", "push", etc.
+
+Returns: \- The schema for the specified operation method if the request is successful. \- An error if the request fails.
+
+<a name="Client.InitOperation"></a>
+### func \(\*Client\) InitOperation
+
+```go
+func (c *Client) InitOperation(details map[string]string, settings map[string]string) (*Operation, error)
+```
+
+InitOperation creates a new operation with the connector. The operation is used to store the configuration details and settings for a specific operation.
+
+Note: System token is required for this operation.
+
+Parameters: \- details: A map containing configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing configuration settings \(e.g. database, schema, table, etc.\).
+
+Returns: \- The newly created operation if the request is successful. \- An error if the request fails.
+
+<a name="Client.OperationPatch"></a>
+### func \(\*Client\) OperationPatch
+
+```go
+func (c *Client) OperationPatch(patchFile FormFile) (string, error)
+```
+
+OperationPatch sends a patch file to the /operation/patch endpoint to apply JSON patch operations to the data.
+
+Note: Operation token is required for this operation.
+
+Parameters: \- A JSON form file "patches" containing the list of JSON patch operations to apply to the data.
+
+Returns: \- A string containing the response message from the push operation. \- An error if the request fails.
+
+<a name="Client.OperationPull"></a>
+### func \(\*Client\) OperationPull
+
+```go
+func (c *Client) OperationPull(path string) ([]PulledFile, error)
+```
+
+OperationPull sends a POST request to the /operation/pull endpoint, retrieves the full streamed content, extracts the filename from the Content\-Disposition header \(if available\), and returns both.
+
+Note: Operation token is required for this operation.
+
+Parameters: \- path: The path in the connector to pull data for.
+
+Returns: \- A slice of PulledFile objects containing the following:
+
+- Byte map containing the full streamed content.
+- String containing the filename extracted from the Content\-Disposition header \(if present\).
+
+\- An error if the request fails.
+
+<a name="Client.OperationPush"></a>
+### func \(\*Client\) OperationPush
+
+```go
+func (c *Client) OperationPush(path string, file FormFile) (string, error)
+```
+
+OperationPush sends a file to the /operation/push endpoint along with a target path.
+
+Note: Operation token is required for this operation.
+
+Parameters: \- A form field "path" with the provided path value. \- A form file "file" containing the file to push.
+
+Returns: \- A string containing the response message from the push operation. \- An error if the request fails.
+
+<a name="Client.Request"></a>
+### func \(\*Client\) Request
+
+```go
+func (c *Client) Request(opts RequestOptions) ([]byte, error)
+```
+
+Request sends requests to the REST API of the connector and returns the raw response data. It utilises prepareBodyAndHeaders and doRequest to reduce code duplication.
+
+<a name="Client.SubscribeToChanges"></a>
+### func \(\*Client\) SubscribeToChanges
+
+```go
+func (c *Client) SubscribeToChanges(webhook, webhookAccessToken string) (*Subscription, error)
+```
+
+SubscribeToChanges subscribes to changes in the data and sends the changes to the specified webhook.
+
+Note: Operation token is required for this operation.
+
+Parameters: \- webhook: The URL of the webhook to send the changes to. \- webhookAccessToken: The token to authenticate the webhook request with.
+
+Returns: \- The schema for the specified operation method if the request is successful. \- An error if the request fails.
+
+<a name="Client.ValidateConfigFields"></a>
+### func \(\*Client\) ValidateConfigFields
+
+```go
+func (c *Client) ValidateConfigFields(details map[string]string, settings map[string]string) (*irminmodels.ConnectorConfigurationValidationResult, error)
+```
+
+ValidateConfigFields validates the configuration fields provided by the user.
+
+Note: System token is required for this operation.
+
+Parameters: \- details: A map containing configuration details provided by the user. \- settings: A map containing configuration settings provided by the user.
+
+Returns: \- A validation result from the connector if the request is successful. \- An error if there is a problem with the request.
+
+<a name="ConnectorInfo"></a>
+## type ConnectorInfo
+
+ConnectorInfo holds metadata about a connector returned from the connector's /info endpoint.
+
+```go
+type ConnectorInfo struct {
+    Name             string   `json:"name"              example:"My Connector"`
+    Description      string   `json:"description"       example:"My Connector Description"`
+    Version          string   `json:"version"           example:"1.0.0"`
+    StructureVersion string   `json:"structure_version" example:"1.0.0"`
+    Author           string   `json:"author"            example:"John Doe"`
+    APIBaseURL       string   `json:"api_base_url"      example:"https://api.example.com"`
+    LogoURL          string   `json:"logo_url"          example:"https://example.com/logo.png"`
+    Capabilities     []string `json:"capabilities"      example:"read,write"`
+    Locales          []string `json:"locales"           example:"en,fr"`
+    PrimaryCategory  string   `json:"primary_category"  example:"database"`
+    Categories       []string `json:"categories"        example:"database,api"`
+    AuthorEmail      string   `json:"author_email"      example:"john.doe@example.com"`
+    Documentation    string   `json:"documentation"     example:"https://example.com/documentation"`
+    ReadMoreURL      string   `json:"read_more_url"     example:"https://example.com/read-more"`
+}
+```
+
+<a name="FormFile"></a>
+## type FormFile
+
+FormFile holds information about a file you want to upload with multipart/form\-data.
+
+```go
+type FormFile struct {
+    FieldName string    // The form field name.
+    FilePath  string    // Local path to the file on disk.
+    Reader    io.Reader // Use if you already have a stream (os.Open, bytes.Buffer, etc.).
+    FileName  string    // Optional override for the actual filename.
+}
+```
+
+<a name="Operation"></a>
+## type Operation
+
+Operation represents a record of an initiated operation tied to a connector.
+
+```go
+type Operation struct {
+    ID                      uint              `json:"ID"                      example:"1"`
+    CreatedAt               string            `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
+    UpdatedAt               string            `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
+    DeletedAt               *string           `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
+    Details                 map[string]string `json:"details"`  // Configuration (details) of the operation, formatted like {"database":"my_database","table":"my_table"}
+    Settings                map[string]string `json:"settings"` // Configuration (settings) of the operation, formatted like {"database":"my_database","table":"my_table"}
+    Token                   string            `json:"token"                   example:"1234567890"`
+    ConnectorRegistrationID uint              `json:"connectorRegistrationID" example:"1"`
+}
+```
+
+<a name="OperationStatus"></a>
+## type OperationStatus
+
+OperationStatus represents the response for an operation status check.
+
+```go
+type OperationStatus struct {
+    OperationID   uint              `json:"operation_id"`
+    Details       map[string]string `json:"details"`
+    Settings      map[string]string `json:"settings"`
+    Subscriptions []Subscription    `json:"subscriptions"`
+}
+```
+
+<a name="PulledFile"></a>
+## type PulledFile
+
+PulledFile represents a file returned with a stream request.
+
+```go
+type PulledFile struct {
+    // Filename is the name extracted from the Content-Disposition header.
+    Filename string
+    // Content holds the file's content.
+    Content []byte
+}
+```
+
+<a name="RequestOptions"></a>
+## type RequestOptions
+
+RequestOptions allows you to specify how you'd like to send data in the request.
+
+```go
+type RequestOptions struct {
+    Method        string
+    Endpoint      string
+    AllowedStatus []int             // Status codes that are considered successful. If none provided, all 2xx codes are considered successful.
+    Body          any               // For JSON, this can be a struct or map to JSON-encode.
+    FormFields    map[string]string // Key-value form fields (for multipart/form-data or URL-encoded).
+    Files         []FormFile        // Files to attach (for multipart/form-data).
+    Headers       map[string]string // Extra headers, if needed.
+    ContentType   string            // e.g. "application/json", "multipart/form-data", etc.
+}
+```
+
+<a name="Subscription"></a>
+## type Subscription
+
+Subscription represents a record of an active subscription to changes in data.
+
+```go
+type Subscription struct {
+    ID                      uint    `json:"ID"                      example:"1"`
+    CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
+    UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
+    DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
+    WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
+    WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
+    ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
+    OperationID             uint    `json:"operationID"             example:"1"`
+}
+```
+
 # controllers
 
 ```go
@@ -4650,7 +5028,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, repository string\) \(\*Repository, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, error\)](<#Client.GetUncommittedChanges>)
-  - [func \(c \*Client\) InitializeConnectorOperation\(connection \*db.Connection\) \(\*irminconnectorclient.Client, func\(\), error\)](<#Client.InitializeConnectorOperation>)
+  - [func \(c \*Client\) InitializeConnectorOperation\(connection \*db.Connection\) \(\*connectorsclient.Client, func\(\), error\)](<#Client.InitializeConnectorOperation>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref string, after \*string, limit \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]Repository, error\)](<#Client.ListRepositories>)
@@ -4986,7 +5364,7 @@ func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*i
 ### func \(\*Client\) InitializeConnectorOperation
 
 ```go
-func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*irminconnectorclient.Client, func(), error)
+func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*connectorsclient.Client, func(), error)
 ```
 
 InitializeConnectorOperation sets up a connector operation and returns an operation client, along with a cancel function to clean up when done. It returns an error if initialization fails.

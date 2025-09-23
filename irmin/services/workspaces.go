@@ -10,7 +10,7 @@ import (
 	"irmin-api/utils"
 	"strings"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	"gorm.io/gorm"
 )
 

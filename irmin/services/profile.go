@@ -6,7 +6,7 @@ import (
 	"irmin-api/db"
 	"mime/multipart"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/emailaddress"
 	"github.com/clerk/clerk-sdk-go/v2/phonenumber"

@@ -24,7 +24,7 @@ The SDK, through the Irmin API, provides access read, write and create repositor
 
 ```go
 import (
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
@@ -113,7 +113,7 @@ import (
 	"encoding/json"
 	"log"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )

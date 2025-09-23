@@ -4,7 +4,7 @@ import (
 	"context"
 	"irmin-api/mcp/helpers"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )

@@ -51,7 +51,7 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, pro
 	// Install the three specific packages as originally intended
 	packages := []string{
 		"github.com/IrminData/irmin-sdk-go",
-		"github.com/IrminData/irmin-sdk-go/core-api",
+		"github.com/IrminData/irmin-sdk-go/api",
 		"github.com/IrminData/irmin-sdk-go/utils",
 	}
 

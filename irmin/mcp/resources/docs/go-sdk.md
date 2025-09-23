@@ -5,7 +5,7 @@ This is an LLM friendly version of the Irmin Go SDK documentation, outlining pac
 # irmincore
 
 ```go
-import "github.com/IrminData/irmin-sdk-go/core-api"
+import "github.com/IrminData/irmin-sdk-go/api"
 ```
 
 ## Index

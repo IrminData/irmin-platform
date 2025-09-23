@@ -8,7 +8,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/utils"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 
