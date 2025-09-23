@@ -404,3 +404,75 @@ All conversations are associated with a specific workspace and user:
 ## MCP Tools
 
 Model Context Protocol tools provide external tool access. Configure in `src/services/mcp.ts`.
+
+## Docker
+
+> For the best Docker experience on macOS, we recommend using [OrbStack](https://orbstack.dev/) instead of Docker Desktop. 
+
+### Docker Compose Setup
+
+The project includes a `docker-compose.yml` file for running the complete Irmin infrastructure locally. This includes:
+
+- **API Service** (`irmin_ai`) - The main Irmin AI API
+- **PostgreSQL Database** (`db_ai`) - Irmin AI Application database
+- **Qdrant** (`qdrant`) - Vector database
+
+#### Running Local Infrastructure
+
+To start only the infrastructure services (database and vector database):
+
+```bash
+docker compose up -d db_ai qdrant
+```
+
+This command runs the services in detached mode (`-d`) and includes:
+- PostgreSQL database on port 5436
+- Qdrant on port 6333
+
+#### Running the Complete Stack
+
+To run the entire application stack including the API, database and vector database:
+
+```bash
+docker compose up -d
+```
+
+#### Stopping Services
+
+```bash
+# Stop all services
+docker compose down
+
+# Stop and remove volumes (WARNING: This will delete all data)
+docker compose down -v
+```
+
+### Dockerfile Usage
+
+#### Building the Image
+
+```bash
+# Build the Docker image
+docker build -t irmin-ai .
+
+# Run the container, injecting your local .env file for configuration
+docker run -p 3001:3000 --env-file .env irmin-ai
+```
+
+#### Multi-Platform Builds
+
+For production deployments across different architectures:
+
+```bash
+# Create and use buildx builder
+docker buildx create --use
+
+# Verify Buildx is active
+docker buildx ls
+
+# Build for multiple platforms
+docker buildx build --platform linux/amd64/v2,linux/arm64/v8 -t YOUR_DOCKER_USERNAME/irmin-ai:latest --push .
+
+# Run the container, injecting your local .env file for configuration
+docker run -p 3001:3000 --env-file .env irmin-ai
+```

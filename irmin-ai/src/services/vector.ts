@@ -23,7 +23,10 @@ const VectorDocumentSchema = z.object({
 const VectorStoreConfigSchema = z.object({
   collectionName: z.string().min(1, 'Collection name cannot be empty'),
   url: z.string().min(1, 'Qdrant URL is required').default(env.QDRANT_URL),
-  apiKey: z.string().optional().default(env.QDRANT_API_KEY),
+  apiKey: z
+    .string()
+    .optional()
+    .default(env.QDRANT_API_KEY || ''),
 });
 
 type VectorSearchOptions = z.infer<typeof VectorSearchSchema>;
