@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	coreapi "github.com/IrminData/irmin-sdk-go/core-api"
+	coreapi "github.com/IrminData/irmin-sdk-go/api"
 	models "github.com/IrminData/irmin-sdk-go/models"
 	sqids "github.com/IrminData/irmin-sdk-go/sqids"
 	validator "github.com/IrminData/irmin-sdk-go/validator"

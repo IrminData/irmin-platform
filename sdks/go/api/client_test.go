@@ -3,7 +3,7 @@ package irmincore_test
 import (
 	"testing"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/core-api"
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 )
 
 func TestClient_ValidationIntegration(t *testing.T) {
