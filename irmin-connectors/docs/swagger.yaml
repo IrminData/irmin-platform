@@ -1,4 +1,48 @@
 definitions:
+  common.OperationStatus:
+    properties:
+      details:
+        additionalProperties:
+          type: string
+        type: object
+      operation_id:
+        type: integer
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+      subscriptions:
+        items:
+          $ref: '#/definitions/common.Subscription'
+        type: array
+    type: object
+  common.Subscription:
+    properties:
+      CreatedAt:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      DeletedAt:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      ID:
+        example: 1
+        type: integer
+      UpdatedAt:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      connectorRegistrationID:
+        example: 1
+        type: integer
+      operationID:
+        example: 1
+        type: integer
+      webhookAccessToken:
+        example: "1234567890"
+        type: string
+      webhookUrl:
+        example: https://example.com/webhook
+        type: string
+    type: object
   db.ConnectorRegistration:
     properties:
       connectorName:
@@ -74,50 +118,6 @@ definitions:
       valid:
         description: Valid is true if Time is not NULL
         type: boolean
-    type: object
-  irminconnectorclient.OperationStatus:
-    properties:
-      details:
-        additionalProperties:
-          type: string
-        type: object
-      operation_id:
-        type: integer
-      settings:
-        additionalProperties:
-          type: string
-        type: object
-      subscriptions:
-        items:
-          $ref: '#/definitions/irminconnectorclient.Subscription'
-        type: array
-    type: object
-  irminconnectorclient.Subscription:
-    properties:
-      CreatedAt:
-        example: "2021-01-01T00:00:00Z"
-        type: string
-      DeletedAt:
-        example: "2021-01-01T00:00:00Z"
-        type: string
-      ID:
-        example: 1
-        type: integer
-      UpdatedAt:
-        example: "2021-01-01T00:00:00Z"
-        type: string
-      connectorRegistrationID:
-        example: 1
-        type: integer
-      operationID:
-        example: 1
-        type: integer
-      webhookAccessToken:
-        example: "1234567890"
-        type: string
-      webhookUrl:
-        example: https://example.com/webhook
-        type: string
     type: object
   irminmodels.ConnectorCapability:
     enum:
@@ -1071,7 +1071,7 @@ paths:
         "200":
           description: Operation status retrieved successfully
           schema:
-            $ref: '#/definitions/irminconnectorclient.OperationStatus'
+            $ref: '#/definitions/common.OperationStatus'
         "400":
           description: Bad request - invalid operation token
           schema:
@@ -1625,7 +1625,7 @@ paths:
         "200":
           description: Operation status retrieved successfully
           schema:
-            $ref: '#/definitions/irminconnectorclient.OperationStatus'
+            $ref: '#/definitions/common.OperationStatus'
         "400":
           description: Bad request - invalid operation token
           schema:
@@ -2139,7 +2139,7 @@ paths:
         "200":
           description: Operation status retrieved successfully
           schema:
-            $ref: '#/definitions/irminconnectorclient.OperationStatus'
+            $ref: '#/definitions/common.OperationStatus'
         "400":
           description: Bad request - invalid operation token
           schema:

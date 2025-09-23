@@ -1090,10 +1090,12 @@ import "irmin-connectors/connectors/common"
   - [func \(p \*NotSupportedSchemaProvider\) InitializeClient\(\_ fiber.Ctx, \_ \*slog.Logger, \_ \*db.Operation\) \(any, \*string, func\(\), error\)](<#NotSupportedSchemaProvider.InitializeClient>)
 - [type OperationCancelConfig](<#OperationCancelConfig>)
 - [type OperationInitProvider](<#OperationInitProvider>)
+- [type OperationStatus](<#OperationStatus>)
 - [type PatchOperationProvider](<#PatchOperationProvider>)
 - [type PullOperationProvider](<#PullOperationProvider>)
 - [type PushOperationProvider](<#PushOperationProvider>)
 - [type SchemaOperationProvider](<#SchemaOperationProvider>)
+- [type Subscription](<#Subscription>)
 
 
 <a name="BuildDetailsFromFields"></a>
@@ -1671,6 +1673,20 @@ type OperationInitProvider interface {
 }
 ```
 
+<a name="OperationStatus"></a>
+## type OperationStatus
+
+OperationStatus represents the response for an operation status check.
+
+```go
+type OperationStatus struct {
+    OperationID   uint              `json:"operation_id"`
+    Details       map[string]string `json:"details"`
+    Settings      map[string]string `json:"settings"`
+    Subscriptions []Subscription    `json:"subscriptions"`
+}
+```
+
 <a name="PatchOperationProvider"></a>
 ## type PatchOperationProvider
 
@@ -1752,6 +1768,24 @@ type SchemaOperationProvider interface {
 
     // GetSupportedOperationTypes returns the list of supported operation types for this connector
     GetSupportedOperationTypes() []string
+}
+```
+
+<a name="Subscription"></a>
+## type Subscription
+
+Subscription represents a record of an active subscription to changes in data.
+
+```go
+type Subscription struct {
+    ID                      uint    `json:"ID"                      example:"1"`
+    CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
+    UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
+    DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
+    WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
+    WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
+    ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
+    OperationID             uint    `json:"operationID"             example:"1"`
 }
 ```
 
@@ -2422,7 +2456,7 @@ OperationSchemaGet godoc @Summary Get MySQL operation schema @Description Get th
 func (cs *Controllers) OperationStatus(c fiber.Ctx) error
 ```
 
-OperationStatus godoc @Summary Get MySQL operation status @Description Get the current status of a MySQL operation using the operation token @Tags mysql @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminconnectorclient.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/status \[post\]
+OperationStatus godoc @Summary Get MySQL operation status @Description Get the current status of a MySQL operation using the operation token @Tags mysql @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} common.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/status \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
 ### func \(\*Controllers\) SubscribeToChanges
@@ -3196,7 +3230,7 @@ OperationSchemaGet godoc @Summary Get PostgreSQL operation schema @Description G
 func (cs *Controllers) OperationStatus(c fiber.Ctx) error
 ```
 
-OperationStatus godoc @Summary Get PostgreSQL operation status @Description Get the current status of a PostgreSQL operation using the operation token @Tags postgres @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminconnectorclient.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/status \[post\]
+OperationStatus godoc @Summary Get PostgreSQL operation status @Description Get the current status of a PostgreSQL operation using the operation token @Tags postgres @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} common.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/status \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
 ### func \(\*Controllers\) SubscribeToChanges
@@ -4403,7 +4437,7 @@ OperationSchemaGet godoc @Summary Get SFTP operation schema @Description Get the
 func (cs *Controllers) OperationStatus(c fiber.Ctx) error
 ```
 
-OperationStatus godoc @Summary Get SFTP operation status @Description Get the current status of an SFTP operation using the operation token @Tags sftp @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminconnectorclient.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/status \[post\]
+OperationStatus godoc @Summary Get SFTP operation status @Description Get the current status of an SFTP operation using the operation token @Tags sftp @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} common.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/status \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
 ### func \(\*Controllers\) SubscribeToChanges

@@ -3,7 +3,7 @@ module irmin-connectors
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20250917201227-b6f21de8fc39
+	github.com/IrminData/irmin-sdk-go v0.0.0-20250923114211-ac2719c50fca
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofiber/fiber/v3 v3.0.0-rc.1
 	github.com/jackc/pgx/v5 v5.7.6

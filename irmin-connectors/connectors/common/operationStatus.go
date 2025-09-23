@@ -10,9 +10,28 @@ import (
 	"strconv"
 	"time"
 
-	irminconnectorclient "github.com/IrminData/irmin-sdk-go/connector"
 	"github.com/gofiber/fiber/v3"
 )
+
+// Subscription represents a record of an active subscription to changes in data.
+type Subscription struct {
+	ID                      uint    `json:"ID"                      example:"1"`
+	CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
+	UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
+	DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
+	WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
+	WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
+	ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
+	OperationID             uint    `json:"operationID"             example:"1"`
+}
+
+// OperationStatus represents the response for an operation status check.
+type OperationStatus struct {
+	OperationID   uint              `json:"operation_id"`
+	Details       map[string]string `json:"details"`
+	Settings      map[string]string `json:"settings"`
+	Subscriptions []Subscription    `json:"subscriptions"`
+}
 
 // HandleOperationStatus provides common operation status handling logic.
 // It validates the operation, retrieves subscriptions, and formats the response
@@ -64,7 +83,7 @@ func HandleOperationStatus(
 	}
 
 	// Build response
-	response := irminconnectorclient.OperationStatus{
+	response := OperationStatus{
 		OperationID:   operation.ID,
 		Details:       detailsMap,
 		Settings:      settingsMap,
@@ -134,10 +153,10 @@ func parseOperationData(operation *db.Operation) (map[string]string, map[string]
 }
 
 // convertToClientSubscriptions converts DB subscriptions to client subscriptions.
-func convertToClientSubscriptions(subs []db.Subscription) []irminconnectorclient.Subscription {
-	clientSubscriptions := make([]irminconnectorclient.Subscription, len(subs))
+func convertToClientSubscriptions(subs []db.Subscription) []Subscription {
+	clientSubscriptions := make([]Subscription, len(subs))
 	for i, sub := range subs {
-		clientSubscriptions[i] = irminconnectorclient.Subscription{
+		clientSubscriptions[i] = Subscription{
 			ID:                      sub.ID,
 			CreatedAt:               sub.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:               sub.UpdatedAt.Format(time.RFC3339),
