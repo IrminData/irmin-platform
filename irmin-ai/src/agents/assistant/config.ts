@@ -11,7 +11,7 @@ export const agentConfig: AgentConfig = {
   modelProvider: 'anthropic',
   model: DEFAULT_MODELS.anthropic,
   temperature: 0.7,
-  maxTokens: 4000,
+  maxTokens: 6000,
   responseFormat: 'markdown',
   contextRequirements: [],
   toolSelection: {

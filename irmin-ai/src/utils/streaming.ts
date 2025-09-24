@@ -5,7 +5,7 @@ import {
   messages,
   type NewMessage,
 } from '@/database';
-import type { AIMessageChunk } from '@langchain/core/messages';
+import { AIMessageChunk } from '@langchain/core/messages';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 
@@ -117,24 +117,30 @@ function processContentChunk(
     return { newTextBlockId: newTextBlockId ?? undefined, incrementBlockOrder }; // Return early as this chunk is fully handled
   }
 
-  // PRIORITY CHECK: Only use JSON content tool call detection if no explicit tool calls are present
-  // This prevents conflicts with agent graph which uses explicit tool_calls field
+  // Handle JSON tool calls in content - detect Claude/Anthropic format and LangGraph format
   if (
+    !hasSpecialContent &&
     value.content &&
     typeof value.content === 'string' &&
     !value.tool_calls?.length
   ) {
     const content = value.content;
 
-    // Check for tool call patterns - but only if no explicit tool calls
-    const isToolCallStart =
-      content.startsWith('{"name"') || content.startsWith('{"');
-    const containsToolCallSignature =
+    // Detect various tool call patterns
+    const isAnthropicToolCall =
+      content.includes('"type":"tool_use"') &&
       content.includes('"name"') &&
-      (content.includes('"args"') || content.includes('"type":"tool_call"'));
+      content.includes('"id"');
 
-    if (isToolCallStart || containsToolCallSignature) {
-      // This looks like a tool call - handle it specially
+    const isLangChainToolCall =
+      content.startsWith('{"name"') ||
+      (content.includes('"name"') && content.includes('"args"'));
+
+    const isToolInputDelta =
+      content.includes('"type":"input_json_delta"') &&
+      content.includes('"input"');
+
+    if (isAnthropicToolCall || isLangChainToolCall || isToolInputDelta) {
       hasSpecialContent = true;
       incrementBlockOrder = true;
 
@@ -163,24 +169,41 @@ function processContentChunk(
         `{"type":"tool-input-start","toolCallId":"${toolCallBlockId}","toolName":"tool_call"}\n`
       );
 
-      // Try to parse if it looks complete
-      if (content.endsWith('}') && content.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(content);
-          if (parsed.name && parsed.args) {
-            const block = currentBlocks.get(toolCallBlockId);
-            if (block) {
-              block.toolCallId = parsed.id || toolCallBlockId;
-              block.toolName = parsed.name;
-              block.metadata = { args: parsed.args };
-            }
-            controller.enqueue(
-              `{"type":"tool-input-available","toolCallId":"${parsed.id || toolCallBlockId}","toolName":"${parsed.name}","input":${JSON.stringify(parsed.args)}}\n`
-            );
+      // Try to parse tool call details
+      try {
+        const parsed = JSON.parse(content);
+
+        // Handle Anthropic format
+        if (parsed.type === 'tool_use' && parsed.name && parsed.id) {
+          const block = currentBlocks.get(toolCallBlockId);
+          if (block) {
+            block.toolCallId = parsed.id;
+            block.toolName = parsed.name;
+            block.metadata = { args: parsed.input || {} };
           }
-        } catch {
-          // Not complete JSON yet, will accumulate in text handler
+          controller.enqueue(
+            `{"type":"tool-input-available","toolCallId":"${parsed.id}","toolName":"${parsed.name}","input":${JSON.stringify(parsed.input || {})}}\n`
+          );
         }
+        // Handle LangChain format
+        else if (parsed.name && parsed.args) {
+          const block = currentBlocks.get(toolCallBlockId);
+          if (block) {
+            block.toolCallId = parsed.id || toolCallBlockId;
+            block.toolName = parsed.name;
+            block.metadata = { args: parsed.args };
+          }
+          controller.enqueue(
+            `{"type":"tool-input-available","toolCallId":"${parsed.id || toolCallBlockId}","toolName":"${parsed.name}","input":${JSON.stringify(parsed.args)}}\n`
+          );
+        }
+        // Handle input delta chunks - these are part of ongoing tool calls, just ignore them
+        else if (parsed.type === 'input_json_delta') {
+          // These are streaming chunks for tool input, we can safely ignore them
+          // as the complete tool call was already processed
+        }
+      } catch {
+        // Not parseable JSON yet, will continue accumulating
       }
 
       return { newTextBlockId, incrementBlockOrder };
@@ -331,75 +354,6 @@ function processContentChunk(
     }
   }
 
-  // 6. Handle tool call JSON in content (LangGraph pattern) - but only if no explicit tool calls
-  if (
-    !hasSpecialContent &&
-    value.content &&
-    typeof value.content === 'string' &&
-    !value.tool_calls?.length
-  ) {
-    // Enhanced tool call detection - also check if we need to transition from text to tool call
-    const isToolCallStart = value.content.startsWith('{"name"');
-    const isToolCallJson =
-      isToolCallStart ||
-      (value.content.includes('"name"') &&
-        value.content.includes('"args"') &&
-        value.content.includes('"id"'));
-
-    if (isToolCallJson) {
-      hasSpecialContent = true;
-      incrementBlockOrder = true;
-
-      // If we already have a text block, end it first
-      if (currentTextBlockId) {
-        const textBlock = currentBlocks.get(currentTextBlockId);
-        if (textBlock && textBlock.type === 'text') {
-          controller.enqueue(
-            `{"type":"text-end","id":"${currentTextBlockId}"}\n`
-          );
-        }
-      }
-
-      // Create a new tool call block
-      const toolCallBlockId = randomUUID();
-      newTextBlockId = toolCallBlockId;
-      currentBlocks.set(toolCallBlockId, {
-        id: toolCallBlockId,
-        type: 'tool_call',
-        content: value.content,
-        order: blockOrder,
-      });
-
-      controller.enqueue(
-        `{"type":"tool-input-start","toolCallId":"${toolCallBlockId}","toolName":"tool_call"}\n`
-      );
-
-      // Check if tool call JSON is complete in this chunk
-      if (value.content.endsWith('}')) {
-        try {
-          const parsedToolCall = JSON.parse(value.content);
-          if (parsedToolCall.name && parsedToolCall.args && parsedToolCall.id) {
-            const block = currentBlocks.get(toolCallBlockId);
-            if (block) {
-              block.toolCallId = parsedToolCall.id;
-              block.toolName = parsedToolCall.name;
-              block.metadata = { args: parsedToolCall.args };
-            }
-
-            controller.enqueue(
-              `{"type":"tool-input-available","toolCallId":"${parsedToolCall.id}","toolName":"${parsedToolCall.name}","input":${JSON.stringify(parsedToolCall.args)}}\n`
-            );
-          }
-        } catch {
-          controller.enqueue(
-            `{"type":"tool-input-available","toolCallId":"${toolCallBlockId}","toolName":"tool_call","input":${JSON.stringify({ content: value.content })}}\n`
-          );
-        }
-      }
-      // If not complete, we'll accumulate in subsequent chunks in the regular text handler
-    }
-  }
-
   // 7. Handle tool results (using tool_calls field to identify tool results)
   if (
     !hasSpecialContent &&
@@ -425,7 +379,7 @@ function processContentChunk(
     );
   }
 
-  // 8. Handle source content
+  // 8. Handle source content - both explicit sources and citation patterns
   if (!hasSpecialContent && value.additional_kwargs?.source) {
     const sourceContent = contentToString(value.additional_kwargs.source);
     hasSpecialContent = true;
@@ -445,6 +399,71 @@ function processContentChunk(
     controller.enqueue(
       `{"type":"source","content":"${escapeJsonString(sourceContent)}"}\n`
     );
+  }
+
+  // 8.1. Handle source citations in text content
+  if (
+    !hasSpecialContent &&
+    value.content &&
+    typeof value.content === 'string'
+  ) {
+    // Detect source citation patterns like [doc: irmin://docs/category], [Sources: ...], etc.
+    const sourceCitationRegex = /\[(doc:|sources?:?)\s*([^\]]+)\]/gi;
+    const matches = Array.from(value.content.matchAll(sourceCitationRegex));
+
+    if (matches.length > 0) {
+      hasSpecialContent = true;
+      incrementBlockOrder = true;
+
+      // Extract sources and create source blocks
+      let currentOrder = blockOrder;
+      for (const match of matches) {
+        const fullMatch = match[0];
+        const sourceType = match[1];
+        const sourceContent = match[2].trim();
+
+        const sourceBlockId = randomUUID();
+        currentBlocks.set(sourceBlockId, {
+          id: sourceBlockId,
+          type: 'source',
+          content: sourceContent,
+          order: currentOrder++, // Increment order for each source
+          metadata: {
+            source: 'text_citation',
+            citation_type: sourceType,
+            original_text: fullMatch,
+          },
+        });
+
+        controller.enqueue(
+          `{"type":"source","content":"${escapeJsonString(sourceContent)}"}\n`
+        );
+      }
+
+      // Remove citations from the content and continue processing as text
+      const contentWithoutCitations = value.content
+        .replace(sourceCitationRegex, '')
+        .trim();
+      if (contentWithoutCitations) {
+        // Create a new chunk with the cleaned content
+        const cleanedChunk = new AIMessageChunk({
+          content: contentWithoutCitations,
+          additional_kwargs: value.additional_kwargs,
+        });
+
+        // Update context with new block order and process the cleaned content
+        const updatedContext = {
+          ...context,
+          blockOrder: currentOrder, // Use the updated blockOrder after sources
+        };
+        return processContentChunk(cleanedChunk, updatedContext);
+      }
+
+      return {
+        newTextBlockId: newTextBlockId || undefined,
+        incrementBlockOrder: false, // We already incremented in the loop
+      };
+    }
   }
 
   // 9. Handle file content
@@ -475,7 +494,14 @@ function processContentChunk(
     value.content &&
     typeof value.content === 'string'
   ) {
-    if (!currentTextBlockId) {
+    // Check if we need a new text block (either none exists or current is not a text block)
+    const currentBlock = currentTextBlockId
+      ? currentBlocks.get(currentTextBlockId)
+      : null;
+    const needsNewTextBlock =
+      !currentTextBlockId || !currentBlock || currentBlock.type !== 'text';
+
+    if (needsNewTextBlock) {
       newTextBlockId = randomUUID();
       currentBlocks.set(newTextBlockId, {
         id: newTextBlockId,

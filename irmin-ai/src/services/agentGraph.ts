@@ -2,7 +2,13 @@ import {
   AIMessage,
   AIMessageChunk,
   BaseMessage,
-  ToolMessage,
+  BaseMessageChunk,
+  type InvalidToolCall,
+  isAIMessage,
+  isAIMessageChunk,
+  isBaseMessage,
+  isToolMessage,
+  isToolMessageChunk,
 } from '@langchain/core/messages';
 import type { StructuredTool } from '@langchain/core/tools';
 import type { IterableReadableStream } from '@langchain/core/utils/stream';
@@ -121,18 +127,54 @@ class AgentGraphService {
             ) {
               const newMessages = chunk[1]; // This is an array of new messages from the last step
               if (Array.isArray(newMessages) && newMessages.length > 0) {
-                // Iterate through ALL new messages, not just the first one
+                // Process all new messages from the agent graph
                 for (const msg of newMessages) {
-                  // Only process if it's an actual message type we expect
-                  if (!(msg instanceof BaseMessage)) {
-                    // BaseMessage is the common ancestor for AIMessage, ToolMessage etc.
-                    continue; // Skip to the next item in newMessages
+                  // Use proper type guards instead of instanceof
+                  if (!isBaseMessage(msg)) {
+                    continue;
                   }
+
+                  // Helper function to safely extract content as string
+                  const getContentAsString = (content: unknown): string => {
+                    if (typeof content === 'string') return content;
+                    if (Array.isArray(content)) {
+                      return content
+                        .map((item) => {
+                          if (typeof item === 'string') return item;
+                          if (typeof item === 'object' && item !== null) {
+                            // Check if this is a Claude content block with text
+                            if (
+                              'type' in item &&
+                              'text' in item &&
+                              item.type === 'text'
+                            ) {
+                              return String(item.text);
+                            }
+                            // For other objects, convert to JSON
+                            return JSON.stringify(item);
+                          }
+                          return String(item);
+                        })
+                        .join('');
+                    }
+                    if (typeof content === 'object' && content !== null) {
+                      // Check if this is a single Claude content block with text
+                      if (
+                        'type' in content &&
+                        'text' in content &&
+                        content.type === 'text'
+                      ) {
+                        return String((content as { text: unknown }).text);
+                      }
+                      return JSON.stringify(content);
+                    }
+                    return String(content);
+                  };
 
                   let chunkToEnqueue: AIMessageChunk;
 
-                  // Check if it's a ToolMessage (result of tool execution)
-                  if (msg instanceof ToolMessage) {
+                  // Check if it's a ToolMessage (result of tool execution) using type guard
+                  if (isToolMessage(msg)) {
                     // Convert ToolMessage to AIMessageChunk with tool_result metadata
                     chunkToEnqueue = new AIMessageChunk({
                       content: msg.content,
@@ -142,28 +184,35 @@ class AgentGraphService {
                         ...msg.additional_kwargs,
                       },
                     });
-                  } else if (
-                    msg instanceof AIMessageChunk ||
-                    msg instanceof AIMessage
-                  ) {
-                    // It's already an AIMessageChunk or AIMessage, just enqueue it
+                  } else if (isToolMessageChunk(msg as BaseMessageChunk)) {
+                    // Handle ToolMessageChunk directly
+                    chunkToEnqueue = new AIMessageChunk({
+                      content: msg.content,
+                      additional_kwargs: {
+                        tool_result: true,
+                        tool_call_id: (
+                          msg as BaseMessageChunk & { tool_call_id?: string }
+                        ).tool_call_id,
+                        ...msg.additional_kwargs,
+                      },
+                    });
+                  } else if (isAIMessage(msg)) {
+                    // Convert AIMessage to AIMessageChunk
+                    const contentString = getContentAsString(msg.content);
+                    chunkToEnqueue = new AIMessageChunk({
+                      content: contentString,
+                      additional_kwargs: msg.additional_kwargs,
+                    });
+                  } else if (isAIMessageChunk(msg as BaseMessageChunk)) {
+                    // It's already an AIMessageChunk, use it directly
                     chunkToEnqueue = msg as AIMessageChunk;
                   } else {
-                    // Fallback for other unexpected message types, convert to generic AIMessageChunk
-                    console.warn(
-                      'Unexpected message type in agent stream (after BaseMessage check):',
-                      msg.constructor?.name,
-                      msg
-                    );
+                    // Fallback for other message types, convert to generic AIMessageChunk
                     chunkToEnqueue = new AIMessageChunk({
-                      content: msg.content || '',
+                      content: getContentAsString(msg.content || ''),
                       additional_kwargs: {
-                        raw_message_type: msg.constructor?.name,
-                        ...((
-                          msg as BaseMessage & {
-                            additional_kwargs?: Record<string, unknown>;
-                          }
-                        ).additional_kwargs || {}),
+                        raw_message_type: msg._getType?.() || 'unknown',
+                        ...(msg.additional_kwargs || {}),
                       },
                     });
                   }
@@ -242,31 +291,25 @@ class AgentGraphService {
 
       try {
         // Get the last message to see what tool calls need to be executed
-        const lastMessage = state.messages[
-          state.messages.length - 1
-        ] as AIMessage;
-        const toolCallsToExecute =
-          lastMessage.tool_calls?.map((tc) => tc.name) || [];
+        const lastMessage = state.messages[state.messages.length - 1];
 
-        if (toolCallsToExecute.length > 0) {
-          console.log(
-            `callTools: Executing ${toolCallsToExecute.length} tool(s): ${toolCallsToExecute.join(', ')}`
+        if (!isBaseMessage(lastMessage)) {
+          console.warn('callTools: Last message is not a BaseMessage');
+          return { messages: [] };
+        }
+
+        if (!isAIMessage(lastMessage)) {
+          console.warn(
+            'callTools: Last message is not an AIMessage, cannot extract tool calls'
           );
+          return { messages: [] };
         }
 
         // Execute tools using the ToolNode
-        const startTime = Date.now();
         const result = await toolNode.invoke(state, {
           maxConcurrency: 5,
           timeout: TIMEOUTS.MCP_TOOL_EXECUTION,
         });
-        const executionTime = Date.now() - startTime;
-
-        if (result.messages?.length) {
-          console.log(
-            `callTools: Completed in ${executionTime}ms, got ${result.messages.length} result(s)`
-          );
-        }
 
         // Increment tool calls counter
         return {
@@ -300,13 +343,18 @@ class AgentGraphService {
 
     // Define the function that determines whether to continue or not
     function shouldContinue(state: AgentState) {
-      const lastMessage = state.messages[
-        state.messages.length - 1
-      ] as AIMessage;
+      const lastMessage = state.messages[state.messages.length - 1];
+
+      // Ensure we have a valid message
+      if (!isBaseMessage(lastMessage)) {
+        console.warn(
+          'shouldContinue: Last message is not a BaseMessage, ending'
+        );
+        return '__end__';
+      }
 
       // Check if we've hit the max tool calls limit
       if (state.toolCalls >= state.maxToolCalls) {
-        console.log('shouldContinue: Max tool calls reached, ending');
         return '__end__';
       }
 
@@ -315,19 +363,78 @@ class AgentGraphService {
         return 'agent';
       }
 
-      // If the LLM makes a tool call, then we route to the "tools" node
-      if (lastMessage.tool_calls?.length) {
-        return 'tools';
+      // Check if it's an AI message with tool calls
+      if (isAIMessage(lastMessage)) {
+        if (lastMessage.tool_calls && lastMessage.tool_calls.length > 0) {
+          // Check if we've made the exact same tool calls in the immediate previous AI message
+          // This prevents immediate loops while allowing legitimate tool call sequences
+          const currentToolCalls = lastMessage.tool_calls.map((tc) => tc.name);
+
+          // Look for the most recent AI message with tool calls (excluding the current one)
+          const previousAIMessage = state.messages
+            .slice(0, -1) // Exclude the current message
+            .reverse()
+            .find((msg) => isAIMessage(msg) && msg.tool_calls?.length) as
+            | AIMessage
+            | undefined;
+
+          // Simple loop detection: check for immediate duplicates
+          if (previousAIMessage) {
+            const previousToolCalls =
+              previousAIMessage.tool_calls?.map((tc) => tc.name) || [];
+
+            // Only check for exact duplicates in the immediate previous AI message
+            if (
+              previousToolCalls.length === currentToolCalls.length &&
+              previousToolCalls.length > 0 &&
+              previousToolCalls.every(
+                (tc, index) => tc === currentToolCalls[index]
+              )
+            ) {
+              // Check how many times we've seen this exact sequence recently
+              const duplicateCount = state.messages
+                .slice(-6) // Look at last 6 messages
+                .filter((msg) => isAIMessage(msg) && msg.tool_calls?.length)
+                .filter((msg) => {
+                  const msgToolCalls =
+                    (msg as AIMessage).tool_calls?.map((tc) => tc.name) || [];
+                  return (
+                    msgToolCalls.length === currentToolCalls.length &&
+                    msgToolCalls.every(
+                      (tc, index) => tc === currentToolCalls[index]
+                    )
+                  );
+                }).length;
+
+              // Allow up to 3 attempts before ending
+              if (duplicateCount >= 3) {
+                return '__end__';
+              }
+            }
+          }
+
+          return 'tools';
+        } else {
+          // AI message without tool calls - this should be the final response
+          return '__end__';
+        }
       }
-      // Otherwise, we stop (reply to the user) using the special "__end__" node
-      return '__end__';
+
+      // For other message types (like ToolMessage), continue to agent to process
+      return 'agent';
     }
 
     // Define function to determine what to do after tool execution
     function shouldContinueAfterTools(state: AgentState) {
-      const lastMessage = state.messages[
-        state.messages.length - 1
-      ] as AIMessage;
+      const lastMessage = state.messages[state.messages.length - 1];
+
+      // Ensure we have a valid message
+      if (!isBaseMessage(lastMessage)) {
+        console.warn(
+          'shouldContinueAfterTools: Last message is not a BaseMessage, ending'
+        );
+        return '__end__';
+      }
 
       // If the last message is feedback for retry, go back to agent
       if (lastMessage.additional_kwargs?.tool_call_feedback) {
@@ -336,12 +443,10 @@ class AgentGraphService {
 
       // If we've hit the max tool calls limit, end
       if (state.toolCalls >= state.maxToolCalls) {
-        console.log('shouldContinueAfterTools: Max tool calls reached, ending');
         return '__end__';
       }
 
-      // For successful tool results, continue back to agent to process the result
-      // The agent can then decide whether to make another tool call or respond to user
+      // After successful tool execution, always go back to agent to process the results
       return 'agent';
     }
 
@@ -352,12 +457,35 @@ class AgentGraphService {
         // LangGraph doesn't support streaming within nodes, so we'll use invoke
         // and handle streaming at the graph level
         const response = await llm.invoke(state.messages);
-        // Log tool calls if any
-        if (response.tool_calls?.length) {
-          const toolNames = response.tool_calls.map((tc) => tc.name);
-          console.log(
-            `callModel: Generated ${response.tool_calls.length} tool call(s): ${toolNames.join(', ')}`
-          );
+        // Handle response based on whether it has tool calls
+
+        // Handle invalid tool calls if any
+        if (
+          response.invalid_tool_calls &&
+          response.invalid_tool_calls.length > 0
+        ) {
+          // Create feedback message to help the LLM retry with correct parameters
+          const invalidCallDetails = response.invalid_tool_calls
+            .map(
+              (call: InvalidToolCall) =>
+                `Tool "${call.name}" (ID: ${call.id}): ${call.error || 'Invalid parameters'}`
+            )
+            .join('; ');
+
+          const feedbackMessage = new AIMessage({
+            content: `Invalid tool calls detected: ${invalidCallDetails}. Please retry the tool calls with the correct parameters according to the tool schemas.`,
+            additional_kwargs: {
+              tool_call_feedback: true,
+              invalid_tool_calls: response.invalid_tool_calls,
+              original_error: 'Invalid tool call parameters',
+            },
+          });
+
+          return {
+            messages: [feedbackMessage],
+            currentIteration: state.currentIteration + 1,
+            toolCalls: state.toolCalls + 1,
+          };
         }
 
         // Check if the model is generating JSON tool calls as text content instead of using proper tool_calls
@@ -368,10 +496,6 @@ class AgentGraphService {
           (response.content.includes('{"name"') ||
             response.content.includes('"type":"tool_call"'))
         ) {
-          console.warn(
-            'callModel: Model generated JSON tool call as text instead of using proper tool_calls mechanism'
-          );
-
           // Create feedback message to instruct the model to use proper tool calling
           const feedbackMessage = new AIMessage({
             content: `Please use the proper tool calling mechanism instead of generating JSON as text. When you need to call a tool, use the structured tool calling format, not JSON text output.`,
