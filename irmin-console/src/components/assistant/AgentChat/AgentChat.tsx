@@ -37,6 +37,7 @@ import type { AIMessage } from '@/types/ai/base';
 import { createAssistantMessage } from './createAssistantMessage';
 import { MessageMetadata } from './MessageMetadata';
 import { processStream } from './processStream';
+import { StoredMessageMetadata } from './StoredMessageMetadata';
 import { StreamingMetadata } from './StreamingMetadata';
 import type { AgentChatProps } from './types';
 import { useMessageActions } from './useMessageActions';
@@ -83,6 +84,69 @@ const AgentChat = ({
     () => aiConversationMessagesQuery.data?.data || [],
     [aiConversationMessagesQuery.data?.data]
   );
+
+  // Group related messages (main text + reasoning + tool_call + tool_result) into single displays
+  const groupedMessages = useMemo(() => {
+    const groups: AIMessage[][] = [];
+    let currentGroup: AIMessage[] = [];
+    let lastAssistantMessage: AIMessage | null = null;
+
+    for (const message of localMessages) {
+      // If this is a reasoning, tool_call, or tool_result message, add to current group
+      if (
+        message.messageType === 'reasoning' ||
+        message.messageType === 'tool_call' ||
+        message.messageType === 'tool_result'
+      ) {
+        currentGroup.push(message);
+      } else {
+        // If we have a current group, finalize it by attaching to the last assistant message
+        if (currentGroup.length > 0) {
+          if (lastAssistantMessage) {
+            // Add the last assistant message to the beginning of the current group
+            currentGroup.unshift(lastAssistantMessage);
+            groups.push([...currentGroup]);
+            lastAssistantMessage = null;
+          } else {
+            // If no assistant message to attach to, add the group as is
+            groups.push([...currentGroup]);
+          }
+          currentGroup = [];
+        }
+
+        // Handle the current message
+        if (message.role === 'assistant' && message.messageType === 'text') {
+          // If we already have a lastAssistantMessage, add it to groups first
+          if (lastAssistantMessage) {
+            groups.push([lastAssistantMessage]);
+          }
+          // Store this assistant message to potentially attach tool calls to it
+          lastAssistantMessage = message;
+        } else {
+          // If this is a user message or other type, add it as its own group
+          if (lastAssistantMessage) {
+            groups.push([lastAssistantMessage]);
+            lastAssistantMessage = null;
+          }
+          groups.push([message]);
+        }
+      }
+    }
+
+    // Handle remaining messages
+    if (currentGroup.length > 0) {
+      if (lastAssistantMessage) {
+        currentGroup.unshift(lastAssistantMessage);
+        groups.push([...currentGroup]);
+      } else {
+        groups.push([...currentGroup]);
+      }
+    } else if (lastAssistantMessage) {
+      groups.push([lastAssistantMessage]);
+    }
+
+    return groups;
+  }, [localMessages]);
 
   // Update local messages when initial messages are loaded
   useEffect(() => {
@@ -315,21 +379,81 @@ const AgentChat = ({
     >
       <Conversation className='flex-1'>
         <ConversationContent>
-          {localMessages &&
-            localMessages.length > 0 &&
-            localMessages.map((message: AIMessage) => (
-              <Message key={message.id} from={message.role}>
-                <MessageContent>
-                  {renderMessageContent(message.content)}
+          {groupedMessages &&
+            groupedMessages.length > 0 &&
+            groupedMessages.map((messageGroup: AIMessage[]) => {
+              // If this is a single message, render it normally
+              if (messageGroup.length === 1) {
+                const message = messageGroup[0];
+                return (
+                  <Message key={message.id} from={message.role}>
+                    <MessageContent>
+                      {renderMessageContent(
+                        message.content,
+                        message.messageType || undefined
+                      )}
 
-                  {/* Render agent graph metadata for assistant messages */}
-                  <MessageMetadata message={message} agentId={agentId} />
+                      {/* Render stored message metadata for different message types */}
+                      <StoredMessageMetadata message={message} />
 
-                  {message.role === 'assistant' &&
-                    renderMessageActions(message.id, message.content)}
-                </MessageContent>
-              </Message>
-            ))}
+                      {/* Render agent graph metadata for assistant messages */}
+                      <MessageMetadata message={message} agentId={agentId} />
+
+                      {message.role === 'assistant' &&
+                        renderMessageActions(message.id, message.content)}
+                    </MessageContent>
+                  </Message>
+                );
+              }
+
+              // If this is a group of related messages, render them together
+              const firstMessage = messageGroup[0];
+              const mainTextMessage = messageGroup.find(
+                (m) => m.messageType === 'text'
+              );
+              const otherMessages = messageGroup.filter(
+                (m) => m.messageType !== 'text'
+              );
+
+              return (
+                <Message
+                  key={`group-${firstMessage.id}`}
+                  from={firstMessage.role}
+                >
+                  <MessageContent>
+                    {/* Render main text message content if it exists */}
+                    {mainTextMessage && (
+                      <>
+                        {renderMessageContent(
+                          mainTextMessage.content,
+                          mainTextMessage.messageType || undefined
+                        )}
+
+                        {/* Render agent graph metadata for the main message */}
+                        <MessageMetadata
+                          message={mainTextMessage}
+                          agentId={agentId}
+                        />
+
+                        {mainTextMessage.role === 'assistant' &&
+                          renderMessageActions(
+                            mainTextMessage.id,
+                            mainTextMessage.content
+                          )}
+                      </>
+                    )}
+
+                    {/* Render other messages (reasoning, tool calls, tool results) */}
+                    {otherMessages.map((message: AIMessage) => (
+                      <StoredMessageMetadata
+                        key={`${message.id}-${message.messageType}`}
+                        message={message}
+                      />
+                    ))}
+                  </MessageContent>
+                </Message>
+              );
+            })}
 
           {streamingState.isStreaming && streamingState.streamingMessageId && (
             <Message key={streamingState.streamingMessageId} from='assistant'>

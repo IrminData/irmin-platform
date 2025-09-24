@@ -45,7 +45,20 @@ export const isIterationsNumber = (value: unknown): value is number => {
 };
 
 // Helper function to detect and render code blocks
-export const renderMessageContent = (content: string): ReactNode => {
+export const renderMessageContent = (
+  content: string,
+  messageType?: string
+): ReactNode => {
+  // For tool calls, tool results, and reasoning, don't render content here
+  // The StoredMessageMetadata component will handle the rendering
+  if (
+    messageType === 'tool_call' ||
+    messageType === 'tool_result' ||
+    messageType === 'reasoning'
+  ) {
+    return null;
+  }
+
   // Simple markdown code block detection
   const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
   const parts: ReactNode[] = [];
