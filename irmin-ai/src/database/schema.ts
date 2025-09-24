@@ -56,7 +56,7 @@ export const messages = pgTable('messages', {
 
   // AI model information
   aiModelId: text('ai_model_id'),
-  modelProvider: text('model_provider'), // 'openai', 'groq', etc.
+  modelProvider: text('model_provider'), // 'openai', 'groq', 'anthropic', etc.
   modelName: text('model_name'),
 
   // Agent information
@@ -83,7 +83,7 @@ export const messages = pgTable('messages', {
 export const aiModels = pgTable('ai_models', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   name: text('name').notNull(),
-  provider: text('provider').notNull(), // 'openai', 'groq', etc.
+  provider: text('provider').notNull(), // 'openai', 'groq', 'anthropic', etc.
   modelId: text('model_id').notNull().unique(), // actual model identifier
   description: text('description').notNull(), // model description
 

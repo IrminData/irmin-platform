@@ -8,4 +8,5 @@ export const DEFAULT_LLM_CONFIG = {
 export const DEFAULT_MODELS = {
   groq: 'moonshotai/kimi-k2-instruct',
   openai: 'gpt-5',
+  anthropic: 'claude-sonnet-4-20250514',
 } as const;

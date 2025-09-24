@@ -18,6 +18,9 @@ const envSchema = z.object({
       1,
       'OpenAI API key is required to run inference and create embeddings'
     ),
+  ANTHROPIC_API_KEY: z
+    .string()
+    .min(1, 'Anthropic API key is required to run inference'),
   IRMIN_API_BASE_URL: z
     .string()
     .default('https://irmin-development.up.railway.app'),

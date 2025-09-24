@@ -88,7 +88,7 @@ export const AgentConfigSchema = z.object({
   name: z.string(),
   description: z.string(),
   type: z.enum(['chat', 'single-shot']),
-  modelProvider: z.enum(['groq', 'openai']),
+  modelProvider: z.enum(['groq', 'openai', 'anthropic']),
   model: z.string().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),

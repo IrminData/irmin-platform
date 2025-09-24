@@ -8,8 +8,8 @@ export const agentConfig: AgentConfig = {
   description:
     'General purpose chat agent that can answer questions and help with tasks',
   type: 'chat',
-  modelProvider: 'groq',
-  model: DEFAULT_MODELS.groq,
+  modelProvider: 'anthropic',
+  model: DEFAULT_MODELS.anthropic,
   temperature: 0.7,
   maxTokens: 4000,
   responseFormat: 'markdown',

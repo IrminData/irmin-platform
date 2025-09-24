@@ -1,4 +1,5 @@
 import type { Message, NewMessage } from '@/database';
+import { ChatAnthropic } from '@langchain/anthropic';
 import {
   AIMessage,
   HumanMessage,
@@ -13,7 +14,7 @@ import { DEFAULT_MODELS } from '@/config/defaults';
 import { env } from '@/config/env';
 import { availableAIModels } from '@/config/models';
 
-export type LLMProvider = 'groq' | 'openai';
+export type LLMProvider = 'groq' | 'openai' | 'anthropic';
 
 interface LLMOptions {
   provider: LLMProvider;
@@ -34,6 +35,7 @@ export interface ModelInfo {
 class LlmService {
   private defaultGroqModel = DEFAULT_MODELS.groq;
   private defaultOpenAIModel = DEFAULT_MODELS.openai;
+  private defaultAnthropicModel = DEFAULT_MODELS.anthropic;
 
   /**
    * Create a new model instance with custom parameters and tools
@@ -47,7 +49,7 @@ class LlmService {
       tools = [],
     } = options;
 
-    let llm: ChatGroq | ChatOpenAI;
+    let llm: ChatGroq | ChatOpenAI | ChatAnthropic;
 
     if (provider === 'groq') {
       llm = wrapSDK(
@@ -59,7 +61,7 @@ class LlmService {
           streaming: true, // Explicit streaming optimization
         })
       );
-    } else {
+    } else if (provider === 'openai') {
       llm = wrapSDK(
         new ChatOpenAI({
           apiKey: env.OPENAI_API_KEY,
@@ -69,6 +71,18 @@ class LlmService {
           streaming: true, // Explicit streaming optimization
         })
       );
+    } else if (provider === 'anthropic') {
+      llm = wrapSDK(
+        new ChatAnthropic({
+          apiKey: env.ANTHROPIC_API_KEY,
+          model: model || this.defaultAnthropicModel,
+          temperature,
+          maxTokens,
+          streaming: true, // Explicit streaming optimization
+        })
+      );
+    } else {
+      throw new Error(`Unsupported provider: ${provider}`);
     }
 
     // Bind tools if provided
@@ -122,6 +136,9 @@ class LlmService {
       openai: availableAIModels
         .filter((m) => m.provider === 'openai')
         .map((m) => m.modelId),
+      anthropic: availableAIModels
+        .filter((m) => m.provider === 'anthropic')
+        .map((m) => m.modelId),
     };
   }
 
@@ -153,6 +170,7 @@ class LlmService {
     return {
       groq: this.defaultGroqModel,
       openai: this.defaultOpenAIModel,
+      anthropic: this.defaultAnthropicModel,
     };
   }
 

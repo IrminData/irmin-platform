@@ -3,6 +3,27 @@ import type { NewAIModel } from '@/database';
 // TODO: Define maxContextTokens and maxOutputTokens for each model. This can then be used to validate model requests. Make sure this is used in LLM service and returned by the routes.
 
 export const availableAIModels: NewAIModel[] = [
+  // Anthropic Models
+  {
+    name: 'Claude Sonnet 4',
+    provider: 'anthropic',
+    modelId: 'claude-sonnet-4-20250514',
+    description:
+      'Anthropic Claude Sonnet 4: Optimal balance of intelligence, cost, and speed',
+    inputPricePerMillionTokens: 3,
+    outputPricePerMillionTokens: 15,
+    isActive: true,
+  },
+  {
+    name: 'Claude 3.5 Haiku latest',
+    provider: 'anthropic',
+    modelId: 'claude-3-5-haiku-latest',
+    description:
+      'Anthropic Claude 3.5 Haiku: fastest, most cost-effective model',
+    inputPricePerMillionTokens: 0.8,
+    outputPricePerMillionTokens: 4,
+    isActive: true,
+  },
   // OpenAI Models
   {
     name: 'GPT-5',
