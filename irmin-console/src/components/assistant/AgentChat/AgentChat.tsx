@@ -429,10 +429,15 @@ const AgentChat = ({
                           mainTextMessage.messageType || undefined
                         )}
 
-                        {/* Render agent graph metadata for the main message */}
+                        {/* Always render metadata, but MessageMetadata will handle tool call conflicts */}
                         <MessageMetadata
                           message={mainTextMessage}
                           agentId={agentId}
+                          hasStoredToolMessages={otherMessages.some(
+                            (m) =>
+                              m.messageType === 'tool_call' ||
+                              m.messageType === 'tool_result'
+                          )}
                         />
 
                         {mainTextMessage.role === 'assistant' &&

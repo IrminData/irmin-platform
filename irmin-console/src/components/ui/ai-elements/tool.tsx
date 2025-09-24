@@ -80,7 +80,9 @@ export const ToolHeader = ({
   >
     <div className='flex items-center gap-2'>
       <TbTools className='size-4 text-muted-foreground' />
-      <span className='text-sm font-medium'>{type}</span>
+      <span className='text-sm font-medium'>
+        {type.startsWith('tool-') ? type.slice(5) : type}
+      </span>
       {getStatusBadge(state)}
     </div>
     <TbChevronDown

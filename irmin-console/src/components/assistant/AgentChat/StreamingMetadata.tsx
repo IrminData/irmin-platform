@@ -73,7 +73,7 @@ export const StreamingMetadata = ({
                   defaultOpen={false}
                 >
                   <ToolHeader
-                    type={`tool-${part.toolCallId || 'unknown'}`}
+                    type={`tool-${part.toolName || part.toolCallId || 'unknown'}`}
                     state='output-available'
                   />
                   <ToolContent>

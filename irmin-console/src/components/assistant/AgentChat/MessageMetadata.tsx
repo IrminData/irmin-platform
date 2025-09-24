@@ -32,9 +32,13 @@ import {
 interface MessageMetadataProps {
   message: AIMessage;
   agentId: string;
+  hasStoredToolMessages?: boolean;
 }
 
-export const MessageMetadata = ({ message }: MessageMetadataProps) => {
+export const MessageMetadata = ({
+  message,
+  hasStoredToolMessages = false,
+}: MessageMetadataProps) => {
   const { dict } = useLocale();
 
   if (message.role !== 'assistant' || !message.metadata) {
@@ -43,74 +47,73 @@ export const MessageMetadata = ({ message }: MessageMetadataProps) => {
 
   return (
     <>
-      {/* Render tool calls if available */}
-      {((isStoredToolCallsArray(message.metadata.toolCalls) &&
-        message.metadata.toolCalls.length > 0) ||
-        (isServerToolEventsArray(message.metadata.toolCalls) &&
-          message.metadata.toolCalls.length > 0)) && (
-        <div className='mt-4 space-y-2'>
-          <div className='text-sm font-medium text-muted-foreground'>
-            {dict.assistant.toolCalls} ({message.metadata.toolCalls.length})
+      {/* Render tool calls if available and no stored tool messages exist */}
+      {!hasStoredToolMessages &&
+        ((isStoredToolCallsArray(message.metadata.toolCalls) &&
+          message.metadata.toolCalls.length > 0) ||
+          (isServerToolEventsArray(message.metadata.toolCalls) &&
+            message.metadata.toolCalls.length > 0)) && (
+          <div className='mt-4 space-y-2'>
+            <div className='text-sm font-medium text-muted-foreground'>
+              {dict.assistant.toolCalls} ({message.metadata.toolCalls.length})
+            </div>
+            {message.metadata.toolCalls.map((toolCall, index) => {
+              if (isStoredToolCall(toolCall)) {
+                return (
+                  <Tool
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={`tool-${message.id}-${toolCall.name}-${index}`}
+                    defaultOpen={false}
+                  >
+                    <ToolHeader
+                      type={`tool-${toolCall.name}`}
+                      state='output-available'
+                    />
+                    <ToolContent>
+                      {toolCall.args && <ToolInput input={toolCall.args} />}
+                      {toolCall.output && (
+                        <ToolOutput
+                          output={toolCall.output}
+                          errorText={undefined}
+                        />
+                      )}
+                    </ToolContent>
+                  </Tool>
+                );
+              }
+
+              if (isServerToolEvent(toolCall)) {
+                return (
+                  <Tool
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={`tool-${message.id}-${toolCall.toolCallId}-${index}`}
+                    defaultOpen={false}
+                  >
+                    <ToolHeader
+                      type={`tool-${toolCall.toolName || toolCall.toolCallId || 'unknown'}`}
+                      state={
+                        toolCall.type === 'tool-output-available'
+                          ? 'output-available'
+                          : 'input-available'
+                      }
+                    />
+                    <ToolContent>
+                      {toolCall.input && <ToolInput input={toolCall.input} />}
+                      {toolCall.output && (
+                        <ToolOutput
+                          output={toolCall.output}
+                          errorText={undefined}
+                        />
+                      )}
+                    </ToolContent>
+                  </Tool>
+                );
+              }
+
+              return null;
+            })}
           </div>
-          {message.metadata.toolCalls.map((toolCall, index) => {
-            if (isStoredToolCall(toolCall)) {
-              return (
-                <Tool
-                  // eslint-disable-next-line react/no-array-index-key
-                  key={`tool-${message.id}-${toolCall.name}-${index}`}
-                  defaultOpen={false}
-                >
-                  <ToolHeader
-                    type={`tool-${toolCall.name}` as `tool-${string}`}
-                    state='output-available'
-                  />
-                  <ToolContent>
-                    {toolCall.args && <ToolInput input={toolCall.args} />}
-                    {toolCall.output && (
-                      <ToolOutput
-                        output={toolCall.output}
-                        errorText={undefined}
-                      />
-                    )}
-                  </ToolContent>
-                </Tool>
-              );
-            }
-
-            if (isServerToolEvent(toolCall)) {
-              return (
-                <Tool
-                  // eslint-disable-next-line react/no-array-index-key
-                  key={`tool-${message.id}-${toolCall.toolCallId}-${index}`}
-                  defaultOpen={false}
-                >
-                  <ToolHeader
-                    type={
-                      `tool-${toolCall.toolName || toolCall.toolCallId || 'unknown'}` as `tool-${string}`
-                    }
-                    state={
-                      toolCall.type === 'tool-output-available'
-                        ? 'output-available'
-                        : 'input-available'
-                    }
-                  />
-                  <ToolContent>
-                    {toolCall.input && <ToolInput input={toolCall.input} />}
-                    {toolCall.output && (
-                      <ToolOutput
-                        output={toolCall.output}
-                        errorText={undefined}
-                      />
-                    )}
-                  </ToolContent>
-                </Tool>
-              );
-            }
-
-            return null;
-          })}
-        </div>
-      )}
+        )}
 
       {isThinkingStepsArray(message.metadata.thinkingSteps) &&
         message.metadata.thinkingSteps.length > 0 && (

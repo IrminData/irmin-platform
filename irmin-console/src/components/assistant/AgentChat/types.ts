@@ -24,6 +24,11 @@ interface ServerSystemEvent {
   content?: string;
 }
 
+interface ServerSourceEvent {
+  type: 'source';
+  content?: string;
+}
+
 interface ServerCompletionEvent {
   type: 'stream-complete';
 }
@@ -39,6 +44,7 @@ export type ServerStreamEvent =
   | ServerToolEvent
   | ServerReasoningEvent
   | ServerSystemEvent
+  | ServerSourceEvent
   | ServerCompletionEvent
   | ServerErrorEvent;
 

@@ -15,8 +15,6 @@ import { useLocale } from '@/context/LocaleContext';
 
 import type { AIMessage } from '@/types/ai/base';
 
-import type { StoredToolCall } from './types';
-
 /**
  * Repairs malformed JSON by properly counting braces outside of string values
  * and adding missing closing braces only when structurally valid
@@ -148,38 +146,7 @@ export const StoredMessageMetadata = ({
   if (message.metadata && Object.keys(message.metadata).length > 0) {
     return (
       <>
-        {/* Render tool calls if available in metadata */}
-        {message.metadata.toolCalls &&
-          Array.isArray(message.metadata.toolCalls) &&
-          message.metadata.toolCalls.length > 0 && (
-            <div className='mt-4 space-y-2'>
-              <div className='text-sm font-medium text-muted-foreground'>
-                {dict.assistant.toolCalls} ({message.metadata.toolCalls.length})
-              </div>
-              {message.metadata.toolCalls.map(
-                (toolCall: StoredToolCall, index: number) => (
-                  <Tool
-                    key={`tool-${message.id}-${toolCall.name || index}`}
-                    defaultOpen={false}
-                  >
-                    <ToolHeader
-                      type={`tool-${toolCall.name || 'unknown'}`}
-                      state='output-available'
-                    />
-                    <ToolContent>
-                      {toolCall.args && <ToolInput input={toolCall.args} />}
-                      {toolCall.output && (
-                        <ToolOutput
-                          output={toolCall.output}
-                          errorText={undefined}
-                        />
-                      )}
-                    </ToolContent>
-                  </Tool>
-                )
-              )}
-            </div>
-          )}
+        {/* Tool calls from metadata are handled by MessageMetadata component */}
 
         {/* Render thinking steps if available in metadata */}
         {message.metadata.thinkingSteps &&
