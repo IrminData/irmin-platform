@@ -10,6 +10,12 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
+  AI_API_SYSTEM_TOKEN: z
+    .string()
+    .min(
+      1,
+      'AI API system token is required; used to authenticate system level requests to the AI API'
+    ),
   DATABASE_URL: z.string().min(1, 'Database URL is required'),
   GROQ_API_KEY: z.string().min(1, 'Groq API key is required to run inference'),
   OPENAI_API_KEY: z

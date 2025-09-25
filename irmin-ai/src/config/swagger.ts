@@ -173,6 +173,46 @@ const usageSchema = {
   },
 } as const;
 
+// Vector Collection schema
+const vectorCollectionSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    description: { type: 'string', nullable: true },
+    vectorStoreUrl: { type: 'string' },
+    vectorStoreApiKey: { type: 'string', nullable: true },
+    embeddingModel: { type: 'string' },
+    embeddingDimensions: { type: 'number' },
+    workspaceSlug: { type: 'string' },
+    createdBy: { type: 'string' },
+    isActive: { type: 'boolean' },
+    metadata: { type: 'object' },
+    documentCount: { type: 'number' },
+    lastIndexedAt: { type: 'string', format: 'date-time', nullable: true },
+    createdAt: { type: 'string', format: 'date-time' },
+    updatedAt: { type: 'string', format: 'date-time' },
+  },
+} as const;
+
+// Document schema
+const documentSchema = {
+  type: 'object',
+  properties: {
+    pageContent: { type: 'string' },
+    metadata: { type: 'object' },
+  },
+} as const;
+
+// Vector search result schema
+const vectorSearchResultSchema = {
+  type: 'object',
+  properties: {
+    document: documentSchema,
+    score: { type: 'number' },
+  },
+} as const;
+
 export const swaggerSchemas = {
   // Chat endpoints
   chatRequest: {
@@ -720,6 +760,708 @@ export const swaggerSchemas = {
     response: {
       204: {
         description: 'Conversation deleted successfully',
+        type: 'null',
+      },
+    },
+  },
+
+  // Embedding Collection endpoints
+  listEmbeddingCollections: {
+    tags: ['Embeddings'],
+    summary: 'List embedding collections',
+    description:
+      'Retrieves a paginated list of embedding collections for the authenticated user within the selected workspace',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    querystring: {
+      type: 'object',
+      properties: {
+        page: {
+          type: 'string',
+          pattern: '^[1-9]\\d*$',
+          description: 'Page number (1-based)',
+          default: '1',
+        },
+        limit: {
+          type: 'string',
+          pattern: '^[1-9]\\d*$',
+          description: 'Number of items per page (max 100)',
+          default: '20',
+        },
+        activeOnly: {
+          type: 'string',
+          enum: ['true', 'false'],
+          description: 'Filter to show only active collections',
+          default: 'false',
+        },
+      },
+      additionalProperties: false,
+    },
+    response: {
+      200: {
+        description: 'Paginated list of embedding collections',
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: vectorCollectionSchema,
+          },
+          pagination: paginationSchema,
+        },
+      },
+    },
+  },
+
+  getEmbeddingCollection: {
+    tags: ['Embeddings'],
+    summary: 'Get embedding collection by ID',
+    description: 'Retrieves a specific embedding collection by its ID',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Collection ID',
+        },
+      },
+      required: ['id'],
+    },
+    response: {
+      200: {
+        description: 'Embedding collection details',
+        type: 'object',
+        properties: vectorCollectionSchema.properties,
+      },
+    },
+  },
+
+  createEmbeddingCollection: {
+    tags: ['Embeddings'],
+    summary: 'Create a new embedding collection',
+    description:
+      'Creates a new embedding collection for the authenticated user within the selected workspace',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    body: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 100,
+          description: 'Collection name (must be unique)',
+        },
+        description: {
+          type: 'string',
+          description: 'Collection description',
+        },
+        vectorStoreUrl: {
+          type: 'string',
+          description:
+            'Vector store URL (optional, uses default if not provided)',
+        },
+        embeddingModel: {
+          type: 'string',
+          description: 'Embedding model to use',
+          default: 'text-embedding-3-small',
+        },
+        embeddingDimensions: {
+          type: 'number',
+          minimum: 1,
+          description: 'Number of embedding dimensions',
+          default: 1536,
+        },
+        metadata: {
+          type: 'object',
+          description: 'Additional metadata for the collection',
+        },
+      },
+      required: ['name'],
+      additionalProperties: false,
+    },
+    response: {
+      201: {
+        description: 'Embedding collection created successfully',
+        type: 'object',
+        properties: vectorCollectionSchema.properties,
+      },
+    },
+  },
+
+  updateEmbeddingCollection: {
+    tags: ['Embeddings'],
+    summary: 'Update an embedding collection',
+    description: 'Updates a specific embedding collection by its ID',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+      },
+      required: ['id'],
+    },
+    body: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 100,
+          description: 'Collection name',
+        },
+        description: {
+          type: 'string',
+          description: 'Collection description',
+        },
+        vectorStoreUrl: {
+          type: 'string',
+          description: 'Vector store URL',
+        },
+        embeddingModel: {
+          type: 'string',
+          description: 'Embedding model to use',
+        },
+        embeddingDimensions: {
+          type: 'number',
+          minimum: 1,
+          description: 'Number of embedding dimensions',
+        },
+        isActive: {
+          type: 'boolean',
+          description: 'Whether the collection is active',
+        },
+        metadata: {
+          type: 'object',
+          description: 'Additional metadata for the collection',
+        },
+      },
+      additionalProperties: false,
+    },
+    response: {
+      200: {
+        description: 'Embedding collection updated successfully',
+        type: 'object',
+        properties: vectorCollectionSchema.properties,
+      },
+    },
+  },
+
+  deleteEmbeddingCollection: {
+    tags: ['Embeddings'],
+    summary: 'Delete an embedding collection',
+    description:
+      'Deletes a specific embedding collection by its ID (soft delete)',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+      },
+      required: ['id'],
+    },
+    response: {
+      204: {
+        description: 'Embedding collection deleted successfully',
+        type: 'null',
+      },
+    },
+  },
+
+  // Document indexing endpoints
+  indexDocuments: {
+    tags: ['Embeddings'],
+    summary: 'Index documents in a collection',
+    description:
+      'Adds documents to an embedding collection by creating embeddings and storing them in the vector store',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Collection ID',
+        },
+      },
+      required: ['id'],
+    },
+    body: {
+      type: 'object',
+      properties: {
+        documents: {
+          type: 'array',
+          items: documentSchema,
+          minItems: 1,
+          description: 'Array of documents to index',
+        },
+      },
+      required: ['documents'],
+      additionalProperties: false,
+    },
+    response: {
+      201: {
+        description: 'Documents indexed successfully',
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          documentCount: { type: 'number' },
+          collectionName: { type: 'string' },
+        },
+      },
+    },
+  },
+
+  // Search and retrieval endpoints
+  searchEmbeddings: {
+    tags: ['Embeddings'],
+    summary: 'Search embeddings in a collection',
+    description:
+      'Performs similarity search on documents in an embedding collection',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Collection ID',
+        },
+      },
+      required: ['id'],
+    },
+    body: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          minLength: 1,
+          description: 'Search query',
+        },
+        k: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          description: 'Number of results to return',
+          default: 5,
+        },
+        filter: {
+          type: 'object',
+          description: 'Metadata filters to apply',
+        },
+        scoreThreshold: {
+          type: 'number',
+          minimum: 0,
+          maximum: 1,
+          description: 'Minimum similarity score threshold',
+        },
+      },
+      required: ['query'],
+      additionalProperties: false,
+    },
+    response: {
+      200: {
+        description: 'Search results',
+        type: 'object',
+        properties: {
+          documents: {
+            type: 'array',
+            items: vectorSearchResultSchema,
+          },
+          query: { type: 'string' },
+          totalResults: { type: 'number' },
+          processingTime: { type: 'number' },
+        },
+      },
+    },
+  },
+
+  retrieveContext: {
+    tags: ['Embeddings'],
+    summary: 'Retrieve context for generation',
+    description:
+      'Retrieves relevant context from an embedding collection for use in AI generation',
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Collection ID',
+        },
+      },
+      required: ['id'],
+    },
+    body: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          minLength: 1,
+          description: 'Query to retrieve context for',
+        },
+        maxDocuments: {
+          type: 'number',
+          minimum: 1,
+          maximum: 50,
+          description: 'Maximum number of documents to retrieve',
+          default: 5,
+        },
+        scoreThreshold: {
+          type: 'number',
+          minimum: 0,
+          maximum: 1,
+          description: 'Minimum similarity score threshold',
+          default: 0.0,
+        },
+        includeMetadata: {
+          type: 'boolean',
+          description: 'Whether to include metadata in the context',
+          default: false,
+        },
+        maxTokens: {
+          type: 'number',
+          minimum: 1,
+          maximum: 10000,
+          description: 'Maximum number of tokens in the context',
+          default: 4000,
+        },
+      },
+      required: ['query'],
+      additionalProperties: false,
+    },
+    response: {
+      200: {
+        description: 'Retrieved context',
+        type: 'object',
+        properties: {
+          context: { type: 'string' },
+          sources: {
+            type: 'array',
+            items: documentSchema,
+          },
+          totalTokens: { type: 'number' },
+        },
+      },
+    },
+  },
+
+  // Embedding creation endpoints
+  createEmbedding: {
+    tags: ['Embeddings'],
+    summary: 'Create a single embedding using collection model',
+    description:
+      "Creates an embedding for a single text input using the specified collection's embedding model",
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Collection ID',
+        },
+      },
+      required: ['id'],
+    },
+    body: {
+      type: 'object',
+      properties: {
+        text: {
+          type: 'string',
+          minLength: 1,
+          description: 'Text to create embedding for',
+        },
+        metadata: {
+          type: 'object',
+          description: 'Additional metadata',
+        },
+      },
+      required: ['text'],
+      additionalProperties: false,
+    },
+    response: {
+      201: {
+        description: 'Embedding created successfully',
+        type: 'object',
+        properties: {
+          embedding: {
+            type: 'array',
+            items: { type: 'number' },
+          },
+          text: { type: 'string' },
+          metadata: { type: 'object' },
+          dimensions: { type: 'number' },
+          collectionId: { type: 'string' },
+          embeddingModel: { type: 'string' },
+        },
+      },
+    },
+  },
+
+  createEmbeddings: {
+    tags: ['Embeddings'],
+    summary: 'Create multiple embeddings using collection model',
+    description:
+      "Creates embeddings for multiple text inputs using the specified collection's embedding model",
+    security: [{ bearerAuth: [], workspaceHeader: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Collection ID',
+        },
+      },
+      required: ['id'],
+    },
+    body: {
+      type: 'object',
+      properties: {
+        texts: {
+          type: 'array',
+          items: {
+            type: 'string',
+            minLength: 1,
+          },
+          minItems: 1,
+          description: 'Array of texts to create embeddings for',
+        },
+        metadata: {
+          type: 'object',
+          description: 'Additional metadata',
+        },
+      },
+      required: ['texts'],
+      additionalProperties: false,
+    },
+    response: {
+      201: {
+        description: 'Embeddings created successfully',
+        type: 'object',
+        properties: {
+          embeddings: {
+            type: 'array',
+            items: {
+              type: 'array',
+              items: { type: 'number' },
+            },
+          },
+          texts: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          metadata: { type: 'object' },
+          count: { type: 'number' },
+          dimensions: { type: 'number' },
+          collectionId: { type: 'string' },
+          embeddingModel: { type: 'string' },
+        },
+      },
+    },
+  },
+
+  // System Embedding Collection endpoints (for AI_API_SYSTEM_TOKEN)
+  systemListEmbeddingCollections: {
+    tags: ['System Embeddings'],
+    summary: 'List all embedding collections (System Access)',
+    description:
+      'Retrieves a paginated list of all embedding collections across all workspaces. Requires system token authentication.',
+    security: [{ bearerAuth: [] }],
+    querystring: {
+      type: 'object',
+      properties: {
+        page: {
+          type: 'string',
+          pattern: '^[1-9]\\d*$',
+          description: 'Page number (1-based)',
+          default: '1',
+        },
+        limit: {
+          type: 'string',
+          pattern: '^[1-9]\\d*$',
+          description: 'Number of items per page (max 100)',
+          default: '20',
+        },
+        activeOnly: {
+          type: 'string',
+          enum: ['true', 'false'],
+          description: 'Filter to show only active collections',
+          default: 'false',
+        },
+        workspaceSlug: {
+          type: 'string',
+          description: 'Filter collections by workspace slug (optional)',
+        },
+      },
+      additionalProperties: false,
+    },
+    response: {
+      200: {
+        description: 'Paginated list of all embedding collections',
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: vectorCollectionSchema,
+          },
+          pagination: paginationSchema,
+        },
+      },
+    },
+  },
+
+  systemGetEmbeddingCollection: {
+    tags: ['System Embeddings'],
+    summary: 'Get embedding collection by ID (System Access)',
+    description:
+      'Retrieves any embedding collection by its ID. Requires system token authentication.',
+    security: [{ bearerAuth: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Collection ID',
+        },
+      },
+      required: ['id'],
+    },
+    response: {
+      200: {
+        description: 'Embedding collection details',
+        type: 'object',
+        properties: vectorCollectionSchema.properties,
+      },
+    },
+  },
+
+  systemCreateEmbeddingCollection: {
+    tags: ['System Embeddings'],
+    summary: 'Create a new embedding collection (System Access)',
+    description:
+      'Creates a new embedding collection. Can create system collections without workspace association. Requires system token authentication.',
+    security: [{ bearerAuth: [] }],
+    body: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 100,
+          description: 'Collection name (must be unique)',
+        },
+        description: {
+          type: 'string',
+          description: 'Collection description',
+        },
+        vectorStoreUrl: {
+          type: 'string',
+          description:
+            'Vector store URL (optional, uses default if not provided)',
+        },
+        embeddingModel: {
+          type: 'string',
+          description: 'Embedding model to use',
+          default: 'text-embedding-3-small',
+        },
+        embeddingDimensions: {
+          type: 'number',
+          minimum: 1,
+          description: 'Number of embedding dimensions',
+          default: 1536,
+        },
+        workspaceSlug: {
+          type: 'string',
+          description: 'Workspace slug (optional for system collections)',
+        },
+        metadata: {
+          type: 'object',
+          description: 'Additional metadata for the collection',
+        },
+      },
+      required: ['name'],
+      additionalProperties: false,
+    },
+    response: {
+      201: {
+        description: 'Embedding collection created successfully',
+        type: 'object',
+        properties: vectorCollectionSchema.properties,
+      },
+    },
+  },
+
+  systemUpdateEmbeddingCollection: {
+    tags: ['System Embeddings'],
+    summary: 'Update an embedding collection (System Access)',
+    description:
+      'Updates any embedding collection by its ID. Requires system token authentication.',
+    security: [{ bearerAuth: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+      },
+      required: ['id'],
+    },
+    body: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 100,
+          description: 'Collection name',
+        },
+        description: {
+          type: 'string',
+          description: 'Collection description',
+        },
+        vectorStoreUrl: {
+          type: 'string',
+          description: 'Vector store URL',
+        },
+        embeddingModel: {
+          type: 'string',
+          description: 'Embedding model to use',
+        },
+        embeddingDimensions: {
+          type: 'number',
+          minimum: 1,
+          description: 'Number of embedding dimensions',
+        },
+        isActive: {
+          type: 'boolean',
+          description: 'Whether the collection is active',
+        },
+        metadata: {
+          type: 'object',
+          description: 'Additional metadata for the collection',
+        },
+      },
+      additionalProperties: false,
+    },
+    response: {
+      200: {
+        description: 'Embedding collection updated successfully',
+        type: 'object',
+        properties: vectorCollectionSchema.properties,
+      },
+    },
+  },
+
+  systemDeleteEmbeddingCollection: {
+    tags: ['System Embeddings'],
+    summary: 'Delete an embedding collection (System Access)',
+    description:
+      'Deletes any embedding collection by its ID (soft delete). Requires system token authentication.',
+    security: [{ bearerAuth: [] }],
+    params: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+      },
+      required: ['id'],
+    },
+    response: {
+      204: {
+        description: 'Embedding collection deleted successfully',
         type: 'null',
       },
     },

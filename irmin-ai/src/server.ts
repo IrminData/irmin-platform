@@ -10,12 +10,15 @@ import Fastify from 'fastify';
 import { analyticsService } from '@/services/analytics';
 
 import { authMiddlewareOnRequestHook } from '@/middleware/auth';
+import { systemAuthMiddlewareOnRequestHook } from '@/middleware/systemAuth';
 import { workspaceMiddlewareOnRequestHook } from '@/middleware/workspace';
 
 import { agentRoutes } from '@/routes/agents';
 import { chatRoutes } from '@/routes/chat';
 import { conversationRoutes } from '@/routes/conversations';
+import { embeddingRoutes } from '@/routes/embeddings';
 import { infoRoutes } from '@/routes/info';
+import { systemEmbeddingRoutes } from '@/routes/systemEmbeddings';
 
 import { env } from '@/config/env';
 import { seedDefaultModels } from '@/config/models';
@@ -163,10 +166,13 @@ server.get('/health', async () => {
   };
 });
 
-// Add authentication hook for /api routes
+// Add system authentication hook for /api/system routes
+server.addHook('onRequest', systemAuthMiddlewareOnRequestHook);
+
+// Add authentication hook for /api routes (excluding system routes)
 server.addHook('onRequest', authMiddlewareOnRequestHook);
 
-// Add workspace selection hook for /api routes (runs after auth)
+// Add workspace selection hook for /api routes (runs after auth, excluding system routes)
 server.addHook('onRequest', workspaceMiddlewareOnRequestHook);
 
 // Register API routes
@@ -175,7 +181,9 @@ server.register(
     await fastify.register(chatRoutes);
     await fastify.register(conversationRoutes);
     await fastify.register(agentRoutes);
+    await fastify.register(embeddingRoutes);
     await fastify.register(infoRoutes);
+    await fastify.register(systemEmbeddingRoutes);
   },
   { prefix: '/api' }
 );

@@ -37,5 +37,6 @@ declare module 'fastify' {
   interface FastifyRequest {
     auth?: AuthenticatedUser;
     workspace?: SelectedWorkspace;
+    systemAuth?: boolean;
   }
 }

@@ -241,6 +241,127 @@ class AnalyticsService {
       return [];
     }
   }
+
+  /**
+   * Log vector indexing operations
+   */
+  async logVectorIndexing(
+    operation:
+      | 'vector_store_connected'
+      | 'vector_store_created'
+      | 'vector_store_updated'
+      | 'vector_store_deleted'
+      | 'documents_indexed'
+      | 'embeddings_created'
+      | 'embedding_created',
+    eventData: {
+      collectionName?: string;
+      url?: string;
+      documentCount?: number;
+      textCount?: number;
+      textLength?: number;
+      embeddingDimensions?: number;
+      isNewCollection?: boolean;
+    }
+  ): Promise<void> {
+    try {
+      const analyticsEvent: NewAnalytics = {
+        id: randomUUID(),
+        eventType: 'vector_operation',
+        eventData: {
+          operation,
+          ...eventData,
+          timestamp: new Date().toISOString(),
+        },
+        createdAt: new Date(),
+      };
+
+      await db.insert(analytics).values(analyticsEvent);
+    } catch (error) {
+      console.error(
+        `Failed to log vector indexing operation ${operation}:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Log vector retrieval operations
+   */
+  async logVectorRetrieval(
+    operation:
+      | 'similarity_search'
+      | 'retrieval_with_analysis'
+      | 'context_retrieved'
+      | 'multi_query_retrieval'
+      | 'compressed_retrieval',
+    eventData: {
+      query?: string;
+      resultCount?: number;
+      processingTimeMs?: number;
+      collectionName?: string;
+      k?: number;
+      hasFilter?: boolean;
+      hasFilters?: boolean;
+      scoreThreshold?: number;
+      contextWindow?: number;
+      sourcesCount?: number;
+      estimatedTokens?: number;
+      queryCount?: number;
+      totalResults?: number;
+      originalCount?: number;
+      compressedCount?: number;
+      compressionThreshold?: number;
+      maxChunkSize?: number;
+    }
+  ): Promise<void> {
+    try {
+      const analyticsEvent: NewAnalytics = {
+        id: randomUUID(),
+        eventType: 'vector_operation',
+        eventData: {
+          operation,
+          ...eventData,
+          timestamp: new Date().toISOString(),
+        },
+        createdAt: new Date(),
+      };
+
+      await db.insert(analytics).values(analyticsEvent);
+    } catch (error) {
+      console.error(
+        `Failed to log vector retrieval operation ${operation}:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Log vector errors
+   */
+  async logVectorError(
+    operation: string,
+    errorMessage: string,
+    context?: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      const analyticsEvent: NewAnalytics = {
+        id: randomUUID(),
+        eventType: 'error_occurred',
+        eventData: {
+          originalEventType: `vector_${operation}`,
+          errorMessage,
+          context,
+          timestamp: new Date().toISOString(),
+        },
+        createdAt: new Date(),
+      };
+
+      await db.insert(analytics).values(analyticsEvent);
+    } catch (error) {
+      console.error(`Failed to log vector error for ${operation}:`, error);
+    }
+  }
 }
 
 // Export singleton instance

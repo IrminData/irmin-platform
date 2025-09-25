@@ -148,6 +148,45 @@ export const analytics = pgTable('analytics', {
     .defaultNow(),
 });
 
+export const vectorCollections = pgTable('vector_collections', {
+  id: text('id').primaryKey(),
+
+  // Collection identification
+  name: text('name').notNull().unique(),
+  description: text('description'),
+
+  // Vector store configuration
+  vectorStoreUrl: text('vector_store_url').notNull(),
+  vectorStoreApiKey: text('vector_store_api_key'),
+
+  // Collection metadata
+  embeddingModel: text('embedding_model')
+    .notNull()
+    .default('text-embedding-3-small'),
+  embeddingDimensions: integer('embedding_dimensions').notNull().default(1536),
+
+  // Access control and organization
+  workspaceSlug: text('workspace_slug'), // Nullable for system collections
+  createdBy: text('created_by'), // Nullable for system collections
+  isSystemCollection: boolean('is_system_collection').default(false), // Flag for system collections
+
+  // Collection status and metadata
+  isActive: boolean('is_active').default(true),
+  metadata: jsonb('metadata').default({}),
+
+  // Statistics
+  documentCount: integer('document_count').default(0),
+  lastIndexedAt: timestamp('last_indexed_at', { withTimezone: true }),
+
+  // Timestamps
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // Export types
 export type Conversation = typeof conversations.$inferSelect;
 export type NewConversation = typeof conversations.$inferInsert;
@@ -160,3 +199,6 @@ export type NewAIModel = typeof aiModels.$inferInsert;
 
 export type Analytics = typeof analytics.$inferSelect;
 export type NewAnalytics = typeof analytics.$inferInsert;
+
+export type VectorCollection = typeof vectorCollections.$inferSelect;
+export type NewVectorCollection = typeof vectorCollections.$inferInsert;

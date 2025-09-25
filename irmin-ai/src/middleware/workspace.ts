@@ -134,8 +134,11 @@ export const workspaceMiddlewareOnRequestHook = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
-  // Only apply workspace middleware to /api routes
-  if (request.url.startsWith('/api/')) {
+  // Only apply workspace middleware to /api routes (excluding system routes)
+  if (
+    request.url.startsWith('/api/') &&
+    !request.url.startsWith('/api/system/')
+  ) {
     return new Promise<void>((resolve) => {
       const req = request.raw as IncomingMessage & {
         auth?: AuthenticatedUser;
