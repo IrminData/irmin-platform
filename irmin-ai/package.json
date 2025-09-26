@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "build": "pnpm typecheck && pnpm lint:fix && tsup && pnpm sentry:sourcemaps",
+    "build": "pnpm typecheck && pnpm lint:fix && tsup",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "validate": "pnpm typecheck && pnpm lint:fix",

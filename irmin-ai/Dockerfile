@@ -1,31 +1,55 @@
- # ---- Base Image ----
+# syntax=docker/dockerfile:1.7
+
 FROM node:22-alpine AS base
 WORKDIR /app
 RUN corepack enable
-ENV NODE_ENV=production
-ENV NODE_OPTIONS=--max-old-space-size=8192
 
-# ---- Builder Stage ----
-FROM base AS builder
-WORKDIR /app
-RUN apk add --no-cache libc6-compat
+# ---------- deps ----------
+FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm build
 
-# ---- Runner Stage ----
-FROM base AS runner
+# ---------- build ----------
+FROM base AS build
+COPY --from=deps /app/node_modules /app/node_modules
+COPY . .
+# Compile TypeScript and bundle to ./dist (no Sentry here)
+RUN pnpm run build
+
+# ---------- runner ----------
+FROM node:22-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production
+
+# Enable corepack for pnpm
+RUN corepack enable
 
 # Create non-root user
-RUN addgroup --system app && adduser --system --ingroup app app
-USER app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-# If you need Drizzle migrations at runtime, copy migrations:
-COPY --from=builder /app/src/database ./src/database
+# Set memory limit for Node.js
+ENV NODE_OPTIONS="--max-old-space-size=8192"
 
+# App files
+COPY --from=build /app/dist /app/dist
+COPY --from=build /app/src/database /app/src/database
+COPY package.json pnpm-lock.yaml ./
+COPY --from=deps /app/node_modules /app/node_modules
+
+# Change ownership to non-root user
+RUN chown -R nextjs:nodejs /app
+USER nextjs
+
+# Non-secret Sentry config; token comes from Railway at runtime
+ENV SENTRY_ORG=irmin-dw
+ENV SENTRY_PROJECT=irmin-ai
+
+# Fastify will bind to HOST/PORT from env; Railway sets PORT
 EXPOSE 3000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0.1:3000/health || exit 1
+
+# Start the Fastify server (Sentry SDK will handle sourcemap uploads automatically)
 CMD ["node", "dist/server.js"]
