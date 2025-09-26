@@ -15,6 +15,8 @@ LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with st
 - **Automatic conversation title generation** using AI for better organization
 - **Workspace-based conversation management** with user isolation and access control
 - **Token tracking** and cost analytics
+- **RAG (Retrieval Augmented Generation)** with vector embeddings and similarity search
+- **Document vectorization** for both remote URLs and local LLM documentation files
 
 ## Monitoring and Observability
 
@@ -58,7 +60,7 @@ open http://localhost:3000/docs
 - 📊 **Interactive API Explorer** - Test all endpoints directly from the browser
 - 🔐 **Authentication Support** - Built-in JWT and workspace header authentication
 - 📝 **Complete Schema Documentation** - All request/response schemas with examples
-- 🏷️ **Organized by Tags** - Endpoints grouped by Chat, Conversations, Agents, and Info
+- 🏷️ **Organized by Tags** - Endpoints grouped by Chat, Conversations, Agents, Embeddings, System Scripts, and Info
 - ⚡ **Real-time Testing** - Test streaming responses and file uploads
 
 **Using Authentication in Swagger:**
@@ -72,6 +74,9 @@ open http://localhost:3000/docs
 - **Conversations** (`/api/conversations`) - Manage conversation history and messages
 - **Agents** (`/api/agents`) - Execute specialized AI agents for specific tasks with **LangGraph-powered workflows**
 - **Info** (`/api/info`) - Get user profile, workspace info, available models, and MCP tools
+- **Embeddings** (`/api/embeddings`) - Vector store management, document indexing, and similarity search
+- **Embeddings** (`/api/system/embeddings`) **system** - Administrative operations for vector store management, document indexing, and similarity search
+- **Scripts** (`/api/system/scripts`) **system** - Execute system maintenance scripts like document vectorization
 
 **OpenAPI Specification:**
 - JSON: `http://localhost:3000/docs/json`
@@ -161,72 +166,39 @@ pnpm run db:studio # Open database studio
 pnpm run clean # Clean build files
 ```
 
+## System Scripts
+
+The Irmin AI service includes a system scripts framework for automated tasks and maintenance operations. Scripts are simple, executable functions with hardcoded configurations that can be run manually or scheduled for future automation.
+
+**Available Scripts:**
+- **Vectorize Docs Script** - Automatically fetches and vectorizes documentation from URLs and local files into vector collections
+
+See [Scripts Documentation](src/scripts/README.md) for detailed information about available scripts and usage examples.
+
+### Scripts Concept
+
+**Purpose**: System scripts provide a way to perform routine maintenance, data processing, and automated tasks without requiring complex configuration or user interaction.
+
+**Key Principles**:
+- **Zero Configuration**: Scripts use hardcoded, sensible defaults
+- **Simple Execution**: Can be run via API endpoints, CLI commands, or programmatically
+- **Self-Contained**: Each script handles its own error handling, logging, and analytics
+- **Future-Ready**: Designed to be easily scheduled or automated in the future
+
+### Usage
+
+Scripts can be executed in multiple ways:
+
+1. **API Endpoints** - System-level endpoints for programmatic execution
+2. **Package Scripts** - CLI commands via `pnpm script:name`
+3. **Direct Import** - Import and execute programmatically in your code
+
 ## API Testing
 
-The project includes comprehensive API test utilities located in `src/tests/`. These tests cover all major endpoints including chat, agents, and conversation flows.
+The project includes comprehensive API test utilities located in `src/tests/`. These tests cover all major endpoints including chat, agents, conversation flows, and document vectorization.
 
-### Setup
+> For detailed test documentation see [src/tests/README.md](src/tests/README.md)
 
-1. **Environment Configuration**: Add your test credentials to the environment:
-
-```bash
-# Add to your .env file
-TEST_IRMIN_AUTH_TOKEN=your_test_token_here
-TEST_WORKSPACE_SLUG=your-workspace-slug
-IRMIN_API_BASE_URL=http://localhost:3000  # or your API URL
-```
-
-2. **Server Running**: Make sure the Irmin AI server is running on the configured port and that it has access to the Irmin API with MCP.
-
-### Test Utilities
-
-#### Comprehensive Test Suite (`src/tests/comprehensive.test.ts`)
-
-Runs a complete test suite covering all API endpoints with proper conversation management and cleanup:
-
-```bash
-npx tsx src/tests/comprehensive.test.ts
-```
-
-**Step-by-Step Test Flow:**
-
-1. **Agent Management Tests**
-   - **Agent Listing**: Tests `GET /api/agents` to retrieve available agents
-   - **Agent Configuration**: Tests `GET /api/agents/:id/config` to get agent settings and capabilities
-
-2. **Chat Endpoint Tests**
-   - **Non-Streaming Chat**: 
-     - Creates a test conversation
-     - Sends: `"Hello! Can you tell me about Irmin?"` (generic question, no tool calls)
-     - Tests `POST /api/chat` endpoint
-     - Validates response structure and message content
-   - **Streaming Chat**:
-     - Uses the same conversation from non-streaming test
-     - Sends: `"What are the main features of Irmin?"` (generic question, no tool calls)
-     - Tests streaming response handling
-     - Processes and validates stream chunks
-
-3. **Agent Execution Tests**
-   - **Agent Execution**:
-     - Creates a new test conversation
-     - Sends: `"Help me understand how to use Irmin for data management"` (likely triggers tool calls)
-     - Tests `POST /api/agents/:id` with a specific agent
-     - Validates agent response content and structure
-     - Cleans up the test conversation
-   - **Agent Streaming**:
-     - Creates another test conversation
-     - Sends: `"Show me how to create a repository in Irmin"` (likely triggers tool calls)
-     - Tests `POST /api/agents/:id/stream` for streaming agent responses
-     - Processes streaming data and validates chunks
-     - Cleans up the test conversation
-
-4. **Conversation Flow Test**
-   - Creates a test conversation
-   - Sends: `"I want to learn about Irmin data versioning"` (generic question, no tool calls)
-   - Sends: `"Can you show me how to create a branch?"` (likely triggers tool calls)
-   - Validates conversation continuity and message threading
-   - Cleans up the test conversation
-   
 ## Services
 
 ### LLM Service
@@ -254,51 +226,6 @@ See [analytics.ts](src/services/analytics.ts) for more details.
 
 The Analytics Service provides comprehensive analytics tracking for the Irmin AI application, covering user interactions, performance metrics, error tracking, and system events.
 
-### Vector Service
-
-The Vector Service provides vector embeddings and similarity search capabilities using [Qdrant](https://qdrant.tech/documentation/quickstart/) and LangChain. It supports document storage, retrieval, and semantic search with OpenAI embeddings.
-
-**Qdrant Setup:**
-- **Docker Image**: Run Qdrant locally using `docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant`
-- **Web UI**: Access the Qdrant dashboard at `http://localhost:6333/dashboard`
-- **API Key**: Configure authentication by setting `QDRANT__SERVICE__API_KEY` environment variable
-- **Documentation**: See [Qdrant Quickstart Guide](https://qdrant.tech/documentation/quickstart/) for detailed setup instructions
-
-**Key Features:**
-- **Vector Store Management**: Create and manage Qdrant vector collections
-- **Document Operations**: Add documents with metadata to vector stores
-- **Similarity Search**: Search with filters, score thresholds, and custom parameters
-- **Embedding Creation**: Generate embeddings for single texts or batches using OpenAI's `text-embedding-3-small` model
-- **Analytics Integration**: Track all vector operations for monitoring and debugging
-- **Type Safety**: Full Zod validation and TypeScript types
-
-**Usage Example:**
-```typescript
-import { vectorService } from '@/services/vector';
-
-// Create a vector store
-const vectorStore = await vectorService.createNewVectorStore({
-  collectionName: 'my-documents',
-  url: process.env.QDRANT_URL,
-});
-
-// Add documents
-await vectorService.addDocuments(vectorStore, [
-  {
-    pageContent: 'Your document content here',
-    metadata: { source: 'document.pdf', topic: 'ai' }
-  }
-]);
-
-// Search for similar documents
-const results = await vectorService.searchSimilar(vectorStore, {
-  query: 'search query',
-  k: 5,
-  scoreThreshold: 0.8
-});
-```
-
-See [vector.ts](src/services/vector.ts) for more details.
 
 ### SystemPromptBuilder Service
 
@@ -371,6 +298,45 @@ The service automatically:
 - Logs analytics events for monitoring and debugging
 
 See [titleGeneration.ts](src/services/titleGeneration.ts) for more details.
+
+
+## Vector Embeddings and RAG
+
+The Irmin AI service includes a comprehensive RAG (Retrieval Augmented Generation) implementation using vector embeddings and similarity search. This system enables AI agents to access relevant documentation and context for more accurate responses.
+
+**Key Features:**
+- **Document Vectorization**: Process both remote URLs and local LLM documentation files (`llm-docs/*.md` files)
+- **Vector Store Management**: Create and manage Qdrant vector collections with automatic chunking
+- **Similarity Search**: Find relevant documents using OpenAI embeddings and vector similarity
+- **Context Retrieval**: Prepare retrieved content for LLM generation with token limits
+- **REST API**: Complete API endpoints for collection management, document indexing, and search operations
+
+**Setup:**
+- **Qdrant**: Run locally with `docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant`
+- **Web UI**: Access dashboard at `http://localhost:6333/dashboard`
+- **Environment**: Set `QDRANT_URL` and `OPENAI_API_KEY` environment variables
+
+See [Vector Services Documentation](src/vector/README.md) for detailed RAG implementation guide and API usage examples.
+
+### Embeddings API
+
+The Embeddings API provides REST endpoints for vector store management, document indexing, and similarity search operations. It includes both user-scoped endpoints (`/api/embeddings`) and system-level endpoints (`/api/system/embeddings`) for administrative operations.
+
+**Key Features:**
+- **Collection Management**: Create, update, and delete vector collections
+- **Document Indexing**: Add documents to collections with automatic chunking and embedding
+- **Similarity Search**: Search for relevant documents using vector similarity
+- **Context Retrieval**: Prepare retrieved content for LLM generation
+- **Embedding Generation**: Create embeddings using collection-specific models
+
+**API Endpoints:**
+- **Collections** (`/api/embeddings/collections`) - CRUD operations for vector collections
+- **Documents** (`/api/embeddings/collections/:id/documents`) - Index documents in collections
+- **Search** (`/api/embeddings/collections/:id/search`) - Similarity search within collections
+- **Context** (`/api/embeddings/collections/:id/retrieve-context`) - Retrieve context for generation
+- **System Endpoints** (`/api/system/embeddings/*`) - Administrative operations
+
+See [Vector Services Documentation](src/vector/README.md) for detailed RAG implementation guide.
 
 ## Agents
 

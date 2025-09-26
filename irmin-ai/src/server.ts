@@ -19,6 +19,7 @@ import { conversationRoutes } from '@/routes/conversations';
 import { embeddingRoutes } from '@/routes/embeddings';
 import { infoRoutes } from '@/routes/info';
 import { systemEmbeddingRoutes } from '@/routes/systemEmbeddings';
+import { systemScriptRoutes } from '@/routes/systemScripts';
 
 import { env } from '@/config/env';
 import { seedDefaultModels } from '@/config/models';
@@ -184,6 +185,7 @@ server.register(
     await fastify.register(embeddingRoutes);
     await fastify.register(infoRoutes);
     await fastify.register(systemEmbeddingRoutes);
+    await fastify.register(systemScriptRoutes);
   },
   { prefix: '/api' }
 );

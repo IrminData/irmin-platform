@@ -1466,4 +1466,46 @@ export const swaggerSchemas = {
       },
     },
   },
+
+  // System Script endpoints
+  systemVectorizeDocsScript: {
+    tags: ['System Scripts'],
+    summary: 'Execute vectorize docs script',
+    description:
+      'Execute vectorize docs script to fetch and index documentation from URLs. Uses default configuration with hardcoded URLs.',
+    security: [{ bearerAuth: [] }],
+    response: {
+      200: {
+        description: 'Script execution result',
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          message: { type: 'string' },
+          data: {
+            type: 'object',
+            properties: {
+              collectionId: { type: 'string' },
+              documentsProcessed: { type: 'number' },
+              chunksCreated: { type: 'number' },
+              urlsProcessed: { type: 'number' },
+            },
+          },
+          error: { type: 'string' },
+          executionTime: { type: 'number' },
+          timestamp: { type: 'string' },
+        },
+      },
+      500: {
+        description: 'Script execution failed',
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          message: { type: 'string' },
+          error: { type: 'string' },
+          executionTime: { type: 'number' },
+          timestamp: { type: 'string' },
+        },
+      },
+    },
+  },
 } as const;

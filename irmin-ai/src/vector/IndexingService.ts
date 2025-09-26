@@ -327,6 +327,257 @@ class IndexingService {
   }
 
   /**
+   * Delete all documents from a vector store collection
+   */
+  async deleteAllDocuments(
+    vectorStore: QdrantVectorStore,
+    collectionName?: string
+  ): Promise<{ success: boolean; deletedCount: number; errors: string[] }> {
+    try {
+      const errors: string[] = [];
+      let deletedCount = 0;
+
+      const finalCollectionName = collectionName || this.defaultCollectionName;
+
+      // Get the current document count before deletion
+      const collection =
+        await collectionService.getCollectionByName(finalCollectionName);
+      const initialCount = collection?.documentCount || 0;
+
+      // Delete all points from the collection using an empty filter (matches all)
+      await vectorStore.client.delete(finalCollectionName, {
+        filter: {}, // Empty filter matches all points
+      });
+
+      // Since we deleted all documents, set the count to 0
+      if (collection) {
+        await collectionService.updateCollectionStats(collection.id, {
+          documentCount: 0,
+          lastIndexedAt: new Date(),
+        });
+      }
+
+      deletedCount = initialCount;
+
+      // Log vector operation
+      await analyticsService.logVectorIndexing('documents_deleted', {
+        documentCount: deletedCount,
+        collectionName: finalCollectionName,
+        errorCount: errors.length,
+      });
+
+      return {
+        success: true,
+        deletedCount,
+        errors,
+      };
+    } catch (error) {
+      await analyticsService.logVectorError(
+        'documents_deletion',
+        error instanceof Error ? error.message : 'Unknown error',
+        { collectionName: collectionName || this.defaultCollectionName }
+      );
+      throw new Error(
+        `Failed to delete all documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Delete specific chunks from a vector store by chunk IDs
+   */
+  async deleteSpecificChunks(
+    vectorStore: QdrantVectorStore,
+    chunkIds: string[],
+    collectionName?: string
+  ): Promise<{ success: boolean; deletedCount: number; errors: string[] }> {
+    try {
+      const errors: string[] = [];
+      let deletedCount = 0;
+
+      // Delete each chunk by its specific documentId
+      for (const chunkId of chunkIds) {
+        try {
+          await vectorStore.client.delete(
+            collectionName || this.defaultCollectionName,
+            {
+              filter: {
+                must: [
+                  {
+                    key: 'metadata.documentId',
+                    match: { value: chunkId },
+                  },
+                ],
+              },
+            }
+          );
+          deletedCount++;
+        } catch (error) {
+          const errorMessage = `Failed to delete chunk ${chunkId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          errors.push(errorMessage);
+          console.warn(errorMessage);
+        }
+      }
+
+      // Update collection statistics in database
+      const finalCollectionName = collectionName || this.defaultCollectionName;
+      const collection =
+        await collectionService.getCollectionByName(finalCollectionName);
+      if (collection && deletedCount > 0) {
+        await collectionService.decrementDocumentCount(
+          collection.id,
+          deletedCount
+        );
+      }
+
+      // Log vector operation
+      await analyticsService.logVectorIndexing('documents_deleted', {
+        documentCount: deletedCount,
+        collectionName: finalCollectionName,
+        errorCount: errors.length,
+      });
+
+      return {
+        success: errors.length === 0,
+        deletedCount,
+        errors,
+      };
+    } catch (error) {
+      await analyticsService.logVectorError(
+        'documents_deletion',
+        error instanceof Error ? error.message : 'Unknown error',
+        { documentCount: chunkIds.length }
+      );
+      throw new Error(
+        `Failed to delete specific chunks: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Delete documents from a vector store by document IDs
+   */
+  async deleteDocuments(
+    vectorStore: QdrantVectorStore,
+    documentIds: string[],
+    collectionName?: string
+  ): Promise<{ success: boolean; deletedCount: number; errors: string[] }> {
+    try {
+      const errors: string[] = [];
+      let deletedCount = 0;
+
+      // First, get all chunk document IDs that need to be deleted
+      const allChunkIds: string[] = [];
+      for (const baseDocId of documentIds) {
+        try {
+          // Get all points that match this base document ID using range filter for prefix matching
+          // Since chunk IDs are formatted as baseDocId-chunk-N, we need to use a range filter
+          // to match all strings that start with the base document ID
+          const points = await vectorStore.client.scroll(
+            collectionName || this.defaultCollectionName,
+            {
+              filter: {
+                must: [
+                  {
+                    key: 'metadata.documentId',
+                    range: {
+                      gte: baseDocId,
+                      lt: baseDocId + '\xFF', // Use \xFF to create upper bound for prefix matching
+                    },
+                  },
+                ],
+              },
+              limit: 1000,
+              with_payload: true,
+              with_vector: false,
+            }
+          );
+
+          if (points.points) {
+            for (const point of points.points) {
+              if (
+                point.payload &&
+                typeof point.payload === 'object' &&
+                'metadata' in point.payload &&
+                point.payload.metadata &&
+                typeof point.payload.metadata === 'object' &&
+                'documentId' in point.payload.metadata
+              ) {
+                const chunkDocId = point.payload.metadata.documentId as string;
+                // Double-check that the chunk ID starts with the base document ID
+                if (chunkDocId && chunkDocId.startsWith(baseDocId)) {
+                  allChunkIds.push(chunkDocId);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          const errorMessage = `Failed to get chunks for document ${baseDocId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          errors.push(errorMessage);
+          console.warn(errorMessage);
+        }
+      }
+
+      // Now delete all the chunk document IDs
+      for (const chunkDocId of allChunkIds) {
+        try {
+          await vectorStore.client.delete(
+            collectionName || this.defaultCollectionName,
+            {
+              filter: {
+                must: [
+                  {
+                    key: 'metadata.documentId',
+                    match: { value: chunkDocId },
+                  },
+                ],
+              },
+            }
+          );
+          deletedCount++;
+        } catch (error) {
+          const errorMessage = `Failed to delete chunk ${chunkDocId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          errors.push(errorMessage);
+          console.warn(errorMessage);
+        }
+      }
+
+      // Update collection statistics in database
+      const finalCollectionName = collectionName || this.defaultCollectionName;
+      const collection =
+        await collectionService.getCollectionByName(finalCollectionName);
+      if (collection && deletedCount > 0) {
+        await collectionService.decrementDocumentCount(
+          collection.id,
+          deletedCount
+        );
+      }
+
+      // Log vector operation
+      await analyticsService.logVectorIndexing('documents_deleted', {
+        documentCount: deletedCount,
+        collectionName: finalCollectionName,
+        errorCount: errors.length,
+      });
+
+      return {
+        success: errors.length === 0,
+        deletedCount,
+        errors,
+      };
+    } catch (error) {
+      await analyticsService.logVectorError(
+        'documents_deletion',
+        error instanceof Error ? error.message : 'Unknown error',
+        { documentCount: documentIds.length }
+      );
+      throw new Error(
+        `Failed to delete documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
    * Get collection by name from database
    */
   async getCollectionByName(name: string) {

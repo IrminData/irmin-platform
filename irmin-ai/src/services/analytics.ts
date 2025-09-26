@@ -252,6 +252,7 @@ class AnalyticsService {
       | 'vector_store_updated'
       | 'vector_store_deleted'
       | 'documents_indexed'
+      | 'documents_deleted'
       | 'embeddings_created'
       | 'embedding_created',
     eventData: {
@@ -262,6 +263,7 @@ class AnalyticsService {
       textLength?: number;
       embeddingDimensions?: number;
       isNewCollection?: boolean;
+      errorCount?: number;
     }
   ): Promise<void> {
     try {

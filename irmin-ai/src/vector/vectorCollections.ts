@@ -343,6 +343,32 @@ class CollectionService {
   }
 
   /**
+   * Decrement document count for a collection
+   */
+  async decrementDocumentCount(
+    id: string,
+    decrement: number = 1
+  ): Promise<boolean> {
+    try {
+      const collection = await this.getCollectionById(id);
+      if (!collection) {
+        return false;
+      }
+
+      const newCount = Math.max(0, (collection.documentCount || 0) - decrement);
+      await this.updateCollectionStats(id, {
+        documentCount: newCount,
+        lastIndexedAt: new Date(),
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Failed to decrement document count:', error);
+      return false;
+    }
+  }
+
+  /**
    * Check if user has access to a collection
    *
    * Note: This method assumes workspace access has already been verified
