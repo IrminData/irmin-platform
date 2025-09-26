@@ -206,6 +206,8 @@ type CoreAPIEnv struct {
 	HelmetEnabled                bool   // Flag to enable helmet
 	IdempotencyEnabled           bool   // Flag to enable idempotency
 	AllowedOrigins               string // Allowed origins for CORS
+	AIServiceBaseURL             string // Base URL of the AI service
+	AIServiceSystemToken         string // Key to authenticate system requests to the AI service
 	MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs

@@ -5,12 +5,6 @@
 package resources // import "irmin-api/mcp/resources"
 
 
-FUNCTIONS
-
-func ListAvailableDocs() ([]string, error)
-    ListAvailableDocs returns a list of available documentation files
-
-
 TYPES
 
 type MCPResources struct {
@@ -25,9 +19,6 @@ func NewMCPResources(
 
 func (mcpResources *MCPResources) RegisterAll()
     RegisterAll registers all resources in this package.
-
-func (mcpResources *MCPResources) RegisterDocs()
-    RegisterDocs registers the docs resource for serving static documentation.
 
 func (mcpResources *MCPResources) RegisterProfile()
     RegisterProfile registers the profile resource.

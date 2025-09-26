@@ -25,7 +25,6 @@ func NewMCPTools(
 
 // RegisterAll registers all tools in this package.
 func (mcpTools *MCPTools) RegisterAll() {
-	mcpTools.RegisterDocsTools()
 	mcpTools.RegisterWorkspaceTools()
 	mcpTools.RegisterConnectorTools()
 	mcpTools.RegisterConnectionTools()
@@ -37,4 +36,5 @@ func (mcpTools *MCPTools) RegisterAll() {
 	mcpTools.RegisterQueryTools()
 	mcpTools.RegisterWorkflowsTools()
 	mcpTools.RegisterWorkflowRunsTools()
+	mcpTools.RegisterDocsTools()
 }

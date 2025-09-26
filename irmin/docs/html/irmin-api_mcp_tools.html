@@ -5,24 +5,14 @@
 package tools // import "irmin-api/mcp/tools"
 
 
-TYPES
-
-type DocsCategory string
+CONSTANTS
 
 const (
-	DocsCategoryIndex        DocsCategory = "index"
-	DocsCategorySQL          DocsCategory = "sql"
-	DocsCategoryScripting    DocsCategory = "scripting"
-	DocsCategoryConcepts     DocsCategory = "concepts"
-	DocsCategoryConnections  DocsCategory = "connections"
-	DocsCategoryWorkflows    DocsCategory = "workflows"
-	DocsCategoryObjectSchema DocsCategory = "object-schema"
-	DocsCategoryGoSDK        DocsCategory = "go-sdk"
+	// AIServiceHTTPClientTimeout is the timeout for HTTP client requests
+	AIServiceHTTPClientTimeout = 30 * time.Second
 )
-type GetDocsInput struct {
-	Category string `json:"category" jsonschema:"required,The category of documentation to retrieve. Can be one of: index, sql, scripting, concepts, connections, workflows, object-schema, go-sdk"`
-}
-    GetDocsInput defines the input parameters for the get_docs tool
+
+TYPES
 
 type MCPTools struct {
 	// Has unexported fields.
@@ -44,7 +34,7 @@ func (mcpTools *MCPTools) RegisterConnectorTools()
     RegisterConnectorTools registers all connector-related tools.
 
 func (mcpTools *MCPTools) RegisterDocsTools()
-    RegisterDocsTools registers the tools for documentation access.
+    RegisterDocsTools registers the tools for documentation retrieval
 
 func (mcpTools *MCPTools) RegisterQueryTools()
     RegisterQueryTools registers all query-related tools.
@@ -80,6 +70,12 @@ func (mcpTools *MCPTools) RegisterWorkflowsTools()
 
 func (mcpTools *MCPTools) RegisterWorkspaceTools()
     RegisterWorkspaceTools registers the tools for workspace management.
+
+type RetrieveContextRequest struct {
+	Query string `json:"query"`
+}
+    RetrieveContextRequest represents the request structure for retrieving
+    context
 
 </pre>
 </body></html>

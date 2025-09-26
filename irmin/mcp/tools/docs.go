@@ -1,207 +1,171 @@
 package tools
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
-	"strings"
+	"net/http"
+	"time"
 
 	"irmin-api/mcp/helpers"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type DocsCategory string
+// RetrieveContextRequest represents the request structure for retrieving context
+type RetrieveContextRequest struct {
+	Query string `json:"query"`
+}
+
+// RegisterDocsTools registers the tools for documentation retrieval
+func (mcpTools *MCPTools) RegisterDocsTools() {
+	mcpTools.registerRetrieveContextTool()
+}
+
+// registerRetrieveContextTool registers the retrieve_context tool for getting context from documentation
+func (mcpTools *MCPTools) registerRetrieveContextTool() {
+	sdkmcp.AddTool(
+		mcpTools.server,
+		&sdkmcp.Tool{
+			Name:        "retrieve_context",
+			Description: "Retrieve relevant context from Irmin documentation for a given query. Returns formatted context suitable for AI generation.",
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args RetrieveContextRequest) (*sdkmcp.CallToolResult, struct{}, error) {
+			// Validate user
+			_, err := helpers.ValidateUser(ctx, mcpTools.getUser)
+			if err != nil {
+				return nil, struct{}{}, err
+			}
+
+			// Get collection ID for irmin-docs
+			collectionID, err := mcpTools.getDocsCollectionID(ctx)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get docs collection ID", "error", err)
+				return helpers.MCPError("Failed to access documentation collection"), struct{}{}, nil
+			}
+
+			// Make request to AI service
+			retrieveReq := map[string]any{
+				"query": args.Query,
+			}
+
+			result, err := mcpTools.makeAIRequest(ctx,
+				fmt.Sprintf("/api/system/embeddings/collections/%s/retrieve-context", collectionID),
+				retrieveReq,
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to retrieve context", "error", err)
+				return helpers.MCPError("Failed to retrieve context from documentation"), struct{}{}, nil
+			}
+
+			return result, struct{}{}, nil
+		},
+	)
+}
+
+// getDocsCollectionID retrieves the collection ID for the irmin-docs collection
+func (mcpTools *MCPTools) getDocsCollectionID(ctx context.Context) (string, error) {
+	// Make request to list collections and find irmin-docs
+	result, err := mcpTools.makeAIRequest(ctx, "/api/system/embeddings/collections", nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to list collections: %w", err)
+	}
+
+	// Parse the response to find the irmin-docs collection
+	var response struct {
+		Data []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+
+	// Extract text content from MCP result
+	var contentText string
+	if len(result.Content) > 0 {
+		if textContent, ok := result.Content[0].(*sdkmcp.TextContent); ok {
+			contentText = textContent.Text
+		} else {
+			return "", errors.New("unexpected content type in response")
+		}
+	} else {
+		return "", errors.New("empty response from AI service")
+	}
+
+	if unmarshalErr := json.Unmarshal([]byte(contentText), &response); unmarshalErr != nil {
+		return "", fmt.Errorf("failed to parse collections response: %w", unmarshalErr)
+	}
+
+	const docsCollectionName = "irmin-docs"
+	for _, collection := range response.Data {
+		if collection.Name == docsCollectionName {
+			return collection.ID, nil
+		}
+	}
+
+	return "", errors.New("irmin-docs collection not found")
+}
 
 const (
-	DocsCategoryIndex        DocsCategory = "index"
-	DocsCategorySQL          DocsCategory = "sql"
-	DocsCategoryScripting    DocsCategory = "scripting"
-	DocsCategoryConcepts     DocsCategory = "concepts"
-	DocsCategoryConnections  DocsCategory = "connections"
-	DocsCategoryWorkflows    DocsCategory = "workflows"
-	DocsCategoryObjectSchema DocsCategory = "object-schema"
-	DocsCategoryGoSDK        DocsCategory = "go-sdk"
+	// AIServiceHTTPClientTimeout is the timeout for HTTP client requests
+	AIServiceHTTPClientTimeout = 30 * time.Second
 )
 
-// GetDocsInput defines the input parameters for the get_docs tool
-type GetDocsInput struct {
-	Category string `json:"category" jsonschema:"required,The category of documentation to retrieve. Can be one of: index, sql, scripting, concepts, connections, workflows, object-schema, go-sdk"`
-}
+// makeAIRequest makes an HTTP request to the AI service
+func (mcpTools *MCPTools) makeAIRequest(
+	ctx context.Context,
+	endpoint string,
+	body any,
+) (*sdkmcp.CallToolResult, error) {
+	url := mcpTools.apiServices.Env.AIServiceBaseURL + endpoint
 
-// RegisterDocsTools registers the tools for documentation access.
-func (mcpTools *MCPTools) RegisterDocsTools() {
-	mcpTools.registerGetDocsTool()
-	mcpTools.registerListDocsTool()
-}
+	var reqBody []byte
+	var err error
+	if body != nil {
+		reqBody, err = json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+	}
 
-// registerGetDocsTool registers the get_docs tool for retrieving specific documentation
-func (mcpTools *MCPTools) registerGetDocsTool() {
-	sdkmcp.AddTool(
-		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "get_docs",
-			Description: "Retrieve specific documentation content. Use 'list_docs' to see available documentation categories.",
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+mcpTools.apiServices.Env.AIServiceSystemToken)
+
+	client := &http.Client{
+		Timeout: AIServiceHTTPClientTimeout,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("AI service returned status %d", resp.StatusCode)
+	}
+
+	var responseBody map[string]any
+	if decodeErr := json.NewDecoder(resp.Body).Decode(&responseBody); decodeErr != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", decodeErr)
+	}
+
+	// Convert response to MCP format
+	responseJSON, err := json.MarshalIndent(responseBody, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal response: %w", err)
+	}
+
+	return &sdkmcp.CallToolResult{
+		Content: []sdkmcp.Content{
+			&sdkmcp.TextContent{
+				Text: string(responseJSON),
+			},
 		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args GetDocsInput) (*sdkmcp.CallToolResult, struct{}, error) {
-			// Validate user
-			_, err := helpers.ValidateUser(ctx, mcpTools.getUser)
-			if err != nil {
-				return nil, struct{}{}, err
-			}
-
-			// Get the category from parameters
-			category := DocsCategory(args.Category)
-			if category == "" {
-				return helpers.MCPError(
-					"Category parameter is required. Use 'list_docs' to see available categories.",
-				), struct{}{}, nil
-			}
-
-			// Validate the category parameter
-			switch category {
-			case DocsCategoryIndex:
-				// Valid category
-			case DocsCategorySQL:
-				// Valid category
-			case DocsCategoryScripting:
-				// Valid category
-			case DocsCategoryConcepts:
-				// Valid category
-			case DocsCategoryConnections:
-				// Valid category
-			case DocsCategoryWorkflows:
-			// Valid category
-			case DocsCategoryObjectSchema:
-				// Valid category
-			case DocsCategoryGoSDK:
-				// Valid category
-			default:
-				return helpers.MCPError(
-					fmt.Sprintf(
-						"Unknown documentation category: %s. Use 'list_docs' to see available categories.",
-						category,
-					),
-				), struct{}{}, nil
-			}
-
-			// Return a text response with the resource URI information
-			// The MCP client expects content with a type field, not ResourceLink objects
-			resourceURI := fmt.Sprintf("irmin://docs/%s", category)
-			message := fmt.Sprintf("Documentation for %s is available at: %s", category, resourceURI)
-
-			return &sdkmcp.CallToolResult{
-				Content: []sdkmcp.Content{&sdkmcp.TextContent{
-					Text: message,
-					Meta: sdkmcp.Meta{
-						"resource_uri": resourceURI,
-						"mime_type":    "text/markdown",
-						"category":     string(category),
-					},
-				}},
-			}, struct{}{}, nil
-		},
-	)
-}
-
-// registerListDocsTool registers the list_docs tool for listing available documentation
-func (mcpTools *MCPTools) registerListDocsTool() {
-	sdkmcp.AddTool(
-		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "list_docs",
-			Description: "List available documentation categories and their descriptions.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
-			// Validate user
-			_, err := helpers.ValidateUser(ctx, mcpTools.getUser)
-			if err != nil {
-				return nil, struct{}{}, err
-			}
-
-			// Define available documentation categories
-			categories := []map[string]string{
-				{
-					"category":       "index",
-					"name":           "Documentation Index",
-					"description":    "Main documentation index with links to all categories",
-					"uri":            "irmin://docs",
-					"tool_parameter": "index",
-				},
-				{
-					"category":       "sql",
-					"name":           "Querying and SQL",
-					"description":    "SQL queries, DuckDB, and syntax",
-					"uri":            "irmin://docs/sql",
-					"tool_parameter": "sql",
-				},
-				{
-					"category":       "scripting",
-					"name":           "Scripting",
-					"description":    "Scripting, compute sandbox",
-					"uri":            "irmin://docs/scripting",
-					"tool_parameter": "scripting",
-				},
-				{
-					"category":       "concepts",
-					"name":           "Core Concepts",
-					"description":    "Core concepts, workspaces, repositories, objects, data versioning, and more",
-					"uri":            "irmin://docs/concepts",
-					"tool_parameter": "concepts",
-				},
-				{
-					"category":       "connections",
-					"name":           "Data Connections",
-					"description":    "Data source connections, connectors, and integrations",
-					"uri":            "irmin://docs/connections",
-					"tool_parameter": "connections",
-				},
-				{
-					"category":       "workflows",
-					"name":           "Workflow Orchestration",
-					"description":    "Workflow orchestration, pipeline management, and scheduling",
-					"uri":            "irmin://docs/workflows",
-					"tool_parameter": "workflows",
-				},
-				{
-					"category":       "object-schema",
-					"name":           "Object Schema",
-					"description":    "Object schema, including connection and repository object schemas",
-					"uri":            "irmin://docs/object-schema",
-					"tool_parameter": "object-schema",
-				},
-				{
-					"category":       "go-sdk",
-					"name":           "Go SDK",
-					"description":    "Documentation of the Irmin Go-lang SDK",
-					"uri":            "irmin://docs/go-sdk",
-					"tool_parameter": "go-sdk",
-				},
-			}
-
-			// Build a formatted text response listing all documentation categories
-			var responseText strings.Builder
-			responseText.WriteString("Available Documentation Categories:\n\n")
-
-			// Add the main docs index
-			responseText.WriteString("• Documentation Index (irmin://docs)\n")
-			responseText.WriteString("  Main documentation index with links to all categories\n\n")
-
-			// Add each category
-			for _, cat := range categories {
-				responseText.WriteString(fmt.Sprintf("• %s (%s)\n", cat["name"], cat["uri"]))
-				responseText.WriteString(fmt.Sprintf("  %s\n", cat["description"]))
-				responseText.WriteString(fmt.Sprintf("  Use parameter: %s\n\n", cat["tool_parameter"]))
-			}
-
-			return &sdkmcp.CallToolResult{
-				Content: []sdkmcp.Content{&sdkmcp.TextContent{
-					Text: responseText.String(),
-					Meta: sdkmcp.Meta{
-						"mime_type":  "text/plain",
-						"categories": categories,
-					},
-				}},
-			}, struct{}{}, nil
-		},
-	)
+	}, nil
 }

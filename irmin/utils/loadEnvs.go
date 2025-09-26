@@ -19,6 +19,8 @@ type CoreAPIEnv struct {
 	HelmetEnabled                bool   // Flag to enable helmet
 	IdempotencyEnabled           bool   // Flag to enable idempotency
 	AllowedOrigins               string // Allowed origins for CORS
+	AIServiceBaseURL             string // Base URL of the AI service
+	AIServiceSystemToken         string // Key to authenticate system requests to the AI service
 	MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs
@@ -149,6 +151,15 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 	allowedOrigins, err := getEnv("ALLOWED_ORIGINS", false, "https://localhost:3000")
+	if err != nil {
+		return nil, err
+	}
+
+	aiServiceBaseURL, err := getEnv("AI_SERVICE_BASE_URL", true, "")
+	if err != nil {
+		return nil, err
+	}
+	aiServiceSystemToken, err := getEnv("AI_SERVICE_SYSTEM_TOKEN", true, "")
 	if err != nil {
 		return nil, err
 	}
@@ -321,6 +332,8 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		HelmetEnabled:                helmetEnabled,
 		IdempotencyEnabled:           idempotencyEnabled,
 		AllowedOrigins:               allowedOrigins,
+		AIServiceBaseURL:             aiServiceBaseURL,
+		AIServiceSystemToken:         aiServiceSystemToken,
 		MCPHTTPPath:                  mcpHTTPPath,
 		OrchestratorEnabled:          orchestratorEnabled,
 		SqidAlphabet:                 sqidAlphabet,
