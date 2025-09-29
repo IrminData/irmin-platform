@@ -5,21 +5,29 @@ import type { NewAIModel } from '@/database';
 export const availableAIModels: NewAIModel[] = [
   // Anthropic Models
   {
-    name: 'Claude Sonnet 4',
+    name: 'Claude Opus 4.1',
     provider: 'anthropic',
-    modelId: 'claude-sonnet-4-20250514',
+    modelId: 'claude-opus-4-1-latest',
+    description: "Anthropic's powerful model for complex and creative tasks",
+    inputPricePerMillionTokens: 15,
+    outputPricePerMillionTokens: 75,
+    isActive: true,
+  },
+  {
+    name: 'Claude Sonnet 4.5',
+    provider: 'anthropic',
+    modelId: 'claude-sonnet-4-5-latest',
     description:
-      'Anthropic Claude Sonnet 4: Optimal balance of intelligence, cost, and speed',
+      "Anthropic's most intelligent model for building agents and coding",
     inputPricePerMillionTokens: 3,
     outputPricePerMillionTokens: 15,
     isActive: true,
   },
   {
-    name: 'Claude 3.5 Haiku latest',
+    name: 'Claude Haiku 3.5',
     provider: 'anthropic',
     modelId: 'claude-3-5-haiku-latest',
-    description:
-      'Anthropic Claude 3.5 Haiku: fastest, most cost-effective model',
+    description: "Anthropic's fastest, most cost-effective model",
     inputPricePerMillionTokens: 0.8,
     outputPricePerMillionTokens: 4,
     isActive: true,

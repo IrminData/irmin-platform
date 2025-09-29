@@ -6,4 +6,5 @@ onlyBuiltDependencies:
   - '@swc/core'
   - better-sqlite3
   - esbuild
+  - protobufjs
   - unrs-resolver
