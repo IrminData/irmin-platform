@@ -7,7 +7,7 @@ export const availableAIModels: NewAIModel[] = [
   {
     name: 'Claude Opus 4.1',
     provider: 'anthropic',
-    modelId: 'claude-opus-4-1-latest',
+    modelId: 'claude-opus-4-1-20250805',
     description: "Anthropic's powerful model for complex and creative tasks",
     inputPricePerMillionTokens: 15,
     outputPricePerMillionTokens: 75,
@@ -16,7 +16,7 @@ export const availableAIModels: NewAIModel[] = [
   {
     name: 'Claude Sonnet 4.5',
     provider: 'anthropic',
-    modelId: 'claude-sonnet-4-5-latest',
+    modelId: 'claude-sonnet-4-5-20250929',
     description:
       "Anthropic's most intelligent model for building agents and coding",
     inputPricePerMillionTokens: 3,
@@ -26,7 +26,7 @@ export const availableAIModels: NewAIModel[] = [
   {
     name: 'Claude Haiku 3.5',
     provider: 'anthropic',
-    modelId: 'claude-3-5-haiku-latest',
+    modelId: 'claude-3-5-haiku-20241022',
     description: "Anthropic's fastest, most cost-effective model",
     inputPricePerMillionTokens: 0.8,
     outputPricePerMillionTokens: 4,
