@@ -123,7 +123,7 @@ func (mcpTools *MCPTools) registerSaveScriptTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "save_script",
-			Description: "Save a script in the workspace. Saving the script can mean creating a new script or updating an existing one. It's recommended to read the documentation for scripts first, use `list_docs` tool for more information.",
+			Description: "Save a script in the workspace. Saving the script can mean creating a new script or updating an existing one. It's recommended to read the documentation for scripts first, use `retrieve_docs_context` tool for more information.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args saveScriptArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user

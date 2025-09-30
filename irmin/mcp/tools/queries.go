@@ -98,7 +98,7 @@ func (mcpTools *MCPTools) registerCreateQueryTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "create_query",
-			Description: "Create a new stored query in a workspace. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
+			Description: "Create a new stored query in a workspace. It's recommended to read the documentation for queries first, use `retrieve_docs_context` tool for more information.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -148,7 +148,7 @@ func (mcpTools *MCPTools) registerUpdateQueryTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "update_query",
-			Description: "Update an existing stored query. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
+			Description: "Update an existing stored query. It's recommended to read the documentation for queries first, use `retrieve_docs_context` tool for more information.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateQueryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)
@@ -210,7 +210,7 @@ func (mcpTools *MCPTools) registerExecuteSQLTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "execute_sql",
-			Description: "Execute an arbitrary SQL query on the workspace data. It's recommended to read the documentation for queries first, use `list_docs` tool for more information.",
+			Description: "Execute an arbitrary SQL query on the workspace data. It's recommended to read the documentation for queries first, use `retrieve_docs_context` tool for more information.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args executeSQLArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			user, ok := mcpTools.getUser(ctx)

@@ -21,16 +21,16 @@ type RetrieveContextRequest struct {
 
 // RegisterDocsTools registers the tools for documentation retrieval
 func (mcpTools *MCPTools) RegisterDocsTools() {
-	mcpTools.registerRetrieveContextTool()
+	mcpTools.registerRetrieveDocsContextTool()
 }
 
-// registerRetrieveContextTool registers the retrieve_context tool for getting context from documentation
-func (mcpTools *MCPTools) registerRetrieveContextTool() {
+// registerRetrieveDocsContextTool registers the retrieve_docs_context tool for getting context from documentation
+func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "retrieve_context",
-			Description: "Retrieve relevant context from Irmin documentation for a given query. Returns formatted context suitable for AI generation.",
+			Name:        "retrieve_docs_context",
+			Description: "Retrieve relevant context from Irmin documentation for a given query.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args RetrieveContextRequest) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -56,8 +56,8 @@ func (mcpTools *MCPTools) registerRetrieveContextTool() {
 				retrieveReq,
 			)
 			if err != nil {
-				mcpTools.apiServices.Logger.Error("Failed to retrieve context", "error", err)
-				return helpers.MCPError("Failed to retrieve context from documentation"), struct{}{}, nil
+				mcpTools.apiServices.Logger.Error("Failed to retrieve docs context", "error", err)
+				return helpers.MCPError("Failed to retrieve docs context from documentation"), struct{}{}, nil
 			}
 
 			return result, struct{}{}, nil

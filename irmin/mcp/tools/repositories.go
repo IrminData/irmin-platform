@@ -144,7 +144,7 @@ func (mcpTools *MCPTools) registerCreateRepositoryTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "create_repository",
-			Description: "Create a new repository in a workspace. It's recommended to read the documentation for repositories first, use `list_docs` tool for more information.",
+			Description: "Create a new repository in a workspace. It's recommended to read the documentation for repositories first, use `retrieve_docs_context` tool for more information.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
