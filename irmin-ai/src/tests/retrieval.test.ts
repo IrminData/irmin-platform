@@ -70,14 +70,9 @@ async function testBasicSearch(): Promise<boolean> {
 
   try {
     // Create vector store connection
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test basic similarity search
@@ -138,14 +133,9 @@ async function testContextRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store connection
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test context retrieval
@@ -193,14 +183,9 @@ async function testConceptsQueries(): Promise<boolean> {
   logTest('Concepts Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     let totalResults = 0;
@@ -265,14 +250,9 @@ async function testWorkflowsQueries(): Promise<boolean> {
   logTest('Workflows Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     let totalResults = 0;
@@ -337,14 +317,9 @@ async function testConnectionsQueries(): Promise<boolean> {
   logTest('Connections Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     let totalResults = 0;
@@ -409,14 +384,9 @@ async function testScriptingQueries(): Promise<boolean> {
   logTest('Scripting Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     let totalResults = 0;
@@ -481,14 +451,9 @@ async function testSqlQueries(): Promise<boolean> {
   logTest('SQL Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     let totalResults = 0;
@@ -553,14 +518,9 @@ async function testObjectSchemaQueries(): Promise<boolean> {
   logTest('Object Schema Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     let totalResults = 0;
@@ -625,14 +585,9 @@ async function testMultiQueryRetrieval(): Promise<boolean> {
   logTest('Multi-Query Retrieval', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test multi-query retrieval with concepts
@@ -694,14 +649,9 @@ async function testHighScoreThreshold(): Promise<boolean> {
   logTest('High Score Threshold', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test with high score threshold
@@ -746,14 +696,9 @@ async function testLowScoreThreshold(): Promise<boolean> {
   logTest('Low Score Threshold', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test with low score threshold
@@ -801,14 +746,9 @@ async function testContextGeneration(): Promise<boolean> {
   logTest('Context Generation', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test context generation with different parameters

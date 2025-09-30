@@ -40,12 +40,11 @@ Be helpful, accurate, and concise in your responses. If you need to access data 
     if (context) {
       const contextInfo = this.buildContextInfo(context);
       if (contextInfo) {
-        promptParts.push('\n\n## Context Information');
-        promptParts.push(contextInfo);
+        promptParts.push(`<context>\n${contextInfo}\n</context>`);
       }
     }
 
-    return promptParts.join('');
+    return promptParts.join('\n\n');
   }
 
   /**
@@ -67,47 +66,55 @@ Be helpful, accurate, and concise in your responses. If you need to access data 
       second: '2-digit',
       timeZoneName: 'short',
     });
-    contextParts.push(`- Current time: ${localTime} (${timestamp})`);
+    contextParts.push(
+      `<current_time>\n${localTime} (${timestamp})\n</current_time>`
+    );
 
     // Add user information
     if (context.user) {
       const user = context.user;
       const userName = `${user.first_name} ${user.last_name}`.trim();
-      contextParts.push(`- User: ${userName} (${user.email})`);
+      contextParts.push(`<user>\n${userName} (${user.email})\n</user>`);
       if (user.company) {
-        contextParts.push(`- Company: ${user.company}`);
+        contextParts.push(`<company>\n${user.company}\n</company>`);
       }
     }
 
     // Add workspace information
     if (context.workspace) {
       const workspace = context.workspace;
-      contextParts.push(`- Workspace: ${workspace.name} (${workspace.slug})`);
+      contextParts.push(
+        `<workspace>\n${workspace.name} (${workspace.slug})\n</workspace>`
+      );
       if (workspace.description) {
-        contextParts.push(`- Workspace Description: ${workspace.description}`);
+        contextParts.push(
+          `<workspace_description>\n${workspace.description}\n</workspace_description>`
+        );
       }
     }
 
     // Add conversation context
     if (context.conversationId) {
-      contextParts.push(`- Conversation ID: ${context.conversationId}`);
+      contextParts.push(
+        `<conversation_id>\n${context.conversationId}\n</conversation_id>`
+      );
     }
 
     // Add agent context
     if (context.agentId) {
-      contextParts.push(`- Agent: ${context.agentId}`);
+      contextParts.push(`<agent>\n${context.agentId}\n</agent>`);
     }
 
     // Add custom context
     if (context.customContext) {
       for (const [key, value] of Object.entries(context.customContext)) {
         if (value !== null && value !== undefined) {
-          contextParts.push(`- ${key}: ${String(value)}`);
+          contextParts.push(`<${key}>\n${String(value)}\n</${key}>`);
         }
       }
     }
 
-    return contextParts.length > 0 ? contextParts.join('\n') : '';
+    return contextParts.length > 0 ? contextParts.join('\n\n') : '';
   }
 
   /**

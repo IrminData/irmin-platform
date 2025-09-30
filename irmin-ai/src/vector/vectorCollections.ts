@@ -15,8 +15,6 @@ const CreateCollectionSchema = z.object({
     .min(1, 'Collection name is required')
     .max(100, 'Collection name too long'),
   description: z.string().optional(),
-  vectorStoreUrl: z.string().url('Invalid vector store URL'),
-  vectorStoreApiKey: z.string().optional(),
   embeddingModel: z.string().default('text-embedding-3-small'),
   embeddingDimensions: z.number().int().min(1).default(1536),
   workspaceSlug: z.string().optional(), // Optional for system collections
@@ -28,8 +26,6 @@ const CreateCollectionSchema = z.object({
 const UpdateCollectionSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().optional(),
-  vectorStoreUrl: z.string().url().optional(),
-  vectorStoreApiKey: z.string().optional(),
   embeddingModel: z.string().optional(),
   embeddingDimensions: z.number().int().min(1).optional(),
   isActive: z.boolean().optional(),
@@ -76,8 +72,6 @@ class CollectionService {
         id: randomUUID(),
         name: validatedData.name,
         description: validatedData.description,
-        vectorStoreUrl: validatedData.vectorStoreUrl,
-        vectorStoreApiKey: validatedData.vectorStoreApiKey,
         embeddingModel: validatedData.embeddingModel,
         embeddingDimensions: validatedData.embeddingDimensions,
         workspaceSlug: validatedData.workspaceSlug || null,
@@ -423,14 +417,7 @@ class CollectionService {
   /**
    * Get collection configuration for vector store operations
    */
-  async getCollectionConfig(id: string): Promise<{
-    name: string;
-    url: string;
-    apiKey?: string;
-    embeddingModel: string;
-    embeddingDimensions: number;
-    workspaceSlug?: string | null;
-  } | null> {
+  async getCollectionConfig(id: string) {
     try {
       const collection = await this.getCollectionById(id);
       if (!collection || !collection.isActive) {
@@ -439,11 +426,11 @@ class CollectionService {
 
       return {
         name: collection.name,
-        url: collection.vectorStoreUrl,
-        apiKey: collection.vectorStoreApiKey || undefined,
         embeddingModel: collection.embeddingModel,
         embeddingDimensions: collection.embeddingDimensions,
         workspaceSlug: collection.workspaceSlug,
+        isSystemCollection: collection.isSystemCollection,
+        createdBy: collection.createdBy,
       };
     } catch (error) {
       console.error('Failed to get collection config:', error);

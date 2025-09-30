@@ -155,10 +155,6 @@ export const vectorCollections = pgTable('vector_collections', {
   name: text('name').notNull().unique(),
   description: text('description'),
 
-  // Vector store configuration
-  vectorStoreUrl: text('vector_store_url').notNull(),
-  vectorStoreApiKey: text('vector_store_api_key'),
-
   // Collection metadata
   embeddingModel: text('embedding_model')
     .notNull()

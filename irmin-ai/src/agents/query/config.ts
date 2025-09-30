@@ -14,15 +14,25 @@ export const agentConfig: AgentConfig = {
   responseFormat: 'structured',
   contextRequirements: [
     {
-      type: 'schema',
-      name: 'schema',
+      name: 'repository_slug',
+      description: 'The slug of the repository to query',
       required: true,
+    },
+    {
+      name: 'object_path',
+      description:
+        'The path of the object to query, like /data/customers/customers.json',
+      required: true,
+    },
+    {
+      name: 'object_ref',
+      description: 'The ref of the object to query, like main or tag/v1.0.0',
+      required: false,
     },
   ],
   toolSelection: {
     includeTools: [
-      'list_docs',
-      'get_docs',
+      'retrieve_docs_context',
       'execute_sql',
       'get_repository_object_schema',
       'list_repositories',

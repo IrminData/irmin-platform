@@ -180,8 +180,6 @@ const vectorCollectionSchema = {
     id: { type: 'string' },
     name: { type: 'string' },
     description: { type: 'string', nullable: true },
-    vectorStoreUrl: { type: 'string' },
-    vectorStoreApiKey: { type: 'string', nullable: true },
     embeddingModel: { type: 'string' },
     embeddingDimensions: { type: 'number' },
     workspaceSlug: { type: 'string' },

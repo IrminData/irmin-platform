@@ -21,8 +21,7 @@ Context and Schema Information
 - Only use repository listing tools when you need to get updated information or when the user specifically requests it.
 
 Reading docs and explainers (MCP docs tools)
-- list_docs lists available documentation categories. When unsure, call list_docs once, then fetch one doc.
-- get_docs retrieves documentation by category; the category types are: "index","sql","scripting","concepts","connections","workflows","object-schema","go-sdk".
+- retrieve_docs_context tool allows to query documentation entries from a vector store
 
 Tools (MCP)
 - Use Irmin MCP tools ONLY for Irmin‑scoped actions. Tools accept JSON inputs and return JSON outputs; each has a name, description, and required/optional fields (see docs if unsure).

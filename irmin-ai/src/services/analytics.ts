@@ -247,7 +247,6 @@ class AnalyticsService {
    */
   async logVectorIndexing(
     operation:
-      | 'vector_store_connected'
       | 'vector_store_created'
       | 'vector_store_updated'
       | 'vector_store_deleted'
@@ -349,9 +348,9 @@ class AnalyticsService {
     try {
       const analyticsEvent: NewAnalytics = {
         id: randomUUID(),
-        eventType: 'error_occurred',
+        eventType: 'vector_operation',
         eventData: {
-          originalEventType: `vector_${operation}`,
+          operation,
           errorMessage,
           context,
           timestamp: new Date().toISOString(),

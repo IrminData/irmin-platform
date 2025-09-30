@@ -393,7 +393,7 @@ You can override the agent's default tool selection per request:
 const response = await agentsManager.executeAgent('assistant', {
   message: "List workspaces",
   toolSelection: {
-    includeTools: ["list_workspaces", "list_docs"]
+    includeTools: ["list_workspaces", "retrieve_docs_context"]
   }
 });
 

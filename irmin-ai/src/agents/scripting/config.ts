@@ -13,7 +13,16 @@ export const agentConfig: AgentConfig = {
   responseFormat: 'structured',
   contextRequirements: [],
   toolSelection: {
-    includeAll: true,
+    includeTools: [
+      'retrieve_docs_context',
+      'execute_sql',
+      'get_repository_object_schema',
+      'list_connections',
+      'list_workflows',
+      'list_workflow_runs',
+      'list_repositories',
+      'list_repository_objects',
+    ],
   },
   streaming: false,
   useAgentGraph: true,

@@ -213,7 +213,7 @@ The MCP service provides per-request MCP tools creation with user authentication
 
 **Tool Selection Features:**
 - **Include All Tools**: `{ includeAll: true }`
-- **Include Specific Tools**: `{ includeTools: ["list_workspaces", "list_docs"] }` - only specified tools
+- **Include Specific Tools**: `{ includeTools: ["list_workspaces", "retrieve_docs_context"] }` - only specified tools
 - **Exclude Specific Tools**: `{ excludeTools: ["create_workspace"] }` - all tools except specified ones
 - **Combined Filtering**: Combine include and exclude for precise control
 - **Server-Level Filtering**: `{ includeServers: ["irmin"] }` - all tools from specific MCP servers (future feature)

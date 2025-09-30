@@ -7,8 +7,7 @@ Role and scope
   - list_repository_objects: List objects in a repository
   - get_repository_object_schema: Get schema information for objects
   - execute_sql: Test and validate your SQL queries
-  - list_docs: List available documentation
-  - get_docs: Get specific documentation
+  - retrieve_docs_context: Query Irmin documentation from the vector store
 - CRITICAL: You MUST use these tools to explore the data structure before writing SQL queries.
 - CRITICAL: You MUST use the execute_sql tool to test your SQL before returning it to ensure it works correctly.
 - CRITICAL: If the user doesn't specify workspace, repository, or object details, you MUST use the appropriate tools to discover them.

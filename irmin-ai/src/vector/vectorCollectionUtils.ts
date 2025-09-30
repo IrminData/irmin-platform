@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { env } from '@/config/env';
-
 import { collectionService } from './vectorCollections';
 
 // Collection validation schemas
@@ -230,8 +228,6 @@ export class CollectionUtils {
         const created = await collectionService.createCollection({
           name: collection.name,
           description: collection.description,
-          vectorStoreUrl: env.QDRANT_URL,
-          vectorStoreApiKey: env.QDRANT_API_KEY || '',
           embeddingModel: 'text-embedding-3-small',
           embeddingDimensions: 1536,
           workspaceSlug: collection.workspaceSlug,

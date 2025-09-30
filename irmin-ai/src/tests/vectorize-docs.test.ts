@@ -175,7 +175,6 @@ async function testCollectionDatabase(): Promise<boolean> {
     console.log(`  Document count: ${collection.documentCount}`);
     console.log(`  Embedding model: ${collection.embeddingModel}`);
     console.log(`  Embedding dimensions: ${collection.embeddingDimensions}`);
-    console.log(`  Vector store URL: ${collection.vectorStoreUrl}`);
     console.log(`  Is active: ${collection.isActive}`);
     console.log(`  Is system collection: ${collection.isSystemCollection}`);
     console.log(`  Created at: ${collection.createdAt}`);
@@ -197,14 +196,9 @@ async function testVectorStoreConnection(): Promise<boolean> {
 
   try {
     // Create vector store connection
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     if (!vectorStore) {
@@ -240,14 +234,9 @@ async function testDocumentRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store for retrieval
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test basic similarity search
@@ -306,14 +295,9 @@ async function testContextRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store for retrieval
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test context retrieval
@@ -362,14 +346,9 @@ async function testMultiQueryRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store for retrieval
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Test multi-query retrieval
@@ -591,14 +570,9 @@ async function testLocalFileVectorization(): Promise<boolean> {
     }
 
     // Test retrieval of local file content
-    const vectorStore = await indexingService.createVectorStore(
-      {
-        collectionName: TEST_COLLECTION_NAME,
-        url: process.env.QDRANT_URL || 'http://localhost:6333',
-        apiKey: process.env.QDRANT_API_KEY || '',
-      },
-      'system',
-      'system'
+    const vectorStore = await indexingService.initVectorStore(
+      TEST_COLLECTION_NAME,
+      true
     );
 
     // Search for content that should be in local files

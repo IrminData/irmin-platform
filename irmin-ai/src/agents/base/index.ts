@@ -13,15 +13,12 @@ import {
   AgentResponse,
   BaseAgentInterface,
 } from '@/agents/types';
-import { ContextManager } from '@/agents/utils/context-manager';
 
 export abstract class BaseAgent implements BaseAgentInterface {
   public config: AgentConfig;
-  protected contextManager: ContextManager;
 
   constructor(config: AgentConfig) {
     this.config = config;
-    this.contextManager = new ContextManager();
   }
 
   async execute(input: AgentInput): Promise<AgentResponse> {
@@ -111,16 +108,25 @@ export abstract class BaseAgent implements BaseAgentInterface {
       return false;
     }
 
-    // Check required context that must be provided by the user
+    // Make sure that all required context is provided by the user
     for (const requirement of this.config.contextRequirements) {
       if (requirement.required && !input.context?.[requirement.name]) {
-        // For context types that can be prepared automatically, allow them to pass
-        // even if the implementation is not yet complete
-        if (['schema', 'vector', 'memory'].includes(requirement.type)) {
-          // Allow these context types to be prepared automatically
-          continue;
-        }
+        // If the context is required, and the user has not provided it, fail the validation
         return false;
+      }
+    }
+
+    // Make sure that the input only contains valid context
+    if (input.context) {
+      for (const inputContextKey of Object.keys(input.context)) {
+        if (
+          !this.config.contextRequirements.some(
+            (requirement) => requirement.name === inputContextKey
+          )
+        ) {
+          // If the context is not a valid context, fail the validation
+          return false;
+        }
       }
     }
 
@@ -128,32 +134,8 @@ export abstract class BaseAgent implements BaseAgentInterface {
   }
 
   async prepareContext(input: AgentInput): Promise<Record<string, unknown>> {
+    // Simply pass the input context through
     const context: Record<string, unknown> = { ...input.context };
-
-    for (const requirement of this.config.contextRequirements) {
-      switch (requirement.type) {
-        case 'string':
-          context[requirement.name] = input.context?.[requirement.name] || '';
-          break;
-        case 'vector':
-          context[requirement.name] =
-            await this.contextManager.getVectorContext(
-              requirement.name,
-              input.message
-            );
-          break;
-        case 'memory':
-          context[requirement.name] =
-            await this.contextManager.getMemoryContext(input.conversationId);
-          break;
-        case 'schema':
-          context[requirement.name] =
-            await this.contextManager.getSchemaContext();
-          break;
-        // Add other context types as needed
-      }
-    }
-
     return context;
   }
 

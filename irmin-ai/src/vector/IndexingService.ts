@@ -15,17 +15,7 @@ const VectorDocumentSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-const VectorStoreConfigSchema = z.object({
-  collectionName: z.string().min(1, 'Collection name cannot be empty'),
-  url: z.string().min(1, 'Qdrant URL is required').default(env.QDRANT_URL),
-  apiKey: z
-    .string()
-    .optional()
-    .default(env.QDRANT_API_KEY || ''),
-});
-
 type VectorDocument = z.infer<typeof VectorDocumentSchema>;
-type VectorStoreConfig = z.infer<typeof VectorStoreConfigSchema>;
 
 interface IndexingResult {
   success: boolean;
@@ -54,61 +44,50 @@ class IndexingService {
   /**
    * Create a new vector store instance from existing collection
    */
-  async createVectorStore(
-    config: VectorStoreConfig,
+  async initVectorStore(
+    collectionName: string,
+    isSystemCollection?: boolean,
     workspaceSlug?: string,
     userId?: string
   ): Promise<QdrantVectorStore> {
-    const validatedConfig = VectorStoreConfigSchema.parse(config);
-
     try {
       // First, try to get the collection from the database
-      let collection = await collectionService.getCollectionByName(
-        validatedConfig.collectionName
-      );
+      const collection =
+        await collectionService.getCollectionByName(collectionName);
 
       if (!collection) {
-        // Collection doesn't exist in DB, create it
-        if (!workspaceSlug || !userId) {
-          throw new Error(
-            'Workspace slug and user ID are required to create a new collection'
-          );
-        }
+        throw new Error('Collection not found');
+      }
 
-        collection = await collectionService.createCollection({
-          name: validatedConfig.collectionName,
-          vectorStoreUrl: validatedConfig.url,
-          vectorStoreApiKey: validatedConfig.apiKey,
-          embeddingModel: 'text-embedding-3-small',
-          embeddingDimensions: 1536,
-          workspaceSlug,
-          createdBy: userId,
-          isSystemCollection: false,
-          description: `Vector collection created automatically`,
-        });
+      if (workspaceSlug && collection.workspaceSlug !== workspaceSlug) {
+        throw new Error(
+          'Collection does not belong to the specified workspace'
+        );
+      }
+
+      if (userId && collection.createdBy !== userId) {
+        throw new Error('Collection does not belong to the specified user');
+      }
+
+      if (isSystemCollection && !collection.isSystemCollection) {
+        throw new Error('Collection is not a system collection');
       }
 
       const vectorStore = await QdrantVectorStore.fromExistingCollection(
         this.embeddings,
         {
-          url: validatedConfig.url,
-          collectionName: validatedConfig.collectionName,
-          apiKey: validatedConfig.apiKey,
+          url: env.QDRANT_URL,
+          collectionName: collectionName,
+          apiKey: env.QDRANT_API_KEY || '',
         }
       );
-
-      // Log vector operation
-      await analyticsService.logVectorIndexing('vector_store_connected', {
-        collectionName: validatedConfig.collectionName,
-        url: validatedConfig.url,
-      });
 
       return vectorStore;
     } catch (error) {
       await analyticsService.logVectorError(
         'vector_store_connection',
         error instanceof Error ? error.message : 'Unknown error',
-        { collectionName: validatedConfig.collectionName }
+        { collectionName: collectionName }
       );
       throw new Error(
         `Failed to connect to vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -120,22 +99,18 @@ class IndexingService {
    * Create a new collection and vector store
    */
   async createNewVectorStore(
-    config: VectorStoreConfig,
+    collectionName: string,
     workspaceSlug: string,
     userId: string,
     description?: string
   ): Promise<QdrantVectorStore> {
-    const validatedConfig = VectorStoreConfigSchema.parse(config);
-
     try {
       // Create collection in database first
       await collectionService.createCollection({
-        name: validatedConfig.collectionName,
+        name: collectionName,
         description:
           description ||
           `Vector collection created on ${new Date().toISOString()}`,
-        vectorStoreUrl: validatedConfig.url,
-        vectorStoreApiKey: validatedConfig.apiKey,
         embeddingModel: 'text-embedding-3-small',
         embeddingDimensions: 1536,
         workspaceSlug,
@@ -148,16 +123,16 @@ class IndexingService {
         [], // Empty metadata array
         this.embeddings,
         {
-          url: validatedConfig.url,
-          collectionName: validatedConfig.collectionName,
-          apiKey: validatedConfig.apiKey,
+          url: env.QDRANT_URL,
+          collectionName: collectionName,
+          apiKey: env.QDRANT_API_KEY || '',
         }
       );
 
       // Log vector operation
       await analyticsService.logVectorIndexing('vector_store_created', {
-        collectionName: validatedConfig.collectionName,
-        url: validatedConfig.url,
+        collectionName: collectionName,
+        url: env.QDRANT_URL,
         isNewCollection: true,
       });
 
@@ -166,7 +141,7 @@ class IndexingService {
       await analyticsService.logVectorError(
         'vector_store_creation',
         error instanceof Error ? error.message : 'Unknown error',
-        { collectionName: validatedConfig.collectionName }
+        { collectionName: collectionName }
       );
       throw new Error(
         `Failed to create new vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -299,24 +274,6 @@ class IndexingService {
         `Failed to create embedding: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
-  }
-
-  /**
-   * Get default vector store configuration
-   */
-  getDefaultConfig(): VectorStoreConfig {
-    return {
-      collectionName: this.defaultCollectionName,
-      url: env.QDRANT_URL,
-      apiKey: env.QDRANT_API_KEY || '',
-    };
-  }
-
-  /**
-   * Validate vector store configuration
-   */
-  validateConfig(config: Partial<VectorStoreConfig>): VectorStoreConfig {
-    return VectorStoreConfigSchema.parse(config);
   }
 
   /**
@@ -576,78 +533,7 @@ class IndexingService {
       );
     }
   }
-
-  /**
-   * Get collection by name from database
-   */
-  async getCollectionByName(name: string) {
-    return await collectionService.getCollectionByName(name);
-  }
-
-  /**
-   * Get collections for a workspace
-   */
-  async getCollectionsByWorkspace(workspaceSlug: string) {
-    return await collectionService.getActiveCollectionsByWorkspace(
-      workspaceSlug
-    );
-  }
-
-  /**
-   * Create a collection with proper database tracking
-   */
-  async createCollection(
-    name: string,
-    workspaceSlug: string,
-    userId: string,
-    options: {
-      description?: string;
-      vectorStoreUrl?: string;
-      vectorStoreApiKey?: string;
-      embeddingModel?: string;
-      embeddingDimensions?: number;
-    } = {}
-  ) {
-    const config = {
-      name,
-      description: options.description,
-      vectorStoreUrl: options.vectorStoreUrl || env.QDRANT_URL,
-      vectorStoreApiKey: options.vectorStoreApiKey || env.QDRANT_API_KEY || '',
-      embeddingModel: options.embeddingModel || 'text-embedding-3-small',
-      embeddingDimensions: options.embeddingDimensions || 1536,
-      workspaceSlug,
-      createdBy: userId,
-      isSystemCollection: false,
-    };
-
-    return await collectionService.createCollection(config);
-  }
-
-  /**
-   * Update collection configuration
-   */
-  async updateCollection(
-    collectionId: string,
-    updates: {
-      name?: string;
-      description?: string;
-      vectorStoreUrl?: string;
-      vectorStoreApiKey?: string;
-      embeddingModel?: string;
-      embeddingDimensions?: number;
-      isActive?: boolean;
-    }
-  ) {
-    return await collectionService.updateCollection(collectionId, updates);
-  }
-
-  /**
-   * Delete a collection (soft delete)
-   */
-  async deleteCollection(collectionId: string) {
-    return await collectionService.deleteCollection(collectionId);
-  }
 }
 
 export const indexingService = new IndexingService();
-export type { VectorDocument, VectorStoreConfig, IndexingResult };
+export type { VectorDocument, IndexingResult };

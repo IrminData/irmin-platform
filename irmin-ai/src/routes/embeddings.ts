@@ -3,7 +3,6 @@ import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
 
-import { env } from '@/config/env';
 import { swaggerSchemas } from '@/config/swagger';
 
 import {
@@ -170,7 +169,6 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
           workspaceSlug: workspaceContext.slug,
           createdBy: authContext.user.id,
           isSystemCollection: false,
-          vectorStoreUrl: validatedData.vectorStoreUrl || env.QDRANT_URL, // Default Qdrant URL
         };
 
         const collection =
@@ -371,12 +369,9 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.createVectorStore(
-          {
-            collectionName: collectionConfig.name,
-            url: collectionConfig.url,
-            apiKey: collectionConfig.apiKey || '',
-          },
+        const vectorStore = await indexingService.initVectorStore(
+          collectionConfig.name,
+          collectionConfig.isSystemCollection ?? false,
           workspaceContext.slug,
           authContext.user.id
         );
@@ -452,12 +447,9 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.createVectorStore(
-          {
-            collectionName: collectionConfig.name,
-            url: collectionConfig.url,
-            apiKey: collectionConfig.apiKey || '',
-          },
+        const vectorStore = await indexingService.initVectorStore(
+          collectionConfig.name,
+          collectionConfig.isSystemCollection ?? false,
           workspaceContext.slug,
           authContext.user.id
         );
@@ -538,12 +530,9 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.createVectorStore(
-          {
-            collectionName: collectionConfig.name,
-            url: collectionConfig.url,
-            apiKey: collectionConfig.apiKey || '',
-          },
+        const vectorStore = await indexingService.initVectorStore(
+          collectionConfig.name,
+          collectionConfig.isSystemCollection ?? false,
           workspaceContext.slug,
           authContext.user.id
         );

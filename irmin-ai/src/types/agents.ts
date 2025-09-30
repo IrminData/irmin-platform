@@ -82,6 +82,13 @@ export const AgentResponseSchema = z.object({
     .optional(),
 });
 
+// Context requirement schema
+const ContextRequirementSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  required: z.boolean(),
+});
+
 // Agent config schema
 export const AgentConfigSchema = z.object({
   id: z.string(),
@@ -93,14 +100,7 @@ export const AgentConfigSchema = z.object({
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
   responseFormat: z.enum(['structured', 'unstructured', 'json', 'markdown']),
-  contextRequirements: z.array(
-    z.object({
-      type: z.enum(['string', 'vector', 'memory', 'schema']),
-      name: z.string(),
-      required: z.boolean(),
-      config: z.record(z.string(), z.unknown()).optional(),
-    })
-  ),
+  contextRequirements: z.array(ContextRequirementSchema),
   toolSelection: ToolSelectionSchema.optional(),
   streaming: z.boolean(),
 });

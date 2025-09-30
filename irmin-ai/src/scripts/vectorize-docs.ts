@@ -1,11 +1,10 @@
 import { indexingService } from '@/vector';
+import { collectionService } from '@/vector/vectorCollections';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 import { analyticsService } from '@/services/analytics';
-
-import { env } from '@/config/env';
 
 // Configuration for document URLs and local file paths to vectorize
 const DOCUMENT_URLS = [
@@ -63,12 +62,15 @@ export class VectorizeDocsScript {
     replaceMode: boolean; // Whether to replace existing documents or append
   };
 
+  private collectionService: typeof collectionService;
+
   constructor(config: typeof VectorizeDocsScript.prototype.config) {
     this.config = {
       ...config,
       replaceMode: config.replaceMode ?? true, // Default to replace mode
       localPaths: config.localPaths ?? [], // Default to empty array
     };
+    this.collectionService = collectionService;
   }
 
   /**
@@ -93,7 +95,7 @@ export class VectorizeDocsScript {
       const chunks = this.chunkDocuments(documents);
 
       // Ensure collection exists or create it
-      const collectionId = await this.ensureCollection();
+      await this.ensureCollection();
 
       let existingChunkIds: string[] = [];
       let actualDeletedCount = 0;
@@ -104,14 +106,11 @@ export class VectorizeDocsScript {
       }
 
       // Phase 2: Index new documents in vector store
-      await this.indexDocuments(collectionId, chunks);
+      await this.indexDocuments(chunks);
 
       // Phase 3: Remove old documents (only after new ones are successfully indexed)
       if (this.config.replaceMode && existingChunkIds.length > 0) {
-        const deletionResult = await this.removeOldDocuments(
-          collectionId,
-          existingChunkIds
-        );
+        const deletionResult = await this.removeOldDocuments(existingChunkIds);
         actualDeletedCount = deletionResult.deletedCount;
       }
 
@@ -131,7 +130,6 @@ export class VectorizeDocsScript {
             : ''
         }`,
         data: {
-          collectionId,
           documentsProcessed: documents.length,
           chunksCreated: chunks.length,
           urlsProcessed: urls.length,
@@ -434,27 +432,23 @@ export class VectorizeDocsScript {
   private async ensureCollection(): Promise<string> {
     try {
       // Try to get existing collection
-      const existingCollection = await indexingService.getCollectionByName(
-        this.config.collectionName
-      );
+      const existingCollection =
+        await this.collectionService.getCollectionByName(
+          this.config.collectionName
+        );
 
       if (existingCollection) {
         return existingCollection.id;
       }
 
       // Create new collection
-      const collection = await indexingService.createCollection(
-        this.config.collectionName,
-        'system', // system workspace
-        'system', // system user
-        {
-          description: `Auto-generated collection for ${this.config.collectionName} documentation`,
-          vectorStoreUrl: env.QDRANT_URL,
-          vectorStoreApiKey: env.QDRANT_API_KEY || '',
-          embeddingModel: 'text-embedding-3-small',
-          embeddingDimensions: 1536,
-        }
-      );
+      const collection = await this.collectionService.createCollection({
+        name: this.config.collectionName,
+        description: `Auto-generated collection for ${this.config.collectionName} documentation`,
+        embeddingModel: 'text-embedding-3-small',
+        embeddingDimensions: 1536,
+        isSystemCollection: true,
+      });
 
       return collection.id;
     } catch (error) {
@@ -467,13 +461,10 @@ export class VectorizeDocsScript {
   /**
    * Index documents in the vector store
    */
-  private async indexDocuments(
-    collectionId: string,
-    chunks: DocumentChunk[]
-  ): Promise<void> {
+  private async indexDocuments(chunks: DocumentChunk[]): Promise<void> {
     try {
       // Get collection config
-      const collectionConfig = await indexingService.getCollectionByName(
+      const collectionConfig = await this.collectionService.getCollectionByName(
         this.config.collectionName
       );
       if (!collectionConfig) {
@@ -481,14 +472,9 @@ export class VectorizeDocsScript {
       }
 
       // Create vector store connection
-      const vectorStore = await indexingService.createVectorStore(
-        {
-          collectionName: collectionConfig.name,
-          url: collectionConfig.vectorStoreUrl,
-          apiKey: collectionConfig.vectorStoreApiKey || '',
-        },
-        'system',
-        'system'
+      const vectorStore = await indexingService.initVectorStore(
+        collectionConfig.name,
+        true
       );
 
       // Convert chunks to vector documents
@@ -544,21 +530,16 @@ export class VectorizeDocsScript {
    */
   private async getExistingChunkIds(): Promise<string[]> {
     try {
-      const collectionConfig = await indexingService.getCollectionByName(
+      const collectionConfig = await this.collectionService.getCollectionByName(
         this.config.collectionName
       );
       if (!collectionConfig) {
         return [];
       }
 
-      const vectorStore = await indexingService.createVectorStore(
-        {
-          collectionName: collectionConfig.name,
-          url: collectionConfig.vectorStoreUrl,
-          apiKey: collectionConfig.vectorStoreApiKey || '',
-        },
-        'system',
-        'system'
+      const vectorStore = await indexingService.initVectorStore(
+        collectionConfig.name,
+        true
       );
 
       const chunkIds: string[] = [];
@@ -645,25 +626,19 @@ export class VectorizeDocsScript {
    * Remove old documents from the vector store
    */
   private async removeOldDocuments(
-    collectionId: string,
     documentIds: string[]
   ): Promise<{ deletedCount: number; errors: string[] }> {
     try {
-      const collectionConfig = await indexingService.getCollectionByName(
+      const collectionConfig = await this.collectionService.getCollectionByName(
         this.config.collectionName
       );
       if (!collectionConfig) {
         throw new Error('Collection not found');
       }
 
-      const vectorStore = await indexingService.createVectorStore(
-        {
-          collectionName: collectionConfig.name,
-          url: collectionConfig.vectorStoreUrl,
-          apiKey: collectionConfig.vectorStoreApiKey || '',
-        },
-        'system',
-        'system'
+      const vectorStore = await indexingService.initVectorStore(
+        collectionConfig.name,
+        true
       );
 
       // Remove specific existing chunks that were present before indexing new ones

@@ -9,9 +9,9 @@ import { type ToolSelection } from '@/types/agents';
 import type { MessageBlock } from '@/types/blocks';
 
 interface ContextRequirement {
-  type: 'string' | 'vector' | 'memory' | 'schema';
   name: string;
   required: boolean;
+  description: string;
 }
 
 export interface AgentConfig {

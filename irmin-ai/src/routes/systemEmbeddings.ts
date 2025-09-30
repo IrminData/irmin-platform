@@ -3,7 +3,6 @@ import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
 
-import { env } from '@/config/env';
 import { swaggerSchemas } from '@/config/swagger';
 
 import {
@@ -144,7 +143,6 @@ export async function systemEmbeddingRoutes(fastify: FastifyInstance) {
           workspaceSlug: validatedData.workspaceSlug || undefined,
           createdBy: undefined,
           isSystemCollection: !validatedData.workspaceSlug, // Mark as system collection if no workspace
-          vectorStoreUrl: validatedData.vectorStoreUrl || env.QDRANT_URL, // Default Qdrant URL
         };
 
         const collection =
@@ -288,14 +286,11 @@ export async function systemEmbeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.createVectorStore(
-          {
-            collectionName: collectionConfig.name,
-            url: collectionConfig.url,
-            apiKey: collectionConfig.apiKey || '',
-          },
-          collectionConfig.workspaceSlug || 'system',
-          'system'
+        const vectorStore = await indexingService.initVectorStore(
+          collectionConfig.name,
+          collectionConfig.isSystemCollection ?? false,
+          collectionConfig.workspaceSlug ?? undefined,
+          collectionConfig.createdBy ?? undefined
         );
 
         // Index documents
@@ -350,14 +345,11 @@ export async function systemEmbeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.createVectorStore(
-          {
-            collectionName: collectionConfig.name,
-            url: collectionConfig.url,
-            apiKey: collectionConfig.apiKey || '',
-          },
-          collectionConfig.workspaceSlug || 'system',
-          'system'
+        const vectorStore = await indexingService.initVectorStore(
+          collectionConfig.name,
+          collectionConfig.isSystemCollection ?? false,
+          collectionConfig.workspaceSlug ?? undefined,
+          collectionConfig.createdBy ?? undefined
         );
 
         // Perform search
@@ -417,14 +409,11 @@ export async function systemEmbeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.createVectorStore(
-          {
-            collectionName: collectionConfig.name,
-            url: collectionConfig.url,
-            apiKey: collectionConfig.apiKey || '',
-          },
-          collectionConfig.workspaceSlug || 'system',
-          'system'
+        const vectorStore = await indexingService.initVectorStore(
+          collectionConfig.name,
+          collectionConfig.isSystemCollection ?? false,
+          collectionConfig.workspaceSlug ?? undefined,
+          collectionConfig.createdBy ?? undefined
         );
 
         // Retrieve context
