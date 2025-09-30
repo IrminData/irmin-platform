@@ -23,13 +23,13 @@ function ConsoleErrorSection({
     weEncounteredError: dict.common.weEncounteredError,
     tryAgain: dict.common.tryAgain,
     goBackHome: dict.common.goBackHome,
-    reportIssue: 'Report Issue',
-    hideDetails: 'Hide Details',
-    showDetails: 'Show Details',
-    errorDetails: 'Error Details',
-    copied: 'Copied',
-    copy: 'Copy',
-    stackTrace: 'Stack Trace',
+    reportIssue: dict.common.reportIssue,
+    hideDetails: dict.common.hideDetails,
+    showDetails: dict.common.showDetails,
+    errorDetails: dict.common.errorDetails,
+    copied: dict.common.copied,
+    copy: dict.common.copy,
+    stackTrace: dict.common.stackTrace,
   };
 
   return (

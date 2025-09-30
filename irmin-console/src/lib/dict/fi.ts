@@ -28,6 +28,17 @@ const fi = {
     tryAgain: 'Yritä uudelleen',
     comingSoon: 'Tulossa pian!',
 
+    // Error display
+    pageNotFoundDescription:
+      'Sivua, jota etsitään, ei ole saatavilla tai on siirretty.',
+    errorDetails: 'Virheen tiedot',
+    reportIssue: 'Ilmoita virheestä',
+    showDetails: 'Näytä lisätiedot',
+    hideDetails: 'Piilota lisätiedot',
+    copy: 'Kopioi',
+    copied: 'Kopioitu',
+    stackTrace: 'Virheen seuranta',
+
     // Search and navigation
     search: 'Hae',
     filters: 'Suodattimet',

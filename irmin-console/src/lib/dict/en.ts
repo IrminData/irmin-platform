@@ -28,6 +28,17 @@ const en = {
     tryAgain: 'Try again',
     comingSoon: 'Coming Soon!',
 
+    // Error display
+    pageNotFoundDescription:
+      "The page you're looking for doesn't exist or has been moved.",
+    errorDetails: 'Error details',
+    reportIssue: 'Report issue',
+    showDetails: 'Show details',
+    hideDetails: 'Hide details',
+    copy: 'Copy',
+    copied: 'Copied',
+    stackTrace: 'Stack trace',
+
     // Search and navigation
     search: 'Search',
     filters: 'Filters',

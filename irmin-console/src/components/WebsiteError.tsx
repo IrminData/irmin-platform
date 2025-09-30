@@ -26,7 +26,7 @@ export default function WebsiteError({
     : `${dict.common.somethingWentWrong} - 500`;
 
   const description = pageNotFound
-    ? "The page you're looking for doesn't exist or has been moved."
+    ? dict.common.pageNotFoundDescription
     : dict.common.weEncounteredError;
 
   // Prepare translations for CommonErrorDisplay
@@ -36,13 +36,13 @@ export default function WebsiteError({
     weEncounteredError: dict.common.weEncounteredError,
     tryAgain: dict.common.tryAgain,
     goBackHome: dict.common.goBackHome,
-    reportIssue: 'Report Issue',
-    hideDetails: 'Hide Details',
-    showDetails: 'Show Details',
-    errorDetails: 'Error Details',
-    copied: 'Copied',
-    copy: 'Copy',
-    stackTrace: 'Stack Trace',
+    reportIssue: dict.common.reportIssue,
+    hideDetails: dict.common.hideDetails,
+    showDetails: dict.common.showDetails,
+    errorDetails: dict.common.errorDetails,
+    copied: dict.common.copied,
+    copy: dict.common.copy,
+    stackTrace: dict.common.stackTrace,
   };
 
   return (
