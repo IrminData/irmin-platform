@@ -56,8 +56,12 @@ const TEST_QUERIES = {
 
 // Helper function to get collection ID
 async function getCollectionId(): Promise<string> {
-  const collection =
-    await collectionService.getCollectionByName(TEST_COLLECTION_NAME);
+  const collection = await collectionService.getCollectionByName(
+    TEST_COLLECTION_NAME,
+    undefined,
+    undefined,
+    true
+  );
   if (!collection) {
     throw new Error(`Collection '${TEST_COLLECTION_NAME}' not found`);
   }

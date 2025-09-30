@@ -41,10 +41,10 @@ export class AssistantAgent extends BaseAgent {
         vectorStore,
         input.message,
         {
-          maxDocuments: 3,
+          maxDocuments: 5,
           scoreThreshold: 0.3,
           includeMetadata: false,
-          maxTokens: 2000,
+          maxTokens: 3000,
         },
         'irmin-docs'
       );

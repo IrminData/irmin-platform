@@ -121,12 +121,32 @@ class CollectionService {
   /**
    * Get a collection by name
    */
-  async getCollectionByName(name: string): Promise<VectorCollection | null> {
+  async getCollectionByName(
+    name: string,
+    workspaceSlug?: string,
+    userId?: string,
+    isSystemCollection?: boolean,
+    isActive?: boolean
+  ): Promise<VectorCollection | null> {
     try {
       const [collection] = await db
         .select()
         .from(vectorCollections)
-        .where(eq(vectorCollections.name, name))
+        .where(
+          and(
+            eq(vectorCollections.name, name),
+            workspaceSlug
+              ? eq(vectorCollections.workspaceSlug, workspaceSlug)
+              : undefined,
+            userId ? eq(vectorCollections.createdBy, userId) : undefined,
+            isSystemCollection !== undefined
+              ? eq(vectorCollections.isSystemCollection, isSystemCollection)
+              : undefined,
+            isActive !== undefined
+              ? eq(vectorCollections.isActive, isActive)
+              : undefined
+          )
+        )
         .limit(1);
 
       return collection || null;

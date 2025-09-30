@@ -52,8 +52,12 @@ class IndexingService {
   ): Promise<QdrantVectorStore> {
     try {
       // First, try to get the collection from the database
-      const collection =
-        await collectionService.getCollectionByName(collectionName);
+      const collection = await collectionService.getCollectionByName(
+        collectionName,
+        workspaceSlug,
+        userId,
+        isSystemCollection
+      );
 
       if (!collection) {
         throw new Error('Collection not found');

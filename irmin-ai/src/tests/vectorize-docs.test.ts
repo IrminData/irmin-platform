@@ -153,8 +153,12 @@ async function testCollectionDatabase(): Promise<boolean> {
 
   try {
     // Get collection from database
-    const collection =
-      await collectionService.getCollectionByName(TEST_COLLECTION_NAME);
+    const collection = await collectionService.getCollectionByName(
+      TEST_COLLECTION_NAME,
+      undefined,
+      undefined,
+      true
+    );
 
     if (!collection) {
       logTest(
@@ -411,8 +415,12 @@ async function testReplaceModeFunctionality(): Promise<boolean> {
 
   try {
     // First, get initial document count
-    const initialCollection =
-      await collectionService.getCollectionByName(TEST_COLLECTION_NAME);
+    const initialCollection = await collectionService.getCollectionByName(
+      TEST_COLLECTION_NAME,
+      undefined,
+      undefined,
+      true
+    );
     const initialCount = initialCollection?.documentCount || 0;
 
     console.log(`  Initial document count: ${initialCount}`);
@@ -437,8 +445,12 @@ async function testReplaceModeFunctionality(): Promise<boolean> {
     }
 
     // Check final document count
-    const finalCollection =
-      await collectionService.getCollectionByName(TEST_COLLECTION_NAME);
+    const finalCollection = await collectionService.getCollectionByName(
+      TEST_COLLECTION_NAME,
+      undefined,
+      undefined,
+      true
+    );
     const finalCount = finalCollection?.documentCount || 0;
 
     console.log(`  Final document count: ${finalCount}`);
@@ -477,8 +489,12 @@ async function testAppendModeFunctionality(): Promise<boolean> {
 
   try {
     // Get initial document count
-    const initialCollection =
-      await collectionService.getCollectionByName(TEST_COLLECTION_NAME);
+    const initialCollection = await collectionService.getCollectionByName(
+      TEST_COLLECTION_NAME,
+      undefined,
+      undefined,
+      true
+    );
     const initialCount = initialCollection?.documentCount || 0;
 
     console.log(`  Initial document count: ${initialCount}`);
@@ -503,8 +519,12 @@ async function testAppendModeFunctionality(): Promise<boolean> {
     }
 
     // Check final document count
-    const finalCollection =
-      await collectionService.getCollectionByName(TEST_COLLECTION_NAME);
+    const finalCollection = await collectionService.getCollectionByName(
+      TEST_COLLECTION_NAME,
+      undefined,
+      undefined,
+      true
+    );
     const finalCount = finalCollection?.documentCount || 0;
 
     console.log(`  Final document count: ${finalCount}`);
@@ -669,8 +689,12 @@ async function cleanupTestData(): Promise<void> {
 
   try {
     // Delete the test collection
-    const collection =
-      await collectionService.getCollectionByName(TEST_COLLECTION_NAME);
+    const collection = await collectionService.getCollectionByName(
+      TEST_COLLECTION_NAME,
+      undefined,
+      undefined,
+      true
+    );
     if (collection) {
       await collectionService.deleteCollection(collection.id);
       logTest('Cleanup', 'PASS', 'Test collection deleted');

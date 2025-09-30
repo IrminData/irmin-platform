@@ -434,7 +434,10 @@ export class VectorizeDocsScript {
       // Try to get existing collection
       const existingCollection =
         await this.collectionService.getCollectionByName(
-          this.config.collectionName
+          this.config.collectionName,
+          undefined,
+          undefined,
+          true
         );
 
       if (existingCollection) {
@@ -465,7 +468,10 @@ export class VectorizeDocsScript {
     try {
       // Get collection config
       const collectionConfig = await this.collectionService.getCollectionByName(
-        this.config.collectionName
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
       );
       if (!collectionConfig) {
         throw new Error('Collection not found');
@@ -531,7 +537,10 @@ export class VectorizeDocsScript {
   private async getExistingChunkIds(): Promise<string[]> {
     try {
       const collectionConfig = await this.collectionService.getCollectionByName(
-        this.config.collectionName
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
       );
       if (!collectionConfig) {
         return [];
@@ -630,7 +639,10 @@ export class VectorizeDocsScript {
   ): Promise<{ deletedCount: number; errors: string[] }> {
     try {
       const collectionConfig = await this.collectionService.getCollectionByName(
-        this.config.collectionName
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
       );
       if (!collectionConfig) {
         throw new Error('Collection not found');
