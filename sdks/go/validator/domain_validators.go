@@ -177,7 +177,6 @@ func (v *Validator) validateWorkflowable(fl validator.FieldLevel) bool {
 func (v *Validator) validateImportWorkflowable(parentStruct reflect.Value) bool {
 	connectionIDField := parentStruct.FieldByName("ConnectionID")
 	fromConnectionPathsField := parentStruct.FieldByName("ImportFromConnectionPaths")
-	toRepositoryPathField := parentStruct.FieldByName("ImportToRepositoryPath")
 
 	// Import workflowables must have a connection ID
 	if !v.validateConnectionID(connectionIDField) {
@@ -189,10 +188,8 @@ func (v *Validator) validateImportWorkflowable(parentStruct reflect.Value) bool 
 		return false
 	}
 
-	// Must have destination path
-	if !toRepositoryPathField.IsValid() || toRepositoryPathField.String() == "" {
-		return false
-	}
+	// Destination path can be empty (treated as root)
+	// No validation needed for ImportToRepositoryPath
 
 	return true
 }
