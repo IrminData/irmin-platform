@@ -23,7 +23,7 @@ func (scm *SchemaCacheManager) checkConnectionSchemaCache(
 ) *irminmodels.ObjectSchema {
 	schemaCache, err := scm.db.FindConnectionSchemaCache(connection.ID, operationMethod)
 	if err != nil {
-		scm.logger.ErrorContext(ctx, "warning: error finding schema cache", "error", err)
+		scm.logger.WarnContext(ctx, "failed to find schema cache", "error", err)
 		return nil
 	}
 

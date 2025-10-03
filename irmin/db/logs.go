@@ -80,7 +80,7 @@ func (d *Database) GetLogEventsForWorkspace(
 
 	// base fetch query with associations
 	query := d.Preload("User").
-		Preload("Workspace").
+		Preload("Workspace.Owner").
 		Preload("Repository").
 		Preload("Workflow").
 		Preload("WorkflowRun").
@@ -164,7 +164,7 @@ func (d *Database) GetLogEventsByWorkspaceAndAsset(
 
 	// base fetch query with preloads
 	query := d.Preload("User").
-		Preload("Workspace").
+		Preload("Workspace.Owner").
 		Preload("Repository").
 		Preload("Workflow").
 		Preload("WorkflowRun").

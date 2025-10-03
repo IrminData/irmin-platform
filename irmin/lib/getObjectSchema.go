@@ -24,7 +24,7 @@ func (scm *SchemaCacheManager) checkObjectSchemaCache(
 ) *irminmodels.ObjectSchema {
 	schemaCache, err := scm.db.FindRepositorySchemaCache(repository.ID, objectPath, ref)
 	if err != nil {
-		scm.logger.ErrorContext(ctx, "warning: error finding schema cache", "error", err)
+		scm.logger.WarnContext(ctx, "failed to find schema cache", "error", err)
 		return nil
 	}
 
@@ -32,16 +32,6 @@ func (scm *SchemaCacheManager) checkObjectSchemaCache(
 		return schemaCache.Schema
 	}
 
-	scm.logger.ErrorContext(
-		ctx,
-		"warning: no valid schema cache found",
-		"repository",
-		repository.ID,
-		"objectPath",
-		objectPath,
-		"ref",
-		ref,
-	)
 	return nil
 }
 
