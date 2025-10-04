@@ -2,17 +2,6 @@ import { z } from 'zod';
 
 import { AIToolSelectionSchema } from './base';
 
-export const AIChatRequestSchema = z.object({
-  conversationId: z.string().optional(),
-  message: z.string().min(1),
-  provider: z.enum(['groq', 'openai']).default('groq').optional(),
-  model: z.string().optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().min(1).max(4000).optional(),
-  toolSelection: AIToolSelectionSchema.optional(),
-  stream: z.boolean().default(true).optional(),
-});
-
 export const AICreateConversationRequestSchema = z.object({
   title: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
@@ -26,7 +15,7 @@ export const AIUpdateConversationRequestSchema = z.object({
 });
 
 export const AIAgentExecuteRequestSchema = z.object({
-  message: z.string().min(1),
+  message: z.string().trim().min(1, 'Message cannot be empty'),
   context: z.record(z.string(), z.any()).optional(),
   conversationId: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
@@ -35,7 +24,6 @@ export const AIAgentExecuteRequestSchema = z.object({
 });
 
 // Type exports
-export type AIChatRequest = z.infer<typeof AIChatRequestSchema>;
 export type AICreateConversationRequest = z.infer<
   typeof AICreateConversationRequestSchema
 >;

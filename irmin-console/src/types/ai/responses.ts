@@ -10,12 +10,6 @@ import {
 } from './base';
 
 // Response schemas
-export const AIChatResponseSchema = z.object({
-  conversationId: z.string(),
-  messages: z.array(AIMessageSchema),
-  usage: AIUsageSchema.optional(),
-});
-
 export const AIConversationsListResponseSchema = z.object({
   data: z.array(AIConversationSchema),
   pagination: z.object({
@@ -107,7 +101,6 @@ export const AIToolsResponseSchema = z.object({
 });
 
 // Type exports
-export type AIChatResponse = z.infer<typeof AIChatResponseSchema>;
 export type AIConversationsListResponse = z.infer<
   typeof AIConversationsListResponseSchema
 >;
