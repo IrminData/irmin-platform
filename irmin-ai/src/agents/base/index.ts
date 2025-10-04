@@ -82,7 +82,8 @@ export abstract class BaseAgent implements BaseAgentInterface {
         stream: stream, // Pass LangChain stream directly
         metadata: {
           agentId: this.config.id,
-          type: this.config.type,
+          modelProvider: this.config.modelProvider,
+          model: this.config.model,
           context,
         },
       };
@@ -106,7 +107,8 @@ export abstract class BaseAgent implements BaseAgentInterface {
         blocks: response.blocks,
         metadata: {
           agentId: this.config.id,
-          type: this.config.type,
+          modelProvider: this.config.modelProvider,
+          model: this.config.model,
           context,
         },
       };

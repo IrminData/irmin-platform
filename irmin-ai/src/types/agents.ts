@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { MessageBlockSchema } from '@/types/blocks';
 
 // Tool selection schema - allows specifying which tools to include
-export const ToolSelectionSchema = z.object({
+const ToolSelectionSchema = z.object({
   // Include all tools from specific MCP servers
   includeServers: z
     .array(z.string())

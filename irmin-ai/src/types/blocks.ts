@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Shared block type definition
-export const MessageBlockTypeSchema = z.enum([
+const MessageBlockTypeSchema = z.enum([
   'text',
   'tool_call',
   'tool_result',
