@@ -96,29 +96,23 @@ export const AIAgentSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  type: z.enum(['chat', 'single-shot']),
-  modelProvider: z.enum(['groq', 'openai']),
+  modelProvider: z.enum(['groq', 'openai', 'anthropic']),
   model: z.string().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
-  responseFormat: z.enum(['structured', 'unstructured', 'json', 'markdown']),
   contextRequirements: z.array(
     z.object({
-      type: z.enum(['string', 'vector', 'memory', 'schema']),
       name: z.string(),
       required: z.boolean(),
-      config: z.record(z.string(), z.unknown()).optional(),
+      description: z.string(),
     })
   ),
   toolSelection: AIToolSelectionSchema.optional(),
   streaming: z.boolean(),
-  // Legacy fields for backward compatibility
-  capabilities: z.array(z.string()).optional(),
-  systemPrompt: z.string().optional(),
-  defaultModel: z.string().optional(),
-  defaultProvider: z.string().optional(),
-  supportsMCP: z.boolean().optional(),
-  supportsStreaming: z.boolean().optional(),
+  useAgentGraph: z.boolean(),
+  maxToolCalls: z.number(),
+  maxUserInputChars: z.number().optional(),
+  maxSystemPromptChars: z.number().optional(),
 });
 
 export const AIModelSchema = z.object({
