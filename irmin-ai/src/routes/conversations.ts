@@ -1,6 +1,6 @@
 import { conversations, db, messages, type NewConversation } from '@/database';
 import { randomUUID } from 'crypto';
-import { and, asc, count, desc, eq, isNull, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, sql, sum } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
@@ -268,12 +268,18 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           return;
         }
 
-        // Get all messages
+        // Get all messages (excluding system messages for security)
         const orderFn = sortOrder === 'asc' ? asc : desc;
         const data = await db
           .select()
           .from(messages)
-          .where(eq(messages.conversationId, id))
+          .where(
+            and(
+              eq(messages.conversationId, id),
+              // Exclude system messages to prevent system prompt exposure
+              sql`${messages.role} != 'system'`
+            )
+          )
           .orderBy(orderFn(messages.createdAt));
 
         const response = {
