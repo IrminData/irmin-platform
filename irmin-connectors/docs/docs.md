@@ -1789,6 +1789,26 @@ type Subscription struct {
 }
 ```
 
+# httpconnector
+
+```go
+import "irmin-connectors/connectors/http"
+```
+
+## Index
+
+- [func SetupRoutes\(app \*models.ConnectorsApp\)](<#SetupRoutes>)
+
+
+<a name="SetupRoutes"></a>
+## func SetupRoutes
+
+```go
+func SetupRoutes(app *models.ConnectorsApp)
+```
+
+SetupRoutes sets up the routes for the HTTP connector.
+
 # mysqlconnector
 
 ```go
@@ -1868,6 +1888,537 @@ func SetupRoutes(app *models.ConnectorsApp)
 ```
 
 SetupRoutes sets up the routes for the SFTP connector.
+
+# client
+
+```go
+import "irmin-connectors/connectors/http/client"
+```
+
+## Index
+
+- [func ValidateConfiguration\(config map\[string\]any\) error](<#ValidateConfiguration>)
+- [type HTTPClient](<#HTTPClient>)
+  - [func InitHTTPClient\(c any, logger \*slog.Logger, operation \*db.Operation\) \(\*HTTPClient, error\)](<#InitHTTPClient>)
+  - [func \(h \*HTTPClient\) GetContentType\(resp \*http.Response\) string](<#HTTPClient.GetContentType>)
+  - [func \(h \*HTTPClient\) GetFileNameFromResponse\(resp \*http.Response\) string](<#HTTPClient.GetFileNameFromResponse>)
+  - [func \(h \*HTTPClient\) GetResponseBody\(resp \*http.Response\) \(\[\]byte, error\)](<#HTTPClient.GetResponseBody>)
+  - [func \(h \*HTTPClient\) IsAcceptedStatusCode\(statusCode int\) bool](<#HTTPClient.IsAcceptedStatusCode>)
+  - [func \(h \*HTTPClient\) MakeRequest\(\) \(\*http.Response, error\)](<#HTTPClient.MakeRequest>)
+
+
+<a name="ValidateConfiguration"></a>
+## func ValidateConfiguration
+
+```go
+func ValidateConfiguration(config map[string]any) error
+```
+
+
+
+<a name="HTTPClient"></a>
+## type HTTPClient
+
+HTTPClient represents an HTTP client for making requests. Note: HTTPClient instances should not be shared across goroutines. The Headers map is not protected by synchronization. For concurrent use, create separate HTTPClient instances \(the underlying http.Client can be shared\).
+
+```go
+type HTTPClient struct {
+    URL                 string
+    Method              string
+    Headers             map[string]string // Not safe for concurrent map iteration
+    Body                []byte
+    Timeout             int
+    VerifySSL           bool
+    AcceptedStatusCodes []int
+    Client              *http.Client // Safe for concurrent use
+}
+```
+
+<a name="InitHTTPClient"></a>
+### func InitHTTPClient
+
+```go
+func InitHTTPClient(c any, logger *slog.Logger, operation *db.Operation) (*HTTPClient, error)
+```
+
+InitHTTPClient initializes an HTTP client from operation configuration.
+
+<a name="HTTPClient.GetContentType"></a>
+### func \(\*HTTPClient\) GetContentType
+
+```go
+func (h *HTTPClient) GetContentType(resp *http.Response) string
+```
+
+GetContentType returns the content type from response headers.
+
+<a name="HTTPClient.GetFileNameFromResponse"></a>
+### func \(\*HTTPClient\) GetFileNameFromResponse
+
+```go
+func (h *HTTPClient) GetFileNameFromResponse(resp *http.Response) string
+```
+
+GetFileNameFromResponse generates a filename based on response content type and URL.
+
+<a name="HTTPClient.GetResponseBody"></a>
+### func \(\*HTTPClient\) GetResponseBody
+
+```go
+func (h *HTTPClient) GetResponseBody(resp *http.Response) ([]byte, error)
+```
+
+GetResponseBody reads and returns the response body as bytes. Note: The caller is responsible for closing the response body.
+
+<a name="HTTPClient.IsAcceptedStatusCode"></a>
+### func \(\*HTTPClient\) IsAcceptedStatusCode
+
+```go
+func (h *HTTPClient) IsAcceptedStatusCode(statusCode int) bool
+```
+
+IsAcceptedStatusCode checks if the given status code is in the accepted list.
+
+<a name="HTTPClient.MakeRequest"></a>
+### func \(\*HTTPClient\) MakeRequest
+
+```go
+func (h *HTTPClient) MakeRequest() (*http.Response, error)
+```
+
+MakeRequest makes an HTTP request and returns the response. This method is not safe for concurrent use on the same HTTPClient instance.
+
+# config
+
+```go
+import "irmin-connectors/connectors/http/config"
+```
+
+## Index
+
+- [func GetConnectorInfo\(\) models.ConnectorDetails](<#GetConnectorInfo>)
+- [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
+- [func GetDetailsFields\(\) \[\]string](<#GetDetailsFields>)
+- [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
+- [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
+
+
+<a name="GetConnectorInfo"></a>
+## func GetConnectorInfo
+
+```go
+func GetConnectorInfo() models.ConnectorDetails
+```
+
+GetConnectorInfo returns the default connector information for HTTP.
+
+<a name="GetDetailsFieldDefinitions"></a>
+## func GetDetailsFieldDefinitions
+
+```go
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetDetailsFieldDefinitions returns all detail fields with their metadata.
+
+<a name="GetDetailsFields"></a>
+## func GetDetailsFields
+
+```go
+func GetDetailsFields() []string
+```
+
+GetDetailsFields returns the detail\-specific fields.
+
+<a name="GetOptionalFields"></a>
+## func GetOptionalFields
+
+```go
+func GetOptionalFields() []string
+```
+
+GetOptionalFields returns the optional form fields for HTTP.
+
+<a name="GetRequiredFields"></a>
+## func GetRequiredFields
+
+```go
+func GetRequiredFields() []string
+```
+
+GetRequiredFields returns the mandatory form fields for HTTP.
+
+<a name="GetSettingsFieldDefinitions"></a>
+## func GetSettingsFieldDefinitions
+
+```go
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetSettingsFieldDefinitions returns static settings fields \(dynamic ones are handled in controllers\).
+
+<a name="GetSettingsFields"></a>
+## func GetSettingsFields
+
+```go
+func GetSettingsFields() []string
+```
+
+GetSettingsFields returns the settings\-specific fields.
+
+# httpcontrollers
+
+```go
+import "irmin-connectors/connectors/http/controllers"
+```
+
+## Index
+
+- [type Controllers](<#Controllers>)
+  - [func NewControllers\(app \*models.ConnectorsApp\) \*Controllers](<#NewControllers>)
+  - [func \(cs \*Controllers\) BuildDetails\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildDetails>)
+  - [func \(cs \*Controllers\) BuildSettings\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildSettings>)
+  - [func \(cs \*Controllers\) ConfigFields\(c fiber.Ctx\) error](<#Controllers.ConfigFields>)
+  - [func \(cs \*Controllers\) ConfigValidate\(c fiber.Ctx\) error](<#Controllers.ConfigValidate>)
+  - [func \(cs \*Controllers\) DetailsPage\(c fiber.Ctx\) error](<#Controllers.DetailsPage>)
+  - [func \(cs \*Controllers\) GetDynamicFields\(c fiber.Ctx, key string, fields map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Controllers.GetDynamicFields>)
+  - [func \(cs \*Controllers\) GetOperationFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetOperationFormFields>)
+  - [func \(cs \*Controllers\) GetRequiredFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetRequiredFormFields>)
+  - [func \(cs \*Controllers\) Info\(c fiber.Ctx\) error](<#Controllers.Info>)
+  - [func \(cs \*Controllers\) OperationCancel\(c fiber.Ctx\) error](<#Controllers.OperationCancel>)
+  - [func \(cs \*Controllers\) OperationInit\(c fiber.Ctx\) error](<#Controllers.OperationInit>)
+  - [func \(cs \*Controllers\) OperationPatch\(c fiber.Ctx\) error](<#Controllers.OperationPatch>)
+  - [func \(cs \*Controllers\) OperationPull\(c fiber.Ctx\) error](<#Controllers.OperationPull>)
+  - [func \(cs \*Controllers\) OperationPush\(c fiber.Ctx\) error](<#Controllers.OperationPush>)
+  - [func \(cs \*Controllers\) OperationSchemaGet\(c fiber.Ctx\) error](<#Controllers.OperationSchemaGet>)
+  - [func \(cs \*Controllers\) OperationStatus\(c fiber.Ctx\) error](<#Controllers.OperationStatus>)
+  - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
+  - [func \(cs \*Controllers\) TestConnection\(ctx fiber.Ctx, details map\[string\]any, settings map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, details map\[string\]any, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
+  - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
+  - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
+- [type HTTPPullProvider](<#HTTPPullProvider>)
+  - [func \(p \*HTTPPullProvider\) GetAllFiles\(\_ fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#HTTPPullProvider.GetAllFiles>)
+  - [func \(p \*HTTPPullProvider\) GetFileByPath\(\_ fiber.Ctx, client any, \_ string\) \(string, \[\]byte, error\)](<#HTTPPullProvider.GetFileByPath>)
+  - [func \(p \*HTTPPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPullProvider.InitializeClient>)
+- [type HTTPPushProvider](<#HTTPPushProvider>)
+  - [func \(p \*HTTPPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPushProvider.InitializeClient>)
+  - [func \(p \*HTTPPushProvider\) ProcessFiles\(\_ fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#HTTPPushProvider.ProcessFiles>)
+- [type HTTPSchemaProvider](<#HTTPSchemaProvider>)
+  - [func \(p \*HTTPSchemaProvider\) GetSchema\(c fiber.Ctx, client any, \_ string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#HTTPSchemaProvider.GetSchema>)
+  - [func \(p \*HTTPSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#HTTPSchemaProvider.GetSupportedOperationTypes>)
+  - [func \(p \*HTTPSchemaProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPSchemaProvider.InitializeClient>)
+
+
+<a name="Controllers"></a>
+## type Controllers
+
+Controllers holds the dependencies for the HTTP connector controllers.
+
+```go
+type Controllers struct {
+    *common.Controllers
+}
+```
+
+<a name="NewControllers"></a>
+### func NewControllers
+
+```go
+func NewControllers(app *models.ConnectorsApp) *Controllers
+```
+
+NewControllers creates a new instance of controllers with the required dependencies.
+
+<a name="Controllers.BuildDetails"></a>
+### func \(\*Controllers\) BuildDetails
+
+```go
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+```
+
+BuildDetails implements the OperationInitProvider interface.
+
+<a name="Controllers.BuildSettings"></a>
+### func \(\*Controllers\) BuildSettings
+
+```go
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+```
+
+BuildSettings implements the OperationInitProvider interface.
+
+<a name="Controllers.ConfigFields"></a>
+### func \(\*Controllers\) ConfigFields
+
+```go
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+```
+
+ConfigFields godoc @Summary Get HTTP connector configuration fields @Description Get dynamic configuration fields for the HTTP connector based on the configuration key \(details or settings\) @Tags http @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/configuration/\{key\}/fields \[post\]
+
+<a name="Controllers.ConfigValidate"></a>
+### func \(\*Controllers\) ConfigValidate
+
+```go
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+```
+
+ConfigValidate godoc @Summary Validate HTTP connector configuration @Description Validate HTTP endpoint configuration by testing the connection to the specified URL @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[url\] formData string true "HTTP endpoint URL" @Param details\[method\] formData string true "HTTP method \(GET, POST, PUT, PATCH, DELETE\)" @Param details\[headers\] formData string false "HTTP headers as JSON object" @Param details\[body\] formData string false "Request body content" @Param details\[timeout\] formData integer false "Request timeout in seconds \(default: 30\)" @Param details\[verify\_ssl\] formData boolean false "Verify SSL certificates \(default: true\)" @Param settings\[path\] formData string false "Path setting \(default: /\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/configuration/validate \[post\]
+
+<a name="Controllers.DetailsPage"></a>
+### func \(\*Controllers\) DetailsPage
+
+```go
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+```
+
+DetailsPage godoc @Summary Get HTTP connector details page @Description Get an HTML page with detailed information about the HTTP connector including capabilities, authentication methods, and usage examples @Tags http @Accept json @Produce text/html @Success 200 \{string\} string "HTTP connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/details \[get\]
+
+<a name="Controllers.GetDynamicFields"></a>
+### func \(\*Controllers\) GetDynamicFields
+
+```go
+func (cs *Controllers) GetDynamicFields(c fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
+```
+
+GetDynamicFields implements the ConfigFieldProvider interface.
+
+<a name="Controllers.GetOperationFormFields"></a>
+### func \(\*Controllers\) GetOperationFormFields
+
+```go
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+```
+
+GetOperationFormFields implements the OperationInitProvider interface.
+
+<a name="Controllers.GetRequiredFormFields"></a>
+### func \(\*Controllers\) GetRequiredFormFields
+
+```go
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+```
+
+GetRequiredFormFields implements the ConfigValidationProvider interface.
+
+<a name="Controllers.Info"></a>
+### func \(\*Controllers\) Info
+
+```go
+func (cs *Controllers) Info(c fiber.Ctx) error
+```
+
+Info godoc @Summary Get HTTP connector information @Description Get detailed information about the HTTP connector including capabilities, configuration fields, and API endpoints @Tags http @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "HTTP connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/info \[get\]
+
+<a name="Controllers.OperationCancel"></a>
+### func \(\*Controllers\) OperationCancel
+
+```go
+func (cs *Controllers) OperationCancel(c fiber.Ctx) error
+```
+
+OperationCancel godoc @Summary Cancel HTTP operation @Description Cancel an ongoing HTTP operation using the operation token @Tags http @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} fiber.Map "Operation cancelled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/cancel \[post\]
+
+<a name="Controllers.OperationInit"></a>
+### func \(\*Controllers\) OperationInit
+
+```go
+func (cs *Controllers) OperationInit(c fiber.Ctx) error
+```
+
+OperationInit godoc @Summary Initialize HTTP operation @Description Initialize a new HTTP operation with connection details and settings, returning an operation token for subsequent requests @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[url\] formData string true "HTTP endpoint URL" @Param details\[method\] formData string true "HTTP method \(GET, POST, PUT, PATCH, DELETE\)" @Param details\[headers\] formData string false "HTTP headers as JSON object" @Param details\[body\] formData string false "Request body content" @Param details\[timeout\] formData integer false "Request timeout in seconds \(default: 30\)" @Param details\[verify\_ssl\] formData boolean false "Verify SSL certificates \(default: true\)" @Param settings\[path\] formData string false "Path setting \(default: /\)" @Success 200 \{object\} fiber.Map "Operation initialized successfully with operation token" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/init \[post\]
+
+<a name="Controllers.OperationPatch"></a>
+### func \(\*Controllers\) OperationPatch
+
+```go
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+```
+
+OperationPatch godoc @Summary HTTP connector does not support patch operations @Description HTTP connector does not support patch operations @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 501 \{object\} fiber.Map "Not implemented \- HTTP connector does not support patch operations" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /http/operation/patch \[post\]
+
+<a name="Controllers.OperationPull"></a>
+### func \(\*Controllers\) OperationPull
+
+```go
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+```
+
+OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a request to the configured HTTP endpoint and return the response as a file @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param path formData string false "Path parameter \(ignored for single endpoint configurations\)" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "HTTP endpoint not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/pull \[post\]
+
+<a name="Controllers.OperationPush"></a>
+### func \(\*Controllers\) OperationPush
+
+```go
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+```
+
+OperationPush godoc @Summary Push data to HTTP endpoint @Description Send file content to the configured HTTP endpoint using the specified method and headers @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "File to send to HTTP endpoint" @Param path formData string false "Path parameter \(ignored for single endpoint configurations\)" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/push \[post\]
+
+<a name="Controllers.OperationSchemaGet"></a>
+### func \(\*Controllers\) OperationSchemaGet
+
+```go
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+```
+
+OperationSchemaGet godoc @Summary Get HTTP operation schema @Description Get the response schema for HTTP operations, returning an Irmin\-compatible ObjectSchema based on the operation type \(pull or push\) @Tags http @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/schema/\{operation\} \[post\]
+
+<a name="Controllers.OperationStatus"></a>
+### func \(\*Controllers\) OperationStatus
+
+```go
+func (cs *Controllers) OperationStatus(c fiber.Ctx) error
+```
+
+OperationStatus godoc @Summary Get HTTP operation status @Description Get the current status of an HTTP operation using the operation token @Tags http @Security SystemTokenAuth @Accept json @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} common.OperationStatus "Operation status retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/status \[post\]
+
+<a name="Controllers.SubscribeToChanges"></a>
+### func \(\*Controllers\) SubscribeToChanges
+
+```go
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+```
+
+SubscribeToChanges godoc @Summary HTTP connector does not support webhook subscriptions @Description HTTP connector does not support webhook subscriptions @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 501 \{object\} fiber.Map "Not implemented \- HTTP connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /http/operation/subscribe \[post\]
+
+<a name="Controllers.TestConnection"></a>
+### func \(\*Controllers\) TestConnection
+
+```go
+func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
+```
+
+TestConnection implements the ConfigValidationProvider interface.
+
+<a name="Controllers.ValidateFields"></a>
+### func \(\*Controllers\) ValidateFields
+
+```go
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
+```
+
+ValidateFields implements the ConfigValidationProvider interface.
+
+<a name="Controllers.ValidateOperationTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateOperationTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateOperationTokenMiddleware validates the operation token.
+
+<a name="Controllers.ValidateSystemTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateSystemTokenMiddleware validates the system token.
+
+<a name="HTTPPullProvider"></a>
+## type HTTPPullProvider
+
+HTTPPullProvider implements the PullOperationProvider interface for HTTP.
+
+```go
+type HTTPPullProvider struct{}
+```
+
+<a name="HTTPPullProvider.GetAllFiles"></a>
+### func \(\*HTTPPullProvider\) GetAllFiles
+
+```go
+func (p *HTTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error)
+```
+
+GetAllFiles makes a request to the configured endpoint and returns the response as a file.
+
+<a name="HTTPPullProvider.GetFileByPath"></a>
+### func \(\*HTTPPullProvider\) GetFileByPath
+
+```go
+func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, _ string) (string, []byte, error)
+```
+
+GetFileByPath makes a request to the configured endpoint and returns the response as a file. For HTTP connectors, the path parameter is ignored since we only support single endpoint configurations.
+
+<a name="HTTPPullProvider.InitializeClient"></a>
+### func \(\*HTTPPullProvider\) InitializeClient
+
+```go
+func (p *HTTPPullProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the HTTP client for pull operations.
+
+<a name="HTTPPushProvider"></a>
+## type HTTPPushProvider
+
+HTTPPushProvider implements the PushOperationProvider interface for HTTP.
+
+```go
+type HTTPPushProvider struct{}
+```
+
+<a name="HTTPPushProvider.InitializeClient"></a>
+### func \(\*HTTPPushProvider\) InitializeClient
+
+```go
+func (p *HTTPPushProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the HTTP client for push operations.
+
+<a name="HTTPPushProvider.ProcessFiles"></a>
+### func \(\*HTTPPushProvider\) ProcessFiles
+
+```go
+func (p *HTTPPushProvider) ProcessFiles(_ fiber.Ctx, client any, files map[string][]byte, rawPath string) error
+```
+
+ProcessFiles processes the extracted files and sends them to the HTTP endpoint.
+
+<a name="HTTPSchemaProvider"></a>
+## type HTTPSchemaProvider
+
+HTTPSchemaProvider implements the SchemaOperationProvider interface for HTTP endpoints.
+
+```go
+type HTTPSchemaProvider struct{}
+```
+
+<a name="HTTPSchemaProvider.GetSchema"></a>
+### func \(\*HTTPSchemaProvider\) GetSchema
+
+```go
+func (p *HTTPSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, _ *string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchema retrieves the HTTP endpoint schema and returns an Irmin\-compatible ObjectSchema.
+
+<a name="HTTPSchemaProvider.GetSupportedOperationTypes"></a>
+### func \(\*HTTPSchemaProvider\) GetSupportedOperationTypes
+
+```go
+func (p *HTTPSchemaProvider) GetSupportedOperationTypes() []string
+```
+
+GetSupportedOperationTypes returns the list of supported operation types for HTTP.
+
+<a name="HTTPSchemaProvider.InitializeClient"></a>
+### func \(\*HTTPSchemaProvider\) InitializeClient
+
+```go
+func (p *HTTPSchemaProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient initializes the HTTP client for schema operations.
 
 # mysqlclient
 

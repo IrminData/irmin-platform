@@ -602,6 +602,490 @@ info:
   title: Irmin Connectors
   version: 1.0.0
 paths:
+  /http/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Get dynamic configuration fields for the HTTP connector based on
+        the configuration key (details or settings)
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields retrieved successfully
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request - invalid configuration key
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get HTTP connector configuration fields
+      tags:
+      - http
+  /http/configuration/validate:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Validate HTTP endpoint configuration by testing the connection
+        to the specified URL
+      parameters:
+      - description: HTTP endpoint URL
+        in: formData
+        name: details[url]
+        required: true
+        type: string
+      - description: HTTP method (GET, POST, PUT, PATCH, DELETE)
+        in: formData
+        name: details[method]
+        required: true
+        type: string
+      - description: HTTP headers as JSON object
+        in: formData
+        name: details[headers]
+        type: string
+      - description: Request body content
+        in: formData
+        name: details[body]
+        type: string
+      - description: 'Request timeout in seconds (default: 30)'
+        in: formData
+        name: details[timeout]
+        type: integer
+      - description: 'Verify SSL certificates (default: true)'
+        in: formData
+        name: details[verify_ssl]
+        type: boolean
+      - description: 'Path setting (default: /)'
+        in: formData
+        name: settings[path]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration validation result
+          schema:
+            $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+        "400":
+          description: Bad request - invalid configuration data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate HTTP connector configuration
+      tags:
+      - http
+  /http/details:
+    get:
+      consumes:
+      - application/json
+      description: Get an HTML page with detailed information about the HTTP connector
+        including capabilities, authentication methods, and usage examples
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTTP connector details page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get HTTP connector details page
+      tags:
+      - http
+  /http/info:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about the HTTP connector including capabilities,
+        configuration fields, and API endpoints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: HTTP connector information retrieved successfully
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get HTTP connector information
+      tags:
+      - http
+  /http/operation/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel an ongoing HTTP operation using the operation token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation cancelled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Cancel HTTP operation
+      tags:
+      - http
+  /http/operation/init:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Initialize a new HTTP operation with connection details and settings,
+        returning an operation token for subsequent requests
+      parameters:
+      - description: HTTP endpoint URL
+        in: formData
+        name: details[url]
+        required: true
+        type: string
+      - description: HTTP method (GET, POST, PUT, PATCH, DELETE)
+        in: formData
+        name: details[method]
+        required: true
+        type: string
+      - description: HTTP headers as JSON object
+        in: formData
+        name: details[headers]
+        type: string
+      - description: Request body content
+        in: formData
+        name: details[body]
+        type: string
+      - description: 'Request timeout in seconds (default: 30)'
+        in: formData
+        name: details[timeout]
+        type: integer
+      - description: 'Verify SSL certificates (default: true)'
+        in: formData
+        name: details[verify_ssl]
+        type: boolean
+      - description: 'Path setting (default: /)'
+        in: formData
+        name: settings[path]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation initialized successfully with operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation data
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Initialize HTTP operation
+      tags:
+      - http
+  /http/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: HTTP connector does not support patch operations
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - HTTP connector does not support patch operations
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: HTTP connector does not support patch operations
+      tags:
+      - http
+  /http/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Make a request to the configured HTTP endpoint and return the response
+        as a file
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: Path parameter (ignored for single endpoint configurations)
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pulled successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: HTTP endpoint not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Pull data from HTTP endpoint
+      tags:
+      - http
+  /http/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Send file content to the configured HTTP endpoint using the specified
+        method and headers
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      - description: File to send to HTTP endpoint
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Path parameter (ignored for single endpoint configurations)
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data pushed successfully
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request - invalid operation token or file
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Push data to HTTP endpoint
+      tags:
+      - http
+  /http/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: Get the response schema for HTTP operations, returning an Irmin-compatible
+        ObjectSchema based on the operation type (pull or push)
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        - push
+        in: path
+        name: operation
+        required: true
+        type: string
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema retrieved successfully
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request - invalid operation type or token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: Get HTTP operation schema
+      tags:
+      - http
+  /http/operation/status:
+    post:
+      consumes:
+      - application/json
+      description: Get the current status of an HTTP operation using the operation
+        token
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation status retrieved successfully
+          schema:
+            $ref: '#/definitions/common.OperationStatus'
+        "400":
+          description: Bad request - invalid operation token
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "404":
+          description: Operation not found
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get HTTP operation status
+      tags:
+      - http
+  /http/operation/subscribe:
+    post:
+      consumes:
+      - multipart/form-data
+      description: HTTP connector does not support webhook subscriptions
+      parameters:
+      - description: Operation token received from operation/init
+        in: formData
+        name: operation_token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - HTTP connector does not support webhook subscriptions
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - OperationTokenAuth: []
+      summary: HTTP connector does not support webhook subscriptions
+      tags:
+      - http
   /mysql/configuration/{key}/fields:
     post:
       consumes:

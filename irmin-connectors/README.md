@@ -9,6 +9,7 @@ A collection of deployable connectors for Irmin that enable universal interactio
 - **[PostgreSQL](connectors/postgres/README.md)** - Database connector for PostgreSQL.
 - **[MySQL](connectors/mysql/README.md)** - Database connector for MySQL.
 - **[SFTP](connectors/sftp/README.md)** - File transfer protocol connector for SFTP.
+- **[HTTP](connectors/http/README.md)** - Generic HTTP connector for connecting to any HTTP endpoint. 
 
 ## What are Irmin Connectors?
 
