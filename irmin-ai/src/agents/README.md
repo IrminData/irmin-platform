@@ -144,24 +144,14 @@ export const myAgentConfig: AgentConfig = {
   id: 'my-agent',
   name: 'My Custom Agent',
   description: 'Specialized agent for specific tasks',
-  type: 'single-shot',
   modelProvider: 'openai',
-  model: 'gpt-4-turbo',
-  temperature: 0.5,
+  model: 'gpt-5',
+  temperature: 0.8,
   maxTokens: 2000,
-  responseFormat: 'structured',
-  contextRequirements: [
-    {
-      type: 'vector',
-      name: 'knowledge_base',
-      required: true
-    }
-  ],
-  thinkingEnabled: true,
+  contextRequirements: [],
   toolSelection: {
     includeAll: true
   },
-  streaming: false
 };
 ```
 

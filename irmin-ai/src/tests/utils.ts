@@ -1,12 +1,7 @@
 // Shared utilities for API tests
 import { env } from '@/config/env';
 
-import type {
-  ChatRequest,
-  ConversationRequest,
-  TestConfig,
-  TestResult,
-} from './types';
+import type { ConversationRequest, TestConfig, TestResult } from './types';
 
 export const BASE_URL = env.URL;
 export const WORKSPACE_SLUG =
@@ -50,19 +45,20 @@ export async function makeRequest(
   url: string,
   options: RequestInit = {}
 ): Promise<TestResult> {
-  const defaultOptions: RequestInit = {
-    headers: {
-      Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
-      'X-Workspace-Slug': WORKSPACE_SLUG,
-      'Content-Type': 'application/json',
-    },
+  const defaultHeaders: Record<string, string> = {
+    Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
+    'X-Workspace-Slug': WORKSPACE_SLUG,
   };
 
+  // Only set Content-Type if there's a body to send
+  if (options.body) {
+    defaultHeaders['Content-Type'] = 'application/json';
+  }
+
   const mergedOptions: RequestInit = {
-    ...defaultOptions,
     ...options,
     headers: {
-      ...defaultOptions.headers,
+      ...defaultHeaders,
       ...options.headers,
     },
   };
@@ -93,19 +89,20 @@ export async function makeStreamingRequest(
   url: string,
   options: RequestInit = {}
 ): Promise<TestResult> {
-  const defaultOptions: RequestInit = {
-    headers: {
-      Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
-      'X-Workspace-Slug': WORKSPACE_SLUG,
-      'Content-Type': 'application/json',
-    },
+  const defaultHeaders: Record<string, string> = {
+    Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
+    'X-Workspace-Slug': WORKSPACE_SLUG,
   };
 
+  // Only set Content-Type if there's a body to send
+  if (options.body) {
+    defaultHeaders['Content-Type'] = 'application/json';
+  }
+
   const mergedOptions: RequestInit = {
-    ...defaultOptions,
     ...options,
     headers: {
-      ...defaultOptions.headers,
+      ...defaultHeaders,
       ...options.headers,
     },
   };
@@ -165,18 +162,6 @@ export async function processStream(
   }
 
   return chunks.join('');
-}
-
-export function createChatRequest(
-  message: string,
-  options: Partial<ChatRequest> = {}
-): ChatRequest {
-  return {
-    message,
-    stream: false,
-    provider: 'groq',
-    ...options,
-  };
 }
 
 export function createAgentRequest(

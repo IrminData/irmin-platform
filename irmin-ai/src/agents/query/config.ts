@@ -6,12 +6,10 @@ export const agentConfig: AgentConfig = {
   id: 'query',
   name: 'SQL Query Generator',
   description: 'Converts natural language to SQL queries',
-  type: 'chat',
   modelProvider: 'groq',
   model: DEFAULT_MODELS.groq,
   temperature: 1,
   maxTokens: 1000,
-  responseFormat: 'structured',
   contextRequirements: [
     {
       name: 'repository_slug',

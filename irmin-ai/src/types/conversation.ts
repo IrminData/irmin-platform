@@ -1,6 +1,52 @@
 import { z } from 'zod';
 
-import { MessageSchema } from './chat';
+// Message schema based on database schema
+const MessageSchema = z.object({
+  id: z.string(),
+  conversationId: z.string(),
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.string(),
+  metadata: z.unknown().optional(),
+
+  // Message block structure
+  messageType: z
+    .enum([
+      'text',
+      'tool_call',
+      'tool_result',
+      'reasoning',
+      'source',
+      'file',
+      'error',
+      'system',
+    ])
+    .nullable()
+    .default('text'),
+  blockId: z.string().nullable().optional(),
+  parentBlockId: z.string().nullable().optional(),
+  blockOrder: z.number().nullable().default(0),
+
+  // AI model information
+  aiModelId: z.string().nullable(),
+  modelProvider: z.string().nullable(),
+  modelName: z.string().nullable(),
+
+  // Agent information
+  agentName: z.string().nullable(),
+
+  // Token usage and costs
+  inputTokens: z.number().nullable(),
+  outputTokens: z.number().nullable(),
+  totalTokens: z.number().nullable(),
+  costUSD: z.number().nullable(),
+
+  // Performance metrics
+  processingTimeMs: z.number().nullable(),
+
+  // Timestamps
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
 
 // Conversation request schema
 export const ConversationRequestSchema = z.object({

@@ -4,8 +4,8 @@ This directory contains comprehensive test suites for the Irmin AI service, cove
 
 ## Test Files
 
-### `comprehensive.test.ts`
-Complete API test suite covering all endpoints with proper conversation management and cleanup.
+### `assistant-agent.test.ts`
+Complete assistant agent API test suite covering agent execution, streaming, conversation management, and cleanup.
 
 ### `vectorize-docs.test.ts`
 Tests the complete document vectorization pipeline including script execution, vector operations, retrievals, and database tracking.
@@ -37,8 +37,8 @@ IRMIN_API_BASE_URL=http://localhost:3000  # or your API URL
 ### Test Commands
 
 ```bash
-# Run comprehensive API tests
-npx tsx src/tests/comprehensive.test.ts
+# Run assistant agent API tests
+npx tsx src/tests/assistant-agent.test.ts
 
 # Run vectorize docs tests
 npx tsx src/tests/vectorize-docs.test.ts
@@ -47,56 +47,42 @@ npx tsx src/tests/vectorize-docs.test.ts
 npx tsx src/tests/retrieval.test.ts
 ```
 
-## Comprehensive Test Suite (`comprehensive.test.ts`)
+## Assistant Agent Test Suite (`assistant-agent.test.ts`)
 
-Runs a complete test suite covering all API endpoints with proper conversation management and cleanup.
+Runs a complete test suite covering the assistant agent functionality with proper conversation management and cleanup.
 
 **Step-by-Step Test Flow:**
 
 1. **Agent Management Tests**
    - **Agent Listing**: Tests `GET /api/agents` to retrieve available agents
-   - **Agent Configuration**: Tests `GET /api/agents/:id/config` to get agent settings and capabilities
+   - **Assistant Agent Configuration**: Tests `GET /api/agents/assistant/config` to get agent settings and capabilities
 
-2. **Chat Endpoint Tests**
-   - **Non-Streaming Chat**: 
+2. **Assistant Agent Execution Tests**
+   - **Non-Streaming Assistant Agent**: 
      - Creates a test conversation
-     - Sends: `"Hello! Can you tell me about Irmin?"` (generic question, no tool calls)
-     - Tests `POST /api/chat` endpoint
+     - Sends: `"Hello! Can you tell me about Irmin and help me understand what it does?"`
+     - Tests `POST /api/agents/assistant` endpoint
      - Validates response structure and message content
-   - **Streaming Chat**:
+   - **Streaming Assistant Agent**:
      - Uses the same conversation from non-streaming test
-     - Sends: `"What are the main features of Irmin?"` (generic question, no tool calls)
+     - Sends: `"What are the main features of Irmin? Can you explain how data versioning works?"`
      - Tests streaming response handling
      - Processes and validates stream chunks
 
-3. **Agent Execution Tests**
-   - **Agent Execution**:
-     - Creates a new test conversation
-     - Sends: `"Help me understand how to use Irmin for data management"` (likely triggers tool calls)
-     - Tests `POST /api/agents/:id` with a specific agent
-     - Validates agent response content and structure
-     - Cleans up the test conversation
-   - **Agent Streaming**:
-     - Creates another test conversation
-     - Sends: `"Show me how to create a repository in Irmin"` (likely triggers tool calls)
-     - Tests `POST /api/agents/:id/stream` for streaming agent responses
-     - Processes streaming data and validates chunks
-     - Cleans up the test conversation
-
-4. **Conversation Flow Test**
+3. **Assistant Agent Flow Test**
    - Creates a test conversation
-   - Sends: `"I want to learn about Irmin data versioning"` (generic question, no tool calls)
-   - Sends: `"Can you show me how to create a branch?"` (likely triggers tool calls)
+   - Sends: `"I want to learn about Irmin data versioning and how it works"`
+   - Sends: `"Can you show me how to create a branch and work with repositories?"`
    - Validates conversation continuity and message threading
    - Cleans up the test conversation
 
-5. **Conversation Management Test**
+4. **Conversation Management Test**
    - Tests CRUD operations on conversations
    - Validates conversation listing, creation, retrieval, and deletion
    - Tests title generation functionality
    - Verifies message management
 
-6. **Info Endpoints Test**
+5. **Info Endpoints Test**
    - Tests user profile, workspace info, available models, and tools endpoints
    - Validates API information retrieval
 

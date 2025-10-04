@@ -2,12 +2,11 @@
 
 # Irmin AI
 
-LangChain-based (Fastify, TypeScript), AI chat and agents API for Irmin, with streaming responses, Groq/OpenAI integration, MCP tools support, and **LangGraph.js-powered iterative tool calling**.
+LangChain-based (Fastify, TypeScript), AI agents API for Irmin, with streaming responses, Groq/OpenAI integration, MCP tools support, and **LangGraph.js-powered iterative tool calling**.
 
 ## What it does
 
-- **Streaming chat API** with real-time AI responses
-- **Multiple AI providers** (Groq, OpenAI) with model switching
+- **Multiple AI providers** (Groq, OpenAI, Anthropic) with model switching
 - **Granular MCP tools integration** with selective tool access
 - **AI agents** for specialized AI tasks with **iterative problem-solving**
 - **LangGraph.js integration** for ReAct pattern (Reasoning + Acting) workflows
@@ -60,7 +59,7 @@ open http://localhost:3000/docs
 - 📊 **Interactive API Explorer** - Test all endpoints directly from the browser
 - 🔐 **Authentication Support** - Built-in JWT and workspace header authentication
 - 📝 **Complete Schema Documentation** - All request/response schemas with examples
-- 🏷️ **Organized by Tags** - Endpoints grouped by Chat, Conversations, Agents, Embeddings, System Scripts, and Info
+- 🏷️ **Organized by Tags** - Endpoints grouped by Agents, Conversations, Embeddings, System Scripts, and Info
 - ⚡ **Real-time Testing** - Test streaming responses and file uploads
 
 **Using Authentication in Swagger:**
@@ -70,9 +69,8 @@ open http://localhost:3000/docs
 4. Test authenticated endpoints directly
 
 **API Endpoints Overview:**
-- **Chat** (`/api/chat`) - Send messages and get AI responses with streaming support and **iterative tool calling**
-- **Conversations** (`/api/conversations`) - Manage conversation history and messages
 - **Agents** (`/api/agents`) - Execute specialized AI agents for specific tasks with **LangGraph-powered workflows**
+- **Conversations** (`/api/conversations`) - Manage conversation history and messages
 - **Info** (`/api/info`) - Get user profile, workspace info, available models, and MCP tools
 - **Embeddings** (`/api/embeddings`) - Vector store management, document indexing, and similarity search
 - **Embeddings** (`/api/system/embeddings`) **system** - Administrative operations for vector store management, document indexing, and similarity search
@@ -85,24 +83,26 @@ open http://localhost:3000/docs
 ## Usage
 
 ```bash
-# Basic chat
-curl -X POST http://localhost:3000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello", "provider": "groq"}'
-
-# With MCP tools (all tools) - requires workspace context
-curl -X POST http://localhost:3000/api/chat \
+# Basic assistant agent execution
+curl -X POST http://localhost:3000/api/agents/assistant \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-irmin-jwt-token>" \
   -H "X-Workspace-Slug: your-workspace-slug" \
-  -d '{"message": "List repositories", "toolSelection": {"includeAll": true}}'
+  -d '{"message": "Hello! Can you help me understand what Irmin does?"}'
 
-# With selective MCP tools
-curl -X POST http://localhost:3000/api/chat \
+# Assistant agent with streaming response
+curl -X POST http://localhost:3000/api/agents/assistant/stream \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-irmin-jwt-token>" \
   -H "X-Workspace-Slug: your-workspace-slug" \
-  -d '{"message": "List workspaces", "toolSelection": {"includeTools": ["list_workspaces"]}}'
+  -d '{"message": "Explain how data versioning works in Irmin"}'
+
+# Assistant agent with conversation context
+curl -X POST http://localhost:3000/api/agents/assistant \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-irmin-jwt-token>" \
+  -H "X-Workspace-Slug: your-workspace-slug" \
+  -d '{"message": "Show me how to create a repository", "conversationId": "your-conversation-id"}'
 ```
 
 ## LangGraph.js Integration
@@ -195,7 +195,7 @@ Scripts can be executed in multiple ways:
 
 ## API Testing
 
-The project includes comprehensive API test utilities located in `src/tests/`. These tests cover all major endpoints including chat, agents, conversation flows, and document vectorization.
+The project includes comprehensive API test utilities located in `src/tests/`. These tests cover all major endpoints including agents, conversation flows, and document vectorization.
 
 > For detailed test documentation see [src/tests/README.md](src/tests/README.md)
 

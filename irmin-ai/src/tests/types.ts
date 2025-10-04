@@ -1,7 +1,6 @@
 // Test-specific types and utilities
 
 // Re-export actual types from codebase
-export type { ChatRequest } from '@/types/chat';
 export type { ConversationRequest } from '@/types/conversation';
 export type { AgentConfig } from '@/agents/types';
 

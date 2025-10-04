@@ -14,7 +14,6 @@ import { systemAuthMiddlewareOnRequestHook } from '@/middleware/systemAuth';
 import { workspaceMiddlewareOnRequestHook } from '@/middleware/workspace';
 
 import { agentRoutes } from '@/routes/agents';
-import { chatRoutes } from '@/routes/chat';
 import { conversationRoutes } from '@/routes/conversations';
 import { embeddingRoutes } from '@/routes/embeddings';
 import { infoRoutes } from '@/routes/info';
@@ -179,7 +178,6 @@ server.addHook('onRequest', workspaceMiddlewareOnRequestHook);
 // Register API routes
 server.register(
   async function (fastify) {
-    await fastify.register(chatRoutes);
     await fastify.register(conversationRoutes);
     await fastify.register(agentRoutes);
     await fastify.register(embeddingRoutes);

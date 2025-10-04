@@ -7,12 +7,10 @@ export const agentConfig: AgentConfig = {
   name: 'General Assistant Chat Agent',
   description:
     'General purpose chat agent that can answer questions and help with tasks',
-  type: 'chat',
   modelProvider: 'anthropic',
   model: DEFAULT_MODELS.anthropic,
   temperature: 0.8,
   maxTokens: 6000,
-  responseFormat: 'markdown',
   contextRequirements: [],
   toolSelection: {
     includeAll: true,
@@ -20,7 +18,6 @@ export const agentConfig: AgentConfig = {
   streaming: true,
   useAgentGraph: true,
   maxToolCalls: 10,
-  // Sanitization limits (optional, will use defaults if not specified)
   maxUserInputChars: 35000, // ~10k tokens
   maxSystemPromptChars: 210000, // ~60k tokens
 };

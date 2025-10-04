@@ -18,18 +18,15 @@ export interface AgentConfig {
   id: string;
   name: string;
   description: string;
-  type: 'chat' | 'single-shot';
   modelProvider: LLMProvider;
   model?: string;
   temperature?: number;
   maxTokens?: number;
-  responseFormat: 'structured' | 'unstructured' | 'json' | 'markdown';
   contextRequirements: ContextRequirement[];
   toolSelection?: ToolSelection;
   streaming: boolean;
   useAgentGraph: boolean;
   maxToolCalls: number;
-  // Sanitization limits (optional, will use defaults if not specified)
   maxUserInputChars?: number;
   maxSystemPromptChars?: number;
 }

@@ -94,15 +94,17 @@ export const AgentConfigSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  type: z.enum(['chat', 'single-shot']),
   modelProvider: z.enum(['groq', 'openai', 'anthropic']),
   model: z.string().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
-  responseFormat: z.enum(['structured', 'unstructured', 'json', 'markdown']),
   contextRequirements: z.array(ContextRequirementSchema),
   toolSelection: ToolSelectionSchema.optional(),
   streaming: z.boolean(),
+  useAgentGraph: z.boolean(),
+  maxToolCalls: z.number(),
+  maxUserInputChars: z.number().optional(),
+  maxSystemPromptChars: z.number().optional(),
 });
 
 // List agents response schema

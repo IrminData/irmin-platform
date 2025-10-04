@@ -6,11 +6,9 @@ export const agentConfig: AgentConfig = {
   id: 'scripting',
   name: 'Go Script Generator',
   description: 'Generates Go scripts from natural language descriptions',
-  type: 'chat',
   modelProvider: 'groq',
   model: DEFAULT_MODELS.groq,
   maxTokens: 2000,
-  responseFormat: 'structured',
   contextRequirements: [],
   toolSelection: {
     includeTools: [
@@ -27,7 +25,6 @@ export const agentConfig: AgentConfig = {
   streaming: false,
   useAgentGraph: true,
   maxToolCalls: 5,
-  // Sanitization limits (optional, will use defaults if not specified)
   maxUserInputChars: 10000, // ~3k tokens
   maxSystemPromptChars: 210000, // ~60k tokens
 };

@@ -102,14 +102,27 @@ class LlmService {
   ) {
     const langchainMessages: (HumanMessage | SystemMessage | AIMessage)[] = [];
 
-    // Add system message if provided (no sanitization needed - user data already sanitized at source)
+    // Find existing system message in conversation history
+    const existingSystemMessage = messages.find((msg) => msg.role === 'system');
+
+    // Add system message first (either existing from conversation or new one)
+    // IMPORTANT: Claude only allows ONE system message per conversation and it MUST be the first message.
+    // We prioritize new system prompts to allow for dynamic agent updates.
     if (systemPrompt) {
-      // No need to sanitize system prompts
+      // Use new system prompt (allows for updated agent instructions)
       langchainMessages.push(new SystemMessage(systemPrompt));
+    } else if (existingSystemMessage) {
+      // Fall back to existing system message if no new prompt provided
+      langchainMessages.push(new SystemMessage(existingSystemMessage.content));
     }
 
-    // Convert messages with sanitization
+    // Convert messages with sanitization (excluding system messages since we already added one)
     for (const message of messages) {
+      // Skip system messages since we already added the system message at the beginning
+      if (message.role === 'system') {
+        continue;
+      }
+
       switch (message.role) {
         case 'user': {
           // User messages are already sanitized in the request handler
@@ -120,12 +133,6 @@ class LlmService {
         case 'assistant': {
           // Assistant messages are AI-generated content and should never be sanitized
           langchainMessages.push(new AIMessage(message.content));
-          break;
-        }
-        case 'system': {
-          // System messages are already sanitized at source
-          const finalContent = message.content;
-          langchainMessages.push(new SystemMessage(finalContent));
           break;
         }
       }

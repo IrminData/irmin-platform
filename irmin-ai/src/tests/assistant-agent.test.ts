@@ -1,11 +1,10 @@
 /* eslint-disable import-x/no-unused-modules */
-// Comprehensive API Test Utility for Irmin AI
-// Tests all endpoints: chat (streaming/non-streaming), agents, and conversation flows
+// Assistant Agent API Test Utility for Irmin AI
+// Tests the assistant agent functionality including both streaming and non-streaming modes
 import type { AgentConfig, TestResults } from './types';
 import {
   BASE_URL,
   createAgentRequest,
-  createChatRequest,
   createTestConversation,
   delay,
   deleteTestConversation,
@@ -47,7 +46,7 @@ async function testAgentListing(): Promise<AgentConfig[]> {
     agents.forEach((agent: AgentConfig) => {
       console.log(`  - ${agent.name} (${agent.id}): ${agent.description}`);
       console.log(
-        `    Type: ${agent.type}, Provider: ${agent.modelProvider}, Streaming: ${agent.streaming}`
+        `    Provider: ${agent.modelProvider}, Streaming: ${agent.streaming}`
       );
     });
     return agents;
@@ -57,311 +56,14 @@ async function testAgentListing(): Promise<AgentConfig[]> {
   }
 }
 
-async function testNonStreamingChat(): Promise<string | null> {
-  logTest('Non-Streaming Chat', 'RUNNING');
+async function testAssistantAgentConfig(): Promise<boolean> {
+  logTest('Assistant Agent Config', 'RUNNING');
 
-  // Create a test conversation first
-  const conversationId = await createTestConversation(
-    'Non-Streaming Chat Test'
-  );
-  if (!conversationId) {
-    logTest('Non-Streaming Chat', 'FAIL', 'Failed to create test conversation');
-    return null;
-  }
-
-  const chatRequest = createChatRequest('Hello! Can you tell me about Irmin?', {
-    stream: false,
-    provider: 'groq',
-    conversationId,
-  });
-
-  const result = await makeRequest(`${BASE_URL}/api/chat`, {
-    method: 'POST',
-    body: JSON.stringify(chatRequest),
-  });
-
-  const responseConversationId = getResponseData<string>(
-    result,
-    'conversationId'
-  );
-  const messages = getResponseData<Array<Record<string, unknown>>>(
-    result,
-    'messages'
-  );
-
-  if (responseConversationId && messages) {
-    logTest(
-      'Non-Streaming Chat',
-      'PASS',
-      `Conversation: ${responseConversationId}`
-    );
-    console.log(`  Messages: ${messages.length}`);
-    messages.forEach((msg: Record<string, unknown>, index: number) => {
-      const content =
-        typeof msg.content === 'string'
-          ? msg.content
-          : JSON.stringify(msg.content);
-      console.log(
-        `    ${index + 1}. ${msg.role}: ${content.substring(0, 150)}${content.length > 150 ? '...' : ''}`
-      );
-
-      // Log tool calls if present
-      if (msg.toolCalls && Array.isArray(msg.toolCalls)) {
-        console.log(`      Tool calls: ${msg.toolCalls.length}`);
-        msg.toolCalls.forEach(
-          (toolCall: Record<string, unknown>, toolIndex: number) => {
-            console.log(
-              `        ${toolIndex + 1}. ${toolCall.name} (${toolCall.id})`
-            );
-          }
-        );
-      }
-    });
-    return responseConversationId;
-  } else {
-    logTest('Non-Streaming Chat', 'FAIL', result.error || 'Invalid response');
-    // Clean up the conversation on failure
-    await deleteTestConversation(conversationId);
-    return null;
-  }
-}
-
-async function testStreamingChat(conversationId: string): Promise<boolean> {
-  logTest('Streaming Chat', 'RUNNING');
-
-  const chatRequest = createChatRequest(
-    'What are the main features of Irmin?',
-    {
-      stream: true,
-      provider: 'groq',
-      conversationId,
-    }
-  );
-
-  const result = await makeStreamingRequest(`${BASE_URL}/api/chat`, {
-    method: 'POST',
-    body: JSON.stringify(chatRequest),
-  });
-
-  if (result.ok && result.stream) {
-    logTest('Streaming Chat', 'PASS', 'Stream received');
-
-    // Process the stream
-    const streamData = await processStream(result.stream);
-    console.log(`  Stream data length: ${streamData.length} characters`);
-
-    // Try to parse as JSON lines
-    const lines = streamData.split('\n').filter((line) => line.trim());
-    console.log(`  Stream chunks: ${lines.length}`);
-
-    // Log sample stream content
-    if (lines.length > 0) {
-      console.log(`  Sample stream content:`);
-      lines.slice(0, 3).forEach((line, index) => {
-        try {
-          const parsed = JSON.parse(line);
-          console.log(
-            `    ${index + 1}. ${JSON.stringify(parsed).substring(0, 100)}...`
-          );
-        } catch {
-          console.log(`    ${index + 1}. ${line.substring(0, 100)}...`);
-        }
-      });
-      if (lines.length > 3) {
-        console.log(`    ... and ${lines.length - 3} more chunks`);
-      }
-    }
-
-    return true;
-  } else {
-    logTest('Streaming Chat', 'FAIL', result.error || 'No stream received');
-    return false;
-  }
-}
-
-async function testAgentExecution(agents: AgentConfig[]): Promise<boolean> {
-  if (!agents.length) {
-    logTest('Agent Execution', 'SKIP', 'No agents available');
-    return false;
-  }
-
-  const agent = agents[0]; // Use first available agent
-  logTest(`Agent Execution (${agent.name})`, 'RUNNING');
-
-  // Create a test conversation for the agent
-  const conversationId = await createTestConversation(
-    `Agent Test - ${agent.name}`
-  );
-  if (!conversationId) {
-    logTest(
-      `Agent Execution (${agent.name})`,
-      'FAIL',
-      'Failed to create test conversation'
-    );
-    return false;
-  }
-
-  const agentRequest = createAgentRequest(
-    'Help me understand how to use Irmin for data management',
-    {
-      conversationId,
-    }
-  );
-
-  const result = await makeRequest(`${BASE_URL}/api/agents/${agent.id}`, {
-    method: 'POST',
-    body: JSON.stringify(agentRequest),
-  });
-
-  const content = getResponseData<string>(result, 'content');
-  const messages = getResponseData<Array<Record<string, unknown>>>(
-    result,
-    'messages'
-  );
-
-  if (content) {
-    logTest(
-      `Agent Execution (${agent.name})`,
-      'PASS',
-      `Response length: ${content.length}`
-    );
-    console.log(`  Content preview: ${content.substring(0, 200)}...`);
-
-    if (messages) {
-      console.log(`  Messages: ${messages.length}`);
-      messages.forEach((msg: Record<string, unknown>, index: number) => {
-        const msgContent =
-          typeof msg.content === 'string'
-            ? msg.content
-            : JSON.stringify(msg.content);
-        console.log(
-          `    ${index + 1}. ${msg.role}: ${msgContent.substring(0, 100)}...`
-        );
-
-        // Log tool calls if present
-        if (msg.toolCalls && Array.isArray(msg.toolCalls)) {
-          console.log(`      Tool calls: ${msg.toolCalls.length}`);
-          msg.toolCalls.forEach(
-            (toolCall: Record<string, unknown>, toolIndex: number) => {
-              console.log(
-                `        ${toolIndex + 1}. ${toolCall.name} (${toolCall.id})`
-              );
-            }
-          );
-        }
-      });
-    }
-
-    // Clean up the conversation
-    await deleteTestConversation(conversationId);
-    return true;
-  } else {
-    logTest(
-      `Agent Execution (${agent.name})`,
-      'FAIL',
-      result.error || 'Invalid response'
-    );
-    // Clean up the conversation on failure
-    await deleteTestConversation(conversationId);
-    return false;
-  }
-}
-
-async function testAgentStreaming(agents: AgentConfig[]): Promise<boolean> {
-  if (!agents.length) {
-    logTest('Agent Streaming', 'SKIP', 'No agents available');
-    return false;
-  }
-
-  const agent = agents[0]; // Use first available agent
-  logTest(`Agent Streaming (${agent.name})`, 'RUNNING');
-
-  // Create a test conversation for the agent
-  const conversationId = await createTestConversation(
-    `Agent Stream Test - ${agent.name}`
-  );
-  if (!conversationId) {
-    logTest(
-      `Agent Streaming (${agent.name})`,
-      'FAIL',
-      'Failed to create test conversation'
-    );
-    return false;
-  }
-
-  const agentRequest = createAgentRequest(
-    'Show me how to create a repository in Irmin',
-    {
-      conversationId,
-    }
-  );
-
-  const result = await makeStreamingRequest(
-    `${BASE_URL}/api/agents/${agent.id}/stream`,
-    {
-      method: 'POST',
-      body: JSON.stringify(agentRequest),
-    }
-  );
-
-  if (result.ok && result.stream) {
-    logTest(`Agent Streaming (${agent.name})`, 'PASS', 'Stream received');
-
-    // Process the stream
-    const streamData = await processStream(result.stream);
-    console.log(`  Stream data length: ${streamData.length} characters`);
-
-    // Try to parse as JSON lines
-    const lines = streamData.split('\n').filter((line) => line.trim());
-    console.log(`  Stream chunks: ${lines.length}`);
-
-    // Log sample stream content
-    if (lines.length > 0) {
-      console.log(`  Sample stream content:`);
-      lines.slice(0, 3).forEach((line, index) => {
-        try {
-          const parsed = JSON.parse(line);
-          console.log(
-            `    ${index + 1}. ${JSON.stringify(parsed).substring(0, 100)}...`
-          );
-        } catch {
-          console.log(`    ${index + 1}. ${line.substring(0, 100)}...`);
-        }
-      });
-      if (lines.length > 3) {
-        console.log(`    ... and ${lines.length - 3} more chunks`);
-      }
-    }
-
-    // Clean up the conversation
-    await deleteTestConversation(conversationId);
-    return true;
-  } else {
-    logTest(
-      `Agent Streaming (${agent.name})`,
-      'FAIL',
-      result.error || 'No stream received'
-    );
-    // Clean up the conversation on failure
-    await deleteTestConversation(conversationId);
-    return false;
-  }
-}
-
-async function testAgentConfig(agents: AgentConfig[]): Promise<boolean> {
-  if (!agents.length) {
-    logTest('Agent Config', 'SKIP', 'No agents available');
-    return false;
-  }
-
-  const agent = agents[0]; // Use first available agent
-  logTest(`Agent Config (${agent.name})`, 'RUNNING');
-
-  const result = await makeRequest(`${BASE_URL}/api/agents/${agent.id}/config`);
+  const result = await makeRequest(`${BASE_URL}/api/agents/assistant/config`);
 
   if (result.ok && result.data && typeof result.data === 'object') {
     const config = result.data as Record<string, unknown>;
-    logTest(`Agent Config (${agent.name})`, 'PASS', `Type: ${config.type}`);
+    logTest('Assistant Agent Config', 'PASS', `Type: ${config.type}`);
     console.log(`  Model: ${config.modelProvider}/${config.model}`);
     console.log(`  Streaming: ${config.streaming}`);
     console.log(`  Max Tool Calls: ${config.maxToolCalls}`);
@@ -395,7 +97,7 @@ async function testAgentConfig(agents: AgentConfig[]): Promise<boolean> {
     return true;
   } else {
     logTest(
-      `Agent Config (${agent.name})`,
+      'Assistant Agent Config',
       'FAIL',
       result.error || 'Invalid response'
     );
@@ -403,32 +105,177 @@ async function testAgentConfig(agents: AgentConfig[]): Promise<boolean> {
   }
 }
 
-async function testConversationFlow(): Promise<boolean> {
-  logTest('Conversation Flow', 'RUNNING');
+async function testNonStreamingAssistantAgent(): Promise<string | null> {
+  logTest('Non-Streaming Assistant Agent', 'RUNNING');
 
-  // Create a new conversation with first message
-  const conversationId = await createTestConversation('Conversation Flow Test');
+  // Create a test conversation first
+  const conversationId = await createTestConversation(
+    'Non-Streaming Assistant Agent Test'
+  );
   if (!conversationId) {
-    logTest('Conversation Flow', 'FAIL', 'Failed to create test conversation');
-    return false;
+    logTest(
+      'Non-Streaming Assistant Agent',
+      'FAIL',
+      'Failed to create test conversation'
+    );
+    return null;
   }
 
-  const firstRequest = createChatRequest(
-    'I want to learn about Irmin data versioning',
+  const agentRequest = createAgentRequest(
+    'Hello! Can you tell me about Irmin and help me understand what it does?',
     {
-      stream: false,
-      provider: 'groq',
       conversationId,
     }
   );
 
-  const firstResult = await makeRequest(`${BASE_URL}/api/chat`, {
+  const result = await makeRequest(`${BASE_URL}/api/agents/assistant`, {
+    method: 'POST',
+    body: JSON.stringify(agentRequest),
+  });
+
+  const content = getResponseData<string>(result, 'content');
+  const messages = getResponseData<Array<Record<string, unknown>>>(
+    result,
+    'messages'
+  );
+
+  if (content) {
+    logTest(
+      'Non-Streaming Assistant Agent',
+      'PASS',
+      `Response length: ${content.length}`
+    );
+    console.log(`  Content preview: ${content.substring(0, 200)}...`);
+
+    if (messages) {
+      console.log(`  Messages: ${messages.length}`);
+      messages.forEach((msg: Record<string, unknown>, index: number) => {
+        const msgContent =
+          typeof msg.content === 'string'
+            ? msg.content
+            : JSON.stringify(msg.content);
+        console.log(
+          `    ${index + 1}. ${msg.role}: ${msgContent.substring(0, 100)}...`
+        );
+
+        // Log tool calls if present
+        if (msg.toolCalls && Array.isArray(msg.toolCalls)) {
+          console.log(`      Tool calls: ${msg.toolCalls.length}`);
+          msg.toolCalls.forEach(
+            (toolCall: Record<string, unknown>, toolIndex: number) => {
+              console.log(
+                `        ${toolIndex + 1}. ${toolCall.name} (${toolCall.id})`
+              );
+            }
+          );
+        }
+      });
+    }
+
+    return conversationId;
+  } else {
+    logTest(
+      'Non-Streaming Assistant Agent',
+      'FAIL',
+      result.error || 'Invalid response'
+    );
+    // Clean up the conversation on failure
+    await deleteTestConversation(conversationId);
+    return null;
+  }
+}
+
+async function testStreamingAssistantAgent(
+  conversationId: string
+): Promise<boolean> {
+  logTest('Streaming Assistant Agent', 'RUNNING');
+
+  const agentRequest = createAgentRequest(
+    'What are the main features of Irmin? Can you explain how data versioning works?',
+    {
+      conversationId,
+    }
+  );
+
+  const result = await makeStreamingRequest(
+    `${BASE_URL}/api/agents/assistant/stream`,
+    {
+      method: 'POST',
+      body: JSON.stringify(agentRequest),
+    }
+  );
+
+  if (result.ok && result.stream) {
+    logTest('Streaming Assistant Agent', 'PASS', 'Stream received');
+
+    // Process the stream
+    const streamData = await processStream(result.stream);
+    console.log(`  Stream data length: ${streamData.length} characters`);
+
+    // Try to parse as JSON lines
+    const lines = streamData.split('\n').filter((line) => line.trim());
+    console.log(`  Stream chunks: ${lines.length}`);
+
+    // Log sample stream content
+    if (lines.length > 0) {
+      console.log(`  Sample stream content:`);
+      lines.slice(0, 3).forEach((line, index) => {
+        try {
+          const parsed = JSON.parse(line);
+          console.log(
+            `    ${index + 1}. ${JSON.stringify(parsed).substring(0, 100)}...`
+          );
+        } catch {
+          console.log(`    ${index + 1}. ${line.substring(0, 100)}...`);
+        }
+      });
+      if (lines.length > 3) {
+        console.log(`    ... and ${lines.length - 3} more chunks`);
+      }
+    }
+
+    return true;
+  } else {
+    logTest(
+      'Streaming Assistant Agent',
+      'FAIL',
+      result.error || 'No stream received'
+    );
+    return false;
+  }
+}
+
+async function testAssistantAgentFlow(): Promise<boolean> {
+  logTest('Assistant Agent Flow', 'RUNNING');
+
+  // Create a new conversation with first message
+  const conversationId = await createTestConversation(
+    'Assistant Agent Flow Test'
+  );
+  if (!conversationId) {
+    logTest(
+      'Assistant Agent Flow',
+      'FAIL',
+      'Failed to create test conversation'
+    );
+    return false;
+  }
+
+  const firstRequest = createAgentRequest(
+    'I want to learn about Irmin data versioning and how it works',
+    {
+      conversationId,
+    }
+  );
+
+  const firstResult = await makeRequest(`${BASE_URL}/api/agents/assistant`, {
     method: 'POST',
     body: JSON.stringify(firstRequest),
   });
 
   if (!firstResult.ok) {
-    logTest('Conversation Flow', 'FAIL', 'Failed to send first message');
+    logTest('Assistant Agent Flow', 'FAIL', 'Failed to send first message');
+    console.log(`  First result: ${JSON.stringify(firstResult, null, 2)}`);
     await deleteTestConversation(conversationId);
     return false;
   }
@@ -438,16 +285,14 @@ async function testConversationFlow(): Promise<boolean> {
   // Add follow-up message
   await delay(1000);
 
-  const followUpRequest = createChatRequest(
-    'Can you show me how to create a branch?',
+  const followUpRequest = createAgentRequest(
+    'Can you show me how to create a branch and work with repositories?',
     {
-      stream: false,
-      provider: 'groq',
       conversationId,
     }
   );
 
-  const followUpResult = await makeRequest(`${BASE_URL}/api/chat`, {
+  const followUpResult = await makeRequest(`${BASE_URL}/api/agents/assistant`, {
     method: 'POST',
     body: JSON.stringify(followUpRequest),
   });
@@ -458,7 +303,11 @@ async function testConversationFlow(): Promise<boolean> {
   );
 
   if (followUpResult.ok && messages) {
-    logTest('Conversation Flow', 'PASS', `Total messages: ${messages.length}`);
+    logTest(
+      'Assistant Agent Flow',
+      'PASS',
+      `Total messages: ${messages.length}`
+    );
 
     messages.forEach((msg: Record<string, unknown>, index: number) => {
       const content =
@@ -482,7 +331,10 @@ async function testConversationFlow(): Promise<boolean> {
       }
     });
   } else {
-    logTest('Conversation Flow', 'FAIL', 'Failed to add follow-up message');
+    logTest('Assistant Agent Flow', 'FAIL', 'Failed to add follow-up message');
+    console.log(
+      `  Follow-up result: ${JSON.stringify(followUpResult, null, 2)}`
+    );
     // Clean up the conversation
     await deleteTestConversation(conversationId);
     return false;
@@ -500,6 +352,7 @@ async function testConversationManagement(): Promise<boolean> {
   const listResult = await makeRequest(`${BASE_URL}/api/conversations`);
   if (!listResult.ok) {
     logTest('Conversation Management', 'FAIL', 'Failed to list conversations');
+    console.log(`  List result: ${JSON.stringify(listResult, null, 2)}`);
     return false;
   }
 
@@ -515,6 +368,7 @@ async function testConversationManagement(): Promise<boolean> {
     body: JSON.stringify({
       title: 'Test Conversation Management',
       metadata: { test: true },
+      agentId: 'assistant',
     }),
   });
 
@@ -574,14 +428,16 @@ async function testConversationManagement(): Promise<boolean> {
   console.log(`  Updated conversation: ${updatedConversation?.title}`);
 
   // Test 5: Generate title (requires a user message first)
-  const userMessageResult = await makeRequest(`${BASE_URL}/api/chat`, {
-    method: 'POST',
-    body: JSON.stringify({
-      message: 'This is a test message for title generation',
-      conversationId,
-      stream: false,
-    }),
-  });
+  const userMessageResult = await makeRequest(
+    `${BASE_URL}/api/agents/assistant`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        message: 'This is a test message for title generation',
+        conversationId,
+      }),
+    }
+  );
 
   if (userMessageResult.ok) {
     const generateTitleResult = await makeRequest(
@@ -722,7 +578,7 @@ async function testInfoEndpoints(): Promise<boolean> {
 
 // Main test runner
 async function runAllTests(): Promise<void> {
-  console.log('🚀 Starting Comprehensive Irmin AI API Tests');
+  console.log('🚀 Starting Assistant Agent API Tests');
   console.log(`📍 Base URL: ${BASE_URL}`);
   console.log(`🏢 Workspace: ${WORKSPACE_SLUG}`);
   console.log(`🔑 Auth Token: ${TEST_AUTH_TOKEN.substring(0, 20)}...`);
@@ -742,57 +598,44 @@ async function runAllTests(): Promise<void> {
 
     await delay(TEST_CONFIG.delay);
 
-    // Test 2: Agent Configuration
-    const agentConfigSuccess = await testAgentConfig(agents);
+    // Test 2: Assistant Agent Configuration
+    const agentConfigSuccess = await testAssistantAgentConfig();
     if (agentConfigSuccess) results.passed++;
     else results.failed++;
 
     await delay(TEST_CONFIG.delay);
 
-    // Test 3: Non-Streaming Chat
-    logSection('Chat Endpoints');
-    const conversationId = await testNonStreamingChat();
+    // Test 3: Non-Streaming Assistant Agent
+    logSection('Assistant Agent Endpoints');
+    const conversationId = await testNonStreamingAssistantAgent();
     if (conversationId) results.passed++;
     else results.failed++;
 
     await delay(TEST_CONFIG.delay);
 
-    // Test 4: Streaming Chat (using the conversation from non-streaming test)
-    const streamingChatSuccess = await testStreamingChat(conversationId || '');
-    if (streamingChatSuccess) results.passed++;
+    // Test 4: Streaming Assistant Agent (using the conversation from non-streaming test)
+    const streamingAgentSuccess = await testStreamingAssistantAgent(
+      conversationId || ''
+    );
+    if (streamingAgentSuccess) results.passed++;
     else results.failed++;
 
-    // Clean up the conversation after both chat tests are done
+    // Clean up the conversation after both agent tests are done
     if (conversationId) {
       await deleteTestConversation(conversationId);
     }
 
     await delay(TEST_CONFIG.delay);
 
-    // Test 5: Agent Execution
-    logSection('Agent Execution');
-    const agentExecutionSuccess = await testAgentExecution(agents);
-    if (agentExecutionSuccess) results.passed++;
+    // Test 5: Assistant Agent Flow
+    logSection('Assistant Agent Flow');
+    const agentFlowSuccess = await testAssistantAgentFlow();
+    if (agentFlowSuccess) results.passed++;
     else results.failed++;
 
     await delay(TEST_CONFIG.delay);
 
-    // Test 6: Agent Streaming
-    const agentStreamingSuccess = await testAgentStreaming(agents);
-    if (agentStreamingSuccess) results.passed++;
-    else results.failed++;
-
-    await delay(TEST_CONFIG.delay);
-
-    // Test 7: Conversation Flow
-    logSection('Conversation Flow');
-    const conversationFlowSuccess = await testConversationFlow();
-    if (conversationFlowSuccess) results.passed++;
-    else results.failed++;
-
-    await delay(TEST_CONFIG.delay);
-
-    // Test 8: Conversation Management
+    // Test 6: Conversation Management
     logSection('Conversation Management');
     const conversationManagementSuccess = await testConversationManagement();
     if (conversationManagementSuccess) results.passed++;
@@ -800,7 +643,7 @@ async function runAllTests(): Promise<void> {
 
     await delay(TEST_CONFIG.delay);
 
-    // Test 9: Info Endpoints
+    // Test 7: Info Endpoints
     logSection('Info Endpoints');
     const infoEndpointsSuccess = await testInfoEndpoints();
     if (infoEndpointsSuccess) results.passed++;
