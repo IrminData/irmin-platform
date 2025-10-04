@@ -64,6 +64,8 @@ go mod tidy && go get -u ./...
 
 Create a `.env` file with the following variables:
 
+> Universal API Key (UNIVERSAL_CONNECTOR_API_KEY, optional) can be used for all connectors. Used for manual testing, to bypass the connector registration flow, and the connector specific API key it creates. Key is optional. Removing it will disable the universal API key feature. Make sure to never use this in production environments.
+
 ```bash
 PORT=8080
 URL=http://localhost:8080
@@ -72,6 +74,8 @@ PREFORK_ENABLED=true
 HELMET_ENABLED=true
 CORS_ENABLED=true
 CORS_ORIGINS=https://api.irmin.dev
+
+UNIVERSAL_CONNECTOR_API_KEY=random_api_key_here
 
 IRMIN_API_BASE_URL=https://api.irmin.dev
 IRMIN_API_TOKEN=your_api_token_here

@@ -415,7 +415,7 @@ import "irmin-connectors/lib"
 ## Index
 
 - [func UpdateConnectorInDB\(d \*db.Database, logger \*slog.Logger, irminID, token, connectorName string\) error](<#UpdateConnectorInDB>)
-- [func ValidateConnectorSystemToken\(d \*db.Database, logger \*slog.Logger, c fiber.Ctx, connectorName string\) \(bool, \*db.ConnectorRegistration\)](<#ValidateConnectorSystemToken>)
+- [func ValidateConnectorSystemToken\(d \*db.Database, env \*utils.ConnectorsEnv, logger \*slog.Logger, c fiber.Ctx, connectorName string\) \(bool, \*db.ConnectorRegistration\)](<#ValidateConnectorSystemToken>)
 - [func ValidateOperationToken\(d \*db.Database, logger \*slog.Logger, c fiber.Ctx, connectorName string\) \(bool, \*db.ConnectorRegistration, \*db.Operation\)](<#ValidateOperationToken>)
 
 
@@ -432,7 +432,7 @@ UpdateConnectorInDB updates the connector registration in the database.
 ## func ValidateConnectorSystemToken
 
 ```go
-func ValidateConnectorSystemToken(d *db.Database, logger *slog.Logger, c fiber.Ctx, connectorName string) (bool, *db.ConnectorRegistration)
+func ValidateConnectorSystemToken(d *db.Database, env *utils.ConnectorsEnv, logger *slog.Logger, c fiber.Ctx, connectorName string) (bool, *db.ConnectorRegistration)
 ```
 
 ValidateConnectorSystemToken validates the provided token against the system token of the connector registration instance.
@@ -1010,6 +1010,7 @@ type ConnectorsEnv struct {
     HelmetEnabled            bool   // Whether helmet is enabled
     CorsEnabled              bool   // Whether CORS is enabled
     CorsOrigins              string // Origins allowed to access the connectors server
+    UniversalConnectorAPIKey string // Universal API Key for all connectors.
     APIBaseURL               string // Base URL of the Irmin Core API
     APIToken                 string // Token to authenticate system requests to the Irmin Core API
     DatabaseConnectionString string // Connection string for the database

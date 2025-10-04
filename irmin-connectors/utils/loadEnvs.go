@@ -17,6 +17,7 @@ type ConnectorsEnv struct {
 	HelmetEnabled            bool   // Whether helmet is enabled
 	CorsEnabled              bool   // Whether CORS is enabled
 	CorsOrigins              string // Origins allowed to access the connectors server
+	UniversalConnectorAPIKey string // Universal API Key for all connectors.
 	APIBaseURL               string // Base URL of the Irmin Core API
 	APIToken                 string // Token to authenticate system requests to the Irmin Core API
 	DatabaseConnectionString string // Connection string for the database
@@ -95,6 +96,11 @@ func LoadEnv() (*ConnectorsEnv, error) {
 		return nil, err
 	}
 
+	universalConnectorAPIKey, err := getEnv("UNIVERSAL_CONNECTOR_API_KEY", false, "")
+	if err != nil {
+		return nil, err
+	}
+
 	apiBaseURL, err := getEnv("IRMIN_API_BASE_URL", true, "")
 	if err != nil {
 		return nil, err
@@ -116,6 +122,7 @@ func LoadEnv() (*ConnectorsEnv, error) {
 		HelmetEnabled:            helmetEnabled,
 		CorsEnabled:              corsEnabled,
 		CorsOrigins:              corsOrigins,
+		UniversalConnectorAPIKey: universalConnectorAPIKey,
 		APIBaseURL:               apiBaseURL,
 		APIToken:                 apiToken,
 		DatabaseConnectionString: dbConnStr,

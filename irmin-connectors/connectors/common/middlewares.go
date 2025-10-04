@@ -18,7 +18,7 @@ func ValidateSystemToken(
 	info := getConnectorInfo()
 
 	// Validate the system token
-	tokenValid, registration := lib.ValidateConnectorSystemToken(app.DB, app.Logger, c, info.Name)
+	tokenValid, registration := lib.ValidateConnectorSystemToken(app.DB, app.Env, app.Logger, c, info.Name)
 	if !tokenValid {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Unauthorized",

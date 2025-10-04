@@ -16,6 +16,7 @@ func UpdateConnectorInDB(
 
 func ValidateConnectorSystemToken(
 	d *db.Database,
+	env *utils.ConnectorsEnv,
 	logger *slog.Logger,
 	c fiber.Ctx,
 	connectorName string,
