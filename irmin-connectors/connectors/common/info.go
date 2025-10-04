@@ -2,6 +2,7 @@ package common
 
 import (
 	"irmin-connectors/models"
+	"irmin-connectors/utils"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -19,10 +20,10 @@ func RenderConnectorInfo(
 	// Get the connector info from config
 	info := getConnectorInfo()
 
-	// Update URLs by prepending the base URL
-	info.LogoURL = baseURL + info.LogoURL
-	info.APIBaseURL = baseURL + info.APIBaseURL
-	info.ReadMoreURL = baseURL + info.ReadMoreURL
+	// Update URLs by properly joining with the base URL
+	info.LogoURL = utils.JoinURL(baseURL, info.LogoURL)
+	info.APIBaseURL = utils.JoinURL(baseURL, info.APIBaseURL)
+	info.ReadMoreURL = utils.JoinURL(baseURL, info.ReadMoreURL)
 
 	// Send the connector details
 	return c.Status(fiber.StatusOK).JSON(info)

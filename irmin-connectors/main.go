@@ -76,6 +76,9 @@ const (
 
 	// MaxRequestBodySize is the maximum body size in bytes (5 GB).
 	MaxRequestBodySize = 5 * 1024 * 1024 * 1024
+
+	// ReadBufferSize is the size of the read buffer in bytes (10 MB).
+	ReadBufferSize = 10 * 1024 * 1024
 )
 
 // setupDatabase initializes and configures the database based on command line flags.
@@ -94,8 +97,9 @@ func setupDatabase(ctx context.Context) (*db.Database, error) {
 // setupFiberApp creates and configures a new Fiber application.
 func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:   "Irmin Connectors",
-		BodyLimit: MaxRequestBodySize,
+		AppName:        "Irmin Connectors",
+		BodyLimit:      MaxRequestBodySize,
+		ReadBufferSize: ReadBufferSize, // 10MB for headers to handle large CORS headers
 		ErrorHandler: func(c fiber.Ctx, err error) error {
 			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 		},
@@ -110,8 +114,12 @@ func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 	// 2. CORS: Must be very early. It needs to handle preflight OPTIONS
 	// requests immediately, before they hit other middleware like logging,
 	// caching, or authentication.
+	// Apply public CORS for static files and connector details pages
+	app.Use(setupPublicCORS())
+
+	// Apply restricted CORS for API routes
 	if env.CorsEnabled {
-		app.Use(setupCORS(env))
+		app.Use(setupRestrictedCORS(env))
 	}
 
 	// 3. Request ID: Assigns a unique ID to the request. This should be
@@ -177,13 +185,44 @@ func setupCache() fiber.Handler {
 	})
 }
 
-// setupCORS configures and returns the CORS middleware.
-func setupCORS(env *utils.ConnectorsEnv) fiber.Handler {
+// setupPublicCORS configures and returns a permissive CORS middleware for public routes.
+func setupPublicCORS() fiber.Handler {
+	return cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Allow all origins for public content
+		AllowCredentials: false,         // No credentials needed for public content
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Accept",
+			"X-Requested-With",
+			"Accept-Language",
+			"Referer",
+			"Cache-Control",
+		},
+		AllowMethods: []string{"GET", "OPTIONS"},
+		Next: func(c fiber.Ctx) bool {
+			// Only apply to public routes
+			path := c.Path()
+			// Apply to static files in /public/
+			if strings.HasPrefix(path, "/public/") {
+				return false // Apply this CORS policy
+			}
+			// Apply to connector details pages (e.g., /http/details, /mysql/details, etc.)
+			if strings.HasSuffix(path, "/details") {
+				return false // Apply this CORS policy
+			}
+			return true // Skip this CORS policy for other routes
+		},
+	})
+}
+
+// setupRestrictedCORS configures and returns the restricted CORS middleware for API routes.
+func setupRestrictedCORS(env *utils.ConnectorsEnv) fiber.Handler {
 	allowedOrigins := strings.Split(env.CorsOrigins, ",")
 	for i, origin := range allowedOrigins {
 		allowedOrigins[i] = strings.TrimSpace(origin)
 	}
-	log.Println("Allowed origins:", allowedOrigins)
+	log.Println("Allowed origins for API routes:", allowedOrigins)
 
 	return cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
@@ -199,6 +238,19 @@ func setupCORS(env *utils.ConnectorsEnv) fiber.Handler {
 			"Cache-Control",
 		},
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		Next: func(c fiber.Ctx) bool {
+			// Skip restricted CORS for public routes (they use public CORS instead)
+			path := c.Path()
+			// Skip restricted CORS for static files in /public/
+			if strings.HasPrefix(path, "/public/") {
+				return true
+			}
+			// Skip restricted CORS for connector details pages
+			if strings.HasSuffix(path, "/details") {
+				return true
+			}
+			return false // Apply restricted CORS to API routes
+		},
 	})
 }
 

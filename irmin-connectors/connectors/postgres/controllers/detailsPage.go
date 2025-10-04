@@ -19,6 +19,7 @@ import (
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	return common.RenderConnectorDetailsPage(
 		c,
+		cs.App,
 		"postgres",
 		config.GetConnectorInfo,
 		"The connector sets up notification triggers on all tables. These triggers broadcast changes (inserts, updates, deletes) which are then captured by an event listener. The listener processes these notifications and can forward them via webhook endpoints, enabling real-time reactive workflows.",

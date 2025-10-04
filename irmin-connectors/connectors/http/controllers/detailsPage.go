@@ -19,6 +19,7 @@ import (
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	return common.RenderConnectorDetailsPage(
 		c,
+		cs.App,
 		"http",
 		config.GetConnectorInfo,
 		"The HTTP connector allows you to connect to any HTTP endpoint. For pull operations, it makes a request to the configured URL and returns the response as a file. For push operations, it sends the provided file content as the request body to the configured endpoint.",

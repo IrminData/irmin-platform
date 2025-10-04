@@ -19,6 +19,7 @@ import (
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	return common.RenderConnectorDetailsPage(
 		c,
+		cs.App,
 		"mysql",
 		config.GetConnectorInfo,
 		"The connector can monitor MySQL binary logs for real-time change detection. This enables capture of inserts, updates, and deletes which can be forwarded via webhook endpoints for reactive workflows.",

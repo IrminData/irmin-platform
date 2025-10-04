@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"irmin-connectors/models"
 	"irmin-connectors/templates"
+	"irmin-connectors/utils"
 	"slices"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -87,13 +88,25 @@ func containsCapability(capabilities []irminmodels.ConnectorCapability, target i
 // RenderConnectorDetailsPage is a helper function for connectors to easily render their details page.
 func RenderConnectorDetailsPage(
 	c fiber.Ctx,
+	app *models.ConnectorsApp,
 	connectorSlug string,
 	getConnectorInfo func() models.ConnectorDetails,
 	eventDescription ...string,
 ) error {
+	// Retrieve the base URL from the environment
+	baseURL := app.Env.URL
+
+	// Get the connector info from config
+	info := getConnectorInfo()
+
+	// Update URLs by properly joining with the base URL
+	info.LogoURL = utils.JoinURL(baseURL, info.LogoURL)
+	info.APIBaseURL = utils.JoinURL(baseURL, info.APIBaseURL)
+	info.ReadMoreURL = utils.JoinURL(baseURL, info.ReadMoreURL)
+
 	config := DetailsPageConfig{
 		ConnectorSlug: connectorSlug,
-		ConnectorInfo: getConnectorInfo(),
+		ConnectorInfo: info,
 	}
 
 	// Use custom event description if provided

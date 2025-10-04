@@ -132,6 +132,7 @@ func LogOnlyCancellation(app *models.ConnectorsApp, operation *db.Operation) err
 
 func RenderConnectorDetailsPage(
 	c fiber.Ctx,
+	app *models.ConnectorsApp,
 	connectorSlug string,
 	getConnectorInfo func() models.ConnectorDetails,
 	eventDescription ...string,

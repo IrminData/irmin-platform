@@ -82,6 +82,14 @@ func GetIntFromMap(m map[string]any, key string, defaultValue int) int
 func GetStringFromMap(m map[string]any, key string, defaultValue string) string
     GetStringFromMap extracts a string value from a map with type conversion.
 
+func JoinURL(baseURL, path string) string
+    JoinURL properly joins a base URL with a path, handling absolute URLs and
+    slashes correctly. Used to properly format full URLs to public links,
+    like the connector web pages, and assets like logos. It prevents malformed
+    URLs like: - https://example.com/https://other.com/path (absolute
+    URL concatenation) - https://example.com//path (double slashes) -
+    https://example.compath (missing slash)
+
 func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]string, error)
     ParseFormFields parses the form data from a Fiber context and checks for
     required and optional fields.

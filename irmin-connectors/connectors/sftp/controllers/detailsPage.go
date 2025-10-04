@@ -19,6 +19,7 @@ import (
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error {
 	return common.RenderConnectorDetailsPage(
 		c,
+		cs.App,
 		"sftp",
 		config.GetConnectorInfo,
 		"The connector supports both password-based authentication and SSH key-based authentication for secure access to SFTP servers.",

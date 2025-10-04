@@ -34,6 +34,9 @@ const (
 
     // MaxRequestBodySize is the maximum body size in bytes (5 GB).
     MaxRequestBodySize = 5 * 1024 * 1024 * 1024
+
+    // ReadBufferSize is the size of the read buffer in bytes (10 MB).
+    ReadBufferSize = 10 * 1024 * 1024
 )
 ```
 
@@ -816,6 +819,7 @@ import "irmin-connectors/utils"
 - [func GenerateToken\(length int\) \(string, error\)](<#GenerateToken>)
 - [func GetIntFromMap\(m map\[string\]any, key string, defaultValue int\) int](<#GetIntFromMap>)
 - [func GetStringFromMap\(m map\[string\]any, key string, defaultValue string\) string](<#GetStringFromMap>)
+- [func JoinURL\(baseURL, path string\) string](<#JoinURL>)
 - [func ParseFormFields\(c fiber.Ctx, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseFormFields>)
 - [func ParseHeaders\(r \*http.Request, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseHeaders>)
 - [func ParseQueryParams\(r \*http.Request, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseQueryParams>)
@@ -949,6 +953,15 @@ func GetStringFromMap(m map[string]any, key string, defaultValue string) string
 
 GetStringFromMap extracts a string value from a map with type conversion.
 
+<a name="JoinURL"></a>
+## func JoinURL
+
+```go
+func JoinURL(baseURL, path string) string
+```
+
+JoinURL properly joins a base URL with a path, handling absolute URLs and slashes correctly. Used to properly format full URLs to public links, like the connector web pages, and assets like logos. It prevents malformed URLs like: \- https://example.com/https://other.com/path \(absolute URL concatenation\) \- https://example.com//path \(double slashes\) \- https://example.compath \(missing slash\)
+
 <a name="ParseFormFields"></a>
 ## func ParseFormFields
 
@@ -1059,7 +1072,7 @@ import "irmin-connectors/connectors/common"
 - [func HandleOperationSchemaGet\(c fiber.Ctx, provider SchemaOperationProvider, logger \*slog.Logger\) error](<#HandleOperationSchemaGet>)
 - [func HandleOperationStatus\(c fiber.Ctx, getConnectorInfo func\(\) models.ConnectorDetails, app \*models.ConnectorsApp\) error](<#HandleOperationStatus>)
 - [func LogOnlyCancellation\(app \*models.ConnectorsApp, operation \*db.Operation\) error](<#LogOnlyCancellation>)
-- [func RenderConnectorDetailsPage\(c fiber.Ctx, connectorSlug string, getConnectorInfo func\(\) models.ConnectorDetails, eventDescription ...string\) error](<#RenderConnectorDetailsPage>)
+- [func RenderConnectorDetailsPage\(c fiber.Ctx, app \*models.ConnectorsApp, connectorSlug string, getConnectorInfo func\(\) models.ConnectorDetails, eventDescription ...string\) error](<#RenderConnectorDetailsPage>)
 - [func RenderConnectorInfo\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#RenderConnectorInfo>)
 - [func RenderDetailsPage\(c fiber.Ctx, config DetailsPageConfig\) error](<#RenderDetailsPage>)
 - [func SetupConnectorRoutes\(config ConnectorRouteConfig\)](<#SetupConnectorRoutes>)
@@ -1328,7 +1341,7 @@ LogOnlyCancellation provides a simple logging\-only cancellation for connectors 
 ## func RenderConnectorDetailsPage
 
 ```go
-func RenderConnectorDetailsPage(c fiber.Ctx, connectorSlug string, getConnectorInfo func() models.ConnectorDetails, eventDescription ...string) error
+func RenderConnectorDetailsPage(c fiber.Ctx, app *models.ConnectorsApp, connectorSlug string, getConnectorInfo func() models.ConnectorDetails, eventDescription ...string) error
 ```
 
 RenderConnectorDetailsPage is a helper function for connectors to easily render their details page.
