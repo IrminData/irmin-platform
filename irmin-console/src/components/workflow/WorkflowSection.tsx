@@ -170,7 +170,31 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   {run.triggered_by.type}
                 </p>
               )}
-              {/* TODO: Add more information on what triggered the workflow to run - consider showing trigger details like schedule cron expression, webhook payload, or manual trigger reason */}
+              {run.triggered_by?.type === 'time' && run.triggered_by.cron && (
+                <p className='text-xs text-muted-foreground'>
+                  Cron: {run.triggered_by.cron}
+                </p>
+              )}
+              {run.triggered_by?.type === 'time' && run.triggered_by.rrule && (
+                <p className='text-xs text-muted-foreground'>
+                  RRule: {run.triggered_by.rrule}
+                </p>
+              )}
+              {run.triggered_by?.type === 'repository-event' && (
+                <p className='text-xs text-muted-foreground'>
+                  Event: {run.triggered_by.event}
+                  {run.triggered_by.repository &&
+                    ` on ${run.triggered_by.repository}`}
+                  {run.triggered_by.ref && ` (${run.triggered_by.ref})`}
+                </p>
+              )}
+              {run.triggered_by?.type === 'workflow-run-event' && (
+                <p className='text-xs text-muted-foreground'>
+                  Event: {run.triggered_by.event}
+                  {run.triggered_by.workflow &&
+                    ` from ${run.triggered_by.workflow}`}
+                </p>
+              )}
               <Tooltip.Arrow />
             </Tooltip.Content>
           </Tooltip.Root>,
@@ -189,14 +213,36 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
               </p>
             )}
             {run.triggered_by && (
-              <p
-                className={`
-                  text-xs
-                  lg:text-sm
-                `}
-              >
-                {run.triggered_by.type}
-              </p>
+              <div className='space-y-1'>
+                <p
+                  className={`
+                    text-xs
+                    lg:text-sm
+                  `}
+                >
+                  {run.triggered_by.type}
+                </p>
+                {run.triggered_by.type === 'time' && run.triggered_by.cron && (
+                  <p className='text-xs text-muted-foreground'>
+                    {run.triggered_by.cron}
+                  </p>
+                )}
+                {run.triggered_by.type === 'time' && run.triggered_by.rrule && (
+                  <p className='text-xs text-muted-foreground'>RRule</p>
+                )}
+                {run.triggered_by.type === 'repository-event' && (
+                  <p className='text-xs text-muted-foreground'>
+                    {run.triggered_by.event}
+                    {run.triggered_by.repository &&
+                      ` (${run.triggered_by.repository})`}
+                  </p>
+                )}
+                {run.triggered_by.type === 'workflow-run-event' && (
+                  <p className='text-xs text-muted-foreground'>
+                    {run.triggered_by.event}
+                  </p>
+                )}
+              </div>
             )}
           </div>,
           <div

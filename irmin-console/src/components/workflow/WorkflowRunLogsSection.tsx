@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import StatusBadge from '@/components/ui/StatusBadge';
+import WorkflowRunTriggerDetails from '@/components/workflow/WorkflowRunTriggerDetails';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -110,7 +111,6 @@ export default function WorkflowRunLogsSection({
             {workflowRun.triggered_by && (
               <p className='text-base'>{workflowRun.triggered_by.type}</p>
             )}
-            {/* TODO: Add more information on what triggered the workflow to run - consider showing trigger details like schedule cron expression, webhook payload, or manual trigger reason */}
           </div>
           <div className='flex flex-col gap-1'>
             <p className='text-sm opacity-60'>{dict.list.status}</p>
@@ -154,6 +154,15 @@ export default function WorkflowRunLogsSection({
           </div>
         </div>
       </div>
+
+      {/* Detailed Trigger Information */}
+      <div className='container mx-auto max-w-7xl'>
+        <WorkflowRunTriggerDetails
+          triggeredBy={workflowRun.triggered_by}
+          triggeredByUser={workflowRun.triggered_by_user}
+        />
+      </div>
+
       {workflowRun.logs ? (
         <div className='h-[calc(100vh-347px)]'>
           <LogFeed logs={workflowRun.logs ?? []} />

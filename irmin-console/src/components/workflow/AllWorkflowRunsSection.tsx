@@ -16,6 +16,7 @@ import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 import PaginationControls from '@/components/ui/PaginationControls';
 import StatusBadge from '@/components/ui/StatusBadge';
+import WorkflowRunTriggerDetails from '@/components/workflow/WorkflowRunTriggerDetails';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -171,9 +172,31 @@ const AllWorkflowRunsSection = () => {
               </span>
             )}
             {run.triggered_by && (
-              <span className='text-sm text-gray-400'>
-                {dict.workflow.triggeredBy}: {run.triggered_by.type}
-              </span>
+              <div className='space-y-1'>
+                <span className='text-sm text-gray-400'>
+                  {dict.workflow.triggeredBy}: {run.triggered_by.type}
+                </span>
+                {run.triggered_by.type === 'time' && run.triggered_by.cron && (
+                  <span className='block text-xs text-gray-500'>
+                    {run.triggered_by.cron}
+                  </span>
+                )}
+                {run.triggered_by.type === 'time' && run.triggered_by.rrule && (
+                  <span className='block text-xs text-gray-500'>RRule</span>
+                )}
+                {run.triggered_by.type === 'repository-event' && (
+                  <span className='block text-xs text-gray-500'>
+                    {run.triggered_by.event}
+                    {run.triggered_by.repository &&
+                      ` (${run.triggered_by.repository})`}
+                  </span>
+                )}
+                {run.triggered_by.type === 'workflow-run-event' && (
+                  <span className='block text-xs text-gray-500'>
+                    {run.triggered_by.event}
+                  </span>
+                )}
+              </div>
             )}
           </div>,
           <div
@@ -195,31 +218,39 @@ const AllWorkflowRunsSection = () => {
           },
         ],
         details: (
-          <div className='flex max-w-sm flex-col text-gray-400'>
-            <p className='pb-2 text-sm'>
-              <strong>{dict.workflow.run}:</strong> {run.id}
-            </p>
-            <p className='pb-2 text-sm'>
-              <strong>{dict.workflow.startedAt}:</strong>{' '}
-              {new Date(run.started_at ?? '').toLocaleString(locale)}
-            </p>
-            {run.finished_at && (
+          <div className='flex max-w-lg flex-col space-y-4'>
+            <div className='text-gray-400'>
               <p className='pb-2 text-sm'>
-                <strong>{dict.workflow.finishedAt}:</strong>{' '}
-                {new Date(run.finished_at).toLocaleString(locale)}
+                <strong>{dict.workflow.run}:</strong> {run.id}
               </p>
-            )}
-            {run.finished_at && (
               <p className='pb-2 text-sm'>
-                <strong>{dict.workflow.duration}:</strong>{' '}
-                {formatDurationForUI(
-                  intervalToDuration({
-                    start: new Date(run.started_at ?? ''),
-                    end: new Date(run.finished_at),
-                  })
-                )}
+                <strong>{dict.workflow.startedAt}:</strong>{' '}
+                {new Date(run.started_at ?? '').toLocaleString(locale)}
               </p>
-            )}
+              {run.finished_at && (
+                <p className='pb-2 text-sm'>
+                  <strong>{dict.workflow.finishedAt}:</strong>{' '}
+                  {new Date(run.finished_at).toLocaleString(locale)}
+                </p>
+              )}
+              {run.finished_at && (
+                <p className='pb-2 text-sm'>
+                  <strong>{dict.workflow.duration}:</strong>{' '}
+                  {formatDurationForUI(
+                    intervalToDuration({
+                      start: new Date(run.started_at ?? ''),
+                      end: new Date(run.finished_at),
+                    })
+                  )}
+                </p>
+              )}
+            </div>
+            <div className='border-t border-border pt-4'>
+              <WorkflowRunTriggerDetails
+                triggeredBy={run.triggered_by}
+                triggeredByUser={run.triggered_by_user}
+              />
+            </div>
           </div>
         ),
       })) ?? [],

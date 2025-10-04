@@ -557,6 +557,15 @@ const en = {
       presets: 'Presets',
       custom: 'Custom',
 
+      // Trigger details
+      manualTrigger: 'Manual Trigger',
+      scheduledTrigger: 'Scheduled Trigger',
+      unknownTrigger: 'Unknown Trigger',
+      noTriggerInformation: 'No Trigger Information',
+      triggerDetails: 'Trigger Details',
+      rawTriggerData: 'Raw Trigger Data',
+      sourceWorkflow: 'Source Workflow',
+
       cron: {
         selectPreset: 'Select a preset schedule',
         generatedCron: 'Generated Cron Expression',

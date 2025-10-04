@@ -71,7 +71,7 @@ const DashboardSection = () => {
     <div className='pattern-bg h-full py-4'>
       <div
         className={`
-          relative container mx-auto max-w-7xl
+          relative container mx-auto w-full max-w-7xl
           lg:px-4
         `}
       >

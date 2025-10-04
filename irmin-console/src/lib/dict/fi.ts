@@ -541,6 +541,15 @@ const fi = {
       saveSchedule: 'Tallenna aikataulu',
       presets: 'Pohjat',
       custom: 'Mukautettu',
+
+      // Trigger details
+      manualTrigger: 'Manuaalinen laukaisin',
+      scheduledTrigger: 'Aikataulutettu laukaisin',
+      unknownTrigger: 'Tuntematon laukaisin',
+      noTriggerInformation: 'Ei laukaisintietoja',
+      triggerDetails: 'Laukaisimen tiedot',
+      rawTriggerData: 'Raaka laukaisintiedot',
+      sourceWorkflow: 'Lähdeprosessi',
       cron: {
         selectPreset: 'Valitse aikataulupohja',
         generatedCron: 'Luotu Cron-lauseke',
