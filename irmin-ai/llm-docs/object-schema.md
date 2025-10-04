@@ -10,7 +10,8 @@ Object Schemas are useful for building queries, scripts, and workflows, as they 
 
 ## Connection Schemas
 
-Using the `get_connection_schema` tool, you can get the schema of a connection. The schema describes what data can be read from and written to the connection.
+Using the `get_connection_schema` tool, you can get the schema of a connection. The schema describes what data can be read from or written to the connection.
+To get fetch the connection schema, you need to specify the operation method. The operation method can be for example `pull` (data we read from the connection) or `push` (data we write to the connection).
 
 ## Repository Object Schemas
 

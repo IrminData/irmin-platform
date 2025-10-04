@@ -299,6 +299,39 @@ The service automatically:
 
 See [titleGeneration.ts](src/services/titleGeneration.ts) for more details.
 
+## Input Sanitization
+
+The Irmin AI service includes simple input sanitization to protect against malicious content, empty messages, and overly long messages. All user inputs and system prompts are automatically sanitized before processing.
+
+**Key Features:**
+- **Length Limits**: Enforces maximum input lengths to prevent resource exhaustion
+- **Prompt Injection Protection**: Removes malicious patterns that could manipulate AI behavior
+- **Malicious Code Detection**: Filters dangerous script injection and command execution attempts
+- **Whitespace Normalization**: Cleans up excessive whitespace and normalizes line endings
+- **Empty Input Validation**: Ensures messages remain valid after sanitization
+
+**Input Limits (defaults, agent config can override):**
+- **User Messages**: Maximum 35,000 characters (~10,000 tokens)
+- **System Prompts**: Maximum 210,000 characters (~60,000 tokens)
+- **Minimum Length**: Messages must not be empty after sanitization
+
+**Security Patterns Removed:**
+- Chat format role markers (`<|system|>`, `<|assistant|>`, etc.)
+- XML-style role tags (`<system>`, `<assistant>`, etc.)
+- Prompt delimiter sequences (`=== END PROMPT ===`, etc.)
+- Script injection attempts (`<script>`, `javascript:`, etc.)
+- Command injection patterns (`rm -rf /`, etc.)
+- SQL injection attempts (complex union attacks, etc.)
+- Zero-width and control characters
+- Base64-like encoded strings
+
+**Implementation:**
+- **Agent Routes**: Sanitization handled by `AgentsManager.executeAgent()`
+- **Chat Routes**: Direct sanitization in route handlers
+- **Validation**: Empty message validation occurs after sanitization
+- **Error Handling**: Clear error messages for invalid inputs
+
+See [sanitization.ts](src/utils/sanitization.ts) for detailed implementation and pattern definitions.
 
 ## Vector Embeddings and RAG
 

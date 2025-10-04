@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { completionService } from '@/services/completion';
-import { systemPromptBuilder } from '@/services/systemPromptBuilder';
+import { systemMessageCacheService } from '@/services/systemMessageCache';
 
 import {
   AgentConfig,
@@ -21,7 +21,10 @@ export abstract class BaseAgent implements BaseAgentInterface {
     this.config = config;
   }
 
-  async execute(input: AgentInput): Promise<AgentResponse> {
+  async execute(
+    input: AgentInput,
+    conversationId: string
+  ): Promise<AgentResponse> {
     // Validate input
     if (!this.validateInput(input)) {
       throw new Error('Invalid input for agent');
@@ -29,21 +32,28 @@ export abstract class BaseAgent implements BaseAgentInterface {
 
     // Prepare context and messages
     const context = await this.prepareContext(input);
-    const conversationMessages = await this.buildMessages(input);
+    const conversationMessages = await this.buildMessages(
+      input,
+      conversationId
+    );
     const baseSystemPrompt = await this.loadSystemPrompt();
 
-    // Build system prompt with context using the system prompt builder
-    // Convert AgentInput types to SystemPromptBuilder types
-    const systemPrompt = systemPromptBuilder.buildSystemPrompt(
-      baseSystemPrompt,
-      {
-        user: input.user,
-        workspace: input.workspace,
-        conversationId: input.conversationId,
-        agentId: this.config.id,
-        customContext: context,
-      }
-    );
+    // Get or create system message (cached per conversation)
+    // Note: conversationId validation is handled by the systemMessageCacheService
+    const systemPrompt =
+      await systemMessageCacheService.getOrCreateSystemMessage(
+        conversationId,
+        baseSystemPrompt,
+        {
+          user: input.user,
+          workspace: input.workspace,
+          conversationId: conversationId,
+          agentId: this.config.id,
+          customContext: context,
+          maxUserInputChars: this.config.maxUserInputChars,
+          maxSystemPromptChars: this.config.maxSystemPromptChars,
+        }
+      );
 
     // Check if this is a streaming request based on input metadata and agent ability to stream
     // If metadata.streaming is explicitly set to false, respect that even if agent supports streaming
@@ -61,10 +71,10 @@ export abstract class BaseAgent implements BaseAgentInterface {
         maxTokens: this.config.maxTokens,
         useAgentGraph: this.config.useAgentGraph,
         maxToolCalls: this.config.maxToolCalls,
-        systemPrompt,
+        systemPrompt: systemPrompt || undefined,
         toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
-        conversationId: input.conversationId,
+        conversationId: conversationId,
       });
 
       return {
@@ -85,10 +95,10 @@ export abstract class BaseAgent implements BaseAgentInterface {
         maxTokens: this.config.maxTokens,
         useAgentGraph: this.config.useAgentGraph,
         maxToolCalls: this.config.maxToolCalls,
-        systemPrompt,
+        systemPrompt: systemPrompt || undefined,
         toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
-        conversationId: input.conversationId,
+        conversationId: conversationId,
       });
 
       return {
@@ -139,21 +149,22 @@ export abstract class BaseAgent implements BaseAgentInterface {
     return context;
   }
 
-  protected async buildMessages(input: AgentInput): Promise<Message[]> {
+  protected async buildMessages(
+    input: AgentInput,
+    conversationId: string
+  ): Promise<Message[]> {
     const conversationMessages: Message[] = [];
 
-    // Fetch conversation history if conversationId is provided
-    if (input.conversationId) {
-      const history = await db
-        .select()
-        .from(messagesTable)
-        .where(eq(messagesTable.conversationId, input.conversationId))
-        .orderBy(desc(messagesTable.createdAt))
-        .limit(input.messageHistoryLimit || 20);
+    // Fetch conversation history
+    const history = await db
+      .select()
+      .from(messagesTable)
+      .where(eq(messagesTable.conversationId, conversationId))
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(input.messageHistoryLimit || 20);
 
-      // Reverse to get chronological order
-      conversationMessages.push(...history.reverse());
-    }
+    // Reverse to get chronological order
+    conversationMessages.push(...history.reverse());
 
     return conversationMessages;
   }

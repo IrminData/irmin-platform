@@ -1,12 +1,16 @@
 import { User } from '@/irmin-api/types/user';
 import { Workspace } from '@/irmin-api/types/workspace';
 
+import { textSanitizer } from '@/utils/sanitization';
+
 interface SystemPromptContext {
   user?: User;
   workspace?: Workspace;
   conversationId?: string;
   agentId?: string;
   customContext?: Record<string, unknown>;
+  maxUserInputChars?: number;
+  maxSystemPromptChars?: number;
 }
 
 class SystemPromptBuilder {
@@ -24,19 +28,23 @@ Be helpful, accurate, and concise in your responses. If you need to access data 
    * Build a complete system prompt with context injection
    */
   buildSystemPrompt(
-    basePrompt?: string,
+    basePrompt?: string | null,
     context?: SystemPromptContext
   ): string {
     const promptParts: string[] = [];
 
-    // Add base prompt (from agent file or default)
+    // Add base prompt (from agent file or default) - NO SANITIZATION
     if (basePrompt) {
-      promptParts.push(basePrompt);
+      promptParts.push(
+        `<system_instructions>\n${basePrompt}\n</system_instructions>`
+      );
     } else {
-      promptParts.push(this.DEFAULT_SYSTEM_PROMPT);
+      promptParts.push(
+        `<system_instructions>\n${this.DEFAULT_SYSTEM_PROMPT}\n</system_instructions>`
+      );
     }
 
-    // Add context information if provided
+    // Add context information if provided (context data is sanitized)
     if (context) {
       const contextInfo = this.buildContextInfo(context);
       if (contextInfo) {
@@ -44,7 +52,17 @@ Be helpful, accurate, and concise in your responses. If you need to access data 
       }
     }
 
-    return promptParts.join('\n\n');
+    // Join all parts
+    const finalPrompt = promptParts.join('\n\n');
+
+    // Apply final length check to the complete system prompt (without sanitizing base content)
+    const maxLength = context?.maxSystemPromptChars;
+    if (maxLength && finalPrompt.length > maxLength) {
+      const truncateLength = Math.max(0, maxLength - 3);
+      return finalPrompt.substring(0, truncateLength) + '...';
+    }
+
+    return finalPrompt;
   }
 
   /**
@@ -67,28 +85,48 @@ Be helpful, accurate, and concise in your responses. If you need to access data 
       timeZoneName: 'short',
     });
     contextParts.push(
-      `<current_time>\n${localTime} (${timestamp})\n</current_time>`
+      `<current_datetime>\n${localTime} (${timestamp})\n</current_datetime>`
     );
 
-    // Add user information
+    // Add user information (sanitized with reasonable limits)
     if (context.user) {
       const user = context.user;
       const userName = `${user.first_name} ${user.last_name}`.trim();
-      contextParts.push(`<user>\n${userName} (${user.email})\n</user>`);
+      const sanitizedUserName = textSanitizer.sanitize(userName, 100).sanitized; // Max 100 chars for name
+      const sanitizedEmail = textSanitizer.sanitize(user.email, 254).sanitized; // Max 254 chars for email
+      contextParts.push(
+        `<user>\n${sanitizedUserName} (${sanitizedEmail})\n</user>`
+      );
       if (user.company) {
-        contextParts.push(`<company>\n${user.company}\n</company>`);
+        const sanitizedCompany = textSanitizer.sanitize(
+          user.company,
+          200
+        ).sanitized; // Max 200 chars for company
+        contextParts.push(`<company>\n${sanitizedCompany}\n</company>`);
       }
     }
 
-    // Add workspace information
+    // Add workspace information (sanitized with reasonable limits)
     if (context.workspace) {
       const workspace = context.workspace;
+      const sanitizedWorkspaceName = textSanitizer.sanitize(
+        workspace.name,
+        200
+      ).sanitized; // Max 200 chars for workspace name
+      const sanitizedWorkspaceSlug = textSanitizer.sanitize(
+        workspace.slug,
+        200
+      ).sanitized; // Max 200 chars for workspace slug
       contextParts.push(
-        `<workspace>\n${workspace.name} (${workspace.slug})\n</workspace>`
+        `<workspace>\n${sanitizedWorkspaceName} (${sanitizedWorkspaceSlug})\n</workspace>`
       );
       if (workspace.description) {
+        const sanitizedDescription = textSanitizer.sanitize(
+          workspace.description,
+          300
+        ).sanitized; // Max 300 chars for workspace description
         contextParts.push(
-          `<workspace_description>\n${workspace.description}\n</workspace_description>`
+          `<workspace_description>\n${sanitizedDescription}\n</workspace_description>`
         );
       }
     }
@@ -105,11 +143,14 @@ Be helpful, accurate, and concise in your responses. If you need to access data 
       contextParts.push(`<agent>\n${context.agentId}\n</agent>`);
     }
 
-    // Add custom context
+    // Add custom context (sanitized)
     if (context.customContext) {
       for (const [key, value] of Object.entries(context.customContext)) {
         if (value !== null && value !== undefined) {
-          contextParts.push(`<${key}>\n${String(value)}\n</${key}>`);
+          const sanitizedValue = textSanitizer.sanitize(
+            String(value)
+          ).sanitized;
+          contextParts.push(`<${key}>\n${sanitizedValue}\n</${key}>`);
         }
       }
     }

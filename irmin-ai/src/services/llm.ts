@@ -94,7 +94,7 @@ class LlmService {
   }
 
   /**
-   * Convert our Message format to LangChain messages
+   * Convert our Message format to LangChain messages with sanitization
    */
   convertMessagesToLangChain(
     messages: NewMessage[] | Message[],
@@ -102,23 +102,32 @@ class LlmService {
   ) {
     const langchainMessages: (HumanMessage | SystemMessage | AIMessage)[] = [];
 
-    // Add system message if provided
+    // Add system message if provided (no sanitization needed - user data already sanitized at source)
     if (systemPrompt) {
+      // No need to sanitize system prompts
       langchainMessages.push(new SystemMessage(systemPrompt));
     }
 
-    // Convert messages
+    // Convert messages with sanitization
     for (const message of messages) {
       switch (message.role) {
-        case 'user':
+        case 'user': {
+          // User messages are already sanitized in the request handler
+          // No need to sanitize again
           langchainMessages.push(new HumanMessage(message.content));
           break;
-        case 'assistant':
+        }
+        case 'assistant': {
+          // Assistant messages are AI-generated content and should never be sanitized
           langchainMessages.push(new AIMessage(message.content));
           break;
-        case 'system':
-          langchainMessages.push(new SystemMessage(message.content));
+        }
+        case 'system': {
+          // System messages are already sanitized at source
+          const finalContent = message.content;
+          langchainMessages.push(new SystemMessage(finalContent));
           break;
+        }
       }
     }
 

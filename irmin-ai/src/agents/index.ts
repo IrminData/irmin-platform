@@ -16,6 +16,8 @@ import {
   BaseAgentInterface,
 } from '@/agents/types';
 
+import { textSanitizer } from '@/utils/sanitization';
+
 export class AgentsManager {
   private agents: Map<string, BaseAgentInterface> = new Map();
 
@@ -36,6 +38,7 @@ export class AgentsManager {
     agentResponse: AgentResponse;
     conversationId: string;
     userMessageId: string;
+    sanitizedMessage: string;
   }> {
     const agent = this.agents.get(agentId);
     if (!agent) {
@@ -115,14 +118,25 @@ export class AgentsManager {
         await analyticsService.logConversationEvent('conversation_created', id);
       }
 
-      // Save user message
+      // Sanitize user message
+      const sanitizedMessage = textSanitizer.sanitizeUserMessage(input.message);
+
+      // Validate message is not empty after sanitization
+      if (
+        !sanitizedMessage.sanitized ||
+        sanitizedMessage.sanitized.trim().length === 0
+      ) {
+        throw new Error('Message cannot be empty');
+      }
+
+      // Save user message (sanitized)
       const userMessageId = randomUUID();
       const now = new Date();
       const userMessage: NewMessage = {
         id: userMessageId,
         conversationId: conversation.id,
         role: 'user',
-        content: input.message,
+        content: sanitizedMessage.sanitized,
         createdAt: now,
         updatedAt: now,
       };
@@ -132,11 +146,12 @@ export class AgentsManager {
       // Log user message analytics
       await analyticsService.logMessageSent(conversation.id, userMessageId);
 
-      // Execute agent
-      const response = await agent.execute({
+      // Execute agent with sanitized message
+      const sanitizedInput = {
         ...input,
-        conversationId: conversation.id, // Ensure conversationId is set to the actual conversation ID
-      });
+        message: sanitizedMessage.sanitized,
+      };
+      const response = await agent.execute(sanitizedInput, conversation.id);
       const processingTimeMs = Date.now() - startTime;
 
       // Check if this is a streaming response
@@ -214,7 +229,7 @@ export class AgentsManager {
           titleGenerationService
             .updateTitleWithAIResponse(
               conversation.id,
-              input.message,
+              sanitizedMessage.sanitized,
               response.content,
               {
                 user: input.user,
@@ -266,6 +281,7 @@ export class AgentsManager {
         agentResponse,
         conversationId: conversation.id,
         userMessageId,
+        sanitizedMessage: sanitizedMessage.sanitized,
       };
     } catch (error) {
       // Log error analytics only if we have a valid conversation ID

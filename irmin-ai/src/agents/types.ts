@@ -29,11 +29,14 @@ export interface AgentConfig {
   streaming: boolean;
   useAgentGraph: boolean;
   maxToolCalls: number;
+  // Sanitization limits (optional, will use defaults if not specified)
+  maxUserInputChars?: number;
+  maxSystemPromptChars?: number;
 }
 
 export interface AgentInput {
   message: string;
-  conversationId: string;
+  conversationId?: string; // Optional - AgentsManager will create conversation if not provided
   context?: Record<string, unknown>;
   authToken?: string;
   metadata?: Record<string, unknown>;
@@ -83,7 +86,7 @@ export interface AgentResponse {
 
 export interface BaseAgentInterface {
   config: AgentConfig;
-  execute(input: AgentInput): Promise<AgentResponse>;
+  execute(input: AgentInput, conversationId: string): Promise<AgentResponse>;
   validateInput(input: AgentInput): boolean;
   prepareContext(input: AgentInput): Promise<Record<string, unknown>>;
 }

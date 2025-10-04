@@ -20,4 +20,7 @@ export const agentConfig: AgentConfig = {
   streaming: true,
   useAgentGraph: true,
   maxToolCalls: 10,
+  // Sanitization limits (optional, will use defaults if not specified)
+  maxUserInputChars: 35000, // ~10k tokens
+  maxSystemPromptChars: 210000, // ~60k tokens
 };

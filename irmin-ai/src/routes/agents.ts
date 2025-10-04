@@ -55,6 +55,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
       try {
         const agentRequest = AgentRequestSchema.parse(request.body);
         const { agentId } = request.params;
+
         // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
         const workspaceContext = request.workspace;
@@ -66,7 +67,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
         const response = await agentsManager.executeAgent(agentId, {
           message: agentRequest.message,
           context: agentRequest.context,
-          conversationId: agentRequest.conversationId ?? '', // The actual conversation creation, if needed, will be handled in the agents manager
+          conversationId: agentRequest.conversationId, // Let AgentsManager handle conversation creation when undefined
           metadata: {
             ...agentRequest.metadata,
             streaming: false, // Non-streaming request
@@ -126,6 +127,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
       try {
         const agentRequest = AgentRequestSchema.parse(request.body);
         const { agentId } = request.params;
+
         // Get authenticated user and workspace context (set by middleware)
         const authContext = request.auth;
         const workspaceContext = request.workspace;
@@ -155,7 +157,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
         const response = await agentsManager.executeAgent(agentId, {
           message: agentRequest.message,
           context: agentRequest.context,
-          conversationId: agentRequest.conversationId ?? '', // The actual conversation creation, if needed, will be handled in the agents manager
+          conversationId: agentRequest.conversationId, // Let AgentsManager handle conversation creation when undefined
           metadata: {
             ...agentRequest.metadata,
             streaming: true, // Streaming request
@@ -194,7 +196,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
               agentName: agent?.name,
               history: conversationHistory,
               startTime: requestStartTime,
-              userMessage: agentRequest.message,
+              userMessage: response.sanitizedMessage,
               user: authContext.user,
               workspace: workspaceContext.workspace,
             }

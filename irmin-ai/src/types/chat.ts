@@ -7,7 +7,7 @@ import { ToolSelectionSchema } from './agents';
 // Chat request schema
 export const ChatRequestSchema = z.object({
   conversationId: z.string().optional(),
-  message: z.string(),
+  message: z.string().min(1, 'Message cannot be empty'),
   provider: z.enum(['groq', 'openai']).optional(),
   model: z.string().optional(),
   temperature: z.number().optional(),

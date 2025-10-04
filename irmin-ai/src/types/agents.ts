@@ -28,7 +28,7 @@ export const ToolSelectionSchema = z.object({
 
 // Agent request schema
 export const AgentRequestSchema = z.object({
-  message: z.string(),
+  message: z.string().trim().min(1, 'Message cannot be empty'),
   context: z.record(z.string(), z.unknown()).optional(),
   conversationId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),

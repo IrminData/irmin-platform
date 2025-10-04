@@ -12,7 +12,7 @@ import { FastifyInstance } from 'fastify';
 import { analyticsService } from '@/services/analytics';
 import { completionService } from '@/services/completion';
 import { llmService } from '@/services/llm';
-import { systemPromptBuilder } from '@/services/systemPromptBuilder';
+import { systemMessageCacheService } from '@/services/systemMessageCache';
 import { titleGenerationService } from '@/services/titleGeneration';
 
 import { swaggerSchemas } from '@/config/swagger';
@@ -26,6 +26,7 @@ import {
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
 import { sendOkResponse } from '@/utils/responses';
+import { textSanitizer } from '@/utils/sanitization';
 import {
   applyStreamingHeaders,
   createStoredUIMessageStream,
@@ -122,14 +123,30 @@ export async function chatRoutes(fastify: FastifyInstance) {
           );
         }
 
-        // Save user message first
+        // Sanitize user message
+        const sanitizedMessage = textSanitizer.sanitizeUserMessage(message);
+
+        // Validate message is not empty after sanitization
+        if (
+          !sanitizedMessage.sanitized ||
+          sanitizedMessage.sanitized.trim().length === 0
+        ) {
+          sendInternalServerError(
+            reply,
+            'Message cannot be empty',
+            fastify.log
+          );
+          return;
+        }
+
+        // Save user message first (sanitized)
         const userMessageId = randomUUID();
         const now = new Date();
         const userMessage: NewMessage = {
           id: userMessageId,
           conversationId: conversation.id,
           role: 'user',
-          content: message,
+          content: sanitizedMessage.sanitized,
           createdAt: now,
           updatedAt: now,
         };
@@ -151,15 +168,17 @@ export async function chatRoutes(fastify: FastifyInstance) {
         // Reverse the history to chronological order for LLM processing
         const chronologicalHistory = conversationHistory.reverse();
 
-        // Build system prompt with context
-        const systemPrompt = systemPromptBuilder.buildSystemPrompt(
-          undefined, // Use default system prompt for chat
-          {
-            user: authContext.user,
-            workspace: workspaceContext.workspace,
-            conversationId: conversation.id,
-          }
-        );
+        // Get or create system message (cached per conversation)
+        const systemPrompt =
+          await systemMessageCacheService.getOrCreateSystemMessage(
+            conversation.id,
+            null, // Use default system prompt for chat
+            {
+              user: authContext.user,
+              workspace: workspaceContext.workspace,
+              conversationId: conversation.id,
+            }
+          );
 
         // Always use streaming internally for consistency
         const streamResponse = await completionService.createStreamingResponse({
@@ -168,7 +187,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
           model,
           temperature,
           maxTokens,
-          systemPrompt,
+          systemPrompt: systemPrompt || undefined,
           toolSelection,
           authToken,
           conversationId: conversation.id,
@@ -190,7 +209,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
             modelProvider: provider,
             model: model || llmService.getDefaultModels()[provider],
             history: chronologicalHistory,
-            userMessage: message,
+            userMessage: sanitizedMessage.sanitized,
             user: authContext.user,
             workspace: workspaceContext.workspace,
           });
@@ -205,7 +224,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
             model: model || llmService.getDefaultModels()[provider],
             history: chronologicalHistory,
             returnStream: false,
-            userMessage: message,
+            userMessage: sanitizedMessage.sanitized,
             user: authContext.user,
             workspace: workspaceContext.workspace,
           });
