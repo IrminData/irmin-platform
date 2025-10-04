@@ -693,6 +693,12 @@ import "irmin-connectors/templates"
 
 ## Variables
 
+<a name="HTTPDetailsHTML"></a>
+
+```go
+var HTTPDetailsHTML []byte
+```
+
 <a name="MySQLDetailsHTML"></a>
 
 ```go
@@ -1928,7 +1934,7 @@ import "irmin-connectors/connectors/http/client"
 func ValidateConfiguration(config map[string]any) error
 ```
 
-
+ValidateConfiguration validates the HTTP client configuration.
 
 <a name="HTTPClient"></a>
 ## type HTTPClient
@@ -1973,7 +1979,7 @@ GetContentType returns the content type from response headers.
 func (h *HTTPClient) GetFileNameFromResponse(resp *http.Response) string
 ```
 
-GetFileNameFromResponse generates a filename based on response content type and URL.
+GetFileNameFromResponse generates a filename based on response headers, URL, and content type.
 
 <a name="HTTPClient.GetResponseBody"></a>
 ### func \(\*HTTPClient\) GetResponseBody
@@ -2180,7 +2186,7 @@ ConfigFields godoc @Summary Get HTTP connector configuration fields @Description
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ```
 
-ConfigValidate godoc @Summary Validate HTTP connector configuration @Description Validate HTTP endpoint configuration by testing the connection to the specified URL @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[url\] formData string true "HTTP endpoint URL" @Param details\[method\] formData string true "HTTP method \(GET, POST, PUT, PATCH, DELETE\)" @Param details\[headers\] formData string false "HTTP headers as JSON object" @Param details\[body\] formData string false "Request body content" @Param details\[timeout\] formData integer false "Request timeout in seconds \(default: 30\)" @Param details\[verify\_ssl\] formData boolean false "Verify SSL certificates \(default: true\)" @Param settings\[path\] formData string false "Path setting \(default: /\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/configuration/validate \[post\]
+ConfigValidate godoc @Summary Validate HTTP connector configuration @Description Validate HTTP endpoint configuration by testing the connection to the specified URL @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[url\] formData string true "HTTP endpoint URL" @Param details\[method\] formData string true "HTTP method \(GET, POST, PUT, PATCH, DELETE\)" @Param details\[headers\] formData string false "HTTP headers as JSON object" @Param details\[body\] formData string false "Request body content" @Param details\[timeout\] formData integer false "Request timeout in seconds \(default: 30\)" @Param details\[verify\_ssl\] formData boolean false "Verify SSL certificates \(default: true\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
 ### func \(\*Controllers\) DetailsPage
@@ -2243,7 +2249,7 @@ OperationCancel godoc @Summary Cancel HTTP operation @Description Cancel an ongo
 func (cs *Controllers) OperationInit(c fiber.Ctx) error
 ```
 
-OperationInit godoc @Summary Initialize HTTP operation @Description Initialize a new HTTP operation with connection details and settings, returning an operation token for subsequent requests @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[url\] formData string true "HTTP endpoint URL" @Param details\[method\] formData string true "HTTP method \(GET, POST, PUT, PATCH, DELETE\)" @Param details\[headers\] formData string false "HTTP headers as JSON object" @Param details\[body\] formData string false "Request body content" @Param details\[timeout\] formData integer false "Request timeout in seconds \(default: 30\)" @Param details\[verify\_ssl\] formData boolean false "Verify SSL certificates \(default: true\)" @Param settings\[path\] formData string false "Path setting \(default: /\)" @Success 200 \{object\} fiber.Map "Operation initialized successfully with operation token" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/init \[post\]
+OperationInit godoc @Summary Initialize HTTP operation @Description Initialize a new HTTP operation with connection details and settings, returning an operation token for subsequent requests @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[url\] formData string true "HTTP endpoint URL" @Param details\[method\] formData string true "HTTP method \(GET, POST, PUT, PATCH, DELETE\)" @Param details\[headers\] formData string false "HTTP headers as JSON object" @Param details\[body\] formData string false "Request body content" @Param details\[timeout\] formData integer false "Request timeout in seconds \(default: 30\)" @Param details\[verify\_ssl\] formData boolean false "Verify SSL certificates \(default: true\)" @Success 200 \{object\} fiber.Map "Operation initialized successfully with operation token" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/init \[post\]
 
 <a name="Controllers.OperationPatch"></a>
 ### func \(\*Controllers\) OperationPatch
@@ -2261,7 +2267,7 @@ OperationPatch godoc @Summary HTTP connector does not support patch operations @
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
 ```
 
-OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a request to the configured HTTP endpoint and return the response as a file @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param path formData string false "Path parameter \(ignored for single endpoint configurations\)" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "HTTP endpoint not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/pull \[post\]
+OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a request to the configured HTTP endpoint and return the response as a file @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "HTTP endpoint not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
 ### func \(\*Controllers\) OperationPush
@@ -2270,7 +2276,7 @@ OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a re
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
 ```
 
-OperationPush godoc @Summary Push data to HTTP endpoint @Description Send file content to the configured HTTP endpoint using the specified method and headers @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "File to send to HTTP endpoint" @Param path formData string false "Path parameter \(ignored for single endpoint configurations\)" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/push \[post\]
+OperationPush godoc @Summary Push data to HTTP endpoint @Description Send file content to the configured HTTP endpoint using the specified method and headers @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "File to send to HTTP endpoint" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
 ### func \(\*Controllers\) OperationSchemaGet

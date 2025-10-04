@@ -677,10 +677,6 @@ paths:
         in: formData
         name: details[verify_ssl]
         type: boolean
-      - description: 'Path setting (default: /)'
-        in: formData
-        name: settings[path]
-        type: string
       produces:
       - application/json
       responses:
@@ -823,10 +819,6 @@ paths:
         in: formData
         name: details[verify_ssl]
         type: boolean
-      - description: 'Path setting (default: /)'
-        in: formData
-        name: settings[path]
-        type: string
       produces:
       - application/json
       responses:
@@ -890,10 +882,6 @@ paths:
         name: operation_token
         required: true
         type: string
-      - description: Path parameter (ignored for single endpoint configurations)
-        in: formData
-        name: path
-        type: string
       produces:
       - application/json
       responses:
@@ -939,10 +927,6 @@ paths:
         name: file
         required: true
         type: file
-      - description: Path parameter (ignored for single endpoint configurations)
-        in: formData
-        name: path
-        type: string
       produces:
       - application/json
       responses:

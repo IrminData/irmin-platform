@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -151,19 +152,33 @@ func (h *HTTPClient) GetContentType(resp *http.Response) string {
 	return resp.Header.Get("Content-Type")
 }
 
-// GetFileNameFromResponse generates a filename based on response content type and URL.
+// GetFileNameFromResponse generates a filename based on response headers, URL, and content type.
 func (h *HTTPClient) GetFileNameFromResponse(resp *http.Response) string {
 	contentType := h.GetContentType(resp)
-
-	// Use the SDK's content type detection to get the appropriate extension
-	// Create a temporary filename with the detected content type
-	tempFilename := "response"
-
-	// Try to find a matching extension for the content type
 	extension := getExtensionFromContentType(contentType)
 
-	// For single endpoint configurations, use a generic filename
-	return fmt.Sprintf("%s.%s", tempFilename, extension)
+	// 1. Try to get filename from Content-Disposition header
+	if filename := extractFilenameFromContentDisposition(resp.Header.Get("Content-Disposition")); filename != "" {
+		// If the filename already has an extension, use it as-is
+		if hasExtension(filename) {
+			return filename
+		}
+		// Otherwise, add the detected extension
+		return fmt.Sprintf("%s.%s", filename, extension)
+	}
+
+	// 2. Try to extract a meaningful filename from the URL path
+	if filename := extractFilenameFromURL(h.URL); filename != "" {
+		// If the filename already has an extension, use it as-is
+		if hasExtension(filename) {
+			return filename
+		}
+		// Otherwise, add the detected extension
+		return fmt.Sprintf("%s.%s", filename, extension)
+	}
+
+	// 3. Fall back to generic filename
+	return fmt.Sprintf("response.%s", extension)
 }
 
 // getExtensionFromContentType maps content types to file extensions using the SDK's logic
@@ -198,11 +213,156 @@ func getExtensionFromContentType(contentType string) string {
 	return "bin"
 }
 
-// ValidateConfiguration validates the HTTP client configuration.
-//
+// extractFilenameFromContentDisposition parses the Content-Disposition header and extracts the filename.
+func extractFilenameFromContentDisposition(contentDisposition string) string {
+	if contentDisposition == "" {
+		return ""
+	}
 
+	// Content-Disposition header format examples:
+	// attachment; filename="example.json"
+	// attachment; filename*=UTF-8''example.json
+	// inline; filename="data.csv"
+
+	// Look for filename= or filename*=
+	parts := strings.Split(contentDisposition, ";")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+
+		// Handle filename="..."
+		if strings.HasPrefix(part, "filename=") {
+			filename := strings.TrimPrefix(part, "filename=")
+			// Remove quotes
+			filename = strings.Trim(filename, `"`)
+			return sanitizeFilename(filename)
+		}
+
+		// Handle filename*=UTF-8''... (RFC 5987)
+		if strings.HasPrefix(part, "filename*=") {
+			filename := strings.TrimPrefix(part, "filename*=")
+			// Remove encoding prefix (e.g., "UTF-8''")
+			if idx := strings.Index(filename, "''"); idx != -1 {
+				filename = filename[idx+2:]
+			}
+			// Remove quotes
+			filename = strings.Trim(filename, `"`)
+			return sanitizeFilename(filename)
+		}
+	}
+
+	return ""
+}
+
+// extractFilenameFromURL extracts a meaningful filename from the URL path.
+func extractFilenameFromURL(urlStr string) string {
+	if urlStr == "" {
+		return ""
+	}
+
+	// Parse the URL
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return ""
+	}
+
+	// Get the path
+	path := parsedURL.Path
+
+	// Remove trailing slash
+	path = strings.TrimSuffix(path, "/")
+
+	// Get the last segment of the path
+	segments := strings.Split(path, "/")
+	if len(segments) == 0 {
+		return ""
+	}
+
+	filename := segments[len(segments)-1]
+
+	// Skip if it's empty or looks like a generic endpoint
+	if filename == "" {
+		return ""
+	}
+
+	// Sanitize the filename
+	return sanitizeFilename(filename)
+}
+
+// sanitizeFilename removes or replaces invalid characters from a filename.
+func sanitizeFilename(filename string) string {
+	if filename == "" {
+		return ""
+	}
+
+	// Remove or replace characters that are invalid in filenames
+	// Keep alphanumeric, dots, hyphens, underscores
+	var result strings.Builder
+	for _, char := range filename {
+		switch {
+		case char >= 'a' && char <= 'z',
+			char >= 'A' && char <= 'Z',
+			char >= '0' && char <= '9',
+			char == '.',
+			char == '-',
+			char == '_':
+			result.WriteRune(char)
+		case char == ' ':
+			result.WriteRune('_')
+		}
+	}
+
+	sanitized := result.String()
+
+	// Limit length to reasonable size
+	const maxLength = 255
+	if len(sanitized) > maxLength {
+		sanitized = sanitized[:maxLength]
+	}
+
+	return sanitized
+}
+
+// hasExtension checks if a filename has a file extension.
+func hasExtension(filename string) bool {
+	if filename == "" {
+		return false
+	}
+
+	// Find the last dot
+	lastDot := strings.LastIndex(filename, ".")
+	if lastDot == -1 || lastDot == 0 || lastDot == len(filename)-1 {
+		return false
+	}
+
+	// Check if there's at least one character after the dot
+	// and no slashes after the dot (which would indicate a directory path)
+	afterDot := filename[lastDot+1:]
+	return len(afterDot) > 0 && !strings.Contains(afterDot, "/")
+}
+
+// ValidateConfiguration validates the HTTP client configuration.
 func ValidateConfiguration(config map[string]any) error {
-	// Check required fields
+	if err := validateRequiredFields(config); err != nil {
+		return err
+	}
+
+	if err := validateHeaders(config); err != nil {
+		return err
+	}
+
+	if err := validateTimeout(config); err != nil {
+		return err
+	}
+
+	if err := validateAcceptedStatusCodes(config); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateRequiredFields validates the required URL and method fields.
+func validateRequiredFields(config map[string]any) error {
 	if url, ok := config["url"].(string); !ok || url == "" {
 		return errors.New("url is required")
 	}
@@ -212,7 +372,11 @@ func ValidateConfiguration(config map[string]any) error {
 		return errors.New("method is required")
 	}
 
-	// Validate method
+	return validateHTTPMethod(method)
+}
+
+// validateHTTPMethod validates that the HTTP method is supported.
+func validateHTTPMethod(method string) error {
 	validMethods := map[string]bool{
 		"GET":    true,
 		"POST":   true,
@@ -225,41 +389,87 @@ func ValidateConfiguration(config map[string]any) error {
 		return fmt.Errorf("invalid method: %s", method)
 	}
 
-	// Validate headers if provided
-	if headersRaw, exists := config["headers"]; exists && headersRaw != nil {
-		if _, isMap := headersRaw.(map[string]any); !isMap {
-			return errors.New("headers must be a JSON object")
-		}
+	return nil
+}
+
+// validateHeaders validates the headers configuration if provided.
+func validateHeaders(config map[string]any) error {
+	headersRaw, exists := config["headers"]
+	if !exists || headersRaw == nil {
+		return nil
 	}
 
-	// Validate timeout if provided
-	if timeoutRaw, exists := config["timeout"]; exists && timeoutRaw != nil {
-		var timeoutValue int
+	return validateHeadersFormat(headersRaw)
+}
 
-		switch v := timeoutRaw.(type) {
-		case string:
-			parsed, err := strconv.Atoi(v)
-			if err != nil {
-				return fmt.Errorf("timeout must be a valid integer: %w", err)
-			}
-			timeoutValue = parsed
-		case float64:
-			// JSON numbers are parsed as float64
-			timeoutValue = int(v)
-		case int:
-			timeoutValue = v
-		default:
-			return errors.New("timeout must be a string or number")
-		}
-
-		if timeoutValue < 1 || timeoutValue > 300 {
-			return errors.New("timeout must be between 1 and 300 seconds")
-		}
+// validateHeadersFormat validates the format of headers configuration.
+func validateHeadersFormat(headersRaw any) error {
+	headersStr, isString := headersRaw.(string)
+	if isString {
+		return validateHeadersString(headersStr)
 	}
 
-	// Validate accepted_status_codes if provided
-	if err := validateAcceptedStatusCodes(config); err != nil {
+	if _, isMap := headersRaw.(map[string]any); !isMap {
+		return errors.New("headers must be a JSON object")
+	}
+
+	return nil
+}
+
+// validateHeadersString validates headers when provided as a JSON string.
+func validateHeadersString(headersStr string) error {
+	// Skip validation for empty strings (already handled by BuildDetailsFromFields)
+	if headersStr == "" {
+		return nil
+	}
+
+	// Try to parse as JSON to validate format
+	var headersMap map[string]any
+	if err := json.Unmarshal([]byte(headersStr), &headersMap); err != nil {
+		return errors.New("headers must be a valid JSON object")
+	}
+
+	return nil
+}
+
+// validateTimeout validates the timeout configuration if provided.
+func validateTimeout(config map[string]any) error {
+	timeoutRaw, exists := config["timeout"]
+	if !exists || timeoutRaw == nil {
+		return nil
+	}
+
+	timeoutValue, err := parseTimeoutValue(timeoutRaw)
+	if err != nil {
 		return err
+	}
+
+	return validateTimeoutRange(timeoutValue)
+}
+
+// parseTimeoutValue parses the timeout value from various types.
+func parseTimeoutValue(timeoutRaw any) (int, error) {
+	switch v := timeoutRaw.(type) {
+	case string:
+		parsed, err := strconv.Atoi(v)
+		if err != nil {
+			return 0, fmt.Errorf("timeout must be a valid integer: %w", err)
+		}
+		return parsed, nil
+	case float64:
+		// JSON numbers are parsed as float64
+		return int(v), nil
+	case int:
+		return v, nil
+	default:
+		return 0, errors.New("timeout must be a string or number")
+	}
+}
+
+// validateTimeoutRange validates that the timeout is within acceptable range.
+func validateTimeoutRange(timeoutValue int) error {
+	if timeoutValue < 1 || timeoutValue > 300 {
+		return errors.New("timeout must be between 1 and 300 seconds")
 	}
 
 	return nil
@@ -268,16 +478,36 @@ func ValidateConfiguration(config map[string]any) error {
 // extractHeaders extracts headers from config map.
 func extractHeaders(config map[string]any) map[string]string {
 	headers := make(map[string]string)
-	if headersRaw, exists := config["headers"]; exists && headersRaw != nil {
-		if headersMap, isMap := headersRaw.(map[string]any); isMap {
-			for k, v := range headersMap {
-				if str, isString := v.(string); isString {
-					headers[k] = str
-				}
-			}
+	headersRaw, exists := config["headers"]
+	if !exists || headersRaw == nil {
+		return headers
+	}
+
+	// Handle string representation of JSON that needs parsing
+	if headersStr, ok := headersRaw.(string); ok {
+		// Try to parse as JSON
+		var headersMap map[string]any
+		if err := json.Unmarshal([]byte(headersStr), &headersMap); err == nil {
+			extractHeaderStrings(headersMap, headers)
+		}
+		return headers
+	}
+
+	// Handle map representation
+	if headersMap, ok := headersRaw.(map[string]any); ok {
+		extractHeaderStrings(headersMap, headers)
+	}
+
+	return headers
+}
+
+// extractHeaderStrings extracts string values from headers map into the target map.
+func extractHeaderStrings(source map[string]any, target map[string]string) {
+	for k, v := range source {
+		if str, ok := v.(string); ok {
+			target[k] = str
 		}
 	}
-	return headers
 }
 
 // extractBody extracts body from config map.

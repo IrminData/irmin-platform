@@ -20,7 +20,11 @@ func BuildDetailsFromFields(
 ) map[string]string {
 	details := make(map[string]string)
 	for fieldName := range definitions {
-		details[fieldName] = fields["details["+fieldName+"]"]
+		value := fields["details["+fieldName+"]"]
+		// Only include non-empty values to avoid storing empty strings for optional fields
+		if value != "" {
+			details[fieldName] = value
+		}
 	}
 	return details
 }
@@ -32,7 +36,11 @@ func BuildSettingsFromFields(
 ) map[string]string {
 	settings := make(map[string]string)
 	for fieldName := range definitions {
-		settings[fieldName] = fields["settings["+fieldName+"]"]
+		value := fields["settings["+fieldName+"]"]
+		// Only include non-empty values to avoid storing empty strings for optional fields
+		if value != "" {
+			settings[fieldName] = value
+		}
 	}
 	return settings
 }

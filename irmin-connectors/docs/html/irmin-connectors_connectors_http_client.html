@@ -8,6 +8,8 @@ package client // import "irmin-connectors/connectors/http/client"
 FUNCTIONS
 
 func ValidateConfiguration(config map[string]any) error
+    ValidateConfiguration validates the HTTP client configuration.
+
 
 TYPES
 
@@ -33,8 +35,8 @@ func (h *HTTPClient) GetContentType(resp *http.Response) string
     GetContentType returns the content type from response headers.
 
 func (h *HTTPClient) GetFileNameFromResponse(resp *http.Response) string
-    GetFileNameFromResponse generates a filename based on response content type
-    and URL.
+    GetFileNameFromResponse generates a filename based on response headers, URL,
+    and content type.
 
 func (h *HTTPClient) GetResponseBody(resp *http.Response) ([]byte, error)
     GetResponseBody reads and returns the response body as bytes. Note:

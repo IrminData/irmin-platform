@@ -111,14 +111,7 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 	}
 
 	settingsFieldDefinitions := map[string]irminmodels.DynamicField{
-		"path": {
-			Type:     "text",
-			Label:    "Path",
-			Example:  "/",
-			Required: false,
-			Default:  "/",
-			HelpText: "The path to use for operations (for single endpoint configurations, use root path).",
-		},
+		// No settings fields for HTTP connector - all configuration is in the URL
 	}
 
 	return detailsFieldDefinitions, settingsFieldDefinitions

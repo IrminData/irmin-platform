@@ -124,7 +124,6 @@ func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, _ string) (str
 // @Accept multipart/form-data
 // @Produce json
 // @Param operation_token formData string true "Operation token received from operation/init"
-// @Param path formData string false "Path parameter (ignored for single endpoint configurations)"
 // @Success 200 {object} fiber.Map "Data pulled successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

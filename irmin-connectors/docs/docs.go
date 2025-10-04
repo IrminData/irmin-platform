@@ -76,12 +76,6 @@ const docTemplate = `{
                         "description": "Verify SSL certificates (default: true)",
                         "name": "details[verify_ssl]",
                         "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path setting (default: /)",
-                        "name": "settings[path]",
-                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -361,12 +355,6 @@ const docTemplate = `{
                         "description": "Verify SSL certificates (default: true)",
                         "name": "details[verify_ssl]",
                         "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path setting (default: /)",
-                        "name": "settings[path]",
-                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -465,12 +453,6 @@ const docTemplate = `{
                         "name": "operation_token",
                         "in": "formData",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path parameter (ignored for single endpoint configurations)",
-                        "name": "path",
-                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -539,12 +521,6 @@ const docTemplate = `{
                         "name": "file",
                         "in": "formData",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path parameter (ignored for single endpoint configurations)",
-                        "name": "path",
-                        "in": "formData"
                     }
                 ],
                 "responses": {

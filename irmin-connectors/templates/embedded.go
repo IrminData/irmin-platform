@@ -4,6 +4,9 @@ import (
 	_ "embed"
 )
 
+//go:embed connector-details/http.html
+var HTTPDetailsHTML []byte
+
 //go:embed connector-details/mysql.html
 var MySQLDetailsHTML []byte
 

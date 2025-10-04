@@ -15,7 +15,7 @@ The HTTP connector supports the following configuration options:
 - **verify_ssl** (optional): Whether to verify SSL certificates (default: true)
 
 ### Settings
-- **path** (optional): Path setting for operations (default: "/")
+No additional settings are required for HTTP connectors - all configuration is handled through the connection details.
 
 ## Capabilities
 
@@ -107,8 +107,8 @@ Send file content as the HTTP request body to the configured endpoint. The conne
 - **Patch Operations**: Not supported (returns appropriate error message)
 - **Webhook Subscriptions**: Not supported (returns appropriate error message)
 
-## Path Usage
-Since the connector supports single endpoint configurations, only the root path ("/") should be used for operations. 
+## URL Configuration
+The HTTP connector uses the full URL provided in the connection details for all operations. No additional path configuration is needed. 
 
 ## Usage Examples
 

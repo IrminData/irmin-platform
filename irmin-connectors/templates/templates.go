@@ -45,6 +45,8 @@ func (ctm *ConnectorTemplateManager) LoadTemplate(templateName string) (*Connect
 
 	// Use embedded templates
 	switch templateName {
+	case "http":
+		htmlContent = HTTPDetailsHTML
 	case "mysql":
 		htmlContent = MySQLDetailsHTML
 	case "postgres":
@@ -83,7 +85,7 @@ func (ct *ConnectorTemplate) RenderHTML(data ConnectorDetailsData) (string, erro
 
 // GetAvailableTemplates returns a list of available connector templates.
 func (ctm *ConnectorTemplateManager) GetAvailableTemplates() []string {
-	return []string{"mysql", "postgres", "sftp"}
+	return []string{"http", "mysql", "postgres", "sftp"}
 }
 
 // ClearCache clears the template cache.

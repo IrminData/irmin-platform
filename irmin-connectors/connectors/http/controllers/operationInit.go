@@ -20,7 +20,6 @@ import (
 // @Param details[body] formData string false "Request body content"
 // @Param details[timeout] formData integer false "Request timeout in seconds (default: 30)"
 // @Param details[verify_ssl] formData boolean false "Verify SSL certificates (default: true)"
-// @Param settings[path] formData string false "Path setting (default: /)"
 // @Success 200 {object} fiber.Map "Operation initialized successfully with operation token"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation data"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

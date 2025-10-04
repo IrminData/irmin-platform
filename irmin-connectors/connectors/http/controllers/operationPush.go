@@ -144,7 +144,6 @@ func (p *HTTPPushProvider) ProcessFiles(
 // @Produce json
 // @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "File to send to HTTP endpoint"
-// @Param path formData string false "Path parameter (ignored for single endpoint configurations)"
 // @Success 200 {object} fiber.Map "Data pushed successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
