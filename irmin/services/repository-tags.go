@@ -54,7 +54,7 @@ func (api *APIServices) GetRepositoryTag(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -104,7 +104,7 @@ func (api *APIServices) ListRepositoryTags(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, createDataEngineClientErr
@@ -157,7 +157,7 @@ func (api *APIServices) CreateRepositoryTag(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, createDataEngineClientErr
@@ -224,7 +224,7 @@ func (api *APIServices) DeleteRepositoryTag(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return createDataEngineClientErr

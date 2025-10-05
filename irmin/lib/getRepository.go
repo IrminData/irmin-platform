@@ -9,6 +9,8 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const (
@@ -31,13 +33,40 @@ func refreshRepositoryFromDataEngine(
 		repository.DefaultBranch = dataEngineRepository.DefaultBranch
 		repository.StorageNamespace = dataEngineRepository.StorageNamespace
 
-		// Save the repository to the database in a go routine
-		go func() {
-			saveErr := d.Save(&repository).Error
-			if saveErr != nil {
-				logger.ErrorContext(ctx, "Error saving repository to database", "error", saveErr)
-			}
-		}()
+		// Save the repository to the database asynchronously with advisory lock
+		go saveRepositoryWithLock(ctx, repository, d, logger)
+	}
+}
+
+// saveRepositoryWithLock saves the repository to the database with an advisory lock to prevent race conditions.
+func saveRepositoryWithLock(
+	ctx context.Context,
+	repository *db.Repository,
+	d *db.Database,
+	logger *slog.Logger,
+) {
+	// Create a lock key based on repository ID to prevent race conditions
+	lockKey := fmt.Sprintf("repository_save:%d", repository.ID)
+
+	// Execute the save within a database transaction with advisory lock
+	transactionErr := d.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent repository saves
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			logger.WarnContext(ctx, "failed to acquire advisory lock for repository save", "error", lockErr)
+			return lockErr
+		}
+
+		// Save the repository
+		if saveErr := tx.Save(&repository).Error; saveErr != nil {
+			logger.ErrorContext(ctx, "Error saving repository to database", "error", saveErr)
+			return saveErr
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		logger.ErrorContext(ctx, "Error saving repository to database", "error", transactionErr)
 	}
 }
 
@@ -74,7 +103,7 @@ func GetRepository(
 		)
 
 		// Initialize Data Engine client
-		dataEngine, createClientErr := engine.NewClient(ctx, locale, logger, env)
+		dataEngine, createClientErr := engine.NewClient(ctx, locale, logger, env, d)
 		if createClientErr != nil {
 			logger.ErrorContext(ctx, "error creating data engine client", "error", createClientErr)
 			return nil, fmt.Errorf("error creating data engine client: %w", createClientErr)

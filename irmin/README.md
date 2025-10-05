@@ -313,7 +313,7 @@ Create a `.env` file in the root directory of the project by copying the `.env.e
 ```bash
 cp .env.example .env
 # Add your API keys and update other variables as required:
-# LAKE_FS_ACCESS_KEY_ID=your_groq_key
-# LAKE_FS_SECRET_ACCESS_KEY=your_openai_key
+# LAKE_FS_ACCESS_KEY_ID=your_lakefs_access_key
+# LAKE_FS_SECRET_ACCESS_KEY=your_lakefs_secret_key
 # NOVU_SECRET_KEY=your_novu_key
 ```

@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"io"
+	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	"gorm.io/gorm"
 )
 
 // processChildren processes immediate children of a group object and returns them as Irmin objects.
@@ -252,6 +254,40 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 		return nil, fmt.Errorf("access to system path %s is not allowed", path)
 	}
 
+	// Create a lock key based on workspace, repository, ref, and path to prevent race conditions
+	lockKey := fmt.Sprintf("object_upload:%s:%s:%s:%s", workspace, repository, ref, path)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Object
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent uploads to the same path
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for object upload to path %s at ref %s: %w",
+				path,
+				ref,
+				lockErr,
+			)
+		}
+
+		// Process the object upload
+		var processErr error
+		result, processErr = c.uploadObjectInternal(workspace, repository, path, ref, file)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// uploadObjectInternal contains the core object upload logic, separated for clarity.
+func (c *Client) uploadObjectInternal(
+	workspace, repository, path, ref string,
+	file io.Reader,
+) (*irminmodels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
@@ -293,12 +329,53 @@ func (c *Client) UploadObject(workspace, repository, path, ref string, file io.R
 	return &irminObject, nil
 }
 
-func (c *Client) DeleteObject(workspace, repository, path, ref string) error {
+func (c *Client) DeleteObject(workspace, repository, path, ref string, tx ...*gorm.DB) error {
 	// Check if the object is a system path
 	if IsSystemPath(path) {
 		return fmt.Errorf("access to system path %s is not allowed", path)
 	}
 
+	// Create a lock key based on workspace, repository, ref, and path to prevent race conditions
+	lockKey := fmt.Sprintf("object_delete:%s:%s:%s:%s", workspace, repository, ref, path)
+
+	// If a transaction is provided, use it; otherwise create a new one
+	if len(tx) > 0 && tx[0] != nil {
+		// Use provided transaction
+		// Acquire advisory lock to prevent concurrent deletions of the same path
+		if lockErr := db.LockKeyTx(tx[0], lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for object deletion at path %s at ref %s: %w",
+				path,
+				ref,
+				lockErr,
+			)
+		}
+
+		// Process the object deletion
+		return c.deleteObjectInternal(workspace, repository, path, ref)
+	}
+
+	// Create new transaction
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent deletions of the same path
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for object deletion at path %s at ref %s: %w",
+				path,
+				ref,
+				lockErr,
+			)
+		}
+
+		// Process the object deletion
+		return c.deleteObjectInternal(workspace, repository, path, ref)
+	})
+
+	return transactionErr
+}
+
+// deleteObjectInternal contains the core object deletion logic, separated for clarity.
+func (c *Client) deleteObjectInternal(workspace, repository, path, ref string) error {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
@@ -329,6 +406,37 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 		return nil, fmt.Errorf("access to system path %s is not allowed", path)
 	}
 
+	// Create a lock key based on workspace, repository, ref, and the original path to prevent race conditions
+	lockKey := fmt.Sprintf("object_move:%s:%s:%s:%s", workspace, repository, ref, path)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Object
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent moves involving the same paths
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for object move from %s at ref %s: %w",
+				path,
+				ref,
+				lockErr,
+			)
+		}
+
+		// Process the object move
+		var processErr error
+		result, processErr = c.moveObjectInternal(workspace, repository, path, ref, newPath)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// moveObjectInternal contains the core object move logic, separated for clarity.
+func (c *Client) moveObjectInternal(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
@@ -391,6 +499,37 @@ func (c *Client) CopyObject(workspace, repository, path, ref, newPath string) (*
 		return nil, fmt.Errorf("access to system path %s is not allowed", path)
 	}
 
+	// Create a lock key based on workspace, repository, ref, and the original path to prevent race conditions
+	lockKey := fmt.Sprintf("object_copy:%s:%s:%s:%s", workspace, repository, ref, path)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Object
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent copies involving the same paths
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for object copy from %s at ref %s: %w",
+				path,
+				ref,
+				lockErr,
+			)
+		}
+
+		// Process the object copy
+		var processErr error
+		result, processErr = c.copyObjectInternal(workspace, repository, path, ref, newPath)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// copyObjectInternal contains the core object copy logic, separated for clarity.
+func (c *Client) copyObjectInternal(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 

@@ -49,7 +49,7 @@ func (api *APIServices) GetRepositoryBranch(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -99,7 +99,7 @@ func (api *APIServices) ListRepositoryBranches(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -152,7 +152,7 @@ func (api *APIServices) CreateRepositoryBranch(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -241,7 +241,7 @@ func (api *APIServices) UpdateRepositoryBranch(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -318,7 +318,7 @@ func (api *APIServices) DeleteRepositoryBranch(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return err
@@ -380,7 +380,7 @@ func (api *APIServices) GetRepositoryUncommittedChanges(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err

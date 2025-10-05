@@ -56,7 +56,7 @@ func (api *APIServices) ListRepositoryCommits(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, nil, createDataEngineClientErr
@@ -120,7 +120,7 @@ func (api *APIServices) CreateRepositoryCommit(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, createDataEngineClientErr
@@ -189,7 +189,7 @@ func (api *APIServices) GetRepositoryCommit(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, createDataEngineClientErr
@@ -257,7 +257,7 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return createDataEngineClientErr

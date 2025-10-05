@@ -248,7 +248,7 @@ func setupServices(
 	database *db.Database,
 ) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *lib.PermissionService, error) {
 	// Initialize data engine
-	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env)
+	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env, database)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

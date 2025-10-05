@@ -16,12 +16,71 @@ import (
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	"gorm.io/gorm"
 )
 
 // InitializeConnectorOperation sets up a connector operation and returns an operation client,
 // along with a cancel function to clean up when done.
 // It returns an error if initialization fails.
-func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*connectorsclient.Client, func(), error) {
+// If tx is provided, it will be used instead of creating a new transaction.
+func (c *Client) InitializeConnectorOperation(
+	connection *db.Connection,
+	tx ...*gorm.DB,
+) (*connectorsclient.Client, func(), error) {
+	// Create a lock key based on connector ID to prevent race conditions
+	lockKey := fmt.Sprintf("connector_operation_init:%d", connection.ID)
+
+	// If a transaction is provided, use it; otherwise create a new one
+	if len(tx) > 0 && tx[0] != nil {
+		// Use provided transaction
+		var result *connectorsclient.Client
+		var cancelFunc func()
+
+		// Acquire advisory lock to prevent concurrent initialization of the same connector
+		if lockErr := db.LockKeyTx(tx[0], lockKey); lockErr != nil {
+			return nil, nil, fmt.Errorf(
+				"failed to acquire advisory lock for connector operation creation with connection %d: %w",
+				connection.ID,
+				lockErr,
+			)
+		}
+
+		// Process the connector initialization
+		var processErr error
+		result, cancelFunc, processErr = c.initializeConnectorOperationInternal(connection)
+		return result, cancelFunc, processErr
+	}
+
+	// Create new transaction
+	var result *connectorsclient.Client
+	var cancelFunc func()
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent initialization of the same connector
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for connector operation creation with connection %d: %w",
+				connection.ID,
+				lockErr,
+			)
+		}
+
+		// Process the connector initialization
+		var processErr error
+		result, cancelFunc, processErr = c.initializeConnectorOperationInternal(connection)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, nil, transactionErr
+	}
+
+	return result, cancelFunc, nil
+}
+
+// initializeConnectorOperationInternal contains the core connector initialization logic, separated for clarity.
+func (c *Client) initializeConnectorOperationInternal(
+	connection *db.Connection,
+) (*connectorsclient.Client, func(), error) {
 	// Create base connector client.
 	baseClient := connectorsclient.NewClient(
 		connection.Connector.APIBaseURL,
@@ -54,8 +113,13 @@ func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*conne
 
 // DataMovementSchema retrieves the schema for a specific method from the connector.
 // It returns the schema and an error if any occurred.
-func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*irminmodels.ObjectSchema, error) {
-	opClient, cancel, err := c.InitializeConnectorOperation(connection)
+// If tx is provided, it will be used instead of creating a new transaction.
+func (c *Client) DataMovementSchema(
+	connection *db.Connection,
+	method string,
+	tx ...*gorm.DB,
+) (*irminmodels.ObjectSchema, error) {
+	opClient, cancel, err := c.InitializeConnectorOperation(connection, tx...)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +198,94 @@ func (c *Client) buildTargetPath(basePath, itemName string, hasMultipleItems boo
 // It applies field mappings to route and transform data, merges files that map
 // to the same destination, and uploads the results.
 // Returns the metadata of the uploaded objects and any errors that occurred.
+// If tx is provided, it will be used instead of creating a new transaction.
 func (c *Client) DataImport(
+	ctx context.Context,
+	connection *db.Connection,
+	connectionPaths []string,
+	workspace string,
+	repository string,
+	branch string,
+	repositoryPath string,
+	fieldMappings []irminmodels.FieldMapping,
+	tx ...*gorm.DB,
+) ([]lakefs.ObjectMetadata, []error) {
+	// Create a lock key based on workspace, repository, and branch to prevent race conditions
+	lockKey := fmt.Sprintf("data_import:%d:%s:%s:%s", connection.ID, workspace, repository, branch)
+
+	// If a transaction is provided, use it; otherwise create a new one
+	if len(tx) > 0 && tx[0] != nil {
+		// Use provided transaction
+		var result []lakefs.ObjectMetadata
+
+		// Acquire advisory lock to prevent concurrent imports to the same branch
+		if lockErr := db.LockKeyTx(tx[0], lockKey); lockErr != nil {
+			return nil, []error{fmt.Errorf(
+				"failed to acquire advisory lock for data import to branch %s with connection %d: %w",
+				branch,
+				connection.ID,
+				lockErr,
+			)}
+		}
+
+		// Process the data import
+		var processErr []error
+		result, processErr = c.dataImportInternal(
+			ctx,
+			connection,
+			connectionPaths,
+			workspace,
+			repository,
+			branch,
+			repositoryPath,
+			fieldMappings,
+		)
+		return result, processErr
+	}
+
+	// Create new transaction
+	var result []lakefs.ObjectMetadata
+	var resultErrors []error
+	transactionErr := c.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent imports to the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for data import to branch %s with connection %d: %w",
+				branch,
+				connection.ID,
+				lockErr,
+			)
+		}
+
+		// Process the data import
+		var processErr []error
+		result, processErr = c.dataImportInternal(
+			ctx,
+			connection,
+			connectionPaths,
+			workspace,
+			repository,
+			branch,
+			repositoryPath,
+			fieldMappings,
+		)
+		resultErrors = processErr
+		// Don't fail the transaction based on process errors - let them be collected
+		return nil
+	})
+
+	if transactionErr != nil {
+		// Combine transaction error with any existing process errors
+		allErrors := []error{transactionErr}
+		allErrors = append(allErrors, resultErrors...)
+		return nil, allErrors
+	}
+
+	return result, resultErrors
+}
+
+// dataImportInternal contains the core data import logic, separated for clarity.
+func (c *Client) dataImportInternal(
 	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
@@ -431,6 +582,7 @@ func (c *Client) fetchObjectsFromPaths(
 // It applies field mappings to route and transform data, merges files that map
 // to the same destination, and pushes the results to the connector.
 // Returns the paths of the files that were pushed and any errors that occurred.
+// If tx is provided, it will be used instead of creating a new transaction.
 func (c *Client) DataExport(
 	ctx context.Context,
 	connection *db.Connection,
@@ -440,6 +592,91 @@ func (c *Client) DataExport(
 	branch string,
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
+	tx ...*gorm.DB,
+) ([]string, []error) {
+	// Create a lock key based on workspace, repository, and branch to prevent race conditions
+	lockKey := fmt.Sprintf("data_export:%d:%s:%s:%s", connection.ID, workspaceSlug, repositorySlug, branch)
+
+	// If a transaction is provided, use it; otherwise create a new one
+	if len(tx) > 0 && tx[0] != nil {
+		// Use provided transaction
+		// Acquire advisory lock to prevent concurrent exports from the same branch
+		if lockErr := db.LockKeyTx(tx[0], lockKey); lockErr != nil {
+			return nil, []error{fmt.Errorf(
+				"failed to acquire advisory lock for data export from branch %s with connection %d: %w",
+				branch,
+				connection.ID,
+				lockErr,
+			)}
+		}
+
+		// Process the data export
+		result, processErr := c.dataExportInternal(
+			ctx,
+			connection,
+			connectionPath,
+			workspaceSlug,
+			repositorySlug,
+			branch,
+			requestedRepositoryPaths,
+			fieldMappings,
+			tx[0],
+		)
+		return result, processErr
+	}
+
+	// Create new transaction
+	var result []string
+	var resultErrors []error
+	transactionErr := c.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent exports from the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for data export from branch %s with connection %d: %w",
+				branch,
+				connection.ID,
+				lockErr,
+			)
+		}
+
+		// Process the data export
+		var processErr []error
+		result, processErr = c.dataExportInternal(
+			ctx,
+			connection,
+			connectionPath,
+			workspaceSlug,
+			repositorySlug,
+			branch,
+			requestedRepositoryPaths,
+			fieldMappings,
+		)
+		resultErrors = processErr
+		// Don't fail the transaction based on process errors - let them be collected
+		return nil
+	})
+
+	if transactionErr != nil {
+		// Combine transaction error with any existing process errors
+		allErrors := []error{transactionErr}
+		allErrors = append(allErrors, resultErrors...)
+		return nil, allErrors
+	}
+
+	return result, resultErrors
+}
+
+// dataExportInternal contains the core data export logic, separated for clarity.
+func (c *Client) dataExportInternal(
+	ctx context.Context,
+	connection *db.Connection,
+	connectionPath string,
+	workspaceSlug string,
+	repositorySlug string,
+	branch string,
+	requestedRepositoryPaths []string,
+	fieldMappings []irminmodels.FieldMapping,
+	tx ...*gorm.DB,
 ) ([]string, []error) {
 	repoName := utils.ConstructLakeFSRepositoryName(workspaceSlug, repositorySlug)
 
@@ -456,7 +693,7 @@ func (c *Client) DataExport(
 	}
 
 	// Push the files to the connection path
-	_, pushErr := c.PushFilesToConnector(connection, connectionPath, objects, finalFiles)
+	_, pushErr := c.PushFilesToConnector(connection, connectionPath, objects, finalFiles, tx...)
 	if pushErr != nil {
 		return repositoryPaths, []error{pushErr}
 	}
@@ -466,11 +703,13 @@ func (c *Client) DataExport(
 
 // PushFilesToConnector pushes files to a connector.
 // It returns the paths of the files that were pushed and an error if any occurred.
+// If tx is provided, it will be used instead of creating a new transaction.
 func (c *Client) PushFilesToConnector(
 	connection *db.Connection,
 	connectionPath string,
 	objects []*irminmodels.Object,
 	files map[string][]byte,
+	tx ...*gorm.DB,
 ) ([]string, error) {
 	// Zip the files.
 	zip, zipFilesErr := irminutils.ZipFiles(files)
@@ -479,7 +718,7 @@ func (c *Client) PushFilesToConnector(
 	}
 
 	// Initialize connector operation.
-	opClient, cancel, initializeConnectorOperationErr := c.InitializeConnectorOperation(connection)
+	opClient, cancel, initializeConnectorOperationErr := c.InitializeConnectorOperation(connection, tx...)
 	if initializeConnectorOperationErr != nil {
 		return nil, fmt.Errorf("failed to initialize connector operation: %w", initializeConnectorOperationErr)
 	}

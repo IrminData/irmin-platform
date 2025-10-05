@@ -143,7 +143,7 @@ func (api *APIServices) UploadRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -219,7 +219,7 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	defer safeBody.Close()
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -387,7 +387,7 @@ func (api *APIServices) MoveRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -532,7 +532,7 @@ func (api *APIServices) CopyRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -657,14 +657,14 @@ func (api *APIServices) DeleteRepositoryObject(
 	// Delete the object from the data engine and the database
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Initialize Data Engine client
-		dataEngine, dataEngineErr := engine.NewClient(c, locale, api.Logger, api.Env)
+		dataEngine, dataEngineErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 		if dataEngineErr != nil {
 			api.Logger.ErrorContext(c, "error creating data engine client", "error", dataEngineErr)
 			return dataEngineErr
 		}
 
 		// Delete the object from the data engine
-		if deleteEngineObjectErr := dataEngine.DeleteObject(workspace.Slug, repository.Slug, object.Path, object.RepositoryRef); deleteEngineObjectErr != nil {
+		if deleteEngineObjectErr := dataEngine.DeleteObject(workspace.Slug, repository.Slug, object.Path, object.RepositoryRef, tx); deleteEngineObjectErr != nil {
 			api.Logger.ErrorContext(c, "Error deleting object from Data Engine", "error", deleteEngineObjectErr)
 			return deleteEngineObjectErr
 		}
@@ -736,7 +736,7 @@ func (api *APIServices) GetRepositoryObjectContent(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -857,7 +857,7 @@ func (api *APIServices) ZipRepositoryObject(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, "", err
@@ -1020,7 +1020,7 @@ func (api *APIServices) GetRepositoryObjectHistory(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err

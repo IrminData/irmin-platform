@@ -2116,6 +2116,7 @@ import "irmin-api/db"
 - [func GetNormalizedQueryWithOptions\(query string, options QueryNormalizationOptions\) string](<#GetNormalizedQueryWithOptions>)
 - [func IsValidFieldName\(fieldName string\) bool](<#IsValidFieldName>)
 - [func IsValidTableName\(tableName string\) bool](<#IsValidTableName>)
+- [func LockKeyTx\(tx \*gorm.DB, key string\) error](<#LockKeyTx>)
 - [func SanitizeSearchValue\(value string\) string](<#SanitizeSearchValue>)
 - [func ValidateFieldMappings\(fieldMappings map\[string\]string\) map\[string\]string](<#ValidateFieldMappings>)
 - [func ValidateSearchToken\(token SearchToken\) bool](<#ValidateSearchToken>)
@@ -2446,6 +2447,15 @@ func IsValidTableName(tableName string) bool
 ```
 
 IsValidTableName validates that a table name is in the allowed whitelist.
+
+<a name="LockKeyTx"></a>
+## func LockKeyTx
+
+```go
+func LockKeyTx(tx *gorm.DB, key string) error
+```
+
+LockKeyTx takes a namespaced key and grabs a 64\-bit transactional advisory lock.
 
 <a name="SanitizeSearchValue"></a>
 ## func SanitizeSearchValue
@@ -5002,7 +5012,7 @@ import "irmin-api/engine"
   - [func \(m \*BranchProtectionManager\) RenameBranch\(repositoryName, currentName, newName string, isImmutable bool, currentBranch \*lakefs.Branch\) \(\*irminmodels.Branch, error\)](<#BranchProtectionManager.RenameBranch>)
   - [func \(m \*BranchProtectionManager\) UpdateBranchProtection\(repositoryName, branchName string, isImmutable bool\) error](<#BranchProtectionManager.UpdateBranchProtection>)
 - [type Client](<#Client>)
-  - [func NewClient\(ctx context.Context, locale string, logger \*slog.Logger, env \*utils.CoreAPIEnv\) \(\*Client, error\)](<#NewClient>)
+  - [func NewClient\(ctx context.Context, locale string, logger \*slog.Logger, env \*utils.CoreAPIEnv, db \*db.Database\) \(\*Client, error\)](<#NewClient>)
   - [func \(c \*Client\) ApplyFieldMappings\(ctx context.Context, duckDBClient \*duckdb.QueryClient, fileContent \[\]byte, originalFilePath string, mappings \[\]irminmodels.FieldMapping\) \(map\[string\]\[\]byte, error\)](<#Client.ApplyFieldMappings>)
   - [func \(c \*Client\) CommitChanges\(workspace, repository, branch, message, author string, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.CommitChanges>)
   - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#Client.CompareRefs>)
@@ -5011,11 +5021,11 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateRepository\(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
-  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]string, \[\]error\)](<#Client.DataExport>)
-  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
-  - [func \(c \*Client\) DataMovementSchema\(connection \*db.Connection, method string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
+  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, \[\]error\)](<#Client.DataExport>)
+  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
+  - [func \(c \*Client\) DataMovementSchema\(connection \*db.Connection, method string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
-  - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string\) error](<#Client.DeleteObject>)
+  - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
   - [func \(c \*Client\) DeleteTag\(workspace, repository, tag string\) error](<#Client.DeleteTag>)
   - [func \(c \*Client\) ExecuteQuery\(ctx context.Context, userWorkspace, query string\) \*irminmodels.QueryResult](<#Client.ExecuteQuery>)
@@ -5028,7 +5038,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, repository string\) \(\*Repository, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, error\)](<#Client.GetUncommittedChanges>)
-  - [func \(c \*Client\) InitializeConnectorOperation\(connection \*db.Connection\) \(\*connectorsclient.Client, func\(\), error\)](<#Client.InitializeConnectorOperation>)
+  - [func \(c \*Client\) InitializeConnectorOperation\(connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, func\(\), error\)](<#Client.InitializeConnectorOperation>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref string, after \*string, limit \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]Repository, error\)](<#Client.ListRepositories>)
@@ -5036,7 +5046,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) MergeRefs\(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.MergeRefs>)
   - [func \(c \*Client\) MoveObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.MoveObject>)
   - [func \(c \*Client\) PullFilesFromConnector\(connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, error\)](<#Client.PullFilesFromConnector>)
-  - [func \(c \*Client\) PushFilesToConnector\(connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte\) \(\[\]string, error\)](<#Client.PushFilesToConnector>)
+  - [func \(c \*Client\) PushFilesToConnector\(connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, error\)](<#Client.PushFilesToConnector>)
   - [func \(c \*Client\) RevertUncommitedChanges\(workspace, repository, branch, path, pathType string\) error](<#Client.RevertUncommitedChanges>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, currentName, name string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateRepository\(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.UpdateRepository>)
@@ -5113,6 +5123,7 @@ type Client struct {
     LakeFSClient *lakefs.Client
     Logger       *slog.Logger
     Env          *utils.CoreAPIEnv
+    DB           *db.Database
     // contains filtered or unexported fields
 }
 ```
@@ -5121,7 +5132,7 @@ type Client struct {
 ### func NewClient
 
 ```go
-func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *utils.CoreAPIEnv) (*Client, error)
+func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *utils.CoreAPIEnv, db *db.Database) (*Client, error)
 ```
 
 NewClient creates a new Irmin Data Engine API client with default settings.
@@ -5211,28 +5222,28 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodel
 ### func \(\*Client\) DataExport
 
 ```go
-func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping) ([]string, []error)
+func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]string, []error)
 ```
 
-DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred.
+DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred. If tx is provided, it will be used instead of creating a new transaction.
 
 <a name="Client.DataImport"></a>
 ### func \(\*Client\) DataImport
 
 ```go
-func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping) ([]lakefs.ObjectMetadata, []error)
+func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]lakefs.ObjectMetadata, []error)
 ```
 
-DataImport imports data from an external source into a lakeFS repository. It applies field mappings to route and transform data, merges files that map to the same destination, and uploads the results. Returns the metadata of the uploaded objects and any errors that occurred.
+DataImport imports data from an external source into a lakeFS repository. It applies field mappings to route and transform data, merges files that map to the same destination, and uploads the results. Returns the metadata of the uploaded objects and any errors that occurred. If tx is provided, it will be used instead of creating a new transaction.
 
 <a name="Client.DataMovementSchema"></a>
 ### func \(\*Client\) DataMovementSchema
 
 ```go
-func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*irminmodels.ObjectSchema, error)
+func (c *Client) DataMovementSchema(connection *db.Connection, method string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
 ```
 
-DataMovementSchema retrieves the schema for a specific method from the connector. It returns the schema and an error if any occurred.
+DataMovementSchema retrieves the schema for a specific method from the connector. It returns the schema and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
 
 <a name="Client.DeleteBranch"></a>
 ### func \(\*Client\) DeleteBranch
@@ -5247,7 +5258,7 @@ func (c *Client) DeleteBranch(workspace, repository, branch string) error
 ### func \(\*Client\) DeleteObject
 
 ```go
-func (c *Client) DeleteObject(workspace, repository, path, ref string) error
+func (c *Client) DeleteObject(workspace, repository, path, ref string, tx ...*gorm.DB) error
 ```
 
 
@@ -5364,10 +5375,10 @@ func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*i
 ### func \(\*Client\) InitializeConnectorOperation
 
 ```go
-func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*connectorsclient.Client, func(), error)
+func (c *Client) InitializeConnectorOperation(connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, func(), error)
 ```
 
-InitializeConnectorOperation sets up a connector operation and returns an operation client, along with a cancel function to clean up when done. It returns an error if initialization fails.
+InitializeConnectorOperation sets up a connector operation and returns an operation client, along with a cancel function to clean up when done. It returns an error if initialization fails. If tx is provided, it will be used instead of creating a new transaction.
 
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
@@ -5436,10 +5447,10 @@ PullFilesFromConnector pulls files from a connector, unzips them, and returns a 
 ### func \(\*Client\) PushFilesToConnector
 
 ```go
-func (c *Client) PushFilesToConnector(connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte) ([]string, error)
+func (c *Client) PushFilesToConnector(connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte, tx ...*gorm.DB) ([]string, error)
 ```
 
-PushFilesToConnector pushes files to a connector. It returns the paths of the files that were pushed and an error if any occurred.
+PushFilesToConnector pushes files to a connector. It returns the paths of the files that were pushed and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
 
 <a name="Client.RevertUncommitedChanges"></a>
 ### func \(\*Client\) RevertUncommitedChanges
@@ -8008,6 +8019,7 @@ import "irmin-api/lib"
 ## Index
 
 - [Constants](<#constants>)
+- [Variables](<#variables>)
 - [func AssignDefaultRolesToUsersWithoutRoles\(d \*db.Database\) error](<#AssignDefaultRolesToUsersWithoutRoles>)
 - [func CreateAuditLogEventAsync\(d \*db.Database, logger \*slog.Logger, event \*db.LogEvent\)](<#CreateAuditLogEventAsync>)
 - [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
@@ -8051,9 +8063,7 @@ import "irmin-api/lib"
 - [type PolicyMatch](<#PolicyMatch>)
 - [type SchemaCacheManager](<#SchemaCacheManager>)
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
-  - [func \(m \*SchemaCacheManager\) GetConnectionMutex\(key string\) \(bool, func\(\)\)](<#SchemaCacheManager.GetConnectionMutex>)
   - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetConnectionSchema>)
-  - [func \(m \*SchemaCacheManager\) GetObjectMutex\(key string\) \(bool, func\(\)\)](<#SchemaCacheManager.GetObjectMutex>)
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
@@ -8094,6 +8104,26 @@ const (
 const (
     // ObjectSchemaCacheMaxAge is the maximum age of an object schema cache entry.
     ObjectSchemaCacheMaxAge = 30 * time.Minute
+)
+```
+
+## Variables
+
+<a name="ErrConnectionSchemaCacheNotFound"></a>
+
+```go
+var (
+    // ErrConnectionSchemaCacheNotFound is returned when a connection schema cache entry is not found.
+    ErrConnectionSchemaCacheNotFound = errors.New("connection schema cache not found")
+)
+```
+
+<a name="ErrObjectSchemaCacheNotFound"></a>
+
+```go
+var (
+    // ErrObjectSchemaCacheNotFound is returned when an object schema cache entry is not found.
+    ErrObjectSchemaCacheNotFound = errors.New("object schema cache not found")
 )
 ```
 
@@ -8540,15 +8570,6 @@ func NewSchemaCacheManager(env *utils.CoreAPIEnv, logger *slog.Logger, db *db.Da
 
 NewSchemaCacheManager creates a new SchemaCacheManager instance.
 
-<a name="SchemaCacheManager.GetConnectionMutex"></a>
-### func \(\*SchemaCacheManager\) GetConnectionMutex
-
-```go
-func (m *SchemaCacheManager) GetConnectionMutex(key string) (bool, func())
-```
-
-GetConnectionMutex returns the mutex for a connection schema cache entry.
-
 <a name="SchemaCacheManager.GetConnectionSchema"></a>
 ### func \(\*SchemaCacheManager\) GetConnectionSchema
 
@@ -8556,16 +8577,7 @@ GetConnectionMutex returns the mutex for a connection schema cache entry.
 func (scm *SchemaCacheManager) GetConnectionSchema(ctx context.Context, connection *db.Connection, operationMethod, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, error)
 ```
 
-GetConnectionSchema returns the schema for a connection. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it. The cache is updated in a goroutine to avoid blocking the main thread.
-
-<a name="SchemaCacheManager.GetObjectMutex"></a>
-### func \(\*SchemaCacheManager\) GetObjectMutex
-
-```go
-func (m *SchemaCacheManager) GetObjectMutex(key string) (bool, func())
-```
-
-GetObjectMutex returns the mutex for an object schema cache entry.
+GetConnectionSchema returns the schema for a connection. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it asynchronously.
 
 <a name="SchemaCacheManager.GetObjectSchema"></a>
 ### func \(\*SchemaCacheManager\) GetObjectSchema
@@ -8574,7 +8586,7 @@ GetObjectMutex returns the mutex for an object schema cache entry.
 func (scm *SchemaCacheManager) GetObjectSchema(ctx context.Context, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject, ref, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, error)
 ```
 
-GetObjectSchema returns the schema for an object. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it. The cache is updated in a goroutine to avoid blocking the main thread.
+GetObjectSchema returns the schema for an object. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it asynchronously.
 
 <a name="TestSuite"></a>
 ## type TestSuite

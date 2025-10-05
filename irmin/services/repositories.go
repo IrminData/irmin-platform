@@ -336,6 +336,7 @@ func (api *APIServices) CreateRepository(
 		locale,
 		api.Logger,
 		api.Env,
+		api.DB,
 	)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
@@ -463,6 +464,7 @@ func (api *APIServices) UpdateRepository(
 		locale,
 		api.Logger,
 		api.Env,
+		api.DB,
 	)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
@@ -551,6 +553,7 @@ func (api *APIServices) DeleteRepository(
 		locale,
 		api.Logger,
 		api.Env,
+		api.DB,
 	)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)

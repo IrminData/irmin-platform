@@ -113,6 +113,10 @@ func IsValidFieldName(fieldName string) bool
 func IsValidTableName(tableName string) bool
     IsValidTableName validates that a table name is in the allowed whitelist.
 
+func LockKeyTx(tx *gorm.DB, key string) error
+    LockKeyTx takes a namespaced key and grabs a 64-bit transactional advisory
+    lock.
+
 func SanitizeSearchValue(value string) string
     SanitizeSearchValue sanitizes a search value for use in ILIKE patterns.
 

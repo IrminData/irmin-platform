@@ -3,12 +3,14 @@ package engine
 import (
 	"context"
 	"fmt"
+	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	"gorm.io/gorm"
 )
 
 func (c *Client) CompareRefs(
@@ -143,6 +145,46 @@ func (c *Client) GetUncommittedChanges(
 }
 
 func (c *Client) MergeRefs(
+	workspace, repository, baseRef, compareRef, message, author, strategy string,
+	squash, allowEmpty bool,
+) (*irminmodels.Commit, error) {
+	// Create a lock key based on workspace, repository, and baseRef to prevent race conditions
+	// We lock on the baseRef since that's the target branch being modified
+	lockKey := fmt.Sprintf("merge_refs:%s:%s:%s", workspace, repository, baseRef)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Commit
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent merges to the same base branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for merge to branch %s: %w", baseRef, lockErr)
+		}
+
+		// Process the merge
+		var processErr error
+		result, processErr = c.mergeRefsInternal(
+			workspace,
+			repository,
+			baseRef,
+			compareRef,
+			message,
+			author,
+			strategy,
+			squash,
+			allowEmpty,
+		)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// mergeRefsInternal contains the core merge logic, separated for clarity.
+func (c *Client) mergeRefsInternal(
 	workspace, repository, baseRef, compareRef, message, author, strategy string,
 	squash, allowEmpty bool,
 ) (*irminmodels.Commit, error) {

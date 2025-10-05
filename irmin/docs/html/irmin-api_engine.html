@@ -41,11 +41,18 @@ type Client struct {
 	LakeFSClient *lakefs.Client
 	Logger       *slog.Logger
 	Env          *utils.CoreAPIEnv
+	DB           *db.Database
 	// Has unexported fields.
 }
     Client represents the Irmin Data Engine API client.
 
-func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *utils.CoreAPIEnv) (*Client, error)
+func NewClient(
+	ctx context.Context,
+	locale string,
+	logger *slog.Logger,
+	env *utils.CoreAPIEnv,
+	db *db.Database,
+) (*Client, error)
     NewClient creates a new Irmin Data Engine API client with default settings.
 
 func (c *Client) ApplyFieldMappings(
@@ -114,11 +121,13 @@ func (c *Client) DataExport(
 	branch string,
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
+	tx ...*gorm.DB,
 ) ([]string, []error)
     DataExport exports data from a lakeFS repository to an external connector.
     It applies field mappings to route and transform data, merges files that map
     to the same destination, and pushes the results to the connector. Returns
     the paths of the files that were pushed and any errors that occurred.
+    If tx is provided, it will be used instead of creating a new transaction.
 
 func (c *Client) DataImport(
 	ctx context.Context,
@@ -129,19 +138,26 @@ func (c *Client) DataImport(
 	branch string,
 	repositoryPath string,
 	fieldMappings []irminmodels.FieldMapping,
+	tx ...*gorm.DB,
 ) ([]lakefs.ObjectMetadata, []error)
     DataImport imports data from an external source into a lakeFS repository.
-    It applies field mappings to route and transform data, merges files that map
-    to the same destination, and uploads the results. Returns the metadata of
-    the uploaded objects and any errors that occurred.
+    It applies field mappings to route and transform data, merges files that
+    map to the same destination, and uploads the results. Returns the metadata
+    of the uploaded objects and any errors that occurred. If tx is provided,
+    it will be used instead of creating a new transaction.
 
-func (c *Client) DataMovementSchema(connection *db.Connection, method string) (*irminmodels.ObjectSchema, error)
+func (c *Client) DataMovementSchema(
+	connection *db.Connection,
+	method string,
+	tx ...*gorm.DB,
+) (*irminmodels.ObjectSchema, error)
     DataMovementSchema retrieves the schema for a specific method from the
-    connector. It returns the schema and an error if any occurred.
+    connector. It returns the schema and an error if any occurred. If tx is
+    provided, it will be used instead of creating a new transaction.
 
 func (c *Client) DeleteBranch(workspace, repository, branch string) error
 
-func (c *Client) DeleteObject(workspace, repository, path, ref string) error
+func (c *Client) DeleteObject(workspace, repository, path, ref string, tx ...*gorm.DB) error
 
 func (c *Client) DeleteRepository(ctx context.Context, workspace, repository string, keepObjects bool) error
 
@@ -174,10 +190,14 @@ func (c *Client) GetUncommittedChanges(
 	workspace, repository, branch string,
 ) (*irminmodels.Diff, error)
 
-func (c *Client) InitializeConnectorOperation(connection *db.Connection) (*connectorsclient.Client, func(), error)
+func (c *Client) InitializeConnectorOperation(
+	connection *db.Connection,
+	tx ...*gorm.DB,
+) (*connectorsclient.Client, func(), error)
     InitializeConnectorOperation sets up a connector operation and returns
     an operation client, along with a cancel function to clean up when done.
-    It returns an error if initialization fails.
+    It returns an error if initialization fails. If tx is provided, it will be
+    used instead of creating a new transaction.
 
 func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, error)
 
@@ -211,9 +231,11 @@ func (c *Client) PushFilesToConnector(
 	connectionPath string,
 	objects []*irminmodels.Object,
 	files map[string][]byte,
+	tx ...*gorm.DB,
 ) ([]string, error)
     PushFilesToConnector pushes files to a connector. It returns the paths of
-    the files that were pushed and an error if any occurred.
+    the files that were pushed and an error if any occurred. If tx is provided,
+    it will be used instead of creating a new transaction.
 
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error
 

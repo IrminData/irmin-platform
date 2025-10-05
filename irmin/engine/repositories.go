@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"irmin-api/bucket"
+	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"strings"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"gorm.io/gorm"
 )
 
 //go:embed default-lakefs-actions.yaml
@@ -129,6 +131,48 @@ func (c *Client) CreateRepository(
 	isImmutable bool,
 	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
 ) (*Repository, error) {
+	// Create a lock key based on workspace and repository name to prevent race conditions
+	lockKey := fmt.Sprintf("repository_create:%s:%s", workspace, name)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *Repository
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent creation of the same repository
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for repository creation %s/%s: %w",
+				workspace,
+				name,
+				lockErr,
+			)
+		}
+
+		// Process the repository creation
+		var processErr error
+		result, processErr = c.createRepositoryInternal(
+			workspace,
+			name,
+			defaultBranch,
+			isImmutable,
+			gcDefaultRetentionDays,
+			gcDefaultBranchRetentionDays,
+		)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// createRepositoryInternal contains the core repository creation logic, separated for clarity.
+func (c *Client) createRepositoryInternal(
+	workspace, name, defaultBranch string,
+	isImmutable bool,
+	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
+) (*Repository, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, name)
 
@@ -204,6 +248,38 @@ func (c *Client) CreateRepository(
 func (c *Client) ConfigureRepositoryWebhookNotifications(
 	lakefsRepository *lakefs.Repository,
 ) (*lakefs.ObjectMetadata, error) {
+	// Create a lock key based on repository ID to prevent race conditions
+	lockKey := fmt.Sprintf("repository_webhook_config:%s", lakefsRepository.ID)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *lakefs.ObjectMetadata
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent webhook configuration for the same repository
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for webhook configuration of repository %s: %w",
+				lakefsRepository.ID,
+				lockErr,
+			)
+		}
+
+		// Process the webhook configuration
+		var processErr error
+		result, processErr = c.configureRepositoryWebhookNotificationsInternal(lakefsRepository)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// configureRepositoryWebhookNotificationsInternal contains the core webhook configuration logic, separated for clarity.
+func (c *Client) configureRepositoryWebhookNotificationsInternal(
+	lakefsRepository *lakefs.Repository,
+) (*lakefs.ObjectMetadata, error) {
 	// Read the default lakefs actions file
 	defaultActions := string(defaultLakeFSActionsYAML)
 
@@ -245,6 +321,45 @@ func (c *Client) ConfigureRepositoryWebhookNotifications(
 }
 
 func (c *Client) UpdateRepository(
+	workspace, repository string,
+	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
+) (*Repository, error) {
+	// Create a lock key based on workspace and repository name to prevent race conditions
+	lockKey := fmt.Sprintf("repository_update:%s:%s", workspace, repository)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *Repository
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent updates of the same repository
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for repository update %s/%s: %w",
+				workspace,
+				repository,
+				lockErr,
+			)
+		}
+
+		// Process the repository update
+		var processErr error
+		result, processErr = c.updateRepositoryInternal(
+			workspace,
+			repository,
+			gcDefaultRetentionDays,
+			gcDefaultBranchRetentionDays,
+		)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// updateRepositoryInternal contains the core repository update logic, separated for clarity.
+func (c *Client) updateRepositoryInternal(
 	workspace, repository string,
 	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
 ) (*Repository, error) {
@@ -300,6 +415,30 @@ func (c *Client) UpdateRepository(
 }
 
 func (c *Client) DeleteRepository(ctx context.Context, workspace, repository string, keepObjects bool) error {
+	// Create a lock key based on workspace and repository name to prevent race conditions
+	lockKey := fmt.Sprintf("repository_delete:%s:%s", workspace, repository)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	transactionErr := c.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent deletion of the same repository
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for repository deletion %s/%s: %w",
+				workspace,
+				repository,
+				lockErr,
+			)
+		}
+
+		// Process the repository deletion
+		return c.deleteRepositoryInternal(ctx, workspace, repository, keepObjects)
+	})
+
+	return transactionErr
+}
+
+// deleteRepositoryInternal contains the core repository deletion logic, separated for clarity.
+func (c *Client) deleteRepositoryInternal(ctx context.Context, workspace, repository string, keepObjects bool) error {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 

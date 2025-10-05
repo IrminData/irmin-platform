@@ -388,7 +388,7 @@ func (api *APIServices) ExecuteSQL(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if createDataEngineClientErr != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 		return nil, createDataEngineClientErr

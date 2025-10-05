@@ -23,6 +23,11 @@ func (m *BranchProtectionManager) EnsureBranchProtection(repositoryName, branchN
 		return nil
 	}
 
+	return m.ensureBranchProtectionInternal(repositoryName, branchName)
+}
+
+// ensureBranchProtectionInternal contains the core branch protection logic, separated for clarity.
+func (m *BranchProtectionManager) ensureBranchProtectionInternal(repositoryName, branchName string) error {
 	branchProtectionRules, getBranchProtectionRulesErr := m.client.GetBranchProtectionRules(repositoryName)
 	if getBranchProtectionRulesErr != nil {
 		return fmt.Errorf("failed to get branch protection rules: %w", getBranchProtectionRulesErr)
@@ -47,6 +52,14 @@ func (m *BranchProtectionManager) EnsureBranchProtection(repositoryName, branchN
 
 // UpdateBranchProtection updates protection rules for a branch.
 func (m *BranchProtectionManager) UpdateBranchProtection(repositoryName, branchName string, isImmutable bool) error {
+	return m.updateBranchProtectionInternal(repositoryName, branchName, isImmutable)
+}
+
+// updateBranchProtectionInternal contains the core branch protection update logic, separated for clarity.
+func (m *BranchProtectionManager) updateBranchProtectionInternal(
+	repositoryName, branchName string,
+	isImmutable bool,
+) error {
 	branchProtectionRules, getBranchProtectionRulesErr := m.client.GetBranchProtectionRules(repositoryName)
 	if getBranchProtectionRulesErr != nil {
 		return fmt.Errorf("failed to get branch protection rules: %w", getBranchProtectionRulesErr)
@@ -79,6 +92,15 @@ func (m *BranchProtectionManager) RenameBranch(
 	isImmutable bool,
 	currentBranch *lakefs.Branch,
 ) (*irminmodels.Branch, error) {
+	return m.renameBranchInternal(repositoryName, currentName, newName, isImmutable, currentBranch)
+}
+
+// renameBranchInternal contains the core branch rename logic, separated for clarity.
+func (m *BranchProtectionManager) renameBranchInternal(
+	repositoryName, currentName, newName string,
+	isImmutable bool,
+	currentBranch *lakefs.Branch,
+) (*irminmodels.Branch, error) {
 	// Create new branch from the current branch
 	reqData := lakefs.BranchCreateRequest{
 		Name:   newName,
@@ -97,11 +119,13 @@ func (m *BranchProtectionManager) RenameBranch(
 	}
 
 	// Update branch protection rules
-	if updateBranchProtectionErr := m.UpdateBranchProtection(repositoryName, currentName, false); updateBranchProtectionErr != nil {
+	if updateBranchProtectionErr := m.updateBranchProtectionInternal(repositoryName, currentName, false); updateBranchProtectionErr != nil {
 		return nil, fmt.Errorf("failed to update protection rules for old branch: %w", updateBranchProtectionErr)
 	}
-	if ensureBranchProtectionErr := m.EnsureBranchProtection(repositoryName, branch.ID, isImmutable); ensureBranchProtectionErr != nil {
-		return nil, fmt.Errorf("failed to update protection rules for new branch: %w", ensureBranchProtectionErr)
+	if isImmutable {
+		if ensureBranchProtectionErr := m.ensureBranchProtectionInternal(repositoryName, branch.ID); ensureBranchProtectionErr != nil {
+			return nil, fmt.Errorf("failed to update protection rules for new branch: %w", ensureBranchProtectionErr)
+		}
 	}
 
 	// Delete the old branch

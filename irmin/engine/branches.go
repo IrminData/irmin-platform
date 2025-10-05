@@ -3,10 +3,12 @@ package engine
 import (
 	"context"
 	"fmt"
+	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"gorm.io/gorm"
 )
 
 func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, error) {
@@ -113,6 +115,35 @@ func (c *Client) CreateBranch(
 	workspace, repository, name, from string,
 	isImmutable bool,
 ) (*irminmodels.Branch, error) {
+	// Create a lock key based on workspace, repository, and branch name to prevent race conditions
+	lockKey := fmt.Sprintf("branch_create:%s:%s:%s", workspace, repository, name)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Branch
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent creation of the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for branch %s: %w", name, lockErr)
+		}
+
+		// Process the branch creation
+		var processErr error
+		result, processErr = c.createBranchInternal(workspace, repository, name, from, isImmutable)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// createBranchInternal contains the core branch creation logic, separated for clarity.
+func (c *Client) createBranchInternal(
+	workspace, repository, name, from string,
+	isImmutable bool,
+) (*irminmodels.Branch, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
@@ -164,6 +195,41 @@ func (c *Client) UpdateBranch(
 	workspace, repository, currentName, name string,
 	isImmutable bool,
 ) (*irminmodels.Branch, error) {
+	// Create a lock key based on workspace, repository, and branch name to prevent race conditions
+	// Use the target name if renaming, otherwise use current name
+	lockName := name
+	if name == "" || name == currentName {
+		lockName = currentName
+	}
+	lockKey := fmt.Sprintf("branch_update:%s:%s:%s", workspace, repository, lockName)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Branch
+	transactionErr := c.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent updates of the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for branch %s: %w", lockName, lockErr)
+		}
+
+		// Process the branch update
+		var processErr error
+		result, processErr = c.updateBranchInternal(ctx, workspace, repository, currentName, name, isImmutable)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// updateBranchInternal contains the core branch update logic, separated for clarity.
+func (c *Client) updateBranchInternal(
+	ctx context.Context,
+	workspace, repository, currentName, name string,
+	isImmutable bool,
+) (*irminmodels.Branch, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
@@ -209,6 +275,25 @@ func (c *Client) UpdateBranch(
 }
 
 func (c *Client) DeleteBranch(workspace, repository, branch string) error {
+	// Create a lock key based on workspace, repository, and branch name to prevent race conditions
+	lockKey := fmt.Sprintf("branch_delete:%s:%s:%s", workspace, repository, branch)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent deletion of the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for branch %s: %w", branch, lockErr)
+		}
+
+		// Process the branch deletion
+		return c.deleteBranchInternal(workspace, repository, branch)
+	})
+
+	return transactionErr
+}
+
+// deleteBranchInternal contains the core branch deletion logic, separated for clarity.
+func (c *Client) deleteBranchInternal(workspace, repository, branch string) error {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 

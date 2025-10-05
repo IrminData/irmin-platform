@@ -26,7 +26,7 @@ func setupApplyFieldMappingsTestSuite(t *testing.T) *ApplyFieldMappingsTestSuite
 	}
 
 	// Initialize engine client with proper fields
-	engineClient, err := engine.NewClient(t.Context(), "env", testSuite.Logger, testSuite.Env)
+	engineClient, err := engine.NewClient(t.Context(), "en", testSuite.Logger, testSuite.Env, testSuite.DB)
 	if err != nil {
 		t.Fatalf("Failed to create engine client: %v", err)
 	}

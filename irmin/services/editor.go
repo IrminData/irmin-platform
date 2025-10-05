@@ -468,7 +468,7 @@ func (api *APIServices) ExecuteEditorItem(
 	// Check if we have input data repositories and paths
 	if len(inputData) > 0 {
 		// Initialize Data Engine client
-		dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env)
+		dataEngine, createDataEngineClientErr := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 		if createDataEngineClientErr != nil {
 			api.Logger.ErrorContext(c, "error creating data engine client", "error", createDataEngineClientErr)
 			return nil, createDataEngineClientErr

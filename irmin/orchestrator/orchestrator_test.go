@@ -21,7 +21,7 @@ func setupTestOrchestrator(t *testing.T) (*orchestrator.Orchestrator, *db.Databa
 
 	// Create data engine client
 	ctx := t.Context()
-	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env)
+	dataEngine, err := engine.NewClient(ctx, "en", ts.Logger, ts.Env, ts.DB)
 	if err != nil {
 		t.Fatalf("Failed to create data engine: %v", err)
 	}

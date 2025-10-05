@@ -29,6 +29,17 @@ const (
 	ObjectSchemaCacheMaxAge = 30 * time.Minute
 )
 
+VARIABLES
+
+var (
+	// ErrConnectionSchemaCacheNotFound is returned when a connection schema cache entry is not found.
+	ErrConnectionSchemaCacheNotFound = errors.New("connection schema cache not found")
+)
+var (
+	// ErrObjectSchemaCacheNotFound is returned when an object schema cache entry is not found.
+	ErrObjectSchemaCacheNotFound = errors.New("object schema cache not found")
+)
+
 FUNCTIONS
 
 func AssignDefaultRolesToUsersWithoutRoles(d *db.Database) error
@@ -360,9 +371,6 @@ type SchemaCacheManager struct {
 func NewSchemaCacheManager(env *utils.CoreAPIEnv, logger *slog.Logger, db *db.Database) *SchemaCacheManager
     NewSchemaCacheManager creates a new SchemaCacheManager instance.
 
-func (m *SchemaCacheManager) GetConnectionMutex(key string) (bool, func())
-    GetConnectionMutex returns the mutex for a connection schema cache entry.
-
 func (scm *SchemaCacheManager) GetConnectionSchema(
 	ctx context.Context,
 	connection *db.Connection,
@@ -371,11 +379,7 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 ) (*irminmodels.ObjectSchema, error)
     GetConnectionSchema returns the schema for a connection. It first checks
     if the schema is cached, and if so, returns the cached schema. Otherwise,
-    it fetches the schema from the Data Engine and caches it. The cache is
-    updated in a goroutine to avoid blocking the main thread.
-
-func (m *SchemaCacheManager) GetObjectMutex(key string) (bool, func())
-    GetObjectMutex returns the mutex for an object schema cache entry.
+    it fetches the schema from the Data Engine and caches it asynchronously.
 
 func (scm *SchemaCacheManager) GetObjectSchema(
 	ctx context.Context,
@@ -385,10 +389,9 @@ func (scm *SchemaCacheManager) GetObjectSchema(
 	ref, locale string,
 	ignoreCache bool,
 ) (*irminmodels.ObjectSchema, error)
-    GetObjectSchema returns the schema for an object. It first checks if the
-    schema is cached, and if so, returns the cached schema. Otherwise, it
-    fetches the schema from the Data Engine and caches it. The cache is updated
-    in a goroutine to avoid blocking the main thread.
+    GetObjectSchema returns the schema for an object. It first checks if
+    the schema is cached, and if so, returns the cached schema. Otherwise,
+    it fetches the schema from the Data Engine and caches it asynchronously.
 
 type TestSuite struct {
 	DB           *db.Database

@@ -51,7 +51,7 @@ func (api *APIServices) CompareRepositoryRefs(
 	}
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err
@@ -121,7 +121,7 @@ func (api *APIServices) MergeRepositoryRefs(
 	allowEmpty := req.AllowEmpty
 
 	// Initialize Data Engine client
-	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env)
+	dataEngine, err := engine.NewClient(c, locale, api.Logger, api.Env, api.DB)
 	if err != nil {
 		api.Logger.ErrorContext(c, "error creating data engine client", "error", err)
 		return nil, err

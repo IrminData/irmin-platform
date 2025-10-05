@@ -2,11 +2,13 @@ package engine
 
 import (
 	"fmt"
+	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"gorm.io/gorm"
 )
 
 func (c *Client) ListCommits(
@@ -110,6 +112,35 @@ func (c *Client) CommitChanges(
 	workspace, repository, branch, message, author string,
 	allowEmpty bool,
 ) (*irminmodels.Commit, error) {
+	// Create a lock key based on workspace, repository, and branch to prevent race conditions
+	lockKey := fmt.Sprintf("commit_changes:%s:%s:%s", workspace, repository, branch)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	var result *irminmodels.Commit
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent commits to the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for commit to branch %s: %w", branch, lockErr)
+		}
+
+		// Process the commit
+		var processErr error
+		result, processErr = c.commitChangesInternal(workspace, repository, branch, message, author, allowEmpty)
+		return processErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
+	}
+
+	return result, nil
+}
+
+// commitChangesInternal contains the core commit logic, separated for clarity.
+func (c *Client) commitChangesInternal(
+	workspace, repository, branch, message, author string,
+	allowEmpty bool,
+) (*irminmodels.Commit, error) {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
@@ -152,6 +183,25 @@ func (c *Client) CommitChanges(
 }
 
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error {
+	// Create a lock key based on workspace, repository, and branch to prevent race conditions
+	lockKey := fmt.Sprintf("revert_changes:%s:%s:%s", workspace, repository, branch)
+
+	// Execute the entire operation within a database transaction with advisory lock
+	transactionErr := c.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock to prevent concurrent reverts on the same branch
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			return fmt.Errorf("failed to acquire advisory lock for revert on branch %s: %w", branch, lockErr)
+		}
+
+		// Process the revert
+		return c.revertUncommitedChangesInternal(workspace, repository, branch, path, pathType)
+	})
+
+	return transactionErr
+}
+
+// revertUncommitedChangesInternal contains the core revert logic, separated for clarity.
+func (c *Client) revertUncommitedChangesInternal(workspace, repository, branch, path, pathType string) error {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 

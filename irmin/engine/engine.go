@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 	"log/slog"
@@ -14,10 +15,17 @@ type Client struct {
 	LakeFSClient *lakefs.Client
 	Logger       *slog.Logger
 	Env          *utils.CoreAPIEnv
+	DB           *db.Database
 }
 
 // NewClient creates a new Irmin Data Engine API client with default settings.
-func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *utils.CoreAPIEnv) (*Client, error) {
+func NewClient(
+	ctx context.Context,
+	locale string,
+	logger *slog.Logger,
+	env *utils.CoreAPIEnv,
+	db *db.Database,
+) (*Client, error) {
 	// Create LakeFS client.
 	lakefsClient, err := lakefs.CreateClient(ctx, logger, env)
 	if err != nil {
@@ -32,6 +40,7 @@ func NewClient(ctx context.Context, locale string, logger *slog.Logger, env *uti
 		LakeFSClient: lakefsClient,
 		Env:          env,
 		Logger:       logger,
+		DB:           db,
 	}
 	return client, nil
 }
