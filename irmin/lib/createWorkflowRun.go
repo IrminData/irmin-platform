@@ -2,6 +2,7 @@ package lib
 
 import (
 	"errors"
+	"fmt"
 	"irmin-api/db"
 	"time"
 
@@ -27,6 +28,12 @@ func CreateWorkflowRun(
 	// Make sure that the workflow is not paused.
 	if workflow.Paused {
 		return nil, errors.New("workflow is paused")
+	}
+
+	// Acquire advisory lock to prevent concurrent workflow run creation for this workflow
+	lockKey := fmt.Sprintf("orchestrator:create_workflow_run:%d", workflow.ID)
+	if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+		return nil, fmt.Errorf("failed to acquire lock for workflow run creation: %w", lockErr)
 	}
 
 	// Make sure that enough time has passed since the last run.

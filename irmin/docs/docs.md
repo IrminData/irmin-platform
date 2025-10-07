@@ -2111,14 +2111,18 @@ import "irmin-api/db"
 ## Index
 
 - [Constants](<#constants>)
+- [Variables](<#variables>)
 - [func ContainsSQLInjectionPattern\(input string\) bool](<#ContainsSQLInjectionPattern>)
 - [func ContainsSuspiciousPatterns\(input string\) bool](<#ContainsSuspiciousPatterns>)
 - [func GetNormalizedQuery\(query string\) string](<#GetNormalizedQuery>)
 - [func GetNormalizedQueryWithOptions\(query string, options QueryNormalizationOptions\) string](<#GetNormalizedQueryWithOptions>)
 - [func IsValidFieldName\(fieldName string\) bool](<#IsValidFieldName>)
 - [func IsValidTableName\(tableName string\) bool](<#IsValidTableName>)
+- [func LockKey\(db \*gorm.DB, key string\) error](<#LockKey>)
 - [func LockKeyTx\(tx \*gorm.DB, key string\) error](<#LockKeyTx>)
 - [func SanitizeSearchValue\(value string\) string](<#SanitizeSearchValue>)
+- [func TryLockKey\(db \*gorm.DB, key string\) \(bool, error\)](<#TryLockKey>)
+- [func UnlockKey\(db \*gorm.DB, key string\) error](<#UnlockKey>)
 - [func ValidateFieldMappings\(fieldMappings map\[string\]string\) map\[string\]string](<#ValidateFieldMappings>)
 - [func ValidateSearchToken\(token SearchToken\) bool](<#ValidateSearchToken>)
 - [type APIToken](<#APIToken>)
@@ -2395,6 +2399,14 @@ const (
 )
 ```
 
+## Variables
+
+<a name="ErrLockNotHeld"></a>ErrLockNotHeld is returned when attempting to unlock an advisory lock that is not held by the current session.
+
+```go
+var ErrLockNotHeld = errors.New("advisory lock not held by current session")
+```
+
 <a name="ContainsSQLInjectionPattern"></a>
 ## func ContainsSQLInjectionPattern
 
@@ -2449,6 +2461,15 @@ func IsValidTableName(tableName string) bool
 
 IsValidTableName validates that a table name is in the allowed whitelist.
 
+<a name="LockKey"></a>
+## func LockKey
+
+```go
+func LockKey(db *gorm.DB, key string) error
+```
+
+LockKey acquires a session\-scoped advisory lock, blocking until available. The lock must be explicitly released with UnlockKey.
+
 <a name="LockKeyTx"></a>
 ## func LockKeyTx
 
@@ -2466,6 +2487,24 @@ func SanitizeSearchValue(value string) string
 ```
 
 SanitizeSearchValue sanitizes a search value for use in ILIKE patterns.
+
+<a name="TryLockKey"></a>
+## func TryLockKey
+
+```go
+func TryLockKey(db *gorm.DB, key string) (bool, error)
+```
+
+TryLockKey attempts to acquire a session\-scoped advisory lock without blocking. Returns true if the lock was acquired, false if it's already held by another session. The lock must be explicitly released with UnlockKey.
+
+<a name="UnlockKey"></a>
+## func UnlockKey
+
+```go
+func UnlockKey(db *gorm.DB, key string) error
+```
+
+UnlockKey releases a session\-scoped advisory lock. Returns ErrLockNotHeld if the lock was not held by the current session.
 
 <a name="ValidateFieldMappings"></a>
 ## func ValidateFieldMappings
