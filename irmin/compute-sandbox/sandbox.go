@@ -49,7 +49,7 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	}
 
 	// Initialize bucket client
-	bucket, err := bucket.CreateClient(s.env, s.env.IrminS3Bucket)
+	bucket, err := bucket.CreateClient(s.env, s.env.IrminS3Bucket, s.d)
 	if err != nil {
 		return result, err
 	}

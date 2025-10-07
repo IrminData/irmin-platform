@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"irmin-api/db"
 	"irmin-api/utils"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	fiberS3 "github.com/gofiber/storage/s3/v2"
+	"gorm.io/gorm"
 )
 
 // Client is a client for interacting with S3 for storing and retrieving files.
@@ -22,10 +24,11 @@ type Client struct {
 	Endpoint string
 	Region   string
 	Env      *utils.CoreAPIEnv
+	DB       *db.Database
 }
 
 // CreateClient creates a new S3 client.
-func CreateClient(env *utils.CoreAPIEnv, bucketName string) (*Client, error) {
+func CreateClient(env *utils.CoreAPIEnv, bucketName string, database *db.Database) (*Client, error) {
 	// Define the S3 bucket client configuration
 	config := fiberS3.Config{
 		Bucket:   bucketName,
@@ -46,6 +49,7 @@ func CreateClient(env *utils.CoreAPIEnv, bucketName string) (*Client, error) {
 		Endpoint: env.S3Endpoint,
 		Region:   env.S3Region,
 		Env:      env,
+		DB:       database,
 	}, nil
 }
 
@@ -61,7 +65,23 @@ func (bucket *Client) ListObjects(ctx context.Context, keyPrefix string) ([]type
 	return objects.Contents, nil
 }
 
-func (bucket *Client) WritePath(ctx context.Context, key string, content string) error {
+func (bucket *Client) WritePath(ctx context.Context, key string, content string, tx ...*gorm.DB) error {
+	// If a transaction is provided, acquire advisory lock within that transaction
+	if len(tx) > 0 && tx[0] != nil {
+		// Create a lock key based on bucket and key to prevent race conditions
+		lockKey := fmt.Sprintf("bucket_write:%s:%s", bucket.Bucket, key)
+
+		// Acquire advisory lock to prevent concurrent writes to the same key
+		if lockErr := db.LockKeyTx(tx[0], lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for bucket write to key %s: %w",
+				key,
+				lockErr,
+			)
+		}
+	}
+
+	// Perform the S3 write operation (no transaction needed for S3)
 	_, putObjectErr := bucket.Conn().PutObject(ctx, &s3.PutObjectInput{
 		Bucket: &bucket.Bucket,
 		Key:    &key,
@@ -74,7 +94,23 @@ func (bucket *Client) WritePath(ctx context.Context, key string, content string)
 	return nil
 }
 
-func (bucket *Client) DeletePath(ctx context.Context, keyPrefix string) error {
+func (bucket *Client) DeletePath(ctx context.Context, keyPrefix string, tx ...*gorm.DB) error {
+	// If a transaction is provided, acquire advisory lock within that transaction
+	if len(tx) > 0 && tx[0] != nil {
+		// Create a lock key based on bucket and key prefix to prevent race conditions
+		lockKey := fmt.Sprintf("bucket_delete:%s:%s", bucket.Bucket, keyPrefix)
+
+		// Acquire advisory lock to prevent concurrent deletions of the same prefix
+		if lockErr := db.LockKeyTx(tx[0], lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for bucket delete of prefix %s: %w",
+				keyPrefix,
+				lockErr,
+			)
+		}
+	}
+
+	// Perform the S3 delete operations (no transaction needed for S3)
 	// List all objects under the given prefix
 	objects, listObjectsErr := bucket.ListObjects(ctx, keyPrefix)
 	if listObjectsErr != nil {
@@ -116,7 +152,29 @@ func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
 	return &content, nil
 }
 
-func (bucket *Client) DuplicatePath(ctx context.Context, sourceKey, destKey string, removeOriginal bool) error {
+func (bucket *Client) DuplicatePath(
+	ctx context.Context,
+	sourceKey, destKey string,
+	removeOriginal bool,
+	tx ...*gorm.DB,
+) error {
+	// If a transaction is provided, acquire advisory lock within that transaction
+	if len(tx) > 0 && tx[0] != nil {
+		// Create a lock key based on bucket and both source and destination keys to prevent race conditions
+		lockKey := fmt.Sprintf("bucket_duplicate:%s:%s:%s", bucket.Bucket, sourceKey, destKey)
+
+		// Acquire advisory lock to prevent concurrent duplicate operations involving the same paths
+		if lockErr := db.LockKeyTx(tx[0], lockKey); lockErr != nil {
+			return fmt.Errorf(
+				"failed to acquire advisory lock for bucket duplicate from %s to %s: %w",
+				sourceKey,
+				destKey,
+				lockErr,
+			)
+		}
+	}
+
+	// Perform the S3 duplicate operations (no transaction needed for S3)
 	// List objects under the source prefix
 	objects, listObjectsErr := bucket.ListObjects(ctx, sourceKey)
 	if listObjectsErr != nil {

@@ -16,6 +16,7 @@ import (
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"gorm.io/gorm"
 )
 
 func (api *APIServices) ListEditorItems(
@@ -49,7 +50,7 @@ func (api *APIServices) ListEditorItems(
 	}
 
 	// Initialize the bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(c, "failed to create bucket client", "error", createBucketClientErr)
 		return nil, createBucketClientErr
@@ -128,7 +129,7 @@ func (api *APIServices) SaveEditorItem(
 	}
 
 	// Create bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(c, "failed to create bucket client", "error", createBucketClientErr)
 		return nil, createBucketClientErr
@@ -148,8 +149,10 @@ func (api *APIServices) SaveEditorItem(
 		key += "/"
 	}
 
-	// Upload the content to S3
-	writePathErr := bucket.WritePath(c, key, content)
+	// Upload the content to S3 with advisory lock
+	writePathErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return bucket.WritePath(c, key, content, tx)
+	})
 	if writePathErr != nil {
 		api.Logger.ErrorContext(c, "Error uploading object", "error", writePathErr)
 		return nil, writePathErr
@@ -221,7 +224,7 @@ func (api *APIServices) DeleteEditorItem(
 	}
 
 	// Create bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(c, "failed to create bucket client", "error", createBucketClientErr)
 		return createBucketClientErr
@@ -238,8 +241,10 @@ func (api *APIServices) DeleteEditorItem(
 	// Construct full S3 key prefix for deletion
 	keyPrefix := editorPathPrefix + itemPath
 
-	// Delete all objects under the prefix
-	deletePathErr := bucket.DeletePath(c, keyPrefix)
+	// Delete all objects under the prefix with advisory lock
+	deletePathErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return bucket.DeletePath(c, keyPrefix, tx)
+	})
 	if deletePathErr != nil {
 		api.Logger.ErrorContext(c, "Error deleting editor items", "error", deletePathErr)
 		return deletePathErr
@@ -320,7 +325,7 @@ func (api *APIServices) transferEditorItem(
 	}
 
 	// Create bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(c, "failed to create bucket client", "error", createBucketClientErr)
 		return nil, createBucketClientErr
@@ -338,8 +343,10 @@ func (api *APIServices) transferEditorItem(
 	sourcePrefix := editorPathPrefix + sourcePath
 	destinationPrefix := editorPathPrefix + destinationPath
 
-	// Move or copy the source to the destination
-	duplicatePathErr := bucket.DuplicatePath(c, sourcePrefix, destinationPrefix, isMove)
+	// Move or copy the source to the destination with advisory lock
+	duplicatePathErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		return bucket.DuplicatePath(c, sourcePrefix, destinationPrefix, isMove, tx)
+	})
 	if duplicatePathErr != nil {
 		api.Logger.ErrorContext(c, "Error transferring editor items", "error", duplicatePathErr)
 		return nil, duplicatePathErr
@@ -417,7 +424,7 @@ func (api *APIServices) GetEditorItemContent(
 	}
 
 	// Create bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(c, "failed to create bucket client", "error", createBucketClientErr)
 		return "", createBucketClientErr

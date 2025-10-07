@@ -431,14 +431,19 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 		}
 
 		// Process the repository deletion
-		return c.deleteRepositoryInternal(ctx, workspace, repository, keepObjects)
+		return c.deleteRepositoryInternal(ctx, tx, workspace, repository, keepObjects)
 	})
 
 	return transactionErr
 }
 
 // deleteRepositoryInternal contains the core repository deletion logic, separated for clarity.
-func (c *Client) deleteRepositoryInternal(ctx context.Context, workspace, repository string, keepObjects bool) error {
+func (c *Client) deleteRepositoryInternal(
+	ctx context.Context,
+	tx *gorm.DB,
+	workspace, repository string,
+	keepObjects bool,
+) error {
 	// Construct repository name.
 	lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
 
@@ -460,15 +465,15 @@ func (c *Client) deleteRepositoryInternal(ctx context.Context, workspace, reposi
 	// Delete repository storage namespace if keepObjects is false
 	if !keepObjects {
 		// Create bucket client
-		bucket, createBucketErr := bucket.CreateClient(c.Env, c.Env.LakeFSS3Bucket)
+		bucket, createBucketErr := bucket.CreateClient(c.Env, c.Env.LakeFSS3Bucket, c.DB)
 		if createBucketErr != nil {
 			return fmt.Errorf("failed to create bucket client: %w", createBucketErr)
 		}
 		defer bucket.Close()
 		// Construct the repository storage namespace
 		lakefsStorageNamespace := strings.TrimPrefix(lakefsRepository.StorageNamespace, "s3://")
-		// Delete repository storage namespace
-		deletePathErr := bucket.DeletePath(ctx, lakefsStorageNamespace)
+		// Delete repository storage namespace, passing the transaction to avoid nested transactions
+		deletePathErr := bucket.DeletePath(ctx, lakefsStorageNamespace, tx)
 		if deletePathErr != nil {
 			return fmt.Errorf("failed to delete repository storage namespace: %w", deletePathErr)
 		}

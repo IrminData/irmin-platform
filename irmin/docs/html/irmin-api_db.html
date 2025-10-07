@@ -306,7 +306,7 @@ func (d *Database) DeleteTag(tx *gorm.DB, id uint) error
 func (d *Database) DeleteWorkflow(tx *gorm.DB, id uint) error
     DeleteWorkflow deletes a workflow and all related records.
 
-func (d *Database) DeleteWorkspace(id uint) error
+func (d *Database) DeleteWorkspace(id uint, tx *gorm.DB) error
     DeleteWorkspace deletes a workspace and the related records.
 
 func (d *Database) DropSearchIndexes() error

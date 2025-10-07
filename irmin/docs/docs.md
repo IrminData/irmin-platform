@@ -33,13 +33,13 @@ import "irmin-api/bucket"
 ## Index
 
 - [type Client](<#Client>)
-  - [func CreateClient\(env \*utils.CoreAPIEnv, bucketName string\) \(\*Client, error\)](<#CreateClient>)
-  - [func \(bucket \*Client\) DeletePath\(ctx context.Context, keyPrefix string\) error](<#Client.DeletePath>)
+  - [func CreateClient\(env \*utils.CoreAPIEnv, bucketName string, database \*db.Database\) \(\*Client, error\)](<#CreateClient>)
+  - [func \(bucket \*Client\) DeletePath\(ctx context.Context, keyPrefix string, tx ...\*gorm.DB\) error](<#Client.DeletePath>)
   - [func \(bucket \*Client\) DownloadFolder\(ctx context.Context, folderPrefix, localDir string\) error](<#Client.DownloadFolder>)
-  - [func \(bucket \*Client\) DuplicatePath\(ctx context.Context, sourceKey, destKey string, removeOriginal bool\) error](<#Client.DuplicatePath>)
+  - [func \(bucket \*Client\) DuplicatePath\(ctx context.Context, sourceKey, destKey string, removeOriginal bool, tx ...\*gorm.DB\) error](<#Client.DuplicatePath>)
   - [func \(bucket \*Client\) ListObjects\(ctx context.Context, keyPrefix string\) \(\[\]types.Object, error\)](<#Client.ListObjects>)
   - [func \(bucket \*Client\) ReadPath\(ctx context.Context, key string\) \(\*string, error\)](<#Client.ReadPath>)
-  - [func \(bucket \*Client\) WritePath\(ctx context.Context, key string, content string\) error](<#Client.WritePath>)
+  - [func \(bucket \*Client\) WritePath\(ctx context.Context, key string, content string, tx ...\*gorm.DB\) error](<#Client.WritePath>)
 
 
 <a name="Client"></a>
@@ -54,6 +54,7 @@ type Client struct {
     Endpoint string
     Region   string
     Env      *utils.CoreAPIEnv
+    DB       *db.Database
 }
 ```
 
@@ -61,7 +62,7 @@ type Client struct {
 ### func CreateClient
 
 ```go
-func CreateClient(env *utils.CoreAPIEnv, bucketName string) (*Client, error)
+func CreateClient(env *utils.CoreAPIEnv, bucketName string, database *db.Database) (*Client, error)
 ```
 
 CreateClient creates a new S3 client.
@@ -70,7 +71,7 @@ CreateClient creates a new S3 client.
 ### func \(\*Client\) DeletePath
 
 ```go
-func (bucket *Client) DeletePath(ctx context.Context, keyPrefix string) error
+func (bucket *Client) DeletePath(ctx context.Context, keyPrefix string, tx ...*gorm.DB) error
 ```
 
 
@@ -88,7 +89,7 @@ DownloadFolder downloads all objects under the given folder prefix from the S3 b
 ### func \(\*Client\) DuplicatePath
 
 ```go
-func (bucket *Client) DuplicatePath(ctx context.Context, sourceKey, destKey string, removeOriginal bool) error
+func (bucket *Client) DuplicatePath(ctx context.Context, sourceKey, destKey string, removeOriginal bool, tx ...*gorm.DB) error
 ```
 
 
@@ -115,7 +116,7 @@ func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
 ### func \(\*Client\) WritePath
 
 ```go
-func (bucket *Client) WritePath(ctx context.Context, key string, content string) error
+func (bucket *Client) WritePath(ctx context.Context, key string, content string, tx ...*gorm.DB) error
 ```
 
 
@@ -2149,7 +2150,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteStoredQuery\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredQuery>)
   - [func \(d \*Database\) DeleteTag\(tx \*gorm.DB, id uint\) error](<#Database.DeleteTag>)
   - [func \(d \*Database\) DeleteWorkflow\(tx \*gorm.DB, id uint\) error](<#Database.DeleteWorkflow>)
-  - [func \(d \*Database\) DeleteWorkspace\(id uint\) error](<#Database.DeleteWorkspace>)
+  - [func \(d \*Database\) DeleteWorkspace\(id uint, tx \*gorm.DB\) error](<#Database.DeleteWorkspace>)
   - [func \(d \*Database\) DropSearchIndexes\(\) error](<#Database.DropSearchIndexes>)
   - [func \(d \*Database\) EnsureNotificationTrigger\(ctx context.Context\) error](<#Database.EnsureNotificationTrigger>)
   - [func \(d \*Database\) FindConnectionSchemaCache\(connectionID uint, opMethod string\) \(\*ConnectionSchemaCache, error\)](<#Database.FindConnectionSchemaCache>)
@@ -2844,7 +2845,7 @@ DeleteWorkflow deletes a workflow and all related records.
 ### func \(\*Database\) DeleteWorkspace
 
 ```go
-func (d *Database) DeleteWorkspace(id uint) error
+func (d *Database) DeleteWorkspace(id uint, tx *gorm.DB) error
 ```
 
 DeleteWorkspace deletes a workspace and the related records.

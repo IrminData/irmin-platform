@@ -35,28 +35,26 @@ func (d *Database) GetWorkspaceBySlug(slug string) (*Workspace, error) {
 }
 
 // DeleteWorkspace deletes a workspace and the related records.
-func (d *Database) DeleteWorkspace(id uint) error {
-	return d.Transaction(func(tx *gorm.DB) error {
-		// Delete the workspace.
-		if err := tx.Delete(&Workspace{}, id).Error; err != nil {
-			return err
-		}
-		// Delete the workspace users.
-		if err := tx.Delete(&WorkspaceUser{}, &WorkspaceUser{WorkspaceID: id}).Error; err != nil {
-			return err
-		}
-		// Delete the workflows
-		if err := tx.Delete(&Workflow{}, &Workflow{WorkspaceID: id}).Error; err != nil {
-			return err
-		}
-		// Delete the connections
-		if err := tx.Delete(&Connection{}, &Connection{WorkspaceID: id}).Error; err != nil {
-			return err
-		}
-		// Delete the repositories
-		if err := tx.Delete(&Repository{}, &Repository{WorkspaceID: id}).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+func (d *Database) DeleteWorkspace(id uint, tx *gorm.DB) error {
+	// Delete the workspace.
+	if err := tx.Delete(&Workspace{}, id).Error; err != nil {
+		return err
+	}
+	// Delete the workspace users.
+	if err := tx.Delete(&WorkspaceUser{}, &WorkspaceUser{WorkspaceID: id}).Error; err != nil {
+		return err
+	}
+	// Delete the workflows
+	if err := tx.Delete(&Workflow{}, &Workflow{WorkspaceID: id}).Error; err != nil {
+		return err
+	}
+	// Delete the connections
+	if err := tx.Delete(&Connection{}, &Connection{WorkspaceID: id}).Error; err != nil {
+		return err
+	}
+	// Delete the repositories
+	if err := tx.Delete(&Repository{}, &Repository{WorkspaceID: id}).Error; err != nil {
+		return err
+	}
+	return nil
 }

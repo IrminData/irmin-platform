@@ -13,13 +13,14 @@ type Client struct {
 	Endpoint string
 	Region   string
 	Env      *utils.CoreAPIEnv
+	DB       *db.Database
 }
     Client is a client for interacting with S3 for storing and retrieving files.
 
-func CreateClient(env *utils.CoreAPIEnv, bucketName string) (*Client, error)
+func CreateClient(env *utils.CoreAPIEnv, bucketName string, database *db.Database) (*Client, error)
     CreateClient creates a new S3 client.
 
-func (bucket *Client) DeletePath(ctx context.Context, keyPrefix string) error
+func (bucket *Client) DeletePath(ctx context.Context, keyPrefix string, tx ...*gorm.DB) error
 
 func (bucket *Client) DownloadFolder(ctx context.Context, folderPrefix, localDir string) error
     DownloadFolder downloads all objects under the given folder prefix from
@@ -28,13 +29,18 @@ func (bucket *Client) DownloadFolder(ctx context.Context, folderPrefix, localDir
     folderPrefix: the prefix for the folder in the bucket - localDir: the local
     directory where files will be saved Returns an error if any step fails.
 
-func (bucket *Client) DuplicatePath(ctx context.Context, sourceKey, destKey string, removeOriginal bool) error
+func (bucket *Client) DuplicatePath(
+	ctx context.Context,
+	sourceKey, destKey string,
+	removeOriginal bool,
+	tx ...*gorm.DB,
+) error
 
 func (bucket *Client) ListObjects(ctx context.Context, keyPrefix string) ([]types.Object, error)
 
 func (bucket *Client) ReadPath(ctx context.Context, key string) (*string, error)
 
-func (bucket *Client) WritePath(ctx context.Context, key string, content string) error
+func (bucket *Client) WritePath(ctx context.Context, key string, content string, tx ...*gorm.DB) error
 
 </pre>
 </body></html>

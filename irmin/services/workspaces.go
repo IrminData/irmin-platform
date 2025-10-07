@@ -68,7 +68,7 @@ func (api *APIServices) CreateWorkspace(
 	var newWorkspace *db.Workspace
 
 	// Create a bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
+	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
 	if createBucketClientErr != nil {
 		api.Logger.ErrorContext(ctx, "failed to create bucket client", "error", createBucketClientErr)
 		return nil, createBucketClientErr
@@ -125,7 +125,8 @@ func (api *APIServices) CreateWorkspace(
 		if !strings.HasSuffix(editorPathPrefix, "/") {
 			editorPathPrefix += "/"
 		}
-		if writePathErr := bucket.WritePath(ctx, editorPathPrefix, ""); writePathErr != nil {
+		// Pass the transaction to acquire advisory lock and ensure atomicity
+		if writePathErr := bucket.WritePath(ctx, editorPathPrefix, "", tx); writePathErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating workspace editor items folder object", "error", writePathErr)
 			return writePathErr
 		}
@@ -193,33 +194,43 @@ func (api *APIServices) DeleteWorkspace(ctx context.Context, user *db.User, work
 		return ErrWorkspaceNotOwner
 	}
 
-	// Delete the workspace.
-	deleteWorkspaceErr := api.DB.DeleteWorkspace(workspace.ID)
-	if deleteWorkspaceErr != nil {
-		api.Logger.ErrorContext(ctx, "Error deleting workspace", "error", deleteWorkspaceErr)
-		return deleteWorkspaceErr
-	}
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Delete the workspace.
+		deleteWorkspaceErr := api.DB.DeleteWorkspace(workspace.ID, tx)
+		if deleteWorkspaceErr != nil {
+			api.Logger.ErrorContext(ctx, "Error deleting workspace", "error", deleteWorkspaceErr)
+			return deleteWorkspaceErr
+		}
 
-	// Create bucket client
-	bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket)
-	if createBucketClientErr != nil {
-		api.Logger.ErrorContext(ctx, "failed to create bucket client", "error", createBucketClientErr)
-		return createBucketClientErr
-	}
-	defer bucket.Close()
+		// Create bucket client
+		bucket, createBucketClientErr := bucket.CreateClient(api.Env, api.Env.IrminS3Bucket, api.DB)
+		if createBucketClientErr != nil {
+			api.Logger.ErrorContext(ctx, "failed to create bucket client", "error", createBucketClientErr)
+			return createBucketClientErr
+		}
+		defer bucket.Close()
 
-	// Format the workspace's base path prefix
-	editorPathPrefix := utils.ConstructEditorStorageNamespace(workspace.Slug)
-	editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
-	if !strings.HasSuffix(editorPathPrefix, "/") {
-		editorPathPrefix += "/"
-	}
+		// Format the workspace's base path prefix
+		editorPathPrefix := utils.ConstructEditorStorageNamespace(workspace.Slug)
+		editorPathPrefix = strings.TrimPrefix(editorPathPrefix, "s3://")
+		if !strings.HasSuffix(editorPathPrefix, "/") {
+			editorPathPrefix += "/"
+		}
 
-	// Delete the workspace editor items folder.
-	deletePathErr := bucket.DeletePath(ctx, editorPathPrefix)
-	if deletePathErr != nil {
-		api.Logger.ErrorContext(ctx, "Error deleting workspace editor items folder", "error", deletePathErr)
-		return deletePathErr
+		// Delete the workspace editor items folder.
+		deletePathErr := bucket.DeletePath(ctx, editorPathPrefix, tx)
+		if deletePathErr != nil {
+			api.Logger.ErrorContext(ctx, "Error deleting workspace editor items folder", "error", deletePathErr)
+			return deletePathErr
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		api.Logger.ErrorContext(ctx, "Transaction failed for workspace deletion", "error", transactionErr)
+		return transactionErr
 	}
 
 	// TODO: Delete all related data (repositories, workflows, connections, etc.) when workspace is deleted
