@@ -27,17 +27,8 @@ const (
 	// UserCreationTimeout is the timeout for new user creation operations
 	UserCreationTimeout = 10 * time.Second
 
-	// SyncLockTimeout is the timeout for acquiring sync locks
-	SyncLockTimeout = 100 * time.Millisecond
-
-	// UserCreationLockTimeout is the timeout for acquiring user creation locks
-	UserCreationLockTimeout = 500 * time.Millisecond
-
 	// AuthCacheTTL is how long to cache auth results
 	AuthCacheTTL = 5 * time.Minute
-
-	// LockPollingInterval is the interval between lock acquisition attempts
-	LockPollingInterval = 1 * time.Millisecond
 )
 
 // AuthCacheEntry represents a cached authentication result.
@@ -50,18 +41,6 @@ type AuthCacheEntry struct {
 type AuthCache struct {
 	cache map[string]*AuthCacheEntry
 	mu    sync.RWMutex
-}
-
-// PerUserLockManager provides thread-safe per-user locking for sync operations.
-type PerUserLockManager struct {
-	locks map[string]*sync.Mutex
-	mu    sync.RWMutex
-}
-
-// LockInfo tracks whether a lock was acquired for a specific key.
-type LockInfo struct {
-	acquired bool
-	mutex    *sync.Mutex
 }
 
 // getCachedAuth retrieves a cached authentication result.
@@ -219,17 +198,40 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
 	irminUser *db.User,
 	clerkID, locale string,
 ) (*db.User, error) {
-	// Use per-user locking to prevent duplicate sync operations for the same user
-	userLockKey := fmt.Sprintf("user_sync_%s", clerkID)
+	// Use database advisory lock to prevent duplicate sync operations across instances
+	lockKey := fmt.Sprintf("auth:user_sync:%s", clerkID)
 
-	// Try to acquire lock with timeout - if we can't get it quickly, skip sync
-	lockInfo := api.perUserLocks.TryLock(userLockKey, SyncLockTimeout)
-	if !lockInfo.acquired {
-		// Another sync is already in progress for this user, skip this one
+	// Try to acquire lock - if already locked, another instance is syncing this user
+	locked, lockErr := db.TryLockKey(api.DB.DB, lockKey)
+	if lockErr != nil {
+		// Lock acquisition failed due to database error - log but continue without lock
+		// This maintains resilience if the lock system has transient issues
+		api.Logger.WarnContext(
+			c,
+			"Failed to acquire advisory lock for user sync, continuing without lock protection",
+			"error",
+			lockErr,
+			"clerk_id",
+			clerkID,
+		)
+		locked = false // Proceed without lock
+	}
+
+	// Setup defer to release lock only if we acquired it
+	lockAcquired := locked
+	if lockAcquired {
+		defer func() {
+			if unlockErr := db.UnlockKey(api.DB.DB, lockKey); unlockErr != nil {
+				api.Logger.ErrorContext(c, "Error releasing sync lock", "error", unlockErr, "clerk_id", clerkID)
+			}
+		}()
+	}
+
+	if !locked && lockErr == nil {
+		// Lock is held by another instance (not an error) - skip sync
 		api.Logger.InfoContext(c, "Skipping user sync - already in progress", "clerk_id", clerkID)
 		return irminUser, nil
 	}
-	defer api.perUserLocks.UnlockLockInfo(lockInfo)
 
 	// Set Clerk API key
 	clerk.SetKey(api.Env.ClerkSecretKey)
@@ -370,29 +372,56 @@ func (api *APIServices) backgroundUserSync(ctx context.Context, user *db.User, c
 }
 
 // createUserFromClerk creates a new user by fetching data from Clerk.
-// This is only used for completely new users and uses fast locking to prevent duplicates.
+// This is only used for completely new users and uses database locking to prevent duplicates across instances.
 func (api *APIServices) createUserFromClerk(ctx context.Context, clerkID, locale string) (*db.User, error) {
 	// Use a shorter timeout for new user creation
 	createCtx, cancel := context.WithTimeout(ctx, UserCreationTimeout)
 	defer cancel()
 
-	// Use per-user locking for user creation to prevent duplicates
-	// But use a very short timeout - if we can't get the lock quickly,
-	// assume another request is creating the user and check the DB
-	userLockKey := fmt.Sprintf("user_creation_%s", clerkID)
-	lockInfo := api.perUserLocks.TryLock(userLockKey, UserCreationLockTimeout)
+	// Use database advisory lock to prevent duplicate user creation across instances
+	lockKey := fmt.Sprintf("auth:user_creation:%s", clerkID)
+	locked, lockErr := db.TryLockKey(api.DB.DB, lockKey)
+	if lockErr != nil {
+		// Lock acquisition failed due to database error - log but continue without lock
+		// This maintains resilience if the lock system has transient issues
+		api.Logger.WarnContext(
+			createCtx,
+			"Failed to acquire advisory lock for user creation, continuing without lock protection",
+			"error",
+			lockErr,
+			"clerk_id",
+			clerkID,
+		)
+		locked = false // Proceed without lock
+	}
 
-	if !lockInfo.acquired {
-		// Another user creation is in progress, check if user was created
+	// Setup defer to release lock only if we acquired it
+	lockAcquired := locked
+	if lockAcquired {
+		defer func() {
+			if unlockErr := db.UnlockKey(api.DB.DB, lockKey); unlockErr != nil {
+				api.Logger.ErrorContext(
+					createCtx,
+					"Error releasing user creation lock",
+					"error",
+					unlockErr,
+					"clerk_id",
+					clerkID,
+				)
+			}
+		}()
+	}
+
+	if !locked && lockErr == nil {
+		// Lock is held by another instance (not an error) - check if user was created
 		if existingUser, _ := api.DB.GetUserByClerkID(clerkID); existingUser != nil && existingUser.ID != 0 {
 			return existingUser, nil
 		}
 		// If still not found, return error - avoid waiting
 		return nil, fmt.Errorf("user creation in progress for clerk ID: %s", clerkID)
 	}
-	defer api.perUserLocks.UnlockLockInfo(lockInfo)
 
-	// Double-check if user was created by another goroutine
+	// Double-check if user was created by another instance
 	if existingUser, _ := api.DB.GetUserByClerkID(clerkID); existingUser != nil && existingUser.ID != 0 {
 		return existingUser, nil
 	}
@@ -443,66 +472,5 @@ func (api *APIServices) ensureNovuSubscriberAsync(ctx context.Context, user *db.
 		if saveErr := api.DB.Save(&user).Error; saveErr != nil {
 			api.Logger.ErrorContext(novuCtx, "Error saving Novu subscriber ID", "error", saveErr, "user_id", user.ID)
 		}
-	}
-}
-
-// Lock acquires a lock for a specific key (e.g., user ID).
-func (pm *PerUserLockManager) Lock(key string) {
-	pm.mu.Lock()
-	if pm.locks == nil {
-		pm.locks = make(map[string]*sync.Mutex)
-	}
-	if _, exists := pm.locks[key]; !exists {
-		pm.locks[key] = &sync.Mutex{}
-	}
-	userMutex := pm.locks[key]
-	pm.mu.Unlock()
-
-	// Acquire the per-user lock (only blocks this specific user)
-	userMutex.Lock()
-}
-
-// TryLock attempts to acquire a lock for a specific key with a timeout.
-// Returns LockInfo with acquisition status and the mutex.
-func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) LockInfo {
-	pm.mu.Lock()
-	if pm.locks == nil {
-		pm.locks = make(map[string]*sync.Mutex)
-	}
-	if _, exists := pm.locks[key]; !exists {
-		pm.locks[key] = &sync.Mutex{}
-	}
-	userMutex := pm.locks[key]
-	pm.mu.Unlock()
-
-	// Use a simple polling approach with TryLock
-	deadline := time.Now().Add(timeout)
-
-	for time.Now().Before(deadline) {
-		if userMutex.TryLock() {
-			return LockInfo{acquired: true, mutex: userMutex}
-		}
-		// Small sleep to avoid busy waiting
-		time.Sleep(LockPollingInterval)
-	}
-
-	return LockInfo{acquired: false, mutex: userMutex}
-}
-
-// Unlock releases the lock for a specific key.
-func (pm *PerUserLockManager) Unlock(key string) {
-	pm.mu.RLock()
-	userMutex := pm.locks[key]
-	pm.mu.RUnlock()
-
-	if userMutex != nil {
-		userMutex.Unlock()
-	}
-}
-
-// UnlockLockInfo safely unlocks only if the lock was actually acquired.
-func (pm *PerUserLockManager) UnlockLockInfo(lockInfo LockInfo) {
-	if lockInfo.acquired && lockInfo.mutex != nil {
-		lockInfo.mutex.Unlock()
 	}
 }

@@ -109,6 +109,35 @@ func (api *APIServices) createRepositoryInTransaction(
 	workspace *db.Workspace,
 	user *db.User,
 ) (*db.Repository, *engine.Repository, error) {
+	// Acquire session-scoped advisory lock before starting transaction
+	// Use workspace slug for consistency with engine layer
+	lockKey := fmt.Sprintf("repository:create:%s:%s", workspace.Slug, repositorySlug)
+	locked, lockErr := db.TryLockKey(api.DB.DB, lockKey)
+	if lockErr != nil {
+		api.Logger.ErrorContext(ctx, "Error acquiring lock for repository creation", "error", lockErr)
+		return nil, nil, lockErr
+	}
+	if !locked {
+		// Another instance is creating this repository
+		api.Logger.InfoContext(
+			ctx,
+			"Repository creation already in progress by another instance",
+			"repository",
+			repositorySlug,
+		)
+		return nil, nil, ErrRepositoryAlreadyExists
+	}
+	defer func() {
+		if unlockErr := db.UnlockKey(api.DB.DB, lockKey); unlockErr != nil {
+			api.Logger.ErrorContext(ctx, "Error releasing repository creation lock", "error", unlockErr)
+		}
+	}()
+
+	// Double-check if repository exists after acquiring lock
+	if api.DB.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
+		return nil, nil, ErrRepositoryAlreadyExists
+	}
+
 	var repository *db.Repository
 	var dataEngineRepository *engine.Repository
 
@@ -309,7 +338,7 @@ func (api *APIServices) CreateRepository(
 	// Format the slug from the name
 	repositorySlug := utils.Slugify(req.Name)
 
-	// Make sure such repository does not exist
+	// Early check: fail fast if repository already exists
 	if api.DB.CheckIfRepositoryExists(repositorySlug, workspace.ID) {
 		return nil, ErrRepositoryAlreadyExists
 	}

@@ -20,17 +20,8 @@ const (
 	// UserCreationTimeout is the timeout for new user creation operations
 	UserCreationTimeout = 10 * time.Second
 
-	// SyncLockTimeout is the timeout for acquiring sync locks
-	SyncLockTimeout = 100 * time.Millisecond
-
-	// UserCreationLockTimeout is the timeout for acquiring user creation locks
-	UserCreationLockTimeout = 500 * time.Millisecond
-
 	// AuthCacheTTL is how long to cache auth results
 	AuthCacheTTL = 5 * time.Minute
-
-	// LockPollingInterval is the interval between lock acquisition attempts
-	LockPollingInterval = 1 * time.Millisecond
 )
 const (
 	// SearchDefaultLimit is the default number of results to return.
@@ -1061,30 +1052,6 @@ type InviteTransactionResult struct {
 }
     InviteTransactionResult contains the result of invitation creation including
     notification status.
-
-type LockInfo struct {
-	// Has unexported fields.
-}
-    LockInfo tracks whether a lock was acquired for a specific key.
-
-type PerUserLockManager struct {
-	// Has unexported fields.
-}
-    PerUserLockManager provides thread-safe per-user locking for sync
-    operations.
-
-func (pm *PerUserLockManager) Lock(key string)
-    Lock acquires a lock for a specific key (e.g., user ID).
-
-func (pm *PerUserLockManager) TryLock(key string, timeout time.Duration) LockInfo
-    TryLock attempts to acquire a lock for a specific key with a timeout.
-    Returns LockInfo with acquisition status and the mutex.
-
-func (pm *PerUserLockManager) Unlock(key string)
-    Unlock releases the lock for a specific key.
-
-func (pm *PerUserLockManager) UnlockLockInfo(lockInfo LockInfo)
-    UnlockLockInfo safely unlocks only if the lock was actually acquired.
 
 type PolicyFilters struct {
 	Effect     string

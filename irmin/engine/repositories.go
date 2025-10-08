@@ -132,7 +132,7 @@ func (c *Client) CreateRepository(
 	gcDefaultRetentionDays, gcDefaultBranchRetentionDays *int,
 ) (*Repository, error) {
 	// Create a lock key based on workspace and repository name to prevent race conditions
-	lockKey := fmt.Sprintf("repository_create:%s:%s", workspace, name)
+	lockKey := fmt.Sprintf("engine:repository_create:%s:%s", workspace, name)
 
 	// Execute the entire operation within a database transaction with advisory lock
 	var result *Repository

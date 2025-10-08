@@ -7,7 +7,6 @@ import (
 	"irmin-api/orchestrator"
 	"irmin-api/utils"
 	"log/slog"
-	"sync"
 
 	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
 	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
@@ -25,7 +24,6 @@ type APIServices struct {
 	Validator          *irminvalidator.Validator
 	CacheStorage       fiber.Storage
 	authCache          *AuthCache
-	perUserLocks       *PerUserLockManager // Per-user locks for sync operations
 	schemaCacheManager *lib.SchemaCacheManager
 }
 
@@ -40,7 +38,6 @@ func NewAPIServices(
 	cacheStorage fiber.Storage,
 ) *APIServices {
 	authCache := &AuthCache{cache: make(map[string]*AuthCacheEntry)}
-	perUserLocks := &PerUserLockManager{locks: make(map[string]*sync.Mutex)}
 	schemaCacheManager := lib.NewSchemaCacheManager(env, logger, db)
 	return &APIServices{
 		DB:                 db,
@@ -53,7 +50,6 @@ func NewAPIServices(
 		Validator:          irminvalidator.NewValidator(sqidManager),
 		CacheStorage:       cacheStorage,
 		authCache:          authCache,
-		perUserLocks:       perUserLocks,
 		schemaCacheManager: schemaCacheManager,
 	}
 }

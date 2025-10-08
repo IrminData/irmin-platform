@@ -16,6 +16,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	nilPolicyValue = "nil"
+)
+
 type PolicyFilters struct {
 	Effect     string
 	Resource   string
@@ -278,6 +282,77 @@ func (api *APIServices) handleOptionalPolicyFields(
 	return nil
 }
 
+// createPolicyInTransaction creates a policy within a transaction with advisory locking.
+func (api *APIServices) createPolicyInTransaction(
+	c context.Context,
+	workspace *db.Workspace,
+	newPolicy *db.Policy,
+) error {
+	return api.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire advisory lock based on unique policy attributes
+		// Format pointer values properly to avoid using memory addresses
+		resourceIDStr := nilPolicyValue
+		if newPolicy.ResourceID != nil {
+			resourceIDStr = strconv.FormatUint(uint64(*newPolicy.ResourceID), 10)
+		}
+		roleIDStr := nilPolicyValue
+		if newPolicy.RoleID != nil {
+			roleIDStr = strconv.FormatUint(uint64(*newPolicy.RoleID), 10)
+		}
+		workspaceUserIDStr := nilPolicyValue
+		if newPolicy.WorkspaceUserID != nil {
+			workspaceUserIDStr = strconv.FormatUint(uint64(*newPolicy.WorkspaceUserID), 10)
+		}
+
+		lockKey := fmt.Sprintf(
+			"policy:create:%d:%s:%s:%s:%s:%s:%s:%s",
+			workspace.ID,
+			newPolicy.Principal,
+			newPolicy.Resource,
+			newPolicy.Action,
+			newPolicy.Effect,
+			resourceIDStr,
+			roleIDStr,
+			workspaceUserIDStr,
+		)
+		if lockErr := db.LockKeyTx(tx, lockKey); lockErr != nil {
+			api.Logger.ErrorContext(c, "Error acquiring lock for policy creation", "error", lockErr)
+			return lockErr
+		}
+
+		// Check for existing policy after acquiring lock
+		var existingPolicy db.Policy
+		existingPolicyErr := tx.Where(
+			"workspace_id = ? AND principal = ? AND resource = ? AND action = ? AND effect = ? AND COALESCE(resource_id, 0) = COALESCE(?, 0) AND COALESCE(role_id, 0) = COALESCE(?, 0) AND COALESCE(workspace_user_id, 0) = COALESCE(?, 0)",
+			workspace.ID,
+			newPolicy.Principal,
+			newPolicy.Resource,
+			newPolicy.Action,
+			newPolicy.Effect,
+			newPolicy.ResourceID,
+			newPolicy.RoleID,
+			newPolicy.WorkspaceUserID,
+		).First(&existingPolicy).Error
+
+		if existingPolicyErr == nil {
+			api.Logger.ErrorContext(c, "Policy already exists")
+			return ErrPolicyAlreadyExists
+		}
+		if !errors.Is(existingPolicyErr, gorm.ErrRecordNotFound) {
+			api.Logger.ErrorContext(c, "Error checking for existing policy", "error", existingPolicyErr)
+			return existingPolicyErr
+		}
+
+		// Create the policy
+		if createPolicyErr := tx.Create(newPolicy).Error; createPolicyErr != nil {
+			api.Logger.ErrorContext(c, "Error creating policy", "error", createPolicyErr)
+			return createPolicyErr
+		}
+
+		return nil
+	})
+}
+
 func (api *APIServices) CreatePolicy(
 	c context.Context,
 	user *db.User,
@@ -343,32 +418,9 @@ func (api *APIServices) CreatePolicy(
 		return nil, handleOptionalPolicyFieldsErr
 	}
 
-	// Check for existing policy
-	var existingPolicy db.Policy
-	existingPolicyErr := api.DB.Where(
-		"workspace_id = ? AND principal = ? AND resource = ? AND action = ? AND effect = ? AND COALESCE(resource_id, 0) = COALESCE(?, 0) AND COALESCE(role_id, 0) = COALESCE(?, 0) AND COALESCE(workspace_user_id, 0) = COALESCE(?, 0)",
-		workspace.ID,
-		newPolicy.Principal,
-		newPolicy.Resource,
-		newPolicy.Action,
-		newPolicy.Effect,
-		newPolicy.ResourceID,
-		newPolicy.RoleID,
-		newPolicy.WorkspaceUserID,
-	).First(&existingPolicy).Error
-
-	if existingPolicyErr == nil {
-		api.Logger.ErrorContext(c, "Policy already exists")
-		return nil, ErrPolicyAlreadyExists
-	} else if !errors.Is(existingPolicyErr, gorm.ErrRecordNotFound) {
-		api.Logger.ErrorContext(c, "Error checking for existing policy", "error", existingPolicyErr)
-		return nil, existingPolicyErr
-	}
-
-	// Create the policy
-	if createPolicyErr := api.DB.Create(newPolicy).Error; createPolicyErr != nil {
-		api.Logger.ErrorContext(c, "Error creating policy", "error", createPolicyErr)
-		return nil, createPolicyErr
+	// Create policy in transaction with advisory lock
+	if transactionErr := api.createPolicyInTransaction(c, workspace, newPolicy); transactionErr != nil {
+		return nil, transactionErr
 	}
 
 	// Log the event
@@ -856,7 +908,7 @@ func (api *APIServices) deduplicatePolicies(policies []db.Policy) []db.Policy {
 		policy := &policies[i]
 
 		// Create a unique key for this policy combination
-		resourceIDStr := "nil"
+		resourceIDStr := nilPolicyValue
 		if policy.ResourceID != nil {
 			resourceIDStr = strconv.FormatUint(uint64(*policy.ResourceID), 10)
 		}
