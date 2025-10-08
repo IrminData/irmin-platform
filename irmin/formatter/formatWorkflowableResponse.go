@@ -35,15 +35,25 @@ func formatImportWorkflowable(
 		return nil
 	}
 
+	// Ensure slices are never nil (use empty arrays for proper JSON serialization)
+	importPaths := importWorkflowable.ImportFromConnectionPaths
+	if importPaths == nil {
+		importPaths = make([]string, 0)
+	}
+	fieldMappings := importWorkflowable.FieldMappings
+	if fieldMappings == nil {
+		fieldMappings = make([]irminmodels.FieldMapping, 0)
+	}
+
 	connectionSqid, _ := sqidManager.Encode("connections", uint64(importWorkflowable.ConnectionID))
 	return &irminmodels.Workflowable{
 		Type:                      irminmodels.WorkflowableTypeImport,
 		ConnectionID:              connectionSqid,
-		ImportFromConnectionPaths: importWorkflowable.ImportFromConnectionPaths,
+		ImportFromConnectionPaths: importPaths,
 		ImportToRepositoryPath:    importWorkflowable.ImportToRepositoryPath,
 		Repository:                importWorkflowable.Repository.Slug,
 		RepositoryBranch:          importWorkflowable.RepositoryBranch,
-		FieldMappings:             importWorkflowable.FieldMappings,
+		FieldMappings:             fieldMappings,
 	}
 }
 
@@ -56,15 +66,25 @@ func formatExportWorkflowable(
 		return nil
 	}
 
+	// Ensure slices are never nil (use empty arrays for proper JSON serialization)
+	exportPaths := exportWorkflowable.ExportFromRepositoryPaths
+	if exportPaths == nil {
+		exportPaths = make([]string, 0)
+	}
+	fieldMappings := exportWorkflowable.FieldMappings
+	if fieldMappings == nil {
+		fieldMappings = make([]irminmodels.FieldMapping, 0)
+	}
+
 	connectionSqid, _ := sqidManager.Encode("connections", uint64(exportWorkflowable.ConnectionID))
 	return &irminmodels.Workflowable{
 		Type:                      irminmodels.WorkflowableTypeExport,
 		ConnectionID:              connectionSqid,
-		ExportFromRepositoryPaths: exportWorkflowable.ExportFromRepositoryPaths,
+		ExportFromRepositoryPaths: exportPaths,
 		ExportToConnectionPath:    exportWorkflowable.ExportToConnectionPath,
 		Repository:                exportWorkflowable.Repository.Slug,
 		RepositoryBranch:          exportWorkflowable.RepositoryBranch,
-		FieldMappings:             exportWorkflowable.FieldMappings,
+		FieldMappings:             fieldMappings,
 	}
 }
 
@@ -91,8 +111,9 @@ func formatActionWorkflowable(
 		response.ResultsRepositoryPath = &resultsRepositoryPath
 	}
 
+	// Always initialize Input as empty array if no inputs exist
+	var inputsResponse []irminmodels.ActionInputData
 	if actionWorkflowable.Inputs != nil {
-		var inputsResponse []irminmodels.ActionInputData
 		for _, input := range actionWorkflowable.Inputs {
 			inputsResponse = append(inputsResponse, irminmodels.ActionInputData{
 				Repository:     input.Repository.Slug,
@@ -100,11 +121,11 @@ func formatActionWorkflowable(
 				RepositoryPath: input.RepositoryPath,
 			})
 		}
-		if len(inputsResponse) == 0 {
-			inputsResponse = make([]irminmodels.ActionInputData, 0)
-		}
-		response.Input = inputsResponse
 	}
+	if inputsResponse == nil {
+		inputsResponse = make([]irminmodels.ActionInputData, 0)
+	}
+	response.Input = inputsResponse
 
 	return response
 }
@@ -122,17 +143,27 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 		}
 	case db.PipelineStageTypeConnection:
 		connectionSqid, _ := sqidManager.Encode("connections", uint64(*stage.ConnectionID))
+		// Ensure read paths slice is never nil
+		readPaths := stage.ConnectionReadPaths
+		if readPaths == nil {
+			readPaths = make([]string, 0)
+		}
 		return irminmodels.PipelineStage{
 			Description:         stage.Description,
 			Write:               stage.Write,
 			Read:                stage.Read,
 			Type:                irminmodels.PipelineStageTypeConnection,
 			ConnectionWritePath: stage.ConnectionWritePath,
-			ConnectionReadPaths: &stage.ConnectionReadPaths,
+			ConnectionReadPaths: &readPaths,
 			ConnectionID:        &connectionSqid,
 		}
 	case db.PipelineStageTypeRepository:
 		repositorySlug := stage.Repository.Slug
+		// Ensure read paths slice is never nil
+		readPaths := stage.RepositoryReadPaths
+		if readPaths == nil {
+			readPaths = make([]string, 0)
+		}
 		return irminmodels.PipelineStage{
 			Description:         stage.Description,
 			Write:               stage.Write,
@@ -140,7 +171,7 @@ func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDMan
 			Type:                irminmodels.PipelineStageTypeRepository,
 			RepositoryBranch:    stage.RepositoryBranch,
 			RepositoryWritePath: stage.RepositoryWritePath,
-			RepositoryReadPaths: &stage.RepositoryReadPaths,
+			RepositoryReadPaths: &readPaths,
 			Repository:          &repositorySlug,
 		}
 	default:
