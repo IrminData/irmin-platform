@@ -2,6 +2,7 @@ package irmincore
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -34,4 +35,31 @@ func (c *Client) CallSystemWebhook(
 		return nil, fmt.Errorf("call system webhook error: %w", err)
 	}
 	return apiResp, nil
+}
+
+// GenerateFileSchema generates a schema from a file.
+// The body is expected to be a multipart/form-data request with a file field.
+//
+// Usable only with a system token.
+func (c *Client) GenerateFileSchema(
+	fileName string,
+	fileReader io.Reader,
+) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
+	var result *irminmodels.ObjectSchema
+	apiResp, err := c.FetchAPI(RequestOptions{
+		Method:      http.MethodPost,
+		Endpoint:    "/v1/system/schema-from-file",
+		ContentType: "multipart/form-data",
+		Files: []FormFile{
+			{
+				FieldName: "file",
+				FileName:  fileName,
+				Reader:    fileReader,
+			},
+		},
+	}, &result)
+	if err != nil {
+		return nil, nil, fmt.Errorf("generate file schema error: %w", err)
+	}
+	return result, apiResp, nil
 }
