@@ -851,6 +851,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) EditorItemStore\(c fiber.Ctx\) error](<#APIControllers.EditorItemStore>)
   - [func \(api \*APIControllers\) ExecuteQuery\(c fiber.Ctx\) error](<#APIControllers.ExecuteQuery>)
   - [func \(api \*APIControllers\) ExecuteSQL\(c fiber.Ctx\) error](<#APIControllers.ExecuteSQL>)
+  - [func \(api \*APIControllers\) GenerateFileSchema\(c fiber.Ctx\) error](<#APIControllers.GenerateFileSchema>)
   - [func \(api \*APIControllers\) IndexMyInvites\(c fiber.Ctx\) error](<#APIControllers.IndexMyInvites>)
   - [func \(api \*APIControllers\) InvitesDestroy\(c fiber.Ctx\) error](<#APIControllers.InvitesDestroy>)
   - [func \(api \*APIControllers\) InvitesShow\(c fiber.Ctx\) error](<#APIControllers.InvitesShow>)
@@ -1219,6 +1220,15 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error
 ```
 
 ExecuteSQL godoc @Summary Execute SQL query @Description Execute an arbitrary SQL query on the workspace data @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param request body irmincore.ExecuteSQLRequest true "SQL query to execute" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.QueryResult\} "SQL query executed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body or SQL" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/execute\-sql \[post\]
+
+<a name="APIControllers.GenerateFileSchema"></a>
+### func \(\*APIControllers\) GenerateFileSchema
+
+```go
+func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error
+```
+
+GenerateFileSchema godoc @Summary Generate schema from uploaded file @Description Upload a file \(CSV, JSON, Parquet, etc.\) and get its schema structure @Tags schema @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "File to analyze \(CSV, JSON, Parquet, Excel, Avro, ORC, etc.\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ObjectSchema\} "File schema generated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid file or missing file" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid system authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /system/schema\-from\-file \[post\]
 
 <a name="APIControllers.IndexMyInvites"></a>
 ### func \(\*APIControllers\) IndexMyInvites
@@ -5070,6 +5080,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) DeleteTag\(workspace, repository, tag string\) error](<#Client.DeleteTag>)
   - [func \(c \*Client\) ExecuteQuery\(ctx context.Context, userWorkspace, query string\) \*irminmodels.QueryResult](<#Client.ExecuteQuery>)
   - [func \(c \*Client\) GenerateObjectSchema\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateObjectSchema>)
+  - [func \(c \*Client\) GenerateSchemaFromFile\(ctx context.Context, filename string, fileData \[\]byte\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateSchemaFromFile>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.Branch, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(workspace, repository, hash string\) \(\*irminmodels.Commit, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetObjectChanges\(workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, error\)](<#Client.GetObjectChanges>)
@@ -5338,6 +5349,15 @@ func (c *Client) GenerateObjectSchema(ctx context.Context, workspace, repository
 ```
 
 
+
+<a name="Client.GenerateSchemaFromFile"></a>
+### func \(\*Client\) GenerateSchemaFromFile
+
+```go
+func (c *Client) GenerateSchemaFromFile(ctx context.Context, filename string, fileData []byte) (*irminmodels.ObjectSchema, error)
+```
+
+GenerateSchemaFromFile generates a schema for an uploaded file. It saves the file temporarily, uses DuckDB to introspect it, and returns the schema.
 
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
@@ -9432,8 +9452,9 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) DeleteWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagWithAssets \*db.TagWithAssets\) error](<#APIServices.DeleteWorkspaceTag>)
   - [func \(api \*APIServices\) ExecuteEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string, inputData \[\]irminmodels.ActionInputData, locale string\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteEditorItem>)
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
+  - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
-  - [func \(api \*APIServices\) GetConnectionSchema\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, method string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
+  - [func \(api \*APIServices\) GetConnectionSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, operationMethod string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
   - [func \(api \*APIServices\) GetConnector\(c context.Context, connectorID uint\) \(\*db.Connector, error\)](<#APIServices.GetConnector>)
   - [func \(api \*APIServices\) GetConnectorConfigurationFields\(c context.Context, locale string, connector \*db.Connector, configurationType string, req irmincore.ConnectorConfigurationRequest\) \(map\[string\]irminmodels.DynamicField, error\)](<#APIServices.GetConnectorConfigurationFields>)
   - [func \(api \*APIServices\) GetEditorItemContent\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) \(string, error\)](<#APIServices.GetEditorItemContent>)
@@ -9451,14 +9472,14 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string\) \(\*db.RepositoryObject, irminutils.ObjectDetails, string, error\)](<#APIServices.GetRepositoryObject>)
   - [func \(api \*APIServices\) GetRepositoryObjectContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, error\)](<#APIServices.GetRepositoryObjectContent>)
   - [func \(api \*APIServices\) GetRepositoryObjectHistory\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]irminmodels.Commit, error\)](<#APIServices.GetRepositoryObjectHistory>)
-  - [func \(api \*APIServices\) GetRepositoryObjectSchema\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetRepositoryObjectSchema>)
+  - [func \(api \*APIServices\) GetRepositoryObjectSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetRepositoryObjectSchema>)
   - [func \(api \*APIServices\) GetRepositoryObjectStructuredContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(map\[string\]\[\]map\[string\]any, error\)](<#APIServices.GetRepositoryObjectStructuredContent>)
   - [func \(api \*APIServices\) GetRepositoryTag\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, tagName string\) \(\*irminmodels.GitTag, error\)](<#APIServices.GetRepositoryTag>)
   - [func \(api \*APIServices\) GetRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch\) \(\*irminmodels.Diff, error\)](<#APIServices.GetRepositoryUncommittedChanges>)
   - [func \(api \*APIServices\) GetWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowSqid string\) \(\*db.Workflow, error\)](<#APIServices.GetWorkflow>)
   - [func \(api \*APIServices\) GetWorkflowRun\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, runSqid string\) \(\*db.WorkflowRun, error\)](<#APIServices.GetWorkflowRun>)
   - [func \(api \*APIServices\) GetWorkspace\(ctx context.Context, user \*db.User, workspaceSlug string\) \(\*db.Workspace, error\)](<#APIServices.GetWorkspace>)
-  - [func \(api \*APIServices\) GetWorkspaceSchema\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, includeConnections bool, includeRepositories bool\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetWorkspaceSchema>)
+  - [func \(api \*APIServices\) GetWorkspaceSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, includeConnections bool, includeRepositories bool\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetWorkspaceSchema>)
   - [func \(api \*APIServices\) GetWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagID uint\) \(\*db.TagWithAssets, error\)](<#APIServices.GetWorkspaceTag>)
   - [func \(api \*APIServices\) GetWorkspaceTagWithAssets\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag\) \(\*db.Tag, error\)](<#APIServices.GetWorkspaceTagWithAssets>)
   - [func \(api \*APIServices\) GetWorkspaceUser\(c context.Context, user \*db.User, workspace \*db.Workspace, workspaceUserSqid string\) \(\*db.WorkspaceUser, error\)](<#APIServices.GetWorkspaceUser>)
@@ -9975,6 +9996,15 @@ func (api *APIServices) ExecuteSQL(c context.Context, locale string, user *db.Us
 
 
 
+<a name="APIServices.GenerateSchemaFromUploadedFile"></a>
+### func \(\*APIServices\) GenerateSchemaFromUploadedFile
+
+```go
+func (api *APIServices) GenerateSchemaFromUploadedFile(ctx context.Context, locale string, filename string, fileReader io.Reader) (*irminmodels.ObjectSchema, error)
+```
+
+GenerateSchemaFromUploadedFile generates a schema for an uploaded file.
+
 <a name="APIServices.GetConnection"></a>
 ### func \(\*APIServices\) GetConnection
 
@@ -9988,10 +10018,10 @@ GetConnection gets a connection by its SQID.
 ### func \(\*APIServices\) GetConnectionSchema
 
 ```go
-func (api *APIServices) GetConnectionSchema(c context.Context, locale string, user *db.User, workspace *db.Workspace, connection *db.Connection, method string) (*irminmodels.ObjectSchema, error)
+func (api *APIServices) GetConnectionSchema(ctx context.Context, locale string, user *db.User, workspace *db.Workspace, connection *db.Connection, operationMethod string) (*irminmodels.ObjectSchema, error)
 ```
 
-
+GetConnectionSchema gets the schema for a connection.
 
 <a name="APIServices.GetConnector"></a>
 ### func \(\*APIServices\) GetConnector
@@ -10150,10 +10180,10 @@ func (api *APIServices) GetRepositoryObjectHistory(c context.Context, locale str
 ### func \(\*APIServices\) GetRepositoryObjectSchema
 
 ```go
-func (api *APIServices) GetRepositoryObjectSchema(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject, ref string) (*irminmodels.ObjectSchema, error)
+func (api *APIServices) GetRepositoryObjectSchema(ctx context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, object *db.RepositoryObject, ref string) (*irminmodels.ObjectSchema, error)
 ```
 
-
+GetRepositoryObjectSchema gets the schema for a repository object.
 
 <a name="APIServices.GetRepositoryObjectStructuredContent"></a>
 ### func \(\*APIServices\) GetRepositoryObjectStructuredContent
@@ -10213,10 +10243,10 @@ func (api *APIServices) GetWorkspace(ctx context.Context, user *db.User, workspa
 ### func \(\*APIServices\) GetWorkspaceSchema
 
 ```go
-func (api *APIServices) GetWorkspaceSchema(c context.Context, locale string, user *db.User, workspace *db.Workspace, includeConnections bool, includeRepositories bool) (*irminmodels.ObjectSchema, error)
+func (api *APIServices) GetWorkspaceSchema(ctx context.Context, locale string, user *db.User, workspace *db.Workspace, includeConnections bool, includeRepositories bool) (*irminmodels.ObjectSchema, error)
 ```
 
-
+GetWorkspaceSchema gets the complete schema for a workspace.
 
 <a name="APIServices.GetWorkspaceTag"></a>
 ### func \(\*APIServices\) GetWorkspaceTag

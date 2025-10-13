@@ -1157,6 +1157,73 @@
                 }
             }
         },
+        "/system/schema-from-file": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Upload a file (CSV, JSON, Parquet, etc.) and get its schema structure",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "schema"
+                ],
+                "summary": "Generate schema from uploaded file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "File to analyze (CSV, JSON, Parquet, Excel, Avro, ORC, etc.)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File schema generated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ObjectSchema"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid file or missing file",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid system authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/system/webhook": {
             "post": {
                 "security": [

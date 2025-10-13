@@ -366,6 +366,14 @@ func (api *APIServices) ExecuteSQL(
 	req irmincore.ExecuteSQLRequest,
 ) (*irminmodels.QueryResult, error)
 
+func (api *APIServices) GenerateSchemaFromUploadedFile(
+	ctx context.Context,
+	locale string,
+	filename string,
+	fileReader io.Reader,
+) (*irminmodels.ObjectSchema, error)
+    GenerateSchemaFromUploadedFile generates a schema for an uploaded file.
+
 func (api *APIServices) GetConnection(
 	c context.Context,
 	user *db.User,
@@ -375,13 +383,14 @@ func (api *APIServices) GetConnection(
     GetConnection gets a connection by its SQID.
 
 func (api *APIServices) GetConnectionSchema(
-	c context.Context,
+	ctx context.Context,
 	locale string,
 	user *db.User,
 	workspace *db.Workspace,
 	connection *db.Connection,
-	method string,
+	operationMethod string,
 ) (*irminmodels.ObjectSchema, error)
+    GetConnectionSchema gets the schema for a connection.
 
 func (api *APIServices) GetConnector(c context.Context, connectorID uint) (*db.Connector, error)
 
@@ -513,7 +522,7 @@ func (api *APIServices) GetRepositoryObjectHistory(
 ) ([]irminmodels.Commit, error)
 
 func (api *APIServices) GetRepositoryObjectSchema(
-	c context.Context,
+	ctx context.Context,
 	locale string,
 	user *db.User,
 	workspace *db.Workspace,
@@ -521,6 +530,7 @@ func (api *APIServices) GetRepositoryObjectSchema(
 	object *db.RepositoryObject,
 	ref string,
 ) (*irminmodels.ObjectSchema, error)
+    GetRepositoryObjectSchema gets the schema for a repository object.
 
 func (api *APIServices) GetRepositoryObjectStructuredContent(
 	c context.Context,
@@ -568,13 +578,14 @@ func (api *APIServices) GetWorkflowRun(
 func (api *APIServices) GetWorkspace(ctx context.Context, user *db.User, workspaceSlug string) (*db.Workspace, error)
 
 func (api *APIServices) GetWorkspaceSchema(
-	c context.Context,
+	ctx context.Context,
 	locale string,
 	user *db.User,
 	workspace *db.Workspace,
 	includeConnections bool,
 	includeRepositories bool,
 ) (*irminmodels.ObjectSchema, error)
+    GetWorkspaceSchema gets the complete schema for a workspace.
 
 func (api *APIServices) GetWorkspaceTag(
 	c context.Context,

@@ -47,6 +47,7 @@ func RegisterAPIRoutes(
 	// System routes
 	system := v1.Group("/system")
 	system.Post("/webhook", apiControllers.SystemWebhook)
+	system.Post("/schema-from-file", apiControllers.GenerateFileSchema)
 
 	// Profile routes
 	v1.Get("/profile", apiControllers.ProfileShow)

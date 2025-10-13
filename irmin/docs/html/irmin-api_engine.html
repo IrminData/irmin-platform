@@ -172,6 +172,14 @@ func (c *Client) GenerateObjectSchema(
 	workspace, repository, path, ref string,
 ) (*irminmodels.ObjectSchema, error)
 
+func (c *Client) GenerateSchemaFromFile(
+	ctx context.Context,
+	filename string,
+	fileData []byte,
+) (*irminmodels.ObjectSchema, error)
+    GenerateSchemaFromFile generates a schema for an uploaded file. It saves the
+    file temporarily, uses DuckDB to introspect it, and returns the schema.
+
 func (c *Client) GetBranch(ctx context.Context, workspace, repository, branch string) (*irminmodels.Branch, error)
 
 func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Commit, error)

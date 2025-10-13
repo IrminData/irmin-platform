@@ -3244,6 +3244,46 @@ paths:
       summary: Get Swagger JSON specification
       tags:
       - documentation
+  /system/schema-from-file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file (CSV, JSON, Parquet, etc.) and get its schema structure
+      parameters:
+      - description: File to analyze (CSV, JSON, Parquet, Excel, Avro, ORC, etc.)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File schema generated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ObjectSchema'
+              type: object
+        "400":
+          description: Bad request - invalid file or missing file
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid system authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - SystemTokenAuth: []
+      summary: Generate schema from uploaded file
+      tags:
+      - schema
   /system/webhook:
     post:
       consumes:

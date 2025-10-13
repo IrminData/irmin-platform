@@ -83,5 +83,6 @@
   "validation_failed": "Validation failed",
   "response_validation_failed": "Response validation failed",
   "search_failed": "Search failed",
-  "system_only_action": "This action is only available to system users"
+  "system_only_action": "This action is only available to system users",
+  "schema_generated": "Schema generated successfully"
 }

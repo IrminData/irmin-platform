@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"irmin-api/utils"
+	"path/filepath"
 	"slices"
+	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -192,4 +194,117 @@ func (c *Client) GenerateObjectSchema(
 	}
 
 	return schema, nil
+}
+
+// GenerateSchemaFromFile generates a schema for an uploaded file.
+// It saves the file temporarily, uses DuckDB to introspect it, and returns the schema.
+func (c *Client) GenerateSchemaFromFile(
+	ctx context.Context,
+	filename string,
+	fileData []byte,
+) (*irminmodels.ObjectSchema, error) {
+	// Determine the object type and content type based on file extension
+	objectType := determineObjectTypeFromFilename(filename)
+	contentType := getContentTypeFromFilename(filename)
+
+	size := len(fileData)
+	schema := &irminmodels.ObjectSchema{
+		Name:        filename,
+		Path:        filename,
+		Type:        objectType,
+		Size:        &size,
+		ContentType: &contentType,
+	}
+
+	// For structured files, generate the schema using DuckDB
+	if objectType == irminmodels.ObjectTypeStructured {
+		duckDBSchema, err := getDuckDBSchemaFromLocalFile(ctx, c, c.Env, filename, fileData)
+		if err != nil {
+			c.Logger.WarnContext(ctx, "failed to generate structured schema, treating as binary", "error", err)
+			// Fall back to binary schema
+			schema.Type = irminmodels.ObjectTypeBinary
+			return schema, nil
+		}
+
+		// Create a JSON schema for the structured object
+		jsonSchema := buildJSONSchema(duckDBSchema)
+		schema.Schema = &jsonSchema
+	}
+
+	return schema, nil
+}
+
+// determineObjectTypeFromFilename determines the object type based on file extension.
+func determineObjectTypeFromFilename(filename string) irminmodels.ObjectType {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	//nolint:goconst // This does not need to be a constant
+	case ".csv", ".json", ".jsonl", ".ndjson", ".parquet", ".xlsx", ".xls", ".avro", ".orc":
+		return irminmodels.ObjectTypeStructured
+	default:
+		return irminmodels.ObjectTypeBinary
+	}
+}
+
+// getContentTypeFromFilename returns the MIME type based on file extension.
+func getContentTypeFromFilename(filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".csv":
+		return "text/csv"
+	case ".json":
+		return "application/json"
+	case ".jsonl", ".ndjson":
+		return "application/x-ndjson"
+	case ".parquet":
+		return "application/vnd.apache.parquet"
+	case ".xlsx":
+		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case ".xls":
+		return "application/vnd.ms-excel"
+	case ".avro":
+		return "application/avro"
+	case ".orc":
+		return "application/orc"
+	case ".pdf":
+		return "application/pdf"
+	case ".txt":
+		return "text/plain"
+	case ".xml":
+		return "application/xml"
+	case ".zip":
+		return "application/zip"
+	case ".png":
+		return "image/png"
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".gif":
+		return "image/gif"
+	case ".svg":
+		return "image/svg+xml"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+// getDuckDBReadFunction returns the appropriate DuckDB read function for a file.
+func getDuckDBReadFunction(filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".csv":
+		return "read_csv"
+	case ".json", ".jsonl", ".ndjson":
+		return "read_json"
+	case ".parquet":
+		return "read_parquet"
+	case ".xlsx", ".xls":
+		return "st_read"
+	case ".avro":
+		return "read_avro"
+	case ".orc":
+		return "read_orc"
+	default:
+		// Default to read_csv for unknown extensions
+		return "read_csv"
+	}
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -130,7 +132,14 @@ func getDuckDBSchema(
 		return nil, fmt.Errorf("failed to create view: %w", executeNonQueryErr)
 	}
 
-	// fetch schema with nullability
+	// Use the shared schema extraction logic
+	return extractSchemaFromView(ctx, qc)
+}
+
+// extractSchemaFromView extracts schema information from a DuckDB view named 'table_view'.
+// This is shared logic used by both getDuckDBSchema and getDuckDBSchemaFromLocalFile.
+func extractSchemaFromView(ctx context.Context, qc *duckdb.QueryClient) ([]SchemaField, error) {
+	// Fetch schema with nullability
 	rows, executeQueryErr := qc.ExecuteQuery(ctx, `
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
@@ -154,4 +163,51 @@ WHERE table_schema='main' AND table_name='table_view'
 		result = append(result, parseField(name, typ, required))
 	}
 	return result, nil
+}
+
+// getDuckDBSchemaFromLocalFile runs DuckDB introspection on a local file.
+// It saves the file data to a temporary location and analyzes it with DuckDB.
+func getDuckDBSchemaFromLocalFile(
+	ctx context.Context,
+	c *Client,
+	env *utils.CoreAPIEnv,
+	filename string,
+	fileData []byte,
+) ([]SchemaField, error) {
+	// Create a temporary directory for the file
+	tempDir, err := os.MkdirTemp("", "irmin-schema-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Save the file to the temporary directory
+	// Use filepath.Base to prevent path traversal attacks
+	safeFilename := filepath.Base(filename)
+	tempFilePath := filepath.Join(tempDir, safeFilename)
+	if writeErr := os.WriteFile(tempFilePath, fileData, 0600); writeErr != nil {
+		return nil, fmt.Errorf("failed to write temp file: %w", writeErr)
+	}
+
+	qc, newQueryClientErr := duckdb.NewQueryClient(ctx, env, c.Logger)
+	if newQueryClientErr != nil {
+		return nil, fmt.Errorf("failed to create DuckDB client: %w", newQueryClientErr)
+	}
+	defer qc.Close()
+
+	// Determine the read function based on file extension
+	readFunction := getDuckDBReadFunction(safeFilename)
+
+	// Create temp view from the file
+	viewSQL := fmt.Sprintf(
+		"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s');",
+		readFunction,
+		tempFilePath,
+	)
+	if _, executeNonQueryErr := qc.ExecuteNonQuery(ctx, viewSQL); executeNonQueryErr != nil {
+		return nil, fmt.Errorf("failed to create view: %w", executeNonQueryErr)
+	}
+
+	// Use the shared schema extraction logic
+	return extractSchemaFromView(ctx, qc)
 }

@@ -50,6 +50,7 @@ func EnsureNovuSubscriber(
 				Locale:       &locale,
 			},
 			nil,
+			nil,
 		)
 		if createSubscriberErr != nil {
 			return nil, createSubscriberErr

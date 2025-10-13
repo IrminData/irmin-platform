@@ -83,5 +83,6 @@
   "validation_failed": "Validointi epäonnistui",
   "response_validation_failed": "Vastauksen validointi epäonnistui",
   "search_failed": "Haku epäonnistui",
-  "system_only_action": "Tämä toiminto on saatavilla vain järjestelmäkäyttäjille"
+  "system_only_action": "Tämä toiminto on saatavilla vain järjestelmäkäyttäjille",
+  "schema_generated": "Skeema luotu onnistuneesti"
 }

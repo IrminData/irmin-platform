@@ -387,6 +387,19 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error
     authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
     server error" @Router /workspaces/{workspace_slug}/execute-sql [post]
 
+func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error
+    GenerateFileSchema godoc @Summary Generate schema from uploaded file
+    @Description Upload a file (CSV, JSON, Parquet, etc.) and get its schema
+    structure @Tags schema @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param file formData file true "File to analyze (CSV,
+    JSON, Parquet, Excel, Avro, ORC, etc.)" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.ObjectSchema} "File schema
+    generated successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - invalid file or missing file" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid system authentication"
+    @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+    @Router /system/schema-from-file [post]
+
 func (api *APIControllers) IndexMyInvites(c fiber.Ctx) error
     IndexMyInvites godoc @Summary List my invites @Description Get all invites
     sent to the current authenticated user's email address @Tags invites
