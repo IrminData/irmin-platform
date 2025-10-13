@@ -35,18 +35,31 @@ type GroupSchemaRestrictions struct {
 
 // JSONSchema represents a JSON Schema for structured data.
 type JSONSchema struct {
-	Type                 string                `json:"type"                           validate:"required,oneof=object array string number integer boolean null" example:"object"` // e.g. "object", "array", etc.
-	Properties           map[string]JSONSchema `json:"properties,omitempty"`                                                                                                      // Properties of the schema, formatted like {"name":{"type":"string"},"age":{"type":"integer"}}
-	Required             []string              `json:"required,omitempty"             validate:"dive"                                                           example:"name,email"`
+	Type                 string                `json:"type"                             validate:"required,oneof=object array string number integer boolean null" example:"object"` // e.g. "object", "array", etc.
+	Properties           map[string]JSONSchema `json:"properties,omitempty"`                                                                                                        // Properties of the schema, formatted like {"name":{"type":"string"},"age":{"type":"integer"}}
+	Required             []string              `json:"required,omitempty"               validate:"dive"                                                           example:"name,email"`
 	Items                *JSONSchema           `json:"items,omitempty"`
-	Description          *string               `json:"description,omitempty"                                                                                    example:"Customer information schema"`
+	Description          *string               `json:"description,omitempty"                                                                                      example:"Customer information schema"`
 	Default              any                   `json:"default,omitempty"`
-	Enum                 []any                 `json:"enum,omitempty"                                                                                                                                 swaggertype:"array,string"`
-	AdditionalProperties any                   `json:"additionalProperties,omitempty"                                                                                                                 swaggertype:"boolean"`
-	Format               *string               `json:"format,omitempty"                                                                                         example:"email"`
-	Minimum              *float64              `json:"minimum,omitempty"                                                                                        example:"0"`
-	Maximum              *float64              `json:"maximum,omitempty"                                                                                        example:"100"`
-	MinLength            *int                  `json:"minLength,omitempty"                                                                                      example:"1"`
-	MaxLength            *int                  `json:"maxLength,omitempty"                                                                                      example:"255"`
-	Pattern              *string               `json:"pattern,omitempty"                                                                                        example:"email-pattern"`
+	Enum                 []any                 `json:"enum,omitempty"                                                                                                                                   swaggertype:"array,string"`
+	AdditionalProperties any                   `json:"additionalProperties,omitempty"                                                                                                                   swaggertype:"boolean"`
+	Format               *string               `json:"format,omitempty"                                                                                           example:"email"`
+	Minimum              *float64              `json:"minimum,omitempty"                                                                                          example:"0"`
+	Maximum              *float64              `json:"maximum,omitempty"                                                                                          example:"100"`
+	MinLength            *int                  `json:"minLength,omitempty"                                                                                        example:"1"`
+	MaxLength            *int                  `json:"maxLength,omitempty"                                                                                        example:"255"`
+	Pattern              *string               `json:"pattern,omitempty"                                                                                          example:"email-pattern"`
+	ContentEncoding      *string               `json:"contentEncoding,omitempty"                                                                                  example:"base64"`
+	ContentMediaType     *string               `json:"contentMediaType,omitempty"                                                                                 example:"application/octet-stream"`
+	MinItems             *int                  `json:"minItems,omitempty"                                                                                         example:"1"`
+	MaxItems             *int                  `json:"maxItems,omitempty"                                                                                         example:"100"`
+	// Extension fields for metadata and traceability
+	XOriginalDuckDBType *string            `json:"x-original-duckdb-type,omitempty"                                                                           example:"DECIMAL(10,2)"`
+	XDecimalPrecision   *int               `json:"x-decimal-precision,omitempty"                                                                              example:"10"`
+	XDecimalScale       *int               `json:"x-decimal-scale,omitempty"                                                                                  example:"2"`
+	XDuckDBType         *string            `json:"x-duckdb-type,omitempty"                                                                                    example:"INTERVAL"`
+	XIrmin              *map[string]string `json:"x-irmin,omitempty"`
+	XIrminSchemaVersion *string            `json:"x-irmin-schema-version,omitempty"                                                                           example:"1.0.0"`
+	XInferredBy         *string            `json:"x-inferred-by,omitempty"                                                                                    example:"duckdb-information_schema"`
+	XUnmappedTypes      *[]string          `json:"x-unmapped-types,omitempty"                                                                                 example:"CUSTOM_TYPE,UNKNOWN_TYPE"`
 }
