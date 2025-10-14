@@ -5055,7 +5055,11 @@ import "irmin-api/engine"
 
 ## Index
 
+- [func BuildJSONSchemaForTesting\(fields \[\]SchemaField, context \*SchemaContext\) irminmodels.JSONSchema](<#BuildJSONSchemaForTesting>)
+- [func ExtractArrayElementTypeForTesting\(arrayType string\) string](<#ExtractArrayElementTypeForTesting>)
 - [func IsSystemPath\(path string\) bool](<#IsSystemPath>)
+- [func PrimitiveSchemaForTesting\(duckType string, field SchemaField\) irminmodels.JSONSchema](<#PrimitiveSchemaForTesting>)
+- [func SplitTopLevelCommaForTesting\(s string\) \[\]string](<#SplitTopLevelCommaForTesting>)
 - [type BranchProtectionManager](<#BranchProtectionManager>)
   - [func NewBranchProtectionManager\(client \*lakefs.Client\) \*BranchProtectionManager](<#NewBranchProtectionManager>)
   - [func \(m \*BranchProtectionManager\) EnsureBranchProtection\(repositoryName, branchName string, isImmutable bool\) error](<#BranchProtectionManager.EnsureBranchProtection>)
@@ -5104,8 +5108,29 @@ import "irmin-api/engine"
   - [func \(c \*Client\) UploadObject\(workspace, repository, path, ref string, file io.Reader\) \(\*irminmodels.Object, error\)](<#Client.UploadObject>)
 - [type FieldMappingResult](<#FieldMappingResult>)
 - [type Repository](<#Repository>)
+- [type SchemaContext](<#SchemaContext>)
 - [type SchemaField](<#SchemaField>)
+  - [func ParseFieldForElementForTesting\(name, elementType string, required bool\) SchemaField](<#ParseFieldForElementForTesting>)
+  - [func ParseFieldForTesting\(name, typ string, required bool\) SchemaField](<#ParseFieldForTesting>)
 
+
+<a name="BuildJSONSchemaForTesting"></a>
+## func BuildJSONSchemaForTesting
+
+```go
+func BuildJSONSchemaForTesting(fields []SchemaField, context *SchemaContext) irminmodels.JSONSchema
+```
+
+BuildJSONSchemaForTesting exposes buildJSONSchema for testing
+
+<a name="ExtractArrayElementTypeForTesting"></a>
+## func ExtractArrayElementTypeForTesting
+
+```go
+func ExtractArrayElementTypeForTesting(arrayType string) string
+```
+
+ExtractArrayElementTypeForTesting exposes extractArrayElementType for testing
 
 <a name="IsSystemPath"></a>
 ## func IsSystemPath
@@ -5115,6 +5140,24 @@ func IsSystemPath(path string) bool
 ```
 
 IsSystemPath checks if the given path is a system path that should be hidden.
+
+<a name="PrimitiveSchemaForTesting"></a>
+## func PrimitiveSchemaForTesting
+
+```go
+func PrimitiveSchemaForTesting(duckType string, field SchemaField) irminmodels.JSONSchema
+```
+
+PrimitiveSchemaForTesting exposes primitiveSchema for testing
+
+<a name="SplitTopLevelCommaForTesting"></a>
+## func SplitTopLevelCommaForTesting
+
+```go
+func SplitTopLevelCommaForTesting(s string) []string
+```
+
+SplitTopLevelCommaForTesting exposes splitTopLevelComma for testing
 
 <a name="BranchProtectionManager"></a>
 ## type BranchProtectionManager
@@ -5584,19 +5627,53 @@ type Repository struct {
 }
 ```
 
+<a name="SchemaContext"></a>
+## type SchemaContext
+
+SchemaContext holds optional context information for schema generation
+
+```go
+type SchemaContext struct {
+    Repository string
+    Path       string
+    Ref        string
+}
+```
+
 <a name="SchemaField"></a>
 ## type SchemaField
 
-SchemaField represents one column or nested field in the DuckDB schema. Name is the column name or nested field name. Type is the DuckDB data type \(e.g. "VARCHAR", "STRUCT", or "ARRAY\<STRUCT\>"\). Required indicates whether the field is non\-nullable in DuckDB \(is\_nullable = 'NO'\). Children holds nested struct fields if this column is a STRUCT or array of STRUCTs.
+SchemaField represents one column or nested field in the DuckDB schema. Name is the column name or nested field name. Type is the DuckDB data type \(e.g. "VARCHAR", "STRUCT", or "ARRAY\<STRUCT\>"\). Required indicates whether the field is non\-nullable in DuckDB \(is\_nullable = 'NO'\). Children holds nested struct fields if this column is a STRUCT or array of STRUCTs. OriginalType preserves the exact DuckDB type string for traceability. Precision and Scale are for DECIMAL types.
 
 ```go
 type SchemaField struct {
-    Name     string        `json:"name"`
-    Type     string        `json:"type"`
-    Required bool          `json:"required"`
-    Children []SchemaField `json:"children,omitempty"`
+    Name         string        `json:"name"`
+    Type         string        `json:"type"`
+    Required     bool          `json:"required"`
+    Children     []SchemaField `json:"children,omitempty"`
+    OriginalType string        `json:"original_type,omitempty"`
+    Precision    *int          `json:"precision,omitempty"`
+    Scale        *int          `json:"scale,omitempty"`
 }
 ```
+
+<a name="ParseFieldForElementForTesting"></a>
+### func ParseFieldForElementForTesting
+
+```go
+func ParseFieldForElementForTesting(name, elementType string, required bool) SchemaField
+```
+
+ParseFieldForElementForTesting exposes parseFieldForElement for testing
+
+<a name="ParseFieldForTesting"></a>
+### func ParseFieldForTesting
+
+```go
+func ParseFieldForTesting(name, typ string, required bool) SchemaField
+```
+
+ParseFieldForTesting exposes parseField for testing
 
 # formatter
 

@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"irmin-api/db"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
@@ -68,7 +69,13 @@ func SetupTestSuite(t *testing.T) error {
 	}
 
 	// Create DuckDB client for data operations
-	duckDBClient, err := duckdb.NewQueryClient(t.Context(), testEnv, logger)
+	var ctx context.Context
+	if t != nil {
+		ctx = t.Context()
+	} else {
+		ctx = context.Background()
+	}
+	duckDBClient, err := duckdb.NewQueryClient(ctx, testEnv, logger)
 	if err != nil {
 		// Close the DB if DuckDB client fails
 		testDB.Close()

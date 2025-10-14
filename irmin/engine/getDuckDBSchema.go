@@ -15,33 +15,128 @@ import (
 // Type is the DuckDB data type (e.g. "VARCHAR", "STRUCT", or "ARRAY<STRUCT>").
 // Required indicates whether the field is non-nullable in DuckDB (is_nullable = 'NO').
 // Children holds nested struct fields if this column is a STRUCT or array of STRUCTs.
+// OriginalType preserves the exact DuckDB type string for traceability.
+// Precision and Scale are for DECIMAL types.
 type SchemaField struct {
-	Name     string        `json:"name"`
-	Type     string        `json:"type"`
-	Required bool          `json:"required"`
-	Children []SchemaField `json:"children,omitempty"`
+	Name         string        `json:"name"`
+	Type         string        `json:"type"`
+	Required     bool          `json:"required"`
+	Children     []SchemaField `json:"children,omitempty"`
+	OriginalType string        `json:"original_type,omitempty"`
+	Precision    *int          `json:"precision,omitempty"`
+	Scale        *int          `json:"scale,omitempty"`
 }
 
 // minFieldParts is the minimum number of parts required for a valid field definition
 // (name and type).
 const minFieldParts = 2
 
+// typeInfo holds parsed type information including metadata
+type typeInfo struct {
+	normalizedType string
+	originalType   string
+	precision      *int
+	scale          *int
+}
+
+// parseDecimalParameters extracts precision and scale from DECIMAL/NUMERIC type strings
+func parseDecimalParameters(typeStr string) (*int, *int) {
+	start := strings.Index(typeStr, "(")
+	end := strings.Index(typeStr, ")")
+	if start == -1 || end == -1 || end <= start {
+		return nil, nil
+	}
+
+	params := strings.Split(typeStr[start+1:end], ",")
+	var precision, scale *int
+
+	// Parse precision (first parameter)
+	if len(params) >= 1 {
+		if p, err := parseInt(strings.TrimSpace(params[0])); err == nil {
+			precision = &p
+		}
+	}
+
+	// Parse scale (second parameter)
+	const scaleParamIndex = 1
+	const minDecimalParams = 2
+	if len(params) >= minDecimalParams {
+		if s, err := parseInt(strings.TrimSpace(params[scaleParamIndex])); err == nil {
+			scale = &s
+		}
+	}
+
+	return precision, scale
+}
+
+// normalizeAndParseType takes a raw DuckDB type string and extracts normalized type
+// plus any metadata (precision, scale for DECIMAL, etc.)
+func normalizeAndParseType(rawType string) typeInfo {
+	info := typeInfo{
+		originalType:   rawType,
+		normalizedType: strings.ToUpper(strings.TrimSpace(rawType)),
+	}
+
+	// Handle DECIMAL/NUMERIC with precision and scale: DECIMAL(10,2)
+	if strings.HasPrefix(info.normalizedType, "DECIMAL(") || strings.HasPrefix(info.normalizedType, "NUMERIC(") {
+		info.precision, info.scale = parseDecimalParameters(info.normalizedType)
+		// Normalize to just DECIMAL (both NUMERIC and DECIMAL become DECIMAL)
+		info.normalizedType = "DECIMAL"
+		return info
+	}
+
+	// Handle array syntax variations: INTEGER[] → ARRAY<INTEGER>
+	if strings.HasSuffix(info.normalizedType, "[]") && !strings.HasPrefix(info.normalizedType, "ARRAY<") {
+		baseType := strings.TrimSuffix(info.normalizedType, "[]")
+		info.normalizedType = "ARRAY<" + baseType + ">"
+		return info
+	}
+
+	return info
+}
+
+// parseInt parses an integer from a string
+func parseInt(s string) (int, error) {
+	var result int
+	_, err := fmt.Sscanf(s, "%d", &result)
+	return result, err
+}
+
 // splitTopLevelComma splits a STRUCT(...) definition by commas at top-level only,
-// ignoring commas inside nested parentheses.
+// ignoring commas inside nested parentheses and respecting quoted identifiers.
 func splitTopLevelComma(s string) []string {
 	var parts []string
 	var buf strings.Builder
 	depth := 0
+	inQuotes := false
+	escapeNext := false
+
 	for _, r := range s {
+		if escapeNext {
+			buf.WriteRune(r)
+			escapeNext = false
+			continue
+		}
+
 		switch r {
+		case '\\':
+			escapeNext = true
+			buf.WriteRune(r)
+		case '"':
+			inQuotes = !inQuotes
+			buf.WriteRune(r)
 		case '(':
-			depth++
+			if !inQuotes {
+				depth++
+			}
 			buf.WriteRune(r)
 		case ')':
-			depth--
+			if !inQuotes {
+				depth--
+			}
 			buf.WriteRune(r)
 		case ',':
-			if depth == 0 {
+			if depth == 0 && !inQuotes {
 				parts = append(parts, buf.String())
 				buf.Reset()
 			} else {
@@ -57,43 +152,102 @@ func splitTopLevelComma(s string) []string {
 	return parts
 }
 
+// parseStructFields parses struct field definitions and returns children
+func parseStructFields(structDef string, required bool) []SchemaField {
+	fields := splitTopLevelComma(structDef)
+	children := make([]SchemaField, 0, len(fields))
+	for _, f := range fields {
+		parts := strings.Fields(strings.TrimSpace(f))
+		if len(parts) < minFieldParts {
+			continue
+		}
+		childName := parts[0]
+		childType := strings.Join(parts[1:], " ")
+		children = append(children, parseField(childName, childType, required))
+	}
+	return children
+}
+
+// handleArrayOfStructs processes array of struct types
+func handleArrayOfStructs(name, normalizedType string, tInfo typeInfo, required bool) SchemaField {
+	var nested string
+	if strings.HasSuffix(normalizedType, ")[]") {
+		// STRUCT(...)[]
+		nested = normalizedType[len("STRUCT(") : len(normalizedType)-3]
+	} else {
+		// ARRAY<STRUCT(...)>
+		nested = normalizedType[len("ARRAY<STRUCT(") : len(normalizedType)-2]
+	}
+
+	children := parseStructFields(nested, required)
+	return SchemaField{
+		Name:         name,
+		Type:         "ARRAY<STRUCT>",
+		Required:     required,
+		Children:     children,
+		OriginalType: tInfo.originalType,
+	}
+}
+
+// handleStruct processes regular struct types
+func handleStruct(name, normalizedType string, tInfo typeInfo, required bool) SchemaField {
+	nested := normalizedType[len("STRUCT(") : len(normalizedType)-1]
+	children := parseStructFields(nested, required)
+	return SchemaField{
+		Name:         name,
+		Type:         "STRUCT",
+		Required:     required,
+		Children:     children,
+		OriginalType: tInfo.originalType,
+	}
+}
+
 // parseField constructs a SchemaField recursively from its name, type and required flag.
 func parseField(name, typ string, required bool) SchemaField {
-	// handle array of structs
-	if strings.HasPrefix(typ, "STRUCT(") && strings.HasSuffix(typ, ")[]") {
-		// treat as array of struct
-		nested := typ[len("STRUCT(") : len(typ)-3] // drop STRUCT( ... )[]
-		fields := splitTopLevelComma(nested)
-		children := make([]SchemaField, 0, len(fields))
-		for _, f := range fields {
-			parts := strings.Fields(strings.TrimSpace(f))
-			if len(parts) < minFieldParts {
-				continue
-			}
-			childName := parts[0]
-			childType := strings.Join(parts[1:], " ")
-			children = append(children, parseField(childName, childType, required))
-		}
-		return SchemaField{Name: name, Type: "ARRAY<STRUCT>", Required: required, Children: children}
+	// Normalize and parse the type to extract metadata
+	tInfo := normalizeAndParseType(typ)
+	normalizedType := tInfo.normalizedType
+
+	// Handle array of structs: STRUCT(...)[] or ARRAY<STRUCT(...)>
+	if (strings.HasPrefix(normalizedType, "STRUCT(") && strings.HasSuffix(normalizedType, ")[]")) ||
+		(strings.HasPrefix(normalizedType, "ARRAY<STRUCT(") && strings.HasSuffix(normalizedType, ")>")) {
+		return handleArrayOfStructs(name, normalizedType, tInfo, required)
 	}
-	// handle struct
-	if strings.HasPrefix(typ, "STRUCT(") && strings.HasSuffix(typ, ")") {
-		nested := typ[len("STRUCT(") : len(typ)-1]
-		fields := splitTopLevelComma(nested)
-		children := make([]SchemaField, 0, len(fields))
-		for _, f := range fields {
-			parts := strings.Fields(strings.TrimSpace(f))
-			if len(parts) < minFieldParts {
-				continue
-			}
-			childName := parts[0]
-			childType := strings.Join(parts[1:], " ")
-			children = append(children, parseField(childName, childType, required))
-		}
-		return SchemaField{Name: name, Type: "STRUCT", Required: required, Children: children}
+
+	// Handle regular struct
+	if strings.HasPrefix(normalizedType, "STRUCT(") && strings.HasSuffix(normalizedType, ")") {
+		return handleStruct(name, normalizedType, tInfo, required)
 	}
-	// primitive or other types
-	return SchemaField{Name: name, Type: typ, Required: required}
+
+	// Handle ARRAY<primitive> types
+	if strings.HasPrefix(normalizedType, "ARRAY<") && strings.HasSuffix(normalizedType, ">") {
+		return SchemaField{
+			Name:         name,
+			Type:         normalizedType,
+			Required:     required,
+			OriginalType: tInfo.originalType,
+		}
+	}
+
+	// Handle MAP<K,V> types
+	if strings.HasPrefix(normalizedType, "MAP<") && strings.HasSuffix(normalizedType, ">") {
+		return SchemaField{
+			Name:         name,
+			Type:         normalizedType,
+			Required:     required,
+			OriginalType: tInfo.originalType,
+		}
+	}
+
+	// Primitive or other types
+	return SchemaField{
+		Name:         name,
+		Type:         normalizedType,
+		Required:     required,
+		OriginalType: tInfo.originalType,
+		Precision:    tInfo.precision,
+		Scale:        tInfo.scale,
+	}
 }
 
 // getDuckDBSchema runs DuckDB introspection on a structured file and returns a schema with required flags.

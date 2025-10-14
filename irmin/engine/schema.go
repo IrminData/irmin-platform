@@ -121,8 +121,12 @@ func generateStructuredObjectSchema(
 		return nil, fmt.Errorf("failed to get DuckDB schema: %w", err)
 	}
 
-	// Create a JSON schema for the structured object.
-	jsonSchema := buildJSONSchema(duckDBSchema)
+	// Create a JSON schema for the structured object with context metadata
+	jsonSchema := buildJSONSchema(duckDBSchema, &SchemaContext{
+		Repository: repository,
+		Path:       object.Path,
+		Ref:        ref,
+	})
 	schema.Schema = &jsonSchema
 
 	return schema, nil
@@ -226,8 +230,10 @@ func (c *Client) GenerateSchemaFromFile(
 			return schema, nil
 		}
 
-		// Create a JSON schema for the structured object
-		jsonSchema := buildJSONSchema(duckDBSchema)
+		// Create a JSON schema for the structured object with filename context
+		jsonSchema := buildJSONSchema(duckDBSchema, &SchemaContext{
+			Path: filename,
+		})
 		schema.Schema = &jsonSchema
 	}
 

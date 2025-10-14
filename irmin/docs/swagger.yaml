@@ -1233,6 +1233,12 @@ definitions:
     properties:
       additionalProperties:
         type: boolean
+      contentEncoding:
+        example: base64
+        type: string
+      contentMediaType:
+        example: application/octet-stream
+        type: string
       default: {}
       description:
         example: Customer information schema
@@ -1246,12 +1252,18 @@ definitions:
         type: string
       items:
         $ref: '#/definitions/irminmodels.JSONSchema'
+      maxItems:
+        example: 100
+        type: integer
       maxLength:
         example: 255
         type: integer
       maximum:
         example: 100
         type: number
+      minItems:
+        example: 1
+        type: integer
       minLength:
         example: 1
         type: integer
@@ -1285,6 +1297,36 @@ definitions:
         - "null"
         example: object
         type: string
+      x-decimal-precision:
+        example: 10
+        type: integer
+      x-decimal-scale:
+        example: 2
+        type: integer
+      x-duckdb-type:
+        example: INTERVAL
+        type: string
+      x-inferred-by:
+        example: duckdb-information_schema
+        type: string
+      x-irmin:
+        additionalProperties:
+          type: string
+        type: object
+      x-irmin-schema-version:
+        example: 1.0.0
+        type: string
+      x-original-duckdb-type:
+        description: Extension fields for metadata and traceability
+        example: DECIMAL(10,2)
+        type: string
+      x-unmapped-types:
+        example:
+        - CUSTOM_TYPE
+        - UNKNOWN_TYPE
+        items:
+          type: string
+        type: array
     required:
     - type
     type: object

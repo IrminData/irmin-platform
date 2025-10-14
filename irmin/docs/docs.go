@@ -11662,6 +11662,14 @@ const docTemplate = `{
                 "additionalProperties": {
                     "type": "boolean"
                 },
+                "contentEncoding": {
+                    "type": "string",
+                    "example": "base64"
+                },
+                "contentMediaType": {
+                    "type": "string",
+                    "example": "application/octet-stream"
+                },
                 "default": {},
                 "description": {
                     "type": "string",
@@ -11680,6 +11688,10 @@ const docTemplate = `{
                 "items": {
                     "$ref": "#/definitions/irminmodels.JSONSchema"
                 },
+                "maxItems": {
+                    "type": "integer",
+                    "example": 100
+                },
                 "maxLength": {
                     "type": "integer",
                     "example": 255
@@ -11687,6 +11699,10 @@ const docTemplate = `{
                 "maximum": {
                     "type": "number",
                     "example": 100
+                },
+                "minItems": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "minLength": {
                     "type": "integer",
@@ -11730,6 +11746,47 @@ const docTemplate = `{
                         "null"
                     ],
                     "example": "object"
+                },
+                "x-decimal-precision": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "x-decimal-scale": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "x-duckdb-type": {
+                    "type": "string",
+                    "example": "INTERVAL"
+                },
+                "x-inferred-by": {
+                    "type": "string",
+                    "example": "duckdb-information_schema"
+                },
+                "x-irmin": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "x-irmin-schema-version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                },
+                "x-original-duckdb-type": {
+                    "description": "Extension fields for metadata and traceability",
+                    "type": "string",
+                    "example": "DECIMAL(10,2)"
+                },
+                "x-unmapped-types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "CUSTOM_TYPE",
+                        "UNKNOWN_TYPE"
+                    ]
                 }
             }
         },

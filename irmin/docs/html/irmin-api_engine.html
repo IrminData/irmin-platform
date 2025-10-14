@@ -7,9 +7,22 @@ package engine // import "irmin-api/engine"
 
 FUNCTIONS
 
+func BuildJSONSchemaForTesting(fields []SchemaField, context *SchemaContext) irminmodels.JSONSchema
+    BuildJSONSchemaForTesting exposes buildJSONSchema for testing
+
+func ExtractArrayElementTypeForTesting(arrayType string) string
+    ExtractArrayElementTypeForTesting exposes extractArrayElementType for
+    testing
+
 func IsSystemPath(path string) bool
     IsSystemPath checks if the given path is a system path that should be
     hidden.
+
+func PrimitiveSchemaForTesting(duckType string, field SchemaField) irminmodels.JSONSchema
+    PrimitiveSchemaForTesting exposes primitiveSchema for testing
+
+func SplitTopLevelCommaForTesting(s string) []string
+    SplitTopLevelCommaForTesting exposes splitTopLevelComma for testing
 
 
 TYPES
@@ -285,17 +298,35 @@ type Repository struct {
 }
     Repository represents a returned by the data engine.
 
+type SchemaContext struct {
+	Repository string
+	Path       string
+	Ref        string
+}
+    SchemaContext holds optional context information for schema generation
+
 type SchemaField struct {
-	Name     string        `json:"name"`
-	Type     string        `json:"type"`
-	Required bool          `json:"required"`
-	Children []SchemaField `json:"children,omitempty"`
+	Name         string        `json:"name"`
+	Type         string        `json:"type"`
+	Required     bool          `json:"required"`
+	Children     []SchemaField `json:"children,omitempty"`
+	OriginalType string        `json:"original_type,omitempty"`
+	Precision    *int          `json:"precision,omitempty"`
+	Scale        *int          `json:"scale,omitempty"`
 }
     SchemaField represents one column or nested field in the DuckDB schema. Name
     is the column name or nested field name. Type is the DuckDB data type (e.g.
     "VARCHAR", "STRUCT", or "ARRAY&lt;STRUCT&gt;"). Required indicates whether the
     field is non-nullable in DuckDB (is_nullable = 'NO'). Children holds nested
-    struct fields if this column is a STRUCT or array of STRUCTs.
+    struct fields if this column is a STRUCT or array of STRUCTs. OriginalType
+    preserves the exact DuckDB type string for traceability. Precision and Scale
+    are for DECIMAL types.
+
+func ParseFieldForElementForTesting(name, elementType string, required bool) SchemaField
+    ParseFieldForElementForTesting exposes parseFieldForElement for testing
+
+func ParseFieldForTesting(name, typ string, required bool) SchemaField
+    ParseFieldForTesting exposes parseField for testing
 
 </pre>
 </body></html>
