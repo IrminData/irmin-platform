@@ -26,6 +26,7 @@ go get github.com/IrminData/irmin-sdk-go
 package main
 
 import (
+    "context"
     "fmt"
     "log"
 
@@ -34,11 +35,14 @@ import (
 )
 
 func main() {
+    // Create a context for API calls
+    ctx := context.Background()
+    
     // Create a new client
     client := irmincore.NewClient("https://api.irmin.co/api", "your-token", "en")
 
     // Create a workspace
-    workspace, resp, err := client.CreateWorkspace(irmincore.CreateWorkspaceRequest{
+    workspace, resp, err := client.CreateWorkspace(ctx, irmincore.CreateWorkspaceRequest{
         Name:        "My Workspace",
         Description: "A workspace for data analysis",
     })
@@ -54,14 +58,18 @@ func main() {
 
 ```go
 import (
+    "context"
     irminconnector "github.com/IrminData/irmin-sdk-go/connector"
 )
 
+// Create a context
+ctx := context.Background()
+
 // Create a connector client
-connectorClient := irminconnector.NewClient("https://connector.irmin.co", "your-token")
+connectorClient := irminconnector.NewClient("https://connector.irmin.co", "your-token", "en")
 
 // Get connector information
-info, err := connectorClient.GetInfo("postgres")
+info, err := connectorClient.GetInfo(ctx)
 if err != nil {
     log.Fatal(err)
 }
@@ -132,41 +140,51 @@ The Core API client provides methods for all Irmin endpoints:
 
 ### Workspaces
 ```go
+ctx := context.Background()
+
 // Create, update, delete workspaces
-workspace, _, err := client.CreateWorkspace(request)
-workspaces, _, err := client.GetWorkspaces()
-_, err = client.UpdateWorkspace("workspace-id", updateRequest)
+workspace, _, err := client.CreateWorkspace(ctx, request)
+workspaces, _, err := client.GetWorkspaces(ctx)
+_, err = client.UpdateWorkspace(ctx, "workspace-id", updateRequest)
 ```
 
 ### Connections
 ```go
+ctx := context.Background()
+
 // Manage data source connections
-connection, _, err := client.CreateConnection("workspace-id", request)
-connections, _, err := client.GetConnections("workspace-id")
+connection, _, err := client.CreateConnection(ctx, "workspace-id", request)
+connections, _, err := client.GetConnections(ctx, "workspace-id")
 ```
 
 ### Workflows & Queries
 ```go
+ctx := context.Background()
+
 // Create and manage workflows
-workflow, _, err := client.CreateWorkflow("workspace-id", request)
+workflow, _, err := client.CreateWorkflow(ctx, "workspace-id", request)
 
 // Execute and manage SQL queries
-query, _, err := client.CreateQuery("workspace-id", request)
+query, _, err := client.CreateQuery(ctx, "workspace-id", request)
 ```
 
 ### Repositories & Version Control
 ```go
+ctx := context.Background()
+
 // Git-like data versioning
-repo, _, err := client.CreateRepository("workspace-id", request)
-branches, _, err := client.GetRepositoryBranches("workspace-id", "repo-id")
-commits, _, err := client.GetRepositoryCommits("workspace-id", "repo-id", "branch")
+repo, _, err := client.CreateRepository(ctx, "workspace-id", request)
+branches, _, err := client.GetRepositoryBranches(ctx, "workspace-id", "repo-id")
+commits, _, err := client.GetRepositoryCommits(ctx, "workspace-id", "repo-id", "branch")
 ```
 
 ### User & Role Management
 ```go
+ctx := context.Background()
+
 // Manage users and permissions
-users, _, err := client.GetUsers()
-roles, _, err := client.GetRoles()
+users, _, err := client.GetUsers(ctx)
+roles, _, err := client.GetRoles(ctx)
 ```
 
 ## Validation
@@ -178,8 +196,10 @@ The SDK includes comprehensive client-side validation to catch errors before API
 All API methods automatically validate requests:
 
 ```go
+ctx := context.Background()
+
 // This will fail validation before making the HTTP request
-_, _, err := client.CreateConnection("workspace", irmincore.CreateConnectionRequest{
+_, _, err := client.CreateConnection(ctx, "workspace", irmincore.CreateConnectionRequest{
     // Missing required fields
     Description: "Invalid request",
 })
@@ -246,14 +266,16 @@ client := irmincore.NewClientWithSQIDManager(
 The connector client supports various data operations:
 
 ```go
+ctx := context.Background()
+
 // Pull data from a source
-result, err := connectorClient.Pull("connector-id", pullConfig)
+result, err := connectorClient.OperationPull(ctx, "path/to/data")
 
 // Push data to a destination  
-err = connectorClient.Push("connector-id", pushConfig, data)
+err = connectorClient.OperationPush(ctx, "path/to/destination", file)
 
 // Subscribe to real-time updates
-err = connectorClient.Subscribe("connector-id", subscribeConfig)
+subscription, err := connectorClient.SubscribeToChanges(ctx, webhookURL, webhookToken)
 ```
 
 ## DuckDB In-Memory Analytics
@@ -349,7 +371,9 @@ The SDK supports multiple content types:
 Comprehensive error information with validation details:
 
 ```go
-result, resp, err := client.CreateConnection("workspace", request)
+ctx := context.Background()
+
+result, resp, err := client.CreateConnection(ctx, "workspace", request)
 if err != nil {
     // Check for validation errors
     if strings.Contains(err.Error(), "validation failed") {
