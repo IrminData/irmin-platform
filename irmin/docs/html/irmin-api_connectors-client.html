@@ -25,28 +25,30 @@ type Client struct {
 func NewClient(baseURL, token, locale string) *Client
     NewClient creates a new Connector API client with default settings.
 
-func (c *Client) CancelOperation(operationID uint) error
+func (c *Client) CancelOperation(ctx context.Context, operationID uint) error
     CancelOperation cancels an operation with the connector. Cancellation
     is used to revoke the operation token and stop any ongoing processes,
     like event listeners.
 
     Note: System token is required for this operation.
 
-    Parameters: - operationID: The ID of the operation to cancel.
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - operationID: The ID of the operation to cancel.
 
     Returns: - An error if the operation cannot be cancelled.
 
-func (c *Client) FetchAPI(opts RequestOptions, out any) error
+func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error
     FetchAPI sends a request and attempts to parse the JSON response into a
     struct if provided.
 
-func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error)
+func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]PulledFile, error)
     FetchStreamFiles sends a request based on the provided RequestOptions and
     returns a slice of PulledFile. If the response is multipart, each part is
     parsed as a separate file. Otherwise, the response is treated as a single
     file.
 
 func (c *Client) GetConfigFields(
+	ctx context.Context,
 	configType string,
 	details map[string]string,
 	settings map[string]string,
@@ -56,33 +58,37 @@ func (c *Client) GetConfigFields(
 
     Note: System token is required for this operation.
 
-    Parameters: - configType: The type of configuration, e.g. "details" or
-    "settings". - details: A map containing prefilled configuration details
-    (e.g. host, port, user, password, etc.). - settings: A map containing
-    prefilled configuration settings (e.g. database, schema, table, etc.).
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - configType: The type of configuration, e.g. "details" or "settings". -
+    details: A map containing prefilled configuration details (e.g. host, port,
+    user, password, etc.). - settings: A map containing prefilled configuration
+    settings (e.g. database, schema, table, etc.).
 
     Returns: - A list of DynamicField objects representing the configuration
     fields if the request is successful. - An error if the request fails.
 
-func (c *Client) GetInfo() (*ConnectorInfo, error)
+func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
     GetInfo fetches the connector's information from the /info endpoint.
 
     Note: System token is required for this operation.
 
+    Parameters: - ctx: Context for request cancellation and timeout control.
+
     Returns: - A pointer to ConnectorInfo if the request is successful. - An
     error if the API call fails or the response cannot be unmarshalled.
 
-func (c *Client) GetOperationStatus(operationID uint) (*OperationStatus, error)
+func (c *Client) GetOperationStatus(ctx context.Context, operationID uint) (*OperationStatus, error)
     GetOperationStatus retrieves the status of an operation with the connector.
 
     Note: System token is required for this operation.
 
-    Parameters: - operationID: The ID of the operation to get the status of.
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - operationID: The ID of the operation to get the status of.
 
     Returns: - The status of the operation if the request is successful.
     - An error if the operation cannot be retrieved.
 
-func (c *Client) GetSchema(method string) (*irminmodels.ObjectSchema, error)
+func (c *Client) GetSchema(ctx context.Context, method string) (*irminmodels.ObjectSchema, error)
     GetSchema retrieves the schema for a specific operation method.
 
     Note: Operation token is required for this operation.
@@ -93,40 +99,47 @@ func (c *Client) GetSchema(method string) (*irminmodels.ObjectSchema, error)
     Returns: - The schema for the specified operation method if the request is
     successful. - An error if the request fails.
 
-func (c *Client) InitOperation(details map[string]string, settings map[string]string) (*Operation, error)
+func (c *Client) InitOperation(
+	ctx context.Context,
+	details map[string]string,
+	settings map[string]string,
+) (*Operation, error)
     InitOperation creates a new operation with the connector. The operation
     is used to store the configuration details and settings for a specific
     operation.
 
     Note: System token is required for this operation.
 
-    Parameters: - details: A map containing configuration details (e.g. host,
-    port, user, password, etc.). - settings: A map containing configuration
-    settings (e.g. database, schema, table, etc.).
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - details: A map containing configuration details (e.g. host, port, user,
+    password, etc.). - settings: A map containing configuration settings (e.g.
+    database, schema, table, etc.).
 
     Returns: - The newly created operation if the request is successful.
     - An error if the request fails.
 
-func (c *Client) OperationPatch(patchFile FormFile) (string, error)
+func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string, error)
     OperationPatch sends a patch file to the /operation/patch endpoint to apply
     JSON patch operations to the data.
 
     Note: Operation token is required for this operation.
 
-    Parameters: - A JSON form file "patches" containing the list of JSON patch
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - patchFile: A JSON form file "patches" containing the list of JSON patch
     operations to apply to the data.
 
     Returns: - A string containing the response message from the push operation.
     - An error if the request fails.
 
-func (c *Client) OperationPull(path string) ([]PulledFile, error)
+func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error)
     OperationPull sends a POST request to the /operation/pull endpoint,
     retrieves the full streamed content, extracts the filename from the
     Content-Disposition header (if available), and returns both.
 
     Note: Operation token is required for this operation.
 
-    Parameters: - path: The path in the connector to pull data for.
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - path: The path in the connector to pull data for.
 
     Returns: - A slice of PulledFile objects containing the following:
       - Byte map containing the full streamed content.
@@ -135,36 +148,39 @@ func (c *Client) OperationPull(path string) ([]PulledFile, error)
 
     - An error if the request fails.
 
-func (c *Client) OperationPush(path string, file FormFile) (string, error)
+func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) (string, error)
     OperationPush sends a file to the /operation/push endpoint along with a
     target path.
 
     Note: Operation token is required for this operation.
 
-    Parameters: - A form field "path" with the provided path value. - A form
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - path: A form field "path" with the provided path value. - file: A form
     file "file" containing the file to push.
 
     Returns: - A string containing the response message from the push operation.
     - An error if the request fails.
 
-func (c *Client) Request(opts RequestOptions) ([]byte, error)
+func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
     Request sends requests to the REST API of the connector and returns the raw
     response data. It utilises prepareBodyAndHeaders and doRequest to reduce
     code duplication.
 
-func (c *Client) SubscribeToChanges(webhook, webhookAccessToken string) (*Subscription, error)
+func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error)
     SubscribeToChanges subscribes to changes in the data and sends the changes
     to the specified webhook.
 
     Note: Operation token is required for this operation.
 
-    Parameters: - webhook: The URL of the webhook to send the changes to.
+    Parameters: - ctx: Context for request cancellation and timeout
+    control. - webhook: The URL of the webhook to send the changes to.
     - webhookAccessToken: The token to authenticate the webhook request with.
 
     Returns: - The schema for the specified operation method if the request is
     successful. - An error if the request fails.
 
 func (c *Client) ValidateConfigFields(
+	ctx context.Context,
 	details map[string]string,
 	settings map[string]string,
 ) (*irminmodels.ConnectorConfigurationValidationResult, error)
@@ -173,9 +189,9 @@ func (c *Client) ValidateConfigFields(
 
     Note: System token is required for this operation.
 
-    Parameters: - details: A map containing configuration details provided by
-    the user. - settings: A map containing configuration settings provided by
-    the user.
+    Parameters: - ctx: Context for request cancellation and timeout control.
+    - details: A map containing configuration details provided by the user.
+    - settings: A map containing configuration settings provided by the user.
 
     Returns: - A validation result from the connector if the request is
     successful. - An error if there is a problem with the request.

@@ -1,6 +1,7 @@
 package connectorsclient
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -32,13 +33,18 @@ type OperationStatus struct {
 // Note: System token is required for this operation.
 //
 // Parameters:
+// - ctx: Context for request cancellation and timeout control.
 // - details: A map containing configuration details (e.g. host, port, user, password, etc.).
 // - settings: A map containing configuration settings (e.g. database, schema, table, etc.).
 //
 // Returns:
 // - The newly created operation if the request is successful.
 // - An error if the request fails.
-func (c *Client) InitOperation(details map[string]string, settings map[string]string) (*Operation, error) {
+func (c *Client) InitOperation(
+	ctx context.Context,
+	details map[string]string,
+	settings map[string]string,
+) (*Operation, error) {
 	// Prepare form fields by formatting keys with the appropriate prefixes.
 	formFields := make(map[string]string)
 	for key, value := range details {
@@ -52,7 +58,7 @@ func (c *Client) InitOperation(details map[string]string, settings map[string]st
 	var operation Operation
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
-	if err := c.FetchAPI(RequestOptions{
+	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/operation/init",
 		FormFields:  formFields,
@@ -70,18 +76,19 @@ func (c *Client) InitOperation(details map[string]string, settings map[string]st
 // Note: System token is required for this operation.
 //
 // Parameters:
+// - ctx: Context for request cancellation and timeout control.
 // - operationID: The ID of the operation to cancel.
 //
 // Returns:
 // - An error if the operation cannot be cancelled.
-func (c *Client) CancelOperation(operationID uint) error {
+func (c *Client) CancelOperation(ctx context.Context, operationID uint) error {
 	// Prepare form fields by formatting keys with the appropriate prefixes.
 	formFields := map[string]string{
 		"operation_id": strconv.FormatUint(uint64(operationID), 10),
 	}
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
-	if err := c.FetchAPI(RequestOptions{
+	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/operation/cancel",
 		FormFields:  formFields,
@@ -99,19 +106,20 @@ func (c *Client) CancelOperation(operationID uint) error {
 // Note: System token is required for this operation.
 //
 // Parameters:
+// - ctx: Context for request cancellation and timeout control.
 // - operationID: The ID of the operation to get the status of.
 //
 // Returns:
 // - The status of the operation if the request is successful.
 // - An error if the operation cannot be retrieved.
-func (c *Client) GetOperationStatus(operationID uint) (*OperationStatus, error) {
+func (c *Client) GetOperationStatus(ctx context.Context, operationID uint) (*OperationStatus, error) {
 	formFields := map[string]string{
 		"operation_id": strconv.FormatUint(uint64(operationID), 10),
 	}
 
 	var operationStatus OperationStatus
 
-	if err := c.FetchAPI(RequestOptions{
+	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/operation/status",
 		FormFields:  formFields,

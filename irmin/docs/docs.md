@@ -446,20 +446,20 @@ import "irmin-api/connectors-client"
 
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
-  - [func \(c \*Client\) CancelOperation\(operationID uint\) error](<#Client.CancelOperation>)
-  - [func \(c \*Client\) FetchAPI\(opts RequestOptions, out any\) error](<#Client.FetchAPI>)
-  - [func \(c \*Client\) FetchStreamFiles\(opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
-  - [func \(c \*Client\) GetConfigFields\(configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
-  - [func \(c \*Client\) GetInfo\(\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
-  - [func \(c \*Client\) GetOperationStatus\(operationID uint\) \(\*OperationStatus, error\)](<#Client.GetOperationStatus>)
-  - [func \(c \*Client\) GetSchema\(method string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
-  - [func \(c \*Client\) InitOperation\(details map\[string\]string, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
-  - [func \(c \*Client\) OperationPatch\(patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
-  - [func \(c \*Client\) OperationPull\(path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
-  - [func \(c \*Client\) OperationPush\(path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
-  - [func \(c \*Client\) Request\(opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
-  - [func \(c \*Client\) SubscribeToChanges\(webhook, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
-  - [func \(c \*Client\) ValidateConfigFields\(details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
+  - [func \(c \*Client\) CancelOperation\(ctx context.Context, operationID uint\) error](<#Client.CancelOperation>)
+  - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) error](<#Client.FetchAPI>)
+  - [func \(c \*Client\) FetchStreamFiles\(ctx context.Context, opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
+  - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
+  - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
+  - [func \(c \*Client\) GetOperationStatus\(ctx context.Context, operationID uint\) \(\*OperationStatus, error\)](<#Client.GetOperationStatus>)
+  - [func \(c \*Client\) GetSchema\(ctx context.Context, method string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
+  - [func \(c \*Client\) InitOperation\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
+  - [func \(c \*Client\) OperationPatch\(ctx context.Context, patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
+  - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
+  - [func \(c \*Client\) OperationPush\(ctx context.Context, path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
+  - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
+  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhook, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
+  - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
 - [type ConnectorInfo](<#ConnectorInfo>)
 - [type FormFile](<#FormFile>)
 - [type Operation](<#Operation>)
@@ -503,14 +503,14 @@ NewClient creates a new Connector API client with default settings.
 ### func \(\*Client\) CancelOperation
 
 ```go
-func (c *Client) CancelOperation(operationID uint) error
+func (c *Client) CancelOperation(ctx context.Context, operationID uint) error
 ```
 
 CancelOperation cancels an operation with the connector. Cancellation is used to revoke the operation token and stop any ongoing processes, like event listeners.
 
 Note: System token is required for this operation.
 
-Parameters: \- operationID: The ID of the operation to cancel.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- operationID: The ID of the operation to cancel.
 
 Returns: \- An error if the operation cannot be cancelled.
 
@@ -518,7 +518,7 @@ Returns: \- An error if the operation cannot be cancelled.
 ### func \(\*Client\) FetchAPI
 
 ```go
-func (c *Client) FetchAPI(opts RequestOptions, out any) error
+func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error
 ```
 
 FetchAPI sends a request and attempts to parse the JSON response into a struct if provided.
@@ -527,7 +527,7 @@ FetchAPI sends a request and attempts to parse the JSON response into a struct i
 ### func \(\*Client\) FetchStreamFiles
 
 ```go
-func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error)
+func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]PulledFile, error)
 ```
 
 FetchStreamFiles sends a request based on the provided RequestOptions and returns a slice of PulledFile. If the response is multipart, each part is parsed as a separate file. Otherwise, the response is treated as a single file.
@@ -536,14 +536,14 @@ FetchStreamFiles sends a request based on the provided RequestOptions and return
 ### func \(\*Client\) GetConfigFields
 
 ```go
-func (c *Client) GetConfigFields(configType string, details map[string]string, settings map[string]string) (map[string]irminmodels.DynamicField, error)
+func (c *Client) GetConfigFields(ctx context.Context, configType string, details map[string]string, settings map[string]string) (map[string]irminmodels.DynamicField, error)
 ```
 
 GetConfigFields fetches the configuration fields for a given configuration type.
 
 Note: System token is required for this operation.
 
-Parameters: \- configType: The type of configuration, e.g. "details" or "settings". \- details: A map containing prefilled configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing prefilled configuration settings \(e.g. database, schema, table, etc.\).
+Parameters: \- ctx: Context for request cancellation and timeout control. \- configType: The type of configuration, e.g. "details" or "settings". \- details: A map containing prefilled configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing prefilled configuration settings \(e.g. database, schema, table, etc.\).
 
 Returns: \- A list of DynamicField objects representing the configuration fields if the request is successful. \- An error if the request fails.
 
@@ -551,12 +551,14 @@ Returns: \- A list of DynamicField objects representing the configuration fields
 ### func \(\*Client\) GetInfo
 
 ```go
-func (c *Client) GetInfo() (*ConnectorInfo, error)
+func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
 ```
 
 GetInfo fetches the connector's information from the /info endpoint.
 
 Note: System token is required for this operation.
+
+Parameters: \- ctx: Context for request cancellation and timeout control.
 
 Returns: \- A pointer to ConnectorInfo if the request is successful. \- An error if the API call fails or the response cannot be unmarshalled.
 
@@ -564,14 +566,14 @@ Returns: \- A pointer to ConnectorInfo if the request is successful. \- An error
 ### func \(\*Client\) GetOperationStatus
 
 ```go
-func (c *Client) GetOperationStatus(operationID uint) (*OperationStatus, error)
+func (c *Client) GetOperationStatus(ctx context.Context, operationID uint) (*OperationStatus, error)
 ```
 
 GetOperationStatus retrieves the status of an operation with the connector.
 
 Note: System token is required for this operation.
 
-Parameters: \- operationID: The ID of the operation to get the status of.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- operationID: The ID of the operation to get the status of.
 
 Returns: \- The status of the operation if the request is successful. \- An error if the operation cannot be retrieved.
 
@@ -579,7 +581,7 @@ Returns: \- The status of the operation if the request is successful. \- An erro
 ### func \(\*Client\) GetSchema
 
 ```go
-func (c *Client) GetSchema(method string) (*irminmodels.ObjectSchema, error)
+func (c *Client) GetSchema(ctx context.Context, method string) (*irminmodels.ObjectSchema, error)
 ```
 
 GetSchema retrieves the schema for a specific operation method.
@@ -594,14 +596,14 @@ Returns: \- The schema for the specified operation method if the request is succ
 ### func \(\*Client\) InitOperation
 
 ```go
-func (c *Client) InitOperation(details map[string]string, settings map[string]string) (*Operation, error)
+func (c *Client) InitOperation(ctx context.Context, details map[string]string, settings map[string]string) (*Operation, error)
 ```
 
 InitOperation creates a new operation with the connector. The operation is used to store the configuration details and settings for a specific operation.
 
 Note: System token is required for this operation.
 
-Parameters: \- details: A map containing configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing configuration settings \(e.g. database, schema, table, etc.\).
+Parameters: \- ctx: Context for request cancellation and timeout control. \- details: A map containing configuration details \(e.g. host, port, user, password, etc.\). \- settings: A map containing configuration settings \(e.g. database, schema, table, etc.\).
 
 Returns: \- The newly created operation if the request is successful. \- An error if the request fails.
 
@@ -609,14 +611,14 @@ Returns: \- The newly created operation if the request is successful. \- An erro
 ### func \(\*Client\) OperationPatch
 
 ```go
-func (c *Client) OperationPatch(patchFile FormFile) (string, error)
+func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string, error)
 ```
 
 OperationPatch sends a patch file to the /operation/patch endpoint to apply JSON patch operations to the data.
 
 Note: Operation token is required for this operation.
 
-Parameters: \- A JSON form file "patches" containing the list of JSON patch operations to apply to the data.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- patchFile: A JSON form file "patches" containing the list of JSON patch operations to apply to the data.
 
 Returns: \- A string containing the response message from the push operation. \- An error if the request fails.
 
@@ -624,14 +626,14 @@ Returns: \- A string containing the response message from the push operation. \-
 ### func \(\*Client\) OperationPull
 
 ```go
-func (c *Client) OperationPull(path string) ([]PulledFile, error)
+func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error)
 ```
 
 OperationPull sends a POST request to the /operation/pull endpoint, retrieves the full streamed content, extracts the filename from the Content\-Disposition header \(if available\), and returns both.
 
 Note: Operation token is required for this operation.
 
-Parameters: \- path: The path in the connector to pull data for.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- path: The path in the connector to pull data for.
 
 Returns: \- A slice of PulledFile objects containing the following:
 
@@ -644,14 +646,14 @@ Returns: \- A slice of PulledFile objects containing the following:
 ### func \(\*Client\) OperationPush
 
 ```go
-func (c *Client) OperationPush(path string, file FormFile) (string, error)
+func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) (string, error)
 ```
 
 OperationPush sends a file to the /operation/push endpoint along with a target path.
 
 Note: Operation token is required for this operation.
 
-Parameters: \- A form field "path" with the provided path value. \- A form file "file" containing the file to push.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- path: A form field "path" with the provided path value. \- file: A form file "file" containing the file to push.
 
 Returns: \- A string containing the response message from the push operation. \- An error if the request fails.
 
@@ -659,7 +661,7 @@ Returns: \- A string containing the response message from the push operation. \-
 ### func \(\*Client\) Request
 
 ```go
-func (c *Client) Request(opts RequestOptions) ([]byte, error)
+func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
 ```
 
 Request sends requests to the REST API of the connector and returns the raw response data. It utilises prepareBodyAndHeaders and doRequest to reduce code duplication.
@@ -668,14 +670,14 @@ Request sends requests to the REST API of the connector and returns the raw resp
 ### func \(\*Client\) SubscribeToChanges
 
 ```go
-func (c *Client) SubscribeToChanges(webhook, webhookAccessToken string) (*Subscription, error)
+func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error)
 ```
 
 SubscribeToChanges subscribes to changes in the data and sends the changes to the specified webhook.
 
 Note: Operation token is required for this operation.
 
-Parameters: \- webhook: The URL of the webhook to send the changes to. \- webhookAccessToken: The token to authenticate the webhook request with.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- webhook: The URL of the webhook to send the changes to. \- webhookAccessToken: The token to authenticate the webhook request with.
 
 Returns: \- The schema for the specified operation method if the request is successful. \- An error if the request fails.
 
@@ -683,14 +685,14 @@ Returns: \- The schema for the specified operation method if the request is succ
 ### func \(\*Client\) ValidateConfigFields
 
 ```go
-func (c *Client) ValidateConfigFields(details map[string]string, settings map[string]string) (*irminmodels.ConnectorConfigurationValidationResult, error)
+func (c *Client) ValidateConfigFields(ctx context.Context, details map[string]string, settings map[string]string) (*irminmodels.ConnectorConfigurationValidationResult, error)
 ```
 
 ValidateConfigFields validates the configuration fields provided by the user.
 
 Note: System token is required for this operation.
 
-Parameters: \- details: A map containing configuration details provided by the user. \- settings: A map containing configuration settings provided by the user.
+Parameters: \- ctx: Context for request cancellation and timeout control. \- details: A map containing configuration details provided by the user. \- settings: A map containing configuration settings provided by the user.
 
 Returns: \- A validation result from the connector if the request is successful. \- An error if there is a problem with the request.
 
@@ -5077,7 +5079,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
   - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, \[\]error\)](<#Client.DataExport>)
   - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
-  - [func \(c \*Client\) DataMovementSchema\(connection \*db.Connection, method string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
+  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
@@ -5093,15 +5095,15 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, repository string\) \(\*Repository, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, error\)](<#Client.GetUncommittedChanges>)
-  - [func \(c \*Client\) InitializeConnectorOperation\(connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, func\(\), error\)](<#Client.InitializeConnectorOperation>)
+  - [func \(c \*Client\) InitializeConnectorOperation\(ctx context.Context, connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, func\(\), error\)](<#Client.InitializeConnectorOperation>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref string, after \*string, limit \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]Repository, error\)](<#Client.ListRepositories>)
   - [func \(c \*Client\) ListTags\(workspace, repository string\) \(\[\]irminmodels.GitTag, error\)](<#Client.ListTags>)
   - [func \(c \*Client\) MergeRefs\(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.MergeRefs>)
   - [func \(c \*Client\) MoveObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.MoveObject>)
-  - [func \(c \*Client\) PullFilesFromConnector\(connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, error\)](<#Client.PullFilesFromConnector>)
-  - [func \(c \*Client\) PushFilesToConnector\(connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, error\)](<#Client.PushFilesToConnector>)
+  - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, error\)](<#Client.PullFilesFromConnector>)
+  - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, error\)](<#Client.PushFilesToConnector>)
   - [func \(c \*Client\) RevertUncommitedChanges\(workspace, repository, branch, path, pathType string\) error](<#Client.RevertUncommitedChanges>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, currentName, name string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateRepository\(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.UpdateRepository>)
@@ -5334,7 +5336,7 @@ DataImport imports data from an external source into a lakeFS repository. It app
 ### func \(\*Client\) DataMovementSchema
 
 ```go
-func (c *Client) DataMovementSchema(connection *db.Connection, method string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
+func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
 ```
 
 DataMovementSchema retrieves the schema for a specific method from the connector. It returns the schema and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -5478,7 +5480,7 @@ func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*i
 ### func \(\*Client\) InitializeConnectorOperation
 
 ```go
-func (c *Client) InitializeConnectorOperation(connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, func(), error)
+func (c *Client) InitializeConnectorOperation(ctx context.Context, connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, func(), error)
 ```
 
 InitializeConnectorOperation sets up a connector operation and returns an operation client, along with a cancel function to clean up when done. It returns an error if initialization fails. If tx is provided, it will be used instead of creating a new transaction.
@@ -5541,7 +5543,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 ### func \(\*Client\) PullFilesFromConnector
 
 ```go
-func (c *Client) PullFilesFromConnector(connection *db.Connection, connectionPaths []string) (map[string][]byte, error)
+func (c *Client) PullFilesFromConnector(ctx context.Context, connection *db.Connection, connectionPaths []string) (map[string][]byte, error)
 ```
 
 PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents. It returns a map of file paths to file contents and an error if any occurred.
@@ -5550,7 +5552,7 @@ PullFilesFromConnector pulls files from a connector, unzips them, and returns a 
 ### func \(\*Client\) PushFilesToConnector
 
 ```go
-func (c *Client) PushFilesToConnector(connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte, tx ...*gorm.DB) ([]string, error)
+func (c *Client) PushFilesToConnector(ctx context.Context, connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte, tx ...*gorm.DB) ([]string, error)
 ```
 
 PushFilesToConnector pushes files to a connector. It returns the paths of the files that were pushed and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.

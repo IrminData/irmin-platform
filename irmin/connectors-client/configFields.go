@@ -1,6 +1,7 @@
 package connectorsclient
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -12,6 +13,7 @@ import (
 // Note: System token is required for this operation.
 //
 // Parameters:
+// - ctx: Context for request cancellation and timeout control.
 // - configType: The type of configuration, e.g. "details" or "settings".
 // - details: A map containing prefilled configuration details (e.g. host, port, user, password, etc.).
 // - settings: A map containing prefilled configuration settings (e.g. database, schema, table, etc.).
@@ -20,6 +22,7 @@ import (
 // - A list of DynamicField objects representing the configuration fields if the request is successful.
 // - An error if the request fails.
 func (c *Client) GetConfigFields(
+	ctx context.Context,
 	configType string,
 	details map[string]string,
 	settings map[string]string,
@@ -42,7 +45,7 @@ func (c *Client) GetConfigFields(
 	var fields map[string]irminmodels.DynamicField
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
-	if err := c.FetchAPI(RequestOptions{
+	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    endpoint,
 		FormFields:  formFields,
@@ -60,6 +63,7 @@ func (c *Client) GetConfigFields(
 // Note: System token is required for this operation.
 //
 // Parameters:
+// - ctx: Context for request cancellation and timeout control.
 // - details: A map containing configuration details provided by the user.
 // - settings: A map containing configuration settings provided by the user.
 //
@@ -67,6 +71,7 @@ func (c *Client) GetConfigFields(
 // - A validation result from the connector if the request is successful.
 // - An error if there is a problem with the request.
 func (c *Client) ValidateConfigFields(
+	ctx context.Context,
 	details map[string]string,
 	settings map[string]string,
 ) (*irminmodels.ConnectorConfigurationValidationResult, error) {
@@ -85,7 +90,7 @@ func (c *Client) ValidateConfigFields(
 	var result irminmodels.ConnectorConfigurationValidationResult
 
 	// Send the POST request using FetchAPI with URL-encoded form fields.
-	err := c.FetchAPI(RequestOptions{
+	err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/configuration/validate",
 		FormFields:  formFields,

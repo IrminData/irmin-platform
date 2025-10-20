@@ -79,7 +79,7 @@ func (api *APIServices) CreateConnector(
 	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken, locale)
 
 	// Request the info endpoint of the connector
-	connectorInfo, getInfoErr := connectorClient.GetInfo()
+	connectorInfo, getInfoErr := connectorClient.GetInfo(c)
 	if getInfoErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching connector info", "error", getInfoErr, "url", req.URL)
 		return nil, getInfoErr
@@ -140,7 +140,7 @@ func (api *APIServices) UpdateConnector(
 	connectorClient := connectorsclient.NewClient(req.URL, req.SystemToken, locale)
 
 	// Request the info endpoint of the connector
-	connectorInfo, getInfoErr := connectorClient.GetInfo()
+	connectorInfo, getInfoErr := connectorClient.GetInfo(c)
 	if getInfoErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching connector info", "error", getInfoErr)
 		return nil, getInfoErr
@@ -193,6 +193,7 @@ func (api *APIServices) GetConnectorConfigurationFields(
 
 	// Get the connection settings
 	configurationFields, getConfigFieldsErr := connectorClient.GetConfigFields(
+		c,
 		configurationType,
 		detailsStr,
 		settingsStr,
@@ -221,7 +222,7 @@ func (api *APIServices) ValidateConnectorConfiguration(
 	connectorClient := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
 
 	// Test the connection
-	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(detailsStr, settingsStr)
+	testResponse, validateConfigFieldsErr := connectorClient.ValidateConfigFields(c, detailsStr, settingsStr)
 	if validateConfigFieldsErr != nil && testResponse == nil {
 		api.Logger.ErrorContext(c, "Error testing connection", "error", validateConfigFieldsErr)
 		return nil, validateConfigFieldsErr

@@ -24,6 +24,7 @@ import (
 // It returns an error if initialization fails.
 // If tx is provided, it will be used instead of creating a new transaction.
 func (c *Client) InitializeConnectorOperation(
+	ctx context.Context,
 	connection *db.Connection,
 	tx ...*gorm.DB,
 ) (*connectorsclient.Client, func(), error) {
@@ -47,7 +48,7 @@ func (c *Client) InitializeConnectorOperation(
 
 		// Process the connector initialization
 		var processErr error
-		result, cancelFunc, processErr = c.initializeConnectorOperationInternal(connection)
+		result, cancelFunc, processErr = c.initializeConnectorOperationInternal(ctx, connection)
 		return result, cancelFunc, processErr
 	}
 
@@ -66,7 +67,7 @@ func (c *Client) InitializeConnectorOperation(
 
 		// Process the connector initialization
 		var processErr error
-		result, cancelFunc, processErr = c.initializeConnectorOperationInternal(connection)
+		result, cancelFunc, processErr = c.initializeConnectorOperationInternal(ctx, connection)
 		return processErr
 	})
 
@@ -79,6 +80,7 @@ func (c *Client) InitializeConnectorOperation(
 
 // initializeConnectorOperationInternal contains the core connector initialization logic, separated for clarity.
 func (c *Client) initializeConnectorOperationInternal(
+	ctx context.Context,
 	connection *db.Connection,
 ) (*connectorsclient.Client, func(), error) {
 	// Create base connector client.
@@ -89,15 +91,17 @@ func (c *Client) initializeConnectorOperationInternal(
 	)
 
 	// Initialize a new operation.
-	op, err := baseClient.InitOperation(connection.Details, connection.Settings)
+	op, err := baseClient.InitOperation(ctx, connection.Details, connection.Settings)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize operation: %w", err)
 	}
 
 	// Define cancel function with error logging.
+	// Use a fresh context for cleanup to ensure it succeeds even if the original context is cancelled.
 	cancel := func() {
-		if cancelErr := baseClient.CancelOperation(op.ID); cancelErr != nil {
-			c.Logger.Error("failed to cancel operation", "error", cancelErr)
+		cleanupCtx := context.Background()
+		if cancelErr := baseClient.CancelOperation(cleanupCtx, op.ID); cancelErr != nil {
+			c.Logger.ErrorContext(cleanupCtx, "failed to cancel operation", "error", cancelErr)
 		}
 	}
 
@@ -115,11 +119,12 @@ func (c *Client) initializeConnectorOperationInternal(
 // It returns the schema and an error if any occurred.
 // If tx is provided, it will be used instead of creating a new transaction.
 func (c *Client) DataMovementSchema(
+	ctx context.Context,
 	connection *db.Connection,
 	method string,
 	tx ...*gorm.DB,
 ) (*irminmodels.ObjectSchema, error) {
-	opClient, cancel, err := c.InitializeConnectorOperation(connection, tx...)
+	opClient, cancel, err := c.InitializeConnectorOperation(ctx, connection, tx...)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +145,7 @@ func (c *Client) DataMovementSchema(
 	}
 
 	// Retrieve method schema.
-	schema, err := opClient.GetSchema(method)
+	schema, err := opClient.GetSchema(ctx, method)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema for method %q: %w", method, err)
 	}
@@ -296,7 +301,7 @@ func (c *Client) dataImportInternal(
 	fieldMappings []irminmodels.FieldMapping,
 ) ([]lakefs.ObjectMetadata, []error) {
 	// Pull the files from the connector.
-	allFiles, err := c.PullFilesFromConnector(connection, connectionPaths)
+	allFiles, err := c.PullFilesFromConnector(ctx, connection, connectionPaths)
 	if err != nil {
 		return nil, []error{err}
 	}
@@ -435,11 +440,12 @@ func (c *Client) mergeDestinationFiles(
 // PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents.
 // It returns a map of file paths to file contents and an error if any occurred.
 func (c *Client) PullFilesFromConnector(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
 ) (map[string][]byte, error) {
 	// Initialize connector operation.
-	opClient, cancel, err := c.InitializeConnectorOperation(connection)
+	opClient, cancel, err := c.InitializeConnectorOperation(ctx, connection)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize connector operation: %w", err)
 	}
@@ -448,7 +454,7 @@ func (c *Client) PullFilesFromConnector(
 	// Pull the matching files from the connector.
 	pulled := make([]connectorsclient.PulledFile, 0)
 	for _, connectionPath := range connectionPaths {
-		pulledFiles, pullErr := opClient.OperationPull(connectionPath)
+		pulledFiles, pullErr := opClient.OperationPull(ctx, connectionPath)
 		if pullErr != nil {
 			return nil, fmt.Errorf("failed to pull files: %w", pullErr)
 		}
@@ -693,7 +699,7 @@ func (c *Client) dataExportInternal(
 	}
 
 	// Push the files to the connection path
-	_, pushErr := c.PushFilesToConnector(connection, connectionPath, objects, finalFiles, tx...)
+	_, pushErr := c.PushFilesToConnector(ctx, connection, connectionPath, objects, finalFiles, tx...)
 	if pushErr != nil {
 		return repositoryPaths, []error{pushErr}
 	}
@@ -705,6 +711,7 @@ func (c *Client) dataExportInternal(
 // It returns the paths of the files that were pushed and an error if any occurred.
 // If tx is provided, it will be used instead of creating a new transaction.
 func (c *Client) PushFilesToConnector(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPath string,
 	objects []*irminmodels.Object,
@@ -718,7 +725,7 @@ func (c *Client) PushFilesToConnector(
 	}
 
 	// Initialize connector operation.
-	opClient, cancel, initializeConnectorOperationErr := c.InitializeConnectorOperation(connection, tx...)
+	opClient, cancel, initializeConnectorOperationErr := c.InitializeConnectorOperation(ctx, connection, tx...)
 	if initializeConnectorOperationErr != nil {
 		return nil, fmt.Errorf("failed to initialize connector operation: %w", initializeConnectorOperationErr)
 	}
@@ -733,6 +740,7 @@ func (c *Client) PushFilesToConnector(
 
 	// Push the zip to the correct path in the connector.
 	_, pushFilesErr := opClient.OperationPush(
+		ctx,
 		connPath,
 		connectorsclient.FormFile{Reader: bytes.NewBuffer(zip)},
 	)

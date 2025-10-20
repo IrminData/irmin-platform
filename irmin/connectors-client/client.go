@@ -243,10 +243,13 @@ func (c *Client) doRequest(req *http.Request, allowedStatus []int) (*http.Respon
 
 // Request sends requests to the REST API of the connector and returns the raw response data.
 // It utilises prepareBodyAndHeaders and doRequest to reduce code duplication.
-func (c *Client) Request(opts RequestOptions) ([]byte, error) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), irminsdkgo.DefaultConnectorTimeout)
-	defer cancel()
+func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error) {
+	// If no context provided, create one with default timeout
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), irminsdkgo.DefaultConnectorTimeout)
+		defer cancel()
+	}
 
 	// Construct the full URL.
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
@@ -290,9 +293,9 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 }
 
 // FetchAPI sends a request and attempts to parse the JSON response into a struct if provided.
-func (c *Client) FetchAPI(opts RequestOptions, out any) error {
+func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error {
 	// Make the HTTP request using the Request method.
-	body, err := c.Request(opts)
+	body, err := c.Request(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -310,10 +313,13 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) error {
 
 // FetchStreamFiles sends a request based on the provided RequestOptions and returns a slice of PulledFile.
 // If the response is multipart, each part is parsed as a separate file. Otherwise, the response is treated as a single file.
-func (c *Client) FetchStreamFiles(opts RequestOptions) ([]PulledFile, error) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), irminsdkgo.DefaultConnectorTimeout)
-	defer cancel()
+func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]PulledFile, error) {
+	// If no context provided, create one with default timeout
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), irminsdkgo.DefaultConnectorTimeout)
+		defer cancel()
+	}
 
 	// Construct full URL.
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)

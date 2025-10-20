@@ -106,7 +106,7 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 	}
 
 	// Get the schema of the connection
-	schema, err := dataEngine.DataMovementSchema(connection, operationMethod)
+	schema, err := dataEngine.DataMovementSchema(ctx, connection, operationMethod)
 	if err != nil {
 		scm.logger.ErrorContext(ctx, "error getting connection schema", "error", err)
 		return nil, err

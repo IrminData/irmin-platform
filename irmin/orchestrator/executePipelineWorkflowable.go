@@ -194,6 +194,7 @@ func (o *Orchestrator) handleConnectionWrite(
 
 	connectionPath := strings.TrimLeft(*stage.ConnectionWritePath, "/")
 	pushedPaths, err := o.dataEngine.PushFilesToConnector(
+		ctx,
 		connection,
 		connectionPath,
 		nil,
@@ -227,7 +228,7 @@ func (o *Orchestrator) handleConnectionRead(
 ) ([]string, error) {
 	var logs []string
 
-	pulledPaths, err := o.dataEngine.PullFilesFromConnector(connection, stage.ConnectionReadPaths)
+	pulledPaths, err := o.dataEngine.PullFilesFromConnector(ctx, connection, stage.ConnectionReadPaths)
 	if err != nil {
 		if ctx.Err() != nil {
 			// If cancelled, collect any logs from the pull operation

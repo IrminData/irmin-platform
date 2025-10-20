@@ -1,6 +1,7 @@
 package connectorsclient
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -17,9 +18,9 @@ import (
 // Returns:
 // - The schema for the specified operation method if the request is successful.
 // - An error if the request fails.
-func (c *Client) GetSchema(method string) (*irminmodels.ObjectSchema, error) {
+func (c *Client) GetSchema(ctx context.Context, method string) (*irminmodels.ObjectSchema, error) {
 	var schema irminmodels.ObjectSchema
-	if err := c.FetchAPI(RequestOptions{
+	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/operation/schema/%s", method),
 	}, &schema); err != nil {

@@ -1,6 +1,7 @@
 package connectorsclient
 
 import (
+	"context"
 	"net/http"
 )
 
@@ -21,15 +22,16 @@ type Subscription struct {
 // Note: Operation token is required for this operation.
 //
 // Parameters:
+// - ctx: Context for request cancellation and timeout control.
 // - webhook: The URL of the webhook to send the changes to.
 // - webhookAccessToken: The token to authenticate the webhook request with.
 //
 // Returns:
 // - The schema for the specified operation method if the request is successful.
 // - An error if the request fails.
-func (c *Client) SubscribeToChanges(webhook, webhookAccessToken string) (*Subscription, error) {
+func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error) {
 	var subscription Subscription
-	if err := c.FetchAPI(RequestOptions{
+	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: "/operation/subscribe",
 		FormFields: map[string]string{

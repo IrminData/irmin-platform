@@ -1,6 +1,7 @@
 package connectorsclient
 
 import (
+	"context"
 	"net/http"
 )
 
@@ -26,12 +27,15 @@ type ConnectorInfo struct {
 //
 // Note: System token is required for this operation.
 //
+// Parameters:
+// - ctx: Context for request cancellation and timeout control.
+//
 // Returns:
 // - A pointer to ConnectorInfo if the request is successful.
 // - An error if the API call fails or the response cannot be unmarshalled.
-func (c *Client) GetInfo() (*ConnectorInfo, error) {
+func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error) {
 	var info ConnectorInfo
-	if err := c.FetchAPI(RequestOptions{
+	if err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/info",
 	}, &info); err != nil {

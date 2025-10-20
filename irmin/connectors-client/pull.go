@@ -1,6 +1,9 @@
 package connectorsclient
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+)
 
 // OperationPull sends a POST request to the /operation/pull endpoint, retrieves the full streamed content,
 // extracts the filename from the Content-Disposition header (if available), and returns both.
@@ -8,6 +11,7 @@ import "net/http"
 // Note: Operation token is required for this operation.
 //
 // Parameters:
+// - ctx: Context for request cancellation and timeout control.
 // - path: The path in the connector to pull data for.
 //
 // Returns:
@@ -16,7 +20,7 @@ import "net/http"
 //   - String containing the filename extracted from the Content-Disposition header (if present).
 //
 // - An error if the request fails.
-func (c *Client) OperationPull(path string) ([]PulledFile, error) {
+func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error) {
 	opts := RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: "/operation/pull",
@@ -26,5 +30,5 @@ func (c *Client) OperationPull(path string) ([]PulledFile, error) {
 		ContentType: "application/x-www-form-urlencoded",
 	}
 
-	return c.FetchStreamFiles(opts)
+	return c.FetchStreamFiles(ctx, opts)
 }

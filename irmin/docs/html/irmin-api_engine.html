@@ -160,6 +160,7 @@ func (c *Client) DataImport(
     it will be used instead of creating a new transaction.
 
 func (c *Client) DataMovementSchema(
+	ctx context.Context,
 	connection *db.Connection,
 	method string,
 	tx ...*gorm.DB,
@@ -212,6 +213,7 @@ func (c *Client) GetUncommittedChanges(
 ) (*irminmodels.Diff, error)
 
 func (c *Client) InitializeConnectorOperation(
+	ctx context.Context,
 	connection *db.Connection,
 	tx ...*gorm.DB,
 ) (*connectorsclient.Client, func(), error)
@@ -240,6 +242,7 @@ func (c *Client) MergeRefs(
 func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*irminmodels.Object, error)
 
 func (c *Client) PullFilesFromConnector(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
 ) (map[string][]byte, error)
@@ -248,6 +251,7 @@ func (c *Client) PullFilesFromConnector(
     to file contents and an error if any occurred.
 
 func (c *Client) PushFilesToConnector(
+	ctx context.Context,
 	connection *db.Connection,
 	connectionPath string,
 	objects []*irminmodels.Object,

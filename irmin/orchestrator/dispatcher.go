@@ -218,7 +218,7 @@ func (o *Orchestrator) dispatchRun(ctx context.Context, run *db.WorkflowRun) err
 	}
 
 	// Dispatch the event.
-	_, dispatchRunErr := client.CallSystemWebhook("dispatch", nil, &dispatchEvent)
+	_, dispatchRunErr := client.CallSystemWebhook(ctx, "dispatch", nil, &dispatchEvent)
 	if dispatchRunErr != nil {
 		o.logger.ErrorContext(ctx, "failed to dispatch run", "error", dispatchRunErr, "run_id", run.ID)
 		return dispatchRunErr
