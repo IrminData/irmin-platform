@@ -29,6 +29,11 @@ func GetInputFile(filePath string) ([]byte, error)
     GetInputFile reads a file from the _input directory. Returns the file
     content as bytes and any error encountered.
 
+func IsStructuredDataFormat(ext, contentType string) bool
+    IsStructuredDataFormat determines if a file extension and MIME type
+    represent structured data that can be queried, analyzed, or processed as
+    tabular data.
+
 func ListInputFiles() ([]string, error)
     ListInputFiles returns a list of all files in the _input directory.
     Returns a slice of file paths relative to the _input directory and any error

@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,9 +19,9 @@ type UpdateProfileRequest struct {
 	Company   string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
 }
 
-func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetProfile(ctx context.Context) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
 	var profile irminmodels.User
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/profile",
 	}, &profile)
@@ -31,6 +32,7 @@ func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse,
 }
 
 func (c *Client) UpdateProfile(
+	ctx context.Context,
 	firstName, lastName, email, phone, company string,
 	profilePicture *os.File,
 ) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
@@ -72,7 +74,7 @@ func (c *Client) UpdateProfile(
 			return nil, nil, fmt.Errorf("marshal update request error: %w", marshalErr)
 		}
 
-		apiResp, err = c.FetchAPI(RequestOptions{
+		apiResp, err = c.FetchAPI(ctx, RequestOptions{
 			Method:      http.MethodPatch,
 			Endpoint:    "/v1/profile",
 			ContentType: "multipart/form-data",
@@ -83,7 +85,7 @@ func (c *Client) UpdateProfile(
 		}, &updatedProfile)
 	} else {
 		// If no profile picture, use JSON content type
-		apiResp, err = c.FetchAPI(RequestOptions{
+		apiResp, err = c.FetchAPI(ctx, RequestOptions{
 			Method:      http.MethodPatch,
 			Endpoint:    "/v1/profile",
 			ContentType: "application/json",

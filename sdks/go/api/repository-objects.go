@@ -2,6 +2,7 @@ package irmincore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 
@@ -21,10 +22,11 @@ type UploadObjectFromURLRequest struct {
 
 // GetObjectAtPath fetches the object at the given path and ref.
 func (c *Client) GetObjectAtPath(
+	ctx context.Context,
 	workspace, repository, path, ref string,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
 	var objects irminmodels.Object
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
@@ -42,10 +44,11 @@ func (c *Client) GetObjectAtPath(
 
 // GetObjectHistory fetches the history of an object at the given path and ref.
 func (c *Client) GetObjectHistory(
+	ctx context.Context,
 	workspace, repository, path, ref string,
 ) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
 	var commits []irminmodels.Commit
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/history?ref=%s&path=%s",
@@ -63,10 +66,11 @@ func (c *Client) GetObjectHistory(
 
 // GetObjectSchema fetches the schema of an object at the given path and ref.
 func (c *Client) GetObjectSchema(
+	ctx context.Context,
 	workspace, repository, path, ref string,
 ) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
 	var schema irminmodels.ObjectSchema
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/schema?ref=%s&path=%s",
@@ -84,6 +88,7 @@ func (c *Client) GetObjectSchema(
 
 // UploadObject uploads a file to the given path and ref.
 func (c *Client) UploadObject(
+	ctx context.Context,
 	workspace, repository, ref, path string,
 	files map[string][]byte,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
@@ -99,7 +104,7 @@ func (c *Client) UploadObject(
 	}
 
 	var object irminmodels.Object
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",
@@ -120,11 +125,12 @@ func (c *Client) UploadObject(
 
 // UploadObjectFromURL uploads an object from a URL to the given path and ref.
 func (c *Client) UploadObjectFromURL(
+	ctx context.Context,
 	workspace, repository, ref, path string,
 	req UploadObjectFromURLRequest,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
 	var object irminmodels.Object
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/upload-from-url?ref=%s&path=%s",
@@ -143,8 +149,8 @@ func (c *Client) UploadObjectFromURL(
 }
 
 // GetObjectContent fetches the content of an object at the given path and ref.
-func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error) {
-	apiResp, err := c.FetchBinary(RequestOptions{
+func (c *Client) GetObjectContent(ctx context.Context, workspace, repository, path, ref string) ([]byte, error) {
+	apiResp, err := c.FetchBinary(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/content?ref=%s&path=%s",
@@ -162,10 +168,11 @@ func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]by
 
 // GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref.
 func (c *Client) GetObjectStructuredContent(
+	ctx context.Context,
 	workspace, repository, path, ref string,
 ) (map[string]any, *irminmodels.IrminAPIResponse, error) {
 	var structuredContent map[string]any
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/content/structured?ref=%s&path=%s",
@@ -182,8 +189,8 @@ func (c *Client) GetObjectStructuredContent(
 }
 
 // DownloadObject creates a zip file of the object at the given path and ref and returns the binary data.
-func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte, error) {
-	apiResp, err := c.FetchBinary(RequestOptions{
+func (c *Client) DownloadObject(ctx context.Context, workspace, repository, path, ref string) ([]byte, error) {
+	apiResp, err := c.FetchBinary(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/download?ref=%s&path=%s",
@@ -200,11 +207,12 @@ func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte
 }
 
 func (c *Client) MoveObject(
+	ctx context.Context,
 	workspace, repository, path, ref string,
 	req MoveObjectRequest,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
 	var object irminmodels.Object
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/move?ref=%s&path=%s",
@@ -223,11 +231,12 @@ func (c *Client) MoveObject(
 }
 
 func (c *Client) CopyObject(
+	ctx context.Context,
 	workspace, repository, path, ref string,
 	req MoveObjectRequest,
 ) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error) {
 	var object irminmodels.Object
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects/copy?ref=%s&path=%s",
@@ -245,8 +254,11 @@ func (c *Client) CopyObject(
 	return &object, apiResp, nil
 }
 
-func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteObject(
+	ctx context.Context,
+	workspace, repository, ref, path string,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodDelete,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/objects?ref=%s&path=%s",

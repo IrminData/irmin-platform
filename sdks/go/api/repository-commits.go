@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -21,6 +22,7 @@ type RevertUncommittedChangesRequest struct {
 }
 
 func (c *Client) ListCommits(
+	ctx context.Context,
 	workspace, repository, ref, after string,
 	perPage int,
 ) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
@@ -36,7 +38,7 @@ func (c *Client) ListCommits(
 		endpoint += fmt.Sprintf("&ref=%s", ref)
 	}
 
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: endpoint,
 	}, &commits)
@@ -47,10 +49,11 @@ func (c *Client) ListCommits(
 }
 
 func (c *Client) GetCommit(
+	ctx context.Context,
 	workspace, repository, hash string,
 ) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
 	var commit irminmodels.Commit
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits/%s", workspace, repository, hash),
 	}, &commit)
@@ -61,11 +64,12 @@ func (c *Client) GetCommit(
 }
 
 func (c *Client) CreateCommit(
+	ctx context.Context,
 	workspace, repository string,
 	req CreateCommitRequest,
 ) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
 	var commit irminmodels.Commit
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits", workspace, repository),
 		ContentType: "application/json",
@@ -78,10 +82,11 @@ func (c *Client) CreateCommit(
 }
 
 func (c *Client) RevertChanges(
+	ctx context.Context,
 	workspace, repository string,
 	req RevertUncommittedChangesRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/commits/revert", workspace, repository),
 		ContentType: "application/json",

@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -31,10 +32,11 @@ type ExecuteEditorItemRequest struct {
 }
 
 func (c *Client) ListEditorItems(
+	ctx context.Context,
 	workspace, path string,
 ) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error) {
 	var editorItems []irminmodels.EditorItem
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
 	}, &editorItems)
@@ -44,9 +46,12 @@ func (c *Client) ListEditorItems(
 	return editorItems, apiResp, nil
 }
 
-func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetEditorItemContent(
+	ctx context.Context,
+	workspace, path string,
+) (*string, *irminmodels.IrminAPIResponse, error) {
 	var editorItemContent string
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/editor/content?path=%s", workspace, path),
 	}, &editorItemContent)
@@ -57,10 +62,11 @@ func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminmo
 }
 
 func (c *Client) MoveEditorItem(
+	ctx context.Context,
 	workspace, path string,
 	req MoveEditorItemRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/move?path=%s", workspace, path),
 		ContentType: "application/json",
@@ -73,10 +79,11 @@ func (c *Client) MoveEditorItem(
 }
 
 func (c *Client) CopyEditorItem(
+	ctx context.Context,
 	workspace, path string,
 	req MoveEditorItemRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/copy?path=%s", workspace, path),
 		ContentType: "application/json",
@@ -88,8 +95,8 @@ func (c *Client) CopyEditorItem(
 	return apiResp, nil
 }
 
-func (c *Client) DeleteEditorItem(workspace, path string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteEditorItem(ctx context.Context, workspace, path string) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
 	}, nil)
@@ -100,10 +107,11 @@ func (c *Client) DeleteEditorItem(workspace, path string) (*irminmodels.IrminAPI
 }
 
 func (c *Client) SaveEditorItem(
+	ctx context.Context,
 	workspace, path string,
 	req CreateEditorItemRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
 		ContentType: "application/json",
@@ -116,10 +124,11 @@ func (c *Client) SaveEditorItem(
 }
 
 func (c *Client) CreateEditorFolder(
+	ctx context.Context,
 	workspace, path string,
 	req CreateEditorItemRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor?path=%s", workspace, path),
 		ContentType: "application/json",
@@ -132,6 +141,7 @@ func (c *Client) CreateEditorFolder(
 }
 
 func (c *Client) RunScript(
+	ctx context.Context,
 	workspace, path string,
 	inputs []irminmodels.ActionInputData,
 ) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error) {
@@ -140,7 +150,7 @@ func (c *Client) RunScript(
 	}
 
 	var scriptResult irminmodels.ScriptResult
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/editor/run?path=%s", workspace, path),
 		ContentType: "application/json",

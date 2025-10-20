@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -8,11 +9,12 @@ import (
 )
 
 func (c *Client) ListWorkflowRuns(
+	ctx context.Context,
 	workspace, workflowID string,
 	page, perPage int,
 ) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
 	var runs []irminmodels.WorkflowRun
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/workflows/%s/runs?page=%d&per_page=%d",
@@ -29,10 +31,11 @@ func (c *Client) ListWorkflowRuns(
 }
 
 func (c *Client) GetWorkflowRun(
+	ctx context.Context,
 	workspace, workflowID, runID string,
 ) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
 	var run irminmodels.WorkflowRun
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs/%s", workspace, workflowID, runID),
 	}, &run)
@@ -43,10 +46,11 @@ func (c *Client) GetWorkflowRun(
 }
 
 func (c *Client) CancelWorkflowRun(
+	ctx context.Context,
 	workspace, workflowID, runID string,
 ) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
 	var run irminmodels.WorkflowRun
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs/%s", workspace, workflowID, runID),
 	}, &run)
@@ -57,10 +61,11 @@ func (c *Client) CancelWorkflowRun(
 }
 
 func (c *Client) TriggerWorkflowRun(
+	ctx context.Context,
 	workspace, workflowID string,
 ) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
 	var run irminmodels.WorkflowRun
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/workflows/%s/runs", workspace, workflowID),
 	}, &run)
@@ -71,11 +76,12 @@ func (c *Client) TriggerWorkflowRun(
 }
 
 func (c *Client) ListAllWorkflowRuns(
+	ctx context.Context,
 	workspace string,
 	page, perPage int,
 ) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error) {
 	var runs []irminmodels.WorkflowRun
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/workflows/runs?page=%d&per_page=%d",

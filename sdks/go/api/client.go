@@ -210,9 +210,13 @@ func (c *Client) prepareRequestBody(opts RequestOptions) (io.Reader, map[string]
 }
 
 // Request is the main method that sends requests to the Irmin API and returns raw response data.
-func (c *Client) Request(opts RequestOptions) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), irminsdkgo.DefaultAPITimeout)
-	defer cancel()
+func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error) {
+	// If no context provided, create one with default timeout
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), irminsdkgo.DefaultAPITimeout)
+		defer cancel()
+	}
 
 	url := fmt.Sprintf("%s%s", c.BaseURL, opts.Endpoint)
 
@@ -268,7 +272,7 @@ func (c *Client) Request(opts RequestOptions) ([]byte, error) {
 }
 
 // FetchAPI sends a request and attempts to parse the response into IrminAPIResponse[T].
-func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error) {
+func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error) {
 	// Validate the request body if it exists and has validation tags
 	if opts.Body != nil && c.Validator != nil {
 		if err := c.Validator.Validate(opts.Body); err != nil {
@@ -277,7 +281,7 @@ func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminmodels.IrminAPIRe
 	}
 
 	// 1) Make the HTTP request using your existing `Request` method.
-	body, err := c.Request(opts)
+	body, err := c.Request(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -364,6 +368,7 @@ func (c *Client) ValidateVarEnhanced(field any, tag string) *irminvalidator.Vali
 // FetchAPIEnhanced sends a request with enhanced validation and attempts to parse the response into IrminAPIResponse[T].
 // This method provides detailed validation results before sending the request.
 func (c *Client) FetchAPIEnhanced(
+	ctx context.Context,
 	opts RequestOptions,
 	out any,
 ) (*irminmodels.IrminAPIResponse, *irminvalidator.ValidationResultError, error) {
@@ -385,7 +390,7 @@ func (c *Client) FetchAPIEnhanced(
 	}
 
 	// 1) Make the HTTP request using your existing `Request` method.
-	body, err := c.Request(opts)
+	body, err := c.Request(ctx, opts)
 	if err != nil {
 		return nil, validationResult, err
 	}
@@ -421,6 +426,6 @@ func (c *Client) FetchAPIEnhanced(
 }
 
 // FetchBinary sends a request and returns the raw bytes (which you can treat as a file, or parse further).
-func (c *Client) FetchBinary(opts RequestOptions) ([]byte, error) {
-	return c.Request(opts)
+func (c *Client) FetchBinary(ctx context.Context, opts RequestOptions) ([]byte, error) {
+	return c.Request(ctx, opts)
 }

@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -33,9 +34,12 @@ type TransferRepositoryOwnershipRequest struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
-func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) ListRepositories(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repositories []irminmodels.Repository
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories", workspace),
 	}, &repositories)
@@ -45,9 +49,12 @@ func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *
 	return repositories, apiResp, nil
 }
 
-func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetRepository(
+	ctx context.Context,
+	workspace, slug string,
+) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repository irminmodels.Repository
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s", workspace, slug),
 	}, &repository)
@@ -58,11 +65,12 @@ func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository,
 }
 
 func (c *Client) CreateRepository(
+	ctx context.Context,
 	workspace string,
 	req CreateRepositoryRequest,
 ) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repository irminmodels.Repository
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories", workspace),
 		ContentType: "application/json",
@@ -76,11 +84,12 @@ func (c *Client) CreateRepository(
 }
 
 func (c *Client) UpdateRepository(
+	ctx context.Context,
 	workspace, slug string,
 	req UpdateRepositoryRequest,
 ) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repository irminmodels.Repository
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s", workspace, slug),
 		ContentType: "application/json",
@@ -94,11 +103,12 @@ func (c *Client) UpdateRepository(
 }
 
 func (c *Client) TransferRepository(
+	ctx context.Context,
 	workspace, slug string,
 	req TransferRepositoryOwnershipRequest,
 ) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error) {
 	var repository irminmodels.Repository
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/transfer-ownership", workspace, slug),
 		ContentType: "application/json",
@@ -111,8 +121,8 @@ func (c *Client) TransferRepository(
 	return &repository, apiResp, nil
 }
 
-func (c *Client) DeleteRepository(workspace, slug string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteRepository(ctx context.Context, workspace, slug string) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s", workspace, slug),
 	}, nil)

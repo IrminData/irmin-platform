@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -19,10 +20,11 @@ type MergeRefsRequest struct {
 
 // CompareRefs compares two refs in a repository and returns the differences.
 func (c *Client) CompareRefs(
+	ctx context.Context,
 	workspace, repository, baseRef, compareRef string,
 ) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error) {
 	var diff irminmodels.Diff
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/repositories/%s/compare?base_ref=%s&compare_ref=%s",
@@ -40,11 +42,12 @@ func (c *Client) CompareRefs(
 
 // MergeRefs merges one ref into another.
 func (c *Client) MergeRefs(
+	ctx context.Context,
 	workspace, repository string,
 	req MergeRefsRequest,
 ) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error) {
 	var mergeCommit irminmodels.Commit
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/merge", workspace, repository),
 		ContentType: "application/json",

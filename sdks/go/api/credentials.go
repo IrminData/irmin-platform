@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -13,9 +14,9 @@ type CreateCredentialRequest struct {
 	Expiry int    `json:"expiry" validate:"required"         example:"3600"` // Seconds until expiry
 }
 
-func (c *Client) ListTokens() ([]irminmodels.APIToken, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) ListTokens(ctx context.Context) ([]irminmodels.APIToken, *irminmodels.IrminAPIResponse, error) {
 	var tokens []irminmodels.APIToken
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/credentials",
 	}, &tokens)
@@ -26,10 +27,11 @@ func (c *Client) ListTokens() ([]irminmodels.APIToken, *irminmodels.IrminAPIResp
 }
 
 func (c *Client) CreateToken(
+	ctx context.Context,
 	req CreateCredentialRequest,
 ) (*irminmodels.APIToken, *irminmodels.IrminAPIResponse, error) {
 	var token irminmodels.APIToken
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/credentials",
 		ContentType: "application/json",
@@ -41,8 +43,8 @@ func (c *Client) CreateToken(
 	return &token, apiResp, nil
 }
 
-func (c *Client) DeleteToken(tokenID string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteToken(ctx context.Context, tokenID string) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/credentials/%s", tokenID),
 		ContentType: "application/json",

@@ -138,142 +138,143 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type Client](<#Client>)
   - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
-  - [func \(c \*Client\) AcceptInvite\(inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.AcceptInvite>)
-  - [func \(c \*Client\) AddTagToEntity\(workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.AddTagToEntity>)
-  - [func \(c \*Client\) CallSystemWebhook\(webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
-  - [func \(c \*Client\) CancelWorkflowRun\(workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
-  - [func \(c \*Client\) CheckPermission\(workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
-  - [func \(c \*Client\) CompareRefs\(workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.CompareRefs>)
-  - [func \(c \*Client\) CopyEditorItem\(workspace, path string, req MoveEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CopyEditorItem>)
-  - [func \(c \*Client\) CopyObject\(workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CopyObject>)
-  - [func \(c \*Client\) CreateBranch\(workspace, repository string, req CreateBranchRequest\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateBranch>)
-  - [func \(c \*Client\) CreateCommit\(workspace, repository string, req CreateCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateCommit>)
-  - [func \(c \*Client\) CreateConnection\(workspace string, req CreateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnection>)
-  - [func \(c \*Client\) CreateEditorFolder\(workspace, path string, req CreateEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CreateEditorFolder>)
-  - [func \(c \*Client\) CreatePolicy\(workspace string, req CreatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePolicy>)
-  - [func \(c \*Client\) CreateRepository\(workspace string, req CreateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateRepository>)
-  - [func \(c \*Client\) CreateStoredQuery\(workspace string, req CreateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredQuery>)
-  - [func \(c \*Client\) CreateTag\(workspace, repository string, req CreateRepositoryTagRequest\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateTag>)
-  - [func \(c \*Client\) CreateToken\(req CreateCredentialRequest\) \(\*irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateToken>)
-  - [func \(c \*Client\) CreateWorkflow\(workspace string, req WorkflowRequest\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkflow>)
-  - [func \(c \*Client\) CreateWorkspace\(req CreateWorkspaceRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspace>)
-  - [func \(c \*Client\) CreateWorkspaceTag\(workspace string, req CreateTagRequest\) \(\*irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspaceTag>)
-  - [func \(c \*Client\) DeclineInvite\(inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.DeclineInvite>)
-  - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteBranch>)
-  - [func \(c \*Client\) DeleteConnection\(workspace, connectionID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnection>)
-  - [func \(c \*Client\) DeleteConnector\(connectorID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnector>)
-  - [func \(c \*Client\) DeleteEditorItem\(workspace, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteEditorItem>)
-  - [func \(c \*Client\) DeleteInvite\(inviteID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteInvite>)
-  - [func \(c \*Client\) DeleteObject\(workspace, repository, ref, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteObject>)
-  - [func \(c \*Client\) DeletePolicy\(workspace, policyID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeletePolicy>)
-  - [func \(c \*Client\) DeleteRepository\(workspace, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteRepository>)
-  - [func \(c \*Client\) DeleteStoredQuery\(workspace, queryID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteStoredQuery>)
-  - [func \(c \*Client\) DeleteTag\(workspace, repository, tag string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteTag>)
-  - [func \(c \*Client\) DeleteToken\(tokenID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteToken>)
-  - [func \(c \*Client\) DeleteWorkflow\(workspace, workflowID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkflow>)
-  - [func \(c \*Client\) DeleteWorkspace\(slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspace>)
-  - [func \(c \*Client\) DeleteWorkspaceTag\(workspace, tagID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspaceTag>)
-  - [func \(c \*Client\) DownloadObject\(workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.DownloadObject>)
-  - [func \(c \*Client\) ExecuteSQL\(workspace string, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
-  - [func \(c \*Client\) ExecuteStoredQuery\(workspace, queryID string\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
-  - [func \(c \*Client\) FetchAPI\(opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.FetchAPI>)
-  - [func \(c \*Client\) FetchAPIEnhanced\(opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, \*irminvalidator.ValidationResultError, error\)](<#Client.FetchAPIEnhanced>)
-  - [func \(c \*Client\) FetchBinary\(opts RequestOptions\) \(\[\]byte, error\)](<#Client.FetchBinary>)
-  - [func \(c \*Client\) FetchConnectorConfigurationFields\(connectorID, configType string, currentDetails map\[string\]string, currentSettings map\[string\]string\) \(\[\]irminmodels.DynamicField, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchConnectorConfigurationFields>)
-  - [func \(c \*Client\) FetchLogEvents\(workspace, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEvents>)
-  - [func \(c \*Client\) FetchLogEventsForConnection\(workspace, connectionID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForConnection>)
-  - [func \(c \*Client\) FetchLogEventsForObject\(workspace, objectID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForObject>)
-  - [func \(c \*Client\) FetchLogEventsForPolicy\(workspace, policyID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForPolicy>)
-  - [func \(c \*Client\) FetchLogEventsForRepository\(workspace, repositorySlug, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForRepository>)
-  - [func \(c \*Client\) FetchLogEventsForStoredQuery\(workspace, storedQueryID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForStoredQuery>)
-  - [func \(c \*Client\) FetchLogEventsForUser\(workspace, userID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForUser>)
-  - [func \(c \*Client\) FetchLogEventsForWorkflow\(workspace, workflowID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForWorkflow>)
-  - [func \(c \*Client\) GetBranch\(workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
-  - [func \(c \*Client\) GetCommit\(workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
-  - [func \(c \*Client\) GetConnection\(workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
-  - [func \(c \*Client\) GetConnectionSchema\(workspace, connectionID, operationMethod string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSchema>)
-  - [func \(c \*Client\) GetConnector\(connectorID string\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnector>)
-  - [func \(c \*Client\) GetEditorItemContent\(workspace, path string\) \(\*string, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetEditorItemContent>)
-  - [func \(c \*Client\) GetInvite\(inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetInvite>)
-  - [func \(c \*Client\) GetObjectAtPath\(workspace, repository, path, ref string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectAtPath>)
-  - [func \(c \*Client\) GetObjectContent\(workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
-  - [func \(c \*Client\) GetObjectHistory\(workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectHistory>)
-  - [func \(c \*Client\) GetObjectSchema\(workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectSchema>)
-  - [func \(c \*Client\) GetObjectStructuredContent\(workspace, repository, path, ref string\) \(map\[string\]any, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectStructuredContent>)
-  - [func \(c \*Client\) GetPolicy\(workspace, policyID string\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicy>)
-  - [func \(c \*Client\) GetPolicyResourceOptions\(workspace string\) \(\*irminmodels.PolicyResourceOptions, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyResourceOptions>)
-  - [func \(c \*Client\) GetPolicyRoleSummary\(workspace string\) \(\[\]irminmodels.RolePolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyRoleSummary>)
-  - [func \(c \*Client\) GetPolicyUserSummary\(workspace string\) \(\*irminmodels.UserPolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyUserSummary>)
-  - [func \(c \*Client\) GetProfile\(\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetProfile>)
-  - [func \(c \*Client\) GetRepository\(workspace, slug string\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetRepository>)
-  - [func \(c \*Client\) GetStoredQuery\(workspace, queryID string\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetStoredQuery>)
-  - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetTag>)
-  - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetUncommittedChanges>)
-  - [func \(c \*Client\) GetUser\(workspace, userID string\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetUser>)
-  - [func \(c \*Client\) GetWorkflow\(workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkflow>)
-  - [func \(c \*Client\) GetWorkflowRun\(workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkflowRun>)
-  - [func \(c \*Client\) GetWorkspace\(slug string\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspace>)
-  - [func \(c \*Client\) GetWorkspaceSchema\(slug string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceSchema>)
-  - [func \(c \*Client\) GetWorkspaceTag\(workspace, tagID string\) \(\*irminmodels.TagWithAssets, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceTag>)
-  - [func \(c \*Client\) LeaveWorkspace\(slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.LeaveWorkspace>)
-  - [func \(c \*Client\) ListAllWorkflowRuns\(workspace string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRuns>)
-  - [func \(c \*Client\) ListBranches\(workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
-  - [func \(c \*Client\) ListCommits\(workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
-  - [func \(c \*Client\) ListConnections\(workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
-  - [func \(c \*Client\) ListConnectors\(\) \(\[\]irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectors>)
-  - [func \(c \*Client\) ListEditorItems\(workspace, path string\) \(\[\]irminmodels.EditorItem, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListEditorItems>)
-  - [func \(c \*Client\) ListInviteInbox\(\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInviteInbox>)
-  - [func \(c \*Client\) ListInvitesToWorkspace\(workspace string\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInvitesToWorkspace>)
-  - [func \(c \*Client\) ListPolicies\(workspace string, params ListPoliciesParams\) \(\[\]irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListPolicies>)
-  - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRepositories>)
-  - [func \(c \*Client\) ListRoles\(\) \(\[\]irminmodels.Role, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRoles>)
-  - [func \(c \*Client\) ListStoredQueries\(workspace string\) \(\[\]irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListStoredQueries>)
-  - [func \(c \*Client\) ListTags\(workspace, repository string\) \(\[\]irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTags>)
-  - [func \(c \*Client\) ListTokens\(\) \(\[\]irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTokens>)
-  - [func \(c \*Client\) ListUsers\(workspace string\) \(\[\]irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListUsers>)
-  - [func \(c \*Client\) ListWorkflowRuns\(workspace, workflowID string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowRuns>)
-  - [func \(c \*Client\) ListWorkflows\(workspace string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflows>)
-  - [func \(c \*Client\) ListWorkflowsOfType\(workspace, workflowType string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowsOfType>)
-  - [func \(c \*Client\) ListWorkspaceTags\(workspace string\) \(\[\]irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaceTags>)
-  - [func \(c \*Client\) ListWorkspaces\(\) \(\[\]irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaces>)
-  - [func \(c \*Client\) MergeRefs\(workspace, repository string, req MergeRefsRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.MergeRefs>)
-  - [func \(c \*Client\) MoveEditorItem\(workspace, path string, req MoveEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.MoveEditorItem>)
-  - [func \(c \*Client\) MoveObject\(workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.MoveObject>)
-  - [func \(c \*Client\) PauseWorkflow\(workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.PauseWorkflow>)
-  - [func \(c \*Client\) RegisterNewConnector\(req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegisterNewConnector>)
-  - [func \(c \*Client\) RemoveTagFromEntity\(workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveTagFromEntity>)
-  - [func \(c \*Client\) RemoveUser\(workspace, userID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveUser>)
-  - [func \(c \*Client\) Request\(opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
-  - [func \(c \*Client\) ResendInvite\(inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ResendInvite>)
-  - [func \(c \*Client\) RevertChanges\(workspace, repository string, req RevertUncommittedChangesRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RevertChanges>)
-  - [func \(c \*Client\) RunScript\(workspace, path string, inputs \[\]irminmodels.ActionInputData\) \(\*irminmodels.ScriptResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.RunScript>)
-  - [func \(c \*Client\) SaveEditorItem\(workspace, path string, req CreateEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.SaveEditorItem>)
-  - [func \(c \*Client\) Search\(workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
-  - [func \(c \*Client\) SendInvite\(workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
-  - [func \(c \*Client\) StartWorkflow\(workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.StartWorkflow>)
-  - [func \(c \*Client\) TransferConnection\(workspace, connectionID string, req TransferConnectionOwnershipRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferConnection>)
-  - [func \(c \*Client\) TransferRepository\(workspace, slug string, req TransferRepositoryOwnershipRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferRepository>)
-  - [func \(c \*Client\) TransferStoredQuery\(workspace, queryID string, req TransferQueryOwnershipRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferStoredQuery>)
-  - [func \(c \*Client\) TransferWorkflow\(workspace, workflowID, newOwnerID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkflow>)
-  - [func \(c \*Client\) TransferWorkspace\(workspaceSlug string, req TransferOwnershipRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkspace>)
-  - [func \(c \*Client\) TriggerWorkflowRun\(workspace, workflowID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.TriggerWorkflowRun>)
-  - [func \(c \*Client\) UpdateBranch\(workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
-  - [func \(c \*Client\) UpdateConnection\(workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
-  - [func \(c \*Client\) UpdateInvite\(inviteID string, req UpdateInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateInvite>)
-  - [func \(c \*Client\) UpdatePolicy\(workspace, policyID string, req UpdatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdatePolicy>)
-  - [func \(c \*Client\) UpdateProfile\(firstName, lastName, email, phone, company string, profilePicture \*os.File\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateProfile>)
-  - [func \(c \*Client\) UpdateRegisteredConnector\(connectorID string, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRegisteredConnector>)
-  - [func \(c \*Client\) UpdateRepository\(workspace, slug string, req UpdateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRepository>)
-  - [func \(c \*Client\) UpdateStoredQuery\(workspace, queryID string, req UpdateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateStoredQuery>)
-  - [func \(c \*Client\) UpdateUserRoles\(workspace, userID string, req UpdateUserRolesRequest\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateUserRoles>)
-  - [func \(c \*Client\) UpdateWorkflow\(workspace, workflowID string, req UpdateWorkflowRequest\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflow>)
-  - [func \(c \*Client\) UpdateWorkflowSchedule\(workspace, workflowID string, schedule irminmodels.Schedule\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflowSchedule>)
-  - [func \(c \*Client\) UpdateWorkflowWorkflowable\(workspace, workflowID string, workflowable irminmodels.Workflowable\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflowWorkflowable>)
-  - [func \(c \*Client\) UpdateWorkspace\(workspaceSlug string, req UpdateWorkspaceRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkspace>)
-  - [func \(c \*Client\) UpdateWorkspaceTag\(workspace, tagID string, req UpdateTagRequest\) \(\*irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkspaceTag>)
-  - [func \(c \*Client\) UploadObject\(workspace, repository, ref, path string, files map\[string\]\[\]byte\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObject>)
-  - [func \(c \*Client\) UploadObjectFromURL\(workspace, repository, ref, path string, req UploadObjectFromURLRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObjectFromURL>)
-  - [func \(c \*Client\) ValidateConnectorConfiguration\(connectorID string, req ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateConnectorConfiguration>)
+  - [func \(c \*Client\) AcceptInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.AcceptInvite>)
+  - [func \(c \*Client\) AddTagToEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.AddTagToEntity>)
+  - [func \(c \*Client\) CallSystemWebhook\(ctx context.Context, webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
+  - [func \(c \*Client\) CancelWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
+  - [func \(c \*Client\) CheckPermission\(ctx context.Context, workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID \*string\) \(bool, error\)](<#Client.CheckPermission>)
+  - [func \(c \*Client\) CompareRefs\(ctx context.Context, workspace, repository, baseRef, compareRef string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.CompareRefs>)
+  - [func \(c \*Client\) CopyEditorItem\(ctx context.Context, workspace, path string, req MoveEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CopyEditorItem>)
+  - [func \(c \*Client\) CopyObject\(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.CopyObject>)
+  - [func \(c \*Client\) CreateBranch\(ctx context.Context, workspace, repository string, req CreateBranchRequest\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateBranch>)
+  - [func \(c \*Client\) CreateCommit\(ctx context.Context, workspace, repository string, req CreateCommitRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateCommit>)
+  - [func \(c \*Client\) CreateConnection\(ctx context.Context, workspace string, req CreateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateConnection>)
+  - [func \(c \*Client\) CreateEditorFolder\(ctx context.Context, workspace, path string, req CreateEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CreateEditorFolder>)
+  - [func \(c \*Client\) CreatePolicy\(ctx context.Context, workspace string, req CreatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreatePolicy>)
+  - [func \(c \*Client\) CreateRepository\(ctx context.Context, workspace string, req CreateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateRepository>)
+  - [func \(c \*Client\) CreateStoredQuery\(ctx context.Context, workspace string, req CreateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateStoredQuery>)
+  - [func \(c \*Client\) CreateTag\(ctx context.Context, workspace, repository string, req CreateRepositoryTagRequest\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateTag>)
+  - [func \(c \*Client\) CreateToken\(ctx context.Context, req CreateCredentialRequest\) \(\*irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateToken>)
+  - [func \(c \*Client\) CreateWorkflow\(ctx context.Context, workspace string, req WorkflowRequest\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkflow>)
+  - [func \(c \*Client\) CreateWorkspace\(ctx context.Context, req CreateWorkspaceRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspace>)
+  - [func \(c \*Client\) CreateWorkspaceTag\(ctx context.Context, workspace string, req CreateTagRequest\) \(\*irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.CreateWorkspaceTag>)
+  - [func \(c \*Client\) DeclineInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.DeclineInvite>)
+  - [func \(c \*Client\) DeleteBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteBranch>)
+  - [func \(c \*Client\) DeleteConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnection>)
+  - [func \(c \*Client\) DeleteConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteConnector>)
+  - [func \(c \*Client\) DeleteEditorItem\(ctx context.Context, workspace, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteEditorItem>)
+  - [func \(c \*Client\) DeleteInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteInvite>)
+  - [func \(c \*Client\) DeleteObject\(ctx context.Context, workspace, repository, ref, path string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteObject>)
+  - [func \(c \*Client\) DeletePolicy\(ctx context.Context, workspace, policyID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeletePolicy>)
+  - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteRepository>)
+  - [func \(c \*Client\) DeleteStoredQuery\(ctx context.Context, workspace, queryID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteStoredQuery>)
+  - [func \(c \*Client\) DeleteTag\(ctx context.Context, workspace, repository, tag string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteTag>)
+  - [func \(c \*Client\) DeleteToken\(ctx context.Context, tokenID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteToken>)
+  - [func \(c \*Client\) DeleteWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkflow>)
+  - [func \(c \*Client\) DeleteWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspace>)
+  - [func \(c \*Client\) DeleteWorkspaceTag\(ctx context.Context, workspace, tagID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.DeleteWorkspaceTag>)
+  - [func \(c \*Client\) DownloadObject\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.DownloadObject>)
+  - [func \(c \*Client\) ExecuteSQL\(ctx context.Context, workspace string, req ExecuteSQLRequest\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteSQL>)
+  - [func \(c \*Client\) ExecuteStoredQuery\(ctx context.Context, workspace, queryID string\) \(\*irminmodels.QueryResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ExecuteStoredQuery>)
+  - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.FetchAPI>)
+  - [func \(c \*Client\) FetchAPIEnhanced\(ctx context.Context, opts RequestOptions, out any\) \(\*irminmodels.IrminAPIResponse, \*irminvalidator.ValidationResultError, error\)](<#Client.FetchAPIEnhanced>)
+  - [func \(c \*Client\) FetchBinary\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.FetchBinary>)
+  - [func \(c \*Client\) FetchConnectorConfigurationFields\(ctx context.Context, connectorID, configType string, currentDetails map\[string\]string, currentSettings map\[string\]string\) \(\[\]irminmodels.DynamicField, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchConnectorConfigurationFields>)
+  - [func \(c \*Client\) FetchLogEvents\(ctx context.Context, workspace, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEvents>)
+  - [func \(c \*Client\) FetchLogEventsForConnection\(ctx context.Context, workspace, connectionID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForConnection>)
+  - [func \(c \*Client\) FetchLogEventsForObject\(ctx context.Context, workspace, objectID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForObject>)
+  - [func \(c \*Client\) FetchLogEventsForPolicy\(ctx context.Context, workspace, policyID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForPolicy>)
+  - [func \(c \*Client\) FetchLogEventsForRepository\(ctx context.Context, workspace, repositorySlug, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForRepository>)
+  - [func \(c \*Client\) FetchLogEventsForStoredQuery\(ctx context.Context, workspace, storedQueryID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForStoredQuery>)
+  - [func \(c \*Client\) FetchLogEventsForUser\(ctx context.Context, workspace, userID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForUser>)
+  - [func \(c \*Client\) FetchLogEventsForWorkflow\(ctx context.Context, workspace, workflowID, search string, page, perPage int\) \(\[\]irminmodels.LogEvent, \*irminmodels.IrminAPIResponse, error\)](<#Client.FetchLogEventsForWorkflow>)
+  - [func \(c \*Client\) GenerateFileSchema\(ctx context.Context, fileName string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GenerateFileSchema>)
+  - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
+  - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
+  - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
+  - [func \(c \*Client\) GetConnectionSchema\(ctx context.Context, workspace, connectionID, operationMethod string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSchema>)
+  - [func \(c \*Client\) GetConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnector>)
+  - [func \(c \*Client\) GetEditorItemContent\(ctx context.Context, workspace, path string\) \(\*string, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetEditorItemContent>)
+  - [func \(c \*Client\) GetInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetInvite>)
+  - [func \(c \*Client\) GetObjectAtPath\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectAtPath>)
+  - [func \(c \*Client\) GetObjectContent\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]byte, error\)](<#Client.GetObjectContent>)
+  - [func \(c \*Client\) GetObjectHistory\(ctx context.Context, workspace, repository, path, ref string\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectHistory>)
+  - [func \(c \*Client\) GetObjectSchema\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectSchema>)
+  - [func \(c \*Client\) GetObjectStructuredContent\(ctx context.Context, workspace, repository, path, ref string\) \(map\[string\]any, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetObjectStructuredContent>)
+  - [func \(c \*Client\) GetPolicy\(ctx context.Context, workspace, policyID string\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicy>)
+  - [func \(c \*Client\) GetPolicyResourceOptions\(ctx context.Context, workspace string\) \(\*irminmodels.PolicyResourceOptions, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyResourceOptions>)
+  - [func \(c \*Client\) GetPolicyRoleSummary\(ctx context.Context, workspace string\) \(\[\]irminmodels.RolePolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyRoleSummary>)
+  - [func \(c \*Client\) GetPolicyUserSummary\(ctx context.Context, workspace string\) \(\*irminmodels.UserPolicySummary, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetPolicyUserSummary>)
+  - [func \(c \*Client\) GetProfile\(ctx context.Context\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetProfile>)
+  - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, slug string\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetRepository>)
+  - [func \(c \*Client\) GetStoredQuery\(ctx context.Context, workspace, queryID string\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetStoredQuery>)
+  - [func \(c \*Client\) GetTag\(ctx context.Context, workspace, repository, tag string\) \(\*irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetTag>)
+  - [func \(c \*Client\) GetUncommittedChanges\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.Diff, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetUncommittedChanges>)
+  - [func \(c \*Client\) GetUser\(ctx context.Context, workspace, userID string\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetUser>)
+  - [func \(c \*Client\) GetWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkflow>)
+  - [func \(c \*Client\) GetWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkflowRun>)
+  - [func \(c \*Client\) GetWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspace>)
+  - [func \(c \*Client\) GetWorkspaceSchema\(ctx context.Context, slug string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceSchema>)
+  - [func \(c \*Client\) GetWorkspaceTag\(ctx context.Context, workspace, tagID string\) \(\*irminmodels.TagWithAssets, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetWorkspaceTag>)
+  - [func \(c \*Client\) LeaveWorkspace\(ctx context.Context, slug string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.LeaveWorkspace>)
+  - [func \(c \*Client\) ListAllWorkflowRuns\(ctx context.Context, workspace string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListAllWorkflowRuns>)
+  - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListBranches>)
+  - [func \(c \*Client\) ListCommits\(ctx context.Context, workspace, repository, ref, after string, perPage int\) \(\[\]irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListCommits>)
+  - [func \(c \*Client\) ListConnections\(ctx context.Context, workspace string\) \(\[\]irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnections>)
+  - [func \(c \*Client\) ListConnectors\(ctx context.Context\) \(\[\]irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListConnectors>)
+  - [func \(c \*Client\) ListEditorItems\(ctx context.Context, workspace, path string\) \(\[\]irminmodels.EditorItem, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListEditorItems>)
+  - [func \(c \*Client\) ListInviteInbox\(ctx context.Context\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInviteInbox>)
+  - [func \(c \*Client\) ListInvitesToWorkspace\(ctx context.Context, workspace string\) \(\[\]irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListInvitesToWorkspace>)
+  - [func \(c \*Client\) ListPolicies\(ctx context.Context, workspace string, params ListPoliciesParams\) \(\[\]irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListPolicies>)
+  - [func \(c \*Client\) ListRepositories\(ctx context.Context, workspace string\) \(\[\]irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRepositories>)
+  - [func \(c \*Client\) ListRoles\(ctx context.Context\) \(\[\]irminmodels.Role, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListRoles>)
+  - [func \(c \*Client\) ListStoredQueries\(ctx context.Context, workspace string\) \(\[\]irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListStoredQueries>)
+  - [func \(c \*Client\) ListTags\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.GitTag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTags>)
+  - [func \(c \*Client\) ListTokens\(ctx context.Context\) \(\[\]irminmodels.APIToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListTokens>)
+  - [func \(c \*Client\) ListUsers\(ctx context.Context, workspace string\) \(\[\]irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListUsers>)
+  - [func \(c \*Client\) ListWorkflowRuns\(ctx context.Context, workspace, workflowID string, page, perPage int\) \(\[\]irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowRuns>)
+  - [func \(c \*Client\) ListWorkflows\(ctx context.Context, workspace string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflows>)
+  - [func \(c \*Client\) ListWorkflowsOfType\(ctx context.Context, workspace, workflowType string\) \(\[\]irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkflowsOfType>)
+  - [func \(c \*Client\) ListWorkspaceTags\(ctx context.Context, workspace string\) \(\[\]irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaceTags>)
+  - [func \(c \*Client\) ListWorkspaces\(ctx context.Context\) \(\[\]irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.ListWorkspaces>)
+  - [func \(c \*Client\) MergeRefs\(ctx context.Context, workspace, repository string, req MergeRefsRequest\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.MergeRefs>)
+  - [func \(c \*Client\) MoveEditorItem\(ctx context.Context, workspace, path string, req MoveEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.MoveEditorItem>)
+  - [func \(c \*Client\) MoveObject\(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.MoveObject>)
+  - [func \(c \*Client\) PauseWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.PauseWorkflow>)
+  - [func \(c \*Client\) RegisterNewConnector\(ctx context.Context, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegisterNewConnector>)
+  - [func \(c \*Client\) RemoveTagFromEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveTagFromEntity>)
+  - [func \(c \*Client\) RemoveUser\(ctx context.Context, workspace, userID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveUser>)
+  - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
+  - [func \(c \*Client\) ResendInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.ResendInvite>)
+  - [func \(c \*Client\) RevertChanges\(ctx context.Context, workspace, repository string, req RevertUncommittedChangesRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RevertChanges>)
+  - [func \(c \*Client\) RunScript\(ctx context.Context, workspace, path string, inputs \[\]irminmodels.ActionInputData\) \(\*irminmodels.ScriptResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.RunScript>)
+  - [func \(c \*Client\) SaveEditorItem\(ctx context.Context, workspace, path string, req CreateEditorItemRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.SaveEditorItem>)
+  - [func \(c \*Client\) Search\(ctx context.Context, workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
+  - [func \(c \*Client\) SendInvite\(ctx context.Context, workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
+  - [func \(c \*Client\) StartWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.StartWorkflow>)
+  - [func \(c \*Client\) TransferConnection\(ctx context.Context, workspace, connectionID string, req TransferConnectionOwnershipRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferConnection>)
+  - [func \(c \*Client\) TransferRepository\(ctx context.Context, workspace, slug string, req TransferRepositoryOwnershipRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferRepository>)
+  - [func \(c \*Client\) TransferStoredQuery\(ctx context.Context, workspace, queryID string, req TransferQueryOwnershipRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferStoredQuery>)
+  - [func \(c \*Client\) TransferWorkflow\(ctx context.Context, workspace, workflowID, newOwnerID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkflow>)
+  - [func \(c \*Client\) TransferWorkspace\(ctx context.Context, workspaceSlug string, req TransferOwnershipRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferWorkspace>)
+  - [func \(c \*Client\) TriggerWorkflowRun\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.TriggerWorkflowRun>)
+  - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
+  - [func \(c \*Client\) UpdateConnection\(ctx context.Context, workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
+  - [func \(c \*Client\) UpdateInvite\(ctx context.Context, inviteID string, req UpdateInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateInvite>)
+  - [func \(c \*Client\) UpdatePolicy\(ctx context.Context, workspace, policyID string, req UpdatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdatePolicy>)
+  - [func \(c \*Client\) UpdateProfile\(ctx context.Context, firstName, lastName, email, phone, company string, profilePicture \*os.File\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateProfile>)
+  - [func \(c \*Client\) UpdateRegisteredConnector\(ctx context.Context, connectorID string, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRegisteredConnector>)
+  - [func \(c \*Client\) UpdateRepository\(ctx context.Context, workspace, slug string, req UpdateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRepository>)
+  - [func \(c \*Client\) UpdateStoredQuery\(ctx context.Context, workspace, queryID string, req UpdateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateStoredQuery>)
+  - [func \(c \*Client\) UpdateUserRoles\(ctx context.Context, workspace, userID string, req UpdateUserRolesRequest\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateUserRoles>)
+  - [func \(c \*Client\) UpdateWorkflow\(ctx context.Context, workspace, workflowID string, req UpdateWorkflowRequest\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflow>)
+  - [func \(c \*Client\) UpdateWorkflowSchedule\(ctx context.Context, workspace, workflowID string, schedule irminmodels.Schedule\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflowSchedule>)
+  - [func \(c \*Client\) UpdateWorkflowWorkflowable\(ctx context.Context, workspace, workflowID string, workflowable irminmodels.Workflowable\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkflowWorkflowable>)
+  - [func \(c \*Client\) UpdateWorkspace\(ctx context.Context, workspaceSlug string, req UpdateWorkspaceRequest\) \(\*irminmodels.Workspace, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkspace>)
+  - [func \(c \*Client\) UpdateWorkspaceTag\(ctx context.Context, workspace, tagID string, req UpdateTagRequest\) \(\*irminmodels.Tag, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateWorkspaceTag>)
+  - [func \(c \*Client\) UploadObject\(ctx context.Context, workspace, repository, ref, path string, files map\[string\]\[\]byte\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObject>)
+  - [func \(c \*Client\) UploadObjectFromURL\(ctx context.Context, workspace, repository, ref, path string, req UploadObjectFromURLRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.UploadObjectFromURL>)
+  - [func \(c \*Client\) ValidateConnectorConfiguration\(ctx context.Context, connectorID string, req ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ValidateConnectorConfiguration>)
   - [func \(c \*Client\) ValidateRequest\(req any\) error](<#Client.ValidateRequest>)
   - [func \(c \*Client\) ValidateRequestEnhanced\(req any\) \*irminvalidator.ValidationResultError](<#Client.ValidateRequestEnhanced>)
   - [func \(c \*Client\) ValidateVar\(field any, tag string\) error](<#Client.ValidateVar>)
@@ -368,7 +369,7 @@ NewClientWithSQIDManager creates a new Irmin API client with a custom SQID manag
 ### func \(\*Client\) AcceptInvite
 
 ```go
-func (c *Client) AcceptInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) AcceptInvite(ctx context.Context, inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -377,7 +378,7 @@ func (c *Client) AcceptInvite(inviteID string) (*irminmodels.Invite, *irminmodel
 ### func \(\*Client\) AddTagToEntity
 
 ```go
-func (c *Client) AddTagToEntity(workspace, tagID string, entityType irminmodels.TagEntityType, entityID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) AddTagToEntity(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 AddTagToEntity adds an entity to a tag using the workspace tag route.
@@ -386,7 +387,7 @@ AddTagToEntity adds an entity to a tag using the workspace tag route.
 ### func \(\*Client\) CallSystemWebhook
 
 ```go
-func (c *Client) CallSystemWebhook(webhookType string, headers map[string]string, body any) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) CallSystemWebhook(ctx context.Context, webhookType string, headers map[string]string, body any) (*irminmodels.IrminAPIResponse, error)
 ```
 
 CallSystemWebhook calls the system webhook endpoint. The body is expected to be an that will be marshaled to JSON.
@@ -397,7 +398,7 @@ Usable only with a system token.
 ### func \(\*Client\) CancelWorkflowRun
 
 ```go
-func (c *Client) CancelWorkflowRun(workspace, workflowID, runID string) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CancelWorkflowRun(ctx context.Context, workspace, workflowID, runID string) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -406,7 +407,7 @@ func (c *Client) CancelWorkflowRun(workspace, workflowID, runID string) (*irminm
 ### func \(\*Client\) CheckPermission
 
 ```go
-func (c *Client) CheckPermission(workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID *string) (bool, error)
+func (c *Client) CheckPermission(ctx context.Context, workspace string, resource irminmodels.PolicyResource, action irminmodels.PolicyAction, resourceID *string) (bool, error)
 ```
 
 CheckPermission checks if a user has permission to perform an action on a resource.
@@ -415,7 +416,7 @@ CheckPermission checks if a user has permission to perform an action on a resour
 ### func \(\*Client\) CompareRefs
 
 ```go
-func (c *Client) CompareRefs(workspace, repository, baseRef, compareRef string) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CompareRefs(ctx context.Context, workspace, repository, baseRef, compareRef string) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
 ```
 
 CompareRefs compares two refs in a repository and returns the differences.
@@ -424,7 +425,7 @@ CompareRefs compares two refs in a repository and returns the differences.
 ### func \(\*Client\) CopyEditorItem
 
 ```go
-func (c *Client) CopyEditorItem(workspace, path string, req MoveEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) CopyEditorItem(ctx context.Context, workspace, path string, req MoveEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -433,7 +434,7 @@ func (c *Client) CopyEditorItem(workspace, path string, req MoveEditorItemReques
 ### func \(\*Client\) CopyObject
 
 ```go
-func (c *Client) CopyObject(workspace, repository, path, ref string, req MoveObjectRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CopyObject(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -442,7 +443,7 @@ func (c *Client) CopyObject(workspace, repository, path, ref string, req MoveObj
 ### func \(\*Client\) CreateBranch
 
 ```go
-func (c *Client) CreateBranch(workspace, repository string, req CreateBranchRequest) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateBranch(ctx context.Context, workspace, repository string, req CreateBranchRequest) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
 ```
 
 CreateBranch creates a new branch in the repository.
@@ -451,7 +452,7 @@ CreateBranch creates a new branch in the repository.
 ### func \(\*Client\) CreateCommit
 
 ```go
-func (c *Client) CreateCommit(workspace, repository string, req CreateCommitRequest) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateCommit(ctx context.Context, workspace, repository string, req CreateCommitRequest) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -460,7 +461,7 @@ func (c *Client) CreateCommit(workspace, repository string, req CreateCommitRequ
 ### func \(\*Client\) CreateConnection
 
 ```go
-func (c *Client) CreateConnection(workspace string, req CreateConnectionRequest) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateConnection(ctx context.Context, workspace string, req CreateConnectionRequest) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -469,7 +470,7 @@ func (c *Client) CreateConnection(workspace string, req CreateConnectionRequest)
 ### func \(\*Client\) CreateEditorFolder
 
 ```go
-func (c *Client) CreateEditorFolder(workspace, path string, req CreateEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateEditorFolder(ctx context.Context, workspace, path string, req CreateEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -478,7 +479,7 @@ func (c *Client) CreateEditorFolder(workspace, path string, req CreateEditorItem
 ### func \(\*Client\) CreatePolicy
 
 ```go
-func (c *Client) CreatePolicy(workspace string, req CreatePolicyRequest) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreatePolicy(ctx context.Context, workspace string, req CreatePolicyRequest) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
 ```
 
 CreatePolicy creates a new policy for a workspace.
@@ -487,7 +488,7 @@ CreatePolicy creates a new policy for a workspace.
 ### func \(\*Client\) CreateRepository
 
 ```go
-func (c *Client) CreateRepository(workspace string, req CreateRepositoryRequest) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateRepository(ctx context.Context, workspace string, req CreateRepositoryRequest) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -496,7 +497,7 @@ func (c *Client) CreateRepository(workspace string, req CreateRepositoryRequest)
 ### func \(\*Client\) CreateStoredQuery
 
 ```go
-func (c *Client) CreateStoredQuery(workspace string, req CreateQueryRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateStoredQuery(ctx context.Context, workspace string, req CreateQueryRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -505,7 +506,7 @@ func (c *Client) CreateStoredQuery(workspace string, req CreateQueryRequest) (*i
 ### func \(\*Client\) CreateTag
 
 ```go
-func (c *Client) CreateTag(workspace, repository string, req CreateRepositoryTagRequest) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateTag(ctx context.Context, workspace, repository string, req CreateRepositoryTagRequest) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -514,7 +515,7 @@ func (c *Client) CreateTag(workspace, repository string, req CreateRepositoryTag
 ### func \(\*Client\) CreateToken
 
 ```go
-func (c *Client) CreateToken(req CreateCredentialRequest) (*irminmodels.APIToken, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateToken(ctx context.Context, req CreateCredentialRequest) (*irminmodels.APIToken, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -523,7 +524,7 @@ func (c *Client) CreateToken(req CreateCredentialRequest) (*irminmodels.APIToken
 ### func \(\*Client\) CreateWorkflow
 
 ```go
-func (c *Client) CreateWorkflow(workspace string, req WorkflowRequest) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateWorkflow(ctx context.Context, workspace string, req WorkflowRequest) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -532,7 +533,7 @@ func (c *Client) CreateWorkflow(workspace string, req WorkflowRequest) (*irminmo
 ### func \(\*Client\) CreateWorkspace
 
 ```go
-func (c *Client) CreateWorkspace(req CreateWorkspaceRequest) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateWorkspace(ctx context.Context, req CreateWorkspaceRequest) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -541,7 +542,7 @@ func (c *Client) CreateWorkspace(req CreateWorkspaceRequest) (*irminmodels.Works
 ### func \(\*Client\) CreateWorkspaceTag
 
 ```go
-func (c *Client) CreateWorkspaceTag(workspace string, req CreateTagRequest) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
+func (c *Client) CreateWorkspaceTag(ctx context.Context, workspace string, req CreateTagRequest) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
 ```
 
 CreateWorkspaceTag creates a new workspace tag.
@@ -550,7 +551,7 @@ CreateWorkspaceTag creates a new workspace tag.
 ### func \(\*Client\) DeclineInvite
 
 ```go
-func (c *Client) DeclineInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) DeclineInvite(ctx context.Context, inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -559,7 +560,7 @@ func (c *Client) DeclineInvite(inviteID string) (*irminmodels.Invite, *irminmode
 ### func \(\*Client\) DeleteBranch
 
 ```go
-func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteBranch(ctx context.Context, workspace, repository, branch string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 DeleteBranch deletes a branch in the repository.
@@ -568,7 +569,7 @@ DeleteBranch deletes a branch in the repository.
 ### func \(\*Client\) DeleteConnection
 
 ```go
-func (c *Client) DeleteConnection(workspace, connectionID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteConnection(ctx context.Context, workspace, connectionID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 DeleteConnection deletes a connection by its ID.
@@ -577,7 +578,7 @@ DeleteConnection deletes a connection by its ID.
 ### func \(\*Client\) DeleteConnector
 
 ```go
-func (c *Client) DeleteConnector(connectorID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteConnector(ctx context.Context, connectorID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 DeleteConnector deletes a connector from the system. Requests to this endpoint must be authenticated with a system token.
@@ -586,7 +587,7 @@ DeleteConnector deletes a connector from the system. Requests to this endpoint m
 ### func \(\*Client\) DeleteEditorItem
 
 ```go
-func (c *Client) DeleteEditorItem(workspace, path string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteEditorItem(ctx context.Context, workspace, path string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -595,7 +596,7 @@ func (c *Client) DeleteEditorItem(workspace, path string) (*irminmodels.IrminAPI
 ### func \(\*Client\) DeleteInvite
 
 ```go
-func (c *Client) DeleteInvite(inviteID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteInvite(ctx context.Context, inviteID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -604,7 +605,7 @@ func (c *Client) DeleteInvite(inviteID string) (*irminmodels.IrminAPIResponse, e
 ### func \(\*Client\) DeleteObject
 
 ```go
-func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteObject(ctx context.Context, workspace, repository, ref, path string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -613,7 +614,7 @@ func (c *Client) DeleteObject(workspace, repository, ref, path string) (*irminmo
 ### func \(\*Client\) DeletePolicy
 
 ```go
-func (c *Client) DeletePolicy(workspace, policyID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeletePolicy(ctx context.Context, workspace, policyID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 DeletePolicy deletes a policy.
@@ -622,7 +623,7 @@ DeletePolicy deletes a policy.
 ### func \(\*Client\) DeleteRepository
 
 ```go
-func (c *Client) DeleteRepository(workspace, slug string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteRepository(ctx context.Context, workspace, slug string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -631,7 +632,7 @@ func (c *Client) DeleteRepository(workspace, slug string) (*irminmodels.IrminAPI
 ### func \(\*Client\) DeleteStoredQuery
 
 ```go
-func (c *Client) DeleteStoredQuery(workspace, queryID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteStoredQuery(ctx context.Context, workspace, queryID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -640,7 +641,7 @@ func (c *Client) DeleteStoredQuery(workspace, queryID string) (*irminmodels.Irmi
 ### func \(\*Client\) DeleteTag
 
 ```go
-func (c *Client) DeleteTag(workspace, repository, tag string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteTag(ctx context.Context, workspace, repository, tag string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -649,7 +650,7 @@ func (c *Client) DeleteTag(workspace, repository, tag string) (*irminmodels.Irmi
 ### func \(\*Client\) DeleteToken
 
 ```go
-func (c *Client) DeleteToken(tokenID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteToken(ctx context.Context, tokenID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -658,7 +659,7 @@ func (c *Client) DeleteToken(tokenID string) (*irminmodels.IrminAPIResponse, err
 ### func \(\*Client\) DeleteWorkflow
 
 ```go
-func (c *Client) DeleteWorkflow(workspace, workflowID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteWorkflow(ctx context.Context, workspace, workflowID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -667,7 +668,7 @@ func (c *Client) DeleteWorkflow(workspace, workflowID string) (*irminmodels.Irmi
 ### func \(\*Client\) DeleteWorkspace
 
 ```go
-func (c *Client) DeleteWorkspace(slug string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteWorkspace(ctx context.Context, slug string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -676,7 +677,7 @@ func (c *Client) DeleteWorkspace(slug string) (*irminmodels.IrminAPIResponse, er
 ### func \(\*Client\) DeleteWorkspaceTag
 
 ```go
-func (c *Client) DeleteWorkspaceTag(workspace, tagID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) DeleteWorkspaceTag(ctx context.Context, workspace, tagID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 DeleteWorkspaceTag deletes a workspace tag.
@@ -685,7 +686,7 @@ DeleteWorkspaceTag deletes a workspace tag.
 ### func \(\*Client\) DownloadObject
 
 ```go
-func (c *Client) DownloadObject(workspace, repository, path, ref string) ([]byte, error)
+func (c *Client) DownloadObject(ctx context.Context, workspace, repository, path, ref string) ([]byte, error)
 ```
 
 DownloadObject creates a zip file of the object at the given path and ref and returns the binary data.
@@ -694,7 +695,7 @@ DownloadObject creates a zip file of the object at the given path and ref and re
 ### func \(\*Client\) ExecuteSQL
 
 ```go
-func (c *Client) ExecuteSQL(workspace string, req ExecuteSQLRequest) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ExecuteSQL(ctx context.Context, workspace string, req ExecuteSQLRequest) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -703,7 +704,7 @@ func (c *Client) ExecuteSQL(workspace string, req ExecuteSQLRequest) (*irminmode
 ### func \(\*Client\) ExecuteStoredQuery
 
 ```go
-func (c *Client) ExecuteStoredQuery(workspace, queryID string) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ExecuteStoredQuery(ctx context.Context, workspace, queryID string) (*irminmodels.QueryResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -712,7 +713,7 @@ func (c *Client) ExecuteStoredQuery(workspace, queryID string) (*irminmodels.Que
 ### func \(\*Client\) FetchAPI
 
 ```go
-func (c *Client) FetchAPI(opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, error)
 ```
 
 FetchAPI sends a request and attempts to parse the response into IrminAPIResponse\[T\].
@@ -721,7 +722,7 @@ FetchAPI sends a request and attempts to parse the response into IrminAPIRespons
 ### func \(\*Client\) FetchAPIEnhanced
 
 ```go
-func (c *Client) FetchAPIEnhanced(opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, *irminvalidator.ValidationResultError, error)
+func (c *Client) FetchAPIEnhanced(ctx context.Context, opts RequestOptions, out any) (*irminmodels.IrminAPIResponse, *irminvalidator.ValidationResultError, error)
 ```
 
 FetchAPIEnhanced sends a request with enhanced validation and attempts to parse the response into IrminAPIResponse\[T\]. This method provides detailed validation results before sending the request.
@@ -730,7 +731,7 @@ FetchAPIEnhanced sends a request with enhanced validation and attempts to parse 
 ### func \(\*Client\) FetchBinary
 
 ```go
-func (c *Client) FetchBinary(opts RequestOptions) ([]byte, error)
+func (c *Client) FetchBinary(ctx context.Context, opts RequestOptions) ([]byte, error)
 ```
 
 FetchBinary sends a request and returns the raw bytes \(which you can treat as a file, or parse further\).
@@ -739,7 +740,7 @@ FetchBinary sends a request and returns the raw bytes \(which you can treat as a
 ### func \(\*Client\) FetchConnectorConfigurationFields
 
 ```go
-func (c *Client) FetchConnectorConfigurationFields(connectorID, configType string, currentDetails map[string]string, currentSettings map[string]string) ([]irminmodels.DynamicField, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchConnectorConfigurationFields(ctx context.Context, connectorID, configType string, currentDetails map[string]string, currentSettings map[string]string) ([]irminmodels.DynamicField, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -748,7 +749,7 @@ func (c *Client) FetchConnectorConfigurationFields(connectorID, configType strin
 ### func \(\*Client\) FetchLogEvents
 
 ```go
-func (c *Client) FetchLogEvents(workspace, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEvents(ctx context.Context, workspace, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEvents retrieves general audit log events for the current workspace.
@@ -757,7 +758,7 @@ FetchLogEvents retrieves general audit log events for the current workspace.
 ### func \(\*Client\) FetchLogEventsForConnection
 
 ```go
-func (c *Client) FetchLogEventsForConnection(workspace, connectionID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEventsForConnection(ctx context.Context, workspace, connectionID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEventsForConnection retrieves general audit log events for a connection.
@@ -766,7 +767,7 @@ FetchLogEventsForConnection retrieves general audit log events for a connection.
 ### func \(\*Client\) FetchLogEventsForObject
 
 ```go
-func (c *Client) FetchLogEventsForObject(workspace, objectID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEventsForObject(ctx context.Context, workspace, objectID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEventsForObject retrieves general audit log events for an object.
@@ -775,7 +776,7 @@ FetchLogEventsForObject retrieves general audit log events for an object.
 ### func \(\*Client\) FetchLogEventsForPolicy
 
 ```go
-func (c *Client) FetchLogEventsForPolicy(workspace, policyID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEventsForPolicy(ctx context.Context, workspace, policyID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEventsForPolicy retrieves general audit log events for a policy.
@@ -784,7 +785,7 @@ FetchLogEventsForPolicy retrieves general audit log events for a policy.
 ### func \(\*Client\) FetchLogEventsForRepository
 
 ```go
-func (c *Client) FetchLogEventsForRepository(workspace, repositorySlug, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEventsForRepository(ctx context.Context, workspace, repositorySlug, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEventsForRepository retrieves general audit log events for a repository.
@@ -793,7 +794,7 @@ FetchLogEventsForRepository retrieves general audit log events for a repository.
 ### func \(\*Client\) FetchLogEventsForStoredQuery
 
 ```go
-func (c *Client) FetchLogEventsForStoredQuery(workspace, storedQueryID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEventsForStoredQuery(ctx context.Context, workspace, storedQueryID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEventsForStoredQuery retrieves general audit log events for a stored query.
@@ -802,7 +803,7 @@ FetchLogEventsForStoredQuery retrieves general audit log events for a stored que
 ### func \(\*Client\) FetchLogEventsForUser
 
 ```go
-func (c *Client) FetchLogEventsForUser(workspace, userID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEventsForUser(ctx context.Context, workspace, userID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEventsForUser retrieves general audit log events for a user.
@@ -811,16 +812,27 @@ FetchLogEventsForUser retrieves general audit log events for a user.
 ### func \(\*Client\) FetchLogEventsForWorkflow
 
 ```go
-func (c *Client) FetchLogEventsForWorkflow(workspace, workflowID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
+func (c *Client) FetchLogEventsForWorkflow(ctx context.Context, workspace, workflowID, search string, page, perPage int) ([]irminmodels.LogEvent, *irminmodels.IrminAPIResponse, error)
 ```
 
 FetchLogEventsForWorkflow retrieves general audit log events for a workflow.
+
+<a name="Client.GenerateFileSchema"></a>
+### func \(\*Client\) GenerateFileSchema
+
+```go
+func (c *Client) GenerateFileSchema(ctx context.Context, fileName string, fileReader io.Reader) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+```
+
+GenerateFileSchema generates a schema from a file. The body is expected to be a multipart/form\-data request with a file field.
+
+Usable only with a system token.
 
 <a name="Client.GetBranch"></a>
 ### func \(\*Client\) GetBranch
 
 ```go
-func (c *Client) GetBranch(workspace, repository, branchName string) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetBranch(ctx context.Context, workspace, repository, branchName string) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -829,7 +841,7 @@ func (c *Client) GetBranch(workspace, repository, branchName string) (*irminmode
 ### func \(\*Client\) GetCommit
 
 ```go
-func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetCommit(ctx context.Context, workspace, repository, hash string) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -838,7 +850,7 @@ func (c *Client) GetCommit(workspace, repository, hash string) (*irminmodels.Com
 ### func \(\*Client\) GetConnection
 
 ```go
-func (c *Client) GetConnection(workspace, connectionID string) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetConnection(ctx context.Context, workspace, connectionID string) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -847,7 +859,7 @@ func (c *Client) GetConnection(workspace, connectionID string) (*irminmodels.Con
 ### func \(\*Client\) GetConnectionSchema
 
 ```go
-func (c *Client) GetConnectionSchema(workspace, connectionID, operationMethod string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetConnectionSchema(ctx context.Context, workspace, connectionID, operationMethod string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetConnectionSchema retrieves the schema for a specific connection and operation method.
@@ -856,7 +868,7 @@ GetConnectionSchema retrieves the schema for a specific connection and operation
 ### func \(\*Client\) GetConnector
 
 ```go
-func (c *Client) GetConnector(connectorID string) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetConnector(ctx context.Context, connectorID string) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -865,7 +877,7 @@ func (c *Client) GetConnector(connectorID string) (*irminmodels.Connector, *irmi
 ### func \(\*Client\) GetEditorItemContent
 
 ```go
-func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetEditorItemContent(ctx context.Context, workspace, path string) (*string, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -874,7 +886,7 @@ func (c *Client) GetEditorItemContent(workspace, path string) (*string, *irminmo
 ### func \(\*Client\) GetInvite
 
 ```go
-func (c *Client) GetInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetInvite(ctx context.Context, inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -883,7 +895,7 @@ func (c *Client) GetInvite(inviteID string) (*irminmodels.Invite, *irminmodels.I
 ### func \(\*Client\) GetObjectAtPath
 
 ```go
-func (c *Client) GetObjectAtPath(workspace, repository, path, ref string) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetObjectAtPath(ctx context.Context, workspace, repository, path, ref string) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetObjectAtPath fetches the object at the given path and ref.
@@ -892,7 +904,7 @@ GetObjectAtPath fetches the object at the given path and ref.
 ### func \(\*Client\) GetObjectContent
 
 ```go
-func (c *Client) GetObjectContent(workspace, repository, path, ref string) ([]byte, error)
+func (c *Client) GetObjectContent(ctx context.Context, workspace, repository, path, ref string) ([]byte, error)
 ```
 
 GetObjectContent fetches the content of an object at the given path and ref.
@@ -901,7 +913,7 @@ GetObjectContent fetches the content of an object at the given path and ref.
 ### func \(\*Client\) GetObjectHistory
 
 ```go
-func (c *Client) GetObjectHistory(workspace, repository, path, ref string) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetObjectHistory(ctx context.Context, workspace, repository, path, ref string) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetObjectHistory fetches the history of an object at the given path and ref.
@@ -910,7 +922,7 @@ GetObjectHistory fetches the history of an object at the given path and ref.
 ### func \(\*Client\) GetObjectSchema
 
 ```go
-func (c *Client) GetObjectSchema(workspace, repository, path, ref string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetObjectSchema(ctx context.Context, workspace, repository, path, ref string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetObjectSchema fetches the schema of an object at the given path and ref.
@@ -919,7 +931,7 @@ GetObjectSchema fetches the schema of an object at the given path and ref.
 ### func \(\*Client\) GetObjectStructuredContent
 
 ```go
-func (c *Client) GetObjectStructuredContent(workspace, repository, path, ref string) (map[string]any, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetObjectStructuredContent(ctx context.Context, workspace, repository, path, ref string) (map[string]any, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetObjectStructuredContent fetches the parsed structured content of an object at the given path and ref.
@@ -928,7 +940,7 @@ GetObjectStructuredContent fetches the parsed structured content of an object at
 ### func \(\*Client\) GetPolicy
 
 ```go
-func (c *Client) GetPolicy(workspace, policyID string) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetPolicy(ctx context.Context, workspace, policyID string) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetPolicy returns a single policy.
@@ -937,7 +949,7 @@ GetPolicy returns a single policy.
 ### func \(\*Client\) GetPolicyResourceOptions
 
 ```go
-func (c *Client) GetPolicyResourceOptions(workspace string) (*irminmodels.PolicyResourceOptions, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetPolicyResourceOptions(ctx context.Context, workspace string) (*irminmodels.PolicyResourceOptions, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetPolicyResourceOptions returns all possible policy resource options for a given workspace.
@@ -946,7 +958,7 @@ GetPolicyResourceOptions returns all possible policy resource options for a give
 ### func \(\*Client\) GetPolicyRoleSummary
 
 ```go
-func (c *Client) GetPolicyRoleSummary(workspace string) ([]irminmodels.RolePolicySummary, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetPolicyRoleSummary(ctx context.Context, workspace string) ([]irminmodels.RolePolicySummary, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetPolicyRoleSummary returns a list of policies that apply to a role.
@@ -955,7 +967,7 @@ GetPolicyRoleSummary returns a list of policies that apply to a role.
 ### func \(\*Client\) GetPolicyUserSummary
 
 ```go
-func (c *Client) GetPolicyUserSummary(workspace string) (*irminmodels.UserPolicySummary, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetPolicyUserSummary(ctx context.Context, workspace string) (*irminmodels.UserPolicySummary, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetPolicyUserSummary returns a list of policies that apply to a user.
@@ -964,7 +976,7 @@ GetPolicyUserSummary returns a list of policies that apply to a user.
 ### func \(\*Client\) GetProfile
 
 ```go
-func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetProfile(ctx context.Context) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -973,7 +985,7 @@ func (c *Client) GetProfile() (*irminmodels.User, *irminmodels.IrminAPIResponse,
 ### func \(\*Client\) GetRepository
 
 ```go
-func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetRepository(ctx context.Context, workspace, slug string) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -982,7 +994,7 @@ func (c *Client) GetRepository(workspace, slug string) (*irminmodels.Repository,
 ### func \(\*Client\) GetStoredQuery
 
 ```go
-func (c *Client) GetStoredQuery(workspace, queryID string) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetStoredQuery(ctx context.Context, workspace, queryID string) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -991,7 +1003,7 @@ func (c *Client) GetStoredQuery(workspace, queryID string) (*irminmodels.StoredQ
 ### func \(\*Client\) GetTag
 
 ```go
-func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetTag(ctx context.Context, workspace, repository, tag string) (*irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1000,7 +1012,7 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag,
 ### func \(\*Client\) GetUncommittedChanges
 
 ```go
-func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetUncommittedChanges(ctx context.Context, workspace, repository, branch string) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetUncommittedChanges retrieves the list of uncommitted changes in a branch.
@@ -1009,7 +1021,7 @@ GetUncommittedChanges retrieves the list of uncommitted changes in a branch.
 ### func \(\*Client\) GetUser
 
 ```go
-func (c *Client) GetUser(workspace, userID string) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetUser(ctx context.Context, workspace, userID string) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1018,7 +1030,7 @@ func (c *Client) GetUser(workspace, userID string) (*irminmodels.User, *irminmod
 ### func \(\*Client\) GetWorkflow
 
 ```go
-func (c *Client) GetWorkflow(workspace, workflowID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetWorkflow(ctx context.Context, workspace, workflowID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1027,7 +1039,7 @@ func (c *Client) GetWorkflow(workspace, workflowID string) (*irminmodels.Workflo
 ### func \(\*Client\) GetWorkflowRun
 
 ```go
-func (c *Client) GetWorkflowRun(workspace, workflowID, runID string) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetWorkflowRun(ctx context.Context, workspace, workflowID, runID string) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1036,7 +1048,7 @@ func (c *Client) GetWorkflowRun(workspace, workflowID, runID string) (*irminmode
 ### func \(\*Client\) GetWorkspace
 
 ```go
-func (c *Client) GetWorkspace(slug string) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetWorkspace(ctx context.Context, slug string) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1045,7 +1057,7 @@ func (c *Client) GetWorkspace(slug string) (*irminmodels.Workspace, *irminmodels
 ### func \(\*Client\) GetWorkspaceSchema
 
 ```go
-func (c *Client) GetWorkspaceSchema(slug string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetWorkspaceSchema(ctx context.Context, slug string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1054,7 +1066,7 @@ func (c *Client) GetWorkspaceSchema(slug string) (*irminmodels.ObjectSchema, *ir
 ### func \(\*Client\) GetWorkspaceTag
 
 ```go
-func (c *Client) GetWorkspaceTag(workspace, tagID string) (*irminmodels.TagWithAssets, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetWorkspaceTag(ctx context.Context, workspace, tagID string) (*irminmodels.TagWithAssets, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetWorkspaceTag retrieves a specific workspace tag with all its associated assets.
@@ -1063,7 +1075,7 @@ GetWorkspaceTag retrieves a specific workspace tag with all its associated asset
 ### func \(\*Client\) LeaveWorkspace
 
 ```go
-func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) LeaveWorkspace(ctx context.Context, slug string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1072,7 +1084,7 @@ func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, err
 ### func \(\*Client\) ListAllWorkflowRuns
 
 ```go
-func (c *Client) ListAllWorkflowRuns(workspace string, page, perPage int) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListAllWorkflowRuns(ctx context.Context, workspace string, page, perPage int) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1081,7 +1093,7 @@ func (c *Client) ListAllWorkflowRuns(workspace string, page, perPage int) ([]irm
 ### func \(\*Client\) ListBranches
 
 ```go
-func (c *Client) ListBranches(workspace, repository string) ([]irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1090,7 +1102,7 @@ func (c *Client) ListBranches(workspace, repository string) ([]irminmodels.Branc
 ### func \(\*Client\) ListCommits
 
 ```go
-func (c *Client) ListCommits(workspace, repository, ref, after string, perPage int) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListCommits(ctx context.Context, workspace, repository, ref, after string, perPage int) ([]irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1099,7 +1111,7 @@ func (c *Client) ListCommits(workspace, repository, ref, after string, perPage i
 ### func \(\*Client\) ListConnections
 
 ```go
-func (c *Client) ListConnections(workspace string) ([]irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListConnections(ctx context.Context, workspace string) ([]irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1108,7 +1120,7 @@ func (c *Client) ListConnections(workspace string) ([]irminmodels.Connection, *i
 ### func \(\*Client\) ListConnectors
 
 ```go
-func (c *Client) ListConnectors() ([]irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListConnectors(ctx context.Context) ([]irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1117,7 +1129,7 @@ func (c *Client) ListConnectors() ([]irminmodels.Connector, *irminmodels.IrminAP
 ### func \(\*Client\) ListEditorItems
 
 ```go
-func (c *Client) ListEditorItems(workspace, path string) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListEditorItems(ctx context.Context, workspace, path string) ([]irminmodels.EditorItem, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1126,7 +1138,7 @@ func (c *Client) ListEditorItems(workspace, path string) ([]irminmodels.EditorIt
 ### func \(\*Client\) ListInviteInbox
 
 ```go
-func (c *Client) ListInviteInbox() ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListInviteInbox(ctx context.Context) ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1135,7 +1147,7 @@ func (c *Client) ListInviteInbox() ([]irminmodels.Invite, *irminmodels.IrminAPIR
 ### func \(\*Client\) ListInvitesToWorkspace
 
 ```go
-func (c *Client) ListInvitesToWorkspace(workspace string) ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListInvitesToWorkspace(ctx context.Context, workspace string) ([]irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1144,7 +1156,7 @@ func (c *Client) ListInvitesToWorkspace(workspace string) ([]irminmodels.Invite,
 ### func \(\*Client\) ListPolicies
 
 ```go
-func (c *Client) ListPolicies(workspace string, params ListPoliciesParams) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListPolicies(ctx context.Context, workspace string, params ListPoliciesParams) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
 ```
 
 ListPolicies returns a list of all policies for a workspace.
@@ -1153,7 +1165,7 @@ ListPolicies returns a list of all policies for a workspace.
 ### func \(\*Client\) ListRepositories
 
 ```go
-func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListRepositories(ctx context.Context, workspace string) ([]irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1162,7 +1174,7 @@ func (c *Client) ListRepositories(workspace string) ([]irminmodels.Repository, *
 ### func \(\*Client\) ListRoles
 
 ```go
-func (c *Client) ListRoles() ([]irminmodels.Role, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListRoles(ctx context.Context) ([]irminmodels.Role, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1171,7 +1183,7 @@ func (c *Client) ListRoles() ([]irminmodels.Role, *irminmodels.IrminAPIResponse,
 ### func \(\*Client\) ListStoredQueries
 
 ```go
-func (c *Client) ListStoredQueries(workspace string) ([]irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListStoredQueries(ctx context.Context, workspace string) ([]irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1180,7 +1192,7 @@ func (c *Client) ListStoredQueries(workspace string) ([]irminmodels.StoredQuery,
 ### func \(\*Client\) ListTags
 
 ```go
-func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListTags(ctx context.Context, workspace, repository string) ([]irminmodels.GitTag, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1189,7 +1201,7 @@ func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, *
 ### func \(\*Client\) ListTokens
 
 ```go
-func (c *Client) ListTokens() ([]irminmodels.APIToken, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListTokens(ctx context.Context) ([]irminmodels.APIToken, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1198,7 +1210,7 @@ func (c *Client) ListTokens() ([]irminmodels.APIToken, *irminmodels.IrminAPIResp
 ### func \(\*Client\) ListUsers
 
 ```go
-func (c *Client) ListUsers(workspace string) ([]irminmodels.User, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListUsers(ctx context.Context, workspace string) ([]irminmodels.User, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1207,7 +1219,7 @@ func (c *Client) ListUsers(workspace string) ([]irminmodels.User, *irminmodels.I
 ### func \(\*Client\) ListWorkflowRuns
 
 ```go
-func (c *Client) ListWorkflowRuns(workspace, workflowID string, page, perPage int) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListWorkflowRuns(ctx context.Context, workspace, workflowID string, page, perPage int) ([]irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1216,7 +1228,7 @@ func (c *Client) ListWorkflowRuns(workspace, workflowID string, page, perPage in
 ### func \(\*Client\) ListWorkflows
 
 ```go
-func (c *Client) ListWorkflows(workspace string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListWorkflows(ctx context.Context, workspace string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1225,7 +1237,7 @@ func (c *Client) ListWorkflows(workspace string) ([]irminmodels.Workflow, *irmin
 ### func \(\*Client\) ListWorkflowsOfType
 
 ```go
-func (c *Client) ListWorkflowsOfType(workspace, workflowType string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListWorkflowsOfType(ctx context.Context, workspace, workflowType string) ([]irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1234,7 +1246,7 @@ func (c *Client) ListWorkflowsOfType(workspace, workflowType string) ([]irminmod
 ### func \(\*Client\) ListWorkspaceTags
 
 ```go
-func (c *Client) ListWorkspaceTags(workspace string) ([]irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListWorkspaceTags(ctx context.Context, workspace string) ([]irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
 ```
 
 ListWorkspaceTags retrieves all workspace tags for a workspace.
@@ -1243,7 +1255,7 @@ ListWorkspaceTags retrieves all workspace tags for a workspace.
 ### func \(\*Client\) ListWorkspaces
 
 ```go
-func (c *Client) ListWorkspaces() ([]irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ListWorkspaces(ctx context.Context) ([]irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1252,7 +1264,7 @@ func (c *Client) ListWorkspaces() ([]irminmodels.Workspace, *irminmodels.IrminAP
 ### func \(\*Client\) MergeRefs
 
 ```go
-func (c *Client) MergeRefs(workspace, repository string, req MergeRefsRequest) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
+func (c *Client) MergeRefs(ctx context.Context, workspace, repository string, req MergeRefsRequest) (*irminmodels.Commit, *irminmodels.IrminAPIResponse, error)
 ```
 
 MergeRefs merges one ref into another.
@@ -1261,7 +1273,7 @@ MergeRefs merges one ref into another.
 ### func \(\*Client\) MoveEditorItem
 
 ```go
-func (c *Client) MoveEditorItem(workspace, path string, req MoveEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) MoveEditorItem(ctx context.Context, workspace, path string, req MoveEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1270,7 +1282,7 @@ func (c *Client) MoveEditorItem(workspace, path string, req MoveEditorItemReques
 ### func \(\*Client\) MoveObject
 
 ```go
-func (c *Client) MoveObject(workspace, repository, path, ref string, req MoveObjectRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+func (c *Client) MoveObject(ctx context.Context, workspace, repository, path, ref string, req MoveObjectRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1279,7 +1291,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref string, req MoveObj
 ### func \(\*Client\) PauseWorkflow
 
 ```go
-func (c *Client) PauseWorkflow(workspace, workflowID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) PauseWorkflow(ctx context.Context, workspace, workflowID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1288,7 +1300,7 @@ func (c *Client) PauseWorkflow(workspace, workflowID string) (*irminmodels.Workf
 ### func \(\*Client\) RegisterNewConnector
 
 ```go
-func (c *Client) RegisterNewConnector(req ConnectorRequest) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+func (c *Client) RegisterNewConnector(ctx context.Context, req ConnectorRequest) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 ```
 
 RegisterNewConnector registers a new connector with the system. Requests to this endpoint must be authenticated with a system token.
@@ -1297,7 +1309,7 @@ RegisterNewConnector registers a new connector with the system. Requests to this
 ### func \(\*Client\) RemoveTagFromEntity
 
 ```go
-func (c *Client) RemoveTagFromEntity(workspace, tagID string, entityType irminmodels.TagEntityType, entityID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) RemoveTagFromEntity(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 RemoveTagFromEntity removes an entity from a tag using the workspace tag route.
@@ -1306,7 +1318,7 @@ RemoveTagFromEntity removes an entity from a tag using the workspace tag route.
 ### func \(\*Client\) RemoveUser
 
 ```go
-func (c *Client) RemoveUser(workspace, userID string) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) RemoveUser(ctx context.Context, workspace, userID string) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1315,7 +1327,7 @@ func (c *Client) RemoveUser(workspace, userID string) (*irminmodels.IrminAPIResp
 ### func \(\*Client\) Request
 
 ```go
-func (c *Client) Request(opts RequestOptions) ([]byte, error)
+func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
 ```
 
 Request is the main method that sends requests to the Irmin API and returns raw response data.
@@ -1324,7 +1336,7 @@ Request is the main method that sends requests to the Irmin API and returns raw 
 ### func \(\*Client\) ResendInvite
 
 ```go
-func (c *Client) ResendInvite(inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ResendInvite(ctx context.Context, inviteID string) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1333,7 +1345,7 @@ func (c *Client) ResendInvite(inviteID string) (*irminmodels.Invite, *irminmodel
 ### func \(\*Client\) RevertChanges
 
 ```go
-func (c *Client) RevertChanges(workspace, repository string, req RevertUncommittedChangesRequest) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) RevertChanges(ctx context.Context, workspace, repository string, req RevertUncommittedChangesRequest) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1342,7 +1354,7 @@ func (c *Client) RevertChanges(workspace, repository string, req RevertUncommitt
 ### func \(\*Client\) RunScript
 
 ```go
-func (c *Client) RunScript(workspace, path string, inputs []irminmodels.ActionInputData) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
+func (c *Client) RunScript(ctx context.Context, workspace, path string, inputs []irminmodels.ActionInputData) (*irminmodels.ScriptResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1351,7 +1363,7 @@ func (c *Client) RunScript(workspace, path string, inputs []irminmodels.ActionIn
 ### func \(\*Client\) SaveEditorItem
 
 ```go
-func (c *Client) SaveEditorItem(workspace, path string, req CreateEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) SaveEditorItem(ctx context.Context, workspace, path string, req CreateEditorItemRequest) (*irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1360,7 +1372,7 @@ func (c *Client) SaveEditorItem(workspace, path string, req CreateEditorItemRequ
 ### func \(\*Client\) Search
 
 ```go
-func (c *Client) Search(workspace string, params irminmodels.SearchFilters) (*irminmodels.SearchResponse, *irminmodels.IrminAPIResponse, error)
+func (c *Client) Search(ctx context.Context, workspace string, params irminmodels.SearchFilters) (*irminmodels.SearchResponse, *irminmodels.IrminAPIResponse, error)
 ```
 
 Search performs a workspace\-wide search using the provided filters.
@@ -1369,7 +1381,7 @@ Search performs a workspace\-wide search using the provided filters.
 ### func \(\*Client\) SendInvite
 
 ```go
-func (c *Client) SendInvite(workspace string, req SendInviteRequest) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) SendInvite(ctx context.Context, workspace string, req SendInviteRequest) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1378,7 +1390,7 @@ func (c *Client) SendInvite(workspace string, req SendInviteRequest) (*irminmode
 ### func \(\*Client\) StartWorkflow
 
 ```go
-func (c *Client) StartWorkflow(workspace, workflowID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) StartWorkflow(ctx context.Context, workspace, workflowID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1387,7 +1399,7 @@ func (c *Client) StartWorkflow(workspace, workflowID string) (*irminmodels.Workf
 ### func \(\*Client\) TransferConnection
 
 ```go
-func (c *Client) TransferConnection(workspace, connectionID string, req TransferConnectionOwnershipRequest) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+func (c *Client) TransferConnection(ctx context.Context, workspace, connectionID string, req TransferConnectionOwnershipRequest) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 ```
 
 TransferConnection reassigns a connection to a new owner.
@@ -1396,7 +1408,7 @@ TransferConnection reassigns a connection to a new owner.
 ### func \(\*Client\) TransferRepository
 
 ```go
-func (c *Client) TransferRepository(workspace, slug string, req TransferRepositoryOwnershipRequest) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+func (c *Client) TransferRepository(ctx context.Context, workspace, slug string, req TransferRepositoryOwnershipRequest) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1405,7 +1417,7 @@ func (c *Client) TransferRepository(workspace, slug string, req TransferReposito
 ### func \(\*Client\) TransferStoredQuery
 
 ```go
-func (c *Client) TransferStoredQuery(workspace, queryID string, req TransferQueryOwnershipRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+func (c *Client) TransferStoredQuery(ctx context.Context, workspace, queryID string, req TransferQueryOwnershipRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1414,7 +1426,7 @@ func (c *Client) TransferStoredQuery(workspace, queryID string, req TransferQuer
 ### func \(\*Client\) TransferWorkflow
 
 ```go
-func (c *Client) TransferWorkflow(workspace, workflowID, newOwnerID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) TransferWorkflow(ctx context.Context, workspace, workflowID, newOwnerID string) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1423,7 +1435,7 @@ func (c *Client) TransferWorkflow(workspace, workflowID, newOwnerID string) (*ir
 ### func \(\*Client\) TransferWorkspace
 
 ```go
-func (c *Client) TransferWorkspace(workspaceSlug string, req TransferOwnershipRequest) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+func (c *Client) TransferWorkspace(ctx context.Context, workspaceSlug string, req TransferOwnershipRequest) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1432,7 +1444,7 @@ func (c *Client) TransferWorkspace(workspaceSlug string, req TransferOwnershipRe
 ### func \(\*Client\) TriggerWorkflowRun
 
 ```go
-func (c *Client) TriggerWorkflowRun(workspace, workflowID string) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
+func (c *Client) TriggerWorkflowRun(ctx context.Context, workspace, workflowID string) (*irminmodels.WorkflowRun, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1441,7 +1453,7 @@ func (c *Client) TriggerWorkflowRun(workspace, workflowID string) (*irminmodels.
 ### func \(\*Client\) UpdateBranch
 
 ```go
-func (c *Client) UpdateBranch(workspace, repository, oldName string, req UpdateBranchRequest) (*irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateBranch(ctx context.Context, workspace, repository, oldName string, req UpdateBranchRequest) (*irminmodels.IrminAPIResponse, error)
 ```
 
 UpdateBranch updates a branch name in the repository.
@@ -1450,7 +1462,7 @@ UpdateBranch updates a branch name in the repository.
 ### func \(\*Client\) UpdateConnection
 
 ```go
-func (c *Client) UpdateConnection(workspace, connectionID string, req UpdateConnectionRequest) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateConnection(ctx context.Context, workspace, connectionID string, req UpdateConnectionRequest) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1459,7 +1471,7 @@ func (c *Client) UpdateConnection(workspace, connectionID string, req UpdateConn
 ### func \(\*Client\) UpdateInvite
 
 ```go
-func (c *Client) UpdateInvite(inviteID string, req UpdateInviteRequest) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateInvite(ctx context.Context, inviteID string, req UpdateInviteRequest) (*irminmodels.Invite, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1468,7 +1480,7 @@ func (c *Client) UpdateInvite(inviteID string, req UpdateInviteRequest) (*irminm
 ### func \(\*Client\) UpdatePolicy
 
 ```go
-func (c *Client) UpdatePolicy(workspace, policyID string, req UpdatePolicyRequest) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdatePolicy(ctx context.Context, workspace, policyID string, req UpdatePolicyRequest) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error)
 ```
 
 UpdatePolicy updates an existing policy.
@@ -1477,7 +1489,7 @@ UpdatePolicy updates an existing policy.
 ### func \(\*Client\) UpdateProfile
 
 ```go
-func (c *Client) UpdateProfile(firstName, lastName, email, phone, company string, profilePicture *os.File) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, email, phone, company string, profilePicture *os.File) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1486,7 +1498,7 @@ func (c *Client) UpdateProfile(firstName, lastName, email, phone, company string
 ### func \(\*Client\) UpdateRegisteredConnector
 
 ```go
-func (c *Client) UpdateRegisteredConnector(connectorID string, req ConnectorRequest) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateRegisteredConnector(ctx context.Context, connectorID string, req ConnectorRequest) (*irminmodels.Connector, *irminmodels.IrminAPIResponse, error)
 ```
 
 UpdateRegisteredConnector updates the details of a registered connector. Requests to this endpoint must be authenticated with a system token.
@@ -1495,7 +1507,7 @@ UpdateRegisteredConnector updates the details of a registered connector. Request
 ### func \(\*Client\) UpdateRepository
 
 ```go
-func (c *Client) UpdateRepository(workspace, slug string, req UpdateRepositoryRequest) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateRepository(ctx context.Context, workspace, slug string, req UpdateRepositoryRequest) (*irminmodels.Repository, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1504,7 +1516,7 @@ func (c *Client) UpdateRepository(workspace, slug string, req UpdateRepositoryRe
 ### func \(\*Client\) UpdateStoredQuery
 
 ```go
-func (c *Client) UpdateStoredQuery(workspace, queryID string, req UpdateQueryRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateStoredQuery(ctx context.Context, workspace, queryID string, req UpdateQueryRequest) (*irminmodels.StoredQuery, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1513,7 +1525,7 @@ func (c *Client) UpdateStoredQuery(workspace, queryID string, req UpdateQueryReq
 ### func \(\*Client\) UpdateUserRoles
 
 ```go
-func (c *Client) UpdateUserRoles(workspace, userID string, req UpdateUserRolesRequest) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateUserRoles(ctx context.Context, workspace, userID string, req UpdateUserRolesRequest) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1522,7 +1534,7 @@ func (c *Client) UpdateUserRoles(workspace, userID string, req UpdateUserRolesRe
 ### func \(\*Client\) UpdateWorkflow
 
 ```go
-func (c *Client) UpdateWorkflow(workspace, workflowID string, req UpdateWorkflowRequest) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateWorkflow(ctx context.Context, workspace, workflowID string, req UpdateWorkflowRequest) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1531,7 +1543,7 @@ func (c *Client) UpdateWorkflow(workspace, workflowID string, req UpdateWorkflow
 ### func \(\*Client\) UpdateWorkflowSchedule
 
 ```go
-func (c *Client) UpdateWorkflowSchedule(workspace, workflowID string, schedule irminmodels.Schedule) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateWorkflowSchedule(ctx context.Context, workspace, workflowID string, schedule irminmodels.Schedule) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1540,7 +1552,7 @@ func (c *Client) UpdateWorkflowSchedule(workspace, workflowID string, schedule i
 ### func \(\*Client\) UpdateWorkflowWorkflowable
 
 ```go
-func (c *Client) UpdateWorkflowWorkflowable(workspace, workflowID string, workflowable irminmodels.Workflowable) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateWorkflowWorkflowable(ctx context.Context, workspace, workflowID string, workflowable irminmodels.Workflowable) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1549,7 +1561,7 @@ func (c *Client) UpdateWorkflowWorkflowable(workspace, workflowID string, workfl
 ### func \(\*Client\) UpdateWorkspace
 
 ```go
-func (c *Client) UpdateWorkspace(workspaceSlug string, req UpdateWorkspaceRequest) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateWorkspace(ctx context.Context, workspaceSlug string, req UpdateWorkspaceRequest) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -1558,7 +1570,7 @@ func (c *Client) UpdateWorkspace(workspaceSlug string, req UpdateWorkspaceReques
 ### func \(\*Client\) UpdateWorkspaceTag
 
 ```go
-func (c *Client) UpdateWorkspaceTag(workspace, tagID string, req UpdateTagRequest) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateWorkspaceTag(ctx context.Context, workspace, tagID string, req UpdateTagRequest) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error)
 ```
 
 UpdateWorkspaceTag updates an existing workspace tag.
@@ -1567,7 +1579,7 @@ UpdateWorkspaceTag updates an existing workspace tag.
 ### func \(\*Client\) UploadObject
 
 ```go
-func (c *Client) UploadObject(workspace, repository, ref, path string, files map[string][]byte) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UploadObject(ctx context.Context, workspace, repository, ref, path string, files map[string][]byte) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
 ```
 
 UploadObject uploads a file to the given path and ref.
@@ -1576,7 +1588,7 @@ UploadObject uploads a file to the given path and ref.
 ### func \(\*Client\) UploadObjectFromURL
 
 ```go
-func (c *Client) UploadObjectFromURL(workspace, repository, ref, path string, req UploadObjectFromURLRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UploadObjectFromURL(ctx context.Context, workspace, repository, ref, path string, req UploadObjectFromURLRequest) (*irminmodels.Object, *irminmodels.IrminAPIResponse, error)
 ```
 
 UploadObjectFromURL uploads an object from a URL to the given path and ref.
@@ -1585,7 +1597,7 @@ UploadObjectFromURL uploads an object from a URL to the given path and ref.
 ### func \(\*Client\) ValidateConnectorConfiguration
 
 ```go
-func (c *Client) ValidateConnectorConfiguration(connectorID string, req ConnectorConfigurationRequest) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ValidateConnectorConfiguration(ctx context.Context, connectorID string, req ConnectorConfigurationRequest) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -3077,20 +3089,33 @@ JSONSchema represents a JSON Schema for structured data.
 
 ```go
 type JSONSchema struct {
-    Type                 string                `json:"type"                           validate:"required,oneof=object array string number integer boolean null" example:"object"` // e.g. "object", "array", etc.
-    Properties           map[string]JSONSchema `json:"properties,omitempty"`                                                                                                      // Properties of the schema, formatted like {"name":{"type":"string"},"age":{"type":"integer"}}
-    Required             []string              `json:"required,omitempty"             validate:"dive"                                                           example:"name,email"`
+    Type                 string                `json:"type"                             validate:"required,oneof=object array string number integer boolean null" example:"object"` // e.g. "object", "array", etc.
+    Properties           map[string]JSONSchema `json:"properties,omitempty"`                                                                                                        // Properties of the schema, formatted like {"name":{"type":"string"},"age":{"type":"integer"}}
+    Required             []string              `json:"required,omitempty"               validate:"dive"                                                           example:"name,email"`
     Items                *JSONSchema           `json:"items,omitempty"`
-    Description          *string               `json:"description,omitempty"                                                                                    example:"Customer information schema"`
+    Description          *string               `json:"description,omitempty"                                                                                      example:"Customer information schema"`
     Default              any                   `json:"default,omitempty"`
-    Enum                 []any                 `json:"enum,omitempty"                                                                                                                                 swaggertype:"array,string"`
-    AdditionalProperties any                   `json:"additionalProperties,omitempty"                                                                                                                 swaggertype:"boolean"`
-    Format               *string               `json:"format,omitempty"                                                                                         example:"email"`
-    Minimum              *float64              `json:"minimum,omitempty"                                                                                        example:"0"`
-    Maximum              *float64              `json:"maximum,omitempty"                                                                                        example:"100"`
-    MinLength            *int                  `json:"minLength,omitempty"                                                                                      example:"1"`
-    MaxLength            *int                  `json:"maxLength,omitempty"                                                                                      example:"255"`
-    Pattern              *string               `json:"pattern,omitempty"                                                                                        example:"email-pattern"`
+    Enum                 []any                 `json:"enum,omitempty"                                                                                                                                   swaggertype:"array,string"`
+    AdditionalProperties any                   `json:"additionalProperties,omitempty"                                                                                                                   swaggertype:"boolean"`
+    Format               *string               `json:"format,omitempty"                                                                                           example:"email"`
+    Minimum              *float64              `json:"minimum,omitempty"                                                                                          example:"0"`
+    Maximum              *float64              `json:"maximum,omitempty"                                                                                          example:"100"`
+    MinLength            *int                  `json:"minLength,omitempty"                                                                                        example:"1"`
+    MaxLength            *int                  `json:"maxLength,omitempty"                                                                                        example:"255"`
+    Pattern              *string               `json:"pattern,omitempty"                                                                                          example:"email-pattern"`
+    ContentEncoding      *string               `json:"contentEncoding,omitempty"                                                                                  example:"base64"`
+    ContentMediaType     *string               `json:"contentMediaType,omitempty"                                                                                 example:"application/octet-stream"`
+    MinItems             *int                  `json:"minItems,omitempty"                                                                                         example:"1"`
+    MaxItems             *int                  `json:"maxItems,omitempty"                                                                                         example:"100"`
+    // Extension fields for metadata and traceability
+    XOriginalDuckDBType *string            `json:"x-original-duckdb-type,omitempty"                                                                           example:"DECIMAL(10,2)"`
+    XDecimalPrecision   *int               `json:"x-decimal-precision,omitempty"                                                                              example:"10"`
+    XDecimalScale       *int               `json:"x-decimal-scale,omitempty"                                                                                  example:"2"`
+    XDuckDBType         *string            `json:"x-duckdb-type,omitempty"                                                                                    example:"INTERVAL"`
+    XIrmin              *map[string]string `json:"x-irmin,omitempty"`
+    XIrminSchemaVersion *string            `json:"x-irmin-schema-version,omitempty"                                                                           example:"1.0.0"`
+    XInferredBy         *string            `json:"x-inferred-by,omitempty"                                                                                    example:"duckdb-information_schema"`
+    XUnmappedTypes      *[]string          `json:"x-unmapped-types,omitempty"                                                                                 example:"CUSTOM_TYPE,UNKNOWN_TYPE"`
 }
 ```
 
@@ -4103,6 +4128,7 @@ import "github.com/IrminData/irmin-sdk-go/utils"
 - [func CreateMultipartFormWithFields\(file \*File, fieldName string, textFields map\[string\]string\) \(\*bytes.Buffer, string, error\)](<#CreateMultipartFormWithFields>)
 - [func GetAPIFromFlags\(\) \(string, string, error\)](<#GetAPIFromFlags>)
 - [func GetInputFile\(filePath string\) \(\[\]byte, error\)](<#GetInputFile>)
+- [func IsStructuredDataFormat\(ext, contentType string\) bool](<#IsStructuredDataFormat>)
 - [func ListInputFiles\(\) \(\[\]string, error\)](<#ListInputFiles>)
 - [func SendComputeResult\(data \[\]byte, fileName string\) error](<#SendComputeResult>)
 - [func UnzipFiles\(zipData \[\]byte\) \(map\[string\]\[\]byte, error\)](<#UnzipFiles>)
@@ -4161,6 +4187,15 @@ func GetInputFile(filePath string) ([]byte, error)
 ```
 
 GetInputFile reads a file from the \_input directory. Returns the file content as bytes and any error encountered.
+
+<a name="IsStructuredDataFormat"></a>
+## func IsStructuredDataFormat
+
+```go
+func IsStructuredDataFormat(ext, contentType string) bool
+```
+
+IsStructuredDataFormat determines if a file extension and MIME type represent structured data that can be queried, analyzed, or processed as tabular data.
 
 <a name="ListInputFiles"></a>
 ## func ListInputFiles

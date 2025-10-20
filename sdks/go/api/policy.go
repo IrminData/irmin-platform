@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -43,6 +44,7 @@ type UpdatePolicyRequest struct {
 
 // ListPolicies returns a list of all policies for a workspace.
 func (c *Client) ListPolicies(
+	ctx context.Context,
 	workspace string,
 	params ListPoliciesParams,
 ) ([]irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
@@ -72,7 +74,7 @@ func (c *Client) ListPolicies(
 
 	// Fetch policies
 	var policies []irminmodels.Policy
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies?%s", workspace, queryParams.Encode()),
 	}, &policies)
@@ -83,9 +85,12 @@ func (c *Client) ListPolicies(
 }
 
 // GetPolicy returns a single policy.
-func (c *Client) GetPolicy(workspace, policyID string) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetPolicy(
+	ctx context.Context,
+	workspace, policyID string,
+) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
 	var policy irminmodels.Policy
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies/%s", workspace, policyID),
 	}, &policy)
@@ -97,11 +102,12 @@ func (c *Client) GetPolicy(workspace, policyID string) (*irminmodels.Policy, *ir
 
 // CreatePolicy creates a new policy for a workspace.
 func (c *Client) CreatePolicy(
+	ctx context.Context,
 	workspace string,
 	req CreatePolicyRequest,
 ) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
 	var policy irminmodels.Policy
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/policies", workspace),
 		ContentType: "application/json",
@@ -115,11 +121,12 @@ func (c *Client) CreatePolicy(
 
 // UpdatePolicy updates an existing policy.
 func (c *Client) UpdatePolicy(
+	ctx context.Context,
 	workspace, policyID string,
 	req UpdatePolicyRequest,
 ) (*irminmodels.Policy, *irminmodels.IrminAPIResponse, error) {
 	var policy irminmodels.Policy
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/policies/%s", workspace, policyID),
 		ContentType: "application/json",
@@ -132,8 +139,8 @@ func (c *Client) UpdatePolicy(
 }
 
 // DeletePolicy deletes a policy.
-func (c *Client) DeletePolicy(workspace, policyID string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeletePolicy(ctx context.Context, workspace, policyID string) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies/%s", workspace, policyID),
 	}, nil)
@@ -145,10 +152,11 @@ func (c *Client) DeletePolicy(workspace, policyID string) (*irminmodels.IrminAPI
 
 // GetPolicyRoleSummary returns a list of policies that apply to a role.
 func (c *Client) GetPolicyRoleSummary(
+	ctx context.Context,
 	workspace string,
 ) ([]irminmodels.RolePolicySummary, *irminmodels.IrminAPIResponse, error) {
 	var rolePolicySummaries []irminmodels.RolePolicySummary
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies/role-summary", workspace),
 	}, &rolePolicySummaries)
@@ -160,10 +168,11 @@ func (c *Client) GetPolicyRoleSummary(
 
 // GetPolicyUserSummary returns a list of policies that apply to a user.
 func (c *Client) GetPolicyUserSummary(
+	ctx context.Context,
 	workspace string,
 ) (*irminmodels.UserPolicySummary, *irminmodels.IrminAPIResponse, error) {
 	var userPolicySummary irminmodels.UserPolicySummary
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies/my", workspace),
 	}, &userPolicySummary)
@@ -175,6 +184,7 @@ func (c *Client) GetPolicyUserSummary(
 
 // CheckPermission checks if a user has permission to perform an action on a resource.
 func (c *Client) CheckPermission(
+	ctx context.Context,
 	workspace string,
 	resource irminmodels.PolicyResource,
 	action irminmodels.PolicyAction,
@@ -185,7 +195,7 @@ func (c *Client) CheckPermission(
 		endpoint += fmt.Sprintf("&resource_id=%s", *resourceID)
 	}
 
-	_, err := c.FetchAPI(RequestOptions{
+	_, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: endpoint,
 	}, nil)
@@ -197,10 +207,11 @@ func (c *Client) CheckPermission(
 
 // GetPolicyResourceOptions returns all possible policy resource options for a given workspace.
 func (c *Client) GetPolicyResourceOptions(
+	ctx context.Context,
 	workspace string,
 ) (*irminmodels.PolicyResourceOptions, *irminmodels.IrminAPIResponse, error) {
 	var policyResourceOptions irminmodels.PolicyResourceOptions
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/policies/resource-options", workspace),
 	}, &policyResourceOptions)

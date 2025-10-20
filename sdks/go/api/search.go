@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,6 +13,7 @@ import (
 
 // Search performs a workspace-wide search using the provided filters.
 func (c *Client) Search(
+	ctx context.Context,
 	workspace string,
 	params irminmodels.SearchFilters,
 ) (*irminmodels.SearchResponse, *irminmodels.IrminAPIResponse, error) {
@@ -44,7 +46,7 @@ func (c *Client) Search(
 
 	// Fetch search results
 	var searchResponse irminmodels.SearchResponse
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/search?%s", workspace, queryParams.Encode()),
 	}, &searchResponse)

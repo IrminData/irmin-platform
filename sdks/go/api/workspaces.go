@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -24,9 +25,9 @@ type TransferOwnershipRequest struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
-func (c *Client) ListWorkspaces() ([]irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) ListWorkspaces(ctx context.Context) ([]irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspaces []irminmodels.Workspace
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: "/v1/workspaces",
 	}, &workspaces)
@@ -36,9 +37,12 @@ func (c *Client) ListWorkspaces() ([]irminmodels.Workspace, *irminmodels.IrminAP
 	return workspaces, apiResp, nil
 }
 
-func (c *Client) GetWorkspace(slug string) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetWorkspace(
+	ctx context.Context,
+	slug string,
+) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s", slug),
 	}, &workspace)
@@ -48,11 +52,11 @@ func (c *Client) GetWorkspace(slug string) (*irminmodels.Workspace, *irminmodels
 	return &workspace, apiResp, nil
 }
 
-func (c *Client) CreateWorkspace(
+func (c *Client) CreateWorkspace(ctx context.Context,
 	req CreateWorkspaceRequest,
 ) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/workspaces",
 		ContentType: "application/json",
@@ -64,12 +68,12 @@ func (c *Client) CreateWorkspace(
 	return &workspace, apiResp, nil
 }
 
-func (c *Client) UpdateWorkspace(
+func (c *Client) UpdateWorkspace(ctx context.Context,
 	workspaceSlug string,
 	req UpdateWorkspaceRequest,
 ) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPut,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", workspaceSlug),
 		ContentType: "application/json",
@@ -81,8 +85,8 @@ func (c *Client) UpdateWorkspace(
 	return &workspace, apiResp, nil
 }
 
-func (c *Client) DeleteWorkspace(slug string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteWorkspace(ctx context.Context, slug string) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s", slug),
 	}, nil)
@@ -92,12 +96,12 @@ func (c *Client) DeleteWorkspace(slug string) (*irminmodels.IrminAPIResponse, er
 	return apiResp, nil
 }
 
-func (c *Client) TransferWorkspace(
+func (c *Client) TransferWorkspace(ctx context.Context,
 	workspaceSlug string,
 	req TransferOwnershipRequest,
 ) (*irminmodels.Workspace, *irminmodels.IrminAPIResponse, error) {
 	var workspace irminmodels.Workspace
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s", workspaceSlug),
 		ContentType: "application/json",
@@ -109,8 +113,8 @@ func (c *Client) TransferWorkspace(
 	return &workspace, apiResp, nil
 }
 
-func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) LeaveWorkspace(ctx context.Context, slug string) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodPatch,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/leave", slug),
 	}, nil)
@@ -120,9 +124,12 @@ func (c *Client) LeaveWorkspace(slug string) (*irminmodels.IrminAPIResponse, err
 	return apiResp, nil
 }
 
-func (c *Client) GetWorkspaceSchema(slug string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) GetWorkspaceSchema(
+	ctx context.Context,
+	slug string,
+) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
 	var workspaceSchema irminmodels.ObjectSchema
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/schema", slug),
 	}, &workspaceSchema)

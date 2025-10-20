@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -21,10 +22,11 @@ type UpdateBranchRequest struct {
 }
 
 func (c *Client) ListBranches(
+	ctx context.Context,
 	workspace, repository string,
 ) ([]irminmodels.Branch, *irminmodels.IrminAPIResponse, error) {
 	var branches []irminmodels.Branch
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches", workspace, repository),
 	}, &branches)
@@ -35,10 +37,11 @@ func (c *Client) ListBranches(
 }
 
 func (c *Client) GetBranch(
+	ctx context.Context,
 	workspace, repository, branchName string,
 ) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error) {
 	var branch irminmodels.Branch
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s", workspace, repository, branchName),
 	}, &branch)
@@ -50,11 +53,12 @@ func (c *Client) GetBranch(
 
 // CreateBranch creates a new branch in the repository.
 func (c *Client) CreateBranch(
+	ctx context.Context,
 	workspace, repository string,
 	req CreateBranchRequest,
 ) (*irminmodels.Branch, *irminmodels.IrminAPIResponse, error) {
 	var branch irminmodels.Branch
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches", workspace, repository),
 		ContentType: "application/json",
@@ -68,8 +72,11 @@ func (c *Client) CreateBranch(
 }
 
 // DeleteBranch deletes a branch in the repository.
-func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteBranch(
+	ctx context.Context,
+	workspace, repository, branch string,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s", workspace, repository, branch),
 		ContentType: "application/x-www-form-urlencoded",
@@ -83,10 +90,11 @@ func (c *Client) DeleteBranch(workspace, repository, branch string) (*irminmodel
 
 // UpdateBranch updates a branch name in the repository.
 func (c *Client) UpdateBranch(
+	ctx context.Context,
 	workspace, repository, oldName string,
 	req UpdateBranchRequest,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s", workspace, repository, oldName),
 		ContentType: "application/json",
@@ -102,10 +110,11 @@ func (c *Client) UpdateBranch(
 
 // GetUncommittedChanges retrieves the list of uncommitted changes in a branch.
 func (c *Client) GetUncommittedChanges(
+	ctx context.Context,
 	workspace, repository, branch string,
 ) (*irminmodels.Diff, *irminmodels.IrminAPIResponse, error) {
 	var diff irminmodels.Diff
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/repositories/%s/branches/%s/changes", workspace, repository, branch),
 	}, &diff)

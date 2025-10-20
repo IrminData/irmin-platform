@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 //
 // Usable only with a system token.
 func (c *Client) CallSystemWebhook(
+	ctx context.Context,
 	webhookType string,
 	headers map[string]string,
 	body any,
@@ -24,7 +26,7 @@ func (c *Client) CallSystemWebhook(
 
 	// Call the endpoint
 	var result any
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/system/webhook?%s", queryParamsString.Encode()),
 		ContentType: "application/json",
@@ -42,11 +44,12 @@ func (c *Client) CallSystemWebhook(
 //
 // Usable only with a system token.
 func (c *Client) GenerateFileSchema(
+	ctx context.Context,
 	fileName string,
 	fileReader io.Reader,
 ) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
 	var result *irminmodels.ObjectSchema
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    "/v1/system/schema-from-file",
 		ContentType: "multipart/form-data",

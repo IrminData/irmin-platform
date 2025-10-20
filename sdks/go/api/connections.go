@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -32,9 +33,12 @@ type TransferConnectionOwnershipRequest struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
 }
 
-func (c *Client) ListConnections(workspace string) ([]irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) ListConnections(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var connections []irminmodels.Connection
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/connections", workspace),
 	}, &connections)
@@ -45,10 +49,11 @@ func (c *Client) ListConnections(workspace string) ([]irminmodels.Connection, *i
 }
 
 func (c *Client) GetConnection(
+	ctx context.Context,
 	workspace, connectionID string,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var connection irminmodels.Connection
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
 	}, &connection)
@@ -59,11 +64,12 @@ func (c *Client) GetConnection(
 }
 
 func (c *Client) CreateConnection(
+	ctx context.Context,
 	workspace string,
 	req CreateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var newConnection irminmodels.Connection
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections", workspace),
 		ContentType: "application/json",
@@ -76,11 +82,12 @@ func (c *Client) CreateConnection(
 }
 
 func (c *Client) UpdateConnection(
+	ctx context.Context,
 	workspace, connectionID string,
 	req UpdateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var updatedConnection irminmodels.Connection
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
 		ContentType: "application/json",
@@ -94,11 +101,12 @@ func (c *Client) UpdateConnection(
 
 // TransferConnection reassigns a connection to a new owner.
 func (c *Client) TransferConnection(
+	ctx context.Context,
 	workspace, connectionID string,
 	req TransferConnectionOwnershipRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var updatedConnection irminmodels.Connection
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s/transfer-ownership", workspace, connectionID),
 		ContentType: "application/json",
@@ -111,8 +119,11 @@ func (c *Client) TransferConnection(
 }
 
 // DeleteConnection deletes a connection by its ID.
-func (c *Client) DeleteConnection(workspace, connectionID string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteConnection(
+	ctx context.Context,
+	workspace, connectionID string,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodDelete,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s", workspace, connectionID),
 		ContentType: "application/json",
@@ -125,10 +136,11 @@ func (c *Client) DeleteConnection(workspace, connectionID string) (*irminmodels.
 
 // GetConnectionSchema retrieves the schema for a specific connection and operation method.
 func (c *Client) GetConnectionSchema(
+	ctx context.Context,
 	workspace, connectionID, operationMethod string,
 ) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error) {
 	var connectionSchema irminmodels.ObjectSchema
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
 			"/v1/workspaces/%s/connections/%s/schema?operation_method=%s",

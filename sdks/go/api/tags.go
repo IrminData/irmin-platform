@@ -1,6 +1,7 @@
 package irmincore
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -22,9 +23,12 @@ type UpdateTagRequest struct {
 }
 
 // ListWorkspaceTags retrieves all workspace tags for a workspace.
-func (c *Client) ListWorkspaceTags(workspace string) ([]irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
+func (c *Client) ListWorkspaceTags(
+	ctx context.Context,
+	workspace string,
+) ([]irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tags []irminmodels.Tag
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags", workspace),
 	}, &tags)
@@ -35,11 +39,11 @@ func (c *Client) ListWorkspaceTags(workspace string) ([]irminmodels.Tag, *irminm
 }
 
 // GetWorkspaceTag retrieves a specific workspace tag with all its associated assets.
-func (c *Client) GetWorkspaceTag(
+func (c *Client) GetWorkspaceTag(ctx context.Context,
 	workspace, tagID string,
 ) (*irminmodels.TagWithAssets, *irminmodels.IrminAPIResponse, error) {
 	var tagWithAssets irminmodels.TagWithAssets
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags/%s", workspace, tagID),
 	}, &tagWithAssets)
@@ -51,11 +55,12 @@ func (c *Client) GetWorkspaceTag(
 
 // CreateWorkspaceTag creates a new workspace tag.
 func (c *Client) CreateWorkspaceTag(
+	ctx context.Context,
 	workspace string,
 	req CreateTagRequest,
 ) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tag irminmodels.Tag
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPost,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/tags", workspace),
 		ContentType: "application/json",
@@ -69,11 +74,12 @@ func (c *Client) CreateWorkspaceTag(
 
 // UpdateWorkspaceTag updates an existing workspace tag.
 func (c *Client) UpdateWorkspaceTag(
+	ctx context.Context,
 	workspace, tagID string,
 	req UpdateTagRequest,
 ) (*irminmodels.Tag, *irminmodels.IrminAPIResponse, error) {
 	var tag irminmodels.Tag
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/tags/%s", workspace, tagID),
 		ContentType: "application/json",
@@ -86,8 +92,11 @@ func (c *Client) UpdateWorkspaceTag(
 }
 
 // DeleteWorkspaceTag deletes a workspace tag.
-func (c *Client) DeleteWorkspaceTag(workspace, tagID string) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+func (c *Client) DeleteWorkspaceTag(
+	ctx context.Context,
+	workspace, tagID string,
+) (*irminmodels.IrminAPIResponse, error) {
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags/%s", workspace, tagID),
 	}, nil)
@@ -99,11 +108,12 @@ func (c *Client) DeleteWorkspaceTag(workspace, tagID string) (*irminmodels.Irmin
 
 // AddTagToEntity adds an entity to a tag using the workspace tag route.
 func (c *Client) AddTagToEntity(
+	ctx context.Context,
 	workspace, tagID string,
 	entityType irminmodels.TagEntityType,
 	entityID string,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags/%s/entities/%s/%s", workspace, tagID, entityType, entityID),
 	}, nil)
@@ -115,9 +125,10 @@ func (c *Client) AddTagToEntity(
 
 // RemoveTagFromEntity removes an entity from a tag using the workspace tag route.
 func (c *Client) RemoveTagFromEntity(
+	ctx context.Context,
 	workspace, tagID string, entityType irminmodels.TagEntityType, entityID string,
 ) (*irminmodels.IrminAPIResponse, error) {
-	apiResp, err := c.FetchAPI(RequestOptions{
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodDelete,
 		Endpoint: fmt.Sprintf("/v1/workspaces/%s/tags/%s/entities/%s/%s", workspace, tagID, entityType, entityID),
 	}, nil)
