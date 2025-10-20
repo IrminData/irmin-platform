@@ -24,6 +24,7 @@ Core principles
 - If request is ambiguous even after MCP exploration, ask for clarification.
 
 Irmin SDK context
+- Context: All API calls require `context.Context` as first parameter. Use `context.Background()` at start of main()
 - Core API client: `irmincore.NewClient(apiURL, apiKey, "en")`
 - Input handling: `irminutils.ListInputFiles()`, `irminutils.GetInputFile(filename)`
 - Output handling: `irminutils.SendComputeResult(content, filename)`
@@ -64,12 +65,16 @@ Stop condition
 package main
 
 import (
+	"context"
 	"log"
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 func main() {
+	// Create context for API calls.
+	ctx := context.Background()
+	
 	// Parse API flags.
 	apiURL, apiKey, err := irminutils.GetAPIFromFlags()
 	if err != nil {
@@ -80,7 +85,7 @@ func main() {
 	client := irmincore.NewClient(apiURL, apiKey, "en")
 
 	// List available workspaces.
-	workspaces, _, listWorkspacesErr := client.ListWorkspaces()
+	workspaces, _, listWorkspacesErr := client.ListWorkspaces(ctx)
 	if listWorkspacesErr != nil {
 		log.Fatalf("Error listing workspaces: %v", listWorkspacesErr)
 	}

@@ -24,11 +24,16 @@ The SDK, through the Irmin API, provides access read, write and create repositor
 
 ```go
 import (
+	"context"
+	
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 func main() {
+	// Create a context for API calls.
+	ctx := context.Background()
+	
 	// Parse command line flags for API key and URL.
 	apiURL, apiKey, getAPIFromFlagsErr := irminutils.GetAPIFromFlags()
 	if getAPIFromFlagsErr != nil {
@@ -38,6 +43,9 @@ func main() {
 	// Initialise the Irmin API client.
 	client := irmincore.NewClient(apiURL, apiKey, "en")
 
+	// Example API call with context.
+	// workspaces, _, err := client.ListWorkspaces(ctx)
+	
 	// ...
 } 
 ```
@@ -110,6 +118,7 @@ This example script will fetch the log events for the first workspace available 
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 
@@ -125,6 +134,9 @@ const (
 )
 
 func main() {
+	// Create a context for API calls.
+	ctx := context.Background()
+	
 	// Parse command line flags for API key and URL.
 	apiURL, apiKey, getAPIFromFlagsErr := irminutils.GetAPIFromFlags()
 	if getAPIFromFlagsErr != nil {
@@ -155,7 +167,7 @@ func main() {
 	client := irmincore.NewClient(apiURL, apiKey, "en")
 
 	// List available workspaces.
-	workspaces, _, listWorkspacesErr := client.ListWorkspaces()
+	workspaces, _, listWorkspacesErr := client.ListWorkspaces(ctx)
 	if listWorkspacesErr != nil {
 		log.Fatalf("Error listing workspaces: %v", listWorkspacesErr)
 	}
@@ -169,7 +181,7 @@ func main() {
 	}
 
 	// Fetch a list of log events for the first workspace.
-	logEvents, _, fetchLogEventsErr := client.FetchLogEvents(workspaces[0].Slug, "", logsPage, logsLimit)
+	logEvents, _, fetchLogEventsErr := client.FetchLogEvents(ctx, workspaces[0].Slug, "", logsPage, logsLimit)
 	if fetchLogEventsErr != nil {
 		log.Fatalf("Error fetching log events: %v", fetchLogEventsErr)
 	}
