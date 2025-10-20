@@ -84,7 +84,7 @@ func ParseObjectDetailsFromPath(inputPath string) ObjectDetails {
 		contentType = getContentTypeHybrid(ext)
 
 		// Determine object type based on content type and extension
-		if isStructuredDataFormat(ext, contentType) {
+		if IsStructuredDataFormat(ext, contentType) {
 			objectType = irminmodels.ObjectTypeStructured
 		} else {
 			objectType = irminmodels.ObjectTypeBinary
@@ -173,9 +173,9 @@ func stripMimeTypeParameters(mimeType string) string {
 	return mimeType
 }
 
-// isStructuredDataFormat determines if a file extension and MIME type represent
+// IsStructuredDataFormat determines if a file extension and MIME type represent
 // structured data that can be queried, analyzed, or processed as tabular data.
-func isStructuredDataFormat(ext, contentType string) bool {
+func IsStructuredDataFormat(ext, contentType string) bool {
 	// Define extensions that represent structured data formats
 	structuredExtensions := map[string]bool{
 		// Standard tabular formats
