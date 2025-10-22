@@ -36,7 +36,9 @@ class McpService {
           const langChainTools = await convertMcpToLangchainTools({
             servers: server,
           });
-          allTools.push(...langChainTools.tools);
+          allTools.push(
+            ...(langChainTools.tools as unknown as StructuredTool[])
+          );
           console.log(
             `Loaded ${langChainTools.tools.length} tools from server`
           );
