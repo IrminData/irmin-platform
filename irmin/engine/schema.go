@@ -300,7 +300,7 @@ func getDuckDBReadFunction(filename string) string {
 	case ".csv":
 		return "read_csv"
 	case ".json", ".jsonl", ".ndjson":
-		return "read_json"
+		return "read_json_auto"
 	case ".parquet":
 		return "read_parquet"
 	case ".xlsx", ".xls":

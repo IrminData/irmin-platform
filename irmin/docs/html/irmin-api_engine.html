@@ -18,6 +18,9 @@ func IsSystemPath(path string) bool
     IsSystemPath checks if the given path is a system path that should be
     hidden.
 
+func ParseFieldNameAndTypeForTesting(fieldDef string) (string, string)
+    ParseFieldNameAndTypeForTesting exposes parseFieldNameAndType for testing
+
 func PrimitiveSchemaForTesting(duckType string, field SchemaField) irminmodels.JSONSchema
     PrimitiveSchemaForTesting exposes primitiveSchema for testing
 

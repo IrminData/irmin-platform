@@ -40,12 +40,12 @@ func generateCreateViewSQL(
 	case ".json":
 		return fmt.Sprintf(`
 			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_json_auto(%s);
+			SELECT * FROM read_json_auto(%s, ignore_errors=true, maximum_object_size=10485760, union_by_name=true);
 		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
 	case ".jsonl", ".ndjson":
 		return fmt.Sprintf(`
 			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_json_auto(%s, format='newline_delimited');
+			SELECT * FROM read_json_auto(%s, format='newline_delimited', ignore_errors=true, union_by_name=true);
 		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
 
 	// CSV and TSV formats

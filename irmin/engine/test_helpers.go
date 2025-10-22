@@ -38,3 +38,8 @@ func ExtractArrayElementTypeForTesting(arrayType string) string {
 func ParseFieldForElementForTesting(name, elementType string, required bool) SchemaField {
 	return parseFieldForElement(name, elementType, required)
 }
+
+// ParseFieldNameAndTypeForTesting exposes parseFieldNameAndType for testing
+func ParseFieldNameAndTypeForTesting(fieldDef string) (string, string) {
+	return parseFieldNameAndType(fieldDef)
+}

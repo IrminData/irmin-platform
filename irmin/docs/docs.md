@@ -5060,6 +5060,7 @@ import "irmin-api/engine"
 - [func BuildJSONSchemaForTesting\(fields \[\]SchemaField, context \*SchemaContext\) irminmodels.JSONSchema](<#BuildJSONSchemaForTesting>)
 - [func ExtractArrayElementTypeForTesting\(arrayType string\) string](<#ExtractArrayElementTypeForTesting>)
 - [func IsSystemPath\(path string\) bool](<#IsSystemPath>)
+- [func ParseFieldNameAndTypeForTesting\(fieldDef string\) \(string, string\)](<#ParseFieldNameAndTypeForTesting>)
 - [func PrimitiveSchemaForTesting\(duckType string, field SchemaField\) irminmodels.JSONSchema](<#PrimitiveSchemaForTesting>)
 - [func SplitTopLevelCommaForTesting\(s string\) \[\]string](<#SplitTopLevelCommaForTesting>)
 - [type BranchProtectionManager](<#BranchProtectionManager>)
@@ -5142,6 +5143,15 @@ func IsSystemPath(path string) bool
 ```
 
 IsSystemPath checks if the given path is a system path that should be hidden.
+
+<a name="ParseFieldNameAndTypeForTesting"></a>
+## func ParseFieldNameAndTypeForTesting
+
+```go
+func ParseFieldNameAndTypeForTesting(fieldDef string) (string, string)
+```
+
+ParseFieldNameAndTypeForTesting exposes parseFieldNameAndType for testing
 
 <a name="PrimitiveSchemaForTesting"></a>
 ## func PrimitiveSchemaForTesting

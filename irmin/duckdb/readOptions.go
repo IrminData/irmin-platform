@@ -26,17 +26,25 @@ func GetDuckDBReadOptionsByExtension(extension string) (*ReadOptions, error) {
 		return &ReadOptions{
 			ReadFunction: "read_json_auto",
 			FormatOption: "JSON",
-			Parameters:   map[string]string{},
-			Extension:    "",
-			Description:  "Standard JSON format",
+			Parameters: map[string]string{
+				"ignore_errors":       "true",
+				"maximum_object_size": "10485760",
+				"union_by_name":       "true",
+			},
+			Extension:   "",
+			Description: "Standard JSON format",
 		}, nil
 	case "jsonl", "ndjson":
 		return &ReadOptions{
 			ReadFunction: "read_json_auto",
 			FormatOption: "JSON",
-			Parameters:   map[string]string{"format": "newline_delimited"},
-			Extension:    "",
-			Description:  "Newline-delimited JSON",
+			Parameters: map[string]string{
+				"format":        "newline_delimited",
+				"ignore_errors": "true",
+				"union_by_name": "true",
+			},
+			Extension:   "",
+			Description: "Newline-delimited JSON",
 		}, nil
 
 	// CSV formats
@@ -168,17 +176,25 @@ func GetDuckDBReadOptionsByMIMEType(contentType string) (*ReadOptions, error) {
 		return &ReadOptions{
 			ReadFunction: "read_json_auto",
 			FormatOption: "JSON",
-			Parameters:   map[string]string{},
-			Extension:    "",
-			Description:  "Standard JSON format",
+			Parameters: map[string]string{
+				"ignore_errors":       "true",
+				"maximum_object_size": "10485760",
+				"union_by_name":       "true",
+			},
+			Extension:   "",
+			Description: "Standard JSON format",
 		}, nil
 	case "application/jsonl", "application/x-ndjson":
 		return &ReadOptions{
 			ReadFunction: "read_json_auto",
 			FormatOption: "JSON",
-			Parameters:   map[string]string{"format": "newline_delimited"},
-			Extension:    "",
-			Description:  "Newline-delimited JSON",
+			Parameters: map[string]string{
+				"format":        "newline_delimited",
+				"ignore_errors": "true",
+				"union_by_name": "true",
+			},
+			Extension:   "",
+			Description: "Newline-delimited JSON",
 		}, nil
 
 	// CSV and TSV formats

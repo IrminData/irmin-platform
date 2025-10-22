@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
@@ -157,15 +158,54 @@ func parseStructFields(structDef string, required bool) []SchemaField {
 	fields := splitTopLevelComma(structDef)
 	children := make([]SchemaField, 0, len(fields))
 	for _, f := range fields {
-		parts := strings.Fields(strings.TrimSpace(f))
-		if len(parts) < minFieldParts {
+		childName, childType := parseFieldNameAndType(strings.TrimSpace(f))
+		if childName == "" || childType == "" {
 			continue
 		}
-		childName := parts[0]
-		childType := strings.Join(parts[1:], " ")
+
+		// Remove surrounding quotes from field names if present
+		// DuckDB STRUCT definitions include quotes for identifiers with spaces
+		if strings.HasPrefix(childName, `"`) && strings.HasSuffix(childName, `"`) {
+			childName = childName[1 : len(childName)-1]
+		}
+
 		children = append(children, parseField(childName, childType, required))
 	}
 	return children
+}
+
+// parseFieldNameAndType splits a field definition into name and type,
+// respecting quoted identifiers (e.g., "CPU model" VARCHAR -> name: "CPU model", type: VARCHAR)
+func parseFieldNameAndType(fieldDef string) (string, string) {
+	if fieldDef == "" {
+		return "", ""
+	}
+
+	// Check if field name is quoted
+	if strings.HasPrefix(fieldDef, `"`) {
+		// Find the closing quote
+		closeQuoteIdx := strings.Index(fieldDef[1:], `"`)
+		if closeQuoteIdx == -1 {
+			// Malformed quoted identifier, fall back to simple split
+			parts := strings.Fields(fieldDef)
+			if len(parts) < minFieldParts {
+				return "", ""
+			}
+			return parts[0], strings.Join(parts[1:], " ")
+		}
+
+		// Extract the quoted name (including quotes) and the type
+		name := fieldDef[:closeQuoteIdx+2] // +2 to include both quotes
+		typ := strings.TrimSpace(fieldDef[closeQuoteIdx+2:])
+		return name, typ
+	}
+
+	// Unquoted identifier - split on first space
+	parts := strings.Fields(fieldDef)
+	if len(parts) < minFieldParts {
+		return "", ""
+	}
+	return parts[0], strings.Join(parts[1:], " ")
 }
 
 // handleArrayOfStructs processes array of struct types
@@ -293,12 +333,9 @@ func getDuckDBSchema(
 // extractSchemaFromView extracts schema information from a DuckDB view named 'table_view'.
 // This is shared logic used by both getDuckDBSchema and getDuckDBSchemaFromLocalFile.
 func extractSchemaFromView(ctx context.Context, qc *duckdb.QueryClient) ([]SchemaField, error) {
-	// Fetch schema with nullability
-	rows, executeQueryErr := qc.ExecuteQuery(ctx, `
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_schema='main' AND table_name='table_view'
-`)
+	// Use DESCRIBE instead of information_schema to preserve original field name casing
+	// information_schema.columns uppercases column names, but DESCRIBE preserves them
+	rows, executeQueryErr := qc.ExecuteQuery(ctx, "DESCRIBE table_view;")
 	if executeQueryErr != nil {
 		return nil, fmt.Errorf("failed to fetch schema: %w", executeQueryErr)
 	}
@@ -309,12 +346,30 @@ WHERE table_schema='main' AND table_name='table_view'
 
 	var result []SchemaField
 	for rows.Next() {
-		var name, typ, nullable string
-		if scanErr := rows.Scan(&name, &typ, &nullable); scanErr != nil {
+		// DESCRIBE returns: column_name, column_type, null, key, default, extra
+		var name, typ, null, key, defaultValue, extra sql.NullString
+		if scanErr := rows.Scan(&name, &typ, &null, &key, &defaultValue, &extra); scanErr != nil {
 			return nil, fmt.Errorf("failed to scan schema row: %w", scanErr)
 		}
-		required := strings.EqualFold(nullable, "NO")
-		result = append(result, parseField(name, typ, required))
+
+		if !name.Valid || !typ.Valid {
+			continue
+		}
+
+		// In DuckDB DESCRIBE output, null column is "YES" or "NO"
+		required := false
+		if null.Valid && strings.EqualFold(null.String, "NO") {
+			required = true
+		}
+
+		// Remove surrounding quotes from field names if present
+		// DuckDB's DESCRIBE includes quotes for identifiers with spaces
+		fieldName := name.String
+		if strings.HasPrefix(fieldName, `"`) && strings.HasSuffix(fieldName, `"`) {
+			fieldName = fieldName[1 : len(fieldName)-1]
+		}
+
+		result = append(result, parseField(fieldName, typ.String, required))
 	}
 	return result, nil
 }
@@ -352,12 +407,35 @@ func getDuckDBSchemaFromLocalFile(
 	// Determine the read function based on file extension
 	readFunction := getDuckDBReadFunction(safeFilename)
 
-	// Create temp view from the file
-	viewSQL := fmt.Sprintf(
-		"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s');",
-		readFunction,
-		tempFilePath,
-	)
+	// Build SQL with appropriate parameters
+	var viewSQL string
+	ext := strings.ToLower(filepath.Ext(safeFilename))
+	switch ext {
+	case ".json":
+		// For JSON files, use parameters that handle inconsistent schemas and root-level arrays
+		// union_by_name preserves original field name casing instead of uppercasing
+		viewSQL = fmt.Sprintf(
+			"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s', ignore_errors=true, maximum_object_size=10485760, union_by_name=true);",
+			readFunction,
+			tempFilePath,
+		)
+	case ".jsonl", ".ndjson":
+		// For JSONL/NDJSON, use format parameter
+		// union_by_name preserves original field name casing
+		viewSQL = fmt.Sprintf(
+			"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s', format='newline_delimited', ignore_errors=true, union_by_name=true);",
+			readFunction,
+			tempFilePath,
+		)
+	default:
+		// For other formats, use simple syntax
+		viewSQL = fmt.Sprintf(
+			"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s');",
+			readFunction,
+			tempFilePath,
+		)
+	}
+
 	if _, executeNonQueryErr := qc.ExecuteNonQuery(ctx, viewSQL); executeNonQueryErr != nil {
 		return nil, fmt.Errorf("failed to create view: %w", executeNonQueryErr)
 	}

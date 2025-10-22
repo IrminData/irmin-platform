@@ -772,6 +772,114 @@ func TestParseFieldForElement(t *testing.T) {
 	}
 }
 
+func TestParseFieldNameAndType(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        string
+		expectedName string
+		expectedType string
+	}{
+		{
+			name:         "Simple unquoted field",
+			input:        "id INTEGER",
+			expectedName: "id",
+			expectedType: "INTEGER",
+		},
+		{
+			name:         "Quoted field with space",
+			input:        `"CPU model" VARCHAR`,
+			expectedName: `"CPU model"`, // Will be stripped in parseStructFields
+			expectedType: "VARCHAR",
+		},
+		{
+			name:         "Quoted field with space and complex type",
+			input:        `"Hard disk size" VARCHAR(100)`,
+			expectedName: `"Hard disk size"`, // Will be stripped in parseStructFields
+			expectedType: "VARCHAR(100)",
+		},
+		{
+			name:         "Quoted field - Case Size",
+			input:        `"Case Size" VARCHAR`,
+			expectedName: `"Case Size"`, // Will be stripped in parseStructFields
+			expectedType: "VARCHAR",
+		},
+		{
+			name:         "Quoted field - capacity GB",
+			input:        `"capacity GB" BIGINT`,
+			expectedName: `"capacity GB"`, // Will be stripped in parseStructFields
+			expectedType: "BIGINT",
+		},
+		{
+			name:         "Quoted field - Strap Colour",
+			input:        `"Strap Colour" VARCHAR`,
+			expectedName: `"Strap Colour"`, // Will be stripped in parseStructFields
+			expectedType: "VARCHAR",
+		},
+		{
+			name:         "Quoted field - Screen size with DOUBLE",
+			input:        `"Screen size" DOUBLE`,
+			expectedName: `"Screen size"`, // Will be stripped in parseStructFields
+			expectedType: "DOUBLE",
+		},
+		{
+			name:         "Quoted field - year",
+			input:        `"year" BIGINT`,
+			expectedName: `"year"`, // Will be stripped in parseStructFields
+			expectedType: "BIGINT",
+		},
+		{
+			name:         "Unquoted field with complex type",
+			input:        "price DECIMAL(10,2)",
+			expectedName: "price",
+			expectedType: "DECIMAL(10,2)",
+		},
+		{
+			name:         "Quoted field with comma in name",
+			input:        `"field,name" VARCHAR`,
+			expectedName: `"field,name"`,
+			expectedType: "VARCHAR",
+		},
+		{
+			name:         "Quoted field with parentheses in name",
+			input:        `"field(1)" VARCHAR`,
+			expectedName: `"field(1)"`,
+			expectedType: "VARCHAR",
+		},
+		{
+			name:         "Field with STRUCT type",
+			input:        "data STRUCT(x INT, y INT)",
+			expectedName: "data",
+			expectedType: "STRUCT(x INT, y INT)",
+		},
+		{
+			name:         "Quoted field with STRUCT type",
+			input:        `"nested data" STRUCT(x INT, y INT)`,
+			expectedName: `"nested data"`,
+			expectedType: "STRUCT(x INT, y INT)",
+		},
+		{
+			name:         "Empty string",
+			input:        "",
+			expectedName: "",
+			expectedType: "",
+		},
+		{
+			name:         "Only name no type",
+			input:        "field",
+			expectedName: "",
+			expectedType: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			name, typ := engine.ParseFieldNameAndTypeForTesting(tt.input)
+			assert.Equal(t, tt.expectedName, name)
+			assert.Equal(t, tt.expectedType, typ)
+		})
+	}
+}
+
 // Helper functions
 func intPtr(v int) *int {
 	return &v
