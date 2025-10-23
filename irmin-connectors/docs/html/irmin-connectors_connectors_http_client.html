@@ -50,5 +50,14 @@ func (h *HTTPClient) MakeRequest() (*http.Response, error)
     MakeRequest makes an HTTP request and returns the response. This method is
     not safe for concurrent use on the same HTTPClient instance.
 
+func (h *HTTPClient) WithPath(newPath string) *HTTPClient
+    WithPath creates a new HTTPClient with the URL path replaced or appended.
+    If the path is absolute (starts with /), it replaces the URL path entirely.
+    If the path is relative, it appends it to the existing URL path. If the path
+    is empty, the URL remains unchanged but a new client is still returned.
+    This method always returns a new client instance with deep copies of all
+    mutable fields. Exception: If URL parsing fails, returns the original client
+    as an error condition.
+
 </pre>
 </body></html>

@@ -38,6 +38,7 @@ func (p *HTTPPushProvider) InitializeClient(
 }
 
 // ProcessFiles processes the extracted files and sends them to the HTTP endpoint.
+// The rawPath parameter is used to modify the request URL (absolute path replaces, relative path appends).
 func (p *HTTPPushProvider) ProcessFiles(
 	_ fiber.Ctx,
 	client any,
@@ -47,6 +48,11 @@ func (p *HTTPPushProvider) ProcessFiles(
 	httpClient, ok := client.(*httpclient.HTTPClient)
 	if !ok {
 		return errors.New("invalid client type for HTTP push provider")
+	}
+
+	// If a path is provided, use it to modify the request URL
+	if rawPath != "" {
+		httpClient = httpClient.WithPath(rawPath)
 	}
 
 	if len(files) == 0 {
@@ -137,13 +143,14 @@ func (p *HTTPPushProvider) ProcessFiles(
 
 // OperationPush godoc
 // @Summary Push data to HTTP endpoint
-// @Description Send file content to the configured HTTP endpoint using the specified method and headers
+// @Description Send file content to the configured HTTP endpoint using the specified method and headers. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).
 // @Tags http
 // @Security OperationTokenAuth
 // @Accept multipart/form-data
 // @Produce json
 // @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "File to send to HTTP endpoint"
+// @Param path formData string false "Path to append/replace in the request URL (e.g., /api/users or customers)"
 // @Success 200 {object} fiber.Map "Data pushed successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

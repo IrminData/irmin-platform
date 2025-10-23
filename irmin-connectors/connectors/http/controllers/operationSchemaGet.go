@@ -44,12 +44,17 @@ func (p *HTTPSchemaProvider) InitializeClient(
 func (p *HTTPSchemaProvider) GetSchema(
 	c fiber.Ctx,
 	client any,
-	_ string,
-	_ *string,
+	_ string, // operationType parameter is not used for HTTP
+	requestPath *string, // path parameter in HTTP is used to modify the request URL
 ) (*irminmodels.ObjectSchema, error) {
 	httpClient, ok := client.(*httpclient.HTTPClient)
 	if !ok {
 		return nil, errors.New("invalid client type for HTTP")
+	}
+
+	// If a custom path is provided, use it to modify the request URL
+	if requestPath != nil && *requestPath != "" {
+		httpClient = httpClient.WithPath(*requestPath)
 	}
 
 	// Make a request to get the response structure
@@ -114,13 +119,14 @@ func (p *HTTPSchemaProvider) GetSupportedOperationTypes() []string {
 
 // OperationSchemaGet godoc
 // @Summary Get HTTP operation schema
-// @Description Get the response schema for HTTP operations, returning an Irmin-compatible ObjectSchema based on the operation type (pull or push)
+// @Description Get the response schema for HTTP operations, returning an Irmin-compatible ObjectSchema based on the operation type (pull or push). Use the path query parameter to specify which API endpoint or resource to analyze.
 // @Tags http
 // @Security OperationTokenAuth
 // @Accept json
 // @Produce json
 // @Param operation path string true "Operation type" Enums(pull, push)
 // @Param operation_token formData string true "Operation token received from operation/init"
+// @Param path query string false "API endpoint or resource path to get schema for (e.g., /api/users or /data.json)"
 // @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation type or token"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

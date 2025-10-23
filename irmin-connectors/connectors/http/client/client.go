@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"slices"
@@ -647,4 +648,60 @@ func parseStatusCodesStrict(input string) ([]int, []string) {
 // IsAcceptedStatusCode checks if the given status code is in the accepted list.
 func (h *HTTPClient) IsAcceptedStatusCode(statusCode int) bool {
 	return slices.Contains(h.AcceptedStatusCodes, statusCode)
+}
+
+// WithPath creates a new HTTPClient with the URL path replaced or appended.
+// If the path is absolute (starts with /), it replaces the URL path entirely.
+// If the path is relative, it appends it to the existing URL path.
+// If the path is empty, the URL remains unchanged but a new client is still returned.
+// This method always returns a new client instance with deep copies of all mutable fields.
+// Exception: If URL parsing fails, returns the original client as an error condition.
+func (h *HTTPClient) WithPath(newPath string) *HTTPClient {
+	// Parse the original URL
+	parsedURL, err := url.Parse(h.URL)
+	if err != nil {
+		// If URL parsing fails, return the original client as an error condition
+		// This is an exceptional case and should not happen with valid HTTPClient instances
+		return h
+	}
+
+	// Modify the path only if newPath is not empty
+	if newPath != "" {
+		// If newPath starts with /, replace the entire path
+		// Otherwise, append it to the existing path
+		if strings.HasPrefix(newPath, "/") {
+			parsedURL.Path = newPath
+		} else {
+			// Join paths properly
+			parsedURL.Path = strings.TrimSuffix(parsedURL.Path, "/") + "/" + newPath
+		}
+	}
+
+	// Create a deep copy of the Headers map
+	headersCopy := make(map[string]string, len(h.Headers))
+	maps.Copy(headersCopy, h.Headers)
+
+	// Create a deep copy of the AcceptedStatusCodes slice
+	statusCodesCopy := make([]int, len(h.AcceptedStatusCodes))
+	copy(statusCodesCopy, h.AcceptedStatusCodes)
+
+	// Create a deep copy of the Body slice
+	var bodyCopy []byte
+	if h.Body != nil {
+		bodyCopy = make([]byte, len(h.Body))
+		copy(bodyCopy, h.Body)
+	}
+
+	// Create a new client with the modified URL and deep copies of mutable fields
+	// Note: Client (*http.Client) is safe to share as it's documented to be concurrent-safe
+	return &HTTPClient{
+		URL:                 parsedURL.String(),
+		Method:              h.Method,
+		Headers:             headersCopy,
+		Body:                bodyCopy,
+		Timeout:             h.Timeout,
+		VerifySSL:           h.VerifySSL,
+		AcceptedStatusCodes: statusCodesCopy,
+		Client:              h.Client, // Safe to share - http.Client is concurrent-safe
+	}
 }

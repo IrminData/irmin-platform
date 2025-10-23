@@ -917,12 +917,18 @@ paths:
       consumes:
       - multipart/form-data
       description: Make a request to the configured HTTP endpoint and return the response
-        as a file
+        as a file. Use the path parameter to modify the request URL (absolute path
+        replaces, relative path appends).
       parameters:
       - description: Operation token received from operation/init
         in: formData
         name: operation_token
         required: true
+        type: string
+      - description: Path to append/replace in the request URL (e.g., /api/users or
+          customers)
+        in: formData
+        name: path
         type: string
       produces:
       - application/json
@@ -957,7 +963,8 @@ paths:
       consumes:
       - multipart/form-data
       description: Send file content to the configured HTTP endpoint using the specified
-        method and headers
+        method and headers. Use the path parameter to modify the request URL (absolute
+        path replaces, relative path appends).
       parameters:
       - description: Operation token received from operation/init
         in: formData
@@ -969,6 +976,11 @@ paths:
         name: file
         required: true
         type: file
+      - description: Path to append/replace in the request URL (e.g., /api/users or
+          customers)
+        in: formData
+        name: path
+        type: string
       produces:
       - application/json
       responses:
@@ -1002,7 +1014,8 @@ paths:
       consumes:
       - application/json
       description: Get the response schema for HTTP operations, returning an Irmin-compatible
-        ObjectSchema based on the operation type (pull or push)
+        ObjectSchema based on the operation type (pull or push). Use the path query
+        parameter to specify which API endpoint or resource to analyze.
       parameters:
       - description: Operation type
         enum:
@@ -1016,6 +1029,11 @@ paths:
         in: formData
         name: operation_token
         required: true
+        type: string
+      - description: API endpoint or resource path to get schema for (e.g., /api/users
+          or /data.json)
+        in: query
+        name: path
         type: string
       produces:
       - application/json
@@ -1474,7 +1492,8 @@ paths:
       consumes:
       - multipart/form-data
       description: Insert data into MySQL database tables using the operation token
-        and JSON file containing table data
+        and JSON file containing table data. Use the path parameter to specify a target
+        table name.
       parameters:
       - description: Operation token received from operation/init
         in: formData
@@ -1486,6 +1505,11 @@ paths:
         name: file
         required: true
         type: file
+      - description: Target table name (e.g., customers). If not specified, uses the
+          filename from the uploaded file
+        in: formData
+        name: path
+        type: string
       produces:
       - application/json
       responses:
@@ -1520,7 +1544,8 @@ paths:
       - application/json
       description: Get the database schema for MySQL operations, returning an Irmin-compatible
         ObjectSchema grouping each table as a JSON array based on the operation type
-        (pull or push)
+        (pull or push). Use the path query parameter to specify which database to
+        analyze.
       parameters:
       - description: Operation type
         enum:
@@ -1534,6 +1559,10 @@ paths:
         in: formData
         name: operation_token
         required: true
+        type: string
+      - description: Database name to get schema for (e.g., my_database)
+        in: query
+        name: path
         type: string
       produces:
       - application/json
@@ -2028,7 +2057,8 @@ paths:
       consumes:
       - multipart/form-data
       description: Insert data into PostgreSQL database tables using the operation
-        token and JSON file containing table data
+        token and JSON file containing table data. Use the path parameter to specify
+        a target table name.
       parameters:
       - description: Operation token received from operation/init
         in: formData
@@ -2040,6 +2070,11 @@ paths:
         name: file
         required: true
         type: file
+      - description: Target table name (e.g., customers). If not specified, uses the
+          filename from the uploaded file
+        in: formData
+        name: path
+        type: string
       produces:
       - application/json
       responses:
@@ -2074,7 +2109,8 @@ paths:
       - application/json
       description: Get the database schema for PostgreSQL operations, returning an
         Irmin-compatible ObjectSchema grouping each table as a JSON array based on
-        the operation type (pull or push)
+        the operation type (pull or push). Use the path query parameter to specify
+        which database to analyze.
       parameters:
       - description: Operation type
         enum:
@@ -2088,6 +2124,10 @@ paths:
         in: formData
         name: operation_token
         required: true
+        type: string
+      - description: Database name to get schema for (e.g., my_database)
+        in: query
+        name: path
         type: string
       produces:
       - application/json
@@ -2588,7 +2628,8 @@ paths:
       consumes:
       - application/json
       description: Get the schema and directory structure for SFTP file operations
-        based on the operation type (pull or push)
+        based on the operation type (pull or push). Use the path query parameter to
+        navigate to specific files or directories on the SFTP server.
       parameters:
       - description: Operation type
         enum:
@@ -2602,6 +2643,11 @@ paths:
         in: formData
         name: operation_token
         required: true
+        type: string
+      - description: Path to file or directory to get schema for (e.g., /data/customers.csv
+          or /reports/)
+        in: query
+        name: path
         type: string
       produces:
       - application/json

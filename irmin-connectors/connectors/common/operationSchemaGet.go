@@ -18,10 +18,10 @@ type SchemaOperationProvider interface {
 		c fiber.Ctx,
 		logger *slog.Logger,
 		operation *db.Operation,
-	) (client any, databaseName *string, cleanup func(), err error)
+	) (client any, path *string, cleanup func(), err error)
 
 	// GetSchema retrieves the schema for the specified operation type
-	GetSchema(c fiber.Ctx, client any, operationType string, databaseName *string) (*irminmodels.ObjectSchema, error)
+	GetSchema(c fiber.Ctx, client any, operationType string, path *string) (*irminmodels.ObjectSchema, error)
 
 	// GetSupportedOperationTypes returns the list of supported operation types for this connector
 	GetSupportedOperationTypes() []string
@@ -76,7 +76,7 @@ func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, log
 	}
 
 	// Initialize the client
-	client, databaseName, cleanup, err := provider.InitializeClient(c, logger, operation)
+	client, defaultPath, cleanup, err := provider.InitializeClient(c, logger, operation)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize client: " + err.Error(),
@@ -84,8 +84,20 @@ func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, log
 	}
 	defer cleanup()
 
+	// Check for path query parameter to specify which resource to analyze.
+	// The path parameter allows navigation within the connected system (e.g., /data/file.csv for SFTP,
+	// database_name for SQL, /api/endpoint for HTTP). If not provided, uses the default path from
+	// operation settings or connector-specific defaults.
+	queryPath := c.Query("path")
+	var finalPath *string
+	if queryPath != "" {
+		finalPath = &queryPath
+	} else {
+		finalPath = defaultPath
+	}
+
 	// Get the schema from the provider
-	schema, err := provider.GetSchema(c, client, operationType, databaseName)
+	schema, err := provider.GetSchema(c, client, operationType, finalPath)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to get schema: " + err.Error(),

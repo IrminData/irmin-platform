@@ -74,12 +74,17 @@ func (p *HTTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]b
 	return []string{fileName}, [][]byte{body}, nil
 }
 
-// GetFileByPath makes a request to the configured endpoint and returns the response as a file.
-// For HTTP connectors, the path parameter is ignored since we only support single endpoint configurations.
-func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, _ string) (string, []byte, error) {
+// GetFileByPath makes a request to the configured endpoint with an optional path modification.
+// The path parameter is used to modify the request URL (absolute path replaces, relative path appends).
+func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (string, []byte, error) {
 	httpClient, ok := client.(*httpclient.HTTPClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for HTTP pull provider")
+	}
+
+	// If a path is provided, use it to modify the request URL
+	if path != "" {
+		httpClient = httpClient.WithPath(path)
 	}
 
 	// Make the HTTP request
@@ -118,12 +123,13 @@ func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, _ string) (str
 
 // OperationPull godoc
 // @Summary Pull data from HTTP endpoint
-// @Description Make a request to the configured HTTP endpoint and return the response as a file
+// @Description Make a request to the configured HTTP endpoint and return the response as a file. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).
 // @Tags http
 // @Security OperationTokenAuth
 // @Accept multipart/form-data
 // @Produce json
 // @Param operation_token formData string true "Operation token received from operation/init"
+// @Param path formData string false "Path to append/replace in the request URL (e.g., /api/users or customers)"
 // @Success 200 {object} fiber.Map "Data pulled successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

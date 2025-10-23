@@ -1781,10 +1781,10 @@ type SchemaOperationProvider interface {
         c fiber.Ctx,
         logger *slog.Logger,
         operation *db.Operation,
-    ) (client any, databaseName *string, cleanup func(), err error)
+    ) (client any, path *string, cleanup func(), err error)
 
     // GetSchema retrieves the schema for the specified operation type
-    GetSchema(c fiber.Ctx, client any, operationType string, databaseName *string) (*irminmodels.ObjectSchema, error)
+    GetSchema(c fiber.Ctx, client any, operationType string, path *string) (*irminmodels.ObjectSchema, error)
 
     // GetSupportedOperationTypes returns the list of supported operation types for this connector
     GetSupportedOperationTypes() []string
@@ -1925,6 +1925,7 @@ import "irmin-connectors/connectors/http/client"
   - [func \(h \*HTTPClient\) GetResponseBody\(resp \*http.Response\) \(\[\]byte, error\)](<#HTTPClient.GetResponseBody>)
   - [func \(h \*HTTPClient\) IsAcceptedStatusCode\(statusCode int\) bool](<#HTTPClient.IsAcceptedStatusCode>)
   - [func \(h \*HTTPClient\) MakeRequest\(\) \(\*http.Response, error\)](<#HTTPClient.MakeRequest>)
+  - [func \(h \*HTTPClient\) WithPath\(newPath string\) \*HTTPClient](<#HTTPClient.WithPath>)
 
 
 <a name="ValidateConfiguration"></a>
@@ -2007,6 +2008,15 @@ func (h *HTTPClient) MakeRequest() (*http.Response, error)
 ```
 
 MakeRequest makes an HTTP request and returns the response. This method is not safe for concurrent use on the same HTTPClient instance.
+
+<a name="HTTPClient.WithPath"></a>
+### func \(\*HTTPClient\) WithPath
+
+```go
+func (h *HTTPClient) WithPath(newPath string) *HTTPClient
+```
+
+WithPath creates a new HTTPClient with the URL path replaced or appended. If the path is absolute \(starts with /\), it replaces the URL path entirely. If the path is relative, it appends it to the existing URL path. If the path is empty, the URL remains unchanged but a new client is still returned. This method always returns a new client instance with deep copies of all mutable fields. Exception: If URL parsing fails, returns the original client as an error condition.
 
 # config
 
@@ -2121,13 +2131,13 @@ import "irmin-connectors/connectors/http/controllers"
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
 - [type HTTPPullProvider](<#HTTPPullProvider>)
   - [func \(p \*HTTPPullProvider\) GetAllFiles\(\_ fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#HTTPPullProvider.GetAllFiles>)
-  - [func \(p \*HTTPPullProvider\) GetFileByPath\(\_ fiber.Ctx, client any, \_ string\) \(string, \[\]byte, error\)](<#HTTPPullProvider.GetFileByPath>)
+  - [func \(p \*HTTPPullProvider\) GetFileByPath\(\_ fiber.Ctx, client any, path string\) \(string, \[\]byte, error\)](<#HTTPPullProvider.GetFileByPath>)
   - [func \(p \*HTTPPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPullProvider.InitializeClient>)
 - [type HTTPPushProvider](<#HTTPPushProvider>)
   - [func \(p \*HTTPPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPushProvider.InitializeClient>)
   - [func \(p \*HTTPPushProvider\) ProcessFiles\(\_ fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#HTTPPushProvider.ProcessFiles>)
 - [type HTTPSchemaProvider](<#HTTPSchemaProvider>)
-  - [func \(p \*HTTPSchemaProvider\) GetSchema\(c fiber.Ctx, client any, \_ string, \_ \*string\) \(\*irminmodels.ObjectSchema, error\)](<#HTTPSchemaProvider.GetSchema>)
+  - [func \(p \*HTTPSchemaProvider\) GetSchema\(c fiber.Ctx, client any, \_ string, requestPath \*string\) \(\*irminmodels.ObjectSchema, error\)](<#HTTPSchemaProvider.GetSchema>)
   - [func \(p \*HTTPSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#HTTPSchemaProvider.GetSupportedOperationTypes>)
   - [func \(p \*HTTPSchemaProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPSchemaProvider.InitializeClient>)
 
@@ -2267,7 +2277,7 @@ OperationPatch godoc @Summary HTTP connector does not support patch operations @
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
 ```
 
-OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a request to the configured HTTP endpoint and return the response as a file @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "HTTP endpoint not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/pull \[post\]
+OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a request to the configured HTTP endpoint and return the response as a file. Use the path parameter to modify the request URL \(absolute path replaces, relative path appends\). @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param path formData string false "Path to append/replace in the request URL \(e.g., /api/users or customers\)" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "HTTP endpoint not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
 ### func \(\*Controllers\) OperationPush
@@ -2276,7 +2286,7 @@ OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a re
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
 ```
 
-OperationPush godoc @Summary Push data to HTTP endpoint @Description Send file content to the configured HTTP endpoint using the specified method and headers @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "File to send to HTTP endpoint" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/push \[post\]
+OperationPush godoc @Summary Push data to HTTP endpoint @Description Send file content to the configured HTTP endpoint using the specified method and headers. Use the path parameter to modify the request URL \(absolute path replaces, relative path appends\). @Tags http @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "File to send to HTTP endpoint" @Param path formData string false "Path to append/replace in the request URL \(e.g., /api/users or customers\)" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
 ### func \(\*Controllers\) OperationSchemaGet
@@ -2285,7 +2295,7 @@ OperationPush godoc @Summary Push data to HTTP endpoint @Description Send file c
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 ```
 
-OperationSchemaGet godoc @Summary Get HTTP operation schema @Description Get the response schema for HTTP operations, returning an Irmin\-compatible ObjectSchema based on the operation type \(pull or push\) @Tags http @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/schema/\{operation\} \[post\]
+OperationSchemaGet godoc @Summary Get HTTP operation schema @Description Get the response schema for HTTP operations, returning an Irmin\-compatible ObjectSchema based on the operation type \(pull or push\). Use the path query parameter to specify which API endpoint or resource to analyze. @Tags http @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Param path query string false "API endpoint or resource path to get schema for \(e.g., /api/users or /data.json\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.OperationStatus"></a>
 ### func \(\*Controllers\) OperationStatus
@@ -2363,10 +2373,10 @@ GetAllFiles makes a request to the configured endpoint and returns the response 
 ### func \(\*HTTPPullProvider\) GetFileByPath
 
 ```go
-func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, _ string) (string, []byte, error)
+func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (string, []byte, error)
 ```
 
-GetFileByPath makes a request to the configured endpoint and returns the response as a file. For HTTP connectors, the path parameter is ignored since we only support single endpoint configurations.
+GetFileByPath makes a request to the configured endpoint with an optional path modification. The path parameter is used to modify the request URL \(absolute path replaces, relative path appends\).
 
 <a name="HTTPPullProvider.InitializeClient"></a>
 ### func \(\*HTTPPullProvider\) InitializeClient
@@ -2402,7 +2412,7 @@ InitializeClient initializes the HTTP client for push operations.
 func (p *HTTPPushProvider) ProcessFiles(_ fiber.Ctx, client any, files map[string][]byte, rawPath string) error
 ```
 
-ProcessFiles processes the extracted files and sends them to the HTTP endpoint.
+ProcessFiles processes the extracted files and sends them to the HTTP endpoint. The rawPath parameter is used to modify the request URL \(absolute path replaces, relative path appends\).
 
 <a name="HTTPSchemaProvider"></a>
 ## type HTTPSchemaProvider
@@ -2420,7 +2430,7 @@ type HTTPSchemaProvider struct {
 ### func \(\*HTTPSchemaProvider\) GetSchema
 
 ```go
-func (p *HTTPSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, _ *string) (*irminmodels.ObjectSchema, error)
+func (p *HTTPSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, requestPath *string) (*irminmodels.ObjectSchema, error)
 ```
 
 GetSchema retrieves the HTTP endpoint schema and returns an Irmin\-compatible ObjectSchema.
@@ -3012,7 +3022,7 @@ OperationPull godoc @Summary Pull data from MySQL database @Description Extract 
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
 ```
 
-OperationPush godoc @Summary Push data to MySQL database @Description Insert data into MySQL database tables using the operation token and JSON file containing table data @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "JSON file containing table data to insert" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/push \[post\]
+OperationPush godoc @Summary Push data to MySQL database @Description Insert data into MySQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name. @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "JSON file containing table data to insert" @Param path formData string false "Target table name \(e.g., customers\). If not specified, uses the filename from the uploaded file" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
 ### func \(\*Controllers\) OperationSchemaGet
@@ -3021,7 +3031,7 @@ OperationPush godoc @Summary Push data to MySQL database @Description Insert dat
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 ```
 
-OperationSchemaGet godoc @Summary Get MySQL operation schema @Description Get the database schema for MySQL operations, returning an Irmin\-compatible ObjectSchema grouping each table as a JSON array based on the operation type \(pull or push\) @Tags mysql @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/schema/\{operation\} \[post\]
+OperationSchemaGet godoc @Summary Get MySQL operation schema @Description Get the database schema for MySQL operations, returning an Irmin\-compatible ObjectSchema grouping each table as a JSON array based on the operation type \(pull or push\). Use the path query parameter to specify which database to analyze. @Tags mysql @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Param path query string false "Database name to get schema for \(e.g., my\_database\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.OperationStatus"></a>
 ### func \(\*Controllers\) OperationStatus
@@ -3786,7 +3796,7 @@ OperationPull godoc @Summary Pull data from PostgreSQL database @Description Ext
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
 ```
 
-OperationPush godoc @Summary Push data to PostgreSQL database @Description Insert data into PostgreSQL database tables using the operation token and JSON file containing table data @Tags postgres @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "JSON file containing table data to insert" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/push \[post\]
+OperationPush godoc @Summary Push data to PostgreSQL database @Description Insert data into PostgreSQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name. @Tags postgres @Security OperationTokenAuth @Accept multipart/form\-data @Produce json @Param operation\_token formData string true "Operation token received from operation/init" @Param file formData file true "JSON file containing table data to insert" @Param path formData string false "Target table name \(e.g., customers\). If not specified, uses the filename from the uploaded file" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
 ### func \(\*Controllers\) OperationSchemaGet
@@ -3795,7 +3805,7 @@ OperationPush godoc @Summary Push data to PostgreSQL database @Description Inser
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 ```
 
-OperationSchemaGet godoc @Summary Get PostgreSQL operation schema @Description Get the database schema for PostgreSQL operations, returning an Irmin\-compatible ObjectSchema grouping each table as a JSON array based on the operation type \(pull or push\) @Tags postgres @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/schema/\{operation\} \[post\]
+OperationSchemaGet godoc @Summary Get PostgreSQL operation schema @Description Get the database schema for PostgreSQL operations, returning an Irmin\-compatible ObjectSchema grouping each table as a JSON array based on the operation type \(pull or push\). Use the path query parameter to specify which database to analyze. @Tags postgres @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Param path query string false "Database name to get schema for \(e.g., my\_database\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.OperationStatus"></a>
 ### func \(\*Controllers\) OperationStatus
@@ -5002,7 +5012,7 @@ OperationPush godoc @Summary Push files to SFTP server @Description Upload files
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 ```
 
-OperationSchemaGet godoc @Summary Get SFTP operation schema @Description Get the schema and directory structure for SFTP file operations based on the operation type \(pull or push\) @Tags sftp @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/schema/\{operation\} \[post\]
+OperationSchemaGet godoc @Summary Get SFTP operation schema @Description Get the schema and directory structure for SFTP file operations based on the operation type \(pull or push\). Use the path query parameter to navigate to specific files or directories on the SFTP server. @Tags sftp @Security OperationTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param operation\_token formData string true "Operation token received from operation/init" @Param path query string false "Path to file or directory to get schema for \(e.g., /data/customers.csv or /reports/\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.OperationStatus"></a>
 ### func \(\*Controllers\) OperationStatus

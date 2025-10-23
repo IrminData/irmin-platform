@@ -93,13 +93,14 @@ func (p *PostgresPushProvider) ProcessFiles(
 
 // OperationPush godoc
 // @Summary Push data to PostgreSQL database
-// @Description Insert data into PostgreSQL database tables using the operation token and JSON file containing table data
+// @Description Insert data into PostgreSQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.
 // @Tags postgres
 // @Security OperationTokenAuth
 // @Accept multipart/form-data
 // @Produce json
 // @Param operation_token formData string true "Operation token received from operation/init"
 // @Param file formData file true "JSON file containing table data to insert"
+// @Param path formData string false "Target table name (e.g., customers). If not specified, uses the filename from the uploaded file"
 // @Success 200 {object} fiber.Map "Data pushed successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation token or file format"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

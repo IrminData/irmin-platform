@@ -435,7 +435,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "Make a request to the configured HTTP endpoint and return the response as a file",
+                "description": "Make a request to the configured HTTP endpoint and return the response as a file. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -453,6 +453,12 @@ const docTemplate = `{
                         "name": "operation_token",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path to append/replace in the request URL (e.g., /api/users or customers)",
+                        "name": "path",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -496,7 +502,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "Send file content to the configured HTTP endpoint using the specified method and headers",
+                "description": "Send file content to the configured HTTP endpoint using the specified method and headers. Use the path parameter to modify the request URL (absolute path replaces, relative path appends).",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -521,6 +527,12 @@ const docTemplate = `{
                         "name": "file",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path to append/replace in the request URL (e.g., /api/users or customers)",
+                        "name": "path",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -564,7 +576,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "Get the response schema for HTTP operations, returning an Irmin-compatible ObjectSchema based on the operation type (pull or push)",
+                "description": "Get the response schema for HTTP operations, returning an Irmin-compatible ObjectSchema based on the operation type (pull or push). Use the path query parameter to specify which API endpoint or resource to analyze.",
                 "consumes": [
                     "application/json"
                 ],
@@ -593,6 +605,12 @@ const docTemplate = `{
                         "name": "operation_token",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API endpoint or resource path to get schema for (e.g., /api/users or /data.json)",
+                        "name": "path",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1275,7 +1293,7 @@ const docTemplate = `{
                         "SystemTokenAuth": []
                     }
                 ],
-                "description": "Insert data into MySQL database tables using the operation token and JSON file containing table data",
+                "description": "Insert data into MySQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -1300,6 +1318,12 @@ const docTemplate = `{
                         "name": "file",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target table name (e.g., customers). If not specified, uses the filename from the uploaded file",
+                        "name": "path",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -1343,7 +1367,7 @@ const docTemplate = `{
                         "SystemTokenAuth": []
                     }
                 ],
-                "description": "Get the database schema for MySQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push)",
+                "description": "Get the database schema for MySQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push). Use the path query parameter to specify which database to analyze.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1372,6 +1396,12 @@ const docTemplate = `{
                         "name": "operation_token",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Database name to get schema for (e.g., my_database)",
+                        "name": "path",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2104,7 +2134,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "Insert data into PostgreSQL database tables using the operation token and JSON file containing table data",
+                "description": "Insert data into PostgreSQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -2129,6 +2159,12 @@ const docTemplate = `{
                         "name": "file",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target table name (e.g., customers). If not specified, uses the filename from the uploaded file",
+                        "name": "path",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -2172,7 +2208,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "Get the database schema for PostgreSQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push)",
+                "description": "Get the database schema for PostgreSQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push). Use the path query parameter to specify which database to analyze.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2201,6 +2237,12 @@ const docTemplate = `{
                         "name": "operation_token",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Database name to get schema for (e.g., my_database)",
+                        "name": "path",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2949,7 +2991,7 @@ const docTemplate = `{
                         "OperationTokenAuth": []
                     }
                 ],
-                "description": "Get the schema and directory structure for SFTP file operations based on the operation type (pull or push)",
+                "description": "Get the schema and directory structure for SFTP file operations based on the operation type (pull or push). Use the path query parameter to navigate to specific files or directories on the SFTP server.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2978,6 +3020,12 @@ const docTemplate = `{
                         "name": "operation_token",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path to file or directory to get schema for (e.g., /data/customers.csv or /reports/)",
+                        "name": "path",
+                        "in": "query"
                     }
                 ],
                 "responses": {

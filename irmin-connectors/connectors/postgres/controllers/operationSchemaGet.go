@@ -36,8 +36,8 @@ func (p *PostgreSQLSchemaProvider) InitializeClient(
 func (p *PostgreSQLSchemaProvider) GetSchema(
 	c fiber.Ctx,
 	client any,
-	_ string,
-	databaseName *string,
+	_ string, // operationType parameter is not used for PostgreSQL
+	databaseName *string, // path parameter in PostgreSQL is used as the database name
 ) (*irminmodels.ObjectSchema, error) {
 	postgresClient, ok := client.(*postgresclient.PostgresClient)
 	if !ok {
@@ -114,13 +114,14 @@ func (p *PostgreSQLSchemaProvider) GetSupportedOperationTypes() []string {
 
 // OperationSchemaGet godoc
 // @Summary Get PostgreSQL operation schema
-// @Description Get the database schema for PostgreSQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push)
+// @Description Get the database schema for PostgreSQL operations, returning an Irmin-compatible ObjectSchema grouping each table as a JSON array based on the operation type (pull or push). Use the path query parameter to specify which database to analyze.
 // @Tags postgres
 // @Security OperationTokenAuth
 // @Accept json
 // @Produce json
 // @Param operation path string true "Operation type" Enums(pull, push)
 // @Param operation_token formData string true "Operation token received from operation/init"
+// @Param path query string false "Database name to get schema for (e.g., my_database)"
 // @Success 200 {object} irminmodels.ObjectSchema "Operation schema retrieved successfully"
 // @Failure 400 {object} fiber.Map "Bad request - invalid operation type or token"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"
