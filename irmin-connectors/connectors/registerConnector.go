@@ -1,6 +1,7 @@
 package connectors
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"irmin-connectors/db"
@@ -16,6 +17,7 @@ const defaultTokenLength = 32
 
 // registerConnector registers a new connector with the Irmin API.
 func registerConnector(
+	ctx context.Context,
 	database *db.Database,
 	logger *slog.Logger,
 	apiBaseURL, apiToken, baseURL, connectorName, connectorSlug string,
@@ -55,6 +57,7 @@ func registerConnector(
 		var newConnector *irminmodels.Connector
 		var res *irminmodels.IrminAPIResponse
 		newConnector, res, err = apiClient.UpdateRegisteredConnector(
+			ctx,
 			connectorRegistration.IrminID,
 			irmincore.ConnectorRequest{
 				URL:         connectorURL,
@@ -64,8 +67,13 @@ func registerConnector(
 		if err != nil {
 			return nil, fmt.Errorf("error updating connector: %w", err)
 		}
-		logger.Info("Connector updated",
-			"message", res.Message)
+		logger.InfoContext(ctx, "Connector updated",
+			"message", res.Message,
+			"connector_id", newConnector.ID,
+			"connector_name", connectorName,
+			"connector_url", connectorURL,
+			"connector_token", token,
+		)
 
 		return newConnector, nil
 	}
@@ -87,14 +95,15 @@ func registerConnector(
 	// Ensure cleanup of temporary registration regardless of success or failure
 	defer func() {
 		if deleteErr := database.DeleteConnectorRegistration(tempRegistration.ID); deleteErr != nil {
-			logger.Error("Failed to delete temporary connector registration",
-				"error", deleteErr,
-				"registration_id", tempRegistration.ID)
+			logger.ErrorContext(ctx, "Failed to delete temporary connector registration",
+				"registration_id", tempRegistration.ID,
+				"error", deleteErr)
 		}
 	}()
 
 	// Send a request to register the connector
 	newConnector, res, err := apiClient.RegisterNewConnector(
+		ctx,
 		irmincore.ConnectorRequest{
 			URL:         connectorURL,
 			SystemToken: token,
@@ -103,8 +112,12 @@ func registerConnector(
 	if err != nil {
 		return nil, fmt.Errorf("error registering connector: %w", err)
 	}
-	logger.Info("Connector registered",
-		"message", res.Message)
+	logger.InfoContext(ctx, "Connector registered",
+		"message", res.Message,
+		"connector_id", newConnector.ID,
+		"connector_name", connectorName,
+		"connector_url", connectorURL,
+	)
 
 	// Create a new connector in the database
 	err = lib.UpdateConnectorInDB(database, logger, newConnector.ID, token, connectorName)

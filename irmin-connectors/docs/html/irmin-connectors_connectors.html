@@ -8,6 +8,7 @@ package connectors // import "irmin-connectors/connectors"
 FUNCTIONS
 
 func RegisterAllConnectors(
+	ctx context.Context,
 	database *db.Database,
 	logger *slog.Logger,
 	apiBaseURL, apiToken, url string,

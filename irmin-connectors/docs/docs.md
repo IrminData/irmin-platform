@@ -48,7 +48,7 @@ import "irmin-connectors/connectors"
 
 ## Index
 
-- [func RegisterAllConnectors\(database \*db.Database, logger \*slog.Logger, apiBaseURL, apiToken, url string\) error](<#RegisterAllConnectors>)
+- [func RegisterAllConnectors\(ctx context.Context, database \*db.Database, logger \*slog.Logger, apiBaseURL, apiToken, url string\) error](<#RegisterAllConnectors>)
 - [func SetupConnectorRoutes\(app \*models.ConnectorsApp\)](<#SetupConnectorRoutes>)
 - [func StartConnectorSubscriptionListener\(ctx context.Context, connectorName string, subscription db.Subscription, d \*db.Database, logger \*slog.Logger\) error](<#StartConnectorSubscriptionListener>)
 
@@ -57,7 +57,7 @@ import "irmin-connectors/connectors"
 ## func RegisterAllConnectors
 
 ```go
-func RegisterAllConnectors(database *db.Database, logger *slog.Logger, apiBaseURL, apiToken, url string) error
+func RegisterAllConnectors(ctx context.Context, database *db.Database, logger *slog.Logger, apiBaseURL, apiToken, url string) error
 ```
 
 RegisterAllConnectors registers all connectors.
@@ -2410,7 +2410,10 @@ ProcessFiles processes the extracted files and sends them to the HTTP endpoint.
 HTTPSchemaProvider implements the SchemaOperationProvider interface for HTTP endpoints.
 
 ```go
-type HTTPSchemaProvider struct{}
+type HTTPSchemaProvider struct {
+    APIBaseURL string
+    APIToken   string
+}
 ```
 
 <a name="HTTPSchemaProvider.GetSchema"></a>
@@ -4822,18 +4825,18 @@ import "irmin-connectors/connectors/sftp/controllers"
 
 ## Constants
 
-<a name="DefaultConcurrentTransfers"></a>
+<a name="MaxSampleFiles"></a>
 
 ```go
 const (
-    // DefaultConcurrentTransfers is the default number of concurrent transfers.
-    DefaultConcurrentTransfers = 5
-    // DefaultMaxFilesPerZip is the default maximum files per ZIP archive.
-    DefaultMaxFilesPerZip = 1000
     // MaxSampleFiles is the maximum number of files to sample for schema generation.
     MaxSampleFiles = 10
     // MaxSampleSize is the maximum size of each file sample in bytes.
     MaxSampleSize = 1024 * 1024 // 1MB
+    // MaxChildrenPerDirectory is the maximum number of children to include in a directory schema.
+    MaxChildrenPerDirectory = 100
+    // MaxSchemaDepth is the maximum depth to recurse when building directory schemas.
+    MaxSchemaDepth = 1
 )
 ```
 
@@ -5124,7 +5127,11 @@ ProcessFiles processes the extracted files and uploads them to the SFTP server.
 SFTPSchemaProvider implements the SchemaOperationProvider interface for SFTP file operations.
 
 ```go
-type SFTPSchemaProvider struct{}
+type SFTPSchemaProvider struct {
+    APIBaseURL string
+    APIToken   string
+    Logger     *slog.Logger
+}
 ```
 
 <a name="SFTPSchemaProvider.GetSchema"></a>

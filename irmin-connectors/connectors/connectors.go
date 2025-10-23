@@ -49,6 +49,7 @@ func StartConnectorSubscriptionListener(
 
 // RegisterAllConnectors registers all connectors.
 func RegisterAllConnectors(
+	ctx context.Context,
 	database *db.Database,
 	logger *slog.Logger,
 	apiBaseURL, apiToken, url string,
@@ -67,23 +68,24 @@ func RegisterAllConnectors(
 
 	// Loop through the connectors array and register each one.
 	for _, conn := range connectors {
-		newConnector, err := registerConnector(database, logger, apiBaseURL, apiToken, url, conn.Name, conn.Slug)
+		newConnector, err := registerConnector(ctx, database, logger, apiBaseURL, apiToken, url, conn.Name, conn.Slug)
 		if err != nil {
-			logger.Error("Error registering connector",
-				"error", err,
-				"connector_name", conn.Name)
+			logger.ErrorContext(ctx, "Error registering connector",
+				"connector_name", conn.Name,
+				"error", err)
 			continue
 		}
 		connJSON, jsonErr := json.Marshal(newConnector)
 		if jsonErr != nil {
-			logger.Error("Error marshalling connector",
-				"error", jsonErr,
-				"connector_name", conn.Name)
+			logger.ErrorContext(ctx, "Error marshalling connector",
+				"connector_name", conn.Name,
+				"error", jsonErr)
 			continue
 		}
-		logger.Info("Registered connector",
+		logger.InfoContext(ctx, "Registered connector",
 			"connector_name", conn.Name,
-			"connector_json", string(connJSON))
+			"connector_json", string(connJSON),
+		)
 	}
 
 	return nil

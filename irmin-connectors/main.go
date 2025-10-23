@@ -267,7 +267,7 @@ func setupConnectorsApp(env *utils.ConnectorsEnv, database *db.Database, app *fi
 // initializeConnectors registers all connectors and starts the listeners for all subscriptions.
 func initializeConnectors(app *models.ConnectorsApp, skipRegistrations bool) error {
 	if !skipRegistrations {
-		if err := connectors.RegisterAllConnectors(app.DB, app.Logger, app.Env.APIBaseURL, app.Env.APIToken, app.Env.URL); err != nil {
+		if err := connectors.RegisterAllConnectors(context.Background(), app.DB, app.Logger, app.Env.APIBaseURL, app.Env.APIToken, app.Env.URL); err != nil {
 			return err
 		}
 	}

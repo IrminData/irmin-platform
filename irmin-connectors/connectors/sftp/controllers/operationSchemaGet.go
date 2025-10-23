@@ -1,6 +1,7 @@
 package sftpcontrollers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,28 +10,34 @@ import (
 	sftpclient "irmin-connectors/connectors/sftp/client"
 	"irmin-connectors/connectors/sftp/config"
 	"irmin-connectors/db"
-	"irmin-connectors/schema"
 	"log/slog"
+	"path"
 	"strings"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 const (
-	// DefaultConcurrentTransfers is the default number of concurrent transfers.
-	DefaultConcurrentTransfers = 5
-	// DefaultMaxFilesPerZip is the default maximum files per ZIP archive.
-	DefaultMaxFilesPerZip = 1000
 	// MaxSampleFiles is the maximum number of files to sample for schema generation.
 	MaxSampleFiles = 10
 	// MaxSampleSize is the maximum size of each file sample in bytes.
 	MaxSampleSize = 1024 * 1024 // 1MB
+	// MaxChildrenPerDirectory is the maximum number of children to include in a directory schema.
+	MaxChildrenPerDirectory = 100
+	// MaxSchemaDepth is the maximum depth to recurse when building directory schemas.
+	MaxSchemaDepth = 1
 )
 
 // SFTPSchemaProvider implements the SchemaOperationProvider interface for SFTP file operations.
-type SFTPSchemaProvider struct{}
+type SFTPSchemaProvider struct {
+	APIBaseURL string
+	APIToken   string
+	Logger     *slog.Logger
+}
 
 // InitializeClient initializes an SFTP client for schema analysis.
 func (p *SFTPSchemaProvider) InitializeClient(
@@ -147,23 +154,20 @@ func (p *SFTPSchemaProvider) getPullSchema(
 		analysisPath = *remotePath
 	}
 
-	// Analyze files in the specified path
-	fileSchemas, err := p.analyzeFilesInPath(ctx, sftpClient, analysisPath)
+	// Create API client for schema generation
+	apiClient := irmincore.NewClient(p.APIBaseURL, p.APIToken, "en")
+
+	// Build directory schema showing all files and folders (with depth limit)
+	dirSchema, err := p.buildDirectorySchema(ctx, sftpClient, analysisPath, apiClient, 0)
 	if err != nil {
 		// Log error but return basic schema as fallback
-		slog.Default().WarnContext(ctx, "failed to analyze files for enhanced schema, using basic schema",
+		p.Logger.WarnContext(ctx, "failed to build directory schema, using basic schema",
 			"path", analysisPath,
 			"error", err)
 		return p.getBasicPullSchema(), nil
 	}
 
-	// If we found file schemas, create an enhanced pull schema
-	if len(fileSchemas) > 0 {
-		return p.createEnhancedPullSchema(fileSchemas, analysisPath), nil
-	}
-
-	// Fallback to basic schema
-	return p.getBasicPullSchema(), nil
+	return dirSchema, nil
 }
 
 // getBasicPullSchema returns a basic pull schema (fallback).
@@ -185,17 +189,6 @@ func (p *SFTPSchemaProvider) getBasicPullSchema() *irminmodels.ObjectSchema {
 		Properties: map[string]irminmodels.JSONSchema{
 			"path": pathParam,
 		},
-		AdditionalProperties: map[string]any{
-			"response_format": "ZIP archive containing requested files",
-			"supported_file_types": []string{
-				"text", "binary", "image", "document", "archive",
-			},
-			"limitations": map[string]any{
-				"max_file_size":        "1GB",
-				"max_total_size":       "5GB",
-				"concurrent_transfers": DefaultConcurrentTransfers,
-			},
-		},
 	}
 
 	return &irminmodels.ObjectSchema{
@@ -211,7 +204,7 @@ func (p *SFTPSchemaProvider) getPushSchema() *irminmodels.ObjectSchema {
 	// String constants for descriptions
 	pathDesc := "Remote directory path for upload"
 	fileFormat := "binary"
-	fileDesc := "ZIP archive containing files to upload"
+	fileDesc := "Files to upload to SFTP server"
 	schemaDesc := "Upload files or directories to SFTP server"
 
 	// Create a JSON schema that describes the push operation parameters
@@ -235,24 +228,6 @@ func (p *SFTPSchemaProvider) getPushSchema() *irminmodels.ObjectSchema {
 			"file": fileParam,
 		},
 		Required: []string{"file"},
-		AdditionalProperties: map[string]any{
-			"input_format": "ZIP archive containing files and directories",
-			"behavior": map[string]any{
-				"overwrite_existing":  "Controlled by configuration",
-				"create_directories":  "Controlled by configuration",
-				"preserve_structure":  true,
-				"preserve_timestamps": "Controlled by configuration",
-			},
-			"supported_file_types": []string{
-				"text", "binary", "image", "document", "archive",
-			},
-			"limitations": map[string]any{
-				"max_file_size":        "1GB",
-				"max_total_size":       "5GB",
-				"max_files_per_zip":    DefaultMaxFilesPerZip,
-				"concurrent_transfers": DefaultConcurrentTransfers,
-			},
-		},
 	}
 
 	return &irminmodels.ObjectSchema{
@@ -263,168 +238,204 @@ func (p *SFTPSchemaProvider) getPushSchema() *irminmodels.ObjectSchema {
 	}
 }
 
-// analyzeFilesInPath analyzes files in the specified SFTP path and returns their schemas.
-func (p *SFTPSchemaProvider) analyzeFilesInPath(
+// buildDirectorySchema builds a group schema showing the directory structure.
+// Recurses up to MaxSchemaDepth levels deep, limiting children to MaxChildrenPerDirectory.
+func (p *SFTPSchemaProvider) buildDirectorySchema(
 	ctx context.Context,
 	sftpClient *sftpclient.SftpClient,
-	path string,
-) ([]*irminmodels.ObjectSchema, error) {
-	// Create schema generator
-	generator, err := schema.NewGenerator(ctx, slog.Default())
+	dirPath string,
+	apiClient *irmincore.Client,
+	currentDepth int,
+) (*irminmodels.ObjectSchema, error) {
+	// Get info for the path itself
+	pathInfo, err := sftpClient.GetFileInfo(dirPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create schema generator: %w", err)
+		return nil, fmt.Errorf("failed to get info for path %s: %w", dirPath, err)
 	}
-	defer generator.Close()
 
-	// List files in the directory
-	files, err := p.listFiles(sftpClient, path)
+	// If it's a single file, return its schema
+	if !pathInfo.IsDir {
+		return p.buildFileSchema(ctx, sftpClient, pathInfo, apiClient, currentDepth), nil
+	}
+
+	// It's a directory - list its contents
+	fileInfos, err := sftpClient.ListDirectory(dirPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list files in path %s: %w", path, err)
+		return nil, fmt.Errorf("failed to list directory %s: %w", dirPath, err)
 	}
 
-	// Sample and analyze files
-	var fileSchemas []*irminmodels.ObjectSchema
-	sampleCount := 0
-
-	for _, fileInfo := range files {
-		// Skip directories and limit sample size
-		if fileInfo.IsDir || sampleCount >= MaxSampleFiles {
-			continue
-		}
-
-		// Skip files that are too large
-		if fileInfo.Size > MaxSampleSize {
-			continue
-		}
-
-		// Download and analyze file
-		fileData, downloadErr := sftpClient.DownloadFile(fileInfo.Path)
-		if downloadErr != nil {
-			continue // Skip files that can't be downloaded
-		}
-
-		// Skip empty files
-		if len(fileData) == 0 {
-			continue
-		}
-
-		// Generate schema for the file
-		fileSchema, schemaErr := generator.GenerateObjectSchema(fileData, fileInfo.Name)
-		if schemaErr != nil {
-			continue // Skip files that can't be analyzed
-		}
-
-		fileSchemas = append(fileSchemas, fileSchema)
-		sampleCount++
+	// Limit number of children
+	childCount := len(fileInfos)
+	if childCount > MaxChildrenPerDirectory {
+		p.Logger.WarnContext(ctx, "directory has too many children, truncating",
+			"path", dirPath,
+			"total_count", childCount,
+			"max_count", MaxChildrenPerDirectory)
+		fileInfos = fileInfos[:MaxChildrenPerDirectory]
 	}
 
-	return fileSchemas, nil
-}
+	p.Logger.InfoContext(ctx, "building directory schema",
+		"path", dirPath,
+		"depth", currentDepth,
+		"item_count", len(fileInfos),
+		"total_items", childCount)
 
-// listFiles lists files in the given SFTP path.
-func (p *SFTPSchemaProvider) listFiles(
-	sftpClient *sftpclient.SftpClient,
-	path string,
-) ([]*sftpclient.FileInfo, error) {
-	// Get file info for the path
-	fileInfo, err := sftpClient.GetFileInfo(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file info for path %s: %w", path, err)
+	// Build schemas for each child
+	var children []irminmodels.ObjectSchema
+	for _, fileInfo := range fileInfos {
+		childSchema := p.buildFileSchema(ctx, sftpClient, &fileInfo, apiClient, currentDepth)
+		children = append(children, *childSchema)
 	}
 
-	// If it's a file, return it directly
-	if !fileInfo.IsDir {
-		return []*sftpclient.FileInfo{fileInfo}, nil
-	}
-
-	// If it's a directory, list its contents
-	fileInfos, err := sftpClient.ListDirectory(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list directory %s: %w", path, err)
-	}
-
-	// Convert []FileInfo to []*FileInfo
-	var result []*sftpclient.FileInfo
-	for i := range fileInfos {
-		result = append(result, &fileInfos[i])
-	}
-
-	return result, nil
-}
-
-// createEnhancedPullSchema creates an enhanced pull schema based on analyzed files.
-func (p *SFTPSchemaProvider) createEnhancedPullSchema(
-	fileSchemas []*irminmodels.ObjectSchema,
-	path string,
-) *irminmodels.ObjectSchema {
-	// String constants for descriptions
-	pathDesc := fmt.Sprintf("Remote path to download (analyzed %d files in %s)", len(fileSchemas), path)
-	schemaDesc := "Download files or directories from SFTP server with analysis-based schema"
-
-	// Create a JSON schema that describes the pull operation parameters
-	pathParam := irminmodels.JSONSchema{
-		Type:        "string",
-		Description: &pathDesc,
-		Default:     path,
-	}
-
-	// Collect file type information from analyzed schemas
-	fileTypes := make(map[string]bool)
-	var sampleSchemas []map[string]any
-
-	for _, fileSchema := range fileSchemas {
-		if fileSchema.ContentType != nil && *fileSchema.ContentType != "" {
-			parts := strings.Split(*fileSchema.ContentType, "/")
-			if len(parts) > 0 && parts[0] != "" {
-				fileTypes[parts[0]] = true
-			}
-		}
-
-		// Add sample schema information
-		if fileSchema.Schema != nil {
-			sampleSchemas = append(sampleSchemas, map[string]any{
-				"name":         fileSchema.Name,
-				"type":         string(fileSchema.Type),
-				"content_type": fileSchema.ContentType,
-				"size":         fileSchema.Size,
-			})
-		}
-	}
-
-	// Convert file types to slice
-	var detectedTypes []string
-	for fileType := range fileTypes {
-		detectedTypes = append(detectedTypes, fileType)
-	}
-
-	schema := irminmodels.JSONSchema{
-		Type:        "object",
-		Description: &schemaDesc,
-		Properties: map[string]irminmodels.JSONSchema{
-			"path": pathParam,
-		},
-		AdditionalProperties: map[string]any{
-			"response_format":     "ZIP archive containing requested files",
-			"detected_file_types": detectedTypes,
-			"sample_files":        sampleSchemas,
-			"analysis_info": map[string]any{
-				"files_analyzed": len(fileSchemas),
-				"analysis_path":  path,
-			},
-			"limitations": map[string]any{
-				"max_file_size":        "1GB",
-				"max_total_size":       "5GB",
-				"concurrent_transfers": DefaultConcurrentTransfers,
-			},
-		},
+	// Create group schema
+	desc := fmt.Sprintf("SFTP directory: %s", dirPath)
+	if childCount > MaxChildrenPerDirectory {
+		desc = fmt.Sprintf("SFTP directory: %s (showing %d of %d items)", dirPath, MaxChildrenPerDirectory, childCount)
 	}
 
 	return &irminmodels.ObjectSchema{
-		Type:   irminmodels.ObjectTypeBinary,
-		Name:   "sftp-pull-operation-analyzed",
-		Path:   "/sftp/pull",
-		Schema: &schema,
+		Type:        irminmodels.ObjectTypeGroup,
+		Name:        path.Base(dirPath),
+		Path:        dirPath,
+		Description: &desc,
+		Children:    children,
+	}, nil
+}
+
+// buildFileSchema builds a schema for a single file or directory.
+// Recurses into subdirectories if currentDepth < MaxSchemaDepth.
+func (p *SFTPSchemaProvider) buildFileSchema(
+	ctx context.Context,
+	sftpClient *sftpclient.SftpClient,
+	fileInfo *sftpclient.FileInfo,
+	apiClient *irmincore.Client,
+	currentDepth int,
+) *irminmodels.ObjectSchema {
+	// For directories, recurse if we haven't reached max depth
+	if fileInfo.IsDir {
+		if currentDepth < MaxSchemaDepth {
+			// Recurse into subdirectory
+			dirSchema, err := p.buildDirectorySchema(ctx, sftpClient, fileInfo.Path, apiClient, currentDepth+1)
+			if err != nil {
+				// If recursion fails, return basic directory schema
+				p.Logger.WarnContext(ctx, "failed to recurse into subdirectory, returning basic schema",
+					"path", fileInfo.Path,
+					"depth", currentDepth,
+					"error", err)
+				desc := "Directory"
+				return &irminmodels.ObjectSchema{
+					Type:        irminmodels.ObjectTypeGroup,
+					Name:        fileInfo.Name,
+					Path:        fileInfo.Path,
+					Description: &desc,
+				}
+			}
+			return dirSchema
+		}
+
+		// At max depth, return directory without children
+		desc := "Directory"
+		return &irminmodels.ObjectSchema{
+			Type:        irminmodels.ObjectTypeGroup,
+			Name:        fileInfo.Name,
+			Path:        fileInfo.Path,
+			Description: &desc,
+		}
 	}
+
+	// For files, try to generate schema for structured formats
+	ext := path.Ext(strings.ToLower(fileInfo.Name))
+
+	// Try structured file analysis
+	structuredSchema := p.tryGenerateStructuredSchema(ctx, sftpClient, fileInfo, ext, apiClient)
+	if structuredSchema != nil {
+		return structuredSchema
+	}
+
+	// For binary files or failed structured analysis, return binary schema
+	return p.createBinarySchema(fileInfo, ext)
+}
+
+// tryGenerateStructuredSchema attempts to generate a schema for structured file formats.
+func (p *SFTPSchemaProvider) tryGenerateStructuredSchema(
+	ctx context.Context,
+	sftpClient *sftpclient.SftpClient,
+	fileInfo *sftpclient.FileInfo,
+	ext string,
+	apiClient *irmincore.Client,
+) *irminmodels.ObjectSchema {
+	// Check if it's a structured format
+	if !irminutils.IsStructuredDataFormat(ext, "") {
+		return nil
+	}
+
+	// Skip files that are too large
+	if fileInfo.Size > MaxSampleSize {
+		return nil
+	}
+
+	// Download the file
+	fileData, downloadErr := sftpClient.DownloadFile(fileInfo.Path)
+	if downloadErr != nil || len(fileData) == 0 {
+		return nil
+	}
+
+	// Generate schema using the API endpoint
+	fileSchema, _, schemaErr := apiClient.GenerateFileSchema(ctx, fileInfo.Name, bytes.NewReader(fileData))
+	if schemaErr != nil || fileSchema == nil {
+		return nil
+	}
+
+	p.Logger.DebugContext(ctx, "generated schema for structured file",
+		"file", fileInfo.Name,
+		"size", fileInfo.Size)
+
+	return fileSchema
+}
+
+// createBinarySchema creates a binary schema for a file.
+func (p *SFTPSchemaProvider) createBinarySchema(
+	fileInfo *sftpclient.FileInfo,
+	ext string,
+) *irminmodels.ObjectSchema {
+	contentType := p.getContentTypeFromExtension(ext)
+	desc := fmt.Sprintf("File: %s", fileInfo.Name)
+	size := int(fileInfo.Size)
+
+	return &irminmodels.ObjectSchema{
+		Type:        irminmodels.ObjectTypeBinary,
+		Name:        fileInfo.Name,
+		Path:        fileInfo.Path,
+		Description: &desc,
+		ContentType: &contentType,
+		Size:        &size,
+	}
+}
+
+// getContentTypeFromExtension returns a content type based on file extension.
+func (p *SFTPSchemaProvider) getContentTypeFromExtension(ext string) string {
+	contentTypes := map[string]string{
+		".json":    "application/json",
+		".csv":     "text/csv",
+		".xml":     "application/xml",
+		".txt":     "text/plain",
+		".parquet": "application/vnd.apache.parquet",
+		".avro":    "application/vnd.apache.avro",
+		".orc":     "application/vnd.apache.orc",
+		".xlsx":    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		".xls":     "application/vnd.ms-excel",
+		".yaml":    "application/x-yaml",
+		".yml":     "application/x-yaml",
+		".pdf":     "application/pdf",
+		".zip":     "application/zip",
+		".tar":     "application/x-tar",
+		".gz":      "application/gzip",
+	}
+
+	if contentType, exists := contentTypes[ext]; exists {
+		return contentType
+	}
+	return "application/octet-stream"
 }
 
 // OperationSchemaGet godoc
@@ -443,6 +454,10 @@ func (p *SFTPSchemaProvider) createEnhancedPullSchema(
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /sftp/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	provider := &SFTPSchemaProvider{}
+	provider := &SFTPSchemaProvider{
+		APIBaseURL: cs.App.Env.APIBaseURL,
+		APIToken:   cs.App.Env.APIToken,
+		Logger:     cs.Logger,
+	}
 	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
 }

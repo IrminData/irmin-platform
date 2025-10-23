@@ -236,7 +236,10 @@ func (p *HTTPPushProvider) ProcessFiles(
     ProcessFiles processes the extracted files and sends them to the HTTP
     endpoint.
 
-type HTTPSchemaProvider struct{}
+type HTTPSchemaProvider struct {
+	APIBaseURL string
+	APIToken   string
+}
     HTTPSchemaProvider implements the SchemaOperationProvider interface for HTTP
     endpoints.
 

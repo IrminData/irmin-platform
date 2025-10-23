@@ -3,7 +3,9 @@ package httpcontrollers
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"path"
 	"strings"
 
 	"irmin-connectors/connectors/common"
@@ -11,12 +13,17 @@ import (
 	"irmin-connectors/connectors/http/config"
 	"irmin-connectors/db"
 
+	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
 // HTTPSchemaProvider implements the SchemaOperationProvider interface for HTTP endpoints.
-type HTTPSchemaProvider struct{}
+type HTTPSchemaProvider struct {
+	APIBaseURL string
+	APIToken   string
+}
 
 // InitializeClient initializes the HTTP client for schema operations.
 func (p *HTTPSchemaProvider) InitializeClient(
@@ -69,8 +76,23 @@ func (p *HTTPSchemaProvider) GetSchema(
 	// Generate filename
 	fileName := httpClient.GetFileNameFromResponse(resp)
 
-	// For HTTP connectors, we create a schema based on the response content type
-	// Use the SDK's content type detection to determine the appropriate schema
+	// Try to generate schema using the centralized API endpoint for structured data formats
+	ext := path.Ext(strings.ToLower(fileName))
+	if irminutils.IsStructuredDataFormat(ext, contentType) {
+		apiClient := irmincore.NewClient(p.APIBaseURL, p.APIToken, "en")
+
+		// Create a reader from the response body
+		bodyReader := io.NopCloser(resp.Body)
+
+		// Generate schema using the API endpoint
+		objectSchema, _, schemaErr := apiClient.GenerateFileSchema(c, fileName, bodyReader)
+		if schemaErr == nil && objectSchema != nil {
+			return objectSchema, nil
+		}
+		// Fall back to basic schema if API call fails
+	}
+
+	// For unsupported or non-structured content types, create a basic schema
 	schema := createSchemaFromContentType(contentType)
 
 	// Create the object schema
@@ -106,7 +128,10 @@ func (p *HTTPSchemaProvider) GetSupportedOperationTypes() []string {
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /http/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
-	provider := &HTTPSchemaProvider{}
+	provider := &HTTPSchemaProvider{
+		APIBaseURL: cs.App.Env.APIBaseURL,
+		APIToken:   cs.App.Env.APIToken,
+	}
 	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
 }
 
