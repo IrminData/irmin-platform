@@ -460,5 +460,5 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		APIToken:   cs.App.Env.APIToken,
 		Logger:     cs.Logger,
 	}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB)
 }

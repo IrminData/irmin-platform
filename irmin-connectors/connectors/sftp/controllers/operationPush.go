@@ -99,5 +99,5 @@ func (p *SFTPPushProvider) ProcessFiles(
 // @Router /sftp/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &SFTPPushProvider{}
-	return common.HandleOperationPush(c, provider, cs.Logger)
+	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB)
 }

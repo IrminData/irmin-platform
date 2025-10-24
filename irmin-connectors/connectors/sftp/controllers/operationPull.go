@@ -140,5 +140,5 @@ func (p *SFTPPullProvider) downloadFromPath(client *sftpclient.SftpClient, path 
 // @Router /sftp/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	provider := &SFTPPullProvider{}
-	return common.HandleOperationPull(c, provider, cs.Logger)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }

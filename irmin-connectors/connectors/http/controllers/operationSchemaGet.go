@@ -138,7 +138,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 		APIBaseURL: cs.App.Env.APIBaseURL,
 		APIToken:   cs.App.Env.APIToken,
 	}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB)
 }
 
 // createSchemaFromContentType creates an appropriate JSON schema based on content type

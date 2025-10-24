@@ -89,6 +89,12 @@ import "irmin-connectors/db"
 ## Index
 
 - [Variables](<#variables>)
+- [func LockKeyTx\(tx \*gorm.DB, key string\) error](<#LockKeyTx>)
+- [func LockOperationCreation\(tx \*gorm.DB, connectorName, configHash string\) error](<#LockOperationCreation>)
+- [func TryLockKey\(db \*gorm.DB, key string\) \(bool, error\)](<#TryLockKey>)
+- [func TryLockOperationExecution\(db \*gorm.DB, operationID uint\) \(bool, error\)](<#TryLockOperationExecution>)
+- [func UnlockKey\(db \*gorm.DB, key string\) error](<#UnlockKey>)
+- [func UnlockOperationExecution\(db \*gorm.DB, operationID uint\) error](<#UnlockOperationExecution>)
 - [type ConnectorRegistration](<#ConnectorRegistration>)
 - [type Database](<#Database>)
   - [func InitialiseDB\(ctx context.Context, runMigrations bool\) \(\*Database, error\)](<#InitialiseDB>)
@@ -100,6 +106,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) DeleteOperation\(id uint\) error](<#Database.DeleteOperation>)
   - [func \(d \*Database\) DeleteSubscriptionsByConnectorRegistrationID\(connectorRegistrationID uint\) error](<#Database.DeleteSubscriptionsByConnectorRegistrationID>)
   - [func \(d \*Database\) DeleteSubscriptionsByOperationID\(operationID uint\) error](<#Database.DeleteSubscriptionsByOperationID>)
+  - [func \(d \*Database\) FindOperationByConfigHash\(connectorRegistrationID uint, configHash string\) \(\*Operation, error\)](<#Database.FindOperationByConfigHash>)
   - [func \(d \*Database\) GetAllConnectorRegistrations\(\) \(\[\]ConnectorRegistration, error\)](<#Database.GetAllConnectorRegistrations>)
   - [func \(d \*Database\) GetAllOperations\(\) \(\[\]Operation, error\)](<#Database.GetAllOperations>)
   - [func \(d \*Database\) GetAllSubscriptions\(\) \(\[\]Subscription, error\)](<#Database.GetAllSubscriptions>)
@@ -113,6 +120,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
   - [func \(d \*Database\) RunRawQuery\(sqlQuery string, args ...any\) error](<#Database.RunRawQuery>)
 - [type Operation](<#Operation>)
+  - [func FindOperationByConfigHashTx\(tx \*gorm.DB, connectorRegistrationID uint, configHash string\) \(\*Operation, error\)](<#FindOperationByConfigHashTx>)
 - [type Subscription](<#Subscription>)
 
 
@@ -123,6 +131,70 @@ import "irmin-connectors/db"
 ```go
 var ErrConnectorRegistrationNotFound = errors.New("connector registration not found")
 ```
+
+<a name="ErrLockNotHeld"></a>ErrLockNotHeld is returned when attempting to unlock an advisory lock that is not held by the current session.
+
+```go
+var ErrLockNotHeld = errors.New("advisory lock not held by current session")
+```
+
+<a name="LockKeyTx"></a>
+## func LockKeyTx
+
+```go
+func LockKeyTx(tx *gorm.DB, key string) error
+```
+
+LockKeyTx takes a namespaced key and grabs a 64\-bit transactional advisory lock.
+
+<a name="LockOperationCreation"></a>
+## func LockOperationCreation
+
+```go
+func LockOperationCreation(tx *gorm.DB, connectorName, configHash string) error
+```
+
+LockOperationCreation acquires a transaction\-scoped advisory lock for operation creation. This lock is based on connector name and configuration hash to prevent duplicate operations for the same connector configuration.
+
+The lock is automatically released when the transaction commits or rolls back.
+
+<a name="TryLockKey"></a>
+## func TryLockKey
+
+```go
+func TryLockKey(db *gorm.DB, key string) (bool, error)
+```
+
+TryLockKey attempts to acquire a session\-scoped advisory lock without blocking. Returns true if the lock was acquired, false if it's already held by another session. The lock must be explicitly released with UnlockKey.
+
+<a name="TryLockOperationExecution"></a>
+## func TryLockOperationExecution
+
+```go
+func TryLockOperationExecution(db *gorm.DB, operationID uint) (bool, error)
+```
+
+TryLockOperationExecution attempts to acquire a session\-scoped advisory lock for operation execution without blocking. Returns true if the lock was acquired, false if already held by another session. This lock is based on operation ID to prevent concurrent execution of the same operation.
+
+The lock must be explicitly released with UnlockOperationExecution.
+
+<a name="UnlockKey"></a>
+## func UnlockKey
+
+```go
+func UnlockKey(db *gorm.DB, key string) error
+```
+
+UnlockKey releases a session\-scoped advisory lock. Returns ErrLockNotHeld if the lock was not held by the current session.
+
+<a name="UnlockOperationExecution"></a>
+## func UnlockOperationExecution
+
+```go
+func UnlockOperationExecution(db *gorm.DB, operationID uint) error
+```
+
+UnlockOperationExecution releases a session\-scoped advisory lock for operation execution.
 
 <a name="ConnectorRegistration"></a>
 ## type ConnectorRegistration
@@ -231,6 +303,15 @@ func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error
 ```
 
 DeleteSubscriptionsByOperationID removes all subscriptions associated with the specified operation ID.
+
+<a name="Database.FindOperationByConfigHash"></a>
+### func \(\*Database\) FindOperationByConfigHash
+
+```go
+func (d *Database) FindOperationByConfigHash(connectorRegistrationID uint, configHash string) (*Operation, error)
+```
+
+FindOperationByConfigHash retrieves an Operation record matching the connector registration ID and configuration hash using the main database connection.
 
 <a name="Database.GetAllConnectorRegistrations"></a>
 ### func \(\*Database\) GetAllConnectorRegistrations
@@ -349,14 +430,24 @@ Operation represents a record of an initiated operation tied to a connector.
 type Operation struct {
     gorm.Model
 
-    Details  datatypes.JSON `json:"details"  gorm:"type:json"`
-    Settings datatypes.JSON `json:"settings" gorm:"type:json"`
-    Token    string         `json:"token"    gorm:"type:varchar(255);not null"`
+    Details    datatypes.JSON `json:"details"    gorm:"type:json"`
+    Settings   datatypes.JSON `json:"settings"   gorm:"type:json"`
+    Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
+    ConfigHash string         `json:"configHash" gorm:"type:varchar(64);not null;index:idx_connector_config"`
 
-    ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
+    ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
     Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
 }
 ```
+
+<a name="FindOperationByConfigHashTx"></a>
+### func FindOperationByConfigHashTx
+
+```go
+func FindOperationByConfigHashTx(tx *gorm.DB, connectorRegistrationID uint, configHash string) (*Operation, error)
+```
+
+FindOperationByConfigHashTx retrieves an Operation record matching the connector registration ID and configuration hash using the provided transaction context. This should be used within transactions to avoid race conditions.
 
 <a name="Subscription"></a>
 ## type Subscription
@@ -825,6 +916,8 @@ import "irmin-connectors/utils"
 - [func GenerateToken\(length int\) \(string, error\)](<#GenerateToken>)
 - [func GetIntFromMap\(m map\[string\]any, key string, defaultValue int\) int](<#GetIntFromMap>)
 - [func GetStringFromMap\(m map\[string\]any, key string, defaultValue string\) string](<#GetStringFromMap>)
+- [func HashConfigMap\(config map\[string\]string\) \(string, error\)](<#HashConfigMap>)
+- [func HashJSONFields\(details, settings \[\]byte\) \(string, error\)](<#HashJSONFields>)
 - [func JoinURL\(baseURL, path string\) string](<#JoinURL>)
 - [func ParseFormFields\(c fiber.Ctx, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseFormFields>)
 - [func ParseHeaders\(r \*http.Request, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseHeaders>)
@@ -959,6 +1052,24 @@ func GetStringFromMap(m map[string]any, key string, defaultValue string) string
 
 GetStringFromMap extracts a string value from a map with type conversion.
 
+<a name="HashConfigMap"></a>
+## func HashConfigMap
+
+```go
+func HashConfigMap(config map[string]string) (string, error)
+```
+
+HashConfigMap generates a deterministic hash from a configuration map. Keys are sorted alphabetically before hashing to ensure consistent hashes regardless of map iteration order.
+
+<a name="HashJSONFields"></a>
+## func HashJSONFields
+
+```go
+func HashJSONFields(details, settings []byte) (string, error)
+```
+
+HashJSONFields generates a deterministic hash from JSON fields \(Details and Settings\). Both fields are unmarshaled, keys are sorted, and then hashed together.
+
 <a name="JoinURL"></a>
 ## func JoinURL
 
@@ -1073,9 +1184,9 @@ import "irmin-connectors/connectors/common"
 - [func HandleNotSupportedPush\(c fiber.Ctx\) error](<#HandleNotSupportedPush>)
 - [func HandleNotSupportedSchemaGet\(c fiber.Ctx\) error](<#HandleNotSupportedSchemaGet>)
 - [func HandleOperationPatch\(c fiber.Ctx, provider PatchOperationProvider, logger \*slog.Logger\) error](<#HandleOperationPatch>)
-- [func HandleOperationPull\(c fiber.Ctx, provider PullOperationProvider, logger \*slog.Logger\) error](<#HandleOperationPull>)
-- [func HandleOperationPush\(c fiber.Ctx, provider PushOperationProvider, logger \*slog.Logger\) error](<#HandleOperationPush>)
-- [func HandleOperationSchemaGet\(c fiber.Ctx, provider SchemaOperationProvider, logger \*slog.Logger\) error](<#HandleOperationSchemaGet>)
+- [func HandleOperationPull\(c fiber.Ctx, provider PullOperationProvider, logger \*slog.Logger, dbInstance \*db.Database\) error](<#HandleOperationPull>)
+- [func HandleOperationPush\(c fiber.Ctx, provider PushOperationProvider, logger \*slog.Logger, dbInstance \*db.Database\) error](<#HandleOperationPush>)
+- [func HandleOperationSchemaGet\(c fiber.Ctx, provider SchemaOperationProvider, logger \*slog.Logger, dbInstance \*db.Database\) error](<#HandleOperationSchemaGet>)
 - [func HandleOperationStatus\(c fiber.Ctx, getConnectorInfo func\(\) models.ConnectorDetails, app \*models.ConnectorsApp\) error](<#HandleOperationStatus>)
 - [func LogOnlyCancellation\(app \*models.ConnectorsApp, operation \*db.Operation\) error](<#LogOnlyCancellation>)
 - [func RenderConnectorDetailsPage\(c fiber.Ctx, app \*models.ConnectorsApp, connectorSlug string, getConnectorInfo func\(\) models.ConnectorDetails, eventDescription ...string\) error](<#RenderConnectorDetailsPage>)
@@ -1302,7 +1413,7 @@ HandleOperationPatch provides a common HTTP handler for patch operation endpoint
 ## func HandleOperationPull
 
 ```go
-func HandleOperationPull(c fiber.Ctx, provider PullOperationProvider, logger *slog.Logger) error
+func HandleOperationPull(c fiber.Ctx, provider PullOperationProvider, logger *slog.Logger, dbInstance *db.Database) error
 ```
 
 HandleOperationPull provides a common HTTP handler for pull operation endpoints.
@@ -1311,7 +1422,7 @@ HandleOperationPull provides a common HTTP handler for pull operation endpoints.
 ## func HandleOperationPush
 
 ```go
-func HandleOperationPush(c fiber.Ctx, provider PushOperationProvider, logger *slog.Logger) error
+func HandleOperationPush(c fiber.Ctx, provider PushOperationProvider, logger *slog.Logger, dbInstance *db.Database) error
 ```
 
 HandleOperationPush provides a common HTTP handler for push operation endpoints.
@@ -1320,7 +1431,7 @@ HandleOperationPush provides a common HTTP handler for push operation endpoints.
 ## func HandleOperationSchemaGet
 
 ```go
-func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, logger *slog.Logger) error
+func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, logger *slog.Logger, dbInstance *db.Database) error
 ```
 
 HandleOperationSchemaGet provides a common HTTP handler for schema operation endpoints.

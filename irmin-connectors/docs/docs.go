@@ -3331,6 +3331,9 @@ const docTemplate = `{
         "db.Operation": {
             "type": "object",
             "properties": {
+                "configHash": {
+                    "type": "string"
+                },
                 "connectorRegistration": {
                     "$ref": "#/definitions/db.ConnectorRegistration"
                 },

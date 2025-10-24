@@ -109,7 +109,7 @@ func (p *PostgresPushProvider) ProcessFiles(
 // @Router /postgres/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &PostgresPushProvider{}
-	return common.HandleOperationPush(c, provider, cs.Logger)
+	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB)
 }
 
 // processTableData processes a single table's data and executes the database operations.

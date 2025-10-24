@@ -105,15 +105,30 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
     HandleOperationPatch provides a common HTTP handler for patch operation
     endpoints.
 
-func HandleOperationPull(c fiber.Ctx, provider PullOperationProvider, logger *slog.Logger) error
+func HandleOperationPull(
+	c fiber.Ctx,
+	provider PullOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+) error
     HandleOperationPull provides a common HTTP handler for pull operation
     endpoints.
 
-func HandleOperationPush(c fiber.Ctx, provider PushOperationProvider, logger *slog.Logger) error
+func HandleOperationPush(
+	c fiber.Ctx,
+	provider PushOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+) error
     HandleOperationPush provides a common HTTP handler for push operation
     endpoints.
 
-func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, logger *slog.Logger) error
+func HandleOperationSchemaGet(
+	c fiber.Ctx,
+	provider SchemaOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+) error
     HandleOperationSchemaGet provides a common HTTP handler for schema operation
     endpoints.
 

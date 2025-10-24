@@ -132,5 +132,5 @@ func (p *MySQLSchemaProvider) GetSupportedOperationTypes() []string {
 // @Router /mysql/operation/schema/{operation} [post]
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error {
 	provider := &MySQLSchemaProvider{}
-	return common.HandleOperationSchemaGet(c, provider, cs.Logger)
+	return common.HandleOperationSchemaGet(c, provider, cs.Logger, cs.DB)
 }

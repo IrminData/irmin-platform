@@ -159,7 +159,7 @@ func (p *HTTPPushProvider) ProcessFiles(
 // @Router /http/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
 	provider := &HTTPPushProvider{}
-	return common.HandleOperationPush(c, provider, cs.Logger)
+	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB)
 }
 
 // getContentTypeForExtension returns the appropriate Content-Type for a file extension using the SDK.

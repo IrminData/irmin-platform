@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 // OperationInitProvider defines the interface for initializing connector operations.
@@ -24,6 +25,8 @@ type OperationInitProvider interface {
 }
 
 // HandleOperationInit provides a common HTTP handler for operation initialization endpoints.
+//
+//nolint:gocognit // Complexity is necessary for proper locking and validation logic
 func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitProvider) error {
 	// Get the connector info from the context
 	info, ok := c.Locals("connectorInfo").(*models.ConnectorDetails)
@@ -97,19 +100,60 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 		})
 	}
 
-	// Create a new operation
-	operation := &db.Operation{
-		Details:                 datatypes.JSON(details),
-		Settings:                datatypes.JSON(settings),
-		Token:                   operationToken,
-		ConnectorRegistrationID: connectorRegistration.ID,
-	}
-
-	// Save the operation to the database
-	operation, err = cs.DB.CreateOperation(operation)
+	// Compute configuration hash for locking and deduplication
+	configHash, err := utils.HashJSONFields(details, settings)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create operation",
+			"error": "Failed to compute configuration hash",
+		})
+	}
+
+	// Use transaction with Level 1 lock to prevent duplicate operations
+	var operation *db.Operation
+	err = cs.DB.Transaction(func(tx *gorm.DB) error {
+		// Acquire lock based on connector name + config hash
+		if lockErr := db.LockOperationCreation(tx, info.Name, configHash); lockErr != nil {
+			return lockErr
+		}
+
+		// Check if an operation already exists for this connector + config
+		// IMPORTANT: Use tx instead of cs.DB to check within the transaction scope
+		existingOp, findErr := db.FindOperationByConfigHashTx(
+			tx,
+			connectorRegistration.ID,
+			configHash,
+		)
+		if findErr != nil && !errors.Is(findErr, gorm.ErrRecordNotFound) {
+			return findErr
+		}
+
+		// If operation exists, return it instead of creating a new one
+		if existingOp != nil {
+			operation = existingOp
+			return nil
+		}
+
+		// Create a new operation
+		newOperation := &db.Operation{
+			Details:                 datatypes.JSON(details),
+			Settings:                datatypes.JSON(settings),
+			Token:                   operationToken,
+			ConfigHash:              configHash,
+			ConnectorRegistrationID: connectorRegistration.ID,
+		}
+
+		// Save the operation to the database within the transaction
+		if createErr := tx.Create(newOperation).Error; createErr != nil {
+			return createErr
+		}
+
+		operation = newOperation
+		return nil
+	})
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create operation: " + err.Error(),
 		})
 	}
 

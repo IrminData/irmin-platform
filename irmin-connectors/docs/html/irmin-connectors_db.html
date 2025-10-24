@@ -11,6 +11,46 @@ var ErrConnectorRegistrationNotFound = errors.New("connector registration not fo
     ErrConnectorRegistrationNotFound is returned when no connector registration
     is found
 
+var ErrLockNotHeld = errors.New("advisory lock not held by current session")
+    ErrLockNotHeld is returned when attempting to unlock an advisory lock that
+    is not held by the current session.
+
+
+FUNCTIONS
+
+func LockKeyTx(tx *gorm.DB, key string) error
+    LockKeyTx takes a namespaced key and grabs a 64-bit transactional advisory
+    lock.
+
+func LockOperationCreation(tx *gorm.DB, connectorName, configHash string) error
+    LockOperationCreation acquires a transaction-scoped advisory lock for
+    operation creation. This lock is based on connector name and configuration
+    hash to prevent duplicate operations for the same connector configuration.
+
+    The lock is automatically released when the transaction commits or rolls
+    back.
+
+func TryLockKey(db *gorm.DB, key string) (bool, error)
+    TryLockKey attempts to acquire a session-scoped advisory lock without
+    blocking. Returns true if the lock was acquired, false if it's already held
+    by another session. The lock must be explicitly released with UnlockKey.
+
+func TryLockOperationExecution(db *gorm.DB, operationID uint) (bool, error)
+    TryLockOperationExecution attempts to acquire a session-scoped advisory
+    lock for operation execution without blocking. Returns true if the lock was
+    acquired, false if already held by another session. This lock is based on
+    operation ID to prevent concurrent execution of the same operation.
+
+    The lock must be explicitly released with UnlockOperationExecution.
+
+func UnlockKey(db *gorm.DB, key string) error
+    UnlockKey releases a session-scoped advisory lock. Returns ErrLockNotHeld if
+    the lock was not held by the current session.
+
+func UnlockOperationExecution(db *gorm.DB, operationID uint) error
+    UnlockOperationExecution releases a session-scoped advisory lock for
+    operation execution.
+
 
 TYPES
 
@@ -63,6 +103,14 @@ func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error
     DeleteSubscriptionsByOperationID removes all subscriptions associated with
     the specified operation ID.
 
+func (d *Database) FindOperationByConfigHash(
+	connectorRegistrationID uint,
+	configHash string,
+) (*Operation, error)
+    FindOperationByConfigHash retrieves an Operation record matching the
+    connector registration ID and configuration hash using the main database
+    connection.
+
 func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, error)
     GetAllConnectorRegistrations retrieves all ConnectorRegistration records
     from the database.
@@ -108,14 +156,25 @@ func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
 type Operation struct {
 	gorm.Model
 
-	Details  datatypes.JSON `json:"details"  gorm:"type:json"`
-	Settings datatypes.JSON `json:"settings" gorm:"type:json"`
-	Token    string         `json:"token"    gorm:"type:varchar(255);not null"`
+	Details    datatypes.JSON `json:"details"    gorm:"type:json"`
+	Settings   datatypes.JSON `json:"settings"   gorm:"type:json"`
+	Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
+	ConfigHash string         `json:"configHash" gorm:"type:varchar(64);not null;index:idx_connector_config"`
 
-	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
+	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
 }
     Operation represents a record of an initiated operation tied to a connector.
+
+func FindOperationByConfigHashTx(
+	tx *gorm.DB,
+	connectorRegistrationID uint,
+	configHash string,
+) (*Operation, error)
+    FindOperationByConfigHashTx retrieves an Operation record matching the
+    connector registration ID and configuration hash using the provided
+    transaction context. This should be used within transactions to avoid race
+    conditions.
 
 type Subscription struct {
 	gorm.Model

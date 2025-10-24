@@ -129,7 +129,7 @@ func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 // @Router /postgres/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	provider := &PostgresPullProvider{}
-	return common.HandleOperationPull(c, provider, cs.Logger)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }
 
 // buildRecordsFromRows converts rows into a slice of maps.

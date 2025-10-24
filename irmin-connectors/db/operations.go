@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/datatypes"
@@ -11,11 +12,12 @@ import (
 type Operation struct {
 	gorm.Model
 
-	Details  datatypes.JSON `json:"details"  gorm:"type:json"`
-	Settings datatypes.JSON `json:"settings" gorm:"type:json"`
-	Token    string         `json:"token"    gorm:"type:varchar(255);not null"`
+	Details    datatypes.JSON `json:"details"    gorm:"type:json"`
+	Settings   datatypes.JSON `json:"settings"   gorm:"type:json"`
+	Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
+	ConfigHash string         `json:"configHash" gorm:"type:varchar(64);not null;index:idx_connector_config"`
 
-	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"`
+	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
 }
 
@@ -60,4 +62,47 @@ func (d *Database) DeleteOperation(id uint) error {
 		return fmt.Errorf("failed to delete operation: %w", err)
 	}
 	return nil
+}
+
+// FindOperationByConfigHash retrieves an Operation record matching the connector registration ID
+// and configuration hash using the main database connection.
+func (d *Database) FindOperationByConfigHash(
+	connectorRegistrationID uint,
+	configHash string,
+) (*Operation, error) {
+	return findOperationByConfigHash(d.DB, connectorRegistrationID, configHash)
+}
+
+// FindOperationByConfigHashTx retrieves an Operation record matching the connector registration ID
+// and configuration hash using the provided transaction context.
+// This should be used within transactions to avoid race conditions.
+func FindOperationByConfigHashTx(
+	tx *gorm.DB,
+	connectorRegistrationID uint,
+	configHash string,
+) (*Operation, error) {
+	return findOperationByConfigHash(tx, connectorRegistrationID, configHash)
+}
+
+// findOperationByConfigHash is a helper that works with any *gorm.DB (main DB or transaction).
+// This allows it to be used within transactions to avoid race conditions.
+func findOperationByConfigHash(
+	db *gorm.DB,
+	connectorRegistrationID uint,
+	configHash string,
+) (*Operation, error) {
+	var operation Operation
+	err := db.Where(&Operation{
+		ConnectorRegistrationID: connectorRegistrationID,
+		ConfigHash:              configHash,
+	}).First(&operation).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
+		}
+		return nil, fmt.Errorf("failed to fetch operation: %w", err)
+	}
+
+	return &operation, nil
 }

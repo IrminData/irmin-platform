@@ -130,7 +130,7 @@ func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath strin
 // @Router /mysql/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	provider := &MySQLPullProvider{}
-	return common.HandleOperationPull(c, provider, cs.Logger)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }
 
 // buildRecordsFromRows converts rows into a slice of maps.

@@ -82,6 +82,16 @@ func GetIntFromMap(m map[string]any, key string, defaultValue int) int
 func GetStringFromMap(m map[string]any, key string, defaultValue string) string
     GetStringFromMap extracts a string value from a map with type conversion.
 
+func HashConfigMap(config map[string]string) (string, error)
+    HashConfigMap generates a deterministic hash from a configuration map.
+    Keys are sorted alphabetically before hashing to ensure consistent hashes
+    regardless of map iteration order.
+
+func HashJSONFields(details, settings []byte) (string, error)
+    HashJSONFields generates a deterministic hash from JSON fields (Details and
+    Settings). Both fields are unmarshaled, keys are sorted, and then hashed
+    together.
+
 func JoinURL(baseURL, path string) string
     JoinURL properly joins a base URL with a path, handling absolute URLs and
     slashes correctly. Used to properly format full URLs to public links,

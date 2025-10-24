@@ -48,7 +48,12 @@ func CapabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability
 }
 
 // HandleOperationSchemaGet provides a common HTTP handler for schema operation endpoints.
-func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, logger *slog.Logger) error {
+func HandleOperationSchemaGet(
+	c fiber.Ctx,
+	provider SchemaOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+) error {
 	// Get the operation from the context
 	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
@@ -56,6 +61,27 @@ func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, log
 			"error": "Invalid operation type in context",
 		})
 	}
+
+	// Use Level 2 lock to prevent concurrent execution of the same operation
+	locked, err := db.TryLockOperationExecution(dbInstance.DB, operation.ID)
+	if err != nil {
+		logger.Error("failed to acquire operation execution lock", "error", err, "operation_id", operation.ID)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to acquire operation lock",
+		})
+	}
+	if !locked {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "Operation is already running",
+		})
+	}
+
+	// Ensure lock is released when operation completes
+	defer func() {
+		if unlockErr := db.UnlockOperationExecution(dbInstance.DB, operation.ID); unlockErr != nil {
+			logger.Error("failed to release operation execution lock", "error", unlockErr, "operation_id", operation.ID)
+		}
+	}()
 
 	// Get the operation type from the URL parameter
 	operationType := c.Params("operation")

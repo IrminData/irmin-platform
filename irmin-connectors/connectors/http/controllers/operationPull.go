@@ -138,5 +138,5 @@ func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (
 // @Router /http/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
 	provider := &HTTPPullProvider{}
-	return common.HandleOperationPull(c, provider, cs.Logger)
+	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }
