@@ -4822,9 +4822,11 @@ import "irmin-api/duckdb"
 ## Index
 
 - [func BuildReadQuery\(filePath string, options \*ReadOptions\) string](<#BuildReadQuery>)
+- [func GetContentTypeFromExtension\(extension string\) string](<#GetContentTypeFromExtension>)
 - [func GetRequiredExtensions\(options \*ReadOptions\) \[\]string](<#GetRequiredExtensions>)
 - [func GetSupportedFormats\(\) \[\]string](<#GetSupportedFormats>)
 - [func IsFormatSupported\(filePathOrMIMEType string\) bool](<#IsFormatSupported>)
+- [func IsStructuredFormat\(extension string\) bool](<#IsStructuredFormat>)
 - [type ColumnSchema](<#ColumnSchema>)
 - [type MergeFileResult](<#MergeFileResult>)
 - [type MergeStrategy](<#MergeStrategy>)
@@ -4848,7 +4850,16 @@ import "irmin-api/duckdb"
 func BuildReadQuery(filePath string, options *ReadOptions) string
 ```
 
-BuildReadQuery constructs a DuckDB query string for reading a file.
+BuildReadQuery constructs a DuckDB query string for reading a file. File paths and string parameter values are properly escaped to prevent SQL injection.
+
+<a name="GetContentTypeFromExtension"></a>
+## func GetContentTypeFromExtension
+
+```go
+func GetContentTypeFromExtension(extension string) string
+```
+
+GetContentTypeFromExtension returns the MIME type for a given file extension. It delegates to the SDK's GetContentTypeHybrid which handles both specialized data analytics formats and standard MIME type detection.
 
 <a name="GetRequiredExtensions"></a>
 ## func GetRequiredExtensions
@@ -4876,6 +4887,15 @@ func IsFormatSupported(filePathOrMIMEType string) bool
 ```
 
 IsFormatSupported checks if a file format is supported.
+
+<a name="IsStructuredFormat"></a>
+## func IsStructuredFormat
+
+```go
+func IsStructuredFormat(extension string) bool
+```
+
+IsStructuredFormat checks if a file extension represents a structured data format.
 
 <a name="ColumnSchema"></a>
 ## type ColumnSchema

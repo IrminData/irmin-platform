@@ -13,185 +13,102 @@ import (
 	"log/slog"
 )
 
-// getFileExtension extracts the actual file extension.
-func getFileExtension(fileName string) string {
-	lowerFileName := strings.ToLower(fileName)
-	return filepath.Ext(lowerFileName)
-}
-
 // generateCreateViewSQL generates the appropriate SQL for creating a view based on file extension.
 func generateCreateViewSQL(
 	ctx context.Context,
 	qc *duckdb.QueryClient,
 	fileName, viewName, tmpFilePath string,
 ) (string, error) {
-	fileExt := getFileExtension(fileName)
-
-	// Helper to quote identifiers and paths
+	// Helper to quote identifiers
 	quoteIdent := func(s string) string {
 		return fmt.Sprintf(`"%s"`, strings.ReplaceAll(s, `"`, `""`))
 	}
-	quotePath := func(s string) string {
-		return fmt.Sprintf(`'%s'`, strings.ReplaceAll(s, `'`, `''`))
+
+	// Check if this is an Excel file - needs special fallback handling
+	ext := strings.ToLower(filepath.Ext(fileName))
+	if ext == ".xlsx" || ext == ".xls" || ext == ".xlsm" || ext == ".xlsb" {
+		return generateExcelViewSQL(ctx, qc, viewName, tmpFilePath, quoteIdent)
 	}
 
-	switch fileExt {
-	// JSON formats
-	case ".json":
-		return fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_json_auto(%s, ignore_errors=true, maximum_object_size=10485760, union_by_name=true);
-		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
-	case ".jsonl", ".ndjson":
-		return fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_json_auto(%s, format='newline_delimited', ignore_errors=true, union_by_name=true);
-		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
-
-	// CSV and TSV formats
-	case ".csv":
-		return fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_csv_auto(%s);
-		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
-	case ".tsv", ".tab":
-		return fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_csv_auto(%s, delim='\t');
-		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
-
-	// Parquet format
-	case ".parquet":
-		return fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_parquet(%s);
-		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
-
-	// Excel formats
-	case ".xlsx", ".xls", ".xlsm", ".xlsb":
-		return handleExcelFormat(ctx, qc, fileName, viewName, tmpFilePath)
-
-	// Advanced analytics formats
-	case ".avro":
-		return handleAvroFormat(ctx, qc, fileName, viewName, tmpFilePath)
-	case ".orc":
-		return fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_orc(%s);
-		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
-	case ".delta":
-		return handleDeltaFormat(ctx, qc, fileName, viewName, tmpFilePath)
-	case ".iceberg":
-		return handleIcebergFormat(ctx, qc, fileName, viewName, tmpFilePath)
-
-	// XML and YAML formats (experimental support)
-	case ".xml", ".yaml", ".yml":
-		return fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM read_csv_auto(%s, delim='\t', header=false);
-		`, quoteIdent(viewName), quotePath(tmpFilePath)), nil
-
-	default:
-		return "", fmt.Errorf("unsupported file type: %s", fileName)
+	// Get read options from the centralized duckdb package
+	readOptions, readOptsErr := duckdb.GetDuckDBReadOptionsByExtension(filepath.Ext(fileName))
+	if readOptsErr != nil {
+		return "", fmt.Errorf("unsupported file type %s: %w", fileName, readOptsErr)
 	}
+
+	// Install required extensions
+	requiredExtensions := duckdb.GetRequiredExtensions(readOptions)
+	for _, ext := range requiredExtensions {
+		installSQL := fmt.Sprintf("INSTALL %s; LOAD %s;", ext, ext)
+		if _, installErr := qc.ExecuteNonQuery(ctx, installSQL); installErr != nil {
+			// For some extensions like avro, delta, iceberg, we want to fail
+			// if they can't be loaded since there's no fallback
+			if ext != "httpfs" {
+				return "", fmt.Errorf(
+					"%s format is not supported on this platform - DuckDB %s extension could not be loaded: %w",
+					ext, ext, installErr,
+				)
+			}
+		}
+	}
+
+	// Build the read query using the centralized function
+	readQuery := duckdb.BuildReadQuery(tmpFilePath, readOptions)
+
+	// Create the view SQL
+	return fmt.Sprintf(
+		"CREATE OR REPLACE TEMPORARY VIEW %s AS SELECT * FROM %s;",
+		quoteIdent(viewName),
+		readQuery,
+	), nil
 }
 
-// handleExcelFormat handles Excel file formats.
-func handleExcelFormat(ctx context.Context, qc *duckdb.QueryClient, _, viewName, tmpFilePath string) (string, error) {
-	// First try to install and load the Excel extension
+// generateExcelViewSQL handles Excel file processing with a three-tier fallback strategy.
+// Tier 1: Try spatial extension with st_read
+// Tier 2: Try excel extension with st_read
+// Tier 3: Fall back to CSV parsing with read_csv_auto
+func generateExcelViewSQL(
+	ctx context.Context,
+	qc *duckdb.QueryClient,
+	viewName, tmpFilePath string,
+	quoteIdent func(string) string,
+) (string, error) {
+	// Escape the file path to prevent SQL injection
+	// Single quotes in file paths are escaped by doubling them
+	escapedPath := strings.ReplaceAll(tmpFilePath, "'", "''")
+
+	// Tier 1: Try spatial extension with st_read
 	_, spatialErr := qc.ExecuteNonQuery(ctx, "INSTALL spatial; LOAD spatial;")
 	if spatialErr == nil {
-		// Spatial extension loaded successfully, try to use it
-		createViewSQL := fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM st_read('%s');
-		`, viewName, tmpFilePath)
-
-		// If spatial works, return it; otherwise fall back below
+		createViewSQL := fmt.Sprintf(
+			"CREATE OR REPLACE TEMPORARY VIEW %s AS SELECT * FROM st_read('%s');",
+			quoteIdent(viewName),
+			escapedPath,
+		)
 		if _, execErr := qc.ExecuteNonQuery(ctx, createViewSQL); execErr == nil {
 			return createViewSQL, nil
 		}
 	}
 
-	// Try alternative Excel extension installation
-	if _, excelErr := qc.ExecuteNonQuery(ctx, "INSTALL excel; LOAD excel;"); excelErr == nil {
-		// Excel extension loaded, try to use it with spatial read
-		createViewSQL := fmt.Sprintf(`
-			CREATE OR REPLACE TEMPORARY VIEW %s AS 
-			SELECT * FROM st_read('%s');
-		`, viewName, tmpFilePath)
-
-		// If it works, return it; otherwise fall back below
+	// Tier 2: Try excel extension with st_read
+	_, excelErr := qc.ExecuteNonQuery(ctx, "INSTALL excel; LOAD excel;")
+	if excelErr == nil {
+		createViewSQL := fmt.Sprintf(
+			"CREATE OR REPLACE TEMPORARY VIEW %s AS SELECT * FROM st_read('%s');",
+			quoteIdent(viewName),
+			escapedPath,
+		)
 		if _, execErr := qc.ExecuteNonQuery(ctx, createViewSQL); execErr == nil {
 			return createViewSQL, nil
 		}
 	}
 
-	// If no Excel extensions are available, fall back to treating as CSV
-	return fmt.Sprintf(`
-		CREATE OR REPLACE TEMPORARY VIEW %s AS 
-		SELECT * FROM read_csv_auto('%s');
-	`, viewName, tmpFilePath), nil
-}
-
-// handleAvroFormat handles Avro file format.
-func handleAvroFormat(
-	ctx context.Context,
-	qc *duckdb.QueryClient,
-	fileName, viewName, tmpFilePath string,
-) (string, error) {
-	if _, avroErr := qc.ExecuteNonQuery(ctx, "INSTALL avro; LOAD avro;"); avroErr != nil {
-		// If Avro extension is not available, return a more descriptive error
-		return "", fmt.Errorf(
-			"avro format is not supported on this platform - DuckDB Avro extension could not be loaded for %s: %w",
-			fileName,
-			avroErr,
-		)
-	}
-	return fmt.Sprintf(`
-		CREATE OR REPLACE TEMPORARY VIEW %s AS 
-		SELECT * FROM read_avro('%s');
-	`, viewName, tmpFilePath), nil
-}
-
-// handleDeltaFormat handles Delta Lake file format.
-func handleDeltaFormat(
-	ctx context.Context,
-	qc *duckdb.QueryClient,
-	fileName, viewName, tmpFilePath string,
-) (string, error) {
-	if _, deltaErr := qc.ExecuteNonQuery(ctx, "INSTALL delta; LOAD delta;"); deltaErr != nil {
-		// If Delta extension is not available, return a more descriptive error
-		return "", fmt.Errorf(
-			"delta Lake format is not supported on this platform - DuckDB Delta extension could not be loaded for %s: %w",
-			fileName,
-			deltaErr,
-		)
-	}
-	return fmt.Sprintf(`
-		CREATE OR REPLACE TEMPORARY VIEW %s AS 
-		SELECT * FROM delta_scan('%s');
-	`, viewName, tmpFilePath), nil
-}
-
-// handleIcebergFormat handles Iceberg file format.
-func handleIcebergFormat(
-	ctx context.Context,
-	qc *duckdb.QueryClient,
-	fileName, viewName, tmpFilePath string,
-) (string, error) {
-	if _, icebergErr := qc.ExecuteNonQuery(ctx, "INSTALL iceberg; LOAD iceberg;"); icebergErr != nil {
-		// If Iceberg extension is not available, return a more descriptive error
-		return "", fmt.Errorf(
-			"iceberg format is not supported on this platform - DuckDB Iceberg extension could not be loaded for %s: %w",
-			fileName,
-			icebergErr,
-		)
-	}
-	return fmt.Sprintf(`
-		CREATE OR REPLACE TEMPORARY VIEW %s AS 
-		SELECT * FROM iceberg_scan('%s');
-	`, viewName, tmpFilePath), nil
+	// Tier 3: Fall back to CSV parsing
+	return fmt.Sprintf(
+		"CREATE OR REPLACE TEMPORARY VIEW %s AS SELECT * FROM read_csv_auto('%s');",
+		quoteIdent(viewName),
+		escapedPath,
+	), nil
 }
 
 // createTemporaryView creates a temporary view in DuckDB for the given file content.

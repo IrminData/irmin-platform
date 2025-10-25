@@ -404,38 +404,26 @@ func getDuckDBSchemaFromLocalFile(
 	}
 	defer qc.Close()
 
-	// Determine the read function based on file extension
-	readFunction := getDuckDBReadFunction(safeFilename)
-
-	// Build SQL with appropriate parameters
-	var viewSQL string
-	ext := strings.ToLower(filepath.Ext(safeFilename))
-	switch ext {
-	case ".json":
-		// For JSON files, use parameters that handle inconsistent schemas and root-level arrays
-		// union_by_name preserves original field name casing instead of uppercasing
-		viewSQL = fmt.Sprintf(
-			"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s', ignore_errors=true, maximum_object_size=10485760, union_by_name=true);",
-			readFunction,
-			tempFilePath,
-		)
-	case ".jsonl", ".ndjson":
-		// For JSONL/NDJSON, use format parameter
-		// union_by_name preserves original field name casing
-		viewSQL = fmt.Sprintf(
-			"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s', format='newline_delimited', ignore_errors=true, union_by_name=true);",
-			readFunction,
-			tempFilePath,
-		)
-	default:
-		// For other formats, use simple syntax
-		viewSQL = fmt.Sprintf(
-			"CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s('%s');",
-			readFunction,
-			tempFilePath,
-		)
+	// Get read options from the centralized duckdb package
+	readOptions, readOptsErr := duckdb.GetDuckDBReadOptionsByExtension(filepath.Ext(safeFilename))
+	if readOptsErr != nil {
+		return nil, fmt.Errorf("unsupported file format: %w", readOptsErr)
 	}
 
+	// Install required extensions if any
+	requiredExtensions := duckdb.GetRequiredExtensions(readOptions)
+	for _, ext := range requiredExtensions {
+		installSQL := fmt.Sprintf("INSTALL %s; LOAD %s;", ext, ext)
+		if _, installErr := qc.ExecuteNonQuery(ctx, installSQL); installErr != nil {
+			c.Logger.WarnContext(ctx, "failed to install extension", "extension", ext, "error", installErr)
+		}
+	}
+
+	// Build the read query using the centralized function
+	readQuery := duckdb.BuildReadQuery(tempFilePath, readOptions)
+
+	// Create the view
+	viewSQL := fmt.Sprintf("CREATE OR REPLACE TEMPORARY VIEW table_view AS SELECT * FROM %s;", readQuery)
 	if _, executeNonQueryErr := qc.ExecuteNonQuery(ctx, viewSQL); executeNonQueryErr != nil {
 		return nil, fmt.Errorf("failed to create view: %w", executeNonQueryErr)
 	}

@@ -3,7 +3,11 @@ package duckdb
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
+
+	irminutils "github.com/IrminData/irmin-sdk-go/utils"
 )
 
 // ReadOptions represents the configuration for reading a file with DuckDB.
@@ -309,11 +313,23 @@ func GetDuckDBReadOptionsFromObject(object string) (*ReadOptions, error) {
 }
 
 // BuildReadQuery constructs a DuckDB query string for reading a file.
+// File paths and string parameter values are properly escaped to prevent SQL injection.
 func BuildReadQuery(filePath string, options *ReadOptions) string {
+	// Escape the file path to prevent SQL injection
+	escapedPath := escapeSQLString(filePath)
+
 	// Build parameter string
 	var params []string
 	for key, value := range options.Parameters {
-		params = append(params, fmt.Sprintf("%s='%s'", key, value))
+		// Determine if the value should be quoted
+		// Boolean and numeric values should not be quoted
+		if needsQuotes(value) {
+			// Escape string values to prevent SQL injection
+			escapedValue := escapeSQLString(value)
+			params = append(params, fmt.Sprintf("%s='%s'", key, escapedValue))
+		} else {
+			params = append(params, fmt.Sprintf("%s=%s", key, value))
+		}
 	}
 
 	paramStr := ""
@@ -321,24 +337,62 @@ func BuildReadQuery(filePath string, options *ReadOptions) string {
 		paramStr = ", " + strings.Join(params, ", ")
 	}
 
-	return fmt.Sprintf("%s('%s'%s)", options.ReadFunction, filePath, paramStr)
+	return fmt.Sprintf("%s('%s'%s)", options.ReadFunction, escapedPath, paramStr)
+}
+
+// escapeSQLString escapes single quotes in SQL string literals by doubling them.
+// This prevents SQL injection when interpolating strings into SQL queries.
+// For example: "file'name.json" becomes "file”name.json"
+func escapeSQLString(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
+}
+
+// needsQuotes determines if a parameter value needs to be quoted in DuckDB SQL.
+// Boolean values (true/false) and numeric values should not be quoted.
+// String values should be quoted.
+func needsQuotes(value string) bool {
+	// Check if it's a boolean
+	if value == "true" || value == "false" {
+		return false
+	}
+
+	// Check if it's numeric using strconv
+	// Try parsing as integer first
+	if _, err := strconv.ParseInt(value, 10, 64); err == nil {
+		return false
+	}
+
+	// Try parsing as float
+	if _, err := strconv.ParseFloat(value, 64); err == nil {
+		return false
+	}
+
+	// Everything else needs quotes
+	return true
 }
 
 // GetRequiredExtensions returns a list of required DuckDB extensions for the given read options.
 func GetRequiredExtensions(options *ReadOptions) []string {
 	var extensions []string
 
+	// Helper to add extension without duplicates
+	addExtension := func(ext string) {
+		if !slices.Contains(extensions, ext) {
+			extensions = append(extensions, ext)
+		}
+	}
+
 	// Core extensions that are always needed
-	extensions = append(extensions, "httpfs") // For S3/HTTP access
+	addExtension("httpfs") // For S3/HTTP access
 
 	// Format-specific extensions
 	if options.Extension != "" {
-		extensions = append(extensions, options.Extension)
+		addExtension(options.Extension)
 	}
 
-	// Special cases
+	// Special cases - st_read requires spatial extension
 	if options.ReadFunction == "st_read" {
-		extensions = append(extensions, "spatial")
+		addExtension("spatial")
 	}
 
 	return extensions
@@ -361,4 +415,34 @@ func GetSupportedFormats() []string {
 		"xlsx", "xls", "xlsm", "xlsb",
 		"xml", "yaml", "yml",
 	}
+}
+
+// IsStructuredFormat checks if a file extension represents a structured data format.
+func IsStructuredFormat(extension string) bool {
+	// Normalize extension
+	ext := strings.ToLower(strings.TrimPrefix(extension, "."))
+
+	supportedFormats := GetSupportedFormats()
+	for _, format := range supportedFormats {
+		if ext == format {
+			return true
+		}
+	}
+	return false
+}
+
+// GetContentTypeFromExtension returns the MIME type for a given file extension.
+// It delegates to the SDK's GetContentTypeHybrid which handles both specialized
+// data analytics formats and standard MIME type detection.
+func GetContentTypeFromExtension(extension string) string {
+	// Normalize extension to include the dot prefix
+	ext := strings.ToLower(extension)
+	if !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+
+	// Use the SDK's hybrid MIME type detection
+	// This handles specialized data analytics formats (parquet, avro, delta, etc.)
+	// and falls back to Go's standard mime.TypeByExtension for common formats
+	return irminutils.GetContentTypeHybrid(ext)
 }

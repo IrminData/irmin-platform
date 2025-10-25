@@ -3,10 +3,10 @@ package engine
 import (
 	"context"
 	"fmt"
+	"irmin-api/duckdb"
 	"irmin-api/utils"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -242,75 +242,14 @@ func (c *Client) GenerateSchemaFromFile(
 
 // determineObjectTypeFromFilename determines the object type based on file extension.
 func determineObjectTypeFromFilename(filename string) irminmodels.ObjectType {
-	ext := strings.ToLower(filepath.Ext(filename))
-	switch ext {
-	//nolint:goconst // This does not need to be a constant
-	case ".csv", ".json", ".jsonl", ".ndjson", ".parquet", ".xlsx", ".xls", ".avro", ".orc":
+	ext := filepath.Ext(filename)
+	if duckdb.IsStructuredFormat(ext) {
 		return irminmodels.ObjectTypeStructured
-	default:
-		return irminmodels.ObjectTypeBinary
 	}
+	return irminmodels.ObjectTypeBinary
 }
 
 // getContentTypeFromFilename returns the MIME type based on file extension.
 func getContentTypeFromFilename(filename string) string {
-	ext := strings.ToLower(filepath.Ext(filename))
-	switch ext {
-	case ".csv":
-		return "text/csv"
-	case ".json":
-		return "application/json"
-	case ".jsonl", ".ndjson":
-		return "application/x-ndjson"
-	case ".parquet":
-		return "application/vnd.apache.parquet"
-	case ".xlsx":
-		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-	case ".xls":
-		return "application/vnd.ms-excel"
-	case ".avro":
-		return "application/avro"
-	case ".orc":
-		return "application/orc"
-	case ".pdf":
-		return "application/pdf"
-	case ".txt":
-		return "text/plain"
-	case ".xml":
-		return "application/xml"
-	case ".zip":
-		return "application/zip"
-	case ".png":
-		return "image/png"
-	case ".jpg", ".jpeg":
-		return "image/jpeg"
-	case ".gif":
-		return "image/gif"
-	case ".svg":
-		return "image/svg+xml"
-	default:
-		return "application/octet-stream"
-	}
-}
-
-// getDuckDBReadFunction returns the appropriate DuckDB read function for a file.
-func getDuckDBReadFunction(filename string) string {
-	ext := strings.ToLower(filepath.Ext(filename))
-	switch ext {
-	case ".csv":
-		return "read_csv"
-	case ".json", ".jsonl", ".ndjson":
-		return "read_json_auto"
-	case ".parquet":
-		return "read_parquet"
-	case ".xlsx", ".xls":
-		return "st_read"
-	case ".avro":
-		return "read_avro"
-	case ".orc":
-		return "read_orc"
-	default:
-		// Default to read_csv for unknown extensions
-		return "read_csv"
-	}
+	return duckdb.GetContentTypeFromExtension(filepath.Ext(filename))
 }

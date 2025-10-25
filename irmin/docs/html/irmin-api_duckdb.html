@@ -9,6 +9,13 @@ FUNCTIONS
 
 func BuildReadQuery(filePath string, options *ReadOptions) string
     BuildReadQuery constructs a DuckDB query string for reading a file.
+    File paths and string parameter values are properly escaped to prevent SQL
+    injection.
+
+func GetContentTypeFromExtension(extension string) string
+    GetContentTypeFromExtension returns the MIME type for a given file
+    extension. It delegates to the SDK's GetContentTypeHybrid which handles both
+    specialized data analytics formats and standard MIME type detection.
 
 func GetRequiredExtensions(options *ReadOptions) []string
     GetRequiredExtensions returns a list of required DuckDB extensions for the
@@ -19,6 +26,10 @@ func GetSupportedFormats() []string
 
 func IsFormatSupported(filePathOrMIMEType string) bool
     IsFormatSupported checks if a file format is supported.
+
+func IsStructuredFormat(extension string) bool
+    IsStructuredFormat checks if a file extension represents a structured data
+    format.
 
 
 TYPES
