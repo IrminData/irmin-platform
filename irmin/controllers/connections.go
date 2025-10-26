@@ -359,6 +359,7 @@ func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error {
 // @Param workspace_slug path string true "Workspace slug"
 // @Param connection_slug path string true "Connection ID"
 // @Param operation_method query string false "Operation method (pull, push)" default(pull)
+// @Param path query string false "Path within the connection to get schema for, empty string means the root path"
 // @Success 200 {object} irminmodels.IrminAPIResponse{data=object} "Connection schema retrieved successfully"
 // @Failure 400 {object} irminmodels.IrminAPIResponse "Bad request - invalid query parameters"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
@@ -375,8 +376,8 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
-	// Get the operation method from query params
-	query, parseQueryParamsErr := utils.ParseQueryParams(c, nil, []string{"operation_method"})
+	// Get the operation method and path from query params
+	query, parseQueryParamsErr := utils.ParseQueryParams(c, nil, []string{"operation_method", "path"})
 	if parseQueryParamsErr != nil {
 		api.Logger.Error("Error parsing query params", "error", parseQueryParamsErr)
 		return utils.WriteResponse(c, fiber.StatusBadRequest, irminmodels.IrminAPIResponse{
@@ -392,6 +393,7 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 		workspace,
 		connection,
 		query["operation_method"],
+		query["path"],
 	)
 	if getConnectionSchemaErr != nil {
 		api.Logger.Error("Error getting connection schema", "error", getConnectionSchemaErr)

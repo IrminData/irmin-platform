@@ -374,7 +374,7 @@ func NewSchemaCacheManager(env *utils.CoreAPIEnv, logger *slog.Logger, db *db.Da
 func (scm *SchemaCacheManager) GetConnectionSchema(
 	ctx context.Context,
 	connection *db.Connection,
-	operationMethod, locale string,
+	operationMethod, path, locale string,
 	ignoreCache bool,
 ) (*irminmodels.ObjectSchema, error)
     GetConnectionSchema returns the schema for a connection. It first checks

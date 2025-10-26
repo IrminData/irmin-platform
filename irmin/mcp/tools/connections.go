@@ -44,6 +44,7 @@ type connectionSchemaArgs struct {
 	WorkspaceSlug   string `json:"workspace_slug"   jsonschema:"required,The slug of the workspace to get the connection schema from"`
 	ConnectionID    string `json:"connection_id"    jsonschema:"required,The ID (SQID) of the connection to get the schema from"`
 	OperationMethod string `json:"operation_method" jsonschema:"required,The operation method to get the schema for (pull, push)"`
+	Path            string `json:"path"             jsonschema:"optional,The path within the connection to get the schema for, empty string means the root path"`
 }
 
 // RegisterConnectionTools registers all connection-related tools.
@@ -304,6 +305,7 @@ func (mcpTools *MCPTools) registerConnectionSchemaTool() {
 				workspace,
 				connection,
 				args.OperationMethod,
+				args.Path,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get connection schema", "error", err)

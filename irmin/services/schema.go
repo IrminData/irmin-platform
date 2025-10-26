@@ -94,6 +94,7 @@ func (api *APIServices) GetConnectionSchema(
 	workspace *db.Workspace,
 	connection *db.Connection,
 	operationMethod string,
+	path string,
 ) (*irminmodels.ObjectSchema, error) {
 	// Check user permissions for the connection
 	allowed, err := api.PermissionService.IsAllowed(
@@ -116,6 +117,7 @@ func (api *APIServices) GetConnectionSchema(
 		ctx,
 		connection,
 		operationMethod,
+		path,
 		locale,
 		false,
 	)
@@ -219,6 +221,7 @@ func (api *APIServices) addConnectionSchemas(
 			ctx,
 			&connection,
 			"pull",
+			"",
 			locale,
 			false,
 		)

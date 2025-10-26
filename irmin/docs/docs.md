@@ -452,7 +452,7 @@ import "irmin-api/connectors-client"
   - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configType string, details map\[string\]string, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
   - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
   - [func \(c \*Client\) GetOperationStatus\(ctx context.Context, operationID uint\) \(\*OperationStatus, error\)](<#Client.GetOperationStatus>)
-  - [func \(c \*Client\) GetSchema\(ctx context.Context, method string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
+  - [func \(c \*Client\) GetSchema\(ctx context.Context, method, path string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
   - [func \(c \*Client\) InitOperation\(ctx context.Context, details map\[string\]string, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
   - [func \(c \*Client\) OperationPatch\(ctx context.Context, patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
   - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
@@ -581,14 +581,14 @@ Returns: \- The status of the operation if the request is successful. \- An erro
 ### func \(\*Client\) GetSchema
 
 ```go
-func (c *Client) GetSchema(ctx context.Context, method string) (*irminmodels.ObjectSchema, error)
+func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmodels.ObjectSchema, error)
 ```
 
 GetSchema retrieves the schema for a specific operation method.
 
 Note: Operation token is required for this operation.
 
-Parameters: \- method: The operation method for which to retrieve the schema, e.g. "pull", "push", etc.
+Parameters: \- method: The operation method for which to retrieve the schema, e.g. "pull", "push", etc. \- path: The path within the connection to get schema for, empty string means the root path
 
 Returns: \- The schema for the specified operation method if the request is successful. \- An error if the request fails.
 
@@ -1023,7 +1023,7 @@ CompareRefs godoc @Summary Compare two repository references @Description Compar
 func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error
 ```
 
-ConnectionSchema godoc @Summary Get connection schema @Description Get the schema information for a specific connection and operation method @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param operation\_method query string false "Operation method \(pull, push\)" default\(pull\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Connection schema retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid query parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/schema \[get\]
+ConnectionSchema godoc @Summary Get connection schema @Description Get the schema information for a specific connection and operation method @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param operation\_method query string false "Operation method \(pull, push\)" default\(pull\) @Param path query string false "Path within the connection to get schema for, empty string means the root path" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=object\} "Connection schema retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid query parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/schema \[get\]
 
 <a name="APIControllers.ConnectionsDestroy"></a>
 ### func \(\*APIControllers\) ConnectionsDestroy
@@ -5100,7 +5100,7 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
   - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, \[\]error\)](<#Client.DataExport>)
   - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
-  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
+  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
@@ -5366,7 +5366,7 @@ DataImport imports data from an external source into a lakeFS repository. It app
 ### func \(\*Client\) DataMovementSchema
 
 ```go
-func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
+func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method, path string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
 ```
 
 DataMovementSchema retrieves the schema for a specific method from the connector. It returns the schema and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -8232,7 +8232,7 @@ import "irmin-api/lib"
 - [type PolicyMatch](<#PolicyMatch>)
 - [type SchemaCacheManager](<#SchemaCacheManager>)
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
-  - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetConnectionSchema>)
+  - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetConnectionSchema>)
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
@@ -8743,7 +8743,7 @@ NewSchemaCacheManager creates a new SchemaCacheManager instance.
 ### func \(\*SchemaCacheManager\) GetConnectionSchema
 
 ```go
-func (scm *SchemaCacheManager) GetConnectionSchema(ctx context.Context, connection *db.Connection, operationMethod, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, error)
+func (scm *SchemaCacheManager) GetConnectionSchema(ctx context.Context, connection *db.Connection, operationMethod, path, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, error)
 ```
 
 GetConnectionSchema returns the schema for a connection. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it asynchronously.
@@ -9563,7 +9563,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
   - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
-  - [func \(api \*APIServices\) GetConnectionSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, operationMethod string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
+  - [func \(api \*APIServices\) GetConnectionSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, operationMethod string, path string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
   - [func \(api \*APIServices\) GetConnector\(c context.Context, connectorID uint\) \(\*db.Connector, error\)](<#APIServices.GetConnector>)
   - [func \(api \*APIServices\) GetConnectorConfigurationFields\(c context.Context, locale string, connector \*db.Connector, configurationType string, req irmincore.ConnectorConfigurationRequest\) \(map\[string\]irminmodels.DynamicField, error\)](<#APIServices.GetConnectorConfigurationFields>)
   - [func \(api \*APIServices\) GetEditorItemContent\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) \(string, error\)](<#APIServices.GetEditorItemContent>)
@@ -10127,7 +10127,7 @@ GetConnection gets a connection by its SQID.
 ### func \(\*APIServices\) GetConnectionSchema
 
 ```go
-func (api *APIServices) GetConnectionSchema(ctx context.Context, locale string, user *db.User, workspace *db.Workspace, connection *db.Connection, operationMethod string) (*irminmodels.ObjectSchema, error)
+func (api *APIServices) GetConnectionSchema(ctx context.Context, locale string, user *db.User, workspace *db.Workspace, connection *db.Connection, operationMethod string, path string) (*irminmodels.ObjectSchema, error)
 ```
 
 GetConnectionSchema gets the schema for a connection.

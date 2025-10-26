@@ -121,7 +121,7 @@ func (c *Client) initializeConnectorOperationInternal(
 func (c *Client) DataMovementSchema(
 	ctx context.Context,
 	connection *db.Connection,
-	method string,
+	method, path string,
 	tx ...*gorm.DB,
 ) (*irminmodels.ObjectSchema, error) {
 	opClient, cancel, err := c.InitializeConnectorOperation(ctx, connection, tx...)
@@ -145,7 +145,7 @@ func (c *Client) DataMovementSchema(
 	}
 
 	// Retrieve method schema.
-	schema, err := opClient.GetSchema(ctx, method)
+	schema, err := opClient.GetSchema(ctx, method, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema for method %q: %w", method, err)
 	}

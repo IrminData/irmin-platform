@@ -3829,6 +3829,11 @@ paths:
         in: query
         name: operation_method
         type: string
+      - description: Path within the connection to get schema for, empty string means
+          the root path
+        in: query
+        name: path
+        type: string
       produces:
       - application/json
       responses:

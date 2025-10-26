@@ -2041,6 +2041,12 @@ const docTemplate = `{
                         "description": "Operation method (pull, push)",
                         "name": "operation_method",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Path within the connection to get schema for, empty string means the root path",
+                        "name": "path",
+                        "in": "query"
                     }
                 ],
                 "responses": {

@@ -165,7 +165,7 @@ func (c *Client) DataImport(
 func (c *Client) DataMovementSchema(
 	ctx context.Context,
 	connection *db.Connection,
-	method string,
+	method, path string,
 	tx ...*gorm.DB,
 ) (*irminmodels.ObjectSchema, error)
     DataMovementSchema retrieves the schema for a specific method from the

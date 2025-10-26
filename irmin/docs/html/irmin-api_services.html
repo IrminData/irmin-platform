@@ -389,6 +389,7 @@ func (api *APIServices) GetConnectionSchema(
 	workspace *db.Workspace,
 	connection *db.Connection,
 	operationMethod string,
+	path string,
 ) (*irminmodels.ObjectSchema, error)
     GetConnectionSchema gets the schema for a connection.
 

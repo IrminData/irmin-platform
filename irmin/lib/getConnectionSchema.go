@@ -88,11 +88,11 @@ func (scm *SchemaCacheManager) updateConnectionSchemaCacheWithTx(
 func (scm *SchemaCacheManager) GetConnectionSchema(
 	ctx context.Context,
 	connection *db.Connection,
-	operationMethod, locale string,
+	operationMethod, path, locale string,
 	ignoreCache bool,
 ) (*irminmodels.ObjectSchema, error) {
-	// Check cache first
-	if !ignoreCache {
+	// Check cache first if fetching root schema
+	if !ignoreCache && (path == "" || path == "/") {
 		if cachedSchema := scm.checkConnectionSchemaCache(ctx, connection, operationMethod); cachedSchema != nil {
 			return cachedSchema, nil
 		}
@@ -106,14 +106,17 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 	}
 
 	// Get the schema of the connection
-	schema, err := dataEngine.DataMovementSchema(ctx, connection, operationMethod)
+	schema, err := dataEngine.DataMovementSchema(ctx, connection, operationMethod, path)
 	if err != nil {
 		scm.logger.ErrorContext(ctx, "error getting connection schema", "error", err)
 		return nil, err
 	}
 
-	// Update cache asynchronously with advisory lock to prevent race conditions
-	go scm.updateConnectionSchemaCacheAsync(ctx, connection, operationMethod, schema)
+	// Only update cache if path is not the root path
+	if path == "" || path == "/" {
+		// Update cache asynchronously with advisory lock to prevent race conditions
+		go scm.updateConnectionSchemaCacheAsync(ctx, connection, operationMethod, schema)
+	}
 
 	return schema, nil
 }
