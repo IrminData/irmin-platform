@@ -79,7 +79,7 @@ function SchemaSkeleton({
     >
       <div
         className={`
-          min-h-screen bg-gradient-to-br from-background via-secondary/20
+          min-h-screen bg-linear-to-br from-background via-secondary/20
           to-accent/10
         `}
       >

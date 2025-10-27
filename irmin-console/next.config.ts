@@ -11,9 +11,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     resolveExtensions: ['.mdx', '.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
-  experimental: {
-    reactCompiler: true,
-  },
+  reactCompiler: true,
   images: {
     remotePatterns: [
       {

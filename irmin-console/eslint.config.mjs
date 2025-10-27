@@ -178,5 +178,5 @@ export default tseslint.config(
     },
   },
   prettierConfig,
-  next.flatConfig.recommended
+  next.configs.recommended
 );

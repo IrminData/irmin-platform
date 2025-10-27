@@ -1,3 +1,4 @@
+/* eslint-disable import-x/no-unused-modules */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 

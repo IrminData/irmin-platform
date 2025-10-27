@@ -8,8 +8,8 @@
     "url": "https://github.com/IrminData/irmin-console.git"
   },
   "scripts": {
-    "dev": "next dev --experimental-https --turbopack",
-    "dev:no-https": "next dev --turbopack",
+    "dev": "next dev --experimental-https",
+    "dev:no-https": "next dev",
     "build": "pnpm docs && next build",
     "start": "next start",
     "validate": "tsc --noEmit && eslint --fix .",
@@ -75,7 +75,7 @@
     "import-in-the-middle": "^1.14.4",
     "katex": "^0.16.23",
     "markdown-to-jsx": "^7.7.15",
-    "next": "15.5.4",
+    "next": "16.0.0",
     "next-themes": "^0.4.6",
     "posthog-js": "^1.274.1",
     "react": "19.2.0",
@@ -104,7 +104,7 @@
     "@eslint/compat": "^1.4.0",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.37.0",
-    "@next/eslint-plugin-next": "^15.5.4",
+    "@next/eslint-plugin-next": "16.0.0",
     "@playwright/test": "^1.56.0",
     "@sentry/types": "^10.19.0",
     "@tailwindcss/postcss": "^4.1.14",
@@ -113,14 +113,14 @@
     "@types/eslint": "9.6.1",
     "@types/node": "^24.7.0",
     "@types/postcss-flexbugs-fixes": "^5.0.3",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.1",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@typescript-eslint/parser": "8.45.0",
     "autoprefixer": "^10.4.21",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "eslint": "9.36.0",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "16.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-better-tailwindcss": "^3.7.8",
@@ -146,5 +146,11 @@
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
+  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac",
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.2",
+      "@types/react-dom": "19.2.2"
+    }
+  }
 }
