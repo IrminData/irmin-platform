@@ -109,7 +109,9 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Update current editor items if query data changes
   useEffect(() => {
-    setCurrentEditorItems(editorItemsQuery.data?.data ?? []);
+    queueMicrotask(() => {
+      setCurrentEditorItems(editorItemsQuery.data?.data ?? []);
+    });
   }, [editorItemsQuery.data]);
 
   // State for script input files
@@ -228,15 +230,17 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (setInitialOpenTabs.current) return;
     const paths = searchParams.getAll('path');
-    for (let i = 0; i < paths.length; i++) {
-      const path = paths[i];
-      if (!path) continue;
-      if (openTabs.some((tab) => tab.path === path)) continue;
-      const editorItem = getItemByPath(path, currentEditorItems);
-      if (!editorItem) continue;
-      void openFile({ current: editorItem, original: editorItem });
-    }
-    setInitialOpenTabs.current = true;
+    queueMicrotask(() => {
+      for (let i = 0; i < paths.length; i++) {
+        const path = paths[i];
+        if (!path) continue;
+        if (openTabs.some((tab) => tab.path === path)) continue;
+        const editorItem = getItemByPath(path, currentEditorItems);
+        if (!editorItem) continue;
+        void openFile({ current: editorItem, original: editorItem });
+      }
+      setInitialOpenTabs.current = true;
+    });
   }, [searchParams, currentEditorItems, openTabs, openFile]);
 
   /**

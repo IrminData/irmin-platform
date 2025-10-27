@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ export default function DefineDetailsStep({
 }) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
+  const [defaultTimestamp] = useState(() => Date.now());
 
   const {
     connectionConfigurationQuery,
@@ -50,7 +51,7 @@ export default function DefineDetailsStep({
         const { irmin_connection_name, ...connectionDetails } = formValues;
         const newName =
           (irmin_connection_name as string) ||
-          `${wizardData.connector?.name} ${Date.now()}`;
+          `${wizardData.connector?.name} ${defaultTimestamp}`;
         // Validate the connector configuration
         const res = await validateConnectorConfigurationMutation.mutateAsync({
           details: convertToConnectionFieldValues(connectionDetails),
@@ -84,6 +85,7 @@ export default function DefineDetailsStep({
       goNext,
       updateWizardData,
       dict,
+      defaultTimestamp,
     ]
   );
 
@@ -109,7 +111,7 @@ export default function DefineDetailsStep({
       required: true,
       default:
         wizardData.name ??
-        `${wizardData.connector?.name ?? 'Connection'} ${Date.now()}`,
+        `${wizardData.connector?.name ?? 'Connection'} ${defaultTimestamp}`,
       example: dict.connections.create.connectionNamePlaceholder,
     },
     ...connectionDetailsFields,

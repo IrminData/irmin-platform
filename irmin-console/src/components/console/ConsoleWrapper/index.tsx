@@ -1,7 +1,7 @@
 'use client';
 
 import type { ComponentPropsWithoutRef } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -96,13 +96,6 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   );
 
   const foldMenu = isLargeScreen ? isMenuFolded : false;
-
-  // Close assistant sheet when navigating to assistant page
-  useEffect(() => {
-    if (isOnAssistantPage && isAssistantSheetOpen) {
-      setIsAssistantSheetOpen(false);
-    }
-  }, [isOnAssistantPage, isAssistantSheetOpen]);
 
   return (
     <div className='contents' id='console-wrapper'>

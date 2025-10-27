@@ -127,15 +127,19 @@ export default tseslint.config(
       },
     },
   },
+  tanstackQuery.configs['flat/recommended'],
+  reactPlugin.configs.flat.recommended,
+  jsxA11Y.flatConfigs.recommended,
+  promisePlugin.configs['flat/recommended'],
   {
     files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
-    extends: [
-      tanstackQuery.configs['flat/recommended'],
-      reactPlugin.configs.flat.recommended,
-      jsxA11Y.flatConfigs.recommended,
-      reactHooks.configs['recommended-latest'],
-      promisePlugin.configs['flat/recommended'],
-    ],
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    rules: reactHooks.configs.recommended.rules,
+  },
+  {
+    files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
     settings: {
       react: {
         version: 'detect',
@@ -171,8 +175,8 @@ export default tseslint.config(
       'react/jsx-no-target-blank': 'warn',
     },
   },
+  reactCompilerConfigs.recommended,
   {
-    extends: [reactCompilerConfigs.recommended],
     rules: {
       'react-compiler/react-compiler': 'error',
     },

@@ -18,6 +18,7 @@ Ensure you have the following installed:
 See [.env.example](.env.example) for required and optional variables.
 
 To set environment variables, copy the `.env.example` file and update the variables as required.
+
 ```bash
 cp .env.example .env
 # Add your API keys and update other variables as required:

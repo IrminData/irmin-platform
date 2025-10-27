@@ -121,10 +121,12 @@ export const RepositoryProvider = ({
   useEffect(() => {
     const queryRef = searchParams.get('ref');
     if (!currentRef) {
-      // Uset the ref from the query parameter if set
-      // Otherwise, use the default ref
-      if (queryRef) updateCurrentRef(queryRef);
-      else if (defaultRef) updateCurrentRef(defaultRef);
+      queueMicrotask(() => {
+        // Uset the ref from the query parameter if set
+        // Otherwise, use the default ref
+        if (queryRef) updateCurrentRef(queryRef);
+        else if (defaultRef) updateCurrentRef(defaultRef);
+      });
     }
   }, [searchParams, currentRef, defaultRef, updateCurrentRef]);
 

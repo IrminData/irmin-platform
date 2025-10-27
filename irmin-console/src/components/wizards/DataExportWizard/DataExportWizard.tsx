@@ -45,16 +45,16 @@ export default function DataExportWizard({
 }) {
   const [wizardData, setWizardData] =
     useState<DataExportWizardData>(initialWizardData);
-  const isFirstRender = useRef(true);
+  const prevStepRef = useRef<number>(currentStep);
 
-  // Reset wizard data only when modal is opened for the first time
+  // Reset wizard data when returning to step 1 from another step
   useEffect(() => {
-    if (currentStep === 1 && isFirstRender.current) {
-      setWizardData(initialWizardData);
-      isFirstRender.current = false;
-    } else if (currentStep !== 1) {
-      isFirstRender.current = true;
+    if (currentStep === 1 && prevStepRef.current !== 1) {
+      queueMicrotask(() => {
+        setWizardData(initialWizardData);
+      });
     }
+    prevStepRef.current = currentStep;
   }, [currentStep]);
 
   // Function to go to the next step

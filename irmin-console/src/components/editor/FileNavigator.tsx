@@ -124,105 +124,112 @@ const FileNavigator = () => {
    * @param items The items to render
    */
   const renderItems = useCallback(
-    (items: FileNavigatorItem[]) =>
-      items.map((item) => {
-        if (!item.current) return;
-        return (
-          <div key={item.current.name} className='my-1'>
-            <div
-              className={`
-                flex items-center justify-normal rounded-md p-1 text-sm
-              `}
-            >
-              {item.current.type === 'folder' ? (
-                openFolders[item.current.name] ? (
-                  <TbChevronDown
-                    className={`
-                      inline-block cursor-pointer
-                      hover:bg-gray-100
-                      dark:hover:bg-gray-800
-                    `}
-                    aria-label={`Close folder ${item.current.name} in the file navigator`}
-                    onClick={() => {
-                      if (!loading) {
-                        handleItemClick(item);
-                      }
-                    }}
-                  />
-                ) : (
-                  <TbChevronRight
-                    className={`
-                      inline-block cursor-pointer
-                      hover:bg-gray-100
-                      dark:hover:bg-gray-800
-                    `}
-                    aria-label={`Open folder ${item.current.name} in the file navigator`}
-                    onClick={() => {
-                      if (!loading) {
-                        handleItemClick(item);
-                      }
-                    }}
-                  />
-                )
-              ) : null}
-              <span className='ml-2'>
-                {item.current.type === 'folder' ? <FiFolder /> : <FiFileText />}
-              </span>
-              <span
+    (items: FileNavigatorItem[]) => {
+      const render = (items: FileNavigatorItem[]): React.ReactNode[] =>
+        items.map((item) => {
+          if (!item.current) return;
+          return (
+            <div key={item.current.name} className='my-1'>
+              <div
                 className={`
-                  ml-2 cursor-pointer
-                  hover:underline
+                  flex items-center justify-normal rounded-md p-1 text-sm
                 `}
-                aria-label={`Open ${item.current.name} ${item.current.type}`}
-                onClick={() => {
-                  if (!loading) {
-                    handleItemClick(item);
-                  }
-                }}
-                onContextMenu={(e) => {
-                  if (!loading) {
-                    handleContextMenu(e, item);
-                  }
-                }}
-                role='button'
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleItemClick(item);
-                  }
-                }}
               >
-                {item.current.name}
-              </span>
-              <button
-                className={`
-                  ml-auto cursor-pointer rounded-full py-1
-                  hover:bg-gray-100
-                  dark:hover:bg-gray-700
-                `}
-                aria-label={`Open context menu for ${item.current.name}`}
-                onClick={(e) => {
-                  handleContextMenu(e, item);
-                }}
-                disabled={loading}
-              >
-                <CiMenuKebab />
-              </button>
-            </div>
-            {item.current.type === 'folder' &&
-              openFolders[item.current.name] && (
-                <div className='pl-6'>
-                  {renderItems(
-                    (item.current?.children ?? []).map((child) => ({
-                      current: child,
-                      original: child,
-                    }))
+                {item.current.type === 'folder' ? (
+                  openFolders[item.current.name] ? (
+                    <TbChevronDown
+                      className={`
+                        inline-block cursor-pointer
+                        hover:bg-gray-100
+                        dark:hover:bg-gray-800
+                      `}
+                      aria-label={`Close folder ${item.current.name} in the file navigator`}
+                      onClick={() => {
+                        if (!loading) {
+                          handleItemClick(item);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <TbChevronRight
+                      className={`
+                        inline-block cursor-pointer
+                        hover:bg-gray-100
+                        dark:hover:bg-gray-800
+                      `}
+                      aria-label={`Open folder ${item.current.name} in the file navigator`}
+                      onClick={() => {
+                        if (!loading) {
+                          handleItemClick(item);
+                        }
+                      }}
+                    />
+                  )
+                ) : null}
+                <span className='ml-2'>
+                  {item.current.type === 'folder' ? (
+                    <FiFolder />
+                  ) : (
+                    <FiFileText />
                   )}
-                </div>
-              )}
-          </div>
-        );
-      }),
+                </span>
+                <span
+                  className={`
+                    ml-2 cursor-pointer
+                    hover:underline
+                  `}
+                  aria-label={`Open ${item.current.name} ${item.current.type}`}
+                  onClick={() => {
+                    if (!loading) {
+                      handleItemClick(item);
+                    }
+                  }}
+                  onContextMenu={(e) => {
+                    if (!loading) {
+                      handleContextMenu(e, item);
+                    }
+                  }}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleItemClick(item);
+                    }
+                  }}
+                >
+                  {item.current.name}
+                </span>
+                <button
+                  className={`
+                    ml-auto cursor-pointer rounded-full py-1
+                    hover:bg-gray-100
+                    dark:hover:bg-gray-700
+                  `}
+                  aria-label={`Open context menu for ${item.current.name}`}
+                  onClick={(e) => {
+                    handleContextMenu(e, item);
+                  }}
+                  disabled={loading}
+                >
+                  <CiMenuKebab />
+                </button>
+              </div>
+              {item.current.type === 'folder' &&
+                openFolders[item.current.name] && (
+                  <div className='pl-6'>
+                    {render(
+                      (item.current?.children ?? []).map((child) => ({
+                        current: child,
+                        original: child,
+                      }))
+                    )}
+                  </div>
+                )}
+            </div>
+          );
+        });
+      return render(items);
+    },
     [openFolders, handleItemClick, handleContextMenu, loading]
   );
 

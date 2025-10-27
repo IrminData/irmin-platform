@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -40,37 +40,35 @@ export default function ExportWorkflowsSection({
 
   const { workflowsQuery } = useWorkflows('export');
 
-  const [filteredItems, setFilteredItems] = useState<ExportWorkflow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
-  // Set the initial items when the query data is available
-  const initialDataSet = useRef(false);
-  useEffect(() => {
-    if (initialDataSet.current) return;
-    if (!workflowsQuery.data?.data) return;
-    initialDataSet.current = true;
-    setFilteredItems((workflowsQuery.data?.data ?? []) as ExportWorkflow[]);
-  }, [workflowsQuery.data?.data]);
-
-  // Filter items based on search query
+  // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      setFilteredItems(
-        (workflowsQuery.data?.data ?? []).filter(
-          (item) =>
-            item.type === 'export' &&
-            item.name
-              .trim()
-              .replace(/\s+/g, '')
-              .toLowerCase()
-              .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-        ) as ExportWorkflow[]
-      );
+      setDebouncedSearchQuery(searchQuery);
     }, 300);
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, workflowsQuery.data?.data]);
+  }, [searchQuery]);
+
+  // Filter items based on debounced search query
+  const filteredItems = useMemo(
+    () =>
+      (workflowsQuery.data?.data ?? []).filter(
+        (item) =>
+          item.type === 'export' &&
+          item.name
+            .trim()
+            .replace(/\s+/g, '')
+            .toLowerCase()
+            .includes(
+              debouncedSearchQuery.trim().replace(/\s+/g, '').toLowerCase()
+            )
+      ) as ExportWorkflow[],
+    [workflowsQuery.data?.data, debouncedSearchQuery]
+  );
 
   const closeModal = useCallback(() => {
     setIsOpen(false);

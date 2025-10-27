@@ -77,11 +77,15 @@ export default function ConsoleSearch() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Detect platform for keyboard shortcut display
+  // Initialize to false to match server-side rendering, then update on mount
   const [isMac, setIsMac] = useState(false);
+  const [isMacLoaded, setIsMacLoaded] = useState(false);
 
+  // Synchronize with external system (browser platform detection) after hydration
   useEffect(() => {
-    // Set platform detection after hydration to avoid SSR mismatch
-    setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
+    setIsMacLoaded(true);
   }, []);
 
   // Get static search items
@@ -298,23 +302,26 @@ export default function ConsoleSearch() {
           placeholder={dict.consoleNavigation.searchPlaceholder}
         />
         {/* Keyboard shortcut indicator */}
-        <div
-          className={`
-            pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3
-          `}
-        >
+        {isMacLoaded && (
           <div
             className={`
-              hidden items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5
-              text-xs text-gray-500
-              md:flex
-              dark:bg-gray-800 dark:text-gray-400
+              pointer-events-none absolute inset-y-0 end-0 flex items-center
+              pe-3
             `}
           >
-            <span>{isMac ? '⌘' : 'Ctrl'}</span>
-            <span>K</span>
+            <div
+              className={`
+                hidden items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5
+                text-xs text-gray-500
+                md:flex
+                dark:bg-gray-800 dark:text-gray-400
+              `}
+            >
+              <span>{isMac ? '⌘' : 'Ctrl'}</span>
+              <span>K</span>
+            </div>
           </div>
-        </div>
+        )}
       </form>
 
       {/* Results Modal */}

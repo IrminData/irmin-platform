@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { TbSearch } from 'react-icons/tb';
 
@@ -11,8 +11,6 @@ import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { useRepositories } from '@/hooks/api';
-
-import type { Repository } from '@/types/core/Repository';
 
 import type { DataExportWizardData } from '../types';
 
@@ -37,22 +35,16 @@ export default function SelectRepositoryStep({
   const { repositoriesQuery } = useRepositories();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredRepositories, setFilteredRepositories] = useState<
-    Repository[]
-  >([]);
 
-  useEffect(() => {
-    if (repositoriesQuery.data?.data) {
-      const filtered = repositoriesQuery.data.data.filter((repository) =>
-        repository.name
-          .trim()
-          .replace(/\s+/g, '')
-          .toLowerCase()
-          .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-      );
-      setFilteredRepositories(filtered);
-    }
-  }, [repositoriesQuery.data?.data, searchQuery]);
+  // Compute filtered repositories directly during render
+  const repositories = repositoriesQuery.data?.data ?? [];
+  const filteredRepositories = repositories.filter((repository) =>
+    repository.name
+      .trim()
+      .replace(/\s+/g, '')
+      .toLowerCase()
+      .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+  );
 
   const handleContinue = useCallback(() => {
     if (!wizardData.repository) {

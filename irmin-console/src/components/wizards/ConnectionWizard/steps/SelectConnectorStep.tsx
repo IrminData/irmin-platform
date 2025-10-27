@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { TbHelp } from 'react-icons/tb';
 
@@ -34,45 +34,32 @@ export default function SelectConnectorStep({
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
 
-  const [categoryFilterOptions, setCategoryFilterOptions] = useState<string[]>(
-    []
-  );
   const [activeCategory, setActiveCategory] = useState<string>(
     dict.connections.create.categoryAll
   );
-  const [filteredConnectors, setFilteredConnectors] = useState<Connector[]>([]);
-
   const [selectedConnector, setSelectedConnector] = useState<Connector | null>(
     null
   );
 
-  useEffect(() => {
-    if (connectorsQuery.data?.data) {
-      // Get all unique categories from the connectors
-      const filterOptions = connectorsQuery.data.data
-        .map((connector) => [
-          ...connector.categories,
-          connector.primary_category,
-        ])
-        .flat();
-      setCategoryFilterOptions([
-        dict.connections.create.categoryAll,
-        ...Array.from(new Set(filterOptions)),
-      ]);
+  // Compute category filter options from connectors
+  const connectorData = connectorsQuery.data?.data ?? [];
+  const filterOptions = connectorData
+    .map((connector) => [...connector.categories, connector.primary_category])
+    .flat();
+  const categoryFilterOptions = [
+    dict.connections.create.categoryAll,
+    ...Array.from(new Set(filterOptions)),
+  ];
 
-      // Set the filtered connectors to all connectors
-      const filteredConnectors = connectorsQuery.data.data.filter(
-        (connector) =>
-          connector.primary_category === activeCategory ||
-          connector.categories.includes(activeCategory as ConnectorCategory)
-      );
-      setFilteredConnectors(
-        activeCategory && activeCategory !== dict.connections.create.categoryAll
-          ? filteredConnectors
-          : connectorsQuery.data.data
-      );
-    }
-  }, [dict, connectorsQuery.data, activeCategory]);
+  // Compute filtered connectors based on active category
+  const filteredConnectors =
+    activeCategory === dict.connections.create.categoryAll
+      ? connectorData
+      : connectorData.filter(
+          (connector) =>
+            connector.primary_category === activeCategory ||
+            connector.categories.includes(activeCategory as ConnectorCategory)
+        );
 
   const handleContinue = useCallback(() => {
     if (!selectedConnector) {

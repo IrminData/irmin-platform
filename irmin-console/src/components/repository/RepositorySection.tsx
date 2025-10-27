@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -112,8 +112,14 @@ function RepositorySectionContent({
     initialObjectContentViewerOpen
   );
 
-  const [queryField, setQueryField] = useState<string>('');
-  const [queryChanged, setQueryChanged] = useState(false);
+  const [customQuery, setCustomQuery] = useState<string | null>(null);
+
+  const defaultQuery = useMemo(() => {
+    if (!selectedObject || selectedObject.type !== 'structured') return '';
+    return `SELECT * FROM $["${repository.slug};${selectedObject.path}${currentRef ? `@${currentRef}` : ''}"] LIMIT 10`;
+  }, [repository.slug, selectedObject, currentRef]);
+
+  const queryField = customQuery ?? defaultQuery;
 
   const canViewRepository = useMemo(
     () => isResourceAllowed('repository', 'read', repository.id),
@@ -136,19 +142,6 @@ function RepositorySectionContent({
     () => isResourceAllowed('repository_object', 'read', repository.id),
     [isResourceAllowed, repository.id]
   );
-
-  /**
-   * Set the initial query when the selected object changes.
-   * Skip if the query has been changed by the user or if there is no selected object.
-   */
-  useEffect(() => {
-    if (!selectedObject) return;
-    if (queryChanged) return;
-    if (selectedObject.type != 'structured') return;
-    setQueryField(
-      `SELECT * FROM $["${repository.slug};${selectedObject.path}${currentRef ? `@${currentRef}` : ''}"] LIMIT 10`
-    );
-  }, [repository, selectedObject, queryChanged, currentRef]);
 
   const handleUpload = useCallback(() => {
     irminModal.show(
@@ -192,8 +185,7 @@ function RepositorySectionContent({
   const updateQuery = useCallback(
     (value: string) => {
       if (queryLoading) return;
-      setQueryChanged(true);
-      setQueryField(value);
+      setCustomQuery(value);
     },
     [queryLoading]
   );

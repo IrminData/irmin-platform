@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import type { IrminFileLanguage } from '@/types/core/EditorItems';
 
@@ -33,28 +33,26 @@ const ResizableCodeEditor = ({
   setEditorHeight: (_height: string) => void;
 }) => {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const handleMouseMoveRef = useRef<(e: MouseEvent) => void>(() => {});
+  const handleMouseUpRef = useRef<() => void>(() => {});
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
+  useEffect(() => {
+    handleMouseMoveRef.current = (e: MouseEvent) => {
       const offsetTop = editorRef.current?.offsetTop ?? 0;
       setEditorHeight(`${e.clientY - offsetTop}px`);
-    },
-    [setEditorHeight]
-  );
+    };
 
-  const handleMouseUp = useCallback(() => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  }, [handleMouseMove]);
+    handleMouseUpRef.current = () => {
+      document.removeEventListener('mousemove', handleMouseMoveRef.current);
+      document.removeEventListener('mouseup', handleMouseUpRef.current);
+    };
+  }, [setEditorHeight]);
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      e.preventDefault();
-    },
-    [handleMouseMove, handleMouseUp]
-  );
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    document.addEventListener('mousemove', handleMouseMoveRef.current);
+    document.addEventListener('mouseup', handleMouseUpRef.current);
+    e.preventDefault();
+  }, []);
 
   return (
     <div

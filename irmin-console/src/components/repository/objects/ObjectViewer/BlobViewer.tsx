@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
 import '@cyntler/react-doc-viewer/dist/index.css';
@@ -46,23 +46,24 @@ const BlobViewer = ({
   object: RepositoryObject;
 }) => {
   const { dict } = useLocale();
-  const [url, setUrl] = useState<string | null>(null);
 
-  useEffect(() => {
+  const url = useMemo(() => {
+    if (!blob) return null;
     try {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        setUrl(url);
-
-        // Cleanup the URL object
-        return () => {
-          URL.revokeObjectURL(url);
-        };
-      }
+      return URL.createObjectURL(blob);
     } catch (error) {
       console.error('Error reading blob content:', error);
+      return null;
     }
   }, [blob]);
+
+  useEffect(() => {
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [url]);
 
   if (!url) return null;
 

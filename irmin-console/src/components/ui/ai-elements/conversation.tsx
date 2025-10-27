@@ -127,7 +127,9 @@ export const ConversationScrollButton = ({
     if (container) {
       container.addEventListener('scroll', checkIfAtBottom);
       window.addEventListener('resize', updateButtonPosition);
-      updateButtonPosition();
+      queueMicrotask(() => {
+        updateButtonPosition();
+      });
 
       return () => {
         container.removeEventListener('scroll', checkIfAtBottom);
@@ -138,7 +140,9 @@ export const ConversationScrollButton = ({
 
   // Check initial state
   useEffect(() => {
-    checkIfAtBottom();
+    queueMicrotask(() => {
+      checkIfAtBottom();
+    });
   }, [checkIfAtBottom]);
 
   if (isAtBottom) return null;

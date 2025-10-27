@@ -82,12 +82,7 @@ function RepositoryBranchesSectionContent() {
         }}
       />
     );
-  }, [
-    repositoryBranchesQuery.data?.data,
-    irminModal,
-    dict,
-    createBranchMutation,
-  ]);
+  }, [repositoryBranchesQuery.data, irminModal, dict, createBranchMutation]);
 
   /**
    * Confirm the deletion of a branch and delete it.

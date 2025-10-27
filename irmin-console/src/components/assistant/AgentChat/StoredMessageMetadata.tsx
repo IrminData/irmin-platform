@@ -69,6 +69,10 @@ export const StoredMessageMetadata = ({
 
   // Handle different message types
   if (message.messageType === 'tool_call') {
+    let toolCallData: {
+      name: string;
+      args: Record<string, unknown>;
+    } | null = null;
     try {
       // Clean the content by removing extra tokens that might be appended
       let cleanContent = message.content;
@@ -83,23 +87,7 @@ export const StoredMessageMetadata = ({
       // Fix malformed JSON by properly counting braces outside of strings
       cleanContent = repairJsonStructure(cleanContent);
 
-      const toolCallData = JSON.parse(cleanContent);
-      return (
-        <div className='mt-4 space-y-2'>
-          <div className='text-sm font-medium text-muted-foreground'>
-            {dict.assistant.toolCalls} (1)
-          </div>
-          <Tool defaultOpen={false}>
-            <ToolHeader
-              type={`tool-${toolCallData.name || 'unknown'}`}
-              state='input-available'
-            />
-            <ToolContent>
-              {toolCallData.args && <ToolInput input={toolCallData.args} />}
-            </ToolContent>
-          </Tool>
-        </div>
-      );
+      toolCallData = JSON.parse(cleanContent);
     } catch (error) {
       console.error(
         'Failed to parse tool call:',
@@ -110,6 +98,27 @@ export const StoredMessageMetadata = ({
       // If parsing fails, render as plain text
       return null;
     }
+
+    if (!toolCallData) {
+      return null;
+    }
+
+    return (
+      <div className='mt-4 space-y-2'>
+        <div className='text-sm font-medium text-muted-foreground'>
+          {dict.assistant.toolCalls} (1)
+        </div>
+        <Tool defaultOpen={false}>
+          <ToolHeader
+            type={`tool-${toolCallData.name || 'unknown'}`}
+            state='input-available'
+          />
+          <ToolContent>
+            {toolCallData.args && <ToolInput input={toolCallData.args} />}
+          </ToolContent>
+        </Tool>
+      </div>
+    );
   }
 
   if (message.messageType === 'tool_result') {

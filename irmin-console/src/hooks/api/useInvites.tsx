@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
@@ -131,6 +133,59 @@ export function useInvites() {
   });
 
   // Mutation to send an invite
+  const sendInviteHandlers = useMemo(
+    () =>
+      createMutationHandlers<Invite, InviteWorkspaceUserInput>(
+        queryClient,
+        'invites',
+        {
+          cacheConfig: {
+            primaryQueryKey: invitesQueryKey(workspaceSlug),
+            getItemId: (invite) => invite.id,
+            createOptimisticItem: (
+              input: InviteWorkspaceUserInput,
+              tempId: string
+            ) => ({
+              id: tempId,
+              email: input.email,
+              role: {
+                id: input.roleId,
+                role: 'Loading...',
+                description: '',
+                isOwner: false,
+                isDefault: false,
+              },
+              expires_at: new Date(
+                new Date().getTime() + 7 * 24 * 60 * 60 * 1000
+              ).toISOString(),
+              invited_by: {
+                id: 'temp-user',
+                first_name: 'Current',
+                last_name: 'User',
+                email: '',
+                phone: '',
+                company: '',
+                profile_picture: '',
+              },
+              workspace: {
+                id: 'temp-workspace',
+                name: 'Current Workspace',
+                slug: workspaceSlug,
+                description: '',
+              },
+            }),
+          },
+          onSuccess: (res) => {
+            irminAlert('success', res.message ?? 'Invite sent successfully');
+          },
+          onError: (error) => {
+            irminAlert('error', error.message ?? 'Error sending the invite');
+          },
+        }
+      ),
+    [queryClient, workspaceSlug, irminAlert]
+  );
+
   const sendInviteMutation = useMutation<
     IrminAPIResponse<Invite>,
     Error,
@@ -146,54 +201,7 @@ export function useInvites() {
       });
       return res;
     },
-    ...createMutationHandlers<Invite, InviteWorkspaceUserInput>(
-      queryClient,
-      'invites',
-      {
-        cacheConfig: {
-          primaryQueryKey: invitesQueryKey(workspaceSlug),
-          getItemId: (invite) => invite.id,
-          createOptimisticItem: (
-            input: InviteWorkspaceUserInput,
-            tempId: string
-          ) => ({
-            id: tempId,
-            email: input.email,
-            role: {
-              id: input.roleId,
-              role: 'Loading...',
-              description: '',
-              isOwner: false,
-              isDefault: false,
-            },
-            expires_at: new Date(
-              Date.now() + 7 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-            invited_by: {
-              id: 'temp-user',
-              first_name: 'Current',
-              last_name: 'User',
-              email: '',
-              phone: '',
-              company: '',
-              profile_picture: '',
-            },
-            workspace: {
-              id: 'temp-workspace',
-              name: 'Current Workspace',
-              slug: workspaceSlug,
-              description: '',
-            },
-          }),
-        },
-        onSuccess: (res) => {
-          irminAlert('success', res.message ?? 'Invite sent successfully');
-        },
-        onError: (error) => {
-          irminAlert('error', error.message ?? 'Error sending the invite');
-        },
-      }
-    ),
+    ...sendInviteHandlers,
   });
 
   return {

@@ -123,8 +123,10 @@ function Stage({
   // Handle initial stage changes
   useEffect(() => {
     const newStage = initialStage ?? defaultStage;
-    setStage(newStage);
-    prevStageRef.current = newStage;
+    queueMicrotask(() => {
+      setStage(newStage);
+      prevStageRef.current = newStage;
+    });
   }, [initialStage]);
 
   const [connectionPushSchema, setConnectionPushSchema] =

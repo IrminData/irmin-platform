@@ -45,6 +45,55 @@ import { ConsoleSearchItemType } from '@/types/internal/ConsoleSearch';
 
 import SearchResultsSkeleton from './SearchResultsSkeleton';
 
+// Tag selection component
+function TagSelection({
+  tags,
+  selectedTags,
+  onTagToggle,
+}: {
+  tags: Tag[];
+  selectedTags: string[];
+  onTagToggle: (tagId: string) => void;
+}) {
+  return (
+    <div className='flex flex-wrap gap-2'>
+      {tags.map((tag, index) => (
+        <div
+          key={tag.id}
+          role='button'
+          tabIndex={index}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              onTagToggle(tag.id);
+            }
+          }}
+          onClick={() => onTagToggle(tag.id)}
+          className={`
+            cursor-pointer transition-all
+            hover:scale-105
+          `}
+        >
+          <TagBadge
+            tag={tag}
+            size='sm'
+            className={
+              selectedTags.includes(tag.id)
+                ? `
+                  border-blue-300 bg-blue-100 text-blue-800
+                  dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300
+                `
+                : `
+                  opacity-70
+                  hover:opacity-100
+                `
+            }
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Available search types
 const SEARCH_TYPES = [
   {
@@ -101,14 +150,13 @@ export default function SearchPageComponent() {
 
   // UI state
   const [showFilters, setShowFilters] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [accumulatedResults, setAccumulatedResults] = useState<
     ConsoleSearchItem[]
   >([]);
 
   // Get search results
   const { workspaceSearchQuery } = useWorkspaceSearch(filters, workspaceSlug, {
-    enabled: isInitialized && (filters.query?.length || 0) > 0,
+    enabled: (filters.query?.length || 0) > 0,
   });
 
   // Get static search items
@@ -117,15 +165,8 @@ export default function SearchPageComponent() {
   // Get workspace tags for filtering
   const { workspaceTagsQuery } = useWorkspaceTags();
 
-  // Initialize filters from URL params
-  useEffect(() => {
-    setIsInitialized(true);
-  }, []);
-
   // Update URL when filters change
   useEffect(() => {
-    if (!isInitialized) return;
-
     const params = new URLSearchParams();
     if (filters.query) params.set('q', filters.query);
     if (filters.types?.length) params.set('types', filters.types.join(','));
@@ -140,56 +181,78 @@ export default function SearchPageComponent() {
 
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [filters, isInitialized, router]);
+  }, [filters, router]);
 
   // Convert and accumulate search results
   useEffect(() => {
-    if (!filters.query || filters.query.length === 0) {
-      setAccumulatedResults([]);
-      return;
-    }
-
-    const combinedResults: ConsoleSearchItem[] = [];
-
-    // Add static search items (filtered by query and type filters)
-    const staticItems = staticSearchItemsQuery.data || [];
-    const filteredStaticItems = filterStaticSearchItems(
-      staticItems,
-      filters.query,
-      filters.types
-    );
-
-    combinedResults.push(...filteredStaticItems);
-
-    // Add workspace search results if available
-    if (workspaceSearchQuery.data?.data?.results) {
-      const workspaceResults = workspaceSearchQuery.data.data.results
-        .map((result: SearchResult) =>
-          convertSearchResultToConsoleItem(dict, result, locale, workspaceSlug)
-        )
-        .filter((item): item is ConsoleSearchItem => item !== null)
-        // Apply type filtering to workspace results as well
-        .filter((item) => {
-          if (filters.types && filters.types.length > 0) {
-            return filters.types.includes(item.type);
-          }
-          return true;
-        });
-
-      if (filters.offset === 0) {
-        // First page - add to combined results
-        combinedResults.push(...workspaceResults);
-      } else {
-        // Additional page - append to existing results (only workspace results support pagination)
-        setAccumulatedResults((prev) => [...prev, ...workspaceResults]);
+    // Batch all state updates in a microtask to avoid cascading renders
+    queueMicrotask(() => {
+      if (!filters.query || filters.query.length === 0) {
+        setAccumulatedResults((prev) => (prev.length === 0 ? prev : []));
         return;
       }
-    }
 
-    if (filters.offset === 0) {
-      // First page or new search - replace all results
-      setAccumulatedResults(combinedResults);
-    }
+      if (filters.offset === 0) {
+        // First page or new search - build combined results from scratch
+        const combinedResults: ConsoleSearchItem[] = [];
+
+        // Add static search items (filtered by query and type filters)
+        const staticItems = staticSearchItemsQuery.data || [];
+        const filteredStaticItems = filterStaticSearchItems(
+          staticItems,
+          filters.query,
+          filters.types
+        );
+
+        combinedResults.push(...filteredStaticItems);
+
+        // Add workspace search results if available
+        if (workspaceSearchQuery.data?.data?.results) {
+          const workspaceResults = workspaceSearchQuery.data.data.results
+            .map((result: SearchResult) =>
+              convertSearchResultToConsoleItem(
+                dict,
+                result,
+                locale,
+                workspaceSlug
+              )
+            )
+            .filter((item): item is ConsoleSearchItem => item !== null)
+            .filter((item) => {
+              if (filters.types && filters.types.length > 0) {
+                return filters.types.includes(item.type);
+              }
+              return true;
+            });
+
+          combinedResults.push(...workspaceResults);
+        }
+
+        setAccumulatedResults(combinedResults);
+      } else {
+        // Additional page - append workspace results only
+        if (workspaceSearchQuery.data?.data?.results) {
+          const workspaceResults = workspaceSearchQuery.data.data.results
+            .map((result: SearchResult) =>
+              convertSearchResultToConsoleItem(
+                dict,
+                result,
+                locale,
+                workspaceSlug
+              )
+            )
+            .filter((item): item is ConsoleSearchItem => item !== null)
+            .filter((item) => {
+              if (filters.types && filters.types.length > 0) {
+                return filters.types.includes(item.type);
+              }
+              return true;
+            });
+
+          setAccumulatedResults((prev) => [...prev, ...workspaceResults]);
+        }
+      }
+    });
   }, [
     workspaceSearchQuery.data,
     staticSearchItemsQuery.data,
@@ -199,22 +262,6 @@ export default function SearchPageComponent() {
     filters.types,
     filters.offset,
     dict,
-  ]);
-
-  // Reset accumulated results when search query changes
-  useEffect(() => {
-    if (filters.offset === 0) {
-      setAccumulatedResults([]);
-    }
-  }, [
-    filters.query,
-    filters.types,
-    filters.tags,
-    filters.owner_id,
-    filters.date_from,
-    filters.date_to,
-    filters.limit,
-    filters.offset,
   ]);
 
   // Group results by type
@@ -320,51 +367,6 @@ export default function SearchPageComponent() {
   ).length;
 
   const hasMoreResults = totalWorkspaceResults > workspaceResultsCount;
-
-  // Custom tag selection component
-  const TagSelection = useCallback(
-    ({ tags }: { tags: Tag[] }) => {
-      return (
-        <div className='flex flex-wrap gap-2'>
-          {tags.map((tag, index) => (
-            <div
-              key={tag.id}
-              role='button'
-              tabIndex={index}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleTagToggle(tag.id);
-                }
-              }}
-              onClick={() => handleTagToggle(tag.id)}
-              className={`
-                cursor-pointer transition-all
-                hover:scale-105
-              `}
-            >
-              <TagBadge
-                tag={tag}
-                size='sm'
-                className={
-                  filters.tags?.includes(tag.id)
-                    ? `
-                      border-blue-300 bg-blue-100 text-blue-800
-                      dark:border-blue-700 dark:bg-blue-900/30
-                      dark:text-blue-300
-                    `
-                    : `
-                      opacity-70
-                      hover:opacity-100
-                    `
-                }
-              />
-            </div>
-          ))}
-        </div>
-      );
-    },
-    [filters.tags, handleTagToggle]
-  );
 
   return (
     <div className='mx-auto max-w-6xl space-y-6 p-6'>
@@ -524,7 +526,11 @@ export default function SearchPageComponent() {
               >
                 {dict.workspace.tags}
               </label>
-              <TagSelection tags={workspaceTagsQuery.data.data} />
+              <TagSelection
+                tags={workspaceTagsQuery.data.data}
+                selectedTags={filters.tags || []}
+                onTagToggle={handleTagToggle}
+              />
             </div>
           ) : workspaceTagsQuery.data?.data &&
             workspaceTagsQuery.data.data.length === 0 ? (
@@ -675,7 +681,7 @@ export default function SearchPageComponent() {
       {/* Results */}
       <div className='space-y-6'>
         {/* Results Count */}
-        {filters.query && isInitialized && (
+        {filters.query && (
           <div
             className={`
               text-sm text-gray-600
@@ -804,40 +810,37 @@ export default function SearchPageComponent() {
         )}
 
         {/* No Results */}
-        {!isLoading &&
-          filters.query &&
-          accumulatedResults.length === 0 &&
-          isInitialized && (
-            <div className='py-12 text-center'>
-              <div
-                className={`
-                  mb-4 text-gray-400
-                  dark:text-gray-500
-                `}
-              >
-                <TbSearch size={48} className='mx-auto' />
-              </div>
-              <h3
-                className={`
-                  mb-2 text-lg text-gray-900
-                  dark:text-white
-                `}
-              >
-                {dict.search.noResultsFound}
-              </h3>
-              <p
-                className={`
-                  text-gray-600
-                  dark:text-gray-400
-                `}
-              >
-                {dict.search.tryAdjustingFilters}
-              </p>
+        {!isLoading && filters.query && accumulatedResults.length === 0 && (
+          <div className='py-12 text-center'>
+            <div
+              className={`
+                mb-4 text-gray-400
+                dark:text-gray-500
+              `}
+            >
+              <TbSearch size={48} className='mx-auto' />
             </div>
-          )}
+            <h3
+              className={`
+                mb-2 text-lg text-gray-900
+                dark:text-white
+              `}
+            >
+              {dict.search.noResultsFound}
+            </h3>
+            <p
+              className={`
+                text-gray-600
+                dark:text-gray-400
+              `}
+            >
+              {dict.search.tryAdjustingFilters}
+            </p>
+          </div>
+        )}
 
         {/* Empty State */}
-        {!filters.query && isInitialized && (
+        {!filters.query && (
           <div className='py-12 text-center'>
             <div
               className={`

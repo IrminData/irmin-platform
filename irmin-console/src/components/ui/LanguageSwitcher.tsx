@@ -30,8 +30,11 @@ const LanguageSwitcher = () => {
   const { locale, dict, switchLocale } = useLocale();
   const [isMounted, setIsMounted] = useState(false);
 
+  // Ensure consistent rendering between server and client
   useEffect(() => {
-    setIsMounted(true);
+    queueMicrotask(() => {
+      setIsMounted(true);
+    });
   }, []);
 
   const currentLanguage = useMemo(
@@ -46,15 +49,11 @@ const LanguageSwitcher = () => {
     [switchLocale]
   );
 
-  if (!currentLanguage || !dict || !isMounted)
+  if (!isMounted || !currentLanguage || !dict)
     return <LoadingSkeleton className='h-8' />;
 
   return (
-    <Select
-      value={currentLanguage.code}
-      onValueChange={changeHandler}
-      disabled={!isMounted}
-    >
+    <Select value={currentLanguage.code} onValueChange={changeHandler}>
       <SelectTrigger className='w-[140px]'>
         <SelectValue placeholder={dict.common.selectLanguage}>
           {currentLanguage.name}

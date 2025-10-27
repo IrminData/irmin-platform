@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -14,8 +14,6 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useRepositories } from '@/hooks/api';
 import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
-
-import type { Repository } from '@/types/core/Repository';
 
 import RepositoryList from './RepositoryList';
 
@@ -40,35 +38,33 @@ export default function RepositoriesSection({
   const [isOpen, setIsOpen] = useState(sideModalOpen);
   const { repositoriesQuery } = useRepositories();
 
-  const [filteredItems, setFilteredItems] = useState<Repository[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
-  // Set the initial items when the query data is available
-  const initialDataSet = useRef(false);
-  useEffect(() => {
-    if (initialDataSet.current) return;
-    if (!repositoriesQuery.data?.data) return;
-    initialDataSet.current = true;
-    setFilteredItems(repositoriesQuery.data?.data);
-  }, [repositoriesQuery.data?.data]);
-
-  // Filter items based on search query
+  // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      setFilteredItems(
-        (repositoriesQuery.data?.data ?? []).filter((item) =>
-          item.name
-            .trim()
-            .replace(/\s+/g, '')
-            .toLowerCase()
-            .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-        )
-      );
+      setDebouncedSearchQuery(searchQuery);
     }, 300);
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, repositoriesQuery.data]);
+  }, [searchQuery]);
+
+  // Filter items based on debounced search query
+  const filteredItems = useMemo(
+    () =>
+      (repositoriesQuery.data?.data ?? []).filter((item) =>
+        item.name
+          .trim()
+          .replace(/\s+/g, '')
+          .toLowerCase()
+          .includes(
+            debouncedSearchQuery.trim().replace(/\s+/g, '').toLowerCase()
+          )
+      ),
+    [repositoriesQuery.data?.data, debouncedSearchQuery]
+  );
 
   const closeModal = useCallback(() => {
     setIsOpen(false);

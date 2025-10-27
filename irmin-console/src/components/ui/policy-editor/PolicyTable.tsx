@@ -53,6 +53,53 @@ interface SortState {
   direction: SortDirection;
 }
 
+function SortableHeader({
+  column,
+  children,
+  sortState,
+  onSort,
+}: {
+  column: SortableColumn;
+  children: React.ReactNode;
+  sortState: SortState;
+  onSort: (column: SortableColumn) => void;
+}) {
+  const getSortIcon = () => {
+    if (sortState.column !== column) {
+      return <TbSelector className='size-4 text-muted-foreground' />;
+    }
+
+    if (sortState.direction === 'asc') {
+      return <TbChevronUp className='size-4' />;
+    } else if (sortState.direction === 'desc') {
+      return <TbChevronDown className='size-4' />;
+    }
+
+    return <TbSelector className='size-4 text-muted-foreground' />;
+  };
+
+  return (
+    <div
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSort(column);
+        }
+      }}
+      className={`
+        flex cursor-pointer items-center gap-2 transition-colors select-none
+        hover:text-foreground
+      `}
+      onClick={() => onSort(column)}
+    >
+      {children}
+      {getSortIcon()}
+    </div>
+  );
+}
+
 export default function PolicyTable({
   policies,
   showResourceColumn = true,
@@ -131,47 +178,6 @@ export default function PolicyTable({
     });
   }, [policies, sortState, dict]);
 
-  const getSortIcon = (column: SortableColumn) => {
-    if (sortState.column !== column) {
-      return <TbSelector className='size-4 text-muted-foreground' />;
-    }
-
-    if (sortState.direction === 'asc') {
-      return <TbChevronUp className='size-4' />;
-    } else if (sortState.direction === 'desc') {
-      return <TbChevronDown className='size-4' />;
-    }
-
-    return <TbSelector className='size-4 text-muted-foreground' />;
-  };
-
-  const SortableHeader = ({
-    column,
-    children,
-  }: {
-    column: SortableColumn;
-    children: React.ReactNode;
-  }) => (
-    <div
-      role='button'
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleSort(column);
-        }
-      }}
-      className={`
-        flex cursor-pointer items-center gap-2 transition-colors select-none
-        hover:text-foreground
-      `}
-      onClick={() => handleSort(column)}
-    >
-      {children}
-      {getSortIcon(column)}
-    </div>
-  );
-
   const formatResourceId = (
     resourceType: PolicyResource,
     resourceId?: string
@@ -235,7 +241,11 @@ export default function PolicyTable({
       <TableHeader>
         <TableRow>
           <TableHead className='max-w-[80]'>
-            <SortableHeader column='effect'>
+            <SortableHeader
+              column='effect'
+              sortState={sortState}
+              onSort={handleSort}
+            >
               <div className='flex items-center gap-2'>
                 {dict.policy.effect}
                 <TooltipProvider>
@@ -255,7 +265,11 @@ export default function PolicyTable({
             </SortableHeader>
           </TableHead>
           <TableHead>
-            <SortableHeader column='action'>
+            <SortableHeader
+              column='action'
+              sortState={sortState}
+              onSort={handleSort}
+            >
               <div className='flex items-center gap-2'>
                 {dict.policy.action}
                 <TooltipProvider>
@@ -275,7 +289,11 @@ export default function PolicyTable({
             </SortableHeader>
           </TableHead>
           <TableHead>
-            <SortableHeader column='principal'>
+            <SortableHeader
+              column='principal'
+              sortState={sortState}
+              onSort={handleSort}
+            >
               <div className='flex items-center gap-2'>
                 {dict.policy.principal}
                 <TooltipProvider>
@@ -296,7 +314,11 @@ export default function PolicyTable({
           </TableHead>
           {showResourceColumn && (
             <TableHead>
-              <SortableHeader column='resource'>
+              <SortableHeader
+                column='resource'
+                sortState={sortState}
+                onSort={handleSort}
+              >
                 <div className='flex items-center gap-2'>
                   {dict.policy.resource}
                   <TooltipProvider>
@@ -318,7 +340,11 @@ export default function PolicyTable({
           )}
           {showResourceIdColumn && (
             <TableHead>
-              <SortableHeader column='resourceId'>
+              <SortableHeader
+                column='resourceId'
+                sortState={sortState}
+                onSort={handleSort}
+              >
                 <div className='flex items-center gap-2'>
                   {dict.policy.resourceId}
                   <TooltipProvider>

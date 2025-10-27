@@ -78,10 +78,12 @@ export default function WorkflowWizard({
       const defaultWorkflowable = createDefaultWorkflowable(
         initialWorkflowData.type
       );
-      setWizardData((prev) => ({
-        ...prev,
-        workflowable: defaultWorkflowable,
-      }));
+      queueMicrotask(() => {
+        setWizardData((prev) => ({
+          ...prev,
+          workflowable: defaultWorkflowable,
+        }));
+      });
     }
   }, [initialWorkflowData.type, initialWorkflowData.workflowable]);
 
@@ -89,10 +91,12 @@ export default function WorkflowWizard({
   useEffect(() => {
     if (wizardData.type && !wizardData.workflowable) {
       const defaultWorkflowable = createDefaultWorkflowable(wizardData.type);
-      setWizardData((prev) => ({
-        ...prev,
-        workflowable: defaultWorkflowable,
-      }));
+      queueMicrotask(() => {
+        setWizardData((prev) => ({
+          ...prev,
+          workflowable: defaultWorkflowable,
+        }));
+      });
     }
   }, [wizardData.type, wizardData.workflowable]);
 

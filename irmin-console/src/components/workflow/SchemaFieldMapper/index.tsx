@@ -62,7 +62,9 @@ const SchemaFieldMapper = ({
     if (destinationSchema?.type === 'group') {
       destinationSchema?.children?.forEach((child) => allFiles.add(child.path));
     }
-    setExpandedFiles(allFiles);
+    queueMicrotask(() => {
+      setExpandedFiles(allFiles);
+    });
   }, [sourceSchema, destinationSchema]);
 
   // Auto-map identical fields on schema changes, but only if user hasn't made manual mappings
@@ -74,7 +76,9 @@ const SchemaFieldMapper = ({
         []
       );
       if (result && result.autoMappedCount > 0) {
-        handleMappingsChange(result.newMappings);
+        queueMicrotask(() => {
+          handleMappingsChange(result.newMappings);
+        });
       }
     }
   }, [
@@ -87,7 +91,9 @@ const SchemaFieldMapper = ({
   // Track if user has made manual mappings
   useEffect(() => {
     if (mappings.length > 0) {
-      setHasManualMappings(true);
+      queueMicrotask(() => {
+        setHasManualMappings(true);
+      });
     }
   }, [mappings.length]);
 

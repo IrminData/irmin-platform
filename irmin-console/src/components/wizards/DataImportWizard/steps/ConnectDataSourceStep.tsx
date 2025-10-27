@@ -474,6 +474,7 @@ function ConnectionCreationFlow({
 }) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
+  const [defaultTimestamp] = useState(() => Date.now());
 
   const {
     connectionConfigurationQuery: detailsQuery,
@@ -695,7 +696,7 @@ function ConnectionCreationFlow({
         type: 'text',
         label: dict.connections.create.connectionName,
         required: true,
-        default: `${selectedConnector?.name ?? 'Connection'} ${Date.now()}`,
+        default: `${selectedConnector?.name ?? 'Connection'} ${defaultTimestamp}`,
         example: dict.connections.create.connectionNamePlaceholder,
       },
       ...detailsQuery.data?.data,

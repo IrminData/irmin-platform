@@ -51,14 +51,18 @@ const WorkflowWorkflowableSection = ({
   // Sync workflowable state when workflow data changes, but only if no manual changes
   useEffect(() => {
     if (workflow?.workflowable && !hasManualChanges) {
-      setCurrentWorkflowable(workflow.workflowable);
+      queueMicrotask(() => {
+        setCurrentWorkflowable(workflow.workflowable);
+      });
     }
   }, [workflow?.workflowable, hasManualChanges]);
 
   // Reset manual changes flag when workflow ID changes
   useEffect(() => {
-    setHasManualChanges(false);
-    setCurrentWorkflowable(null);
+    queueMicrotask(() => {
+      setHasManualChanges(false);
+      setCurrentWorkflowable(null);
+    });
   }, [workflowID]);
 
   // Create a wrapper function to handle workflowable updates

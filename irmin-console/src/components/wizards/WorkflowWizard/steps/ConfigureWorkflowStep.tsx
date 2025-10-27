@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,7 @@ function ConfigureWorkflowStep({
   const { dict } = useLocale();
   const { createWorkflowMutation } = useWorkflows();
 
-  const initialWorkflowSchedule = useRef(wizardData.schedule);
+  const [initialWorkflowSchedule] = useState(wizardData.schedule);
 
   const handleCreate = useCallback(async () => {
     try {
@@ -86,7 +86,7 @@ function ConfigureWorkflowStep({
         </div>
         <div className='rounded-md border border-foreground/20 px-2 py-4'>
           <WorkflowScheduleForm
-            initialData={initialWorkflowSchedule.current}
+            initialData={initialWorkflowSchedule}
             disableSaveButton={true}
             updateSchedule={async (newSchedule) => {
               updateWizardData({

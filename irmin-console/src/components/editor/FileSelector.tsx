@@ -88,18 +88,80 @@ const FileSelector = ({
    * @param itemsToRender The items to render (folders or files)
    */
   const renderItems = useCallback(
-    (itemsToRender: EditorItem[]) =>
-      itemsToRender.map((item) => {
-        // Render folder
-        if (item.type === 'folder') {
-          return (
-            <div key={item.path} className='my-1'>
+    (itemsToRender: EditorItem[]) => {
+      const render = (items: EditorItem[]): React.ReactNode[] =>
+        items.map((item) => {
+          // Render folder
+          if (item.type === 'folder') {
+            return (
+              <div key={item.path} className='my-1'>
+                <div
+                  className={`
+                    flex cursor-pointer items-center justify-normal rounded-md
+                    p-1 text-sm
+                    hover:bg-gray-200
+                    dark:hover:bg-gray-800
+                  `}
+                  onClick={() => handleItemClick(item)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleItemClick(item);
+                    }
+                  }}
+                >
+                  {openFolders[item.name] ? (
+                    <TbChevronDown
+                      className='inline-block'
+                      aria-label={`Close folder ${item.name} in the file navigator`}
+                    />
+                  ) : (
+                    <TbChevronRight
+                      className='inline-block'
+                      aria-label={`Open folder ${item.name} in the file navigator`}
+                    />
+                  )}
+                  <span className='ml-2'>
+                    <FiFolder />
+                  </span>
+                  <span
+                    className={`
+                      ml-2
+                      hover:underline
+                    `}
+                    aria-label={`Open ${item.name} folder`}
+                  >
+                    {item.name}
+                  </span>
+                </div>
+                {openFolders[item.name] && (
+                  <div className='pl-6'>{render(item.children ?? [])}</div>
+                )}
+              </div>
+            );
+          }
+
+          // Render file
+          if (item.type === 'file') {
+            const isSelected = item.path === selectedFile;
+            return (
               <div
+                key={item.path}
                 className={`
-                  flex cursor-pointer items-center justify-normal rounded-md p-1
-                  text-sm
-                  hover:bg-gray-200
-                  dark:hover:bg-gray-800
+                  my-1 ml-6 flex cursor-pointer items-center justify-normal
+                  rounded-md p-1 text-sm
+                  ${
+                    isSelected
+                      ? `
+                        bg-gray-200
+                        dark:bg-gray-800
+                      `
+                      : `
+                        hover:bg-gray-200
+                        dark:hover:bg-gray-800
+                      `
+                  }
                 `}
                 onClick={() => handleItemClick(item)}
                 role='button'
@@ -110,85 +172,26 @@ const FileSelector = ({
                   }
                 }}
               >
-                {openFolders[item.name] ? (
-                  <TbChevronDown
-                    className='inline-block'
-                    aria-label={`Close folder ${item.name} in the file navigator`}
-                  />
-                ) : (
-                  <TbChevronRight
-                    className='inline-block'
-                    aria-label={`Open folder ${item.name} in the file navigator`}
-                  />
-                )}
                 <span className='ml-2'>
-                  <FiFolder />
+                  <FiFile />
                 </span>
                 <span
                   className={`
                     ml-2
                     hover:underline
                   `}
-                  aria-label={`Open ${item.name} folder`}
+                  aria-label={`Select file ${item.name}`}
                 >
                   {item.name}
                 </span>
               </div>
-              {openFolders[item.name] && (
-                <div className='pl-6'>{renderItems(item.children ?? [])}</div>
-              )}
-            </div>
-          );
-        }
+            );
+          }
 
-        // Render file
-        if (item.type === 'file') {
-          const isSelected = item.path === selectedFile;
-          return (
-            <div
-              key={item.path}
-              className={`
-                my-1 ml-6 flex cursor-pointer items-center justify-normal
-                rounded-md p-1 text-sm
-                ${
-                  isSelected
-                    ? `
-                      bg-gray-200
-                      dark:bg-gray-800
-                    `
-                    : `
-                      hover:bg-gray-200
-                      dark:hover:bg-gray-800
-                    `
-                }
-              `}
-              onClick={() => handleItemClick(item)}
-              role='button'
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleItemClick(item);
-                }
-              }}
-            >
-              <span className='ml-2'>
-                <FiFile />
-              </span>
-              <span
-                className={`
-                  ml-2
-                  hover:underline
-                `}
-                aria-label={`Select file ${item.name}`}
-              >
-                {item.name}
-              </span>
-            </div>
-          );
-        }
-
-        return null;
-      }),
+          return null;
+        });
+      return render(itemsToRender);
+    },
     [selectedFile, openFolders, handleItemClick]
   );
 

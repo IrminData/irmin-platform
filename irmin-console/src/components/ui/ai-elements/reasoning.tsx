@@ -70,14 +70,16 @@ export const Reasoning = memo(
 
     // Track duration when streaming starts and ends
     useEffect(() => {
-      if (isStreaming) {
-        if (startTime === null) {
-          setStartTime(Date.now());
+      queueMicrotask(() => {
+        if (isStreaming) {
+          if (startTime === null) {
+            setStartTime(Date.now());
+          }
+        } else if (startTime !== null) {
+          setDuration(Math.round((Date.now() - startTime) / 1000));
+          setStartTime(null);
         }
-      } else if (startTime !== null) {
-        setDuration(Math.round((Date.now() - startTime) / 1000));
-        setStartTime(null);
-      }
+      });
     }, [isStreaming, startTime, setDuration]);
 
     // Auto-open when streaming starts, auto-close when streaming ends (once only)

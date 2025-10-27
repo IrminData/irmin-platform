@@ -62,18 +62,22 @@ export function useRepositoryCommits(repositorySlug: string, branch?: string) {
 
   // Reset accumulated commits when branch changes
   useEffect(() => {
-    setAccumulatedCommits([]);
+    queueMicrotask(() => {
+      setAccumulatedCommits([]);
+    });
   }, [branch]);
 
   // Update accumulated commits when new data arrives
   useEffect(() => {
     const newCommits = commitsQuery.data?.data;
     if (newCommits) {
-      setAccumulatedCommits((prev) => {
-        // If after is empty, we're on the first page, so replace the array
-        if (!after) return [...newCommits];
-        // Otherwise append new commits
-        return [...prev, ...newCommits];
+      queueMicrotask(() => {
+        setAccumulatedCommits((prev) => {
+          // If after is empty, we're on the first page, so replace the array
+          if (!after) return [...newCommits];
+          // Otherwise append new commits
+          return [...prev, ...newCommits];
+        });
       });
     }
   }, [commitsQuery.data?.data, after]);

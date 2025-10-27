@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { IoAdd } from 'react-icons/io5';
 import { TbSearch } from 'react-icons/tb';
@@ -15,8 +15,6 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useWorkflows } from '@/hooks/api';
 import { useResourceAllowed, useToggleCreateParam } from '@/hooks/utils';
-
-import type { Workflow } from '@/types/core/Workflow';
 
 import WorkflowList from './WorkflowList';
 
@@ -42,35 +40,33 @@ export default function WorkflowsSection({
 
   const { workflowsQuery } = useWorkflows();
 
-  const [filteredItems, setFilteredItems] = useState<Workflow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
-  // Set the initial items when the query data is available
-  const initialDataSet = useRef(false);
-  useEffect(() => {
-    if (initialDataSet.current) return;
-    if (!workflowsQuery.data?.data) return;
-    initialDataSet.current = true;
-    setFilteredItems((workflowsQuery.data?.data ?? []) as Workflow[]);
-  }, [workflowsQuery.data?.data]);
-
-  // Filter items based on search query
+  // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      setFilteredItems(
-        (workflowsQuery.data?.data ?? []).filter((item) =>
-          item.name
-            .trim()
-            .replace(/\s+/g, '')
-            .toLowerCase()
-            .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-        )
-      );
+      setDebouncedSearchQuery(searchQuery);
     }, 300);
     return () => {
       clearTimeout(handler);
     };
-  }, [searchQuery, workflowsQuery.data?.data]);
+  }, [searchQuery]);
+
+  // Filter items based on debounced search query
+  const filteredItems = useMemo(
+    () =>
+      (workflowsQuery.data?.data ?? []).filter((item) =>
+        item.name
+          .trim()
+          .replace(/\s+/g, '')
+          .toLowerCase()
+          .includes(
+            debouncedSearchQuery.trim().replace(/\s+/g, '').toLowerCase()
+          )
+      ),
+    [workflowsQuery.data?.data, debouncedSearchQuery]
+  );
 
   const closeModal = useCallback(() => {
     setIsOpen(false);

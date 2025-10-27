@@ -103,70 +103,73 @@ const PathSelector = ({
    * @param items The items to render
    */
   const renderItems = useCallback(
-    (items: EditorItem[]) =>
-      items.map((item) => {
-        if (item.type !== 'folder' || item.path === originalItemPath) return;
-        return (
-          <div key={item.path} className='my-1'>
-            <div
-              className={`
-                flex items-center justify-normal rounded-md p-1 text-sm
-                ${
-                  item.path === selectedPath
-                    ? `
-                      bg-gray-200
-                      dark:bg-gray-800
-                    `
-                    : ''
-                }
-              `}
-              onClick={() => handleItemClick(item)}
-              role='button'
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleItemClick(item);
-                }
-              }}
-            >
-              {openFolders[item.name] ? (
-                <TbChevronDown
-                  className={`
-                    inline-block cursor-pointer
-                    hover:bg-gray-100
-                    dark:hover:bg-gray-800
-                  `}
-                  aria-label={`Close folder ${item.name} in the file navigator`}
-                />
-              ) : (
-                <TbChevronRight
-                  className={`
-                    inline-block cursor-pointer
-                    hover:bg-gray-100
-                    dark:hover:bg-gray-800
-                  `}
-                  aria-label={`Open folder ${item.name} in the file navigator`}
-                />
-              )}
-              <span className='ml-2'>
-                <FiFolder />
-              </span>
-              <span
+    (items: EditorItem[]) => {
+      const render = (items: EditorItem[]): React.ReactNode[] =>
+        items.map((item) => {
+          if (item.type !== 'folder' || item.path === originalItemPath) return;
+          return (
+            <div key={item.path} className='my-1'>
+              <div
                 className={`
-                  ml-2 cursor-pointer
-                  hover:underline
+                  flex items-center justify-normal rounded-md p-1 text-sm
+                  ${
+                    item.path === selectedPath
+                      ? `
+                        bg-gray-200
+                        dark:bg-gray-800
+                      `
+                      : ''
+                  }
                 `}
-                aria-label={`Open ${item.name}`}
+                onClick={() => handleItemClick(item)}
+                role='button'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleItemClick(item);
+                  }
+                }}
               >
-                {item.name}
-              </span>
+                {openFolders[item.name] ? (
+                  <TbChevronDown
+                    className={`
+                      inline-block cursor-pointer
+                      hover:bg-gray-100
+                      dark:hover:bg-gray-800
+                    `}
+                    aria-label={`Close folder ${item.name} in the file navigator`}
+                  />
+                ) : (
+                  <TbChevronRight
+                    className={`
+                      inline-block cursor-pointer
+                      hover:bg-gray-100
+                      dark:hover:bg-gray-800
+                    `}
+                    aria-label={`Open folder ${item.name} in the file navigator`}
+                  />
+                )}
+                <span className='ml-2'>
+                  <FiFolder />
+                </span>
+                <span
+                  className={`
+                    ml-2 cursor-pointer
+                    hover:underline
+                  `}
+                  aria-label={`Open ${item.name}`}
+                >
+                  {item.name}
+                </span>
+              </div>
+              {openFolders[item.name] && (
+                <div className='pl-6'>{render(item.children ?? [])}</div>
+              )}
             </div>
-            {openFolders[item.name] && (
-              <div className='pl-6'>{renderItems(item.children ?? [])}</div>
-            )}
-          </div>
-        );
-      }),
+          );
+        });
+      return render(items);
+    },
     [selectedPath, originalItemPath, openFolders, handleItemClick]
   );
 

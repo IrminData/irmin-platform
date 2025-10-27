@@ -67,11 +67,11 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
       ...workflow.workflowable,
       field_mappings: mappings,
     });
-  }, [workflow?.workflowable, mappings, updateWorkflowableMutation]);
+  }, [workflow, mappings, updateWorkflowableMutation]);
 
   const handleReset = useCallback(() => {
     setMappings(workflow?.workflowable?.field_mappings ?? []);
-  }, [workflow?.workflowable?.field_mappings]);
+  }, [workflow]);
 
   const isDirty = useMemo(
     () =>

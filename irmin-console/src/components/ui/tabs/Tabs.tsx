@@ -25,31 +25,35 @@ export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
     const tabsHaveLinks = tabs.some((tab) => tab.link);
     if (!tabsHaveLinks) return;
 
-    // Match by full path
-    const exactMatchTab = tabs.find((tab) => tab.link && pathname === tab.link);
-    if (exactMatchTab) {
-      setActiveTab(exactMatchTab.slug ?? exactMatchTab.name);
-      return;
-    }
+    queueMicrotask(() => {
+      // Match by full path
+      const exactMatchTab = tabs.find(
+        (tab) => tab.link && pathname === tab.link
+      );
+      if (exactMatchTab) {
+        setActiveTab(exactMatchTab.slug ?? exactMatchTab.name);
+        return;
+      }
 
-    // Find the tab with the longest matching prefix
-    let closestMatchTab: TabDetails | undefined;
-    let maxPrefixLength = 0;
+      // Find the tab with the longest matching prefix
+      let closestMatchTab: TabDetails | undefined;
+      let maxPrefixLength = 0;
 
-    tabs.forEach((tab) => {
-      if (
-        tab.link &&
-        pathname.startsWith(tab.link) &&
-        tab.link.length > maxPrefixLength
-      ) {
-        closestMatchTab = tab;
-        maxPrefixLength = tab.link.length;
+      tabs.forEach((tab) => {
+        if (
+          tab.link &&
+          pathname.startsWith(tab.link) &&
+          tab.link.length > maxPrefixLength
+        ) {
+          closestMatchTab = tab;
+          maxPrefixLength = tab.link.length;
+        }
+      });
+
+      if (closestMatchTab) {
+        setActiveTab(closestMatchTab.slug ?? closestMatchTab.name);
       }
     });
-
-    if (closestMatchTab) {
-      setActiveTab(closestMatchTab.slug ?? closestMatchTab.name);
-    }
   }, [pathname, tabs]);
 
   const renderTabContent = () => {
