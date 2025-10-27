@@ -1,4 +1,9 @@
 /**
+ * ObjectType represents the type of the object ("group", "structured", or "binary").
+ */
+type ObjectType = 'group' | 'structured' | 'binary';
+
+/**
  * Type definition for the schema of one of the objects
  */
 export type ObjectSchema = {
@@ -6,46 +11,20 @@ export type ObjectSchema = {
   name: string;
   /** Path of the object */
   path: string;
+  /** Type of the object */
+  type: ObjectType;
   /** Last modified timestamp */
   last_modified?: string;
   /** (optional) A brief description of the object */
   description?: string;
-} & (SchemaObjectBinaryItem | SchemaObjectGroup | SchemaObjectStructuredItem);
-
-/**
- * Schema Object properties for structured items, like tables, which can be described using JSON Schema.
- */
-type SchemaObjectStructuredItem = {
-  /** Indicates that the object is a structured item */
-  type: 'structured';
   /** Defines the schema of the structured object (like a table, json object, etc.) */
-  schema: JSONSchema;
+  schema?: JSONSchema;
   /** (optional) size of the object in bytes */
-  size: number;
+  size?: number;
   /** MIME type of the object's content, for example application/json, text/csv or application/vnd.apache.parquet. Can be unknown. */
   content_type?: string;
-};
-
-/**
- * Schema Object properties for binary items, like images, which can not be described using JSON Schema.
- */
-type SchemaObjectBinaryItem = {
-  /** Indicates that the object is a binary item */
-  type: 'binary';
-  /** (optional) size of the object in bytes */
-  size: number;
-  /** MIME type of the object's content, for example image/png, application/pdf or video/mp4. Can be unknown. */
-  content_type?: string;
-};
-
-/**
- * Schema Object properties for groups of objects, like a folder, which can contain other objects.
- */
-type SchemaObjectGroup = {
-  /** Indicates that the object is a group of items */
-  type: 'group';
   /** List of children objects in the group */
-  children: ObjectSchema[];
+  children?: ObjectSchema[];
   /** (optional) restrictions on the group */
   restrictions?: GroupSchemaRestrictions;
 };
@@ -88,7 +67,14 @@ type GroupSchemaRestrictions = {
  */
 export interface JSONSchema {
   /** Specifies the JSON Schema data type (e.g., 'object', 'array', 'string'). */
-  type: 'array' | 'boolean' | 'null' | 'number' | 'object' | 'string';
+  type:
+    | 'array'
+    | 'boolean'
+    | 'null'
+    | 'number'
+    | 'object'
+    | 'string'
+    | 'integer';
   /** Defines the fields and respective schemas when the type is 'object'. */
   properties?: Record<string, JSONSchema>;
   /** Lists the required fields within the object. */
@@ -115,4 +101,29 @@ export interface JSONSchema {
   maxLength?: number;
   /** For string values, defines a regex pattern to match. */
   pattern?: string;
+  /** Content encoding for binary data (e.g., 'base64'). */
+  contentEncoding?: string;
+  /** Content media type for binary data (e.g., 'application/octet-stream'). */
+  contentMediaType?: string;
+  /** For array values, defines the minimum number of items. */
+  minItems?: number;
+  /** For array values, defines the maximum number of items. */
+  maxItems?: number;
+  /** Extension fields for metadata and traceability */
+  /** Original DuckDB type information (e.g., 'DECIMAL(10,2)'). */
+  'x-original-duckdb-type'?: string;
+  /** Decimal precision for numeric types. */
+  'x-decimal-precision'?: number;
+  /** Decimal scale for numeric types. */
+  'x-decimal-scale'?: number;
+  /** DuckDB type information (e.g., 'INTERVAL'). */
+  'x-duckdb-type'?: string;
+  /** Irmin metadata (repository, path, ref). */
+  'x-irmin'?: Record<string, string>;
+  /** Irmin schema version. */
+  'x-irmin-schema-version'?: string;
+  /** How the schema was inferred (e.g., 'duckdb-information_schema'). */
+  'x-inferred-by'?: string;
+  /** List of unmapped types that couldn't be processed. */
+  'x-unmapped-types'?: string[];
 }

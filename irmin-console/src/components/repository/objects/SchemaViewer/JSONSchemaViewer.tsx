@@ -14,7 +14,7 @@ export function JSONSchemaViewer({
   isExpanded = false,
 }: {
   /** Schema to visualise */
-  schema: JSONSchema;
+  schema: JSONSchema | undefined;
   /** Whether to start expanded */
   isExpanded?: boolean;
 }) {
@@ -31,7 +31,7 @@ export function JSONSchemaViewer({
    * @returns nested JSX or null
    */
   const renderProperties = () => {
-    if (!schema.properties) return null;
+    if (!schema?.properties) return null;
 
     return (
       <div className='mt-2 ml-4 space-y-2'>
@@ -130,7 +130,7 @@ export function JSONSchemaViewer({
           }
         }}
       >
-        {['object', 'array'].includes(schema.type) ? (
+        {['object', 'array'].includes(schema?.type ?? '') ? (
           <>
             {expanded ? (
               <MdKeyboardArrowDown
@@ -153,9 +153,9 @@ export function JSONSchemaViewer({
                 dark:text-gray-200
               `}
             >
-              {schema.type === 'object'
-                ? `Object with ${Object.keys(schema.properties || {}).length} properties`
-                : `Array of ${schema.items?.type}s`}
+              {schema?.type === 'object'
+                ? `Object with ${Object.keys(schema?.properties || {}).length} properties`
+                : `Array of ${schema?.items?.type}s`}
             </span>
           </>
         ) : (
@@ -165,7 +165,7 @@ export function JSONSchemaViewer({
               dark:text-gray-200
             `}
           >
-            {schema.type}
+            {schema?.type}
           </span>
         )}
       </div>
@@ -173,10 +173,10 @@ export function JSONSchemaViewer({
       {expanded && (
         <>
           {/* if object, render its properties */}
-          {schema.type === 'object' && renderProperties()}
+          {schema?.type === 'object' && renderProperties()}
 
           {/* if array, render its item schema */}
-          {schema.type === 'array' && schema.items && (
+          {schema?.type === 'array' && schema?.items && (
             <div className='mt-2 ml-4'>
               <span
                 className={`
@@ -186,7 +186,7 @@ export function JSONSchemaViewer({
               >
                 Items:
               </span>
-              <JSONSchemaViewer schema={schema.items} isExpanded={false} />
+              <JSONSchemaViewer schema={schema?.items} isExpanded={false} />
             </div>
           )}
         </>

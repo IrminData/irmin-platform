@@ -392,7 +392,10 @@ export default function ObjectDetails({
               <div className='flex w-full justify-between gap-1'>
                 <span className='font-semibold'>{dict.common.size}:</span>
                 <span className='text-right'>
-                  {(selectedObjectSchema.size / 1024).toFixed(3)}KB
+                  {selectedObjectSchema.size
+                    ? (selectedObjectSchema.size / 1024).toFixed(3)
+                    : 'N/A'}
+                  KB
                 </span>
               </div>
             </>
