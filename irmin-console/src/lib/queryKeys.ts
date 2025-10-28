@@ -169,13 +169,15 @@ export const connectionQueryKey = (
 export const connectionSchemaQueryKey = (
   workspaceSlug: string,
   connectionID: string,
-  operationMethod?: string
+  operationMethod?: string,
+  paths?: string[]
 ) =>
   [
     'connection-schema',
     workspaceSlug,
     connectionID,
     operationMethod ?? 'pull',
+    paths && paths.length > 0 ? [...paths].sort().join(',') : '',
   ] as const;
 
 export const connectorConfigurationQueryKey = (

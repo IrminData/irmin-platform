@@ -25,7 +25,10 @@ export default async function ConnectionSchemaPage(props: {
   const path =
     typeof searchParams.path === 'string' ? searchParams.path : undefined;
   const operationMethod =
-    typeof searchParams.method === 'string' ? searchParams.method : 'pull';
+    typeof searchParams.method === 'string' &&
+    (searchParams.method === 'pull' || searchParams.method === 'push')
+      ? searchParams.method
+      : 'pull';
 
   return (
     <ConnectionSchemaSection

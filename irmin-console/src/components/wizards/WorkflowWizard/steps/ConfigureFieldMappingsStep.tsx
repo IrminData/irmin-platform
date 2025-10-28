@@ -42,7 +42,12 @@ function ConfigureFieldMappingsStep({
 
   const { connectionSchemaQuery } = useConnectionSchema(
     workflowable?.connection_id ?? '',
-    workflowable?.type === 'import' ? 'read' : 'write'
+    workflowable?.type === 'import' ? 'pull' : 'push', // For import workflows, we read from connection, so operation method is "pull", for export workflows, we write to connection, so operation method is "push"
+    workflowable?.type === 'import'
+      ? workflowable.import_from_connection_paths
+      : workflowable?.type === 'export'
+        ? [workflowable.export_to_connection_path]
+        : undefined
   );
 
   const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(

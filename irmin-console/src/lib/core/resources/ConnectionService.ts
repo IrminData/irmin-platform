@@ -311,20 +311,26 @@ class ConnectionService {
    * @param props.workspace - The workspace slug.
    * @param props.connectionID - The connection's identifier.
    * @param props.operationMethod - The operation method (e.g., 'pull', 'push').
+   * @param props.path - The path within the connection to get schema for, empty string means the root path.
    * @returns IrminAPIResponse containing the schema.
    */
   async fetchConnectionSchema({
     workspace,
     connectionID,
     operationMethod,
+    path,
   }: {
     workspace: string;
     connectionID: string;
     operationMethod: string;
+    path?: string;
   }): Promise<IrminAPIResponse<ObjectSchema>> {
     try {
+      const urlParams = new URLSearchParams();
+      urlParams.append('operation_method', operationMethod);
+      if (path) urlParams.append('path', path);
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/connections/${connectionID}/schema?operation_method=${operationMethod}`,
+        `/v1/workspaces/${workspace}/connections/${connectionID}/schema?${urlParams.toString()}`,
         { method: 'GET' }
       )) as IrminAPIResponse<ObjectSchema>;
       return response;

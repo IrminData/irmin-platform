@@ -46,7 +46,8 @@ export default function ConfigureFieldMappingsStep({
 
   const { connectionSchemaQuery } = useConnectionSchema(
     connectionId,
-    'read' // For import workflows, we read from connection
+    'pull', // For import workflows, we read from connection, so operation method is "pull"
+    wizardData.workflowData.import_from_connection_paths // Fetch schemas only for the selected paths
   );
 
   const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(

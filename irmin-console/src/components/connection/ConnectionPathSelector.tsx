@@ -155,7 +155,7 @@ const ConnectionPathSelector = ({
 }: {
   rootSchema?: ObjectSchema;
   connectionId: string;
-  operationMethod?: string;
+  operationMethod?: 'pull' | 'push';
   defaultPath?: string;
   onPathChange: (path: string) => void;
   defaultExpanded?: boolean;
@@ -178,7 +178,10 @@ const ConnectionPathSelector = ({
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [isValidPath, setIsValidPath] = useState<boolean>(true);
 
-  const { connectionSchemaQuery } = useConnectionSchema(connectionId);
+  const { connectionSchemaQuery } = useConnectionSchema(
+    connectionId,
+    operationMethod
+  );
 
   const loading = connectionSchemaQuery.isLoading || loadingProp;
 

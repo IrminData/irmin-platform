@@ -19,13 +19,14 @@ const ConnectionSchemaSection = ({
   operationMethod,
 }: {
   focusedPath?: string;
-  operationMethod?: string;
+  operationMethod?: 'pull' | 'push';
 }) => {
   const { connectionID } = useConnectionContext();
   const { dict } = useLocale();
   const { connectionSchemaQuery } = useConnectionSchema(
     connectionID,
-    operationMethod
+    operationMethod,
+    undefined // Get the root schema, so no paths specified
   );
 
   if (connectionSchemaQuery.isLoading) {

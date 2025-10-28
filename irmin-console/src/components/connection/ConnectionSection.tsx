@@ -109,7 +109,7 @@ const ConnectionSection = () => {
       description={dict.common.weEncounteredError}
     >
       <div className='relative container mx-auto max-w-7xl'>
-        <div className='my-4 flex flex-col gap-4 p-4'>
+        <div className='flex flex-col gap-4 px-4 pb-4'>
           <div
             className={`
               flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4
@@ -127,13 +127,13 @@ const ConnectionSection = () => {
             {Object.entries(connection.details).map(([key, value]) => (
               <div className='flex flex-col gap-1' key={`details-${key}`}>
                 <p className='text-sm opacity-60'>{key}</p>
-                <p className='text-base'>{`${value}`}</p>
+                <p className='text-base'>{`${value ?? '-'}`}</p>
               </div>
             ))}
             {Object.entries(connection.settings).map(([key, value]) => (
               <div className='flex flex-col gap-1' key={`settings-${key}`}>
                 <p className='text-sm opacity-60'>{key}</p>
-                <p className='text-base'>{`${value}`}</p>
+                <p className='text-base'>{`${value ?? '-'}`}</p>
               </div>
             ))}
           </div>

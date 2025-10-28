@@ -20,27 +20,22 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '**.irmin.dev',
-        port: '',
       },
       {
         protocol: 'https',
         hostname: '**.irmin.co',
-        port: '',
       },
       {
         protocol: 'https',
         hostname: '**.irmin.app',
-        port: '',
       },
       {
         protocol: 'https',
         hostname: '**.railway.app',
-        port: '',
       },
       {
         protocol: 'https',
         hostname: 'img.clerk.com',
-        port: '',
       },
     ],
   },
