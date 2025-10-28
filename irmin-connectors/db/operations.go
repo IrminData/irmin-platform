@@ -15,7 +15,7 @@ type Operation struct {
 	Details    datatypes.JSON `json:"details"    gorm:"type:json"`
 	Settings   datatypes.JSON `json:"settings"   gorm:"type:json"`
 	Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
-	ConfigHash string         `json:"configHash" gorm:"type:varchar(64);not null;index:idx_connector_config"`
+	ConfigHash *string        `json:"configHash" gorm:"type:varchar(64);index:idx_connector_config"`
 
 	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
@@ -68,7 +68,7 @@ func (d *Database) DeleteOperation(id uint) error {
 // and configuration hash using the main database connection.
 func (d *Database) FindOperationByConfigHash(
 	connectorRegistrationID uint,
-	configHash string,
+	configHash *string,
 ) (*Operation, error) {
 	return findOperationByConfigHash(d.DB, connectorRegistrationID, configHash)
 }
@@ -79,7 +79,7 @@ func (d *Database) FindOperationByConfigHash(
 func FindOperationByConfigHashTx(
 	tx *gorm.DB,
 	connectorRegistrationID uint,
-	configHash string,
+	configHash *string,
 ) (*Operation, error) {
 	return findOperationByConfigHash(tx, connectorRegistrationID, configHash)
 }
@@ -89,7 +89,7 @@ func FindOperationByConfigHashTx(
 func findOperationByConfigHash(
 	db *gorm.DB,
 	connectorRegistrationID uint,
-	configHash string,
+	configHash *string,
 ) (*Operation, error) {
 	var operation Operation
 	err := db.Where(&Operation{

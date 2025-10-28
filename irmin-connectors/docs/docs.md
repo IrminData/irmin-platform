@@ -106,7 +106,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) DeleteOperation\(id uint\) error](<#Database.DeleteOperation>)
   - [func \(d \*Database\) DeleteSubscriptionsByConnectorRegistrationID\(connectorRegistrationID uint\) error](<#Database.DeleteSubscriptionsByConnectorRegistrationID>)
   - [func \(d \*Database\) DeleteSubscriptionsByOperationID\(operationID uint\) error](<#Database.DeleteSubscriptionsByOperationID>)
-  - [func \(d \*Database\) FindOperationByConfigHash\(connectorRegistrationID uint, configHash string\) \(\*Operation, error\)](<#Database.FindOperationByConfigHash>)
+  - [func \(d \*Database\) FindOperationByConfigHash\(connectorRegistrationID uint, configHash \*string\) \(\*Operation, error\)](<#Database.FindOperationByConfigHash>)
   - [func \(d \*Database\) GetAllConnectorRegistrations\(\) \(\[\]ConnectorRegistration, error\)](<#Database.GetAllConnectorRegistrations>)
   - [func \(d \*Database\) GetAllOperations\(\) \(\[\]Operation, error\)](<#Database.GetAllOperations>)
   - [func \(d \*Database\) GetAllSubscriptions\(\) \(\[\]Subscription, error\)](<#Database.GetAllSubscriptions>)
@@ -120,7 +120,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
   - [func \(d \*Database\) RunRawQuery\(sqlQuery string, args ...any\) error](<#Database.RunRawQuery>)
 - [type Operation](<#Operation>)
-  - [func FindOperationByConfigHashTx\(tx \*gorm.DB, connectorRegistrationID uint, configHash string\) \(\*Operation, error\)](<#FindOperationByConfigHashTx>)
+  - [func FindOperationByConfigHashTx\(tx \*gorm.DB, connectorRegistrationID uint, configHash \*string\) \(\*Operation, error\)](<#FindOperationByConfigHashTx>)
 - [type Subscription](<#Subscription>)
 
 
@@ -308,7 +308,7 @@ DeleteSubscriptionsByOperationID removes all subscriptions associated with the s
 ### func \(\*Database\) FindOperationByConfigHash
 
 ```go
-func (d *Database) FindOperationByConfigHash(connectorRegistrationID uint, configHash string) (*Operation, error)
+func (d *Database) FindOperationByConfigHash(connectorRegistrationID uint, configHash *string) (*Operation, error)
 ```
 
 FindOperationByConfigHash retrieves an Operation record matching the connector registration ID and configuration hash using the main database connection.
@@ -433,7 +433,7 @@ type Operation struct {
     Details    datatypes.JSON `json:"details"    gorm:"type:json"`
     Settings   datatypes.JSON `json:"settings"   gorm:"type:json"`
     Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
-    ConfigHash string         `json:"configHash" gorm:"type:varchar(64);not null;index:idx_connector_config"`
+    ConfigHash *string        `json:"configHash" gorm:"type:varchar(64);index:idx_connector_config"`
 
     ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
     Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
@@ -444,7 +444,7 @@ type Operation struct {
 ### func FindOperationByConfigHashTx
 
 ```go
-func FindOperationByConfigHashTx(tx *gorm.DB, connectorRegistrationID uint, configHash string) (*Operation, error)
+func FindOperationByConfigHashTx(tx *gorm.DB, connectorRegistrationID uint, configHash *string) (*Operation, error)
 ```
 
 FindOperationByConfigHashTx retrieves an Operation record matching the connector registration ID and configuration hash using the provided transaction context. This should be used within transactions to avoid race conditions.

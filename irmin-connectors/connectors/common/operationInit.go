@@ -121,7 +121,7 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 		existingOp, findErr := db.FindOperationByConfigHashTx(
 			tx,
 			connectorRegistration.ID,
-			configHash,
+			&configHash,
 		)
 		if findErr != nil && !errors.Is(findErr, gorm.ErrRecordNotFound) {
 			return findErr
@@ -138,7 +138,7 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 			Details:                 datatypes.JSON(details),
 			Settings:                datatypes.JSON(settings),
 			Token:                   operationToken,
-			ConfigHash:              configHash,
+			ConfigHash:              &configHash,
 			ConnectorRegistrationID: connectorRegistration.ID,
 		}
 
