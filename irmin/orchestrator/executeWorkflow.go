@@ -243,12 +243,24 @@ func (o *Orchestrator) executeWorkflowableByType(
 func (o *Orchestrator) getWorkflowableByType(workflow *db.Workflow) (any, error) {
 	switch workflow.Type {
 	case irminmodels.WorkflowableTypeAction:
+		if workflow.ActionID == nil {
+			return nil, errors.New("workflow action ID is nil")
+		}
 		return o.db.GetActionWorkflowableByID(*workflow.ActionID)
 	case irminmodels.WorkflowableTypeExport:
+		if workflow.ExportID == nil {
+			return nil, errors.New("workflow export ID is nil")
+		}
 		return o.db.GetExportWorkflowableByID(*workflow.ExportID)
 	case irminmodels.WorkflowableTypeImport:
+		if workflow.ImportID == nil {
+			return nil, errors.New("workflow import ID is nil")
+		}
 		return o.db.GetImportWorkflowableByID(*workflow.ImportID)
 	case irminmodels.WorkflowableTypePipeline:
+		if workflow.PipelineID == nil {
+			return nil, errors.New("workflow pipeline ID is nil")
+		}
 		return o.db.GetPipelineWorkflowableByID(*workflow.PipelineID)
 	default:
 		return nil, fmt.Errorf("unknown workflow type: %s", workflow.Type)
@@ -272,8 +284,12 @@ func (o *Orchestrator) executeWorkflowWithContext(
 
 		wf, err := o.getWorkflowableByType(workflow)
 		if err != nil {
-			allAttemptsLogs = append(allAttemptsLogs, fmt.Sprintf("Failed to get workflowable: %v", err))
-			continue
+			errorMsg := fmt.Sprintf("Failed to get workflowable: %v", err)
+			o.logger.ErrorContext(ctx, errorMsg, "workflow_id", workflow.ID, "workflow_type", workflow.Type)
+			allAttemptsLogs = append(allAttemptsLogs, errorMsg)
+			// If we can't get the workflowable, there's no point retrying
+			allAttemptsFailed = true
+			break
 		}
 
 		logs, err := o.executeWorkflowableByType(ctx, workflow, wf)

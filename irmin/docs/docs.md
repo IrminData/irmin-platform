@@ -2151,7 +2151,10 @@ import "irmin-api/db"
 - [func LockKeyTx\(tx \*gorm.DB, key string\) error](<#LockKeyTx>)
 - [func SanitizeSearchValue\(value string\) string](<#SanitizeSearchValue>)
 - [func TryLockKey\(db \*gorm.DB, key string\) \(bool, error\)](<#TryLockKey>)
+- [func TryLockKeyConn\(ctx context.Context, conn \*pgxpool.Conn, key string\) \(bool, error\)](<#TryLockKeyConn>)
+- [func TryLockKeyTx\(tx \*gorm.DB, key string\) \(bool, error\)](<#TryLockKeyTx>)
 - [func UnlockKey\(db \*gorm.DB, key string\) error](<#UnlockKey>)
+- [func UnlockKeyConn\(ctx context.Context, conn \*pgxpool.Conn, key string\) error](<#UnlockKeyConn>)
 - [func ValidateFieldMappings\(fieldMappings map\[string\]string\) map\[string\]string](<#ValidateFieldMappings>)
 - [func ValidateSearchToken\(token SearchToken\) bool](<#ValidateSearchToken>)
 - [type APIToken](<#APIToken>)
@@ -2506,7 +2509,7 @@ LockKey acquires a session\-scoped advisory lock, blocking until available. The 
 func LockKeyTx(tx *gorm.DB, key string) error
 ```
 
-LockKeyTx takes a namespaced key and grabs a 64\-bit transactional advisory lock.
+LockKeyTx takes a namespaced key and grabs a 64\-bit transactional advisory lock. This is a blocking lock that will wait until the lock is available.
 
 <a name="SanitizeSearchValue"></a>
 ## func SanitizeSearchValue
@@ -2526,6 +2529,24 @@ func TryLockKey(db *gorm.DB, key string) (bool, error)
 
 TryLockKey attempts to acquire a session\-scoped advisory lock without blocking. Returns true if the lock was acquired, false if it's already held by another session. The lock must be explicitly released with UnlockKey.
 
+<a name="TryLockKeyConn"></a>
+## func TryLockKeyConn
+
+```go
+func TryLockKeyConn(ctx context.Context, conn *pgxpool.Conn, key string) (bool, error)
+```
+
+TryLockKeyConn attempts to acquire a session\-scoped advisory lock using a pgx connection. This ensures the lock is acquired on a specific connection that must be used for unlocking. Returns true if the lock was acquired, false if it's already held by another session. The lock must be explicitly released with UnlockKeyConn using the same connection.
+
+<a name="TryLockKeyTx"></a>
+## func TryLockKeyTx
+
+```go
+func TryLockKeyTx(tx *gorm.DB, key string) (bool, error)
+```
+
+TryLockKeyTx attempts to acquire a 64\-bit transactional advisory lock without blocking. Returns true if the lock was acquired, false if it's already held by another transaction.
+
 <a name="UnlockKey"></a>
 ## func UnlockKey
 
@@ -2534,6 +2555,15 @@ func UnlockKey(db *gorm.DB, key string) error
 ```
 
 UnlockKey releases a session\-scoped advisory lock. Returns ErrLockNotHeld if the lock was not held by the current session.
+
+<a name="UnlockKeyConn"></a>
+## func UnlockKeyConn
+
+```go
+func UnlockKeyConn(ctx context.Context, conn *pgxpool.Conn, key string) error
+```
+
+UnlockKeyConn releases a session\-scoped advisory lock using a pgx connection. This must be called with the same connection that was used to acquire the lock. Returns ErrLockNotHeld if the lock was not held by the current session.
 
 <a name="ValidateFieldMappings"></a>
 ## func ValidateFieldMappings

@@ -126,7 +126,7 @@ func LockKey(db *gorm.DB, key string) error
 
 func LockKeyTx(tx *gorm.DB, key string) error
     LockKeyTx takes a namespaced key and grabs a 64-bit transactional advisory
-    lock.
+    lock. This is a blocking lock that will wait until the lock is available.
 
 func SanitizeSearchValue(value string) string
     SanitizeSearchValue sanitizes a search value for use in ILIKE patterns.
@@ -136,9 +136,27 @@ func TryLockKey(db *gorm.DB, key string) (bool, error)
     blocking. Returns true if the lock was acquired, false if it's already held
     by another session. The lock must be explicitly released with UnlockKey.
 
+func TryLockKeyConn(ctx context.Context, conn *pgxpool.Conn, key string) (bool, error)
+    TryLockKeyConn attempts to acquire a session-scoped advisory lock using a
+    pgx connection. This ensures the lock is acquired on a specific connection
+    that must be used for unlocking. Returns true if the lock was acquired,
+    false if it's already held by another session. The lock must be explicitly
+    released with UnlockKeyConn using the same connection.
+
+func TryLockKeyTx(tx *gorm.DB, key string) (bool, error)
+    TryLockKeyTx attempts to acquire a 64-bit transactional advisory lock
+    without blocking. Returns true if the lock was acquired, false if it's
+    already held by another transaction.
+
 func UnlockKey(db *gorm.DB, key string) error
     UnlockKey releases a session-scoped advisory lock. Returns ErrLockNotHeld if
     the lock was not held by the current session.
+
+func UnlockKeyConn(ctx context.Context, conn *pgxpool.Conn, key string) error
+    UnlockKeyConn releases a session-scoped advisory lock using a pgx
+    connection. This must be called with the same connection that was used to
+    acquire the lock. Returns ErrLockNotHeld if the lock was not held by the
+    current session.
 
 func ValidateFieldMappings(fieldMappings map[string]string) map[string]string
     ValidateFieldMappings validates and filters field mappings to ensure they

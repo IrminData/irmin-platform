@@ -258,7 +258,7 @@ func setupServices(
 	if env.OrchestratorEnabled {
 		go func() {
 			if orchestratorStartErr := orchestrator.StartOrchestrator(context.Background()); orchestratorStartErr != nil {
-				log.Printf("Orchestrator error: %v", err)
+				log.Printf("Orchestrator error: %v", orchestratorStartErr)
 			}
 		}()
 	}

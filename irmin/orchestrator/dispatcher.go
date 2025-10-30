@@ -45,47 +45,93 @@ func (o *Orchestrator) StartDispatcher(ctx context.Context) error {
 	return o.processNotifications(ctx, notificationChan)
 }
 
-// startNotificationListener starts a goroutine that listens for PostgreSQL notifications.
+// startNotificationListener listens for PostgreSQL notifications and sends them to the channel.
+// Uses advisory locking to ensure only one process across all instances listens for notifications.
+// This function blocks and holds the lock for its entire lifetime.
 func (o *Orchestrator) startNotificationListener(ctx context.Context, notificationChan chan<- string) {
-	// Start listening for notifications
-	cleanup, err := o.db.ListenForNotifications(ctx, "workflow_run_status")
+	// Acquire a connection to hold the advisory lock for the listener's lifetime
+	lockConn, err := o.db.GetPgxConn(ctx)
 	if err != nil {
-		o.logger.ErrorContext(ctx, "failed to start listening for notifications", "error", err)
+		o.logger.ErrorContext(ctx, "failed to acquire connection for notification listener lock", "error", err)
 		return
 	}
+	defer lockConn.Release()
+
+	// Try to acquire a session-scoped advisory lock to become the notification listener
+	// Only one process across all instances (including prefork children) will get this lock
+	lockKey := "orchestrator:notification_listener"
+	o.logger.DebugContext(ctx, "attempting to acquire notification listener lock")
+
+	locked, lockErr := db.TryLockKeyConn(ctx, lockConn, lockKey)
+	if lockErr != nil {
+		o.logger.ErrorContext(ctx, "error acquiring notification listener lock", "error", lockErr)
+		return
+	}
+	if !locked {
+		// Another process is already listening for notifications
+		o.logger.InfoContext(ctx, "notification listener already running in another process, skipping")
+		return
+	}
+
+	// We got the lock - this process is the notification listener
+	o.logger.WarnContext(ctx, "🎯 ACQUIRED notification listener lock - this process will handle all notifications")
+
+	// Ensure the lock is released when done
 	defer func() {
-		if cleanupErr := cleanup(); cleanupErr != nil {
-			o.logger.ErrorContext(ctx, "failed to cleanup notification listener", "error", cleanupErr)
+		if unlockErr := db.UnlockKeyConn(ctx, lockConn, lockKey); unlockErr != nil {
+			o.logger.ErrorContext(ctx, "error releasing notification listener lock", "error", unlockErr)
 		}
 	}()
 
-	// Background goroutine to handle notifications
-	go func() {
-		for {
-			// Wait for notification with timeout
-			notification, waitForNotificationErr := o.db.WaitForNotification(ctx, "workflow_run_status")
+	// Start listening for notifications on a separate connection
+	// We need a different connection because we're holding lockConn for the lock
+	listenConn, err := o.db.GetPgxConn(ctx)
+	if err != nil {
+		o.logger.ErrorContext(ctx, "failed to acquire connection for notification listening", "error", err)
+		return
+	}
+	defer listenConn.Release()
 
-			if waitForNotificationErr != nil {
-				if errors.Is(waitForNotificationErr, context.DeadlineExceeded) {
-					continue
-				}
-				if errors.Is(waitForNotificationErr, context.Canceled) {
-					return
-				}
-				o.logger.ErrorContext(ctx, "error waiting for notification", "error", waitForNotificationErr)
+	// Start listening on the notification connection
+	if _, listenExecErr := listenConn.Exec(ctx, "LISTEN workflow_run_status"); listenExecErr != nil {
+		o.logger.ErrorContext(ctx, "failed to start listening for notifications", "error", listenExecErr)
+		return
+	}
+	o.logger.InfoContext(ctx, "started listening for notifications on workflow_run_status channel")
+
+	// Listen for notifications using the same connection that's listening
+	// This keeps the function alive and the lock held
+	for {
+		// Wait for notification with timeout on the listening connection
+		notification, waitForNotificationErr := listenConn.Conn().WaitForNotification(ctx)
+		if waitForNotificationErr != nil {
+			if errors.Is(waitForNotificationErr, context.Canceled) {
+				o.logger.InfoContext(ctx, "notification listener context cancelled, stopping")
 				return
 			}
-
-			select {
-			case notificationChan <- notification.Payload:
-			case <-ctx.Done():
-				return
-			default:
-				// Channel is full, log warning and skip
-				o.logger.WarnContext(ctx, "notification channel full, skipping notification")
-			}
+			o.logger.ErrorContext(ctx, "error waiting for notification", "error", waitForNotificationErr)
+			return
 		}
-	}()
+
+		if notification == nil {
+			continue
+		}
+
+		select {
+		case notificationChan <- notification.Payload:
+			o.logger.DebugContext(ctx, "forwarded notification to channel", "payload", notification.Payload)
+		case <-ctx.Done():
+			return
+		default:
+			// Channel is full, log warning and skip
+			o.logger.WarnContext(
+				ctx,
+				"notification channel full, skipping notification",
+				"payload",
+				notification.Payload,
+			)
+		}
+	}
 }
 
 // processNotifications processes notifications from the channel.
@@ -135,7 +181,7 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 	// Use a transaction with proper locking to claim the job
 	var run db.WorkflowRun
 	processWorkflowRunErr := o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if claimWorkflowRunErr := o.claimWorkflowRun(ctx, tx, notification.ID, &run); claimWorkflowRunErr != nil {
+		if claimWorkflowRunErr := o.claimWorkflowRun(tx, notification.ID, &run); claimWorkflowRunErr != nil {
 			return claimWorkflowRunErr
 		}
 
@@ -179,7 +225,7 @@ func (o *Orchestrator) processWorkflowRun(ctx context.Context, notification *db.
 }
 
 // claimWorkflowRun attempts to claim a workflow run using proper locking.
-func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, id uint, run *db.WorkflowRun) error {
+func (o *Orchestrator) claimWorkflowRun(tx *gorm.DB, id uint, run *db.WorkflowRun) error {
 	if claimWorkflowRunErr := tx.Clauses(clause.Locking{
 		Strength: "UPDATE",
 		Options:  "SKIP LOCKED",
@@ -187,8 +233,6 @@ func (o *Orchestrator) claimWorkflowRun(ctx context.Context, tx *gorm.DB, id uin
 		First(&run).Error; claimWorkflowRunErr != nil {
 		if errors.Is(claimWorkflowRunErr, gorm.ErrRecordNotFound) {
 			// Job was already claimed by another dispatcher
-			o.logger.DebugContext(ctx, "job already claimed by another dispatcher",
-				"run_id", id)
 			return nil
 		}
 		return fmt.Errorf("failed to claim job: %w", claimWorkflowRunErr)
