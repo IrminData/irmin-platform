@@ -15,22 +15,34 @@ import (
 
 // Subscription represents a record of an active subscription to changes in data.
 type Subscription struct {
-	ID                      uint    `json:"ID"                      example:"1"`
-	CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
-	UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
-	DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
-	WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
-	WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
-	ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
-	OperationID             uint    `json:"operationID"             example:"1"`
+	ID                      uint    `json:"ID"                        example:"1"`
+	CreatedAt               string  `json:"created_at"                example:"2021-01-01T00:00:00Z"`
+	UpdatedAt               string  `json:"updated_at"                example:"2021-01-01T00:00:00Z"`
+	DeletedAt               *string `json:"deleted_at,omitempty"      example:"2021-01-01T00:00:00Z"`
+	WebhookURL              string  `json:"webhook_url"               example:"https://example.com/webhook"`
+	WebhookAccessToken      string  `json:"webhook_access_token"      example:"1234567890"`
+	ConnectorRegistrationID uint    `json:"connector_registration_id" example:"1"`
+	OperationID             uint    `json:"operation_id"              example:"1"`
+}
+
+// OperationLog represents a record of a log tied to an operation.
+type OperationLog struct {
+	CreatedAt string         `json:"created_at"`
+	Type      string         `json:"type"`
+	Message   string         `json:"message"`
+	Metadata  map[string]any `json:"metadata"`
 }
 
 // OperationStatus represents the response for an operation status check.
 type OperationStatus struct {
 	OperationID   uint              `json:"operation_id"`
+	CreatedAt     string            `json:"created_at"`
+	UpdatedAt     string            `json:"updated_at"`
+	DeletedAt     *string           `json:"deleted_at,omitempty"`
 	Details       map[string]string `json:"details"`
 	Settings      map[string]string `json:"settings"`
 	Subscriptions []Subscription    `json:"subscriptions"`
+	Logs          []OperationLog    `json:"logs"`
 }
 
 // HandleOperationStatus provides common operation status handling logic.
@@ -82,12 +94,23 @@ func HandleOperationStatus(
 		})
 	}
 
+	// Convert deleted at to string if it is valid
+	var deletedAt *string
+	if operation.DeletedAt.Valid {
+		deletedAtString := operation.DeletedAt.Time.Format(time.RFC3339)
+		deletedAt = &deletedAtString
+	}
+
 	// Build response
 	response := OperationStatus{
 		OperationID:   operation.ID,
+		CreatedAt:     operation.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:     operation.UpdatedAt.Format(time.RFC3339),
+		DeletedAt:     deletedAt,
 		Details:       detailsMap,
 		Settings:      settingsMap,
 		Subscriptions: convertToClientSubscriptions(operationSubscriptions),
+		Logs:          convertToClientLogs(operation.Logs),
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)
@@ -114,6 +137,8 @@ func getOperationAndValidate(
 	if connectorRegistration == nil {
 		return nil, errors.New("connector registration not found")
 	}
+
+	// Validate that the operation belongs to the same connector
 	if connectorRegistration.ConnectorName != connectorInfo.Name {
 		return nil, errors.New("operation belongs to different connector")
 	}
@@ -167,4 +192,25 @@ func convertToClientSubscriptions(subs []db.Subscription) []Subscription {
 		}
 	}
 	return clientSubscriptions
+}
+
+// convertToClientLogs converts DB logs to client logs.
+func convertToClientLogs(logs []db.OperationLog) []OperationLog {
+	clientLogs := make([]OperationLog, len(logs))
+	for i, log := range logs {
+		clientLogs[i] = OperationLog{
+			CreatedAt: log.CreatedAt.Format(time.RFC3339),
+			Type:      string(log.Type),
+			Message:   log.Message,
+		}
+		if log.Metadata == nil {
+			continue
+		}
+		var metadata map[string]any
+		if err := json.Unmarshal(log.Metadata, &metadata); err != nil {
+			continue
+		}
+		clientLogs[i].Metadata = metadata
+	}
+	return clientLogs
 }

@@ -207,14 +207,16 @@ func (cs *Controllers) ValidateOperationTokenMiddleware(c fiber.Ctx) error
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token.
 
-type HTTPPullProvider struct{}
+type HTTPPullProvider struct {
+	// Has unexported fields.
+}
     HTTPPullProvider implements the PullOperationProvider interface for HTTP.
 
-func (p *HTTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *HTTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
     GetAllFiles makes a request to the configured endpoint and returns the
     response as a file.
 
-func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (string, []byte, error)
+func (p *HTTPPullProvider) GetFileByPath(c fiber.Ctx, client any, path string) (string, []byte, error)
     GetFileByPath makes a request to the configured endpoint with an optional
     path modification. The path parameter is used to modify the request URL
     (absolute path replaces, relative path appends).
@@ -226,7 +228,9 @@ func (p *HTTPPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the HTTP client for pull operations.
 
-type HTTPPushProvider struct{}
+type HTTPPushProvider struct {
+	// Has unexported fields.
+}
     HTTPPushProvider implements the PushOperationProvider interface for HTTP.
 
 func (p *HTTPPushProvider) InitializeClient(
@@ -237,7 +241,7 @@ func (p *HTTPPushProvider) InitializeClient(
     InitializeClient initializes the HTTP client for push operations.
 
 func (p *HTTPPushProvider) ProcessFiles(
-	_ fiber.Ctx,
+	c fiber.Ctx,
 	client any,
 	files map[string][]byte,
 	rawPath string,

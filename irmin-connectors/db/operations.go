@@ -17,6 +17,8 @@ type Operation struct {
 	Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
 	ConfigHash *string        `json:"configHash" gorm:"type:varchar(64);index:idx_connector_config"`
 
+	Logs []OperationLog `json:"logs,omitempty" gorm:"foreignKey:OperationID"`
+
 	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
 }
@@ -39,9 +41,10 @@ func (d *Database) GetAllOperations() ([]Operation, error) {
 }
 
 // GetOperationByID retrieves an Operation record from the database by ID.
+// This includes soft-deleted operations.
 func (d *Database) GetOperationByID(id uint) (*Operation, error) {
 	var operation Operation
-	if err := d.First(&operation, id).Error; err != nil {
+	if err := d.Unscoped().Preload("Logs").First(&operation, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch operation: %w", err)
 	}
 	return &operation, nil
@@ -95,7 +98,7 @@ func findOperationByConfigHash(
 	err := db.Where(&Operation{
 		ConnectorRegistrationID: connectorRegistrationID,
 		ConfigHash:              configHash,
-	}).First(&operation).Error
+	}).Preload("Logs").First(&operation).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

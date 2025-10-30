@@ -117,7 +117,7 @@ func executePatchOperation(
 // @Router /postgres/operation/patch [post]
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 	provider := &PostgresPatchProvider{}
-	return common.HandleOperationPatch(c, provider, cs.Logger)
+	return common.HandleOperationPatch(c, provider, cs.Logger, cs.DB)
 }
 
 // handleAddOperation handles the "add" patch operation.

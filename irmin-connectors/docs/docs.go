@@ -3239,13 +3239,43 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "common.OperationLog": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "common.OperationStatus": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
                 "details": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
+                    }
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.OperationLog"
                     }
                 },
                 "operation_id": {
@@ -3262,41 +3292,44 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/common.Subscription"
                     }
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
         "common.Subscription": {
             "type": "object",
             "properties": {
-                "CreatedAt": {
-                    "type": "string",
-                    "example": "2021-01-01T00:00:00Z"
-                },
-                "DeletedAt": {
-                    "type": "string",
-                    "example": "2021-01-01T00:00:00Z"
-                },
                 "ID": {
                     "type": "integer",
                     "example": 1
                 },
-                "UpdatedAt": {
+                "connector_registration_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "created_at": {
                     "type": "string",
                     "example": "2021-01-01T00:00:00Z"
                 },
-                "connectorRegistrationID": {
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2021-01-01T00:00:00Z"
+                },
+                "operation_id": {
                     "type": "integer",
                     "example": 1
                 },
-                "operationID": {
-                    "type": "integer",
-                    "example": 1
+                "updated_at": {
+                    "type": "string",
+                    "example": "2021-01-01T00:00:00Z"
                 },
-                "webhookAccessToken": {
+                "webhook_access_token": {
                     "type": "string",
                     "example": "1234567890"
                 },
-                "webhookUrl": {
+                "webhook_url": {
                     "type": "string",
                     "example": "https://example.com/webhook"
                 }
@@ -3328,6 +3361,19 @@ const docTemplate = `{
                 }
             }
         },
+        "db.LogEventType": {
+            "type": "string",
+            "enum": [
+                "ERROR",
+                "INFO",
+                "WARNING"
+            ],
+            "x-enum-varnames": [
+                "LogEventTypeError",
+                "LogEventTypeInfo",
+                "LogEventTypeWarning"
+            ]
+        },
         "db.Operation": {
             "type": "object",
             "properties": {
@@ -3355,6 +3401,12 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.OperationLog"
+                    }
+                },
                 "settings": {
                     "type": "array",
                     "items": {
@@ -3363,6 +3415,42 @@ const docTemplate = `{
                 },
                 "token": {
                     "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.OperationLog": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "description": "Arbitrary structured data that stores information about the log - e.g., userId: 100.",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "operation": {
+                    "$ref": "#/definitions/db.Operation"
+                },
+                "operation_id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/db.LogEventType"
                 },
                 "updatedAt": {
                     "type": "string"

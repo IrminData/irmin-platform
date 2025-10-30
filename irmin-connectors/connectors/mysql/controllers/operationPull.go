@@ -16,6 +16,8 @@ import (
 // MySQLPullProvider implements the PullOperationProvider interface for MySQL.
 type MySQLPullProvider struct {
 	databaseName *string
+	dbInstance   *db.Database
+	logger       *slog.Logger
 }
 
 // InitializeClient initializes the MySQL client for pull operations.
@@ -48,10 +50,39 @@ func (p *MySQLPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]
 		return nil, nil, errors.New("invalid client type for MySQL pull provider")
 	}
 
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// Get list of tables
 	tables, err := mysqlClient.GetTables(c)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get MySQL tables list",
+				map[string]any{
+					"error":    err.Error(),
+					"database": p.databaseName,
+				},
+			)
+		}
 		return nil, nil, fmt.Errorf("failed to get tables: %w", err)
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Retrieved MySQL tables list",
+			map[string]any{
+				"table_count": len(tables),
+				"database":    p.databaseName,
+			},
+		)
 	}
 
 	// Initialize lists
@@ -62,6 +93,20 @@ func (p *MySQLPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]
 	for i, table := range tables {
 		resultPath, resultContent, getErr := p.GetFileByPath(c, client, table)
 		if getErr != nil {
+			if operation != nil && p.dbInstance != nil && p.logger != nil {
+				common.LogOperationEvent(
+					p.dbInstance,
+					p.logger,
+					operation.ID,
+					db.LogEventTypeError,
+					"Failed to process MySQL table",
+					map[string]any{
+						"error":    getErr.Error(),
+						"table":    table,
+						"database": p.databaseName,
+					},
+				)
+			}
 			return nil, nil, fmt.Errorf("failed to process table %s: %w", table, getErr)
 		}
 		filenames[i] = resultPath
@@ -78,6 +123,8 @@ func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath strin
 		return "", nil, errors.New("invalid client type for MySQL pull provider")
 	}
 
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// Database-specific path processing with proper database name
 	path := processRawPath(rawPath, p.databaseName)
 
@@ -88,6 +135,20 @@ func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath strin
 	query := fmt.Sprintf("SELECT * FROM %s", escapeIdentifier(path))
 	rows, err := mysqlClient.Query(c, query)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"MySQL table query failed",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    path,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fileName, nil, fmt.Errorf("query failed: %w", err)
 	}
 	defer rows.Close()
@@ -95,19 +156,77 @@ func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath strin
 	// Get column names
 	cols, err := rows.Columns()
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get MySQL table columns",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    path,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fileName, nil, fmt.Errorf("failed to get columns: %w", err)
 	}
 
 	// Build records
 	recs, err := buildRecordsFromRows(rows, cols)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to build records from MySQL table",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    path,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fileName, nil, fmt.Errorf("build records failed: %w", err)
 	}
 
 	// Marshal and write JSON
 	data, err := json.MarshalIndent(recs, "", "  ")
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to marshal MySQL table data to JSON",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    path,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fileName, nil, fmt.Errorf("marshal failed: %w", err)
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Successfully pulled MySQL table data",
+			map[string]any{
+				"table":        path,
+				"database":     p.databaseName,
+				"row_count":    len(recs),
+				"column_count": len(cols),
+			},
+		)
 	}
 
 	return fileName, data, nil
@@ -129,7 +248,10 @@ func (p *MySQLPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath strin
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /mysql/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	provider := &MySQLPullProvider{}
+	provider := &MySQLPullProvider{
+		dbInstance: cs.DB,
+		logger:     cs.Logger,
+	}
 	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }
 

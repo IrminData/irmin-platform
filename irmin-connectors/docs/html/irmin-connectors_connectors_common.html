@@ -101,7 +101,12 @@ func HandleNotSupportedSchemaGet(c fiber.Ctx) error
     HandleNotSupportedSchemaGet provides a common handler for connectors that
     don't support schema operations.
 
-func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *slog.Logger) error
+func HandleOperationPatch(
+	c fiber.Ctx,
+	provider PatchOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+) error
     HandleOperationPatch provides a common HTTP handler for patch operation
     endpoints.
 
@@ -144,6 +149,18 @@ func HandleOperationStatus(
 func LogOnlyCancellation(app *models.ConnectorsApp, operation *db.Operation) error
     LogOnlyCancellation provides a simple logging-only cancellation for
     connectors that don't implement full cancellation yet.
+
+func LogOperationEvent(
+	dbInstance *db.Database,
+	logger *slog.Logger,
+	operationID uint,
+	eventType db.LogEventType,
+	message string,
+	metadata map[string]any,
+)
+    LogOperationEvent creates an operation log entry with the specified type,
+    message, and metadata. This is a helper function to standardize operation
+    logging across all connector handlers.
 
 func RenderConnectorDetailsPage(
 	c fiber.Ctx,
@@ -390,11 +407,23 @@ type OperationInitProvider interface {
     OperationInitProvider defines the interface for initializing connector
     operations.
 
+type OperationLog struct {
+	CreatedAt string         `json:"created_at"`
+	Type      string         `json:"type"`
+	Message   string         `json:"message"`
+	Metadata  map[string]any `json:"metadata"`
+}
+    OperationLog represents a record of a log tied to an operation.
+
 type OperationStatus struct {
 	OperationID   uint              `json:"operation_id"`
+	CreatedAt     string            `json:"created_at"`
+	UpdatedAt     string            `json:"updated_at"`
+	DeletedAt     *string           `json:"deleted_at,omitempty"`
 	Details       map[string]string `json:"details"`
 	Settings      map[string]string `json:"settings"`
 	Subscriptions []Subscription    `json:"subscriptions"`
+	Logs          []OperationLog    `json:"logs"`
 }
     OperationStatus represents the response for an operation status check.
 
@@ -463,14 +492,14 @@ type SchemaOperationProvider interface {
     operation handling.
 
 type Subscription struct {
-	ID                      uint    `json:"ID"                      example:"1"`
-	CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
-	UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
-	DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
-	WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
-	WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
-	ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
-	OperationID             uint    `json:"operationID"             example:"1"`
+	ID                      uint    `json:"ID"                        example:"1"`
+	CreatedAt               string  `json:"created_at"                example:"2021-01-01T00:00:00Z"`
+	UpdatedAt               string  `json:"updated_at"                example:"2021-01-01T00:00:00Z"`
+	DeletedAt               *string `json:"deleted_at,omitempty"      example:"2021-01-01T00:00:00Z"`
+	WebhookURL              string  `json:"webhook_url"               example:"https://example.com/webhook"`
+	WebhookAccessToken      string  `json:"webhook_access_token"      example:"1234567890"`
+	ConnectorRegistrationID uint    `json:"connector_registration_id" example:"1"`
+	OperationID             uint    `json:"operation_id"              example:"1"`
 }
     Subscription represents a record of an active subscription to changes in
     data.

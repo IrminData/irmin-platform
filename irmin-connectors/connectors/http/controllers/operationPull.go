@@ -12,7 +12,10 @@ import (
 )
 
 // HTTPPullProvider implements the PullOperationProvider interface for HTTP.
-type HTTPPullProvider struct{}
+type HTTPPullProvider struct {
+	dbInstance *db.Database
+	logger     *slog.Logger
+}
 
 // InitializeClient initializes the HTTP client for pull operations.
 func (p *HTTPPullProvider) InitializeClient(
@@ -34,15 +37,33 @@ func (p *HTTPPullProvider) InitializeClient(
 }
 
 // GetAllFiles makes a request to the configured endpoint and returns the response as a file.
-func (p *HTTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error) {
+//
+//nolint:gocognit // Complex? Maybe, but it's okay for now
+func (p *HTTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error) {
 	httpClient, ok := client.(*httpclient.HTTPClient)
 	if !ok {
 		return nil, nil, errors.New("invalid client type for HTTP pull provider")
 	}
 
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// Make the HTTP request
 	resp, err := httpClient.MakeRequest()
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"HTTP request failed during pull operation",
+				map[string]any{
+					"error":  err.Error(),
+					"url":    httpClient.URL,
+					"method": httpClient.Method,
+				},
+			)
+		}
 		return nil, nil, fmt.Errorf("failed to make HTTP request: %w", err)
 	}
 	defer resp.Body.Close()
@@ -51,11 +72,43 @@ func (p *HTTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]b
 	if !httpClient.IsAcceptedStatusCode(resp.StatusCode) {
 		errorBody, errorBodyErr := httpClient.GetResponseBody(resp)
 		if errorBodyErr != nil {
+			if operation != nil && p.dbInstance != nil && p.logger != nil {
+				common.LogOperationEvent(
+					p.dbInstance,
+					p.logger,
+					operation.ID,
+					db.LogEventTypeError,
+					"HTTP request returned unaccepted status code",
+					map[string]any{
+						"status_code": resp.StatusCode,
+						"status":      resp.Status,
+						"url":         httpClient.URL,
+						"method":      httpClient.Method,
+					},
+				)
+			}
 			return nil, nil, fmt.Errorf(
 				"HTTP request returned unaccepted status %d: %s, failed to read error response: %w",
 				resp.StatusCode,
 				resp.Status,
 				errorBodyErr,
+			)
+		}
+
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"HTTP request returned unaccepted status code",
+				map[string]any{
+					"status_code":   resp.StatusCode,
+					"status":        resp.Status,
+					"url":           httpClient.URL,
+					"method":        httpClient.Method,
+					"response_body": string(errorBody),
+				},
 			)
 		}
 		return nil, nil, fmt.Errorf("HTTP request returned unaccepted status %d: %s, response: %s",
@@ -65,22 +118,58 @@ func (p *HTTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]b
 	// Read response body
 	body, err := httpClient.GetResponseBody(resp)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to read HTTP response body",
+				map[string]any{
+					"error": err.Error(),
+					"url":   httpClient.URL,
+				},
+			)
+		}
 		return nil, nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	// Generate filename based on content type and URL
 	fileName := httpClient.GetFileNameFromResponse(resp)
 
+	// Log successful HTTP request
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"HTTP pull request completed successfully",
+			map[string]any{
+				"status_code":    resp.StatusCode,
+				"content_type":   resp.Header.Get("Content-Type"),
+				"content_length": len(body),
+				"url":            httpClient.URL,
+				"method":         httpClient.Method,
+				"filename":       fileName,
+			},
+		)
+	}
+
 	return []string{fileName}, [][]byte{body}, nil
 }
 
 // GetFileByPath makes a request to the configured endpoint with an optional path modification.
 // The path parameter is used to modify the request URL (absolute path replaces, relative path appends).
-func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (string, []byte, error) {
+//
+//nolint:gocognit // Complex? Maybe, but it's okay for now
+func (p *HTTPPullProvider) GetFileByPath(c fiber.Ctx, client any, path string) (string, []byte, error) {
 	httpClient, ok := client.(*httpclient.HTTPClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for HTTP pull provider")
 	}
+
+	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// If a path is provided, use it to modify the request URL
 	if path != "" {
@@ -90,6 +179,21 @@ func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (
 	// Make the HTTP request
 	resp, err := httpClient.MakeRequest()
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"HTTP request failed during pull operation with specific path",
+				map[string]any{
+					"error":  err.Error(),
+					"url":    httpClient.URL,
+					"method": httpClient.Method,
+					"path":   path,
+				},
+			)
+		}
 		return "", nil, fmt.Errorf("failed to make HTTP request: %w", err)
 	}
 	defer resp.Body.Close()
@@ -98,11 +202,45 @@ func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (
 	if !httpClient.IsAcceptedStatusCode(resp.StatusCode) {
 		errorBody, errorBodyErr := httpClient.GetResponseBody(resp)
 		if errorBodyErr != nil {
+			if operation != nil && p.dbInstance != nil && p.logger != nil {
+				common.LogOperationEvent(
+					p.dbInstance,
+					p.logger,
+					operation.ID,
+					db.LogEventTypeError,
+					"HTTP request returned unaccepted status code with specific path",
+					map[string]any{
+						"status_code": resp.StatusCode,
+						"status":      resp.Status,
+						"url":         httpClient.URL,
+						"method":      httpClient.Method,
+						"path":        path,
+					},
+				)
+			}
 			return "", nil, fmt.Errorf(
 				"HTTP request returned unaccepted status %d: %s, failed to read error response: %w",
 				resp.StatusCode,
 				resp.Status,
 				errorBodyErr,
+			)
+		}
+
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"HTTP request returned unaccepted status code with specific path",
+				map[string]any{
+					"status_code":   resp.StatusCode,
+					"status":        resp.Status,
+					"url":           httpClient.URL,
+					"method":        httpClient.Method,
+					"path":          path,
+					"response_body": string(errorBody),
+				},
 			)
 		}
 		return "", nil, fmt.Errorf("HTTP request returned unaccepted status %d: %s, response: %s",
@@ -112,11 +250,45 @@ func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (
 	// Read response body
 	body, err := httpClient.GetResponseBody(resp)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to read HTTP response body with specific path",
+				map[string]any{
+					"error": err.Error(),
+					"url":   httpClient.URL,
+					"path":  path,
+				},
+			)
+		}
 		return "", nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	// Generate filename based on content type and URL
 	fileName := httpClient.GetFileNameFromResponse(resp)
+
+	// Log successful HTTP request
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"HTTP pull request with specific path completed successfully",
+			map[string]any{
+				"status_code":    resp.StatusCode,
+				"content_type":   resp.Header.Get("Content-Type"),
+				"content_length": len(body),
+				"url":            httpClient.URL,
+				"method":         httpClient.Method,
+				"path":           path,
+				"filename":       fileName,
+			},
+		)
+	}
 
 	return fileName, body, nil
 }
@@ -137,6 +309,9 @@ func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /http/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	provider := &HTTPPullProvider{}
+	provider := &HTTPPullProvider{
+		dbInstance: cs.DB,
+		logger:     cs.Logger,
+	}
 	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }

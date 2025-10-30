@@ -13,7 +13,10 @@ import (
 )
 
 // SFTPPullProvider implements the PullOperationProvider interface for SFTP.
-type SFTPPullProvider struct{}
+type SFTPPullProvider struct {
+	dbInstance *db.Database
+	logger     *slog.Logger
+}
 
 // InitializeClient initializes the SFTP client for pull operations.
 func (p *SFTPPullProvider) InitializeClient(
@@ -43,23 +46,43 @@ func (p *SFTPPullProvider) InitializeClient(
 }
 
 // GetAllFiles downloads all files from the root directory.
-func (p *SFTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error) {
+func (p *SFTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error) {
 	sftpClient, ok := client.(*sftpclient.SftpClient)
 	if !ok {
 		return nil, nil, errors.New("invalid client type for SFTP pull provider")
 	}
 
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// For SFTP, "all files" means all files in the root directory
 	path := "/"
-	return p.downloadFromPath(sftpClient, path)
+	filePaths, fileContents, err := p.downloadFromPath(c, sftpClient, path)
+
+	if err != nil && operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to download files from SFTP root directory",
+			map[string]any{
+				"error": err.Error(),
+				"path":  path,
+			},
+		)
+	}
+
+	return filePaths, fileContents, err
 }
 
 // GetFileByPath downloads a specific file by path.
-func (p *SFTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, rawPath string) (string, []byte, error) {
+func (p *SFTPPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error) {
 	sftpClient, ok := client.(*sftpclient.SftpClient)
 	if !ok {
 		return "", nil, errors.New("invalid client type for SFTP pull provider")
 	}
+
+	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// SFTP-specific path processing - normalize for file system
 	path := normalizePath(rawPath)
@@ -67,19 +90,71 @@ func (p *SFTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, rawPath string
 	// Check if path exists and whether it's a file or directory
 	fileInfo, err := sftpClient.GetFileInfo(path)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get SFTP file info",
+				map[string]any{
+					"error": err.Error(),
+					"path":  path,
+				},
+			)
+		}
 		return "", nil, fmt.Errorf("failed to get file info for %s: %w", path, err)
 	}
 
 	if fileInfo.IsDir {
 		// For directories, we can't return them as a single "file"
 		// Return an error since a directory can't be a single file
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"SFTP path is a directory, not a file",
+				map[string]any{
+					"path": path,
+				},
+			)
+		}
 		return "", nil, fmt.Errorf("path %s is a directory, not a file", path)
 	}
 
 	// Download single file
 	fileContent, err := sftpClient.DownloadFile(path)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to download SFTP file",
+				map[string]any{
+					"error": err.Error(),
+					"path":  path,
+				},
+			)
+		}
 		return "", nil, fmt.Errorf("failed to download file %s: %w", path, err)
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Successfully downloaded SFTP file",
+			map[string]any{
+				"path":      path,
+				"file_size": len(fileContent),
+			},
+		)
 	}
 
 	fileName := filepath.Base(path)
@@ -87,10 +162,31 @@ func (p *SFTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, rawPath string
 }
 
 // downloadFromPath downloads files from SFTP server based on path.
-func (p *SFTPPullProvider) downloadFromPath(client *sftpclient.SftpClient, path string) ([]string, [][]byte, error) {
+//
+//nolint:gocognit // Complex? Maybe, but it's okay for now
+func (p *SFTPPullProvider) downloadFromPath(
+	c fiber.Ctx,
+	client *sftpclient.SftpClient,
+	path string,
+) ([]string, [][]byte, error) {
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// Check if path exists and whether it's a file or directory
 	fileInfo, err := client.GetFileInfo(path)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get SFTP file info during download",
+				map[string]any{
+					"error": err.Error(),
+					"path":  path,
+				},
+			)
+		}
 		return nil, nil, fmt.Errorf("failed to get file info for %s: %w", path, err)
 	}
 
@@ -98,7 +194,39 @@ func (p *SFTPPullProvider) downloadFromPath(client *sftpclient.SftpClient, path 
 		// Download entire directory
 		dirFiles, dirErr := client.DownloadDirectory(path)
 		if dirErr != nil {
+			if operation != nil && p.dbInstance != nil && p.logger != nil {
+				common.LogOperationEvent(
+					p.dbInstance,
+					p.logger,
+					operation.ID,
+					db.LogEventTypeError,
+					"Failed to download SFTP directory",
+					map[string]any{
+						"error": dirErr.Error(),
+						"path":  path,
+					},
+				)
+			}
 			return nil, nil, fmt.Errorf("failed to download directory %s: %w", path, dirErr)
+		}
+
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			totalSize := 0
+			for _, content := range dirFiles {
+				totalSize += len(content)
+			}
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeInfo,
+				"Successfully downloaded SFTP directory",
+				map[string]any{
+					"path":       path,
+					"file_count": len(dirFiles),
+					"total_size": totalSize,
+				},
+			)
 		}
 
 		// Convert map to slices
@@ -116,7 +244,34 @@ func (p *SFTPPullProvider) downloadFromPath(client *sftpclient.SftpClient, path 
 	// Download single file
 	fileContent, err := client.DownloadFile(path)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to download SFTP file from path",
+				map[string]any{
+					"error": err.Error(),
+					"path":  path,
+				},
+			)
+		}
 		return nil, nil, fmt.Errorf("failed to download file %s: %w", path, err)
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Successfully downloaded SFTP file from path",
+			map[string]any{
+				"path":      path,
+				"file_size": len(fileContent),
+			},
+		)
 	}
 
 	fileName := filepath.Base(path)
@@ -139,6 +294,9 @@ func (p *SFTPPullProvider) downloadFromPath(client *sftpclient.SftpClient, path 
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /sftp/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	provider := &SFTPPullProvider{}
+	provider := &SFTPPullProvider{
+		dbInstance: cs.DB,
+		logger:     cs.Logger,
+	}
 	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }

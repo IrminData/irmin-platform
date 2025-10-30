@@ -63,9 +63,29 @@ func HandleOperationPull(
 		}
 	}()
 
+	// Log operation execution start
+	LogOperationEvent(
+		dbInstance,
+		logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Pull operation execution started",
+		nil,
+	)
+
 	// Initialize the client
 	client, _, cleanup, err := provider.InitializeClient(c, logger, operation)
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to initialize client for pull operation",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize client: " + err.Error(),
 		})
@@ -75,6 +95,16 @@ func HandleOperationPull(
 	// Parse "path" field from form
 	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to parse form fields for pull operation",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -92,6 +122,16 @@ func HandleOperationPull(
 		resultPaths, resultContents, getErr := provider.GetAllFiles(c, client)
 		if getErr != nil {
 			logger.Error("failed to get all files", "error", getErr)
+			LogOperationEvent(
+				dbInstance,
+				logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get all files during pull operation",
+				map[string]any{
+					"error": getErr.Error(),
+				},
+			)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "Failed to get all files: " + getErr.Error(),
 			})
@@ -104,6 +144,17 @@ func HandleOperationPull(
 		resultPath, resultContent, getErr := provider.GetFileByPath(c, client, rawPath)
 		if getErr != nil {
 			logger.Error("failed to get file", "error", getErr)
+			LogOperationEvent(
+				dbInstance,
+				logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get file during pull operation",
+				map[string]any{
+					"error": getErr.Error(),
+					"path":  rawPath,
+				},
+			)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "Failed to get file: " + getErr.Error(),
 			})
@@ -115,10 +166,33 @@ func HandleOperationPull(
 	zipBytes, err := irminutils.ZipFiles(resultFiles)
 	if err != nil {
 		logger.Error("failed to create zip archive", "error", err)
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to create zip archive for pull operation",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create zip archive",
 		})
 	}
+
+	// Log successful completion
+	LogOperationEvent(
+		dbInstance,
+		logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Pull operation completed successfully",
+		map[string]any{
+			"file_count": len(resultFiles),
+			"path":       rawPath,
+		},
+	)
 
 	// Return the result files as a zip archive stream
 	c.Response().Header.Set("Content-Type", "application/zip")

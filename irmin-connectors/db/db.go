@@ -134,6 +134,7 @@ func (d *Database) migrateModels(models ...any) error {
 func (d *Database) Migrate() error {
 	models := []any{
 		&Operation{},
+		&OperationLog{},
 		&ConnectorRegistration{},
 		&Subscription{},
 	}
@@ -149,6 +150,7 @@ func (d *Database) Migrate() error {
 func (d *Database) Reset() error {
 	// Drop tables in an order that avoids foreign key conflicts.
 	if err := d.Migrator().DropTable(
+		&OperationLog{},
 		&Operation{},
 		&ConnectorRegistration{},
 		&Subscription{},

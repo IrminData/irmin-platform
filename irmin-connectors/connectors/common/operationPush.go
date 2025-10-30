@@ -61,9 +61,29 @@ func HandleOperationPush(
 		}
 	}()
 
+	// Log operation execution start
+	LogOperationEvent(
+		dbInstance,
+		logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Push operation execution started",
+		nil,
+	)
+
 	// Initialize the client
 	client, _, cleanup, err := provider.InitializeClient(c, logger, operation)
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to initialize client for push operation",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize client: " + err.Error(),
 		})
@@ -73,6 +93,16 @@ func HandleOperationPush(
 	// Parse form fields for target path
 	fields, err := utils.ParseFormFields(c, nil, []string{"path"})
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to parse form fields for push operation",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -84,12 +114,30 @@ func HandleOperationPush(
 	// Handle uploaded file
 	files, err := handleUploadedFile(c)
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to handle uploaded file for push operation",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
 	if len(files) == 0 {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"No files found in uploaded ZIP",
+			nil,
+		)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "No files found in uploaded ZIP",
 		})
@@ -99,10 +147,34 @@ func HandleOperationPush(
 	err = provider.ProcessFiles(c, client, files, rawPath)
 	if err != nil {
 		logger.Error("failed to process files", "error", err)
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to process files during push operation",
+			map[string]any{
+				"error": err.Error(),
+				"path":  rawPath,
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to process files: " + err.Error(),
 		})
 	}
+
+	// Log successful completion
+	LogOperationEvent(
+		dbInstance,
+		logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Push operation completed successfully",
+		map[string]any{
+			"file_count": len(files),
+			"path":       rawPath,
+		},
+	)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Successfully pushed data",

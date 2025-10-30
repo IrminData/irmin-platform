@@ -23,6 +23,8 @@ import (
 // PostgresPushProvider implements the PushOperationProvider interface for PostgreSQL.
 type PostgresPushProvider struct {
 	databaseName *string
+	dbInstance   *db.Database
+	logger       *slog.Logger
 }
 
 // InitializeClient initializes the PostgreSQL client for push operations.
@@ -58,12 +60,27 @@ func (p *PostgresPushProvider) ProcessFiles(
 		return errors.New("invalid client type for PostgreSQL push provider")
 	}
 
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// Use the existing database-specific path processing utility with proper database name
 	targetPath := processRawPath(rawPath, p.databaseName)
 
 	// Get available tables
 	tables, err := postgresClient.GetTables(c)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get PostgreSQL tables list for push operation",
+				map[string]any{
+					"error":    err.Error(),
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fmt.Errorf("failed to fetch tables: %w", err)
 	}
 
@@ -82,7 +99,7 @@ func (p *PostgresPushProvider) ProcessFiles(
 			continue
 		}
 
-		err = processTableData(c, postgresClient, tableName, files[filePath], tables)
+		err = p.processTableDataWithLogging(c, postgresClient, tableName, files[filePath], tables, operation)
 		if err != nil {
 			return fmt.Errorf("failed to process table data: %w", err)
 		}
@@ -108,36 +125,174 @@ func (p *PostgresPushProvider) ProcessFiles(
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /postgres/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	provider := &PostgresPushProvider{}
+	provider := &PostgresPushProvider{
+		dbInstance: cs.DB,
+		logger:     cs.Logger,
+	}
 	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB)
 }
 
-// processTableData processes a single table's data and executes the database operations.
-func processTableData(
+// processTableDataWithLogging is a wrapper around processTableData that adds logging.
+func (p *PostgresPushProvider) processTableDataWithLogging(
 	c fiber.Ctx,
 	client *postgresclient.PostgresClient,
 	tableName string,
 	fileData []byte,
 	tables []string,
+	operation *db.Operation,
 ) error {
 	if !slices.Contains(tables, tableName) {
 		// Table doesn't exist, skip it
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeWarning,
+				"Skipping PostgreSQL table that doesn't exist",
+				map[string]any{
+					"table":    tableName,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return nil
 	}
 
 	var records []map[string]any
 	if err := json.Unmarshal(fileData, &records); err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to parse JSON data for PostgreSQL table",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    tableName,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fmt.Errorf("failed to parse JSON data: %w", err)
 	}
 
 	if len(records) == 0 {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeInfo,
+				"Skipping empty PostgreSQL table data",
+				map[string]any{
+					"table":    tableName,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return nil
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Processing PostgreSQL table push operation",
+			map[string]any{
+				"table":     tableName,
+				"database":  p.databaseName,
+				"row_count": len(records),
+			},
+		)
 	}
 
 	columns := getSortedColumns(records[0])
 	insertSQL := buildInsertStatement(tableName, columns)
 
-	return executeTransaction(c, client, tableName, records, columns, insertSQL)
+	err := p.executeTransactionWithLogging(c, client, tableName, records, columns, insertSQL, operation)
+	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to execute PostgreSQL table push transaction",
+				map[string]any{
+					"error":     err.Error(),
+					"table":     tableName,
+					"database":  p.databaseName,
+					"row_count": len(records),
+				},
+			)
+		}
+		return err
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Successfully pushed PostgreSQL table data",
+			map[string]any{
+				"table":        tableName,
+				"database":     p.databaseName,
+				"row_count":    len(records),
+				"column_count": len(columns),
+			},
+		)
+	}
+
+	return nil
+}
+
+// executeTransactionWithLogging wraps executeTransaction with logging for retries.
+func (p *PostgresPushProvider) executeTransactionWithLogging(
+	c fiber.Ctx,
+	client *postgresclient.PostgresClient,
+	tableName string,
+	records []map[string]any,
+	columns []string,
+	insertSQL string,
+	operation *db.Operation,
+) error {
+	var lastErr error
+	for attempt := 1; attempt <= utils.MaxRetries; attempt++ {
+		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL)
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "40P01" && attempt < utils.MaxRetries {
+			if operation != nil && p.dbInstance != nil && p.logger != nil {
+				common.LogOperationEvent(
+					p.dbInstance,
+					p.logger,
+					operation.ID,
+					db.LogEventTypeWarning,
+					"PostgreSQL deadlock detected, retrying transaction",
+					map[string]any{
+						"table":    tableName,
+						"database": p.databaseName,
+						"attempt":  attempt,
+					},
+				)
+			}
+			backoff()
+			continue
+		}
+		return err
+	}
+
+	return fmt.Errorf("operation failed after retries due to deadlocks: %w", lastErr)
 }
 
 // getSortedColumns returns a sorted slice of column names from a record.
@@ -243,34 +398,6 @@ func executeTransactionStep(
 	}
 
 	return nil
-}
-
-// executeTransaction executes the delete+insert transaction with retries.
-func executeTransaction(
-	c fiber.Ctx,
-	client *postgresclient.PostgresClient,
-	tableName string,
-	records []map[string]any,
-	columns []string,
-	insertSQL string,
-) error {
-	var lastErr error
-	for attempt := 1; attempt <= utils.MaxRetries; attempt++ {
-		err := executeTransactionStep(c, client, tableName, records, columns, insertSQL)
-		if err == nil {
-			return nil
-		}
-
-		lastErr = err
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "40P01" && attempt < utils.MaxRetries {
-			backoff()
-			continue
-		}
-		return err
-	}
-
-	return fmt.Errorf("operation failed after retries due to deadlocks: %w", lastErr)
 }
 
 // backoff sleeps for a short, randomised duration before retrying.

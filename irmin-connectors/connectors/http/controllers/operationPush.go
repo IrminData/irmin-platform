@@ -16,7 +16,10 @@ import (
 )
 
 // HTTPPushProvider implements the PushOperationProvider interface for HTTP.
-type HTTPPushProvider struct{}
+type HTTPPushProvider struct {
+	dbInstance *db.Database
+	logger     *slog.Logger
+}
 
 // InitializeClient initializes the HTTP client for push operations.
 func (p *HTTPPushProvider) InitializeClient(
@@ -39,8 +42,10 @@ func (p *HTTPPushProvider) InitializeClient(
 
 // ProcessFiles processes the extracted files and sends them to the HTTP endpoint.
 // The rawPath parameter is used to modify the request URL (absolute path replaces, relative path appends).
+//
+//nolint:gocognit // Complex? Maybe, but it's okay for now
 func (p *HTTPPushProvider) ProcessFiles(
-	_ fiber.Ctx,
+	c fiber.Ctx,
 	client any,
 	files map[string][]byte,
 	rawPath string,
@@ -49,6 +54,8 @@ func (p *HTTPPushProvider) ProcessFiles(
 	if !ok {
 		return errors.New("invalid client type for HTTP push provider")
 	}
+
+	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// If a path is provided, use it to modify the request URL
 	if rawPath != "" {
@@ -62,6 +69,18 @@ func (p *HTTPPushProvider) ProcessFiles(
 	// HTTP connector limitation: only one file can be sent per request
 	// Warn if multiple files are provided
 	if len(files) > 1 {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"HTTP connector only supports one file per request",
+				map[string]any{
+					"file_count": len(files),
+				},
+			)
+		}
 		return fmt.Errorf(
 			"HTTP connector only supports sending one file per request, received %d files. Please configure separate operations for each file",
 			len(files),
@@ -122,6 +141,22 @@ func (p *HTTPPushProvider) ProcessFiles(
 	// Make the HTTP request
 	resp, err := tempClient.MakeRequest()
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"HTTP request failed during push operation",
+				map[string]any{
+					"error":    err.Error(),
+					"url":      tempClient.URL,
+					"method":   tempClient.Method,
+					"filename": fileName,
+					"path":     rawPath,
+				},
+			)
+		}
 		return fmt.Errorf("failed to make HTTP request: %w", err)
 	}
 	defer resp.Body.Close()
@@ -131,11 +166,67 @@ func (p *HTTPPushProvider) ProcessFiles(
 		// Try to read error response body
 		errorBody, errorBodyErr := tempClient.GetResponseBody(resp)
 		if errorBodyErr != nil {
+			if operation != nil && p.dbInstance != nil && p.logger != nil {
+				common.LogOperationEvent(
+					p.dbInstance,
+					p.logger,
+					operation.ID,
+					db.LogEventTypeError,
+					"HTTP request returned unaccepted status code during push",
+					map[string]any{
+						"status_code": resp.StatusCode,
+						"status":      resp.Status,
+						"url":         tempClient.URL,
+						"method":      tempClient.Method,
+						"filename":    fileName,
+						"path":        rawPath,
+					},
+				)
+			}
 			return fmt.Errorf("HTTP request returned unaccepted status %d: %s, failed to read error response: %w",
 				resp.StatusCode, resp.Status, errorBodyErr)
 		}
+
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"HTTP request returned unaccepted status code during push",
+				map[string]any{
+					"status_code":   resp.StatusCode,
+					"status":        resp.Status,
+					"url":           tempClient.URL,
+					"method":        tempClient.Method,
+					"filename":      fileName,
+					"path":          rawPath,
+					"response_body": string(errorBody),
+				},
+			)
+		}
 		return fmt.Errorf("HTTP request returned unaccepted status %d: %s, response: %s",
 			resp.StatusCode, resp.Status, string(errorBody))
+	}
+
+	// Log successful HTTP push
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"HTTP push request completed successfully",
+			map[string]any{
+				"status_code":    resp.StatusCode,
+				"url":            tempClient.URL,
+				"method":         tempClient.Method,
+				"filename":       fileName,
+				"path":           rawPath,
+				"content_type":   headers["Content-Type"],
+				"content_length": len(fileContent),
+			},
+		)
 	}
 
 	return nil
@@ -158,7 +249,10 @@ func (p *HTTPPushProvider) ProcessFiles(
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /http/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	provider := &HTTPPushProvider{}
+	provider := &HTTPPushProvider{
+		dbInstance: cs.DB,
+		logger:     cs.Logger,
+	}
 	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB)
 }
 

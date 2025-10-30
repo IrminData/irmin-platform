@@ -37,9 +37,10 @@ func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, erro
 }
 
 // GetConnectorRegistrationByID retrieves a ConnectorRegistration record from the database by ID.
+// This includes soft-deleted connector registrations.
 func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration, error) {
 	var registration ConnectorRegistration
-	if err := d.First(&registration, id).Error; err != nil {
+	if err := d.Unscoped().First(&registration, id).Error; err != nil {
 		return nil, fmt.Errorf("failed to fetch connector registration: %w", err)
 	}
 	return &registration, nil

@@ -229,13 +229,15 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware validates the system token for SFTP connector
     endpoints.
 
-type SFTPPullProvider struct{}
+type SFTPPullProvider struct {
+	// Has unexported fields.
+}
     SFTPPullProvider implements the PullOperationProvider interface for SFTP.
 
-func (p *SFTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *SFTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
     GetAllFiles downloads all files from the root directory.
 
-func (p *SFTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, rawPath string) (string, []byte, error)
+func (p *SFTPPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error)
     GetFileByPath downloads a specific file by path.
 
 func (p *SFTPPullProvider) InitializeClient(
@@ -245,7 +247,9 @@ func (p *SFTPPullProvider) InitializeClient(
 ) (any, *string, func(), error)
     InitializeClient initializes the SFTP client for pull operations.
 
-type SFTPPushProvider struct{}
+type SFTPPushProvider struct {
+	// Has unexported fields.
+}
     SFTPPushProvider implements the PushOperationProvider interface for SFTP.
 
 func (p *SFTPPushProvider) InitializeClient(
@@ -256,7 +260,7 @@ func (p *SFTPPushProvider) InitializeClient(
     InitializeClient initializes the SFTP client for push operations.
 
 func (p *SFTPPushProvider) ProcessFiles(
-	_ fiber.Ctx,
+	c fiber.Ctx,
 	client any,
 	files map[string][]byte,
 	rawPath string,

@@ -148,6 +148,17 @@ func (cs *Controllers) HandleOperationInit(c fiber.Ctx, provider OperationInitPr
 		}
 
 		operation = newOperation
+
+		// Log operation creation
+		LogOperationEvent(
+			cs.DB,
+			cs.Logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Operation created",
+			nil,
+		)
+
 		return nil
 	})
 

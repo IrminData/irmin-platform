@@ -29,7 +29,12 @@ type PatchOperationProvider interface {
 }
 
 // HandleOperationPatch provides a common HTTP handler for patch operation endpoints.
-func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *slog.Logger) error {
+func HandleOperationPatch(
+	c fiber.Ctx,
+	provider PatchOperationProvider,
+	logger *slog.Logger,
+	dbInstance *db.Database,
+) error {
 	// Get the operation from the context
 	operation, ok := c.Locals("operation").(*db.Operation)
 	if !ok {
@@ -38,9 +43,29 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 		})
 	}
 
+	// Log operation execution start
+	LogOperationEvent(
+		dbInstance,
+		logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Patch operation execution started",
+		nil,
+	)
+
 	// Initialize the database client
 	client, cleanup, err := provider.InitializeClient(c, logger, operation)
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to initialize database client for patch operation",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to initialize database client: " + err.Error(),
 		})
@@ -50,11 +75,29 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 	// Retrieve the patch file from the form
 	fileHeader, err := c.FormFile("patches")
 	if errors.Is(err, http.ErrMissingFile) {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"No JSON patch file uploaded",
+			nil,
+		)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "No JSON patch file uploaded with form field 'patches'",
 		})
 	}
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to retrieve patch file",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve form file: " + err.Error(),
 		})
@@ -62,6 +105,16 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 
 	file, err := fileHeader.Open()
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to open patch file",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to open form file: " + err.Error(),
 		})
@@ -71,6 +124,16 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 	// Read the entire file into memory
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to read patch file",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to read uploaded file: " + err.Error(),
 		})
@@ -79,6 +142,16 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 	// Unmarshal the JSON into a slice of patch operations
 	var operations []irminmodels.PatchOperation
 	if err = json.Unmarshal(fileBytes, &operations); err != nil {
+		LogOperationEvent(
+			dbInstance,
+			logger,
+			operation.ID,
+			db.LogEventTypeError,
+			"Failed to parse patch operations JSON",
+			map[string]any{
+				"error": err.Error(),
+			},
+		)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to parse JSON data: " + err.Error(),
 		})
@@ -93,6 +166,17 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 		var fromDB, fromTable, fromRow, fromColumn string
 		if op.Op == "move" || op.Op == "copy" {
 			if op.From == nil {
+				LogOperationEvent(
+					dbInstance,
+					logger,
+					operation.ID,
+					db.LogEventTypeError,
+					"Move or copy operation missing 'from' field",
+					map[string]any{
+						"operation": op.Op,
+						"path":      op.Path,
+					},
+				)
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 					"error": "move and copy operations require a 'from' field",
 				})
@@ -102,11 +186,35 @@ func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *
 
 		// Execute the operation using the provider - now with additional source location info
 		if err = provider.ExecutePatchOperation(c, client, op, tableName, rowIdentifier, columnName, fromDB, fromTable, fromRow, fromColumn); err != nil {
+			LogOperationEvent(
+				dbInstance,
+				logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to execute patch operation",
+				map[string]any{
+					"error":     err.Error(),
+					"operation": op.Op,
+					"path":      op.Path,
+				},
+			)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
 	}
+
+	// Log successful completion
+	LogOperationEvent(
+		dbInstance,
+		logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Patch operation completed successfully",
+		map[string]any{
+			"operation_count": len(operations),
+		},
+	)
 
 	// Send a success response
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

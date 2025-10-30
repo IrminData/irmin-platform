@@ -12,7 +12,10 @@ import (
 )
 
 // SFTPPushProvider implements the PushOperationProvider interface for SFTP.
-type SFTPPushProvider struct{}
+type SFTPPushProvider struct {
+	dbInstance *db.Database
+	logger     *slog.Logger
+}
 
 // InitializeClient initializes the SFTP client for push operations.
 func (p *SFTPPushProvider) InitializeClient(
@@ -43,7 +46,7 @@ func (p *SFTPPushProvider) InitializeClient(
 
 // ProcessFiles processes the extracted files and uploads them to the SFTP server.
 func (p *SFTPPushProvider) ProcessFiles(
-	_ fiber.Ctx,
+	c fiber.Ctx,
 	client any,
 	files map[string][]byte,
 	rawPath string,
@@ -52,6 +55,8 @@ func (p *SFTPPushProvider) ProcessFiles(
 	if !ok {
 		return errors.New("invalid client type for SFTP push provider")
 	}
+
+	operation, _ := c.Locals("operation").(*db.Operation)
 
 	// SFTP-specific path processing
 	targetPath := "/"
@@ -62,21 +67,68 @@ func (p *SFTPPushProvider) ProcessFiles(
 	// Create performance tracker
 	tracker := sftpclient.NewPerformanceTracker("push_operation", sftpClient.GetMetrics())
 
-	// Track the files to be uploaded
+	// Calculate total size and count files
+	totalSize := int64(0)
 	for _, fileData := range files {
-		tracker.AddBytes(int64(len(fileData)))
+		fileSize := int64(len(fileData))
+		tracker.AddBytes(fileSize)
 		tracker.AddFiles(1)
+		totalSize += fileSize
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Starting SFTP file upload",
+			map[string]any{
+				"target_path": targetPath,
+				"file_count":  len(files),
+				"total_size":  totalSize,
+			},
+		)
 	}
 
 	// Upload files to SFTP server
 	err := sftpClient.UploadDirectory(files, targetPath)
 	if err != nil {
 		tracker.Finish(false, err.Error())
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to upload files to SFTP server",
+				map[string]any{
+					"error":       err.Error(),
+					"target_path": targetPath,
+					"file_count":  len(files),
+				},
+			)
+		}
 		return fmt.Errorf("failed to upload files: %w", err)
 	}
 
 	// Complete performance tracking
 	tracker.Finish(true, "")
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Successfully uploaded files to SFTP server",
+			map[string]any{
+				"target_path": targetPath,
+				"file_count":  len(files),
+				"total_size":  totalSize,
+			},
+		)
+	}
 
 	return nil
 }
@@ -98,6 +150,9 @@ func (p *SFTPPushProvider) ProcessFiles(
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /sftp/operation/push [post]
 func (cs *Controllers) OperationPush(c fiber.Ctx) error {
-	provider := &SFTPPushProvider{}
+	provider := &SFTPPushProvider{
+		dbInstance: cs.DB,
+		logger:     cs.Logger,
+	}
 	return common.HandleOperationPush(c, provider, cs.Logger, cs.DB)
 }

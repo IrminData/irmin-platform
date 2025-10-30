@@ -1,10 +1,30 @@
 definitions:
+  common.OperationLog:
+    properties:
+      created_at:
+        type: string
+      message:
+        type: string
+      metadata:
+        additionalProperties: {}
+        type: object
+      type:
+        type: string
+    type: object
   common.OperationStatus:
     properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
       details:
         additionalProperties:
           type: string
         type: object
+      logs:
+        items:
+          $ref: '#/definitions/common.OperationLog'
+        type: array
       operation_id:
         type: integer
       settings:
@@ -15,31 +35,33 @@ definitions:
         items:
           $ref: '#/definitions/common.Subscription'
         type: array
+      updated_at:
+        type: string
     type: object
   common.Subscription:
     properties:
-      CreatedAt:
-        example: "2021-01-01T00:00:00Z"
-        type: string
-      DeletedAt:
-        example: "2021-01-01T00:00:00Z"
-        type: string
       ID:
         example: 1
         type: integer
-      UpdatedAt:
+      connector_registration_id:
+        example: 1
+        type: integer
+      created_at:
         example: "2021-01-01T00:00:00Z"
         type: string
-      connectorRegistrationID:
+      deleted_at:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      operation_id:
         example: 1
         type: integer
-      operationID:
-        example: 1
-        type: integer
-      webhookAccessToken:
+      updated_at:
+        example: "2021-01-01T00:00:00Z"
+        type: string
+      webhook_access_token:
         example: "1234567890"
         type: string
-      webhookUrl:
+      webhook_url:
         example: https://example.com/webhook
         type: string
     type: object
@@ -60,6 +82,16 @@ definitions:
       updatedAt:
         type: string
     type: object
+  db.LogEventType:
+    enum:
+    - ERROR
+    - INFO
+    - WARNING
+    type: string
+    x-enum-varnames:
+    - LogEventTypeError
+    - LogEventTypeInfo
+    - LogEventTypeWarning
   db.Operation:
     properties:
       configHash:
@@ -78,12 +110,41 @@ definitions:
         type: array
       id:
         type: integer
+      logs:
+        items:
+          $ref: '#/definitions/db.OperationLog'
+        type: array
       settings:
         items:
           type: integer
         type: array
       token:
         type: string
+      updatedAt:
+        type: string
+    type: object
+  db.OperationLog:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      message:
+        type: string
+      metadata:
+        description: 'Arbitrary structured data that stores information about the
+          log - e.g., userId: 100.'
+        items:
+          type: integer
+        type: array
+      operation:
+        $ref: '#/definitions/db.Operation'
+      operation_id:
+        type: integer
+      type:
+        $ref: '#/definitions/db.LogEventType'
       updatedAt:
         type: string
     type: object

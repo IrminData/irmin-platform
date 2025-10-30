@@ -79,14 +79,45 @@ func CancelOperation(
 		})
 	}
 
+	// Log cancellation start
+	LogOperationEvent(
+		app.DB,
+		app.Logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Operation cancellation initiated",
+		nil,
+	)
+
 	// Execute custom cancellation logic if provided
 	if cancellationFunc != nil {
 		if err = cancellationFunc(app, operation); err != nil {
+			// Log cancellation failure
+			LogOperationEvent(
+				app.DB,
+				app.Logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Operation cancellation failed",
+				map[string]any{
+					"error": err.Error(),
+				},
+			)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "Failed to cancel operation: " + err.Error(),
 			})
 		}
 	}
+
+	// Log successful cancellation
+	LogOperationEvent(
+		app.DB,
+		app.Logger,
+		operation.ID,
+		db.LogEventTypeInfo,
+		"Operation cancelled successfully",
+		nil,
+	)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Operation cancelled successfully",

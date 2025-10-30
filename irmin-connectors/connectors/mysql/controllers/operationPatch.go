@@ -70,7 +70,7 @@ func (p *MySQLPatchProvider) ExecutePatchOperation(
 // @Router /mysql/operation/patch [post]
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error {
 	provider := &MySQLPatchProvider{}
-	return common.HandleOperationPatch(c, provider, cs.Logger)
+	return common.HandleOperationPatch(c, provider, cs.Logger, cs.DB)
 }
 
 // executePatchOperation executes a single patch operation within its own transaction.

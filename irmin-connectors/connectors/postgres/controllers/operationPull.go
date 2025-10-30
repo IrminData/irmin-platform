@@ -16,6 +16,8 @@ import (
 // PostgresPullProvider implements the PullOperationProvider interface for PostgreSQL.
 type PostgresPullProvider struct {
 	databaseName *string
+	dbInstance   *db.Database
+	logger       *slog.Logger
 }
 
 // InitializeClient initializes the PostgreSQL client for pull operations.
@@ -46,10 +48,39 @@ func (p *PostgresPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [
 		return nil, nil, errors.New("invalid client type for PostgreSQL pull provider")
 	}
 
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// Get list of tables
 	tables, err := postgresClient.GetTables(c)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to get PostgreSQL tables list",
+				map[string]any{
+					"error":    err.Error(),
+					"database": p.databaseName,
+				},
+			)
+		}
 		return nil, nil, fmt.Errorf("failed to get tables: %w", err)
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Retrieved PostgreSQL tables list",
+			map[string]any{
+				"table_count": len(tables),
+				"database":    p.databaseName,
+			},
+		)
 	}
 
 	// Initialize lists
@@ -60,6 +91,20 @@ func (p *PostgresPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [
 	for i, table := range tables {
 		resultPath, resultContent, getErr := p.GetFileByPath(c, client, table)
 		if getErr != nil {
+			if operation != nil && p.dbInstance != nil && p.logger != nil {
+				common.LogOperationEvent(
+					p.dbInstance,
+					p.logger,
+					operation.ID,
+					db.LogEventTypeError,
+					"Failed to process PostgreSQL table",
+					map[string]any{
+						"error":    getErr.Error(),
+						"table":    table,
+						"database": p.databaseName,
+					},
+				)
+			}
 			return nil, nil, fmt.Errorf("failed to process table %s: %w", table, getErr)
 		}
 		filenames[i] = resultPath
@@ -76,6 +121,8 @@ func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 		return "", nil, errors.New("invalid client type for PostgreSQL pull provider")
 	}
 
+	operation, _ := c.Locals("operation").(*db.Operation)
+
 	// Database-specific path processing with proper database name
 	path := processRawPath(rawPath, p.databaseName)
 
@@ -86,6 +133,20 @@ func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 	query := fmt.Sprintf(`SELECT * FROM "%s"`, path)
 	rows, err := postgresClient.Query(c, query)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"PostgreSQL table query failed",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    path,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fileName, nil, fmt.Errorf("query failed: %w", err)
 	}
 	defer rows.Close()
@@ -100,13 +161,57 @@ func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 	// Build records
 	recs, err := buildRecordsFromRows(rows, cols)
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to build records from PostgreSQL table",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    path,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fileName, nil, fmt.Errorf("build records failed: %w", err)
 	}
 
 	// Marshal and write JSON
 	data, err := json.MarshalIndent(recs, "", "  ")
 	if err != nil {
+		if operation != nil && p.dbInstance != nil && p.logger != nil {
+			common.LogOperationEvent(
+				p.dbInstance,
+				p.logger,
+				operation.ID,
+				db.LogEventTypeError,
+				"Failed to marshal PostgreSQL table data to JSON",
+				map[string]any{
+					"error":    err.Error(),
+					"table":    path,
+					"database": p.databaseName,
+				},
+			)
+		}
 		return fileName, nil, fmt.Errorf("marshal failed: %w", err)
+	}
+
+	if operation != nil && p.dbInstance != nil && p.logger != nil {
+		common.LogOperationEvent(
+			p.dbInstance,
+			p.logger,
+			operation.ID,
+			db.LogEventTypeInfo,
+			"Successfully pulled PostgreSQL table data",
+			map[string]any{
+				"table":        path,
+				"database":     p.databaseName,
+				"row_count":    len(recs),
+				"column_count": len(cols),
+			},
+		)
 	}
 
 	return fileName, data, nil
@@ -128,7 +233,10 @@ func (p *PostgresPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath st
 // @Failure 500 {object} fiber.Map "Internal server error"
 // @Router /postgres/operation/pull [post]
 func (cs *Controllers) OperationPull(c fiber.Ctx) error {
-	provider := &PostgresPullProvider{}
+	provider := &PostgresPullProvider{
+		dbInstance: cs.DB,
+		logger:     cs.Logger,
+	}
 	return common.HandleOperationPull(c, provider, cs.Logger, cs.DB)
 }
 

@@ -101,6 +101,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
   - [func \(d \*Database\) CreateConnectorRegistration\(registration \*ConnectorRegistration\) \(\*ConnectorRegistration, error\)](<#Database.CreateConnectorRegistration>)
   - [func \(d \*Database\) CreateOperation\(operation \*Operation\) \(\*Operation, error\)](<#Database.CreateOperation>)
+  - [func \(d \*Database\) CreateOperationLog\(operationLog \*OperationLog\) \(\*OperationLog, error\)](<#Database.CreateOperationLog>)
   - [func \(d \*Database\) CreateSubscription\(subscription \*Subscription\) \(\*Subscription, error\)](<#Database.CreateSubscription>)
   - [func \(d \*Database\) DeleteConnectorRegistration\(id uint\) error](<#Database.DeleteConnectorRegistration>)
   - [func \(d \*Database\) DeleteOperation\(id uint\) error](<#Database.DeleteOperation>)
@@ -108,6 +109,7 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) DeleteSubscriptionsByOperationID\(operationID uint\) error](<#Database.DeleteSubscriptionsByOperationID>)
   - [func \(d \*Database\) FindOperationByConfigHash\(connectorRegistrationID uint, configHash \*string\) \(\*Operation, error\)](<#Database.FindOperationByConfigHash>)
   - [func \(d \*Database\) GetAllConnectorRegistrations\(\) \(\[\]ConnectorRegistration, error\)](<#Database.GetAllConnectorRegistrations>)
+  - [func \(d \*Database\) GetAllLogsForOperation\(operationID uint\) \(\[\]OperationLog, error\)](<#Database.GetAllLogsForOperation>)
   - [func \(d \*Database\) GetAllOperations\(\) \(\[\]Operation, error\)](<#Database.GetAllOperations>)
   - [func \(d \*Database\) GetAllSubscriptions\(\) \(\[\]Subscription, error\)](<#Database.GetAllSubscriptions>)
   - [func \(d \*Database\) GetConnectorRegistrationByConnectorName\(name string\) \(\*ConnectorRegistration, error\)](<#Database.GetConnectorRegistrationByConnectorName>)
@@ -119,8 +121,10 @@ import "irmin-connectors/db"
   - [func \(d \*Database\) Migrate\(\) error](<#Database.Migrate>)
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
   - [func \(d \*Database\) RunRawQuery\(sqlQuery string, args ...any\) error](<#Database.RunRawQuery>)
+- [type LogEventType](<#LogEventType>)
 - [type Operation](<#Operation>)
   - [func FindOperationByConfigHashTx\(tx \*gorm.DB, connectorRegistrationID uint, configHash \*string\) \(\*Operation, error\)](<#FindOperationByConfigHashTx>)
+- [type OperationLog](<#OperationLog>)
 - [type Subscription](<#Subscription>)
 
 
@@ -259,6 +263,15 @@ func (d *Database) CreateOperation(operation *Operation) (*Operation, error)
 
 CreateOperation inserts a new Operation record into the database.
 
+<a name="Database.CreateOperationLog"></a>
+### func \(\*Database\) CreateOperationLog
+
+```go
+func (d *Database) CreateOperationLog(operationLog *OperationLog) (*OperationLog, error)
+```
+
+CreateOperationLog inserts a new OperationLog record into the database.
+
 <a name="Database.CreateSubscription"></a>
 ### func \(\*Database\) CreateSubscription
 
@@ -322,6 +335,15 @@ func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, erro
 
 GetAllConnectorRegistrations retrieves all ConnectorRegistration records from the database.
 
+<a name="Database.GetAllLogsForOperation"></a>
+### func \(\*Database\) GetAllLogsForOperation
+
+```go
+func (d *Database) GetAllLogsForOperation(operationID uint) ([]OperationLog, error)
+```
+
+GetAllLogsForOperation retrieves all OperationLog records for a given operation ID.
+
 <a name="Database.GetAllOperations"></a>
 ### func \(\*Database\) GetAllOperations
 
@@ -356,7 +378,7 @@ GetConnectorRegistrationByConnectorName retrieves a ConnectorRegistration record
 func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration, error)
 ```
 
-GetConnectorRegistrationByID retrieves a ConnectorRegistration record from the database by ID.
+GetConnectorRegistrationByID retrieves a ConnectorRegistration record from the database by ID. This includes soft\-deleted connector registrations.
 
 <a name="Database.GetConnectorRegistrationsByConnectorName"></a>
 ### func \(\*Database\) GetConnectorRegistrationsByConnectorName
@@ -374,7 +396,7 @@ GetConnectorRegistrationsByConnectorName retrieves all ConnectorRegistration rec
 func (d *Database) GetOperationByID(id uint) (*Operation, error)
 ```
 
-GetOperationByID retrieves an Operation record from the database by ID.
+GetOperationByID retrieves an Operation record from the database by ID. This includes soft\-deleted operations.
 
 <a name="Database.GetOperationsByConnectorRegistrationID"></a>
 ### func \(\*Database\) GetOperationsByConnectorRegistrationID
@@ -421,6 +443,25 @@ func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
 
 RunRawQuery executes a raw SQL query against the database.
 
+<a name="LogEventType"></a>
+## type LogEventType
+
+
+
+```go
+type LogEventType string
+```
+
+<a name="LogEventTypeError"></a>
+
+```go
+const (
+    LogEventTypeError   LogEventType = "ERROR"
+    LogEventTypeInfo    LogEventType = "INFO"
+    LogEventTypeWarning LogEventType = "WARNING"
+)
+```
+
 <a name="Operation"></a>
 ## type Operation
 
@@ -435,6 +476,8 @@ type Operation struct {
     Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
     ConfigHash *string        `json:"configHash" gorm:"type:varchar(64);index:idx_connector_config"`
 
+    Logs []OperationLog `json:"logs,omitempty" gorm:"foreignKey:OperationID"`
+
     ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
     Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
 }
@@ -448,6 +491,25 @@ func FindOperationByConfigHashTx(tx *gorm.DB, connectorRegistrationID uint, conf
 ```
 
 FindOperationByConfigHashTx retrieves an Operation record matching the connector registration ID and configuration hash using the provided transaction context. This should be used within transactions to avoid race conditions.
+
+<a name="OperationLog"></a>
+## type OperationLog
+
+OperationLog represents a record of a log tied to an operation.
+
+```go
+type OperationLog struct {
+    gorm.Model
+
+    Type LogEventType `json:"type"`
+
+    Message  string         `json:"message"  gorm:"type:text"`
+    Metadata datatypes.JSON `json:"metadata" gorm:"type:json"` // Arbitrary structured data that stores information about the log - e.g., userId: 100.
+
+    OperationID uint       `json:"operation_id"        gorm:"index"`
+    Operation   *Operation `json:"operation,omitempty" gorm:"foreignKey:OperationID"`
+}
+```
 
 <a name="Subscription"></a>
 ## type Subscription
@@ -1183,12 +1245,13 @@ import "irmin-connectors/connectors/common"
 - [func HandleNotSupportedPull\(c fiber.Ctx\) error](<#HandleNotSupportedPull>)
 - [func HandleNotSupportedPush\(c fiber.Ctx\) error](<#HandleNotSupportedPush>)
 - [func HandleNotSupportedSchemaGet\(c fiber.Ctx\) error](<#HandleNotSupportedSchemaGet>)
-- [func HandleOperationPatch\(c fiber.Ctx, provider PatchOperationProvider, logger \*slog.Logger\) error](<#HandleOperationPatch>)
+- [func HandleOperationPatch\(c fiber.Ctx, provider PatchOperationProvider, logger \*slog.Logger, dbInstance \*db.Database\) error](<#HandleOperationPatch>)
 - [func HandleOperationPull\(c fiber.Ctx, provider PullOperationProvider, logger \*slog.Logger, dbInstance \*db.Database\) error](<#HandleOperationPull>)
 - [func HandleOperationPush\(c fiber.Ctx, provider PushOperationProvider, logger \*slog.Logger, dbInstance \*db.Database\) error](<#HandleOperationPush>)
 - [func HandleOperationSchemaGet\(c fiber.Ctx, provider SchemaOperationProvider, logger \*slog.Logger, dbInstance \*db.Database\) error](<#HandleOperationSchemaGet>)
 - [func HandleOperationStatus\(c fiber.Ctx, getConnectorInfo func\(\) models.ConnectorDetails, app \*models.ConnectorsApp\) error](<#HandleOperationStatus>)
 - [func LogOnlyCancellation\(app \*models.ConnectorsApp, operation \*db.Operation\) error](<#LogOnlyCancellation>)
+- [func LogOperationEvent\(dbInstance \*db.Database, logger \*slog.Logger, operationID uint, eventType db.LogEventType, message string, metadata map\[string\]any\)](<#LogOperationEvent>)
 - [func RenderConnectorDetailsPage\(c fiber.Ctx, app \*models.ConnectorsApp, connectorSlug string, getConnectorInfo func\(\) models.ConnectorDetails, eventDescription ...string\) error](<#RenderConnectorDetailsPage>)
 - [func RenderConnectorInfo\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#RenderConnectorInfo>)
 - [func RenderDetailsPage\(c fiber.Ctx, config DetailsPageConfig\) error](<#RenderDetailsPage>)
@@ -1221,6 +1284,7 @@ import "irmin-connectors/connectors/common"
   - [func \(p \*NotSupportedSchemaProvider\) InitializeClient\(\_ fiber.Ctx, \_ \*slog.Logger, \_ \*db.Operation\) \(any, \*string, func\(\), error\)](<#NotSupportedSchemaProvider.InitializeClient>)
 - [type OperationCancelConfig](<#OperationCancelConfig>)
 - [type OperationInitProvider](<#OperationInitProvider>)
+- [type OperationLog](<#OperationLog>)
 - [type OperationStatus](<#OperationStatus>)
 - [type PatchOperationProvider](<#PatchOperationProvider>)
 - [type PullOperationProvider](<#PullOperationProvider>)
@@ -1404,7 +1468,7 @@ HandleNotSupportedSchemaGet provides a common handler for connectors that don't 
 ## func HandleOperationPatch
 
 ```go
-func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *slog.Logger) error
+func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *slog.Logger, dbInstance *db.Database) error
 ```
 
 HandleOperationPatch provides a common HTTP handler for patch operation endpoints.
@@ -1453,6 +1517,15 @@ func LogOnlyCancellation(app *models.ConnectorsApp, operation *db.Operation) err
 ```
 
 LogOnlyCancellation provides a simple logging\-only cancellation for connectors that don't implement full cancellation yet.
+
+<a name="LogOperationEvent"></a>
+## func LogOperationEvent
+
+```go
+func LogOperationEvent(dbInstance *db.Database, logger *slog.Logger, operationID uint, eventType db.LogEventType, message string, metadata map[string]any)
+```
+
+LogOperationEvent creates an operation log entry with the specified type, message, and metadata. This is a helper function to standardize operation logging across all connector handlers.
 
 <a name="RenderConnectorDetailsPage"></a>
 ## func RenderConnectorDetailsPage
@@ -1804,6 +1877,20 @@ type OperationInitProvider interface {
 }
 ```
 
+<a name="OperationLog"></a>
+## type OperationLog
+
+OperationLog represents a record of a log tied to an operation.
+
+```go
+type OperationLog struct {
+    CreatedAt string         `json:"created_at"`
+    Type      string         `json:"type"`
+    Message   string         `json:"message"`
+    Metadata  map[string]any `json:"metadata"`
+}
+```
+
 <a name="OperationStatus"></a>
 ## type OperationStatus
 
@@ -1812,9 +1899,13 @@ OperationStatus represents the response for an operation status check.
 ```go
 type OperationStatus struct {
     OperationID   uint              `json:"operation_id"`
+    CreatedAt     string            `json:"created_at"`
+    UpdatedAt     string            `json:"updated_at"`
+    DeletedAt     *string           `json:"deleted_at,omitempty"`
     Details       map[string]string `json:"details"`
     Settings      map[string]string `json:"settings"`
     Subscriptions []Subscription    `json:"subscriptions"`
+    Logs          []OperationLog    `json:"logs"`
 }
 ```
 
@@ -1909,14 +2000,14 @@ Subscription represents a record of an active subscription to changes in data.
 
 ```go
 type Subscription struct {
-    ID                      uint    `json:"ID"                      example:"1"`
-    CreatedAt               string  `json:"CreatedAt"               example:"2021-01-01T00:00:00Z"`
-    UpdatedAt               string  `json:"UpdatedAt"               example:"2021-01-01T00:00:00Z"`
-    DeletedAt               *string `json:"DeletedAt,omitempty"     example:"2021-01-01T00:00:00Z"`
-    WebhookURL              string  `json:"webhookUrl"              example:"https://example.com/webhook"`
-    WebhookAccessToken      string  `json:"webhookAccessToken"      example:"1234567890"`
-    ConnectorRegistrationID uint    `json:"connectorRegistrationID" example:"1"`
-    OperationID             uint    `json:"operationID"             example:"1"`
+    ID                      uint    `json:"ID"                        example:"1"`
+    CreatedAt               string  `json:"created_at"                example:"2021-01-01T00:00:00Z"`
+    UpdatedAt               string  `json:"updated_at"                example:"2021-01-01T00:00:00Z"`
+    DeletedAt               *string `json:"deleted_at,omitempty"      example:"2021-01-01T00:00:00Z"`
+    WebhookURL              string  `json:"webhook_url"               example:"https://example.com/webhook"`
+    WebhookAccessToken      string  `json:"webhook_access_token"      example:"1234567890"`
+    ConnectorRegistrationID uint    `json:"connector_registration_id" example:"1"`
+    OperationID             uint    `json:"operation_id"              example:"1"`
 }
 ```
 
@@ -2241,12 +2332,12 @@ import "irmin-connectors/connectors/http/controllers"
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
 - [type HTTPPullProvider](<#HTTPPullProvider>)
-  - [func \(p \*HTTPPullProvider\) GetAllFiles\(\_ fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#HTTPPullProvider.GetAllFiles>)
-  - [func \(p \*HTTPPullProvider\) GetFileByPath\(\_ fiber.Ctx, client any, path string\) \(string, \[\]byte, error\)](<#HTTPPullProvider.GetFileByPath>)
+  - [func \(p \*HTTPPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#HTTPPullProvider.GetAllFiles>)
+  - [func \(p \*HTTPPullProvider\) GetFileByPath\(c fiber.Ctx, client any, path string\) \(string, \[\]byte, error\)](<#HTTPPullProvider.GetFileByPath>)
   - [func \(p \*HTTPPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPullProvider.InitializeClient>)
 - [type HTTPPushProvider](<#HTTPPushProvider>)
   - [func \(p \*HTTPPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#HTTPPushProvider.InitializeClient>)
-  - [func \(p \*HTTPPushProvider\) ProcessFiles\(\_ fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#HTTPPushProvider.ProcessFiles>)
+  - [func \(p \*HTTPPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#HTTPPushProvider.ProcessFiles>)
 - [type HTTPSchemaProvider](<#HTTPSchemaProvider>)
   - [func \(p \*HTTPSchemaProvider\) GetSchema\(c fiber.Ctx, client any, \_ string, requestPath \*string\) \(\*irminmodels.ObjectSchema, error\)](<#HTTPSchemaProvider.GetSchema>)
   - [func \(p \*HTTPSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#HTTPSchemaProvider.GetSupportedOperationTypes>)
@@ -2468,14 +2559,16 @@ ValidateSystemTokenMiddleware validates the system token.
 HTTPPullProvider implements the PullOperationProvider interface for HTTP.
 
 ```go
-type HTTPPullProvider struct{}
+type HTTPPullProvider struct {
+    // contains filtered or unexported fields
+}
 ```
 
 <a name="HTTPPullProvider.GetAllFiles"></a>
 ### func \(\*HTTPPullProvider\) GetAllFiles
 
 ```go
-func (p *HTTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *HTTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
 ```
 
 GetAllFiles makes a request to the configured endpoint and returns the response as a file.
@@ -2484,7 +2577,7 @@ GetAllFiles makes a request to the configured endpoint and returns the response 
 ### func \(\*HTTPPullProvider\) GetFileByPath
 
 ```go
-func (p *HTTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, path string) (string, []byte, error)
+func (p *HTTPPullProvider) GetFileByPath(c fiber.Ctx, client any, path string) (string, []byte, error)
 ```
 
 GetFileByPath makes a request to the configured endpoint with an optional path modification. The path parameter is used to modify the request URL \(absolute path replaces, relative path appends\).
@@ -2504,7 +2597,9 @@ InitializeClient initializes the HTTP client for pull operations.
 HTTPPushProvider implements the PushOperationProvider interface for HTTP.
 
 ```go
-type HTTPPushProvider struct{}
+type HTTPPushProvider struct {
+    // contains filtered or unexported fields
+}
 ```
 
 <a name="HTTPPushProvider.InitializeClient"></a>
@@ -2520,7 +2615,7 @@ InitializeClient initializes the HTTP client for push operations.
 ### func \(\*HTTPPushProvider\) ProcessFiles
 
 ```go
-func (p *HTTPPushProvider) ProcessFiles(_ fiber.Ctx, client any, files map[string][]byte, rawPath string) error
+func (p *HTTPPushProvider) ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, rawPath string) error
 ```
 
 ProcessFiles processes the extracted files and sends them to the HTTP endpoint. The rawPath parameter is used to modify the request URL \(absolute path replaces, relative path appends\).
@@ -4932,12 +5027,12 @@ import "irmin-connectors/connectors/sftp/controllers"
   - [func \(cs \*Controllers\) ValidateOperationTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateOperationTokenMiddleware>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
 - [type SFTPPullProvider](<#SFTPPullProvider>)
-  - [func \(p \*SFTPPullProvider\) GetAllFiles\(\_ fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#SFTPPullProvider.GetAllFiles>)
-  - [func \(p \*SFTPPullProvider\) GetFileByPath\(\_ fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#SFTPPullProvider.GetFileByPath>)
+  - [func \(p \*SFTPPullProvider\) GetAllFiles\(c fiber.Ctx, client any\) \(\[\]string, \[\]\[\]byte, error\)](<#SFTPPullProvider.GetAllFiles>)
+  - [func \(p \*SFTPPullProvider\) GetFileByPath\(c fiber.Ctx, client any, rawPath string\) \(string, \[\]byte, error\)](<#SFTPPullProvider.GetFileByPath>)
   - [func \(p \*SFTPPullProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#SFTPPullProvider.InitializeClient>)
 - [type SFTPPushProvider](<#SFTPPushProvider>)
   - [func \(p \*SFTPPushProvider\) InitializeClient\(c fiber.Ctx, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#SFTPPushProvider.InitializeClient>)
-  - [func \(p \*SFTPPushProvider\) ProcessFiles\(\_ fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#SFTPPushProvider.ProcessFiles>)
+  - [func \(p \*SFTPPushProvider\) ProcessFiles\(c fiber.Ctx, client any, files map\[string\]\[\]byte, rawPath string\) error](<#SFTPPushProvider.ProcessFiles>)
 - [type SFTPSchemaProvider](<#SFTPSchemaProvider>)
   - [func \(p \*SFTPSchemaProvider\) GetSchema\(ctx fiber.Ctx, client any, operationType string, remotePath \*string\) \(\*irminmodels.ObjectSchema, error\)](<#SFTPSchemaProvider.GetSchema>)
   - [func \(p \*SFTPSchemaProvider\) GetSupportedOperationTypes\(\) \[\]string](<#SFTPSchemaProvider.GetSupportedOperationTypes>)
@@ -5185,14 +5280,16 @@ ValidateSystemTokenMiddleware validates the system token for SFTP connector endp
 SFTPPullProvider implements the PullOperationProvider interface for SFTP.
 
 ```go
-type SFTPPullProvider struct{}
+type SFTPPullProvider struct {
+    // contains filtered or unexported fields
+}
 ```
 
 <a name="SFTPPullProvider.GetAllFiles"></a>
 ### func \(\*SFTPPullProvider\) GetAllFiles
 
 ```go
-func (p *SFTPPullProvider) GetAllFiles(_ fiber.Ctx, client any) ([]string, [][]byte, error)
+func (p *SFTPPullProvider) GetAllFiles(c fiber.Ctx, client any) ([]string, [][]byte, error)
 ```
 
 GetAllFiles downloads all files from the root directory.
@@ -5201,7 +5298,7 @@ GetAllFiles downloads all files from the root directory.
 ### func \(\*SFTPPullProvider\) GetFileByPath
 
 ```go
-func (p *SFTPPullProvider) GetFileByPath(_ fiber.Ctx, client any, rawPath string) (string, []byte, error)
+func (p *SFTPPullProvider) GetFileByPath(c fiber.Ctx, client any, rawPath string) (string, []byte, error)
 ```
 
 GetFileByPath downloads a specific file by path.
@@ -5221,7 +5318,9 @@ InitializeClient initializes the SFTP client for pull operations.
 SFTPPushProvider implements the PushOperationProvider interface for SFTP.
 
 ```go
-type SFTPPushProvider struct{}
+type SFTPPushProvider struct {
+    // contains filtered or unexported fields
+}
 ```
 
 <a name="SFTPPushProvider.InitializeClient"></a>
@@ -5237,7 +5336,7 @@ InitializeClient initializes the SFTP client for push operations.
 ### func \(\*SFTPPushProvider\) ProcessFiles
 
 ```go
-func (p *SFTPPushProvider) ProcessFiles(_ fiber.Ctx, client any, files map[string][]byte, rawPath string) error
+func (p *SFTPPushProvider) ProcessFiles(c fiber.Ctx, client any, files map[string][]byte, rawPath string) error
 ```
 
 ProcessFiles processes the extracted files and uploads them to the SFTP server.

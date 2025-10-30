@@ -85,6 +85,9 @@ func (d *Database) CreateConnectorRegistration(registration *ConnectorRegistrati
 func (d *Database) CreateOperation(operation *Operation) (*Operation, error)
     CreateOperation inserts a new Operation record into the database.
 
+func (d *Database) CreateOperationLog(operationLog *OperationLog) (*OperationLog, error)
+    CreateOperationLog inserts a new OperationLog record into the database.
+
 func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription, error)
     CreateSubscription inserts a new Subscription record into the database.
 
@@ -115,6 +118,10 @@ func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, erro
     GetAllConnectorRegistrations retrieves all ConnectorRegistration records
     from the database.
 
+func (d *Database) GetAllLogsForOperation(operationID uint) ([]OperationLog, error)
+    GetAllLogsForOperation retrieves all OperationLog records for a given
+    operation ID.
+
 func (d *Database) GetAllOperations() ([]Operation, error)
     GetAllOperations retrieves all Operation records from the database.
 
@@ -127,7 +134,7 @@ func (d *Database) GetConnectorRegistrationByConnectorName(name string) (*Connec
 
 func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration, error)
     GetConnectorRegistrationByID retrieves a ConnectorRegistration record from
-    the database by ID.
+    the database by ID. This includes soft-deleted connector registrations.
 
 func (d *Database) GetConnectorRegistrationsByConnectorName(name string) ([]ConnectorRegistration, error)
     GetConnectorRegistrationsByConnectorName retrieves all ConnectorRegistration
@@ -135,6 +142,7 @@ func (d *Database) GetConnectorRegistrationsByConnectorName(name string) ([]Conn
 
 func (d *Database) GetOperationByID(id uint) (*Operation, error)
     GetOperationByID retrieves an Operation record from the database by ID.
+    This includes soft-deleted operations.
 
 func (d *Database) GetOperationsByConnectorRegistrationID(id uint) ([]Operation, error)
     GetOperationsByConnectorRegistrationID retrieves all Operation records from
@@ -153,6 +161,13 @@ func (d *Database) Reset() error
 func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
     RunRawQuery executes a raw SQL query against the database.
 
+type LogEventType string
+
+const (
+	LogEventTypeError   LogEventType = "ERROR"
+	LogEventTypeInfo    LogEventType = "INFO"
+	LogEventTypeWarning LogEventType = "WARNING"
+)
 type Operation struct {
 	gorm.Model
 
@@ -160,6 +175,8 @@ type Operation struct {
 	Settings   datatypes.JSON `json:"settings"   gorm:"type:json"`
 	Token      string         `json:"token"      gorm:"type:varchar(255);not null"`
 	ConfigHash *string        `json:"configHash" gorm:"type:varchar(64);index:idx_connector_config"`
+
+	Logs []OperationLog `json:"logs,omitempty" gorm:"foreignKey:OperationID"`
 
 	ConnectorRegistrationID uint                   `json:"connectorRegistrationID"         gorm:"index:idx_connector_config"`
 	Connector               *ConnectorRegistration `json:"connectorRegistration,omitempty" gorm:"foreignKey:ConnectorRegistrationID"`
@@ -175,6 +192,19 @@ func FindOperationByConfigHashTx(
     connector registration ID and configuration hash using the provided
     transaction context. This should be used within transactions to avoid race
     conditions.
+
+type OperationLog struct {
+	gorm.Model
+
+	Type LogEventType `json:"type"`
+
+	Message  string         `json:"message"  gorm:"type:text"`
+	Metadata datatypes.JSON `json:"metadata" gorm:"type:json"` // Arbitrary structured data that stores information about the log - e.g., userId: 100.
+
+	OperationID uint       `json:"operation_id"        gorm:"index"`
+	Operation   *Operation `json:"operation,omitempty" gorm:"foreignKey:OperationID"`
+}
+    OperationLog represents a record of a log tied to an operation.
 
 type Subscription struct {
 	gorm.Model
