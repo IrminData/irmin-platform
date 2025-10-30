@@ -376,7 +376,7 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 	connection *db.Connection,
 	operationMethod, path, locale string,
 	ignoreCache bool,
-) (*irminmodels.ObjectSchema, error)
+) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error)
     GetConnectionSchema returns the schema for a connection. It first checks
     if the schema is cached, and if so, returns the cached schema. Otherwise,
     it fetches the schema from the Data Engine and caches it asynchronously.

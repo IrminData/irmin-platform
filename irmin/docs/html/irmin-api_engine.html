@@ -138,7 +138,7 @@ func (c *Client) DataExport(
 	requestedRepositoryPaths []string,
 	fieldMappings []irminmodels.FieldMapping,
 	tx ...*gorm.DB,
-) ([]string, []error)
+) ([]string, []connectorsclient.OperationLog, []error)
     DataExport exports data from a lakeFS repository to an external connector.
     It applies field mappings to route and transform data, merges files that map
     to the same destination, and pushes the results to the connector. Returns
@@ -155,7 +155,7 @@ func (c *Client) DataImport(
 	repositoryPath string,
 	fieldMappings []irminmodels.FieldMapping,
 	tx ...*gorm.DB,
-) ([]lakefs.ObjectMetadata, []error)
+) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error)
     DataImport imports data from an external source into a lakeFS repository.
     It applies field mappings to route and transform data, merges files that
     map to the same destination, and uploads the results. Returns the metadata
@@ -167,7 +167,7 @@ func (c *Client) DataMovementSchema(
 	connection *db.Connection,
 	method, path string,
 	tx ...*gorm.DB,
-) (*irminmodels.ObjectSchema, error)
+) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error)
     DataMovementSchema retrieves the schema for a specific method from the
     connector. It returns the schema and an error if any occurred. If tx is
     provided, it will be used instead of creating a new transaction.
@@ -219,11 +219,11 @@ func (c *Client) InitializeConnectorOperation(
 	ctx context.Context,
 	connection *db.Connection,
 	tx ...*gorm.DB,
-) (*connectorsclient.Client, func(), error)
-    InitializeConnectorOperation sets up a connector operation and returns
-    an operation client, along with a cancel function to clean up when done.
-    It returns an error if initialization fails. If tx is provided, it will be
-    used instead of creating a new transaction.
+) (*connectorsclient.Client, *connectorsclient.Client, *uint, func(), error)
+    InitializeConnectorOperation sets up a connector operation and returns a
+    system connector client, an operation client, along with a cancel function
+    to clean up when done. It returns an error if initialization fails. If tx is
+    provided, it will be used instead of creating a new transaction.
 
 func (c *Client) ListBranches(ctx context.Context, workspace, repository string) ([]irminmodels.Branch, error)
 
@@ -248,7 +248,7 @@ func (c *Client) PullFilesFromConnector(
 	ctx context.Context,
 	connection *db.Connection,
 	connectionPaths []string,
-) (map[string][]byte, error)
+) (map[string][]byte, []connectorsclient.OperationLog, error)
     PullFilesFromConnector pulls files from a connector, unzips them, and
     returns a map of file paths to file contents. It returns a map of file paths
     to file contents and an error if any occurred.
@@ -260,7 +260,7 @@ func (c *Client) PushFilesToConnector(
 	objects []*irminmodels.Object,
 	files map[string][]byte,
 	tx ...*gorm.DB,
-) ([]string, error)
+) ([]string, []connectorsclient.OperationLog, error)
     PushFilesToConnector pushes files to a connector. It returns the paths of
     the files that were pushed and an error if any occurred. If tx is provided,
     it will be used instead of creating a new transaction.

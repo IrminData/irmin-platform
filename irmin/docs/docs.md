@@ -463,6 +463,7 @@ import "irmin-api/connectors-client"
 - [type ConnectorInfo](<#ConnectorInfo>)
 - [type FormFile](<#FormFile>)
 - [type Operation](<#Operation>)
+- [type OperationLog](<#OperationLog>)
 - [type OperationStatus](<#OperationStatus>)
 - [type PulledFile](<#PulledFile>)
 - [type RequestOptions](<#RequestOptions>)
@@ -748,7 +749,22 @@ type Operation struct {
     Details                 map[string]string `json:"details"`  // Configuration (details) of the operation, formatted like {"database":"my_database","table":"my_table"}
     Settings                map[string]string `json:"settings"` // Configuration (settings) of the operation, formatted like {"database":"my_database","table":"my_table"}
     Token                   string            `json:"token"                   example:"1234567890"`
+    ConfigHash              string            `json:"configHash"              example:"dad9439d003d075c99035d7d42521fbbc6f01758e2ba00559a56ff64c1fa0344"`
     ConnectorRegistrationID uint              `json:"connectorRegistrationID" example:"1"`
+}
+```
+
+<a name="OperationLog"></a>
+## type OperationLog
+
+OperationLog represents a record of a log tied to an operation.
+
+```go
+type OperationLog struct {
+    CreatedAt string         `json:"created_at"`
+    Type      string         `json:"type"`
+    Message   string         `json:"message"`
+    Metadata  map[string]any `json:"metadata"`
 }
 ```
 
@@ -763,6 +779,7 @@ type OperationStatus struct {
     Details       map[string]string `json:"details"`
     Settings      map[string]string `json:"settings"`
     Subscriptions []Subscription    `json:"subscriptions"`
+    Logs          []OperationLog    `json:"logs"`
 }
 ```
 
@@ -5098,9 +5115,9 @@ import "irmin-api/engine"
   - [func \(c \*Client\) CreateBranch\(workspace, repository, name, from string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.CreateBranch>)
   - [func \(c \*Client\) CreateRepository\(workspace, name, defaultBranch string, isImmutable bool, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.CreateRepository>)
   - [func \(c \*Client\) CreateTag\(workspace, repository, name, ref string\) \(\*irminmodels.GitTag, error\)](<#Client.CreateTag>)
-  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, \[\]error\)](<#Client.DataExport>)
-  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]lakefs.ObjectMetadata, \[\]error\)](<#Client.DataImport>)
-  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, error\)](<#Client.DataMovementSchema>)
+  - [func \(c \*Client\) DataExport\(ctx context.Context, connection \*db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths \[\]string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataExport>)
+  - [func \(c \*Client\) DataImport\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string, workspace string, repository string, branch string, repositoryPath string, fieldMappings \[\]irminmodels.FieldMapping, tx ...\*gorm.DB\) \(\[\]lakefs.ObjectMetadata, \[\]connectorsclient.OperationLog, \[\]error\)](<#Client.DataImport>)
+  - [func \(c \*Client\) DataMovementSchema\(ctx context.Context, connection \*db.Connection, method, path string, tx ...\*gorm.DB\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#Client.DataMovementSchema>)
   - [func \(c \*Client\) DeleteBranch\(workspace, repository, branch string\) error](<#Client.DeleteBranch>)
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
@@ -5116,15 +5133,15 @@ import "irmin-api/engine"
   - [func \(c \*Client\) GetRepository\(ctx context.Context, workspace, repository string\) \(\*Repository, error\)](<#Client.GetRepository>)
   - [func \(c \*Client\) GetTag\(workspace, repository, tag string\) \(\*irminmodels.GitTag, error\)](<#Client.GetTag>)
   - [func \(c \*Client\) GetUncommittedChanges\(workspace, repository, branch string\) \(\*irminmodels.Diff, error\)](<#Client.GetUncommittedChanges>)
-  - [func \(c \*Client\) InitializeConnectorOperation\(ctx context.Context, connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, func\(\), error\)](<#Client.InitializeConnectorOperation>)
+  - [func \(c \*Client\) InitializeConnectorOperation\(ctx context.Context, connection \*db.Connection, tx ...\*gorm.DB\) \(\*connectorsclient.Client, \*connectorsclient.Client, \*uint, func\(\), error\)](<#Client.InitializeConnectorOperation>)
   - [func \(c \*Client\) ListBranches\(ctx context.Context, workspace, repository string\) \(\[\]irminmodels.Branch, error\)](<#Client.ListBranches>)
   - [func \(c \*Client\) ListCommits\(workspace, repository, ref string, after \*string, limit \*int\) \(\[\]irminmodels.Commit, \*lakefs.Pagination, error\)](<#Client.ListCommits>)
   - [func \(c \*Client\) ListRepositories\(workspace string\) \(\[\]Repository, error\)](<#Client.ListRepositories>)
   - [func \(c \*Client\) ListTags\(workspace, repository string\) \(\[\]irminmodels.GitTag, error\)](<#Client.ListTags>)
   - [func \(c \*Client\) MergeRefs\(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool\) \(\*irminmodels.Commit, error\)](<#Client.MergeRefs>)
   - [func \(c \*Client\) MoveObject\(workspace, repository, path, ref, newPath string\) \(\*irminmodels.Object, error\)](<#Client.MoveObject>)
-  - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, error\)](<#Client.PullFilesFromConnector>)
-  - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, error\)](<#Client.PushFilesToConnector>)
+  - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
+  - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, error\)](<#Client.PushFilesToConnector>)
   - [func \(c \*Client\) RevertUncommitedChanges\(workspace, repository, branch, path, pathType string\) error](<#Client.RevertUncommitedChanges>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, currentName, name string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateRepository\(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.UpdateRepository>)
@@ -5348,7 +5365,7 @@ func (c *Client) CreateTag(workspace, repository, name, ref string) (*irminmodel
 ### func \(\*Client\) DataExport
 
 ```go
-func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]string, []error)
+func (c *Client) DataExport(ctx context.Context, connection *db.Connection, connectionPath string, workspaceSlug string, repositorySlug string, branch string, requestedRepositoryPaths []string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]string, []connectorsclient.OperationLog, []error)
 ```
 
 DataExport exports data from a lakeFS repository to an external connector. It applies field mappings to route and transform data, merges files that map to the same destination, and pushes the results to the connector. Returns the paths of the files that were pushed and any errors that occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -5357,7 +5374,7 @@ DataExport exports data from a lakeFS repository to an external connector. It ap
 ### func \(\*Client\) DataImport
 
 ```go
-func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]lakefs.ObjectMetadata, []error)
+func (c *Client) DataImport(ctx context.Context, connection *db.Connection, connectionPaths []string, workspace string, repository string, branch string, repositoryPath string, fieldMappings []irminmodels.FieldMapping, tx ...*gorm.DB) ([]lakefs.ObjectMetadata, []connectorsclient.OperationLog, []error)
 ```
 
 DataImport imports data from an external source into a lakeFS repository. It applies field mappings to route and transform data, merges files that map to the same destination, and uploads the results. Returns the metadata of the uploaded objects and any errors that occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -5366,7 +5383,7 @@ DataImport imports data from an external source into a lakeFS repository. It app
 ### func \(\*Client\) DataMovementSchema
 
 ```go
-func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method, path string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, error)
+func (c *Client) DataMovementSchema(ctx context.Context, connection *db.Connection, method, path string, tx ...*gorm.DB) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error)
 ```
 
 DataMovementSchema retrieves the schema for a specific method from the connector. It returns the schema and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -5510,10 +5527,10 @@ func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*i
 ### func \(\*Client\) InitializeConnectorOperation
 
 ```go
-func (c *Client) InitializeConnectorOperation(ctx context.Context, connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, func(), error)
+func (c *Client) InitializeConnectorOperation(ctx context.Context, connection *db.Connection, tx ...*gorm.DB) (*connectorsclient.Client, *connectorsclient.Client, *uint, func(), error)
 ```
 
-InitializeConnectorOperation sets up a connector operation and returns an operation client, along with a cancel function to clean up when done. It returns an error if initialization fails. If tx is provided, it will be used instead of creating a new transaction.
+InitializeConnectorOperation sets up a connector operation and returns a system connector client, an operation client, along with a cancel function to clean up when done. It returns an error if initialization fails. If tx is provided, it will be used instead of creating a new transaction.
 
 <a name="Client.ListBranches"></a>
 ### func \(\*Client\) ListBranches
@@ -5573,7 +5590,7 @@ func (c *Client) MoveObject(workspace, repository, path, ref, newPath string) (*
 ### func \(\*Client\) PullFilesFromConnector
 
 ```go
-func (c *Client) PullFilesFromConnector(ctx context.Context, connection *db.Connection, connectionPaths []string) (map[string][]byte, error)
+func (c *Client) PullFilesFromConnector(ctx context.Context, connection *db.Connection, connectionPaths []string) (map[string][]byte, []connectorsclient.OperationLog, error)
 ```
 
 PullFilesFromConnector pulls files from a connector, unzips them, and returns a map of file paths to file contents. It returns a map of file paths to file contents and an error if any occurred.
@@ -5582,7 +5599,7 @@ PullFilesFromConnector pulls files from a connector, unzips them, and returns a 
 ### func \(\*Client\) PushFilesToConnector
 
 ```go
-func (c *Client) PushFilesToConnector(ctx context.Context, connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte, tx ...*gorm.DB) ([]string, error)
+func (c *Client) PushFilesToConnector(ctx context.Context, connection *db.Connection, connectionPath string, objects []*irminmodels.Object, files map[string][]byte, tx ...*gorm.DB) ([]string, []connectorsclient.OperationLog, error)
 ```
 
 PushFilesToConnector pushes files to a connector. It returns the paths of the files that were pushed and an error if any occurred. If tx is provided, it will be used instead of creating a new transaction.
@@ -8232,7 +8249,7 @@ import "irmin-api/lib"
 - [type PolicyMatch](<#PolicyMatch>)
 - [type SchemaCacheManager](<#SchemaCacheManager>)
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
-  - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetConnectionSchema>)
+  - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#SchemaCacheManager.GetConnectionSchema>)
   - [func \(scm \*SchemaCacheManager\) GetObjectSchema\(ctx context.Context, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, ref, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, error\)](<#SchemaCacheManager.GetObjectSchema>)
 - [type TestSuite](<#TestSuite>)
   - [func GetTestSuite\(\) \*TestSuite](<#GetTestSuite>)
@@ -8743,7 +8760,7 @@ NewSchemaCacheManager creates a new SchemaCacheManager instance.
 ### func \(\*SchemaCacheManager\) GetConnectionSchema
 
 ```go
-func (scm *SchemaCacheManager) GetConnectionSchema(ctx context.Context, connection *db.Connection, operationMethod, path, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, error)
+func (scm *SchemaCacheManager) GetConnectionSchema(ctx context.Context, connection *db.Connection, operationMethod, path, locale string, ignoreCache bool) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error)
 ```
 
 GetConnectionSchema returns the schema for a connection. It first checks if the schema is cached, and if so, returns the cached schema. Otherwise, it fetches the schema from the Data Engine and caches it asynchronously.

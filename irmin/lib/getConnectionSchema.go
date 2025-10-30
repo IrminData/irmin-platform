@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/engine"
 	"time"
@@ -90,11 +91,11 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 	connection *db.Connection,
 	operationMethod, path, locale string,
 	ignoreCache bool,
-) (*irminmodels.ObjectSchema, error) {
+) (*irminmodels.ObjectSchema, []connectorsclient.OperationLog, error) {
 	// Check cache first if fetching root schema
 	if !ignoreCache && (path == "" || path == "/") {
 		if cachedSchema := scm.checkConnectionSchemaCache(ctx, connection, operationMethod); cachedSchema != nil {
-			return cachedSchema, nil
+			return cachedSchema, nil, nil
 		}
 	}
 
@@ -102,14 +103,14 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 	dataEngine, err := engine.NewClient(ctx, locale, scm.logger, scm.env, scm.db)
 	if err != nil {
 		scm.logger.ErrorContext(ctx, "error creating data engine client", "error", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Get the schema of the connection
-	schema, err := dataEngine.DataMovementSchema(ctx, connection, operationMethod, path)
+	schema, operationLogs, err := dataEngine.DataMovementSchema(ctx, connection, operationMethod, path)
 	if err != nil {
 		scm.logger.ErrorContext(ctx, "error getting connection schema", "error", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Only update cache if path is not the root path
@@ -118,7 +119,7 @@ func (scm *SchemaCacheManager) GetConnectionSchema(
 		go scm.updateConnectionSchemaCacheAsync(ctx, connection, operationMethod, schema)
 	}
 
-	return schema, nil
+	return schema, operationLogs, nil
 }
 
 // updateConnectionSchemaCacheAsync updates the connection schema cache asynchronously with advisory lock.

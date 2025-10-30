@@ -193,7 +193,7 @@ func (o *Orchestrator) handleConnectionWrite(
 	var logs []string
 
 	connectionPath := strings.TrimLeft(*stage.ConnectionWritePath, "/")
-	pushedPaths, err := o.dataEngine.PushFilesToConnector(
+	pushedPaths, operationLogs, err := o.dataEngine.PushFilesToConnector(
 		ctx,
 		connection,
 		connectionPath,
@@ -213,6 +213,19 @@ func (o *Orchestrator) handleConnectionWrite(
 		return logs, err
 	}
 
+	for _, operationLog := range operationLogs {
+		logs = append(
+			logs,
+			fmt.Sprintf(
+				"Connector operation log: %s: %s, %s %v",
+				operationLog.Type,
+				operationLog.Message,
+				operationLog.CreatedAt,
+				operationLog.Metadata,
+			),
+		)
+	}
+
 	for _, pushedPath := range pushedPaths {
 		logs = append(logs, fmt.Sprintf("Object ('%s') pushed to connector.", pushedPath))
 	}
@@ -228,7 +241,7 @@ func (o *Orchestrator) handleConnectionRead(
 ) ([]string, error) {
 	var logs []string
 
-	pulledPaths, err := o.dataEngine.PullFilesFromConnector(ctx, connection, stage.ConnectionReadPaths)
+	pulledPaths, operationLogs, err := o.dataEngine.PullFilesFromConnector(ctx, connection, stage.ConnectionReadPaths)
 	if err != nil {
 		if ctx.Err() != nil {
 			// If cancelled, collect any logs from the pull operation
@@ -240,6 +253,19 @@ func (o *Orchestrator) handleConnectionRead(
 		}
 		o.logger.ErrorContext(ctx, "Error pulling files from connector", "error", err)
 		return logs, err
+	}
+
+	for _, operationLog := range operationLogs {
+		logs = append(
+			logs,
+			fmt.Sprintf(
+				"Connector operation log: %s: %s, %s %v",
+				operationLog.Type,
+				operationLog.Message,
+				operationLog.CreatedAt,
+				operationLog.Metadata,
+			),
+		)
 	}
 
 	for fileName, fileContent := range pulledPaths {

@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/lakefs"
 	"irmin-api/lib"
@@ -23,6 +24,7 @@ const (
 type operationResult struct {
 	importedObjects []lakefs.ObjectMetadata
 	exportedPaths   []string
+	operationLogs   []connectorsclient.OperationLog
 	errors          []error
 }
 
@@ -51,7 +53,7 @@ func (o *Orchestrator) performImportOperation(
 		repositoryPath = repositoryPaths[0]
 	}
 
-	importedObjects, errors := o.dataEngine.DataImport(
+	importedObjects, operationLogs, errors := o.dataEngine.DataImport(
 		ctx,
 		connection,
 		connectionPaths,
@@ -64,6 +66,7 @@ func (o *Orchestrator) performImportOperation(
 
 	return operationResult{
 		importedObjects: importedObjects,
+		operationLogs:   operationLogs,
 		errors:          errors,
 	}
 }
@@ -84,7 +87,7 @@ func (o *Orchestrator) performExportOperation(
 		connectionPath = connectionPaths[0]
 	}
 
-	exportedPaths, errors := o.dataEngine.DataExport(
+	exportedPaths, operationLogs, errors := o.dataEngine.DataExport(
 		ctx,
 		connection,
 		connectionPath,
@@ -97,6 +100,7 @@ func (o *Orchestrator) performExportOperation(
 
 	return operationResult{
 		exportedPaths: exportedPaths,
+		operationLogs: operationLogs,
 		errors:        errors,
 	}
 }
@@ -116,6 +120,20 @@ func (o *Orchestrator) processOperationResults(
 		}
 	} else {
 		logs = append(logs, fmt.Sprintf("Data %sed successfully from the connector", operation))
+	}
+
+	// Log connector operation logs
+	for _, operationLog := range result.operationLogs {
+		logs = append(
+			logs,
+			fmt.Sprintf(
+				"Connector operation log: %s: %s, %s %v",
+				operationLog.Type,
+				operationLog.Message,
+				operationLog.CreatedAt,
+				operationLog.Metadata,
+			),
+		)
 	}
 
 	// Log imported objects

@@ -16,7 +16,16 @@ type Operation struct {
 	Details                 map[string]string `json:"details"`  // Configuration (details) of the operation, formatted like {"database":"my_database","table":"my_table"}
 	Settings                map[string]string `json:"settings"` // Configuration (settings) of the operation, formatted like {"database":"my_database","table":"my_table"}
 	Token                   string            `json:"token"                   example:"1234567890"`
+	ConfigHash              string            `json:"configHash"              example:"dad9439d003d075c99035d7d42521fbbc6f01758e2ba00559a56ff64c1fa0344"`
 	ConnectorRegistrationID uint              `json:"connectorRegistrationID" example:"1"`
+}
+
+// OperationLog represents a record of a log tied to an operation.
+type OperationLog struct {
+	CreatedAt string         `json:"created_at"`
+	Type      string         `json:"type"`
+	Message   string         `json:"message"`
+	Metadata  map[string]any `json:"metadata"`
 }
 
 // OperationStatus represents the response for an operation status check.
@@ -25,6 +34,7 @@ type OperationStatus struct {
 	Details       map[string]string `json:"details"`
 	Settings      map[string]string `json:"settings"`
 	Subscriptions []Subscription    `json:"subscriptions"`
+	Logs          []OperationLog    `json:"logs"`
 }
 
 // InitOperation creates a new operation with the connector.

@@ -113,7 +113,7 @@ func (api *APIServices) GetConnectionSchema(
 	}
 
 	// Use the schema cache manager to get the connection schema
-	schema, err := api.schemaCacheManager.GetConnectionSchema(
+	schema, _, err := api.schemaCacheManager.GetConnectionSchema(
 		ctx,
 		connection,
 		operationMethod,
@@ -217,7 +217,7 @@ func (api *APIServices) addConnectionSchemas(
 		}
 
 		// Get connection schema for pull operation (default)
-		connSchema, connSchemaErr := api.schemaCacheManager.GetConnectionSchema(
+		connSchema, _, connSchemaErr := api.schemaCacheManager.GetConnectionSchema(
 			ctx,
 			&connection,
 			"pull",
