@@ -188,6 +188,7 @@ export default function ConfigureFieldMappingsStep({
         onMappingsChange={handleMappingsChange}
         sourceSchema={sourceSchema ?? null}
         destinationSchema={destinationSchema ?? null}
+        showEmptyState={true}
       />
 
       <div className='grow' />

@@ -1120,6 +1120,8 @@ const fi = {
     noIdenticalFieldsFound: 'Ei samankaltaisia kenttiä yhdistettäväksi.',
     sourceEmpty: 'Lähde on tyhjä - ei kenttiä yhdistettäväksi',
     destinationEmpty: 'Kohde on tyhjä - mitään ei tarvitse korvata',
+    noFieldsToMap:
+      'Kenttien yhdistäminen ei ole käytettävissä, koska toisella tai molemmilla puolilla ei ole ennalta määriteltyjä kenttiä. Kentät luodaan automaattisesti työnkulkua suoritettaessa.',
   },
 };
 

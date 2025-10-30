@@ -95,6 +95,14 @@ export const groupFieldsByFile = (schema: ObjectSchema | null): FileGroup[] => {
   return [];
 };
 
+/**
+ * Check if a schema has any fields that can be mapped
+ */
+export const hasFields = (schema: ObjectSchema | null): boolean => {
+  const fileGroups = groupFieldsByFile(schema);
+  return fileGroups.some((group) => group.fields.length > 0);
+};
+
 export const getFileIcon = (fileType: string) => {
   switch (fileType) {
     case 'group':

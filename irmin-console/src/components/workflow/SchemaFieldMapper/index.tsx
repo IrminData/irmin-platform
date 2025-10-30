@@ -14,18 +14,20 @@ import type { FieldMapping } from '@/types/core/Workflow';
 
 import FieldGroup from './FieldGroup';
 import type { Field } from './types';
-import { autoMapIdenticalFields, groupFieldsByFile } from './utils';
+import { autoMapIdenticalFields, groupFieldsByFile, hasFields } from './utils';
 
 const SchemaFieldMapper = ({
   initialMappings = [],
   onMappingsChange,
   sourceSchema,
   destinationSchema,
+  showEmptyState = false,
 }: {
   initialMappings?: FieldMapping[];
   onMappingsChange: (mappings: FieldMapping[]) => void;
   sourceSchema: ObjectSchema | null;
   destinationSchema: ObjectSchema | null;
+  showEmptyState?: boolean;
 }) => {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
@@ -202,6 +204,42 @@ const SchemaFieldMapper = ({
   const mappingsCount = useMemo(() => mappings.length, [mappings]);
 
   const hasMappings = useMemo(() => mappings.length > 0, [mappings]);
+
+  const sourceHasFields = useMemo(
+    () => hasFields(sourceSchema),
+    [sourceSchema]
+  );
+  const destinationHasFields = useMemo(
+    () => hasFields(destinationSchema),
+    [destinationSchema]
+  );
+
+  // Hide field mapper if one of the mapped sides doesn't have predefined fields
+  if (!sourceHasFields || !destinationHasFields) {
+    if (!showEmptyState) {
+      return null;
+    }
+
+    return (
+      <div className='mx-auto w-full max-w-7xl space-y-4 py-4'>
+        <div
+          className={`
+            rounded-lg border border-gray-200 p-8 text-center
+            dark:border-gray-700
+          `}
+        >
+          <p
+            className={`
+              text-sm text-gray-600
+              dark:text-gray-400
+            `}
+          >
+            {dict.schemaFieldMapper.noFieldsToMap}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='mx-auto w-full max-w-7xl space-y-4 py-4'>

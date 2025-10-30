@@ -1136,6 +1136,8 @@ const en = {
     noIdenticalFieldsFound: 'No identical fields found to auto-map.',
     sourceEmpty: 'Source is empty - no fields to map',
     destinationEmpty: 'Destination is empty - nothing needs replacement',
+    noFieldsToMap:
+      'Field mappings are not available because one or both sides do not have predefined fields. Fields will be created automatically during the workflow execution.',
   },
 };
 

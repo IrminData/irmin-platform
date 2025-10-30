@@ -119,10 +119,25 @@ function ConfigureFieldMappingsStep({
 
   return (
     <div className='flex w-full flex-col px-4 py-6'>
+      <div className='mb-6'>
+        <h3 className='mb-2 text-lg font-semibold'>
+          {dict.schemaFieldMapper.fieldMappings}
+        </h3>
+        <p
+          className={`
+            text-sm text-gray-600
+            dark:text-gray-400
+          `}
+        >
+          {dict.wizard.fieldMappingsDescription}
+        </p>
+      </div>
+
       <SchemaFieldMapper
         onMappingsChange={handleMappingsChange}
         sourceSchema={sourceSchema ?? null}
         destinationSchema={destinationSchema ?? null}
+        showEmptyState={true}
       />
       <div className='grow' />
       <div
