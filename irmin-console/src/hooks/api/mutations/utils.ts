@@ -162,7 +162,7 @@ function createOnMutate<TData, TInput>(
 
           return {
             ...old,
-            data: [...old.data, optimisticItem],
+            data: [optimisticItem, ...old.data],
           };
         }
       );

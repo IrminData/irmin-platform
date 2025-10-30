@@ -72,6 +72,21 @@ export default function WorkflowLayoutWrapper({
     segmentsAfter: 1,
   });
 
+  // Redirect to the run page after successful workflow run creation
+  useEffect(() => {
+    if (createWorkflowRunMutation.isSuccess && createWorkflowRunMutation.data) {
+      const runID = createWorkflowRunMutation.data.data?.id;
+      if (runID) {
+        router.push(`${baseUrl}/run/${runID}`);
+      }
+    }
+  }, [
+    createWorkflowRunMutation.isSuccess,
+    createWorkflowRunMutation.data,
+    baseUrl,
+    router,
+  ]);
+
   // Make sure the user is allowed to access the workflow
   useEffect(() => {
     if (isResourceAllowedLoading) return;

@@ -1,3 +1,4 @@
+import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
@@ -15,9 +16,20 @@ import type { WorkflowRun } from '@/types/core/WorkflowRun';
  *
  * @param workflowID - unique identifier of the workflow
  * @param runID - unique identifier of the workflow run
+ * @param options - optional query options (e.g., refetchInterval)
  * @returns the workflow run
  */
-export const useWorkflowRun = (workflowID: string, runID: string) => {
+export const useWorkflowRun = (
+  workflowID: string,
+  runID: string,
+  options?: Partial<
+    UseQueryOptions<
+      IrminAPIResponse<WorkflowRun>,
+      Error,
+      IrminAPIResponse<WorkflowRun>
+    >
+  >
+) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
@@ -53,6 +65,7 @@ export const useWorkflowRun = (workflowID: string, runID: string) => {
       }
       return undefined;
     },
+    ...options,
   });
 
   return {

@@ -32,7 +32,26 @@ export default function WorkflowRunLogsSection({
   runID: string;
 }) {
   const { dict, locale } = useLocale();
-  const { workflowRunQuery } = useWorkflowRun(workflowID, runID);
+
+  const { workflowRunQuery } = useWorkflowRun(workflowID, runID, {
+    refetchInterval: (query) => {
+      const runData = query.state.data;
+      if (!runData?.data) return false;
+
+      const run = runData.data;
+      const hasInProgressStatus =
+        run.status === 'pending' ||
+        run.status === 'initiating' ||
+        run.status === 'running';
+
+      // Poll every 2 seconds if status is in progress AND we don't have logs yet
+      // Stop polling once we have logs or the run is complete
+      const shouldPoll =
+        hasInProgressStatus && (!run.logs || run.logs.length === 0);
+
+      return shouldPoll ? 2000 : false;
+    },
+  });
 
   if (workflowRunQuery.isLoading) {
     return (
