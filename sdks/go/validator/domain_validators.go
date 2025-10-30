@@ -183,8 +183,9 @@ func (v *Validator) validateImportWorkflowable(parentStruct reflect.Value) bool 
 		return false
 	}
 
-	// Must have source paths
-	if !fromConnectionPathsField.IsValid() || fromConnectionPathsField.Len() == 0 {
+	// ImportFromConnectionPaths can be empty - empty means "import all paths"
+	// Only validate that the field exists, not that it has values
+	if !fromConnectionPathsField.IsValid() {
 		return false
 	}
 
