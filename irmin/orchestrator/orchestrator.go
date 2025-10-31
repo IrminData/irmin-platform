@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"github.com/robfig/cron/v3"
 	"github.com/teambition/rrule-go"
 	"gorm.io/gorm"
@@ -69,13 +70,72 @@ func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent) {
 	o.workerEventQueue <- event
 }
 
+// cancelStuckWorkflowRuns cancels all workflow runs that are stuck in running, pending, or initiating status.
+// This should be called when the orchestrator starts to handle cases where the server was restarted
+// and workflow runs were left in an active state.
+func (o *Orchestrator) cancelStuckWorkflowRuns(ctx context.Context) error {
+	return o.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Count stuck runs first to check if there are any
+		var count int64
+		if err := tx.Model(&db.WorkflowRun{}).
+			Where("status IN ?", []irminmodels.WorkflowStatus{
+				irminmodels.WorkflowStatusRunning,
+				irminmodels.WorkflowStatusPending,
+				irminmodels.WorkflowStatusInitiating,
+			}).
+			Count(&count).Error; err != nil {
+			return err
+		}
+
+		if count == 0 {
+			return nil
+		}
+
+		now := time.Now()
+
+		// Bulk update status to cancelled and set finished_at only if it's NULL
+		// Using COALESCE ensures we only update finished_at for runs that don't have it set,
+		// and we target only the runs we're cancelling (not previously cancelled runs)
+		result := tx.Model(&db.WorkflowRun{}).
+			Where("status IN ?", []irminmodels.WorkflowStatus{
+				irminmodels.WorkflowStatusRunning,
+				irminmodels.WorkflowStatusPending,
+				irminmodels.WorkflowStatusInitiating,
+			}).
+			Updates(map[string]any{
+				"status":      irminmodels.WorkflowStatusCancelled,
+				"finished_at": gorm.Expr("COALESCE(finished_at, ?)", now),
+			})
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		o.logger.InfoContext(
+			ctx,
+			"cancelled stuck workflow runs",
+			"count",
+			result.RowsAffected,
+		)
+		return nil
+	})
+}
+
 // StartOrchestrator starts the orchestrator and the dispatcher.
 // It will tick every 10 seconds to check for time-based triggers.
 // When a trigger is due to run, it will create a new workflow run.
 // It will also start the dispatcher in a new goroutine.
 // The dispatcher will check for pending workflow runs and dispatch them to be executed.
+//
+//nolint:gocognit // This function is complex but it is necessary to ensure the orchestrator starts correctly.
 func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 	o.logger.InfoContext(ctx, "starting orchestrator")
+
+	// Cancel any stuck workflow runs from previous server restarts
+	if err := o.cancelStuckWorkflowRuns(ctx); err != nil {
+		o.logger.ErrorContext(ctx, "failed to cancel stuck workflow runs", "error", err)
+		// Log the error but don't fail startup - the orchestrator should still start
+	}
 
 	// Create a channel to receive dispatcher errors
 	dispatcherErrChan := make(chan error, 1)
