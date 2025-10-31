@@ -2,18 +2,39 @@ package sandbox
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
+	"strings"
 )
 
-// newGoCmd constructs a "go" command with context and working directory.
-// It inherits environment variables from the process (Dockerfile sets HOME/GOPATH/GOMODCACHE).
-func (s *ComputeSandbox) newGoCmd(ctx context.Context, workingDir string, args ...string) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, "go", args...)
-	cmd.Dir = workingDir
-	return cmd
+// runGoCommandInDocker executes a Go command inside a Docker container.
+func (s *ComputeSandbox) runGoCommandInDocker(ctx context.Context, workspaceTempDir string, args ...string) error {
+	dockerArgs := []string{
+		"run", "--rm",
+		"-v", fmt.Sprintf("%s:/usr/src/app", workspaceTempDir),
+		"-w", "/usr/src/app",
+		fmt.Sprintf("golang:%s", LatestGoVersion),
+		"go",
+	}
+	dockerArgs = append(dockerArgs, args...)
+
+	cmd := exec.CommandContext(ctx, "docker", dockerArgs...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		s.logger.ErrorContext(ctx, "Go command failed in Docker",
+			"command", strings.Join(args, " "),
+			"error", err,
+			"output", string(output))
+		return fmt.Errorf("go %s failed: %w\nOutput: %s", strings.Join(args, " "), err, string(output))
+	}
+
+	s.logger.InfoContext(ctx, "Go command executed successfully in Docker",
+		"command", strings.Join(args, " "))
+
+	return nil
 }
 
-// installGoSDK installs the Go SDK for the given workspace.
+// installGoSDK installs the Go SDK for the given workspace using Docker.
 func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, projectName string) error {
 	// Check for context cancellation before starting
 	if ctx.Err() != nil {
@@ -24,8 +45,7 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, pro
 	initCtx, cancelInitCtx := context.WithTimeout(ctx, DockerCommandTimeout)
 	defer cancelInitCtx()
 
-	cmd := s.newGoCmd(initCtx, workspaceTempDir, "mod", "init", projectName)
-	if err := cmd.Run(); err != nil {
+	if err := s.runGoCommandInDocker(initCtx, workspaceTempDir, "mod", "init", projectName); err != nil {
 		return err
 	}
 
@@ -38,8 +58,7 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, pro
 	versionCtx, cancelVersionCtx := context.WithTimeout(ctx, DockerCommandTimeout)
 	defer cancelVersionCtx()
 
-	cmd = s.newGoCmd(versionCtx, workspaceTempDir, "mod", "edit", "-go="+LatestGoVersion)
-	if err := cmd.Run(); err != nil {
+	if err := s.runGoCommandInDocker(versionCtx, workspaceTempDir, "mod", "edit", "-go="+LatestGoVersion); err != nil {
 		return err
 	}
 
@@ -62,8 +81,7 @@ func (s *ComputeSandbox) installGoSDK(ctx context.Context, workspaceTempDir, pro
 		}
 
 		getCtx, cancelGetCtx := context.WithTimeout(ctx, DockerCommandTimeout)
-		cmd = s.newGoCmd(getCtx, workspaceTempDir, "get", pkg)
-		if err := cmd.Run(); err != nil {
+		if err := s.runGoCommandInDocker(getCtx, workspaceTempDir, "get", pkg); err != nil {
 			cancelGetCtx()
 			return err
 		}
