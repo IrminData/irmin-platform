@@ -338,9 +338,7 @@ func startServer(app *fiber.App, env *utils.ConnectorsEnv) chan error {
 		log.Printf("Server starting on port %s...", env.Port)
 
 		// Try to start the server
-		appListenErr := app.Listen(":"+env.Port, fiber.ListenConfig{
-			EnablePrefork: env.PreforkEnabled,
-		})
+		appListenErr := app.Listen(":" + env.Port)
 
 		// If Listen returns, it's either due to an error or graceful shutdown
 		serverErr <- appListenErr

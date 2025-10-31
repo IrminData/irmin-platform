@@ -1198,7 +1198,6 @@ ConnectorsEnv is a struct that holds the environment variables for the connector
 type ConnectorsEnv struct {
     Port                     string // Port to run the connectors server on
     URL                      string // URL of the connectors server
-    PreforkEnabled           bool   // Whether prefork is enabled
     HelmetEnabled            bool   // Whether helmet is enabled
     CorsEnabled              bool   // Whether CORS is enabled
     CorsOrigins              string // Origins allowed to access the connectors server
