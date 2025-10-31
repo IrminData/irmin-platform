@@ -1160,6 +1160,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/system/sandbox-health": {
+            "get": {
+                "description": "Verify that the compute sandbox is available and functioning",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Check sandbox health",
+                "responses": {
+                    "200": {
+                        "description": "Sandbox is healthy",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/system/schema-from-file": {
             "post": {
                 "security": [

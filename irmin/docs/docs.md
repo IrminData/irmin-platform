@@ -304,36 +304,17 @@ import "irmin-api/compute-sandbox"
 - [Constants](<#constants>)
 - [type ComputeSandbox](<#ComputeSandbox>)
   - [func NewComputeSandbox\(env \*utils.CoreAPIEnv, d \*db.Database, logger \*slog.Logger\) \*ComputeSandbox](<#NewComputeSandbox>)
-  - [func \(c \*ComputeSandbox\) CollectMetricsFromContainer\(ctx context.Context, containerID string\) ResourceUsageMetrics](<#ComputeSandbox.CollectMetricsFromContainer>)
   - [func \(s \*ComputeSandbox\) ExecuteEditorItem\(ctx context.Context, inputFiles map\[string\]\[\]byte, responsibleUser db.User, executablePath, workspaceSlug string\) \(ExecutionResult, error\)](<#ComputeSandbox.ExecuteEditorItem>)
 - [type ExecutionResult](<#ExecutionResult>)
-- [type ResourceUsage](<#ResourceUsage>)
 - [type ResourceUsageMetrics](<#ResourceUsageMetrics>)
 
 
 ## Constants
 
-<a name="InitialSamplingIntervalMs"></a>
+<a name="FileDownloadTimeout"></a>
 
 ```go
 const (
-    InitialSamplingIntervalMs = 10  // Sample every 10ms for the first second
-    NormalSamplingIntervalMs  = 100 // Then sample every 100ms
-    InitialSamplingDuration   = 1 * time.Second
-    ContainerStopTimeout      = 100 * time.Millisecond // Time to wait after container stops before ending sampling
-    StatsRetryDelay           = 10 * time.Millisecond  // Delay before retrying stats collection
-
-    DockerShortIDLength     = 12  // Standard length of Docker's short container ID format
-    DockerStatsFieldCount   = 14  // Expected number of fields in Docker stats output
-    SampleChannelBufferSize = 100 // Buffer size for the metrics sampling channel
-    StatsSplitCount         = 2   // Number of parts when splitting stats values (e.g. "X/Y")
-
-    ContainerStartTimeout     = 30 * time.Second // Timeout for starting a container
-    ContainerExecTimeout      = 10 * time.Second // Timeout for container stop operations
-    DockerCommandTimeout      = 60 * time.Second // Timeout for general Docker commands
-    ContainerCleanupTimeout   = 10 * time.Second // Timeout for container cleanup operations
-    ContainerOperationTimeout = 30 * time.Minute // Maximum time for container operations
-
     FileDownloadTimeout  = 300 * time.Second // 5 minutes for large files
     FileUploadTimeout    = 180 * time.Second // 3 minutes
     FileOperationTimeout = 30 * time.Second  // Timeout for general file operations
@@ -342,7 +323,17 @@ const (
     LatestNodeVersion   = "24.2.0"
     LatestPythonVersion = "3.11.12"
 
+    RuntimeTypePython = "python"
+    RuntimeTypeGo     = "go"
+    RuntimeTypeNode   = "node"
+
+    InterpreterPython = "python3"
+    InterpreterGo     = "go"
+    InterpreterNode   = "node"
+
     TokenExpiryDuration = 60 * time.Minute // How long API tokens created for sandbox execution should be valid
+
+    MaxConcurrentExecutions = 50 // Maximum concurrent script executions (each in its own temp dir)
 )
 ```
 
@@ -366,15 +357,6 @@ func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logge
 
 NewComputeSandbox creates a new ComputeSandbox.
 
-<a name="ComputeSandbox.CollectMetricsFromContainer"></a>
-### func \(\*ComputeSandbox\) CollectMetricsFromContainer
-
-```go
-func (c *ComputeSandbox) CollectMetricsFromContainer(ctx context.Context, containerID string) ResourceUsageMetrics
-```
-
-
-
 <a name="ComputeSandbox.ExecuteEditorItem"></a>
 ### func \(\*ComputeSandbox\) ExecuteEditorItem
 
@@ -382,57 +364,37 @@ func (c *ComputeSandbox) CollectMetricsFromContainer(ctx context.Context, contai
 func (s *ComputeSandbox) ExecuteEditorItem(ctx context.Context, inputFiles map[string][]byte, responsibleUser db.User, executablePath, workspaceSlug string) (ExecutionResult, error)
 ```
 
-ExecuteEditorItem executes the provided executable code in a sandbox environment. It downloads the workspace files from the S3 bucket to a temporary directory, executes the code using Docker, and returns the execution result.
+ExecuteEditorItem executes the provided executable code. It downloads the workspace files from the S3 bucket to a temporary directory, executes the code, and returns the execution result.
 
 <a name="ExecutionResult"></a>
 ## type ExecutionResult
 
-ExecutionResult holds the container logs and raw metric samples collected during execution.
+ExecutionResult holds the execution logs and metrics collected during execution.
 
 ```go
 type ExecutionResult struct {
-    StartTime            time.Time            `json:"start_time"`             // Start time of the container
-    EndTime              time.Time            `json:"end_time"`               // End time of the container
-    ContainerID          string               `json:"container_id"`           // Container ID (short form)
-    Logs                 string               `json:"logs"`                   // Output logs from container execution
-    ResourceUsageMetrics ResourceUsageMetrics `json:"resource_usage_metrics"` // Averace metric values, sampled every 10 milliseconds of execution
+    StartTime            time.Time            `json:"start_time"`             // Start time of the execution
+    EndTime              time.Time            `json:"end_time"`               // End time of the execution
+    ContainerID          string               `json:"container_id"`           // Container/execution ID (legacy field, kept for compatibility)
+    Logs                 string               `json:"logs"`                   // Output logs from execution
+    ResourceUsageMetrics ResourceUsageMetrics `json:"resource_usage_metrics"` // Resource usage metrics (not available with nsjail)
     ResultFiles          map[string][]byte    `json:"result_files"`           // Map of result files and their contents
-}
-```
-
-<a name="ResourceUsage"></a>
-## type ResourceUsage
-
-ResourceUsage holds a snapshot of resource usage metrics as numeric values.
-
-```go
-type ResourceUsage struct {
-    ContainerID      string    // Container ID (short form)
-    Timestamp        time.Time // Timestamp of the sample
-    Name             string    // Container name
-    CPUPercent       float64   // CPU usage in percentage
-    MemUsageBytes    float64   // Memory usage in bytes (NOT a percentage)
-    MemPercent       float64   // Memory usage percentage (parsed from stats, not used for sampling)
-    NetInputBytes    float64   // Network input in bytes (cumulative)
-    NetOutputBytes   float64   // Network output in bytes (cumulative)
-    BlockInputBytes  float64   // Block input in bytes (cumulative)
-    BlockOutputBytes float64   // Block output in bytes (cumulative)
 }
 ```
 
 <a name="ResourceUsageMetrics"></a>
 ## type ResourceUsageMetrics
 
-ResourceUsageMetrics holds average metric values sampled during container execution.
+ResourceUsageMetrics holds average metric values sampled during execution. Note: With nsjail, these metrics are not currently collected \(would require external process monitoring\).
 
 ```go
 type ResourceUsageMetrics struct {
-    CPU         float64 `json:"cpu"`          // Average CPU usage percentage
-    MemUsage    float64 `json:"mem_usage"`    // Average memory usage in bytes
-    NetInput    float64 `json:"net_input"`    // Average cumulative network input in bytes
-    NetOutput   float64 `json:"net_output"`   // Average cumulative network output in bytes
-    BlockInput  float64 `json:"block_input"`  // Average cumulative block input in bytes
-    BlockOutput float64 `json:"block_output"` // Average cumulative block output in bytes
+    CPU         float64 `json:"cpu"`          // Average CPU usage percentage (not available with nsjail)
+    MemUsage    float64 `json:"mem_usage"`    // Average memory usage in bytes (not available with nsjail)
+    NetInput    float64 `json:"net_input"`    // Average cumulative network input in bytes (not available with nsjail)
+    NetOutput   float64 `json:"net_output"`   // Average cumulative network output in bytes (not available with nsjail)
+    BlockInput  float64 `json:"block_input"`  // Average cumulative block input in bytes (not available with nsjail)
+    BlockOutput float64 `json:"block_output"` // Average cumulative block output in bytes (not available with nsjail)
 }
 ```
 
@@ -933,6 +895,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) StartWorkflow\(c fiber.Ctx\) error](<#APIControllers.StartWorkflow>)
   - [func \(api \*APIControllers\) SwaggerJSON\(c fiber.Ctx\) error](<#APIControllers.SwaggerJSON>)
   - [func \(api \*APIControllers\) SwaggerUI\(c fiber.Ctx\) error](<#APIControllers.SwaggerUI>)
+  - [func \(api \*APIControllers\) SystemSandboxHealth\(c fiber.Ctx\) error](<#APIControllers.SystemSandboxHealth>)
   - [func \(api \*APIControllers\) SystemWebhook\(c fiber.Ctx\) error](<#APIControllers.SystemWebhook>)
   - [func \(api \*APIControllers\) TransferConnectionOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferConnectionOwnership>)
   - [func \(api \*APIControllers\) TransferQueryOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferQueryOwnership>)
@@ -1806,6 +1769,15 @@ func (api *APIControllers) SwaggerUI(c fiber.Ctx) error
 ```
 
 SwaggerUI godoc @Summary Swagger UI interface @Description Interactive API documentation interface using Swagger UI @Tags documentation @Accept json @Produce text/html @Success 200 \{string\} string "Swagger UI HTML page" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /swagger \[get\]
+
+<a name="APIControllers.SystemSandboxHealth"></a>
+### func \(\*APIControllers\) SystemSandboxHealth
+
+```go
+func (api *APIControllers) SystemSandboxHealth(c fiber.Ctx) error
+```
+
+SystemSandboxHealth godoc @Summary Check sandbox health @Description Verify that the compute sandbox is available and functioning @Tags system @Produce json @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=map\[string\]string\} "Sandbox is healthy" @Router /system/sandbox\-health \[get\]
 
 <a name="APIControllers.SystemWebhook"></a>
 ### func \(\*APIControllers\) SystemWebhook
@@ -11440,7 +11412,6 @@ type CoreAPIEnv struct {
     URL                          string // URL of the Core API server
     SystemToken                  string // Token to authenticate system requests to the API
     CorsEnabled                  bool   // Flag to enable CORS
-    PreforkEnabled               bool   // Flag to enable prefork
     HelmetEnabled                bool   // Flag to enable helmet
     IdempotencyEnabled           bool   // Flag to enable idempotency
     AllowedOrigins               string // Allowed origins for CORS

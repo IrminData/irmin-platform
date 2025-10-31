@@ -281,9 +281,7 @@ func setupServices(
 // startServer starts the Fiber server in a goroutine.
 func startServer(app *fiber.App, env *utils.CoreAPIEnv) {
 	go func() {
-		if err := app.Listen(":"+env.Port, fiber.ListenConfig{
-			EnablePrefork: env.PreforkEnabled,
-		}); err != nil {
+		if err := app.Listen(":" + env.Port); err != nil {
 			log.Printf("Server error: %v", err)
 		}
 	}()

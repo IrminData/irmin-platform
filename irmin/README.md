@@ -4,6 +4,12 @@
 
 Irmin Core API is a RESTful API that provides a unified interface to interact with Irmin services. It is built in Go and uses the [Fiber](https://github.com/gofiber/fiber) web framework.
 
+## Requirements
+
+### Compute Sandbox
+
+The compute sandbox enables execution of user-provided Python, Node.js, and Go scripts with basic resource controls and concurrency limits. See [compute-sandbox/README.md](compute-sandbox/README.md) for details.
+
 ## Commands
 
 **Install dependencies**
@@ -317,3 +323,23 @@ cp .env.example .env
 # LAKE_FS_SECRET_ACCESS_KEY=your_lakefs_secret_key
 # NOVU_SECRET_KEY=your_novu_key
 ```
+
+### Important: Docker Compose vs Local URLs
+
+When running services in **docker-compose**, use service names for internal communication:
+
+```bash
+# for docker-compose (services communicate via service names)
+LAKE_FS_URL=http://lakefs:8000
+S3_ENDPOINT=http://minio:9000
+```
+
+When running the API **locally** (outside Docker) with docker-compose infrastructure:
+
+```bash
+# for local API connecting to docker-compose infrastructure
+LAKE_FS_URL=http://localhost:8000
+S3_ENDPOINT=http://localhost:9000
+```
+
+**Why?** In docker-compose, containers use Docker's internal network where service names (like `lakefs`, `minio`) resolve to container IPs. From your host machine, you use `localhost` to access exposed ports.

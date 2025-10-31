@@ -21,20 +21,24 @@ type ComputeSandbox struct {
 	d *db.Database
 	// logger is the logger for the compute sandbox.
 	logger *slog.Logger
+	// executor is the script executor.
+	executor *executor
 }
 
 // NewComputeSandbox creates a new ComputeSandbox.
 func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logger) *ComputeSandbox {
-	return &ComputeSandbox{
+	s := &ComputeSandbox{
 		env:    env,
 		d:      d,
 		logger: logger,
 	}
+	s.executor = newExecutor(s)
+	return s
 }
 
-// ExecuteEditorItem executes the provided executable code in a sandbox environment.
+// ExecuteEditorItem executes the provided executable code.
 // It downloads the workspace files from the S3 bucket to a temporary directory,
-// executes the code using Docker, and returns the execution result.
+// executes the code, and returns the execution result.
 func (s *ComputeSandbox) ExecuteEditorItem(
 	ctx context.Context,
 	inputFiles map[string][]byte,
@@ -99,14 +103,14 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	executableType := ""
 	switch *executableLanguage {
 	case "js":
-		executableType = "node"
+		executableType = RuntimeTypeNode
 	case "go":
-		executableType = "go"
-		if installGoSDKErr := s.installGoSDK(ctx, workspaceTempDir, filepath.Base(workspaceTempDir)); installGoSDKErr != nil {
+		executableType = RuntimeTypeGo
+		if installGoSDKErr := s.executor.installGoSDK(ctx, workspaceTempDir, filepath.Base(workspaceTempDir)); installGoSDKErr != nil {
 			return result, installGoSDKErr
 		}
 	case "py":
-		executableType = "python"
+		executableType = RuntimeTypePython
 	}
 
 	// Check for context cancellation before creating token
@@ -125,11 +129,11 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 		}
 	}()
 
-	// Execute in Docker with context
-	return s.runInDocker(
+	// Execute in nsjail sandbox
+	return s.executor.execute(
 		ctx,
-		executablePath,
 		workspaceTempDir,
+		executablePath,
 		executableType,
 		apiToken.Token,
 		fmt.Sprintf("%s/api", s.env.URL),

@@ -37,6 +37,9 @@ func RegisterAPIRoutes(
 	app.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{}))
 	app.Get(healthcheck.StartupEndpoint, healthcheck.New(healthcheck.Config{}))
 
+	// Public system routes (no auth required)
+	app.Get("/api/v1/system/sandbox-health", apiControllers.SystemSandboxHealth)
+
 	// Swagger documentation endpoints
 	app.Get("/swagger/swagger.json", apiControllers.SwaggerJSON)
 	app.Get("/swagger", apiControllers.SwaggerUI)
@@ -44,7 +47,7 @@ func RegisterAPIRoutes(
 	// Secure API routes
 	v1 := app.Group("/api/v1", apiMiddlewares.LocaleMiddleware, apiMiddlewares.AuthMiddleware)
 
-	// System routes
+	// System routes (authenticated)
 	system := v1.Group("/system")
 	system.Post("/webhook", apiControllers.SystemWebhook)
 	system.Post("/schema-from-file", apiControllers.GenerateFileSchema)

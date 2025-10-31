@@ -13,8 +13,10 @@ services:
       - minio
     ports:
       - "8082:8082"
-    volumes:
-      - .:/app
+    # Volume mount disabled - use compiled binary from image
+    # For development with hot reload, build locally: go build -o main .
+    # volumes:
+    #   - .:/app
 
   db_api:
     image: postgres:16
