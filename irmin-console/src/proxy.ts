@@ -23,20 +23,23 @@ if (
 }
 
 // List of available locales
-const locales = languages.map((lang) => lang.code);
+const locales: Locale[] = languages.map((lang) => lang.code);
 
 /**
  * Get the preferred locale from the Accept-Language header
  * @param request - The request object
- * @returns The users preferred locale
+ * @returns The users preferred locale, or defaultLocale if not found
  */
 function getLocaleFromHeader(request: NextRequest): Locale {
   const acceptLanguage = request.headers.get('accept-language');
+  if (!acceptLanguage) {
+    return defaultLocale;
+  }
 
-  const preferredLocale: Locale | null = acceptLanguage
-    ?.split(',')
+  const preferredLocale = acceptLanguage
+    .split(',')
     .map((lang) => lang.split(';')[0].trim())
-    .find((lang) => locales.includes(lang as Locale)) as Locale;
+    .find((lang): lang is Locale => locales.includes(lang as Locale));
 
   return preferredLocale ?? defaultLocale;
 }
@@ -44,14 +47,17 @@ function getLocaleFromHeader(request: NextRequest): Locale {
 /**
  * Get the locale from the cookies
  * @param request - The request object
- * @returns The locale from the cookies or null if not found
+ * @returns The locale from the cookies or null if not found or invalid
  */
 function getLocaleFromCookies(request: NextRequest): Locale | null {
   const cookieLocale = request.cookies.get('locale')?.value;
-  if (cookieLocale && locales.includes(cookieLocale as Locale)) {
-    return cookieLocale as Locale;
+  if (!cookieLocale) {
+    return null;
   }
-  return null;
+
+  // Validate that the cookie locale is in the list of supported locales
+  const isValidLocale = locales.includes(cookieLocale as Locale);
+  return isValidLocale ? (cookieLocale as Locale) : null;
 }
 
 /**
@@ -64,6 +70,19 @@ function setLocaleCookie(response: NextResponse, locale: Locale) {
     path: '/',
     maxAge: 60 * 60 * 24 * 365,
   });
+}
+
+/**
+ * Get locale from request (cookies or headers)
+ *
+ * @remarks
+ * Fallback priority: Cookie → Accept-Language header → defaultLocale
+ *
+ * @param request - The request object
+ * @returns The locale (guaranteed to be valid, falls back to defaultLocale)
+ */
+export function getLocale(request: NextRequest): Locale {
+  return getLocaleFromCookies(request) ?? getLocaleFromHeader(request);
 }
 
 // Protected routes (Clerk)
@@ -81,7 +100,7 @@ const isProtectedRoute = createRouteMatcher([
  * Env authentication is required for development environments and TSDoc paths.
  *
  * - Redirects to the correct locale if not found in the URL
- * - Redirects to the /api/verify-dev-access route if the user is not authenticated and the environment requires it or the path is a TSDoc path
+ * - Redirects to the /api/verify-env-access route if the user is not authenticated and the environment requires it or the path is a TSDoc path
  * - Redirects to the /frontend-docs/index.html route if the path is /frontend-docs or /tsdocs
  *
  * {@link https://nextjs.org/docs/app/building-your-application/routing/middleware}
@@ -95,8 +114,14 @@ export default clerkMiddleware(async (auth, req) => {
     return;
   }
 
-  const { pathname } = req.nextUrl;
+  const { pathname, searchParams } = req.nextUrl;
   const { cookies } = req;
+
+  // Skip env auth for Clerk handshake requests to prevent redirect loops
+  const isClerkHandshake = searchParams.has('__clerk_hs_reason');
+  if (isClerkHandshake) {
+    return NextResponse.next();
+  }
 
   // If accessing /api routes, skip the rest of the middleware
   if (pathname.startsWith('/api')) return NextResponse.next();
@@ -110,7 +135,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (!appPassword) {
       if (requireAuth === 'true' && process.env.NODE_ENV === 'production') {
         return NextResponse.redirect(
-          new URL('/api/verify-dev-access', req.url)
+          new URL('/api/verify-env-access', req.url)
         );
       }
       // Allow access when no password is set and auth is not required, or in development
@@ -122,7 +147,7 @@ export default clerkMiddleware(async (auth, req) => {
           authorisedDev.value !== 'no-auth-required')
       ) {
         return NextResponse.redirect(
-          new URL('/api/verify-dev-access', req.url)
+          new URL('/api/verify-env-access', req.url)
         );
       }
     }
@@ -161,10 +186,7 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Get the locale from cookies (user preference), then headers as fallback
-  let locale = getLocaleFromCookies(req);
-  if (!locale) {
-    locale = getLocaleFromHeader(req);
-  }
+  const locale = getLocale(req);
 
   // Redirect to the correct locale if not found in the URL
   req.nextUrl.pathname = `/${locale}${pathname}`;

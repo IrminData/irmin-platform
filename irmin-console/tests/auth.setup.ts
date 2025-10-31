@@ -16,7 +16,7 @@ setup('authenticate', async ({ page }) => {
   // Check if environment-specific authentication is required
   if (process.env.REQUIRE_ENV_AUTH === 'true') {
     // Wait for the verification URL to load
-    await page.waitForURL('/api/verify-dev-access');
+    await page.waitForURL('/api/verify-env-access');
     // Fill in the password from environment variables
     await page
       .getByPlaceholder('Password')

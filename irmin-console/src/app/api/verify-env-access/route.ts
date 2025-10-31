@@ -1,6 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { getLocale } from '@/proxy';
+
 const appPassword = process.env.ENV_PASSWORD;
 const requireAuth = process.env.REQUIRE_ENV_AUTH ?? 'false';
 const app_base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://irmin.dev';
@@ -22,7 +24,7 @@ if (
  * @remarks
  * This form is displayed when the user tries to access the development environment.
  * The form contains a password input field and a submit button.
- * When submitted in will POST /api/verify-dev-access with the password.
+ * When submitted in will POST /api/verify-env-access with the password.
  */
 const signIn = `
 <!DOCTYPE html>
@@ -52,7 +54,7 @@ body {
   margin-bottom: 1rem;
 }
 </style>
-<form action="${app_base}/api/verify-dev-access" method="post">
+<form action="${app_base}/api/verify-env-access" method="post">
 <div class="signInDev">
 <label for="password">Enter password to access this environment</label>
 <input type="password" name="password" id="password" placeholder="Password">
@@ -64,24 +66,26 @@ body {
 `;
 
 /**
- * GET request handler for verify-dev-access
+ * GET request handler for verify-env-access
  *
- * Can be accessed at GET /api/verify-dev-access
+ * Can be accessed at GET /api/verify-env-access
  *
  * Users will be redirected to this page when they try to access the development environment
  * without being authorised.
  *
+ * @param req - Request object
  * @returns HTML form for signing in to the development environment, or redirect if auth is not required
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   // If auth is not required and no password is set, redirect directly to home
   if (requireAuth !== 'true' && !appPassword) {
+    const locale = getLocale(req);
     const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
     const setCookieHeader = `authorisedDev=no-auth-required; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
 
     const headers = new Headers();
     headers.append('Set-Cookie', setCookieHeader);
-    headers.append('Location', '/');
+    headers.append('Location', `/${locale}`);
     return new NextResponse(null, { status: 302, headers });
   }
 
@@ -94,12 +98,12 @@ export async function GET() {
 }
 
 /**
- * Handler for POST request to verify-dev-access
+ * Handler for POST request to verify-env-access
  *
- * Can be accessed at POST /api/verify-dev-access
+ * Can be accessed at POST /api/verify-env-access
  *
  * This handler is used to verify the password entered by the user to access the development environment.
- * If the password is correct, a cookie is set and the user is redirected to the home page.
+ * If the password is correct, a cookie is set and the user is redirected to the home page with locale.
  *
  * If the password is incorrect, a 403 Forbidden response is returned.
  *
@@ -107,9 +111,11 @@ export async function GET() {
  * This password is required when REQUIRE_ENV_AUTH is set to true.
  *
  * @param req - Request object
- * @returns Response object - Redirects to the home page
+ * @returns Response object - Redirects to the home page with locale prefix
  */
 export async function POST(req: NextRequest) {
+  const locale = getLocale(req);
+
   // Check if password is configured when auth is required
   if (!appPassword) {
     if (requireAuth === 'true') {
@@ -123,7 +129,7 @@ export async function POST(req: NextRequest) {
 
       const headers = new Headers();
       headers.append('Set-Cookie', setCookieHeader);
-      headers.append('Location', '/');
+      headers.append('Location', `/${locale}`);
       return new NextResponse(null, { status: 302, headers });
     }
   }
@@ -144,9 +150,9 @@ export async function POST(req: NextRequest) {
   const expires = new Date(Date.now() + 60 * 60 * 24 * 12 * 365 * 100);
   const setCookieHeader = `authorisedDev=${appPassword}; Expires=${expires.toUTCString()}; Path=/; HttpOnly`;
 
-  // Redirect to the home page
+  // Redirect to the home page with locale prefix
   const headers = new Headers();
   headers.append('Set-Cookie', setCookieHeader);
-  headers.append('Location', '/');
+  headers.append('Location', `/${locale}`);
   return new NextResponse(null, { status: 302, headers });
 }
