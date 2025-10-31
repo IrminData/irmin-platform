@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -24,7 +25,8 @@ func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error {
 	tagName := c.Params("repository-tag")
 
 	// Get the tag from the service
-	tag, err := api.Services.GetRepositoryTag(c, locale, user, workspace, repository, tagName)
+	// Use context.Background() instead of Fiber context to ensure timeouts work properly for LakeFS calls
+	tag, err := api.Services.GetRepositoryTag(context.Background(), locale, user, workspace, repository, tagName)
 	if err != nil {
 		api.Logger.Error("Error retrieving tag from Data Engine", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

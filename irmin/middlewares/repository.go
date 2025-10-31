@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"errors"
 	"irmin-api/db"
 	"irmin-api/locales"
@@ -25,7 +26,8 @@ func (api *APIMiddlewares) RepositoryMiddleware(c fiber.Ctx) error {
 	repositorySlug := c.Params("repository")
 
 	// Get the repository by its slug and workspace.
-	repository, err := api.Services.GetRepositoryBySlug(c, locale, user, workspace, repositorySlug)
+	// Use context.Background() instead of Fiber context to ensure timeouts work properly for LakeFS calls
+	repository, err := api.Services.GetRepositoryBySlug(context.Background(), locale, user, workspace, repositorySlug)
 	if err != nil {
 		api.Logger.Error("Error retrieving repository", "error", err)
 		if errors.Is(err, services.ErrInvalidRequest) {

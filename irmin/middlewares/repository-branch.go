@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/utils"
@@ -30,7 +31,15 @@ func (api *APIMiddlewares) RepositoryBranchMiddleware(c fiber.Ctx) error {
 	}
 
 	// Get the branch
-	branch, err := api.Services.GetRepositoryBranch(c, locale, user, workspace, repository, branchName)
+	// Use context.Background() instead of Fiber context to ensure timeouts work properly for LakeFS calls
+	branch, err := api.Services.GetRepositoryBranch(
+		context.Background(),
+		locale,
+		user,
+		workspace,
+		repository,
+		branchName,
+	)
 	if err != nil {
 		api.Logger.Error("Error retrieving branch", "error", err)
 		return utils.WriteResponse(c, fiber.StatusNotFound, irminmodels.IrminAPIResponse{

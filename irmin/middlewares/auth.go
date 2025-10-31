@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"irmin-api/utils"
 	"strings"
 
@@ -30,7 +31,8 @@ func (api *APIMiddlewares) AuthMiddleware(c fiber.Ctx) error {
 	}
 
 	// Identify the user from the token
-	irminUser, isSystem, err := api.Services.IdentifyUserFromToken(c, token, locale)
+	// Use context.Background() instead of Fiber context to ensure timeouts work properly
+	irminUser, isSystem, err := api.Services.IdentifyUserFromToken(context.Background(), token, locale)
 	if err != nil {
 		api.Logger.Error("Authentication failed", "error", err)
 		return utils.WriteResponse(c, fiber.StatusUnauthorized, irminmodels.IrminAPIResponse{})
