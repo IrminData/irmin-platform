@@ -139,10 +139,12 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
 
   /**
    * Opens a new tab with an untitled file.
+   * NOTE: Defaults to Go-lang since only Go scripts are supported for execution
    */
   const openNewTab = useCallback(() => {
     // - Generate an untitled filename and path
-    const untitledName = `untitled_${untitledCounter}.txt`;
+    // Default to .go extension for script development
+    const untitledName = `untitled_${untitledCounter}.go`;
     const untitledPath = `/${untitledName}`;
 
     const newTab: FileContents = {
@@ -150,7 +152,7 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
       path: untitledPath,
       contents: '',
       originalContents: '',
-      language: 'txt',
+      language: 'go', // Default to Go-lang for script development
       created: false,
     };
 

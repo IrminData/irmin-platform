@@ -1,5 +1,7 @@
 import type { JSONValue } from '../internal/GenericJSON';
 
+// NOTE: Currently only Go-lang scripts are supported for execution
+// Other languages are available for syntax highlighting and editing but not for script execution
 export type IrminFileLanguage =
   | 'go'
   | 'js'
@@ -9,38 +11,44 @@ export type IrminFileLanguage =
   | 'sql'
   | 'txt';
 
+// This list controls what file types users can SELECT when creating new files in the editor
+// NOTE: Only Go-lang is currently supported for script execution
+// Other languages (SQL, Markdown, etc.) are used programmatically in specific contexts
+// (queries, documentation) but we don't want users creating script files in those languages
 export const irminFileLanguages: {
   label: string;
   value: IrminFileLanguage;
 }[] = [
   {
-    label: 'JavaScript',
-    value: 'js',
-  },
-  {
     label: 'Go-lang',
     value: 'go',
-  },
-  {
-    label: 'Python',
-    value: 'py',
-  },
-  {
-    label: 'SQL',
-    value: 'sql',
-  },
-  {
-    label: 'Markdown',
-    value: 'md',
   },
   {
     label: 'Plaintext',
     value: 'txt',
   },
-  {
-    label: 'JSON',
-    value: 'json',
-  },
+  // JavaScript, Python, SQL, Markdown, JSON are commented out for script creation
+  // They're still supported for syntax highlighting if files exist in those formats
+  // {
+  //   label: 'JavaScript',
+  //   value: 'js',
+  // },
+  // {
+  //   label: 'Python',
+  //   value: 'py',
+  // },
+  // {
+  //   label: 'SQL',
+  //   value: 'sql',
+  // },
+  // {
+  //   label: 'Markdown',
+  //   value: 'md',
+  // },
+  // {
+  //   label: 'JSON',
+  //   value: 'json',
+  // },
 ];
 
 /**

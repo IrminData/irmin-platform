@@ -73,9 +73,10 @@ export default function AddNewFileModal({
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      extension: irminFileLanguages[0].value,
+      // Default to Go-lang (first and primary option)
+      extension: irminFileLanguages[0].value, // 'go'
       name: 'example',
-      path: '/example.js',
+      path: '/example.go',
     },
   });
 

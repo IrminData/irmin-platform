@@ -107,6 +107,8 @@ const EditorWithTabs = () => {
             </button>
           </div>
           <div className='flex flex-row items-center justify-end gap-2 py-1'>
+            {/* Language selector - only shown for unsaved files */}
+            {/* NOTE: Currently limited to Go-lang and plaintext only */}
             {currentEditor && !currentEditor.created && (
               <select
                 aria-label='Select the type of the file'

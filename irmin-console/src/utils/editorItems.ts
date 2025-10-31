@@ -25,7 +25,8 @@ export const getCorrectNameWithExtension = (
   // Skip if not a file
   if (type !== 'file') return formattedName;
   // Add extension to the name
-  return `${formattedName}.${desiredExtension ?? 'js'}`;
+  // Default to 'go' for scripts (only supported language currently)
+  return `${formattedName}.${desiredExtension ?? 'go'}`;
 };
 
 /**
@@ -180,6 +181,7 @@ const getParentPath = (path: string, name?: string): string => {
 
 /**
  * Determines the language for syntax highlighting based on the file's extension.
+ * NOTE: Currently only Go-lang scripts are supported for execution
  *
  * @param path - The file path.
  * @returns The language identifier for the file.
