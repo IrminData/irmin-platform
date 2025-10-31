@@ -231,7 +231,19 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
   const setInitialOpenTabs = useRef(false);
   useEffect(() => {
     if (setInitialOpenTabs.current) return;
+    if (editorItemsQuery.isLoading) return;
+
     const paths = searchParams.getAll('path');
+    if (paths.length === 0) {
+      setInitialOpenTabs.current = true;
+      return;
+    }
+
+    // If no items are loaded yet, wait for them (don't set flag)
+    if (currentEditorItems.length === 0) {
+      return;
+    }
+
     queueMicrotask(() => {
       for (let i = 0; i < paths.length; i++) {
         const path = paths[i];
@@ -243,7 +255,13 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
       }
       setInitialOpenTabs.current = true;
     });
-  }, [searchParams, currentEditorItems, openTabs, openFile]);
+  }, [
+    searchParams,
+    currentEditorItems,
+    openTabs,
+    openFile,
+    editorItemsQuery.isLoading,
+  ]);
 
   /**
    * Closes a tab.

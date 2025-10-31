@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { FaFolderTree } from 'react-icons/fa6';
 import { FiFile, FiFolder } from 'react-icons/fi';
-import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight, TbExternalLink } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import LoadingSpinner from '@/components/ui/loading/LoadingSpinner';
@@ -47,6 +47,21 @@ const FileSelector = ({
   const [selectedFile, setSelectedFile] = useState<string>(
     currentSelectedFile ?? ''
   );
+
+  // Sync internal state with prop changes
+  useEffect(() => {
+    queueMicrotask(() => {
+      setSelectedFile(currentSelectedFile ?? '');
+    });
+  }, [currentSelectedFile]);
+
+  // The base URL for the workspace, eg. /en/workspace/workspace-slug
+  const workspaceUrl = useBaseUrl({
+    pathname: '',
+    segment: 'workspace',
+    includeSegment: true,
+    segmentsAfter: 1,
+  });
 
   /**
    * Toggle a folder in the file navigator
@@ -149,7 +164,7 @@ const FileSelector = ({
               <div
                 key={item.path}
                 className={`
-                  my-1 ml-6 flex cursor-pointer items-center justify-normal
+                  my-1 ml-6 flex cursor-pointer items-center justify-between
                   rounded-md p-1 text-sm
                   ${
                     isSelected
@@ -163,27 +178,45 @@ const FileSelector = ({
                       `
                   }
                 `}
-                onClick={() => handleItemClick(item)}
-                role='button'
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleItemClick(item);
-                  }
-                }}
               >
-                <span className='ml-2'>
-                  <FiFile />
-                </span>
-                <span
-                  className={`
-                    ml-2
-                    hover:underline
-                  `}
-                  aria-label={`Select file ${item.name}`}
+                <div
+                  className='flex flex-1 items-center'
+                  onClick={() => handleItemClick(item)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleItemClick(item);
+                    }
+                  }}
                 >
-                  {item.name}
-                </span>
+                  <span className='ml-2'>
+                    <FiFile />
+                  </span>
+                  <span
+                    className={`
+                      ml-2
+                      hover:underline
+                    `}
+                    aria-label={`Select file ${item.name}`}
+                  >
+                    {item.name}
+                  </span>
+                </div>
+                <a
+                  href={`${workspaceUrl}/editor?path=${encodeURIComponent(item.path)}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className={`
+                    ml-2 p-1 text-gray-500
+                    hover:text-gray-700
+                    dark:text-gray-400 dark:hover:text-gray-200
+                  `}
+                  aria-label={`Open ${item.name} in editor`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <TbExternalLink className='size-4' />
+                </a>
               </div>
             );
           }
@@ -192,16 +225,8 @@ const FileSelector = ({
         });
       return render(itemsToRender);
     },
-    [selectedFile, openFolders, handleItemClick]
+    [selectedFile, openFolders, handleItemClick, workspaceUrl]
   );
-
-  // The base URL for the workspace, eg. /en/workspace/workspace-slug
-  const workspaceUrl = useBaseUrl({
-    pathname: '',
-    segment: 'workspace',
-    includeSegment: true,
-    segmentsAfter: 1,
-  });
 
   return (
     <div
@@ -211,12 +236,12 @@ const FileSelector = ({
         dark:border-b-gray-800
       `}
     >
-      {currentSelectedFile && currentSelectedFile.length > 0 && (
+      {selectedFile && selectedFile.length > 0 && (
         <ButtonWithTooltip
-          href={`${workspaceUrl}/editor?path=${currentSelectedFile}`}
+          href={`${workspaceUrl}/editor?path=${encodeURIComponent(selectedFile)}`}
           target='_blank'
           variant='secondary'
-          tooltip={currentSelectedFile}
+          tooltip={selectedFile}
           className='w-full'
         >
           {dict.workflow.openInEditor}
