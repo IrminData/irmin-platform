@@ -141,6 +141,8 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 }
 
 // setupWorkspaceFiles handles the creation of temporary directory and writing input files.
+//
+//nolint:gocognit // Complexity is acceptable for file setup with proper error handling
 func (s *ComputeSandbox) setupWorkspaceFiles(
 	ctx context.Context,
 	workspaceSlug string,
@@ -156,16 +158,52 @@ func (s *ComputeSandbox) setupWorkspaceFiles(
 		return "", err
 	}
 
-	workspaceTempDir := filepath.Join(os.TempDir(), "irmin-compute-sandbox", workspaceSlug, tempDirName)
-	if mkdirAllErr := os.MkdirAll(workspaceTempDir, 0750); mkdirAllErr != nil {
+	// Ensure workspace slug directory exists with setgid bit for group inheritance
+	workspaceSlugDir := filepath.Join("/var/lib/irmin-compute-sandbox", workspaceSlug)
+	//nolint:gosec // G301: Group-writable is intentional for shared access between appuser and sandbox
+	if mkdirErr := os.MkdirAll(workspaceSlugDir, 0770); mkdirErr != nil {
+		return "", fmt.Errorf("failed to create workspace slug directory: %w", mkdirErr)
+	}
+
+	workspaceTempDir := filepath.Join(workspaceSlugDir, tempDirName)
+	// Use setgid (02770) - files created inside inherit group ownership
+	//nolint:gosec // G301: Group-writable with setgid for shared access between appuser and sandbox
+	if mkdirAllErr := os.MkdirAll(workspaceTempDir, 02770); mkdirAllErr != nil {
 		return "", mkdirAllErr
 	}
-	s.logger.InfoContext(ctx, "Temporary directory created", "workspaceTempDir", workspaceTempDir)
 
-	// Create and populate _input directory
+	// Explicitly set permissions with setgid bit to ensure group inheritance
+	//nolint:gosec // G302: Group-writable with setgid for shared access
+	if chmodErr := os.Chmod(workspaceTempDir, 02770); chmodErr != nil {
+		return "", fmt.Errorf("failed to set permissions on workspace: %w", chmodErr)
+	}
+
+	s.logger.InfoContext(ctx, "Temporary directory created",
+		"workspaceTempDir", workspaceTempDir)
+
+	// Create and populate _input directory with setgid bit for group inheritance
 	inputDir := filepath.Join(workspaceTempDir, "_input")
-	if mkdirAllErr := os.MkdirAll(inputDir, 0750); mkdirAllErr != nil {
+	//nolint:gosec // G301: Group-writable with setgid for shared access between appuser and sandbox
+	if mkdirAllErr := os.MkdirAll(inputDir, 02770); mkdirAllErr != nil {
 		return "", fmt.Errorf("failed to create _input directory: %w", mkdirAllErr)
+	}
+
+	// Explicitly set permissions with setgid bit on _input directory
+	//nolint:gosec // G302: Group-writable with setgid for shared access
+	if chmodErr := os.Chmod(inputDir, 02770); chmodErr != nil {
+		return "", fmt.Errorf("failed to set permissions on _input: %w", chmodErr)
+	}
+
+	// Create .tmp directory for TMPDIR environment variable
+	tmpDir := filepath.Join(workspaceTempDir, ".tmp")
+	//nolint:gosec // G301: Group-writable with setgid for shared access between appuser and sandbox
+	if mkdirErr := os.MkdirAll(tmpDir, 02770); mkdirErr != nil {
+		return "", fmt.Errorf("failed to create .tmp directory: %w", mkdirErr)
+	}
+
+	//nolint:gosec // G302: Group-writable with setgid for shared access
+	if chmodErr := os.Chmod(tmpDir, 02770); chmodErr != nil {
+		return "", fmt.Errorf("failed to set permissions on .tmp: %w", chmodErr)
 	}
 
 	// Create a channel to signal completion of file operations
@@ -181,16 +219,22 @@ func (s *ComputeSandbox) setupWorkspaceFiles(
 			}
 
 			fullPath := filepath.Join(inputDir, filePath)
-			if mkdirAllErr := os.MkdirAll(filepath.Dir(fullPath), 0750); mkdirAllErr != nil {
+			dirPath := filepath.Dir(fullPath)
+
+			// Create directory structure with setgid bit for group inheritance
+			//nolint:gosec // G301: Group-writable with setgid for shared access between appuser and sandbox
+			if mkdirAllErr := os.MkdirAll(dirPath, 02770); mkdirAllErr != nil {
 				done <- fmt.Errorf("failed to create directory for input file %s: %w", filePath, mkdirAllErr)
 				return
 			}
 
-			// Write file - since os.WriteFile is not context-aware, we do the context check before
-			if writeFileErr := os.WriteFile(fullPath, content, 0600); writeFileErr != nil {
+			// Write file with group-readable permissions
+			//nolint:gosec // G306: Group-readable is intentional for shared access between appuser and sandbox
+			if writeFileErr := os.WriteFile(fullPath, content, 0660); writeFileErr != nil {
 				done <- fmt.Errorf("failed to write input file %s: %w", filePath, writeFileErr)
 				return
 			}
+
 			s.logger.InfoContext(ctx, "Input file written", "filePath", filePath)
 		}
 		done <- nil

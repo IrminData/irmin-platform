@@ -20,9 +20,9 @@ const (
 	RuntimeTypeGo     = "go"
 	RuntimeTypeNode   = "node"
 
-	InterpreterPython = "python3"
-	InterpreterGo     = "go"
-	InterpreterNode   = "node"
+	InterpreterPython = "/usr/bin/python3"
+	InterpreterGo     = "/usr/local/go/bin/go"
+	InterpreterNode   = "/usr/bin/node"
 
 	TokenExpiryDuration = 60 * time.Minute // How long API tokens created for sandbox execution should be valid
 
@@ -49,6 +49,13 @@ func (s *ComputeSandbox) ExecuteEditorItem(
     ExecuteEditorItem executes the provided executable code. It downloads the
     workspace files from the S3 bucket to a temporary directory, executes the
     code, and returns the execution result.
+
+type DangerousPattern struct {
+	Pattern     string
+	Description string
+	Severity    string // "high", "medium", "low"
+}
+    DangerousPattern represents a pattern that might indicate malicious intent.
 
 type ExecutionResult struct {
 	StartTime            time.Time            `json:"start_time"`             // Start time of the execution

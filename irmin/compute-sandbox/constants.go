@@ -21,11 +21,11 @@ const (
 	RuntimeTypeGo     = "go"
 	RuntimeTypeNode   = "node"
 
-	// Interpreter executables.
+	// Interpreter executables (full paths for sudo).
 
-	InterpreterPython = "python3"
-	InterpreterGo     = "go"
-	InterpreterNode   = "node"
+	InterpreterPython = "/usr/bin/python3"
+	InterpreterGo     = "/usr/local/go/bin/go"
+	InterpreterNode   = "/usr/bin/node"
 
 	// API configuration.
 

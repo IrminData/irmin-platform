@@ -305,6 +305,7 @@ import "irmin-api/compute-sandbox"
 - [type ComputeSandbox](<#ComputeSandbox>)
   - [func NewComputeSandbox\(env \*utils.CoreAPIEnv, d \*db.Database, logger \*slog.Logger\) \*ComputeSandbox](<#NewComputeSandbox>)
   - [func \(s \*ComputeSandbox\) ExecuteEditorItem\(ctx context.Context, inputFiles map\[string\]\[\]byte, responsibleUser db.User, executablePath, workspaceSlug string\) \(ExecutionResult, error\)](<#ComputeSandbox.ExecuteEditorItem>)
+- [type DangerousPattern](<#DangerousPattern>)
 - [type ExecutionResult](<#ExecutionResult>)
 - [type ResourceUsageMetrics](<#ResourceUsageMetrics>)
 
@@ -327,9 +328,9 @@ const (
     RuntimeTypeGo     = "go"
     RuntimeTypeNode   = "node"
 
-    InterpreterPython = "python3"
-    InterpreterGo     = "go"
-    InterpreterNode   = "node"
+    InterpreterPython = "/usr/bin/python3"
+    InterpreterGo     = "/usr/local/go/bin/go"
+    InterpreterNode   = "/usr/bin/node"
 
     TokenExpiryDuration = 60 * time.Minute // How long API tokens created for sandbox execution should be valid
 
@@ -365,6 +366,19 @@ func (s *ComputeSandbox) ExecuteEditorItem(ctx context.Context, inputFiles map[s
 ```
 
 ExecuteEditorItem executes the provided executable code. It downloads the workspace files from the S3 bucket to a temporary directory, executes the code, and returns the execution result.
+
+<a name="DangerousPattern"></a>
+## type DangerousPattern
+
+DangerousPattern represents a pattern that might indicate malicious intent.
+
+```go
+type DangerousPattern struct {
+    Pattern     string
+    Description string
+    Severity    string // "high", "medium", "low"
+}
+```
 
 <a name="ExecutionResult"></a>
 ## type ExecutionResult

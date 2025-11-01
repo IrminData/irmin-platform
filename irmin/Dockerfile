@@ -14,8 +14,10 @@ RUN CGO_ENABLED=1 go build -ldflags="-w -s" -o /app/main .
 # Stage 2: Runtime
 FROM debian:bookworm-slim
 
-# Install runtime dependencies (Python, Node, Go)
+# Install runtime dependencies (Python, Node, Go) including sudo and bash
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    sudo \
+    bash \
     python3.11 \
     python3-pip \
     nodejs \
@@ -34,10 +36,37 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GOPATH="/tmp/go"
 ENV GOMODCACHE="/tmp/go/pkg/mod"
 
+# Create dedicated users for privilege separation with shared group
+RUN groupadd -r irmingroup && \
+    useradd -r -g irmingroup -s /bin/false sandbox && \
+    useradd -r -g irmingroup -s /bin/false appuser && \
+    mkdir -p /var/lib/irmin-compute-sandbox && \
+    chown appuser:irmingroup /var/lib/irmin-compute-sandbox && \
+    chmod 770 /var/lib/irmin-compute-sandbox && \
+    mkdir -p /home/sandbox && \
+    chown sandbox:irmingroup /home/sandbox && \
+    chmod 700 /home/sandbox && \
+    mkdir -p /home/appuser && \
+    chown appuser:irmingroup /home/appuser && \
+    chmod 700 /home/appuser
+
+# Configure sudo for appuser -> sandbox execution (restricted to interpreters and shells)
+RUN echo "appuser ALL=(sandbox) NOPASSWD: /usr/bin/python3, /usr/local/go/bin/go, /usr/bin/node, /bin/sh, /bin/bash" > /etc/sudoers.d/sandbox && \
+    chmod 440 /etc/sudoers.d/sandbox && \
+    visudo -c -f /etc/sudoers.d/sandbox
+
 WORKDIR /app
 
-# Copy the compiled binary
-COPY --from=builder /app/main .
+# Copy the compiled binary with correct ownership
+COPY --from=builder --chown=appuser:irmingroup /app/main .
+
+# Lock down app directory and executable
+RUN chown -R appuser:irmingroup /app && \
+    chmod 700 /app && \
+    chmod 700 /app/main
+
+# Switch to appuser for running the main application
+USER appuser
 
 # Expose port
 EXPOSE 8080

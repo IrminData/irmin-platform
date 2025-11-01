@@ -6,6 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
+	"syscall"
 	"time"
 )
 
@@ -37,11 +40,36 @@ func (e *executor) execute(
 		return result, ctx.Err()
 	}
 
+	// Validate executable path to prevent directory traversal attacks
+	if strings.Contains(executable, "..") {
+		return result, fmt.Errorf("executable path contains directory traversal: %s", executable)
+	}
+
+	if filepath.IsAbs(executable) {
+		return result, fmt.Errorf("executable path must be relative: %s", executable)
+	}
+
 	// Acquire semaphore to limit concurrent executions
 	if err := e.acquireExecutionSlot(ctx, workspaceDir); err != nil {
 		return result, err
 	}
 	defer func() { <-executionSemaphore }() // Release on return
+
+	// Perform static analysis
+	scriptPath := filepath.Join(workspaceDir, executable)
+	if scanErr := e.scanScriptForDangerousPatterns(ctx, scriptPath); scanErr != nil {
+		e.sandbox.logger.ErrorContext(ctx, "Failed to scan script", "error", scanErr)
+		// Continue execution even if scan fails
+	}
+
+	// Security audit: Execution started
+	e.sandbox.logger.InfoContext(ctx, "SECURITY_AUDIT: Script execution started",
+		"workspace", filepath.Base(workspaceDir),
+		"executable", executable,
+		"type", executableType,
+		"user", "sandbox",
+		"timestamp", result.StartTime.Unix(),
+		"timestamp_iso", result.StartTime.Format(time.RFC3339))
 
 	// Build and configure command
 	cmd, interpreterPath, err := e.buildCommand(ctx, workspaceDir, executable, executableType, apiKey, apiURL)
@@ -57,17 +85,37 @@ func (e *executor) execute(
 		"executable", executable)
 
 	output, execErr := cmd.CombinedOutput()
-	result.Logs = string(output)
 	result.EndTime = time.Now()
+
+	// Format logs with timing information header
+	result.Logs = e.formatLogsWithTiming(result.StartTime, result.EndTime, string(output))
 
 	// Log execution results
 	e.logExecutionResult(ctx, execErr, cmd, result)
+
+	// Fix permissions on all files created by sandbox user
+	e.fixWorkspacePermissions(ctx, workspaceDir)
 
 	// Collect result files
 	e.collectResultFiles(ctx, workspaceDir, &result)
 
 	// Note: Resource metrics not available with direct execution
 	result.ResourceUsageMetrics = ResourceUsageMetrics{}
+
+	// Security audit: Execution completed
+	exitCode := -1
+	if cmd.ProcessState != nil {
+		exitCode = cmd.ProcessState.ExitCode()
+	}
+	e.sandbox.logger.InfoContext(ctx, "SECURITY_AUDIT: Script execution completed",
+		"workspace", filepath.Base(workspaceDir),
+		"executable", executable,
+		"type", executableType,
+		"exit_code", exitCode,
+		"duration_ms", result.EndTime.Sub(result.StartTime).Milliseconds(),
+		"success", execErr == nil,
+		"timestamp", result.EndTime.Unix(),
+		"timestamp_iso", result.EndTime.Format(time.RFC3339))
 
 	return result, execErr
 }
@@ -85,6 +133,25 @@ func (e *executor) acquireExecutionSlot(ctx context.Context, workspaceDir string
 	}
 }
 
+// buildResourceLimitsPrefix returns resource limit commands for production environments.
+// On Linux (production Docker), applies ulimit restrictions to prevent:
+// - Disk DoS (max 1GB file size)
+// - Fork bombs (max 512 processes per user)
+// - File descriptor exhaustion (max 1024 open files)
+// On macOS (development), returns empty string to avoid breaking local development.
+func (e *executor) buildResourceLimitsPrefix() string {
+	if runtime.GOOS == "linux" {
+		// Production (Docker): Apply resource limits
+		// ulimit -f: max file size in KB (1GB = 1048576 KB)
+		// ulimit -n: max open files (1024)
+		// ulimit -u: max processes per user (512 - allows concurrent Go programs with threads)
+		// Note: -u is per-user limit, shared across all concurrent executions as sandbox user
+		return "ulimit -f 1048576 && ulimit -n 1024 && ulimit -u 512 && "
+	}
+	// macOS development: Skip limits to avoid breaking local development
+	return ""
+}
+
 // buildCommand builds the execution command based on executable type.
 func (e *executor) buildCommand(
 	ctx context.Context,
@@ -93,16 +160,64 @@ func (e *executor) buildCommand(
 	var cmd *exec.Cmd
 	var interpreterPath string
 
+	// Get resource limits prefix (only on Linux/production)
+	resourceLimits := e.buildResourceLimitsPrefix()
+
+	// umask 002 ensures files are group-readable/writable (664 for files, 775 for dirs)
+	// Use bash instead of sh because bash supports ulimit -u (process limit)
+	// SECURITY: Pass executable as $3 positional parameter to prevent command injection
 	switch executableType {
 	case RuntimeTypePython:
 		interpreterPath = InterpreterPython
-		cmd = exec.CommandContext(ctx, interpreterPath, executable, "--api-key", apiKey, "--api-url", apiURL)
+		shellCmd := fmt.Sprintf("%sumask 002 && exec %s \"$3\" --api-key \"$1\" --api-url \"$2\"",
+			resourceLimits, interpreterPath)
+		cmd = exec.CommandContext(
+			ctx,
+			"sudo",
+			"-u",
+			"sandbox",
+			"bash",
+			"-c",
+			shellCmd,
+			"--",
+			apiKey,
+			apiURL,
+			executable,
+		)
 	case RuntimeTypeGo:
 		interpreterPath = InterpreterGo
-		cmd = exec.CommandContext(ctx, interpreterPath, "run", executable, "--api-key", apiKey, "--api-url", apiURL)
+		shellCmd := fmt.Sprintf("%sumask 002 && exec %s run \"$3\" --api-key \"$1\" --api-url \"$2\"",
+			resourceLimits, interpreterPath)
+		cmd = exec.CommandContext(
+			ctx,
+			"sudo",
+			"-u",
+			"sandbox",
+			"bash",
+			"-c",
+			shellCmd,
+			"--",
+			apiKey,
+			apiURL,
+			executable,
+		)
 	case RuntimeTypeNode:
 		interpreterPath = InterpreterNode
-		cmd = exec.CommandContext(ctx, interpreterPath, executable, "--api-key", apiKey, "--api-url", apiURL)
+		shellCmd := fmt.Sprintf("%sumask 002 && exec %s \"$3\" --api-key \"$1\" --api-url \"$2\"",
+			resourceLimits, interpreterPath)
+		cmd = exec.CommandContext(
+			ctx,
+			"sudo",
+			"-u",
+			"sandbox",
+			"bash",
+			"-c",
+			shellCmd,
+			"--",
+			apiKey,
+			apiURL,
+			executable,
+		)
 	default:
 		return nil, "", fmt.Errorf("unsupported executable type: %s", executableType)
 	}
@@ -110,26 +225,35 @@ func (e *executor) buildCommand(
 	// Set working directory
 	cmd.Dir = workspaceDir
 
-	// Set up environment
-	cmd.Env = os.Environ()
+	// CRITICAL: Use isolated environment, NOT os.Environ()
+	cmd.Env = e.buildSandboxEnvironment(workspaceDir)
 
-	// Set up Go cache for Go scripts
-	if executableType == RuntimeTypeGo {
-		e.setupGoCache(cmd)
+	// Set process group for isolation
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true, // Create new process group for easier cleanup
 	}
 
 	return cmd, interpreterPath, nil
 }
 
-// setupGoCache configures Go cache directories for Go script execution.
-func (e *executor) setupGoCache(cmd *exec.Cmd) {
-	goCacheDir := filepath.Join(os.TempDir(), "irmin-go-cache")
-	if mkdirErr := os.MkdirAll(goCacheDir, 0750); mkdirErr == nil {
-		cmd.Env = append(cmd.Env,
-			fmt.Sprintf("GOPATH=%s", goCacheDir),
-			fmt.Sprintf("GOMODCACHE=%s/pkg/mod", goCacheDir),
-		)
-	}
+// formatLogsWithTiming prepends execution timing information to the logs.
+func (e *executor) formatLogsWithTiming(startTime, endTime time.Time, output string) string {
+	duration := endTime.Sub(startTime)
+
+	header := fmt.Sprintf(
+		"=== Script Execution Report ===\n"+
+			"Start Time:    %s\n"+
+			"End Time:      %s\n"+
+			"Duration:      %s\n"+
+			"Duration (ms): %d\n"+
+			"===============================\n\n",
+		startTime.Format(time.RFC3339),
+		endTime.Format(time.RFC3339),
+		duration.Round(time.Millisecond).String(),
+		duration.Milliseconds(),
+	)
+
+	return header + output
 }
 
 // logExecutionResult logs the outcome of script execution.
@@ -169,15 +293,60 @@ func (e *executor) collectResultFiles(ctx context.Context, workspaceDir string, 
 		fullPath := filepath.Join(workspaceDir, fileName)
 		if data, readErr := os.ReadFile(fullPath); readErr == nil {
 			resultFileData[fileName] = data
-			e.sandbox.logger.InfoContext(ctx, "Result file collected", "file", fileName, "size", len(data))
+			e.sandbox.logger.InfoContext(ctx, "SECURITY_AUDIT: Result file collected",
+				"file", fileName,
+				"size", len(data),
+				"workspace", filepath.Base(workspaceDir))
 		} else {
-			e.sandbox.logger.WarnContext(ctx, "Failed to read result file", "file", fileName, "error", readErr)
+			e.sandbox.logger.WarnContext(ctx, "SECURITY_AUDIT: Failed to read result file",
+				"file", fileName,
+				"error", readErr,
+				"workspace", filepath.Base(workspaceDir))
 		}
 	}
 
 	if len(resultFileData) > 0 {
 		result.ResultFiles = resultFileData
 	}
+}
+
+// fixWorkspacePermissions ensures all files in workspace are group-readable/writable.
+func (e *executor) fixWorkspacePermissions(ctx context.Context, workspaceDir string) {
+	if ctx.Err() != nil {
+		return
+	}
+
+	// Walk the workspace and fix permissions on all files/dirs created by sandbox user
+	//nolint:nilerr // We want to continue walking even on errors
+	_ = filepath.Walk(workspaceDir, func(path string, info os.FileInfo, walkError error) error {
+		if walkError != nil {
+			return nil // Skip errors, continue walking
+		}
+
+		// Skip _input directory and Go cache (already handled)
+		if strings.Contains(path, "/_input/") || strings.Contains(path, "/.go/") {
+			return nil
+		}
+
+		if info.IsDir() {
+			// Set directories to 02770 (setgid + group-writable)
+			//nolint:gosec // G302: Group-writable with setgid for shared access
+			if chmodErr := os.Chmod(path, 02770); chmodErr != nil {
+				e.sandbox.logger.WarnContext(ctx, "Failed to chmod directory",
+					"path", path,
+					"error", chmodErr)
+			}
+		} else {
+			// Set files to 0660 (group-readable/writable)
+			//nolint:gosec // G306: Group-writable for shared access
+			if chmodErr := os.Chmod(path, 0660); chmodErr != nil {
+				e.sandbox.logger.WarnContext(ctx, "Failed to chmod file",
+					"path", path,
+					"error", chmodErr)
+			}
+		}
+		return nil
+	})
 }
 
 // installGoSDK installs Go SDK directly.
@@ -187,9 +356,12 @@ func (e *executor) installGoSDK(ctx context.Context, workspaceTempDir, projectNa
 		return ctx.Err()
 	}
 
-	// Initialize go module
-	initCmd := exec.CommandContext(ctx, "go", "mod", "init", projectName)
+	// Initialize go module with umask for group-writable files
+	// SECURITY: Pass projectName as positional parameter to prevent injection
+	shellCmd := "umask 002 && exec /usr/local/go/bin/go mod init \"$1\""
+	initCmd := exec.CommandContext(ctx, "sh", "-c", shellCmd, "--", projectName)
 	initCmd.Dir = workspaceTempDir
+	initCmd.Env = e.buildSandboxEnvironment(workspaceTempDir)
 	if output, err := initCmd.CombinedOutput(); err != nil {
 		e.sandbox.logger.ErrorContext(ctx, "go mod init failed",
 			"error", err,
@@ -202,9 +374,10 @@ func (e *executor) installGoSDK(ctx context.Context, workspaceTempDir, projectNa
 		return ctx.Err()
 	}
 
-	//nolint:gosec // LatestGoVersion is a constant, not user input
-	editCmd := exec.CommandContext(ctx, "go", "mod", "edit", fmt.Sprintf("-go=%s", LatestGoVersion))
+	editShellCmd := fmt.Sprintf("umask 002 && exec /usr/local/go/bin/go mod edit -go=%s", LatestGoVersion)
+	editCmd := exec.CommandContext(ctx, "sh", "-c", editShellCmd)
 	editCmd.Dir = workspaceTempDir
+	editCmd.Env = e.buildSandboxEnvironment(workspaceTempDir)
 	if output, err := editCmd.CombinedOutput(); err != nil {
 		e.sandbox.logger.ErrorContext(ctx, "go mod edit failed",
 			"error", err,
@@ -224,8 +397,10 @@ func (e *executor) installGoSDK(ctx context.Context, workspaceTempDir, projectNa
 			return ctx.Err()
 		}
 
-		getCmd := exec.CommandContext(ctx, "go", "get", pkg)
+		getShellCmd := fmt.Sprintf("umask 002 && exec /usr/local/go/bin/go get \"%s\"", pkg)
+		getCmd := exec.CommandContext(ctx, "sh", "-c", getShellCmd)
 		getCmd.Dir = workspaceTempDir
+		getCmd.Env = e.buildSandboxEnvironment(workspaceTempDir)
 		if output, err := getCmd.CombinedOutput(); err != nil {
 			e.sandbox.logger.ErrorContext(ctx, "go get failed",
 				"package", pkg,
@@ -234,6 +409,29 @@ func (e *executor) installGoSDK(ctx context.Context, workspaceTempDir, projectNa
 			return fmt.Errorf("go get %s failed: %w\nOutput: %s", pkg, err, string(output))
 		}
 		e.sandbox.logger.InfoContext(ctx, "Go package installed", "package", pkg)
+	}
+
+	// Fix permissions on Go module cache (Go creates read-only files by design)
+	// Make all files/dirs group-writable so appuser can clean them up
+	modCache := filepath.Join(workspaceTempDir, ".go", "pkg", "mod")
+	//nolint:nilerr // We want to continue walking even on errors
+	if walkErr := filepath.Walk(modCache, func(path string, info os.FileInfo, walkError error) error {
+		if walkError != nil {
+			return nil // Skip errors, continue walking
+		}
+		if info.IsDir() {
+			// Set directories to 02770 (setgid + group-writable)
+			//nolint:gosec // G302: Group-writable with setgid for cleanup
+			_ = os.Chmod(path, 02770)
+		} else {
+			// Set files to 0660 (group-writable)
+			//nolint:gosec // G306: Group-writable for cleanup
+			_ = os.Chmod(path, 0660)
+		}
+		return nil
+	}); walkErr != nil {
+		e.sandbox.logger.WarnContext(ctx, "Failed to fix module cache permissions",
+			"error", walkErr)
 	}
 
 	return nil
