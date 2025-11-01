@@ -346,7 +346,7 @@ func (c *Client) GetConnection(
 
 func (c *Client) GetConnectionSchema(
 	ctx context.Context,
-	workspace, connectionID, operationMethod string,
+	workspace, connectionID, operationMethod, path string,
 ) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
     GetConnectionSchema retrieves the schema for a specific connection and
     operation method.

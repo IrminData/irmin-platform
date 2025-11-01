@@ -206,8 +206,9 @@ func (v *Validator) validateExportWorkflowable(parentStruct reflect.Value) bool 
 		return false
 	}
 
-	// Must have source paths
-	if !fromRepositoryPathsField.IsValid() || fromRepositoryPathsField.Len() == 0 {
+	// ExportFromRepositoryPaths can be empty - empty means "export all repository paths"
+	// Only validate that the field exists, not that it has values
+	if !fromRepositoryPathsField.IsValid() {
 		return false
 	}
 

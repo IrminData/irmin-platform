@@ -192,7 +192,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branchName string\) \(\*irminmodels.Branch, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(ctx context.Context, workspace, repository, hash string\) \(\*irminmodels.Commit, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetCommit>)
   - [func \(c \*Client\) GetConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnection>)
-  - [func \(c \*Client\) GetConnectionSchema\(ctx context.Context, workspace, connectionID, operationMethod string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSchema>)
+  - [func \(c \*Client\) GetConnectionSchema\(ctx context.Context, workspace, connectionID, operationMethod, path string\) \(\*irminmodels.ObjectSchema, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnectionSchema>)
   - [func \(c \*Client\) GetConnector\(ctx context.Context, connectorID string\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetConnector>)
   - [func \(c \*Client\) GetEditorItemContent\(ctx context.Context, workspace, path string\) \(\*string, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetEditorItemContent>)
   - [func \(c \*Client\) GetInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.GetInvite>)
@@ -859,7 +859,7 @@ func (c *Client) GetConnection(ctx context.Context, workspace, connectionID stri
 ### func \(\*Client\) GetConnectionSchema
 
 ```go
-func (c *Client) GetConnectionSchema(ctx context.Context, workspace, connectionID, operationMethod string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
+func (c *Client) GetConnectionSchema(ctx context.Context, workspace, connectionID, operationMethod, path string) (*irminmodels.ObjectSchema, *irminmodels.IrminAPIResponse, error)
 ```
 
 GetConnectionSchema retrieves the schema for a specific connection and operation method.
@@ -4127,10 +4127,12 @@ import "github.com/IrminData/irmin-sdk-go/utils"
 - [func CreateMultipartForm\(file \*File, fieldName string\) \(\*bytes.Buffer, string, error\)](<#CreateMultipartForm>)
 - [func CreateMultipartFormWithFields\(file \*File, fieldName string, textFields map\[string\]string\) \(\*bytes.Buffer, string, error\)](<#CreateMultipartFormWithFields>)
 - [func GetAPIFromFlags\(\) \(string, string, error\)](<#GetAPIFromFlags>)
+- [func GetContentTypeHybrid\(ext string\) string](<#GetContentTypeHybrid>)
 - [func GetInputFile\(filePath string\) \(\[\]byte, error\)](<#GetInputFile>)
 - [func IsStructuredDataFormat\(ext, contentType string\) bool](<#IsStructuredDataFormat>)
 - [func ListInputFiles\(\) \(\[\]string, error\)](<#ListInputFiles>)
 - [func SendComputeResult\(data \[\]byte, fileName string\) error](<#SendComputeResult>)
+- [func StripMimeTypeParameters\(mimeType string\) string](<#StripMimeTypeParameters>)
 - [func UnzipFiles\(zipData \[\]byte\) \(map\[string\]\[\]byte, error\)](<#UnzipFiles>)
 - [func ZipFiles\(files map\[string\]\[\]byte\) \(\[\]byte, error\)](<#ZipFiles>)
 - [type File](<#File>)
@@ -4179,6 +4181,17 @@ func GetAPIFromFlags() (string, string, error)
 
 GetAPIFromFlags retrieves the API key and the base URL from command line flags.
 
+<a name="GetContentTypeHybrid"></a>
+## func GetContentTypeHybrid
+
+```go
+func GetContentTypeHybrid(ext string) string
+```
+
+GetContentTypeHybrid uses a hybrid approach for MIME type detection. It first checks for specialized data analytics formats that aren't typically registered in system MIME databases, then falls back to the system's built\-in MIME type detection for standard formats.
+
+To maintain backward compatibility with existing tests, this function: \- Uses specialized mappings for data analytics formats \- Falls back to system MIME types but strips charset parameters \- Maintains specific legacy MIME types where expected by existing code
+
 <a name="GetInputFile"></a>
 ## func GetInputFile
 
@@ -4214,6 +4227,15 @@ func SendComputeResult(data []byte, fileName string) error
 ```
 
 SendComputeResult writes the provided data to a file with the given name in the current working directory. This file will be used to pass computation results back to the host system from within the container.
+
+<a name="StripMimeTypeParameters"></a>
+## func StripMimeTypeParameters
+
+```go
+func StripMimeTypeParameters(mimeType string) string
+```
+
+StripMimeTypeParameters removes charset and other parameters from MIME types to maintain backward compatibility with existing test expectations.
 
 <a name="UnzipFiles"></a>
 ## func UnzipFiles
