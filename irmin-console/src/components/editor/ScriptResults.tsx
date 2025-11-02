@@ -96,6 +96,11 @@ const ScriptResults = ({
     [loading, processingRun]
   );
 
+  const showLoadingOnLogs = useMemo(
+    () => loading || processingRun,
+    [loading, processingRun]
+  );
+
   const logs = useMemo(() => result?.logs ?? [], [result]);
 
   return (
@@ -248,7 +253,14 @@ const ScriptResults = ({
       )}
       {activeTab === 'logs' && (
         <>
-          {logs && logs.length > 0 ? (
+          {showLoadingOnLogs ? (
+            <div
+              className={`
+                m-4 h-64 animate-pulse rounded bg-gray-200
+                dark:bg-gray-800
+              `}
+            />
+          ) : logs && logs.length > 0 ? (
             <LogFeed logs={logs} />
           ) : (
             <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
