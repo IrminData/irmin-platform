@@ -18,7 +18,7 @@ import (
 // @Produce json
 // @Param details[host] formData string true "PostgreSQL server hostname or IP address"
 // @Param details[port] formData integer false "PostgreSQL server port (default: 5432)"
-// @Param details[user] formData string true "Username for PostgreSQL authentication"
+// @Param details[username] formData string true "Username for PostgreSQL authentication"
 // @Param details[password] formData string true "Password for PostgreSQL authentication"
 // @Param details[default_db] formData string false "Default database for initial connection"
 // @Param details[ssl_mode] formData boolean false "Enable SSL mode for secure connections"

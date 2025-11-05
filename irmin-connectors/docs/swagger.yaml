@@ -1220,7 +1220,7 @@ paths:
         type: integer
       - description: Username (required for settings key to fetch databases)
         in: formData
-        name: details[user]
+        name: details[username]
         type: string
       - description: Password (required for settings key to fetch databases)
         in: formData
@@ -1275,7 +1275,7 @@ paths:
         type: integer
       - description: Username for MySQL authentication
         in: formData
-        name: details[user]
+        name: details[username]
         required: true
         type: string
       - description: Password for MySQL authentication
@@ -1419,7 +1419,7 @@ paths:
         type: integer
       - description: Username for MySQL authentication
         in: formData
-        name: details[user]
+        name: details[username]
         required: true
         type: string
       - description: Password for MySQL authentication
@@ -1773,7 +1773,7 @@ paths:
         type: integer
       - description: Username (required for settings key to fetch databases)
         in: formData
-        name: details[user]
+        name: details[username]
         type: string
       - description: Password (required for settings key to fetch databases)
         in: formData
@@ -1832,7 +1832,7 @@ paths:
         type: integer
       - description: Username for PostgreSQL authentication
         in: formData
-        name: details[user]
+        name: details[username]
         required: true
         type: string
       - description: Password for PostgreSQL authentication
@@ -1980,7 +1980,7 @@ paths:
         type: integer
       - description: Username for PostgreSQL authentication
         in: formData
-        name: details[user]
+        name: details[username]
         required: true
         type: string
       - description: Password for PostgreSQL authentication

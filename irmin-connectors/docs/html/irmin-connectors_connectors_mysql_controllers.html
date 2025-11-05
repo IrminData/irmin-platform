@@ -32,7 +32,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
     settings) @Param details[host] formData string false "MySQL server hostname
     (required for settings key to fetch databases)" @Param details[port]
     formData integer false "MySQL server port (required for settings key to
-    fetch databases)" @Param details[user] formData string false "Username
+    fetch databases)" @Param details[username] formData string false "Username
     (required for settings key to fetch databases)" @Param details[password]
     formData string false "Password (required for settings key to fetch
     databases)" @Param details[default_db] formData string false "Default
@@ -51,7 +51,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
     @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
     details[host] formData string true "MySQL server hostname or IP address"
     @Param details[port] formData integer false "MySQL server port (default:
-    3306)" @Param details[user] formData string true "Username for MySQL
+    3306)" @Param details[username] formData string true "Username for MySQL
     authentication" @Param details[password] formData string true "Password
     for MySQL authentication" @Param details[default_db] formData string false
     "Default database for initial connection" @Param settings[database] formData
@@ -114,7 +114,7 @@ func (cs *Controllers) OperationInit(c fiber.Ctx) error
     @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
     details[host] formData string true "MySQL server hostname or IP address"
     @Param details[port] formData integer false "MySQL server port (default:
-    3306)" @Param details[user] formData string true "Username for MySQL
+    3306)" @Param details[username] formData string true "Username for MySQL
     authentication" @Param details[password] formData string true "Password
     for MySQL authentication" @Param details[default_db] formData string
     false "Default database for initial connection" @Param settings[database]

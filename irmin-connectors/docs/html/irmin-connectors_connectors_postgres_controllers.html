@@ -32,7 +32,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
     settings) @Param details[host] formData string false "PostgreSQL
     server hostname (required for settings key to fetch databases)" @Param
     details[port] formData integer false "PostgreSQL server port (required
-    for settings key to fetch databases)" @Param details[user] formData
+    for settings key to fetch databases)" @Param details[username] formData
     string false "Username (required for settings key to fetch databases)"
     @Param details[password] formData string false "Password (required for
     settings key to fetch databases)" @Param details[default_db] formData
@@ -53,8 +53,8 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
     postgres @Security SystemTokenAuth @Accept multipart/form-data @Produce
     json @Param details[host] formData string true "PostgreSQL server hostname
     or IP address" @Param details[port] formData integer false "PostgreSQL
-    server port (default: 5432)" @Param details[user] formData string true
-    "Username for PostgreSQL authentication" @Param details[password]
+    server port (default: 5432)" @Param details[username] formData string
+    true "Username for PostgreSQL authentication" @Param details[password]
     formData string true "Password for PostgreSQL authentication" @Param
     details[default_db] formData string false "Default database for initial
     connection" @Param details[ssl_mode] formData boolean false "Enable SSL
@@ -115,8 +115,8 @@ func (cs *Controllers) OperationInit(c fiber.Ctx) error
     returning an operation token for subsequent requests @Tags postgres
     @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
     details[host] formData string true "PostgreSQL server hostname or IP
-    address" @Param details[port] formData integer false "PostgreSQL server
-    port (default: 5432)" @Param details[user] formData string true "Username
+    address" @Param details[port] formData integer false "PostgreSQL server port
+    (default: 5432)" @Param details[username] formData string true "Username
     for PostgreSQL authentication" @Param details[password] formData string
     true "Password for PostgreSQL authentication" @Param details[default_db]
     formData string false "Default database for initial connection" @Param

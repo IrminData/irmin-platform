@@ -786,7 +786,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Username for MySQL authentication",
-                        "name": "details[user]",
+                        "name": "details[username]",
                         "in": "formData",
                         "required": true
                     },
@@ -885,7 +885,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Username (required for settings key to fetch databases)",
-                        "name": "details[user]",
+                        "name": "details[username]",
                         "in": "formData"
                     },
                     {
@@ -1097,7 +1097,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Username for MySQL authentication",
-                        "name": "details[user]",
+                        "name": "details[username]",
                         "in": "formData",
                         "required": true
                     },
@@ -1609,7 +1609,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Username for PostgreSQL authentication",
-                        "name": "details[user]",
+                        "name": "details[username]",
                         "in": "formData",
                         "required": true
                     },
@@ -1714,7 +1714,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Username (required for settings key to fetch databases)",
-                        "name": "details[user]",
+                        "name": "details[username]",
                         "in": "formData"
                     },
                     {
@@ -1932,7 +1932,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Username for PostgreSQL authentication",
-                        "name": "details[user]",
+                        "name": "details[username]",
                         "in": "formData",
                         "required": true
                     },

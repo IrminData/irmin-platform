@@ -24,7 +24,7 @@ import (
 // @Param key path string true "Configuration key" Enums(details, settings)
 // @Param details[host] formData string false "MySQL server hostname (required for settings key to fetch databases)"
 // @Param details[port] formData integer false "MySQL server port (required for settings key to fetch databases)"
-// @Param details[user] formData string false "Username (required for settings key to fetch databases)"
+// @Param details[username] formData string false "Username (required for settings key to fetch databases)"
 // @Param details[password] formData string false "Password (required for settings key to fetch databases)"
 // @Param details[default_db] formData string false "Default database (required for settings key to fetch databases)"
 // @Success 200 {object} map[string]irminmodels.DynamicField "Configuration fields retrieved successfully"
@@ -76,8 +76,8 @@ func (cs *Controllers) getSettingsFields(
 	if port := fields["details[port]"]; port != "" {
 		details["port"] = port
 	}
-	if user := fields["details[user]"]; user != "" {
-		details["user"] = user
+	if username := fields["details[username]"]; username != "" {
+		details["username"] = username
 	}
 	if password := fields["details[password]"]; password != "" {
 		details["password"] = password
@@ -89,7 +89,7 @@ func (cs *Controllers) getSettingsFields(
 	// Extract values using utility functions with defaults
 	host := utils.GetStringFromMap(details, "host", "")
 	port := utils.GetIntFromMap(details, "port", mysqlconfig.DefaultMySQLPort)
-	user := utils.GetStringFromMap(details, "user", "")
+	user := utils.GetStringFromMap(details, "username", "")
 	password := utils.GetStringFromMap(details, "password", "")
 	defaultDB := utils.GetStringFromMap(details, "default_db", "")
 

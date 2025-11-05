@@ -16,7 +16,7 @@ import (
 // @Produce json
 // @Param details[host] formData string true "MySQL server hostname or IP address"
 // @Param details[port] formData integer false "MySQL server port (default: 3306)"
-// @Param details[user] formData string true "Username for MySQL authentication"
+// @Param details[username] formData string true "Username for MySQL authentication"
 // @Param details[password] formData string true "Password for MySQL authentication"
 // @Param details[default_db] formData string false "Default database for initial connection"
 // @Param settings[database] formData string true "Target database name for operations"

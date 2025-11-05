@@ -84,7 +84,7 @@ GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'irmin_user'@'%';
   "details": {
     "host": "mysql.example.com",
     "port": "3306",
-    "user": "irmin_user",
+    "username": "irmin_user",
     "password": "secure_password",
     "default_db": "mysql"
   },
