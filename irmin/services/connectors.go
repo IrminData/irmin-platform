@@ -51,10 +51,10 @@ func (api *APIServices) updateConnectorFromInfo(
 	connector.StructureVersion = connectorInfo.StructureVersion
 	connector.Author = connectorInfo.Author
 	connector.LogoURL = connectorInfo.LogoURL
-	connector.Capabilities = connectorInfo.Capabilities
+	connector.Capabilities = utils.ConvertToStringSlice(connectorInfo.Capabilities)
 	connector.Locales = connectorInfo.Locales
-	connector.PrimaryCategory = connectorInfo.PrimaryCategory
-	connector.Categories = connectorInfo.Categories
+	connector.PrimaryCategory = string(connectorInfo.PrimaryCategory)
+	connector.Categories = utils.ConvertToStringSlice(connectorInfo.Categories)
 	connector.AuthorEmail = connectorInfo.AuthorEmail
 	connector.ReadMoreURL = connectorInfo.ReadMoreURL
 }

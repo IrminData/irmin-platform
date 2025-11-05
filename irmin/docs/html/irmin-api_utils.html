@@ -69,6 +69,9 @@ func ConvertToStringMap(source map[string]any) map[string]string
     ConvertToStringMap converts a map[string]any to map[string]string for
     database compatibility.
 
+func ConvertToStringSlice[T ~string](source []T) []string
+    ConvertToStringSlice converts a slice of ~string types to []string.
+
 func CreateMultipartPayload(
 	fileFields map[string]FilePayload,
 	textFields map[string]string,
