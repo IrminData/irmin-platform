@@ -75,6 +75,13 @@ func (api *APIServices) CreateWorkspace(
 	}
 	defer bucket.Close()
 
+	// Get owner role BEFORE starting transaction to avoid deadlocks
+	ownerRole, err := api.DB.GetOwnerRole()
+	if err != nil {
+		api.Logger.ErrorContext(ctx, "Error getting owner role", "error", err)
+		return nil, err
+	}
+
 	// Use database transaction to ensure atomicity
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Create the workspace
@@ -88,13 +95,6 @@ func (api *APIServices) CreateWorkspace(
 		if createWorkspaceErr := tx.Create(&newWorkspace).Error; createWorkspaceErr != nil {
 			api.Logger.ErrorContext(ctx, "Error creating workspace", "error", createWorkspaceErr)
 			return createWorkspaceErr
-		}
-
-		// Get owner role for the workspace
-		ownerRole, err := api.DB.GetOwnerRole()
-		if err != nil {
-			api.Logger.ErrorContext(ctx, "Error getting owner role", "error", err)
-			return err
 		}
 
 		// Add user to workspace with default role

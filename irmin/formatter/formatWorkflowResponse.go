@@ -70,7 +70,8 @@ func FormatWorkflowResponse(
 		latestStatus = irminmodels.WorkflowStatusPaused
 	} else {
 		latestWorkflowRun, _ := d.GetLatestWorkflowRunByWorkflowID(workflow.ID)
-		if latestWorkflowRun != nil {
+		// Check if workflow run actually exists (ID > 0) to avoid using empty struct
+		if latestWorkflowRun != nil && latestWorkflowRun.ID > 0 {
 			latestStatus = latestWorkflowRun.Status
 		}
 	}

@@ -193,6 +193,13 @@ func (api *APIServices) CreateWorkflow(
 		return nil, ErrAccessDenied
 	}
 
+	// Parse and validate schedule BEFORE starting transaction to avoid deadlocks
+	schedule, parseScheduleErr := lib.ParseScheduleFromData(&req.Schedule, api.DB, *workspace, api.SQIDManager)
+	if parseScheduleErr != nil {
+		api.Logger.ErrorContext(c, "Error parsing schedule", "error", parseScheduleErr)
+		return nil, parseScheduleErr
+	}
+
 	// Create variables to store all possible workflowable objects.
 	var importWorkflowable *db.ImportWorkflowable
 	var exportWorkflowable *db.ExportWorkflowable
@@ -202,10 +209,13 @@ func (api *APIServices) CreateWorkflow(
 
 	// Start a transaction for all database operations
 	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Wrap tx in a Database struct so all DB operations use the transaction
+		txDB := &db.Database{DB: tx}
+
 		// Create workflowable based on type
 		var createWorkflowableErr error
 		importWorkflowable, exportWorkflowable, actionWorkflowable, pipelineWorkflowable, createWorkflowableErr = api.createWorkflowableByType(
-			tx,
+			txDB,
 			workspace,
 			&req,
 		)
@@ -213,11 +223,7 @@ func (api *APIServices) CreateWorkflow(
 			return createWorkflowableErr
 		}
 
-		// Parse and create schedule
-		schedule, parseScheduleErr := lib.ParseScheduleFromData(&req.Schedule, api.DB, *workspace, api.SQIDManager)
-		if parseScheduleErr != nil {
-			return parseScheduleErr
-		}
+		// Create schedule
 		if createScheduleErr := tx.Create(schedule).Error; createScheduleErr != nil {
 			return createScheduleErr
 		}
@@ -307,6 +313,9 @@ func (api *APIServices) UpdateWorkflowable(
 
 	// Start a transaction for all database operations
 	txErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Wrap tx in a Database struct so all DB operations use the transaction
+		txDB := &db.Database{DB: tx}
+
 		// Make sure the workflowable type is unchanged
 		if workflowableReq.Type != workflow.Type {
 			return errors.New("workflowable type cannot be changed")
@@ -317,23 +326,23 @@ func (api *APIServices) UpdateWorkflowable(
 		switch workflowableReq.Type {
 		case irminmodels.WorkflowableTypeImport:
 			importWorkflowable, _, createWorkflowableErr = api.createImportExportWorkflowable(
-				tx,
+				txDB,
 				workspace,
 				&workflowableReq,
 				irminmodels.WorkflowableTypeImport,
 			)
 		case irminmodels.WorkflowableTypeExport:
 			_, exportWorkflowable, createWorkflowableErr = api.createImportExportWorkflowable(
-				tx,
+				txDB,
 				workspace,
 				&workflowableReq,
 				irminmodels.WorkflowableTypeExport,
 			)
 		case irminmodels.WorkflowableTypeAction:
-			actionWorkflowable, createWorkflowableErr = api.createActionWorkflowable(tx, workspace, &workflowableReq)
+			actionWorkflowable, createWorkflowableErr = api.createActionWorkflowable(txDB, workspace, &workflowableReq)
 		case irminmodels.WorkflowableTypePipeline:
 			pipelineWorkflowable, createWorkflowableErr = api.createPipelineWorkflowable(
-				tx,
+				txDB,
 				workspace,
 				&workflowableReq,
 			)
@@ -824,7 +833,7 @@ func (api *APIServices) updateWorkflowWithWorkflowable(
 
 // createWorkflowableByType is a helper function to create workflowable by type.
 func (api *APIServices) createWorkflowableByType(
-	tx *gorm.DB,
+	txDB *db.Database,
 	workspace *db.Workspace,
 	req *irmincore.WorkflowRequest,
 ) (*db.ImportWorkflowable, *db.ExportWorkflowable, *db.ActionWorkflowable, *db.PipelineWorkflowable, error) {
@@ -847,22 +856,22 @@ func (api *APIServices) createWorkflowableByType(
 	switch req.Type {
 	case irminmodels.WorkflowableTypeImport:
 		importWorkflowable, _, err = api.createImportExportWorkflowable(
-			tx,
+			txDB,
 			workspace,
 			&wflConfig,
 			irminmodels.WorkflowableTypeImport,
 		)
 	case irminmodels.WorkflowableTypeExport:
 		_, exportWorkflowable, err = api.createImportExportWorkflowable(
-			tx,
+			txDB,
 			workspace,
 			&wflConfig,
 			irminmodels.WorkflowableTypeExport,
 		)
 	case irminmodels.WorkflowableTypeAction:
-		actionWorkflowable, err = api.createActionWorkflowable(tx, workspace, &wflConfig)
+		actionWorkflowable, err = api.createActionWorkflowable(txDB, workspace, &wflConfig)
 	case irminmodels.WorkflowableTypePipeline:
-		pipelineWorkflowable, err = api.createPipelineWorkflowable(tx, workspace, &wflConfig)
+		pipelineWorkflowable, err = api.createPipelineWorkflowable(txDB, workspace, &wflConfig)
 	default:
 		return nil, nil, nil, nil, fmt.Errorf("invalid workflow type: %s", req.Type)
 	}
@@ -871,7 +880,7 @@ func (api *APIServices) createWorkflowableByType(
 
 // createImportExportWorkflowable is a helper function to create import or export workflowable.
 func (api *APIServices) createImportExportWorkflowable(
-	tx *gorm.DB,
+	txDB *db.Database,
 	workspace *db.Workspace,
 	wflConfig *irminmodels.Workflowable,
 	workflowableType irminmodels.WorkflowableType,
@@ -881,18 +890,18 @@ func (api *APIServices) createImportExportWorkflowable(
 		return nil, nil, fmt.Errorf("%s configuration is required", workflowableType)
 	}
 
-	// Find the repository by slug
-	repo, err := api.DB.GetRepositoryBySlugAndWorkspaceID(wflConfig.Repository, workspace.ID)
+	// Find the repository by slug (using transaction connection)
+	repo, err := txDB.GetRepositoryBySlugAndWorkspaceID(wflConfig.Repository, workspace.ID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Find the connection by ID
+	// Find the connection by ID (using transaction connection)
 	connectionID, err := api.SQIDManager.Decode("connections", wflConfig.ConnectionID)
 	if err != nil {
 		return nil, nil, err
 	}
-	conn, err := api.DB.GetConnectionByID(uint(connectionID))
+	conn, err := txDB.GetConnectionByID(uint(connectionID))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -926,7 +935,7 @@ func (api *APIServices) createImportExportWorkflowable(
 			ImportToRepositoryPath:    trimmedImportToRepositoryPath,
 			FieldMappings:             fieldMappings,
 		}
-		if createImportWorkflowableErr := tx.Create(importWorkflowable).Error; createImportWorkflowableErr != nil {
+		if createImportWorkflowableErr := txDB.Create(importWorkflowable).Error; createImportWorkflowableErr != nil {
 			return nil, nil, createImportWorkflowableErr
 		}
 		return importWorkflowable, nil, nil
@@ -941,7 +950,7 @@ func (api *APIServices) createImportExportWorkflowable(
 		ExportFromRepositoryPaths: trimmedExportFromRepositoryPaths,
 		FieldMappings:             fieldMappings,
 	}
-	if createExportWorkflowableErr := tx.Create(exportWorkflowable).Error; createExportWorkflowableErr != nil {
+	if createExportWorkflowableErr := txDB.Create(exportWorkflowable).Error; createExportWorkflowableErr != nil {
 		return nil, nil, createExportWorkflowableErr
 	}
 	return nil, exportWorkflowable, nil
@@ -949,7 +958,7 @@ func (api *APIServices) createImportExportWorkflowable(
 
 // createActionWorkflowable is a helper function to create action workflowable.
 func (api *APIServices) createActionWorkflowable(
-	tx *gorm.DB,
+	txDB *db.Database,
 	workspace *db.Workspace,
 	config *irminmodels.Workflowable,
 ) (*db.ActionWorkflowable, error) {
@@ -957,10 +966,10 @@ func (api *APIServices) createActionWorkflowable(
 		return nil, errors.New("action configuration is required")
 	}
 
-	// Process input data
+	// Process input data (using transaction connection)
 	var inputData []db.ActionWorkflowableInput
 	for _, inputObject := range config.Input {
-		repository, getRepoErr := api.DB.GetRepositoryBySlugAndWorkspaceID(
+		repository, getRepoErr := txDB.GetRepositoryBySlugAndWorkspaceID(
 			inputObject.Repository,
 			workspace.ID,
 		)
@@ -976,11 +985,11 @@ func (api *APIServices) createActionWorkflowable(
 		})
 	}
 
-	// Handle repository if specified
+	// Handle repository if specified (using transaction connection)
 	var repository *db.Repository
 	if config.Repository != "" {
 		var getRepositoryBySlugAndWorkspaceIDErr error
-		repository, getRepositoryBySlugAndWorkspaceIDErr = api.DB.GetRepositoryBySlugAndWorkspaceID(
+		repository, getRepositoryBySlugAndWorkspaceIDErr = txDB.GetRepositoryBySlugAndWorkspaceID(
 			config.Repository,
 			workspace.ID,
 		)
@@ -1018,7 +1027,7 @@ func (api *APIServices) createActionWorkflowable(
 		}
 	}
 
-	if createActionWorkflowableErr := tx.Create(&workflowable).Error; createActionWorkflowableErr != nil {
+	if createActionWorkflowableErr := txDB.Create(&workflowable).Error; createActionWorkflowableErr != nil {
 		return nil, createActionWorkflowableErr
 	}
 	return &workflowable, nil
@@ -1026,7 +1035,7 @@ func (api *APIServices) createActionWorkflowable(
 
 // createPipelineWorkflowable is a helper function to create pipeline workflowable.
 func (api *APIServices) createPipelineWorkflowable(
-	tx *gorm.DB,
+	txDB *db.Database,
 	workspace *db.Workspace,
 	config *irminmodels.Workflowable,
 ) (*db.PipelineWorkflowable, error) {
@@ -1044,7 +1053,7 @@ func (api *APIServices) createPipelineWorkflowable(
 			Read:          stage.Read,
 		}
 
-		err := api.processStageByType(&newStage, stage, workspace)
+		err := api.processStageByType(txDB, &newStage, stage, workspace)
 		if err != nil {
 			return nil, err
 		}
@@ -1057,7 +1066,7 @@ func (api *APIServices) createPipelineWorkflowable(
 		Live:   config.Live,
 		Stages: stages,
 	}
-	if createPipelineWorkflowableErr := tx.Create(pipelineWorkflowable).Error; createPipelineWorkflowableErr != nil {
+	if createPipelineWorkflowableErr := txDB.Create(pipelineWorkflowable).Error; createPipelineWorkflowableErr != nil {
 		return nil, createPipelineWorkflowableErr
 	}
 	return pipelineWorkflowable, nil
@@ -1065,6 +1074,7 @@ func (api *APIServices) createPipelineWorkflowable(
 
 // processStageByType processes a stage based on its type.
 func (api *APIServices) processStageByType(
+	txDB *db.Database,
 	newStage *db.PipelineStage,
 	stage irminmodels.PipelineStage,
 	workspace *db.Workspace,
@@ -1073,9 +1083,9 @@ func (api *APIServices) processStageByType(
 	case irminmodels.PipelineStageTypeAction:
 		return api.processActionStage(newStage, stage)
 	case irminmodels.PipelineStageTypeConnection:
-		return api.processConnectionStage(newStage, stage)
+		return api.processConnectionStage(txDB, newStage, stage)
 	case irminmodels.PipelineStageTypeRepository:
-		return api.processRepositoryStage(newStage, stage, workspace)
+		return api.processRepositoryStage(txDB, newStage, stage, workspace)
 	default:
 		return fmt.Errorf("invalid stage type: %s", stage.Type)
 	}
@@ -1092,7 +1102,11 @@ func (api *APIServices) processActionStage(newStage *db.PipelineStage, stage irm
 }
 
 // processConnectionStage processes a connection stage.
-func (api *APIServices) processConnectionStage(newStage *db.PipelineStage, stage irminmodels.PipelineStage) error {
+func (api *APIServices) processConnectionStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+) error {
 	newStage.Type = db.PipelineStageTypeConnection
 	if stage.ConnectionID == nil {
 		return nil
@@ -1103,7 +1117,7 @@ func (api *APIServices) processConnectionStage(newStage *db.PipelineStage, stage
 		return parseConnIDErr
 	}
 
-	connection, getConnectionByIDErr := api.DB.GetConnectionByID(uint(parsedConnID))
+	connection, getConnectionByIDErr := txDB.GetConnectionByID(uint(parsedConnID))
 	if getConnectionByIDErr != nil {
 		return getConnectionByIDErr
 	}
@@ -1131,6 +1145,7 @@ func (api *APIServices) processConnectionStage(newStage *db.PipelineStage, stage
 
 // processRepositoryStage processes a repository stage.
 func (api *APIServices) processRepositoryStage(
+	txDB *db.Database,
 	newStage *db.PipelineStage,
 	stage irminmodels.PipelineStage,
 	workspace *db.Workspace,
@@ -1140,7 +1155,7 @@ func (api *APIServices) processRepositoryStage(
 		return nil
 	}
 
-	repository, getRepositoryBySlugAndWorkspaceIDErr := api.DB.GetRepositoryBySlugAndWorkspaceID(
+	repository, getRepositoryBySlugAndWorkspaceIDErr := txDB.GetRepositoryBySlugAndWorkspaceID(
 		*stage.Repository,
 		workspace.ID,
 	)
