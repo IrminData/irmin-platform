@@ -562,6 +562,16 @@ var SwaggerInfo = &swag.Spec{
 }
 ```
 
+# e2e\-tests
+
+```go
+import "irmin-connectors/e2e-tests"
+```
+
+## Index
+
+
+
 # lib
 
 ```go
@@ -2109,6 +2119,1037 @@ func SetupRoutes(app *models.ConnectorsApp)
 ```
 
 SetupRoutes sets up the routes for the SFTP connector.
+
+# connectorsclient
+
+```go
+import "irmin-connectors/e2e-tests/connectors-client"
+```
+
+## Index
+
+- [Constants](<#constants>)
+- [type Client](<#Client>)
+  - [func NewClient\(baseURL, token, locale string\) \*Client](<#NewClient>)
+  - [func \(c \*Client\) CancelOperation\(ctx context.Context, operationID uint\) error](<#Client.CancelOperation>)
+  - [func \(c \*Client\) FetchAPI\(ctx context.Context, opts RequestOptions, out any\) error](<#Client.FetchAPI>)
+  - [func \(c \*Client\) FetchStreamFiles\(ctx context.Context, opts RequestOptions\) \(\[\]PulledFile, error\)](<#Client.FetchStreamFiles>)
+  - [func \(c \*Client\) GetConfigFields\(ctx context.Context, configurationType string, details, settings map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Client.GetConfigFields>)
+  - [func \(c \*Client\) GetInfo\(ctx context.Context\) \(\*ConnectorInfo, error\)](<#Client.GetInfo>)
+  - [func \(c \*Client\) GetOperationStatus\(ctx context.Context, operationID uint\) \(\*OperationStatus, error\)](<#Client.GetOperationStatus>)
+  - [func \(c \*Client\) GetSchema\(ctx context.Context, method, path string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GetSchema>)
+  - [func \(c \*Client\) InitOperation\(ctx context.Context, details, settings map\[string\]string\) \(\*Operation, error\)](<#Client.InitOperation>)
+  - [func \(c \*Client\) OperationPatch\(ctx context.Context, patchFile FormFile\) \(string, error\)](<#Client.OperationPatch>)
+  - [func \(c \*Client\) OperationPull\(ctx context.Context, path string\) \(\[\]PulledFile, error\)](<#Client.OperationPull>)
+  - [func \(c \*Client\) OperationPush\(ctx context.Context, path string, file FormFile\) \(string, error\)](<#Client.OperationPush>)
+  - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
+  - [func \(c \*Client\) SubscribeToChanges\(ctx context.Context, webhook, webhookAccessToken string\) \(\*Subscription, error\)](<#Client.SubscribeToChanges>)
+  - [func \(c \*Client\) ValidateConfigFields\(ctx context.Context, details, settings map\[string\]string\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#Client.ValidateConfigFields>)
+- [type ConnectorInfo](<#ConnectorInfo>)
+- [type FormFile](<#FormFile>)
+- [type Operation](<#Operation>)
+- [type OperationLog](<#OperationLog>)
+- [type OperationStatus](<#OperationStatus>)
+- [type PulledFile](<#PulledFile>)
+- [type RequestOptions](<#RequestOptions>)
+- [type Subscription](<#Subscription>)
+
+
+## Constants
+
+<a name="DefaultConnectorTimeout"></a>
+
+```go
+const DefaultConnectorTimeout = 30 * time.Second
+```
+
+<a name="Client"></a>
+## type Client
+
+Client represents the Connector API client.
+
+```go
+type Client struct {
+    BaseURL    string
+    Token      string
+    Locale     string
+    HTTPClient *http.Client
+}
+```
+
+<a name="NewClient"></a>
+### func NewClient
+
+```go
+func NewClient(baseURL, token, locale string) *Client
+```
+
+NewClient creates a new Connector API client with default settings.
+
+<a name="Client.CancelOperation"></a>
+### func \(\*Client\) CancelOperation
+
+```go
+func (c *Client) CancelOperation(ctx context.Context, operationID uint) error
+```
+
+CancelOperation cancels an operation.
+
+<a name="Client.FetchAPI"></a>
+### func \(\*Client\) FetchAPI
+
+```go
+func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error
+```
+
+FetchAPI sends a request and attempts to parse the JSON response into a struct if provided.
+
+<a name="Client.FetchStreamFiles"></a>
+### func \(\*Client\) FetchStreamFiles
+
+```go
+func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]PulledFile, error)
+```
+
+FetchStreamFiles sends a request and returns a slice of PulledFile.
+
+<a name="Client.GetConfigFields"></a>
+### func \(\*Client\) GetConfigFields
+
+```go
+func (c *Client) GetConfigFields(ctx context.Context, configurationType string, details, settings map[string]string) (map[string]irminmodels.DynamicField, error)
+```
+
+GetConfigFields retrieves configuration fields from the connector.
+
+<a name="Client.GetInfo"></a>
+### func \(\*Client\) GetInfo
+
+```go
+func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
+```
+
+GetInfo fetches the connector's information from the /info endpoint.
+
+<a name="Client.GetOperationStatus"></a>
+### func \(\*Client\) GetOperationStatus
+
+```go
+func (c *Client) GetOperationStatus(ctx context.Context, operationID uint) (*OperationStatus, error)
+```
+
+GetOperationStatus retrieves the status of an operation.
+
+<a name="Client.GetSchema"></a>
+### func \(\*Client\) GetSchema
+
+```go
+func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmodels.ObjectSchema, error)
+```
+
+GetSchema retrieves the schema for a specific operation method.
+
+<a name="Client.InitOperation"></a>
+### func \(\*Client\) InitOperation
+
+```go
+func (c *Client) InitOperation(ctx context.Context, details, settings map[string]string) (*Operation, error)
+```
+
+InitOperation creates a new operation with the connector.
+
+<a name="Client.OperationPatch"></a>
+### func \(\*Client\) OperationPatch
+
+```go
+func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string, error)
+```
+
+OperationPatch sends a patch file to apply JSON patch operations.
+
+<a name="Client.OperationPull"></a>
+### func \(\*Client\) OperationPull
+
+```go
+func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error)
+```
+
+OperationPull sends a file pull request.
+
+<a name="Client.OperationPush"></a>
+### func \(\*Client\) OperationPush
+
+```go
+func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) (string, error)
+```
+
+OperationPush sends a file to the /operation/push endpoint.
+
+<a name="Client.Request"></a>
+### func \(\*Client\) Request
+
+```go
+func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
+```
+
+Request sends requests to the REST API of the connector and returns the raw response data.
+
+<a name="Client.SubscribeToChanges"></a>
+### func \(\*Client\) SubscribeToChanges
+
+```go
+func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error)
+```
+
+SubscribeToChanges subscribes to changes in the data.
+
+<a name="Client.ValidateConfigFields"></a>
+### func \(\*Client\) ValidateConfigFields
+
+```go
+func (c *Client) ValidateConfigFields(ctx context.Context, details, settings map[string]string) (*irminmodels.ConnectorConfigurationValidationResult, error)
+```
+
+ValidateConfigFields validates configuration details and settings.
+
+<a name="ConnectorInfo"></a>
+## type ConnectorInfo
+
+ConnectorInfo holds metadata about a connector returned from the connector's /info endpoint.
+
+```go
+type ConnectorInfo struct {
+    Name             string                            `json:"name"`
+    Description      string                            `json:"description"`
+    Version          string                            `json:"version"`
+    StructureVersion string                            `json:"structure_version"`
+    Author           string                            `json:"author"`
+    APIBaseURL       string                            `json:"api_base_url"`
+    LogoURL          string                            `json:"logo_url"`
+    Capabilities     []irminmodels.ConnectorCapability `json:"capabilities"`
+    Locales          []string                          `json:"locales"`
+    PrimaryCategory  irminmodels.ConnectorCategory     `json:"primary_category"`
+    Categories       []irminmodels.ConnectorCategory   `json:"categories"`
+    AuthorEmail      string                            `json:"author_email"`
+    Documentation    string                            `json:"documentation"`
+    ReadMoreURL      string                            `json:"read_more_url"`
+}
+```
+
+<a name="FormFile"></a>
+## type FormFile
+
+FormFile holds information about a file you want to upload with multipart/form\-data.
+
+```go
+type FormFile struct {
+    FieldName string
+    FilePath  string
+    Reader    io.Reader
+    FileName  string
+}
+```
+
+<a name="Operation"></a>
+## type Operation
+
+Operation represents a record of an initiated operation tied to a connector.
+
+```go
+type Operation struct {
+    ID                      uint              `json:"ID"`
+    CreatedAt               string            `json:"CreatedAt"`
+    UpdatedAt               string            `json:"UpdatedAt"`
+    DeletedAt               *string           `json:"DeletedAt,omitempty"`
+    Details                 map[string]string `json:"details"`
+    Settings                map[string]string `json:"settings"`
+    Token                   string            `json:"token"`
+    ConfigHash              string            `json:"configHash"`
+    ConnectorRegistrationID uint              `json:"connectorRegistrationID"`
+}
+```
+
+<a name="OperationLog"></a>
+## type OperationLog
+
+OperationLog represents a record of a log tied to an operation.
+
+```go
+type OperationLog struct {
+    CreatedAt string         `json:"created_at"`
+    Type      string         `json:"type"`
+    Message   string         `json:"message"`
+    Metadata  map[string]any `json:"metadata"`
+}
+```
+
+<a name="OperationStatus"></a>
+## type OperationStatus
+
+OperationStatus represents the response for an operation status check.
+
+```go
+type OperationStatus struct {
+    OperationID   uint              `json:"operation_id"`
+    Details       map[string]string `json:"details"`
+    Settings      map[string]string `json:"settings"`
+    Subscriptions []Subscription    `json:"subscriptions"`
+    Logs          []OperationLog    `json:"logs"`
+}
+```
+
+<a name="PulledFile"></a>
+## type PulledFile
+
+PulledFile represents a file returned with a stream request.
+
+```go
+type PulledFile struct {
+    Filename string
+    Content  []byte
+}
+```
+
+<a name="RequestOptions"></a>
+## type RequestOptions
+
+RequestOptions allows you to specify how you'd like to send data in the request.
+
+```go
+type RequestOptions struct {
+    Method        string
+    Endpoint      string
+    AllowedStatus []int
+    Body          any
+    FormFields    map[string]string
+    Files         []FormFile
+    Headers       map[string]string
+    ContentType   string
+}
+```
+
+<a name="Subscription"></a>
+## type Subscription
+
+Subscription represents a record of an active subscription to changes in data.
+
+```go
+type Subscription struct {
+    ID                      uint    `json:"ID"`
+    CreatedAt               string  `json:"CreatedAt"`
+    UpdatedAt               string  `json:"UpdatedAt"`
+    DeletedAt               *string `json:"DeletedAt,omitempty"`
+    WebhookURL              string  `json:"webhookUrl"`
+    WebhookAccessToken      string  `json:"webhookAccessToken"`
+    ConnectorRegistrationID uint    `json:"connectorRegistrationID"`
+    OperationID             uint    `json:"operationID"`
+}
+```
+
+# helpers
+
+```go
+import "irmin-connectors/e2e-tests/helpers"
+```
+
+## Index
+
+- [func AssertCapabilityContains\(capabilities \[\]irminmodels.ConnectorCapability, capability irminmodels.ConnectorCapability, context string\) error](<#AssertCapabilityContains>)
+- [func AssertContains\(slice \[\]string, value string, context string\) error](<#AssertContains>)
+- [func AssertError\(err error, context string\) error](<#AssertError>)
+- [func AssertFalse\(condition bool, message string\) error](<#AssertFalse>)
+- [func AssertGreaterThan\(value, threshold int, context string\) error](<#AssertGreaterThan>)
+- [func AssertNoError\(err error, context string\) error](<#AssertNoError>)
+- [func AssertNotEmpty\(value string, fieldName string\) error](<#AssertNotEmpty>)
+- [func AssertNotNil\(value any, message string\) error](<#AssertNotNil>)
+- [func AssertTrue\(condition bool, message string\) error](<#AssertTrue>)
+- [func AssertValidConnectorInfo\(info \*connectorsclient.ConnectorInfo\) error](<#AssertValidConnectorInfo>)
+- [func AssertValidDynamicField\(field irminmodels.DynamicField, fieldName string\) error](<#AssertValidDynamicField>)
+- [func AssertValidObjectSchema\(schema \*irminmodels.ObjectSchema\) error](<#AssertValidObjectSchema>)
+- [func AssertValidOperation\(op \*connectorsclient.Operation\) error](<#AssertValidOperation>)
+- [func AssertValidationResult\(result \*irminmodels.ConnectorConfigurationValidationResult, shouldBeValid bool\) error](<#AssertValidationResult>)
+- [func CleanupTestFile\(filePath string\) error](<#CleanupTestFile>)
+- [func CreateFormFile\(filePath, fieldName string\) connectorsclient.FormFile](<#CreateFormFile>)
+- [func CreateFormFileFromBytes\(filename, fieldName string, content \[\]byte\) connectorsclient.FormFile](<#CreateFormFileFromBytes>)
+- [func CreatePatchFile\(patches \[\]irminmodels.PatchOperation\) \(string, error\)](<#CreatePatchFile>)
+- [func CreateSampleCSVData\(\) \[\]byte](<#CreateSampleCSVData>)
+- [func CreateSampleJSONData\(\) \[\]byte](<#CreateSampleJSONData>)
+- [func CreateSampleParquetData\(\) \[\]byte](<#CreateSampleParquetData>)
+- [func CreateSampleZipFile\(filename string\) \(string, error\)](<#CreateSampleZipFile>)
+- [func CreateTestFile\(filename string, content \[\]byte\) \(string, error\)](<#CreateTestFile>)
+- [func WrapFileInZip\(filePath string\) \(string, error\)](<#WrapFileInZip>)
+- [type ConnectorClient](<#ConnectorClient>)
+  - [func NewConnectorClient\(connectorName, url, systemToken, locale string\) \*ConnectorClient](<#NewConnectorClient>)
+  - [func \(c \*ConnectorClient\) GetInfoWithContext\(ctx context.Context\) \(\*connectorsclient.ConnectorInfo, error\)](<#ConnectorClient.GetInfoWithContext>)
+  - [func \(c \*ConnectorClient\) SetTimeout\(timeout time.Duration\)](<#ConnectorClient.SetTimeout>)
+  - [func \(c \*ConnectorClient\) WithOperationToken\(operationToken string\) \*ConnectorClient](<#ConnectorClient.WithOperationToken>)
+- [type TestError](<#TestError>)
+  - [func \(e \*TestError\) Error\(\) string](<#TestError.Error>)
+
+
+<a name="AssertCapabilityContains"></a>
+## func AssertCapabilityContains
+
+```go
+func AssertCapabilityContains(capabilities []irminmodels.ConnectorCapability, capability irminmodels.ConnectorCapability, context string) error
+```
+
+AssertCapabilityContains checks that capabilities contain a specific capability.
+
+<a name="AssertContains"></a>
+## func AssertContains
+
+```go
+func AssertContains(slice []string, value string, context string) error
+```
+
+AssertContains checks that a slice contains a specific value.
+
+<a name="AssertError"></a>
+## func AssertError
+
+```go
+func AssertError(err error, context string) error
+```
+
+AssertError checks that an error occurred.
+
+<a name="AssertFalse"></a>
+## func AssertFalse
+
+```go
+func AssertFalse(condition bool, message string) error
+```
+
+AssertFalse checks that a condition is false.
+
+<a name="AssertGreaterThan"></a>
+## func AssertGreaterThan
+
+```go
+func AssertGreaterThan(value, threshold int, context string) error
+```
+
+AssertGreaterThan checks that a value is greater than another.
+
+<a name="AssertNoError"></a>
+## func AssertNoError
+
+```go
+func AssertNoError(err error, context string) error
+```
+
+AssertNoError checks that an error is nil.
+
+<a name="AssertNotEmpty"></a>
+## func AssertNotEmpty
+
+```go
+func AssertNotEmpty(value string, fieldName string) error
+```
+
+AssertNotEmpty checks that a string is not empty.
+
+<a name="AssertNotNil"></a>
+## func AssertNotNil
+
+```go
+func AssertNotNil(value any, message string) error
+```
+
+AssertNotNil checks that a value is not nil.
+
+<a name="AssertTrue"></a>
+## func AssertTrue
+
+```go
+func AssertTrue(condition bool, message string) error
+```
+
+AssertTrue checks that a condition is true.
+
+<a name="AssertValidConnectorInfo"></a>
+## func AssertValidConnectorInfo
+
+```go
+func AssertValidConnectorInfo(info *connectorsclient.ConnectorInfo) error
+```
+
+AssertValidConnectorInfo validates the connector info structure.
+
+<a name="AssertValidDynamicField"></a>
+## func AssertValidDynamicField
+
+```go
+func AssertValidDynamicField(field irminmodels.DynamicField, fieldName string) error
+```
+
+AssertValidDynamicField validates a dynamic field structure.
+
+<a name="AssertValidObjectSchema"></a>
+## func AssertValidObjectSchema
+
+```go
+func AssertValidObjectSchema(schema *irminmodels.ObjectSchema) error
+```
+
+AssertValidObjectSchema validates an object schema structure.
+
+<a name="AssertValidOperation"></a>
+## func AssertValidOperation
+
+```go
+func AssertValidOperation(op *connectorsclient.Operation) error
+```
+
+AssertValidOperation validates an operation structure.
+
+<a name="AssertValidationResult"></a>
+## func AssertValidationResult
+
+```go
+func AssertValidationResult(result *irminmodels.ConnectorConfigurationValidationResult, shouldBeValid bool) error
+```
+
+AssertValidationResult checks connector configuration validation results.
+
+<a name="CleanupTestFile"></a>
+## func CleanupTestFile
+
+```go
+func CleanupTestFile(filePath string) error
+```
+
+CleanupTestFile removes a temporary test file.
+
+<a name="CreateFormFile"></a>
+## func CreateFormFile
+
+```go
+func CreateFormFile(filePath, fieldName string) connectorsclient.FormFile
+```
+
+CreateFormFile creates a FormFile struct from a file path.
+
+<a name="CreateFormFileFromBytes"></a>
+## func CreateFormFileFromBytes
+
+```go
+func CreateFormFileFromBytes(filename, fieldName string, content []byte) connectorsclient.FormFile
+```
+
+CreateFormFileFromBytes creates a FormFile struct from bytes.
+
+<a name="CreatePatchFile"></a>
+## func CreatePatchFile
+
+```go
+func CreatePatchFile(patches []irminmodels.PatchOperation) (string, error)
+```
+
+CreatePatchFile creates a JSON patch file for testing.
+
+<a name="CreateSampleCSVData"></a>
+## func CreateSampleCSVData
+
+```go
+func CreateSampleCSVData() []byte
+```
+
+CreateSampleCSVData creates sample CSV data for testing.
+
+<a name="CreateSampleJSONData"></a>
+## func CreateSampleJSONData
+
+```go
+func CreateSampleJSONData() []byte
+```
+
+CreateSampleJSONData creates sample JSON data for testing.
+
+<a name="CreateSampleParquetData"></a>
+## func CreateSampleParquetData
+
+```go
+func CreateSampleParquetData() []byte
+```
+
+CreateSampleParquetData creates sample data for Parquet file testing. Note: This is a placeholder. Real implementation would use a Parquet library.
+
+<a name="CreateSampleZipFile"></a>
+## func CreateSampleZipFile
+
+```go
+func CreateSampleZipFile(filename string) (string, error)
+```
+
+CreateSampleZipFile creates a sample zip file with CSV data for testing.
+
+<a name="CreateTestFile"></a>
+## func CreateTestFile
+
+```go
+func CreateTestFile(filename string, content []byte) (string, error)
+```
+
+CreateTestFile creates a temporary test file with the given content.
+
+<a name="WrapFileInZip"></a>
+## func WrapFileInZip
+
+```go
+func WrapFileInZip(filePath string) (string, error)
+```
+
+WrapFileInZip wraps an existing file in a ZIP archive.
+
+<a name="ConnectorClient"></a>
+## type ConnectorClient
+
+ConnectorClient wraps the connector client with test\-specific functionality.
+
+```go
+type ConnectorClient struct {
+    *connectorsclient.Client
+    ConnectorName string
+    URL           string
+    SystemToken   string
+}
+```
+
+<a name="NewConnectorClient"></a>
+### func NewConnectorClient
+
+```go
+func NewConnectorClient(connectorName, url, systemToken, locale string) *ConnectorClient
+```
+
+NewConnectorClient creates a new connector client for testing.
+
+<a name="ConnectorClient.GetInfoWithContext"></a>
+### func \(\*ConnectorClient\) GetInfoWithContext
+
+```go
+func (c *ConnectorClient) GetInfoWithContext(ctx context.Context) (*connectorsclient.ConnectorInfo, error)
+```
+
+GetInfoWithContext is a context\-aware wrapper for GetInfo.
+
+<a name="ConnectorClient.SetTimeout"></a>
+### func \(\*ConnectorClient\) SetTimeout
+
+```go
+func (c *ConnectorClient) SetTimeout(timeout time.Duration)
+```
+
+SetTimeout updates the HTTP client timeout.
+
+<a name="ConnectorClient.WithOperationToken"></a>
+### func \(\*ConnectorClient\) WithOperationToken
+
+```go
+func (c *ConnectorClient) WithOperationToken(operationToken string) *ConnectorClient
+```
+
+WithOperationToken creates a new client with an operation token instead of system token.
+
+<a name="TestError"></a>
+## type TestError
+
+TestError represents a test assertion failure.
+
+```go
+type TestError struct {
+    Message string
+}
+```
+
+<a name="TestError.Error"></a>
+### func \(\*TestError\) Error
+
+```go
+func (e *TestError) Error() string
+```
+
+
+
+# runner
+
+```go
+import "irmin-connectors/e2e-tests/runner"
+```
+
+## Index
+
+- [type ConnectorConfig](<#ConnectorConfig>)
+- [type TestConfig](<#TestConfig>)
+  - [func LoadConfig\(configPath string\) \(\*TestConfig, error\)](<#LoadConfig>)
+  - [func \(c \*TestConfig\) GetConnector\(name string\) \(ConnectorConfig, bool\)](<#TestConfig.GetConnector>)
+  - [func \(c \*TestConfig\) GetEnabledConnectors\(\) \[\]string](<#TestConfig.GetEnabledConnectors>)
+- [type TestDataConfig](<#TestDataConfig>)
+- [type TestResult](<#TestResult>)
+- [type TestRunner](<#TestRunner>)
+  - [func NewTestRunner\(config \*TestConfig, verbose bool, locale string\) \*TestRunner](<#NewTestRunner>)
+  - [func \(r \*TestRunner\) RunAll\(ctx context.Context, specificConnector, specificTest string\) error](<#TestRunner.RunAll>)
+  - [func \(r \*TestRunner\) RunTest\(name, connector string, testFunc func\(\) error\)](<#TestRunner.RunTest>)
+  - [func \(r \*TestRunner\) SkipTest\(name, connector, reason string\)](<#TestRunner.SkipTest>)
+- [type TestSummary](<#TestSummary>)
+  - [func NewTestSummary\(\) \*TestSummary](<#NewTestSummary>)
+  - [func \(s \*TestSummary\) AddResult\(result TestResult\)](<#TestSummary.AddResult>)
+  - [func \(s \*TestSummary\) Finalize\(\)](<#TestSummary.Finalize>)
+  - [func \(s \*TestSummary\) GetFailedTests\(\) \[\]TestResult](<#TestSummary.GetFailedTests>)
+  - [func \(s \*TestSummary\) HasFailures\(\) bool](<#TestSummary.HasFailures>)
+  - [func \(s \*TestSummary\) Print\(verbose bool\)](<#TestSummary.Print>)
+
+
+<a name="ConnectorConfig"></a>
+## type ConnectorConfig
+
+ConnectorConfig represents configuration for a single connector.
+
+```go
+type ConnectorConfig struct {
+    Enabled     bool              `json:"enabled"`
+    URL         string            `json:"url"`
+    SystemToken string            `json:"systemToken"`
+    Details     map[string]string `json:"details"`
+    Settings    map[string]string `json:"settings"`
+    TestData    TestDataConfig    `json:"testData"`
+}
+```
+
+<a name="TestConfig"></a>
+## type TestConfig
+
+TestConfig represents the test configuration structure.
+
+```go
+type TestConfig struct {
+    Connectors map[string]ConnectorConfig `json:"connectors"`
+}
+```
+
+<a name="LoadConfig"></a>
+### func LoadConfig
+
+```go
+func LoadConfig(configPath string) (*TestConfig, error)
+```
+
+LoadConfig loads the test configuration from a JSON file.
+
+<a name="TestConfig.GetConnector"></a>
+### func \(\*TestConfig\) GetConnector
+
+```go
+func (c *TestConfig) GetConnector(name string) (ConnectorConfig, bool)
+```
+
+GetConnector returns the configuration for a specific connector.
+
+<a name="TestConfig.GetEnabledConnectors"></a>
+### func \(\*TestConfig\) GetEnabledConnectors
+
+```go
+func (c *TestConfig) GetEnabledConnectors() []string
+```
+
+GetEnabledConnectors returns a list of enabled connector names.
+
+<a name="TestDataConfig"></a>
+## type TestDataConfig
+
+TestDataConfig represents test data configuration for a connector.
+
+```go
+type TestDataConfig struct {
+    PullPath     string `json:"pullPath"`
+    PushPath     string `json:"pushPath"`
+    PushFile     string `json:"pushFile"`
+    PatchFile    string `json:"patchFile"`
+    WebhookURL   string `json:"webhookURL"`
+    WebhookToken string `json:"webhookToken"`
+}
+```
+
+<a name="TestResult"></a>
+## type TestResult
+
+TestResult represents the result of a single test.
+
+```go
+type TestResult struct {
+    Name       string
+    Connector  string
+    Passed     bool
+    Error      error
+    Duration   time.Duration
+    Skipped    bool
+    SkipReason string
+}
+```
+
+<a name="TestRunner"></a>
+## type TestRunner
+
+TestRunner orchestrates the execution of connector tests.
+
+```go
+type TestRunner struct {
+    Config  *TestConfig
+    Summary *TestSummary
+    Verbose bool
+    Locale  string
+}
+```
+
+<a name="NewTestRunner"></a>
+### func NewTestRunner
+
+```go
+func NewTestRunner(config *TestConfig, verbose bool, locale string) *TestRunner
+```
+
+NewTestRunner creates a new test runner.
+
+<a name="TestRunner.RunAll"></a>
+### func \(\*TestRunner\) RunAll
+
+```go
+func (r *TestRunner) RunAll(ctx context.Context, specificConnector, specificTest string) error
+```
+
+RunAll executes all tests for all enabled connectors.
+
+<a name="TestRunner.RunTest"></a>
+### func \(\*TestRunner\) RunTest
+
+```go
+func (r *TestRunner) RunTest(name, connector string, testFunc func() error)
+```
+
+RunTest executes a single test and records the result.
+
+<a name="TestRunner.SkipTest"></a>
+### func \(\*TestRunner\) SkipTest
+
+```go
+func (r *TestRunner) SkipTest(name, connector, reason string)
+```
+
+SkipTest records a skipped test.
+
+<a name="TestSummary"></a>
+## type TestSummary
+
+TestSummary represents a summary of all test results.
+
+```go
+type TestSummary struct {
+    Results       []TestResult
+    TotalTests    int
+    PassedTests   int
+    FailedTests   int
+    SkippedTests  int
+    TotalDuration time.Duration
+    StartTime     time.Time
+    EndTime       time.Time
+}
+```
+
+<a name="NewTestSummary"></a>
+### func NewTestSummary
+
+```go
+func NewTestSummary() *TestSummary
+```
+
+NewTestSummary creates a new test summary.
+
+<a name="TestSummary.AddResult"></a>
+### func \(\*TestSummary\) AddResult
+
+```go
+func (s *TestSummary) AddResult(result TestResult)
+```
+
+AddResult adds a test result to the summary.
+
+<a name="TestSummary.Finalize"></a>
+### func \(\*TestSummary\) Finalize
+
+```go
+func (s *TestSummary) Finalize()
+```
+
+Finalize marks the end of testing.
+
+<a name="TestSummary.GetFailedTests"></a>
+### func \(\*TestSummary\) GetFailedTests
+
+```go
+func (s *TestSummary) GetFailedTests() []TestResult
+```
+
+GetFailedTests returns all failed test results.
+
+<a name="TestSummary.HasFailures"></a>
+### func \(\*TestSummary\) HasFailures
+
+```go
+func (s *TestSummary) HasFailures() bool
+```
+
+HasFailures returns true if any tests failed.
+
+<a name="TestSummary.Print"></a>
+### func \(\*TestSummary\) Print
+
+```go
+func (s *TestSummary) Print(verbose bool)
+```
+
+Print outputs the test summary in a formatted way.
+
+# tests
+
+```go
+import "irmin-connectors/e2e-tests/tests"
+```
+
+## Index
+
+- [func HasCapability\(capabilities \[\]irminmodels.ConnectorCapability, capability string\) bool](<#HasCapability>)
+- [func TestConfigFields\(ctx context.Context, client \*helpers.ConnectorClient, configurationType string, details, settings map\[string\]string\) error](<#TestConfigFields>)
+- [func TestConfigValidation\(ctx context.Context, client \*helpers.ConnectorClient, details, settings map\[string\]string, shouldBeValid bool\) error](<#TestConfigValidation>)
+- [func TestConfigValidationInvalid\(ctx context.Context, client \*helpers.ConnectorClient\) error](<#TestConfigValidationInvalid>)
+- [func TestInfo\(ctx context.Context, client \*helpers.ConnectorClient\) error](<#TestInfo>)
+- [func TestOperationCancel\(ctx context.Context, client \*helpers.ConnectorClient, operationToken string\) error](<#TestOperationCancel>)
+- [func TestOperationInit\(ctx context.Context, client \*helpers.ConnectorClient, details, settings map\[string\]string\) \(string, error\)](<#TestOperationInit>)
+- [func TestOperationStatus\(ctx context.Context, client \*helpers.ConnectorClient, operationToken string\) error](<#TestOperationStatus>)
+- [func TestPatch\(ctx context.Context, client \*helpers.ConnectorClient, patchFile string\) error](<#TestPatch>)
+- [func TestPull\(ctx context.Context, client \*helpers.ConnectorClient, pullPath string\) error](<#TestPull>)
+- [func TestPush\(ctx context.Context, client \*helpers.ConnectorClient, pushPath, pushFile string\) error](<#TestPush>)
+- [func TestSchema\(ctx context.Context, client \*helpers.ConnectorClient, capabilities \[\]irminmodels.ConnectorCapability\) error](<#TestSchema>)
+- [func TestSubscribe\(ctx context.Context, client \*helpers.ConnectorClient, webhookURL, webhookToken string\) error](<#TestSubscribe>)
+
+
+<a name="HasCapability"></a>
+## func HasCapability
+
+```go
+func HasCapability(capabilities []irminmodels.ConnectorCapability, capability string) bool
+```
+
+HasCapability checks if a connector has a specific capability.
+
+<a name="TestConfigFields"></a>
+## func TestConfigFields
+
+```go
+func TestConfigFields(ctx context.Context, client *helpers.ConnectorClient, configurationType string, details, settings map[string]string) error
+```
+
+TestConfigFields tests the configuration fields endpoint.
+
+<a name="TestConfigValidation"></a>
+## func TestConfigValidation
+
+```go
+func TestConfigValidation(ctx context.Context, client *helpers.ConnectorClient, details, settings map[string]string, shouldBeValid bool) error
+```
+
+TestConfigValidation tests the configuration validation endpoint with valid config.
+
+<a name="TestConfigValidationInvalid"></a>
+## func TestConfigValidationInvalid
+
+```go
+func TestConfigValidationInvalid(ctx context.Context, client *helpers.ConnectorClient) error
+```
+
+TestConfigValidationInvalid tests the configuration validation with invalid credentials.
+
+<a name="TestInfo"></a>
+## func TestInfo
+
+```go
+func TestInfo(ctx context.Context, client *helpers.ConnectorClient) error
+```
+
+TestInfo tests the /info endpoint of a connector.
+
+<a name="TestOperationCancel"></a>
+## func TestOperationCancel
+
+```go
+func TestOperationCancel(ctx context.Context, client *helpers.ConnectorClient, operationToken string) error
+```
+
+TestOperationCancel tests the operation cancellation endpoint.
+
+<a name="TestOperationInit"></a>
+## func TestOperationInit
+
+```go
+func TestOperationInit(ctx context.Context, client *helpers.ConnectorClient, details, settings map[string]string) (string, error)
+```
+
+TestOperationInit tests the operation initialization endpoint. Returns the operation token for use in subsequent tests.
+
+<a name="TestOperationStatus"></a>
+## func TestOperationStatus
+
+```go
+func TestOperationStatus(ctx context.Context, client *helpers.ConnectorClient, operationToken string) error
+```
+
+TestOperationStatus tests the operation status endpoint.
+
+<a name="TestPatch"></a>
+## func TestPatch
+
+```go
+func TestPatch(ctx context.Context, client *helpers.ConnectorClient, patchFile string) error
+```
+
+TestPatch tests the patch capability of a connector.
+
+<a name="TestPull"></a>
+## func TestPull
+
+```go
+func TestPull(ctx context.Context, client *helpers.ConnectorClient, pullPath string) error
+```
+
+TestPull tests the pull capability of a connector.
+
+<a name="TestPush"></a>
+## func TestPush
+
+```go
+func TestPush(ctx context.Context, client *helpers.ConnectorClient, pushPath, pushFile string) error
+```
+
+TestPush tests the push capability of a connector.
+
+<a name="TestSchema"></a>
+## func TestSchema
+
+```go
+func TestSchema(ctx context.Context, client *helpers.ConnectorClient, capabilities []irminmodels.ConnectorCapability) error
+```
+
+TestSchema tests the schema retrieval for all supported operation types.
+
+<a name="TestSubscribe"></a>
+## func TestSubscribe
+
+```go
+func TestSubscribe(ctx context.Context, client *helpers.ConnectorClient, webhookURL, webhookToken string) error
+```
+
+TestSubscribe tests the subscription capability of a connector.
 
 # client
 

@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
-github.com/IrminData/irmin-sdk-go v0.0.0-20251030173520-d07657cffbb9 h1:8WVCczUZ4ejlagoejP8o3FOa3vr0IJLHaJgO6lRebHw=
-github.com/IrminData/irmin-sdk-go v0.0.0-20251030173520-d07657cffbb9/go.mod h1:QeFeW1gk3YdgGHAmQmk8Vl47EbD+ZcY3IrydzPOEesY=
+github.com/IrminData/irmin-sdk-go v0.0.0-20251101175330-dc505f43aa48 h1:Di6gQvkNUHvbfWyDvSACw63GGoGCpvSzqPlMeIKiYzY=
+github.com/IrminData/irmin-sdk-go v0.0.0-20251101175330-dc505f43aa48/go.mod h1:tqCDV3WmmO6GoCcxLIeMqkuzeBx4puWhw98EGFH+mSw=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=

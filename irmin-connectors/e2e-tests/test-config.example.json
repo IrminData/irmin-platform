@@ -1,0 +1,94 @@
+{
+  "connectors": {
+    "postgres": {
+      "enabled": false,
+      "url": "http://localhost:8080/postgres",
+      "systemToken": "your-system-token-here",
+      "details": {
+        "host": "localhost",
+        "port": "5432",
+        "user": "testuser",
+        "password": "testpassword",
+        "ssl_mode": "disable"
+      },
+      "settings": {
+        "database": "testdb",
+        "schema": "public"
+      },
+      "testData": {
+        "pullPath": "",
+        "pushPath": "test_table",
+        "pushFile": "test-data/test-data.csv",
+        "patchFile": "test-data/test-patches.json",
+        "webhookURL": "https://example.com/webhook",
+        "webhookToken": "webhook-access-token"
+      }
+    },
+    "mysql": {
+      "enabled": false,
+      "url": "http://localhost:8080/mysql",
+      "systemToken": "your-system-token-here",
+      "details": {
+        "host": "localhost",
+        "port": "3306",
+        "user": "testuser",
+        "password": "testpassword"
+      },
+      "settings": {
+        "database": "testdb"
+      },
+      "testData": {
+        "pullPath": "",
+        "pushPath": "test_table",
+        "pushFile": "test-data/test-data.csv",
+        "patchFile": "test-data/test-patches.json",
+        "webhookURL": "https://example.com/webhook",
+        "webhookToken": "webhook-access-token"
+      }
+    },
+    "sftp": {
+      "enabled": false,
+      "url": "http://localhost:8080/sftp",
+      "systemToken": "your-system-token-here",
+      "details": {
+        "host": "localhost",
+        "port": "22",
+        "user": "testuser",
+        "password": "testpassword"
+      },
+      "settings": {
+        "base_path": "/upload"
+      },
+      "testData": {
+        "pullPath": "/test/file.csv",
+        "pushPath": "/test/upload.csv",
+        "pushFile": "test-data/test-data.csv",
+        "patchFile": "",
+        "webhookURL": "",
+        "webhookToken": ""
+      }
+    },
+    "http": {
+      "enabled": false,
+      "url": "http://localhost:8080/http",
+      "systemToken": "your-system-token-here",
+      "details": {
+        "base_url": "https://api.example.com",
+        "auth_type": "bearer",
+        "auth_token": "your-api-token"
+      },
+      "settings": {
+        "endpoint": "/data"
+      },
+      "testData": {
+        "pullPath": "/users",
+        "pushPath": "/users",
+        "pushFile": "test-data/test-data.json",
+        "patchFile": "test-data/test-patches.json",
+        "webhookURL": "",
+        "webhookToken": ""
+      }
+    }
+  }
+}
+

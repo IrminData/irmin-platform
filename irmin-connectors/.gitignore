@@ -33,3 +33,6 @@ go.work
 
 # Mac OS X Finder directory files
 .DS_Store
+
+# E2E test configuration (contains sensitive credentials)
+e2e-tests/test-config.json

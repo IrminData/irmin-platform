@@ -19,6 +19,7 @@ Irmin Connectors are a collection of API services that allow the Irmin platform 
 
 - **[Concepts and Processes](concepts-and-processes.md)** - Understanding how connectors work
 - **[How to Create Connectors](how-to-create-connectors.md)** - Developer guide for building new connectors
+- **[E2E Test Suite](e2e-tests/README.md)** - Comprehensive end-to-end testing guide
 
 ## Technology Stack
 
@@ -118,6 +119,40 @@ golangci-lint run
 ```bash
 golangci-lint run --fix
 ```
+
+## Testing
+
+### End-to-End Test Suite
+
+The project includes a comprehensive E2E test suite for validating all connector capabilities.
+
+**Quick start:**
+
+```bash
+# Navigate to the e2e-tests directory
+cd e2e-tests
+
+# Initialize test configuration
+go run main.go -init
+
+# Edit test-config.json with your connector credentials
+
+# Run all tests
+go run main.go -v
+
+# Run tests for a specific connector
+go run main.go -connector postgres -v
+```
+
+The test suite validates:
+- Connector info and metadata
+- Configuration field retrieval and validation
+- Operation lifecycle (init, status, cancel)
+- Data operations (pull, push, patch)
+- Schema discovery
+- Webhook subscriptions
+
+For detailed documentation, see **[E2E Test Suite README](e2e-tests/README.md)**.
 
 ## Docker
 
