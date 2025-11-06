@@ -992,6 +992,8 @@ const fi = {
     storedQueryLogs: 'Kyselyn audit lokit',
     policyLogs: 'Käyttöoikeuden audit lokit',
     repositoryObjectLogs: 'Data-arkiston objektin audit lokit',
+    waitingForLogs: 'Odotetaan lokeja...',
+    waitingForResults: 'Odotetaan tuloksia...',
   },
 
   // === DOCUMENTATION ===

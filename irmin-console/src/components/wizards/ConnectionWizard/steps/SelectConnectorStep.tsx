@@ -25,9 +25,11 @@ import type { ConnectionWizardData } from '../types';
 export default function SelectConnectorStep({
   updateWizardData,
   goNext,
+  onCancel,
 }: {
   updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goNext: () => void;
+  onCancel?: () => void;
 }) {
   const { connectorsQuery } = useConnectors();
 
@@ -154,6 +156,17 @@ export default function SelectConnectorStep({
           dark:border-gray-800
         `}
       >
+        {onCancel && (
+          <Button
+            className='mb-3 w-full'
+            size='lg'
+            variant='secondary'
+            type='button'
+            onClick={onCancel}
+          >
+            {dict.common.cancel}
+          </Button>
+        )}
         <Button
           className='w-full'
           size='lg'

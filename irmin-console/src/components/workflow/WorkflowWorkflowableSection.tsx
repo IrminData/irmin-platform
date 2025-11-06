@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -48,22 +48,22 @@ const WorkflowWorkflowableSection = ({
 
   const workflow = workflowQuery.data?.data;
 
-  // Sync workflowable state when workflow data changes, but only if no manual changes
-  useEffect(() => {
-    if (workflow?.workflowable && !hasManualChanges) {
-      queueMicrotask(() => {
-        setCurrentWorkflowable(workflow.workflowable);
-      });
-    }
-  }, [workflow?.workflowable, hasManualChanges]);
-
   // Reset manual changes flag when workflow ID changes
   useEffect(() => {
-    queueMicrotask(() => {
+    return () => {
+      // Cleanup on unmount or workflow change
       setHasManualChanges(false);
       setCurrentWorkflowable(null);
-    });
+    };
   }, [workflowID]);
+
+  // Derive active workflowable: use edited version if exists, otherwise use server data
+  const activeWorkflowable = useMemo(() => {
+    if (hasManualChanges && currentWorkflowable) {
+      return currentWorkflowable;
+    }
+    return workflow?.workflowable ?? null;
+  }, [hasManualChanges, currentWorkflowable, workflow?.workflowable]);
 
   // Create a wrapper function to handle workflowable updates
   const handleWorkflowableUpdate = useCallback(
@@ -101,7 +101,8 @@ const WorkflowWorkflowableSection = ({
   );
 
   const handleSave = useCallback(() => {
-    if (currentWorkflowable) {
+    // Save uses currentWorkflowable since it's only available when user made changes
+    if (currentWorkflowable && hasManualChanges) {
       updateWorkflowableMutation.mutate(currentWorkflowable, {
         onSuccess: () => {
           // Reset manual changes flag after successful save
@@ -109,7 +110,7 @@ const WorkflowWorkflowableSection = ({
         },
       });
     }
-  }, [currentWorkflowable, updateWorkflowableMutation]);
+  }, [currentWorkflowable, hasManualChanges, updateWorkflowableMutation]);
 
   if (workflowQuery.isLoading) {
     return (
@@ -127,7 +128,7 @@ const WorkflowWorkflowableSection = ({
     );
   }
 
-  if (!workflow || !currentWorkflowable) {
+  if (!workflow?.workflowable || !activeWorkflowable) {
     return <></>;
   }
 
@@ -136,7 +137,7 @@ const WorkflowWorkflowableSection = ({
   // Create a mock workflow data structure for components that need the full workflow
   const mockWorkflowData = {
     ...workflow,
-    workflowable: currentWorkflowable,
+    workflowable: activeWorkflowable,
   };
 
   return (
@@ -148,27 +149,27 @@ const WorkflowWorkflowableSection = ({
       id='workflow-workflowable-section'
     >
       <div className='flex flex-col gap-4 py-4'>
-        {currentWorkflowable.type === 'action' && (
+        {activeWorkflowable.type === 'action' && (
           <ActionWorkflow
-            workflowable={currentWorkflowable as Action}
+            workflowable={activeWorkflowable as Action}
             setWorkflowData={handleWorkflowableUpdate}
           />
         )}
-        {currentWorkflowable.type === 'import' && (
+        {activeWorkflowable.type === 'import' && (
           <ImportWorkflow
-            workflowable={currentWorkflowable as Import}
+            workflowable={activeWorkflowable as Import}
             setWorkflowData={handleWorkflowableUpdate}
           />
         )}
-        {currentWorkflowable.type === 'export' && (
+        {activeWorkflowable.type === 'export' && (
           <ExportWorkflow
-            workflowable={currentWorkflowable as Export}
+            workflowable={activeWorkflowable as Export}
             setWorkflowData={handleWorkflowableUpdate}
           />
         )}
-        {currentWorkflowable.type === 'pipeline' && (
+        {activeWorkflowable.type === 'pipeline' && (
           <PipelineWorkflow
-            workflowable={currentWorkflowable as Pipeline}
+            workflowable={activeWorkflowable as Pipeline}
             workflowData={mockWorkflowData}
             setWorkflowData={handleWorkflowableUpdate}
           />
@@ -187,7 +188,7 @@ const WorkflowWorkflowableSection = ({
             size={'lg'}
             onClick={handleSave}
             loading={updateWorkflowableMutation.isPending}
-            disabled={updateWorkflowableMutation.isPending}
+            disabled={updateWorkflowableMutation.isPending || !hasManualChanges}
           >
             {dict.common.save}
           </Button>

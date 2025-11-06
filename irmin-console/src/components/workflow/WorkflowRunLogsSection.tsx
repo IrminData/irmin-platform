@@ -44,24 +44,32 @@ export default function WorkflowRunLogsSection({
         run.status === 'initiating' ||
         run.status === 'running';
 
-      // Poll every 2 seconds if status is in progress AND we don't have logs yet
-      // Stop polling once we have logs or the run is complete
-      const shouldPoll =
-        hasInProgressStatus && (!run.logs || run.logs.length === 0);
+      const hasLogs = run.logs && run.logs.length > 0;
 
-      return shouldPoll ? 2000 : false;
+      // Poll while the run is in progress
+      if (hasInProgressStatus) {
+        return 2000;
+      }
+
+      // Also poll for a short time after completion if we don't have logs yet
+      // This handles the race condition where status changes before logs are available
+      if (!hasLogs && run.finished_at) {
+        const finishedTime = new Date(run.finished_at).getTime();
+        const now = Date.now();
+        const timeSinceFinished = now - finishedTime;
+
+        // Keep polling for up to 10 seconds after completion if no logs
+        if (timeSinceFinished < 10000) {
+          return 2000;
+        }
+      }
+
+      return false;
     },
   });
 
-  if (workflowRunQuery.isLoading) {
-    return (
-      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
-        <LoadingSkeleton />
-      </div>
-    );
-  }
-
-  if (workflowRunQuery.error) {
+  // Show error state if there's an error and we don't have any cached data
+  if (workflowRunQuery.error && !workflowRunQuery.data?.data) {
     return (
       <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
         <QueryError
@@ -74,7 +82,8 @@ export default function WorkflowRunLogsSection({
     );
   }
 
-  if (!workflowRunQuery.data?.data) {
+  // Show empty state only if we're not loading and have no data
+  if (!workflowRunQuery.isLoading && !workflowRunQuery.data?.data) {
     return (
       <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
         <EmptyState
@@ -87,7 +96,30 @@ export default function WorkflowRunLogsSection({
     );
   }
 
-  const workflowRun = workflowRunQuery.data.data;
+  const workflowRun = workflowRunQuery.data?.data;
+  const isLoading = workflowRunQuery.isLoading && !workflowRun;
+
+  // If still loading and no data at all, show full page skeleton
+  if (isLoading) {
+    return (
+      <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
+  // At this point we have workflowRun data (either from cache or fetched)
+  if (!workflowRun) {
+    return null;
+  }
+
+  const hasInProgressStatus =
+    workflowRun.status === 'pending' ||
+    workflowRun.status === 'initiating' ||
+    workflowRun.status === 'running';
+
+  const showLogsWaitingState =
+    hasInProgressStatus && (!workflowRun.logs || workflowRun.logs.length === 0);
 
   return (
     <div
@@ -182,17 +214,29 @@ export default function WorkflowRunLogsSection({
         />
       </div>
 
-      {workflowRun.logs ? (
+      {/* Logs Section */}
+      {showLogsWaitingState ? (
+        <div className='container mx-auto max-w-7xl'>
+          <EmptyState
+            title={dict.logs.waitingForLogs}
+            description={dict.logs.waitingForResults}
+            icon={<TbHourglassLow className='size-full' />}
+            size='md'
+          />
+        </div>
+      ) : workflowRun.logs && workflowRun.logs.length > 0 ? (
         <div className='h-[calc(100vh-347px)]'>
-          <LogFeed logs={workflowRun.logs ?? []} />
+          <LogFeed logs={workflowRun.logs} />
         </div>
       ) : (
-        <EmptyState
-          title={dict.logs.noLogsFound}
-          description={dict.list.emptyState.generic.description}
-          icon={<TbFileText className='size-full' />}
-          size='md'
-        />
+        <div className='container mx-auto max-w-7xl'>
+          <EmptyState
+            title={dict.logs.noLogsFound}
+            description={dict.list.emptyState.generic.description}
+            icon={<TbFileText className='size-full' />}
+            size='md'
+          />
+        </div>
       )}
     </div>
   );

@@ -3,6 +3,8 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useState } from 'react';
 
+import type { Repository } from '@/types/core/Repository';
+
 import ConfigureRepositoryStep from './steps/ConfigureRepositoryStep';
 import ReviewAndCreateStep from './steps/ReviewAndCreateStep';
 import type { RepositoryWizardData } from './types';
@@ -20,15 +22,22 @@ const initialWizardData: RepositoryWizardData = {
  * Main content component for the Repository Wizard
  *
  * Manages the wizard state and renders the appropriate step component
+ * Can be used in standalone mode (in a modal) or embedded mode (inside another wizard)
  */
 export default function RepositoryWizard({
   closeModal,
   currentStep,
   setCurrentStep,
+  embedded = false,
+  onComplete,
+  onCancel,
 }: {
   closeModal: () => void;
   currentStep: number;
   setCurrentStep: Dispatch<SetStateAction<number>>;
+  embedded?: boolean;
+  onComplete?: (repository: Repository) => void;
+  onCancel?: () => void;
 }) {
   const [wizardData, setWizardData] =
     useState<RepositoryWizardData>(initialWizardData);
@@ -62,6 +71,9 @@ export default function RepositoryWizard({
           wizardData={wizardData}
           updateWizardData={updateWizardData}
           goNext={goNext}
+          embedded={embedded}
+          onComplete={onComplete}
+          onCancel={onCancel}
         />
       )}
       {currentStep === 2 && (

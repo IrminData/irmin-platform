@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,22 @@ export default function DefineSettingsStep({
       ? convertToConnectionFieldValues(wizardData.connectionDetails)
       : undefined
   );
+
+  // Auto-skip if there are no settings fields
+  useEffect(() => {
+    const settingsFields = connectionConfigurationQuery.data?.data;
+    const hasSettingsFields =
+      settingsFields && Object.keys(settingsFields).length > 0;
+
+    if (!connectionConfigurationQuery.isLoading && !hasSettingsFields) {
+      // No settings fields, skip to next step
+      goNext();
+    }
+  }, [
+    connectionConfigurationQuery.isLoading,
+    connectionConfigurationQuery.data?.data,
+    goNext,
+  ]);
 
   const handleContinue = useCallback(
     async (formValues: DynamicFieldValues) => {

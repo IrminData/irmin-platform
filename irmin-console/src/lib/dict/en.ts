@@ -1007,6 +1007,8 @@ const en = {
     storedQueryLogs: 'Query audit logs',
     policyLogs: 'Policy audit logs',
     repositoryObjectLogs: 'Repository object audit logs',
+    waitingForLogs: 'Waiting for logs...',
+    waitingForResults: 'Waiting for results...',
   },
 
   // === DOCUMENTATION ===

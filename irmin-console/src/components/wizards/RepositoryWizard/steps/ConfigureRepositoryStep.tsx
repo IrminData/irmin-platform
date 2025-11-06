@@ -9,8 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
 import { useRepositories } from '@/hooks/api';
+
+import type { Repository } from '@/types/core/Repository';
 
 import type { RepositoryWizardData } from '../types';
 
@@ -21,12 +24,19 @@ export default function ConfigureRepositoryStep({
   wizardData,
   updateWizardData,
   goNext,
+  embedded = false,
+  onComplete,
+  onCancel,
 }: {
   wizardData: RepositoryWizardData;
   updateWizardData: (updates: Partial<RepositoryWizardData>) => void;
   goNext: () => void;
+  embedded?: boolean;
+  onComplete?: (repository: Repository) => void;
+  onCancel?: () => void;
 }) {
   const { dict } = useLocale();
+  const { irminAlert } = usePopup();
 
   const {
     handleSubmit,
@@ -45,20 +55,43 @@ export default function ConfigureRepositoryStep({
   const handleCreate = useCallback(
     async (data: RepositoryWizardData) => {
       try {
-        await createRepositoryMutation.mutateAsync({
+        const res = await createRepositoryMutation.mutateAsync({
           name: data.name,
           description: data.description,
           documentation: '',
           default_branch: data.default_branch,
           isImmutable: false,
         });
+
+        if (!res.data) {
+          throw new Error(res.message ?? 'Failed to create repository');
+        }
+
         updateWizardData(data);
-        goNext();
+        irminAlert('success', res.message ?? 'Repository created successfully');
+
+        // Handle completion based on mode
+        if (embedded && onComplete) {
+          onComplete(res.data);
+        } else {
+          goNext();
+        }
       } catch (error) {
         console.error(error);
+        irminAlert(
+          'error',
+          (error as Error)?.message ?? 'Failed to create repository'
+        );
       }
     },
-    [createRepositoryMutation, updateWizardData, goNext]
+    [
+      createRepositoryMutation,
+      updateWizardData,
+      goNext,
+      embedded,
+      onComplete,
+      irminAlert,
+    ]
   );
 
   return (
@@ -125,6 +158,17 @@ export default function ConfigureRepositoryStep({
           )}
         />
       </div>
+      {onCancel && (
+        <Button
+          type='button'
+          size='lg'
+          variant='secondary'
+          onClick={onCancel}
+          className='mb-3'
+        >
+          {dict.common.cancel}
+        </Button>
+      )}
       <Button
         type='submit'
         size='lg'

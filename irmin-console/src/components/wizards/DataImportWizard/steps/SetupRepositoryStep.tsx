@@ -1,8 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-
-import { Controller, useForm } from 'react-hook-form';
+import { useCallback, useMemo, useState } from 'react';
 
 import { TbSearch } from 'react-icons/tb';
 
@@ -10,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
+import { RepositoryWizard } from '@/components/wizards/RepositoryWizard';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -40,94 +38,51 @@ export default function SetupRepositoryStep({
 }) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
-  const { repositoriesQuery, createRepositoryMutation } = useRepositories();
+  const { repositoriesQuery } = useRepositories();
   const { isResourceAllowed } = useResourceAllowed();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredRepositories, setFilteredRepositories] = useState<
-    Repository[]
-  >([]);
-
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      name: wizardData.repositoryData.name,
-      description: wizardData.repositoryData.description,
-      default_branch: wizardData.repositoryData.default_branch,
-    },
-  });
-
   // Filter repositories based on search
-  useEffect(() => {
-    if (repositoriesQuery.data?.data) {
-      const filtered = repositoriesQuery.data.data.filter((repository) =>
-        repository.name
-          .trim()
-          .replace(/\s+/g, '')
-          .toLowerCase()
-          .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
-      );
-      setFilteredRepositories(filtered);
-    }
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Compute filtered repositories using useMemo
+  const filteredRepositories = useMemo(() => {
+    const repositories = repositoriesQuery.data?.data;
+    if (!repositories) return [];
+    return repositories.filter((repository) =>
+      repository.name
+        .trim()
+        .replace(/\s+/g, '')
+        .toLowerCase()
+        .includes(searchQuery.trim().replace(/\s+/g, '').toLowerCase())
+    );
   }, [repositoriesQuery.data?.data, searchQuery]);
 
-  const handleCreateRepository = useCallback(
-    async (data: {
-      name: string;
-      description: string;
-      default_branch: string;
-    }) => {
-      try {
-        const res = await createRepositoryMutation.mutateAsync({
-          name: data.name,
-          description: data.description,
-          documentation: '',
-          default_branch: data.default_branch,
-          isImmutable: false,
-        });
+  // Repository wizard step state
+  const [repositoryWizardStep, setRepositoryWizardStep] = useState(1);
 
-        if (!res.data) {
-          throw new Error(res.message ?? 'Failed to create repository');
-        }
-
-        // Update wizard data with the created repository
-        updateWizardData({
-          repository: res.data,
-          repositoryData: {
-            name: data.name,
-            description: data.description,
-            default_branch: data.default_branch,
-          },
-        });
-
-        irminAlert('success', res.message ?? 'Repository created successfully');
-        goNext();
-      } catch (error) {
-        console.error(error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? dict.wizard.failedToCreateRepository
-        );
-      }
+  const handleRepositoryComplete = useCallback(
+    (repository: Repository) => {
+      updateWizardData({
+        repository,
+        repositoryData: {
+          name: repository.name,
+          description: repository.description,
+          default_branch: repository.default_branch,
+        },
+      });
+      setRepositoryWizardStep(1);
+      goNext();
     },
-    [updateWizardData, goNext, irminAlert, dict, createRepositoryMutation]
+    [updateWizardData, goNext]
   );
 
   const handleContinue = useCallback(() => {
-    if (wizardData.createNewRepository) {
-      // Form submission will be handled by the form's onSubmit
+    if (!wizardData.repository) {
+      irminAlert('error', dict.wizard.pleaseSelectRepository);
       return;
-    } else {
-      if (!wizardData.repository) {
-        irminAlert('error', dict.wizard.pleaseSelectRepository);
-        return;
-      }
-      goNext();
     }
-  }, [wizardData, goNext, irminAlert, dict]);
+    goNext();
+  }, [wizardData.repository, goNext, irminAlert, dict]);
 
   return (
     <div className='flex w-full flex-col space-y-6 px-4 py-8'>
@@ -277,99 +232,48 @@ export default function SetupRepositoryStep({
           </div>
         </div>
       ) : (
-        // New repository creation form
-        <div className='rounded-lg bg-card p-4 text-card-foreground'>
-          <form
-            onSubmit={handleSubmit(handleCreateRepository)}
-            className='space-y-4'
-          >
-            <div className='flex flex-col gap-2'>
-              <Label>{dict.common.name}</Label>
-              <Controller
-                name='name'
-                control={control}
-                rules={{ required: dict.common.fieldRequired }}
-                render={({ field }) => (
-                  <>
-                    <Input {...field} />
-                    {errors.name && (
-                      <p className='mt-1 text-xs text-red-600'>
-                        {errors.name.message}
-                      </p>
-                    )}
-                  </>
-                )}
-              />
-            </div>
-            <div className='flex flex-col gap-2'>
-              <Label>{dict.common.description}</Label>
-              <Controller
-                name='description'
-                control={control}
-                rules={{ required: dict.common.fieldRequired }}
-                render={({ field }) => (
-                  <>
-                    <Textarea {...field} rows={3} />
-                    {errors.description && (
-                      <p className='mt-1 text-xs text-red-600'>
-                        {errors.description.message}
-                      </p>
-                    )}
-                  </>
-                )}
-              />
-            </div>
-            <div className='flex flex-col gap-2'>
-              <Label>{dict.repository.branches.primaryBranch}</Label>
-              <Controller
-                name='default_branch'
-                control={control}
-                rules={{ required: dict.common.fieldRequired }}
-                render={({ field }) => (
-                  <>
-                    <Input {...field} />
-                    {errors.default_branch && (
-                      <p className='mt-1 text-xs text-red-600'>
-                        {errors.default_branch.message}
-                      </p>
-                    )}
-                  </>
-                )}
-              />
-            </div>
-          </form>
+        // Embedded repository wizard
+        <div className='space-y-4'>
+          <RepositoryWizard
+            closeModal={() => {}}
+            currentStep={repositoryWizardStep}
+            setCurrentStep={setRepositoryWizardStep}
+            embedded={true}
+            onComplete={handleRepositoryComplete}
+            onCancel={() => {
+              setRepositoryWizardStep(1);
+              updateWizardData({ createNewRepository: false });
+            }}
+          />
         </div>
       )}
 
-      <div
-        className={`
-          flex gap-3 border-t pt-4
-          dark:border-gray-800
-        `}
-      >
-        <Button
-          variant='secondary'
-          onClick={goBack}
-          className='flex-1'
-          size='lg'
+      {!wizardData.createNewRepository && (
+        <div
+          className={`
+            flex gap-3 border-t pt-4
+            dark:border-gray-800
+          `}
         >
-          {dict.common.back}
-        </Button>
-        <Button
-          className='flex-1'
-          size='lg'
-          variant='default'
-          onClick={handleContinue}
-          disabled={
-            wizardData.createNewRepository
-              ? false // Form validation will handle this
-              : !wizardData.repository
-          }
-          loading={createRepositoryMutation.isPending}
-        >
-          {dict.connections.create.continue}
-        </Button>
-      </div>
+          <Button
+            variant='secondary'
+            onClick={goBack}
+            className='flex-1'
+            size='lg'
+          >
+            {dict.common.back}
+          </Button>
+          <Button
+            className='flex-1'
+            size='lg'
+            variant='default'
+            onClick={handleContinue}
+            disabled={!wizardData.repository}
+          >
+            {dict.connections.create.continue}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

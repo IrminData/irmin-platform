@@ -1,9 +1,14 @@
 import { useCallback, useState } from 'react';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryOptions,
+} from '@tanstack/react-query';
 
 import IrminCore from '@/lib/core';
-import { workflowRunsQueryKey } from '@/lib/queryKeys';
+import { workflowRunQueryKey, workflowRunsQueryKey } from '@/lib/queryKeys';
 
 import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
@@ -27,9 +32,16 @@ interface WorkflowRunsResponse
  * Custom hook to manage fetching and pagination of workflow runs
  *
  * @param workflowID - unique identifier of the workflow
+ * @param options - optional query options to pass to useQuery
  * @returns pagination state and control functions
  */
-export const useWorkflowRuns = (workflowID: string) => {
+export const useWorkflowRuns = (
+  workflowID: string,
+  options?: Omit<
+    UseQueryOptions<WorkflowRunsResponse, Error>,
+    'queryKey' | 'queryFn'
+  >
+) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { irminAlert } = usePopup();
@@ -50,6 +62,7 @@ export const useWorkflowRuns = (workflowID: string) => {
         page: currentPage,
       });
     },
+    ...options,
   });
 
   const createWorkflowRunMutation = useMutation<
@@ -83,6 +96,14 @@ export const useWorkflowRuns = (workflowID: string) => {
         }),
       },
       onSuccess: (res) => {
+        // Also populate the individual run cache for instant access
+        if (res.data) {
+          queryClient.setQueryData(
+            workflowRunQueryKey(workspaceSlug, workflowID, res.data.id),
+            res
+          );
+        }
+
         irminAlert(
           'success',
           res.message ?? 'Workflow run created successfully'

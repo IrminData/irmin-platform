@@ -2,11 +2,14 @@
 
 import { useCallback, useState } from 'react';
 
+import IrminCore from '@/lib/core';
+
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
 import { ConnectionCreationSkeleton } from '@/components/ui/loading/ConnectionCreationSkeleton';
 
+import { useIAM } from '@/context/IAMContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
@@ -29,14 +32,17 @@ export default function DefineDetailsStep({
   updateWizardData,
   goBack,
   goNext,
+  goToStep,
 }: {
   wizardData: ConnectionWizardData;
   updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goBack: () => void;
   goNext: () => void;
+  goToStep?: (step: number) => void;
 }) {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
+  const { getToken } = useIAM();
   const [defaultTimestamp] = useState(() => Date.now());
 
   const {
@@ -65,7 +71,28 @@ export default function DefineDetailsStep({
             name: newName,
             connectionDetails: connectionDetails,
           });
-          goNext();
+
+          // Fetch settings configuration with the NEW connection details
+          const token = await getToken();
+          const core = new IrminCore(locale, token);
+          const settingsConfigRes =
+            await core.connectorService.fetchConnectorConfigurationFields({
+              connectorId: wizardData.connector?.id ?? '',
+              configurationType: 'settings',
+              currentDetails: convertToConnectionFieldValues(connectionDetails),
+            });
+
+          // Check if there are settings fields to configure
+          const settingsFields = settingsConfigRes.data;
+          const hasSettingsFields =
+            settingsFields && Object.keys(settingsFields).length > 0;
+
+          // Skip settings step if there are no fields
+          if (!hasSettingsFields && goToStep) {
+            goToStep(4); // Go directly to step 4 (ConfigureConnectionStep)
+          } else {
+            goNext(); // Go to step 3 (DefineSettingsStep)
+          }
         } else {
           irminAlert('error', dict.connections.create.failed);
         }
@@ -83,9 +110,12 @@ export default function DefineDetailsStep({
       validateConnectorConfigurationMutation,
       irminAlert,
       goNext,
+      goToStep,
       updateWizardData,
       dict,
       defaultTimestamp,
+      getToken,
+      locale,
     ]
   );
 

@@ -3,6 +3,8 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { Connection } from '@/types/core/Connection';
+
 import ConfigureConnectionStep from './steps/ConfigureConnectionStep';
 import DefineDetailsStep from './steps/DefineDetailsStep';
 import DefineSettingsStep from './steps/DefineSettingsStep';
@@ -26,15 +28,22 @@ const initialWizardData: ConnectionWizardData = {
  * Main content component for the Connection Wizard
  *
  * Manages the wizard state and renders the appropriate step component
+ * Can be used in standalone mode (in a modal) or embedded mode (inside another wizard)
  */
 export default function ConnectionWizard({
   closeModal,
   currentStep,
   setCurrentStep,
+  embedded = false,
+  onComplete,
+  onCancel,
 }: {
   closeModal: () => void;
   currentStep: number;
   setCurrentStep: Dispatch<SetStateAction<number>>;
+  embedded?: boolean;
+  onComplete?: (connection: Connection) => void;
+  onCancel?: () => void;
 }) {
   const [wizardData, setWizardData] =
     useState<ConnectionWizardData>(initialWizardData);
@@ -64,6 +73,16 @@ export default function ConnectionWizard({
     }
   }, [currentStep, setCurrentStep]);
 
+  // Function to go to a specific step
+  const goToStep = useCallback(
+    (step: number) => {
+      if (step >= 1 && step <= 4) {
+        setCurrentStep(step);
+      }
+    },
+    [setCurrentStep]
+  );
+
   // Function to update wizard data
   const updateWizardData = useCallback(
     (updates: Partial<ConnectionWizardData>) => {
@@ -78,6 +97,7 @@ export default function ConnectionWizard({
         <SelectConnectorStep
           updateWizardData={updateWizardData}
           goNext={goNext}
+          onCancel={embedded ? onCancel : undefined}
         />
       )}
       {currentStep === 2 && (
@@ -86,6 +106,7 @@ export default function ConnectionWizard({
           updateWizardData={updateWizardData}
           goBack={goBack}
           goNext={goNext}
+          goToStep={goToStep}
         />
       )}
       {currentStep === 3 && (
@@ -101,7 +122,10 @@ export default function ConnectionWizard({
           wizardData={wizardData}
           updateWizardData={updateWizardData}
           goBack={goBack}
+          goToStep={goToStep}
           closeModal={closeModal}
+          embedded={embedded}
+          onComplete={onComplete}
         />
       )}
     </>

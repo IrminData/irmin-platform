@@ -51,7 +51,24 @@ export default function WorkflowLayoutWrapper({
   const router = useRouter();
   const pathname = usePathname();
   const { dict } = useLocale();
-  const { createWorkflowRunMutation } = useWorkflowRuns(workflowID);
+  const { createWorkflowRunMutation, workflowRunsQuery } = useWorkflowRuns(
+    workflowID,
+    {
+      refetchInterval: (query) => {
+        const runsData = query.state.data;
+        if (!runsData?.data || runsData.data.length === 0) return false;
+
+        const mostRecentRun = runsData.data[0];
+        const hasActiveRun =
+          mostRecentRun.status === 'pending' ||
+          mostRecentRun.status === 'initiating' ||
+          mostRecentRun.status === 'running';
+
+        // Poll every 2 seconds while there's an active run
+        return hasActiveRun ? 2000 : false;
+      },
+    }
+  );
   const { workflowQuery } = useWorkflow(workflowID);
   const { isResourceAllowed, loading: isResourceAllowedLoading } =
     useResourceAllowed();
@@ -152,6 +169,18 @@ export default function WorkflowLayoutWrapper({
           : workflow.type === 'action'
             ? dict.workflow.create.configureAction
             : '';
+
+  // Check if there's an active run in progress
+  const mostRecentRun = workflowRunsQuery.data?.data?.[0];
+  const hasActiveRun =
+    mostRecentRun &&
+    (mostRecentRun.status === 'pending' ||
+      mostRecentRun.status === 'initiating' ||
+      mostRecentRun.status === 'running');
+
+  // Button should be in loading state if mutation is pending OR if there's an active run
+  const isTriggerButtonLoading =
+    createWorkflowRunMutation.isPending || hasActiveRun;
 
   const tabs: TabDetails[] = [
     {
@@ -309,7 +338,7 @@ export default function WorkflowLayoutWrapper({
               variant='default'
               size='lg'
               icon={<TbPlayerPlay size={14} />}
-              loading={createWorkflowRunMutation.isPending}
+              loading={isTriggerButtonLoading}
               disabled={
                 !isResourceAllowed('workflow_run', 'create', workflowID)
               }

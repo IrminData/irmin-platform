@@ -24,10 +24,12 @@ function SelectWorkflowTypeStep({
   wizardData,
   updateWizardData,
   goNext,
+  onCancel,
 }: {
   wizardData: WorkflowWizardData;
   updateWizardData: (updates: Partial<WorkflowWizardData>) => void;
   goNext: () => void;
+  onCancel?: () => void;
 }) {
   const { dict } = useLocale();
 
@@ -96,6 +98,16 @@ function SelectWorkflowTypeStep({
           dark:border-gray-800
         `}
       >
+        {onCancel && (
+          <Button
+            className='mb-3 inline-block w-full'
+            variant='secondary'
+            size='lg'
+            onClick={onCancel}
+          >
+            {dict.common.cancel}
+          </Button>
+        )}
         <Button
           className='mb-6 inline-block w-full'
           variant='gradient'

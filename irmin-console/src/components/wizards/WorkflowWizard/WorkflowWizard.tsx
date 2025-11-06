@@ -3,7 +3,11 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
-import type { Workflowable, WorkflowableType } from '@/types/core/Workflow';
+import type {
+  Workflow,
+  Workflowable,
+  WorkflowableType,
+} from '@/types/core/Workflow';
 
 import ConfigureFieldMappingsStep from './steps/ConfigureFieldMappingsStep';
 import ConfigureWorkflowableStep from './steps/ConfigureWorkflowableStep';
@@ -57,17 +61,24 @@ const createDefaultWorkflowable = (type: WorkflowableType): Workflowable => {
  * Main content component for the Workflow Wizard
  *
  * Manages the wizard state and renders the appropriate step component
+ * Can be used in standalone mode (in a modal) or embedded mode (inside another wizard)
  */
 export default function WorkflowWizard({
   closeModal,
   currentStep,
   setCurrentStep,
   initialWorkflowData,
+  embedded = false,
+  onComplete,
+  onCancel,
 }: {
   closeModal: () => void;
   currentStep: number;
   setCurrentStep: Dispatch<SetStateAction<number>>;
   initialWorkflowData: WorkflowWizardData;
+  embedded?: boolean;
+  onComplete?: (workflow: Workflow) => void;
+  onCancel?: () => void;
 }) {
   const [wizardData, setWizardData] =
     useState<WorkflowWizardData>(initialWorkflowData);
@@ -143,6 +154,7 @@ export default function WorkflowWizard({
           wizardData={wizardData}
           updateWizardData={updateWizardData}
           goNext={goNext}
+          onCancel={embedded ? onCancel : undefined}
         />
       )}
       {currentStep === (initialWorkflowData.type ? 1 : 2) && (
@@ -175,6 +187,8 @@ export default function WorkflowWizard({
           updateWizardData={updateWizardData}
           goBack={goBack}
           closeModal={closeModal}
+          embedded={embedded}
+          onComplete={onComplete}
         />
       )}
     </>

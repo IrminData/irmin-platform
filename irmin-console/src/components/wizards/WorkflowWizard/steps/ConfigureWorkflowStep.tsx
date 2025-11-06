@@ -8,8 +8,11 @@ import { Label } from '@/components/ui/label';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
 import { useWorkflows } from '@/hooks/api';
+
+import type { Workflow } from '@/types/core/Workflow';
 
 import type { WorkflowWizardData } from '../types';
 
@@ -22,13 +25,18 @@ function ConfigureWorkflowStep({
   updateWizardData,
   goBack,
   closeModal,
+  embedded = false,
+  onComplete,
 }: {
   wizardData: WorkflowWizardData;
   updateWizardData: (updates: Partial<WorkflowWizardData>) => void;
   goBack: () => void;
   closeModal: () => void;
+  embedded?: boolean;
+  onComplete?: (workflow: Workflow) => void;
 }) {
   const { dict } = useLocale();
+  const { irminAlert } = usePopup();
   const { createWorkflowMutation } = useWorkflows();
 
   const [initialWorkflowSchedule] = useState(wizardData.schedule);
@@ -36,7 +44,7 @@ function ConfigureWorkflowStep({
   const handleCreate = useCallback(async () => {
     try {
       if (!wizardData.type) return;
-      await createWorkflowMutation.mutateAsync({
+      const res = await createWorkflowMutation.mutateAsync({
         type: wizardData.type,
         name: wizardData.name,
         description: wizardData.description,
@@ -44,11 +52,34 @@ function ConfigureWorkflowStep({
         workflowable: wizardData.workflowable,
         schedule: wizardData.schedule,
       });
-      closeModal();
+
+      if (!res.data) {
+        throw new Error(res.message ?? 'Failed to create workflow');
+      }
+
+      irminAlert('success', res.message ?? 'Workflow created successfully');
+
+      // Handle completion based on mode
+      if (embedded && onComplete) {
+        onComplete(res.data);
+      } else {
+        closeModal();
+      }
     } catch (error) {
       console.error('Failed to create workflow:', error);
+      irminAlert(
+        'error',
+        (error as Error)?.message ?? 'Failed to create workflow'
+      );
     }
-  }, [createWorkflowMutation, wizardData, closeModal]);
+  }, [
+    createWorkflowMutation,
+    wizardData,
+    closeModal,
+    embedded,
+    onComplete,
+    irminAlert,
+  ]);
 
   return (
     <div className='flex w-full flex-col px-4 pb-6'>
