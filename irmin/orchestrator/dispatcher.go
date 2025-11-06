@@ -10,6 +10,7 @@ import (
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -34,75 +35,150 @@ type DispatchEvent struct {
 func (o *Orchestrator) StartDispatcher(ctx context.Context) error {
 	o.logger.InfoContext(ctx, "starting dispatcher")
 
+	// Create a cancellable context for the listener goroutine
+	listenerCtx, cancelListener := context.WithCancel(ctx)
+	defer cancelListener()
+
 	// Create a channel to receive notifications
 	notificationChan := make(chan string, DefaultChannelBufferSize)
-	defer close(notificationChan)
+
+	// Create an error channel to receive fatal errors from the listener
+	listenerErrChan := make(chan error, 1)
+
+	// Create a done channel to signal when the listener goroutine has finished
+	listenerDone := make(chan struct{})
 
 	// Start the notification listener
-	go o.startNotificationListener(ctx, notificationChan)
+	go func() {
+		o.startNotificationListener(listenerCtx, notificationChan, listenerErrChan)
+		close(listenerDone)
+	}()
 
 	// Process notifications
-	return o.processNotifications(ctx, notificationChan)
+	processErr := o.processNotifications(ctx, notificationChan, listenerErrChan)
+
+	// Cancel the listener context to signal it to stop
+	cancelListener()
+
+	// Wait for the listener goroutine to finish before closing channels
+	<-listenerDone
+
+	// Now it's safe to close the channels
+	close(notificationChan)
+	close(listenerErrChan)
+
+	return processErr
 }
 
 // startNotificationListener listens for PostgreSQL notifications and sends them to the channel.
 // Uses advisory locking to ensure only one process across all instances listens for notifications.
 // This function blocks and holds the lock for its entire lifetime.
-func (o *Orchestrator) startNotificationListener(ctx context.Context, notificationChan chan<- string) {
-	// Acquire a connection to hold the advisory lock for the listener's lifetime
-	lockConn, err := o.db.GetPgxConn(ctx)
-	if err != nil {
-		o.logger.ErrorContext(ctx, "failed to acquire connection for notification listener lock", "error", err)
+// Fatal errors are sent to listenerErrChan to propagate back to StartDispatcher.
+func (o *Orchestrator) startNotificationListener(
+	ctx context.Context,
+	notificationChan chan<- string,
+	listenerErrChan chan<- error,
+) {
+	lockConn, lockKey, locked, err := o.acquireNotificationListenerLock(ctx, listenerErrChan)
+	if err != nil || !locked {
 		return
 	}
 	defer lockConn.Release()
+	defer o.releaseNotificationListenerLock(ctx, lockConn, lockKey)
 
-	// Try to acquire a session-scoped advisory lock to become the notification listener
-	// Only one process across all instances (including prefork children) will get this lock
+	listenConn, err := o.setupNotificationListening(ctx, listenerErrChan)
+	if err != nil {
+		return
+	}
+	defer listenConn.Release()
+
+	o.runNotificationLoop(ctx, listenConn, notificationChan, listenerErrChan)
+}
+
+// acquireNotificationListenerLock acquires the advisory lock for the notification listener.
+// Returns the connection, lock key, whether the lock was acquired, and any error.
+func (o *Orchestrator) acquireNotificationListenerLock(
+	ctx context.Context,
+	listenerErrChan chan<- error,
+) (*pgxpool.Conn, string, bool, error) {
+	lockConn, err := o.db.GetPgxConn(ctx)
+	if err != nil {
+		o.logger.ErrorContext(ctx, "failed to acquire connection for notification listener lock", "error", err)
+		o.sendListenerError(
+			ctx,
+			listenerErrChan,
+			fmt.Errorf("failed to acquire connection for notification listener lock: %w", err),
+		)
+		return nil, "", false, err
+	}
+
 	lockKey := "orchestrator:notification_listener"
 	o.logger.DebugContext(ctx, "attempting to acquire notification listener lock")
 
 	locked, lockErr := db.TryLockKeyConn(ctx, lockConn, lockKey)
 	if lockErr != nil {
 		o.logger.ErrorContext(ctx, "error acquiring notification listener lock", "error", lockErr)
-		return
+		o.sendListenerError(ctx, listenerErrChan, fmt.Errorf("error acquiring notification listener lock: %w", lockErr))
+		lockConn.Release()
+		return nil, "", false, lockErr
 	}
+
 	if !locked {
-		// Another process is already listening for notifications
 		o.logger.InfoContext(ctx, "notification listener already running in another process, skipping")
-		return
+		lockConn.Release()
+		return nil, "", false, nil
 	}
 
-	// We got the lock - this process is the notification listener
 	o.logger.WarnContext(ctx, "🎯 ACQUIRED notification listener lock - this process will handle all notifications")
+	return lockConn, lockKey, true, nil
+}
 
-	// Ensure the lock is released when done
-	defer func() {
-		if unlockErr := db.UnlockKeyConn(ctx, lockConn, lockKey); unlockErr != nil {
-			o.logger.ErrorContext(ctx, "error releasing notification listener lock", "error", unlockErr)
-		}
-	}()
+// releaseNotificationListenerLock releases the advisory lock.
+func (o *Orchestrator) releaseNotificationListenerLock(ctx context.Context, lockConn *pgxpool.Conn, lockKey string) {
+	if unlockErr := db.UnlockKeyConn(ctx, lockConn, lockKey); unlockErr != nil {
+		o.logger.ErrorContext(ctx, "error releasing notification listener lock", "error", unlockErr)
+	}
+}
 
-	// Start listening for notifications on a separate connection
-	// We need a different connection because we're holding lockConn for the lock
+// setupNotificationListening sets up the database connection and starts listening for notifications.
+func (o *Orchestrator) setupNotificationListening(
+	ctx context.Context,
+	listenerErrChan chan<- error,
+) (*pgxpool.Conn, error) {
 	listenConn, err := o.db.GetPgxConn(ctx)
 	if err != nil {
 		o.logger.ErrorContext(ctx, "failed to acquire connection for notification listening", "error", err)
-		return
+		o.sendListenerError(
+			ctx,
+			listenerErrChan,
+			fmt.Errorf("failed to acquire connection for notification listening: %w", err),
+		)
+		return nil, err
 	}
-	defer listenConn.Release()
 
-	// Start listening on the notification connection
 	if _, listenExecErr := listenConn.Exec(ctx, "LISTEN workflow_run_status"); listenExecErr != nil {
 		o.logger.ErrorContext(ctx, "failed to start listening for notifications", "error", listenExecErr)
-		return
+		o.sendListenerError(
+			ctx,
+			listenerErrChan,
+			fmt.Errorf("failed to start listening for notifications: %w", listenExecErr),
+		)
+		listenConn.Release()
+		return nil, listenExecErr
 	}
-	o.logger.InfoContext(ctx, "started listening for notifications on workflow_run_status channel")
 
-	// Listen for notifications using the same connection that's listening
-	// This keeps the function alive and the lock held
+	o.logger.InfoContext(ctx, "started listening for notifications on workflow_run_status channel")
+	return listenConn, nil
+}
+
+// runNotificationLoop runs the main loop that waits for and processes notifications.
+func (o *Orchestrator) runNotificationLoop(
+	ctx context.Context,
+	listenConn *pgxpool.Conn,
+	notificationChan chan<- string,
+	listenerErrChan chan<- error,
+) {
 	for {
-		// Wait for notification with timeout on the listening connection
 		notification, waitForNotificationErr := listenConn.Conn().WaitForNotification(ctx)
 		if waitForNotificationErr != nil {
 			if errors.Is(waitForNotificationErr, context.Canceled) {
@@ -110,6 +186,11 @@ func (o *Orchestrator) startNotificationListener(ctx context.Context, notificati
 				return
 			}
 			o.logger.ErrorContext(ctx, "error waiting for notification", "error", waitForNotificationErr)
+			o.sendListenerError(
+				ctx,
+				listenerErrChan,
+				fmt.Errorf("error waiting for notification: %w", waitForNotificationErr),
+			)
 			return
 		}
 
@@ -117,30 +198,46 @@ func (o *Orchestrator) startNotificationListener(ctx context.Context, notificati
 			continue
 		}
 
-		select {
-		case notificationChan <- notification.Payload:
-			o.logger.DebugContext(ctx, "forwarded notification to channel", "payload", notification.Payload)
-		case <-ctx.Done():
-			return
-		default:
-			// Channel is full, log warning and skip
-			o.logger.WarnContext(
-				ctx,
-				"notification channel full, skipping notification",
-				"payload",
-				notification.Payload,
-			)
-		}
+		o.forwardNotification(ctx, notification.Payload, notificationChan)
+	}
+}
+
+// forwardNotification forwards a notification to the notification channel.
+func (o *Orchestrator) forwardNotification(ctx context.Context, payload string, notificationChan chan<- string) {
+	select {
+	case notificationChan <- payload:
+		o.logger.DebugContext(ctx, "forwarded notification to channel", "payload", payload)
+	case <-ctx.Done():
+		return
+	default:
+		o.logger.WarnContext(ctx, "notification channel full, skipping notification", "payload", payload)
+	}
+}
+
+// sendListenerError sends an error to the listener error channel, respecting context cancellation.
+func (o *Orchestrator) sendListenerError(ctx context.Context, listenerErrChan chan<- error, err error) {
+	select {
+	case listenerErrChan <- err:
+	case <-ctx.Done():
 	}
 }
 
 // processNotifications processes notifications from the channel.
-func (o *Orchestrator) processNotifications(ctx context.Context, notificationChan <-chan string) error {
+// Returns an error if the notification listener encounters a fatal error.
+func (o *Orchestrator) processNotifications(
+	ctx context.Context,
+	notificationChan <-chan string,
+	listenerErrChan <-chan error,
+) error {
 	for {
 		select {
 		case <-ctx.Done():
 			o.logger.InfoContext(ctx, "dispatcher shutting down")
 			return ctx.Err()
+
+		case err := <-listenerErrChan:
+			o.logger.ErrorContext(ctx, "notification listener encountered fatal error", "error", err)
+			return fmt.Errorf("notification listener failed: %w", err)
 
 		case payload := <-notificationChan:
 			o.logger.InfoContext(ctx, "received notification", "payload", payload)
@@ -153,15 +250,29 @@ func (o *Orchestrator) processNotifications(ctx context.Context, notificationCha
 				continue
 			}
 
-			// Only process if the status is pending
-			if notification.Status != string(irminmodels.WorkflowStatusPending) {
-				continue
-			}
+			// Handle different status changes
+			switch notification.Status {
+			case string(irminmodels.WorkflowStatusPending):
+				// New workflow run to dispatch
+				if processWorkflowRunErr := o.processWorkflowRun(ctx, notification); processWorkflowRunErr != nil {
+					o.logger.ErrorContext(ctx, "failed to process workflow run",
+						"error", processWorkflowRunErr,
+						"run_id", notification.ID)
+				}
 
-			if processWorkflowRunErr := o.processWorkflowRun(ctx, notification); processWorkflowRunErr != nil {
-				o.logger.ErrorContext(ctx, "failed to process workflow run",
-					"error", processWorkflowRunErr,
+			case string(irminmodels.WorkflowStatusCancelled):
+				// Workflow run cancelled - need to stop execution
+				o.logger.InfoContext(ctx, "workflow run cancelled, attempting to cancel execution",
 					"run_id", notification.ID)
+
+				cancelled := o.CancelWorkflowRun(notification.ID)
+				if cancelled {
+					o.logger.InfoContext(ctx, "workflow execution cancelled successfully",
+						"run_id", notification.ID)
+				} else {
+					o.logger.InfoContext(ctx, "workflow not running or already finished",
+						"run_id", notification.ID)
+				}
 			}
 		}
 	}

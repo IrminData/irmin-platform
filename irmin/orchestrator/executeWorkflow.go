@@ -2,14 +2,12 @@ package orchestrator
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"irmin-api/db"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // ExecuteWorkflow executes a workflow and listens for status changes in the database.
@@ -22,68 +20,43 @@ func (o *Orchestrator) ExecuteWorkflow(
 		return nil, errors.New("workflow or run is nil")
 	}
 
-	// Listen for status changes
-	statusChan := make(chan string, 1)
-	go func() {
-		if err := o.listenForStatusChanges(ctx, o.db, run.ID, statusChan); err != nil {
-			o.logger.Error("failed to listen for status changes", "error", err)
-		}
-	}()
+	o.logger.InfoContext(ctx, "ExecuteWorkflow called",
+		"workflow_id", workflow.ID,
+		"workflow_run_id", run.ID)
 
 	// Set a timeout for the workflow
 	maxRuntime := o.getMaxRuntime(workflow)
 	timeoutCtx, cancelTimeout := context.WithTimeout(ctx, time.Duration(maxRuntime)*time.Second)
 	defer cancelTimeout()
 
-	// Execute the workflow
-	resultChan := make(chan *db.WorkflowRun)
-	errChan := make(chan error)
+	o.logger.InfoContext(ctx, "starting workflow execution with timeout",
+		"workflow_run_id", run.ID,
+		"timeout_seconds", maxRuntime)
 
-	go func() {
-		resultRun, err := o.executeWorkflowWithContext(timeoutCtx, workflow, run)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		resultChan <- resultRun
-	}()
+	// Execute the workflow directly (no separate goroutine needed since we're already in a goroutine)
+	resultRun, err := o.executeWorkflowWithContext(timeoutCtx, workflow, run)
 
-	select {
-	case err := <-errChan:
-		return nil, err
-	case result := <-resultChan:
-		return result, nil
-	case status := <-statusChan:
-		return o.handleWorkflowStatus(run, status)
-	case <-timeoutCtx.Done():
+	o.logger.InfoContext(ctx, "executeWorkflowWithContext returned",
+		"workflow_run_id", run.ID,
+		"error", err)
+
+	// Check if context was cancelled or timed out
+	if err != nil && errors.Is(err, context.Canceled) {
+		// Context was cancelled - handle based on the type of cancellation
 		if timeoutCtx.Err() == context.DeadlineExceeded {
+			// Timeout
+			o.logger.InfoContext(ctx, "workflow execution timed out",
+				"workflow_run_id", run.ID,
+				"timeout_seconds", maxRuntime)
 			return o.handleWorkflowTimeout(run, maxRuntime)
 		}
-		return nil, timeoutCtx.Err()
-	}
-}
-
-// handleWorkflowStatus handles the workflow status notification and updates the run accordingly.
-func (o *Orchestrator) handleWorkflowStatus(
-	run *db.WorkflowRun,
-	status string,
-) (*db.WorkflowRun, error) {
-	var notificationPayload db.RunStatusNotificationPayload
-	if err := json.Unmarshal([]byte(status), &notificationPayload); err != nil {
-		return nil, fmt.Errorf("failed to parse status notification: %w", err)
+		// User cancelled
+		o.logger.InfoContext(ctx, "workflow execution cancelled by user",
+			"workflow_run_id", run.ID)
+		return o.handleWorkflowCancellation(run)
 	}
 
-	if notificationPayload.Status == string(irminmodels.WorkflowStatusCancelled) {
-		finishedAt := time.Now()
-		run.Status = irminmodels.WorkflowStatusCancelled
-		run.FinishedAt = &finishedAt
-		run.Logs = append(run.Logs, "Workflow execution cancelled by user")
-		if err := o.db.Save(&run).Error; err != nil {
-			return nil, fmt.Errorf("failed to update workflow run after cancellation: %w", err)
-		}
-		return run, errors.New("workflow execution cancelled")
-	}
-	return nil, fmt.Errorf("unexpected workflow status change: %s", notificationPayload.Status)
+	return resultRun, err
 }
 
 // handleWorkflowTimeout handles the workflow timeout and updates the run accordingly.
@@ -98,7 +71,34 @@ func (o *Orchestrator) handleWorkflowTimeout(
 	if err := o.db.Save(&run).Error; err != nil {
 		return nil, fmt.Errorf("failed to update workflow run after timeout: %w", err)
 	}
+
+	// Invalidate cache so clients get fresh status
+	o.InvalidateWorkflowRunCache(run)
+
 	return run, fmt.Errorf("workflow execution timed out after %d seconds", maxRuntime)
+}
+
+// handleWorkflowCancellation handles workflow cancellation and updates the run accordingly.
+func (o *Orchestrator) handleWorkflowCancellation(run *db.WorkflowRun) (*db.WorkflowRun, error) {
+	// The database status might already be set to cancelled by the API
+	// We just need to ensure finished_at is set and add execution logs
+	if run.FinishedAt == nil {
+		finishedAt := time.Now()
+		run.FinishedAt = &finishedAt
+	}
+
+	run.Status = irminmodels.WorkflowStatusCancelled
+	run.Logs = append(run.Logs, "Workflow execution cancelled")
+
+	if err := o.db.Save(&run).Error; err != nil {
+		return nil, fmt.Errorf("failed to update workflow run after cancellation: %w", err)
+	}
+
+	// Invalidate cache so clients get fresh status
+	o.InvalidateWorkflowRunCache(run)
+
+	o.logger.Info("workflow run cancelled and cleaned up", "run_id", run.ID)
+	return run, errors.New("workflow execution cancelled")
 }
 
 // getMaxRuntime returns the maximum runtime for a workflow.
@@ -107,75 +107,6 @@ func (o *Orchestrator) getMaxRuntime(workflow *db.Workflow) int {
 		return workflow.Schedule.MaxRuntime
 	}
 	return DefaultMaxWorkflowRuntime
-}
-
-// handleNotification processes a single notification and sends it to the status channel if relevant.
-func (o *Orchestrator) handleNotification(
-	ctx context.Context,
-	notification *pgconn.Notification,
-	runID uint,
-	statusChan chan<- string,
-) error {
-	var notificationPayload db.RunStatusNotificationPayload
-	if err := json.Unmarshal([]byte(notification.Payload), &notificationPayload); err != nil {
-		o.logger.ErrorContext(ctx, "failed to parse notification payload", "error", err)
-		// Skip invalid notifications
-		return nil
-	}
-
-	if notificationPayload.ID == runID {
-		select {
-		case statusChan <- notification.Payload:
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			// Channel is full, skip
-		}
-	}
-	return nil
-}
-
-// listenForStatusChanges listens for workflow run status changes in PostgreSQL.
-func (o *Orchestrator) listenForStatusChanges(
-	ctx context.Context,
-	d *db.Database,
-	runID uint,
-	statusChan chan<- string,
-) error {
-	cleanup, err := d.ListenForNotifications(ctx, "workflow_run_status")
-	if err != nil {
-		return fmt.Errorf("failed to start listening for status changes: %w", err)
-	}
-	defer func() {
-		if cleanupErr := cleanup(); cleanupErr != nil {
-			o.logger.ErrorContext(ctx, "failed to cleanup notification listener", "error", cleanupErr)
-		}
-	}()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, ListenForStatusChangesTimeout)
-			notification, waitForNotificationErr := d.WaitForNotification(ctxWithTimeout, "workflow_run_status")
-			cancel()
-
-			if waitForNotificationErr != nil {
-				if errors.Is(waitForNotificationErr, context.DeadlineExceeded) {
-					continue
-				}
-				if errors.Is(waitForNotificationErr, context.Canceled) {
-					return ctx.Err()
-				}
-				return fmt.Errorf("error waiting for notification: %w", waitForNotificationErr)
-			}
-
-			if handleNotificationErr := o.handleNotification(ctx, notification, runID, statusChan); handleNotificationErr != nil {
-				return handleNotificationErr
-			}
-		}
-	}
 }
 
 // executeWorkflowableByType executes a workflowable based on its type.
@@ -273,14 +204,34 @@ func (o *Orchestrator) executeWorkflowWithContext(
 	workflow *db.Workflow,
 	run *db.WorkflowRun,
 ) (*db.WorkflowRun, error) {
+	o.logger.InfoContext(ctx, "executeWorkflowWithContext called",
+		"workflow_id", workflow.ID,
+		"workflow_run_id", run.ID)
+
 	maxAttempts := o.getMaxAttempts(workflow)
 	allAttemptsLogs := []string{}
 	allAttemptsFailed := true
 
+	o.logger.InfoContext(ctx, "starting workflow execution loop",
+		"workflow_run_id", run.ID,
+		"max_attempts", maxAttempts)
+
 	for attempts := range maxAttempts {
+		o.logger.InfoContext(ctx, "workflow execution attempt",
+			"workflow_run_id", run.ID,
+			"attempt", attempts+1,
+			"max_attempts", maxAttempts)
+
 		if ctx.Err() != nil {
-			return o.updateRunLogsAndReturn(run, allAttemptsLogs)
+			o.logger.InfoContext(ctx, "context cancelled before attempt",
+				"workflow_run_id", run.ID,
+				"attempt", attempts+1)
+			return o.updateRunLogsAndReturn(run, allAttemptsLogs, ctx.Err())
 		}
+
+		o.logger.InfoContext(ctx, "getting workflowable by type",
+			"workflow_run_id", run.ID,
+			"workflow_type", workflow.Type)
 
 		wf, err := o.getWorkflowableByType(workflow)
 		if err != nil {
@@ -297,7 +248,7 @@ func (o *Orchestrator) executeWorkflowWithContext(
 
 		if err != nil {
 			if ctx.Err() != nil {
-				return o.updateRunLogsAndReturn(run, allAttemptsLogs)
+				return o.updateRunLogsAndReturn(run, allAttemptsLogs, ctx.Err())
 			}
 			if attempts < maxAttempts-1 {
 				allAttemptsLogs = append(
@@ -318,7 +269,8 @@ func (o *Orchestrator) executeWorkflowWithContext(
 		return o.updateWorkflowRunStatus(run, allAttemptsLogs, allAttemptsFailed)
 	}
 
-	return run, nil
+	// Context was cancelled or timed out - return with the actual context error
+	return o.updateRunLogsAndReturn(run, allAttemptsLogs, ctx.Err())
 }
 
 // getMaxAttempts returns the maximum number of attempts for a workflow.
@@ -345,17 +297,22 @@ func (o *Orchestrator) updateWorkflowRunStatus(
 	if err := o.db.Save(&run).Error; err != nil {
 		return nil, fmt.Errorf("failed to update workflow run: %w", err)
 	}
+
+	// Invalidate cache so clients get fresh status and logs
+	o.InvalidateWorkflowRunCache(run)
+
 	return run, nil
 }
 
-// updateRunLogsAndReturn updates the run with collected logs and returns with cancellation error.
+// updateRunLogsAndReturn updates the run with collected logs and returns with the context error.
 func (o *Orchestrator) updateRunLogsAndReturn(
 	run *db.WorkflowRun,
 	logs []string,
+	contextErr error,
 ) (*db.WorkflowRun, error) {
 	run.Logs = logs
 	if err := o.db.Save(&run).Error; err != nil {
 		return nil, fmt.Errorf("failed to update workflow run logs: %w", err)
 	}
-	return run, context.Canceled
+	return run, contextErr
 }

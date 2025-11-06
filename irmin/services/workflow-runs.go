@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"slices"
+	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	"gorm.io/gorm"
@@ -243,14 +245,37 @@ func (api *APIServices) CancelWorkflowRun(
 		return nil, ErrAccessDenied
 	}
 
-	// Change the workflow run status to cancelled.
+	// Check if the workflow run is in a cancellable state
+	// Users can cancel workflows that are:
+	// - Pending: waiting to be dispatched
+	// - Initiating: being set up
+	// - Running: actively executing
+	cancellableStatuses := []irminmodels.WorkflowStatus{
+		irminmodels.WorkflowStatusPending,
+		irminmodels.WorkflowStatusInitiating,
+		irminmodels.WorkflowStatusRunning,
+	}
+
+	if !slices.Contains(cancellableStatuses, workflowRun.Status) {
+		api.Logger.ErrorContext(c, "Workflow run is not in a cancellable state",
+			"status", workflowRun.Status,
+			"run_id", workflowRun.ID)
+		return nil, fmt.Errorf("workflow run cannot be cancelled (status: %s)", workflowRun.Status)
+	}
+
+	// Update the database status to cancelled
+	// This will trigger a PostgreSQL notification that the orchestrator listens to
+	// The orchestrator will then cancel the running workflow (even on other server instances)
 	workflowRun.Status = irminmodels.WorkflowStatusCancelled
+	finishedAt := time.Now()
+	workflowRun.FinishedAt = &finishedAt
 	if saveErr := api.DB.Save(&workflowRun).Error; saveErr != nil {
-		api.Logger.ErrorContext(c, "Error cancelling workflow run", "error", saveErr)
+		api.Logger.ErrorContext(c, "Error updating workflow run status to cancelled", "error", saveErr)
 		return nil, saveErr
 	}
 
-	// The orchestrator will notice the cancelled status and stop the workflow execution.
+	api.Logger.InfoContext(c, "workflow run status updated to cancelled, orchestrator will handle cancellation",
+		"run_id", workflowRun.ID)
 
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{

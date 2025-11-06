@@ -9345,14 +9345,18 @@ import "irmin-api/orchestrator"
 - [type DispatchEvent](<#DispatchEvent>)
 - [type DispatchEventType](<#DispatchEventType>)
 - [type Orchestrator](<#Orchestrator>)
-  - [func NewOrchestrator\(d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, dataEngine \*engine.Client\) \*Orchestrator](<#NewOrchestrator>)
+  - [func NewOrchestrator\(d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, dataEngine \*engine.Client, cacheStorage fiber.Storage\) \*Orchestrator](<#NewOrchestrator>)
   - [func \(o \*Orchestrator\) AddDispatchedEvent\(event \*DispatchEvent\)](<#Orchestrator.AddDispatchedEvent>)
   - [func \(o \*Orchestrator\) AddLakefsEvent\(event \*lakefs.WebhookEvent\)](<#Orchestrator.AddLakefsEvent>)
   - [func \(o \*Orchestrator\) AddWorkerEvent\(event \*WorkerEvent\)](<#Orchestrator.AddWorkerEvent>)
+  - [func \(o \*Orchestrator\) CancelWorkflowRun\(runID uint\) bool](<#Orchestrator.CancelWorkflowRun>)
   - [func \(o \*Orchestrator\) ExecuteDispatchedEvent\(ctx context.Context, event \*DispatchEvent\) error](<#Orchestrator.ExecuteDispatchedEvent>)
   - [func \(o \*Orchestrator\) ExecuteWorkflow\(ctx context.Context, workflow \*db.Workflow, run \*db.WorkflowRun\) \(\*db.WorkflowRun, error\)](<#Orchestrator.ExecuteWorkflow>)
+  - [func \(o \*Orchestrator\) InvalidateWorkflowRunCache\(run \*db.WorkflowRun\)](<#Orchestrator.InvalidateWorkflowRunCache>)
+  - [func \(o \*Orchestrator\) RegisterActiveRun\(runID uint, cancel context.CancelFunc\)](<#Orchestrator.RegisterActiveRun>)
   - [func \(o \*Orchestrator\) StartDispatcher\(ctx context.Context\) error](<#Orchestrator.StartDispatcher>)
   - [func \(o \*Orchestrator\) StartOrchestrator\(ctx context.Context\) error](<#Orchestrator.StartOrchestrator>)
+  - [func \(o \*Orchestrator\) UnregisterActiveRun\(runID uint\)](<#Orchestrator.UnregisterActiveRun>)
 - [type WorkerEvent](<#WorkerEvent>)
 - [type WorkerEventTopic](<#WorkerEventTopic>)
 
@@ -9423,7 +9427,7 @@ type Orchestrator struct {
 ### func NewOrchestrator
 
 ```go
-func NewOrchestrator(d *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv, dataEngine *engine.Client) *Orchestrator
+func NewOrchestrator(d *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv, dataEngine *engine.Client, cacheStorage fiber.Storage) *Orchestrator
 ```
 
 
@@ -9455,6 +9459,15 @@ func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent)
 
 
 
+<a name="Orchestrator.CancelWorkflowRun"></a>
+### func \(\*Orchestrator\) CancelWorkflowRun
+
+```go
+func (o *Orchestrator) CancelWorkflowRun(runID uint) bool
+```
+
+CancelWorkflowRun cancels a running workflow by calling its cancel function.
+
 <a name="Orchestrator.ExecuteDispatchedEvent"></a>
 ### func \(\*Orchestrator\) ExecuteDispatchedEvent
 
@@ -9473,6 +9486,24 @@ func (o *Orchestrator) ExecuteWorkflow(ctx context.Context, workflow *db.Workflo
 
 ExecuteWorkflow executes a workflow and listens for status changes in the database.
 
+<a name="Orchestrator.InvalidateWorkflowRunCache"></a>
+### func \(\*Orchestrator\) InvalidateWorkflowRunCache
+
+```go
+func (o *Orchestrator) InvalidateWorkflowRunCache(run *db.WorkflowRun)
+```
+
+InvalidateWorkflowRunCache invalidates the cache for a specific workflow run. This ensures clients get fresh data when workflow run status/logs change.
+
+<a name="Orchestrator.RegisterActiveRun"></a>
+### func \(\*Orchestrator\) RegisterActiveRun
+
+```go
+func (o *Orchestrator) RegisterActiveRun(runID uint, cancel context.CancelFunc)
+```
+
+RegisterActiveRun registers a workflow run's cancel function for later cancellation.
+
 <a name="Orchestrator.StartDispatcher"></a>
 ### func \(\*Orchestrator\) StartDispatcher
 
@@ -9490,6 +9521,15 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error
 ```
 
 StartOrchestrator starts the orchestrator and the dispatcher. It will tick every 10 seconds to check for time\-based triggers. When a trigger is due to run, it will create a new workflow run. It will also start the dispatcher in a new goroutine. The dispatcher will check for pending workflow runs and dispatch them to be executed.
+
+<a name="Orchestrator.UnregisterActiveRun"></a>
+### func \(\*Orchestrator\) UnregisterActiveRun
+
+```go
+func (o *Orchestrator) UnregisterActiveRun(runID uint)
+```
+
+UnregisterActiveRun removes a workflow run's cancel function after completion.
 
 <a name="WorkerEvent"></a>
 ## type WorkerEvent

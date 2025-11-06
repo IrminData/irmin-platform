@@ -46,6 +46,7 @@ func NewOrchestrator(
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	dataEngine *engine.Client,
+	cacheStorage fiber.Storage,
 ) *Orchestrator
 
 func (o *Orchestrator) AddDispatchedEvent(event *DispatchEvent)
@@ -53,6 +54,9 @@ func (o *Orchestrator) AddDispatchedEvent(event *DispatchEvent)
 func (o *Orchestrator) AddLakefsEvent(event *lakefs.WebhookEvent)
 
 func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent)
+
+func (o *Orchestrator) CancelWorkflowRun(runID uint) bool
+    CancelWorkflowRun cancels a running workflow by calling its cancel function.
 
 func (o *Orchestrator) ExecuteDispatchedEvent(ctx context.Context, event *DispatchEvent) error
     ExecuteDispatchedEvent executes a dispatched event.
@@ -65,6 +69,15 @@ func (o *Orchestrator) ExecuteWorkflow(
     ExecuteWorkflow executes a workflow and listens for status changes in the
     database.
 
+func (o *Orchestrator) InvalidateWorkflowRunCache(run *db.WorkflowRun)
+    InvalidateWorkflowRunCache invalidates the cache for a specific workflow
+    run. This ensures clients get fresh data when workflow run status/logs
+    change.
+
+func (o *Orchestrator) RegisterActiveRun(runID uint, cancel context.CancelFunc)
+    RegisterActiveRun registers a workflow run's cancel function for later
+    cancellation.
+
 func (o *Orchestrator) StartDispatcher(ctx context.Context) error
     StartDispatcher starts the dispatcher that listens for PostgreSQL
     notifications about new or updated workflow runs and dispatches them to the
@@ -76,6 +89,10 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error
     run, it will create a new workflow run. It will also start the dispatcher
     in a new goroutine. The dispatcher will check for pending workflow runs and
     dispatch them to be executed.
+
+func (o *Orchestrator) UnregisterActiveRun(runID uint)
+    UnregisterActiveRun removes a workflow run's cancel function after
+    completion.
 
 type WorkerEvent struct {
 	Topic WorkerEventTopic

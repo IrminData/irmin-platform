@@ -103,28 +103,53 @@ func (o *Orchestrator) executeWorkflowRunEvent(ctx context.Context, event *Dispa
 		return err
 	}
 
-	// Notify the orchestrator that the workflow run is starting
-	o.AddWorkerEvent(&WorkerEvent{
-		Topic:                WorkerEventTopicWorkflowRun,
-		WorkflowRunEventType: db.PreWorkflowRun,
-		WorkflowRunID:        workflowRun.ID,
-		WorkflowID:           workflow.ID,
-	})
+	// Execute the workflow in a separate goroutine to avoid blocking the orchestrator
+	// We create a new context from background because the parent context will be cancelled
+	// immediately after this function returns, which would kill the goroutine
+	go func() {
+		// Create a cancellable context that won't be cancelled when the parent returns
+		workflowCtx, cancelWorkflow := context.WithCancel(context.Background())
+		defer cancelWorkflow()
 
-	// Execute the workflow
-	_, err = o.ExecuteWorkflow(ctx, workflow, workflowRun)
-	if err != nil {
-		o.logger.ErrorContext(ctx, "error executing workflow", "error", err)
-		return err
-	}
+		// Register this workflow run so it can be cancelled externally
+		o.RegisterActiveRun(workflowRun.ID, cancelWorkflow)
+		defer o.UnregisterActiveRun(workflowRun.ID)
 
-	// Notify the orchestrator that the workflow run has finished
-	o.AddWorkerEvent(&WorkerEvent{
-		Topic:                WorkerEventTopicWorkflowRun,
-		WorkflowRunEventType: db.PostWorkflowRun,
-		WorkflowRunID:        workflowRun.ID,
-		WorkflowID:           workflow.ID,
-	})
+		// Log what is being executed
+		o.logger.InfoContext(workflowCtx, "starting workflow execution, about to notify orchestrator",
+			"workflow_id", workflow.ID,
+			"workflow_run_id", workflowRun.ID)
+
+		// Notify the orchestrator that the workflow run is starting
+		o.AddWorkerEvent(&WorkerEvent{
+			Topic:                WorkerEventTopicWorkflowRun,
+			WorkflowRunEventType: db.PreWorkflowRun,
+			WorkflowRunID:        workflowRun.ID,
+			WorkflowID:           workflow.ID,
+		})
+
+		o.logger.InfoContext(workflowCtx, "starting workflow execution, about to execute workflow",
+			"workflow_id", workflow.ID,
+			"workflow_run_id", workflowRun.ID)
+
+		// Execute the workflow
+		_, executeErr := o.ExecuteWorkflow(workflowCtx, workflow, workflowRun)
+		if executeErr != nil {
+			o.logger.ErrorContext(workflowCtx, "error executing workflow", "error", executeErr)
+		}
+
+		o.logger.InfoContext(workflowCtx, "finished workflow execution",
+			"workflow_id", workflow.ID,
+			"workflow_run_id", workflowRun.ID)
+
+		// Notify the orchestrator that the workflow run has finished
+		o.AddWorkerEvent(&WorkerEvent{
+			Topic:                WorkerEventTopicWorkflowRun,
+			WorkflowRunEventType: db.PostWorkflowRun,
+			WorkflowRunID:        workflowRun.ID,
+			WorkflowID:           workflow.ID,
+		})
+	}()
 
 	return nil
 }

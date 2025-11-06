@@ -27,7 +27,7 @@ func setupTestOrchestrator(t *testing.T) (*orchestrator.Orchestrator, *db.Databa
 	}
 
 	// Create orchestrator
-	orch := orchestrator.NewOrchestrator(ts.DB, ts.Logger, ts.Env, dataEngine)
+	orch := orchestrator.NewOrchestrator(ts.DB, ts.Logger, ts.Env, dataEngine, nil)
 
 	return orch, ts.DB, ts.Env
 }

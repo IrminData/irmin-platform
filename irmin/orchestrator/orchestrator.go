@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	irmincache "irmin-api/cache"
 	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
 	"irmin-api/engine"
@@ -12,9 +13,11 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/gofiber/fiber/v3"
 	"github.com/robfig/cron/v3"
 	"github.com/teambition/rrule-go"
 	"gorm.io/gorm"
@@ -27,6 +30,7 @@ type Orchestrator struct {
 	env            *utils.CoreAPIEnv
 	dataEngine     *engine.Client
 	computeSandbox *sandbox.ComputeSandbox
+	cacheStorage   fiber.Storage
 
 	// LakeFS events are events that are received from the LakeFS webhook.
 	lakefsEventQueue chan *lakefs.WebhookEvent
@@ -34,6 +38,10 @@ type Orchestrator struct {
 	workerEventQueue chan *WorkerEvent
 	// Dispatched events are events that are dispatched to the API to be executed.
 	dispatchedEventQueue chan *DispatchEvent
+
+	// Active workflow run contexts for cancellation
+	activeRunContexts map[uint]context.CancelFunc
+	activeRunMutex    sync.RWMutex
 }
 
 func NewOrchestrator(
@@ -41,6 +49,7 @@ func NewOrchestrator(
 	logger *slog.Logger,
 	env *utils.CoreAPIEnv,
 	dataEngine *engine.Client,
+	cacheStorage fiber.Storage,
 ) *Orchestrator {
 	// Initialize the compute sandbox
 	computeSandbox := sandbox.NewComputeSandbox(env, d, logger)
@@ -52,9 +61,11 @@ func NewOrchestrator(
 		env:                  env,
 		dataEngine:           dataEngine,
 		computeSandbox:       computeSandbox,
+		cacheStorage:         cacheStorage,
 		lakefsEventQueue:     make(chan *lakefs.WebhookEvent, DefaultChannelBufferSize),
 		dispatchedEventQueue: make(chan *DispatchEvent, DefaultChannelBufferSize),
 		workerEventQueue:     make(chan *WorkerEvent, DefaultChannelBufferSize),
+		activeRunContexts:    make(map[uint]context.CancelFunc),
 	}
 }
 
@@ -68,6 +79,68 @@ func (o *Orchestrator) AddDispatchedEvent(event *DispatchEvent) {
 
 func (o *Orchestrator) AddWorkerEvent(event *WorkerEvent) {
 	o.workerEventQueue <- event
+}
+
+// RegisterActiveRun registers a workflow run's cancel function for later cancellation.
+func (o *Orchestrator) RegisterActiveRun(runID uint, cancel context.CancelFunc) {
+	o.activeRunMutex.Lock()
+	defer o.activeRunMutex.Unlock()
+	o.activeRunContexts[runID] = cancel
+	o.logger.Info("registered active workflow run", "run_id", runID)
+}
+
+// UnregisterActiveRun removes a workflow run's cancel function after completion.
+func (o *Orchestrator) UnregisterActiveRun(runID uint) {
+	o.activeRunMutex.Lock()
+	defer o.activeRunMutex.Unlock()
+	delete(o.activeRunContexts, runID)
+	o.logger.Info("unregistered active workflow run", "run_id", runID)
+}
+
+// CancelWorkflowRun cancels a running workflow by calling its cancel function.
+func (o *Orchestrator) CancelWorkflowRun(runID uint) bool {
+	o.activeRunMutex.RLock()
+	cancel, exists := o.activeRunContexts[runID]
+	o.activeRunMutex.RUnlock()
+
+	if !exists {
+		o.logger.Info("workflow run not found in active runs", "run_id", runID)
+		return false
+	}
+
+	o.logger.Info("cancelling workflow run", "run_id", runID)
+	cancel()
+	return true
+}
+
+// InvalidateWorkflowRunCache invalidates the cache for a specific workflow run.
+// This ensures clients get fresh data when workflow run status/logs change.
+func (o *Orchestrator) InvalidateWorkflowRunCache(run *db.WorkflowRun) {
+	if run == nil || o.cacheStorage == nil {
+		return
+	}
+
+	// Get the workflow to construct the cache path (with Workspace preloaded)
+	workflow, err := o.db.GetWorkflowByID(run.WorkflowID)
+	if err != nil {
+		o.logger.Error("failed to get workflow for cache invalidation",
+			"error", err,
+			"workflow_id", run.WorkflowID)
+		return
+	}
+
+	// Invalidate the workflow runs list cache for this workflow
+	// This covers all workflow run-related endpoints for this workspace
+	cachePath := fmt.Sprintf("/api/v1/workspaces/%s/workflows", workflow.Workspace.Slug)
+	if invalidateErr := irmincache.InvalidatePathPrefixForAllUsers(o.cacheStorage, cachePath); invalidateErr != nil {
+		o.logger.Error("failed to invalidate workflow runs cache",
+			"error", invalidateErr,
+			"cache_path", cachePath)
+	} else {
+		o.logger.Debug("invalidated workflow runs cache",
+			"cache_path", cachePath,
+			"run_id", run.ID)
+	}
 }
 
 // cancelStuckWorkflowRuns cancels all workflow runs that are stuck in running, pending, or initiating status.
@@ -182,30 +255,36 @@ func (o *Orchestrator) StartOrchestrator(ctx context.Context) error {
 		case event := <-o.lakefsEventQueue:
 			o.logger.InfoContext(ctx, "received lakefs event", "event", event)
 
-			// Create a new context for the lakefs event with proper cancellation
-			lakefsCtx, cancelLakefs := context.WithCancel(ctx)
+			// Process lakefs events asynchronously to avoid blocking the main loop
+			// These events trigger workflows based on repository events (commits, merges, etc.)
+			go func(evt *lakefs.WebhookEvent) {
+				// Create a dedicated context for this lakefs event derived from the parent context
+				// This ensures the goroutine is cancelled when the orchestrator shuts down
+				lakefsCtx, cancelLakefs := context.WithCancel(ctx)
+				defer cancelLakefs()
 
-			// Process the lakefs event
-			if err := o.processRepositoryEvent(lakefsCtx, event); err != nil {
-				o.logger.ErrorContext(ctx, "error processing repository event", "error", err)
-			}
-
-			// Properly cancel the context to prevent resource leaks
-			cancelLakefs()
+				// Process the lakefs event
+				if err := o.processRepositoryEvent(lakefsCtx, evt); err != nil {
+					o.logger.ErrorContext(lakefsCtx, "error processing repository event", "error", err)
+				}
+			}(event)
 
 		case event := <-o.workerEventQueue:
 			o.logger.InfoContext(ctx, "received worker event", "event", event)
 
-			// Create a new context for the worker event with proper cancellation
-			workerCtx, cancelWorker := context.WithCancel(ctx)
+			// Process worker events asynchronously to avoid blocking the main loop
+			// Worker events are used to trigger other workflows based on workflow run completion
+			go func(evt *WorkerEvent) {
+				// Create a dedicated context for this worker event derived from the parent context
+				// This ensures the goroutine is cancelled when the orchestrator shuts down
+				workerCtx, cancelWorker := context.WithCancel(ctx)
+				defer cancelWorker()
 
-			// Process the worker event
-			if err := o.processWorkerEvent(workerCtx, event); err != nil {
-				o.logger.ErrorContext(ctx, "error processing worker event", "error", err)
-			}
-
-			// Properly cancel the context to prevent resource leaks
-			cancelWorker()
+				// Process the worker event
+				if err := o.processWorkerEvent(workerCtx, evt); err != nil {
+					o.logger.ErrorContext(workerCtx, "error processing worker event", "error", err)
+				}
+			}(event)
 
 		case <-ticker.C:
 			// Create a new context for the trigger scan with proper cancellation

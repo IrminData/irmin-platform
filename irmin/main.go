@@ -246,6 +246,7 @@ func setupCORS(env *utils.CoreAPIEnv) fiber.Handler {
 func setupServices(
 	env *utils.CoreAPIEnv,
 	database *db.Database,
+	cacheStorage fiber.Storage,
 ) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *lib.PermissionService, error) {
 	// Initialize data engine
 	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env, database)
@@ -254,7 +255,7 @@ func setupServices(
 	}
 
 	// Initialize orchestrator
-	orchestrator := orchestrator.NewOrchestrator(database, slog.Default(), env, dataEngine)
+	orchestrator := orchestrator.NewOrchestrator(database, slog.Default(), env, dataEngine, cacheStorage)
 	if env.OrchestratorEnabled {
 		go func() {
 			if orchestratorStartErr := orchestrator.StartOrchestrator(context.Background()); orchestratorStartErr != nil {
@@ -308,7 +309,7 @@ func main() {
 	app := setupFiberApp(env, appCacheMiddleware)
 
 	// Setup services
-	orchestrator, sqidManager, localeManager, permissionService, err := setupServices(env, database)
+	orchestrator, sqidManager, localeManager, permissionService, err := setupServices(env, database, cacheStorage)
 	if err != nil {
 		log.Fatalf("failed to setup services: %v", err)
 	}

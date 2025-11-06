@@ -34,8 +34,10 @@ type Database struct {
 const (
 	// The number of connections each application process can open.
 	// This should be a low number to avoid exhausting PgBouncer's max_client_conn.
-	appMaxConnsPerProcess = 3
-	appMinConnsPerProcess = 1
+	// Note: The orchestrator's dispatcher permanently holds 2 connections for LISTEN/NOTIFY,
+	// so we need at least 10-15 connections for API requests and workflow execution.
+	appMaxConnsPerProcess = 15
+	appMinConnsPerProcess = 3
 
 	// How long a connection can be in use before it's recycled.
 	appConnMaxLifetime = time.Hour

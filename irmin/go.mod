@@ -3,8 +3,8 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20251101175330-dc505f43aa48
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.89.2
+	github.com/IrminData/irmin-sdk-go v0.0.0-20251106135031-f97e0fbab1fa
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.90.0
 	github.com/clerk/clerk-sdk-go/v2 v2.4.2
 	github.com/gofiber/fiber/v3 v3.0.0-rc.2
 	github.com/gofiber/storage/memory/v2 v2.1.0
@@ -33,7 +33,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.31.17 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.13 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.3 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.13 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.13 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
@@ -96,7 +96,7 @@ require (
 	golang.org/x/oauth2 v0.32.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/telemetry v0.0.0-20251104151223-ab4e49a9e6f4 // indirect
+	golang.org/x/telemetry v0.0.0-20251105150722-cbe4531f26c3 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
