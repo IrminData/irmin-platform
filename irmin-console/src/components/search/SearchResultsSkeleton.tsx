@@ -9,7 +9,7 @@ export default function SearchResultsSkeleton() {
   const sectionKeys = [...Array(3)].map(
     (_, index) => `skeleton-section-${index}`
   );
-  const itemKeys = [...Array(3)].map((sectionIndex) =>
+  const itemKeys = [...Array(3)].map((_, sectionIndex) =>
     [...Array(2 + sectionIndex)].map(
       (_, itemIndex) => `skeleton-item-${sectionIndex}-${itemIndex}`
     )

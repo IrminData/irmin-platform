@@ -193,9 +193,21 @@ function WorkflowScheduleForm({
   // Ref to store the previous sent schedule data
   const previousScheduleRef = useRef(formDataAsSchedule);
 
+  // Ref to track if initial update has been sent
+  const hasInitializedRef = useRef(false);
+
   // Call handleUpdateSchedule whenever form data changes if save button is disabled
   useEffect(() => {
     if (disableSaveButton) {
+      // On first render, always send the initial schedule data
+      if (!hasInitializedRef.current) {
+        hasInitializedRef.current = true;
+        previousScheduleRef.current = formDataAsSchedule;
+        void handleUpdateSchedule(formDataAsSchedule);
+        return;
+      }
+
+      // For subsequent renders, only update if data has changed
       if (!deepEqual(previousScheduleRef.current, formDataAsSchedule)) {
         previousScheduleRef.current = formDataAsSchedule;
         void handleUpdateSchedule(formDataAsSchedule);

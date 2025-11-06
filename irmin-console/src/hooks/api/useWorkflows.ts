@@ -86,6 +86,7 @@ export function useWorkflows(type?: WorkflowableType) {
                 company: '',
                 profile_picture: '',
               },
+              tags: [],
               schedule: input.schedule,
               workflowable: input.workflowable,
             }) as Workflow,

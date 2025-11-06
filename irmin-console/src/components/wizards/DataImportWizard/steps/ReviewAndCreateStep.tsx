@@ -104,12 +104,6 @@ export default function ReviewAndCreateStep({
         description: wizardData.workflowData.description,
         documentation: wizardData.workflowData.documentation,
         type: 'import',
-        schedule: {
-          triggers: [],
-          max_retries: 3,
-          max_runtime: 15,
-          min_interval: 120,
-        },
         workflowable: {
           type: 'import',
           connection_id: connectionId,
