@@ -872,11 +872,11 @@ type Workflowable struct {
 	Repository       string         `json:"repository,omitempty"        validate:"required_if=Type import,required_if=Type export"                       example:"customer-analytics"`
 	RepositoryBranch string         `json:"repository_branch,omitempty" validate:"required_if=Type import,required_if=Type export"                       example:"main"`
 
-	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" validate:"dive,required_if=Type import" example:"/exports/customers.csv,/exports/metadata.json"`
-	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    validate:"omitempty"                    example:"/imported/customers.json"`
+	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" validate:"required_if=Type import" example:"/exports/customers.csv,/exports/metadata.json"`
+	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    validate:"omitempty"               example:"/imported/customers.json"`
 
-	ExportFromRepositoryPaths []string `json:"export_from_repository_paths,omitempty" validate:"dive,required_if=Type export" example:"/processed/customers.json,/processed/summary.json"`
-	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"    validate:"omitempty"                    example:"/exports/final_data.csv"`
+	ExportFromRepositoryPaths []string `json:"export_from_repository_paths,omitempty" validate:"required_if=Type export" example:"/processed/customers.json,/processed/summary.json"`
+	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"    validate:"omitempty"               example:"/exports/final_data.csv"`
 
 	Live   bool            `json:"live,omitempty"   example:"true"`
 	Stages []PipelineStage `json:"stages,omitempty"                validate:"dive"`
