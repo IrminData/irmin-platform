@@ -115,7 +115,7 @@ export class AgentsManager {
         conversation = newConversation;
 
         // Log analytics
-        await analyticsService.logConversationEvent('conversation_created', id);
+        analyticsService.logConversationEvent('conversation_created', id);
       }
 
       // Sanitize user message
@@ -144,7 +144,7 @@ export class AgentsManager {
       await db.insert(messages).values(userMessage);
 
       // Log user message analytics
-      await analyticsService.logMessageSent(conversation.id, userMessageId);
+      analyticsService.logMessageSent(conversation.id, userMessageId);
 
       // Execute agent with sanitized message
       const sanitizedInput = {
@@ -218,7 +218,7 @@ export class AgentsManager {
         await Promise.all(assistantMessagePromises);
 
         // Log assistant message analytics
-        await analyticsService.logAgentUsed(
+        analyticsService.logAgentUsed(
           conversation.id,
           userMessageId,
           agent.config.name
@@ -295,7 +295,7 @@ export class AgentsManager {
       }
 
       // Log error analytics for other types of errors
-      await analyticsService.logError(
+      analyticsService.logError(
         'agent_execution',
         error instanceof Error ? error.message : 'Unknown error',
         input.conversationId,

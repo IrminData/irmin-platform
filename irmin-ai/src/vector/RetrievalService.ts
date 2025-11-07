@@ -3,6 +3,7 @@ import { QdrantVectorStore } from '@langchain/qdrant';
 import { z } from 'zod';
 
 import { analyticsService } from '@/services/analytics';
+import { type LLMProvider, llmService } from '@/services/llm';
 
 // Zod schemas for type safety
 const VectorSearchSchema = z.object({
@@ -96,7 +97,7 @@ class RetrievalService {
       };
 
       // Log vector operation
-      await analyticsService.logVectorRetrieval('similarity_search', {
+      analyticsService.logVectorRetrieval('similarity_search', {
         query: validatedOptions.query,
         resultCount: searchResults.length,
         processingTimeMs: processingTime,
@@ -108,7 +109,7 @@ class RetrievalService {
 
       return result;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'similarity_search',
         error instanceof Error ? error.message : 'Unknown error',
         { query: options.query }
@@ -157,7 +158,7 @@ class RetrievalService {
       };
 
       // Log vector operation
-      await analyticsService.logVectorRetrieval('retrieval_with_analysis', {
+      analyticsService.logVectorRetrieval('retrieval_with_analysis', {
         query: validatedAnalysis.query,
         resultCount: searchResults.length,
         processingTimeMs: processingTime,
@@ -168,7 +169,7 @@ class RetrievalService {
 
       return result;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'retrieval_with_analysis',
         error instanceof Error ? error.message : 'Unknown error',
         { query: analysis.query }
@@ -240,7 +241,7 @@ class RetrievalService {
       }
 
       // Log vector operation
-      await analyticsService.logVectorRetrieval('context_retrieved', {
+      analyticsService.logVectorRetrieval('context_retrieved', {
         query,
         sourcesCount: sources.length,
         estimatedTokens: tokenCount,
@@ -253,7 +254,7 @@ class RetrievalService {
         totalTokens: tokenCount,
       };
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'context_retrieval',
         error instanceof Error ? error.message : 'Unknown error',
         { query }
@@ -305,7 +306,7 @@ class RetrievalService {
       }
 
       // Log vector operation
-      await analyticsService.logVectorRetrieval('multi_query_retrieval', {
+      analyticsService.logVectorRetrieval('multi_query_retrieval', {
         queryCount: queries.length,
         totalResults: allResults.reduce((sum, r) => sum + r.totalResults, 0),
         collectionName: collectionName || this.defaultCollectionName,
@@ -313,7 +314,7 @@ class RetrievalService {
 
       return allResults;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'multi_query_retrieval',
         error instanceof Error ? error.message : 'Unknown error',
         { queryCount: queries.length }
@@ -359,7 +360,7 @@ class RetrievalService {
         }));
 
       // Log vector operation
-      await analyticsService.logVectorRetrieval('compressed_retrieval', {
+      analyticsService.logVectorRetrieval('compressed_retrieval', {
         query,
         originalCount: result.documents.length,
         compressedCount: compressedResults.length,
@@ -373,13 +374,260 @@ class RetrievalService {
         totalResults: compressedResults.length,
       };
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'compressed_retrieval',
         error instanceof Error ? error.message : 'Unknown error',
         { query }
       );
       throw new Error(
         `Failed to perform compressed retrieval: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Generate hypothetical content for a query using LLM
+   * This creates richer embeddings that often match document content better than raw queries
+   */
+  private async generateHypotheticalContent(
+    query: string
+  ): Promise<string | null> {
+    const startTime = Date.now();
+    const TIMEOUT_MS = 5000;
+
+    try {
+      const llm = llmService.createModel({
+        provider: 'openai',
+        model: 'gpt-5-nano',
+        maxTokens: 2000,
+        streaming: false,
+        temperature: 1,
+        openai: { reasoning: { effort: 'minimal' } },
+      });
+
+      const prompt = `Given this user query: "${query}"
+Generate a concise passage (2-3 sentences) that would likely contain the answer or relevant information about this topic.`;
+
+      const response = await Promise.race([
+        llm.invoke(prompt),
+        new Promise<never>((_resolve, reject) =>
+          setTimeout(
+            () => reject(new Error('Hypothetical generation timeout')),
+            TIMEOUT_MS
+          )
+        ),
+      ]);
+
+      const getContentAsString = (content: unknown): string => {
+        if (typeof content === 'string') return content;
+        if (Array.isArray(content)) {
+          return content
+            .map((item) => {
+              if (typeof item === 'string') return item;
+              if (item && typeof item === 'object') {
+                if ('text' in item) return String(item.text);
+                if ('content' in item) return String(item.content);
+              }
+              return String(item);
+            })
+            .join(' ');
+        }
+        if (content && typeof content === 'object') {
+          if ('text' in content) return String(content.text);
+          if ('content' in content) return String(content.content);
+        }
+        return String(content || '');
+      };
+
+      const hypotheticalContent = getContentAsString(response.content).trim();
+      const generationTime = Date.now() - startTime;
+
+      // Extract token usage from response metadata
+      // LangChain responses can have usage in different places:
+      // - response.usage_metadata.tokenUsage
+      // - response.response_metadata.usage
+      // - response.usage_metadata (direct properties)
+      const usageMetadata =
+        (response as { usage_metadata?: unknown }).usage_metadata ||
+        (response as { response_metadata?: { usage?: unknown } })
+          .response_metadata?.usage;
+
+      let promptTokens: number | undefined;
+      let completionTokens: number | undefined;
+      let totalTokens: number | undefined;
+
+      if (usageMetadata && typeof usageMetadata === 'object') {
+        const usage = usageMetadata as Record<string, unknown>;
+        // Try different possible structures
+        if (usage.tokenUsage) {
+          const tokenUsage = usage.tokenUsage as Record<string, unknown>;
+          promptTokens = tokenUsage.promptTokens as number | undefined;
+          completionTokens = tokenUsage.completionTokens as number | undefined;
+          totalTokens = tokenUsage.totalTokens as number | undefined;
+        } else {
+          // Direct properties
+          promptTokens = usage.promptTokens as number | undefined;
+          completionTokens = usage.completionTokens as number | undefined;
+          totalTokens = usage.totalTokens as number | undefined;
+        }
+      }
+
+      // Log model usage if token counts are available
+      if (promptTokens !== undefined && completionTokens !== undefined) {
+        const calculatedUsage = llmService.calculateUsage(
+          [{ role: 'user', content: prompt, id: '', conversationId: '' }],
+          hypotheticalContent || '',
+          'openai' as LLMProvider,
+          'gpt-5-nano',
+          promptTokens,
+          completionTokens
+        );
+
+        analyticsService.logModelUsage(
+          'gpt-5-nano',
+          totalTokens || calculatedUsage.totalTokens,
+          calculatedUsage.totalCost,
+          generationTime,
+          undefined,
+          undefined,
+          {
+            operation: 'hypothetical_generation',
+            provider: 'openai',
+          }
+        );
+      }
+
+      analyticsService.logVectorRetrieval('hypothetical_generation', {
+        query,
+        userPrompt: query,
+        generatedHypothetical: hypotheticalContent || undefined,
+        processingTimeMs: generationTime,
+        resultCount: hypotheticalContent ? 1 : 0,
+      });
+
+      return hypotheticalContent || null;
+    } catch (error) {
+      analyticsService.logVectorError(
+        'hypothetical_generation',
+        error instanceof Error ? error.message : 'Unknown error',
+        { query, processingTimeMs: Date.now() - startTime }
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Retrieve context using hypothetical content generation
+   * Falls back to direct query if hypothetical generation fails
+   */
+  async retrieveWithHypotheticalContent(
+    vectorStore: QdrantVectorStore,
+    query: string,
+    options: {
+      maxDocuments?: number;
+      scoreThreshold?: number;
+      includeMetadata?: boolean;
+      maxTokens?: number;
+    } = {},
+    collectionName?: string
+  ): Promise<{
+    context: string;
+    sources: Document[];
+    totalTokens: number;
+    usedHypothetical: boolean;
+    hypotheticalContent?: string;
+  }> {
+    const startTime = Date.now();
+
+    if (!query || query.trim().length === 0) {
+      return {
+        context: '',
+        sources: [],
+        totalTokens: 0,
+        usedHypothetical: false,
+      };
+    }
+
+    try {
+      const {
+        maxDocuments = 5,
+        scoreThreshold = 0.0,
+        includeMetadata = false,
+        maxTokens = 4000,
+      } = options;
+
+      const hypotheticalContent = await this.generateHypotheticalContent(query);
+
+      const searchQuery = hypotheticalContent || query;
+      const usedHypothetical = !!hypotheticalContent;
+
+      if (!hypotheticalContent) {
+        analyticsService.logVectorRetrieval('hypothetical_fallback', {
+          query,
+          collectionName: collectionName || this.defaultCollectionName,
+        });
+      }
+      const retrievalResult = await this.searchSimilar(
+        vectorStore,
+        {
+          query: searchQuery,
+          k: maxDocuments,
+          scoreThreshold,
+        },
+        collectionName
+      );
+
+      // Filter and prepare context
+      let context = '';
+      let tokenCount = 0;
+      const sources: Document[] = [];
+
+      for (const result of retrievalResult.documents) {
+        const docContent = result.document.pageContent;
+        const metadataStr = includeMetadata
+          ? `\n[Source: ${JSON.stringify(result.document.metadata)}]\n`
+          : '';
+
+        const docText = `${docContent}${metadataStr}\n\n`;
+        const estimatedTokens = Math.ceil(docText.length / 4); // Rough token estimation
+
+        if (tokenCount + estimatedTokens <= maxTokens) {
+          context += docText;
+          tokenCount += estimatedTokens;
+          sources.push(result.document);
+        } else {
+          break;
+        }
+      }
+
+      analyticsService.logVectorRetrieval('hypothetical_context_retrieved', {
+        query,
+        userPrompt: query,
+        generatedHypothetical: hypotheticalContent || undefined,
+        sourcesCount: sources.length,
+        estimatedTokens: tokenCount,
+        processingTimeMs: Date.now() - startTime,
+        collectionName: collectionName || this.defaultCollectionName,
+      });
+
+      return {
+        context: context.trim(),
+        sources,
+        totalTokens: tokenCount,
+        usedHypothetical,
+        hypotheticalContent:
+          usedHypothetical && hypotheticalContent
+            ? hypotheticalContent
+            : undefined,
+      };
+    } catch (error) {
+      analyticsService.logVectorError(
+        'hypothetical_context_retrieval',
+        error instanceof Error ? error.message : 'Unknown error',
+        { query }
+      );
+      throw new Error(
+        `Failed to retrieve context with hypothetical content: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }

@@ -295,9 +295,14 @@ class AnalyticsService {
       | 'retrieval_with_analysis'
       | 'context_retrieved'
       | 'multi_query_retrieval'
-      | 'compressed_retrieval',
+      | 'compressed_retrieval'
+      | 'hypothetical_generation'
+      | 'hypothetical_fallback'
+      | 'hypothetical_context_retrieved',
     eventData: {
       query?: string;
+      userPrompt?: string;
+      generatedHypothetical?: string;
       resultCount?: number;
       processingTimeMs?: number;
       collectionName?: string;

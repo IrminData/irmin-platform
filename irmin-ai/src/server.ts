@@ -140,12 +140,7 @@ server.setErrorHandler(async (error, _, reply) => {
   server.log.error(error);
 
   // Log error analytics
-  await analyticsService.logError(
-    'global_error',
-    message,
-    undefined,
-    undefined
-  );
+  analyticsService.logError('global_error', message, undefined, undefined);
 
   sendErrorResponse(
     reply,

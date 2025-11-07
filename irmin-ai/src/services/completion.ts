@@ -92,7 +92,7 @@ class CompletionService {
       );
     } catch (error) {
       // Log error analytics
-      await analyticsService.logError(
+      analyticsService.logError(
         'completion_streaming',
         error instanceof Error ? error.message : 'Unknown error',
         options.conversationId,
@@ -162,7 +162,7 @@ class CompletionService {
       };
     } catch (error) {
       // Log error analytics
-      await analyticsService.logError(
+      analyticsService.logError(
         'completion_non_streaming',
         error instanceof Error ? error.message : 'Unknown error',
         options.conversationId,
@@ -213,7 +213,7 @@ class CompletionService {
                 usedModel
               );
 
-              await analyticsService.logModelUsage(
+              analyticsService.logModelUsage(
                 usedModel,
                 calculatedUsage.totalTokens,
                 calculatedUsage.totalCost,

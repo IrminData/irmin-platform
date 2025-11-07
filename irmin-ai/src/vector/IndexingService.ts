@@ -88,7 +88,7 @@ class IndexingService {
 
       return vectorStore;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'vector_store_connection',
         error instanceof Error ? error.message : 'Unknown error',
         { collectionName: collectionName }
@@ -134,7 +134,7 @@ class IndexingService {
       );
 
       // Log vector operation
-      await analyticsService.logVectorIndexing('vector_store_created', {
+      analyticsService.logVectorIndexing('vector_store_created', {
         collectionName: collectionName,
         url: env.QDRANT_URL,
         isNewCollection: true,
@@ -142,7 +142,7 @@ class IndexingService {
 
       return vectorStore;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'vector_store_creation',
         error instanceof Error ? error.message : 'Unknown error',
         { collectionName: collectionName }
@@ -194,14 +194,14 @@ class IndexingService {
       }
 
       // Log vector operation
-      await analyticsService.logVectorIndexing('documents_indexed', {
+      analyticsService.logVectorIndexing('documents_indexed', {
         documentCount: validatedDocuments.length,
         collectionName: result.collectionName,
       });
 
       return result;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'documents_indexing',
         error instanceof Error ? error.message : 'Unknown error',
         { documentCount: documents.length }
@@ -228,14 +228,14 @@ class IndexingService {
       const embeddingResults = await embeddings.embedDocuments(texts);
 
       // Log vector operation
-      await analyticsService.logVectorIndexing('embeddings_created', {
+      analyticsService.logVectorIndexing('embeddings_created', {
         textCount: texts.length,
         embeddingDimensions: embeddingResults[0]?.length || 0,
       });
 
       return embeddingResults;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'embeddings_creation',
         error instanceof Error ? error.message : 'Unknown error',
         { textCount: texts.length }
@@ -262,14 +262,14 @@ class IndexingService {
       const embedding = await embeddings.embedQuery(text);
 
       // Log vector operation
-      await analyticsService.logVectorIndexing('embedding_created', {
+      analyticsService.logVectorIndexing('embedding_created', {
         textLength: text.length,
         embeddingDimensions: embedding.length,
       });
 
       return embedding;
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'embedding_creation',
         error instanceof Error ? error.message : 'Unknown error',
         { textLength: text.length }
@@ -321,7 +321,7 @@ class IndexingService {
       deletedCount = initialCount;
 
       // Log vector operation
-      await analyticsService.logVectorIndexing('documents_deleted', {
+      analyticsService.logVectorIndexing('documents_deleted', {
         documentCount: deletedCount,
         collectionName: finalCollectionName,
         errorCount: errors.length,
@@ -333,7 +333,7 @@ class IndexingService {
         errors,
       };
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'documents_deletion',
         error instanceof Error ? error.message : 'Unknown error',
         { collectionName: collectionName || this.defaultCollectionName }
@@ -392,7 +392,7 @@ class IndexingService {
       }
 
       // Log vector operation
-      await analyticsService.logVectorIndexing('documents_deleted', {
+      analyticsService.logVectorIndexing('documents_deleted', {
         documentCount: deletedCount,
         collectionName: finalCollectionName,
         errorCount: errors.length,
@@ -404,7 +404,7 @@ class IndexingService {
         errors,
       };
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'documents_deletion',
         error instanceof Error ? error.message : 'Unknown error',
         { documentCount: chunkIds.length }
@@ -515,7 +515,7 @@ class IndexingService {
       }
 
       // Log vector operation
-      await analyticsService.logVectorIndexing('documents_deleted', {
+      analyticsService.logVectorIndexing('documents_deleted', {
         documentCount: deletedCount,
         collectionName: finalCollectionName,
         errorCount: errors.length,
@@ -527,7 +527,7 @@ class IndexingService {
         errors,
       };
     } catch (error) {
-      await analyticsService.logVectorError(
+      analyticsService.logVectorError(
         'documents_deletion',
         error instanceof Error ? error.message : 'Unknown error',
         { documentCount: documentIds.length }

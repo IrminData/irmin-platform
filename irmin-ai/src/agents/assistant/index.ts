@@ -18,6 +18,7 @@ export class AssistantAgent extends BaseAgent {
    *
    * This extends the base class behavior by:
    * - Querying the irmin-docs collection for relevant documentation based on user input
+   * - Using hypothetical content generation for better retrieval accuracy
    * - Adding retrieved documentation to context as 'irmin_documentation' field
    * - Using direct vector store connection with environment-based QDRANT configuration
    * - Providing graceful fallback if documentation retrieval fails
@@ -36,8 +37,9 @@ export class AssistantAgent extends BaseAgent {
         true
       );
 
-      // Retrieve relevant documentation context using the user's message
-      const docsResult = await retrievalService.retrieveContext(
+      // Retrieve relevant documentation context using hypothetical content generation
+      // This improves retrieval by generating a hypothetical answer that better matches document content
+      const docsResult = await retrievalService.retrieveWithHypotheticalContent(
         vectorStore,
         input.message,
         {
@@ -49,7 +51,6 @@ export class AssistantAgent extends BaseAgent {
         'irmin-docs'
       );
 
-      // Add the retrieved documentation to context
       if (docsResult.context && docsResult.context.trim()) {
         context.irmin_documentation = docsResult.context;
       }

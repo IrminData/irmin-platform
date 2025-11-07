@@ -336,11 +336,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         await db.insert(conversations).values(newConversation);
 
         // Log analytics
-        await analyticsService.logConversationEvent(
-          'conversation_created',
-          id,
-          { title }
-        );
+        analyticsService.logConversationEvent('conversation_created', id, {
+          title,
+        });
 
         sendCreatedResponse(
           reply,
@@ -410,14 +408,10 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .where(eq(conversations.id, id));
 
         // Log analytics
-        await analyticsService.logConversationEvent(
-          'conversation_updated',
-          id,
-          {
-            title: updateData.title,
-            metadata: updateData.metadata,
-          }
-        );
+        analyticsService.logConversationEvent('conversation_updated', id, {
+          title: updateData.title,
+          metadata: updateData.metadata,
+        });
 
         // Get updated conversation
         const updated = await db
@@ -509,16 +503,12 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .where(eq(conversations.id, id));
 
         // Log analytics
-        await analyticsService.logConversationEvent(
-          'conversation_updated',
-          id,
-          {
-            titleGenerated: true,
-            oldTitle: conversation[0].title,
-            newTitle: titleResult.title,
-            generated: titleResult.generated,
-          }
-        );
+        analyticsService.logConversationEvent('conversation_updated', id, {
+          titleGenerated: true,
+          oldTitle: conversation[0].title,
+          newTitle: titleResult.title,
+          generated: titleResult.generated,
+        });
 
         // Get updated conversation
         const updated = await db
@@ -575,13 +565,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         }
 
         // Log analytics before deletion
-        await analyticsService.logConversationEvent(
-          'conversation_deleted',
-          id,
-          {
-            title: conversation[0].title,
-          }
-        );
+        analyticsService.logConversationEvent('conversation_deleted', id, {
+          title: conversation[0].title,
+        });
 
         // Delete conversation (messages and analytics will be deleted by CASCADE)
         await db.delete(conversations).where(eq(conversations.id, id));

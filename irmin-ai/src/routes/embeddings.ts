@@ -175,7 +175,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
           await collectionService.createCollection(collectionData);
 
         // Log analytics
-        await analyticsService.logVectorIndexing('vector_store_created', {
+        analyticsService.logVectorIndexing('vector_store_created', {
           collectionName: collection.name,
           embeddingDimensions: collection.embeddingDimensions,
           isNewCollection: true,
@@ -239,7 +239,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Log analytics
-        await analyticsService.logVectorIndexing('vector_store_updated', {
+        analyticsService.logVectorIndexing('vector_store_updated', {
           collectionName: updatedCollection.name,
           embeddingDimensions: updatedCollection.embeddingDimensions,
           isNewCollection: false,
@@ -303,7 +303,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Log analytics
-        await analyticsService.logVectorIndexing('vector_store_deleted', {
+        analyticsService.logVectorIndexing('vector_store_deleted', {
           collectionName: collection.name,
           embeddingDimensions: collection.embeddingDimensions,
           isNewCollection: false,
@@ -384,7 +384,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         );
 
         // Log analytics
-        await analyticsService.logVectorIndexing('documents_indexed', {
+        analyticsService.logVectorIndexing('documents_indexed', {
           documentCount: result.documentCount,
           collectionName: result.collectionName,
         });
@@ -462,7 +462,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         );
 
         // Log analytics
-        await analyticsService.logVectorRetrieval('similarity_search', {
+        analyticsService.logVectorRetrieval('similarity_search', {
           query: validatedData.query,
           resultCount: result.totalResults,
           processingTimeMs: result.processingTime,
@@ -551,7 +551,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         );
 
         // Log analytics
-        await analyticsService.logVectorRetrieval('context_retrieved', {
+        analyticsService.logVectorRetrieval('context_retrieved', {
           query: validatedData.query,
           sourcesCount: result.sources.length,
           estimatedTokens: result.totalTokens,
@@ -631,7 +631,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         };
 
         // Log analytics
-        await analyticsService.logVectorIndexing('embedding_created', {
+        analyticsService.logVectorIndexing('embedding_created', {
           textLength: validatedData.text.length,
           embeddingDimensions: embedding.length,
           collectionName: collectionConfig.name,
@@ -711,7 +711,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         };
 
         // Log analytics
-        await analyticsService.logVectorIndexing('embeddings_created', {
+        analyticsService.logVectorIndexing('embeddings_created', {
           textCount: validatedData.texts.length,
           embeddingDimensions: embeddings[0]?.length || 0,
           collectionName: collectionConfig.name,

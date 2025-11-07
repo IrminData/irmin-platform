@@ -113,7 +113,7 @@ Return only the title, nothing else.`;
     } catch (error) {
       // Log analytics for title generation failure
       if (options.conversationId) {
-        await analyticsService.logError(
+        analyticsService.logError(
           'title_generation_failed',
           error instanceof Error ? error.message : 'Unknown error',
           options.conversationId
@@ -185,7 +185,7 @@ Return only the title, nothing else.`;
           .where(eq(conversations.id, conversationId));
 
         // Log analytics for successful title update
-        await analyticsService.logCustomEvent({
+        analyticsService.logCustomEvent({
           eventType: 'conversation_updated',
           conversationId,
           eventData: {
@@ -266,7 +266,7 @@ Return only the title, nothing else.`;
         );
 
         // Log analytics for successful title update
-        await analyticsService.logCustomEvent({
+        analyticsService.logCustomEvent({
           eventType: 'conversation_updated',
           conversationId,
           eventData: {

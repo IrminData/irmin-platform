@@ -90,7 +90,7 @@ class AgentGraphService {
         >
       );
     } catch (error) {
-      await analyticsService.logError(
+      analyticsService.logError(
         'agent_graph_stream',
         error instanceof Error ? error.message : 'Unknown error',
         options.conversationId,

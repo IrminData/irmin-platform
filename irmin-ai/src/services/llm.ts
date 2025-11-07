@@ -1,5 +1,5 @@
 import type { Message, NewMessage } from '@/database';
-import { ChatAnthropic } from '@langchain/anthropic';
+import { type AnthropicInput, ChatAnthropic } from '@langchain/anthropic';
 import {
   AIMessage,
   HumanMessage,
@@ -22,6 +22,16 @@ interface LLMOptions {
   temperature?: number;
   maxTokens?: number;
   tools?: StructuredTool[];
+  streaming?: boolean;
+  // Provider-specific options
+  anthropic?: {
+    thinking?: AnthropicInput['thinking'];
+  };
+  openai?: {
+    reasoning?: {
+      effort?: 'minimal' | 'low' | 'medium' | 'high';
+    };
+  };
 }
 
 export interface ModelInfo {
@@ -47,6 +57,7 @@ class LlmService {
       temperature = 0.7,
       maxTokens = 1000,
       tools = [],
+      streaming = true, // Default to streaming for better UX
     } = options;
 
     let llm: ChatGroq | ChatOpenAI | ChatAnthropic;
@@ -58,19 +69,36 @@ class LlmService {
           model: model || this.defaultGroqModel,
           temperature,
           maxTokens,
-          streaming: true, // Explicit streaming optimization
+          streaming,
         })
       );
     } else if (provider === 'openai') {
-      llm = wrapSDK(
-        new ChatOpenAI({
-          apiKey: env.OPENAI_API_KEY,
-          model: model || this.defaultOpenAIModel,
-          temperature,
-          maxTokens,
-          streaming: true, // Explicit streaming optimization
-        })
-      );
+      const openAIConfig: {
+        apiKey: string;
+        model: string;
+        temperature?: number;
+        maxTokens: number;
+        streaming: boolean;
+        extraBody?: Record<string, unknown>;
+      } = {
+        apiKey: env.OPENAI_API_KEY,
+        model: model || this.defaultOpenAIModel,
+        temperature,
+        maxTokens,
+        streaming,
+      };
+
+      // Add reasoning effort configuration if provided
+      // Pass via extraBody as LangChain may not have direct support yet
+      if (options.openai?.reasoning?.effort) {
+        openAIConfig.extraBody = {
+          reasoning: {
+            effort: options.openai.reasoning.effort,
+          },
+        };
+      }
+
+      llm = wrapSDK(new ChatOpenAI(openAIConfig));
     } else if (provider === 'anthropic') {
       llm = wrapSDK(
         new ChatAnthropic({
@@ -78,7 +106,8 @@ class LlmService {
           model: model || this.defaultAnthropicModel,
           temperature,
           maxTokens,
-          streaming: true, // Explicit streaming optimization
+          streaming,
+          thinking: options.anthropic?.thinking,
         })
       );
     } else {
