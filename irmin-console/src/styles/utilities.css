@@ -21,4 +21,16 @@
   .scrollbar-show::-webkit-scrollbar {
     display: auto;
   }
+
+  [data-pdf-export] {
+    background-color: #ffffff !important;
+    color: #1f2933 !important;
+  }
+
+  [data-pdf-export] * {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
 }

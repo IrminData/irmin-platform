@@ -422,6 +422,7 @@ const en = {
   // === WORKFLOWS ===
   workflow: {
     workflows: 'Workflows',
+    scheduledWorkflows: 'Scheduled workflows',
     allWorkflowRuns: 'All workflow runs',
     recentRuns: 'Recent runs',
     importWorkflows: 'Import workflows',
@@ -1014,11 +1015,54 @@ const en = {
   // === DOCUMENTATION ===
   documentation: {
     documentation: 'Documentation',
+    workspaceDocumentation: 'Workspace documentation',
+    downloadPdf: 'Download PDF',
     startTypingDocumentation:
       'Start typing your documentation and notes here...',
     schema: 'Schema',
     workspace: 'Workspace',
     createdBy: 'Created by',
+    searchPlaceholder: 'Search documentation...',
+    summaryTitle: 'Workspace summary',
+    summaryDescription:
+      'Snapshot of repositories, connections, and workflows in this workspace.',
+    workspaceIdentifier: 'Workspace identifier',
+    repositorySectionDescription:
+      'Ownership details, tags, and repository documentation.',
+    repositorySearchEmptyTitle: 'No repositories match your search',
+    repositorySearchEmptyDescription:
+      'Adjust your search term to see repository documentation.',
+    clearSearch: 'Clear search',
+    visibilityLabel: 'Visibility',
+    visibilityPrivate: 'Private',
+    notesHeading: 'Notes',
+    connectionSectionDescription:
+      'Connection ownership, connector types, tags, and documentation.',
+    connectionSearchEmptyTitle: 'No connections match your search',
+    connectionSearchEmptyDescription:
+      'Adjust your search term to see connection documentation.',
+    workflowSectionDescription:
+      'Workflow ownership, status, tags, and related resources.',
+    workflowSearchEmptyTitle: 'No workflows match your search',
+    workflowSearchEmptyDescription:
+      'Adjust your search term to see workflow documentation.',
+    scheduleLabel: 'Schedule',
+    workspaceEmptyTitle: 'Workspace is empty',
+    workspaceEmptyDescription:
+      'Start by creating your first repository, connection, or workflow to generate documentation.',
+    goToWorkspace: 'Go to workspace',
+    schemaTitle: 'Workspace schema',
+    schemaIntro:
+      'Visual overview of how connections, workflows, and repositories relate to each other.',
+    schemaSearchPlaceholder: 'Search workflows or components...',
+    dataFlowsTitle: 'Data flows',
+    workflowRelationshipsEmptyDescription:
+      'Adjust your search term to see workflow relationships.',
+    componentDirectoryTitle: 'Component directory',
+    directoryRepositoriesEmpty: 'No repositories defined.',
+    directoryConnectionsEmpty: 'No connections defined.',
+    referencedBy: 'Referenced by',
+    unknownConnector: 'Unknown connector',
   },
 
   // === LIST COMPONENTS ===

@@ -413,6 +413,7 @@ const fi = {
   // === WORKFLOWS ===
   workflow: {
     workflows: 'Prosessit',
+    scheduledWorkflows: 'Ajastetut työnkulut',
     allWorkflowRuns: 'Kaikki prosessin ajot',
     recentRuns: 'Viimeisimmät ajot',
     importWorkflows: 'Tuontiprosessit',
@@ -999,11 +1000,54 @@ const fi = {
   // === DOCUMENTATION ===
   documentation: {
     documentation: 'Dokumentaatio',
+    workspaceDocumentation: 'Työtilan dokumentaatio',
+    downloadPdf: 'Lataa PDF',
     startTypingDocumentation:
-      'Aloita dokumentaation ja muistiinpanojen kirjoittaminen tähän...',
-    schema: 'Rakenne',
+      'Aloita dokumentaation ja muistiinpanojen kirjoittaminen...',
+    schema: 'Skeema',
     workspace: 'Työtila',
     createdBy: 'Luonut',
+    searchPlaceholder: 'Hae dokumentaatiosta...',
+    summaryTitle: 'Työtilan yhteenveto',
+    summaryDescription:
+      'Yhteenveto tämän työtilan data-arkistoista, yhteyksistä ja työnkuluista.',
+    workspaceIdentifier: 'Työtilan tunniste',
+    repositorySectionDescription:
+      'Omistajatiedot, tunnisteet ja arkistojen dokumentaatio.',
+    repositorySearchEmptyTitle: 'Yhtään arkistoa ei löydy haulla',
+    repositorySearchEmptyDescription:
+      'Säädä hakuehtoja nähdäksesi arkistojen dokumentaation.',
+    clearSearch: 'Tyhjennä haku',
+    visibilityLabel: 'Näkyvyys',
+    visibilityPrivate: 'Yksityinen',
+    notesHeading: 'Muistiinpanot',
+    connectionSectionDescription:
+      'Yhteyden omistajatiedot, liittimen tyyppi ja dokumentaatio.',
+    connectionSearchEmptyTitle: 'Yhtään yhteyttä ei löydy haulla',
+    connectionSearchEmptyDescription:
+      'Säädä hakuehtoja nähdäksesi yhteyksien dokumentaation.',
+    workflowSectionDescription:
+      'Työnkulkujen omistajat, tilat, tunnisteet ja liittyvät resurssit.',
+    workflowSearchEmptyTitle: 'Yhtään työnkulkua ei löydy haulla',
+    workflowSearchEmptyDescription:
+      'Säädä hakuehtoja nähdäksesi työnkulkujen dokumentaation.',
+    scheduleLabel: 'Aikataulu',
+    workspaceEmptyTitle: 'Työtila on tyhjä',
+    workspaceEmptyDescription:
+      'Luo ensimmäinen arkisto, yhteys tai työnkulku dokumentaation muodostamiseksi.',
+    goToWorkspace: 'Siirry työtilaan',
+    schemaTitle: 'Työtilan kaavio',
+    schemaIntro:
+      'Visuaalinen näkymä työtilan yhteyksien, työnkulkujen ja arkistojen suhteista.',
+    schemaSearchPlaceholder: 'Hae työnkulkuja tai komponentteja...',
+    dataFlowsTitle: 'Tietovirrat',
+    workflowRelationshipsEmptyDescription:
+      'Säädä hakuehtoja nähdäksesi työnkulkujen suhteet.',
+    componentDirectoryTitle: 'Komponenttihakemisto',
+    directoryRepositoriesEmpty: 'Arkistoja ei ole määritetty.',
+    directoryConnectionsEmpty: 'Yhteyksiä ei ole määritetty.',
+    referencedBy: 'Käytössä',
+    unknownConnector: 'Tuntematon liitin',
   },
 
   // === LIST COMPONENTS ===

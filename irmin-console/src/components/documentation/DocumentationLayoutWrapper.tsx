@@ -40,11 +40,14 @@ export default function DocumentationLayoutWrapper({
     [dict, params.lang, params.workspace]
   );
   return (
-    <div id='console-documentation-layout-wrapper'>
-      <div className='relative container mx-auto max-w-7xl'>
+    <div
+      id='console-documentation-layout-wrapper'
+      className='min-h-screen bg-background text-foreground'
+    >
+      <div className='container mx-auto max-w-6xl p-4'>
         <Tabs tabs={tabs} />
       </div>
-      {children}
+      <div>{children}</div>
     </div>
   );
 }

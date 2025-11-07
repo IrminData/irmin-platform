@@ -1,32 +1,15 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
 import { usePDF } from 'react-to-pdf';
 
-import {
-  BsArrowUpRight,
-  BsCalendar3,
-  BsDatabase,
-  BsEye,
-  BsFilePdf,
-  BsGear,
-  BsGrid3X3Gap,
-  BsList,
-  BsPersonFill,
-  BsSearch,
-} from 'react-icons/bs';
-import {
-  HiOutlineCog,
-  HiOutlineCollection,
-  HiOutlineDocumentText,
-  HiOutlineDownload,
-  HiOutlinePlay,
-  HiOutlineUpload,
-} from 'react-icons/hi';
-import { TbClipboardX, TbFileX, TbSettingsX } from 'react-icons/tb';
+import { BsFilePdf, BsPerson, BsSearch, BsTag } from 'react-icons/bs';
+import { GoWorkflow } from 'react-icons/go';
+import { HiOutlineDocumentText } from 'react-icons/hi';
+import { TbClipboardX, TbDatabase, TbRun } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,9 +35,145 @@ import { useConnections, useRepositories, useWorkflows } from '@/hooks/api';
 
 import MDXViewer from './MDXViewer';
 
-/**
- * Modern documentation section with improved UX and visual design
- */
+function ownerSummary(owner?: {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  company?: string;
+}) {
+  if (!owner) return null;
+  const name = [owner.first_name, owner.last_name].filter(Boolean).join(' ');
+  const company = owner.company ? ` (${owner.company})` : '';
+  return {
+    name: `${name}${company}`.trim(),
+    email: owner.email ?? '',
+  };
+}
+
+function renderTags(tags?: unknown[]) {
+  if (!Array.isArray(tags) || tags.length === 0) {
+    return null;
+  }
+
+  const tagLabels = tags
+    .map((tag) => {
+      if (typeof tag === 'string') return tag;
+      if (tag && typeof tag === 'object' && 'name' in tag) {
+        const value = (tag as { name?: string }).name;
+        return typeof value === 'string' ? value : null;
+      }
+      return null;
+    })
+    .filter((tag): tag is string => Boolean(tag));
+
+  if (tagLabels.length === 0) return null;
+
+  return (
+    <ul className='flex flex-wrap gap-2'>
+      {tagLabels.map((tag) => (
+        <li key={tag}>
+          <Badge variant='outline' className='text-xs'>
+            {tag}
+          </Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function renderDocumentation(content: string | undefined, heading: string) {
+  if (!content || content.length === 0) return null;
+  return (
+    <div className='mt-4 space-y-4 border-t pt-4'>
+      <h4 className='text-sm text-muted-foreground'>{heading}</h4>
+      <MDXViewer content={content} />
+    </div>
+  );
+}
+
+interface SearchableEntityOwner {
+  first_name?: string;
+  last_name?: string;
+  company?: string;
+  email?: string;
+}
+
+type SearchableEntity = {
+  name?: string;
+  description?: string;
+  owner?: SearchableEntityOwner;
+  tags?: unknown[];
+  documentation?: string;
+  status?: string;
+  type?: string;
+  workflowType?: string;
+  connector?: unknown;
+};
+
+function matchSearch<T extends SearchableEntity>(items: T[], term: string) {
+  const trimmed = term.trim();
+  if (!trimmed) return items;
+  const lowered = trimmed.toLowerCase();
+  return items.filter((item) => {
+    const matchesName = item.name?.toLowerCase().includes(lowered);
+    const matchesDescription = item.description
+      ?.toLowerCase()
+      .includes(lowered);
+    const matchesOwner =
+      item.owner?.first_name?.toLowerCase().includes(lowered) ||
+      item.owner?.last_name?.toLowerCase().includes(lowered) ||
+      item.owner?.company?.toLowerCase().includes(lowered) ||
+      item.owner?.email?.toLowerCase().includes(lowered);
+    const matchesDocumentation = item.documentation
+      ?.toLowerCase()
+      .includes(lowered);
+    const matchesTags = Array.isArray(item.tags)
+      ? item.tags.some((tag) => {
+          if (typeof tag === 'string') {
+            return tag.toLowerCase().includes(lowered);
+          }
+          if (tag && typeof tag === 'object' && 'name' in tag) {
+            const value = (tag as { name?: string }).name;
+            return typeof value === 'string'
+              ? value.toLowerCase().includes(lowered)
+              : false;
+          }
+          return false;
+        })
+      : false;
+
+    const connectorName =
+      typeof item.connector === 'string'
+        ? item.connector
+        : item.connector && typeof item.connector === 'object'
+          ? ((item.connector as { name?: string }).name ?? '')
+          : '';
+    const matchesConnector = connectorName.toLowerCase().includes(lowered);
+
+    const matchesStatus =
+      typeof item.status === 'string' &&
+      item.status.toLowerCase().includes(lowered);
+    const matchesType =
+      typeof item.type === 'string' &&
+      item.type.toLowerCase().includes(lowered);
+    const matchesWorkflowType =
+      typeof item.workflowType === 'string' &&
+      item.workflowType.toLowerCase().includes(lowered);
+
+    return Boolean(
+      matchesName ||
+        matchesDescription ||
+        matchesOwner ||
+        matchesDocumentation ||
+        matchesTags ||
+        matchesConnector ||
+        matchesStatus ||
+        matchesType ||
+        matchesWorkflowType
+    );
+  });
+}
+
 export default function DocumentationSection() {
   const { connectionsQuery } = useConnections();
   const { workflowsQuery } = useWorkflows();
@@ -64,21 +183,108 @@ export default function DocumentationSection() {
   const { dict, locale } = useLocale();
   const { toPDF, targetRef } = usePDF({
     filename: `${workspaceSlug}-documentation-${new Date().toISOString()}.pdf`,
+    page: { margin: 24 },
   });
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  const workspace = workspaceQuery.data?.data;
+  const repositories = useMemo(
+    () => repositoriesQuery.data?.data ?? [],
+    [repositoriesQuery.data?.data]
+  );
+  const connections = useMemo(
+    () => connectionsQuery.data?.data ?? [],
+    [connectionsQuery.data?.data]
+  );
+  const workflows = useMemo(
+    () => workflowsQuery.data?.data ?? [],
+    [workflowsQuery.data?.data]
+  );
+
+  const connectionById = useMemo(() => {
+    return new Map(
+      connections.map((connection) => [connection.id, connection])
+    );
+  }, [connections]);
+
+  const repositoryBySlug = useMemo(() => {
+    return new Map(
+      repositories.map((repository) => [repository.slug, repository])
+    );
+  }, [repositories]);
 
   const pdfHeaderRef = useRef<HTMLDivElement | null>(null);
+  const pdfVariableOverrides = useMemo(
+    () =>
+      ({
+        '--background': '#ffffff',
+        '--foreground': '#111827',
+        '--muted': '#f3f4f6',
+        '--muted-foreground': '#4b5563',
+        '--card': '#ffffff',
+        '--card-foreground': '#111827',
+        '--primary': '#0f172a',
+        '--primary-foreground': '#f8fafc',
+        '--secondary': '#e5e7eb',
+        '--secondary-foreground': '#111827',
+        '--accent': '#f1f5f9',
+        '--accent-foreground': '#111827',
+        '--border': '#e5e7eb',
+        '--input': '#e5e7eb',
+        '--ring': '#0f172a',
+      }) as Record<string, string>,
+    []
+  );
 
-  const downloadPDF = useCallback(() => {
-    pdfHeaderRef.current?.classList.remove('hidden');
-    toPDF();
-    pdfHeaderRef.current?.classList.add('hidden');
-  }, [toPDF]);
+  const downloadPDF = useCallback(async () => {
+    if (!targetRef.current) return;
+    const container = targetRef.current;
+    pdfHeaderRef.current?.classList.remove('sr-only');
+    container.setAttribute('data-pdf-export', 'true');
+    const previousVariables = Object.entries(pdfVariableOverrides).map(
+      ([property, value]) => {
+        const existing = container.style.getPropertyValue(property);
+        container.style.setProperty(property, value);
+        return [property, existing] as [string, string];
+      }
+    );
+    const previousBackground = container.style.backgroundColor;
+    const previousColor = container.style.color;
+    container.style.backgroundColor = '#ffffff';
+    container.style.color = '#111827';
+    try {
+      await toPDF({
+        overrides: {
+          canvas: {
+            backgroundColor: '#ffffff',
+            logging: false,
+          },
+        },
+      });
+    } finally {
+      container.removeAttribute('data-pdf-export');
+      previousVariables.forEach(([property, value]) => {
+        if (value) {
+          container.style.setProperty(property, value);
+        } else {
+          container.style.removeProperty(property);
+        }
+      });
+      if (previousBackground) {
+        container.style.backgroundColor = previousBackground;
+      } else {
+        container.style.removeProperty('background-color');
+      }
+      if (previousColor) {
+        container.style.color = previousColor;
+      } else {
+        container.style.removeProperty('color');
+      }
+      pdfHeaderRef.current?.classList.add('sr-only');
+    }
+  }, [pdfVariableOverrides, toPDF, targetRef]);
 
-  // Handle loading states with improved skeleton
   if (
     workspaceQuery.isLoading ||
     connectionsQuery.isLoading ||
@@ -89,13 +295,12 @@ export default function DocumentationSection() {
       <DocumentationSkeleton
         showHero={true}
         showStats={true}
-        showControls={true}
-        contentSections={4}
+        showControls={false}
+        contentSections={3}
       />
     );
   }
 
-  // Handle error states
   const errors = [
     workspaceQuery.error,
     connectionsQuery.error,
@@ -105,47 +310,27 @@ export default function DocumentationSection() {
 
   if (errors.length > 0) {
     return (
-      <div
-        className={`
-          min-h-screen bg-gradient-to-br from-background via-secondary/20
-          to-accent/10
-        `}
-      >
-        <div className='relative container mx-auto max-w-7xl'>
-          <div
-            className={`
-              flex flex-col px-4 py-8
-              md:px-8
-            `}
-          >
-            <QueryError
-              error={errors[0]}
-              onRetry={() => {
-                if (workspaceQuery.error) workspaceQuery.refetch();
-                if (connectionsQuery.error) connectionsQuery.refetch();
-                if (workflowsQuery.error) workflowsQuery.refetch();
-                if (repositoriesQuery.error) repositoriesQuery.refetch();
-              }}
-              title={dict.common.somethingWentWrong}
-            />
-          </div>
+      <div className='min-h-screen bg-background'>
+        <div className='container mx-auto max-w-6xl px-4 py-10'>
+          <QueryError
+            error={errors[0]}
+            onRetry={() => {
+              if (workspaceQuery.error) workspaceQuery.refetch();
+              if (connectionsQuery.error) connectionsQuery.refetch();
+              if (workflowsQuery.error) workflowsQuery.refetch();
+              if (repositoriesQuery.error) repositoriesQuery.refetch();
+            }}
+            title={dict.common.somethingWentWrong}
+          />
         </div>
       </div>
     );
   }
 
-  if (!workspaceQuery?.data) return null;
-
-  const workspace = workspaceQuery.data.data;
-  const workflows = workflowsQuery.data?.data ?? [];
-  const repositories = repositoriesQuery.data?.data ?? [];
-  const connections = connectionsQuery.data?.data ?? [];
-
-  // Statistics
   const stats = {
     repositories: repositories.length,
     connections: connections.length,
-    totalWorkflows: workflows.length,
+    workflows: workflows.length,
     importWorkflows: workflows.filter((w) => w.type === 'import').length,
     exportWorkflows: workflows.filter((w) => w.type === 'export').length,
     actionWorkflows: workflows.filter((w) => w.type === 'action').length,
@@ -155,61 +340,12 @@ export default function DocumentationSection() {
     ).length,
   };
 
-  // Base interface for items that can be filtered
-  interface BaseFilterableItem {
-    name?: string;
-    description?: string;
-    owner?: {
-      first_name?: string;
-      last_name?: string;
-    };
-  }
+  const filteredRepositories = matchSearch(repositories, searchTerm);
+  const filteredConnections = matchSearch(connections, searchTerm);
+  const filteredWorkflows = matchSearch(workflows, searchTerm);
 
-  // Filter function using generics
-  const filterItems = <T extends BaseFilterableItem>(
-    items: T[],
-    searchTerm: string
-  ): T[] => {
-    if (!searchTerm) return items;
-    return items.filter(
-      (item) =>
-        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.owner?.first_name
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        item.owner?.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
+  if (!workspace) return null;
 
-  const filteredRepositories = filterItems(repositories, searchTerm);
-  const filteredConnections = filterItems(connections, searchTerm);
-  const filteredWorkflows = filterItems(workflows, searchTerm);
-
-  // Navigation items
-  const navigationSections = [
-    { id: 'overview', label: 'Overview', icon: <HiOutlineDocumentText /> },
-    {
-      id: 'repositories',
-      label: 'Repositories',
-      icon: <HiOutlineCollection />,
-      count: repositories.length,
-    },
-    {
-      id: 'connections',
-      label: 'Connections',
-      icon: <HiOutlineCog />,
-      count: connections.length,
-    },
-    {
-      id: 'workflows',
-      label: 'Workflows',
-      icon: <HiOutlinePlay />,
-      count: workflows.length,
-    },
-  ];
-
-  // Check if workspace is completely empty
   const isWorkspaceEmpty =
     repositories.length === 0 &&
     connections.length === 0 &&
@@ -217,56 +353,29 @@ export default function DocumentationSection() {
 
   if (isWorkspaceEmpty) {
     return (
-      <div
-        className={`
-          min-h-screen bg-gradient-to-br from-background via-secondary/20
-          to-accent/10
-        `}
-      >
-        <div className='relative container mx-auto max-w-7xl'>
-          <div
-            className={`
-              flex flex-col px-4 py-8
-              md:px-8
-            `}
-          >
-            {/* Header */}
-            <div className='mb-8'>
-              <div className='mb-6 flex items-center gap-3'>
-                <div className='rounded-xl bg-primary/10 p-3'>
-                  <HiOutlineDocumentText className='size-8 text-primary' />
-                </div>
-                <Badge variant='secondary' className='text-sm font-medium'>
-                  {dict.documentation.workspace}
-                </Badge>
+      <div className='min-h-screen bg-background'>
+        <div className='container mx-auto max-w-6xl px-4 py-12'>
+          <div className='space-y-6'>
+            <div className='flex items-center gap-3'>
+              <div className='rounded-lg bg-muted p-2'>
+                <HiOutlineDocumentText className='size-6 text-muted-foreground' />
               </div>
-              <DisplayTitle
-                className={`
-                  mb-4 bg-gradient-to-r from-foreground to-foreground/70
-                  bg-clip-text text-4xl font-bold text-transparent
-                  lg:text-6xl
-                `}
-              >
-                {workspace?.name ?? 'Workspace Documentation'}
-              </DisplayTitle>
-              <p
-                className={`
-                  mb-8 max-w-2xl text-xl leading-relaxed text-muted-foreground
-                `}
-              >
-                {workspace?.description ||
-                  'Complete documentation for your workspace including repositories, connections, and workflows.'}
-              </p>
+              <Badge variant='secondary'>{dict.documentation.workspace}</Badge>
             </div>
-
-            {/* Empty State */}
+            <DisplayTitle className='text-4xl text-foreground'>
+              {workspace.name ?? dict.documentation.workspaceDocumentation}
+            </DisplayTitle>
+            <p className='max-w-2xl text-base text-muted-foreground'>
+              {workspace.description ||
+                dict.documentation.workspaceEmptyDescription}
+            </p>
             <EmptyState
-              icon={<TbFileX className='size-full' />}
-              title='No Documentation Available'
-              description="This workspace doesn't have any repositories, connections, or workflows yet. Start by creating your first component to begin building your documentation."
+              icon={<TbClipboardX className='size-full' />}
+              title={dict.documentation.workspaceEmptyTitle}
+              description={dict.documentation.workspaceEmptyDescription}
               size='lg'
               action={{
-                label: 'Get Started',
+                label: dict.documentation.goToWorkspace,
                 href: `/${locale}/workspace/${workspaceSlug}`,
                 variant: 'default',
               }}
@@ -278,1004 +387,593 @@ export default function DocumentationSection() {
   }
 
   return (
-    <div
-      className={`
-        min-h-screen bg-gradient-to-br from-background via-secondary/20
-        to-accent/10
-      `}
-    >
-      <div className='relative container mx-auto max-w-7xl'>
-        {/* Hero Section */}
-        <div
-          className={`
-            relative px-4 py-12
-            md:px-8
-          `}
-        >
-          <div
-            className={`
-              flex flex-col gap-8
-              lg:flex-row lg:items-center lg:justify-between
-            `}
-          >
-            <div className='flex-1'>
-              <div className='mb-6 flex items-center gap-3'>
-                <div className='rounded-xl bg-primary/10 p-3'>
-                  <HiOutlineDocumentText className='size-8 text-primary' />
-                </div>
-                <Badge variant='secondary' className='text-sm font-medium'>
-                  {dict.documentation.workspace}
-                </Badge>
-              </div>
-              <DisplayTitle
-                className={`
-                  mb-4 bg-gradient-to-r from-foreground to-foreground/70
-                  bg-clip-text text-4xl font-bold text-transparent
-                  lg:text-6xl
-                `}
-              >
-                {workspace?.name ?? 'Workspace Documentation'}
-              </DisplayTitle>
-              <p
-                className={`
-                  mb-8 max-w-2xl text-xl leading-relaxed text-muted-foreground
-                `}
-              >
-                {workspace?.description ||
-                  'Complete documentation for your workspace including repositories, connections, and workflows.'}
-              </p>
-
-              {/* Action Buttons */}
-              <div className='flex flex-wrap gap-4'>
-                <Button
-                  variant='default'
-                  size='lg'
-                  icon={<BsFilePdf size={18} />}
-                  onClick={downloadPDF}
-                  className={`
-                    shadow-lg transition-all duration-200
-                    hover:shadow-xl
-                  `}
-                >
-                  {dict.common.download} PDF
-                </Button>
-                <Button
-                  variant='outline'
-                  size='lg'
-                  icon={<BsEye size={18} />}
-                  className={`
-                    shadow-sm transition-all duration-200
-                    hover:shadow-md
-                  `}
-                >
-                  Quick Overview
-                </Button>
-              </div>
+    <div className='min-h-screen bg-background text-foreground'>
+      <div className='container mx-auto max-w-6xl px-4 py-12'>
+        <div className='mb-10 flex flex-col gap-6'>
+          <div className='flex items-center gap-3'>
+            <div className='rounded-lg bg-muted p-2'>
+              <HiOutlineDocumentText className='size-6 text-muted-foreground' />
             </div>
-
-            {/* Stats Cards */}
-            <div
-              className={`
-                grid grid-cols-2 gap-4
-                lg:min-w-[280px] lg:grid-cols-1
-              `}
+            <Badge variant='secondary'>{dict.documentation.workspace}</Badge>
+          </div>
+          <DisplayTitle className='text-4xl'>
+            {workspace.name ?? dict.documentation.workspaceDocumentation}
+          </DisplayTitle>
+          {workspace.description && (
+            <p className='max-w-2xl text-base text-muted-foreground'>
+              {workspace.description}
+            </p>
+          )}
+          <div className='flex flex-wrap items-center gap-4'>
+            <Button
+              variant='default'
+              icon={<BsFilePdf size={18} />}
+              onClick={downloadPDF}
             >
-              <Card
+              {dict.documentation.downloadPdf}
+            </Button>
+            <div className='relative'>
+              <BsSearch
                 className={`
-                  border-border/50 bg-card/50 shadow-lg backdrop-blur-sm
+                  pointer-events-none absolute top-1/2 left-3 size-4
+                  -translate-y-1/2 text-muted-foreground
                 `}
-              >
-                <CardContent className='p-6'>
-                  <div className='flex items-center gap-3'>
-                    <div className='rounded-lg bg-blue-500/10 p-2'>
-                      <BsDatabase className='size-5 text-blue-600' />
-                    </div>
-                    <div>
-                      <div className='text-2xl font-bold text-foreground'>
-                        {stats.repositories}
-                      </div>
-                      <div className='text-sm text-muted-foreground'>
-                        Repositories
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={`
-                  border-border/50 bg-card/50 shadow-lg backdrop-blur-sm
-                `}
-              >
-                <CardContent className='p-6'>
-                  <div className='flex items-center gap-3'>
-                    <div className='rounded-lg bg-green-500/10 p-2'>
-                      <BsGear className='size-5 text-green-600' />
-                    </div>
-                    <div>
-                      <div className='text-2xl font-bold text-foreground'>
-                        {stats.connections}
-                      </div>
-                      <div className='text-sm text-muted-foreground'>
-                        Connections
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={`
-                  col-span-2 border-border/50 bg-card/50 shadow-lg
-                  backdrop-blur-sm
-                  lg:col-span-1
-                `}
-              >
-                <CardContent className='p-6'>
-                  <div className='flex items-center gap-3'>
-                    <div className='rounded-lg bg-purple-500/10 p-2'>
-                      <HiOutlinePlay className='size-5 text-purple-600' />
-                    </div>
-                    <div>
-                      <div className='text-2xl font-bold text-foreground'>
-                        {stats.totalWorkflows}
-                      </div>
-                      <div className='text-sm text-muted-foreground'>
-                        Total Workflows
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              />
+              <Input
+                className='w-72 pl-9'
+                placeholder={dict.documentation.searchPlaceholder}
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
             </div>
           </div>
         </div>
 
-        {/* Navigation & Controls */}
-        <div
-          className={`
-            mb-8 px-4
-            md:px-8
-          `}
-        >
-          <div
-            className={`
-              rounded-2xl border border-border/50 bg-card/30 p-6 shadow-lg
-              backdrop-blur-sm
-            `}
-          >
-            <div
-              className={`
-                flex flex-col gap-6
-                lg:flex-row lg:items-center lg:justify-between
-              `}
-            >
-              {/* Navigation Pills */}
-              <div className='flex flex-wrap gap-2'>
-                {navigationSections.map((section) => (
-                  <Button
-                    key={section.id}
-                    variant={
-                      activeSection === section.id ? 'default' : 'outline'
-                    }
-                    size='sm'
-                    onClick={() => {
-                      setActiveSection(
-                        activeSection === section.id ? null : section.id
-                      );
-                      const element = document.getElementById(section.id);
-                      if (element) {
-                        element.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'start',
-                        });
-                      }
-                    }}
-                    className={`
-                      flex items-center gap-2 transition-all duration-200
-                    `}
-                  >
-                    {section.icon}
-                    {section.label}
-                    {section.count !== undefined && (
-                      <Badge variant='secondary' className='ml-1 text-xs'>
-                        {section.count}
-                      </Badge>
-                    )}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Search & View Controls */}
-              <div className='flex items-center gap-4'>
-                <div className='relative'>
-                  <BsSearch
-                    className={`
-                      absolute top-1/2 left-3 size-4 -translate-y-1/2 transform
-                      text-muted-foreground
-                    `}
-                  />
-                  <Input
-                    placeholder='Search documentation...'
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className='w-64 border-border/50 bg-background/50 pl-10'
-                  />
-                </div>
-                <div className='flex items-center rounded-lg bg-muted/30 p-1'>
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size='sm'
-                    onClick={() => setViewMode('grid')}
-                    className='size-8 p-0'
-                  >
-                    <BsGrid3X3Gap className='size-4' />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size='sm'
-                    onClick={() => setViewMode('list')}
-                    className='size-8 p-0'
-                  >
-                    <BsList className='size-4' />
-                  </Button>
-                </div>
-              </div>
+        <div ref={targetRef} className='space-y-12'>
+          <div ref={pdfHeaderRef} className='sr-only'>
+            <div className='mb-6 flex items-center justify-between'>
+              <Image
+                src='/irmin-logo.svg'
+                alt='Irmin logo'
+                width={120}
+                height={32}
+                className={`
+                  block h-8 w-auto
+                  dark:hidden
+                `}
+              />
+              <Image
+                src='/irmin-logo-light.svg'
+                alt='Irmin logo'
+                width={120}
+                height={32}
+                className={`
+                  hidden h-8 w-auto
+                  dark:block
+                `}
+              />
             </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div
-          className={`
-            px-4 pb-16
-            md:px-8
-          `}
-        >
-          <div ref={targetRef}>
-            {/* PDF Header (hidden by default) */}
-            <div
-              ref={pdfHeaderRef}
-              className={`
-                hidden border-b-2 py-4
-                dark:border-gray-800
-              `}
-            >
-              <div
-                className={`
-                  flex w-full flex-row items-center justify-between pb-4
-                `}
-              >
-                <Image
-                  className={`
-                    block h-8 w-auto
-                    dark:hidden
-                  `}
-                  src='/irmin-logo.svg'
-                  alt='Irmin logo'
-                  width={100}
-                  height={100}
-                />
-                <Image
-                  className={`
-                    hidden h-8 w-auto
-                    dark:block
-                  `}
-                  src='/irmin-logo-light.svg'
-                  alt='Irmin logo'
-                  width={100}
-                  height={100}
-                />
-              </div>
-              <div
-                className={`
-                  flex w-full flex-col justify-start pb-4 text-sm
-                  text-foreground
-                  dark:text-gray-200
-                `}
-              >
-                {profile && (
-                  <p>
-                    <b>{dict.documentation.createdBy}: </b>
-                    {`${profile.first_name} ${profile.last_name}`}
-                    {profile.company ? ` (${profile.company})` : ''} -{' '}
-                    {profile.email}
-                  </p>
-                )}
+            <div className='space-y-2 text-sm text-muted-foreground'>
+              {profile && (
                 <p>
-                  <b>{dict.common.timestamp}: </b>
-                  {new Date().toLocaleString(locale ?? 'en')}
+                  <span className=''>{dict.documentation.createdBy}: </span>
+                  {`${profile.first_name} ${profile.last_name}`}
+                  {profile.company ? ` (${profile.company})` : ''}
+                  {profile.email ? ` • ${profile.email}` : ''}
                 </p>
-              </div>
+              )}
+              <p>
+                <span className=''>{dict.common.timestamp}: </span>
+                {new Date().toLocaleString(locale ?? 'en')}
+              </p>
             </div>
-
-            {/* Overview Section */}
-            <section id='overview' className='mb-16'>
-              <div className='mb-12 text-center'>
-                <h2 className='mb-4 text-3xl font-bold text-foreground'>
-                  Workspace Overview
-                </h2>
-                <p className='mx-auto max-w-3xl text-lg text-muted-foreground'>
-                  A comprehensive view of your workspace components and their
-                  current status.
-                </p>
-              </div>
-
-              <div
-                className={`
-                  mb-12 grid grid-cols-1 gap-6
-                  md:grid-cols-2
-                  lg:grid-cols-4
-                `}
-              >
-                {/* Workflow Type Stats */}
-                <Card
-                  className={`
-                    border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100
-                    dark:border-blue-800/50 dark:from-blue-950/30
-                    dark:to-blue-900/30
-                  `}
-                >
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <p
-                          className={`
-                            text-sm font-medium text-blue-600
-                            dark:text-blue-400
-                          `}
-                        >
-                          Import Workflows
-                        </p>
-                        <p
-                          className={`
-                            text-2xl font-bold text-blue-900
-                            dark:text-blue-100
-                          `}
-                        >
-                          {stats.importWorkflows}
-                        </p>
-                      </div>
-                      <HiOutlineDownload className='size-8 text-blue-500' />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className={`
-                    border-green-200 bg-gradient-to-br from-green-50
-                    to-green-100
-                    dark:border-green-800/50 dark:from-green-950/30
-                    dark:to-green-900/30
-                  `}
-                >
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <p
-                          className={`
-                            text-sm font-medium text-green-600
-                            dark:text-green-400
-                          `}
-                        >
-                          Export Workflows
-                        </p>
-                        <p
-                          className={`
-                            text-2xl font-bold text-green-900
-                            dark:text-green-100
-                          `}
-                        >
-                          {stats.exportWorkflows}
-                        </p>
-                      </div>
-                      <HiOutlineUpload className='size-8 text-green-500' />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className={`
-                    border-purple-200 bg-gradient-to-br from-purple-50
-                    to-purple-100
-                    dark:border-purple-800/50 dark:from-purple-950/30
-                    dark:to-purple-900/30
-                  `}
-                >
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <p
-                          className={`
-                            text-sm font-medium text-purple-600
-                            dark:text-purple-400
-                          `}
-                        >
-                          Action Workflows
-                        </p>
-                        <p
-                          className={`
-                            text-2xl font-bold text-purple-900
-                            dark:text-purple-100
-                          `}
-                        >
-                          {stats.actionWorkflows}
-                        </p>
-                      </div>
-                      <HiOutlinePlay className='size-8 text-purple-500' />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className={`
-                    border-orange-200 bg-gradient-to-br from-orange-50
-                    to-orange-100
-                    dark:border-orange-800/50 dark:from-orange-950/30
-                    dark:to-orange-900/30
-                  `}
-                >
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between'>
-                      <div>
-                        <p
-                          className={`
-                            text-sm font-medium text-orange-600
-                            dark:text-orange-400
-                          `}
-                        >
-                          Scheduled
-                        </p>
-                        <p
-                          className={`
-                            text-2xl font-bold text-orange-900
-                            dark:text-orange-100
-                          `}
-                        >
-                          {stats.scheduledWorkflows}
-                        </p>
-                      </div>
-                      <BsCalendar3 className='size-8 text-orange-500' />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            {/* Repositories Section */}
-            {repositories.length > 0 ? (
-              filteredRepositories.length > 0 ? (
-                <section id='repositories' className='mb-16'>
-                  <div className='mb-8 flex items-center gap-4'>
-                    <div className='rounded-xl bg-blue-500/10 p-3'>
-                      <HiOutlineCollection className='size-6 text-blue-600' />
-                    </div>
-                    <div>
-                      <h2 className='text-3xl font-bold text-foreground'>
-                        {dict.repository.repositories}
-                      </h2>
-                      <p className='text-muted-foreground'>
-                        Data repositories in your workspace
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`
-                      grid gap-6
-                      ${
-                        viewMode === 'grid'
-                          ? `
-                            grid-cols-1
-                            lg:grid-cols-2
-                          `
-                          : `grid-cols-1`
-                      }
-                    `}
-                  >
-                    {filteredRepositories.map((item) => (
-                      <Card
-                        key={`repository-${item.id}`}
-                        className={`
-                          group border-border/50 bg-card/50 shadow-lg
-                          backdrop-blur-sm transition-all duration-200
-                          hover:shadow-xl
-                        `}
-                      >
-                        <CardHeader className='pb-4'>
-                          <div className='flex items-start justify-between'>
-                            <div className='flex-1'>
-                              <CardTitle
-                                className={`
-                                  mb-2 text-xl font-semibold text-foreground
-                                  transition-colors
-                                  group-hover:text-primary
-                                `}
-                              >
-                                {item.name}
-                              </CardTitle>
-                              <div className='mb-3 flex items-center gap-2'>
-                                <StatusBadge status='private' label='Private' />
-                                <Badge variant='outline' className='text-xs'>
-                                  Repository
-                                </Badge>
-                              </div>
-                            </div>
-                            <BsArrowUpRight
-                              className={`
-                                size-5 text-muted-foreground transition-colors
-                                group-hover:text-primary
-                              `}
-                            />
-                          </div>
-                          <CardDescription className='text-sm leading-relaxed'>
-                            {item.description}
-                          </CardDescription>
-                        </CardHeader>
-
-                        <CardContent className='pt-0'>
-                          <div
-                            className={`
-                              mb-4 flex items-center gap-2 text-sm
-                              text-muted-foreground
-                            `}
-                          >
-                            <BsPersonFill className='size-4' />
-                            <span className='font-medium text-foreground'>
-                              {`${item.owner.first_name} ${item.owner.last_name}`}
-                              {item.owner.company
-                                ? ` (${item.owner.company})`
-                                : ''}
-                            </span>
-                            <span>•</span>
-                            <span>{item.owner.email}</span>
-                          </div>
-
-                          {item.documentation &&
-                            item.documentation.length > 0 && (
-                              <div
-                                className={`
-                                  rounded-xl border border-border/30
-                                  bg-secondary/30 p-4
-                                `}
-                              >
-                                <MDXViewer content={item.documentation} />
-                              </div>
-                            )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
-              ) : (
-                <section id='repositories' className='mb-16'>
-                  <div className='mb-8 flex items-center gap-4'>
-                    <div className='rounded-xl bg-blue-500/10 p-3'>
-                      <HiOutlineCollection className='size-6 text-blue-600' />
-                    </div>
-                    <div>
-                      <h2 className='text-3xl font-bold text-foreground'>
-                        {dict.repository.repositories}
-                      </h2>
-                      <p className='text-muted-foreground'>
-                        Data repositories in your workspace
-                      </p>
-                    </div>
-                  </div>
-
-                  <EmptyState
-                    icon={<TbClipboardX className='size-full' />}
-                    title='No Repositories Match Your Search'
-                    description={`No repositories found matching "${searchTerm}". Try adjusting your search terms or clear the search to see all repositories.`}
-                    size='md'
-                    action={{
-                      label: 'Clear Search',
-                      onClick: () => setSearchTerm(''),
-                      variant: 'outline',
-                    }}
-                  />
-                </section>
-              )
-            ) : null}
-
-            {/* Connections Section */}
-            {connections.length > 0 ? (
-              filteredConnections.length > 0 ? (
-                <section id='connections' className='mb-16'>
-                  <div className='mb-8 flex items-center gap-4'>
-                    <div className='rounded-xl bg-green-500/10 p-3'>
-                      <HiOutlineCog className='size-6 text-green-600' />
-                    </div>
-                    <div>
-                      <h2 className='text-3xl font-bold text-foreground'>
-                        {dict.connections.connections}
-                      </h2>
-                      <p className='text-muted-foreground'>
-                        External system connections
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`
-                      grid gap-6
-                      ${
-                        viewMode === 'grid'
-                          ? `
-                            grid-cols-1
-                            lg:grid-cols-2
-                          `
-                          : `grid-cols-1`
-                      }
-                    `}
-                  >
-                    {filteredConnections.map((item) => (
-                      <Card
-                        key={`connection-${item.id}`}
-                        className={`
-                          group border-border/50 bg-card/50 shadow-lg
-                          backdrop-blur-sm transition-all duration-200
-                          hover:shadow-xl
-                        `}
-                      >
-                        <CardHeader className='pb-4'>
-                          <div className='flex items-start justify-between'>
-                            <div className='flex-1'>
-                              <CardTitle
-                                className={`
-                                  mb-2 text-xl font-semibold text-foreground
-                                  transition-colors
-                                  group-hover:text-primary
-                                `}
-                              >
-                                {item.name}
-                              </CardTitle>
-                              <div className='mb-3 flex items-center gap-2'>
-                                <Badge variant='secondary' className='text-xs'>
-                                  {item.connector.name}
-                                </Badge>
-                                <Badge variant='outline' className='text-xs'>
-                                  Connection
-                                </Badge>
-                              </div>
-                            </div>
-                            <BsArrowUpRight
-                              className={`
-                                size-5 text-muted-foreground transition-colors
-                                group-hover:text-primary
-                              `}
-                            />
-                          </div>
-                          <CardDescription className='text-sm leading-relaxed'>
-                            {item.description}
-                          </CardDescription>
-                        </CardHeader>
-
-                        <CardContent className='pt-0'>
-                          <div
-                            className={`
-                              mb-4 flex items-center gap-2 text-sm
-                              text-muted-foreground
-                            `}
-                          >
-                            <BsPersonFill className='size-4' />
-                            <span className='font-medium text-foreground'>
-                              {`${item.owner.first_name} ${item.owner.last_name}`}
-                              {item.owner.company
-                                ? ` (${item.owner.company})`
-                                : ''}
-                            </span>
-                            <span>•</span>
-                            <span>{item.owner.email}</span>
-                          </div>
-
-                          {item.documentation &&
-                            item.documentation.length > 0 && (
-                              <div
-                                className={`
-                                  rounded-xl border border-border/30
-                                  bg-secondary/30 p-4
-                                `}
-                              >
-                                <MDXViewer content={item.documentation} />
-                              </div>
-                            )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </section>
-              ) : (
-                <section id='connections' className='mb-16'>
-                  <div className='mb-8 flex items-center gap-4'>
-                    <div className='rounded-xl bg-green-500/10 p-3'>
-                      <HiOutlineCog className='size-6 text-green-600' />
-                    </div>
-                    <div>
-                      <h2 className='text-3xl font-bold text-foreground'>
-                        {dict.connections.connections}
-                      </h2>
-                      <p className='text-muted-foreground'>
-                        External system connections
-                      </p>
-                    </div>
-                  </div>
-
-                  <EmptyState
-                    icon={<TbSettingsX className='size-full' />}
-                    title='No Connections Match Your Search'
-                    description={`No connections found matching "${searchTerm}". Try adjusting your search terms or clear the search to see all connections.`}
-                    size='md'
-                    action={{
-                      label: 'Clear Search',
-                      onClick: () => setSearchTerm(''),
-                      variant: 'outline',
-                    }}
-                  />
-                </section>
-              )
-            ) : null}
-
-            {/* Workflows Section */}
-            {workflows.length > 0 ? (
-              filteredWorkflows.length > 0 ? (
-                <section id='workflows' className='mb-16'>
-                  <div className='mb-8 flex items-center gap-4'>
-                    <div className='rounded-xl bg-purple-500/10 p-3'>
-                      <HiOutlinePlay className='size-6 text-purple-600' />
-                    </div>
-                    <div>
-                      <h2 className='text-3xl font-bold text-foreground'>
-                        Workflows
-                      </h2>
-                      <p className='text-muted-foreground'>
-                        Automated processes and data pipelines
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Workflow Type Sections */}
-                  {['import', 'export', 'action', 'pipeline'].map(
-                    (workflowType) => {
-                      const typeWorkflows = filteredWorkflows.filter(
-                        (w) => w.type === workflowType
-                      );
-                      if (typeWorkflows.length === 0) return null;
-
-                      const typeConfig = {
-                        import: {
-                          title: dict.workflow.importWorkflows,
-                          icon: <HiOutlineDownload className='size-5' />,
-                          color: 'blue',
-                        },
-                        export: {
-                          title: dict.workflow.exportWorkflows,
-                          icon: <HiOutlineUpload className='size-5' />,
-                          color: 'green',
-                        },
-                        action: {
-                          title: dict.workflow.actionWorkflows,
-                          icon: <HiOutlinePlay className='size-5' />,
-                          color: 'purple',
-                        },
-                        pipeline: {
-                          title: dict.workflow.pipelineWorkflows,
-                          icon: <HiOutlineCog className='size-5' />,
-                          color: 'orange',
-                        },
-                      };
-
-                      const config =
-                        typeConfig[workflowType as keyof typeof typeConfig];
-
-                      return (
-                        <div key={workflowType} className='mb-12'>
-                          <div className='mb-6 flex items-center gap-3'>
-                            <div
-                              className={`
-                                rounded-lg p-2
-                                ${
-                                  config.color === 'blue'
-                                    ? 'bg-blue-500/10 text-blue-600'
-                                    : config.color === 'green'
-                                      ? 'bg-green-500/10 text-green-600'
-                                      : config.color === 'purple'
-                                        ? 'bg-purple-500/10 text-purple-600'
-                                        : 'bg-orange-500/10 text-orange-600'
-                                }
-                              `}
-                            >
-                              {config.icon}
-                            </div>
-                            <h3 className='text-2xl font-bold text-foreground'>
-                              {config.title}
-                            </h3>
-                            <Badge variant='secondary' className='text-sm'>
-                              {typeWorkflows.length}
-                            </Badge>
-                          </div>
-
-                          <div
-                            className={`
-                              grid gap-6
-                              ${
-                                viewMode === 'grid'
-                                  ? `
-                                    grid-cols-1
-                                    lg:grid-cols-2
-                                  `
-                                  : `grid-cols-1`
-                              }
-                            `}
-                          >
-                            {typeWorkflows.map((item) => (
-                              <Card
-                                key={`${workflowType}-${item.id}`}
-                                className={`
-                                  group border-border/50 bg-card/50 shadow-lg
-                                  backdrop-blur-sm transition-all duration-200
-                                  hover:shadow-xl
-                                `}
-                              >
-                                <CardHeader className='pb-4'>
-                                  <div
-                                    className={`
-                                      flex items-start justify-between
-                                    `}
-                                  >
-                                    <div className='flex-1'>
-                                      <CardTitle
-                                        className={`
-                                          mb-2 text-xl font-semibold
-                                          text-foreground transition-colors
-                                          group-hover:text-primary
-                                        `}
-                                      >
-                                        {item.name}
-                                      </CardTitle>
-                                      <div
-                                        className={`
-                                          mb-3 flex items-center gap-2
-                                        `}
-                                      >
-                                        {item.status === '' || !item.status ? (
-                                          <StatusBadge
-                                            status='default'
-                                            label={dict.workflow.noStatus}
-                                          />
-                                        ) : (
-                                          <StatusBadge
-                                            status={item.status}
-                                            label={item.status}
-                                          />
-                                        )}
-                                        <Badge
-                                          variant='outline'
-                                          className='text-xs capitalize'
-                                        >
-                                          {workflowType}
-                                        </Badge>
-                                        {item.schedule?.triggers &&
-                                          item.schedule.triggers.length > 0 && (
-                                            <Badge
-                                              variant='secondary'
-                                              className={`
-                                                flex items-center gap-1 text-xs
-                                              `}
-                                            >
-                                              <BsCalendar3 className='size-3' />
-                                              Scheduled
-                                            </Badge>
-                                          )}
-                                      </div>
-                                    </div>
-                                    <BsArrowUpRight
-                                      className={`
-                                        size-5 text-muted-foreground
-                                        transition-colors
-                                        group-hover:text-primary
-                                      `}
-                                    />
-                                  </div>
-                                  <CardDescription
-                                    className={`text-sm leading-relaxed`}
-                                  >
-                                    {item.description}
-                                  </CardDescription>
-                                </CardHeader>
-
-                                <CardContent className='pt-0'>
-                                  <div className='mb-4 space-y-3'>
-                                    <div
-                                      className={`
-                                        flex items-center gap-2 text-sm
-                                        text-muted-foreground
-                                      `}
-                                    >
-                                      <BsPersonFill className='size-4' />
-                                      <span
-                                        className={`font-medium text-foreground`}
-                                      >
-                                        {`${item.owner.first_name} ${item.owner.last_name}`}
-                                        {item.owner.company
-                                          ? ` (${item.owner.company})`
-                                          : ''}
-                                      </span>
-                                      <span>•</span>
-                                      <span>{item.owner.email}</span>
-                                    </div>
-
-                                    <div
-                                      className={`
-                                        flex items-center gap-2 text-sm
-                                        text-muted-foreground
-                                      `}
-                                    >
-                                      <BsCalendar3 className='size-4' />
-                                      <span
-                                        className={`font-medium text-foreground`}
-                                      >
-                                        {item.schedule?.triggers &&
-                                        item.schedule.triggers.length > 0
-                                          ? dict.workflow.scheduled
-                                          : dict.workflow.notScheduled}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {item.documentation &&
-                                    item.documentation.length > 0 && (
-                                      <div
-                                        className={`
-                                          rounded-xl border border-border/30
-                                          bg-secondary/30 p-4
-                                        `}
-                                      >
-                                        <MDXViewer
-                                          content={item.documentation}
-                                        />
-                                      </div>
-                                    )}
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                  )}
-                </section>
-              ) : (
-                <section id='workflows' className='mb-16'>
-                  <div className='mb-8 flex items-center gap-4'>
-                    <div className='rounded-xl bg-purple-500/10 p-3'>
-                      <HiOutlinePlay className='size-6 text-purple-600' />
-                    </div>
-                    <div>
-                      <h2 className='text-3xl font-bold text-foreground'>
-                        Workflows
-                      </h2>
-                      <p className='text-muted-foreground'>
-                        Automated processes and data pipelines
-                      </p>
-                    </div>
-                  </div>
-
-                  <EmptyState
-                    icon={<TbSettingsX className='size-full' />}
-                    title='No Workflows Match Your Search'
-                    description={`No workflows found matching "${searchTerm}". Try adjusting your search terms or clear the search to see all workflows.`}
-                    size='md'
-                    action={{
-                      label: 'Clear Search',
-                      onClick: () => setSearchTerm(''),
-                      variant: 'outline',
-                    }}
-                  />
-                </section>
-              )
-            ) : null}
           </div>
+
+          <section className='space-y-6'>
+            <h2 className='text-2xl'>{dict.documentation.summaryTitle}</h2>
+            <Card>
+              <CardHeader>
+                <CardTitle>{dict.common.overview}</CardTitle>
+                <CardDescription>
+                  {dict.documentation.summaryDescription}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <dl
+                  className={`
+                    grid grid-cols-1 gap-4 text-sm
+                    sm:grid-cols-2
+                    lg:grid-cols-3
+                  `}
+                >
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.repository.repositories}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {stats.repositories}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.connections.connections}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {stats.connections}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.workflow.workflows}
+                    </dt>
+                    <dd className='text-base font-medium'>{stats.workflows}</dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.workflow.importWorkflows}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {stats.importWorkflows}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.workflow.exportWorkflows}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {stats.exportWorkflows}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.workflow.actionWorkflows}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {stats.actionWorkflows}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.workflow.pipelineWorkflows}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {stats.pipelineWorkflows}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.workflow.scheduledWorkflows}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {stats.scheduledWorkflows}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className='text-muted-foreground'>
+                      {dict.documentation.workspaceIdentifier}
+                    </dt>
+                    <dd className='text-base font-medium'>
+                      {workspace.name} ({workspace.slug})
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+          </section>
+
+          {repositories.length > 0 && (
+            <section className='space-y-6'>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-lg bg-muted p-2'>
+                  <TbDatabase className='size-5 text-muted-foreground' />
+                </div>
+                <div>
+                  <h2 className='text-2xl'>{dict.repository.repositories}</h2>
+                  <p className='text-sm text-muted-foreground'>
+                    {dict.documentation.repositorySectionDescription}
+                  </p>
+                </div>
+              </div>
+
+              {filteredRepositories.length === 0 ? (
+                <EmptyState
+                  icon={<TbClipboardX className='size-full' />}
+                  title={dict.documentation.repositorySearchEmptyTitle}
+                  description={
+                    dict.documentation.repositorySearchEmptyDescription
+                  }
+                  size='md'
+                  action={{
+                    label: dict.documentation.clearSearch,
+                    onClick: () => setSearchTerm(''),
+                    variant: 'outline',
+                  }}
+                />
+              ) : (
+                <div
+                  className={`
+                    grid grid-cols-1 gap-6
+                    lg:grid-cols-2
+                  `}
+                >
+                  {filteredRepositories.map((repository) => {
+                    const owner = ownerSummary(repository.owner);
+                    const repositoryTags = renderTags(repository.tags);
+                    const repositoryNotes = renderDocumentation(
+                      repository.documentation,
+                      dict.documentation.notesHeading
+                    );
+                    return (
+                      <Card key={`repository-${repository.id}`}>
+                        <CardHeader>
+                          <CardTitle>{repository.name}</CardTitle>
+                          {repository.description && (
+                            <CardDescription>
+                              {repository.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <dl className='space-y-3 text-sm'>
+                            {owner && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsPerson className='size-4' />
+                                  {dict.list.owner}
+                                </dt>
+                                <dd className='text-foreground'>
+                                  {owner.name}
+                                  {owner.email ? ` • ${owner.email}` : ''}
+                                </dd>
+                              </div>
+                            )}
+                            <div className='flex flex-col gap-1'>
+                              <dt className={`text-muted-foreground`}>
+                                {dict.documentation.visibilityLabel}
+                              </dt>
+                              <dd>
+                                <StatusBadge
+                                  status='private'
+                                  label={dict.documentation.visibilityPrivate}
+                                />
+                              </dd>
+                            </div>
+                            {repositoryTags && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsTag className='size-4' />
+                                  {dict.repository.tags.tags}
+                                </dt>
+                                <dd>{repositoryTags}</dd>
+                              </div>
+                            )}
+                          </dl>
+                          {repositoryNotes}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {connections.length > 0 && (
+            <section className='space-y-6'>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-lg bg-muted p-2'>
+                  <GoWorkflow className='size-5 text-muted-foreground' />
+                </div>
+                <div>
+                  <h2 className='text-2xl'>{dict.connections.connections}</h2>
+                  <p className='text-sm text-muted-foreground'>
+                    {dict.documentation.connectionSectionDescription}
+                  </p>
+                </div>
+              </div>
+
+              {filteredConnections.length === 0 ? (
+                <EmptyState
+                  icon={<TbClipboardX className='size-full' />}
+                  title={dict.documentation.connectionSearchEmptyTitle}
+                  description={
+                    dict.documentation.connectionSearchEmptyDescription
+                  }
+                  size='md'
+                  action={{
+                    label: dict.documentation.clearSearch,
+                    onClick: () => setSearchTerm(''),
+                    variant: 'outline',
+                  }}
+                />
+              ) : (
+                <div
+                  className={`
+                    grid grid-cols-1 gap-6
+                    lg:grid-cols-2
+                  `}
+                >
+                  {filteredConnections.map((connection) => {
+                    const owner = ownerSummary(connection.owner);
+                    const connectionTags = renderTags(connection.tags);
+                    const connectionNotes = renderDocumentation(
+                      connection.documentation,
+                      dict.documentation.notesHeading
+                    );
+                    return (
+                      <Card key={`connection-${connection.id}`}>
+                        <CardHeader>
+                          <CardTitle>{connection.name}</CardTitle>
+                          {connection.description && (
+                            <CardDescription>
+                              {connection.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <dl className='space-y-3 text-sm'>
+                            <div className='flex flex-col gap-1'>
+                              <dt className={`text-muted-foreground`}>
+                                {dict.connectors.connector}
+                              </dt>
+                              <dd>
+                                <Badge variant='outline'>
+                                  {connection.connector.name}
+                                </Badge>
+                              </dd>
+                            </div>
+                            {owner && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsPerson className='size-4' />
+                                  {dict.list.owner}
+                                </dt>
+                                <dd className='text-foreground'>
+                                  {owner.name}
+                                  {owner.email ? ` • ${owner.email}` : ''}
+                                </dd>
+                              </div>
+                            )}
+                            {connectionTags && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsTag className='size-4' />
+                                  {dict.repository.tags.tags}
+                                </dt>
+                                <dd>{connectionTags}</dd>
+                              </div>
+                            )}
+                          </dl>
+                          {connectionNotes}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {workflows.length > 0 && (
+            <section className='space-y-6'>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-lg bg-muted p-2'>
+                  <TbRun className='size-5 text-muted-foreground' />
+                </div>
+                <div>
+                  <h2 className='text-2xl'>{dict.workflow.workflows}</h2>
+                  <p className='text-sm text-muted-foreground'>
+                    {dict.documentation.workflowSectionDescription}
+                  </p>
+                </div>
+              </div>
+
+              {filteredWorkflows.length === 0 ? (
+                <EmptyState
+                  icon={<TbClipboardX className='size-full' />}
+                  title={dict.documentation.workflowSearchEmptyTitle}
+                  description={
+                    dict.documentation.workflowSearchEmptyDescription
+                  }
+                  size='md'
+                  action={{
+                    label: dict.documentation.clearSearch,
+                    onClick: () => setSearchTerm(''),
+                    variant: 'outline',
+                  }}
+                />
+              ) : (
+                <div
+                  className={`
+                    grid grid-cols-1 gap-6
+                    lg:grid-cols-2
+                  `}
+                >
+                  {filteredWorkflows.map((workflow) => {
+                    const owner = ownerSummary(workflow.owner);
+                    const statusLabel =
+                      workflow.status && workflow.status.length > 0
+                        ? workflow.status
+                        : dict.workflow.noStatus;
+
+                    const relatedConnectionId =
+                      (workflow.type === 'import' ||
+                        workflow.type === 'export') &&
+                      workflow.workflowable
+                        ? workflow.workflowable.connection_id
+                        : null;
+                    const relatedRepositorySlug =
+                      (workflow.type === 'import' ||
+                        workflow.type === 'export') &&
+                      workflow.workflowable
+                        ? workflow.workflowable.repository
+                        : null;
+
+                    const relatedConnection = relatedConnectionId
+                      ? connectionById.get(relatedConnectionId)
+                      : null;
+                    const relatedRepository = relatedRepositorySlug
+                      ? repositoryBySlug.get(relatedRepositorySlug)
+                      : null;
+                    const repositoryOwner = relatedRepository
+                      ? ownerSummary(relatedRepository.owner)
+                      : null;
+
+                    const scheduled =
+                      workflow.schedule?.triggers &&
+                      workflow.schedule.triggers.length > 0;
+                    const workflowTags = renderTags(workflow.tags);
+                    const workflowNotes = renderDocumentation(
+                      workflow.documentation,
+                      dict.documentation.notesHeading
+                    );
+
+                    return (
+                      <Card key={`workflow-${workflow.id}`}>
+                        <CardHeader>
+                          <CardTitle>{workflow.name}</CardTitle>
+                          {workflow.description && (
+                            <CardDescription>
+                              {workflow.description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          <dl className='space-y-3 text-sm'>
+                            <div className='flex flex-col gap-1'>
+                              <dt className={`text-muted-foreground`}>
+                                {dict.repository.objects.type}
+                              </dt>
+                              <dd className='capitalize'>{workflow.type}</dd>
+                            </div>
+                            <div className='flex flex-col gap-1'>
+                              <dt className={`text-muted-foreground`}>
+                                {dict.list.status}
+                              </dt>
+                              <dd>
+                                <StatusBadge
+                                  status={
+                                    workflow.status &&
+                                    workflow.status.length > 0
+                                      ? workflow.status
+                                      : 'default'
+                                  }
+                                  label={statusLabel}
+                                />
+                              </dd>
+                            </div>
+                            {owner && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2 text-sm
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsPerson className='size-4' />
+                                  {dict.list.owner}
+                                </dt>
+                                <dd className={`font-medium text-foreground`}>
+                                  {owner.name}
+                                  {owner.email ? ` • ${owner.email}` : ''}
+                                </dd>
+                              </div>
+                            )}
+                            <div className='flex flex-col gap-1'>
+                              <dt className={`text-muted-foreground`}>
+                                {dict.documentation.scheduleLabel}
+                              </dt>
+                              <dd>
+                                {scheduled
+                                  ? dict.workflow.scheduled
+                                  : dict.workflow.notScheduled}
+                              </dd>
+                            </div>
+                            {relatedConnection && (
+                              <div className='flex flex-col gap-1'>
+                                <dt className={`text-muted-foreground`}>
+                                  {dict.connections.connection}
+                                </dt>
+                                <dd
+                                  className={`flex flex-wrap items-center gap-2`}
+                                >
+                                  <Badge variant='outline'>
+                                    {relatedConnection.name}
+                                  </Badge>
+                                  <span
+                                    className={`text-xs text-muted-foreground`}
+                                  >
+                                    {dict.connectors.connector}:{' '}
+                                    {relatedConnection.connector.name}
+                                  </span>
+                                </dd>
+                              </div>
+                            )}
+                            {relatedRepository && (
+                              <div className='flex flex-col gap-1'>
+                                <dt className={`text-muted-foreground`}>
+                                  {dict.repository.repository}
+                                </dt>
+                                <dd
+                                  className={`flex flex-wrap items-center gap-2`}
+                                >
+                                  <Badge variant='outline'>
+                                    {relatedRepository.name}
+                                  </Badge>
+                                  {repositoryOwner && (
+                                    <span
+                                      className={`text-xs text-muted-foreground`}
+                                    >
+                                      {dict.list.owner}: {repositoryOwner.name}
+                                    </span>
+                                  )}
+                                </dd>
+                              </div>
+                            )}
+                            {workflowTags && (
+                              <div className='flex flex-col gap-1'>
+                                <dt
+                                  className={`
+                                    flex items-center gap-2
+                                    text-muted-foreground
+                                  `}
+                                >
+                                  <BsTag className='size-4' />
+                                  {dict.repository.tags.tags}
+                                </dt>
+                                <dd>{workflowTags}</dd>
+                              </div>
+                            )}
+                          </dl>
+                          {workflowNotes}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>
