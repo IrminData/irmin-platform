@@ -75,6 +75,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
         toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
         conversationId: conversationId,
+        thinkingOptions: this.config.thinkingOptions,
       });
 
       return {
@@ -100,6 +101,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
         toolSelection: input.toolSelection || this.config.toolSelection,
         authToken: input.authToken,
         conversationId: conversationId,
+        thinkingOptions: this.config.thinkingOptions,
       });
 
       return {

@@ -10,7 +10,7 @@ export const agentConfig: AgentConfig = {
   modelProvider: 'anthropic',
   model: DEFAULT_MODELS.anthropic,
   temperature: 0.8,
-  maxTokens: 6000,
+  maxTokens: 16000, // Must be greater than budget_tokens (10000) for thinking
   contextRequirements: [],
   toolSelection: {
     includeAll: true,
@@ -20,4 +20,13 @@ export const agentConfig: AgentConfig = {
   maxToolCalls: 10,
   maxUserInputChars: 35000, // ~10k tokens
   maxSystemPromptChars: 210000, // ~60k tokens
+  thinkingOptions: {
+    anthropic: {
+      type: 'enabled',
+      budget_tokens: 10000, // Allow substantial thinking for complex queries
+    },
+    openai: {
+      effort: 'medium',
+    },
+  },
 };

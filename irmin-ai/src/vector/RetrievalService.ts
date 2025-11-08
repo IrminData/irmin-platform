@@ -3,7 +3,7 @@ import { QdrantVectorStore } from '@langchain/qdrant';
 import { z } from 'zod';
 
 import { analyticsService } from '@/services/analytics';
-import { type LLMProvider, llmService } from '@/services/llm';
+import { llmService } from '@/services/llm';
 
 // Zod schemas for type safety
 const VectorSearchSchema = z.object({
@@ -397,12 +397,11 @@ class RetrievalService {
 
     try {
       const llm = llmService.createModel({
-        provider: 'openai',
-        model: 'gpt-5-nano',
-        maxTokens: 2000,
-        streaming: false,
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant',
         temperature: 1,
-        openai: { reasoning: { effort: 'minimal' } },
+        maxTokens: 400,
+        streaming: false,
       });
 
       const prompt = `Given this user query: "${query}"
@@ -441,61 +440,6 @@ Generate a concise passage (2-3 sentences) that would likely contain the answer 
 
       const hypotheticalContent = getContentAsString(response.content).trim();
       const generationTime = Date.now() - startTime;
-
-      // Extract token usage from response metadata
-      // LangChain responses can have usage in different places:
-      // - response.usage_metadata.tokenUsage
-      // - response.response_metadata.usage
-      // - response.usage_metadata (direct properties)
-      const usageMetadata =
-        (response as { usage_metadata?: unknown }).usage_metadata ||
-        (response as { response_metadata?: { usage?: unknown } })
-          .response_metadata?.usage;
-
-      let promptTokens: number | undefined;
-      let completionTokens: number | undefined;
-      let totalTokens: number | undefined;
-
-      if (usageMetadata && typeof usageMetadata === 'object') {
-        const usage = usageMetadata as Record<string, unknown>;
-        // Try different possible structures
-        if (usage.tokenUsage) {
-          const tokenUsage = usage.tokenUsage as Record<string, unknown>;
-          promptTokens = tokenUsage.promptTokens as number | undefined;
-          completionTokens = tokenUsage.completionTokens as number | undefined;
-          totalTokens = tokenUsage.totalTokens as number | undefined;
-        } else {
-          // Direct properties
-          promptTokens = usage.promptTokens as number | undefined;
-          completionTokens = usage.completionTokens as number | undefined;
-          totalTokens = usage.totalTokens as number | undefined;
-        }
-      }
-
-      // Log model usage if token counts are available
-      if (promptTokens !== undefined && completionTokens !== undefined) {
-        const calculatedUsage = llmService.calculateUsage(
-          [{ role: 'user', content: prompt, id: '', conversationId: '' }],
-          hypotheticalContent || '',
-          'openai' as LLMProvider,
-          'gpt-5-nano',
-          promptTokens,
-          completionTokens
-        );
-
-        analyticsService.logModelUsage(
-          'gpt-5-nano',
-          totalTokens || calculatedUsage.totalTokens,
-          calculatedUsage.totalCost,
-          generationTime,
-          undefined,
-          undefined,
-          {
-            operation: 'hypothetical_generation',
-            provider: 'openai',
-          }
-        );
-      }
 
       analyticsService.logVectorRetrieval('hypothetical_generation', {
         query,

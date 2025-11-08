@@ -100,11 +100,16 @@ class LlmService {
 
       llm = wrapSDK(new ChatOpenAI(openAIConfig));
     } else if (provider === 'anthropic') {
+      // When thinking is enabled, temperature must be 1.0 or undefined per Anthropic API
+      const anthropicTemperature = options.anthropic?.thinking
+        ? 1.0
+        : temperature;
+
       llm = wrapSDK(
         new ChatAnthropic({
           apiKey: env.ANTHROPIC_API_KEY,
           model: model || this.defaultAnthropicModel,
-          temperature,
+          temperature: anthropicTemperature,
           maxTokens,
           streaming,
           thinking: options.anthropic?.thinking,

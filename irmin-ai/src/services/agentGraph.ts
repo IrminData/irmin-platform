@@ -68,6 +68,7 @@ class AgentGraphService {
         temperature: options.temperature || DEFAULT_LLM_CONFIG.temperature,
         maxTokens: options.maxTokens || DEFAULT_LLM_CONFIG.maxTokens,
         tools,
+        thinkingOptions: options.thinkingOptions,
       });
 
       // Initial state
@@ -171,6 +172,34 @@ class AgentGraphService {
                     return String(content);
                   };
 
+                  // CRITICAL: Check for thinking/reasoning content in additional_kwargs FIRST
+                  // Extract thinking as a separate chunk before processing main content
+                  const hasThinking =
+                    msg.additional_kwargs?.thinking ||
+                    msg.additional_kwargs?.reasoning;
+
+                  if (hasThinking) {
+                    const thinkingContent = getContentAsString(hasThinking);
+
+                    if (thinkingContent.trim()) {
+                      // Create a separate chunk for thinking content
+                      const thinkingChunk = new AIMessageChunk({
+                        content: '',
+                        additional_kwargs: {
+                          thinking: thinkingContent,
+                        },
+                      });
+                      controller.enqueue(thinkingChunk);
+                    }
+                  }
+
+                  // Create clean additional_kwargs without thinking/reasoning to avoid duplication
+                  const cleanAdditionalKwargs = msg.additional_kwargs
+                    ? { ...msg.additional_kwargs }
+                    : {};
+                  delete cleanAdditionalKwargs.thinking;
+                  delete cleanAdditionalKwargs.reasoning;
+
                   let chunkToEnqueue: AIMessageChunk;
 
                   // Check if it's a ToolMessage (result of tool execution) using type guard
@@ -181,7 +210,7 @@ class AgentGraphService {
                       additional_kwargs: {
                         tool_result: true,
                         tool_call_id: msg.tool_call_id,
-                        ...msg.additional_kwargs,
+                        ...cleanAdditionalKwargs,
                       },
                     });
                   } else if (isToolMessageChunk(msg as BaseMessageChunk)) {
@@ -193,26 +222,29 @@ class AgentGraphService {
                         tool_call_id: (
                           msg as BaseMessageChunk & { tool_call_id?: string }
                         ).tool_call_id,
-                        ...msg.additional_kwargs,
+                        ...cleanAdditionalKwargs,
                       },
                     });
                   } else if (isAIMessage(msg)) {
-                    // Convert AIMessage to AIMessageChunk
+                    // Convert AIMessage to AIMessageChunk (without thinking/reasoning)
                     const contentString = getContentAsString(msg.content);
                     chunkToEnqueue = new AIMessageChunk({
                       content: contentString,
-                      additional_kwargs: msg.additional_kwargs,
+                      additional_kwargs: cleanAdditionalKwargs,
                     });
                   } else if (isAIMessageChunk(msg as BaseMessageChunk)) {
-                    // It's already an AIMessageChunk, use it directly
-                    chunkToEnqueue = msg as AIMessageChunk;
+                    // It's already an AIMessageChunk, create clean version without thinking/reasoning
+                    chunkToEnqueue = new AIMessageChunk({
+                      content: (msg as BaseMessageChunk).content,
+                      additional_kwargs: cleanAdditionalKwargs,
+                    });
                   } else {
                     // Fallback for other message types, convert to generic AIMessageChunk
                     chunkToEnqueue = new AIMessageChunk({
                       content: getContentAsString(msg.content || ''),
                       additional_kwargs: {
                         raw_message_type: msg._getType?.() || 'unknown',
-                        ...(msg.additional_kwargs || {}),
+                        ...cleanAdditionalKwargs,
                       },
                     });
                   }
@@ -264,8 +296,10 @@ class AgentGraphService {
     temperature: number;
     maxTokens: number;
     tools: StructuredTool[];
+    thinkingOptions?: CompletionOptions['thinkingOptions'];
   }) {
-    const { provider, model, temperature, maxTokens, tools } = options;
+    const { provider, model, temperature, maxTokens, tools, thinkingOptions } =
+      options;
 
     // Create the LLM with tools
     console.log(
@@ -278,6 +312,12 @@ class AgentGraphService {
       temperature,
       maxTokens,
       tools,
+      anthropic: thinkingOptions?.anthropic
+        ? { thinking: thinkingOptions.anthropic }
+        : undefined,
+      openai: thinkingOptions?.openai
+        ? { reasoning: thinkingOptions.openai }
+        : undefined,
     });
 
     // Create tool node if we have tools with error handling
@@ -311,12 +351,11 @@ class AgentGraphService {
           timeout: TIMEOUTS.MCP_TOOL_EXECUTION,
         });
 
-        // Increment tool calls counter
+        // Return the result with updated state properties
+        // Spread the result to preserve any additional properties from ToolNode
         return {
           ...result,
           toolCalls: state.toolCalls + 1,
-          maxToolCalls: state.maxToolCalls,
-          currentIteration: state.currentIteration,
         };
       } catch (error) {
         // If tool execution fails, provide feedback to the LLM so it can retry with correct parameters
@@ -396,8 +435,11 @@ class AgentGraphService {
                 .slice(-6) // Look at last 6 messages
                 .filter((msg) => isAIMessage(msg) && msg.tool_calls?.length)
                 .filter((msg) => {
+                  if (!isAIMessage(msg)) {
+                    return false;
+                  }
                   const msgToolCalls =
-                    (msg as AIMessage).tool_calls?.map((tc) => tc.name) || [];
+                    msg.tool_calls?.map((tc) => tc.name) || [];
                   return (
                     msgToolCalls.length === currentToolCalls.length &&
                     msgToolCalls.every(

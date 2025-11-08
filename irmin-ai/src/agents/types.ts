@@ -29,6 +29,16 @@ export interface AgentConfig {
   maxToolCalls: number;
   maxUserInputChars?: number;
   maxSystemPromptChars?: number;
+  // Provider-specific thinking options
+  thinkingOptions?: {
+    anthropic?: {
+      type: 'enabled';
+      budget_tokens: number; // Minimum 1024, defaults to 10000
+    };
+    openai?: {
+      effort?: 'minimal' | 'low' | 'medium' | 'high'; // For o1/o3 reasoning models
+    };
+  };
 }
 
 export interface AgentInput {

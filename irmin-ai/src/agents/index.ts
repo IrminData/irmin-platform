@@ -153,6 +153,7 @@ export class AgentsManager {
       };
       const response = await agent.execute(sanitizedInput, conversation.id);
       const processingTimeMs = Date.now() - startTime;
+      const executionTimestamp = new Date(); // Timestamp for this execution
 
       // Check if this is a streaming response
       const isStreamingResponse = !!response.stream;
@@ -178,7 +179,6 @@ export class AgentsManager {
       // For non-streaming responses, save the assistant message immediately
       if (!isStreamingResponse) {
         // Save assistant message blocks
-        const now = new Date();
         const blocks = response.blocks || [];
         const assistantMessagePromises = blocks.map((block) => {
           const messageId = randomUUID();
@@ -209,8 +209,8 @@ export class AgentsManager {
             ),
             costUSD: costUSD / Math.max(blocks.length, 1),
             metadata: block.metadata || {},
-            createdAt: now,
-            updatedAt: now,
+            createdAt: executionTimestamp,
+            updatedAt: executionTimestamp,
           };
           return db.insert(messages).values(message);
         });
@@ -248,7 +248,7 @@ export class AgentsManager {
       // Update conversation updated timestamp
       await db
         .update(conversations)
-        .set({ updatedAt: now })
+        .set({ updatedAt: executionTimestamp })
         .where(eq(conversations.id, conversation.id));
 
       // Add conversation ID to response metadata and include messages for non-streaming responses
@@ -271,10 +271,17 @@ export class AgentsManager {
 
         // Filter to only include assistant messages from this execution
         const assistantMessages = createdMessages.filter(
-          (msg) => msg.role === 'assistant' && msg.createdAt >= now
+          (msg) =>
+            msg.role === 'assistant' && msg.createdAt >= executionTimestamp
         );
 
         agentResponse.messages = assistantMessages;
+
+        // Debug logging
+        console.log('Non-streaming agent response:');
+        console.log(`  content length: ${agentResponse.content?.length || 0}`);
+        console.log(`  blocks count: ${agentResponse.blocks?.length || 0}`);
+        console.log(`  messages count: ${agentResponse.messages?.length || 0}`);
       }
 
       return {

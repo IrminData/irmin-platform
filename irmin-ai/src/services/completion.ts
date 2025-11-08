@@ -8,6 +8,8 @@ import { analyticsService } from '@/services/analytics';
 import { type LLMProvider, llmService, type ModelInfo } from '@/services/llm';
 import { mcpService } from '@/services/mcp';
 
+import type { AgentConfig } from '@/agents/types';
+
 import { DEFAULT_LLM_CONFIG } from '@/config/defaults';
 
 import type { ToolSelection } from '@/types/agents';
@@ -29,6 +31,7 @@ export interface CompletionOptions {
   authToken?: string; // Only needed when Irmin MCP is used
   useAgentGraph?: boolean; // Use LangGraph for iterative tool calling
   maxToolCalls?: number; // Maximum tool calls for agent graph
+  thinkingOptions?: AgentConfig['thinkingOptions'];
 }
 
 class CompletionService {
@@ -48,7 +51,10 @@ class CompletionService {
 
     // Use agent graph for iterative tool calling if requested and tools are available
     if (options.useAgentGraph) {
-      const agentStream = await agentGraphService.executeAgentStream(options);
+      const agentStream = await agentGraphService.executeAgentStream({
+        ...options,
+        thinkingOptions: options.thinkingOptions,
+      });
       return this.wrapStreamWithAnalytics(
         agentStream,
         options,
@@ -71,6 +77,12 @@ class CompletionService {
         temperature: options.temperature || DEFAULT_LLM_CONFIG.temperature,
         maxTokens: options.maxTokens || DEFAULT_LLM_CONFIG.maxTokens,
         tools,
+        anthropic: options.thinkingOptions?.anthropic
+          ? { thinking: options.thinkingOptions.anthropic }
+          : undefined,
+        openai: options.thinkingOptions?.openai
+          ? { reasoning: options.thinkingOptions.openai }
+          : undefined,
       });
 
       // Convert messages to LangChain format
@@ -153,8 +165,11 @@ class CompletionService {
         url: msg.metadata?.url as string,
       }));
 
-      // Extract full content from blocks
-      const fullContent = blocks.map((block) => block.content).join('\n');
+      // Extract full content from text blocks only (exclude reasoning, tool calls, etc.)
+      const fullContent = blocks
+        .filter((block) => block.type === 'text')
+        .map((block) => block.content)
+        .join('\n');
 
       return {
         content: fullContent,

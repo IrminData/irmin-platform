@@ -910,6 +910,7 @@ export async function processStreamingResponse(
     const currentBlocks = new Map<string, MessageBlock>();
     let blockOrder = 0;
     let currentTextBlockId: string | null = null;
+    let currentReasoningBlockId: string | null = null;
 
     const reader = stream.getReader();
     let done = false;
@@ -920,8 +921,30 @@ export async function processStreamingResponse(
 
       if (!done && value) {
         // Process LangChain AIMessageChunk directly
+
+        // Handle thinking/reasoning tokens first
+        const thinking =
+          value.additional_kwargs?.thinking ||
+          value.additional_kwargs?.reasoning;
+        if (thinking && typeof thinking === 'string') {
+          if (!currentReasoningBlockId) {
+            currentReasoningBlockId = `reasoning-${Date.now()}-${Math.random()}`;
+            currentBlocks.set(currentReasoningBlockId, {
+              id: currentReasoningBlockId,
+              type: 'reasoning',
+              content: '',
+              order: blockOrder++,
+            });
+          }
+
+          const block = currentBlocks.get(currentReasoningBlockId);
+          if (block) {
+            block.content += thinking;
+          }
+        }
+
+        // Handle text content
         if (value.content && typeof value.content === 'string') {
-          // Handle text content
           if (!currentTextBlockId) {
             currentTextBlockId = `text-${Date.now()}-${Math.random()}`;
             currentBlocks.set(currentTextBlockId, {
