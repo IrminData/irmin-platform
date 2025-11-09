@@ -269,7 +269,7 @@ export default function AssistantSection({
           <div
             className={`
               hidden w-80 flex-col overflow-y-scroll border-r border-border
-              xl:flex
+              xl:flex xl:shrink-0
             `}
           >
             <ConversationsList
@@ -284,10 +284,10 @@ export default function AssistantSection({
           <div
             className={`
               flex h-full flex-1 flex-col p-2
-              xl:p-4
+              xl:mx-auto xl:max-w-5xl xl:p-4
             `}
           >
-            <Card className='flex h-full flex-col shadow-none'>
+            <Card className='flex size-full flex-col shadow-none'>
               <CardHeader
                 className={`
                   flex flex-row items-center justify-between border-b
