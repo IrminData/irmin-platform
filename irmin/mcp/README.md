@@ -12,9 +12,8 @@ attach endpoint.
 - Workspace management: create new workspaces for data organisation
 - Resource access: read user profile and workspace information
 - Authentication: secure access using API tokens or Clerk JWT tokens
-- Streamable HTTP transport: real-time communication with AI models
-- HTTP single-step attach endpoint: `GET /mcp/attach` for clients that don’t
-  support session handshakes (e.g., Langflow HTTP transport)
+- Streamable HTTP transport: real-time communication with AI models using the MCP Streamable HTTP specification
+- HTTP single-step attach endpoint: `GET /mcp/attach` for clients that need a simplified connection flow (e.g., Langflow HTTP transport)
 
 ## Endpoints
 
@@ -22,8 +21,9 @@ attach endpoint.
 - MCP (full flow): `http://localhost:<PORT><MCP_HTTP_PATH>` (default `/mcp`)
   - For clients that implement the MCP streamable HTTP handshake (e.g., `mcp-remote`,
     Claude Desktop, Inspector)
-- MCP attach (single-step SSE): `http://localhost:<PORT><MCP_HTTP_PATH>/attach`
-  - For HTTP-only clients that need a single `GET` SSE with Bearer auth (e.g., Langflow)
+- MCP attach (single-step Streamable HTTP): `http://localhost:<PORT><MCP_HTTP_PATH>/attach`
+  - For HTTP-only clients that need a single `GET` request with Bearer auth (e.g., Langflow)
+  - Uses the Streamable HTTP transport with automatic initialization and SSE streaming
 
 Configure the mount path with `MCP_HTTP_PATH` (default `/mcp`).
 
@@ -44,7 +44,7 @@ System tokens are not permitted for MCP access.
 
 ## Quick start
 
-### Test the HTTP attach endpoint (single-step SSE)
+### Test the HTTP attach endpoint (single-step Streamable HTTP)
 
 ```bash
 curl -i \
@@ -54,7 +54,8 @@ curl -i \
 ```
 
 You should see `HTTP/1.1 200 OK` and a streaming response
-`Content-Type: text/event-stream`.
+`Content-Type: text/event-stream`. The Streamable HTTP handler automatically handles
+initialization and establishes the SSE connection.
 
 ### Use mcp-remote (full flow, STDIO bridge)
 
@@ -109,8 +110,9 @@ Notes:
 
 The MCP server runs as an embedded component within the main Irmin API
 application. We expose two routes:
-- `<MCP_HTTP_PATH>` for the standard streamable HTTP flow (kept intact)
-- `<MCP_HTTP_PATH>/attach` for single-step SSE attach (HTTP-only clients)
+- `<MCP_HTTP_PATH>` for the standard Streamable HTTP flow (POST for requests, GET for SSE)
+- `<MCP_HTTP_PATH>/attach` for single-step Streamable HTTP attach (HTTP-only clients)
+  - Proxies GET requests to the base path, allowing the SDK handler to manage initialization and SSE automatically
 
 ### Adding new tools
 1. Create a new tool function in `mcp/tools/`
@@ -129,8 +131,7 @@ mcp/
 ├── server.go        # Wire-up for MCP server and routes
 ├── auth.go          # Auth plumbing (Bearer, user context)
 ├── http.go          # Wrapper and mounting of the SDK HTTP handler
-├── attach.go        # /mcp/attach single-step SSE endpoint
-├── pipewriter.go    # Minimal ResponseWriter for in-process streaming
+├── attach.go        # /mcp/attach single-step Streamable HTTP endpoint
 ├── tools/
 │   ├── register.go  # Tool registration
 │   └── workspaces.go
@@ -146,17 +147,32 @@ mcp/
 - Integrates with Irmin’s existing authentication and service layers
 - Provides type-safe tool and resource definitions
 
-## SSE/proxy considerations
+## Streamable HTTP transport
 
-- We set `Cache-Control: no-cache`, `Connection: keep-alive`, and
-  `X-Accel-Buffering: no` for SSE responses.
-- Heartbeat pings are sent periodically on `/mcp/attach` to prevent idle timeouts
-  in proxies.
-- If you terminate TLS or use an extra CDN, ensure it supports long-lived
-  connections and does not buffer `text/event-stream`.
+The MCP server uses the Streamable HTTP transport specification, which replaces
+the older HTTP+SSE transport. Key features:
+
+- **Stateless servers**: The transport supports stateless operation, eliminating
+  the requirement for high availability long-lived connections
+- **Plain HTTP implementation**: MCP can be implemented as a plain HTTP server
+- **Automatic initialization**: The SDK handler automatically handles session
+  initialization and SSE streaming
+- **Infrastructure compatibility**: Works with standard HTTP middleware and proxies
+
+### Proxy considerations
+
+- The SDK handler sets appropriate headers for SSE streaming:
+  `Cache-Control: no-cache`, `Connection: keep-alive`
+- If you terminate TLS or use a CDN, ensure it supports long-lived connections
+  and does not buffer `text/event-stream` responses
 
 ## Testing matrix
 
-- curl to `/mcp/attach` (HTTP-only, single-step SSE) — should stream
-- `npx mcp-remote` to `/mcp` (full flow) — should connect and print MCP capabilities
+- curl to `/mcp/attach` (HTTP-only, single-step Streamable HTTP) — should stream SSE
+- `npx mcp-remote` to `/mcp` (full Streamable HTTP flow) — should connect and print MCP capabilities
 - MCP Inspector to `/mcp` — should connect with Bearer auth
+
+## References
+
+- [MCP Streamable HTTP Transport Specification](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/206)
+- [MCP Go SDK](https://github.com/modelcontextprotocol/go-sdk)
