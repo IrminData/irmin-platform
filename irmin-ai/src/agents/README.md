@@ -1,186 +1,112 @@
 # AI Agents System
 
-A specialized AI agents framework built on top of the existing LLM services, providing structured, configurable agents for different AI tasks. This system leverages the `llmService`, `mcpService`, and `completionService` to create focused AI assistants with specific capabilities and behaviors.
+Irmin AI ships with a lightweight agents framework that wraps LangChain’s `createAgent` API. It adds workspace-aware validation, persistent memory (via LangGraph checkpointer), input sanitization, and optional MCP tool loading on top of the core LLM services.
 
-## Features
+## Core pieces
 
-- **Service Integration**: Built on the existing LLM, MCP, and completion services
-- **Multiple Agent Types**: Chat and single-shot agents
-- **Completion Support**: Full completion response support via LangChain streams (compatible with Vercel AI SDK)
-- **Granular MCP Tools**: Selective tool access with per-request tool selection
-- **Model Flexibility**: Support for OpenAI and Groq models via the model selector
-- **Context Management**: Vector stores, conversation history (fetched from database), and custom contexts
-- **Memory Management**: Uses conversationId for persistent memory across sessions
-- **Type Safety**: Full TypeScript support with comprehensive interfaces
+- `AgentsManager` – registers all agents, validates workspace/user context, manages conversations, sanitizes messages, and orchestrates execution
+- `BaseAgent` – shared implementation that builds a LangChain agent, prepares context, and exposes overridable hooks (`getAgentOptions`, `prepareContext`, `execute`)
+- `AgentService` – internal singleton that configures LangGraph’s Postgres saver, invokes/streams agents, and retrieves agent state
+- `AgentConfig` – minimal per-agent metadata (`id`, `name`, `description`, `contextRequirements`) that powers discovery endpoints and validation
 
-## Future Considerations
+### Execution flow
 
-- **Agent Chaining**: Implementing [LangGraph.js](https://langchain-ai.github.io/langgraphjs) for complex agent workflows and orchestration
-- **Agent Thinking**: Agent specify thinking capabilities, but we don't use it yet.
+1. `AgentsManager.executeAgent` receives an `AgentInput` containing `message`, optional `conversationId`, optional `context`, plus authenticated `workspace` and `user` objects supplied by Fastify middleware.
+2. Existing conversations are validated to ensure they belong to the caller; new conversations are created with fallback titles and stored in Postgres.
+3. Messages are sanitized via `textSanitizer` (prompt-injection patterns stripped, max length enforced). Empty results are rejected.
+4. The target `BaseAgent` subclass builds a LangChain agent:
+   - Retrieves per-agent LLM configuration, middleware, and tool selection via `getAgentOptions`
+   - Prepares additional context via `prepareContext`
+   - Generates a system prompt using `SystemPromptBuilder`
+   - Creates the LangChain agent with the Postgres checkpointer
+5. The agent is invoked or streamed. The resulting stream/content is returned along with the authoritative `conversationId` and sanitized message content.
+6. Conversation metadata (`updatedAt`) is refreshed and async title generation is kicked off for non-streaming responses.
 
-## Quick Start
+### Streaming responses
+
+- Agents expose LangChain v2 `StreamEvent` streams (`ReadableStream<StreamEvent>`). The Fastify route converts them to NDJSON.
+- The assistant agent always streams (its `AgentResponse.content` is intentionally empty).
+- Non-streaming agents return populated `content` fields and no stream.
+
+## Built-in agents
+
+### `assistant`
+- Anthropic Claude Sonnet 4.5 (streaming, thinking tokens enabled) with Groq/OpenAI fallbacks
+- Optional MCP tool loading when `authToken` is present
+- Summarization + tool selector middleware to manage long conversations and reduce tool calls
+- Vector-backed context enrichment via `retrievalService.retrieveWithHypotheticalContent` against the `irmin-docs` collection
 
 ```typescript
-import { AgentsManager } from './agents';
-
-const agentsManager = new AgentsManager();
-
-// Execute assistant agent
-const response = await agentsManager.executeAgent('assistant', {
-  message: "Help me understand microservices architecture",
-  authToken: "your-irmin-auth-token",
-  conversationId: "conv-123"
+const { agentResponse, conversationId } = await agentsManager.executeAgent('assistant', {
+  message: 'Summarize the key Irmin workflows for me.',
+  conversationId: existingConversationId,
+  authToken: request.headers.authorization?.replace('Bearer ', ''),
+  workspace: request.workspace.workspace,
+  user: request.auth.user,
 });
 
-console.log(response.content);
+// agentResponse.stream is a ReadableStream<StreamEvent>
+// agentResponse.metadata?.conversationId mirrors conversationId
 ```
 
-## Architecture
-
-The agents system is a specialized layer that sits on top of the existing services:
-
-```
-┌─────────────────┐
-│   Agents Layer  │  ← New specialized agents
-├─────────────────┤
-│ Streaming Svc   │  ← The existing services
-│ LLM Service     │
-│ MCP Service     │  
-└─────────────────┘
-```
-
-### Streaming Implementation
-
-The agents now pass through LangChain streams directly instead of converting them to Web ReadableStreams. This approach:
-
-- **Eliminates redundancy**: No need to convert between stream types
-- **Vercel AI SDK compatibility**: Works seamlessly with Vercel AI SDK for client-side streaming
-- **Better performance**: Direct stream handling without conversion overhead
-- **LangChain native**: Maintains full compatibility with LangChain ecosystem
-
-## Folder Structure
-
-```
-/agents
-├── agents.ts                    # Main orchestrator
-├── types.ts                     # Type definitions
-├── base/                        # Base implementations
-│   ├── index.ts                 # Base agent implementation class to extend from
-├── utils/                       # Agent-specific utilities
-│   ├── context-manager.ts      # Context preparation
-└── [agent-name]/               # Individual agents
-    ├── index.ts                # Agent implementation
-    ├── config.ts               # Agent configuration
-    └── system-prompt.txt       # System prompt
-```
-
-## Built-in Agents
-
-### Assistant Agent
-General-purpose assistant agent with full MCP tools access.
+### `query`
+- Groq Llama 3.3 70B Versatile
+- Requires `contextRequirements` (repository slug, object path, optional ref); these are validated before execution
+- Returns synchronous JSON/SQL content (`AgentResponse.content`)
 
 ```typescript
-const response = await agentsManager.executeAgent('assistant', {
-  message: "What's the weather like and can you help me write some code?",
-  authToken: token,
-  conversationHistory: messages,
-  toolSelection: { includeAll: true }  // Override default tool selection
-});
-```
-
-**Features:**
-- Full MCP tools integration (configurable via `toolSelection`)
-- Streaming responses
-- Conversation history awareness
-- Thinking enabled
-
-### Query Agent
-Converts natural language to SQL queries.
-
-```typescript
-const response = await agentsManager.executeAgent('query', {
-  message: "Show me users who registered in the last 30 days",
+const { agentResponse } = await agentsManager.executeAgent('query', {
+  message: 'List the five most recently updated objects.',
   context: { 
-    schema: databaseSchema 
+    repository_slug: 'analytics-repo',
+    object_path: '/data/sales/orders.csv',
   },
-  conversationId: "conv-123"
+  workspace: request.workspace.workspace,
+  user: request.auth.user,
 });
+
+console.log(agentResponse.content);
 ```
 
-**Features:**
-- Database schema awareness
-- Optimized for precision (low temperature)
-- Structured JSON responses
-- Fast Groq model for quick results
-
-### Scripting Agent
-Generates Go scripts from natural language descriptions.
+### `scripting`
+- Groq Llama 3.3 70B Versatile
+- Generates Go snippets for Irmin automation tasks
+- Returns synchronous code blocks (`AgentResponse.content`)
 
 ```typescript
-const response = await agentsManager.executeAgent('scripting', {
-  message: "Create a HTTP server with rate limiting and JWT auth",
-  context: { 
-    projectStructure: {...}
-  },
-  conversationId: "conv-123"
+const { agentResponse } = await agentsManager.executeAgent('scripting', {
+  message: 'Create a Go script that exports repository metadata to JSON.',
+  workspace: request.workspace.workspace,
+  user: request.auth.user,
 });
+
+console.log(agentResponse.content);
 ```
 
-**Features:**
-- Go language specialization
-- Project context awareness
-- Code best practices
-- Thinking enabled for complex logic
+## Extending the framework
 
-## Creating Custom Agents
-
-### 1. Define Agent Configuration
-
+1. **Define configuration**
 ```typescript
-// agents/my-agent/config.ts
-import { AgentConfig } from '../types';
+   // src/agents/my-agent/config.ts
+   import { AgentConfig } from '@/agents/types';
 
 export const myAgentConfig: AgentConfig = {
   id: 'my-agent',
   name: 'My Custom Agent',
-  description: 'Specialized agent for specific tasks',
-  modelProvider: 'openai',
-  model: 'gpt-5',
-  temperature: 0.8,
-  maxTokens: 2000,
-  contextRequirements: [],
-  toolSelection: {
-    includeAll: true
-  },
+     description: 'Specialized agent for X tasks',
+     contextRequirements: [
+       { name: 'dataset', description: 'Dataset identifier', required: true },
+     ],
 };
 ```
 
-### 2. Create System Prompt
+2. **Create a system prompt (optional)** – add `src/agents/my-agent/system-prompt.txt` or rely on the config description fallback.
 
-```txt
-// agents/my-agent/system-prompt.txt
-You are a specialized AI assistant focused on [specific domain].
-
-Your capabilities:
-- Task 1: Description
-- Task 2: Description
-
-Guidelines:
-- Always provide structured responses
-- Include reasoning for complex decisions
-- Format code blocks properly
-
-Response format:
-- Use JSON structure when requested
-- Include confidence levels for recommendations
-```
-
-### 3. Implement Agent
-
+3. **Implement the agent**
 ```typescript
-// agents/my-agent/index.ts
+   // src/agents/my-agent/index.ts
 import { BaseAgent } from '@/agents/base';
-import { AgentInput, AgentResponse } from '@/agents/types';
+   import { AgentInput } from '@/agents/types';
 import { myAgentConfig } from './config';
 
 export class MyAgent extends BaseAgent {
@@ -188,225 +114,43 @@ export class MyAgent extends BaseAgent {
     super(myAgentConfig);
   }
 
-  // Override if you need custom logic
-  async prepareContext(input: AgentInput): Promise<Record<string, any>> {
-    const context = await super.prepareContext(input);
-    
-    // Add custom context preparation
-    if (input.context?.specialData) {
-      context.processedData = await this.processSpecialData(input.context.specialData);
-    }
-    
+     protected async getAgentOptions(input: AgentInput) {
+       return {
+         llmOptions: {
+           provider: 'groq',
+           model: 'llama-3.3-70b-versatile',
+           temperature: 0.5,
+         },
+         // Return tools or middleware if needed
+       };
+     }
+
+     protected async prepareContext(input: AgentInput) {
+       const context = await super.prepareContext(input);
+       // Add custom context (e.g., vector lookups) here
     return context;
   }
+   }
+   ```
 
-  private async processSpecialData(data: any) {
-    // Custom processing logic
-    return data;
-  }
-}
-```
+4. **Register the agent** – add `new MyAgent()` inside the `AgentsManager` constructor.
 
-### 4. Register Agent
+## Conversation history helpers
 
-```typescript
-// agents/agents.ts
-import { MyAgent } from '@/agents/my-agent';
+`AgentsManager.getConversationHistory(agentId, conversationId)` uses the LangGraph checkpointer to fetch the stored message array (`BaseMessage[]`). This is useful for debugging or building custom response pipelines.
 
-constructor() {
-  // ... existing agents
-  this.registerAgent(new MyAgent());
-}
-```
+## Tool access
 
-## API Integration
+- The assistant agent automatically loads MCP tools when an `authToken` is supplied.
+- Other agents currently run without tools; add tool loading in `getAgentOptions` as needed.
+- Request-level control of tool inclusion/exclusion can be added by extending agent inputs; see `AssistantAgent.getAgentOptions` for a reference implementation.
 
-### Fastify.js API Routes
+## API routes overview
 
-```typescript
-import Fastify from 'fastify';
-import { AgentsManager } from '@/agents';
+Fastify exposes the following agent routes (see `src/routes/agents.ts`):
+- `GET /api/agents` – list registered agents (`AgentConfig[]`)
+- `GET /api/agents/:agentId/config` – fetch config for a single agent
+- `POST /api/agents/:agentId` – execute an agent (non-streaming response)
+- `POST /api/agents/:agentId/stream` – execute an agent and stream LangChain events (NDJSON)
 
-const fastify = Fastify({ logger: true });
-const agentsManager = new AgentsManager();
-
-// Non-streaming execution
-fastify.post('/api/agents/:agentId', async (request, reply) => {
-  try {
-    const { agentId } = request.params as { agentId: string };
-    const authToken = (request.headers.authorization as string)?.replace('Bearer ', '');
-    
-    const response = await agentsManager.executeAgent(agentId, {
-      ...request.body,
-      authToken
-    });
-    
-    return reply.send(response);
-  } catch (error) {
-    return reply.status(400).send({ 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    });
-  }
-});
-
-// Streaming execution
-fastify.post('/api/agents/:agentId/stream', async (request, reply) => {
-  try {
-    const { agentId } = request.params as { agentId: string };
-    const authToken = (request.headers.authorization as string)?.replace('Bearer ', '');
-    
-    const response = await agentsManager.executeAgent(agentId, {
-      ...request.body,
-      authToken
-    });
-    
-    if (response.stream) {
-      reply.type('text/event-stream');
-      reply.header('Cache-Control', 'no-cache');
-      reply.header('Connection', 'keep-alive');
-      
-      // Handle LangChain stream directly
-      try {
-        for await (const chunk of response.stream) {
-          const content = chunk.content;
-          if (content && typeof content === 'string') {
-            reply.raw.write(`data: ${content}\n\n`);
-          }
-        }
-        reply.raw.write('data: [DONE]\n\n');
-        reply.raw.end();
-      } catch (error) {
-        reply.raw.write(`data: {"error": "${error instanceof Error ? error.message : 'Stream error'}"}\n\n`);
-        reply.raw.end();
-      }
-    } else {
-      return reply.send(response);
-    }
-  } catch (error) {
-    return reply.status(400).send({ 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    });
-  }
-});
-
-// List available agents
-fastify.get('/api/agents', async (request, reply) => {
-  const agents = agentsManager.listAgents();
-  return reply.send(agents);
-});
-```
-
-## Advanced Usage
-
-### Custom Context Example
-```typescript
-const response = await agentsManager.executeAgent('assistant', {
-  message: "Help me optimize this code",
-  context: {
-    codeBase: await vectorStore.search("optimization patterns"),
-    userPreferences: { language: "go", style: "clean" }
-  },
-  conversationId: "conv-123",
-  authToken: userToken
-});
-```
-
-## Error Handling
-
-```typescript
-try {
-  const response = await agentsManager.executeAgent('assistant', input);
-} catch (error) {
-  if (error.message.includes('not found')) {
-    // Agent doesn't exist
-  } else if (error.message.includes('Invalid input')) {
-    // Input validation failed
-  } else if (error.message.includes('MCP')) {
-    // MCP tool error
-  } else {
-    // Model or service error
-  }
-}
-```
-
-## Performance & Monitoring
-
-### Usage Tracking
-```typescript
-const response = await agentsManager.executeAgent('assistant', input);
-console.log('Usage:', response.usage);
-// {
-//   promptTokens: 150,
-//   completionTokens: 300,
-//   totalTokens: 450
-// }
-```
-
-### MCP Status Monitoring
-```typescript
-const status = agentsManager.getMcpStatus();
-console.log('MCP Status:', status);
-// {
-//   enabled: true,
-//   configStatus: {
-//     enabled: true,
-//     serverCount: 1,
-//     configKeys: ["irmin"]
-//   }
-// }
-```
-
-## Tool Selection
-
-Agents support granular tool selection through the `toolSelection` parameter, allowing you to control which MCP tools are available for each request:
-
-### Agent-Level Configuration
-
-Each agent can have a default `toolSelection` in its configuration:
-
-```typescript
-// agents/chat/config.ts
-export const agentConfig: AgentConfig = {
-  // ... other config
-  toolSelection: {
-    includeAll: true  // Assistant agent gets all tools by default
-  },
-};
-```
-
-### Request-Level Override
-
-You can override the agent's default tool selection per request:
-
-```typescript
-// Override to use only specific tools
-const response = await agentsManager.executeAgent('assistant', {
-  message: "List workspaces",
-  toolSelection: {
-    includeTools: ["list_workspaces", "retrieve_docs_context"]
-  }
-});
-
-// Override to exclude specific tools
-const response = await agentsManager.executeAgent('assistant', {
-  message: "Create a workspace",
-  toolSelection: {
-    excludeTools: ["delete_workspace", "delete_repository"]
-  }
-});
-
-// Override to use no tools
-const response = await agentsManager.executeAgent('assistant', {
-  message: "General question",
-  toolSelection: undefined  // No tools
-});
-```
-
-### Tool Selection Options
-
-- `includeAll: true` - Include all available tools
-- `includeTools: ["tool1", "tool2"]` - Include only specified tools
-- `excludeTools: ["tool1", "tool2"]` - Exclude specified tools
-- `includeServers: ["server1"]` - Include all tools from specific MCP servers (future feature)
-
-**Priority:** Request-level `toolSelection` takes precedence over agent-level configuration.
+These routes rely on authentication/workspace middleware to populate `request.auth` and `request.workspace`, which must then be passed to `AgentsManager.executeAgent` as shown in the built-in route handlers.

@@ -7,6 +7,16 @@ export class QueryAgent extends BaseAgent {
     super(agentConfig);
   }
 
-  // The base class handles all execution logic using your services
-  // Override only if you need custom behavior
+  protected async getAgentOptions() {
+    return {
+      llmOptions: {
+        provider: 'groq' as const,
+        model: 'llama-3.3-70b-versatile',
+        temperature: 1.0,
+        maxTokens: 1000,
+      },
+    };
+  }
+
+  // Uses base execute() - non-streaming
 }

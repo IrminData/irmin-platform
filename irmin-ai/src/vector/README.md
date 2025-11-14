@@ -1,274 +1,186 @@
-# Vector Services - RAG Implementation
+# Vector Services – RAG Implementation
 
-This directory contains the vector services for implementing Retrieval Augmented Generation (RAG) in the Irmin AI system.
-
-## Overview
-
-RAG (Retrieval Augmented Generation) is a technique that combines information retrieval with text generation to provide more accurate and contextual responses. Our implementation follows the standard RAG architecture with two main phases:
-
-1. **Indexing**: Processing and storing documents for later retrieval
-2. **Retrieval + Generation**: Searching for relevant content and generating responses
-
-## Architecture
+The vector services power Retrieval Augmented Generation (RAG) inside Irmin AI. They provide helpers for managing Qdrant collections, creating embeddings, indexing documents, and retrieving context for LangChain agents.
 
 ```
-┌─────────────────┐    ┌──────────────────┐
-│   Documents     │    │   User Query     │
-└─────────┬───────┘    └─────────┬────────┘
-          │                      │
-          ▼                      │
-┌─────────────────┐              │
-│  IndexingService │              │
-├─────────────────┤              │
-│ • Load docs     │              │
-│ • Split text    │              │
-│ • Create embeds │              │
-│ • Store vectors │              │
-└─────────┬───────┘              │
-          │                      │
-          ▼                      ▼
-┌─────────────────┐    ┌──────────────────┐
-│  Vector Store   │    │ RetrievalService │
-│   (Qdrant)      │◄───┤ • Search similar │
-└─────────────────┘    │ • Rank results   │
-                       │ • Prepare context│
-                       └─────────┬────────┘
-                                 │
-                                 ▼
-                       ┌──────────────────┐
-                       │   Generated      │
-                       │   Response       │
-                       └──────────────────┘
+┌──────────────┐      ┌──────────────────┐
+│ Source Docs  │      │   User Query     │
+└──────┬───────┘      └────────┬─────────┘
+       │                       │
+       ▼                       │
+┌──────────────┐               │
+│ IndexingSvc  │               │
+│  • Fetch     │               │
+│  • Chunk     │               │
+│  • Embed     │               │
+│  • Upload    │               │
+└──────┬───────┘               │
+       │                       ▼
+       ▼             ┌────────────────────┐
+┌──────────────┐    │ RetrievalService   │
+│  Qdrant      │◄───┤  • Similarity      │
+│  Collection  │    │  • Context build   │
+└──────────────┘    │  • Hypothetical    │
+                     └─────────┬─────────┘
+                               ▼
+                     ┌────────────────────┐
+                     │  Agent / LLM       │
+                     └────────────────────┘
 ```
 
-## Services
+## IndexingService
 
-### IndexingService
+`src/vector/IndexingService.ts`
 
-Handles the **Indexing** phase of RAG:
+| Method | Description |
+| --- | --- |
+| `initVectorStore(collectionName, isSystemCollection?, workspaceSlug?, userId?)` | Connect to an existing Qdrant collection after verifying workspace/user permissions. Throws if access is denied or the collection does not exist. |
+| `createNewVectorStore(collectionName, workspaceSlug, userId, description?)` | Creates a new collection (DB + Qdrant). Returns a ready-to-use `QdrantVectorStore`. |
+| `indexDocuments(vectorStore, documents, collectionName?)` | Validates records via Zod, uploads them, updates collection stats, and logs analytics. |
+| `createEmbeddings(texts, model?)` / `createEmbedding(text, model?)` | Convenience helpers for batch or single embeddings (default `text-embedding-3-small`). |
+| `deleteAllDocuments(vectorStore, collectionName?)` | Removes all points from a collection and resets counters. |
+| `deleteSpecificChunks(vectorStore, chunkIds, collectionName?)` | Removes chunks by `metadata.documentId`. |
+| `deleteDocuments(vectorStore, documentIds, collectionName?)` | Removes all chunk variants for a base document ID. |
+| `getEmbeddingModel()` | Returns the underlying `OpenAIEmbeddings` instance for custom workflows. |
 
-- **Document Loading**: Accepts documents in various formats
-- **Text Splitting**: Chunks documents into manageable pieces
-- **Embedding Creation**: Converts text to vector embeddings using OpenAI
-- **Vector Storage**: Stores embeddings in Qdrant vector database
-
-#### Key Methods
+### Example: create + index
 
 ```typescript
-// Create or connect to vector store
-await indexingService.createVectorStore(config);
-await indexingService.createNewVectorStore(config);
+import { indexingService } from '@/vector';
 
-// Index documents
-await indexingService.indexDocuments(vectorStore, documents);
+// 1. Create a new collection for a workspace user
+const vectorStore = await indexingService.createNewVectorStore(
+  'customer-docs',
+  workspace.slug,
+  user.id,
+  'Customer success playbooks'
+);
 
-// Create embeddings
-await indexingService.createEmbeddings(texts);
-await indexingService.createEmbedding(text);
+// 2. Index content (metadata is optional)
+await indexingService.indexDocuments(vectorStore, [
+  {
+    pageContent: 'Irmin tracks data versioning through repositories and branches.',
+    metadata: { category: 'concepts', documentId: 'concepts-1' },
+  },
+]);
 ```
 
-### RetrievalService
-
-Handles the **Retrieval and Generation** phase of RAG:
-
-- **Similarity Search**: Finds relevant documents using vector similarity
-- **Query Analysis**: Optimizes queries for better retrieval
-- **Context Preparation**: Formats retrieved content for generation
-- **Advanced Retrieval**: Multi-query, compression, and filtering strategies
-
-#### Key Methods
+### Example: connect to existing system collection
 
 ```typescript
-// Basic similarity search
-await retrievalService.searchSimilar(vectorStore, options);
-
-// Advanced retrieval with query analysis
-await retrievalService.retrieveWithAnalysis(vectorStore, analysis);
-
-// Prepare context for LLM generation
-await retrievalService.retrieveContext(vectorStore, query, options);
-
-// Multi-query retrieval
-await retrievalService.multiQueryRetrieval(vectorStore, queries);
-
-// Contextual compression
-await retrievalService.retrieveWithCompression(vectorStore, query, options);
+const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
 ```
 
-## Usage Examples
+`initVectorStore` is used heavily by the assistant agent to connect to the `irmin-docs` system collection that the `vectorize-docs` script maintains.
 
-### Basic RAG Implementation
+## RetrievalService
+
+`src/vector/RetrievalService.ts`
+
+| Method | Description |
+| --- | --- |
+| `searchSimilar(vectorStore, options, collectionName?)` | Similarity search with optional metadata filters and score thresholds. Returns documents, scores, and timing metrics. |
+| `retrieveWithAnalysis(vectorStore, analysis, collectionName?)` | Executes an analyzed query structure (filters + window). Useful for advanced search experiences. |
+| `retrieveContext(vectorStore, query, options?, collectionName?)` | Builds a context string (with optional metadata blocks) constrained by token estimates. |
+| `multiQueryRetrieval(vectorStore, queries, options?, collectionName?)` | Executes multiple queries and optionally deduplicates by content. |
+| `retrieveWithCompression(vectorStore, query, options?, collectionName?)` | Filters results by score and truncates content to reduce tokens. |
+| `retrieveWithHypotheticalContent(vectorStore, query, options?, collectionName?)` | HyDE-style retrieval: generates hypothetical content using Groq LLMs, falls back to the raw query if generation fails, and returns context + metadata about the hypothetical usage. |
+
+### Example: build RAG context
 
 ```typescript
 import { indexingService, retrievalService } from '@/vector';
 
-// 1. Indexing Phase
-const config = indexingService.getDefaultConfig();
-const vectorStore = await indexingService.createVectorStore(config);
+const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
 
-const documents = [
-  { pageContent: "The capital of France is Paris.", metadata: { source: "geography" } },
-  { pageContent: "Paris is known for the Eiffel Tower.", metadata: { source: "landmarks" } }
-];
+const { context, sources, totalTokens } = await retrievalService.retrieveWithHypotheticalContent(
+  vectorStore,
+  'How does Irmin handle branching for data pipelines?',
+  {
+    maxDocuments: 5,
+    scoreThreshold: 0.2,
+    includeMetadata: true,
+    maxTokens: 2000,
+  },
+  'irmin-docs'
+);
 
-await indexingService.indexDocuments(vectorStore, documents);
+console.log(totalTokens, sources.length, context.slice(0, 200));
+```
 
-// 2. Retrieval Phase
-const query = "What is the capital of France?";
-const searchResults = await retrievalService.searchSimilar(vectorStore, {
-  query,
-  k: 5,
-  scoreThreshold: 0.7
+### Example: similarity search with filters
+
+```typescript
+const results = await retrievalService.searchSimilar(
+  vectorStore,
+  {
+    query: 'Irmin connectors',
+    k: 4,
+    filter: { category: 'connectors' },
+    scoreThreshold: 0.25,
+  },
+  'irmin-docs'
+);
+
+results.documents.forEach(({ document, score }) => {
+  console.log(score.toFixed(3), document.metadata);
 });
+```
 
-// 3. Context Preparation
+## Putting it together
+
+```typescript
+// 1. Connect to a collection (create if needed)
+const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
+
+// 2. Retrieve context for a user query
 const { context, sources } = await retrievalService.retrieveContext(
   vectorStore,
-  query,
-  { maxDocuments: 3, includeMetadata: true }
+  'Explain Irmin data versioning best practices',
+  {
+    maxDocuments: 3,
+    scoreThreshold: 0.15,
+    includeMetadata: true,
+    maxTokens: 1800,
+  },
+  'irmin-docs'
 );
 
-// Now use context with your LLM for generation
+// 3. Pass the context into your LLM chain
+// const response = await llm.invoke([...]);
 ```
 
-### Advanced RAG with Query Analysis
+## Configuration & environment
 
-```typescript
-// Enhanced retrieval with query analysis
-const analysis = {
-  query: "recent developments in artificial intelligence",
-  filters: { category: "technology", year: { $gte: 2023 } },
-  contextWindow: 10
-};
-
-const results = await retrievalService.retrieveWithAnalysis(vectorStore, analysis);
-```
-
-### Multi-Query Retrieval
-
-```typescript
-// For complex questions requiring multiple perspectives
-const queries = [
-  "What is machine learning?",
-  "How does deep learning work?",
-  "Applications of neural networks"
-];
-
-const allResults = await retrievalService.multiQueryRetrieval(
-  vectorStore,
-  queries,
-  { deduplicateByContent: true }
-);
-```
-
-## Configuration
-
-### Environment Variables
+Set the following environment variables before using the vector services:
 
 ```bash
-# Required
 OPENAI_API_KEY=your_openai_api_key
 QDRANT_URL=http://localhost:6333
-
-# Optional
-QDRANT_API_KEY=your_qdrant_api_key
+QDRANT_API_KEY=optional_api_key_if_required
 ```
 
-### Vector Store Configuration
+Assistant agents expect the `irmin-docs` system collection to exist. Populate it by running the `vectorize-docs` script (`POST /api/system/scripts/vectorize-docs` or `tsx src/scripts/vectorize-docs.ts`).
 
-```typescript
-const config = {
-  collectionName: 'my-documents',
-  url: 'http://localhost:6333',
-  apiKey: 'optional-api-key'
-};
-```
-
-## Best Practices
+## Best practices
 
 ### Indexing
-
-1. **Document Chunking**: Keep chunks between 100-1000 tokens for optimal retrieval
-2. **Metadata**: Include relevant metadata for filtering and context
-3. **Batch Processing**: Index documents in batches for better performance
-4. **Version Control**: Use collection names to manage different document versions
+- Chunk text between ~700–1000 characters with 150–250 overlap (defaults used by the script)
+- Use deterministic `metadata.documentId` values when you need replace-mode updates (the script auto-generates them)
+- Record relevant metadata (category, source, file path) for better filtering
 
 ### Retrieval
-
-1. **Query Optimization**: Use query analysis for complex questions
-2. **Score Thresholds**: Set appropriate similarity thresholds to filter irrelevant results
-3. **Context Window**: Balance context size with token limits
-4. **Result Ranking**: Consider both similarity scores and metadata for ranking
+- Apply score thresholds to trim irrelevant content (`0.2`–`0.3` works well for most docs)
+- Leverage `retrieveWithHypotheticalContent` when queries are short or ambiguous
+- Cap `maxTokens` to stay within LLM context limits and avoid flooding prompts with stale data
 
 ### Performance
+- Cache vector store connections per request when possible (`initVectorStore` reuses the same embeddings client)
+- Prefer batch indexing (`indexDocuments`) over multiple single calls
+- Monitor analytics events in the `analytics` table to understand document counts and retrieval timings
 
-1. **Caching**: Cache embeddings for frequently used queries
-2. **Parallel Processing**: Use batch operations when possible
-3. **Monitoring**: Track retrieval performance and accuracy metrics
-4. **Indexing Strategy**: Regularly update and maintain vector indices
+## Advanced features
 
-## Advanced Features
-
-### Query Analysis
-
-Transform user queries into optimized search parameters:
-
-```typescript
-const analysis = {
-  query: "optimized search terms",
-  filters: { category: "specific", date: "recent" },
-  contextWindow: 5
-};
-```
-
-### Contextual Compression
-
-Reduce irrelevant content while maintaining context:
-
-```typescript
-const compressed = await retrievalService.retrieveWithCompression(
-  vectorStore,
-  query,
-  { compressionThreshold: 0.6, maxChunkSize: 500 }
-);
-```
-
-### Multi-Modal Support
-
-Handle different content types with appropriate metadata:
-
-```typescript
-const documents = [
-  { 
-    pageContent: "Text content",
-    metadata: { type: "text", source: "document.pdf" }
-  },
-  {
-    pageContent: "Code snippet",
-    metadata: { type: "code", language: "typescript" }
-  }
-];
-```
-
-## Integration with LangChain
-
-Our services are designed to work seamlessly with LangChain components:
-
-```typescript
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { ChatOpenAI } from '@langchain/openai';
-
-// Retrieve context
-const { context } = await retrievalService.retrieveContext(vectorStore, query);
-
-// Create prompt with context
-const prompt = ChatPromptTemplate.fromMessages([
-  ["system", "Use the following context to answer the question: {context}"],
-  ["human", "{question}"]
-]);
-
-// Generate response
-const llm = new ChatOpenAI();
-const chain = prompt.pipe(llm);
-const response = await chain.invoke({ context, question: query });
-```
+- **HyDE retrieval** – `retrieveWithHypotheticalContent` automatically logs hypothetical usage via the analytics service.
+- **Contextual compression** – `retrieveWithCompression` trims low-scoring chunks and shortens content to a defined size.
+- **Chunk deletion helpers** – Use `deleteSpecificChunks` or `deleteDocuments` to surgically remove outdated content without dropping entire collections.

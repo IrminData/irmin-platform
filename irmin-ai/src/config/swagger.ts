@@ -34,55 +34,6 @@ const workspaceSchema = {
   },
 } as const;
 
-// Message schema
-const messageSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'string' },
-    conversationId: { type: 'string' },
-    role: { type: 'string', enum: ['user', 'assistant', 'system'] },
-    content: { type: 'string' },
-    metadata: { type: 'object' },
-
-    // Message block structure
-    messageType: {
-      type: 'string',
-      enum: [
-        'text',
-        'tool_call',
-        'tool_result',
-        'reasoning',
-        'source',
-        'file',
-        'error',
-        'system',
-      ],
-      default: 'text',
-    },
-    blockId: { type: 'string', nullable: true },
-    parentBlockId: { type: 'string', nullable: true },
-    blockOrder: { type: 'number', default: 0 },
-
-    // AI model information
-    aiModelId: { type: 'string', nullable: true },
-    modelProvider: { type: 'string', nullable: true },
-    modelName: { type: 'string', nullable: true },
-
-    // Token usage and costs
-    inputTokens: { type: 'number', nullable: true },
-    outputTokens: { type: 'number', nullable: true },
-    totalTokens: { type: 'number', nullable: true },
-    costUSD: { type: 'number', nullable: true },
-
-    // Performance metrics
-    processingTimeMs: { type: 'number', nullable: true },
-
-    // Timestamps
-    createdAt: { type: 'string', format: 'date-time' },
-    updatedAt: { type: 'string', format: 'date-time' },
-  },
-} as const;
-
 // Conversation schema
 const conversationSchema = {
   type: 'object',
@@ -111,65 +62,6 @@ const aiModelSchema = {
     description: { type: 'string' },
     inputPricePerMillionTokens: { type: 'number' },
     outputPricePerMillionTokens: { type: 'number' },
-  },
-} as const;
-
-// MCP Tool schema
-const mcpToolSchema = {
-  type: 'object',
-  properties: {
-    name: { type: 'string' },
-    description: { type: 'string' },
-    inputSchema: { type: 'object' },
-  },
-} as const;
-
-// Agent schema
-const agentSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'string' },
-    name: { type: 'string' },
-    description: { type: 'string' },
-    type: { type: 'string', enum: ['chat', 'single-shot'] },
-    capabilities: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    systemPrompt: { type: 'string' },
-    defaultModel: { type: 'string' },
-    defaultProvider: { type: 'string' },
-    supportsMCP: { type: 'boolean' },
-    supportsStreaming: { type: 'boolean' },
-  },
-} as const;
-
-// Tool selection schema
-const toolSelectionSchema = {
-  type: 'object',
-  description: 'Tool selection options for MCP tools',
-  properties: {
-    includeAll: { type: 'boolean', description: 'Include all available tools' },
-    includeTools: {
-      type: 'array',
-      items: { type: 'string' },
-      description: 'Specific tools to include',
-    },
-    excludeTools: {
-      type: 'array',
-      items: { type: 'string' },
-      description: 'Tools to exclude',
-    },
-  },
-} as const;
-
-// Usage statistics schema
-const usageSchema = {
-  type: 'object',
-  properties: {
-    promptTokens: { type: 'number' },
-    completionTokens: { type: 'number' },
-    totalTokens: { type: 'number' },
   },
 } as const;
 
@@ -267,39 +159,6 @@ export const swaggerSchemas = {
     },
   },
 
-  listMcpTools: {
-    tags: ['Info'],
-    summary: 'List available MCP tools',
-    description:
-      'Retrieves a list of available Model Context Protocol (MCP) tools for the authenticated user',
-    security: [{ bearerAuth: [], workspaceHeader: [] }],
-    response: {
-      200: {
-        description: 'MCP tools retrieved successfully',
-        type: 'object',
-        properties: {
-          enabled: { type: 'boolean' },
-          tools: {
-            type: 'array',
-            items: mcpToolSchema,
-          },
-          count: { type: 'number' },
-          servers: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                name: { type: 'string' },
-                version: { type: 'string' },
-              },
-            },
-          },
-          totalServers: { type: 'number' },
-        },
-      },
-    },
-  },
-
   // Agent endpoints
   listAgents: {
     tags: ['Agents'],
@@ -313,7 +172,34 @@ export const swaggerSchemas = {
         properties: {
           agents: {
             type: 'array',
-            items: agentSchema,
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                name: { type: 'string' },
+                description: { type: 'string' },
+                supportsStreaming: { type: 'boolean' },
+                contextRequirements: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      required: { type: 'boolean' },
+                      description: { type: 'string' },
+                    },
+                    required: ['name', 'required', 'description'],
+                  },
+                },
+              },
+              required: [
+                'id',
+                'name',
+                'description',
+                'supportsStreaming',
+                'contextRequirements',
+              ],
+            },
           },
         },
       },
@@ -353,16 +239,6 @@ export const swaggerSchemas = {
           type: 'string',
           description: 'ID of the conversation to associate with',
         },
-        metadata: {
-          type: 'object',
-          description: 'Additional metadata for the request',
-        },
-        messageHistoryLimit: {
-          type: 'number',
-          description: 'Limit the number of messages to include in the history',
-          default: 20,
-        },
-        toolSelection: toolSelectionSchema,
       },
       required: ['message'],
       additionalProperties: false,
@@ -372,18 +248,19 @@ export const swaggerSchemas = {
         description: 'Agent execution successful',
         type: 'object',
         properties: {
-          content: { type: 'string' },
-          agentId: { type: 'string' },
-          conversationId: { type: 'string' },
-          usage: usageSchema,
-          processingTimeMs: { type: 'number' },
-          toolCalls: {
-            type: 'number',
-            description: 'Number of tool calls made during execution',
+          messages: {
+            type: 'array',
+            description: 'Array of LangChain messages',
+            items: {
+              type: 'object',
+              additionalProperties: true,
+            },
           },
-          iterations: {
-            type: 'number',
-            description: 'Number of thinking iterations performed',
+          conversationId: { type: 'string' },
+          metadata: {
+            type: 'object',
+            description: 'Additional metadata',
+            additionalProperties: true,
           },
         },
       },
@@ -423,16 +300,6 @@ export const swaggerSchemas = {
           type: 'string',
           description: 'ID of the conversation to associate with',
         },
-        metadata: {
-          type: 'object',
-          description: 'Additional metadata for the request',
-        },
-        messageHistoryLimit: {
-          type: 'number',
-          description: 'Limit the number of messages to include in the history',
-          default: 20,
-        },
-        toolSelection: toolSelectionSchema,
       },
       required: ['message'],
       additionalProperties: false,
@@ -473,7 +340,31 @@ export const swaggerSchemas = {
       200: {
         description: 'Agent configuration retrieved successfully',
         type: 'object',
-        properties: agentSchema.properties,
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          supportsStreaming: { type: 'boolean' },
+          contextRequirements: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                required: { type: 'boolean' },
+                description: { type: 'string' },
+              },
+              required: ['name', 'required', 'description'],
+            },
+          },
+        },
+        required: [
+          'id',
+          'name',
+          'description',
+          'supportsStreaming',
+          'contextRequirements',
+        ],
       },
     },
   },
@@ -571,27 +462,25 @@ export const swaggerSchemas = {
       },
       required: ['id'],
     },
-    querystring: {
-      type: 'object',
-      properties: {
-        sortOrder: {
-          type: 'string',
-          enum: ['asc', 'desc'],
-          description: 'Sort order for messages',
-          default: 'asc',
-        },
-      },
-      additionalProperties: false,
-    },
     response: {
       200: {
-        description: 'List of messages',
-        type: 'object',
-        properties: {
-          data: {
-            type: 'array',
-            items: messageSchema,
+        description: 'List of LangChain messages',
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            lc: { type: 'number' },
+            type: { type: 'string' },
+            id: {
+              type: 'array',
+              items: { type: 'string' },
+            },
+            kwargs: {
+              type: 'object',
+              additionalProperties: true,
+            },
           },
+          additionalProperties: true,
         },
       },
     },
@@ -645,27 +534,6 @@ export const swaggerSchemas = {
     response: {
       200: {
         description: 'Conversation updated successfully',
-        type: 'object',
-        properties: conversationSchema.properties,
-      },
-    },
-  },
-
-  generateConversationTitle: {
-    tags: ['Conversations'],
-    summary: 'Generate a title for a conversation',
-    description: 'Generates a title for a conversation',
-    security: [{ bearerAuth: [], workspaceHeader: [] }],
-    params: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-      },
-      required: ['id'],
-    },
-    response: {
-      200: {
-        description: 'Conversation title generated successfully',
         type: 'object',
         properties: conversationSchema.properties,
       },

@@ -1,15 +1,10 @@
 import { AgentConfig } from '@/agents/types';
 
-import { DEFAULT_MODELS } from '@/config/defaults';
-
 export const agentConfig: AgentConfig = {
   id: 'query',
   name: 'SQL Query Generator',
   description: 'Converts natural language to SQL queries',
-  modelProvider: 'groq',
-  model: DEFAULT_MODELS.groq,
-  temperature: 1,
-  maxTokens: 1000,
+  supportsStreaming: false,
   contextRequirements: [
     {
       name: 'repository_slug',
@@ -28,19 +23,4 @@ export const agentConfig: AgentConfig = {
       required: false,
     },
   ],
-  toolSelection: {
-    includeTools: [
-      'retrieve_docs_context',
-      'execute_sql',
-      'get_repository_object_schema',
-      'list_repositories',
-      'list_repository_objects',
-    ],
-  },
-  streaming: false,
-  useAgentGraph: true,
-  maxToolCalls: 5,
-  // Sanitization limits (optional, will use defaults if not specified)
-  maxUserInputChars: 10000, // ~3k tokens
-  maxSystemPromptChars: 105000, // ~30k tokens
 };

@@ -7,6 +7,16 @@ export class ScriptingAgent extends BaseAgent {
     super(agentConfig);
   }
 
-  // The base class handles all execution logic using your services
-  // Override only if you need custom behavior
+  protected async getAgentOptions() {
+    return {
+      llmOptions: {
+        provider: 'groq' as const,
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        maxTokens: 2000,
+      },
+    };
+  }
+
+  // Uses base execute() - non-streaming
 }

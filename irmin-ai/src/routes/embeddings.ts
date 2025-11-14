@@ -175,10 +175,13 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
           await collectionService.createCollection(collectionData);
 
         // Log analytics
-        analyticsService.logVectorIndexing('vector_store_created', {
-          collectionName: collection.name,
-          embeddingDimensions: collection.embeddingDimensions,
-          isNewCollection: true,
+        analyticsService.logEvent({
+          eventType: 'vector_store_created',
+          eventData: {
+            collectionName: collection.name,
+            embeddingDimensions: collection.embeddingDimensions,
+            isNewCollection: true,
+          },
         });
 
         reply.send(collection);
@@ -239,10 +242,13 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Log analytics
-        analyticsService.logVectorIndexing('vector_store_updated', {
-          collectionName: updatedCollection.name,
-          embeddingDimensions: updatedCollection.embeddingDimensions,
-          isNewCollection: false,
+        analyticsService.logEvent({
+          eventType: 'vector_store_updated',
+          eventData: {
+            collectionName: updatedCollection.name,
+            embeddingDimensions: updatedCollection.embeddingDimensions,
+            isNewCollection: false,
+          },
         });
 
         reply.send(updatedCollection);
@@ -303,10 +309,13 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Log analytics
-        analyticsService.logVectorIndexing('vector_store_deleted', {
-          collectionName: collection.name,
-          embeddingDimensions: collection.embeddingDimensions,
-          isNewCollection: false,
+        analyticsService.logEvent({
+          eventType: 'vector_store_deleted',
+          eventData: {
+            collectionName: collection.name,
+            embeddingDimensions: collection.embeddingDimensions,
+            isNewCollection: false,
+          },
         });
 
         sendNoContentResponse(reply);
@@ -384,9 +393,12 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         );
 
         // Log analytics
-        analyticsService.logVectorIndexing('documents_indexed', {
-          documentCount: result.documentCount,
-          collectionName: result.collectionName,
+        analyticsService.logEvent({
+          eventType: 'documents_indexed',
+          eventData: {
+            documentCount: result.documentCount,
+            collectionName: result.collectionName,
+          },
         });
 
         reply.send(result);
@@ -462,14 +474,17 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         );
 
         // Log analytics
-        analyticsService.logVectorRetrieval('similarity_search', {
-          query: validatedData.query,
-          resultCount: result.totalResults,
-          processingTimeMs: result.processingTime,
-          collectionName: collectionConfig.name,
-          k: validatedData.k,
-          hasFilter: !!validatedData.filter,
-          scoreThreshold: validatedData.scoreThreshold,
+        analyticsService.logEvent({
+          eventType: 'similarity_search',
+          eventData: {
+            query: validatedData.query,
+            resultCount: result.totalResults,
+            processingTimeMs: result.processingTime,
+            collectionName: collectionConfig.name,
+            k: validatedData.k,
+            hasFilter: !!validatedData.filter,
+            scoreThreshold: validatedData.scoreThreshold,
+          },
         });
 
         reply.send(result);
@@ -551,11 +566,14 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         );
 
         // Log analytics
-        analyticsService.logVectorRetrieval('context_retrieved', {
-          query: validatedData.query,
-          sourcesCount: result.sources.length,
-          estimatedTokens: result.totalTokens,
-          collectionName: collectionConfig.name,
+        analyticsService.logEvent({
+          eventType: 'context_retrieved',
+          eventData: {
+            query: validatedData.query,
+            sourcesCount: result.sources.length,
+            estimatedTokens: result.totalTokens,
+            collectionName: collectionConfig.name,
+          },
         });
 
         reply.send(result);
@@ -631,10 +649,13 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         };
 
         // Log analytics
-        analyticsService.logVectorIndexing('embedding_created', {
-          textLength: validatedData.text.length,
-          embeddingDimensions: embedding.length,
-          collectionName: collectionConfig.name,
+        analyticsService.logEvent({
+          eventType: 'embedding_created',
+          eventData: {
+            textLength: validatedData.text.length,
+            embeddingDimensions: embedding.length,
+            collectionName: collectionConfig.name,
+          },
         });
 
         reply.send(result);
@@ -711,10 +732,13 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         };
 
         // Log analytics
-        analyticsService.logVectorIndexing('embeddings_created', {
-          textCount: validatedData.texts.length,
-          embeddingDimensions: embeddings[0]?.length || 0,
-          collectionName: collectionConfig.name,
+        analyticsService.logEvent({
+          eventType: 'embeddings_created',
+          eventData: {
+            textCount: validatedData.texts.length,
+            embeddingDimensions: embeddings[0]?.length || 0,
+            collectionName: collectionConfig.name,
+          },
         });
 
         reply.send(result);

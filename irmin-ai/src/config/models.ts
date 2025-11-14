@@ -2,6 +2,12 @@ import type { NewAIModel } from '@/database';
 
 // TODO: Define maxContextTokens and maxOutputTokens for each model. This can then be used to validate model requests. Make sure this is used in LLM service and returned by the routes.
 
+export const DEFAULT_MODELS = {
+  groq: 'moonshotai/kimi-k2-instruct',
+  openai: 'gpt-5',
+  anthropic: 'claude-sonnet-4-5-20250929',
+} as const;
+
 export const availableAIModels: NewAIModel[] = [
   // Anthropic Models
   {

@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { analyticsService } from '@/services/analytics';
 import { llmService } from '@/services/llm';
 
+import { getContentAsString } from '@/utils/getContentAsString';
+
 // Zod schemas for type safety
 const VectorSearchSchema = z.object({
   query: z.string().min(1, 'Query cannot be empty'),
@@ -97,23 +99,28 @@ class RetrievalService {
       };
 
       // Log vector operation
-      analyticsService.logVectorRetrieval('similarity_search', {
-        query: validatedOptions.query,
-        resultCount: searchResults.length,
-        processingTimeMs: processingTime,
-        collectionName: collectionName || this.defaultCollectionName,
-        k: validatedOptions.k,
-        hasFilter: !!validatedOptions.filter,
-        scoreThreshold: validatedOptions.scoreThreshold,
+      analyticsService.logEvent({
+        eventType: 'similarity_search',
+        eventData: {
+          query: validatedOptions.query,
+          resultCount: searchResults.length,
+          processingTimeMs: processingTime,
+          collectionName: collectionName || this.defaultCollectionName,
+          k: validatedOptions.k,
+          hasFilter: !!validatedOptions.filter,
+          scoreThreshold: validatedOptions.scoreThreshold,
+        },
       });
 
       return result;
     } catch (error) {
-      analyticsService.logVectorError(
-        'similarity_search',
-        error instanceof Error ? error.message : 'Unknown error',
-        { query: options.query }
-      );
+      analyticsService.logEvent({
+        eventType: 'similarity_search',
+        eventData: {
+          query: options.query,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to search vectors: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -158,22 +165,27 @@ class RetrievalService {
       };
 
       // Log vector operation
-      analyticsService.logVectorRetrieval('retrieval_with_analysis', {
-        query: validatedAnalysis.query,
-        resultCount: searchResults.length,
-        processingTimeMs: processingTime,
-        collectionName: collectionName || this.defaultCollectionName,
-        contextWindow: validatedAnalysis.contextWindow,
-        hasFilters: !!validatedAnalysis.filters,
+      analyticsService.logEvent({
+        eventType: 'retrieval_with_analysis',
+        eventData: {
+          query: validatedAnalysis.query,
+          resultCount: searchResults.length,
+          processingTimeMs: processingTime,
+          collectionName: collectionName || this.defaultCollectionName,
+          contextWindow: validatedAnalysis.contextWindow,
+          hasFilters: !!validatedAnalysis.filters,
+        },
       });
 
       return result;
     } catch (error) {
-      analyticsService.logVectorError(
-        'retrieval_with_analysis',
-        error instanceof Error ? error.message : 'Unknown error',
-        { query: analysis.query }
-      );
+      analyticsService.logEvent({
+        eventType: 'retrieval_with_analysis',
+        eventData: {
+          query: analysis.query,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to retrieve with analysis: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -241,11 +253,14 @@ class RetrievalService {
       }
 
       // Log vector operation
-      analyticsService.logVectorRetrieval('context_retrieved', {
-        query,
-        sourcesCount: sources.length,
-        estimatedTokens: tokenCount,
-        collectionName: collectionName || this.defaultCollectionName,
+      analyticsService.logEvent({
+        eventType: 'context_retrieved',
+        eventData: {
+          query,
+          sourcesCount: sources.length,
+          estimatedTokens: tokenCount,
+          collectionName: collectionName || this.defaultCollectionName,
+        },
       });
 
       return {
@@ -254,11 +269,13 @@ class RetrievalService {
         totalTokens: tokenCount,
       };
     } catch (error) {
-      analyticsService.logVectorError(
-        'context_retrieval',
-        error instanceof Error ? error.message : 'Unknown error',
-        { query }
-      );
+      analyticsService.logEvent({
+        eventType: 'context_retrieval',
+        eventData: {
+          query,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to retrieve context: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -306,19 +323,24 @@ class RetrievalService {
       }
 
       // Log vector operation
-      analyticsService.logVectorRetrieval('multi_query_retrieval', {
-        queryCount: queries.length,
-        totalResults: allResults.reduce((sum, r) => sum + r.totalResults, 0),
-        collectionName: collectionName || this.defaultCollectionName,
+      analyticsService.logEvent({
+        eventType: 'multi_query_retrieval',
+        eventData: {
+          queryCount: queries.length,
+          totalResults: allResults.reduce((sum, r) => sum + r.totalResults, 0),
+          collectionName: collectionName || this.defaultCollectionName,
+        },
       });
 
       return allResults;
     } catch (error) {
-      analyticsService.logVectorError(
-        'multi_query_retrieval',
-        error instanceof Error ? error.message : 'Unknown error',
-        { queryCount: queries.length }
-      );
+      analyticsService.logEvent({
+        eventType: 'multi_query_retrieval',
+        eventData: {
+          query: queries.join(', '),
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to perform multi-query retrieval: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -360,12 +382,15 @@ class RetrievalService {
         }));
 
       // Log vector operation
-      analyticsService.logVectorRetrieval('compressed_retrieval', {
-        query,
-        originalCount: result.documents.length,
-        compressedCount: compressedResults.length,
-        compressionThreshold,
-        collectionName: collectionName || this.defaultCollectionName,
+      analyticsService.logEvent({
+        eventType: 'compressed_retrieval',
+        eventData: {
+          query,
+          originalCount: result.documents.length,
+          compressedCount: compressedResults.length,
+          compressionThreshold,
+          collectionName: collectionName || this.defaultCollectionName,
+        },
       });
 
       return {
@@ -374,11 +399,14 @@ class RetrievalService {
         totalResults: compressedResults.length,
       };
     } catch (error) {
-      analyticsService.logVectorError(
-        'compressed_retrieval',
-        error instanceof Error ? error.message : 'Unknown error',
-        { query }
-      );
+      analyticsService.logEvent({
+        eventType: 'compressed_retrieval',
+        eventData: {
+          query,
+          collectionName: collectionName || this.defaultCollectionName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to perform compressed retrieval: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -396,19 +424,25 @@ class RetrievalService {
     const TIMEOUT_MS = 5000;
 
     try {
-      const llm = llmService.createModel({
+      const llm = llmService.createLLM({
         provider: 'groq',
         model: 'llama-3.1-8b-instant',
-        temperature: 1,
-        maxTokens: 400,
-        streaming: false,
+        temperature: 0.6,
+        maxTokens: 300,
       });
 
-      const prompt = `Given this user query: "${query}"
-Generate a concise passage (2-3 sentences) that would likely contain the answer or relevant information about this topic.`;
-
+      const systemPrompt = `Convert the user message in to a hypothetical answer/response that would contain keywords, concepts, topics, etc. that would likely contain the answer or relevant information about this topic, which will be used to retrieve relevant documents from the vector store. Just respond with the hypothetical answer/response, no other text.`;
       const response = await Promise.race([
-        llm.invoke(prompt),
+        llm.invoke([
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: query,
+          },
+        ]),
         new Promise<never>((_resolve, reject) =>
           setTimeout(
             () => reject(new Error('Hypothetical generation timeout')),
@@ -417,46 +451,29 @@ Generate a concise passage (2-3 sentences) that would likely contain the answer 
         ),
       ]);
 
-      const getContentAsString = (content: unknown): string => {
-        if (typeof content === 'string') return content;
-        if (Array.isArray(content)) {
-          return content
-            .map((item) => {
-              if (typeof item === 'string') return item;
-              if (item && typeof item === 'object') {
-                if ('text' in item) return String(item.text);
-                if ('content' in item) return String(item.content);
-              }
-              return String(item);
-            })
-            .join(' ');
-        }
-        if (content && typeof content === 'object') {
-          if ('text' in content) return String(content.text);
-          if ('content' in content) return String(content.content);
-        }
-        return String(content || '');
-      };
-
       const hypotheticalContent = getContentAsString(response.content).trim();
       const generationTime = Date.now() - startTime;
 
-      analyticsService.logVectorRetrieval('hypothetical_generation', {
-        query,
-        userPrompt: query,
-        generatedHypothetical: hypotheticalContent || undefined,
-        processingTimeMs: generationTime,
-        resultCount: hypotheticalContent ? 1 : 0,
+      analyticsService.logEvent({
+        eventType: 'hypothetical_generation',
+        eventData: {
+          query,
+          processingTimeMs: generationTime,
+        },
       });
 
       return hypotheticalContent || null;
     } catch (error) {
-      analyticsService.logVectorError(
-        'hypothetical_generation',
-        error instanceof Error ? error.message : 'Unknown error',
-        { query, processingTimeMs: Date.now() - startTime }
+      analyticsService.logEvent({
+        eventType: 'hypothetical_generation',
+        eventData: {
+          query,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+      throw new Error(
+        `Failed to generate hypothetical content: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
-      return null;
     }
   }
 
@@ -506,9 +523,12 @@ Generate a concise passage (2-3 sentences) that would likely contain the answer 
       const usedHypothetical = !!hypotheticalContent;
 
       if (!hypotheticalContent) {
-        analyticsService.logVectorRetrieval('hypothetical_fallback', {
-          query,
-          collectionName: collectionName || this.defaultCollectionName,
+        analyticsService.logEvent({
+          eventType: 'hypothetical_fallback',
+          eventData: {
+            query,
+            collectionName: collectionName || this.defaultCollectionName,
+          },
         });
       }
       const retrievalResult = await this.searchSimilar(
@@ -544,14 +564,15 @@ Generate a concise passage (2-3 sentences) that would likely contain the answer 
         }
       }
 
-      analyticsService.logVectorRetrieval('hypothetical_context_retrieved', {
-        query,
-        userPrompt: query,
-        generatedHypothetical: hypotheticalContent || undefined,
-        sourcesCount: sources.length,
-        estimatedTokens: tokenCount,
-        processingTimeMs: Date.now() - startTime,
-        collectionName: collectionName || this.defaultCollectionName,
+      analyticsService.logEvent({
+        eventType: 'hypothetical_context_retrieved',
+        eventData: {
+          query,
+          sourcesCount: sources.length,
+          estimatedTokens: tokenCount,
+          processingTimeMs: Date.now() - startTime,
+          collectionName: collectionName || this.defaultCollectionName,
+        },
       });
 
       return {
@@ -565,11 +586,13 @@ Generate a concise passage (2-3 sentences) that would likely contain the answer 
             : undefined,
       };
     } catch (error) {
-      analyticsService.logVectorError(
-        'hypothetical_context_retrieval',
-        error instanceof Error ? error.message : 'Unknown error',
-        { query }
-      );
+      analyticsService.logEvent({
+        eventType: 'hypothetical_context_retrieval',
+        eventData: {
+          query,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to retrieve context with hypothetical content: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

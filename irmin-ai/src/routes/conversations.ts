@@ -1,6 +1,7 @@
-import { conversations, db, messages, type NewConversation } from '@/database';
+import { AgentsManager } from '@/agents';
+import { conversations, db, type NewConversation } from '@/database';
 import { randomUUID } from 'crypto';
-import { and, asc, count, desc, eq, isNull, sql, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
@@ -13,7 +14,6 @@ import {
   ConversationRequestSchema,
   ConversationSchema,
   ConversationWithStatsSchema,
-  MessagesResponseSchema,
   PaginatedConversationsResponseSchema,
 } from '@/types/conversation';
 
@@ -29,6 +29,8 @@ interface ConversationParams {
 }
 
 export async function conversationRoutes(fastify: FastifyInstance) {
+  const agentsManager = new AgentsManager();
+
   // GET /api/conversations - List all conversations with pagination
   fastify.get<{
     Querystring: {
@@ -120,12 +122,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             userId: conversations.userId,
             createdAt: conversations.createdAt,
             updatedAt: conversations.updatedAt,
-            messageCount: count(messages.id),
-            totalTokens: sum(messages.totalTokens),
-            totalCost: sum(messages.costUSD),
           })
           .from(conversations)
-          .leftJoin(messages, eq(conversations.id, messages.conversationId))
           .where(whereConditions)
           .groupBy(conversations.id)
           .orderBy(orderFn(sortColumn))
@@ -189,12 +187,8 @@ export async function conversationRoutes(fastify: FastifyInstance) {
             userId: conversations.userId,
             createdAt: conversations.createdAt,
             updatedAt: conversations.updatedAt,
-            messageCount: count(messages.id),
-            totalTokens: sum(messages.totalTokens),
-            totalCost: sum(messages.costUSD),
           })
           .from(conversations)
-          .leftJoin(messages, eq(conversations.id, messages.conversationId))
           .where(
             and(
               eq(conversations.id, id),
@@ -231,7 +225,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
   // GET /api/conversations/:id/messages - Get conversation messages
   fastify.get<{
     Params: ConversationParams;
-    Querystring: { sortOrder?: string };
+    Querystring: { sortOrder?: string; agentId?: string };
   }>(
     '/conversations/:id/messages',
     {
@@ -240,9 +234,6 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         const { id } = request.params;
-
-        // Parse query parameters manually since we're using JSON schema validation
-        const sortOrder = request.query.sortOrder || 'asc';
 
         // Get workspace and user context from middleware
         const workspaceContext = request.workspace;
@@ -253,7 +244,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         }
 
         // Check if conversation exists and user has access
-        const conversation = await db
+        const conversationResults = await db
           .select()
           .from(conversations)
           .where(
@@ -262,30 +253,36 @@ export async function conversationRoutes(fastify: FastifyInstance) {
               eq(conversations.workspaceSlug, workspaceContext.slug),
               eq(conversations.userId, authContext.user.id)
             )
-          );
-        if (!conversation.length) {
+          )
+          .limit(1);
+        if (!conversationResults.length) {
           sendNotFoundError(reply, 'Conversation not found', fastify.log);
           return;
         }
+        const conversation = conversationResults[0];
+        // Find which agent is associated with the conversation
+        const agentId = conversation.agentId;
+        if (!agentId) {
+          throw new Error('Conversation is not associated with an agent');
+        }
 
-        // Get all messages (excluding system messages for security)
-        const orderFn = sortOrder === 'asc' ? asc : desc;
-        const data = await db
-          .select()
-          .from(messages)
-          .where(
-            and(
-              eq(messages.conversationId, id),
-              // Exclude system messages to prevent system prompt exposure
-              sql`${messages.role} != 'system'`
-            )
-          )
-          .orderBy(orderFn(messages.createdAt));
+        // Get the agent history
+        const agentHistory = await agentsManager.getConversationHistory(
+          agentId,
+          conversation.id
+        );
 
-        const response = {
-          data,
-        };
-        sendOkResponse(reply, MessagesResponseSchema, response, fastify.log);
+        // Serialize LangChain messages using their toJSON method
+        // LangChain messages have a toDict() method that properly serializes them
+        const serializedHistory = agentHistory
+          .map((msg) => {
+            if (typeof msg.toDict === 'function') {
+              return msg.toDict();
+            }
+          })
+          .filter((msg) => msg !== undefined);
+
+        reply.status(200).send(serializedHistory);
         return;
       } catch (error) {
         const errorMessage =
@@ -324,7 +321,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
 
         const newConversation = {
           id,
-          title: title || 'New Conversation',
+          title: title || titleGenerationService.createFallbackTitle(),
           metadata,
           agentId: agentId ?? null,
           workspaceSlug: workspaceContext.slug,
@@ -336,8 +333,14 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         await db.insert(conversations).values(newConversation);
 
         // Log analytics
-        analyticsService.logConversationEvent('conversation_created', id, {
-          title,
+        analyticsService.logEvent({
+          eventType: 'conversation_created',
+          conversationId: id,
+          eventData: {
+            title,
+            metadata,
+            agentId,
+          },
         });
 
         sendCreatedResponse(
@@ -408,9 +411,14 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           .where(eq(conversations.id, id));
 
         // Log analytics
-        analyticsService.logConversationEvent('conversation_updated', id, {
-          title: updateData.title,
-          metadata: updateData.metadata,
+        analyticsService.logEvent({
+          eventType: 'conversation_updated',
+          conversationId: id,
+          eventData: {
+            title: updateData.title,
+            metadata: updateData.metadata,
+            agentId: updateData.agentId,
+          },
         });
 
         // Get updated conversation
@@ -432,105 +440,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // POST /api/conversations/:id/generate-title - Generate a new title for the conversation
-  fastify.post<{ Params: ConversationParams }>(
-    '/conversations/:id/generate-title',
-    {
-      schema: swaggerSchemas.generateConversationTitle,
-    },
-    async (request, reply) => {
-      try {
-        const { id } = request.params;
-
-        // Get workspace and user context from middleware
-        const workspaceContext = request.workspace;
-        const authContext = request.auth;
-
-        if (!workspaceContext || !authContext) {
-          throw new Error('Workspace and authentication context required');
-        }
-
-        // Check if conversation exists and user has access
-        const conversation = await db
-          .select()
-          .from(conversations)
-          .where(
-            and(
-              eq(conversations.id, id),
-              eq(conversations.workspaceSlug, workspaceContext.slug),
-              eq(conversations.userId, authContext.user.id)
-            )
-          );
-        if (!conversation.length) {
-          sendNotFoundError(reply, 'Conversation not found', fastify.log);
-          return;
-        }
-
-        // Get the first user message to use for title generation
-        const firstUserMessage = await db
-          .select()
-          .from(messages)
-          .where(
-            and(eq(messages.conversationId, id), eq(messages.role, 'user'))
-          )
-          .orderBy(asc(messages.createdAt))
-          .limit(1);
-
-        if (!firstUserMessage.length) {
-          sendInternalServerError(
-            reply,
-            'No user messages found in conversation',
-            fastify.log
-          );
-          return;
-        }
-
-        // Generate new title
-        const titleResult = await titleGenerationService.generateTitle({
-          message: firstUserMessage[0].content,
-          user: authContext.user,
-          workspace: workspaceContext.workspace,
-          conversationId: id,
-        });
-
-        // Update conversation with new title
-        await db
-          .update(conversations)
-          .set({
-            title: titleResult.title,
-            updatedAt: new Date(),
-          })
-          .where(eq(conversations.id, id));
-
-        // Log analytics
-        analyticsService.logConversationEvent('conversation_updated', id, {
-          titleGenerated: true,
-          oldTitle: conversation[0].title,
-          newTitle: titleResult.title,
-          generated: titleResult.generated,
-        });
-
-        // Get updated conversation
-        const updated = await db
-          .select()
-          .from(conversations)
-          .where(eq(conversations.id, id));
-
-        sendOkResponse(reply, ConversationSchema, updated[0], fastify.log);
-        return;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : 'Failed to generate conversation title';
-        fastify.log.error('Generate title error: %s', errorMessage);
-        sendInternalServerError(reply, errorMessage, fastify.log);
-        return;
-      }
-    }
-  );
-
-  // DELETE /api/conversations/:id - Delete conversation and all its messages
+  // DELETE /api/conversations/:id - Delete conversation
   fastify.delete<{ Params: ConversationParams }>(
     '/conversations/:id',
     {
@@ -565,8 +475,14 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         }
 
         // Log analytics before deletion
-        analyticsService.logConversationEvent('conversation_deleted', id, {
-          title: conversation[0].title,
+        analyticsService.logEvent({
+          eventType: 'conversation_deleted',
+          conversationId: id,
+          eventData: {
+            title: conversation[0].title,
+            metadata: conversation[0].metadata,
+            agentId: conversation[0].agentId,
+          },
         });
 
         // Delete conversation (messages and analytics will be deleted by CASCADE)

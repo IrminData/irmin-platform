@@ -117,9 +117,12 @@ export class VectorizeDocsScript {
       const executionTime = Date.now() - startTime;
 
       // Log analytics
-      analyticsService.logVectorIndexing('documents_indexed', {
-        collectionName: this.config.collectionName,
-        documentCount: documents.length,
+      analyticsService.logEvent({
+        eventType: 'documents_indexed',
+        eventData: {
+          collectionName: this.config.collectionName,
+          documentCount: documents.length,
+        },
       });
 
       return {
@@ -146,10 +149,13 @@ export class VectorizeDocsScript {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      analyticsService.logVectorError('script_vectorize_docs', errorMessage, {
-        collectionName: this.config.collectionName,
-        executionTime,
-        replaceMode: this.config.replaceMode,
+      analyticsService.logEvent({
+        eventType: 'script_vectorize_docs',
+        eventData: {
+          collectionName: this.config.collectionName,
+          executionTime,
+          replaceMode: this.config.replaceMode,
+        },
       });
 
       return {

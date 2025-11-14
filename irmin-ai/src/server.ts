@@ -5,7 +5,7 @@ import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import * as Sentry from '@sentry/node';
-import Fastify from 'fastify';
+import Fastify, { FastifyError } from 'fastify';
 
 import { analyticsService } from '@/services/analytics';
 
@@ -130,7 +130,7 @@ server.register(swaggerUI, {
 Sentry.setupFastifyErrorHandler(server);
 
 // Global error handler
-server.setErrorHandler(async (error, _, reply) => {
+server.setErrorHandler(async (error: FastifyError, _, reply) => {
   const statusCode = error.statusCode || 500;
   const message = error.message || 'Internal Server Error';
 
@@ -140,7 +140,13 @@ server.setErrorHandler(async (error, _, reply) => {
   server.log.error(error);
 
   // Log error analytics
-  analyticsService.logError('global_error', message, undefined, undefined);
+  analyticsService.logEvent({
+    eventType: 'global_error',
+    eventData: {
+      message,
+      stack: error.stack,
+    },
+  });
 
   sendErrorResponse(
     reply,

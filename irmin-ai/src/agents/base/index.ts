@@ -1,13 +1,12 @@
-import type { Message } from '@/database';
-import { db, messages as messagesTable } from '@/database';
-import { desc, eq } from 'drizzle-orm';
 import fs from 'fs/promises';
+import { AgentMiddleware, BaseMessage, DynamicStructuredTool } from 'langchain';
 import path from 'path';
 
-import { completionService } from '@/services/completion';
-import { systemMessageCacheService } from '@/services/systemMessageCache';
+import agentService from '@/services/agent';
+import type { LLMOptions } from '@/services/llm';
+import { systemPromptBuilder } from '@/services/systemPromptBuilder';
 
-import {
+import type {
   AgentConfig,
   AgentInput,
   AgentResponse,
@@ -21,158 +20,38 @@ export abstract class BaseAgent implements BaseAgentInterface {
     this.config = config;
   }
 
-  async execute(
-    input: AgentInput,
-    conversationId: string
-  ): Promise<AgentResponse> {
-    // Validate input
-    if (!this.validateInput(input)) {
-      throw new Error('Invalid input for agent');
-    }
-
-    // Prepare context and messages
-    const context = await this.prepareContext(input);
-    const conversationMessages = await this.buildMessages(
-      input,
-      conversationId
-    );
-    const baseSystemPrompt = await this.loadSystemPrompt();
-
-    // Get or create system message (cached per conversation)
-    // Note: conversationId validation is handled by the systemMessageCacheService
-    const systemPrompt =
-      await systemMessageCacheService.getOrCreateSystemMessage(
-        conversationId,
-        baseSystemPrompt,
-        {
-          user: input.user,
-          workspace: input.workspace,
-          conversationId: conversationId,
-          agentId: this.config.id,
-          customContext: context,
-          maxUserInputChars: this.config.maxUserInputChars,
-          maxSystemPromptChars: this.config.maxSystemPromptChars,
-        }
-      );
-
-    // Check if this is a streaming request based on input metadata and agent ability to stream
-    // If metadata.streaming is explicitly set to false, respect that even if agent supports streaming
-    const isStreamingRequest =
-      input.metadata?.streaming !== false && // Allow streaming unless explicitly disabled
-      this.config.streaming; // Agent must support streaming
-
-    // Execute with the completion service
-    if (isStreamingRequest) {
-      const stream = await completionService.createStreamingResponse({
-        messages: conversationMessages,
-        provider: this.config.modelProvider,
-        model: this.config.model,
-        temperature: this.config.temperature,
-        maxTokens: this.config.maxTokens,
-        useAgentGraph: this.config.useAgentGraph,
-        maxToolCalls: this.config.maxToolCalls,
-        systemPrompt: systemPrompt || undefined,
-        toolSelection: input.toolSelection || this.config.toolSelection,
-        authToken: input.authToken,
-        conversationId: conversationId,
-        thinkingOptions: this.config.thinkingOptions,
-      });
-
-      return {
-        content: '', // Content will be streamed
-        stream: stream, // Pass LangChain stream directly
-        metadata: {
-          agentId: this.config.id,
-          modelProvider: this.config.modelProvider,
-          model: this.config.model,
-          context,
-        },
-      };
-    } else {
-      const response = await completionService.createResponse({
-        messages: conversationMessages,
-        provider: this.config.modelProvider,
-        model: this.config.model,
-        temperature: this.config.temperature,
-        maxTokens: this.config.maxTokens,
-        useAgentGraph: this.config.useAgentGraph,
-        maxToolCalls: this.config.maxToolCalls,
-        systemPrompt: systemPrompt || undefined,
-        toolSelection: input.toolSelection || this.config.toolSelection,
-        authToken: input.authToken,
-        conversationId: conversationId,
-        thinkingOptions: this.config.thinkingOptions,
-      });
-
-      return {
-        content: response.content,
-        blocks: response.blocks,
-        metadata: {
-          agentId: this.config.id,
-          modelProvider: this.config.modelProvider,
-          model: this.config.model,
-          context,
-        },
-      };
-    }
+  /**
+   * Subclasses override this to specify LLM config, tools, and middleware
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async getAgentOptions(_input: AgentInput): Promise<{
+    llmOptions: LLMOptions;
+    tools?: DynamicStructuredTool[];
+    middleware?: AgentMiddleware[];
+    systemPrompt?: string;
+  }> {
+    // Default: cheap Groq model as fallback
+    return {
+      llmOptions: {
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.7,
+      },
+    };
   }
 
-  validateInput(input: AgentInput): boolean {
-    if (!input.message || input.message.trim() === '') {
-      return false;
-    }
-
-    // Make sure that all required context is provided by the user
-    for (const requirement of this.config.contextRequirements) {
-      if (requirement.required && !input.context?.[requirement.name]) {
-        // If the context is required, and the user has not provided it, fail the validation
-        return false;
-      }
-    }
-
-    // Make sure that the input only contains valid context
-    if (input.context) {
-      for (const inputContextKey of Object.keys(input.context)) {
-        if (
-          !this.config.contextRequirements.some(
-            (requirement) => requirement.name === inputContextKey
-          )
-        ) {
-          // If the context is not a valid context, fail the validation
-          return false;
-        }
-      }
-    }
-
-    return true;
+  /**
+   * Subclasses can override to add custom context (e.g., vector search)
+   */
+  protected async prepareContext(
+    input: AgentInput
+  ): Promise<Record<string, unknown>> {
+    return { ...input.context };
   }
 
-  async prepareContext(input: AgentInput): Promise<Record<string, unknown>> {
-    // Simply pass the input context through
-    const context: Record<string, unknown> = { ...input.context };
-    return context;
-  }
-
-  protected async buildMessages(
-    input: AgentInput,
-    conversationId: string
-  ): Promise<Message[]> {
-    const conversationMessages: Message[] = [];
-
-    // Fetch conversation history
-    const history = await db
-      .select()
-      .from(messagesTable)
-      .where(eq(messagesTable.conversationId, conversationId))
-      .orderBy(desc(messagesTable.createdAt))
-      .limit(input.messageHistoryLimit || 20);
-
-    // Reverse to get chronological order
-    conversationMessages.push(...history.reverse());
-
-    return conversationMessages;
-  }
-
+  /**
+   * Load system prompt from file
+   */
   protected async loadSystemPrompt(): Promise<string> {
     try {
       const promptPath = path.join(
@@ -183,19 +62,132 @@ export abstract class BaseAgent implements BaseAgentInterface {
       );
       return await fs.readFile(promptPath, 'utf-8');
     } catch {
-      console.warn(
-        `No system prompt found for ${this.config.id}, using default`
-      );
+      // Fallback to config-based prompt
       return `You are ${this.config.name}. ${this.config.description}`;
     }
   }
 
   /**
-   * Determine if this agent should use the agent graph for iterative tool calling
-   * By default, use agent graph if tools are available
+   * Validate input based on context requirements
    */
-  protected shouldUseAgentGraph(input: AgentInput): boolean {
-    const hasTools = !!(input.toolSelection || this.config.toolSelection);
-    return hasTools;
+  validateInput(input: AgentInput): boolean {
+    // Check message
+    if (!input.message || input.message.trim() === '') {
+      return false;
+    }
+
+    // Check context requirements
+    for (const requirement of this.config.contextRequirements) {
+      if (requirement.required && !input.context?.[requirement.name]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Creates a configured LangChain agent ready for execution
+   */
+  async createAgent(input: AgentInput, conversationId: string) {
+    // 1. Validate input
+    if (!this.validateInput(input)) {
+      throw new Error('Invalid input for agent');
+    }
+
+    // 2. Get agent options from subclass
+    const options = await this.getAgentOptions(input);
+
+    // 3. Prepare context
+    const context = await this.prepareContext(input);
+
+    // 4. Build system prompt
+    const basePrompt = await this.loadSystemPrompt();
+    const systemPrompt = systemPromptBuilder.buildSystemPrompt(basePrompt, {
+      user: input.user,
+      workspace: input.workspace,
+      conversationId,
+      agentId: this.config.id,
+      customContext: context,
+    });
+
+    // 5. Create LangChain agent via AgentService
+    const agent = await agentService.getAgent({
+      llmOptions: options.llmOptions,
+      systemPrompt,
+      tools: options.tools,
+      middleware: options.middleware,
+    });
+
+    return agent;
+  }
+
+  /**
+   * Main execute method - subclasses can override for custom behavior (e.g., streaming)
+   */
+  async execute(
+    input: AgentInput,
+    conversationId: string
+  ): Promise<AgentResponse> {
+    // Create the agent
+    const agent = await this.createAgent(input, conversationId);
+
+    // Invoke agent with thread_id = conversationId
+    const result = await agentService.invokeAgent(
+      agent,
+      input.message,
+      conversationId
+    );
+
+    // Extract content from result
+    const messages = Array.isArray(result.messages) ? result.messages : [];
+
+    // Return response
+    return { messages };
+  }
+
+  /**
+   * Get conversation history messages for a conversation
+   */
+  async getConversationHistory(conversationId: string): Promise<BaseMessage[]> {
+    // Create a simple agent
+    const agent = await agentService.getAgent({
+      llmOptions: {
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.7,
+      },
+      systemPrompt: `You are a helpful assistant.`,
+      tools: [],
+      middleware: [],
+    });
+
+    // Get the agent state from memory
+    const agentState: unknown = await agentService.getAgentState(
+      agent,
+      conversationId
+    );
+
+    const messages: BaseMessage[] = [];
+    if (
+      typeof agentState === 'object' &&
+      agentState !== null &&
+      'values' in agentState &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      typeof (agentState as any).values === 'object' &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (agentState as any).values !== null &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Array.isArray((agentState as any).values.messages)
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const message of (agentState as any).values.messages) {
+        if (BaseMessage.isInstance(message)) {
+          messages.push(message);
+        }
+      }
+    }
+
+    return messages;
   }
 }

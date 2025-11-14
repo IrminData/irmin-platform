@@ -1,9 +1,10 @@
 import { conversations, db } from '@/database';
 import { eq } from 'drizzle-orm';
 
+import { getContentAsString } from '@/utils/getContentAsString';
+
 import { analyticsService } from './analytics';
-// eslint-disable-next-line import-x/no-cycle
-import { completionService } from './completion';
+import { llmService } from './llm';
 
 interface TitleGenerationOptions {
   message: string;
@@ -46,6 +47,7 @@ Examples:
 - Title: "React Performance Optimization"
 
 Return only the title, nothing else.`;
+  private readonly TITLE_GENERATION_TIMEOUT_MS = 15000;
 
   constructor() {
     // No need for any initialization
@@ -73,51 +75,75 @@ Return only the title, nothing else.`;
         titlePrompt += `\n\nAI response: "${truncatedResponse}"`;
       }
 
-      // Call the completion service
-      const response = await completionService.createResponse({
-        messages: [
-          {
-            id: '1',
-            conversationId: options.conversationId || '',
-            role: 'user',
-            content: titlePrompt,
-            messageType: 'text',
-          },
-        ],
-        conversationId: options.conversationId || '',
-        provider: 'groq',
-        model: 'llama-3.1-8b-instant',
+      const llm = llmService.createLLM({
+        provider: 'openai',
+        model: 'gpt-5-nano',
+        maxTokens: 500,
         temperature: 1,
-        maxTokens: 50,
-        systemPrompt: this.titleGenerationSystemPrompt,
-        useAgentGraph: false,
       });
 
-      let generatedTitle = response.content.trim();
+      const logPrefix = options.conversationId
+        ? `[TitleGeneration][conversation=${options.conversationId}]`
+        : '[TitleGeneration][conversation=new]';
+
+      console.log(`${logPrefix} Generating title...`);
+
+      const response = await Promise.race([
+        llm.invoke([
+          {
+            role: 'system',
+            content: this.titleGenerationSystemPrompt,
+          },
+          {
+            role: 'user',
+            content: titlePrompt,
+          },
+        ]),
+        new Promise<never>((_resolve, reject) =>
+          setTimeout(
+            () => reject(new Error('Hypothetical generation timeout')),
+            this.TITLE_GENERATION_TIMEOUT_MS
+          )
+        ),
+      ]);
+
+      let generatedTitle = getContentAsString(response.content).trim();
 
       // Clean up the generated title
       generatedTitle = this.cleanTitle(generatedTitle);
 
       // Validate the generated title
       if (this.isValidTitle(generatedTitle)) {
+        console.log(
+          `${logPrefix} ✅ Generated title: "${generatedTitle.replace(/\n/g, ' ')}"`
+        );
         return {
           title: generatedTitle,
           generated: true,
         };
       } else {
+        console.warn(
+          `${logPrefix} ⚠️ LLM returned invalid title: "${generatedTitle.replace(/\n/g, ' ')}"`
+        );
         return {
           title: fallbackTitle,
           generated: false,
         };
       }
     } catch (error) {
+      const logPrefix = options.conversationId
+        ? `[TitleGeneration][conversation=${options.conversationId}]`
+        : '[TitleGeneration][conversation=new]';
+      console.error(`${logPrefix} ❌ Title generation failed:`, error);
       // Log analytics for title generation failure
       if (options.conversationId) {
-        analyticsService.logError(
-          'title_generation_failed',
-          error instanceof Error ? error.message : 'Unknown error',
-          options.conversationId
-        );
+        analyticsService.logEvent({
+          eventType: 'title_generation_failed',
+          conversationId: options.conversationId,
+          eventData: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        });
       }
 
       return {
@@ -185,7 +211,7 @@ Return only the title, nothing else.`;
           .where(eq(conversations.id, conversationId));
 
         // Log analytics for successful title update
-        analyticsService.logCustomEvent({
+        analyticsService.logEvent({
           eventType: 'conversation_updated',
           conversationId,
           eventData: {
@@ -227,23 +253,24 @@ Return only the title, nothing else.`;
   }
 
   /**
-   * Updates a conversation title with AI response context
+   * Updates a conversation title using the user's message and optionally the AI's response
    * This should be called after the AI has responded to get a better title
    */
-  async updateTitleWithAIResponse(
+  async updateTitle(
     conversationId: string,
     userMessage: string,
-    aiResponse: string,
     options: Omit<
       TitleGenerationOptions,
       'message' | 'conversationId' | 'aiResponse'
-    >
+    >,
+    aiResponse?: string
   ): Promise<boolean> {
-    console.log(
-      `[TitleGeneration] Updating title for conversation ${conversationId} with AI response context`
-    );
-
     try {
+      const hasAIResponse = Boolean(aiResponse);
+      console.log(
+        `[TitleGeneration][conversation=${conversationId}] Updating title (hasAIResponse=${hasAIResponse})`
+      );
+
       const result = await this.generateTitle({
         message: userMessage,
         aiResponse,
@@ -261,32 +288,31 @@ Return only the title, nothing else.`;
           })
           .where(eq(conversations.id, conversationId));
 
-        console.log(
-          `[TitleGeneration] ✅ Updated conversation ${conversationId} title to: "${result.title}"`
-        );
-
         // Log analytics for successful title update
-        analyticsService.logCustomEvent({
+        analyticsService.logEvent({
           eventType: 'conversation_updated',
           conversationId,
           eventData: {
             titleUpdated: true,
             newTitle: result.title,
-            automated: true,
-            withAIResponse: true,
+            withAIResponse: aiResponse ? true : false,
           },
         });
 
+        console.log(
+          `[TitleGeneration][conversation=${conversationId}] ✅ Title updated to "${result.title}"`
+        );
+
         return true;
       } else {
-        console.log(
-          `[TitleGeneration] ❌ Title generation with AI response failed for conversation ${conversationId}`
+        console.warn(
+          `[TitleGeneration][conversation=${conversationId}] ⚠️ Title generation returned fallback`
         );
         return false;
       }
     } catch (error) {
       console.error(
-        `[TitleGeneration] ❌ Failed to update title with AI response for conversation ${conversationId}:`,
+        `[TitleGeneration] ❌ Failed to update title without AI response for conversation ${conversationId}:`,
         error
       );
       return false;

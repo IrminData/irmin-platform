@@ -1,6 +1,4 @@
 import { AgentsManager } from '@/agents';
-import { db, messages } from '@/database';
-import { desc, eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
 import { swaggerSchemas } from '@/config/swagger';
@@ -17,7 +15,7 @@ import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
 import { sendOkResponse } from '@/utils/responses';
 import {
   applyStreamingHeaders,
-  createStoredUIMessageStream,
+  stringifyLangChainStream,
 } from '@/utils/streaming';
 
 export async function agentRoutes(fastify: FastifyInstance) {
@@ -67,27 +65,28 @@ export async function agentRoutes(fastify: FastifyInstance) {
         const response = await agentsManager.executeAgent(agentId, {
           message: agentRequest.message,
           context: agentRequest.context,
-          conversationId: agentRequest.conversationId, // Let AgentsManager handle conversation creation when undefined
-          metadata: {
-            ...agentRequest.metadata,
-            streaming: false, // Non-streaming request
-          },
-          toolSelection: agentRequest.toolSelection,
+          conversationId: agentRequest.conversationId,
           authToken,
           workspace: workspaceContext.workspace,
           user: authContext.user,
-          messageHistoryLimit: agentRequest.messageHistoryLimit,
         });
 
-        // Add conversation ID to response headers if available
-        if (response.conversationId) {
-          reply.header('X-Conversation-Id', response.conversationId);
-        }
+        // Serialize LangChain messages using their toDict method
+        const serializedMessages =
+          response.agentResponse.messages?.map((message) => message.toDict()) ??
+          [];
+
+        // Add conversation ID to response headers
+        reply.header('X-Conversation-Id', response.conversationId);
+        reply.header('X-Agent-Id', agentId);
 
         sendOkResponse(
           reply,
           AgentResponseSchema,
-          response.agentResponse,
+          {
+            ...response.agentResponse,
+            messages: serializedMessages,
+          },
           fastify.log
         );
         return;
@@ -136,82 +135,30 @@ export async function agentRoutes(fastify: FastifyInstance) {
         }
         const authToken = authContext.token;
 
-        // Capture start time at the beginning of the request for accurate processing time
-        const requestStartTime = Date.now();
-
-        // Fetch conversation history AFTER the user message is saved to include it
-        // This ensures we get the complete conversation context including the current user message
-        let conversationHistory: (typeof messages.$inferSelect)[] = [];
-        if (agentRequest.conversationId) {
-          conversationHistory = await db
-            .select()
-            .from(messages)
-            .where(eq(messages.conversationId, agentRequest.conversationId))
-            .orderBy(desc(messages.createdAt))
-            .limit(agentRequest.messageHistoryLimit || 20);
-
-          // Reverse the history to chronological order for LLM processing
-          conversationHistory = conversationHistory.reverse();
-        }
-
         const response = await agentsManager.executeAgent(agentId, {
           message: agentRequest.message,
           context: agentRequest.context,
-          conversationId: agentRequest.conversationId, // Let AgentsManager handle conversation creation when undefined
-          metadata: {
-            ...agentRequest.metadata,
-            streaming: true, // Streaming request
-          },
-          toolSelection: agentRequest.toolSelection,
+          conversationId: agentRequest.conversationId,
           authToken,
           workspace: workspaceContext.workspace,
           user: authContext.user,
-          messageHistoryLimit: agentRequest.messageHistoryLimit,
         });
 
         if (response.agentResponse.stream) {
-          // Add custom and streaming-friendly headers
+          // Add streaming headers
           applyStreamingHeaders(reply, {
+            'X-Conversation-Id': response.conversationId,
             'X-Agent-Id': agentId,
-            ...(response.conversationId
-              ? { 'X-Conversation-Id': response.conversationId }
-              : {}),
-            ...(response.userMessageId
-              ? { 'X-Message-Id': response.userMessageId }
-              : {}),
           });
 
-          // Get the agent info for model details
-          const agent = agentsManager
-            .listAgents()
-            .find((a) => a.id === agentId);
-
-          // Use regular UI message stream handler for all streams
-          const readableStream = createStoredUIMessageStream(
-            response.agentResponse.stream,
-            {
-              conversationId: response.conversationId,
-              modelProvider: agent?.modelProvider,
-              model: agent?.model,
-              agentName: agent?.name,
-              history: conversationHistory,
-              startTime: requestStartTime,
-              userMessage: response.sanitizedMessage,
-              user: authContext.user,
-              workspace: workspaceContext.workspace,
-            }
+          // Convert LangChain stream to string stream for Fastify
+          const textStream = stringifyLangChainStream(
+            response.agentResponse.stream
           );
 
-          // Return streaming response
-          return reply.send(readableStream);
+          return reply.send(textStream);
         } else {
-          sendOkResponse(
-            reply,
-            AgentResponseSchema,
-            response.agentResponse,
-            fastify.log
-          );
-          return;
+          throw new Error('Agent response is not a stream');
         }
       } catch (error) {
         const errorMessage =

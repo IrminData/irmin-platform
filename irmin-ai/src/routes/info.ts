@@ -2,12 +2,9 @@ import { aiModels, db } from '@/database';
 import { eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
-import { mcpService } from '@/services/mcp';
-
 import { swaggerSchemas } from '@/config/swagger';
 
 import {
-  McpToolsResponseSchema,
   ModelsResponseSchema,
   UserProfileResponseSchema,
   WorkspaceInfoResponseSchema,
@@ -119,47 +116,6 @@ export async function infoRoutes(fastify: FastifyInstance) {
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to fetch models';
         fastify.log.error('Models endpoint error: %s', errorMessage);
-        sendInternalServerError(reply, errorMessage, fastify.log);
-        return;
-      }
-    }
-  );
-
-  // GET /api/info/tools - List available MCP tools
-  fastify.get(
-    '/info/tools',
-    {
-      schema: swaggerSchemas.listMcpTools,
-    },
-    async (request, reply) => {
-      try {
-        // Get authenticated user and workspace context (set by middleware)
-        const authContext = request.auth;
-        const workspaceContext = request.workspace;
-        if (!authContext || !workspaceContext) {
-          throw new Error('Authentication and workspace context required');
-        }
-        const authToken = authContext.token;
-
-        const mcpTools = await mcpService.getTools(authToken);
-
-        sendOkResponse(
-          reply,
-          McpToolsResponseSchema,
-          {
-            enabled: mcpTools.enabled,
-            tools: mcpTools.tools,
-            count: mcpTools.count,
-            servers: mcpTools.servers,
-            totalServers: mcpTools.totalServers,
-          },
-          fastify.log
-        );
-        return;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to fetch tools';
-        fastify.log.error('Tools endpoint error: %s', errorMessage);
         sendInternalServerError(reply, errorMessage, fastify.log);
         return;
       }

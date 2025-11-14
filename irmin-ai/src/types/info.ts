@@ -28,28 +28,3 @@ export const ModelsResponseSchema = z.object({
     })
   ),
 });
-
-// MCP tools response schema - detailed tool information
-export const McpToolsResponseSchema = z.object({
-  enabled: z.boolean(),
-  tools: z.array(
-    z.object({
-      name: z.string(),
-      description: z.string(),
-      type: z.string(),
-      schema: z.unknown().optional(),
-      serverId: z.string().optional(),
-      requiresAuth: z.boolean().optional(),
-    })
-  ),
-  count: z.number(),
-  servers: z.array(
-    z.object({
-      id: z.string(),
-      type: z.enum(['command', 'url']),
-      requiresAuth: z.boolean(),
-      toolCount: z.number(),
-    })
-  ),
-  totalServers: z.number(),
-});

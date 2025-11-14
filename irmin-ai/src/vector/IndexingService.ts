@@ -88,11 +88,13 @@ class IndexingService {
 
       return vectorStore;
     } catch (error) {
-      analyticsService.logVectorError(
-        'vector_store_connection',
-        error instanceof Error ? error.message : 'Unknown error',
-        { collectionName: collectionName }
-      );
+      analyticsService.logEvent({
+        eventType: 'vector_store_connection',
+        eventData: {
+          collectionName: collectionName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to connect to vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -134,19 +136,24 @@ class IndexingService {
       );
 
       // Log vector operation
-      analyticsService.logVectorIndexing('vector_store_created', {
-        collectionName: collectionName,
-        url: env.QDRANT_URL,
-        isNewCollection: true,
+      analyticsService.logEvent({
+        eventType: 'vector_store_created',
+        eventData: {
+          collectionName: collectionName,
+          url: env.QDRANT_URL,
+          isNewCollection: true,
+        },
       });
 
       return vectorStore;
     } catch (error) {
-      analyticsService.logVectorError(
-        'vector_store_creation',
-        error instanceof Error ? error.message : 'Unknown error',
-        { collectionName: collectionName }
-      );
+      analyticsService.logEvent({
+        eventType: 'vector_store_creation',
+        eventData: {
+          collectionName: collectionName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to create new vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -194,18 +201,24 @@ class IndexingService {
       }
 
       // Log vector operation
-      analyticsService.logVectorIndexing('documents_indexed', {
-        documentCount: validatedDocuments.length,
-        collectionName: result.collectionName,
+      analyticsService.logEvent({
+        eventType: 'documents_indexed',
+        eventData: {
+          documentCount: validatedDocuments.length,
+          collectionName: result.collectionName,
+        },
       });
 
       return result;
     } catch (error) {
-      analyticsService.logVectorError(
-        'documents_indexing',
-        error instanceof Error ? error.message : 'Unknown error',
-        { documentCount: documents.length }
-      );
+      analyticsService.logEvent({
+        eventType: 'documents_indexing',
+        eventData: {
+          collectionName: collectionName || this.defaultCollectionName,
+          documentCount: documents.length,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to index documents: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -228,18 +241,23 @@ class IndexingService {
       const embeddingResults = await embeddings.embedDocuments(texts);
 
       // Log vector operation
-      analyticsService.logVectorIndexing('embeddings_created', {
-        textCount: texts.length,
-        embeddingDimensions: embeddingResults[0]?.length || 0,
+      analyticsService.logEvent({
+        eventType: 'embeddings_created',
+        eventData: {
+          textCount: texts.length,
+          embeddingDimensions: embeddingResults[0]?.length || 0,
+        },
       });
 
       return embeddingResults;
     } catch (error) {
-      analyticsService.logVectorError(
-        'embeddings_creation',
-        error instanceof Error ? error.message : 'Unknown error',
-        { textCount: texts.length }
-      );
+      analyticsService.logEvent({
+        eventType: 'embeddings_creation',
+        eventData: {
+          textCount: texts.length,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to create embeddings: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -262,18 +280,23 @@ class IndexingService {
       const embedding = await embeddings.embedQuery(text);
 
       // Log vector operation
-      analyticsService.logVectorIndexing('embedding_created', {
-        textLength: text.length,
-        embeddingDimensions: embedding.length,
+      analyticsService.logEvent({
+        eventType: 'embedding_created',
+        eventData: {
+          textLength: text.length,
+          embeddingDimensions: embedding.length,
+        },
       });
 
       return embedding;
     } catch (error) {
-      analyticsService.logVectorError(
-        'embedding_creation',
-        error instanceof Error ? error.message : 'Unknown error',
-        { textLength: text.length }
-      );
+      analyticsService.logEvent({
+        eventType: 'embedding_creation',
+        eventData: {
+          textLength: text.length,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to create embedding: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -321,10 +344,13 @@ class IndexingService {
       deletedCount = initialCount;
 
       // Log vector operation
-      analyticsService.logVectorIndexing('documents_deleted', {
-        documentCount: deletedCount,
-        collectionName: finalCollectionName,
-        errorCount: errors.length,
+      analyticsService.logEvent({
+        eventType: 'documents_deleted',
+        eventData: {
+          documentCount: deletedCount,
+          collectionName: finalCollectionName,
+          errorCount: errors.length,
+        },
       });
 
       return {
@@ -333,11 +359,13 @@ class IndexingService {
         errors,
       };
     } catch (error) {
-      analyticsService.logVectorError(
-        'documents_deletion',
-        error instanceof Error ? error.message : 'Unknown error',
-        { collectionName: collectionName || this.defaultCollectionName }
-      );
+      analyticsService.logEvent({
+        eventType: 'documents_deletion',
+        eventData: {
+          collectionName: collectionName || this.defaultCollectionName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to delete all documents: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -392,10 +420,13 @@ class IndexingService {
       }
 
       // Log vector operation
-      analyticsService.logVectorIndexing('documents_deleted', {
-        documentCount: deletedCount,
-        collectionName: finalCollectionName,
-        errorCount: errors.length,
+      analyticsService.logEvent({
+        eventType: 'documents_deleted',
+        eventData: {
+          documentCount: deletedCount,
+          collectionName: finalCollectionName,
+          errorCount: errors.length,
+        },
       });
 
       return {
@@ -404,11 +435,13 @@ class IndexingService {
         errors,
       };
     } catch (error) {
-      analyticsService.logVectorError(
-        'documents_deletion',
-        error instanceof Error ? error.message : 'Unknown error',
-        { documentCount: chunkIds.length }
-      );
+      analyticsService.logEvent({
+        eventType: 'documents_deletion',
+        eventData: {
+          collectionName: collectionName || this.defaultCollectionName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to delete specific chunks: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -515,10 +548,14 @@ class IndexingService {
       }
 
       // Log vector operation
-      analyticsService.logVectorIndexing('documents_deleted', {
-        documentCount: deletedCount,
-        collectionName: finalCollectionName,
-        errorCount: errors.length,
+      analyticsService.logEvent({
+        eventType: 'documents_deleted',
+        eventData: {
+          documentCount: deletedCount,
+          collectionName: finalCollectionName,
+          documentIds: documentIds,
+          errorCount: errors.length,
+        },
       });
 
       return {
@@ -527,11 +564,13 @@ class IndexingService {
         errors,
       };
     } catch (error) {
-      analyticsService.logVectorError(
-        'documents_deletion',
-        error instanceof Error ? error.message : 'Unknown error',
-        { documentCount: documentIds.length }
-      );
+      analyticsService.logEvent({
+        eventType: 'documents_deletion',
+        eventData: {
+          collectionName: collectionName || this.defaultCollectionName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
       throw new Error(
         `Failed to delete documents: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

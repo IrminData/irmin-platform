@@ -45,9 +45,6 @@ async function testAgentListing(): Promise<AgentConfig[]> {
     logTest('Agent Listing', 'PASS', `Found ${agents.length} agents`);
     agents.forEach((agent: AgentConfig) => {
       console.log(`  - ${agent.name} (${agent.id}): ${agent.description}`);
-      console.log(
-        `    Provider: ${agent.modelProvider}, Streaming: ${agent.streaming}`
-      );
     });
     return agents;
   } else {

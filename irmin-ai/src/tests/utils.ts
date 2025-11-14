@@ -170,9 +170,6 @@ export function createAgentRequest(
 ): import('@/types/agents').AgentRequest {
   return {
     message,
-    toolSelection: {
-      includeAll: true,
-    },
     ...options,
   };
 }
