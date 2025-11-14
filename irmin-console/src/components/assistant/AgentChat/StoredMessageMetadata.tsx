@@ -151,44 +151,7 @@ export const StoredMessageMetadata = ({
     );
   }
 
-  // For text messages, check if there's metadata to render
-  if (message.metadata && Object.keys(message.metadata).length > 0) {
-    return (
-      <>
-        {/* Tool calls from metadata are handled by MessageMetadata component */}
-
-        {/* Render thinking steps if available in metadata */}
-        {message.metadata.thinkingSteps &&
-          Array.isArray(message.metadata.thinkingSteps) &&
-          message.metadata.thinkingSteps.length > 0 && (
-            <div className='mt-4 space-y-2'>
-              <div className='text-sm font-medium text-muted-foreground'>
-                {dict.assistant.thinkingSteps} (
-                {message.metadata.thinkingSteps.length})
-              </div>
-              {message.metadata.thinkingSteps.map(
-                (step: string, index: number) => {
-                  // Create a simple hash from step content for uniqueness
-                  const stepHash = step
-                    .split('')
-                    .reduce((hash, char) => hash + char.charCodeAt(0), 0);
-                  return (
-                    <Reasoning
-                      // eslint-disable-next-line react/no-array-index-key
-                      key={`thinking-${message.id}-${stepHash}-${index}`}
-                      defaultOpen={false}
-                    >
-                      <ReasoningTrigger />
-                      <ReasoningContent>{step}</ReasoningContent>
-                    </Reasoning>
-                  );
-                }
-              )}
-            </div>
-          )}
-      </>
-    );
-  }
-
+  // For text messages, metadata (thinking steps, tool calls) is handled by MessageMetadata component
+  // to avoid duplication. This component only handles specific message types above.
   return null;
 };

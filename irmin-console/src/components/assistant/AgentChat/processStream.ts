@@ -1,10 +1,17 @@
-import type {
-  CurrentReasoning,
-  CurrentToolCall,
-  ServerStreamEvent,
-} from './types';
+import type { LangChainStreamEvent } from './langchainStreamTypes';
+import {
+  extractTextFromContent,
+  extractThinkingFromContent,
+} from './langchainStreamTypes';
+import type { ServerStreamEvent } from './types';
 
-// Process streaming response chunks
+interface ToolCallState {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+}
+
+// Process LangChain streaming response chunks
 export const processStream = async (
   stream: ReadableStream,
   signal?: AbortSignal,
@@ -15,8 +22,9 @@ export const processStream = async (
   const decoder = new TextDecoder();
   let content = '';
   const parts: ServerStreamEvent[] = [];
-  let currentToolCall: CurrentToolCall = {};
-  let currentReasoning: CurrentReasoning = { content: '' };
+  const toolCalls = new Map<string, ToolCallState>();
+  let accumulatedThinking = '';
+  let thinkingEventIndex = -1;
 
   try {
     while (true) {
@@ -33,110 +41,163 @@ export const processStream = async (
 
       for (const line of lines) {
         try {
-          const parsed = JSON.parse(line) as ServerStreamEvent;
+          const parsed = JSON.parse(line) as LangChainStreamEvent;
 
-          switch (parsed.type) {
-            case 'text-start':
-              break;
-            case 'text-delta':
-              if (parsed.delta) {
-                content += parsed.delta;
+          switch (parsed.event) {
+            case 'on_chat_model_stream': {
+              // Extract text content from the chunk
+              const chunkContent = parsed.data.chunk?.kwargs.content;
+              const text = extractTextFromContent(chunkContent);
+
+              if (text) {
+                content += text;
                 onContentUpdate?.(content);
               }
-              break;
-            case 'text-end':
-              break;
-            case 'tool-input-start':
-              currentToolCall = {
-                id: parsed.toolCallId,
-                name: parsed.toolName,
-              };
-              break;
-            case 'tool-input-available': {
-              currentToolCall = {
-                id: parsed.toolCallId,
-                name: parsed.toolName,
-                input: parsed.input,
-              };
-              // Check if this tool call input is already in parts to avoid duplicates
-              const existingInputIndex = parts.findIndex(
-                (p) =>
-                  p.type === 'tool-input-available' &&
-                  p.toolCallId === parsed.toolCallId
-              );
-              if (existingInputIndex === -1) {
-                parts.push({
-                  type: 'tool-input-available',
-                  toolCallId: parsed.toolCallId,
-                  toolName: parsed.toolName,
-                  input: parsed.input,
-                });
-              }
-              onPartsUpdate?.(parts);
-              break;
-            }
-            case 'tool-output-available': {
-              currentToolCall.output = parsed.output;
-              // Check if this tool call output is already in parts to avoid duplicates
-              const existingOutputIndex = parts.findIndex(
-                (p) =>
-                  p.type === 'tool-output-available' &&
-                  p.toolCallId === parsed.toolCallId
-              );
-              if (existingOutputIndex === -1) {
-                parts.push({
-                  type: 'tool-output-available',
-                  toolCallId: parsed.toolCallId,
-                  output: parsed.output,
-                });
-              }
-              onPartsUpdate?.(parts);
-              break;
-            }
-            case 'reasoning-start':
-              currentReasoning = { id: parsed.id, content: '' };
-              break;
-            case 'reasoning-delta':
-              if (parsed.delta) {
-                currentReasoning.content += parsed.delta;
-              }
-              break;
-            case 'reasoning-end':
-              if (currentReasoning.content.trim()) {
-                parts.push({
-                  type: 'reasoning-end',
-                  id: currentReasoning.id,
-                  delta: currentReasoning.content,
-                });
+
+              // Extract thinking blocks from the chunk and accumulate them
+              const thinkingBlocks = extractThinkingFromContent(chunkContent);
+              for (const thinkingDelta of thinkingBlocks) {
+                accumulatedThinking += thinkingDelta;
+
+                // Update or create the reasoning event with accumulated content
+                if (thinkingEventIndex === -1) {
+                  // Create a new reasoning event
+                  const thinkingId = `thinking-${Date.now()}`;
+                  thinkingEventIndex = parts.length;
+                  parts.push({
+                    type: 'reasoning-end',
+                    id: thinkingId,
+                    delta: accumulatedThinking,
+                  });
+                } else {
+                  // Update the existing reasoning event
+                  const existingEvent = parts[thinkingEventIndex];
+                  if (existingEvent.type === 'reasoning-end') {
+                    parts[thinkingEventIndex] = {
+                      type: 'reasoning-end',
+                      id: existingEvent.id,
+                      delta: accumulatedThinking,
+                    };
+                  }
+                }
                 onPartsUpdate?.(parts);
               }
+
+              // Check for tool calls in the chunk
+              const toolCallsData =
+                parsed.data.chunk?.kwargs.additional_kwargs?.tool_calls;
+              if (toolCallsData && Array.isArray(toolCallsData)) {
+                for (const toolCall of toolCallsData) {
+                  if (toolCall.type === 'function') {
+                    try {
+                      const args = JSON.parse(toolCall.function.arguments);
+                      toolCalls.set(toolCall.id, {
+                        id: toolCall.id,
+                        name: toolCall.function.name,
+                        args,
+                      });
+
+                      // Add tool input event if not already added
+                      const existingInputIndex = parts.findIndex(
+                        (p) =>
+                          p.type === 'tool-input-available' &&
+                          p.toolCallId === toolCall.id
+                      );
+                      if (existingInputIndex === -1) {
+                        parts.push({
+                          type: 'tool-input-available',
+                          toolCallId: toolCall.id,
+                          toolName: toolCall.function.name,
+                          input: args,
+                        });
+                        onPartsUpdate?.(parts);
+                      }
+                    } catch {
+                      // Failed to parse tool call arguments
+                    }
+                  }
+                }
+              }
               break;
-            case 'system':
-              parts.push(parsed);
-              onPartsUpdate?.(parts);
+            }
+
+            case 'on_tool_start': {
+              // Tool execution started
+              const toolName = parsed.name;
+              const runId = parsed.run_id;
+              if (toolName && runId) {
+                const existingToolCall = toolCalls.get(runId);
+                if (!existingToolCall) {
+                  // If we don't have the tool call from chat model stream,
+                  // add it now from the tool start event
+                  const input = parsed.data.input || {};
+                  parts.push({
+                    type: 'tool-input-available',
+                    toolCallId: runId,
+                    toolName,
+                    input,
+                  });
+                  onPartsUpdate?.(parts);
+                }
+              }
               break;
-            case 'source':
-              parts.push(parsed);
-              onPartsUpdate?.(parts);
+            }
+
+            case 'on_tool_end': {
+              // Tool execution completed
+              const toolOutput = parsed.data.output;
+              const runId = parsed.run_id;
+              if (runId && toolOutput !== undefined) {
+                const outputString =
+                  typeof toolOutput === 'string'
+                    ? toolOutput
+                    : JSON.stringify(toolOutput);
+
+                const existingOutputIndex = parts.findIndex(
+                  (p) =>
+                    p.type === 'tool-output-available' && p.toolCallId === runId
+                );
+                if (existingOutputIndex === -1) {
+                  parts.push({
+                    type: 'tool-output-available',
+                    toolCallId: runId,
+                    output: outputString,
+                  });
+                  onPartsUpdate?.(parts);
+                }
+              }
               break;
-            case 'stream-complete':
-              parts.push(parsed);
-              onPartsUpdate?.(parts);
+            }
+
+            case 'on_chat_model_end': {
+              // Chat model finished - could extract usage metadata here if needed
               break;
-            case 'stream-error':
-            case 'error':
-              console.error('Stream error:', parsed.error || parsed.content);
-              parts.push(parsed);
-              onPartsUpdate?.(parts);
+            }
+
+            case 'on_chain_start':
+            case 'on_chain_end':
+            case 'on_chat_model_start':
+              // These events don't need specific handling for UI rendering
               break;
+
             default:
               break;
           }
-        } catch {
+        } catch (error) {
+          // If JSON parsing fails, skip this line
+          console.warn('Failed to parse stream line:', error);
           continue;
         }
       }
     }
+  } catch (error) {
+    // Stream error
+    console.error('Stream processing error:', error);
+    parts.push({
+      type: 'stream-error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    onPartsUpdate?.(parts);
   } finally {
     reader.releaseLock();
   }

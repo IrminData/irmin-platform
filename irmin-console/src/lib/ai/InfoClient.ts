@@ -1,6 +1,5 @@
 import {
   AIModelsResponseSchema,
-  AIToolsResponseSchema,
   AIUserInfoResponseSchema,
   AIWorkspaceInfoResponseSchema,
 } from '@/types/ai/responses';
@@ -30,13 +29,5 @@ export class InfoClient extends BaseClient {
     });
 
     return this.handleResponse(response, AIModelsResponseSchema);
-  }
-
-  async listTools() {
-    const response = await fetch(`${this.baseUrl}/api/info/tools`, {
-      headers: this.getHeaders(),
-    });
-
-    return this.handleResponse(response, AIToolsResponseSchema);
   }
 }

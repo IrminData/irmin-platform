@@ -1,14 +1,13 @@
-import { AIConversationSchema } from '@/types/ai/base';
+import type { StoredMessage } from '@langchain/core/messages';
+
+import { AIConversationSchema, AIErrorSchema } from '@/types/ai/base';
 import {
   AICreateConversationRequest,
   AICreateConversationRequestSchema,
   AIUpdateConversationRequest,
   AIUpdateConversationRequestSchema,
 } from '@/types/ai/requests';
-import {
-  AIConversationsListResponseSchema,
-  AIMessagesListResponseSchema,
-} from '@/types/ai/responses';
+import { AIConversationsListResponseSchema } from '@/types/ai/responses';
 
 import { BaseClient } from './BaseClient';
 
@@ -18,10 +17,6 @@ interface ListConversationsParams {
   sortBy?: 'title' | 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
   agentId?: string;
-}
-
-interface ListMessagesParams {
-  sortOrder?: 'asc' | 'desc';
 }
 
 export class ConversationsClient extends BaseClient {
@@ -109,30 +104,33 @@ export class ConversationsClient extends BaseClient {
     return this.handleDeleteResponse(response);
   }
 
-  async getConversationMessages(id: string, params: ListMessagesParams = {}) {
-    const searchParams = new URLSearchParams();
-
-    if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
-
+  async getConversationMessages(id: string): Promise<StoredMessage[]> {
     const response = await fetch(
-      `${this.baseUrl}/api/conversations/${id}/messages?${searchParams}`,
+      `${this.baseUrl}/api/conversations/${id}/messages`,
       {
         headers: this.getHeaders(),
       }
     );
 
-    return this.handleResponse(response, AIMessagesListResponseSchema);
-  }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const error = AIErrorSchema.safeParse(errorData);
 
-  async generateConversationTitle(id: string) {
-    const response = await fetch(
-      `${this.baseUrl}/api/conversations/${id}/generate-title`,
-      {
-        method: 'POST',
-        headers: this.getHeaders(),
+      if (error.success) {
+        throw new Error(
+          `API Error ${error.data.statusCode}: ${error.data.message}`
+        );
       }
-    );
 
-    return this.handleResponse(response, AIConversationSchema);
+      throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+    }
+
+    // AI service returns raw array of serialized LangChain messages (StoredMessage[])
+    const messages = (await response.json()) as StoredMessage[];
+    if (!Array.isArray(messages)) {
+      return [];
+    }
+
+    return messages;
   }
 }

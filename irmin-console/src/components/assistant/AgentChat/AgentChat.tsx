@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { TbGlobe, TbMessageCircle } from 'react-icons/tb';
+import { TbMessageCircle } from 'react-icons/tb';
 
 import {
   Conversation,
@@ -13,11 +13,9 @@ import { Loader } from '@/components/ui/ai-elements/loader';
 import { Message, MessageContent } from '@/components/ui/ai-elements/message';
 import {
   PromptInput,
-  PromptInputButton,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputToolbar,
-  PromptInputTools,
 } from '@/components/ui/ai-elements/prompt-input';
 import {
   Suggestion,
@@ -34,6 +32,7 @@ import { useAIConversation } from '@/hooks/api/useAIConversation';
 
 import type { AIMessage } from '@/types/ai/base';
 
+import { convertStoredMessages } from './convertStoredMessage';
 import { createAssistantMessage } from './createAssistantMessage';
 import { MessageMetadata } from './MessageMetadata';
 import { processStream } from './processStream';
@@ -55,7 +54,6 @@ const AgentChat = ({
   const conversationUpdateTimeoutRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
-  const [webSearch, setWebSearch] = useState(false);
   const [input, setInput] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<
     string | null
@@ -79,11 +77,16 @@ const AgentChat = ({
     });
   const { executeAgentStreamMutation } = useAIAgent(agentId);
 
-  // Get messages from the conversation query
-  const initialMessages = useMemo(
-    () => aiConversationMessagesQuery.data?.data || [],
-    [aiConversationMessagesQuery.data?.data]
-  );
+  // Get messages from the conversation query and convert from StoredMessage to AIMessage
+  const initialMessages = useMemo(() => {
+    if (!aiConversationMessagesQuery.data || !currentConversationId) {
+      return [];
+    }
+    return convertStoredMessages(
+      aiConversationMessagesQuery.data,
+      currentConversationId
+    );
+  }, [aiConversationMessagesQuery.data, currentConversationId]);
 
   // Group related messages (main text + reasoning + tool_call + tool_result) into single displays
   const groupedMessages = useMemo(() => {
@@ -216,9 +219,6 @@ const AgentChat = ({
       const agentRequest = {
         message: text,
         conversationId: currentConversationId || undefined,
-        metadata: {
-          webSearch,
-        },
       };
 
       const response = await executeAgentStreamMutation.mutateAsync({
@@ -315,11 +315,6 @@ const AgentChat = ({
       }
     };
   }, []);
-
-  // Toggle the web search state
-  const handleToggleWebSearch = () => {
-    setWebSearch(!webSearch);
-  };
 
   // Set the input to the suggestion on click
   const handleSuggestionClick = (suggestion: string) => {
@@ -518,17 +513,7 @@ const AgentChat = ({
           value={input}
           placeholder={dict.assistant.askMeAnything}
         />
-        <PromptInputToolbar>
-          <PromptInputTools>
-            <PromptInputButton
-              variant={webSearch ? 'default' : 'ghost'}
-              onClick={handleToggleWebSearch}
-              title={dict.assistant.toggleWebSearch}
-            >
-              <TbGlobe size={16} />
-              <span>{dict.assistant.search}</span>
-            </PromptInputButton>
-          </PromptInputTools>
+        <PromptInputToolbar className='justify-end'>
           <PromptInputSubmit
             disabled={
               !input &&

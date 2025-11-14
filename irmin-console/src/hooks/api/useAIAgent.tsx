@@ -1,135 +1,91 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-
-import IrminAIClient from '@/lib/ai';
-import { aiAgentConfigQueryKey, aiAgentsListQueryKey } from '@/lib/queryKeys';
+import { useMutation } from '@tanstack/react-query';
 
 import { useIAM } from '@/context/IAMContext';
-import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import type { AIAgent } from '@/types/ai/base';
 import type { AIAgentExecuteRequest } from '@/types/ai/requests';
-import type {
-  AIAgentExecuteResponse,
-  AIAgentsListResponse,
-} from '@/types/ai/responses';
 
-export function useAIAgent(agentId?: string) {
+interface ExecuteAgentStreamResponse {
+  stream: ReadableStream<Uint8Array>;
+  conversationId?: string;
+}
+
+interface ExecuteAgentParams {
+  agentId: string;
+  request: AIAgentExecuteRequest;
+}
+
+export function useAIAgent(_agentId: string) {
   const { getToken } = useIAM();
-  const { irminAlert } = usePopup();
   const { workspaceSlug } = useWorkspaceContext();
 
-  // Query for fetching all available agents
-  const agentsListQuery = useQuery<AIAgentsListResponse>({
-    queryKey: aiAgentsListQueryKey(workspaceSlug),
-    queryFn: async () => {
-      const token = await getToken();
-      const client = new IrminAIClient(token, workspaceSlug);
-      const agents = await client.agents.listAgents();
-      return agents;
-    },
-  });
-
-  // Query for fetching a specific agent's configuration
-  const agentConfigQuery = useQuery<AIAgent>({
-    queryKey: aiAgentConfigQueryKey(workspaceSlug, agentId ?? ''),
-    queryFn: async () => {
-      if (!agentId) throw new Error('Agent ID is required');
-      const token = await getToken();
-      const client = new IrminAIClient(token, workspaceSlug);
-      const agentConfig = await client.agents.getAgentConfig(agentId);
-      return agentConfig;
-    },
-    enabled: !!agentId,
-  });
-
-  // Mutation for executing an agent (non-streaming)
-  const executeAgentMutation = useMutation<
-    AIAgentExecuteResponse,
-    Error,
-    { agentId: string; request: AIAgentExecuteRequest }
-  >({
-    mutationFn: async ({ agentId: execAgentId, request }) => {
-      const token = await getToken();
-      const client = new IrminAIClient(token, workspaceSlug);
-      const response = await client.agents.executeAgent(execAgentId, request);
-      return response;
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to execute agent');
-    },
-    onSuccess: () => {
-      irminAlert('success', 'Agent executed successfully');
-    },
-  });
-
-  // Mutation for executing an agent with streaming
   const executeAgentStreamMutation = useMutation<
-    { stream: ReadableStream<Uint8Array>; conversationId?: string },
+    ExecuteAgentStreamResponse,
     Error,
-    { agentId: string; request: AIAgentExecuteRequest }
+    ExecuteAgentParams
   >({
-    mutationFn: async ({ agentId: execAgentId, request }) => {
+    mutationFn: async ({ agentId, request }: ExecuteAgentParams) => {
       const token = await getToken();
-      const client = new IrminAIClient(token, workspaceSlug);
-      const stream = await client.agents.executeAgentStream(
-        execAgentId,
-        request
+
+      const response = await fetch(
+        `/api/ai/agent/${agentId}?workspaceSlug=${workspaceSlug}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(request),
+        }
       );
-      return stream;
-    },
-    onError: (error) => {
-      irminAlert('error', error.message ?? 'Failed to execute agent stream');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Failed to execute agent: ${response.statusText}`
+        );
+      }
+
+      const conversationId =
+        response.headers.get('X-Conversation-Id') || undefined;
+
+      // Check if response is streaming
+      const contentType = response.headers.get('Content-Type');
+      if (
+        contentType?.includes('application/x-ndjson') ||
+        contentType?.includes('text/event-stream')
+      ) {
+        if (!response.body) {
+          throw new Error('Response body is null');
+        }
+        return { stream: response.body, conversationId };
+      }
+
+      // Non-streaming response - convert to stream
+      const data = await response.json();
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                type: 'text-delta',
+                delta: data.content || data.message || '',
+              }) + '\n'
+            )
+          );
+          controller.enqueue(
+            encoder.encode(JSON.stringify({ type: 'stream-complete' }) + '\n')
+          );
+          controller.close();
+        },
+      });
+
+      return { stream, conversationId };
     },
   });
-
-  // Helper function to execute agent with automatic agentId
-  const executeAgent = (request: AIAgentExecuteRequest) => {
-    if (!agentId) {
-      irminAlert('error', 'No agent ID specified');
-      return;
-    }
-    executeAgentMutation.mutate({ agentId, request });
-  };
-
-  // Helper function to execute agent stream with automatic agentId
-  const executeAgentStream = (request: AIAgentExecuteRequest) => {
-    if (!agentId) {
-      irminAlert('error', 'No agent ID specified');
-      return;
-    }
-    executeAgentStreamMutation.mutate({ agentId, request });
-  };
-
-  // Helper function to execute any agent by ID
-  const executeAgentById = (
-    execAgentId: string,
-    request: AIAgentExecuteRequest
-  ) => {
-    executeAgentMutation.mutate({ agentId: execAgentId, request });
-  };
-
-  // Helper function to execute any agent stream by ID
-  const executeAgentStreamById = (
-    execAgentId: string,
-    request: AIAgentExecuteRequest
-  ) => {
-    executeAgentStreamMutation.mutate({ agentId: execAgentId, request });
-  };
 
   return {
-    // Queries
-    agentsListQuery,
-    agentConfigQuery,
-
-    // Mutations
-    executeAgentMutation,
     executeAgentStreamMutation,
-
-    // Agent execution helper functions
-    executeAgent,
-    executeAgentStream,
-    executeAgentById,
-    executeAgentStreamById,
   };
 }

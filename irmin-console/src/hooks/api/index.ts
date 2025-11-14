@@ -55,7 +55,6 @@ export * from './useInvites';
 export * from './useAIAgent';
 export * from './useAIConversations';
 export * from './useAIConversation';
-export * from './useAIInfo';
 
 // Other API hooks
 export * from './useCredentials';

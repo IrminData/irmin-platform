@@ -23,7 +23,7 @@ export class AgentsClient extends BaseClient {
   async executeAgent(
     agentId: string,
     request: AIAgentExecuteRequest
-  ): Promise<AIAgentExecuteResponse> {
+  ): Promise<{ data: AIAgentExecuteResponse; conversationId?: string }> {
     const validatedRequest = AIAgentExecuteRequestSchema.parse(request);
 
     const response = await fetch(`${this.baseUrl}/api/agents/${agentId}`, {
@@ -32,13 +32,23 @@ export class AgentsClient extends BaseClient {
       body: JSON.stringify(validatedRequest),
     });
 
-    return this.handleResponse(response, AIAgentExecuteResponseSchema);
+    const conversationId =
+      response.headers.get('X-Conversation-Id') || undefined;
+    const data = await this.handleResponse(
+      response,
+      AIAgentExecuteResponseSchema
+    );
+
+    return { data, conversationId };
   }
 
   async executeAgentStream(
     agentId: string,
     request: AIAgentExecuteRequest
-  ): Promise<{ stream: ReadableStream<Uint8Array>; conversationId?: string }> {
+  ): Promise<{
+    stream: ReadableStream<Uint8Array>;
+    conversationId?: string;
+  }> {
     const validatedRequest = AIAgentExecuteRequestSchema.parse(request);
 
     const response = await fetch(
@@ -58,6 +68,7 @@ export class AgentsClient extends BaseClient {
     const conversationId =
       response.headers.get('X-Conversation-Id') || undefined;
 
+    // Return raw stream - parsing will be done in Next.js API route
     return { stream, conversationId };
   }
 

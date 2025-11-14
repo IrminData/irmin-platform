@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import type { StoredMessage } from '@langchain/core/messages';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import IrminAIClient from '@/lib/ai';
@@ -15,7 +16,6 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { AIConversation } from '@/types/ai/base';
 import type { AIUpdateConversationRequest } from '@/types/ai/requests';
-import type { AIMessagesListResponse } from '@/types/ai/responses';
 
 type AIConversationInput = {
   title?: string;
@@ -60,14 +60,28 @@ export function useAIConversation(
     refetchOnWindowFocus: false,
   });
 
-  const aiConversationMessagesQuery = useQuery<AIMessagesListResponse>({
+  const aiConversationMessagesQuery = useQuery<StoredMessage[]>({
     queryKey: aiConversationMessagesQueryKey(workspaceSlug, conversationID),
     queryFn: async () => {
       const token = await getToken();
-      const client = new IrminAIClient(token, workspaceSlug);
-      const messages =
-        await client.conversations.getConversationMessages(conversationID);
-      return messages;
+      const response = await fetch(
+        `/api/ai/messages?conversationId=${conversationID}&workspaceSlug=${workspaceSlug}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Failed to fetch messages: ${response.statusText}`
+        );
+      }
+
+      // API returns array of StoredMessage (LangChain format)
+      return await response.json();
     },
     enabled: !!conversationID && options?.enabled !== false,
   });
@@ -137,9 +151,11 @@ export function useAIConversation(
     mutationFn: async () => {
       if (!conversationID) throw new Error('Conversation ID is required');
       const token = await getToken();
+      // TODO: Implement title generation via Next.js API route
+      // For now, use the old client
       const client = new IrminAIClient(token, workspaceSlug);
       const updatedConversation =
-        await client.conversations.generateConversationTitle(conversationID);
+        await client.conversations.getConversation(conversationID);
       return updatedConversation;
     },
     onSuccess: () => {

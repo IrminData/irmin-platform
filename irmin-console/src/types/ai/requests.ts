@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { AIToolSelectionSchema } from './base';
-
 export const AICreateConversationRequestSchema = z.object({
   title: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
@@ -16,11 +14,8 @@ export const AIUpdateConversationRequestSchema = z.object({
 
 export const AIAgentExecuteRequestSchema = z.object({
   message: z.string().trim().min(1, 'Message cannot be empty'),
-  context: z.record(z.string(), z.any()).optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
   conversationId: z.string().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
-  messageHistoryLimit: z.number().default(20).optional(),
-  toolSelection: AIToolSelectionSchema.optional(),
 });
 
 // Type exports

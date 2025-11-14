@@ -6,6 +6,7 @@ export const AIErrorSchema = z.object({
   statusCode: z.number(),
 });
 
+// TODO: Use correct LangChain BaseMessage type
 export const AIMessageSchema = z.object({
   id: z.string(),
   conversationId: z.string(),
@@ -67,52 +68,20 @@ export const AIConversationSchema = z.object({
   totalCost: z.union([z.number(), z.string()]).nullable().optional(),
 });
 
-export const AIUsageSchema = z.object({
-  promptTokens: z.number(),
-  completionTokens: z.number(),
-  totalTokens: z.number(),
-});
-
-export const AIToolSelectionSchema = z.object({
-  includeServers: z
-    .array(z.string())
-    .optional()
-    .describe('Include all tools from specific MCP servers'),
-  includeTools: z
-    .array(z.string())
-    .optional()
-    .describe('Include specific tools by name'),
-  excludeTools: z
-    .array(z.string())
-    .optional()
-    .describe('Exclude specific tools by name'),
-  includeAll: z
-    .boolean()
-    .optional()
-    .describe('Include all available tools (legacy behavior)'),
-});
-
 export const AIAgentSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  modelProvider: z.enum(['groq', 'openai', 'anthropic']),
-  model: z.string().optional(),
-  temperature: z.number().optional(),
-  maxTokens: z.number().optional(),
-  contextRequirements: z.array(
-    z.object({
-      name: z.string(),
-      required: z.boolean(),
-      description: z.string(),
-    })
-  ),
-  toolSelection: AIToolSelectionSchema.optional(),
-  streaming: z.boolean(),
-  useAgentGraph: z.boolean(),
-  maxToolCalls: z.number(),
-  maxUserInputChars: z.number().optional(),
-  maxSystemPromptChars: z.number().optional(),
+  contextRequirements: z
+    .array(
+      z.object({
+        name: z.string(),
+        required: z.boolean(),
+        description: z.string(),
+      })
+    )
+    .default([]),
+  supportsStreaming: z.boolean().optional(),
 });
 
 export const AIModelSchema = z.object({

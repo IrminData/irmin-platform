@@ -97,10 +97,18 @@ export function useAIConversations(options: UseAIConversationsOptions = {}) {
           })
         );
 
+      const timestamp = new Date().toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      const title = `untitled - ${timestamp}`;
+
       // Optimistically update the cache
       const optimisticConversation: AIConversation = {
         id: `temp-${Date.now()}`,
-        title: input.title || 'New Conversation',
+        title: input.title || title,
         workspaceSlug: workspaceSlug,
         userId: 'temp-user-id',
         metadata: input.metadata || {},

@@ -1,4 +1,5 @@
 /* eslint-disable import-x/no-unused-modules */
+import type { StoredMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 
 import {
@@ -6,7 +7,6 @@ import {
   AIConversationSchema,
   AIMessageSchema,
   AIModelSchema,
-  AIUsageSchema,
 } from './base';
 
 // Response schemas
@@ -29,17 +29,9 @@ export const AIAgentsListResponseSchema = z.object({
 });
 
 export const AIAgentExecuteResponseSchema = z.object({
-  content: z.string(),
-  blocks: z.array(z.unknown()).optional(), // MessageBlockSchema from AI service
-  stream: z.unknown().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  toolCalls: z.array(z.unknown()).optional(),
-  messages: z.array(AIMessageSchema).optional(),
-  // Additional fields that might be returned
-  agentId: z.string().optional(),
+  messages: z.array(z.custom<StoredMessage>()).optional(),
   conversationId: z.string().optional(),
-  usage: AIUsageSchema.optional(),
-  processingTimeMs: z.number().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const AIUserInfoResponseSchema = z.object({
