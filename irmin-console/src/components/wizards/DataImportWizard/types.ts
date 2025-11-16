@@ -1,6 +1,7 @@
 import type { Connection } from '@/types/core/Connection';
 import type { Connector } from '@/types/core/Connector';
 import type { Repository } from '@/types/core/Repository';
+import type { WorkflowSchedule } from '@/types/core/Schedule';
 import type { FieldMapping } from '@/types/core/Workflow';
 import type {
   DynamicFields,
@@ -38,6 +39,7 @@ export interface DataImportWizardData {
     name: string;
     description: string;
     documentation: string;
+    schedule?: WorkflowSchedule;
     import_from_connection_paths: string[];
     repository_branch: string;
     import_to_repository_path: string;

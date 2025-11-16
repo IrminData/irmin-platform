@@ -288,15 +288,3 @@ export const aiConversationMessagesQueryKey = (
   workspaceSlug: string,
   conversationID: string
 ) => ['ai-conversation-messages', workspaceSlug, conversationID] as const;
-
-export const aiAgentsListQueryKey = (workspaceSlug: string) =>
-  ['ai-agents', workspaceSlug] as const;
-
-export const aiAgentConfigQueryKey = (workspaceSlug: string, agentId: string) =>
-  ['ai-agent-config', workspaceSlug, agentId] as const;
-
-export const aiModelsQueryKey = (workspaceSlug: string) =>
-  ['ai-models', workspaceSlug] as const;
-
-export const aiToolsQueryKey = (workspaceSlug: string) =>
-  ['ai-tools', workspaceSlug] as const;

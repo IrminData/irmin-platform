@@ -1,7 +1,7 @@
 // LangChain StreamEvent types
 // Based on @langchain/core/dist/tracers/event_stream
 
-export interface ContentBlock {
+interface ContentBlock {
   type: 'text' | 'image_url' | 'tool_use' | 'thinking';
   text?: string;
   thinking?: string;

@@ -1,5 +1,6 @@
 import type { Connection } from '@/types/core/Connection';
 import type { Repository } from '@/types/core/Repository';
+import type { WorkflowSchedule } from '@/types/core/Schedule';
 import type { FieldMapping } from '@/types/core/Workflow';
 
 /**
@@ -18,6 +19,7 @@ export interface DataExportWizardData {
     name: string;
     description: string;
     documentation: string;
+    schedule?: WorkflowSchedule;
     export_from_repository_paths: string[];
     repository_branch: string;
     export_to_connection_path: string;

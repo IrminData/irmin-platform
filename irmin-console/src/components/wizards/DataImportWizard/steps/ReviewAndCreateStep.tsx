@@ -103,6 +103,7 @@ export default function ReviewAndCreateStep({
         name: wizardData.workflowData.name,
         description: wizardData.workflowData.description,
         documentation: wizardData.workflowData.documentation,
+        schedule: wizardData.workflowData.schedule,
         type: 'import',
         workflowable: {
           type: 'import',
@@ -328,6 +329,13 @@ export default function ReviewAndCreateStep({
               <div>
                 {dict.schemaFieldMapper.fieldMappings}:{' '}
                 {wizardData.workflowData.field_mappings.length}
+              </div>
+            )}
+            {wizardData.workflowData.schedule && (
+              <div>
+                {dict.workflow.schedule.workflowSchedule}:{' '}
+                {wizardData.workflowData.schedule.triggers?.length ?? 0}{' '}
+                {dict.workflow.schedule.trigger}
               </div>
             )}
           </div>

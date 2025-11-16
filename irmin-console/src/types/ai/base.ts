@@ -96,4 +96,3 @@ export const AIModelSchema = z.object({
 // Type exports
 export type AIMessage = z.infer<typeof AIMessageSchema>;
 export type AIConversation = z.infer<typeof AIConversationSchema>;
-export type AIAgent = z.infer<typeof AIAgentSchema>;

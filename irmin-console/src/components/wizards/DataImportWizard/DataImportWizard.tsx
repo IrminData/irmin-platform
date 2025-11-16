@@ -38,6 +38,7 @@ const initialWizardData: DataImportWizardData = {
     name: '',
     description: '',
     documentation: '',
+    schedule: undefined,
     import_from_connection_paths: [],
     repository_branch: 'main',
     import_to_repository_path: '',

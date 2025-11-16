@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
+import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -235,9 +236,26 @@ export default function ConfigureExportStep({
               <ConnectionPathSelector
                 connectionId={wizardData.connection?.id ?? ''}
                 defaultPath={field.value}
+                operationMethod={'push'}
                 onPathChange={field.onChange}
               />
             )}
+          />
+        </div>
+
+        {/* Schedule Configuration */}
+        <div className='rounded-md border border-foreground/20 px-2 py-4'>
+          <WorkflowScheduleForm
+            initialData={wizardData.workflowData.schedule}
+            disableSaveButton={true}
+            updateSchedule={async (newSchedule) => {
+              updateWizardData({
+                workflowData: {
+                  ...wizardData.workflowData,
+                  schedule: newSchedule,
+                },
+              });
+            }}
           />
         </div>
 

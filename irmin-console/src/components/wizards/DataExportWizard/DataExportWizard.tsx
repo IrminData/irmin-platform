@@ -22,6 +22,7 @@ const initialWizardData: DataExportWizardData = {
     name: '',
     description: '',
     documentation: '',
+    schedule: undefined,
     export_from_repository_paths: [],
     repository_branch: 'main',
     export_to_connection_path: '',

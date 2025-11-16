@@ -70,17 +70,3 @@ export interface StoredToolCall {
   args?: Record<string, unknown>;
   output?: string;
 }
-
-// Current tool call during streaming
-export interface CurrentToolCall {
-  id?: string;
-  name?: string;
-  input?: Record<string, unknown>;
-  output?: string;
-}
-
-// Current reasoning during streaming
-export interface CurrentReasoning {
-  id?: string;
-  content: string;
-}

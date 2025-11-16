@@ -47,6 +47,7 @@ export default function ReviewAndCreateStep({
         name: wizardData.workflowData.name,
         description: wizardData.workflowData.description,
         documentation: wizardData.workflowData.documentation,
+        schedule: wizardData.workflowData.schedule,
         type: 'export',
         workflowable: {
           type: 'export',
@@ -67,7 +68,7 @@ export default function ReviewAndCreateStep({
         );
       }
 
-      setCreationProgress((prev) => ({ ...prev, workflow: true }));
+      setCreationProgress((prev) => ({ ...prev, workflow: false }));
 
       irminAlert('success', dict.wizard.exportWorkflowCreatedSuccessfully);
       closeModal();
@@ -229,6 +230,22 @@ export default function ReviewAndCreateStep({
                   `}
                 >
                   {wizardData.workflowData.documentation}
+                </span>
+              </div>
+            )}
+            {wizardData.workflowData.schedule && (
+              <div className='flex items-center gap-2'>
+                <span className='text-sm font-medium'>
+                  {dict.workflow.schedule.workflowSchedule}:
+                </span>
+                <span
+                  className={`
+                    text-sm text-gray-600
+                    dark:text-gray-400
+                  `}
+                >
+                  {wizardData.workflowData.schedule.triggers?.length ?? 0}{' '}
+                  {dict.workflow.schedule.trigger}
                 </span>
               </div>
             )}
