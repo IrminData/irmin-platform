@@ -76,7 +76,7 @@
     "katex": "^0.16.23",
     "langchain": "^1.0.4",
     "markdown-to-jsx": "^8.0.0",
-    "next": "16.0.1",
+    "next": "16.0.3",
     "next-themes": "^0.4.6",
     "posthog-js": "^1.290.0",
     "react": "19.2.0",
@@ -102,10 +102,10 @@
   },
   "devDependencies": {
     "@clerk/types": "^4.99.0",
-    "@eslint/compat": "^1.4.1",
+    "@eslint/compat": "^2.0.0",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.1",
-    "@next/eslint-plugin-next": "16.0.1",
+    "@next/eslint-plugin-next": "16.0.3",
     "@playwright/test": "^1.56.0",
     "@sentry/types": "^10.24.0",
     "@tailwindcss/postcss": "^4.1.17",
@@ -114,14 +114,14 @@
     "@types/eslint": "9.6.1",
     "@types/node": "^24.10.0",
     "@types/postcss-flexbugs-fixes": "^5.0.3",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
+    "@types/react": "19.2.5",
+    "@types/react-dom": "19.2.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@typescript-eslint/parser": "8.46.4",
     "autoprefixer": "^10.4.22",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "eslint": "9.39.1",
-    "eslint-config-next": "16.0.1",
+    "eslint-config-next": "16.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-better-tailwindcss": "^3.7.8",
@@ -145,9 +145,9 @@
     "typescript-eslint": "^8.46.4"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
-  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac",
+  "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c",
   "pnpm": {
     "overrides": {
       "@types/react": "19.2.2",
