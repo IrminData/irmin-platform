@@ -1,3 +1,5 @@
+import type { StoredMessage } from '@langchain/core/messages';
+
 import {
   Reasoning,
   ReasoningContent,
@@ -13,7 +15,11 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import type { AIMessage } from '@/types/ai/base';
+import {
+  getMessageContent,
+  getMessageRole,
+  getMessageType,
+} from './storedMessageHelpers';
 
 /**
  * Repairs malformed JSON by properly counting braces outside of string values
@@ -54,7 +60,7 @@ function repairJsonStructure(jsonString: string): string {
 }
 
 interface StoredMessageMetadataProps {
-  message: AIMessage;
+  message: StoredMessage;
 }
 
 export const StoredMessageMetadata = ({
@@ -62,20 +68,24 @@ export const StoredMessageMetadata = ({
 }: StoredMessageMetadataProps) => {
   const { dict } = useLocale();
 
+  const role = getMessageRole(message);
+  const messageType = getMessageType(message);
+  const content = getMessageContent(message);
+
   // Don't render metadata for user messages
-  if (message.role !== 'assistant') {
+  if (role !== 'assistant') {
     return null;
   }
 
   // Handle different message types
-  if (message.messageType === 'tool_call') {
+  if (messageType === 'tool_call') {
     let toolCallData: {
       name: string;
       args: Record<string, unknown>;
     } | null = null;
     try {
       // Clean the content by removing extra tokens that might be appended
-      let cleanContent = message.content;
+      let cleanContent = content;
 
       // Remove common streaming tokens that might appear anywhere in the content
       cleanContent = cleanContent.replace(/<\|tool_call_end\|>/g, '');
@@ -89,12 +99,7 @@ export const StoredMessageMetadata = ({
 
       toolCallData = JSON.parse(cleanContent);
     } catch (error) {
-      console.error(
-        'Failed to parse tool call:',
-        error,
-        'Content:',
-        message.content
-      );
+      console.error('Failed to parse tool call:', error, 'Content:', content);
       // If parsing fails, render as plain text
       return null;
     }
@@ -121,7 +126,7 @@ export const StoredMessageMetadata = ({
     );
   }
 
-  if (message.messageType === 'tool_result') {
+  if (messageType === 'tool_result') {
     return (
       <div className='mt-4 space-y-2'>
         <div className='text-sm font-medium text-muted-foreground'>
@@ -130,14 +135,14 @@ export const StoredMessageMetadata = ({
         <Tool defaultOpen={false}>
           <ToolHeader type='tool-result' state='output-available' />
           <ToolContent>
-            <ToolOutput output={message.content} errorText={undefined} />
+            <ToolOutput output={content} errorText={undefined} />
           </ToolContent>
         </Tool>
       </div>
     );
   }
 
-  if (message.messageType === 'reasoning') {
+  if (messageType === 'reasoning') {
     return (
       <div className='mt-4 space-y-2'>
         <div className='text-sm font-medium text-muted-foreground'>
@@ -145,7 +150,7 @@ export const StoredMessageMetadata = ({
         </div>
         <Reasoning defaultOpen={false}>
           <ReasoningTrigger />
-          <ReasoningContent>{message.content}</ReasoningContent>
+          <ReasoningContent>{content}</ReasoningContent>
         </Reasoning>
       </div>
     );

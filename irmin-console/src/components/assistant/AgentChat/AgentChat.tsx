@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { StoredMessage } from '@langchain/core/messages';
+
 import { TbMessageCircle } from 'react-icons/tb';
 
 import {
@@ -30,18 +32,60 @@ import { useLocale } from '@/context/LocaleContext';
 import { useAIAgent } from '@/hooks/api/useAIAgent';
 import { useAIConversation } from '@/hooks/api/useAIConversation';
 
-import type { AIMessage } from '@/types/ai/base';
-
-import { convertStoredMessages } from './convertStoredMessage';
-import { createAssistantMessage } from './createAssistantMessage';
 import { MessageMetadata } from './MessageMetadata';
 import { processStream } from './processStream';
+import {
+  getMessageContent,
+  getMessageId,
+  getMessageRole,
+  getMessageType,
+} from './storedMessageHelpers';
 import { StoredMessageMetadata } from './StoredMessageMetadata';
 import { StreamingMetadata } from './StreamingMetadata';
-import type { AgentChatProps } from './types';
+import type {
+  AgentChatProps,
+  ServerReasoningEvent,
+  ServerStreamEvent,
+} from './types';
 import { useMessageActions } from './useMessageActions';
 import { useStreamingState } from './useStreamingState';
 import { renderMessageContent } from './utils';
+
+// Helper to create a StoredMessage from streaming data
+const createAssistantMessage = (
+  content: string,
+  parts: ServerStreamEvent[],
+  agentId: string,
+  messageId?: string
+): StoredMessage => {
+  const toolCalls = parts.filter(
+    (p) =>
+      p.type === 'tool-input-available' || p.type === 'tool-output-available'
+  );
+  const thinkingSteps = parts
+    .filter((p) => p.type === 'reasoning-end')
+    .map((p) => (p as ServerReasoningEvent).delta || '');
+  const errors = parts.filter(
+    (p) => p.type === 'stream-error' || p.type === 'error'
+  );
+
+  return {
+    type: 'ai',
+    data: {
+      content: content.trim() || '[Response interrupted]',
+      id: messageId || `assistant-${Date.now()}`,
+      role: undefined,
+      name: undefined,
+      tool_call_id: undefined,
+      response_metadata: {
+        toolCalls,
+        thinkingSteps,
+        errors,
+        agentName: agentId,
+      },
+    },
+  };
+};
 
 const AgentChat = ({
   conversationID,
@@ -61,7 +105,7 @@ const AgentChat = ({
   const [_pendingUserMessage, setPendingUserMessage] = useState<string | null>(
     null
   );
-  const [localMessages, setLocalMessages] = useState<AIMessage[]>([]);
+  const [localMessages, setLocalMessages] = useState<StoredMessage[]>([]);
 
   // Use extracted hooks
   const streamingState = useStreamingState();
@@ -77,29 +121,29 @@ const AgentChat = ({
     });
   const { executeAgentStreamMutation } = useAIAgent(agentId);
 
-  // Get messages from the conversation query and convert from StoredMessage to AIMessage
+  // Get messages from the conversation query
   const initialMessages = useMemo(() => {
     if (!aiConversationMessagesQuery.data || !currentConversationId) {
       return [];
     }
-    return convertStoredMessages(
-      aiConversationMessagesQuery.data,
-      currentConversationId
-    );
+    return aiConversationMessagesQuery.data;
   }, [aiConversationMessagesQuery.data, currentConversationId]);
 
   // Group related messages (main text + reasoning + tool_call + tool_result) into single displays
   const groupedMessages = useMemo(() => {
-    const groups: AIMessage[][] = [];
-    let currentGroup: AIMessage[] = [];
-    let lastAssistantMessage: AIMessage | null = null;
+    const groups: StoredMessage[][] = [];
+    let currentGroup: StoredMessage[] = [];
+    let lastAssistantMessage: StoredMessage | null = null;
 
     for (const message of localMessages) {
+      const messageType = getMessageType(message);
+      const role = getMessageRole(message);
+
       // If this is a reasoning, tool_call, or tool_result message, add to current group
       if (
-        message.messageType === 'reasoning' ||
-        message.messageType === 'tool_call' ||
-        message.messageType === 'tool_result'
+        messageType === 'reasoning' ||
+        messageType === 'tool_call' ||
+        messageType === 'tool_result'
       ) {
         currentGroup.push(message);
       } else {
@@ -118,7 +162,7 @@ const AgentChat = ({
         }
 
         // Handle the current message
-        if (message.role === 'assistant' && message.messageType === 'text') {
+        if (role === 'assistant' && messageType === 'text') {
           // If we already have a lastAssistantMessage, add it to groups first
           if (lastAssistantMessage) {
             groups.push([lastAssistantMessage]);
@@ -192,27 +236,15 @@ const AgentChat = ({
       const controller = new AbortController();
       streamingState.setAbortController(controller);
 
-      const userMessage: AIMessage = {
-        id: `user-${Date.now()}`,
-        conversationId: currentConversationId || '',
-        role: 'user',
-        content: text,
-        metadata: {},
-        messageType: 'text',
-        blockId: null,
-        parentBlockId: null,
-        blockOrder: 0,
-        aiModelId: null,
-        modelProvider: null,
-        modelName: null,
-        agentName: null,
-        inputTokens: 0,
-        outputTokens: 0,
-        totalTokens: 0,
-        costUSD: 0,
-        processingTimeMs: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      const userMessage: StoredMessage = {
+        type: 'human',
+        data: {
+          content: text,
+          id: `user-${Date.now()}`,
+          role: undefined,
+          name: undefined,
+          tool_call_id: undefined,
+        },
       };
       setLocalMessages((prev) => [...prev, userMessage]);
 
@@ -242,7 +274,6 @@ const AgentChat = ({
         const assistantMessage = createAssistantMessage(
           content,
           parts,
-          currentConversationId,
           agentId
         );
         setLocalMessages((prev) => [...prev, assistantMessage]);
@@ -271,7 +302,6 @@ const AgentChat = ({
               error: error instanceof Error ? error.message : 'Unknown error',
             },
           ],
-          currentConversationId,
           agentId,
           `assistant-error-${Date.now()}`
         );
@@ -331,15 +361,18 @@ const AgentChat = ({
           streamingState.streamingMessage.trim() +
             '\n\n[Response cancelled by user]',
           streamingState.streamingParts,
-          currentConversationId,
           agentId,
           `assistant-cancelled-${Date.now()}`
         );
         // Add cancelled flag to metadata
-        cancelledMessage.metadata = {
-          ...cancelledMessage.metadata,
-          cancelled: true,
-        };
+        if (cancelledMessage.data.response_metadata) {
+          cancelledMessage.data.response_metadata = {
+            ...cancelledMessage.data.response_metadata,
+            cancelled: true,
+          };
+        } else {
+          cancelledMessage.data.response_metadata = { cancelled: true };
+        }
         setLocalMessages((prev) => [...prev, cancelledMessage]);
       }
 
@@ -376,17 +409,19 @@ const AgentChat = ({
         <ConversationContent>
           {groupedMessages &&
             groupedMessages.length > 0 &&
-            groupedMessages.map((messageGroup: AIMessage[]) => {
+            groupedMessages.map((messageGroup: StoredMessage[]) => {
               // If this is a single message, render it normally
               if (messageGroup.length === 1) {
                 const message = messageGroup[0];
+                const messageId = getMessageId(message);
+                const role = getMessageRole(message);
+                const content = getMessageContent(message);
+                const messageType = getMessageType(message);
+
                 return (
-                  <Message key={message.id} from={message.role}>
+                  <Message key={messageId} from={role}>
                     <MessageContent>
-                      {renderMessageContent(
-                        message.content,
-                        message.messageType || undefined
-                      )}
+                      {renderMessageContent(content, messageType)}
 
                       {/* Render stored message metadata for different message types */}
                       <StoredMessageMetadata message={message} />
@@ -394,8 +429,8 @@ const AgentChat = ({
                       {/* Render agent graph metadata for assistant messages */}
                       <MessageMetadata message={message} agentId={agentId} />
 
-                      {message.role === 'assistant' &&
-                        renderMessageActions(message.id, message.content)}
+                      {role === 'assistant' &&
+                        renderMessageActions(messageId, content)}
                     </MessageContent>
                   </Message>
                 );
@@ -403,25 +438,27 @@ const AgentChat = ({
 
               // If this is a group of related messages, render them together
               const firstMessage = messageGroup[0];
+              const firstMessageId = getMessageId(firstMessage);
+              const firstMessageRole = getMessageRole(firstMessage);
               const mainTextMessage = messageGroup.find(
-                (m) => m.messageType === 'text'
+                (m) => getMessageType(m) === 'text'
               );
               const otherMessages = messageGroup.filter(
-                (m) => m.messageType !== 'text'
+                (m) => getMessageType(m) !== 'text'
               );
 
               return (
                 <Message
-                  key={`group-${firstMessage.id}`}
-                  from={firstMessage.role}
+                  key={`group-${firstMessageId}`}
+                  from={firstMessageRole}
                 >
                   <MessageContent>
                     {/* Render main text message content if it exists */}
                     {mainTextMessage && (
                       <>
                         {renderMessageContent(
-                          mainTextMessage.content,
-                          mainTextMessage.messageType || undefined
+                          getMessageContent(mainTextMessage),
+                          getMessageType(mainTextMessage)
                         )}
 
                         {/* Always render metadata, but MessageMetadata will handle tool call conflicts */}
@@ -430,23 +467,23 @@ const AgentChat = ({
                           agentId={agentId}
                           hasStoredToolMessages={otherMessages.some(
                             (m) =>
-                              m.messageType === 'tool_call' ||
-                              m.messageType === 'tool_result'
+                              getMessageType(m) === 'tool_call' ||
+                              getMessageType(m) === 'tool_result'
                           )}
                         />
 
-                        {mainTextMessage.role === 'assistant' &&
+                        {getMessageRole(mainTextMessage) === 'assistant' &&
                           renderMessageActions(
-                            mainTextMessage.id,
-                            mainTextMessage.content
+                            getMessageId(mainTextMessage),
+                            getMessageContent(mainTextMessage)
                           )}
                       </>
                     )}
 
                     {/* Render other messages (reasoning, tool calls, tool results) */}
-                    {otherMessages.map((message: AIMessage) => (
+                    {otherMessages.map((message: StoredMessage) => (
                       <StoredMessageMetadata
-                        key={`${message.id}-${message.messageType}`}
+                        key={`${getMessageId(message)}-${getMessageType(message)}`}
                         message={message}
                       />
                     ))}

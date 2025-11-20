@@ -1,13 +1,7 @@
-/* eslint-disable import-x/no-unused-modules */
 import type { StoredMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 
-import {
-  AIAgentSchema,
-  AIConversationSchema,
-  AIMessageSchema,
-  AIModelSchema,
-} from './base';
+import { AIAgentSchema, AIConversationSchema, AIModelSchema } from './base';
 
 // Response schemas
 export const AIConversationsListResponseSchema = z.object({
@@ -18,10 +12,6 @@ export const AIConversationsListResponseSchema = z.object({
     total: z.number(),
     totalPages: z.number(),
   }),
-});
-
-export const AIMessagesListResponseSchema = z.object({
-  data: z.array(AIMessageSchema),
 });
 
 export const AIAgentsListResponseSchema = z.object({
@@ -66,46 +56,10 @@ export const AIModelsResponseSchema = z.object({
   models: z.array(AIModelSchema),
 });
 
-export const AIToolsResponseSchema = z.object({
-  enabled: z.boolean(),
-  tools: z.array(
-    z.object({
-      name: z.string(),
-      description: z.string(),
-      type: z.string().optional(),
-      schema: z.unknown().optional(),
-      serverId: z.string().optional(),
-      requiresAuth: z.boolean().optional(),
-      // Legacy field for backward compatibility
-      inputSchema: z.record(z.string(), z.unknown()).optional(),
-    })
-  ),
-  count: z.number(),
-  servers: z.array(
-    z.object({
-      id: z.string(),
-      type: z.enum(['command', 'url']),
-      requiresAuth: z.boolean(),
-      toolCount: z.number(),
-    })
-  ),
-  totalServers: z.number(),
-});
-
 // Type exports
 export type AIConversationsListResponse = z.infer<
   typeof AIConversationsListResponseSchema
 >;
-export type AIMessagesListResponse = z.infer<
-  typeof AIMessagesListResponseSchema
->;
-export type AIAgentsListResponse = z.infer<typeof AIAgentsListResponseSchema>;
 export type AIAgentExecuteResponse = z.infer<
   typeof AIAgentExecuteResponseSchema
 >;
-export type AIUserInfoResponse = z.infer<typeof AIUserInfoResponseSchema>;
-export type AIWorkspaceInfoResponse = z.infer<
-  typeof AIWorkspaceInfoResponseSchema
->;
-export type AIModelsResponse = z.infer<typeof AIModelsResponseSchema>;
-export type AIToolsResponse = z.infer<typeof AIToolsResponseSchema>;

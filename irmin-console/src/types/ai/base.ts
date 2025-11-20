@@ -6,54 +6,6 @@ export const AIErrorSchema = z.object({
   statusCode: z.number(),
 });
 
-// TODO: Use correct LangChain BaseMessage type
-export const AIMessageSchema = z.object({
-  id: z.string(),
-  conversationId: z.string(),
-  role: z.enum(['user', 'assistant', 'system']),
-  content: z.string(),
-  metadata: z.record(z.string(), z.unknown()).default({}),
-
-  // Message block structure
-  messageType: z
-    .enum([
-      'text',
-      'tool_call',
-      'tool_result',
-      'reasoning',
-      'source',
-      'file',
-      'error',
-      'system',
-    ])
-    .default('text')
-    .nullable(),
-  blockId: z.string().nullable().optional(),
-  parentBlockId: z.string().nullable().optional(),
-  blockOrder: z.number().default(0).nullable(),
-
-  // AI model information
-  aiModelId: z.string().nullable().optional(),
-  modelProvider: z.string().nullable().optional(),
-  modelName: z.string().nullable().optional(),
-
-  // Agent information
-  agentName: z.string().nullable().optional(),
-
-  // Token usage and costs
-  inputTokens: z.number().default(0).nullable(),
-  outputTokens: z.number().default(0).nullable(),
-  totalTokens: z.number().default(0).nullable(),
-  costUSD: z.number().default(0).nullable(),
-
-  // Performance metrics
-  processingTimeMs: z.number().default(0).nullable(),
-
-  // Timestamps - accept any string and transform to Date
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-});
-
 export const AIConversationSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -94,5 +46,4 @@ export const AIModelSchema = z.object({
 });
 
 // Type exports
-export type AIMessage = z.infer<typeof AIMessageSchema>;
 export type AIConversation = z.infer<typeof AIConversationSchema>;
