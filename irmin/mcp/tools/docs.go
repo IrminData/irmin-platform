@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -51,7 +52,9 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 				"query": args.Query,
 			}
 
-			result, err := mcpTools.makeAIRequest(ctx,
+			result, err := mcpTools.makeAIRequest(
+				ctx,
+				http.MethodPost,
 				fmt.Sprintf("/api/system/embeddings/collections/%s/retrieve-context", collectionID),
 				retrieveReq,
 			)
@@ -68,7 +71,7 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 // getDocsCollectionID retrieves the collection ID for the irmin-docs collection
 func (mcpTools *MCPTools) getDocsCollectionID(ctx context.Context) (string, error) {
 	// Make request to list collections and find irmin-docs
-	result, err := mcpTools.makeAIRequest(ctx, "/api/system/embeddings/collections", nil)
+	result, err := mcpTools.makeAIRequest(ctx, http.MethodGet, "/api/system/embeddings/collections", nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to list collections: %w", err)
 	}
@@ -115,26 +118,33 @@ const (
 // makeAIRequest makes an HTTP request to the AI service
 func (mcpTools *MCPTools) makeAIRequest(
 	ctx context.Context,
+	method string,
 	endpoint string,
 	body any,
 ) (*sdkmcp.CallToolResult, error) {
 	url := mcpTools.apiServices.Env.AIServiceBaseURL + endpoint
 
-	var reqBody []byte
-	var err error
+	if method == "" {
+		method = http.MethodPost
+	}
+
+	var reqBody io.Reader
 	if body != nil {
-		reqBody, err = json.Marshal(body)
+		marshaledBody, err := json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)
 		}
+		reqBody = bytes.NewBuffer(marshaledBody)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	req.Header.Set("Authorization", "Bearer "+mcpTools.apiServices.Env.AIServiceSystemToken)
 
 	client := &http.Client{
