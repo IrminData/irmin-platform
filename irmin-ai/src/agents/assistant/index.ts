@@ -80,7 +80,12 @@ export class AssistantAgent extends BaseAgent {
         }),
         llmToolSelectorMiddleware({
           model: cheaperLLM,
-          maxTools: 5,
+          maxTools: 10,
+          alwaysInclude: [
+            'retrieve_docs_context',
+            'get_repository_object_schema',
+            'get_connection_schema',
+          ],
         }),
         modelFallbackMiddleware(fallbackLLM),
       ],
