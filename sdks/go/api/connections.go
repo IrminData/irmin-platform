@@ -16,6 +16,7 @@ type CreateConnectionRequest struct {
 	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"            example:"# Production Database"`
 	Details       map[string]any `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
 	Settings      map[string]any `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+	Tags          []string       `json:"tags,omitempty"          validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 
 // UpdateConnectionRequest represents the JSON request body for updating connections.

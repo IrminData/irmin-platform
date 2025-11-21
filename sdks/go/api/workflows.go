@@ -32,6 +32,9 @@ type WorkflowRequest struct {
 
 	// Schedule configuration
 	Schedule irminmodels.Schedule `json:"schedule"`
+
+	// Tags
+	Tags []string `json:"tags,omitempty" validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 
 func (c *Client) ListWorkflows(

@@ -16,8 +16,9 @@ type MoveObjectRequest struct {
 
 // UploadObjectFromURLRequest represents the JSON request body for uploading objects from URLs.
 type UploadObjectFromURLRequest struct {
-	URL     string            `json:"url"     validate:"required"  example:"https://example.com/file.json"`
-	Headers map[string]string `json:"headers" validate:"omitempty" example:"Authorization: Bearer <token>"`
+	URL     string            `json:"url"            validate:"required"                      example:"https://example.com/file.json"`
+	Headers map[string]string `json:"headers"        validate:"omitempty"                     example:"Authorization: Bearer <token>"`
+	Tags    []string          `json:"tags,omitempty" validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 
 // GetObjectAtPath fetches the object at the given path and ref.

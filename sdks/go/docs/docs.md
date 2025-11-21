@@ -1700,6 +1700,7 @@ type CreateConnectionRequest struct {
     Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"            example:"# Production Database"`
     Details       map[string]any `json:"details"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
     Settings      map[string]any `json:"settings"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+    Tags          []string       `json:"tags,omitempty"          validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 ```
 
@@ -1764,13 +1765,14 @@ CreateRepositoryRequest represents the JSON request body for creating a reposito
 
 ```go
 type CreateRepositoryRequest struct {
-    Name                              string `json:"name"                                            validate:"required,max=100"   example:"Customer Analytics"`
-    Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
-    Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
-    DefaultBranch                     string `json:"default_branch,omitempty"                        validate:"validslug"          example:"main"`
-    IsImmutable                       bool   `json:"is_immutable,omitempty"                                                        example:"false"`
-    GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
-    GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+    Name                              string   `json:"name"                                            validate:"required,max=100"   example:"Customer Analytics"`
+    Description                       string   `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
+    Documentation                     string   `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
+    DefaultBranch                     string   `json:"default_branch,omitempty"                        validate:"validslug"          example:"main"`
+    IsImmutable                       bool     `json:"is_immutable,omitempty"                                                        example:"false"`
+    GarbageDefaultRetentionDays       *int     `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
+    GarbageDefaultBranchRetentionDays *int     `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+    Tags                              []string `json:"tags,omitempty"                                                                example:"tag_7k3m9x2n5q8p"`
 }
 ```
 
@@ -2174,8 +2176,9 @@ UploadObjectFromURLRequest represents the JSON request body for uploading object
 
 ```go
 type UploadObjectFromURLRequest struct {
-    URL     string            `json:"url"     validate:"required"  example:"https://example.com/file.json"`
-    Headers map[string]string `json:"headers" validate:"omitempty" example:"Authorization: Bearer <token>"`
+    URL     string            `json:"url"            validate:"required"                      example:"https://example.com/file.json"`
+    Headers map[string]string `json:"headers"        validate:"omitempty"                     example:"Authorization: Bearer <token>"`
+    Tags    []string          `json:"tags,omitempty" validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 ```
 
@@ -2196,6 +2199,9 @@ type WorkflowRequest struct {
 
     // Schedule configuration
     Schedule irminmodels.Schedule `json:"schedule"`
+
+    // Tags
+    Tags []string `json:"tags,omitempty" validate:"omitempty,dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 ```
 
