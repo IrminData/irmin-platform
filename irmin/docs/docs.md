@@ -302,6 +302,7 @@ import "irmin-api/compute-sandbox"
 ## Index
 
 - [Constants](<#constants>)
+- [Variables](<#variables>)
 - [type ComputeSandbox](<#ComputeSandbox>)
   - [func NewComputeSandbox\(env \*utils.CoreAPIEnv, d \*db.Database, logger \*slog.Logger\) \*ComputeSandbox](<#NewComputeSandbox>)
   - [func \(s \*ComputeSandbox\) ExecuteEditorItem\(ctx context.Context, inputFiles map\[string\]\[\]byte, responsibleUser db.User, executablePath, workspaceSlug string\) \(ExecutionResult, error\)](<#ComputeSandbox.ExecuteEditorItem>)
@@ -336,6 +337,14 @@ const (
 
     MaxConcurrentExecutions = 50 // Maximum concurrent script executions (each in its own temp dir)
 )
+```
+
+## Variables
+
+<a name="ErrScriptAlreadyRunning"></a>ErrScriptAlreadyRunning is returned when attempting to execute a script that is already being executed by another session.
+
+```go
+var ErrScriptAlreadyRunning = errors.New("script is already being executed")
 ```
 
 <a name="ComputeSandbox"></a>

@@ -29,6 +29,13 @@ const (
 	MaxConcurrentExecutions = 50 // Maximum concurrent script executions (each in its own temp dir)
 )
 
+VARIABLES
+
+var ErrScriptAlreadyRunning = errors.New("script is already being executed")
+    ErrScriptAlreadyRunning is returned when attempting to execute a script that
+    is already being executed by another session.
+
+
 TYPES
 
 type ComputeSandbox struct {

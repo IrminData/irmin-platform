@@ -2,6 +2,7 @@ package sandbox
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"irmin-api/bucket"
 	"irmin-api/db"
@@ -12,6 +13,10 @@ import (
 	"strings"
 	"time"
 )
+
+// ErrScriptAlreadyRunning is returned when attempting to execute a script
+// that is already being executed by another session.
+var ErrScriptAlreadyRunning = errors.New("script is already being executed")
 
 // ComputeSandbox is a struct that contains the environment, database, and logger for the compute sandbox.
 type ComputeSandbox struct {
@@ -39,6 +44,8 @@ func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logge
 // ExecuteEditorItem executes the provided executable code.
 // It downloads the workspace files from the S3 bucket to a temporary directory,
 // executes the code, and returns the execution result.
+//
+//nolint:funlen,gocognit // Complexity is acceptable for script execution with proper error handling and locking
 func (s *ComputeSandbox) ExecuteEditorItem(
 	ctx context.Context,
 	inputFiles map[string][]byte,
@@ -51,6 +58,35 @@ func (s *ComputeSandbox) ExecuteEditorItem(
 	if ctx.Err() != nil {
 		return result, ctx.Err()
 	}
+
+	// Acquire a dedicated connection for advisory lock
+	// PostgreSQL advisory locks are session-scoped and must use the same connection
+	lockConn, err := s.d.GetPgxConn(ctx)
+	if err != nil {
+		return result, fmt.Errorf("failed to acquire connection for execution lock: %w", err)
+	}
+
+	// Acquire lock to prevent concurrent execution of the same script
+	lockKey := s.buildScriptLockKey(workspaceSlug, executablePath)
+	locked, lockErr := db.TryLockKeyConn(ctx, lockConn, lockKey)
+	if lockErr != nil {
+		lockConn.Release()
+		return result, fmt.Errorf("failed to acquire execution lock: %w", lockErr)
+	}
+	if !locked {
+		lockConn.Release()
+		return result, ErrScriptAlreadyRunning
+	}
+
+	// Ensure lock and connection are released after execution
+	// Use context.Background() for unlock to ensure it executes even if ctx is cancelled
+	defer func() {
+		unlockCtx := context.Background()
+		if unlockErr := db.UnlockKeyConn(unlockCtx, lockConn, lockKey); unlockErr != nil {
+			s.logger.ErrorContext(unlockCtx, "error releasing execution lock", "error", unlockErr, "lockKey", lockKey)
+		}
+		lockConn.Release()
+	}()
 
 	// Initialize bucket client
 	bucket, err := bucket.CreateClient(s.env, s.env.IrminS3Bucket, s.d)
@@ -272,4 +308,22 @@ func (s *ComputeSandbox) createTemporaryToken(tempDirName string, user db.User) 
 	}
 
 	return apiToken, nil
+}
+
+// buildScriptLockKey creates a unique lock key for a script execution
+// based on workspace slug and a normalized executable path.
+func (s *ComputeSandbox) buildScriptLockKey(workspaceSlug, executablePath string) string {
+	normalizedPath := filepath.ToSlash(filepath.Clean(executablePath))
+	normalizedPath = strings.TrimLeft(normalizedPath, "/")
+	if normalizedPath == "." {
+		normalizedPath = ""
+	}
+
+	return fmt.Sprintf(
+		"script:wlen:%d:%s:plen:%d:%s",
+		len(workspaceSlug),
+		workspaceSlug,
+		len(normalizedPath),
+		normalizedPath,
+	)
 }
