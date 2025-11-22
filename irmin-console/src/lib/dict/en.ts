@@ -368,6 +368,8 @@ const en = {
   connections: {
     connection: 'Connection',
     connections: 'Connections',
+    testConnection: 'Test Connection',
+    connectionTestSuccess: 'Connection validated successfully',
 
     settings: {
       title: 'Connection settings',

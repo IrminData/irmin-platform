@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { GoWorkflow } from 'react-icons/go';
 import {
+  TbActivity,
   TbBook,
   TbFileText,
   TbPlug,
@@ -15,6 +16,7 @@ import {
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import ConnectionLayoutSkeleton from '@/components/ui/loading/ConnectionLayoutSkeleton';
@@ -24,6 +26,7 @@ import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
+import { useConnectionConfiguration } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 /**
@@ -40,6 +43,13 @@ export default function ConnectionLayoutWrapper({
   const { connectionID, connectionQuery } = useConnectionContext();
   const { isResourceAllowed, loading: isResourceAllowedLoading } =
     useResourceAllowed();
+
+  const connection = connectionQuery.data?.data;
+
+  const { validateConnectorConfigurationMutation } = useConnectionConfiguration(
+    'details',
+    connection?.connector.id
+  );
 
   // The base URL for the connection, eg. /en/workspace/workspace-slug/connections/connection-id
   const baseUrl = useBaseUrl({
@@ -139,7 +149,7 @@ export default function ConnectionLayoutWrapper({
     );
   }
 
-  if (!connectionQuery.data?.data) {
+  if (!connection) {
     return (
       <CommonErrorDisplay
         variant='page'
@@ -150,8 +160,6 @@ export default function ConnectionLayoutWrapper({
     );
   }
 
-  const connection = connectionQuery.data?.data;
-
   return (
     <>
       <div className='relative container mx-auto max-w-7xl'>
@@ -159,7 +167,7 @@ export default function ConnectionLayoutWrapper({
           className={`
             mx-auto my-4 flex w-full flex-col px-2
             md:px-4
-            lg:flex-row lg:items-center
+            lg:flex-row lg:items-center lg:justify-between
           `}
         >
           <div className='flex flex-col gap-2 py-4'>
@@ -212,6 +220,22 @@ export default function ConnectionLayoutWrapper({
                 />
               )}
             </div>
+          </div>
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() =>
+                validateConnectorConfigurationMutation.mutate({
+                  details: connection.details,
+                  settings: connection.settings,
+                })
+              }
+              loading={validateConnectorConfigurationMutation.isPending}
+              icon={<TbActivity size={16} />}
+            >
+              {dict.connections.testConnection}
+            </Button>
           </div>
         </div>
         <TabsWithBackButton

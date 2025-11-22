@@ -361,6 +361,8 @@ const fi = {
   connections: {
     connection: 'Yhteys',
     connections: 'Yhteydet',
+    testConnection: 'Testaa yhteys',
+    connectionTestSuccess: 'Yhteys validoitu onnistuneesti',
     settings: {
       title: 'Yhteyden asetukset',
       saveChanges: 'Tallenna muutokset',
