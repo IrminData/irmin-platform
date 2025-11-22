@@ -64,6 +64,7 @@ export default function SetupRepositoryStep({
     (repository: Repository) => {
       updateWizardData({
         repository,
+        createNewRepository: false,
         repositoryData: {
           name: repository.name,
           description: repository.description,

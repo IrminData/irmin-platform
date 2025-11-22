@@ -82,6 +82,7 @@ const WorkflowWorkflowableSection = ({
             documentation: workflow.documentation,
             workflowable: prev,
             schedule: workflow.schedule,
+            tags: workflow.tags?.map((tag) => tag.id),
           };
           const updated = updater(mockWorkflowData);
           // Allow falsy values if explicitly set, but fall back to prev if undefined
@@ -135,9 +136,10 @@ const WorkflowWorkflowableSection = ({
   const canUpdate = isResourceAllowed('workflow', 'update', workflowID);
 
   // Create a mock workflow data structure for components that need the full workflow
-  const mockWorkflowData = {
+  const mockWorkflowData: WorkflowRequest = {
     ...workflow,
     workflowable: activeWorkflowable,
+    tags: workflow.tags?.map((tag) => tag.id),
   };
 
   return (

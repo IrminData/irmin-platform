@@ -57,6 +57,8 @@ const createDefaultWorkflowable = (type: WorkflowableType): Workflowable => {
   }
 };
 
+const initialWizardTags: WorkflowWizardData['tags'] = [];
+
 /**
  * Main content component for the Workflow Wizard
  *
@@ -110,6 +112,17 @@ export default function WorkflowWizard({
       });
     }
   }, [wizardData.type, wizardData.workflowable]);
+
+  useEffect(() => {
+    if (!initialWorkflowData.tags && !wizardData.tags) {
+      queueMicrotask(() => {
+        setWizardData((prev) => ({
+          ...prev,
+          tags: initialWizardTags,
+        }));
+      });
+    }
+  }, [initialWorkflowData.tags, wizardData.tags]);
 
   // Function to go to the next step
   const goNext = useCallback(() => {

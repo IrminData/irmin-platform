@@ -62,7 +62,8 @@ export default function SideModal({
             <div
               className={`
                 sticky top-0 z-10 mb-4 flex w-full items-center justify-between
-                gap-4 border-b bg-background px-6 py-4
+                gap-4 border-b bg-background px-6 py-4 pt-16
+                lg:pt-4
                 dark:border-gray-800
               `}
             >

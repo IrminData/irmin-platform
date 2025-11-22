@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 
 import { useWorkflows } from '@/hooks/api';
 
+import type { Tag } from '@/types/core/Tag';
 import type { Workflow } from '@/types/core/Workflow';
 
 import type { WorkflowWizardData } from '../types';
@@ -41,6 +43,14 @@ function ConfigureWorkflowStep({
 
   const [initialWorkflowSchedule] = useState(wizardData.schedule);
 
+  const handleTagsChange = useCallback(
+    async (tags: Tag[]) => {
+      updateWizardData({ tags });
+      return tags;
+    },
+    [updateWizardData]
+  );
+
   const handleCreate = useCallback(async () => {
     try {
       if (!wizardData.type) return;
@@ -51,6 +61,7 @@ function ConfigureWorkflowStep({
         documentation: wizardData.documentation,
         workflowable: wizardData.workflowable,
         schedule: wizardData.schedule,
+        tags: wizardData.tags?.map((t) => t.id),
       });
 
       if (!res.data) {
@@ -124,6 +135,14 @@ function ConfigureWorkflowStep({
                 schedule: newSchedule,
               });
             }}
+          />
+        </div>
+        <div className='flex flex-col gap-2'>
+          <WorkspaceTagSelector
+            selectedTags={wizardData.tags ?? []}
+            onTagsChange={handleTagsChange}
+            loading={false}
+            disabled={createWorkflowMutation.isPending}
           />
         </div>
       </div>

@@ -7,6 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -14,6 +15,7 @@ import { usePopup } from '@/context/PopupContext';
 import { useRepositories } from '@/hooks/api';
 
 import type { Repository } from '@/types/core/Repository';
+import type { Tag } from '@/types/core/Tag';
 
 import type { RepositoryWizardData } from '../types';
 
@@ -52,6 +54,14 @@ export default function ConfigureRepositoryStep({
 
   const { createRepositoryMutation } = useRepositories();
 
+  const handleTagsChange = useCallback(
+    async (tags: Tag[]) => {
+      updateWizardData({ tags });
+      return tags;
+    },
+    [updateWizardData]
+  );
+
   const handleCreate = useCallback(
     async (data: RepositoryWizardData) => {
       try {
@@ -61,6 +71,7 @@ export default function ConfigureRepositoryStep({
           documentation: '',
           default_branch: data.default_branch,
           isImmutable: false,
+          tags: wizardData.tags?.map((t) => t.id),
         });
 
         if (!res.data) {
@@ -90,14 +101,17 @@ export default function ConfigureRepositoryStep({
       goNext,
       embedded,
       onComplete,
+      wizardData.tags,
       irminAlert,
     ]
   );
 
   return (
-    <form
-      onSubmit={handleSubmit(handleCreate)}
-      className='flex flex-col gap-4 px-4 py-8'
+    <div
+      className={`
+        flex flex-col gap-4
+        ${!embedded ? 'px-4 py-8' : ''}
+      `}
     >
       <div className='flex flex-col gap-2'>
         <Label>{dict.common.name}</Label>
@@ -158,6 +172,14 @@ export default function ConfigureRepositoryStep({
           )}
         />
       </div>
+      <div className='flex flex-col gap-2'>
+        <WorkspaceTagSelector
+          selectedTags={wizardData.tags ?? []}
+          onTagsChange={handleTagsChange}
+          loading={false}
+          disabled={createRepositoryMutation.isPending}
+        />
+      </div>
       {onCancel && (
         <Button
           type='button'
@@ -170,13 +192,14 @@ export default function ConfigureRepositoryStep({
         </Button>
       )}
       <Button
-        type='submit'
+        type='button'
+        onClick={handleSubmit(handleCreate)}
         size='lg'
         variant='gradient'
         loading={createRepositoryMutation.isPending}
       >
         {dict.repository.createNewRepository}
       </Button>
-    </form>
+    </div>
   );
 }

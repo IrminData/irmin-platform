@@ -54,6 +54,7 @@ export function useWorkflows(type?: WorkflowableType) {
         documentation: data.documentation,
         workflowable: data.workflowable,
         schedule: data.schedule,
+        tags: data.tags,
       });
     },
     ...createMutationHandlers<Workflow, WorkflowRequest>(

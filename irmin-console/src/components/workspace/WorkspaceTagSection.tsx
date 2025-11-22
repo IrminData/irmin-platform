@@ -50,10 +50,11 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
   const assets = workspaceTagQuery.data?.data?.assets;
 
   const handleEditTag = useCallback(
-    (updatedTag: Tag) => {
-      updateWorkspaceTagMutation.mutate(updatedTag);
+    async (updatedTag: Tag) => {
+      await updateWorkspaceTagMutation.mutateAsync(updatedTag);
+      irminModal.close();
     },
-    [updateWorkspaceTagMutation]
+    [updateWorkspaceTagMutation, irminModal]
   );
 
   const handleDeleteTag = useCallback(async () => {

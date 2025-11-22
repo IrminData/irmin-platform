@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useQueryClient } from '@tanstack/react-query';
+
+import { repositoryQueryKey } from '@/lib/queryKeys';
+
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import type { FieldConfig } from '@/components/ui/form/SettingsForm';
 import SettingsForm from '@/components/ui/form/SettingsForm';
@@ -53,6 +57,7 @@ const RepositorySettingsSectionContent = () => {
     updateRepositoryMutation,
   } = useRepository(repository.slug);
   const { isResourceAllowed } = useResourceAllowed();
+  const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
   const handleUpdateRepository = useCallback(
     async (data: { name: string; description: string; owner: string }) => {
@@ -131,13 +136,13 @@ const RepositorySettingsSectionContent = () => {
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {
+      const currentTags = repository.tags ?? [];
       try {
         if (previousTags.current === JSON.stringify(tags)) {
           return tags;
         }
         setSelectedTags(tags);
         setUpdatingTags(true);
-        const currentTags = repository.tags ?? [];
         const tagsToAdd = [];
         const tagsToRemove = [];
         for (const tag of tags) {
@@ -167,12 +172,19 @@ const RepositorySettingsSectionContent = () => {
           ),
         ]);
 
+        // Invalidate repository query to ensure fresh data
+        await queryClient.invalidateQueries({
+          queryKey: repositoryQueryKey(workspaceSlug, repository.slug),
+        });
+
         // Only update previousTags after successful API calls
         previousTags.current = JSON.stringify(tags);
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        return [];
+        // Revert to original tags on error
+        setSelectedTags(currentTags);
+        return currentTags;
       } finally {
         setUpdatingTags(false);
       }
@@ -182,6 +194,9 @@ const RepositorySettingsSectionContent = () => {
       removeTagFromEntityMutation,
       repository.id,
       repository.tags,
+      repository.slug,
+      queryClient,
+      workspaceSlug,
     ]
   );
 

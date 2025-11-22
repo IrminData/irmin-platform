@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useQueryClient } from '@tanstack/react-query';
+
+import { connectionQueryKey } from '@/lib/queryKeys';
+
 import type { FieldConfig } from '@/components/ui/form/SettingsForm';
 import SettingsForm from '@/components/ui/form/SettingsForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -44,6 +48,7 @@ const ConnectionSettingsSection = () => {
   } = useConnectionContext();
   const { workspaceSlug } = useWorkspaceContext();
   const { isResourceAllowed } = useResourceAllowed();
+  const queryClient = useQueryClient();
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -121,13 +126,14 @@ const ConnectionSettingsSection = () => {
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {
+      // Use connectionQuery.data?.data?.tags directly instead of selectedTags to avoid race condition
+      const currentTags = connectionQuery.data?.data?.tags ?? [];
+
       try {
         if (previousTags.current === JSON.stringify(tags)) {
           return tags;
         }
 
-        // Use connectionQuery.data?.data?.tags directly instead of selectedTags to avoid race condition
-        const currentTags = connectionQuery.data?.data?.tags ?? [];
         setSelectedTags(tags);
         setUpdatingTags(true);
 
@@ -144,7 +150,10 @@ const ConnectionSettingsSection = () => {
           }
         }
         const connectionId = connectionQuery.data?.data?.id;
-        if (!connectionId) return tags;
+        if (!connectionId) {
+          setSelectedTags(currentTags);
+          return currentTags;
+        }
 
         await Promise.all([
           ...tagsToAdd.map((tag) =>
@@ -163,12 +172,20 @@ const ConnectionSettingsSection = () => {
           ),
         ]);
 
+        // Invalidate connection query to ensure fresh data
+        await queryClient.invalidateQueries({
+          queryKey: connectionQueryKey(workspaceSlug, connectionId),
+        });
+
         // Only update previousTags after successful API calls
         previousTags.current = JSON.stringify(tags);
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        return [];
+        // Revert to original tags on error
+        // We use the safe currentTags captured before the optimistic update
+        setSelectedTags(currentTags);
+        return currentTags;
       } finally {
         setUpdatingTags(false);
       }
@@ -178,6 +195,8 @@ const ConnectionSettingsSection = () => {
       removeTagFromEntityMutation,
       connectionQuery.data?.data?.id,
       connectionQuery.data?.data?.tags,
+      queryClient,
+      workspaceSlug,
     ]
   );
 

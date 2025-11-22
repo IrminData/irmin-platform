@@ -17,6 +17,7 @@ interface CreateConnectionRequest {
   documentation?: string;
   details: ConnectionFieldValues;
   settings: ConnectionFieldValues;
+  tags?: string[];
 }
 
 /**
@@ -127,6 +128,7 @@ class ConnectionService {
    * @param props.documentation - The connection documentation.
    * @param props.connectionDetails - The connection details.
    * @param props.connectionSettings - The connection settings.
+   * @param props.tags - The connection tags.
    * @returns IrminAPIResponse containing the new Connection.
    */
   async createConnection({
@@ -137,6 +139,7 @@ class ConnectionService {
     documentation,
     connectionDetails,
     connectionSettings,
+    tags,
   }: {
     workspace: string;
     connectorID: string;
@@ -145,6 +148,7 @@ class ConnectionService {
     documentation: string;
     connectionDetails: ConnectionFieldValues;
     connectionSettings: ConnectionFieldValues;
+    tags?: string[];
   }): Promise<IrminAPIResponse<Connection>> {
     try {
       const requestBody: CreateConnectionRequest = {
@@ -154,6 +158,7 @@ class ConnectionService {
         documentation,
         details: connectionDetails,
         settings: connectionSettings,
+        tags,
       };
 
       const res = (await this.irminCore.fetchAPI(

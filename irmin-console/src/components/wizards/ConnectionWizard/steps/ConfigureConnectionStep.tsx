@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
 import DynamicForm from '@/components/ui/form/DynamicForm';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
@@ -14,6 +15,7 @@ import { useConnectionConfiguration, useConnections } from '@/hooks/api';
 import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
 
 import type { Connection } from '@/types/core/Connection';
+import type { Tag } from '@/types/core/Tag';
 import type {
   DynamicFields,
   DynamicFieldValues,
@@ -58,6 +60,14 @@ export default function ConfigureConnectionStep({
         ? convertToConnectionFieldValues(wizardData.connectionDetails)
         : undefined
     );
+
+  const handleTagsChange = useCallback(
+    async (tags: Tag[]) => {
+      updateWizardData({ tags });
+      return tags;
+    },
+    [updateWizardData]
+  );
 
   const handleCreateConnection = useCallback(
     async (formValues: DynamicFieldValues) => {
@@ -108,6 +118,7 @@ export default function ConfigureConnectionStep({
           settings: convertToConnectionFieldValues(
             wizardData.connectionSettings
           ),
+          tags: wizardData.tags?.map((t) => t.id),
         });
         if (!res.data) {
           throw new Error(res.message ?? 'Failed to create connection');
@@ -199,6 +210,15 @@ export default function ConfigureConnectionStep({
           autoFocus: true,
         }}
       />
+
+      <div className='space-y-2'>
+        <WorkspaceTagSelector
+          selectedTags={wizardData.tags ?? []}
+          onTagsChange={handleTagsChange}
+          loading={false}
+          disabled={createConnectionMutation.isPending}
+        />
+      </div>
 
       {/* Go Back Button */}
       <Button className='w-full' variant='ghost' size='sm' onClick={handleBack}>

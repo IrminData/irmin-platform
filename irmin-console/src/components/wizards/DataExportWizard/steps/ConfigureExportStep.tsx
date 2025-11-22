@@ -40,7 +40,7 @@ export default function ConfigureExportStep({
   const {
     handleSubmit,
     control,
-    formState: { errors: _errors },
+    formState: { errors: _errors, isSubmitting },
   } = useForm({
     defaultValues: {
       name: wizardData.workflowData.name,
@@ -118,7 +118,7 @@ export default function ConfigureExportStep({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
+      <div className='space-y-6'>
         {/* Workflow Name */}
         <div className='space-y-2'>
           <Label htmlFor='name' className='text-sm font-medium'>
@@ -276,16 +276,18 @@ export default function ConfigureExportStep({
               {dict.common.back}
             </Button>
             <Button
-              type='submit'
+              type='button'
               className='flex-1'
               size='lg'
               variant='default'
+              onClick={handleSubmit(onSubmit)}
+              loading={isSubmitting}
             >
               {dict.common.continue}
             </Button>
           </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

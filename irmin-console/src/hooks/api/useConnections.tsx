@@ -18,6 +18,7 @@ type CreateConnectionMutation = Pick<
   'description' | 'details' | 'documentation' | 'name' | 'settings'
 > & {
   connectorID: string;
+  tags?: string[];
 };
 
 export function useConnections() {
@@ -57,6 +58,7 @@ export function useConnections() {
         documentation: input.documentation,
         connectionDetails: input.details,
         connectionSettings: input.settings,
+        tags: input.tags,
       });
       return newConnection;
     },

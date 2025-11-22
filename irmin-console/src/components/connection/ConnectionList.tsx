@@ -83,13 +83,22 @@ const ConnectionList = ({
               key={`connector-${item.id}`}
               className='inline-flex flex-row items-center gap-2'
             >
-              <Image
-                src={item.connector.logo_url}
-                alt={item.connector.name}
-                className='size-8 object-contain'
-                width={32}
-                height={32}
-              />
+              {item.connector.logo_url ? (
+                <Image
+                  src={item.connector.logo_url}
+                  alt={item.connector.name}
+                  className='size-8 object-contain'
+                  width={32}
+                  height={32}
+                />
+              ) : (
+                <div
+                  className={`
+                    size-8 rounded-full bg-gray-200
+                    dark:bg-gray-800
+                  `}
+                />
+              )}
               <p className='text-sm'>{item.connector.name}</p>
               {/* Display tags if they exist */}
               {item.tags && item.tags.length > 0 && (

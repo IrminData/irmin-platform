@@ -22,6 +22,7 @@ const initialWizardData: ConnectionWizardData = {
   connectionSettingsFields: undefined,
   connectionDetails: undefined,
   connectionSettings: undefined,
+  tags: [],
 };
 
 /**

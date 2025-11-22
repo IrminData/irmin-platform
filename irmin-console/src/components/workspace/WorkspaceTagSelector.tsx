@@ -65,14 +65,16 @@ export function WorkspaceTagSelector({
 
   const handleSelectTag = useCallback(
     async (tag: Tag) => {
+      if (loading || disabled) return;
       await onTagsChange([...selectedTags, tag]);
       setSearchQuery('');
     },
-    [onTagsChange, selectedTags]
+    [onTagsChange, selectedTags, loading, disabled]
   );
 
   const handleCreateTag = useCallback(
     async (newTag: Tag) => {
+      if (loading || disabled) return;
       const tagCreateResult =
         await createWorkspaceTagMutation.mutateAsync(newTag);
       if (tagCreateResult.data) {
@@ -82,16 +84,17 @@ export function WorkspaceTagSelector({
       setOpen(false);
       setSearchQuery('');
     },
-    [createWorkspaceTagMutation, onTagsChange, selectedTags]
+    [createWorkspaceTagMutation, onTagsChange, selectedTags, loading, disabled]
   );
 
   const handleRemoveTag = useCallback(
     async (tagToRemove: Tag) => {
+      if (loading || disabled) return;
       await onTagsChange(
         selectedTags.filter((tag) => tag.id !== tagToRemove.id)
       );
     },
-    [onTagsChange, selectedTags]
+    [onTagsChange, selectedTags, loading, disabled]
   );
 
   const handleGoToTag = useCallback(
@@ -108,6 +111,7 @@ export function WorkspaceTagSelector({
         className={`
           flex w-full flex-wrap gap-2 rounded-lg border border-border
           bg-background p-3
+          ${loading || disabled ? 'opacity-60' : ''}
         `}
       >
         {selectedTags.length === 0 ? (
@@ -124,6 +128,7 @@ export function WorkspaceTagSelector({
               onClick={() => handleGoToTag(tag)}
               showDelete
               onDelete={() => handleRemoveTag(tag)}
+              className={loading || disabled ? 'cursor-not-allowed' : ''}
             />
           ))
         )}

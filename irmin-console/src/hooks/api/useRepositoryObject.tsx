@@ -125,9 +125,9 @@ export const useRepositoryObject = (
   const uploadObjectMutation = useMutation<
     IrminAPIResponse,
     Error,
-    { path: string; ref: string; files: FileList }
+    { path: string; ref: string; files: FileList; tags?: string[] }
   >({
-    mutationFn: async ({ path, ref, files }) => {
+    mutationFn: async ({ path, ref, files, tags }) => {
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
       return irminCore.objectService.uploadObject({
@@ -136,6 +136,7 @@ export const useRepositoryObject = (
         path,
         ref,
         files,
+        tags,
       });
     },
     onSuccess: (res, { path, ref }) => {
@@ -155,9 +156,10 @@ export const useRepositoryObject = (
       ref: string;
       fileURL: string;
       headers?: { [key: string]: string };
+      tags?: string[];
     }
   >({
-    mutationFn: async ({ path, ref, fileURL, headers }) => {
+    mutationFn: async ({ path, ref, fileURL, headers, tags }) => {
       const token = await getToken();
       const irminCore = new IrminCore(locale, token);
       return irminCore.objectService.uploadObjectFromURL({
@@ -167,6 +169,7 @@ export const useRepositoryObject = (
         ref,
         fileURL,
         headers,
+        tags,
       });
     },
     onSuccess: (res, { path, ref }) => {

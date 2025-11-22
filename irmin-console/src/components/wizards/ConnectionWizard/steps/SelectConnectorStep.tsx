@@ -79,7 +79,7 @@ export default function SelectConnectorStep({
   }
 
   return (
-    <form onSubmit={handleContinue} className='flex w-full flex-col space-y-6'>
+    <div className='flex w-full flex-col space-y-6'>
       {selectedConnector && (
         <div
           className={`
@@ -171,8 +171,9 @@ export default function SelectConnectorStep({
           className='w-full'
           size='lg'
           variant='default'
-          type='submit'
+          type='button'
           disabled={!selectedConnector}
+          onClick={handleContinue}
         >
           {dict.connections.create.confirmConnectorSelection}
         </Button>
@@ -201,6 +202,6 @@ export default function SelectConnectorStep({
           {dict.connections.create.contactSupport}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }

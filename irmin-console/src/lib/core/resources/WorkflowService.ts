@@ -142,6 +142,7 @@ class WorkflowService {
    * @param props.documentation - The workflow documentation.
    * @param props.workflowable - The workflowable data.
    * @param props.schedule - The workflow schedule.
+   * @param props.tags - The workflow tags.
    * @returns IrminAPIResponse containing the created Workflow.
    */
   async createWorkflow({
@@ -152,6 +153,7 @@ class WorkflowService {
     documentation,
     workflowable,
     schedule,
+    tags,
   }: {
     workspace: string;
     type: WorkflowableType;
@@ -160,6 +162,7 @@ class WorkflowService {
     documentation?: string;
     workflowable?: Workflowable;
     schedule?: WorkflowSchedule;
+    tags?: string[];
   }): Promise<IrminAPIResponse<Workflow>> {
     try {
       const requestBody: WorkflowRequest = {
@@ -169,6 +172,7 @@ class WorkflowService {
         documentation,
         workflowable,
         schedule,
+        tags,
       };
 
       const response = await this.irminCore.fetchAPI(

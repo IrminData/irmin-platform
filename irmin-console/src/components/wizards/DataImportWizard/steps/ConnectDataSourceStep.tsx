@@ -73,6 +73,7 @@ export default function ConnectDataSourceStep({
     (connection: Connection) => {
       updateWizardData({
         connection,
+        createNewConnection: false,
         connectionData: {
           ...wizardData.connectionData,
           name: connection.name,

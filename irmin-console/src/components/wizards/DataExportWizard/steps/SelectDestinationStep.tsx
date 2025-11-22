@@ -73,6 +73,7 @@ export default function SelectDestinationStep({
     (connection: Connection) => {
       updateWizardData({
         connection,
+        createNewConnection: false,
       });
       setConnectionWizardStep(1);
       goNext();

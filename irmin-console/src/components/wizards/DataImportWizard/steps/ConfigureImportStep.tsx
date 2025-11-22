@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import ConnectionPathSelector from '@/components/connection/ConnectionPathSelector';
 import RepositoryPathSelector from '@/components/repository/objects/RepositoryPathSelector';
@@ -40,7 +40,7 @@ export default function ConfigureImportStep({
   const {
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       name: wizardData.workflowData.name,
@@ -50,6 +50,11 @@ export default function ConfigureImportStep({
       import_to_repository_path:
         wizardData.workflowData.import_to_repository_path,
     },
+  });
+
+  const repositoryBranch = useWatch({
+    control,
+    name: 'repository_branch',
   });
 
   const handleSubmitForm = useCallback(
@@ -104,7 +109,7 @@ export default function ConfigureImportStep({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(handleSubmitForm)} className='space-y-6'>
+      <div className='space-y-6'>
         {/* Workflow Basic Info */}
         <div className='space-y-4'>
           <h4 className='font-medium'>{dict.wizard.workflowInformation}</h4>
@@ -198,19 +203,22 @@ export default function ConfigureImportStep({
           {wizardData.repository && (
             <div className='flex flex-col gap-2'>
               <Label>{dict.workflow.importDestinationPath}</Label>
-              <RepositoryPathSelector
-                repositorySlug={wizardData.repository.slug}
-                repositoryRef={wizardData.workflowData.repository_branch}
-                defaultPath={wizardData.workflowData.import_to_repository_path}
-                onPathChange={(path) =>
-                  updateWizardData({
-                    workflowData: {
-                      ...wizardData.workflowData,
-                      import_to_repository_path: path,
-                    },
-                  })
-                }
-                defaultExpanded={true}
+              <Controller
+                name='import_to_repository_path'
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <RepositoryPathSelector
+                    repositorySlug={wizardData.repository?.slug ?? ''}
+                    repositoryRef={
+                      repositoryBranch ||
+                      wizardData.workflowData.repository_branch
+                    }
+                    defaultPath={field.value}
+                    onPathChange={field.onChange}
+                    defaultExpanded={true}
+                  />
+                )}
               />
             </div>
           )}
@@ -247,11 +255,18 @@ export default function ConfigureImportStep({
           >
             {dict.common.back}
           </Button>
-          <Button type='submit' className='flex-1' size='lg' variant='default'>
+          <Button
+            type='button'
+            className='flex-1'
+            size='lg'
+            variant='default'
+            onClick={handleSubmit(handleSubmitForm)}
+            loading={isSubmitting}
+          >
             {dict.connections.create.continue}
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

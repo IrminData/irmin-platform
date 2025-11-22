@@ -14,6 +14,7 @@ interface CreateRepositoryRequest {
   is_immutable?: boolean;
   garbage_default_retention_days?: number;
   garbage_default_branch_retention_days?: number;
+  tags?: string[];
 }
 
 /**
@@ -122,6 +123,7 @@ class RepositoryService {
    * @param props.isImmutable - Whether the repository is immutable.
    * @param props.garbageDefaultRetentionDays - Garbage collection default retention days.
    * @param props.garbageDefaultBranchRetentionDays - Garbage collection default branch retention days.
+   * @param props.tags - The repository tags.
    * @returns IrminAPIResponse containing the newly created Repository.
    */
   async createRepository({
@@ -133,6 +135,7 @@ class RepositoryService {
     isImmutable,
     garbageDefaultRetentionDays,
     garbageDefaultBranchRetentionDays,
+    tags,
   }: {
     workspace: string;
     name: string;
@@ -142,6 +145,7 @@ class RepositoryService {
     isImmutable?: boolean;
     garbageDefaultRetentionDays?: number;
     garbageDefaultBranchRetentionDays?: number;
+    tags?: string[];
   }): Promise<IrminAPIResponse<Repository>> {
     try {
       const requestBody: CreateRepositoryRequest = {
@@ -153,6 +157,7 @@ class RepositoryService {
         garbage_default_retention_days: garbageDefaultRetentionDays,
         garbage_default_branch_retention_days:
           garbageDefaultBranchRetentionDays,
+        tags,
       };
 
       const response = await this.irminCore.fetchAPI(

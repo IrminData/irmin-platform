@@ -172,10 +172,10 @@ const RepositoryPathSelector = ({
 
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [selectedPath, setSelectedPath] = useState<string>(
-    defaultPath ? formatPath(defaultPath, false, groupOnly) : ''
+    formatPath(defaultPath || '', false, groupOnly) || (groupOnly ? '/' : '')
   );
   const [inputPath, setInputPath] = useState<string>(
-    defaultPath ? formatPath(defaultPath, false, groupOnly) : ''
+    formatPath(defaultPath || '', false, groupOnly) || (groupOnly ? '/' : '')
   );
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [isValidPath, setIsValidPath] = useState<boolean>(true);
@@ -230,7 +230,7 @@ const RepositoryPathSelector = ({
    * Toggle a folder in the path selector
    */
   const toggleFolder = useCallback((item: RepositoryObject) => {
-    if (item.path && item.type === 'group') {
+    if (item.path !== undefined && item.type === 'group') {
       setOpenFolders((prev) => ({
         ...prev,
         [item.path ?? '']: !prev[item.path ?? ''],
@@ -301,7 +301,18 @@ const RepositoryPathSelector = ({
       return (
         <div key={item.path} className='my-1'>
           <div
-            className={`flex items-center justify-normal rounded-md p-1 text-sm`}
+            className={`
+              flex items-center justify-normal rounded-md p-1 text-sm
+              ${
+                canSelect &&
+                formatPath(item.path ?? '', true, groupOnly) === selectedPath
+                  ? `
+                    bg-gray-200
+                    dark:bg-gray-800
+                  `
+                  : ''
+              }
+            `}
           >
             <div
               className='flex cursor-pointer items-center'
@@ -382,7 +393,7 @@ const RepositoryPathSelector = ({
               ? `
                 cursor-pointer
                 ${
-                  item.path === selectedPath
+                  formatPath(item.path ?? '', false, groupOnly) === selectedPath
                     ? `
                       bg-gray-200
                       dark:bg-gray-800

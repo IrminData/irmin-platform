@@ -7,9 +7,12 @@ import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+
+import type { Tag } from '@/types/core/Tag';
 
 interface UploadFormValues {
   repository: string;
@@ -17,6 +20,7 @@ interface UploadFormValues {
   name: string;
   files: FileList | null;
   path: string;
+  tags: string[];
 }
 
 /**
@@ -34,7 +38,12 @@ export default function UploadObjectModal({
   currentRef,
   prefilledName,
 }: {
-  uploadObject: (path: string, ref: string, files: FileList) => Promise<void>;
+  uploadObject: (
+    path: string,
+    ref: string,
+    files: FileList,
+    tags?: string[]
+  ) => Promise<void>;
   currentRepository: string;
   currentRef: string;
   prefilledName?: string;
@@ -44,6 +53,7 @@ export default function UploadObjectModal({
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const {
     control,
@@ -58,6 +68,7 @@ export default function UploadObjectModal({
       files: null,
       name: prefilledName ?? 'example.txt',
       path: `/${prefilledName ?? 'example.txt'}`,
+      tags: [],
     },
   });
 
@@ -80,6 +91,18 @@ export default function UploadObjectModal({
     lastChanged.current = null;
   }, [nameValue, pathValue, setValue]);
 
+  const handleTagsChange = useCallback(
+    async (tags: Tag[]) => {
+      setSelectedTags(tags);
+      setValue(
+        'tags',
+        tags.map((t) => t.id)
+      );
+      return tags;
+    },
+    [setValue]
+  );
+
   // Handle upload object to the repository
   const handleUpload = useCallback(
     async (data: UploadFormValues) => {
@@ -93,7 +116,7 @@ export default function UploadObjectModal({
         }
 
         // Upload the object
-        await uploadObject(data.path, data.ref, data.files);
+        await uploadObject(data.path, data.ref, data.files, data.tags);
 
         // Close the modal
         irminModal.close();
@@ -235,6 +258,14 @@ export default function UploadObjectModal({
               )}
             </>
           )}
+        />
+      </div>
+      <div className='flex flex-col gap-2'>
+        <WorkspaceTagSelector
+          selectedTags={selectedTags}
+          onTagsChange={handleTagsChange}
+          loading={false}
+          disabled={loading}
         />
       </div>
       {error && <div className='py-2 text-destructive'>{error}</div>}

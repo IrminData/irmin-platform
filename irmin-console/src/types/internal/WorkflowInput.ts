@@ -11,4 +11,5 @@ export interface WorkflowRequest {
   documentation?: string;
   workflowable?: Workflowable;
   schedule?: WorkflowSchedule;
+  tags?: string[];
 }

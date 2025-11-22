@@ -1,4 +1,5 @@
 import type { WorkflowSchedule } from '@/types/core/Schedule';
+import type { Tag } from '@/types/core/Tag';
 import type { Workflowable, WorkflowableType } from '@/types/core/Workflow';
 
 /**
@@ -11,4 +12,5 @@ export interface WorkflowWizardData {
   documentation?: string;
   workflowable?: Workflowable;
   schedule?: WorkflowSchedule;
+  tags?: Tag[];
 }

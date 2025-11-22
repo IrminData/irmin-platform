@@ -21,6 +21,7 @@ type RepositoryCreateInput = {
   isImmutable: boolean;
   garbageDefaultRetentionDays?: number;
   garbageDefaultBranchRetentionDays?: number;
+  tags?: string[];
 };
 
 export function useRepositories() {
@@ -59,6 +60,7 @@ export function useRepositories() {
         garbageDefaultRetentionDays: data.garbageDefaultRetentionDays,
         garbageDefaultBranchRetentionDays:
           data.garbageDefaultBranchRetentionDays,
+        tags: data.tags,
       });
     },
     ...createMutationHandlers<Repository, RepositoryCreateInput>(

@@ -22,6 +22,7 @@ interface MoveObjectRequest {
 interface UploadObjectFromURLRequest {
   url: string;
   headers?: { [key: string]: string };
+  tags?: string[];
 }
 
 /**
@@ -282,6 +283,7 @@ class ObjectService {
    * @param props.ref - The ref (branch, tag or commit hash) to upload to.
    * @param props.path - The path within the repository where the object will be uploaded.
    * @param props.metadata - (optional) The metadata to attach to the object.
+   * @param props.tags - (optional) The tags to attach to the object.
    * @param props.files - A FileList containing files to upload.
    * @returns IrminAPIResponse containing the uploaded object.
    */
@@ -292,12 +294,14 @@ class ObjectService {
     path,
     files,
     metadata,
+    tags,
   }: {
     workspace: string;
     repository: string;
     ref: string;
     path: string;
     metadata?: { [key: string]: string };
+    tags?: string[];
     files?: FileList;
   }): Promise<IrminAPIResponse<RepositoryObject>> {
     try {
@@ -309,6 +313,10 @@ class ObjectService {
       }
       if (metadata) {
         formData.append('metadata', JSON.stringify(metadata));
+      }
+      if (tags && tags.length > 0) {
+        // Append tags as JSON string array
+        formData.append('tags', JSON.stringify(tags));
       }
       const url = `/v1/workspaces/${workspace}/repositories/${repository}/objects?ref=${encodeURIComponent(ref)}&path=${encodeURIComponent(path)}`;
       const response = (await this.irminCore.fetchAPI(url, {
@@ -332,6 +340,7 @@ class ObjectService {
    * @param props.path - The path within the repository where the object will be uploaded.
    * @param props.fileURL - The URL to upload the object from.
    * @param props.headers - (optional) The headers to pass to the URL. e.g. { 'Authorization': 'Bearer <token>' }
+   * @param props.tags - (optional) The tags to attach to the object.
    * @returns IrminAPIResponse containing the uploaded object.
    */
   async uploadObjectFromURL({
@@ -341,6 +350,7 @@ class ObjectService {
     path,
     fileURL,
     headers,
+    tags,
   }: {
     workspace: string;
     repository: string;
@@ -348,11 +358,13 @@ class ObjectService {
     path: string;
     fileURL: string;
     headers?: { [key: string]: string }; // e.g. { 'Authorization': 'Bearer <token>' }
+    tags?: string[];
   }): Promise<IrminAPIResponse<RepositoryObject>> {
     try {
       const requestBody: UploadObjectFromURLRequest = {
         url: fileURL,
         headers,
+        tags,
       };
 
       const urlParams = new URLSearchParams();

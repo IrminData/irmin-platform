@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { useQueryClient } from '@tanstack/react-query';
+
+import { workflowQueryKey } from '@/lib/queryKeys';
+
 import type { FieldConfig } from '@/components/ui/form/SettingsForm';
 import SettingsForm from '@/components/ui/form/SettingsForm';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -44,6 +48,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
   const router = useRouter();
   const { workspaceSlug } = useWorkspaceContext();
   const { isResourceAllowed } = useResourceAllowed();
+  const queryClient = useQueryClient();
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -135,7 +140,6 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
           return tags;
         }
 
-        // Use workflowQuery.data?.data?.tags directly instead of selectedTags to avoid race condition
         const currentTags = workflowQuery.data?.data?.tags ?? [];
         setSelectedTags(tags);
         setUpdatingTags(true);
@@ -172,12 +176,19 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
           ),
         ]);
 
+        // Invalidate workflow query to ensure fresh data
+        await queryClient.invalidateQueries({
+          queryKey: workflowQueryKey(workspaceSlug, workflowId),
+        });
+
         // Only update previousTags after successful API calls
         previousTags.current = JSON.stringify(tags);
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        return [];
+        // Revert to original tags on error
+        setSelectedTags(workflowQuery.data?.data?.tags ?? []);
+        return workflowQuery.data?.data?.tags ?? [];
       } finally {
         setUpdatingTags(false);
       }
@@ -187,6 +198,8 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
       removeTagFromEntityMutation,
       workflowQuery.data?.data?.id,
       workflowQuery.data?.data?.tags,
+      queryClient,
+      workspaceSlug,
     ]
   );
 
