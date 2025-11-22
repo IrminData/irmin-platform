@@ -155,23 +155,39 @@ func (api *APIServices) CreateConnection(
 	detailsStr := utils.ConvertToStringMap(req.Details)
 	settingsStr := utils.ConvertToStringMap(req.Settings)
 
-	// Create the connection
-	connection := &db.Connection{
-		Name:          req.Name,
-		Description:   req.Description,
-		Documentation: req.Documentation,
-		Details:       detailsStr,
-		Settings:      settingsStr,
-		ConnectorID:   uint(connectorID),
-		OwnerID:       user.ID,
-		WorkspaceID:   workspace.ID,
-	}
-	if createConnectionErr := api.DB.Create(connection).Error; createConnectionErr != nil {
-		api.Logger.ErrorContext(c, "Error creating connection", "error", createConnectionErr)
-		return nil, createConnectionErr
+	var connection *db.Connection
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Create the connection
+		connection = &db.Connection{
+			Name:          req.Name,
+			Description:   req.Description,
+			Documentation: req.Documentation,
+			Details:       detailsStr,
+			Settings:      settingsStr,
+			ConnectorID:   uint(connectorID),
+			OwnerID:       user.ID,
+			WorkspaceID:   workspace.ID,
+		}
+		if createConnectionErr := tx.Create(connection).Error; createConnectionErr != nil {
+			api.Logger.ErrorContext(c, "Error creating connection", "error", createConnectionErr)
+			return createConnectionErr
+		}
+
+		// Add tags
+		if addTagErr := api.addConnectionTags(tx, connection, req.Tags, workspace.ID); addTagErr != nil {
+			return addTagErr
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
 	}
 
-	// Fetch the newly created connection
+	// Fetch the newly created connection with preloaded associations
 	connection, getConnectionByIDErr := api.DB.GetConnectionByID(connection.ID)
 	if getConnectionByIDErr != nil {
 		api.Logger.ErrorContext(c, "Error fetching connection", "error", getConnectionByIDErr)
@@ -269,9 +285,9 @@ func (api *APIServices) updateConnectionFields(
 		connection.Settings = utils.ConvertToStringMap(req.Settings)
 	}
 	if req.Connector != "" {
-		connectorID, err := api.SQIDManager.Decode("connectors", req.Connector)
-		if err != nil {
-			return fmt.Errorf("error decoding connector sqid: %w", err)
+		connectorID, tagDecodeErr := api.SQIDManager.Decode("connectors", req.Connector)
+		if tagDecodeErr != nil {
+			return fmt.Errorf("error decoding connector SQID: %w", tagDecodeErr)
 		}
 		connection.ConnectorID = uint(connectorID)
 	}
@@ -424,4 +440,35 @@ func (api *APIServices) TransferConnectionOwnership(
 	})
 
 	return connection, nil
+}
+
+func (api *APIServices) addConnectionTags(
+	tx *gorm.DB,
+	connection *db.Connection,
+	tags []string,
+	workspaceID uint,
+) error {
+	if len(tags) > 0 {
+		for _, tagSqid := range tags {
+			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
+			if tagDecodeErr != nil {
+				return tagDecodeErr
+			}
+
+			// Verify tag belongs to the workspace
+			var tag db.Tag
+			if tagErr := tx.First(&tag, uint(tagID)).Error; tagErr != nil {
+				return tagErr
+			}
+			if tag.WorkspaceID != workspaceID {
+				return ErrInvalidRequest
+			}
+
+			// Add tag using the transaction
+			if tagAddErr := tx.Model(connection).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAddErr != nil {
+				return tagAddErr
+			}
+		}
+	}
+	return nil
 }

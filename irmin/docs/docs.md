@@ -9699,6 +9699,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) MergeRepositoryRefs\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.MergeRefsRequest\) \(\*irminmodels.Commit, error\)](<#APIServices.MergeRepositoryRefs>)
   - [func \(api \*APIServices\) MoveEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, sourcePath string, destinationPath string\) \(\*irminmodels.EditorItem, error\)](<#APIServices.MoveEditorItem>)
   - [func \(api \*APIServices\) MoveRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, req irmincore.MoveObjectRequest\) \(\*db.RepositoryObject, error\)](<#APIServices.MoveRepositoryObject>)
+  - [func \(api \*APIServices\) NormalizeEntityType\(entityType string\) irminmodels.TagEntityType](<#APIServices.NormalizeEntityType>)
   - [func \(api \*APIServices\) PauseWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.PauseWorkflow>)
   - [func \(api \*APIServices\) ProcessSystemWebhook\(c context.Context, webhookType string, payload \[\]byte, isSystem bool\) error](<#APIServices.ProcessSystemWebhook>)
   - [func \(api \*APIServices\) RemoveTagFromEntity\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag, entityType string, entityID uint\) error](<#APIServices.RemoveTagFromEntity>)
@@ -9729,8 +9730,8 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) UpdateWorkspace\(user \*db.User, workspace \*db.Workspace, req irmincore.UpdateWorkspaceRequest\) \(\*db.Workspace, error\)](<#APIServices.UpdateWorkspace>)
   - [func \(api \*APIServices\) UpdateWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagWithAssets \*db.TagWithAssets, req irmincore.UpdateTagRequest\) \(\*db.TagWithAssets, error\)](<#APIServices.UpdateWorkspaceTag>)
   - [func \(api \*APIServices\) UpdateWorkspaceUserRoles\(c context.Context, currentUser \*db.User, workspace \*db.Workspace, workspaceMember \*db.WorkspaceUser, req irmincore.UpdateUserRolesRequest\) \(\*db.WorkspaceUser, error\)](<#APIServices.UpdateWorkspaceUserRoles>)
-  - [func \(api \*APIServices\) UploadRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, file io.Reader\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObject>)
-  - [func \(api \*APIServices\) UploadRepositoryObjectFromURL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, url string, headers map\[string\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObjectFromURL>)
+  - [func \(api \*APIServices\) UploadRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, file io.Reader, tags \[\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObject>)
+  - [func \(api \*APIServices\) UploadRepositoryObjectFromURL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, objectPath string, objectRef string, url string, headers map\[string\]string, tags \[\]string\) \(\*db.RepositoryObject, error\)](<#APIServices.UploadRepositoryObjectFromURL>)
   - [func \(api \*APIServices\) ValidateConnectorConfiguration\(c context.Context, locale string, connector \*db.Connector, req irmincore.ConnectorConfigurationRequest\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#APIServices.ValidateConnectorConfiguration>)
   - [func \(api \*APIServices\) ZipRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(\[\]byte, string, error\)](<#APIServices.ZipRepositoryObject>)
 - [type AuthCache](<#AuthCache>)
@@ -10691,6 +10692,15 @@ func (api *APIServices) MoveRepositoryObject(c context.Context, locale string, u
 
 
 
+<a name="APIServices.NormalizeEntityType"></a>
+### func \(\*APIServices\) NormalizeEntityType
+
+```go
+func (api *APIServices) NormalizeEntityType(entityType string) irminmodels.TagEntityType
+```
+
+NormalizeEntityType normalizes the entity type string to a valid TagEntityType.
+
 <a name="APIServices.PauseWorkflow"></a>
 ### func \(\*APIServices\) PauseWorkflow
 
@@ -10965,7 +10975,7 @@ func (api *APIServices) UpdateWorkspaceUserRoles(c context.Context, currentUser 
 ### func \(\*APIServices\) UploadRepositoryObject
 
 ```go
-func (api *APIServices) UploadRepositoryObject(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, objectPath string, objectRef string, file io.Reader) (*db.RepositoryObject, error)
+func (api *APIServices) UploadRepositoryObject(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, objectPath string, objectRef string, file io.Reader, tags []string) (*db.RepositoryObject, error)
 ```
 
 
@@ -10974,7 +10984,7 @@ func (api *APIServices) UploadRepositoryObject(c context.Context, locale string,
 ### func \(\*APIServices\) UploadRepositoryObjectFromURL
 
 ```go
-func (api *APIServices) UploadRepositoryObjectFromURL(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, objectPath string, objectRef string, url string, headers map[string]string) (*db.RepositoryObject, error)
+func (api *APIServices) UploadRepositoryObjectFromURL(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, objectPath string, objectRef string, url string, headers map[string]string, tags []string) (*db.RepositoryObject, error)
 ```
 
 

@@ -224,7 +224,7 @@ func (api *APIServices) CreateWorkflow(
 		}
 
 		// Create schedule
-		if createScheduleErr := tx.Create(schedule).Error; createScheduleErr != nil {
+		if createScheduleErr := api.createWorkflowSchedule(tx, schedule); createScheduleErr != nil {
 			return createScheduleErr
 		}
 
@@ -241,6 +241,11 @@ func (api *APIServices) CreateWorkflow(
 		)
 		if createWorkflowErr := tx.Create(&workflow).Error; createWorkflowErr != nil {
 			return createWorkflowErr
+		}
+
+		// Add tags
+		if addTagsErr := api.addWorkflowTags(tx, &workflow, req.Tags, workspace.ID); addTagsErr != nil {
+			return addTagsErr
 		}
 
 		// Fetch the full workflow object with all relations
@@ -1185,5 +1190,37 @@ func (api *APIServices) processRepositoryStage(
 		newStage.RepositoryWritePath = &writePath
 	}
 
+	return nil
+}
+
+func (api *APIServices) addWorkflowTags(tx *gorm.DB, workflow *db.Workflow, tags []string, workspaceID uint) error {
+	if len(tags) > 0 {
+		for _, tagSqid := range tags {
+			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
+			if tagDecodeErr != nil {
+				return tagDecodeErr
+			}
+
+			// Verify tag belongs to the workspace
+			var tag db.Tag
+			if err := tx.First(&tag, uint(tagID)).Error; err != nil {
+				return err
+			}
+			if tag.WorkspaceID != workspaceID {
+				return ErrInvalidRequest
+			}
+
+			if tagAppendErr := tx.Model(workflow).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAppendErr != nil {
+				return tagAppendErr
+			}
+		}
+	}
+	return nil
+}
+
+func (api *APIServices) createWorkflowSchedule(tx *gorm.DB, schedule *db.Schedule) error {
+	if createScheduleErr := tx.Create(schedule).Error; createScheduleErr != nil {
+		return createScheduleErr
+	}
 	return nil
 }

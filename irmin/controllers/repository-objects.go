@@ -183,6 +183,20 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		}
 	}
 
+	// Parse tags from form data
+	var tags []string
+	if tagsData := form.Value["tags"]; len(tagsData) > 0 {
+		// Check if it's a JSON string array (starts with '[')
+		if len(tagsData) == 1 && len(tagsData[0]) > 0 && tagsData[0][0] == '[' {
+			if unmarshalErr := json.Unmarshal([]byte(tagsData[0]), &tags); unmarshalErr != nil {
+				// If unmarshal fails, treat as single tag value
+				tags = tagsData
+			}
+		} else {
+			tags = tagsData
+		}
+	}
+
 	// Upload the object to the path in the repository at ref
 	newObject, err := api.Services.UploadRepositoryObject(
 		c,
@@ -193,6 +207,7 @@ func (api *APIControllers) RepositoryUploadObject(c fiber.Ctx) error {
 		params.objectPath,
 		params.objectRef,
 		file,
+		tags,
 	)
 	if err != nil {
 		api.Logger.Error("Error uploading object to Data Engine", "error", err)
@@ -270,6 +285,7 @@ func (api *APIControllers) RepositoryUploadObjectFromURL(c fiber.Ctx) error {
 		params.objectRef,
 		req.URL,
 		req.Headers,
+		req.Tags,
 	)
 	if err != nil {
 		api.Logger.Error("Error uploading object from URL to Data Engine", "error", err)

@@ -504,6 +504,7 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 				args.Path,
 				*branch,
 				file,
+				nil,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to save text repository object", "error", err)
@@ -581,6 +582,7 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 				*branch,
 				args.URL,
 				args.Headers,
+				nil,
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to upload repository object from URL", "error", err)

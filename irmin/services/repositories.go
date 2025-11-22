@@ -159,40 +159,24 @@ func (api *APIServices) createRepositoryInTransaction(
 			return createRepositoryErr
 		}
 
-		// Create the repository in the Data Engine
-		var createRepositoryInDataEngineErr error
-		dataEngineRepository, createRepositoryInDataEngineErr = dataEngine.CreateRepository(
+		var err error
+		dataEngineRepository, err = api.createAndSyncDataEngineRepository(
+			ctx,
+			tx,
+			dataEngine,
+			repository,
+			req,
+			gcSettings,
 			workspace.Slug,
 			repositorySlug,
-			req.DefaultBranch,
-			req.IsImmutable,
-			gcSettings.DefaultRetentionDays,
-			gcSettings.DefaultBranchRetentionDays,
 		)
-		if createRepositoryInDataEngineErr != nil {
-			api.Logger.ErrorContext(
-				ctx,
-				"Error creating repository in Data Engine",
-				"error",
-				createRepositoryInDataEngineErr,
-			)
-			return createRepositoryInDataEngineErr
+		if err != nil {
+			return err
 		}
 
-		// Update the repository in the database with Data Engine information
-		repository.LakeFSRepoID = dataEngineRepository.ID
-		repository.GarbageCollectionRules = dataEngineRepository.GarbageCollectionRules
-		repository.IsImmutable = dataEngineRepository.IsImmutable
-		repository.DefaultBranch = dataEngineRepository.DefaultBranch
-		repository.StorageNamespace = dataEngineRepository.StorageNamespace
-		if updateRepositoryErr := tx.Save(&repository).Error; updateRepositoryErr != nil {
-			api.Logger.ErrorContext(
-				ctx,
-				"Error updating repository with Data Engine information",
-				"error",
-				updateRepositoryErr,
-			)
-			return updateRepositoryErr
+		// Add tags
+		if addTagsErr := api.addRepositoryTags(tx, repository, req.Tags, workspace.ID); addTagsErr != nil {
+			return addTagsErr
 		}
 
 		return nil
@@ -283,6 +267,13 @@ func (api *APIServices) deleteRepositoryInTransaction(
 		if err := tx.Where(&db.RepositoryTag{RepositoryID: repository.ID}).Delete(&db.RepositoryTag{}).Error; err != nil {
 			return err
 		}
+
+		// Soft delete associated repository objects.
+		// We do not delete RepositoryObjectTags to preserve them in case of restoration.
+		if err := tx.Where("repository_id = ?", repository.ID).Delete(&db.RepositoryObject{}).Error; err != nil {
+			return err
+		}
+
 		// Delete associated schema caches
 		if err := tx.Where(&db.RepositorySchemaCache{RepositoryID: repository.ID}).Delete(&db.RepositorySchemaCache{}).Error; err != nil {
 			return err
@@ -702,4 +693,85 @@ func (api *APIServices) TransferRepositoryOwnership(
 	})
 
 	return repository, nil
+}
+
+// ---- Helper functions ----
+
+func (api *APIServices) createAndSyncDataEngineRepository(
+	ctx context.Context,
+	tx *gorm.DB,
+	dataEngine *engine.Client,
+	repository *db.Repository,
+	req irmincore.CreateRepositoryRequest,
+	gcSettings *utils.GarbageCollectionSettings,
+	workspaceSlug string,
+	repositorySlug string,
+) (*engine.Repository, error) {
+	// Create the repository in the Data Engine
+	dataEngineRepository, err := dataEngine.CreateRepository(
+		workspaceSlug,
+		repositorySlug,
+		req.DefaultBranch,
+		req.IsImmutable,
+		gcSettings.DefaultRetentionDays,
+		gcSettings.DefaultBranchRetentionDays,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(
+			ctx,
+			"Error creating repository in Data Engine",
+			"error",
+			err,
+		)
+		return nil, err
+	}
+
+	// Update the repository in the database with Data Engine information
+	repository.LakeFSRepoID = dataEngineRepository.ID
+	repository.GarbageCollectionRules = dataEngineRepository.GarbageCollectionRules
+	repository.IsImmutable = dataEngineRepository.IsImmutable
+	repository.DefaultBranch = dataEngineRepository.DefaultBranch
+	repository.StorageNamespace = dataEngineRepository.StorageNamespace
+
+	if saveErr := tx.Save(repository).Error; saveErr != nil {
+		api.Logger.ErrorContext(
+			ctx,
+			"Error updating repository with Data Engine information",
+			"error",
+			saveErr,
+		)
+		return nil, saveErr
+	}
+
+	return dataEngineRepository, nil
+}
+
+func (api *APIServices) addRepositoryTags(
+	tx *gorm.DB,
+	repository *db.Repository,
+	tags []string,
+	workspaceID uint,
+) error {
+	if len(tags) > 0 {
+		for _, tagSqid := range tags {
+			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
+			if tagDecodeErr != nil {
+				return tagDecodeErr
+			}
+
+			// Verify tag belongs to the workspace
+			var tag db.Tag
+			if err := tx.First(&tag, uint(tagID)).Error; err != nil {
+				return err
+			}
+			if tag.WorkspaceID != workspaceID {
+				return ErrInvalidRequest
+			}
+
+			if tagAppendErr := tx.Model(repository).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAppendErr != nil {
+				return tagAppendErr
+			}
+		}
+	}
+	return nil
 }

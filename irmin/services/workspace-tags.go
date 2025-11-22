@@ -607,6 +607,24 @@ func (api *APIServices) performEntityOperation(
 	}
 }
 
+// NormalizeEntityType normalizes the entity type string to a valid TagEntityType.
+func (api *APIServices) NormalizeEntityType(entityType string) irminmodels.TagEntityType {
+	switch entityType {
+	case "repository", "repositories":
+		return irminmodels.TagEntityTypeRepository
+	case "query", "queries":
+		return irminmodels.TagEntityTypeQuery
+	case "workflow", "workflows":
+		return irminmodels.TagEntityTypeWorkflow
+	case "connection", "connections":
+		return irminmodels.TagEntityTypeConnection
+	case "object", "objects", "repository_objects":
+		return irminmodels.TagEntityTypeObject
+	default:
+		return irminmodels.TagEntityType(entityType)
+	}
+}
+
 // AddOrRemoveTagFromEntity is a helper function that handles common logic for adding/removing tags from entities.
 func (api *APIServices) AddOrRemoveTagFromEntity(
 	c context.Context,
@@ -622,11 +640,8 @@ func (api *APIServices) AddOrRemoveTagFromEntity(
 		return ErrInvalidRequest
 	}
 
-	// Map entity type for SQID decoding (URL param "objects" maps to SQID key "repository_objects")
-	sqidEntityType := irminmodels.TagEntityType(entityType)
-	if entityType == "objects" {
-		sqidEntityType = irminmodels.TagEntityTypeObject
-	}
+	// Normalize entity type
+	sqidEntityType := api.NormalizeEntityType(entityType)
 
 	// Decode entity ID
 	entityIDUint, err := api.SQIDManager.Decode(string(sqidEntityType), entityID)

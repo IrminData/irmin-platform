@@ -79,6 +79,12 @@ definitions:
         description: Values for the optional connector configuration as JSON object,
           like {"ssl_enabled":"true"}
         type: object
+      tags:
+        example:
+        - tag_7k3m9x2n5q8p
+        items:
+          type: string
+        type: array
     required:
     - connector
     - name
@@ -215,6 +221,12 @@ definitions:
         example: Customer Analytics
         maxLength: 100
         type: string
+      tags:
+        example:
+        - tag_7k3m9x2n5q8p
+        items:
+          type: string
+        type: array
     required:
     - name
     type: object
@@ -592,6 +604,12 @@ definitions:
         example:
           Authorization: ' Bearer <token>'
         type: object
+      tags:
+        example:
+        - tag_7k3m9x2n5q8p
+        items:
+          type: string
+        type: array
       url:
         example: https://example.com/file.json
         type: string
@@ -615,6 +633,13 @@ definitions:
         allOf:
         - $ref: '#/definitions/irminmodels.Schedule'
         description: Schedule configuration
+      tags:
+        description: Tags
+        example:
+        - tag_7k3m9x2n5q8p
+        items:
+          type: string
+        type: array
       type:
         allOf:
         - $ref: '#/definitions/irminmodels.WorkflowableType'

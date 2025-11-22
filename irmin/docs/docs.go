@@ -10135,6 +10135,15 @@ const docTemplate = `{
                     "description": "Values for the optional connector configuration as JSON object, like {\"ssl_enabled\":\"true\"}",
                     "type": "object",
                     "additionalProperties": {}
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tag_7k3m9x2n5q8p"
+                    ]
                 }
             }
         },
@@ -10324,6 +10333,15 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "example": "Customer Analytics"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tag_7k3m9x2n5q8p"
+                    ]
                 }
             }
         },
@@ -10853,6 +10871,15 @@ const docTemplate = `{
                         "Authorization": " Bearer \u003ctoken\u003e"
                     }
                 },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tag_7k3m9x2n5q8p"
+                    ]
+                },
                 "url": {
                     "type": "string",
                     "example": "https://example.com/file.json"
@@ -10886,6 +10913,16 @@ const docTemplate = `{
                         {
                             "$ref": "#/definitions/irminmodels.Schedule"
                         }
+                    ]
+                },
+                "tags": {
+                    "description": "Tags",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tag_7k3m9x2n5q8p"
                     ]
                 },
                 "type": {

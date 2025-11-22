@@ -775,6 +775,10 @@ func (api *APIServices) MoveRepositoryObject(
 	req irmincore.MoveObjectRequest,
 ) (*db.RepositoryObject, error)
 
+func (api *APIServices) NormalizeEntityType(entityType string) irminmodels.TagEntityType
+    NormalizeEntityType normalizes the entity type string to a valid
+    TagEntityType.
+
 func (api *APIServices) PauseWorkflow(
 	c context.Context,
 	user *db.User,
@@ -1016,6 +1020,7 @@ func (api *APIServices) UploadRepositoryObject(
 	objectPath string,
 	objectRef string,
 	file io.Reader,
+	tags []string,
 ) (*db.RepositoryObject, error)
 
 func (api *APIServices) UploadRepositoryObjectFromURL(
@@ -1028,6 +1033,7 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	objectRef string,
 	url string,
 	headers map[string]string,
+	tags []string,
 ) (*db.RepositoryObject, error)
 
 func (api *APIServices) ValidateConnectorConfiguration(

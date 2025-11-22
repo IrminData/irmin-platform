@@ -136,6 +136,7 @@ func (api *APIServices) UploadRepositoryObject(
 	objectPath string,
 	objectRef string,
 	file io.Reader,
+	tags []string,
 ) (*db.RepositoryObject, error) {
 	// Make sure this is allowed
 	if err := api.ensureCreateAndModifyPermissions(c, user, workspace, repository); err != nil {
@@ -162,18 +163,25 @@ func (api *APIServices) UploadRepositoryObject(
 		return nil, err
 	}
 
-	// Save the object to the database
-	repositoryObject, err := lib.SaveObject(
-		api.DB,
-		api.Logger,
-		api.Env,
-		newObject,
-		objectRef,
-		repository.ID,
-	)
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error saving object to database", "error", err)
-		return nil, err
+	var repositoryObject *db.RepositoryObject
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		var saveErr error
+		repositoryObject, saveErr = api.saveObjectAndTags(
+			c,
+			tx,
+			workspace,
+			repository,
+			newObject,
+			objectRef,
+			tags,
+		)
+		return saveErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
 	}
 
 	// Log the event
@@ -199,6 +207,7 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 	objectRef string,
 	url string,
 	headers map[string]string,
+	tags []string,
 ) (*db.RepositoryObject, error) {
 	// Make sure this is allowed
 	if err := api.ensureCreateAndModifyPermissions(c, user, workspace, repository); err != nil {
@@ -238,18 +247,25 @@ func (api *APIServices) UploadRepositoryObjectFromURL(
 		return nil, err
 	}
 
-	// Save the object to the database
-	repositoryObject, err := lib.SaveObject(
-		api.DB,
-		api.Logger,
-		api.Env,
-		newObject,
-		objectRef,
-		repository.ID,
-	)
-	if err != nil {
-		api.Logger.ErrorContext(c, "Error saving object to database", "error", err)
-		return nil, err
+	var repositoryObject *db.RepositoryObject
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		var saveErr error
+		repositoryObject, saveErr = api.saveObjectAndTags(
+			c,
+			tx,
+			workspace,
+			repository,
+			newObject,
+			objectRef,
+			tags,
+		)
+		return saveErr
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
 	}
 
 	return repositoryObject, nil
@@ -1034,4 +1050,56 @@ func (api *APIServices) GetRepositoryObjectHistory(
 	}
 
 	return history, nil
+}
+
+func (api *APIServices) saveObjectAndTags(
+	c context.Context,
+	tx *gorm.DB,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	newObject *irminmodels.Object,
+	objectRef string,
+	tags []string,
+) (*db.RepositoryObject, error) {
+	// Save the object to the database
+	txDB := &db.Database{DB: tx}
+	repositoryObject, saveErr := lib.SaveObject(
+		txDB,
+		api.Logger,
+		api.Env,
+		newObject,
+		objectRef,
+		repository.ID,
+	)
+	if saveErr != nil {
+		api.Logger.ErrorContext(c, "Error saving object to database", "error", saveErr)
+		return nil, saveErr
+	}
+
+	// Add tags
+	if len(tags) > 0 {
+		for _, tagSqid := range tags {
+			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
+			if tagDecodeErr != nil {
+				api.Logger.ErrorContext(c, "Error decoding tag SQID", "error", tagDecodeErr)
+				return nil, tagDecodeErr
+			}
+
+			// Verify tag belongs to the workspace
+			var tag db.Tag
+			if tagErr := tx.First(&tag, uint(tagID)).Error; tagErr != nil {
+				return nil, tagErr
+			}
+			if tag.WorkspaceID != workspace.ID {
+				return nil, ErrInvalidRequest
+			}
+
+			// Add tag using the transaction
+			if tagAddErr := tx.Model(repositoryObject).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAddErr != nil {
+				api.Logger.ErrorContext(c, "Error adding tag to repository object", "error", tagAddErr)
+				return nil, tagAddErr
+			}
+		}
+	}
+	return repositoryObject, nil
 }
