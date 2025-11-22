@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"irmin-api/db"
 	"mime/multipart"
 
@@ -129,12 +130,18 @@ func (api *APIServices) updateClerkUserData(c context.Context, irminUser *db.Use
 	}
 
 	// Update profile basic fields + primary ids
-	_, err = user.Update(c, irminUser.ClerkID, &user.UpdateParams{
-		FirstName:             &irminUser.FirstName,
-		LastName:              &irminUser.LastName,
-		PrimaryEmailAddressID: &primaryEmailID,
-		PrimaryPhoneNumberID:  &primaryPhoneID,
-	})
+	params := &user.UpdateParams{
+		FirstName: &irminUser.FirstName,
+		LastName:  &irminUser.LastName,
+	}
+	if primaryEmailID != "" {
+		params.PrimaryEmailAddressID = &primaryEmailID
+	}
+	if primaryPhoneID != "" {
+		params.PrimaryPhoneNumberID = &primaryPhoneID
+	}
+
+	_, err = user.Update(c, irminUser.ClerkID, params)
 	if err != nil {
 		api.Logger.ErrorContext(
 			c,
@@ -152,9 +159,19 @@ func (api *APIServices) updateClerkUserData(c context.Context, irminUser *db.Use
 
 // ensureClerkEmail ensures the email exists in Clerk and returns the primary email ID.
 func (api *APIServices) ensureClerkEmail(c context.Context, clerkUser *clerk.User, irminUser *db.User) (string, error) {
+	if irminUser.Email == "" {
+		return "", nil
+	}
 	for _, email := range clerkUser.EmailAddresses {
 		if email.EmailAddress == irminUser.Email {
-			return email.ID, nil
+			if email.Verification != nil && email.Verification.Status == "verified" {
+				return email.ID, nil
+			}
+			// If email exists but is not verified, delete it so we can recreate it as verified
+			if _, err := emailaddress.Delete(c, email.ID); err != nil {
+				return "", fmt.Errorf("failed to delete unverified email: %w", err)
+			}
+			break
 		}
 	}
 	verified := true
@@ -171,9 +188,19 @@ func (api *APIServices) ensureClerkEmail(c context.Context, clerkUser *clerk.Use
 
 // ensureClerkPhone ensures the phone exists in Clerk and returns the primary phone ID.
 func (api *APIServices) ensureClerkPhone(c context.Context, clerkUser *clerk.User, irminUser *db.User) (string, error) {
+	if irminUser.Phone == "" {
+		return "", nil
+	}
 	for _, phone := range clerkUser.PhoneNumbers {
 		if phone.PhoneNumber == irminUser.Phone {
-			return phone.ID, nil
+			if phone.Verification != nil && phone.Verification.Status == "verified" {
+				return phone.ID, nil
+			}
+			// If phone exists but is not verified, delete it so we can recreate it as verified
+			if _, err := phonenumber.Delete(c, phone.ID); err != nil {
+				return "", fmt.Errorf("failed to delete unverified phone number: %w", err)
+			}
+			break
 		}
 	}
 	verified := true
