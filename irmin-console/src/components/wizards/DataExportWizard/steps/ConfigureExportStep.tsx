@@ -120,7 +120,7 @@ export default function ConfigureExportStep({
 
       <div className='space-y-6'>
         {/* Workflow Name */}
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <Label htmlFor='name' className='text-sm font-medium'>
             {dict.wizard.workflowName} *
           </Label>
@@ -139,7 +139,7 @@ export default function ConfigureExportStep({
         </div>
 
         {/* Workflow Description */}
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <Label htmlFor='description' className='text-sm font-medium'>
             {dict.wizard.workflowDescription} *
           </Label>
@@ -159,7 +159,7 @@ export default function ConfigureExportStep({
         </div>
 
         {/* Workflow Documentation */}
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <Label htmlFor='documentation' className='text-sm font-medium'>
             {dict.wizard.workflowDocumentation}
           </Label>
@@ -178,7 +178,7 @@ export default function ConfigureExportStep({
         </div>
 
         {/* Repository Branch */}
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <Label htmlFor='repository_branch' className='text-sm font-medium'>
             {dict.wizard.repositoryBranch} *
           </Label>
@@ -197,7 +197,7 @@ export default function ConfigureExportStep({
         </div>
 
         {/* Export From Repository Paths */}
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <Label className='text-sm font-medium'>
             {dict.wizard.exportFromRepositoryPaths} *
           </Label>
@@ -224,7 +224,7 @@ export default function ConfigureExportStep({
         </div>
 
         {/* Export To Connection Path */}
-        <div className='space-y-2'>
+        <div className='flex flex-col gap-2'>
           <Label className='text-sm font-medium'>
             {dict.wizard.exportToConnectionPath} *
           </Label>

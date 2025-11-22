@@ -116,7 +116,7 @@ export default function UserProfileForm() {
               md:grid-cols-2
             `}
           >
-            <div className='space-y-2'>
+            <div className='flex flex-col gap-2'>
               <Label htmlFor='first_name' className='text-sm'>
                 {dict.users.firstName}
               </Label>
@@ -133,7 +133,7 @@ export default function UserProfileForm() {
                 </p>
               )}
             </div>
-            <div className='space-y-2'>
+            <div className='flex flex-col gap-2'>
               <Label htmlFor='last_name' className='text-sm'>
                 {dict.users.lastName}
               </Label>
@@ -151,7 +151,7 @@ export default function UserProfileForm() {
               )}
             </div>
           </div>
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             <Label htmlFor='email' className='text-sm'>
               {dict.users.email}
             </Label>
@@ -171,7 +171,7 @@ export default function UserProfileForm() {
               <p className='text-sm text-red-500'>{errors.email.message}</p>
             )}
           </div>
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             <Label htmlFor='phone' className='text-sm'>
               {dict.users.phone}
             </Label>
@@ -182,13 +182,13 @@ export default function UserProfileForm() {
               className='w-full'
             />
           </div>
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             <Label htmlFor='company' className='text-sm'>
               {dict.users.company}
             </Label>
             <Input id='company' {...register('company')} className='w-full' />
           </div>
-          <div className='space-y-2'>
+          <div className='flex flex-col gap-2'>
             <Label className='text-sm'>{dict.common.selectLanguage}</Label>
             <LanguageSwitcher />
           </div>

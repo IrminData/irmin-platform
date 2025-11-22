@@ -130,9 +130,9 @@ function ActionInputEditor({
             </Button>
           </div>
 
-          <div className='space-y-4'>
+          <div className='flex flex-col gap-4'>
             {/* Repository Select */}
-            <div className='space-y-2'>
+            <div className='flex flex-col gap-2'>
               <Label htmlFor={`inputFiles.${index}.repository`}>
                 {dict.repository.repository}
               </Label>
@@ -162,7 +162,7 @@ function ActionInputEditor({
             </div>
 
             {/* Branch Input */}
-            <div className='space-y-2'>
+            <div className='flex flex-col gap-2'>
               <Label htmlFor={`inputFiles.${index}.repository_ref`}>
                 {dict.repository.branches.ref}
               </Label>
@@ -177,7 +177,7 @@ function ActionInputEditor({
 
             {/* Path Input */}
             {inputFile.repository && inputFile.repository_ref && (
-              <div className='space-y-2'>
+              <div className='flex flex-col gap-2'>
                 <Label htmlFor={`inputFiles.${index}.repository_path`}>
                   {dict.workflow.scriptInputFiles.path}
                 </Label>
