@@ -1340,6 +1340,20 @@ func (api *APIControllers) SystemWebhook(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Internal server error" @Router /system/webhook
     [post]
 
+func (api *APIControllers) TestConnection(c fiber.Ctx) error
+    TestConnection godoc @Summary Test connection @Description
+    Test an existing connection using its stored credentials @Tags
+    connections @Security ApiKeyAuth @Accept json @Produce json
+    @Param workspace_slug path string true "Workspace slug" @Param
+    connection_slug path string true "Connection ID" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.ConnectorConfigurationValidationResult}
+    "Connection tested successfully" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse
+    "Connection not found" @Failure 500 {object}
+    irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection_slug}/test [post]
+
 func (api *APIControllers) TransferConnectionOwnership(c fiber.Ctx) error
     TransferConnectionOwnership godoc @Summary Transfer connection
     ownership @Description Transfer ownership of a connection to another

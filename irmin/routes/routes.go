@@ -318,6 +318,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.ConnectionSchema,
 	)
+	connection.Post(
+		"/test",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.TestConnection,
+	)
 
 	// Editor routes
 	editor := workspace.Group("/editor")

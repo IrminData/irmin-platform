@@ -83,7 +83,7 @@ func (api *APIServices) GetInviteByID(
 
 // ListInvitesToWorkspace lists all invites to a workspace.
 //
-//nolint:dupl // This is not a duplicate, it's a different service, which functions in a similar way to other services.
+
 func (api *APIServices) ListInvitesToWorkspace(
 	c context.Context,
 	workspace *db.Workspace,

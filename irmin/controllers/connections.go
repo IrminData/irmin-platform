@@ -407,3 +407,43 @@ func (api *APIControllers) ConnectionSchema(c fiber.Ctx) error {
 		Data: schema,
 	})
 }
+
+// TestConnection godoc
+// @Summary Test connection
+// @Description Test an existing connection using its stored credentials
+// @Tags connections
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param workspace_slug path string true "Workspace slug"
+// @Param connection_slug path string true "Connection ID"
+// @Success 200 {object} irminmodels.IrminAPIResponse{data=irminmodels.ConnectorConfigurationValidationResult} "Connection tested successfully"
+// @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Connection not found"
+// @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
+// @Router /workspaces/{workspace_slug}/connections/{connection_slug}/test [post]
+func (api *APIControllers) TestConnection(c fiber.Ctx) error {
+	locale, localeOk := c.Locals("locale").(string)
+	dict, dictOk := c.Locals("dict").(locales.Dictionary)
+	user, userOk := c.Locals("user").(*db.User)
+	workspace, workspaceOk := c.Locals("workspace").(*db.Workspace)
+	connection, connectionOk := c.Locals("connection").(*db.Connection)
+	if !localeOk || !dictOk || !userOk || !workspaceOk || !connectionOk {
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
+	}
+
+	// Test the connection
+	result, err := api.Services.TestConnection(c, locale, user, workspace, connection)
+	if err != nil {
+		api.Logger.Error("Error testing connection", "error", err)
+		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{
+			Errors: []string{api.lm.T(dict, "error_occurred")},
+		})
+	}
+
+	// Return the response.
+	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
+		Message: api.lm.T(dict, "connection_tested"),
+		Data:    result,
+	})
+}

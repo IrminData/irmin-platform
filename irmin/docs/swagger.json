@@ -2127,6 +2127,80 @@
                 }
             }
         },
+        "/workspaces/{workspace_slug}/connections/{connection_slug}/test": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Test an existing connection using its stored credentials",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connections"
+                ],
+                "summary": "Test connection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Connection tested successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ConnectorConfigurationValidationResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/connections/{connection_slug}/transfer-ownership": {
             "post": {
                 "security": [
@@ -11380,6 +11454,42 @@
                 "ConnectorCategoryMonitoring",
                 "ConnectorCategoryOther"
             ]
+        },
+        "irminmodels.ConnectorConfigurationValidationResult": {
+            "type": "object",
+            "properties": {
+                "can_connect": {
+                    "description": "Indicates if the connector can connect to the external system",
+                    "type": "boolean",
+                    "example": true
+                },
+                "connection_details_valid": {
+                    "description": "Indicates if the connection details are valid",
+                    "type": "boolean",
+                    "example": true
+                },
+                "connection_settings_valid": {
+                    "description": "Indicates if the connection settings are valid",
+                    "type": "boolean",
+                    "example": true
+                },
+                "errors": {
+                    "description": "(Optional) Array of validation errors",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "Invalid host address",
+                        "Authentication failed"
+                    ]
+                },
+                "ok": {
+                    "description": "Indicates if the configuration is valid",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
         },
         "irminmodels.CustomFieldValues": {
             "type": "object",

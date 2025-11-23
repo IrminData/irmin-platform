@@ -380,7 +380,6 @@ func (api *APIServices) GetConnection(
 	workspace *db.Workspace,
 	connectionSqid string,
 ) (*db.Connection, error)
-    GetConnection gets a connection by its SQID.
 
 func (api *APIServices) GetConnectionSchema(
 	ctx context.Context,
@@ -566,7 +565,6 @@ func (api *APIServices) GetWorkflow(
 	workspace *db.Workspace,
 	workflowSqid string,
 ) (*db.Workflow, error)
-    GetWorkflow gets a workflow by its SQID.
 
 func (api *APIServices) GetWorkflowRun(
 	c context.Context,
@@ -633,7 +631,6 @@ func (api *APIServices) ListConnections(
 	user *db.User,
 	workspace *db.Workspace,
 ) ([]db.Connection, error)
-    ListConnections lists all connections in a workspace available to the user.
 
 func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error)
 
@@ -654,7 +651,6 @@ func (api *APIServices) ListInvitesToWorkspace(
 	workspace *db.Workspace,
 	user *db.User,
 ) ([]db.Invite, error)
-    ListInvitesToWorkspace lists all invites to a workspace.
 
 func (api *APIServices) ListLogEventsForWorkspace(
 	c context.Context,
@@ -858,6 +854,15 @@ func (api *APIServices) SyncUserWithClerkAndNovu(
     SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu with
     per-user locking and persists in DB. This function should only be called
     from background goroutines, never from the main auth path.
+
+func (api *APIServices) TestConnection(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	connection *db.Connection,
+) (*irminmodels.ConnectorConfigurationValidationResult, error)
+    TestConnection tests an existing connection using its stored credentials.
 
 func (api *APIServices) TransferConnectionOwnership(
 	c context.Context,

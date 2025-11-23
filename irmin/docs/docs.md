@@ -920,6 +920,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) SwaggerUI\(c fiber.Ctx\) error](<#APIControllers.SwaggerUI>)
   - [func \(api \*APIControllers\) SystemSandboxHealth\(c fiber.Ctx\) error](<#APIControllers.SystemSandboxHealth>)
   - [func \(api \*APIControllers\) SystemWebhook\(c fiber.Ctx\) error](<#APIControllers.SystemWebhook>)
+  - [func \(api \*APIControllers\) TestConnection\(c fiber.Ctx\) error](<#APIControllers.TestConnection>)
   - [func \(api \*APIControllers\) TransferConnectionOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferConnectionOwnership>)
   - [func \(api \*APIControllers\) TransferQueryOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferQueryOwnership>)
   - [func \(api \*APIControllers\) TransferRepositoryOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferRepositoryOwnership>)
@@ -1810,6 +1811,15 @@ func (api *APIControllers) SystemWebhook(c fiber.Ctx) error
 ```
 
 SystemWebhook godoc @Summary System webhook endpoint @Description Handle webhook events from internal services \(LakeFS, orchestrator dispatch events\) @Tags system @Security SystemTokenAuth @Accept json @Produce json @Param type query string true "Webhook type \(lakefs, dispatch\)" @Param body body object true "Webhook payload \(varies by type\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Webhook processed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid webhook type or payload" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid system authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /system/webhook \[post\]
+
+<a name="APIControllers.TestConnection"></a>
+### func \(\*APIControllers\) TestConnection
+
+```go
+func (api *APIControllers) TestConnection(c fiber.Ctx) error
+```
+
+TestConnection godoc @Summary Test connection @Description Test an existing connection using its stored credentials @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ConnectorConfigurationValidationResult\} "Connection tested successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/test \[post\]
 
 <a name="APIControllers.TransferConnectionOwnership"></a>
 ### func \(\*APIControllers\) TransferConnectionOwnership
@@ -9711,6 +9721,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) SendInvite\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.SendInviteRequest\) \(\*InviteTransactionResult, error\)](<#APIServices.SendInvite>)
   - [func \(api \*APIServices\) StartWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.StartWorkflow>)
   - [func \(api \*APIServices\) SyncUserWithClerkAndNovu\(c context.Context, irminUser \*db.User, clerkID, locale string\) \(\*db.User, error\)](<#APIServices.SyncUserWithClerkAndNovu>)
+  - [func \(api \*APIServices\) TestConnection\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection\) \(\*irminmodels.ConnectorConfigurationValidationResult, error\)](<#APIServices.TestConnection>)
   - [func \(api \*APIServices\) TransferConnectionOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.TransferConnectionOwnershipRequest\) \(\*db.Connection, error\)](<#APIServices.TransferConnectionOwnership>)
   - [func \(api \*APIServices\) TransferQueryOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery, req irmincore.TransferQueryOwnershipRequest\) \(\*db.StoredQuery, error\)](<#APIServices.TransferQueryOwnership>)
   - [func \(api \*APIServices\) TransferRepositoryOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.TransferRepositoryOwnershipRequest\) \(\*db.Repository, error\)](<#APIServices.TransferRepositoryOwnership>)
@@ -10204,7 +10215,7 @@ GenerateSchemaFromUploadedFile generates a schema for an uploaded file.
 func (api *APIServices) GetConnection(c context.Context, user *db.User, workspace *db.Workspace, connectionSqid string) (*db.Connection, error)
 ```
 
-GetConnection gets a connection by its SQID.
+
 
 <a name="APIServices.GetConnectionSchema"></a>
 ### func \(\*APIServices\) GetConnectionSchema
@@ -10411,7 +10422,7 @@ func (api *APIServices) GetRepositoryUncommittedChanges(c context.Context, local
 func (api *APIServices) GetWorkflow(c context.Context, user *db.User, workspace *db.Workspace, workflowSqid string) (*db.Workflow, error)
 ```
 
-GetWorkflow gets a workflow by its SQID.
+
 
 <a name="APIServices.GetWorkflowRun"></a>
 ### func \(\*APIServices\) GetWorkflowRun
@@ -10510,7 +10521,7 @@ func (api *APIServices) ListAllWorkflowRuns(c context.Context, user *db.User, wo
 func (api *APIServices) ListConnections(c context.Context, user *db.User, workspace *db.Workspace) ([]db.Connection, error)
 ```
 
-ListConnections lists all connections in a workspace available to the user.
+
 
 <a name="APIServices.ListConnectors"></a>
 ### func \(\*APIServices\) ListConnectors
@@ -10546,7 +10557,7 @@ func (api *APIServices) ListInvitesForUser(c context.Context, user *db.User) ([]
 func (api *APIServices) ListInvitesToWorkspace(c context.Context, workspace *db.Workspace, user *db.User) ([]db.Invite, error)
 ```
 
-ListInvitesToWorkspace lists all invites to a workspace.
+
 
 <a name="APIServices.ListLogEventsForWorkspace"></a>
 ### func \(\*APIServices\) ListLogEventsForWorkspace
@@ -10799,6 +10810,15 @@ func (api *APIServices) SyncUserWithClerkAndNovu(c context.Context, irminUser *d
 ```
 
 SyncUserWithClerkAndNovu synchronizes user data with Clerk and Novu with per\-user locking and persists in DB. This function should only be called from background goroutines, never from the main auth path.
+
+<a name="APIServices.TestConnection"></a>
+### func \(\*APIServices\) TestConnection
+
+```go
+func (api *APIServices) TestConnection(c context.Context, locale string, user *db.User, workspace *db.Workspace, connection *db.Connection) (*irminmodels.ConnectorConfigurationValidationResult, error)
+```
+
+TestConnection tests an existing connection using its stored credentials.
 
 <a name="APIServices.TransferConnectionOwnership"></a>
 ### func \(\*APIServices\) TransferConnectionOwnership

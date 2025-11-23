@@ -16,7 +16,7 @@ import (
 
 // GetWorkflow gets a workflow by its SQID.
 //
-//nolint:dupl // This is not a duplicate, it's a different service, which functions in a similar way to other services.
+
 func (api *APIServices) GetWorkflow(
 	c context.Context,
 	user *db.User,

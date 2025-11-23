@@ -28,6 +28,7 @@
   "connection_deleted": "Connection deleted",
   "connection_updated": "Connection updated",
   "connection_ownership_transferred": "Connection ownership transferred",
+  "connection_tested": "Connection tested successfully",
   "cannot_remove_owner_from_workspace": "Cannot remove the owner from the workspace",
   "cannot_remove_self_from_workspace": "Cannot remove self from the workspace",
   "member_removed_from_workspace": "Member removed from the workspace",

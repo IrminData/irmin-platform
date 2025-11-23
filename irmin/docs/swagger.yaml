@@ -1001,6 +1001,33 @@ definitions:
     - ConnectorCategoryIoT
     - ConnectorCategoryMonitoring
     - ConnectorCategoryOther
+  irminmodels.ConnectorConfigurationValidationResult:
+    properties:
+      can_connect:
+        description: Indicates if the connector can connect to the external system
+        example: true
+        type: boolean
+      connection_details_valid:
+        description: Indicates if the connection details are valid
+        example: true
+        type: boolean
+      connection_settings_valid:
+        description: Indicates if the connection settings are valid
+        example: true
+        type: boolean
+      errors:
+        description: (Optional) Array of validation errors
+        example:
+        - Invalid host address
+        - Authentication failed
+        items:
+          type: string
+        type: array
+      ok:
+        description: Indicates if the configuration is valid
+        example: true
+        type: boolean
+    type: object
   irminmodels.CustomFieldValues:
     additionalProperties:
       type: string
@@ -3910,6 +3937,51 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get connection schema
+      tags:
+      - connections
+  /workspaces/{workspace_slug}/connections/{connection_slug}/test:
+    post:
+      consumes:
+      - application/json
+      description: Test an existing connection using its stored credentials
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Connection tested successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ConnectorConfigurationValidationResult'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Test connection
       tags:
       - connections
   /workspaces/{workspace_slug}/connections/{connection_slug}/transfer-ownership:

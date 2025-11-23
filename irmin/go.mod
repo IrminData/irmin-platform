@@ -3,7 +3,7 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20251121213149-a9b942671842
+	github.com/IrminData/irmin-sdk-go v0.0.0-20251123120746-821b398cf2c9
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.92.0
 	github.com/clerk/clerk-sdk-go/v2 v2.5.0
 	github.com/gofiber/fiber/v3 v3.0.0-rc.3
