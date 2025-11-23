@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 
+import ConnectionConfigTable from '@/components/connection/ConnectionConfigTable';
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import SafeComponent from '@/components/ui/error/SafeComponent';
@@ -110,36 +111,18 @@ const ConnectionSection = () => {
     >
       <div className='relative container mx-auto max-w-7xl'>
         <div className='flex flex-col gap-4 px-4 pb-4'>
-          <div
-            className={`
-              flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4
-              rounded-lg bg-background p-4 text-sm text-foreground
-              lg:text-lg
-            `}
-          >
+          <div className='flex flex-col gap-4'>
             <ConnectorInfoSmall connector={connection.connector} />
-            <hr
-              className={`
-                w-full border-b
-                dark:border-gray-800
-              `}
+            <ConnectionConfigTable
+              title={dict.connections.config.details}
+              data={connection.details}
             />
-            {Object.entries(connection.details).map(([key, value]) => (
-              <div className='flex flex-col gap-1' key={`details-${key}`}>
-                <p className='text-sm opacity-60'>{key}</p>
-                <p className='text-base'>
-                  {value === 'SECRET' ? '********' : `${value ?? '-'}`}
-                </p>
-              </div>
-            ))}
-            {Object.entries(connection.settings).map(([key, value]) => (
-              <div className='flex flex-col gap-1' key={`settings-${key}`}>
-                <p className='text-sm opacity-60'>{key}</p>
-                <p className='text-base'>
-                  {value === 'SECRET' ? '********' : `${value ?? '-'}`}
-                </p>
-              </div>
-            ))}
+            {Object.keys(connection.settings).length > 0 && (
+              <ConnectionConfigTable
+                title={dict.connections.config.settings}
+                data={connection.settings}
+              />
+            )}
           </div>
           {canViewWorkflows && (
             <WorkflowList

@@ -408,6 +408,12 @@ const en = {
       contactSupport: 'Contact support',
       requiredFieldsMissing: 'Required fields are missing',
     },
+
+    config: {
+      details: 'Connection Details',
+      settings: 'Connection Settings',
+      cannotCopySecret: 'Cannot copy secret value',
+    },
   },
 
   connectors: {

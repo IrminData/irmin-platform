@@ -399,6 +399,12 @@ const fi = {
       contactSupport: 'Ota yhteyttä tukeen',
       requiredFieldsMissing: 'Pakollisia kenttiä puuttuu',
     },
+
+    config: {
+      details: 'Yhteyden tiedot',
+      settings: 'Yhteyden asetukset',
+      cannotCopySecret: 'Ei voi kopioida salattua arvoa',
+    },
   },
 
   connectors: {
