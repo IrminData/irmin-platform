@@ -6,7 +6,7 @@ import (
 
 // WorkspaceTagMiddleware verifies that the user has access to the tag they are trying to access.
 func (api *APIMiddlewares) WorkspaceTagMiddleware(c fiber.Ctx) error {
-	err := resourceMiddleware(api, c, "workspace-tag", "tags", api.DB.GetTagWithAssets)
+	err := resourceMiddleware(api, c, "tag_id", "tags", api.DB.GetTagWithAssets)
 	if err != nil {
 		api.Logger.Error("WorkspaceTagMiddleware failed", "error", err)
 	}

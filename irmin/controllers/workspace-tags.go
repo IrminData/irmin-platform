@@ -140,7 +140,7 @@ func (api *APIControllers) WorkspaceTagsShow(c fiber.Ctx) error {
 	}
 
 	// Get the tag from locals
-	tagWithAssets, tagOk := c.Locals("workspace-tag").(*db.TagWithAssets)
+	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
 		api.Logger.Error("Error getting locals for TagsShow")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
@@ -189,7 +189,7 @@ func (api *APIControllers) WorkspaceTagsUpdate(c fiber.Ctx) error {
 	}
 
 	// Get the tag from locals
-	tagWithAssets, tagOk := c.Locals("workspace-tag").(*db.TagWithAssets)
+	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
 		api.Logger.Error("Error getting locals for TagsUpdate")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
@@ -265,7 +265,7 @@ func (api *APIControllers) WorkspaceTagsDestroy(c fiber.Ctx) error {
 	}
 
 	// Get the tag from locals
-	tagWithAssets, tagOk := c.Locals("workspace-tag").(*db.TagWithAssets)
+	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
 		api.Logger.Error("Error getting locals for TagsDestroy")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
@@ -322,7 +322,7 @@ func (api *APIControllers) WorkspaceAddTagToEntity(c fiber.Ctx) error {
 	}
 
 	// Get the tag from locals
-	tagWithAssets, tagOk := c.Locals("workspace-tag").(*db.TagWithAssets)
+	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
 		api.Logger.Error("Error getting locals for AddTagToEntity")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
@@ -391,7 +391,7 @@ func (api *APIControllers) WorkspaceRemoveTagFromEntity(c fiber.Ctx) error {
 	}
 
 	// Get the tag from locals
-	tagWithAssets, tagOk := c.Locals("workspace-tag").(*db.TagWithAssets)
+	tagWithAssets, tagOk := c.Locals("tag_id").(*db.TagWithAssets)
 	if !tagOk {
 		api.Logger.Error("Error getting locals for RemoveTagFromEntity")
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})

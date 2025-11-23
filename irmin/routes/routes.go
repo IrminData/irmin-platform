@@ -173,7 +173,7 @@ func RegisterAPIRoutes(
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionCreate),
 		apiControllers.WorkspaceTagsStore,
 	)
-	workspaceTag := workspace.Group("/tags/:workspace-tag", apiMiddlewares.WorkspaceTagMiddleware)
+	workspaceTag := workspace.Group("/tags/:tag_id", apiMiddlewares.WorkspaceTagMiddleware)
 	workspaceTag.Get(
 		"/",
 		apiMiddlewares.WorkspaceTagPermissionMiddleware(db.PolicyActionRead),

@@ -308,7 +308,7 @@ func (api *APIMiddlewares) WorkspaceTagPermissionMiddleware(action db.PolicyActi
 		db.PolicyResourceWorkspaceTag,
 		action,
 		func(c fiber.Ctx) *uint {
-			tagWithAssets, tagWithAssetsOk := c.Locals("workspace-tag").(*db.TagWithAssets)
+			tagWithAssets, tagWithAssetsOk := c.Locals("tag_id").(*db.TagWithAssets)
 			if !tagWithAssetsOk {
 				// For create operations, there's no tag in context yet, so return nil
 				// This will check workspace-level permissions instead of specific tag permissions
