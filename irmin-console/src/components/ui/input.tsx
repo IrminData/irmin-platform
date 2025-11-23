@@ -29,6 +29,11 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
     const combinedClasses = cn(baseClasses, className, icon ? 'min-w-32' : '');
 
     if (longtext) {
+      // Textarea doesn't support type attribute, so we need to handle password masking separately
+      const isPassword = type === 'password';
+      const textareaProps =
+        props as TextareaHTMLAttributes<HTMLTextAreaElement>;
+
       return (
         <div className={combinedClasses}>
           {icon && <span className='absolute left-3 text-sm'>{icon}</span>}
@@ -40,9 +45,14 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
               `,
               icon ? 'pl-10' : 'pl-3'
             )}
+            style={
+              isPassword
+                ? ({ WebkitTextSecurity: 'disc' } as React.CSSProperties)
+                : undefined
+            }
             ref={ref as Ref<HTMLTextAreaElement>}
             rows={longtext.rows}
-            {...(props as TextareaHTMLAttributes<HTMLTextAreaElement>)}
+            {...textareaProps}
           />
           {loading && (
             <div className='absolute right-3'>

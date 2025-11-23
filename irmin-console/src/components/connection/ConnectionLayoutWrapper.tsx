@@ -26,7 +26,6 @@ import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 import { useConnectionContext } from '@/context/ConnectionContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useConnectionConfiguration } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 /**
@@ -40,16 +39,12 @@ export default function ConnectionLayoutWrapper({
   const pathname = usePathname();
   const router = useRouter();
   const { dict } = useLocale();
-  const { connectionID, connectionQuery } = useConnectionContext();
+  const { connectionID, connectionQuery, testConnectionMutation } =
+    useConnectionContext();
   const { isResourceAllowed, loading: isResourceAllowedLoading } =
     useResourceAllowed();
 
   const connection = connectionQuery.data?.data;
-
-  const { validateConnectorConfigurationMutation } = useConnectionConfiguration(
-    'details',
-    connection?.connector.id
-  );
 
   // The base URL for the connection, eg. /en/workspace/workspace-slug/connections/connection-id
   const baseUrl = useBaseUrl({
@@ -225,13 +220,8 @@ export default function ConnectionLayoutWrapper({
             <Button
               variant='outline'
               size='sm'
-              onClick={() =>
-                validateConnectorConfigurationMutation.mutate({
-                  details: connection.details,
-                  settings: connection.settings,
-                })
-              }
-              loading={validateConnectorConfigurationMutation.isPending}
+              onClick={() => testConnectionMutation.mutate()}
+              loading={testConnectionMutation.isPending}
               icon={<TbActivity size={16} />}
             >
               {dict.connections.testConnection}

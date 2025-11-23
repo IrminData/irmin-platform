@@ -52,6 +52,32 @@ function DynamicFormField(
 
   // Render the appropriate input type based on the field's type
   const renderField = useCallback(() => {
+    // Handle secret text areas separately to ensure they are rendered as such
+    if (field.secret && field.type === 'textarea') {
+      return (
+        <Input
+          type='password'
+          longtext={{ rows: 3 }}
+          placeholder={field.example}
+          ref={ref}
+          disabled={disabled}
+          {...fieldProps}
+        />
+      );
+    }
+
+    if (field.secret) {
+      return (
+        <Input
+          type='password'
+          placeholder={field.example}
+          ref={ref}
+          disabled={disabled}
+          {...fieldProps}
+        />
+      );
+    }
+
     switch (field.type) {
       case 'integer':
       case 'float':
@@ -207,7 +233,7 @@ function DynamicFormField(
   }, [field, fieldProps, options, disabled, ref]);
 
   return (
-    <div id='dynamic-form-field' className='mb-2 flex flex-col gap-1'>
+    <div id='dynamic-form-field' className='mb-2 flex flex-col gap-2'>
       {field.type !== 'checkbox' && (
         <Label>
           {field.label}

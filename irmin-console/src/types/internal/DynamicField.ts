@@ -30,6 +30,7 @@ export interface DynamicField {
   help_text?: string;
   example?: string; // Example value, used as placeholder
   default?: FieldValue | FieldValue[]; // Default value
+  secret?: boolean;
   required?: boolean;
   required_with?: string[];
 }

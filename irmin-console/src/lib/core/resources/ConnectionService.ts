@@ -4,6 +4,7 @@ import type {
   Connection,
   ConnectionFieldValues,
 } from '@/types/core/Connection';
+import type { ConnectorConfigurationValidationResult } from '@/types/core/Connector';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 
@@ -62,6 +63,7 @@ class ConnectionService {
     this.transferConnection = this.transferConnection.bind(this);
     this.deleteConnection = this.deleteConnection.bind(this);
     this.fetchConnectionSchema = this.fetchConnectionSchema.bind(this);
+    this.testConnection = this.testConnection.bind(this);
   }
 
   /**
@@ -341,6 +343,33 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Fetch connection schema error');
+      throw error;
+    }
+  }
+
+  /**
+   * Test an existing connection using its stored credentials.
+   *
+   * @param props - The parameters.
+   * @param props.workspace - The workspace slug.
+   * @param props.connectionID - The connection's identifier.
+   * @returns IrminAPIResponse containing the validation result.
+   */
+  async testConnection({
+    workspace,
+    connectionID,
+  }: {
+    workspace: string;
+    connectionID: string;
+  }): Promise<IrminAPIResponse<ConnectorConfigurationValidationResult>> {
+    try {
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/connections/${connectionID}/test`,
+        { method: 'POST' }
+      )) as IrminAPIResponse<ConnectorConfigurationValidationResult>;
+      return response;
+    } catch (error) {
+      console.error((error as Error).message, 'Test connection error');
       throw error;
     }
   }

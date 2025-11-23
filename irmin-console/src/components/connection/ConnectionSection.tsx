@@ -127,13 +127,17 @@ const ConnectionSection = () => {
             {Object.entries(connection.details).map(([key, value]) => (
               <div className='flex flex-col gap-1' key={`details-${key}`}>
                 <p className='text-sm opacity-60'>{key}</p>
-                <p className='text-base'>{`${value ?? '-'}`}</p>
+                <p className='text-base'>
+                  {value === 'SECRET' ? '********' : `${value ?? '-'}`}
+                </p>
               </div>
             ))}
             {Object.entries(connection.settings).map(([key, value]) => (
               <div className='flex flex-col gap-1' key={`settings-${key}`}>
                 <p className='text-sm opacity-60'>{key}</p>
-                <p className='text-base'>{`${value ?? '-'}`}</p>
+                <p className='text-base'>
+                  {value === 'SECRET' ? '********' : `${value ?? '-'}`}
+                </p>
               </div>
             ))}
           </div>

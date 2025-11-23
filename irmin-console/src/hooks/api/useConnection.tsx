@@ -11,6 +11,7 @@ import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { Connection } from '@/types/core/Connection';
+import type { ConnectorConfigurationValidationResult } from '@/types/core/Connector';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
 import {
@@ -306,6 +307,34 @@ export function useConnection(connectionID: string) {
     },
   });
 
+  // Mutation for testing a connection
+  const testConnectionMutation = useMutation<
+    IrminAPIResponse<ConnectorConfigurationValidationResult>,
+    Error
+  >({
+    mutationFn: async () => {
+      if (!connectionID) throw new Error('Connection ID is required');
+      const token = await getToken();
+      const core = new IrminCore(locale, token);
+      return await core.connectionService.testConnection({
+        workspace: workspaceSlug,
+        connectionID,
+      });
+    },
+    onSuccess: (res) => {
+      if (res.data?.ok) {
+        irminAlert('success', res.message ?? 'Connection tested successfully');
+      } else {
+        const errorMessage =
+          res.data?.errors?.join(', ') ?? 'Connection test failed';
+        irminAlert('error', errorMessage);
+      }
+    },
+    onError: (error) => {
+      irminAlert('error', error.message ?? 'Error testing connection');
+    },
+  });
+
   return {
     // Queries
     connectionQuery,
@@ -315,6 +344,7 @@ export function useConnection(connectionID: string) {
     updateConnectionMutation,
     updateConnectionConfigurationMutation,
     transferConnectionMutation,
+    testConnectionMutation,
 
     // Handlers
     handleDeleteConnection,
