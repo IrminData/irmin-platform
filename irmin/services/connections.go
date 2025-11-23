@@ -16,8 +16,6 @@ import (
 const secretPlaceholder = "SECRET"
 
 // GetConnection gets a connection by its SQID.
-//
-
 func (api *APIServices) GetConnection(
 	c context.Context,
 	user *db.User,
@@ -56,14 +54,12 @@ func (api *APIServices) GetConnection(
 	}
 
 	// Mask secrets
-	api.maskConnectionSecrets(c, connection)
+	api.MaskConnectionSecrets(c, connection)
 
 	return connection, nil
 }
 
 // ListConnections lists all connections in a workspace available to the user.
-//
-
 func (api *APIServices) ListConnections(
 	c context.Context,
 	user *db.User,
@@ -120,14 +116,12 @@ func (api *APIServices) ListConnections(
 	for i := range filteredConnections {
 		connectionsPtrs[i] = &filteredConnections[i]
 	}
-	api.maskConnectionSecrets(c, connectionsPtrs...)
+	api.MaskConnectionSecrets(c, connectionsPtrs...)
 
 	return filteredConnections, nil
 }
 
 // CreateConnection creates a new connection in a workspace.
-//
-
 func (api *APIServices) CreateConnection(
 	c context.Context,
 	user *db.User,
@@ -218,7 +212,7 @@ func (api *APIServices) CreateConnection(
 	})
 
 	// Mask secrets
-	api.maskConnectionSecrets(c, connection)
+	api.MaskConnectionSecrets(c, connection)
 
 	return connection, nil
 }
@@ -287,7 +281,7 @@ func (api *APIServices) UpdateConnection(
 	connection = refreshedConnection
 
 	// Mask secrets
-	api.maskConnectionSecrets(c, connection)
+	api.MaskConnectionSecrets(c, connection)
 
 	return connection, nil
 }
@@ -412,8 +406,6 @@ func (api *APIServices) DeleteConnection(
 }
 
 // TransferConnectionOwnership transfers the ownership of a connection to a new user.
-//
-
 func (api *APIServices) TransferConnectionOwnership(
 	c context.Context,
 	user *db.User,
@@ -493,7 +485,7 @@ func (api *APIServices) TransferConnectionOwnership(
 	})
 
 	// Mask secrets
-	api.maskConnectionSecrets(c, connection)
+	api.MaskConnectionSecrets(c, connection)
 
 	return connection, nil
 }
@@ -529,7 +521,8 @@ func (api *APIServices) addConnectionTags(
 	return nil
 }
 
-func (api *APIServices) maskConnectionSecrets(c context.Context, connections ...*db.Connection) {
+// MaskConnectionSecrets masks secret fields in connection details and settings based on connector schema.
+func (api *APIServices) MaskConnectionSecrets(c context.Context, connections ...*db.Connection) {
 	// 1. Identify unique connectors and fetch any that aren't preloaded
 	connectorMap := make(map[uint]*db.Connector)
 	for _, conn := range connections {

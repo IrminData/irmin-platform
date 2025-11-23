@@ -9706,6 +9706,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListWorkspaceTags\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Tag, error\)](<#APIServices.ListWorkspaceTags>)
   - [func \(api \*APIServices\) ListWorkspaceUsers\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.WorkspaceUser, error\)](<#APIServices.ListWorkspaceUsers>)
   - [func \(api \*APIServices\) ListWorkspaces\(user \*db.User\) \(\[\]db.Workspace, error\)](<#APIServices.ListWorkspaces>)
+  - [func \(api \*APIServices\) MaskConnectionSecrets\(c context.Context, connections ...\*db.Connection\)](<#APIServices.MaskConnectionSecrets>)
   - [func \(api \*APIServices\) MergeRepositoryRefs\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.MergeRefsRequest\) \(\*irminmodels.Commit, error\)](<#APIServices.MergeRepositoryRefs>)
   - [func \(api \*APIServices\) MoveEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, sourcePath string, destinationPath string\) \(\*irminmodels.EditorItem, error\)](<#APIServices.MoveEditorItem>)
   - [func \(api \*APIServices\) MoveRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, req irmincore.MoveObjectRequest\) \(\*db.RepositoryObject, error\)](<#APIServices.MoveRepositoryObject>)
@@ -9945,7 +9946,7 @@ func (api *APIServices) CreateAPIToken(c context.Context, user *db.User, req irm
 func (api *APIServices) CreateConnection(c context.Context, user *db.User, workspace *db.Workspace, req irmincore.CreateConnectionRequest) (*db.Connection, error)
 ```
 
-
+CreateConnection creates a new connection in a workspace.
 
 <a name="APIServices.CreateConnector"></a>
 ### func \(\*APIServices\) CreateConnector
@@ -10098,7 +10099,7 @@ func (api *APIServices) DeleteEditorItem(c context.Context, user *db.User, works
 func (api *APIServices) DeleteInvite(c context.Context, user *db.User, invite *db.Invite) error
 ```
 
-
+DeleteInvite deletes an invite.
 
 <a name="APIServices.DeletePolicy"></a>
 ### func \(\*APIServices\) DeletePolicy
@@ -10215,7 +10216,7 @@ GenerateSchemaFromUploadedFile generates a schema for an uploaded file.
 func (api *APIServices) GetConnection(c context.Context, user *db.User, workspace *db.Workspace, connectionSqid string) (*db.Connection, error)
 ```
 
-
+GetConnection gets a connection by its SQID.
 
 <a name="APIServices.GetConnectionSchema"></a>
 ### func \(\*APIServices\) GetConnectionSchema
@@ -10422,7 +10423,7 @@ func (api *APIServices) GetRepositoryUncommittedChanges(c context.Context, local
 func (api *APIServices) GetWorkflow(c context.Context, user *db.User, workspace *db.Workspace, workflowSqid string) (*db.Workflow, error)
 ```
 
-
+GetWorkflow gets a workflow by its SQID.
 
 <a name="APIServices.GetWorkflowRun"></a>
 ### func \(\*APIServices\) GetWorkflowRun
@@ -10521,7 +10522,7 @@ func (api *APIServices) ListAllWorkflowRuns(c context.Context, user *db.User, wo
 func (api *APIServices) ListConnections(c context.Context, user *db.User, workspace *db.Workspace) ([]db.Connection, error)
 ```
 
-
+ListConnections lists all connections in a workspace available to the user.
 
 <a name="APIServices.ListConnectors"></a>
 ### func \(\*APIServices\) ListConnectors
@@ -10548,7 +10549,7 @@ func (api *APIServices) ListEditorItems(c context.Context, user *db.User, worksp
 func (api *APIServices) ListInvitesForUser(c context.Context, user *db.User) ([]db.Invite, error)
 ```
 
-
+ListInvitesForUser lists all invites for a user.
 
 <a name="APIServices.ListInvitesToWorkspace"></a>
 ### func \(\*APIServices\) ListInvitesToWorkspace
@@ -10557,7 +10558,7 @@ func (api *APIServices) ListInvitesForUser(c context.Context, user *db.User) ([]
 func (api *APIServices) ListInvitesToWorkspace(c context.Context, workspace *db.Workspace, user *db.User) ([]db.Invite, error)
 ```
 
-
+ListInvitesToWorkspace lists all invites to a workspace.
 
 <a name="APIServices.ListLogEventsForWorkspace"></a>
 ### func \(\*APIServices\) ListLogEventsForWorkspace
@@ -10676,6 +10677,15 @@ func (api *APIServices) ListWorkspaces(user *db.User) ([]db.Workspace, error)
 
 
 
+<a name="APIServices.MaskConnectionSecrets"></a>
+### func \(\*APIServices\) MaskConnectionSecrets
+
+```go
+func (api *APIServices) MaskConnectionSecrets(c context.Context, connections ...*db.Connection)
+```
+
+MaskConnectionSecrets masks secret fields in connection details and settings based on connector schema.
+
 <a name="APIServices.MergeRepositoryRefs"></a>
 ### func \(\*APIServices\) MergeRepositoryRefs
 
@@ -10791,7 +10801,7 @@ func (api *APIServices) SearchWorkspace(c context.Context, user *db.User, worksp
 func (api *APIServices) SendInvite(c context.Context, locale string, user *db.User, workspace *db.Workspace, req irmincore.SendInviteRequest) (*InviteTransactionResult, error)
 ```
 
-
+SendInvite sends an invite to a user.
 
 <a name="APIServices.StartWorkflow"></a>
 ### func \(\*APIServices\) StartWorkflow
@@ -10827,7 +10837,7 @@ TestConnection tests an existing connection using its stored credentials.
 func (api *APIServices) TransferConnectionOwnership(c context.Context, user *db.User, workspace *db.Workspace, connection *db.Connection, req irmincore.TransferConnectionOwnershipRequest) (*db.Connection, error)
 ```
 
-
+TransferConnectionOwnership transfers the ownership of a connection to a new user.
 
 <a name="APIServices.TransferQueryOwnership"></a>
 ### func \(\*APIServices\) TransferQueryOwnership
@@ -10890,7 +10900,7 @@ func (api *APIServices) UpdateConnector(c context.Context, locale string, isSyst
 func (api *APIServices) UpdateInvite(c context.Context, user *db.User, invite *db.Invite, req irmincore.UpdateInviteRequest) (*db.Invite, error)
 ```
 
-
+UpdateInvite updates an invite.
 
 <a name="APIServices.UpdatePolicy"></a>
 ### func \(\*APIServices\) UpdatePolicy

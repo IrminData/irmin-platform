@@ -176,6 +176,7 @@ func (api *APIServices) CreateConnection(
 	workspace *db.Workspace,
 	req irmincore.CreateConnectionRequest,
 ) (*db.Connection, error)
+    CreateConnection creates a new connection in a workspace.
 
 func (api *APIServices) CreateConnector(
 	c context.Context,
@@ -282,6 +283,7 @@ func (api *APIServices) DeleteEditorItem(
 ) error
 
 func (api *APIServices) DeleteInvite(c context.Context, user *db.User, invite *db.Invite) error
+    DeleteInvite deletes an invite.
 
 func (api *APIServices) DeletePolicy(
 	c context.Context,
@@ -380,6 +382,7 @@ func (api *APIServices) GetConnection(
 	workspace *db.Workspace,
 	connectionSqid string,
 ) (*db.Connection, error)
+    GetConnection gets a connection by its SQID.
 
 func (api *APIServices) GetConnectionSchema(
 	ctx context.Context,
@@ -565,6 +568,7 @@ func (api *APIServices) GetWorkflow(
 	workspace *db.Workspace,
 	workflowSqid string,
 ) (*db.Workflow, error)
+    GetWorkflow gets a workflow by its SQID.
 
 func (api *APIServices) GetWorkflowRun(
 	c context.Context,
@@ -631,6 +635,7 @@ func (api *APIServices) ListConnections(
 	user *db.User,
 	workspace *db.Workspace,
 ) ([]db.Connection, error)
+    ListConnections lists all connections in a workspace available to the user.
 
 func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error)
 
@@ -645,12 +650,14 @@ func (api *APIServices) ListInvitesForUser(
 	c context.Context,
 	user *db.User,
 ) ([]db.Invite, error)
+    ListInvitesForUser lists all invites for a user.
 
 func (api *APIServices) ListInvitesToWorkspace(
 	c context.Context,
 	workspace *db.Workspace,
 	user *db.User,
 ) ([]db.Invite, error)
+    ListInvitesToWorkspace lists all invites to a workspace.
 
 func (api *APIServices) ListLogEventsForWorkspace(
 	c context.Context,
@@ -743,6 +750,10 @@ func (api *APIServices) ListWorkspaceUsers(
 ) ([]db.WorkspaceUser, error)
 
 func (api *APIServices) ListWorkspaces(user *db.User) ([]db.Workspace, error)
+
+func (api *APIServices) MaskConnectionSecrets(c context.Context, connections ...*db.Connection)
+    MaskConnectionSecrets masks secret fields in connection details and settings
+    based on connector schema.
 
 func (api *APIServices) MergeRepositoryRefs(
 	c context.Context,
@@ -838,6 +849,7 @@ func (api *APIServices) SendInvite(
 	workspace *db.Workspace,
 	req irmincore.SendInviteRequest,
 ) (*InviteTransactionResult, error)
+    SendInvite sends an invite to a user.
 
 func (api *APIServices) StartWorkflow(
 	c context.Context,
@@ -871,6 +883,8 @@ func (api *APIServices) TransferConnectionOwnership(
 	connection *db.Connection,
 	req irmincore.TransferConnectionOwnershipRequest,
 ) (*db.Connection, error)
+    TransferConnectionOwnership transfers the ownership of a connection to a new
+    user.
 
 func (api *APIServices) TransferQueryOwnership(
 	c context.Context,
@@ -925,6 +939,7 @@ func (api *APIServices) UpdateInvite(
 	invite *db.Invite,
 	req irmincore.UpdateInviteRequest,
 ) (*db.Invite, error)
+    UpdateInvite updates an invite.
 
 func (api *APIServices) UpdatePolicy(
 	c context.Context,

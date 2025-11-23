@@ -147,6 +147,9 @@ func (api *APIControllers) ConnectionsShow(c fiber.Ctx) error {
 		return utils.WriteResponse(c, fiber.StatusInternalServerError, irminmodels.IrminAPIResponse{})
 	}
 
+	// Mask secrets
+	api.Services.MaskConnectionSecrets(c.Context(), connection)
+
 	// Format the connection response
 	connectionResponse, formatConnectionResponseErr := formatter.FormatConnectionResponse(connection, api.SQIDManager)
 	if formatConnectionResponseErr != nil {

@@ -15,8 +15,6 @@ import (
 )
 
 // GetWorkflow gets a workflow by its SQID.
-//
-
 func (api *APIServices) GetWorkflow(
 	c context.Context,
 	user *db.User,

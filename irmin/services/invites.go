@@ -82,8 +82,6 @@ func (api *APIServices) GetInviteByID(
 }
 
 // ListInvitesToWorkspace lists all invites to a workspace.
-//
-
 func (api *APIServices) ListInvitesToWorkspace(
 	c context.Context,
 	workspace *db.Workspace,
@@ -141,8 +139,6 @@ func (api *APIServices) ListInvitesToWorkspace(
 }
 
 // ListInvitesForUser lists all invites for a user.
-//
-
 func (api *APIServices) ListInvitesForUser(
 	c context.Context,
 	user *db.User,
@@ -288,8 +284,6 @@ func (api *APIServices) sendInviteInTransaction(
 }
 
 // SendInvite sends an invite to a user.
-//
-
 func (api *APIServices) SendInvite(
 	c context.Context,
 	locale string,
@@ -387,8 +381,6 @@ func (api *APIServices) SendInvite(
 }
 
 // UpdateInvite updates an invite.
-//
-
 func (api *APIServices) UpdateInvite(
 	c context.Context,
 	user *db.User,
@@ -493,8 +485,6 @@ func (api *APIServices) deleteInviteInTransaction(
 }
 
 // DeleteInvite deletes an invite.
-//
-
 func (api *APIServices) DeleteInvite(c context.Context, user *db.User, invite *db.Invite) error {
 	// Make sure this is allowed
 	isAllowed, err := api.PermissionService.IsAllowed(
