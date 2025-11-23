@@ -85,6 +85,7 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 			Label:    "Password",
 			HelpText: "Password for authentication (optional if using private key)",
 			Required: false,
+			Secret:   true,
 		},
 		"private_key": {
 			Type:     "textarea",
@@ -92,12 +93,14 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 			HelpText: "SSH private key content (optional if using password)",
 			Required: false,
 			Example:  "-----BEGIN OPENSSH PRIVATE KEY-----\n...",
+			Secret:   true,
 		},
 		"private_key_passphrase": {
 			Type:     "password",
 			Label:    "Private Key Passphrase",
 			HelpText: "Passphrase for encrypted private key",
 			Required: false,
+			Secret:   true,
 		},
 		"host_key_fingerprint": {
 			Type:     "text",

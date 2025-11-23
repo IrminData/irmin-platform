@@ -80,6 +80,7 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 			Label:    "Password",
 			Required: true,
 			HelpText: "The password for the specified PostgreSQL user.",
+			Secret:   true,
 		},
 		"default_db": {
 			Type:     "text",

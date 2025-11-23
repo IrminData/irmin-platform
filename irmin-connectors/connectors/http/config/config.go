@@ -72,6 +72,7 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 			Required: false,
 			HelpText: "HTTP headers to include with requests (JSON object).",
 			Example:  `{"Authorization": "Bearer token", "Content-Type": "application/json"}`,
+			Secret:   true,
 		},
 		"body": {
 			Type:     "textarea",

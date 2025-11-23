@@ -3656,6 +3656,10 @@ const docTemplate = `{
                         "field2"
                     ]
                 },
+                "secret": {
+                    "type": "boolean",
+                    "example": false
+                },
                 "type": {
                     "enum": [
                         "text",

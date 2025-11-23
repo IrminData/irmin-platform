@@ -297,6 +297,9 @@ definitions:
         items:
           type: string
         type: array
+      secret:
+        example: false
+        type: boolean
       type:
         allOf:
         - $ref: '#/definitions/irminmodels.FieldType'
