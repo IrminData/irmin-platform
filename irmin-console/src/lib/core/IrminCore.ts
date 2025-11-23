@@ -178,8 +178,16 @@ class IrminCore {
       try {
         // Clone response to safely parse JSON without consuming the original stream
         const errorData = await response.clone().json();
+        const parts: string[] = [];
         if (errorData?.errors && Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.join('\n');
+          parts.push(errorData.errors.join('\n'));
+        }
+        if (errorData?.message) {
+          parts.push(errorData.message);
+        }
+
+        if (parts.length > 0) {
+          errorMessage = parts.join('\n');
         }
       } catch (e) {
         // Ignore errors from parsing JSON
@@ -192,11 +200,20 @@ class IrminCore {
     const data = await response.json();
 
     // Fallback check if no allowedStatusCodes were provided
-    if (
-      !allowedStatusCodes &&
-      !response.ok &&
-      (!data.errors || !Array.isArray(data.errors))
-    ) {
+    if (!allowedStatusCodes && !response.ok) {
+      const parts: string[] = [];
+
+      if (data.errors && Array.isArray(data.errors)) {
+        parts.push(data.errors.join('\n'));
+      }
+      if (data.message) {
+        parts.push(data.message);
+      }
+
+      if (parts.length > 0) {
+        throw new Error(parts.join('\n'));
+      }
+
       throw new Error(
         `Irmin API fetch error: ${options.method ?? 'GET'} ${url}`
       );
