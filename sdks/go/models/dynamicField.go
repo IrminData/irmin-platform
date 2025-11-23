@@ -30,6 +30,7 @@ type DynamicField struct {
 	HelpText     string         `json:"help_text,omitempty"     validate:"max=200"                                                                                                 example:"This is a help text"`
 	Example      string         `json:"example,omitempty"       validate:"max=100"                                                                                                 example:"Example value"`
 	Default      string         `json:"default,omitempty"                                                                                                                          example:"Default value"`
+	Secret       bool           `json:"secret,omitempty"                                                                                                                           example:"false"`
 	Required     bool           `json:"required,omitempty"                                                                                                                         example:"true"`
 	RequiredWith []string       `json:"required_with,omitempty" validate:"dive"                                                                                                    example:"field1,field2"`
 }
