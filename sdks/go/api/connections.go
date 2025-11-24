@@ -29,6 +29,12 @@ type UpdateConnectionRequest struct {
 	Settings      map[string]any `json:"settings,omitempty"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
 }
 
+// UpdateConnectionConfigurationRequest represents the JSON request body for updating connection configuration.
+type UpdateConnectionConfigurationRequest struct {
+	Details  map[string]any `json:"details"`
+	Settings map[string]any `json:"settings"`
+}
+
 // TransferConnectionOwnershipRequest represents the JSON request body for transferring connection ownership.
 type TransferConnectionOwnershipRequest struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required,validsqid=users" example:"usr_2k8n9q1m7p3x4z"`
@@ -100,6 +106,24 @@ func (c *Client) UpdateConnection(
 	return &updatedConnection, apiResp, nil
 }
 
+func (c *Client) UpdateConnectionConfiguration(
+	ctx context.Context,
+	workspace, connectionID string,
+	req UpdateConnectionConfigurationRequest,
+) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
+	var updatedConnection irminmodels.Connection
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:      http.MethodPut,
+		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s/configuration", workspace, connectionID),
+		ContentType: "application/json",
+		Body:        req,
+	}, &updatedConnection)
+	if err != nil {
+		return nil, nil, fmt.Errorf("update connection configuration error: %w", err)
+	}
+	return &updatedConnection, apiResp, nil
+}
+
 // TransferConnection reassigns a connection to a new owner.
 func (c *Client) TransferConnection(
 	ctx context.Context,
@@ -155,4 +179,20 @@ func (c *Client) GetConnectionSchema(
 		return nil, nil, fmt.Errorf("fetch connection schema error: %w", err)
 	}
 	return &connectionSchema, apiResp, nil
+}
+
+// TestConnection tests the connection with the provided configuration.
+func (c *Client) TestConnection(
+	ctx context.Context,
+	workspace, connectionID string,
+) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error) {
+	var validationResult irminmodels.ConnectorConfigurationValidationResult
+	apiResp, err := c.FetchAPI(ctx, RequestOptions{
+		Method:   http.MethodPost,
+		Endpoint: fmt.Sprintf("/v1/workspaces/%s/connections/%s/test", workspace, connectionID),
+	}, &validationResult)
+	if err != nil {
+		return nil, nil, fmt.Errorf("test connection error: %w", err)
+	}
+	return &validationResult, apiResp, nil
 }
