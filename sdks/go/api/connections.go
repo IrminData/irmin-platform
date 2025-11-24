@@ -113,7 +113,7 @@ func (c *Client) UpdateConnectionConfiguration(
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error) {
 	var updatedConnection irminmodels.Connection
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
-		Method:      http.MethodPut,
+		Method:      http.MethodPatch,
 		Endpoint:    fmt.Sprintf("/v1/workspaces/%s/connections/%s/configuration", workspace, connectionID),
 		ContentType: "application/json",
 		Body:        req,
