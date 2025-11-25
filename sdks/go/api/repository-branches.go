@@ -17,8 +17,8 @@ type CreateBranchRequest struct {
 
 // UpdateBranchRequest represents the JSON request body for updating a branch.
 type UpdateBranchRequest struct {
-	Name        string `json:"name,omitempty"         example:"feature/add-customer-data"`
-	IsImmutable *bool  `json:"is_immutable,omitempty" example:"false"`
+	Name        *string `json:"name,omitempty"         example:"feature/add-customer-data"`
+	IsImmutable *bool   `json:"is_immutable,omitempty" example:"false"`
 }
 
 func (c *Client) ListBranches(

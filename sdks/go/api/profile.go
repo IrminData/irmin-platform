@@ -12,11 +12,11 @@ import (
 
 // UpdateProfileRequest represents the JSON request body for updating profile.
 type UpdateProfileRequest struct {
-	FirstName string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
-	LastName  string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
-	Email     string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
-	Phone     string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
-	Company   string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
+	FirstName *string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
+	LastName  *string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
+	Email     *string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
+	Phone     *string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
+	Company   *string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
 }
 
 func (c *Client) GetProfile(ctx context.Context) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
@@ -33,24 +33,24 @@ func (c *Client) GetProfile(ctx context.Context) (*irminmodels.User, *irminmodel
 
 func (c *Client) UpdateProfile(
 	ctx context.Context,
-	firstName, lastName, email, phone, company string,
+	firstName, lastName, email, phone, company *string,
 	profilePicture *os.File,
 ) (*irminmodels.User, *irminmodels.IrminAPIResponse, error) {
 	// Create update request struct with only non-empty fields
 	updateReq := UpdateProfileRequest{}
-	if firstName != "" {
+	if firstName != nil && *firstName != "" {
 		updateReq.FirstName = firstName
 	}
-	if lastName != "" {
+	if lastName != nil && *lastName != "" {
 		updateReq.LastName = lastName
 	}
-	if email != "" {
+	if email != nil && *email != "" {
 		updateReq.Email = email
 	}
-	if phone != "" {
+	if phone != nil && *phone != "" {
 		updateReq.Phone = phone
 	}
-	if company != "" {
+	if company != nil && *company != "" {
 		updateReq.Company = company
 	}
 

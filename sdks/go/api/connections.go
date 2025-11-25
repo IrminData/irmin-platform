@@ -21,9 +21,9 @@ type CreateConnectionRequest struct {
 
 // UpdateConnectionRequest represents the JSON request body for updating connections.
 type UpdateConnectionRequest struct {
-	Name          string `json:"name,omitempty"          validate:"max=100"              example:"Production MySQL Database"`
-	Description   string `json:"description,omitempty"   validate:"max=500"              example:"Primary MySQL database for production customer data"`
-	Documentation string `json:"documentation,omitempty" validate:"validdocumentation"   example:"# Production Database"`
+	Name          *string `json:"name,omitempty"          validate:"max=100"            example:"Production MySQL Database"`
+	Description   *string `json:"description,omitempty"   validate:"max=500"            example:"Primary MySQL database for production customer data"`
+	Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Production Database"`
 }
 
 // UpdateConnectionConfigurationRequest represents the JSON request body for updating connection configuration.

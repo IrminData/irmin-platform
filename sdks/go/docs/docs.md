@@ -252,6 +252,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) Search\(ctx context.Context, workspace string, params irminmodels.SearchFilters\) \(\*irminmodels.SearchResponse, \*irminmodels.IrminAPIResponse, error\)](<#Client.Search>)
   - [func \(c \*Client\) SendInvite\(ctx context.Context, workspace string, req SendInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.SendInvite>)
   - [func \(c \*Client\) StartWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.StartWorkflow>)
+  - [func \(c \*Client\) TestConnection\(ctx context.Context, workspace, connectionID string\) \(\*irminmodels.ConnectorConfigurationValidationResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.TestConnection>)
   - [func \(c \*Client\) TransferConnection\(ctx context.Context, workspace, connectionID string, req TransferConnectionOwnershipRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferConnection>)
   - [func \(c \*Client\) TransferRepository\(ctx context.Context, workspace, slug string, req TransferRepositoryOwnershipRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferRepository>)
   - [func \(c \*Client\) TransferStoredQuery\(ctx context.Context, workspace, queryID string, req TransferQueryOwnershipRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.TransferStoredQuery>)
@@ -260,9 +261,10 @@ import "github.com/IrminData/irmin-sdk-go/api"
   - [func \(c \*Client\) TriggerWorkflowRun\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.TriggerWorkflowRun>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, oldName string, req UpdateBranchRequest\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateConnection\(ctx context.Context, workspace, connectionID string, req UpdateConnectionRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnection>)
+  - [func \(c \*Client\) UpdateConnectionConfiguration\(ctx context.Context, workspace, connectionID string, req UpdateConnectionConfigurationRequest\) \(\*irminmodels.Connection, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateConnectionConfiguration>)
   - [func \(c \*Client\) UpdateInvite\(ctx context.Context, inviteID string, req UpdateInviteRequest\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateInvite>)
   - [func \(c \*Client\) UpdatePolicy\(ctx context.Context, workspace, policyID string, req UpdatePolicyRequest\) \(\*irminmodels.Policy, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdatePolicy>)
-  - [func \(c \*Client\) UpdateProfile\(ctx context.Context, firstName, lastName, email, phone, company string, profilePicture \*os.File\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateProfile>)
+  - [func \(c \*Client\) UpdateProfile\(ctx context.Context, firstName, lastName, email, phone, company \*string, profilePicture \*os.File\) \(\*irminmodels.User, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateProfile>)
   - [func \(c \*Client\) UpdateRegisteredConnector\(ctx context.Context, connectorID string, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRegisteredConnector>)
   - [func \(c \*Client\) UpdateRepository\(ctx context.Context, workspace, slug string, req UpdateRepositoryRequest\) \(\*irminmodels.Repository, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateRepository>)
   - [func \(c \*Client\) UpdateStoredQuery\(ctx context.Context, workspace, queryID string, req UpdateQueryRequest\) \(\*irminmodels.StoredQuery, \*irminmodels.IrminAPIResponse, error\)](<#Client.UpdateStoredQuery>)
@@ -309,6 +311,7 @@ import "github.com/IrminData/irmin-sdk-go/api"
 - [type TransferRepositoryOwnershipRequest](<#TransferRepositoryOwnershipRequest>)
 - [type TransferWorkflowOwnershipRequest](<#TransferWorkflowOwnershipRequest>)
 - [type UpdateBranchRequest](<#UpdateBranchRequest>)
+- [type UpdateConnectionConfigurationRequest](<#UpdateConnectionConfigurationRequest>)
 - [type UpdateConnectionRequest](<#UpdateConnectionRequest>)
 - [type UpdateInviteRequest](<#UpdateInviteRequest>)
 - [type UpdatePolicyRequest](<#UpdatePolicyRequest>)
@@ -1395,6 +1398,15 @@ func (c *Client) StartWorkflow(ctx context.Context, workspace, workflowID string
 
 
 
+<a name="Client.TestConnection"></a>
+### func \(\*Client\) TestConnection
+
+```go
+func (c *Client) TestConnection(ctx context.Context, workspace, connectionID string) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error)
+```
+
+TestConnection tests the connection with the provided configuration.
+
 <a name="Client.TransferConnection"></a>
 ### func \(\*Client\) TransferConnection
 
@@ -1467,6 +1479,15 @@ func (c *Client) UpdateConnection(ctx context.Context, workspace, connectionID s
 
 
 
+<a name="Client.UpdateConnectionConfiguration"></a>
+### func \(\*Client\) UpdateConnectionConfiguration
+
+```go
+func (c *Client) UpdateConnectionConfiguration(ctx context.Context, workspace, connectionID string, req UpdateConnectionConfigurationRequest) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+```
+
+
+
 <a name="Client.UpdateInvite"></a>
 ### func \(\*Client\) UpdateInvite
 
@@ -1489,7 +1510,7 @@ UpdatePolicy updates an existing policy.
 ### func \(\*Client\) UpdateProfile
 
 ```go
-func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, email, phone, company string, profilePicture *os.File) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
+func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, email, phone, company *string, profilePicture *os.File) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 ```
 
 
@@ -2027,8 +2048,20 @@ UpdateBranchRequest represents the JSON request body for updating a branch.
 
 ```go
 type UpdateBranchRequest struct {
-    Name        string `json:"name,omitempty"         example:"feature/add-customer-data"`
-    IsImmutable *bool  `json:"is_immutable,omitempty" example:"false"`
+    Name        *string `json:"name,omitempty"         example:"feature/add-customer-data"`
+    IsImmutable *bool   `json:"is_immutable,omitempty" example:"false"`
+}
+```
+
+<a name="UpdateConnectionConfigurationRequest"></a>
+## type UpdateConnectionConfigurationRequest
+
+UpdateConnectionConfigurationRequest represents the JSON request body for updating connection configuration.
+
+```go
+type UpdateConnectionConfigurationRequest struct {
+    Details  map[string]any `json:"details"`
+    Settings map[string]any `json:"settings"`
 }
 ```
 
@@ -2039,12 +2072,9 @@ UpdateConnectionRequest represents the JSON request body for updating connection
 
 ```go
 type UpdateConnectionRequest struct {
-    Name          string         `json:"name,omitempty"          validate:"max=100"              example:"Production MySQL Database"`
-    Connector     string         `json:"connector,omitempty"     validate:"validsqid=connectors" example:"conn_5p8q2n7m9x4k"`
-    Description   string         `json:"description,omitempty"   validate:"max=500"              example:"Primary MySQL database for production customer data"`
-    Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"   example:"# Production Database"`
-    Details       map[string]any `json:"details,omitempty"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
-    Settings      map[string]any `json:"settings,omitempty"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+    Name          *string `json:"name,omitempty"          validate:"max=100"            example:"Production MySQL Database"`
+    Description   *string `json:"description,omitempty"   validate:"max=500"            example:"Primary MySQL database for production customer data"`
+    Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Production Database"`
 }
 ```
 
@@ -2083,11 +2113,11 @@ UpdateProfileRequest represents the JSON request body for updating profile.
 
 ```go
 type UpdateProfileRequest struct {
-    FirstName string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
-    LastName  string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
-    Email     string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
-    Phone     string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
-    Company   string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
+    FirstName *string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
+    LastName  *string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
+    Email     *string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
+    Phone     *string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
+    Company   *string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
 }
 ```
 
@@ -2098,9 +2128,9 @@ UpdateQueryRequest represents the JSON request body for updating a query.
 
 ```go
 type UpdateQueryRequest struct {
-    Name        string `json:"name,omitempty"        validate:"max=100"  example:"Customer Analytics"`
-    Description string `json:"description,omitempty" validate:"max=500"  example:"Customer data analysis and reporting"`
-    SQL         string `json:"sql,omitempty"         validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+    Name        *string `json:"name,omitempty"        validate:"max=100"  example:"Customer Analytics"`
+    Description *string `json:"description,omitempty" validate:"max=500"  example:"Customer data analysis and reporting"`
+    SQL         *string `json:"sql,omitempty"         validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
 }
 ```
 
@@ -2111,12 +2141,12 @@ UpdateRepositoryRequest represents the JSON request body for updating a reposito
 
 ```go
 type UpdateRepositoryRequest struct {
-    Name                              string `json:"name,omitempty"                                  validate:"max=100"            example:"Customer Analytics"`
-    Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
-    Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
-    IsImmutable                       *bool  `json:"is_immutable,omitempty"                                                        example:"false"`
-    GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
-    GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+    Name                              *string `json:"name,omitempty"                                  validate:"max=100"            example:"Customer Analytics"`
+    Description                       *string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
+    Documentation                     *string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
+    IsImmutable                       *bool   `json:"is_immutable,omitempty"                                                        example:"false"`
+    GarbageDefaultRetentionDays       *int    `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
+    GarbageDefaultBranchRetentionDays *int    `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
 }
 ```
 
@@ -2127,9 +2157,9 @@ UpdateTagRequest represents the JSON request body for updating a tag.
 
 ```go
 type UpdateTagRequest struct {
-    Name        string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
-    Color       string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
-    Description string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
+    Name        *string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
+    Color       *string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
+    Description *string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
 }
 ```
 
@@ -2151,9 +2181,9 @@ UpdateWorkflowRequest represents the JSON request body for updating basic workfl
 
 ```go
 type UpdateWorkflowRequest struct {
-    Name          string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
-    Description   string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
-    Documentation string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
+    Name          *string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
+    Description   *string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
+    Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
 }
 ```
 
@@ -2164,8 +2194,8 @@ UpdateWorkspaceRequest represents the JSON request body for updating a workspace
 
 ```go
 type UpdateWorkspaceRequest struct {
-    Name        string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
-    Description string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
+    Name        *string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
+    Description *string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
 }
 ```
 
@@ -2894,6 +2924,7 @@ type DynamicField struct {
     HelpText     string         `json:"help_text,omitempty"     validate:"max=200"                                                                                                 example:"This is a help text"`
     Example      string         `json:"example,omitempty"       validate:"max=100"                                                                                                 example:"Example value"`
     Default      string         `json:"default,omitempty"                                                                                                                          example:"Default value"`
+    Secret       bool           `json:"secret,omitempty"                                                                                                                           example:"false"`
     Required     bool           `json:"required,omitempty"                                                                                                                         example:"true"`
     RequiredWith []string       `json:"required_with,omitempty" validate:"dive"                                                                                                    example:"field1,field2"`
 }

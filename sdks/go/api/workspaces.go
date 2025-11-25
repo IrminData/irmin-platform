@@ -16,8 +16,8 @@ type CreateWorkspaceRequest struct {
 
 // UpdateWorkspaceRequest represents the JSON request body for updating a workspace.
 type UpdateWorkspaceRequest struct {
-	Name        string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
-	Description string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
+	Name        *string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
+	Description *string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
 }
 
 // TransferOwnershipRequest represents the JSON request body for transferring workspace ownership.

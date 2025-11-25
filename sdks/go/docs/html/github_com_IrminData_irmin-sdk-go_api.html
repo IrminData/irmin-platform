@@ -651,6 +651,12 @@ func (c *Client) StartWorkflow(
 	workspace, workflowID string,
 ) (*irminmodels.Workflow, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) TestConnection(
+	ctx context.Context,
+	workspace, connectionID string,
+) (*irminmodels.ConnectorConfigurationValidationResult, *irminmodels.IrminAPIResponse, error)
+    TestConnection tests the connection with the provided configuration.
+
 func (c *Client) TransferConnection(
 	ctx context.Context,
 	workspace, connectionID string,
@@ -698,6 +704,12 @@ func (c *Client) UpdateConnection(
 	req UpdateConnectionRequest,
 ) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
 
+func (c *Client) UpdateConnectionConfiguration(
+	ctx context.Context,
+	workspace, connectionID string,
+	req UpdateConnectionConfigurationRequest,
+) (*irminmodels.Connection, *irminmodels.IrminAPIResponse, error)
+
 func (c *Client) UpdateInvite(
 	ctx context.Context,
 	inviteID string,
@@ -713,7 +725,7 @@ func (c *Client) UpdatePolicy(
 
 func (c *Client) UpdateProfile(
 	ctx context.Context,
-	firstName, lastName, email, phone, company string,
+	firstName, lastName, email, phone, company *string,
 	profilePicture *os.File,
 ) (*irminmodels.User, *irminmodels.IrminAPIResponse, error)
 
@@ -1033,18 +1045,22 @@ type TransferWorkflowOwnershipRequest struct {
     transferring workflow ownership.
 
 type UpdateBranchRequest struct {
-	Name        string `json:"name,omitempty"         example:"feature/add-customer-data"`
-	IsImmutable *bool  `json:"is_immutable,omitempty" example:"false"`
+	Name        *string `json:"name,omitempty"         example:"feature/add-customer-data"`
+	IsImmutable *bool   `json:"is_immutable,omitempty" example:"false"`
 }
     UpdateBranchRequest represents the JSON request body for updating a branch.
 
+type UpdateConnectionConfigurationRequest struct {
+	Details  map[string]any `json:"details"`
+	Settings map[string]any `json:"settings"`
+}
+    UpdateConnectionConfigurationRequest represents the JSON request body for
+    updating connection configuration.
+
 type UpdateConnectionRequest struct {
-	Name          string         `json:"name,omitempty"          validate:"max=100"              example:"Production MySQL Database"`
-	Connector     string         `json:"connector,omitempty"     validate:"validsqid=connectors" example:"conn_5p8q2n7m9x4k"`
-	Description   string         `json:"description,omitempty"   validate:"max=500"              example:"Primary MySQL database for production customer data"`
-	Documentation string         `json:"documentation,omitempty" validate:"validdocumentation"   example:"# Production Database"`
-	Details       map[string]any `json:"details,omitempty"`  // Values for the required connector configuration as JSON object, like {"host":"db.example.com"}
-	Settings      map[string]any `json:"settings,omitempty"` // Values for the optional connector configuration as JSON object, like {"ssl_enabled":"true"}
+	Name          *string `json:"name,omitempty"          validate:"max=100"            example:"Production MySQL Database"`
+	Description   *string `json:"description,omitempty"   validate:"max=500"            example:"Primary MySQL database for production customer data"`
+	Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Production Database"`
 }
     UpdateConnectionRequest represents the JSON request body for updating
     connections.
@@ -1066,36 +1082,36 @@ type UpdatePolicyRequest struct {
     UpdatePolicyRequest represents the JSON request body for updating a policy.
 
 type UpdateProfileRequest struct {
-	FirstName string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
-	LastName  string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
-	Email     string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
-	Phone     string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
-	Company   string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
+	FirstName *string `json:"first_name,omitempty" validate:"max=50"     example:"John"`
+	LastName  *string `json:"last_name,omitempty"  validate:"max=50"     example:"Doe"`
+	Email     *string `json:"email,omitempty"      validate:"email"      example:"john.doe@example.com"`
+	Phone     *string `json:"phone,omitempty"      validate:"validphone" example:"+1234567890"`
+	Company   *string `json:"company,omitempty"    validate:"max=100"    example:"Irmin"`
 }
     UpdateProfileRequest represents the JSON request body for updating profile.
 
 type UpdateQueryRequest struct {
-	Name        string `json:"name,omitempty"        validate:"max=100"  example:"Customer Analytics"`
-	Description string `json:"description,omitempty" validate:"max=500"  example:"Customer data analysis and reporting"`
-	SQL         string `json:"sql,omitempty"         validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+	Name        *string `json:"name,omitempty"        validate:"max=100"  example:"Customer Analytics"`
+	Description *string `json:"description,omitempty" validate:"max=500"  example:"Customer data analysis and reporting"`
+	SQL         *string `json:"sql,omitempty"         validate:"validsql" example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
 }
     UpdateQueryRequest represents the JSON request body for updating a query.
 
 type UpdateRepositoryRequest struct {
-	Name                              string `json:"name,omitempty"                                  validate:"max=100"            example:"Customer Analytics"`
-	Description                       string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
-	Documentation                     string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
-	IsImmutable                       *bool  `json:"is_immutable,omitempty"                                                        example:"false"`
-	GarbageDefaultRetentionDays       *int   `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
-	GarbageDefaultBranchRetentionDays *int   `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
+	Name                              *string `json:"name,omitempty"                                  validate:"max=100"            example:"Customer Analytics"`
+	Description                       *string `json:"description,omitempty"                           validate:"max=500"            example:"Customer data analysis and reporting"`
+	Documentation                     *string `json:"documentation,omitempty"                         validate:"validdocumentation" example:"# Customer Analytics Repository"`
+	IsImmutable                       *bool   `json:"is_immutable,omitempty"                                                        example:"false"`
+	GarbageDefaultRetentionDays       *int    `json:"garbage_default_retention_days,omitempty"                                      example:"30"`
+	GarbageDefaultBranchRetentionDays *int    `json:"garbage_default_branch_retention_days,omitempty"                               example:"30"`
 }
     UpdateRepositoryRequest represents the JSON request body for updating a
     repository.
 
 type UpdateTagRequest struct {
-	Name        string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
-	Color       string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
-	Description string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
+	Name        *string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
+	Color       *string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
+	Description *string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
 }
     UpdateTagRequest represents the JSON request body for updating a tag.
 
@@ -1106,16 +1122,16 @@ type UpdateUserRolesRequest struct {
     roles.
 
 type UpdateWorkflowRequest struct {
-	Name          string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
-	Description   string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
-	Documentation string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
+	Name          *string `json:"name,omitempty"          validate:"omitempty,max=100"  example:"Customer Analytics"`
+	Description   *string `json:"description,omitempty"   validate:"omitempty,max=500"  example:"Customer data analysis and reporting"`
+	Documentation *string `json:"documentation,omitempty" validate:"validdocumentation" example:"# Customer Analytics Workflow"`
 }
     UpdateWorkflowRequest represents the JSON request body for updating basic
     workflow info.
 
 type UpdateWorkspaceRequest struct {
-	Name        string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
-	Description string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
+	Name        *string `json:"name,omitempty"        validate:"max=100" example:"Customer Analytics"`
+	Description *string `json:"description,omitempty" validate:"max=500" example:"Customer data analysis and reporting"`
 }
     UpdateWorkspaceRequest represents the JSON request body for updating a
     workspace.

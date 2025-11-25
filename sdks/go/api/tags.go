@@ -17,9 +17,9 @@ type CreateTagRequest struct {
 
 // UpdateTagRequest represents the JSON request body for updating a tag.
 type UpdateTagRequest struct {
-	Name        string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
-	Color       string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
-	Description string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
+	Name        *string `json:"name,omitempty"        validate:"validslug" example:"v1.0.0"`
+	Color       *string `json:"color,omitempty"       validate:"iscolor"   example:"#000000"`
+	Description *string `json:"description,omitempty" validate:"max=200"   example:"Customer analytics tag"`
 }
 
 // ListWorkspaceTags retrieves all workspace tags for a workspace.
