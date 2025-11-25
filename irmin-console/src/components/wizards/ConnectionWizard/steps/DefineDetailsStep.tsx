@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import IrminCore from '@/lib/core';
 
@@ -22,7 +22,8 @@ import type {
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
-import type { ConnectionWizardData } from '../types';
+import type { ConnectionWizardData, ConnectionWizardMode } from '../types';
+import { populateFieldDefaults } from '../utils';
 
 /**
  * Step component for defining connection details
@@ -33,17 +34,21 @@ export default function DefineDetailsStep({
   goBack,
   goNext,
   goToStep,
+  mode = 'create',
 }: {
   wizardData: ConnectionWizardData;
   updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
   goBack: () => void;
   goNext: () => void;
   goToStep?: (step: number) => void;
+  mode?: ConnectionWizardMode;
 }) {
   const { dict, locale } = useLocale();
   const { irminAlert } = usePopup();
   const { getToken } = useIAM();
   const [defaultTimestamp] = useState(() => Date.now());
+  const isEditMode = mode === 'edit';
+  const configureStep = isEditMode ? 3 : 4;
 
   const {
     connectionConfigurationQuery,
@@ -88,11 +93,15 @@ export default function DefineDetailsStep({
             settingsFields && Object.keys(settingsFields).length > 0;
 
           // Skip settings step if there are no fields
-          if (!hasSettingsFields && goToStep) {
-            goToStep(4); // Go directly to step 4 (ConfigureConnectionStep)
-          } else {
-            goNext(); // Go to step 3 (DefineSettingsStep)
+          if (!hasSettingsFields) {
+            if (goToStep) {
+              goToStep(configureStep);
+              return;
+            }
+            goNext();
+            return;
           }
+          goNext();
         } else {
           irminAlert('error', dict.connections.create.failed);
         }
@@ -116,8 +125,45 @@ export default function DefineDetailsStep({
       defaultTimestamp,
       getToken,
       locale,
+      configureStep,
     ]
   );
+
+  const formFields = useMemo(() => {
+    const connectorFields = populateFieldDefaults(
+      connectionConfigurationQuery.data?.data ?? undefined,
+      wizardData.connectionDetails
+    );
+
+    const defaultName =
+      wizardData.name ??
+      `${wizardData.connector?.name ?? 'Connection'} ${defaultTimestamp}`;
+
+    const formFields: DynamicFields = {
+      irmin_connection_name: {
+        type: 'text',
+        label: dict.connections.create.connectionName,
+        required: true,
+        default: defaultName,
+        example: dict.connections.create.connectionNamePlaceholder,
+      },
+      ...connectorFields,
+    };
+    if (isEditMode) {
+      return connectorFields;
+    }
+
+    return formFields;
+  }, [
+    connectionConfigurationQuery.data?.data,
+    dict.connections.create.connectionName,
+    dict.connections.create.connectionNamePlaceholder,
+    defaultTimestamp,
+    wizardData.connectionDetails,
+    wizardData.connector?.name,
+    wizardData.name,
+    isEditMode,
+  ]);
 
   if (connectionConfigurationQuery.isLoading) {
     return <ConnectionCreationSkeleton variant='form' />;
@@ -130,22 +176,6 @@ export default function DefineDetailsStep({
       </div>
     );
   }
-
-  const connectionDetailsFields = connectionConfigurationQuery.data?.data;
-
-  // Prepare the fields for DynamicForm
-  const formFields: DynamicFields = {
-    irmin_connection_name: {
-      type: 'text',
-      label: dict.connections.create.connectionName,
-      required: true,
-      default:
-        wizardData.name ??
-        `${wizardData.connector?.name ?? 'Connection'} ${defaultTimestamp}`,
-      example: dict.connections.create.connectionNamePlaceholder,
-    },
-    ...connectionDetailsFields,
-  };
 
   return (
     <div className='space-y-6'>

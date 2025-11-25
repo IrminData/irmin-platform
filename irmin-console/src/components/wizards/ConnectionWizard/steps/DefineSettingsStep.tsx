@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { convertToConnectionFieldValues } from '@/utils/convertToConnectionField
 import type { DynamicFieldValues } from '@/types/internal/DynamicField';
 
 import type { ConnectionWizardData } from '../types';
+import { populateFieldDefaults } from '../utils';
 
 /**
  * Step component for defining connection settings
@@ -62,6 +63,15 @@ export default function DefineSettingsStep({
     connectionConfigurationQuery.data?.data,
     goNext,
   ]);
+
+  const settingsFields = useMemo(
+    () =>
+      populateFieldDefaults(
+        connectionConfigurationQuery.data?.data ?? undefined,
+        wizardData.connectionSettings
+      ),
+    [connectionConfigurationQuery.data?.data, wizardData.connectionSettings]
+  );
 
   const handleContinue = useCallback(
     async (formValues: DynamicFieldValues) => {
@@ -133,7 +143,7 @@ export default function DefineSettingsStep({
 
       {/* Dynamic Form Render */}
       <DynamicForm
-        fields={connectionConfigurationQuery.data?.data ?? {}}
+        fields={settingsFields}
         onSubmit={handleContinue}
         submitButtonText={dict.connections.create.continue}
         loading={validateConnectorConfigurationMutation.isPending}

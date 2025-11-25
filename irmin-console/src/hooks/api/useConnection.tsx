@@ -158,11 +158,11 @@ export function useConnection(connectionID: string) {
       if (!connectionID) throw new Error('Connection ID is required');
       const token = await getToken();
       const core = new IrminCore(locale, token);
-      const res = await core.connectionService.updateConnection({
+      const res = await core.connectionService.updateConnectionConfiguration({
         workspace: workspaceSlug,
         connectionID,
-        connectionDetails: input.details,
-        connectionSettings: input.settings,
+        details: input.details,
+        settings: input.settings,
       });
       return res;
     },

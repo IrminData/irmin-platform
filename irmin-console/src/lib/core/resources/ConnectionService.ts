@@ -26,11 +26,16 @@ interface CreateConnectionRequest {
  */
 interface UpdateConnectionRequest {
   name?: string;
-  connector?: string;
   description?: string;
   documentation?: string;
-  details?: ConnectionFieldValues;
-  settings?: ConnectionFieldValues;
+}
+
+/**
+ * Interface for updating connection configuration (details + settings only)
+ */
+interface UpdateConnectionConfigurationRequest {
+  details: ConnectionFieldValues;
+  settings: ConnectionFieldValues;
 }
 
 /**
@@ -187,46 +192,31 @@ class ConnectionService {
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
    * @param props.connectionID - The connection's identifier.
-   * @param props.connectorID - The connector ID.
    * @param props.name - The connection name.
    * @param props.description - The connection description.
    * @param props.documentation - The connection documentation.
-   * @param props.connectionDetails - The connection details.
-   * @param props.connectionSettings - The connection settings.
    * @returns IrminAPIResponse containing the updated Connection.
    */
   async updateConnection({
     workspace,
     connectionID,
-    connectorID,
     name,
     description,
     documentation,
-    connectionDetails,
-    connectionSettings,
   }: {
     workspace: string;
     connectionID: string;
-    connectorID?: string;
     name?: string;
     description?: string;
     documentation?: string;
-    connectionDetails?: ConnectionFieldValues;
-    connectionSettings?: ConnectionFieldValues;
   }): Promise<IrminAPIResponse<Connection>> {
     try {
       const requestBody: UpdateConnectionRequest = {};
 
-      if (connectorID !== undefined) requestBody.connector = connectorID;
       if (name !== undefined) requestBody.name = name;
       if (description !== undefined) requestBody.description = description;
       if (documentation !== undefined)
         requestBody.documentation = documentation;
-      if (connectionDetails !== undefined)
-        requestBody.details = connectionDetails;
-      if (connectionSettings !== undefined)
-        requestBody.settings = connectionSettings;
-
       const response = (await this.irminCore.fetchAPI(
         `/v1/workspaces/${workspace}/connections/${connectionID}`,
         {
@@ -238,6 +228,44 @@ class ConnectionService {
       return response;
     } catch (error) {
       console.error((error as Error).message, 'Update connection error');
+      throw error;
+    }
+  }
+
+  /**
+   * Update the configuration (details/settings) of an existing connection.
+   */
+  async updateConnectionConfiguration({
+    workspace,
+    connectionID,
+    details,
+    settings,
+  }: {
+    workspace: string;
+    connectionID: string;
+    details: ConnectionFieldValues;
+    settings: ConnectionFieldValues;
+  }): Promise<IrminAPIResponse<Connection>> {
+    try {
+      const requestBody: UpdateConnectionConfigurationRequest = {
+        details,
+        settings,
+      };
+
+      const response = (await this.irminCore.fetchAPI(
+        `/v1/workspaces/${workspace}/connections/${connectionID}/configuration`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        }
+      )) as IrminAPIResponse<Connection>;
+      return response;
+    } catch (error) {
+      console.error(
+        (error as Error).message,
+        'Update connection configuration error'
+      );
       throw error;
     }
   }

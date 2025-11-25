@@ -413,6 +413,13 @@ const en = {
       details: 'Connection Details',
       settings: 'Connection Settings',
       cannotCopySecret: 'Cannot copy secret value',
+      editConfiguration: 'Edit configuration',
+      editConfigurationAction: 'Edit configuration',
+      editDescription:
+        'Update connection credentials and settings, then validate before saving.',
+      updateConfiguration: 'Update configuration',
+      updateSuccess: 'Connection updated successfully',
+      updateFailed: 'Failed to update connection. Please review the errors.',
     },
   },
 

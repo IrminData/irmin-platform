@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import ConnectionConfigTable from '@/components/connection/ConnectionConfigTable';
+import EditConnectionConfigurationModal from '@/components/connection/EditConnectionConfigurationModal';
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
+import { Button } from '@/components/ui/button';
 import { CommonErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import SafeComponent from '@/components/ui/error/SafeComponent';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -23,6 +25,7 @@ const ConnectionSection = () => {
   const { isResourceAllowed } = useResourceAllowed();
   const { connectionID, connectionQuery } = useConnectionContext();
   const { workflowsQuery } = useWorkflows();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -34,6 +37,11 @@ const ConnectionSection = () => {
 
   const canViewConnection = useMemo(
     () => isResourceAllowed('connection', 'read', connectionID),
+    [isResourceAllowed, connectionID]
+  );
+
+  const canUpdateConnection = useMemo(
+    () => isResourceAllowed('connection', 'update', connectionID),
     [isResourceAllowed, connectionID]
   );
 
@@ -112,7 +120,26 @@ const ConnectionSection = () => {
       <div className='relative container mx-auto max-w-7xl'>
         <div className='flex flex-col gap-4 px-4 pb-4'>
           <div className='flex flex-col gap-4'>
-            <ConnectorInfoSmall connector={connection.connector} />
+            <div
+              className={`
+                flex flex-col gap-4
+                md:flex-row md:items-center md:justify-between
+              `}
+            >
+              <ConnectorInfoSmall connector={connection.connector} />
+              {canUpdateConnection && (
+                <Button
+                  variant='outline'
+                  onClick={() => setIsEditModalOpen(true)}
+                  className={`
+                    w-full
+                    md:w-auto
+                  `}
+                >
+                  {dict.connections.config.editConfigurationAction}
+                </Button>
+              )}
+            </div>
             <ConnectionConfigTable
               title={dict.connections.config.details}
               data={connection.details}
@@ -141,6 +168,10 @@ const ConnectionSection = () => {
           )}
         </div>
       </div>
+      <EditConnectionConfigurationModal
+        isOpen={isEditModalOpen}
+        closeModal={() => setIsEditModalOpen(false)}
+      />
     </SafeComponent>
   );
 };

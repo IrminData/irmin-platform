@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import SideModal from '@/components/ui/popup/SideModal';
 
@@ -25,6 +25,11 @@ export default function ConnectionWizardModal({
 
   const [currentStep, setCurrentStep] = useState(1);
 
+  const handleClose = useCallback(() => {
+    setCurrentStep(1);
+    closeModal();
+  }, [closeModal]);
+
   if (!isResourceAllowed('connection', 'create')) {
     return null;
   }
@@ -32,7 +37,7 @@ export default function ConnectionWizardModal({
   return (
     <SideModal
       isOpen={isOpen}
-      closeModal={closeModal}
+      closeModal={handleClose}
       currentStep={currentStep}
       steps={[
         dict.connections.create.selectConnector,
@@ -42,11 +47,13 @@ export default function ConnectionWizardModal({
       ]}
       title={dict.connections.create.createConnection}
     >
-      <ConnectionWizard
-        closeModal={closeModal}
-        currentStep={currentStep}
-        setCurrentStep={setCurrentStep}
-      />
+      {isOpen && (
+        <ConnectionWizard
+          closeModal={handleClose}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+        />
+      )}
     </SideModal>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import ConnectorInfoSmall from '@/components/connector/ConnectorInfoSmall';
 import { Button } from '@/components/ui/button';
@@ -15,13 +15,18 @@ import { useConnectionConfiguration, useConnections } from '@/hooks/api';
 import { convertToConnectionFieldValues } from '@/utils/convertToConnectionFieldValues';
 
 import type { Connection } from '@/types/core/Connection';
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { Tag } from '@/types/core/Tag';
 import type {
   DynamicFields,
   DynamicFieldValues,
 } from '@/types/internal/DynamicField';
 
-import type { ConnectionWizardData } from '../types';
+import type {
+  ConnectionConfigurationSubmission,
+  ConnectionWizardData,
+  ConnectionWizardMode,
+} from '../types';
 
 /**
  * Step component for configuring and creating the connection
@@ -34,6 +39,8 @@ export default function ConfigureConnectionStep({
   closeModal,
   embedded = false,
   onComplete,
+  mode = 'create',
+  onSubmitConfiguration,
 }: {
   wizardData: ConnectionWizardData;
   updateWizardData: (updates: Partial<ConnectionWizardData>) => void;
@@ -42,6 +49,10 @@ export default function ConfigureConnectionStep({
   closeModal: () => void;
   embedded?: boolean;
   onComplete?: (connection: Connection) => void;
+  mode?: ConnectionWizardMode;
+  onSubmitConfiguration?: (
+    payload: ConnectionConfigurationSubmission
+  ) => Promise<IrminAPIResponse<Connection>>;
 }) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
@@ -69,12 +80,22 @@ export default function ConfigureConnectionStep({
     [updateWizardData]
   );
 
-  const handleCreateConnection = useCallback(
-    async (formValues: DynamicFieldValues) => {
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const isEditMode = mode === 'edit';
+  const detailsStep = isEditMode ? 1 : 2;
+  const settingsStep = isEditMode ? 2 : 3;
+
+  const handleSubmitConnection = useCallback(
+    async (formValues?: DynamicFieldValues) => {
       try {
-        updateWizardData({
-          description: formValues.description as string,
-        });
+        const descriptionValue =
+          (formValues?.description as string) ?? wizardData.description ?? '';
+
+        if (!isEditMode) {
+          updateWizardData({
+            description: descriptionValue,
+          });
+        }
 
         // Validate connection configuration before creating
         const validationRes =
@@ -101,9 +122,40 @@ export default function ConfigureConnectionStep({
 
           // Redirect user to the appropriate step based on which validation failed
           if (!validationRes.data?.connection_details_valid) {
-            goToStep(2); // Go back to details step
+            goToStep(detailsStep);
           } else if (!validationRes.data?.connection_settings_valid) {
-            goToStep(3); // Go back to settings step
+            goToStep(settingsStep);
+          }
+          return;
+        }
+
+        const payload: ConnectionConfigurationSubmission = {
+          details: convertToConnectionFieldValues(wizardData.connectionDetails),
+          settings: convertToConnectionFieldValues(
+            wizardData.connectionSettings
+          ),
+        };
+
+        if (isEditMode) {
+          if (!onSubmitConfiguration) {
+            throw new Error('Missing update handler for edit mode');
+          }
+          setIsSubmittingEdit(true);
+          try {
+            const res = await onSubmitConfiguration(payload);
+            if (!res.data) {
+              throw new Error(
+                res.message ?? dict.connections.config.updateFailed
+              );
+            }
+
+            if (embedded && onComplete) {
+              onComplete(res.data);
+            } else {
+              closeModal();
+            }
+          } finally {
+            setIsSubmittingEdit(false);
           }
           return;
         }
@@ -112,12 +164,10 @@ export default function ConfigureConnectionStep({
         const res = await createConnectionMutation.mutateAsync({
           connectorID: wizardData.connector?.id ?? '',
           name: wizardData.name,
-          description: formValues.description as string,
+          description: descriptionValue,
           documentation: '',
-          details: convertToConnectionFieldValues(wizardData.connectionDetails),
-          settings: convertToConnectionFieldValues(
-            wizardData.connectionSettings
-          ),
+          details: payload.details,
+          settings: payload.settings,
           tags: wizardData.tags?.map((t) => t.id),
         });
         if (!res.data) {
@@ -133,23 +183,31 @@ export default function ConfigureConnectionStep({
         }
       } catch (error) {
         console.error(error);
-        irminAlert(
-          'error',
-          (error as Error)?.message ?? 'Failed to create connection'
-        );
+        // In edit mode, the mutation's onError handler already shows the alert,
+        // so we don't need to show it again here
+        if (!isEditMode) {
+          irminAlert(
+            'error',
+            (error as Error)?.message ?? 'Failed to create connection'
+          );
+        }
       }
     },
     [
       wizardData,
       createConnectionMutation,
       validateConnectorConfigurationMutation,
-      closeModal,
       irminAlert,
       updateWizardData,
       goToStep,
       dict,
       embedded,
       onComplete,
+      isEditMode,
+      onSubmitConfiguration,
+      closeModal,
+      detailsStep,
+      settingsStep,
     ]
   );
 
@@ -160,22 +218,24 @@ export default function ConfigureConnectionStep({
       settingsFields && Object.keys(settingsFields).length > 0;
 
     if (!hasSettingsFields) {
-      goToStep(2); // Go back to step 2 (details) if no settings
+      goToStep(detailsStep);
     } else {
-      goBack(); // Go back to step 3 (settings) normally
+      goBack();
     }
-  }, [settingsConfigurationQuery.data?.data, goToStep, goBack]);
+  }, [detailsStep, settingsConfigurationQuery.data?.data, goToStep, goBack]);
 
   // Prepare the fields for DynamicForm
-  const formFields: DynamicFields = {
-    description: {
-      type: 'textarea',
-      label: dict.connections.create.connectionDescription,
-      required: true,
-      default: wizardData.description,
-      example: dict.connections.create.connectionDescriptionPlaceholder,
-    },
-  };
+  const formFields: DynamicFields | undefined = !isEditMode
+    ? {
+        description: {
+          type: 'textarea',
+          label: dict.connections.create.connectionDescription,
+          required: true,
+          default: wizardData.description,
+          example: dict.connections.create.connectionDescriptionPlaceholder,
+        },
+      }
+    : undefined;
 
   return (
     <div className='space-y-6'>
@@ -194,31 +254,53 @@ export default function ConfigureConnectionStep({
       )}
 
       {/* Dynamic Form Render */}
-      <DynamicForm
-        fields={formFields}
-        onSubmit={handleCreateConnection}
-        loading={
-          createConnectionMutation.isPending ||
-          validateConnectorConfigurationMutation.isPending
-        }
-        submitButtonText={dict.connections.create.createConnection}
-        formProps={{
-          autoCapitalize: 'none',
-          autoComplete: 'off',
-          autoCorrect: 'off',
-          autoSave: 'off',
-          autoFocus: true,
-        }}
-      />
-
-      <div className='space-y-2'>
-        <WorkspaceTagSelector
-          selectedTags={wizardData.tags ?? []}
-          onTagsChange={handleTagsChange}
-          loading={false}
-          disabled={createConnectionMutation.isPending}
+      {!isEditMode && formFields ? (
+        <DynamicForm
+          fields={formFields}
+          onSubmit={handleSubmitConnection}
+          loading={
+            createConnectionMutation.isPending ||
+            validateConnectorConfigurationMutation.isPending
+          }
+          submitButtonText={dict.connections.create.createConnection}
+          formProps={{
+            autoCapitalize: 'none',
+            autoComplete: 'off',
+            autoCorrect: 'off',
+            autoSave: 'off',
+            autoFocus: true,
+          }}
         />
-      </div>
+      ) : (
+        <div className='space-y-4'>
+          <p className='text-sm text-muted-foreground'>
+            {dict.connections.config.editDescription}
+          </p>
+          <Button
+            className='w-full'
+            variant='gradient'
+            size='lg'
+            loading={
+              isSubmittingEdit ||
+              validateConnectorConfigurationMutation.isPending
+            }
+            onClick={() => handleSubmitConnection()}
+          >
+            {dict.connections.config.updateConfiguration}
+          </Button>
+        </div>
+      )}
+
+      {!isEditMode && (
+        <div className='space-y-2'>
+          <WorkspaceTagSelector
+            selectedTags={wizardData.tags ?? []}
+            onTagsChange={handleTagsChange}
+            loading={false}
+            disabled={createConnectionMutation.isPending}
+          />
+        </div>
+      )}
 
       {/* Go Back Button */}
       <Button className='w-full' variant='ghost' size='sm' onClick={handleBack}>

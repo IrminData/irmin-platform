@@ -404,6 +404,13 @@ const fi = {
       details: 'Yhteyden tiedot',
       settings: 'Yhteyden asetukset',
       cannotCopySecret: 'Ei voi kopioida salattua arvoa',
+      editConfiguration: 'Muokkaa konfiguraatiota',
+      editConfigurationAction: 'Muokkaa konfiguraatiota',
+      editDescription:
+        'Päivitä yhteyden tunnistetiedot ja asetukset ennen tallennusta.',
+      updateConfiguration: 'Päivitä konfiguraatio',
+      updateSuccess: 'Yhteys päivitettiin onnistuneesti',
+      updateFailed: 'Yhteyden päivitys epäonnistui. Tarkista virheet.',
     },
   },
 
