@@ -30,14 +30,11 @@ type createConnectionArgs struct {
 }
 
 type updateConnectionArgs struct {
-	WorkspaceSlug string         `json:"workspace_slug"          jsonschema:"required,The slug of the workspace to update the connection in"`
-	ConnectionID  string         `json:"connection_id"           jsonschema:"required,The ID (SQID) of the connection to update"`
-	Name          string         `json:"name"                    jsonschema:"required,The name of the connection"`
-	Connector     string         `json:"connector"               jsonschema:"required,The ID (SQID) of the connector to use for the connection"`
-	Description   string         `json:"description,omitempty"   jsonschema:"optional,The description of the connection"`
-	Documentation string         `json:"documentation,omitempty" jsonschema:"optional,The documentation of the connection"`
-	Details       map[string]any `json:"details"                 jsonschema:"optional,The values for the 'details' part of the connector configuration as JSON object, Key-Value pairs, like host: db.example.com"`
-	Settings      map[string]any `json:"settings"                jsonschema:"optional,The values for the 'settings' part of the connector configuration as JSON object, Key-Value pairs, like project_id: 123456"`
+	WorkspaceSlug string `json:"workspace_slug"          jsonschema:"required,The slug of the workspace to update the connection in"`
+	ConnectionID  string `json:"connection_id"           jsonschema:"required,The ID (SQID) of the connection to update"`
+	Name          string `json:"name"                    jsonschema:"required,The name of the connection"`
+	Description   string `json:"description,omitempty"   jsonschema:"optional,The description of the connection"`
+	Documentation string `json:"documentation,omitempty" jsonschema:"optional,The documentation of the connection"`
 }
 
 type connectionSchemaArgs struct {
@@ -174,6 +171,7 @@ func (mcpTools *MCPTools) registerCreateConnectionTool() {
 			// Create the connection
 			connection, err := mcpTools.apiServices.CreateConnection(
 				ctx,
+				"en",
 				user,
 				workspace,
 				irmincore.CreateConnectionRequest{
@@ -243,11 +241,8 @@ func (mcpTools *MCPTools) registerUpdateConnectionTool() {
 				connection,
 				irmincore.UpdateConnectionRequest{
 					Name:          args.Name,
-					Connector:     args.Connector,
 					Description:   args.Description,
 					Documentation: args.Documentation,
-					Details:       args.Details,
-					Settings:      args.Settings,
 				},
 			)
 			if err != nil {

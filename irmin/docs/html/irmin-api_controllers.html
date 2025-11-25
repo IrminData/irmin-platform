@@ -167,6 +167,24 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/connections/{connection_slug} [patch]
 
+func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error
+    ConnectionsUpdateConfiguration godoc @Summary Update connection
+    configuration @Description Update an existing connection's configuration
+    (details and settings) @Tags connections @Security ApiKeyAuth @Accept
+    json @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param connection_slug path string true "Connection ID"
+    @Param request body irmincore.UpdateConnectionConfigurationRequest
+    true "Connection configuration update parameters" @Success 200
+    {object} irminmodels.IrminAPIResponse{data=irminmodels.Connection}
+    "Connection configuration updated successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid request body"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Connection not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/connections/{connection_slug}/configuration
+    [patch]
+
 func (api *APIControllers) ConnectorsDestroy(c fiber.Ctx) error
     ConnectorsDestroy godoc @Summary Delete connector @Description Delete an
     existing connector from the system (system authentication required) @Tags

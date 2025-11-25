@@ -2037,6 +2037,95 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/connections/{connection_slug}/configuration": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update an existing connection's configuration (details and settings)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connections"
+                ],
+                "summary": "Update connection configuration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Connection configuration update parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UpdateConnectionConfigurationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Connection configuration updated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.Connection"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connection not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/connections/{connection_slug}/schema": {
             "get": {
                 "security": [
@@ -10680,22 +10769,26 @@ const docTemplate = `{
                 }
             }
         },
+        "irmincore.UpdateConnectionConfigurationRequest": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            }
+        },
         "irmincore.UpdateConnectionRequest": {
             "type": "object",
             "properties": {
-                "connector": {
-                    "type": "string",
-                    "example": "conn_5p8q2n7m9x4k"
-                },
                 "description": {
                     "type": "string",
                     "maxLength": 500,
                     "example": "Primary MySQL database for production customer data"
-                },
-                "details": {
-                    "description": "Values for the required connector configuration as JSON object, like {\"host\":\"db.example.com\"}",
-                    "type": "object",
-                    "additionalProperties": {}
                 },
                 "documentation": {
                     "type": "string",
@@ -10705,11 +10798,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "example": "Production MySQL Database"
-                },
-                "settings": {
-                    "description": "Values for the optional connector configuration as JSON object, like {\"ssl_enabled\":\"true\"}",
-                    "type": "object",
-                    "additionalProperties": {}
                 }
             }
         },

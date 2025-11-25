@@ -172,6 +172,7 @@ func (api *APIServices) CreateAPIToken(
 
 func (api *APIServices) CreateConnection(
 	c context.Context,
+	locale string,
 	user *db.User,
 	workspace *db.Workspace,
 	req irmincore.CreateConnectionRequest,
@@ -924,6 +925,16 @@ func (api *APIServices) UpdateConnection(
 	connection *db.Connection,
 	req irmincore.UpdateConnectionRequest,
 ) (*db.Connection, error)
+
+func (api *APIServices) UpdateConnectionConfiguration(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
+	connection *db.Connection,
+	req irmincore.UpdateConnectionConfigurationRequest,
+) (*db.Connection, error)
+    UpdateConnectionConfiguration updates the configuration of a connection.
 
 func (api *APIServices) UpdateConnector(
 	c context.Context,

@@ -838,6 +838,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ConnectionsShow\(c fiber.Ctx\) error](<#APIControllers.ConnectionsShow>)
   - [func \(api \*APIControllers\) ConnectionsStore\(c fiber.Ctx\) error](<#APIControllers.ConnectionsStore>)
   - [func \(api \*APIControllers\) ConnectionsUpdate\(c fiber.Ctx\) error](<#APIControllers.ConnectionsUpdate>)
+  - [func \(api \*APIControllers\) ConnectionsUpdateConfiguration\(c fiber.Ctx\) error](<#APIControllers.ConnectionsUpdateConfiguration>)
   - [func \(api \*APIControllers\) ConnectorsDestroy\(c fiber.Ctx\) error](<#APIControllers.ConnectorsDestroy>)
   - [func \(api \*APIControllers\) ConnectorsIndex\(c fiber.Ctx\) error](<#APIControllers.ConnectorsIndex>)
   - [func \(api \*APIControllers\) ConnectorsShow\(c fiber.Ctx\) error](<#APIControllers.ConnectorsShow>)
@@ -1073,6 +1074,15 @@ func (api *APIControllers) ConnectionsUpdate(c fiber.Ctx) error
 ```
 
 ConnectionsUpdate godoc @Summary Update connection @Description Update an existing connection's details @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param request body irmincore.UpdateConnectionRequest true "Connection update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Connection\} "Connection updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\} \[patch\]
+
+<a name="APIControllers.ConnectionsUpdateConfiguration"></a>
+### func \(\*APIControllers\) ConnectionsUpdateConfiguration
+
+```go
+func (api *APIControllers) ConnectionsUpdateConfiguration(c fiber.Ctx) error
+```
+
+ConnectionsUpdateConfiguration godoc @Summary Update connection configuration @Description Update an existing connection's configuration \(details and settings\) @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Param request body irmincore.UpdateConnectionConfigurationRequest true "Connection configuration update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Connection\} "Connection configuration updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/configuration \[patch\]
 
 <a name="APIControllers.ConnectorsDestroy"></a>
 ### func \(\*APIControllers\) ConnectorsDestroy
@@ -9624,7 +9634,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) CopyEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, sourcePath string, destinationPath string\) \(\*irminmodels.EditorItem, error\)](<#APIServices.CopyEditorItem>)
   - [func \(api \*APIServices\) CopyRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, req irmincore.MoveObjectRequest\) \(\*db.RepositoryObject, error\)](<#APIServices.CopyRepositoryObject>)
   - [func \(api \*APIServices\) CreateAPIToken\(c context.Context, user \*db.User, req irmincore.CreateCredentialRequest\) \(\*db.APIToken, error\)](<#APIServices.CreateAPIToken>)
-  - [func \(api \*APIServices\) CreateConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.CreateConnection>)
+  - [func \(api \*APIServices\) CreateConnection\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.CreateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.CreateConnection>)
   - [func \(api \*APIServices\) CreateConnector\(c context.Context, locale string, isSystem bool, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.CreateConnector>)
   - [func \(api \*APIServices\) CreatePolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreatePolicyRequest\) \(\*db.Policy, error\)](<#APIServices.CreatePolicy>)
   - [func \(api \*APIServices\) CreateQuery\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateQueryRequest\) \(\*db.StoredQuery, error\)](<#APIServices.CreateQuery>)
@@ -9729,6 +9739,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) TransferWorkflowOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, req irmincore.TransferWorkflowOwnershipRequest\) \(\*db.Workflow, error\)](<#APIServices.TransferWorkflowOwnership>)
   - [func \(api \*APIServices\) TransferWorkspaceOwnership\(ctx context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.TransferOwnershipRequest\) \(\*db.Workspace, error\)](<#APIServices.TransferWorkspaceOwnership>)
   - [func \(api \*APIServices\) UpdateConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnection>)
+  - [func \(api \*APIServices\) UpdateConnectionConfiguration\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionConfigurationRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnectionConfiguration>)
   - [func \(api \*APIServices\) UpdateConnector\(c context.Context, locale string, isSystem bool, connector \*db.Connector, req irmincore.ConnectorRequest\) \(\*db.Connector, error\)](<#APIServices.UpdateConnector>)
   - [func \(api \*APIServices\) UpdateInvite\(c context.Context, user \*db.User, invite \*db.Invite, req irmincore.UpdateInviteRequest\) \(\*db.Invite, error\)](<#APIServices.UpdateInvite>)
   - [func \(api \*APIServices\) UpdatePolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, policy \*db.Policy, req irmincore.UpdatePolicyRequest\) \(\*db.Policy, error\)](<#APIServices.UpdatePolicy>)
@@ -9943,7 +9954,7 @@ func (api *APIServices) CreateAPIToken(c context.Context, user *db.User, req irm
 ### func \(\*APIServices\) CreateConnection
 
 ```go
-func (api *APIServices) CreateConnection(c context.Context, user *db.User, workspace *db.Workspace, req irmincore.CreateConnectionRequest) (*db.Connection, error)
+func (api *APIServices) CreateConnection(c context.Context, locale string, user *db.User, workspace *db.Workspace, req irmincore.CreateConnectionRequest) (*db.Connection, error)
 ```
 
 CreateConnection creates a new connection in a workspace.
@@ -10883,6 +10894,15 @@ func (api *APIServices) UpdateConnection(c context.Context, user *db.User, works
 ```
 
 
+
+<a name="APIServices.UpdateConnectionConfiguration"></a>
+### func \(\*APIServices\) UpdateConnectionConfiguration
+
+```go
+func (api *APIServices) UpdateConnectionConfiguration(c context.Context, locale string, user *db.User, workspace *db.Workspace, connection *db.Connection, req irmincore.UpdateConnectionConfigurationRequest) (*db.Connection, error)
+```
+
+UpdateConnectionConfiguration updates the configuration of a connection.
 
 <a name="APIServices.UpdateConnector"></a>
 ### func \(\*APIServices\) UpdateConnector

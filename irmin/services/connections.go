@@ -7,6 +7,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/utils"
+	"maps"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
@@ -124,6 +125,7 @@ func (api *APIServices) ListConnections(
 // CreateConnection creates a new connection in a workspace.
 func (api *APIServices) CreateConnection(
 	c context.Context,
+	locale string,
 	user *db.User,
 	workspace *db.Workspace,
 	req irmincore.CreateConnectionRequest,
@@ -162,6 +164,26 @@ func (api *APIServices) CreateConnection(
 	// Convert any maps to string maps for compatibility with database models
 	detailsStr := utils.ConvertToStringMap(req.Details)
 	settingsStr := utils.ConvertToStringMap(req.Settings)
+
+	// Get the connector information
+	connector, err := api.DB.GetConnector(uint(connectorID))
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error getting connector", "error", err)
+		return nil, err
+	}
+
+	// Create a connector client scoped to the user's locale for localized validation errors
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+
+	// Validate the connection using the provided configuration
+	validationResult, err := client.ValidateConfigFields(c, detailsStr, settingsStr)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error validating connection configuration", "error", err)
+		return nil, err
+	}
+	if !validationResult.OK {
+		return nil, fmt.Errorf("configuration validation failed: %v", validationResult.Errors)
+	}
 
 	var connection *db.Connection
 
@@ -250,11 +272,19 @@ func (api *APIServices) UpdateConnection(
 		return nil, ErrAccessDenied
 	}
 
-	// Update the connection fields
-	if updateConnectionFieldsErr := api.updateConnectionFields(connection, req); updateConnectionFieldsErr != nil {
-		api.Logger.ErrorContext(c, "Error updating connection fields", "error", updateConnectionFieldsErr)
-		return nil, updateConnectionFieldsErr
+	// Only update fields that were provided
+	if req.Name != "" {
+		connection.Name = req.Name
 	}
+	if req.Description != "" {
+		connection.Description = req.Description
+	}
+	if req.Documentation != "" {
+		connection.Documentation = req.Documentation
+	}
+
+	// We ignore updates to the connector ID.
+	// The connection configuration fields are updated via the configuration endpoint.
 
 	// Update the connection
 	if updateConnectionErr := api.DB.Save(connection).Error; updateConnectionErr != nil {
@@ -286,46 +316,107 @@ func (api *APIServices) UpdateConnection(
 	return connection, nil
 }
 
-// updateConnectionFields updates the connection fields based on the request.
-func (api *APIServices) updateConnectionFields(
+// UpdateConnectionConfiguration updates the configuration of a connection.
+func (api *APIServices) UpdateConnectionConfiguration(
+	c context.Context,
+	locale string,
+	user *db.User,
+	workspace *db.Workspace,
 	connection *db.Connection,
-	req irmincore.UpdateConnectionRequest,
-) error {
-	// Only update fields that were provided
-	if req.Name != "" {
-		connection.Name = req.Name
+	req irmincore.UpdateConnectionConfigurationRequest,
+) (*db.Connection, error) {
+	// Make sure this is allowed
+	isAllowed, err := api.PermissionService.IsAllowed(
+		user,
+		workspace,
+		db.PolicyResourceConnection,
+		&connection.ID,
+		db.PolicyActionUpdate,
+	)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
+		return nil, err
 	}
-	if req.Description != "" {
-		connection.Description = req.Description
-	}
-	if req.Documentation != "" {
-		connection.Documentation = req.Documentation
+	if !isAllowed {
+		api.Logger.ErrorContext(
+			c,
+			"User is not allowed to update connection configuration",
+			"user",
+			user.Email,
+			"workspace",
+			workspace.Slug,
+			"connection",
+			connection.Name,
+		)
+		return nil, ErrAccessDenied
 	}
 
-	if len(req.Details) > 0 {
-		connection.Details = api.processSecretUpdates(connection.Details, req.Details)
+	// Fetch the connection with unmasked secrets from the database
+	fullConnection, err := api.DB.GetConnectionByID(connection.ID)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error getting connection", "error", err)
+		return nil, err
 	}
 
-	if len(req.Settings) > 0 {
-		connection.Settings = api.processSecretUpdates(connection.Settings, req.Settings)
+	// Merge secrets
+	newDetails := api.processSecretUpdates(fullConnection.Details, req.Details)
+	newSettings := api.processSecretUpdates(fullConnection.Settings, req.Settings)
+
+	// Get the connector information
+	connector, err := api.DB.GetConnector(fullConnection.ConnectorID)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error getting connector", "error", err)
+		return nil, err
 	}
 
-	if req.Connector != "" {
-		connectorID, tagDecodeErr := api.SQIDManager.Decode("connectors", req.Connector)
-		if tagDecodeErr != nil {
-			return fmt.Errorf("error decoding connector SQID: %w", tagDecodeErr)
-		}
-		connection.ConnectorID = uint(connectorID)
+	// Create a connector client scoped to the user's locale for localized validation errors
+	client := connectorsclient.NewClient(connector.APIBaseURL, connector.SystemToken, locale)
+
+	// Validate the connection using the new configuration
+	validationResult, err := client.ValidateConfigFields(c, newDetails, newSettings)
+	if err != nil {
+		api.Logger.ErrorContext(c, "Error validating connection configuration", "error", err)
+		return nil, err
 	}
-	return nil
+	if !validationResult.OK {
+		return nil, fmt.Errorf("configuration validation failed: %v", validationResult.Errors)
+	}
+
+	// Update the connection
+	fullConnection.Details = newDetails
+	fullConnection.Settings = newSettings
+	if updateConnectionErr := api.DB.Save(fullConnection).Error; updateConnectionErr != nil {
+		api.Logger.ErrorContext(c, "Error updating connection", "error", updateConnectionErr)
+		return nil, updateConnectionErr
+	}
+
+	// Log the event
+	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
+		Type:         db.LogEventTypeUpdate,
+		Description:  fmt.Sprintf("Connection %s configuration updated", connection.Name),
+		UserID:       &user.ID,
+		WorkspaceID:  &workspace.ID,
+		ConnectionID: &connection.ID,
+	})
+
+	// Refresh the connection to ensure the new connector is preloaded
+	refreshedConnection, refreshErr := api.DB.GetConnectionByID(connection.ID)
+	if refreshErr != nil {
+		api.Logger.ErrorContext(c, "Error refreshing connection", "error", refreshErr)
+		return nil, refreshErr
+	}
+	connection = refreshedConnection
+
+	// Mask secrets
+	api.MaskConnectionSecrets(c, connection)
+
+	return connection, nil
 }
 
 func (api *APIServices) processSecretUpdates(current map[string]string, updates map[string]any) map[string]string {
 	// Start with a copy of current to preserve existing fields (merge strategy)
 	newValues := make(map[string]string)
-	for k, v := range current {
-		newValues[k] = v
-	}
+	maps.Copy(newValues, current)
 
 	updatesMap := utils.ConvertToStringMap(updates)
 	for k, v := range updatesMap {

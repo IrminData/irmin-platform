@@ -303,6 +303,11 @@ func RegisterAPIRoutes(
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
 		apiControllers.ConnectionsUpdate,
 	)
+	connection.Patch(
+		"/configuration",
+		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ConnectionsUpdateConfiguration,
+	)
 	connection.Delete(
 		"/",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionDelete),

@@ -413,20 +413,21 @@ definitions:
         example: feature/add-customer-data
         type: string
     type: object
+  irmincore.UpdateConnectionConfigurationRequest:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      settings:
+        additionalProperties: {}
+        type: object
+    type: object
   irmincore.UpdateConnectionRequest:
     properties:
-      connector:
-        example: conn_5p8q2n7m9x4k
-        type: string
       description:
         example: Primary MySQL database for production customer data
         maxLength: 500
         type: string
-      details:
-        additionalProperties: {}
-        description: Values for the required connector configuration as JSON object,
-          like {"host":"db.example.com"}
-        type: object
       documentation:
         example: '# Production Database'
         type: string
@@ -434,11 +435,6 @@ definitions:
         example: Production MySQL Database
         maxLength: 100
         type: string
-      settings:
-        additionalProperties: {}
-        description: Values for the optional connector configuration as JSON object,
-          like {"ssl_enabled":"true"}
-        type: object
     type: object
   irmincore.UpdateInviteRequest:
     properties:
@@ -3877,6 +3873,61 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Update connection
+      tags:
+      - connections
+  /workspaces/{workspace_slug}/connections/{connection_slug}/configuration:
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing connection's configuration (details and settings)
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection_slug
+        required: true
+        type: string
+      - description: Connection configuration update parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateConnectionConfigurationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Connection configuration updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.Connection'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Connection not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update connection configuration
       tags:
       - connections
   /workspaces/{workspace_slug}/connections/{connection_slug}/schema:
