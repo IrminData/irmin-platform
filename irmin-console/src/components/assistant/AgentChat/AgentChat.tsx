@@ -573,17 +573,22 @@ const AgentChat = ({
 
       <Suggestions className='mt-2'>
         <Suggestion
-          suggestion={dict.assistant.showCodeExamples}
+          suggestion={dict.assistant.querySyntaxExamples}
           onClick={handleSuggestionClick}
           size='sm'
         />
         <Suggestion
-          suggestion={dict.assistant.explainBusinessConcepts}
+          suggestion={dict.assistant.whatIsIrmin}
           onClick={handleSuggestionClick}
           size='sm'
         />
         <Suggestion
-          suggestion={dict.assistant.analyzeMarketTrends}
+          suggestion={dict.assistant.whatRepositoriesDoIHave}
+          onClick={handleSuggestionClick}
+          size='sm'
+        />
+        <Suggestion
+          suggestion={dict.assistant.whatConnectionsAndWorkflowsDoIHave}
           onClick={handleSuggestionClick}
           size='sm'
         />

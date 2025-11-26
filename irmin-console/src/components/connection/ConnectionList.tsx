@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import Image from 'next/image';
+import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 
 import CardOrNormalList from '@/components/ui/list/CardOrNormalList';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
@@ -83,22 +83,21 @@ const ConnectionList = ({
               key={`connector-${item.id}`}
               className='inline-flex flex-row items-center gap-2'
             >
-              {item.connector.logo_url ? (
-                <Image
+              <Avatar
+                className={`
+                  flex size-8 items-center justify-center rounded-full
+                  bg-gray-200
+                  dark:bg-gray-800
+                `}
+              >
+                <AvatarImage
                   src={item.connector.logo_url}
                   alt={item.connector.name}
-                  className='size-8 object-contain'
-                  width={32}
-                  height={32}
                 />
-              ) : (
-                <div
-                  className={`
-                    size-8 rounded-full bg-gray-200
-                    dark:bg-gray-800
-                  `}
-                />
-              )}
+                <AvatarFallback>
+                  {item.connector.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <p className='text-sm'>{item.connector.name}</p>
               {/* Display tags if they exist */}
               {item.tags && item.tags.length > 0 && (

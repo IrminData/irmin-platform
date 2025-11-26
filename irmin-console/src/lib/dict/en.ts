@@ -883,9 +883,11 @@ const en = {
     search: 'Search',
 
     // Chat Suggestions
-    showCodeExamples: 'Show me code examples',
-    explainBusinessConcepts: 'Explain business concepts',
-    analyzeMarketTrends: 'Analyze market trends',
+    querySyntaxExamples: 'Show me query syntax examples',
+    whatIsIrmin: 'What is Irmin?',
+    whatRepositoriesDoIHave: 'What repositories do I have?',
+    whatConnectionsAndWorkflowsDoIHave:
+      'What connections and workflows do I have?',
 
     // Chat Elements
     webSearchResult: 'Web search result',

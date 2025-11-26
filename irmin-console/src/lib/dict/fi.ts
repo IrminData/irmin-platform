@@ -867,9 +867,11 @@ const fi = {
     search: 'Hae',
 
     // Chat Suggestions
-    showCodeExamples: 'Näytä koodiesimerkkejä',
-    explainBusinessConcepts: 'Selitä liiketoimintakäsitteitä',
-    analyzeMarketTrends: 'Analysoi markkinatrendejä',
+    querySyntaxExamples: 'Näytä esimerkki SQL kyselystä',
+    whatIsIrmin: 'Mikä Irmin on?',
+    whatRepositoriesDoIHave: 'Mitkä data-arkistot minulla on?',
+    whatConnectionsAndWorkflowsDoIHave:
+      'Mitkä yhteydet ja työnkulut minulla on?',
 
     // Chat Elements
     webSearchResult: 'Verkkohakutulos',
