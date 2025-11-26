@@ -381,14 +381,14 @@ func (api *APIServices) UpdateWorkspaceTag(
 	req irmincore.UpdateTagRequest,
 ) (*db.TagWithAssets, error) {
 	// Update the tag fields
-	if req.Name != "" {
-		tagWithAssets.Tag.Name = req.Name
+	if req.Name != nil && len(*req.Name) > 0 {
+		tagWithAssets.Tag.Name = *req.Name
 	}
-	if req.Description != "" {
-		tagWithAssets.Tag.Description = req.Description
+	if req.Description != nil {
+		tagWithAssets.Tag.Description = *req.Description
 	}
-	if req.Color != "" {
-		tagWithAssets.Tag.Color = req.Color
+	if req.Color != nil {
+		tagWithAssets.Tag.Color = *req.Color
 	}
 
 	// Save the updated tag

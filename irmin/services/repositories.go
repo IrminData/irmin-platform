@@ -198,14 +198,14 @@ func (api *APIServices) updateRepositoryInTransaction(
 	// Use database transaction to ensure atomicity
 	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
 		// Only update fields that were provided
-		if req.Name != "" {
-			repository.Name = req.Name
+		if req.Name != nil && len(*req.Name) > 0 {
+			repository.Name = *req.Name
 		}
-		if req.Description != "" {
-			repository.Description = req.Description
+		if req.Description != nil {
+			repository.Description = *req.Description
 		}
-		if req.Documentation != "" {
-			repository.Documentation = req.Documentation
+		if req.Documentation != nil {
+			repository.Documentation = *req.Documentation
 		}
 
 		// Handle is_immutable with pointer type for optional boolean

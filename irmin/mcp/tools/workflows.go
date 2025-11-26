@@ -28,11 +28,11 @@ type createWorkflowArgs struct {
 }
 
 type updateWorkflowArgs struct {
-	WorkspaceSlug string `json:"workspace_slug"          jsonschema:"required,The slug of the workspace to update the workflow in"`
-	WorkflowID    string `json:"workflow_id"             jsonschema:"required,The ID of the workflow to update"`
-	Name          string `json:"name"                    jsonschema:"required,The name of the workflow"`
-	Description   string `json:"description,omitempty"   jsonschema:"optional,The description of the workflow"`
-	Documentation string `json:"documentation,omitempty" jsonschema:"optional,The documentation of the workflow, in markdown format, to provide additional context"`
+	WorkspaceSlug string  `json:"workspace_slug"          jsonschema:"required,The slug of the workspace to update the workflow in"`
+	WorkflowID    string  `json:"workflow_id"             jsonschema:"required,The ID of the workflow to update"`
+	Name          *string `json:"name,omitempty"          jsonschema:"optional,The name of the workflow"`
+	Description   *string `json:"description,omitempty"   jsonschema:"optional,The description of the workflow"`
+	Documentation *string `json:"documentation,omitempty" jsonschema:"optional,The documentation of the workflow, in markdown format, to provide additional context"`
 }
 
 type updateWorkflowWorkflowableArgs struct {

@@ -155,12 +155,12 @@ func (api *APIServices) UpdateWorkspace(
 	req irmincore.UpdateWorkspaceRequest,
 ) (*db.Workspace, error) {
 	// Only update fields that were provided
-	if req.Name != "" {
-		workspace.Name = req.Name
+	if req.Name != nil && len(*req.Name) > 0 {
+		workspace.Name = *req.Name
 		// Slug is not updated, as it is used as a unique identifier for the workspace
 	}
-	if req.Description != "" {
-		workspace.Description = req.Description
+	if req.Description != nil {
+		workspace.Description = *req.Description
 	}
 
 	// Update the workspace in the database

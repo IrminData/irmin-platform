@@ -228,8 +228,8 @@ func (api *APIServices) UpdateRepositoryBranch(
 
 	// Determine what the new branch name should be
 	newBranchName := branch.Name
-	if req.Name != "" {
-		newBranchName = req.Name
+	if req.Name != nil && len(*req.Name) > 0 {
+		newBranchName = *req.Name
 	}
 
 	// Delete the cached objects for the branch

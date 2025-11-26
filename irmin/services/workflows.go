@@ -132,14 +132,14 @@ func (api *APIServices) UpdateWorkflow(
 	}
 
 	// Update workflow fields
-	if req.Name != "" {
-		workflow.Name = req.Name
+	if req.Name != nil && len(*req.Name) > 0 {
+		workflow.Name = *req.Name
 	}
-	if req.Description != "" {
-		workflow.Description = req.Description
+	if req.Description != nil {
+		workflow.Description = *req.Description
 	}
-	if req.Documentation != "" {
-		workflow.Documentation = req.Documentation
+	if req.Documentation != nil {
+		workflow.Documentation = *req.Documentation
 	}
 
 	// Save the workflow

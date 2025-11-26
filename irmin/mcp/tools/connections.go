@@ -30,11 +30,11 @@ type createConnectionArgs struct {
 }
 
 type updateConnectionArgs struct {
-	WorkspaceSlug string `json:"workspace_slug"          jsonschema:"required,The slug of the workspace to update the connection in"`
-	ConnectionID  string `json:"connection_id"           jsonschema:"required,The ID (SQID) of the connection to update"`
-	Name          string `json:"name"                    jsonschema:"required,The name of the connection"`
-	Description   string `json:"description,omitempty"   jsonschema:"optional,The description of the connection"`
-	Documentation string `json:"documentation,omitempty" jsonschema:"optional,The documentation of the connection"`
+	WorkspaceSlug string  `json:"workspace_slug"          jsonschema:"required,The slug of the workspace to update the connection in"`
+	ConnectionID  string  `json:"connection_id"           jsonschema:"required,The ID (SQID) of the connection to update"`
+	Name          *string `json:"name,omitempty"          jsonschema:"optional,The name of the connection"`
+	Description   *string `json:"description,omitempty"   jsonschema:"optional,The description of the connection"`
+	Documentation *string `json:"documentation,omitempty" jsonschema:"optional,The documentation of the connection"`
 }
 
 type connectionSchemaArgs struct {
