@@ -22,7 +22,9 @@ const (
 	MCPClientVersion = "1.0.0"
 
 	// MCPAttachTimeout is the timeout for MCP attach streaming operations
-	MCPAttachTimeout = 30 * time.Second
+	// We use a generous timeout because some tools (like SQL queries or large data fetches) can take time.
+	// The client side should handle user-facing timeouts if needed.
+	MCPAttachTimeout = 120 * time.Second
 
 	// MCPAuthTimeout is the timeout for MCP authentication operations
 	MCPAuthTimeout = 10 * time.Second
