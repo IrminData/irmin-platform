@@ -20,17 +20,25 @@ Irmin provides Object Schemas, which are used to describe files/objects, reposit
 
 ## Irmin Query Placeholder Syntax
 
-Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions:
+Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions. **Every query must include at least one placeholder.**
 
 ```
 $["workspace;repository;object@ref"]
 ```
 
+### Placeholder Rules
+
+1. **Always Required**: Every query must contain at least one placeholder
+2. **Double Quotes Only**: Placeholders always use double quotes `"`, never single quotes `'` or other braces
+3. **Required Components**: Repository and object (file) are always required
+4. **Optional Components**: Workspace and ref can be omitted
+5. **Separator**: Use semicolons `;` to separate parts. Placeholders never start or end with `;`
+
 ### Placeholder Components
 
 - **workspace** (optional): The workspace identifier (e.g., "demo-data")
-- **repository**: The repository name (e.g., "documents")
-- **object**: The data object or file path (e.g., "large-file.json", "Meteo.json")
+- **repository** (required): The repository name (e.g., "documents")
+- **object** (required): The data object or file path (e.g., "large-file.json", "Meteo.json")
 - **ref** (optional): The branch, tag, or commit reference (e.g., "main", "dev", "abc123")
 
 ### Placeholder Examples
@@ -167,6 +175,22 @@ FROM $["workspace;repo;json-data.json@main"]
 WHERE json_valid(data_column);
 ```
 
+### Querying Nested JSON Structures
+
+```sql
+-- Query nested JSON arrays using UNNEST
+-- This example queries the vehicles array field from data.json
+SELECT 
+    v.*
+FROM $["cars;data.json"]
+CROSS JOIN UNNEST(vehicles) AS t(v)
+WHERE v.MAKE = 'Toyota' 
+  AND v.YEAR >= 2020
+ORDER BY v.YEAR DESC;
+```
+
+The `UNNEST` function expands nested JSON arrays into rows, allowing you to query array elements as if they were individual table rows. Use `CROSS JOIN UNNEST(column_name)` to flatten the array and access nested object properties directly.
+
 ### Time Series Analysis
 
 ```sql
@@ -231,10 +255,15 @@ WHERE COALESCE(optional_field, 'default') = 'expected_value';
 
 ### Common Issues and Solutions
 
-1. **Invalid Placeholder Format**: Ensure proper syntax with semicolons and optional @ symbol
-2. **Missing Data**: Check that the referenced workspace, repository, and object exist
-3. **Reference Errors**: Verify that the specified branch or commit exists
-4. **Schema Mismatches**: Use `information_schema` to explore table structure before querying
+1. **Invalid Placeholder Format**: 
+   - Ensure proper syntax with semicolons `;` separating parts
+   - Always use double quotes `"`, never single quotes `'`
+   - Placeholders never start or end with `;`
+   - Repository and object (file) are always required
+2. **Missing Placeholder**: Every query must contain at least one placeholder
+3. **Missing Data**: Check that the referenced workspace, repository, and object exist
+4. **Reference Errors**: Verify that the specified branch or commit exists
+5. **Schema Mismatches**: Use `information_schema` to explore table structure before querying
 
 ### Debugging Queries
 

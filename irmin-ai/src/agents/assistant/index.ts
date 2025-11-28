@@ -111,7 +111,7 @@ export class AssistantAgent extends BaseAgent {
           maxDocuments: 5,
           scoreThreshold: 0.3,
           includeMetadata: false,
-          maxTokens: 3000,
+          maxTokens: 6000,
         },
         'irmin-docs'
       );

@@ -514,7 +514,7 @@ class RetrievalService {
         maxDocuments = 5,
         scoreThreshold = 0.0,
         includeMetadata = false,
-        maxTokens = 4000,
+        maxTokens = 8000,
       } = options;
 
       const hypotheticalContent = await this.generateHypotheticalContent(query);
