@@ -1,20 +1,3 @@
-// import type { AIMessageChunk } from '@langchain/core/messages';
-// import { toUIMessageStream } from '@ai-sdk/langchain';
-// import { createUIMessageStreamResponse } from 'ai';
-
-// TODO: We should be doing this in Next.js
-// /**
-//  * Convert LangChain agent stream to Vercel AI SDK format
-//  * Uses Vercel's official utilities for proper formatting
-//  */
-// export function convertLangChainToVercelStream(
-//   stream: ReadableStream<AIMessageChunk>
-// ) {
-//   return createUIMessageStreamResponse({
-//     stream: toUIMessageStream(stream),
-//   });
-// }
-
 /**
  * Convert LangChain agent stream to text stream for Fastify
  * Streams chunks live as they arrive - Fastify requires string or Buffer chunks
@@ -36,16 +19,51 @@ export function stringifyLangChainStream(
           done = readerDone;
 
           if (!done && value) {
-            // Stringify the chunk and send it
-            const chunk = JSON.stringify(value) + '\n';
-            controller.enqueue(textEncoder.encode(chunk));
+            try {
+              // Stringify the chunk and send it
+              const chunk = JSON.stringify(value) + '\n';
+              controller.enqueue(textEncoder.encode(chunk));
+            } catch (error) {
+              // If processing fails (e.g. JSON.stringify error), we must signal the error
+              // to the downstream consumer before closing.
+              console.error('Error processing stream chunk:', error);
+
+              try {
+                controller.error(error);
+              } catch (e) {
+                // Ignore if controller is already closed/errored
+                console.warn(
+                  'Failed to signal error to closed stream controller',
+                  e
+                );
+              }
+
+              // Cancel the reader to ensure upstream cleanup since we're stopping early
+              await reader.cancel();
+              break;
+            }
           }
         }
       } catch (error) {
         console.error('Error in stream conversion:', error);
-        controller.error(error);
+        try {
+          if (controller.desiredSize !== null) {
+            controller.error(error);
+          }
+        } catch (e) {
+          // Ignore error if controller is already closed/errored
+          console.warn('Failed to signal error to closed stream controller', e);
+        }
       } finally {
-        controller.close();
+        try {
+          // Check if controller is already closed/errored before trying to close
+          if (controller.desiredSize !== null) {
+            controller.close();
+          }
+        } catch (e) {
+          // Ignore error if controller is already closed
+          console.warn('Failed to close stream controller', e);
+        }
         reader.releaseLock();
       }
     },

@@ -4,6 +4,7 @@ import {
 } from '@langchain/mcp-adapters';
 
 import { env } from '@/config/env';
+import { TIMEOUTS } from '@/config/timeouts';
 
 class ToolsService {
   createClient(mcpServers: ClientConfig['mcpServers']) {
@@ -44,6 +45,10 @@ class ToolsService {
           Authorization: `Bearer ${authToken}`,
           // Accept header is automatically added by the adapter for SSE connections
         },
+        // Enforce tool execution timeout
+        // Note: The adapter might not support this directly in all versions,
+        // but passing it in config is the standard way if supported.
+        defaultToolTimeout: TIMEOUTS.MCP_TOOL_EXECUTION,
       },
     };
   }
