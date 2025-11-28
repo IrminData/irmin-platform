@@ -847,6 +847,7 @@ const fi = {
 
     // Conversations List
     newConversation: 'Uusi keskustelu',
+    noConversations: 'Ei vielä keskusteluja',
 
     // Conversation Details
     created: 'Luotu',

@@ -52,7 +52,8 @@ const statusBadgeVariants = cva(
 
 // Define the prop types for the StatusBadge component using TypeScript
 interface StatusBadgeProps
-  extends HTMLAttributes<HTMLDivElement>,
+  extends
+    HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof statusBadgeVariants> {
   label: string;
 }

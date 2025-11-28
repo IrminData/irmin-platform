@@ -56,7 +56,7 @@ const DocumentationForm = ({
         render={({ field }) => (
           <MDXEditor
             placeholder={dict.documentation.startTypingDocumentation}
-            markdown={field.value}
+            markdown={field.value || ''}
             onChange={field.onChange}
           >
             {children}

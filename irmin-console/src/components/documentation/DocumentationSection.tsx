@@ -162,14 +162,14 @@ function matchSearch<T extends SearchableEntity>(items: T[], term: string) {
 
     return Boolean(
       matchesName ||
-        matchesDescription ||
-        matchesOwner ||
-        matchesDocumentation ||
-        matchesTags ||
-        matchesConnector ||
-        matchesStatus ||
-        matchesType ||
-        matchesWorkflowType
+      matchesDescription ||
+      matchesOwner ||
+      matchesDocumentation ||
+      matchesTags ||
+      matchesConnector ||
+      matchesStatus ||
+      matchesType ||
+      matchesWorkflowType
     );
   });
 }

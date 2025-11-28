@@ -1,6 +1,11 @@
 'use client';
 
-import type { DefaultValues, FieldValues, Path } from 'react-hook-form';
+import type {
+  DefaultValues,
+  FieldValues,
+  Path,
+  RegisterOptions,
+} from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -32,8 +37,7 @@ export interface FieldConfig<T extends FieldValues> {
   /** The options for the field if it's a select field */
   options?: { value: string; label: string }[];
   /** The validation rules for the field */
-  rules?: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  any;
+  rules?: RegisterOptions<T, Path<T>>;
 }
 
 interface SettingsFormProps<T extends FieldValues> {

@@ -253,7 +253,7 @@ export default function AssistantSection({
                 <SheetHeader className='p-4 pb-2'>
                   <SheetTitle>{dict.assistant.conversations}</SheetTitle>
                 </SheetHeader>
-                <div className='flex-1 overflow-y-auto'>
+                <div className='flex h-full flex-1 flex-col overflow-hidden'>
                   <ConversationsList
                     selectedConversation={selectedConversation}
                     onSelectConversation={handleSelectConversation}
@@ -268,7 +268,7 @@ export default function AssistantSection({
           {/* Desktop Sidebar */}
           <div
             className={`
-              hidden w-80 flex-col overflow-y-scroll border-r border-border
+              hidden w-80 flex-col overflow-hidden border-r border-border
               xl:flex xl:shrink-0
             `}
           >

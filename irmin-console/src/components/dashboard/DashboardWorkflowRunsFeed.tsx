@@ -31,8 +31,10 @@ import type {
 } from '@/types/core/IrminAPIResponse';
 import type { WorkflowRun } from '@/types/core/WorkflowRun';
 
-interface DashboardWorkflowRunsResponse
-  extends Omit<IrminAPIResponse<WorkflowRun[]>, 'pagination'> {
+interface DashboardWorkflowRunsResponse extends Omit<
+  IrminAPIResponse<WorkflowRun[]>,
+  'pagination'
+> {
   pagination?: IrminAPIPaginationMetadata;
 }
 

@@ -23,8 +23,10 @@ import type { WorkflowRun } from '@/types/core/WorkflowRun';
 
 import { createMutationHandlers } from './mutations/utils';
 
-interface WorkflowRunsResponse
-  extends Omit<IrminAPIResponse<WorkflowRun[]>, 'pagination'> {
+interface WorkflowRunsResponse extends Omit<
+  IrminAPIResponse<WorkflowRun[]>,
+  'pagination'
+> {
   pagination?: IrminAPIPaginationMetadata;
 }
 
