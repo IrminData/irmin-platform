@@ -47,7 +47,9 @@ export function useAIAgent(_agentId: string) {
       }
 
       const conversationId =
-        response.headers.get('X-Conversation-Id') || undefined;
+        response.headers.get('X-Conversation-Id') ||
+        response.headers.get('x-conversation-id') ||
+        undefined;
 
       // Check if response is streaming
       const contentType = response.headers.get('Content-Type');

@@ -33,7 +33,9 @@ export class AgentsClient extends BaseClient {
     });
 
     const conversationId =
-      response.headers.get('X-Conversation-Id') || undefined;
+      response.headers.get('X-Conversation-Id') ||
+      response.headers.get('x-conversation-id') ||
+      undefined;
     const data = await this.handleResponse(
       response,
       AIAgentExecuteResponseSchema
@@ -66,7 +68,9 @@ export class AgentsClient extends BaseClient {
 
     const stream = await this.handleStreamResponse(response);
     const conversationId =
-      response.headers.get('X-Conversation-Id') || undefined;
+      response.headers.get('X-Conversation-Id') ||
+      response.headers.get('x-conversation-id') ||
+      undefined;
 
     // Return raw stream - parsing will be done in Next.js API route
     return { stream, conversationId };
