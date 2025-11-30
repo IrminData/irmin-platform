@@ -180,8 +180,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
       }
 
       // 6. Fetch Editor Items (Scripts)
-      if (input.context?.['editor-script-paths']) {
-        const scriptPaths = (input.context['editor-script-paths'] as string)
+      if (
+        input.context?.['editor-script-paths'] &&
+        typeof input.context['editor-script-paths'] === 'string'
+      ) {
+        const scriptPaths = input.context['editor-script-paths']
           .split(',')
           .filter(Boolean);
 
