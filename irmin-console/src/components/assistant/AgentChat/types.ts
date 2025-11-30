@@ -54,6 +54,7 @@ export interface AgentChatProps {
   agentId?: string; // Which agent to use (defaults to 'assistant' - general assistant)
   onConversationCreated?: (conversationId: string) => void; // Callback when new conversation is created
   onConversationUpdated?: (conversationId: string) => void; // Callback when conversation data is updated (e.g., title generation)
+  context?: Record<string, unknown>; // Context to pass to the agent
 }
 
 // Message action state

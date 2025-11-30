@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 import { IoClose } from 'react-icons/io5';
@@ -35,6 +35,7 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 import { useRepositoryObject, useRepositoryObjectContent } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
+import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
 
 import ObjectDetails from './objects/ObjectDetails';
@@ -82,6 +83,8 @@ function RepositorySectionContent({
   const { dict } = useLocale();
   const { isResourceAllowed } = useResourceAllowed();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const { workspaceSlug } = useWorkspaceContext();
 
   const { immutable, currentRef, repository } = useRepositoryContext();
@@ -91,14 +94,75 @@ function RepositorySectionContent({
   const { executeSql, loading: queryLoading, result: queryResult } = useQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
 
-  const [selectedObject, setSelectedObject] = useState<
-    RepositoryObject | undefined
-  >(initialSelectedObject);
+  // Initialize selected object from search params if present
+  const currentObjectPath = searchParams.get('object');
 
   const { repositoryObjectQuery, uploadObjectMutation } = useRepositoryObject(
     repository.slug,
     currentRef,
     '' // Always fetch root object of the repository
+  );
+
+  // Effect to sync selected object from URL params (for initial load or back/forward navigation)
+  // We need to find the object in the fetched data that matches the path
+  const objectFromParams = useMemo(() => {
+    if (!currentObjectPath || !repositoryObjectQuery.data) return undefined;
+
+    // Extract the root object from the API response
+    const rootObject = (
+      repositoryObjectQuery.data as IrminAPIResponse<RepositoryObject>
+    ).data;
+    if (!rootObject) return undefined;
+
+    // Helper to find object recursively
+    const findObject = (
+      objects: RepositoryObject[],
+      path: string
+    ): RepositoryObject | undefined => {
+      for (const obj of objects) {
+        if (obj.path === path) return obj;
+        if (obj.children) {
+          const found = findObject(obj.children, path);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+
+    return findObject([rootObject], currentObjectPath);
+  }, [currentObjectPath, repositoryObjectQuery.data]);
+
+  // Derived selected object state
+  const selectedObject = useMemo(() => {
+    if (!currentObjectPath) return undefined;
+
+    // Use loaded data if available
+    if (objectFromParams) return objectFromParams;
+
+    // Fallback to initial object if paths match (e.g. before data loads)
+    if (
+      initialSelectedObject &&
+      initialSelectedObject.path === currentObjectPath
+    ) {
+      return initialSelectedObject;
+    }
+
+    return undefined;
+  }, [currentObjectPath, objectFromParams, initialSelectedObject]);
+
+  // Handle object selection and URL update
+  const handleObjectSelection = useCallback(
+    (object: RepositoryObject | undefined) => {
+      // Update URL search params
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      if (object) {
+        newSearchParams.set('object', object.path);
+      } else {
+        newSearchParams.delete('object');
+      }
+      router.push(`${pathname}?${newSearchParams.toString()}`);
+    },
+    [pathname, router, searchParams]
   );
 
   const { repositoryObjectContentQuery, downloadObjectAsZipMutation } =
@@ -376,14 +440,14 @@ function RepositorySectionContent({
               `}
             >
               <ObjectList
-                selectObject={setSelectedObject}
+                selectObject={handleObjectSelection}
                 currentPath={currentDirectoryPath}
                 setCurrentPath={setCurrentDirectoryPath}
                 repositoryObjectQuery={repositoryObjectQuery}
               />
               <ObjectDetails
                 selectedObject={selectedObject}
-                closeDetails={() => setSelectedObject(undefined)}
+                closeDetails={() => handleObjectSelection(undefined)}
                 viewObject={() => setObjectContentViewerOpen(true)}
                 setCurrentPath={setCurrentDirectoryPath}
               />

@@ -92,6 +92,7 @@ const AgentChat = ({
   agentId = 'assistant',
   onConversationCreated,
   onConversationUpdated,
+  context,
 }: AgentChatProps) => {
   const { dict } = useLocale();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -251,6 +252,7 @@ const AgentChat = ({
       const agentRequest = {
         message: text,
         conversationId: currentConversationId || undefined,
+        context, // Pass context to the API request
       };
 
       const response = await executeAgentStreamMutation.mutateAsync({

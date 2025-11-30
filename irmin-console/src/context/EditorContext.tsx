@@ -218,11 +218,31 @@ export const EditorProvider = ({ children }: { children: React.ReactNode }) => {
           setActiveTabIndex(updated.length - 1);
           return updated;
         });
+
+        // - Update URL search parameters to include the new file path
+        const currentSearchParams = new URLSearchParams(
+          searchParams.toString()
+        );
+        const paths = currentSearchParams.getAll('path');
+        if (!paths.includes(filePath)) {
+          currentSearchParams.append('path', filePath);
+          router.push(`${pathname}?${currentSearchParams.toString()}`);
+        }
       } else {
         setActiveTabIndex(existingTabIndex);
       }
     },
-    [workspaceSlug, openTabs, irminAlert, getToken, locale, queryClient]
+    [
+      workspaceSlug,
+      openTabs,
+      irminAlert,
+      getToken,
+      locale,
+      queryClient,
+      router,
+      pathname,
+      searchParams,
+    ]
   );
 
   /**

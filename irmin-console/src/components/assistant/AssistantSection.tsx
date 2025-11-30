@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { useParams, usePathname, useSearchParams } from 'next/navigation';
 
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -67,6 +69,66 @@ export default function AssistantSection({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const refetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Extract context from URL params
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const context = useMemo(() => {
+    const ctx: Record<string, unknown> = {};
+
+    // Map URL params to context keys
+    if (params) {
+      if (params.repository) {
+        ctx['repository-slug'] = params.repository;
+      }
+      if (params.connection) {
+        ctx['connection-id'] = params.connection;
+      }
+      if (params.workflow) {
+        ctx['workflow-id'] = params.workflow;
+      }
+      if (params.query) {
+        ctx['stored-query-id'] = params.query;
+      }
+      // Handle catch-all routes like [...path] for object paths
+      // Only set if we are inside a repository context
+      if (params.repository) {
+        if (Array.isArray(params.path)) {
+          ctx['repository-object-path'] = params.path.join('/');
+        } else if (typeof params.path === 'string') {
+          ctx['repository-object-path'] = params.path;
+        }
+      }
+    }
+
+    // Map search params to context keys
+    if (searchParams) {
+      const ref = searchParams.get('ref');
+      // Only set ref if we are inside a repository context
+      if (ref && params?.repository) {
+        ctx['repository-ref'] = ref;
+      }
+
+      // Handle repository object selection via query param
+      const objectPath = searchParams.get('object');
+      if (objectPath && params?.repository) {
+        ctx['repository-object-path'] = objectPath;
+      }
+
+      // Track open editor tabs for scripting agent context (only when on editor page)
+      // Check if the current route is related to the editor
+      if (pathname && pathname.includes('/editor')) {
+        const openTabs = searchParams.getAll('path');
+        if (openTabs && openTabs.length > 0) {
+          ctx['editor-script-paths'] = openTabs.join(',');
+        }
+      }
+    }
+
+    return ctx;
+  }, [params, searchParams, pathname]);
 
   // Assistant page URL to open in full page
   const workspaceUrl = useBaseUrl({
@@ -224,6 +286,7 @@ export default function AssistantSection({
                 agentId='assistant'
                 onConversationCreated={handleConversationCreated}
                 onConversationUpdated={handleConversationUpdated}
+                context={context}
               />
             </CardContent>
           </Card>
@@ -332,6 +395,7 @@ export default function AssistantSection({
                   agentId='assistant' // Use the general assistant agent
                   onConversationCreated={handleConversationCreated}
                   onConversationUpdated={handleConversationUpdated}
+                  context={context}
                 />
               </CardContent>
             </Card>
