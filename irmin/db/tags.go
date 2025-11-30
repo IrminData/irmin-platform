@@ -269,12 +269,14 @@ func (d *Database) GetConnectionsByTag(tagID uint) ([]Connection, error) {
 // RepositoryObject tag methods
 
 // AddTagToRepositoryObject adds a tag to a repository object.
+// If the tag is already attached, this operation is idempotent and returns no error.
 func (d *Database) AddTagToRepositoryObject(repositoryObjectID, tagID uint) error {
 	repositoryObjectTag := RepositoryObjectTag{
 		RepositoryObjectID: repositoryObjectID,
 		TagID:              tagID,
 	}
-	return d.Create(&repositoryObjectTag).Error
+	// Use FirstOrCreate to make this idempotent - if the tag is already attached, just return success
+	return d.FirstOrCreate(&repositoryObjectTag, repositoryObjectTag).Error
 }
 
 // RemoveTagFromRepositoryObject removes a tag from a repository object.
@@ -304,6 +306,8 @@ func (d *Database) GetRepositoryObjectsByTag(tagID uint) ([]RepositoryObject, er
 		Preload("Repository").
 		Preload("Parent").
 		Preload("Children").
+		Preload("Children.Tags").
+		Preload("Tags").
 		Order("repository_objects.created_at desc").
 		Find(&repositoryObjects).Error; err != nil {
 		return nil, err

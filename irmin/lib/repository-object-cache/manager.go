@@ -88,6 +88,18 @@ func (m *Manager) ProcessEngineObject(
 	}
 	repositoryObject.Children = children
 
+	// Load Tags for the object to ensure tags are available in responses
+	if err := m.db.Model(repositoryObject).Association("Tags").Find(&repositoryObject.Tags); err != nil {
+		return nil, fmt.Errorf("error loading object tags: %w", err)
+	}
+
+	// Load Tags for all children to ensure tags are available in responses
+	for i := range repositoryObject.Children {
+		if err := m.db.Model(&repositoryObject.Children[i]).Association("Tags").Find(&repositoryObject.Children[i].Tags); err != nil {
+			return nil, fmt.Errorf("error loading child object tags: %w", err)
+		}
+	}
+
 	return repositoryObject, nil
 }
 

@@ -2835,7 +2835,7 @@ AddTagToRepository adds a tag to a repository.
 func (d *Database) AddTagToRepositoryObject(repositoryObjectID, tagID uint) error
 ```
 
-AddTagToRepositoryObject adds a tag to a repository object.
+AddTagToRepositoryObject adds a tag to a repository object. If the tag is already attached, this operation is idempotent and returns no error.
 
 <a name="Database.AddTagToWorkflow"></a>
 ### func \(\*Database\) AddTagToWorkflow

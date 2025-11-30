@@ -372,6 +372,18 @@ func (api *APIMiddlewares) getEntityResourceInfo(
 		tagIDUint := uint(tagID)
 		return db.PolicyResourceWorkspaceTag, &tagIDUint, nil
 
+	case "repository_objects":
+		objectID, err := api.SQIDManager.Decode("repository_objects", entityIDStr)
+		if err != nil {
+			return "", nil, fmt.Errorf("invalid repository object ID: %w", err)
+		}
+		var object db.RepositoryObject
+		if err = api.DB.First(&object, objectID).Error; err != nil {
+			return "", nil, fmt.Errorf("repository object not found: %w", err)
+		}
+		objectIDUint := uint(objectID)
+		return db.PolicyResourceRepositoryObject, &objectIDUint, nil
+
 	default:
 		return "", nil, fmt.Errorf("unsupported entity type: %s", entityType)
 	}

@@ -33,7 +33,11 @@ type RepositoryObject struct {
 
 func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*RepositoryObject, error) {
 	var object RepositoryObject
-	query := d.Preload("Repository").Preload("Parent").Preload("Children.Repository").Preload("Tags")
+	query := d.Preload("Repository").
+		Preload("Parent").
+		Preload("Children.Repository").
+		Preload("Children.Tags").
+		Preload("Tags")
 
 	conditions := make([]string, 0)
 	args := make([]any, 0)
