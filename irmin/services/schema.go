@@ -90,8 +90,17 @@ func (api *APIServices) GetRepositoryObjectSchema(
 		if s == nil {
 			return
 		}
-		selector := lib.ConstructSQLSelector(workspace.Slug, repository.Slug, s.Path, ref)
-		s.SQLSelectorExample = &selector
+
+		// Only populate selector for "root" objects (Group, Structured, Binary)
+		// Descendants (like columns) shouldn't have a selector unless we want to support column selection syntax
+		if s.Type == irminmodels.ObjectTypeGroup || s.Type == irminmodels.ObjectTypeStructured ||
+			s.Type == irminmodels.ObjectTypeBinary {
+			if s.Path != "" {
+				selector := lib.ConstructSQLSelector(workspace.Slug, repository.Slug, s.Path, ref)
+				s.SQLSelectorExample = &selector
+			}
+		}
+
 		for i := range s.Children {
 			populateSelector(&s.Children[i])
 		}
@@ -183,6 +192,9 @@ func (api *APIServices) GetWorkspaceSchema(
 		}
 	}
 
+	// Track the starting index of repositories to distinguish them from connections
+	repositoryStartIndex := len(workspaceSchema.Children)
+
 	// Include repositories if requested
 	if includeRepositories {
 		if repoErr := api.addRepositorySchemas(ctx, locale, user, workspace, workspaceSchema); repoErr != nil {
@@ -190,7 +202,55 @@ func (api *APIServices) GetWorkspaceSchema(
 		}
 	}
 
+	// Deduplicate root-level objects that are also present in repositories
+	if includeConnections && includeRepositories {
+		api.deduplicateWorkspaceSchema(workspaceSchema, repositoryStartIndex)
+	}
+
 	return workspaceSchema, nil
+}
+
+// deduplicateWorkspaceSchema removes root-level objects that are also present in repositories.
+// This prevents showing the same object twice (once as a connection/loose object and once inside the repository).
+func (api *APIServices) deduplicateWorkspaceSchema(
+	workspaceSchema *irminmodels.ObjectSchema,
+	repositoryStartIndex int,
+) {
+	// Collect all names of objects inside repository groups only (not connection groups)
+	repoObjectNames := api.collectRepositoryObjectNames(workspaceSchema.Children, repositoryStartIndex)
+
+	// Filter out root-level items that are present in repositories
+	filteredChildren := make([]irminmodels.ObjectSchema, 0, len(workspaceSchema.Children))
+	for _, child := range workspaceSchema.Children {
+		// Keep groups (repositories and group connections)
+		if child.Type == irminmodels.ObjectTypeGroup {
+			filteredChildren = append(filteredChildren, child)
+			continue
+		}
+
+		// For non-groups (structured/binary connections), check if they exist in repositories
+		if !repoObjectNames[child.Name] {
+			filteredChildren = append(filteredChildren, child)
+		}
+	}
+	workspaceSchema.Children = filteredChildren
+}
+
+// collectRepositoryObjectNames collects names of objects inside repository groups.
+func (api *APIServices) collectRepositoryObjectNames(
+	children []irminmodels.ObjectSchema,
+	repositoryStartIndex int,
+) map[string]bool {
+	repoObjectNames := make(map[string]bool)
+	for i := repositoryStartIndex; i < len(children); i++ {
+		child := children[i]
+		if child.Type == irminmodels.ObjectTypeGroup {
+			for _, repoChild := range child.Children {
+				repoObjectNames[repoChild.Name] = true
+			}
+		}
+	}
+	return repoObjectNames
 }
 
 // addConnectionSchemas adds connection schemas to the workspace schema.
@@ -336,42 +396,93 @@ func (api *APIServices) buildRepositorySchema(
 	}
 
 	for _, object := range objects {
-		// Get object schema using the repository's default branch
-		objSchema, objSchemaErr := api.schemaCacheManager.GetObjectSchema(
+		// Only process root-level objects (where ParentID is nil)
+		// This avoids duplicates since children are included in the schema of their parent group
+		if object.ParentID != nil {
+			continue
+		}
+
+		objSchema, objSchemaErr := api.getObjectSchemaWithSelector(
 			ctx,
 			workspace,
 			repository,
 			&object,
 			repository.DefaultBranch,
 			locale,
-			false,
 		)
 		if objSchemaErr != nil {
 			api.Logger.WarnContext(ctx, "error getting object schema", "object_id", object.ID, "error", objSchemaErr)
 			continue
 		}
 
-		// Recursively set the SQL selector example
-		var populateSelector func(*irminmodels.ObjectSchema)
-		populateSelector = func(s *irminmodels.ObjectSchema) {
-			if s == nil {
-				return
-			}
-			selector := lib.ConstructSQLSelector(
-				workspace.Slug,
-				repository.Slug,
-				s.Path,
-				repository.DefaultBranch,
-			)
-			s.SQLSelectorExample = &selector
-			for i := range s.Children {
-				populateSelector(&s.Children[i])
-			}
-		}
-		populateSelector(objSchema)
-
-		repoSchema.Children = append(repoSchema.Children, *objSchema)
+		api.appendObjectToRepositorySchema(repoSchema, &object, objSchema)
 	}
 
 	return repoSchema, nil
+}
+
+// getObjectSchemaWithSelector gets the object schema and populates SQL selector examples.
+func (api *APIServices) getObjectSchemaWithSelector(
+	ctx context.Context,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	object *db.RepositoryObject,
+	ref string,
+	locale string,
+) (*irminmodels.ObjectSchema, error) {
+	objSchema, err := api.schemaCacheManager.GetObjectSchema(
+		ctx,
+		workspace,
+		repository,
+		object,
+		ref,
+		locale,
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	api.populateSQLSelector(objSchema, workspace.Slug, repository.Slug, ref)
+	return objSchema, nil
+}
+
+// populateSQLSelector recursively sets the SQL selector example for all objects in the schema.
+func (api *APIServices) populateSQLSelector(
+	schema *irminmodels.ObjectSchema,
+	workspaceSlug string,
+	repositorySlug string,
+	ref string,
+) {
+	if schema == nil {
+		return
+	}
+
+	// Only populate selector for "root" objects (Group, Structured, Binary)
+	if (schema.Type == irminmodels.ObjectTypeGroup ||
+		schema.Type == irminmodels.ObjectTypeStructured ||
+		schema.Type == irminmodels.ObjectTypeBinary) && schema.Path != "" {
+		selector := lib.ConstructSQLSelector(workspaceSlug, repositorySlug, schema.Path, ref)
+		schema.SQLSelectorExample = &selector
+	}
+
+	for i := range schema.Children {
+		api.populateSQLSelector(&schema.Children[i], workspaceSlug, repositorySlug, ref)
+	}
+}
+
+// appendObjectToRepositorySchema appends an object schema to the repository schema,
+// unwrapping root group objects to avoid extra nesting levels.
+func (api *APIServices) appendObjectToRepositorySchema(
+	repoSchema *irminmodels.ObjectSchema,
+	object *db.RepositoryObject,
+	objSchema *irminmodels.ObjectSchema,
+) {
+	// If this is the root object (empty path) and it's a group,
+	// append its children directly to the repository schema to avoid an extra nesting level
+	if object.Path == "" && objSchema.Type == irminmodels.ObjectTypeGroup {
+		repoSchema.Children = append(repoSchema.Children, objSchema.Children...)
+	} else {
+		repoSchema.Children = append(repoSchema.Children, *objSchema)
+	}
 }
