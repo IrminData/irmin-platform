@@ -57,6 +57,24 @@ func (api *APIServices) GetRepositoryObject(
 
 	// Check permissions if object exists
 	if repositoryObjectDB != nil {
+		// Recursively populate SQL selector for object and all descendants
+		var populateSelector func(*db.RepositoryObject)
+		populateSelector = func(obj *db.RepositoryObject) {
+			if obj == nil {
+				return
+			}
+			obj.SQLSelectorExample = lib.ConstructSQLSelector(
+				workspace.Slug,
+				repository.Slug,
+				obj.Path,
+				ref,
+			)
+			for i := range obj.Children {
+				populateSelector(&obj.Children[i])
+			}
+		}
+		populateSelector(repositoryObjectDB)
+
 		if validateErr := api.validateObjectPermissions(c, user, workspace, repositoryObjectDB); validateErr != nil {
 			return nil, detailsFromPath, ref, validateErr
 		}

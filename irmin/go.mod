@@ -3,12 +3,12 @@ module irmin-api
 go 1.25.0
 
 require (
-	github.com/IrminData/irmin-sdk-go v0.0.0-20251125221925-6f7f2ed66532
+	github.com/IrminData/irmin-sdk-go v0.0.0-20251130095255-498ed1ba17f6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.92.1
 	github.com/clerk/clerk-sdk-go/v2 v2.5.0
 	github.com/gofiber/fiber/v3 v3.0.0-rc.3
-	github.com/gofiber/storage/memory/v2 v2.1.0
-	github.com/gofiber/storage/s3/v2 v2.4.1
+	github.com/gofiber/storage/memory/v2 v2.1.1
+	github.com/gofiber/storage/s3/v2 v2.4.2
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/joho/godotenv v1.5.1
@@ -24,7 +24,6 @@ require (
 )
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
@@ -87,7 +86,6 @@ require (
 	github.com/valyala/fasthttp v1.68.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.51.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20251125195548-87e1e737ad39 // indirect
@@ -96,7 +94,7 @@ require (
 	golang.org/x/oauth2 v0.33.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/telemetry v0.0.0-20251124170345-55bbf377f459 // indirect
+	golang.org/x/telemetry v0.0.0-20251128220624-abf20d0e57ec // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect

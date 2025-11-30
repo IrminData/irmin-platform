@@ -47,6 +47,10 @@ func AssignDefaultRolesToUsersWithoutRoles(d *db.Database) error
     in workspaces who don't have any roles. For workspace owners, it assigns the
     owner role instead of the default role.
 
+func ConstructSQLSelector(workspaceSlug, repositorySlug, objectPath, ref string) string
+    ConstructSQLSelector constructs the Irmin SQL selector string. Format:
+    $["workspace;repository;object@ref"]
+
 func CreateAuditLogEventAsync(d *db.Database, logger *slog.Logger, event *db.LogEvent)
     CreateAuditLogEventAsync creates an audit log event asynchronously.
 

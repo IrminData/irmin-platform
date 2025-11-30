@@ -12227,6 +12227,10 @@ const docTemplate = `{
                     "minimum": 0,
                     "example": 1048576
                 },
+                "sql_selector_example": {
+                    "type": "string",
+                    "example": "$["
+                },
                 "tags": {
                     "type": "array",
                     "items": {
@@ -12302,6 +12306,10 @@ const docTemplate = `{
                     "description": "Structured or Binary schema",
                     "type": "integer",
                     "example": 1048576
+                },
+                "sql_selector_example": {
+                    "type": "string",
+                    "example": "$['workspace;repo;file.json@main']"
                 },
                 "type": {
                     "enum": [

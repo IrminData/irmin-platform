@@ -4184,6 +4184,7 @@ type RepositoryObject struct {
     SizeBytes             int64                  `json:"size_bytes,omitempty"`
     LastModified          string                 `json:"last_modified,omitempty"`
     Metadata              map[string]string      `json:"metadata,omitempty"                gorm:"type:jsonb;serializer:json"`
+    SQLSelectorExample    string                 `json:"sql_selector_example,omitempty"    gorm:"-"` // This field is not stored in the database, since it's just a computed value.
 
     ParentID *uint              `json:"parent_id,omitempty" gorm:"index"`
     Parent   *RepositoryObject  `json:"parent,omitempty"    gorm:"foreignKey:ParentID;references:ID"`
@@ -8252,6 +8253,7 @@ import "irmin-api/lib"
 - [Constants](<#constants>)
 - [Variables](<#variables>)
 - [func AssignDefaultRolesToUsersWithoutRoles\(d \*db.Database\) error](<#AssignDefaultRolesToUsersWithoutRoles>)
+- [func ConstructSQLSelector\(workspaceSlug, repositorySlug, objectPath, ref string\) string](<#ConstructSQLSelector>)
 - [func CreateAuditLogEventAsync\(d \*db.Database, logger \*slog.Logger, event \*db.LogEvent\)](<#CreateAuditLogEventAsync>)
 - [func CreateWorkflowRun\(tx \*gorm.DB, workflow \*db.Workflow, user \*db.User, trigger \*db.WorkflowTrigger\) \(\*db.WorkflowRun, error\)](<#CreateWorkflowRun>)
 - [func DecodePolicyResourceID\(sqid string, resource db.PolicyResource, sqidManager \*irminsqids.SQIDManager\) \(\*uint, error\)](<#DecodePolicyResourceID>)
@@ -8366,6 +8368,15 @@ func AssignDefaultRolesToUsersWithoutRoles(d *db.Database) error
 ```
 
 AssignDefaultRolesToUsersWithoutRoles assigns the default role to any users in workspaces who don't have any roles. For workspace owners, it assigns the owner role instead of the default role.
+
+<a name="ConstructSQLSelector"></a>
+## func ConstructSQLSelector
+
+```go
+func ConstructSQLSelector(workspaceSlug, repositorySlug, objectPath, ref string) string
+```
+
+ConstructSQLSelector constructs the Irmin SQL selector string. Format: $\["workspace;repository;object@ref"\]
 
 <a name="CreateAuditLogEventAsync"></a>
 ## func CreateAuditLogEventAsync

@@ -1495,6 +1495,9 @@ definitions:
         example: 1048576
         minimum: 0
         type: integer
+      sql_selector_example:
+        example: $[
+        type: string
       tags:
         items:
           $ref: '#/definitions/irminmodels.Tag'
@@ -1548,6 +1551,9 @@ definitions:
         description: Structured or Binary schema
         example: 1048576
         type: integer
+      sql_selector_example:
+        example: $['workspace;repo;file.json@main']
+        type: string
       type:
         allOf:
         - $ref: '#/definitions/irminmodels.ObjectType'

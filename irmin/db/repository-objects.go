@@ -19,6 +19,7 @@ type RepositoryObject struct {
 	SizeBytes             int64                  `json:"size_bytes,omitempty"`
 	LastModified          string                 `json:"last_modified,omitempty"`
 	Metadata              map[string]string      `json:"metadata,omitempty"                gorm:"type:jsonb;serializer:json"`
+	SQLSelectorExample    string                 `json:"sql_selector_example,omitempty"    gorm:"-"` // This field is not stored in the database, since it's just a computed value.
 
 	ParentID *uint              `json:"parent_id,omitempty" gorm:"index"`
 	Parent   *RepositoryObject  `json:"parent,omitempty"    gorm:"foreignKey:ParentID;references:ID"`

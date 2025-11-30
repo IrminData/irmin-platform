@@ -8,6 +8,7 @@ import (
 
 	"irmin-api/db"
 	"irmin-api/engine"
+	"irmin-api/lib"
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 )
@@ -82,6 +83,20 @@ func (api *APIServices) GetRepositoryObjectSchema(
 		api.Logger.ErrorContext(ctx, "error getting object schema", "error", err)
 		return nil, fmt.Errorf("failed to get object schema: %w", err)
 	}
+
+	// Recursively set the SQL selector example
+	var populateSelector func(*irminmodels.ObjectSchema)
+	populateSelector = func(s *irminmodels.ObjectSchema) {
+		if s == nil {
+			return
+		}
+		selector := lib.ConstructSQLSelector(workspace.Slug, repository.Slug, s.Path, ref)
+		s.SQLSelectorExample = &selector
+		for i := range s.Children {
+			populateSelector(&s.Children[i])
+		}
+	}
+	populateSelector(schema)
 
 	return schema, nil
 }
@@ -335,6 +350,25 @@ func (api *APIServices) buildRepositorySchema(
 			api.Logger.WarnContext(ctx, "error getting object schema", "object_id", object.ID, "error", objSchemaErr)
 			continue
 		}
+
+		// Recursively set the SQL selector example
+		var populateSelector func(*irminmodels.ObjectSchema)
+		populateSelector = func(s *irminmodels.ObjectSchema) {
+			if s == nil {
+				return
+			}
+			selector := lib.ConstructSQLSelector(
+				workspace.Slug,
+				repository.Slug,
+				s.Path,
+				repository.DefaultBranch,
+			)
+			s.SQLSelectorExample = &selector
+			for i := range s.Children {
+				populateSelector(&s.Children[i])
+			}
+		}
+		populateSelector(objSchema)
 
 		repoSchema.Children = append(repoSchema.Children, *objSchema)
 	}

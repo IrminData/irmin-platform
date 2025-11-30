@@ -55,6 +55,7 @@ func FormatRepositoryObjectResponse(
 		SizeBytes:             object.SizeBytes,
 		LastModified:          object.LastModified,
 		Metadata:              object.Metadata,
+		SQLSelectorExample:    object.SQLSelectorExample,
 		Tags:                  tags,
 		Children:              children,
 	}
