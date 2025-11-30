@@ -3,7 +3,9 @@
 import { useState } from 'react';
 
 import { MdDescription } from 'react-icons/md';
+import { TbCheck, TbCopy } from 'react-icons/tb';
 
+import SqlHelper from '@/components/query/helper/SqlHelper';
 import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -28,6 +30,7 @@ export function StructuredItemViewer({
 }) {
   const { dict, locale } = useLocale();
   const [expanded, setExpanded] = useState(isExpanded);
+  const [copied, setCopied] = useState(false);
 
   if (item.type !== 'structured') return <></>;
 
@@ -113,16 +116,58 @@ export function StructuredItemViewer({
             </span>
             {item.content_type && <span>MIME: {item.content_type}</span>}
           </div>
-          <Button
-            className='mt-2 -ml-2'
-            variant='ghost'
-            onClick={() => setExpanded(!expanded)}
-            aria-expanded={expanded}
-          >
-            {expanded
-              ? dict.repository.objects.hideSchema
-              : dict.repository.objects.showSchema}
-          </Button>
+          {item.sql_selector_example && (
+            <div className='mt-2 w-full max-w-full'>
+              <div
+                className={`
+                  flex items-center gap-1 rounded bg-gray-100 p-1
+                  dark:bg-gray-800
+                `}
+              >
+                <code
+                  className={`
+                    flex-1 overflow-x-auto px-1 font-mono text-[10px]
+                    whitespace-nowrap
+                  `}
+                >
+                  {item.sql_selector_example}
+                </code>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='size-6 p-0'
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(
+                      item.sql_selector_example || ''
+                    );
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  title={copied ? dict.common.copied : dict.common.copy}
+                  icon={
+                    copied ? (
+                      <TbCheck size={12} className='text-green-500' />
+                    ) : (
+                      <TbCopy size={12} />
+                    )
+                  }
+                />
+              </div>
+            </div>
+          )}
+          <div className='mt-2 flex items-center gap-2'>
+            <Button
+              className='-ml-2'
+              variant='ghost'
+              onClick={() => setExpanded(!expanded)}
+              aria-expanded={expanded}
+            >
+              {expanded
+                ? dict.repository.objects.hideSchema
+                : dict.repository.objects.showSchema}
+            </Button>
+            <SqlHelper schema={item} title={item.name} />
+          </div>
           {expanded && (
             <div
               className={`

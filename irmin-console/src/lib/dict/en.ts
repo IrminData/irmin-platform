@@ -675,6 +675,49 @@ const en = {
     search: 'Search in results',
     newQuery: 'New query',
     selectedQuery: 'Selected query',
+    editor: 'SQL Editor',
+    syntaxHelper: 'Syntax helper',
+  },
+
+  queryHelper: {
+    title: 'SQL Syntax Helper',
+    poweredBy: 'Powered by DuckDB',
+    duckDbDescription:
+      'Irmin uses DuckDB, a high-performance analytical database. All standard SQL syntax and DuckDB-specific functions are supported.',
+    duckDbDocs: 'DuckDB SQL Documentation',
+    context: 'Query Context',
+    placeholderSyntax: 'Placeholder Syntax',
+    placeholderDescription:
+      'Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions. Every query must include at least one placeholder.',
+    placeholderSyntaxNote:
+      'Ref (branch/commit) is optional. Workspace is optional if running in the same workspace.',
+    basicSyntax: 'Basic Syntax',
+    examples: 'Query Examples',
+    sqlSqlqctor: 'SQL Selector',
+    copySelector: 'Copy selector',
+    copy: 'Copy',
+    close: 'Close',
+    noSchemaAvailable: 'No schema available for the current context.',
+    availableColumns: 'Available Columns',
+    basicSelect: 'Basic Select',
+    filterAndSort: 'Filter & Sort',
+    aggregations: 'Aggregations',
+    windowFunctions: 'Window Functions',
+    nestedJson: 'Nested JSON (UNNEST)',
+    jsonExtract: 'Extract JSON Fields',
+    crossBranchQuery: 'Cross-Branch Query',
+    timeSeries: 'Time Series Analysis',
+    explanations: {
+      basicSelect: 'Retrieve the first 10 rows from the object.',
+      filterAndSort: 'Filter rows by id and sort by creation date.',
+      aggregations: 'Group data by category and calculate statistics.',
+      windowFunctions:
+        'Calculate rank and previous values using window functions.',
+      nestedJson: 'Expand the "data" array into rows to query its fields.',
+      jsonExtract: 'Extract specific fields from a JSON string column.',
+      crossBranchQuery: 'Combine results from main and dev branches.',
+      timeSeries: 'Aggregate data by hour to analyze trends.',
+    },
   },
 
   fileNavigator: {

@@ -658,6 +658,49 @@ const fi = {
     search: 'Hae tuloksista',
     newQuery: 'Uusi kysely',
     selectedQuery: 'Valittu kysely',
+    editor: 'SQL-editori',
+    syntaxHelper: 'Syntaksiavustaja',
+  },
+
+  queryHelper: {
+    title: 'SQL-syntaksiavustaja',
+    poweredBy: 'DuckDB:n voimalla',
+    duckDbDescription:
+      'Irmin käyttää DuckDB:tä, suorituskykyistä analytiikkatietokantaa. Kaikki standardi SQL-syntaksi ja DuckDB:n erityisfunktiot ovat tuettuja.',
+    duckDbDocs: 'DuckDB SQL-dokumentaatio',
+    context: 'Kyselyn konteksti',
+    placeholderSyntax: 'Paikkamerkkisyntaksi',
+    placeholderDescription:
+      'Irmin käyttää erityistä paikkamerkkisyntaksia viitatakseen dataan eri työtilojen, data-arkistojen ja versioiden välillä. Jokaisessa kyselyssä on oltava vähintään yksi paikkamerkki.',
+    placeholderSyntaxNote:
+      'Ref (haara/commit) on valinnainen. Työtila on valinnainen, jos ajetaan samassa työtilassa.',
+    basicSyntax: 'Perussyntaksi',
+    examples: 'Kyselyesimerkit',
+    sqlSqlqctor: 'SQL valitsin',
+    copySelector: 'Kopioi valitsin',
+    copy: 'Kopioi',
+    close: 'Sulje',
+    noSchemaAvailable: 'Ei rakennetta saatavilla nykyisessä kontekstissa.',
+    availableColumns: 'Saatavilla olevat sarakkeet',
+    basicSelect: 'Perusvalinta',
+    filterAndSort: 'Suodatus ja lajittelu',
+    aggregations: 'Aggregaatiot',
+    windowFunctions: 'Ikkunafunktiot',
+    nestedJson: 'Sisäkkäinen JSON (UNNEST)',
+    jsonExtract: 'Poimi JSON-kentät',
+    crossBranchQuery: 'Haarojen välinen kysely',
+    timeSeries: 'Aikasarja-analyysi',
+    explanations: {
+      basicSelect: 'Hae ensimmäiset 10 riviä objektista.',
+      filterAndSort:
+        'Suodata rivit id:n mukaan ja lajittele luontipäivämäärän mukaan.',
+      aggregations: 'Ryhmittele data kategorioittain ja laske tilastot.',
+      windowFunctions: 'Laske sijoitus ja edelliset arvot ikkunafunktioilla.',
+      nestedJson: 'Laajenna "data"-taulukko riveiksi kyselläksesi sen kenttiä.',
+      jsonExtract: 'Poimi tietyt kentät JSON-merkkijonosarakkeesta.',
+      crossBranchQuery: 'Yhdistä tulokset main- ja dev-haaroista.',
+      timeSeries: 'Aggregoi data tunneittain trendien analysoimiseksi.',
+    },
   },
 
   fileNavigator: {

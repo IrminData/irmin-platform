@@ -41,6 +41,7 @@ import type { StoredQuery } from '@/types/core/StoredQuery';
 import type { Tag } from '@/types/core/Tag';
 
 import CreateSavedQueryModal from './CreateQueryModal';
+import SqlHelper from './helper/SqlHelper';
 import UpdateQueryModal from './UpdateQueryModal';
 
 /**
@@ -403,15 +404,27 @@ export default function QueriesSection() {
           </div>
           <div
             className={`
-              order-1 h-full
+              relative order-1 flex h-full flex-col
               lg:order-2 lg:grow lg:overflow-y-scroll
             `}
           >
-            <CodeMirrorEditor
-              language='sql'
-              content={editorContent}
-              updateEditorContent={updateEditorContent}
-            />
+            <div
+              className={`
+                flex items-center justify-between border-b bg-muted/30 px-4 py-2
+              `}
+            >
+              <h3 className='text-sm font-medium'>{dict.query.editor}</h3>
+              <div className='flex items-center gap-2'>
+                <SqlHelper schema={workspaceSchema.schema || undefined} />
+              </div>
+            </div>
+            <div className='grow overflow-hidden'>
+              <CodeMirrorEditor
+                language='sql'
+                content={editorContent}
+                updateEditorContent={updateEditorContent}
+              />
+            </div>
           </div>
           {selectedQuery && (
             <div

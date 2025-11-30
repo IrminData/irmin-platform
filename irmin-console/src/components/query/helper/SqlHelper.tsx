@@ -1,0 +1,491 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+
+import {
+  TbCheck,
+  TbCopy,
+  TbExternalLink,
+  TbHelp,
+  TbInfoCircle,
+} from 'react-icons/tb';
+
+import { JSONSchemaViewer } from '@/components/repository/objects/SchemaViewer/JSONSchemaViewer';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+import { useLocale } from '@/context/LocaleContext';
+
+import { useRepositoryObjectSchema } from '@/hooks/api/useRepositoryObjectSchema';
+
+import type { ObjectSchema } from '@/types/core/ObjectSchema';
+import type { RepositoryObject } from '@/types/core/RepositoryObject';
+
+/**
+ * SQL Helper component to assist users with writing Irmin SQL queries.
+ * Provides syntax examples, placeholder explanations, and schema-specific selectors.
+ */
+export default function SqlHelper({
+  schema,
+  selector,
+  title,
+  repositoryObject,
+}: {
+  schema?: ObjectSchema;
+  selector?: string;
+  title?: string;
+  repositoryObject?: RepositoryObject;
+}) {
+  const { dict } = useLocale();
+  const [open, setOpen] = useState(false);
+
+  const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(
+    repositoryObject?.repository_slug ?? '',
+    repositoryObject?.ref,
+    repositoryObject?.path,
+    { enabled: !!repositoryObject }
+  );
+
+  const effectiveSchema =
+    schema ||
+    (repositoryObject ? repositoryObjectSchemaQuery.data?.data : undefined);
+
+  // Prefer object's selector, then schema's, then passed selector
+  const displaySelector =
+    repositoryObject?.sql_selector_example ||
+    effectiveSchema?.sql_selector_example ||
+    selector;
+  const displayName =
+    repositoryObject?.name ||
+    effectiveSchema?.name ||
+    title ||
+    dict.repository.objects.object;
+
+  // Determine if object is JSON for showing JSON-specific examples
+  const isJsonObject =
+    (repositoryObject?.type === 'structured' ||
+      effectiveSchema?.type === 'structured') &&
+    (repositoryObject?.content_type?.includes('json') ||
+      effectiveSchema?.content_type?.includes('json') ||
+      repositoryObject?.path?.toLowerCase().endsWith('.json') ||
+      effectiveSchema?.path?.toLowerCase().endsWith('.json') ||
+      repositoryObject?.path?.toLowerCase().endsWith('.jsonl') ||
+      effectiveSchema?.path?.toLowerCase().endsWith('.jsonl'));
+
+  const context = useMemo(() => {
+    if (!displaySelector) return null;
+    const match = displaySelector.match(/\$\["(.*?)"\]/);
+    if (!match) return null;
+    const content = match[1];
+    const parts = content.split(';');
+    if (parts.length < 3) return null;
+
+    const repository = parts[1];
+    const remainder = parts.slice(2).join(';');
+
+    const refIndex = remainder.lastIndexOf('@');
+    let path = remainder;
+    let ref = '';
+    if (refIndex !== -1) {
+      path = remainder.substring(0, refIndex);
+      ref = remainder.substring(refIndex + 1);
+    }
+
+    return { repository, path, ref };
+  }, [displaySelector]);
+
+  const getSelectorWithRef = (baseSelector: string, ref: string) => {
+    if (/@([^"]+)"]$/.test(baseSelector)) {
+      return baseSelector.replace(/@([^"]+)"]$/, `@${ref}"]`);
+    }
+    return baseSelector.replace('"]', `@${ref}"]`);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant='ghost'
+          size='sm'
+          icon={<TbHelp size={18} />}
+          className='size-8 p-0'
+          title={dict.queryHelper.title}
+        />
+      </SheetTrigger>
+      <SheetContent
+        className={`
+          w-[400px] overflow-y-auto
+          sm:w-[540px]
+        `}
+      >
+        <SheetHeader>
+          <SheetTitle>{dict.queryHelper.title}</SheetTitle>
+        </SheetHeader>
+
+        <div className='space-y-6 px-2 pb-8'>
+          {/* DuckDB Information Section */}
+          <section>
+            <div className='rounded-md border bg-card p-2'>
+              <div className='mb-2 flex items-center justify-between'>
+                <h3 className='text-sm font-semibold'>
+                  {dict.queryHelper.poweredBy}
+                </h3>
+                <a
+                  href='https://duckdb.org/docs/sql/introduction'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className={`
+                    flex items-center gap-1 text-xs text-accent
+                    hover:underline
+                  `}
+                >
+                  {dict.queryHelper.duckDbDocs}
+                  <TbExternalLink size={12} />
+                </a>
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                {dict.queryHelper.duckDbDescription}
+              </p>
+            </div>
+          </section>
+
+          {/* Placeholder Syntax Section */}
+          <section>
+            <div className='rounded-md border bg-card p-2'>
+              <h3 className='mb-2 text-sm font-semibold'>
+                {dict.queryHelper.placeholderSyntax}
+              </h3>
+              <p className='mb-3 text-xs text-muted-foreground'>
+                {dict.queryHelper.placeholderDescription}
+              </p>
+              <div className='rounded-md bg-muted p-2 font-mono text-xs'>
+                {`$["workspace;repository;object@ref"]`}
+              </div>
+              <p className='mt-2 text-xs text-muted-foreground'>
+                {dict.queryHelper.placeholderSyntaxNote}
+              </p>
+            </div>
+          </section>
+
+          <Separator />
+
+          <div className='space-y-6 px-2'>
+            {/* Context Section */}
+            {context && (
+              <section id='context'>
+                <h3 className='mb-2 text-sm font-semibold'>
+                  {dict.queryHelper.context}
+                </h3>
+                <div className='rounded-md border bg-card p-3 text-xs'>
+                  <div className='flex flex-col gap-3'>
+                    <div className='flex flex-col gap-1'>
+                      <span
+                        className={`
+                          text-[10px] font-bold tracking-wider
+                          text-muted-foreground uppercase
+                        `}
+                      >
+                        {dict.repository.repository}
+                      </span>
+                      <span className='font-mono'>{context.repository}</span>
+                    </div>
+
+                    <div className='flex flex-col gap-1'>
+                      <span
+                        className={`
+                          text-[10px] font-bold tracking-wider
+                          text-muted-foreground uppercase
+                        `}
+                      >
+                        {dict.repository.objects.path}
+                      </span>
+                      <span className='font-mono break-all'>
+                        {context.path}
+                      </span>
+                    </div>
+
+                    {context.ref && (
+                      <div className='flex flex-col gap-1'>
+                        <span
+                          className={`
+                            text-[10px] font-bold tracking-wider
+                            text-muted-foreground uppercase
+                          `}
+                        >
+                          {dict.repository.branches.ref}
+                        </span>
+                        <span className='font-mono'>{context.ref}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+            {/* Schema & Selectors Section */}
+            {(effectiveSchema?.schema || displaySelector) && (
+              <section id='schema-and-selectors'>
+                <div className='rounded-md border p-3'>
+                  {displaySelector && (
+                    <>
+                      <div className='mb-2 flex items-center justify-between'>
+                        <span className='text-sm font-medium'>
+                          {displayName}
+                        </span>
+                        <CopyButton
+                          text={displaySelector}
+                          label={dict.queryHelper.copySelector}
+                        />
+                      </div>
+                      <div
+                        className={`
+                          mb-4 rounded bg-muted p-2 font-mono text-xs break-all
+                        `}
+                      >
+                        {displaySelector}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Available Columns */}
+                  {effectiveSchema?.schema && (
+                    <div>
+                      <h4
+                        className={`
+                          mb-2 text-xs font-semibold text-muted-foreground
+                          uppercase
+                        `}
+                      >
+                        {dict.queryHelper.availableColumns}
+                      </h4>
+                      <div
+                        className={`
+                          rounded-md border border-border bg-background/50 p-2
+                        `}
+                      >
+                        <JSONSchemaViewer
+                          schema={effectiveSchema.schema}
+                          isExpanded={true}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Examples Section */}
+            <section id='examples'>
+              <h3 className='mb-4 text-sm font-semibold'>
+                {dict.queryHelper.examples}
+              </h3>
+              <div className='space-y-3'>
+                {/* Basic Examples */}
+                {displaySelector ? (
+                  <>
+                    <ExampleItem
+                      title={dict.queryHelper.basicSelect}
+                      code={`SELECT * FROM ${displaySelector} LIMIT 10;`}
+                      explanation={dict.queryHelper.explanations.basicSelect}
+                    />
+                    <ExampleItem
+                      title={dict.queryHelper.filterAndSort}
+                      code={`SELECT * FROM ${displaySelector}\nWHERE id > 100\nORDER BY created_at DESC;`}
+                      explanation={dict.queryHelper.explanations.filterAndSort}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <ExampleItem
+                      title={dict.queryHelper.basicSelect}
+                      code='SELECT * FROM $["repo;file.json@main"] LIMIT 10;'
+                      explanation={dict.queryHelper.explanations.basicSelect}
+                    />
+                    <ExampleItem
+                      title={dict.queryHelper.filterAndSort}
+                      code={`SELECT * FROM $["repo;data.csv"]\nWHERE id > 100\nORDER BY created_at DESC;`}
+                      explanation={dict.queryHelper.explanations.filterAndSort}
+                    />
+                  </>
+                )}
+
+                {/* Aggregations */}
+                {displaySelector ? (
+                  <ExampleItem
+                    title={dict.queryHelper.aggregations}
+                    code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM ${displaySelector}\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
+                    explanation={dict.queryHelper.explanations.aggregations}
+                  />
+                ) : (
+                  <ExampleItem
+                    title={dict.queryHelper.aggregations}
+                    code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM $["repo;data.json"]\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
+                    explanation={dict.queryHelper.explanations.aggregations}
+                  />
+                )}
+
+                {/* Window Functions */}
+                {displaySelector ? (
+                  <ExampleItem
+                    title={dict.queryHelper.windowFunctions}
+                    code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM ${displaySelector};`}
+                    explanation={dict.queryHelper.explanations.windowFunctions}
+                  />
+                ) : (
+                  <ExampleItem
+                    title={dict.queryHelper.windowFunctions}
+                    code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM $["repo;data.json"];`}
+                    explanation={dict.queryHelper.explanations.windowFunctions}
+                  />
+                )}
+
+                {/* Nested JSON */}
+                {isJsonObject ? (
+                  <ExampleItem
+                    title={dict.queryHelper.nestedJson}
+                    code={
+                      displaySelector
+                        ? `SELECT d.*\nFROM ${displaySelector}\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
+                        : `SELECT d.*\nFROM $["repo;data.json"]\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
+                    }
+                    explanation={dict.queryHelper.explanations.nestedJson}
+                  />
+                ) : null}
+
+                {/* JSON Extract */}
+                {isJsonObject ? (
+                  <ExampleItem
+                    title={dict.queryHelper.jsonExtract}
+                    code={
+                      displaySelector
+                        ? `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM ${displaySelector}\nWHERE json_valid(data_column);`
+                        : `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM $["repo;json-data.json"]\nWHERE json_valid(data_column);`
+                    }
+                    explanation={dict.queryHelper.explanations.jsonExtract}
+                  />
+                ) : null}
+
+                {/* Cross-Branch Query */}
+                {displaySelector ? (
+                  <ExampleItem
+                    title={dict.queryHelper.crossBranchQuery}
+                    code={`SELECT 'main' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'main')}\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'dev')};`}
+                    explanation={dict.queryHelper.explanations.crossBranchQuery}
+                  />
+                ) : (
+                  <ExampleItem
+                    title={dict.queryHelper.crossBranchQuery}
+                    code={`SELECT 'main' AS branch, COUNT(*) FROM $["repo;data.json@main"]\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM $["repo;data.json@dev"];`}
+                    explanation={dict.queryHelper.explanations.crossBranchQuery}
+                  />
+                )}
+
+                {/* Time Series */}
+                {displaySelector ? (
+                  <ExampleItem
+                    title={dict.queryHelper.timeSeries}
+                    code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM ${displaySelector}\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
+                    explanation={dict.queryHelper.explanations.timeSeries}
+                  />
+                ) : (
+                  <ExampleItem
+                    title={dict.queryHelper.timeSeries}
+                    code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM $["repo;time-series.json"]\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
+                    explanation={dict.queryHelper.explanations.timeSeries}
+                  />
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function CopyButton({ text, label }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
+  };
+
+  return (
+    <Button
+      variant='ghost'
+      size='sm'
+      onClick={handleCopy}
+      className='h-6 gap-1 px-2 text-xs'
+    >
+      {copied ? <TbCheck size={14} /> : <TbCopy size={14} />}
+      {label && <span>{copied ? 'Copied' : label}</span>}
+    </Button>
+  );
+}
+
+function ExampleItem({
+  title,
+  code,
+  explanation,
+}: {
+  title: string;
+  code: string;
+  explanation?: string;
+}) {
+  return (
+    <div className='rounded-md border bg-card'>
+      <div
+        className={`
+          flex items-center justify-between border-b bg-muted/30 px-3 py-1.5
+        `}
+      >
+        <div className='flex items-center gap-1.5'>
+          <span className='text-xs font-medium'>{title}</span>
+          {explanation && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className={`
+                      cursor-help text-muted-foreground
+                      hover:text-foreground
+                    `}
+                  >
+                    <TbInfoCircle size={14} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side='right' className='max-w-xs text-xs'>
+                  <p>{explanation}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        <CopyButton text={code} />
+      </div>
+      <div className='p-2'>
+        <pre className='overflow-x-auto font-mono text-xs whitespace-pre-wrap'>
+          {code}
+        </pre>
+      </div>
+    </div>
+  );
+}

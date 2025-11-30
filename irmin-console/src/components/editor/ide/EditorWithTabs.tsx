@@ -3,6 +3,7 @@
 import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
 import { TbRun } from 'react-icons/tb';
 
+import SqlHelper from '@/components/query/helper/SqlHelper';
 import { Button } from '@/components/ui/button';
 
 import { useEditor } from '@/context/EditorContext';
@@ -127,6 +128,9 @@ const EditorWithTabs = () => {
                 ))}
               </select>
             )}
+            <div className='mr-2'>
+              <SqlHelper />
+            </div>
             <Button
               size='sm'
               variant='secondary'

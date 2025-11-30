@@ -16,6 +16,7 @@ import {
 } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
+import SqlHelper from '@/components/query/helper/SqlHelper';
 import QueryResults from '@/components/query/QueryResults';
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
@@ -327,8 +328,17 @@ function RepositorySectionContent({
                 dark:bg-gray-800
               `}
             >
-              <div className='py-2 text-sm font-semibold'>
+              <div
+                className={`
+                  flex flex-row items-center gap-2 py-2 text-sm font-semibold
+                `}
+              >
                 {dict.repository.sqlQuery}
+                <SqlHelper
+                  repositoryObject={selectedObject}
+                  selector={selectedObject?.sql_selector_example}
+                  title={selectedObject?.name}
+                />
               </div>
               <Button
                 variant='accent'

@@ -10,13 +10,15 @@ import { useWorkspaceContext } from '@/context/WorkspaceContext';
 export const useRepositoryObjectSchema = (
   repositorySlug: string,
   ref?: string,
-  path?: string
+  path?: string,
+  options?: { enabled?: boolean }
 ) => {
   const { getToken } = useIAM();
   const { locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
 
   const repositoryObjectSchemaQuery = useQuery({
+    enabled: options?.enabled,
     queryKey: repositoryObjectSchemaQueryKey(
       workspaceSlug,
       repositorySlug,

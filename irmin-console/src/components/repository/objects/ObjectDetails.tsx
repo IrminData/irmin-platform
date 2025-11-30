@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 
 import { IoClose } from 'react-icons/io5';
 import {
+  TbCheck,
+  TbCopy,
   TbDownload,
   TbEdit,
   TbFile,
@@ -224,6 +226,7 @@ export default function ObjectDetails({
   }, [selectedObject, baseUrl, router]);
 
   const [downloading, setDownloading] = useState(false);
+  const [selectorCopied, setSelectorCopied] = useState(false);
   const handleDownload = useCallback(async () => {
     if (!selectedObject) return;
     setDownloading(true);
@@ -348,6 +351,51 @@ export default function ObjectDetails({
               loading={updatingTags}
               disabled={!canChangeTags}
             />
+          </div>
+        )}
+        {(selectedObject.sql_selector_example ||
+          selectedObjectSchema?.sql_selector_example) && (
+          <div className='mt-2 flex w-full flex-col gap-1'>
+            <div
+              className={`
+                flex items-center gap-1 rounded bg-gray-100 p-1
+                dark:bg-gray-800
+              `}
+            >
+              <code
+                className={`
+                  flex-1 overflow-x-auto px-1 font-mono text-[10px]
+                  whitespace-nowrap
+                `}
+              >
+                {selectedObject.sql_selector_example ||
+                  selectedObjectSchema?.sql_selector_example}
+              </code>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='size-6 p-0'
+                onClick={async () => {
+                  const selectorText =
+                    selectedObject.sql_selector_example ||
+                    selectedObjectSchema?.sql_selector_example ||
+                    '';
+                  await navigator.clipboard.writeText(selectorText);
+                  setSelectorCopied(true);
+                  setTimeout(() => {
+                    setSelectorCopied(false);
+                  }, 2000);
+                }}
+                title={selectorCopied ? dict.common.copied : dict.common.copy}
+                icon={
+                  selectorCopied ? (
+                    <TbCheck size={12} className='text-green-500' />
+                  ) : (
+                    <TbCopy size={12} />
+                  )
+                }
+              />
+            </div>
           </div>
         )}
         {/** Description of the object */}

@@ -27,6 +27,8 @@ export type ObjectSchema = {
   children?: ObjectSchema[];
   /** (optional) restrictions on the group */
   restrictions?: GroupSchemaRestrictions;
+  /** An example SQL selector for this object, e.g., $["workspace;repo;file.json@main"] */
+  sql_selector_example?: string;
 };
 
 /**
