@@ -844,6 +844,8 @@ const fi = {
       'Avustajakäyttöliittymän lataaminen epäonnistui',
     openSidebar: 'Avaa sivupalkki',
     openInFullPage: 'Avaa täysikokoisessa sivussa',
+    contextAwareBanner:
+      'Olen tietoinen kontekstista! Näen millä sivulla olet, avoimet tiedostosi ja valitut objektit.',
 
     // Conversations List
     newConversation: 'Uusi keskustelu',

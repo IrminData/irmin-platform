@@ -48,6 +48,14 @@ interface AssistantSectionProps {
    * Whether to render without a border
    */
   noBorder?: boolean;
+  /**
+   * The currently selected conversation ID (controlled mode)
+   */
+  conversationId?: string | null;
+  /**
+   * Callback when the selected conversation changes
+   */
+  onConversationChange?: (id: string | null) => void;
 }
 
 /**
@@ -59,13 +67,25 @@ export default function AssistantSection({
   compact = false,
   noBorder = false,
   onClose,
+  conversationId: controlledConversationId,
+  onConversationChange,
 }: AssistantSectionProps) {
   const { dict } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(null);
+  const [internalSelectedConversationId, setInternalSelectedConversationId] =
+    useState<string | null>(null);
+
+  const selectedConversationId =
+    controlledConversationId !== undefined
+      ? controlledConversationId
+      : internalSelectedConversationId;
+
+  const setSelectedConversationId = (id: string | null) => {
+    setInternalSelectedConversationId(id);
+    onConversationChange?.(id);
+  };
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const refetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -287,6 +307,7 @@ export default function AssistantSection({
                 onConversationCreated={handleConversationCreated}
                 onConversationUpdated={handleConversationUpdated}
                 context={context}
+                showContextBanner={compact}
               />
             </CardContent>
           </Card>

@@ -860,6 +860,8 @@ const en = {
     failedToLoadAssistantInterface: 'Failed to load assistant interface',
     openSidebar: 'Open sidebar',
     openInFullPage: 'Open in full page',
+    contextAwareBanner:
+      "I'm context-aware! I can see the page you are on, your open files, and selected objects.",
 
     // Conversations List
     newConversation: 'New Conversation',

@@ -5,24 +5,21 @@ import { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
-import { TbChevronLeft, TbChevronRight, TbCircle } from 'react-icons/tb';
+import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
-import AssistantSection from '@/components/assistant/AssistantSection';
 import ConsoleSearch from '@/components/search/ConsoleSearch';
 import { Button } from '@/components/ui/button';
-import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { ErrorBoundary } from '@/components/ui/error/ErrorBoundary';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 import { useLocale } from '@/context/LocaleContext';
-import { WorkspaceProvider } from '@/context/WorkspaceContext';
 
 import { useWorkspaces } from '@/hooks/api';
-import { useBaseUrl, useBreakpoint } from '@/hooks/utils';
+import { useBreakpoint } from '@/hooks/utils';
 
+import AssistantSheet from './AssistantSheet';
 import ConsoleNavigationLink from './ConsoleNavigationLink';
 import ConsoleNavigationProfile from './ConsoleNavigationProfile';
 import ConsoleNavigationWorkspaceSwitcher from './ConsoleNavigationWorkspaceSwitcher';
@@ -61,31 +58,12 @@ export default function ConsoleWrapper({
 function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   const { dict } = useLocale();
   const params = useParams<{ workspace?: string }>();
-  const pathname = usePathname();
   const { loadingPermissions, ...links } = useConsoleNavigationLinks();
 
   const isLargeScreen = useBreakpoint('@lg');
 
-  // Assistant URL for floating button
-  const workspaceUrl = useBaseUrl({
-    pathname: '',
-    segment: 'workspace',
-    includeSegment: true,
-    segmentsAfter: 1,
-  });
-  const assistantUrl = `${workspaceUrl}/assistant`;
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
-  const [isAssistantSheetOpen, setIsAssistantSheetOpen] = useState(false);
-
-  // Check if we're on the assistant page
-  const isOnAssistantPage = pathname.startsWith(assistantUrl);
-
-  // Check if we're on the dashboard page
-  const isOnDashboardPage =
-    pathname.startsWith(`${workspaceUrl}/dashboard`) ||
-    pathname == workspaceUrl;
 
   const { workspacesQuery } = useWorkspaces();
 
@@ -466,45 +444,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
         </Button>
       </div>
 
-      {/* Floating Assistant Button */}
-      {currentWorkspace && !isOnAssistantPage && !isOnDashboardPage && (
-        <div className='fixed right-6 bottom-6 z-50'>
-          <ButtonWithTooltip
-            onClick={() => setIsAssistantSheetOpen(true)}
-            size='icon'
-            variant='gradient'
-            tooltip={dict.assistant.title}
-            className={`
-              size-12 rounded-full shadow-lg transition-all duration-200
-              hover:shadow-xl
-            `}
-            aria-label={dict.assistant.title}
-          >
-            <TbCircle className='size-6' />
-          </ButtonWithTooltip>
-        </div>
-      )}
-
-      {/* AI Assistant Sheet */}
-      {currentWorkspace && !isOnAssistantPage && !isOnDashboardPage && (
-        <Sheet
-          open={isAssistantSheetOpen}
-          onOpenChange={setIsAssistantSheetOpen}
-        >
-          <SheetContent
-            side='right'
-            className='w-full max-w-4xl p-0'
-            hideCloseButton
-          >
-            <WorkspaceProvider workspaceSlug={currentWorkspace.slug}>
-              <AssistantSection
-                compact={true}
-                onClose={() => setIsAssistantSheetOpen(false)}
-              />
-            </WorkspaceProvider>
-          </SheetContent>
-        </Sheet>
-      )}
+      <AssistantSheet currentWorkspace={currentWorkspace} />
     </div>
   );
 }

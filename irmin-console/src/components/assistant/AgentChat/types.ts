@@ -55,6 +55,7 @@ export interface AgentChatProps {
   onConversationCreated?: (conversationId: string) => void; // Callback when new conversation is created
   onConversationUpdated?: (conversationId: string) => void; // Callback when conversation data is updated (e.g., title generation)
   context?: Record<string, unknown>; // Context to pass to the agent
+  showContextBanner?: boolean; // Whether to show the context aware banner in empty state
 }
 
 // Message action state

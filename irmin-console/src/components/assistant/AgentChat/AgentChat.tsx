@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { StoredMessage } from '@langchain/core/messages';
 
-import { TbMessageCircle } from 'react-icons/tb';
+import { TbInfoCircle, TbMessageCircle } from 'react-icons/tb';
 
 import {
   Conversation,
@@ -93,6 +93,7 @@ const AgentChat = ({
   onConversationCreated,
   onConversationUpdated,
   context,
+  showContextBanner,
 }: AgentChatProps) => {
   const { dict } = useLocale();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -538,6 +539,18 @@ const AgentChat = ({
                   }
                   size='sm'
                 />
+                {showContextBanner && (
+                  <div
+                    className={`
+                      mt-4 flex items-center gap-2 rounded-md border
+                      border-accent/20 bg-accent/10 p-2 text-xs
+                      text-accent-foreground
+                    `}
+                  >
+                    <TbInfoCircle className='size-4 shrink-0' />
+                    <span>{dict.assistant.contextAwareBanner}</span>
+                  </div>
+                )}
               </div>
             )}
         </ConversationContent>
