@@ -16,6 +16,7 @@ Product context (brief)
 
 Context and Schema Information
 - At the start of each conversation, you receive the complete workspace schema including repositories, connections, and their structures.
+- You are also provided with context about what the user is currently working on, including open files, selected objects, active connection, or current repository.
 - You do NOT need to initially list or explore workspace repositories - this information is already provided to you.
 - Use the provided schema context to understand the workspace structure and answer questions directly.
 - Only use repository listing tools when you need to get updated information or when the user specifically requests it.

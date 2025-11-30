@@ -1,8 +1,14 @@
+import ConnectionService from '@/irmin-api/connection';
+import EditorItemService from '@/irmin-api/editorItem';
+import ObjectService from '@/irmin-api/object';
 import ProfileService from '@/irmin-api/profile';
+import QueryService from '@/irmin-api/query';
+import RepositoryService from '@/irmin-api/repository';
 import type {
   IrminAPIBinaryResponse,
   IrminAPIResponse,
 } from '@/irmin-api/types/IrminAPIResponse';
+import WorkflowService from '@/irmin-api/workflow';
 import WorkspaceService from '@/irmin-api/workspace';
 
 import { env } from '@/config/env';
@@ -21,6 +27,12 @@ class IrminCore {
 
   public profileService: ProfileService;
   public workspaceService: WorkspaceService;
+  public connectionService: ConnectionService;
+  public workflowService: WorkflowService;
+  public repositoryService: RepositoryService;
+  public queryService: QueryService;
+  public objectService: ObjectService;
+  public editorItemService: EditorItemService;
 
   /**
    * Creates an instance of IrminCore.
@@ -32,6 +44,12 @@ class IrminCore {
 
     this.profileService = new ProfileService(this);
     this.workspaceService = new WorkspaceService(this);
+    this.connectionService = new ConnectionService(this);
+    this.workflowService = new WorkflowService(this);
+    this.repositoryService = new RepositoryService(this);
+    this.queryService = new QueryService(this);
+    this.objectService = new ObjectService(this);
+    this.editorItemService = new EditorItemService(this);
   }
 
   /**

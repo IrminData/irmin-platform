@@ -9,6 +9,7 @@ interface SystemPromptContext {
   conversationId?: string;
   agentId?: string;
   customContext?: Record<string, unknown>;
+  contextDescriptions?: Record<string, string>;
   maxUserInputChars?: number;
   maxSystemPromptChars?: number;
 }
@@ -150,7 +151,17 @@ Be helpful, accurate, and concise in your responses. If you need to access data 
           const sanitizedValue = textSanitizer.sanitize(
             String(value)
           ).sanitized;
-          contextParts.push(`<${key}>\n${sanitizedValue}\n</${key}>`);
+
+          const description = context.contextDescriptions?.[key];
+          if (description) {
+            const sanitizedDescription =
+              textSanitizer.sanitize(description).sanitized;
+            contextParts.push(
+              `<${key}>\n<description>${sanitizedDescription}</description>\n<value>${sanitizedValue}</value>\n</${key}>`
+            );
+          } else {
+            contextParts.push(`<${key}>\n${sanitizedValue}\n</${key}>`);
+          }
         }
       }
     }

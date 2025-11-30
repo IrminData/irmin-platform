@@ -72,7 +72,7 @@ const authMiddleware = async (
       throw new AuthenticationError(
         `Failed to fetch user profile: ${apiErrorMessage}`,
         apiErrorMessage.includes('401') ||
-        apiErrorMessage.includes('Unauthorized')
+          apiErrorMessage.includes('Unauthorized')
           ? 401
           : 500
       );

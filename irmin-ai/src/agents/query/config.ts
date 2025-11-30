@@ -6,21 +6,24 @@ export const agentConfig: AgentConfig = {
   description: 'Converts natural language to SQL queries',
   supportsStreaming: false,
   contextRequirements: [
+    // Repository context
     {
-      name: 'repository_slug',
-      description: 'The slug of the repository to query',
-      required: true,
-    },
-    {
-      name: 'object_path',
-      description:
-        'The path of the object to query, like /data/customers/customers.json',
-      required: true,
-    },
-    {
-      name: 'object_ref',
-      description: 'The ref of the object to query, like main or tag/v1.0.0',
+      name: 'repository-slug',
       required: false,
+      description:
+        'The slug of the repository that the user is currently working with',
+    },
+    {
+      name: 'repository-object-path',
+      required: false,
+      description:
+        'The path of the object that the user is currently working with',
+    },
+    {
+      name: 'repository-ref',
+      required: false,
+      description:
+        'The ref of the object that the user is currently working with',
     },
   ],
 };
