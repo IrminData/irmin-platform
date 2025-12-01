@@ -1,5 +1,14 @@
 import { indexingService, retrievalService } from '@/vector';
 import { collectionService } from '@/vector/vectorCollections';
+import {
+  AgentMiddleware,
+  DynamicStructuredTool,
+  llmToolSelectorMiddleware,
+  modelFallbackMiddleware,
+} from 'langchain';
+
+import { LLMOptions, llmService } from '@/services/llm';
+import { toolsService } from '@/services/tools';
 
 import { BaseAgent } from '@/agents/base';
 import type { AgentInput } from '@/agents/types';
@@ -11,14 +20,66 @@ export class QueryAgent extends BaseAgent {
     super(agentConfig);
   }
 
-  protected async getAgentOptions() {
+  protected async getAgentOptions(input: AgentInput): Promise<{
+    llmOptions: LLMOptions;
+    tools?: DynamicStructuredTool[];
+    middleware?: AgentMiddleware[];
+    systemPrompt?: string;
+  }> {
+    // Create MCP tools with auth token
+    // Load all tools like assistant agent - the system prompt guides which tools to use
+    const tools: DynamicStructuredTool[] = [];
+    if (input.authToken) {
+      const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
+      const mcpClient = toolsService.createClient({
+        ...mcpConfig,
+      });
+      const mcpTools = await toolsService.getTools(mcpClient);
+      tools.push(...mcpTools);
+    }
+
+    const fallbackLLM = llmService.createLLM({
+      provider: 'openai',
+      model: 'gpt-5',
+      temperature: 0.9,
+      maxTokens: 1000,
+      streaming: false,
+    });
+
+    const cheaperLLM = llmService.createLLM({
+      provider: 'groq',
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.7,
+      streaming: false,
+    });
+
     return {
       llmOptions: {
-        provider: 'groq' as const,
-        model: 'llama-3.3-70b-versatile',
-        temperature: 1.0,
+        provider: 'anthropic' as const,
+        model: 'claude-sonnet-4-5-20250929',
+        temperature: 0.9,
         maxTokens: 1000,
+        streaming: false,
+        anthropic: {
+          thinking: {
+            budget_tokens: 1024,
+            type: 'enabled',
+          },
+        },
       },
+      tools,
+      middleware: [
+        llmToolSelectorMiddleware({
+          model: cheaperLLM,
+          maxTools: 5,
+          alwaysInclude: [
+            'retrieve_docs_context',
+            'get_repository_object_schema',
+            'execute_sql',
+          ],
+        }),
+        modelFallbackMiddleware(fallbackLLM),
+      ],
     };
   }
 
