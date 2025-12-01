@@ -157,7 +157,11 @@ const DashboardSection = () => {
             `}
           >
             <div className={`w-full overflow-hidden rounded-xl border`}>
-              <AssistantSection compact={true} noBorder={true} />
+              <AssistantSection
+                compact={true}
+                noBorder={true}
+                showContextBanner={false}
+              />
             </div>
             <div className='flex w-full max-w-md flex-col overflow-hidden'>
               {isResourceAllowed('workflow_run', 'read') && (

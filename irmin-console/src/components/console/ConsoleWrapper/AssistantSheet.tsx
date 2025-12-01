@@ -80,6 +80,7 @@ export default function AssistantSheet({
             <WorkspaceProvider workspaceSlug={currentWorkspace.slug}>
               <AssistantSection
                 compact={true}
+                showContextBanner={true}
                 onClose={() => setIsOpen(false)}
                 conversationId={conversationId}
                 onConversationChange={setConversationId}

@@ -41,6 +41,10 @@ interface AssistantSectionProps {
    */
   compact?: boolean;
   /**
+   * Whether to show the context banner
+   */
+  showContextBanner?: boolean;
+  /**
    * Callback to close the sheet/modal when in compact mode
    */
   onClose?: () => void;
@@ -65,6 +69,7 @@ interface AssistantSectionProps {
  */
 export default function AssistantSection({
   compact = false,
+  showContextBanner = true,
   noBorder = false,
   onClose,
   conversationId: controlledConversationId,
@@ -307,7 +312,7 @@ export default function AssistantSection({
                 onConversationCreated={handleConversationCreated}
                 onConversationUpdated={handleConversationUpdated}
                 context={context}
-                showContextBanner={compact}
+                showContextBanner={showContextBanner}
               />
             </CardContent>
           </Card>
