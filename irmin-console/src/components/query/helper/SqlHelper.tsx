@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   TbCheck,
@@ -20,6 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -33,6 +34,8 @@ import { useRepositoryObjectSchema } from '@/hooks/api/useRepositoryObjectSchema
 
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
+
+import { SqlGenerationChat } from './SqlGenerationChat';
 
 /**
  * SQL Helper component to assist users with writing Irmin SQL queries.
@@ -51,6 +54,19 @@ export default function SqlHelper({
 }) {
   const { dict } = useLocale();
   const [open, setOpen] = useState(false);
+
+  // Conversation state - persists across Sheet open/close
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ id: string; role: 'user' | 'assistant'; content: string }>
+  >([]);
+  const [chatConversationId, setChatConversationId] = useState<
+    string | undefined
+  >(undefined);
+
+  const handleChatReset = useCallback(() => {
+    setChatMessages([]);
+    setChatConversationId(undefined);
+  }, []);
 
   const { repositoryObjectSchemaQuery } = useRepositoryObjectSchema(
     repositoryObject?.repository_slug ?? '',
@@ -114,6 +130,27 @@ export default function SqlHelper({
     return baseSelector.replace('"]', `@${ref}"]`);
   };
 
+  // Build context for the query agent
+  const agentContext = useMemo(() => {
+    const ctx: Record<string, unknown> = {};
+    if (repositoryObject?.repository_slug) {
+      ctx['repository-slug'] = repositoryObject.repository_slug;
+    }
+    if (repositoryObject?.path) {
+      ctx['repository-object-path'] = repositoryObject.path;
+    }
+    if (repositoryObject?.ref) {
+      ctx['repository-ref'] = repositoryObject.ref;
+    }
+    if (displaySelector) {
+      ctx['sql-selector'] = displaySelector;
+    }
+    if (effectiveSchema?.schema) {
+      ctx['schema'] = effectiveSchema.schema;
+    }
+    return ctx;
+  }, [repositoryObject, displaySelector, effectiveSchema]);
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -127,7 +164,9 @@ export default function SqlHelper({
       </SheetTrigger>
       <SheetContent
         className={`
-          w-[400px] overflow-y-auto
+          flex w-[400px] flex-col overflow-hidden
+          focus:outline-none
+          focus-visible:outline-none
           sm:w-[540px]
         `}
       >
@@ -135,89 +174,113 @@ export default function SqlHelper({
           <SheetTitle>{dict.queryHelper.title}</SheetTitle>
         </SheetHeader>
 
-        <div className='space-y-6 px-2 pb-8'>
-          {/* DuckDB Information Section */}
-          <section>
-            <div className='rounded-md border bg-card p-2'>
-              <div className='mb-2 flex items-center justify-between'>
-                <h3 className='text-sm font-semibold'>
-                  {dict.queryHelper.poweredBy}
-                </h3>
-                <a
-                  href='https://duckdb.org/docs/sql/introduction'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className={`
-                    flex items-center gap-1 text-xs text-accent
-                    hover:underline
-                  `}
-                >
-                  {dict.queryHelper.duckDbDocs}
-                  <TbExternalLink size={12} />
-                </a>
-              </div>
-              <p className='text-xs text-muted-foreground'>
-                {dict.queryHelper.duckDbDescription}
-              </p>
+        <Tabs
+          defaultValue='generate'
+          className={`
+            flex flex-1 flex-col overflow-hidden
+            focus:outline-none
+            focus-visible:outline-none
+          `}
+        >
+          <TabsList
+            className={`
+              grid w-full grid-cols-2 gap-1 bg-transparent px-2
+              focus:outline-none
+              focus-visible:outline-none
+            `}
+          >
+            <TabsTrigger
+              value='generate'
+              className={`
+                focus:outline-none
+                focus-visible:outline-none
+              `}
+            >
+              {dict.queryHelper.generateSql}
+            </TabsTrigger>
+            <TabsTrigger
+              value='examples'
+              className={`
+                focus:outline-none
+                focus-visible:outline-none
+              `}
+            >
+              {dict.queryHelper.queryDocumentationTab}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value='generate'
+            className='mt-4 flex flex-1 flex-col overflow-hidden'
+          >
+            <div className='flex-1 overflow-hidden'>
+              <SqlGenerationChat
+                context={agentContext}
+                messages={chatMessages}
+                setMessages={setChatMessages}
+                conversationId={chatConversationId}
+                setConversationId={setChatConversationId}
+                onReset={handleChatReset}
+              />
             </div>
-          </section>
+          </TabsContent>
 
-          {/* Placeholder Syntax Section */}
-          <section>
-            <div className='rounded-md border bg-card p-2'>
-              <h3 className='mb-2 text-sm font-semibold'>
-                {dict.queryHelper.placeholderSyntax}
-              </h3>
-              <p className='mb-3 text-xs text-muted-foreground'>
-                {dict.queryHelper.placeholderDescription}
-              </p>
-              <div className='rounded-md bg-muted p-2 font-mono text-xs'>
-                {`$["workspace;repository;object@ref"]`}
+          <TabsContent value='examples' className='mt-4 flex-1 overflow-y-auto'>
+            {/* DuckDB Information Section */}
+            <section className='mb-4 px-2'>
+              <div className='rounded-md border bg-card p-2'>
+                <div className='mb-2 flex items-center justify-between'>
+                  <h3 className='text-sm font-semibold'>
+                    {dict.queryHelper.poweredBy}
+                  </h3>
+                  <a
+                    href='https://duckdb.org/docs/sql/introduction'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className={`
+                      flex items-center gap-1 text-xs text-accent
+                      hover:underline
+                    `}
+                  >
+                    {dict.queryHelper.duckDbDocs}
+                    <TbExternalLink size={12} />
+                  </a>
+                </div>
+                <p className='text-xs text-muted-foreground'>
+                  {dict.queryHelper.duckDbDescription}
+                </p>
               </div>
-              <p className='mt-2 text-xs text-muted-foreground'>
-                {dict.queryHelper.placeholderSyntaxNote}
-              </p>
-            </div>
-          </section>
+            </section>
 
-          <Separator />
-
-          <div className='space-y-6 px-2'>
-            {/* Context Section */}
-            {context && (
-              <section id='context'>
+            {/* Placeholder Syntax Section */}
+            <section className='mb-4 px-2'>
+              <div className='rounded-md border bg-card p-2'>
                 <h3 className='mb-2 text-sm font-semibold'>
-                  {dict.queryHelper.context}
+                  {dict.queryHelper.placeholderSyntax}
                 </h3>
-                <div className='rounded-md border bg-card p-3 text-xs'>
-                  <div className='flex flex-col gap-3'>
-                    <div className='flex flex-col gap-1'>
-                      <span
-                        className={`
-                          text-[10px] font-bold tracking-wider
-                          text-muted-foreground uppercase
-                        `}
-                      >
-                        {dict.repository.repository}
-                      </span>
-                      <span className='font-mono'>{context.repository}</span>
-                    </div>
+                <p className='mb-3 text-xs text-muted-foreground'>
+                  {dict.queryHelper.placeholderDescription}
+                </p>
+                <div className='rounded-md bg-muted p-2 font-mono text-xs'>
+                  {`$["workspace;repository;object@ref"]`}
+                </div>
+                <p className='mt-2 text-xs text-muted-foreground'>
+                  {dict.queryHelper.placeholderSyntaxNote}
+                </p>
+              </div>
+            </section>
 
-                    <div className='flex flex-col gap-1'>
-                      <span
-                        className={`
-                          text-[10px] font-bold tracking-wider
-                          text-muted-foreground uppercase
-                        `}
-                      >
-                        {dict.repository.objects.path}
-                      </span>
-                      <span className='font-mono break-all'>
-                        {context.path}
-                      </span>
-                    </div>
+            <Separator className='my-4' />
 
-                    {context.ref && (
+            <div className='space-y-6 px-2'>
+              {/* Context Section */}
+              {context && (
+                <section id='context'>
+                  <div className='rounded-md border bg-card p-3 text-xs'>
+                    <h3 className='mb-2 text-sm font-semibold'>
+                      {dict.queryHelper.context}
+                    </h3>
+                    <div className='flex flex-col gap-3'>
                       <div className='flex flex-col gap-1'>
                         <span
                           className={`
@@ -225,191 +288,232 @@ export default function SqlHelper({
                             text-muted-foreground uppercase
                           `}
                         >
-                          {dict.repository.branches.ref}
+                          {dict.repository.repository}
                         </span>
-                        <span className='font-mono'>{context.ref}</span>
+                        <span className='font-mono'>{context.repository}</span>
+                      </div>
+
+                      <div className='flex flex-col gap-1'>
+                        <span
+                          className={`
+                            text-[10px] font-bold tracking-wider
+                            text-muted-foreground uppercase
+                          `}
+                        >
+                          {dict.repository.objects.path}
+                        </span>
+                        <span className='font-mono break-all'>
+                          {context.path}
+                        </span>
+                      </div>
+
+                      {context.ref && (
+                        <div className='flex flex-col gap-1'>
+                          <span
+                            className={`
+                              text-[10px] font-bold tracking-wider
+                              text-muted-foreground uppercase
+                            `}
+                          >
+                            {dict.repository.branches.ref}
+                          </span>
+                          <span className='font-mono'>{context.ref}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
+              {/* Schema & Selectors Section */}
+              {(effectiveSchema?.schema || displaySelector) && (
+                <section id='schema-and-selectors'>
+                  <div className='rounded-md border p-3'>
+                    {displaySelector && (
+                      <>
+                        <div className='mb-2 flex items-center justify-between'>
+                          <span className='text-sm font-medium'>
+                            {displayName}
+                          </span>
+                          <CopyButton
+                            text={displaySelector}
+                            label={dict.queryHelper.copySelector}
+                          />
+                        </div>
+                        <div
+                          className={`
+                            mb-4 rounded bg-muted p-2 font-mono text-xs
+                            break-all
+                          `}
+                        >
+                          {displaySelector}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Available Columns */}
+                    {effectiveSchema?.schema && (
+                      <div>
+                        <h4
+                          className={`
+                            mb-2 text-xs font-semibold text-muted-foreground
+                            uppercase
+                          `}
+                        >
+                          {dict.queryHelper.availableColumns}
+                        </h4>
+                        <div
+                          className={`
+                            rounded-md border border-border bg-background/50 p-2
+                          `}
+                        >
+                          <JSONSchemaViewer
+                            schema={effectiveSchema.schema}
+                            isExpanded={true}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
-              </section>
-            )}
-            {/* Schema & Selectors Section */}
-            {(effectiveSchema?.schema || displaySelector) && (
-              <section id='schema-and-selectors'>
-                <div className='rounded-md border p-3'>
-                  {displaySelector && (
+                </section>
+              )}
+
+              {/* Examples Section */}
+              <section id='examples'>
+                <h3 className='mb-4 text-sm font-semibold'>
+                  {dict.queryHelper.examples}
+                </h3>
+                <div className='space-y-3'>
+                  {/* Basic Examples */}
+                  {displaySelector ? (
                     <>
-                      <div className='mb-2 flex items-center justify-between'>
-                        <span className='text-sm font-medium'>
-                          {displayName}
-                        </span>
-                        <CopyButton
-                          text={displaySelector}
-                          label={dict.queryHelper.copySelector}
-                        />
-                      </div>
-                      <div
-                        className={`
-                          mb-4 rounded bg-muted p-2 font-mono text-xs break-all
-                        `}
-                      >
-                        {displaySelector}
-                      </div>
+                      <ExampleItem
+                        title={dict.queryHelper.basicSelect}
+                        code={`SELECT * FROM ${displaySelector} LIMIT 10;`}
+                        explanation={dict.queryHelper.explanations.basicSelect}
+                      />
+                      <ExampleItem
+                        title={dict.queryHelper.filterAndSort}
+                        code={`SELECT * FROM ${displaySelector}\nWHERE id > 100\nORDER BY created_at DESC;`}
+                        explanation={
+                          dict.queryHelper.explanations.filterAndSort
+                        }
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <ExampleItem
+                        title={dict.queryHelper.basicSelect}
+                        code='SELECT * FROM $["repo;file.json@main"] LIMIT 10;'
+                        explanation={dict.queryHelper.explanations.basicSelect}
+                      />
+                      <ExampleItem
+                        title={dict.queryHelper.filterAndSort}
+                        code={`SELECT * FROM $["repo;data.csv"]\nWHERE id > 100\nORDER BY created_at DESC;`}
+                        explanation={
+                          dict.queryHelper.explanations.filterAndSort
+                        }
+                      />
                     </>
                   )}
 
-                  {/* Available Columns */}
-                  {effectiveSchema?.schema && (
-                    <div>
-                      <h4
-                        className={`
-                          mb-2 text-xs font-semibold text-muted-foreground
-                          uppercase
-                        `}
-                      >
-                        {dict.queryHelper.availableColumns}
-                      </h4>
-                      <div
-                        className={`
-                          rounded-md border border-border bg-background/50 p-2
-                        `}
-                      >
-                        <JSONSchemaViewer
-                          schema={effectiveSchema.schema}
-                          isExpanded={true}
-                        />
-                      </div>
-                    </div>
+                  {/* Aggregations */}
+                  {displaySelector ? (
+                    <ExampleItem
+                      title={dict.queryHelper.aggregations}
+                      code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM ${displaySelector}\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
+                      explanation={dict.queryHelper.explanations.aggregations}
+                    />
+                  ) : (
+                    <ExampleItem
+                      title={dict.queryHelper.aggregations}
+                      code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM $["repo;data.json"]\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
+                      explanation={dict.queryHelper.explanations.aggregations}
+                    />
+                  )}
+
+                  {/* Window Functions */}
+                  {displaySelector ? (
+                    <ExampleItem
+                      title={dict.queryHelper.windowFunctions}
+                      code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM ${displaySelector};`}
+                      explanation={
+                        dict.queryHelper.explanations.windowFunctions
+                      }
+                    />
+                  ) : (
+                    <ExampleItem
+                      title={dict.queryHelper.windowFunctions}
+                      code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM $["repo;data.json"];`}
+                      explanation={
+                        dict.queryHelper.explanations.windowFunctions
+                      }
+                    />
+                  )}
+
+                  {/* Nested JSON */}
+                  {isJsonObject ? (
+                    <ExampleItem
+                      title={dict.queryHelper.nestedJson}
+                      code={
+                        displaySelector
+                          ? `SELECT d.*\nFROM ${displaySelector}\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
+                          : `SELECT d.*\nFROM $["repo;data.json"]\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
+                      }
+                      explanation={dict.queryHelper.explanations.nestedJson}
+                    />
+                  ) : null}
+
+                  {/* JSON Extract */}
+                  {isJsonObject ? (
+                    <ExampleItem
+                      title={dict.queryHelper.jsonExtract}
+                      code={
+                        displaySelector
+                          ? `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM ${displaySelector}\nWHERE json_valid(data_column);`
+                          : `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM $["repo;json-data.json"]\nWHERE json_valid(data_column);`
+                      }
+                      explanation={dict.queryHelper.explanations.jsonExtract}
+                    />
+                  ) : null}
+
+                  {/* Cross-Branch Query */}
+                  {displaySelector ? (
+                    <ExampleItem
+                      title={dict.queryHelper.crossBranchQuery}
+                      code={`SELECT 'main' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'main')}\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'dev')};`}
+                      explanation={
+                        dict.queryHelper.explanations.crossBranchQuery
+                      }
+                    />
+                  ) : (
+                    <ExampleItem
+                      title={dict.queryHelper.crossBranchQuery}
+                      code={`SELECT 'main' AS branch, COUNT(*) FROM $["repo;data.json@main"]\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM $["repo;data.json@dev"];`}
+                      explanation={
+                        dict.queryHelper.explanations.crossBranchQuery
+                      }
+                    />
+                  )}
+
+                  {/* Time Series */}
+                  {displaySelector ? (
+                    <ExampleItem
+                      title={dict.queryHelper.timeSeries}
+                      code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM ${displaySelector}\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
+                      explanation={dict.queryHelper.explanations.timeSeries}
+                    />
+                  ) : (
+                    <ExampleItem
+                      title={dict.queryHelper.timeSeries}
+                      code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM $["repo;time-series.json"]\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
+                      explanation={dict.queryHelper.explanations.timeSeries}
+                    />
                   )}
                 </div>
               </section>
-            )}
-
-            {/* Examples Section */}
-            <section id='examples'>
-              <h3 className='mb-4 text-sm font-semibold'>
-                {dict.queryHelper.examples}
-              </h3>
-              <div className='space-y-3'>
-                {/* Basic Examples */}
-                {displaySelector ? (
-                  <>
-                    <ExampleItem
-                      title={dict.queryHelper.basicSelect}
-                      code={`SELECT * FROM ${displaySelector} LIMIT 10;`}
-                      explanation={dict.queryHelper.explanations.basicSelect}
-                    />
-                    <ExampleItem
-                      title={dict.queryHelper.filterAndSort}
-                      code={`SELECT * FROM ${displaySelector}\nWHERE id > 100\nORDER BY created_at DESC;`}
-                      explanation={dict.queryHelper.explanations.filterAndSort}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <ExampleItem
-                      title={dict.queryHelper.basicSelect}
-                      code='SELECT * FROM $["repo;file.json@main"] LIMIT 10;'
-                      explanation={dict.queryHelper.explanations.basicSelect}
-                    />
-                    <ExampleItem
-                      title={dict.queryHelper.filterAndSort}
-                      code={`SELECT * FROM $["repo;data.csv"]\nWHERE id > 100\nORDER BY created_at DESC;`}
-                      explanation={dict.queryHelper.explanations.filterAndSort}
-                    />
-                  </>
-                )}
-
-                {/* Aggregations */}
-                {displaySelector ? (
-                  <ExampleItem
-                    title={dict.queryHelper.aggregations}
-                    code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM ${displaySelector}\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
-                    explanation={dict.queryHelper.explanations.aggregations}
-                  />
-                ) : (
-                  <ExampleItem
-                    title={dict.queryHelper.aggregations}
-                    code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM $["repo;data.json"]\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
-                    explanation={dict.queryHelper.explanations.aggregations}
-                  />
-                )}
-
-                {/* Window Functions */}
-                {displaySelector ? (
-                  <ExampleItem
-                    title={dict.queryHelper.windowFunctions}
-                    code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM ${displaySelector};`}
-                    explanation={dict.queryHelper.explanations.windowFunctions}
-                  />
-                ) : (
-                  <ExampleItem
-                    title={dict.queryHelper.windowFunctions}
-                    code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM $["repo;data.json"];`}
-                    explanation={dict.queryHelper.explanations.windowFunctions}
-                  />
-                )}
-
-                {/* Nested JSON */}
-                {isJsonObject ? (
-                  <ExampleItem
-                    title={dict.queryHelper.nestedJson}
-                    code={
-                      displaySelector
-                        ? `SELECT d.*\nFROM ${displaySelector}\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
-                        : `SELECT d.*\nFROM $["repo;data.json"]\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
-                    }
-                    explanation={dict.queryHelper.explanations.nestedJson}
-                  />
-                ) : null}
-
-                {/* JSON Extract */}
-                {isJsonObject ? (
-                  <ExampleItem
-                    title={dict.queryHelper.jsonExtract}
-                    code={
-                      displaySelector
-                        ? `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM ${displaySelector}\nWHERE json_valid(data_column);`
-                        : `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM $["repo;json-data.json"]\nWHERE json_valid(data_column);`
-                    }
-                    explanation={dict.queryHelper.explanations.jsonExtract}
-                  />
-                ) : null}
-
-                {/* Cross-Branch Query */}
-                {displaySelector ? (
-                  <ExampleItem
-                    title={dict.queryHelper.crossBranchQuery}
-                    code={`SELECT 'main' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'main')}\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'dev')};`}
-                    explanation={dict.queryHelper.explanations.crossBranchQuery}
-                  />
-                ) : (
-                  <ExampleItem
-                    title={dict.queryHelper.crossBranchQuery}
-                    code={`SELECT 'main' AS branch, COUNT(*) FROM $["repo;data.json@main"]\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM $["repo;data.json@dev"];`}
-                    explanation={dict.queryHelper.explanations.crossBranchQuery}
-                  />
-                )}
-
-                {/* Time Series */}
-                {displaySelector ? (
-                  <ExampleItem
-                    title={dict.queryHelper.timeSeries}
-                    code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM ${displaySelector}\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
-                    explanation={dict.queryHelper.explanations.timeSeries}
-                  />
-                ) : (
-                  <ExampleItem
-                    title={dict.queryHelper.timeSeries}
-                    code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM $["repo;time-series.json"]\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
-                    explanation={dict.queryHelper.explanations.timeSeries}
-                  />
-                )}
-              </div>
-            </section>
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );
