@@ -6,6 +6,12 @@ export const agentConfig: AgentConfig = {
   description: 'Converts natural language to SQL queries',
   supportsStreaming: false,
   contextRequirements: [
+    // Current SQL query
+    {
+      name: 'current-sql',
+      required: false,
+      description: 'The SQL query that the user is currently working with',
+    },
     // Repository context
     {
       name: 'repository-slug',

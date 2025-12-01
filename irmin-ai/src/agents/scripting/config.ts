@@ -6,6 +6,19 @@ export const agentConfig: AgentConfig = {
   description: 'Generates Go scripts from natural language descriptions',
   supportsStreaming: false,
   contextRequirements: [
+    // Current script
+    {
+      name: 'script-path',
+      required: true,
+      description:
+        'The path of the script that the user is currently working with',
+    },
+    {
+      name: 'current-script-content',
+      required: false,
+      description:
+        'The content of the script that the user is currently working with',
+    },
     // Editor script path context
     {
       name: 'editor-script-paths',
