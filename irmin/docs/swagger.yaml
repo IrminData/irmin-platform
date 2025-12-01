@@ -193,6 +193,12 @@ definitions:
         example: select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity'
           = 'Hour' LIMIT 2;
         type: string
+      tags:
+        example:
+        - tag_7k3m9x2n5q8p
+        items:
+          type: string
+        type: array
     required:
     - name
     type: object
@@ -1496,7 +1502,7 @@ definitions:
         minimum: 0
         type: integer
       sql_selector_example:
-        example: $[
+        description: Constructed SQL selector for the object, like $["workspace;repo;file.json@main"]
         type: string
       tags:
         items:

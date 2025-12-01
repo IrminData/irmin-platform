@@ -10458,6 +10458,15 @@ const docTemplate = `{
                 "sql": {
                     "type": "string",
                     "example": "select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tag_7k3m9x2n5q8p"
+                    ]
                 }
             }
         },
@@ -12228,8 +12237,8 @@ const docTemplate = `{
                     "example": 1048576
                 },
                 "sql_selector_example": {
-                    "type": "string",
-                    "example": "$["
+                    "description": "Constructed SQL selector for the object, like $[\"workspace;repo;file.json@main\"]",
+                    "type": "string"
                 },
                 "tags": {
                     "type": "array",

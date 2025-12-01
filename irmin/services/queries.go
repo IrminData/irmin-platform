@@ -129,17 +129,36 @@ func (api *APIServices) CreateQuery(
 		name = strconv.FormatInt(time.Now().Unix(), 10)
 	}
 
-	// Create the stored query in the database
-	query := &db.StoredQuery{
-		Name:        name,
-		Description: req.Description,
-		SQL:         req.SQL,
-		OwnerID:     user.ID,
-		WorkspaceID: workspace.ID,
-	}
-	if saveErr := api.DB.Save(&query).Error; saveErr != nil {
-		api.Logger.ErrorContext(c, "Error creating stored query", "error", saveErr)
-		return nil, saveErr
+	var query *db.StoredQuery
+
+	// Use database transaction to ensure atomicity
+	transactionErr := api.DB.Transaction(func(tx *gorm.DB) error {
+		// Create the stored query in the database
+		query = &db.StoredQuery{
+			Name:        name,
+			Description: req.Description,
+			SQL:         req.SQL,
+			OwnerID:     user.ID,
+			WorkspaceID: workspace.ID,
+		}
+		if saveErr := tx.Create(query).Error; saveErr != nil {
+			api.Logger.ErrorContext(c, "Error creating stored query", "error", saveErr)
+			return saveErr
+		}
+
+		// Add tags if provided
+		if len(req.Tags) > 0 {
+			if addTagsErr := api.addQueryTags(tx, query, req.Tags, workspace.ID); addTagsErr != nil {
+				api.Logger.ErrorContext(c, "Error adding tags to query", "error", addTagsErr)
+				return addTagsErr
+			}
+		}
+
+		return nil
+	})
+
+	if transactionErr != nil {
+		return nil, transactionErr
 	}
 
 	// Log the event
@@ -151,7 +170,44 @@ func (api *APIServices) CreateQuery(
 		StoredQueryID: &query.ID,
 	})
 
+	// Reload the query with Owner and Tags relationships preloaded
+	query, getQueryByIDErr := api.DB.GetStoredQueryByID(query.ID)
+	if getQueryByIDErr != nil {
+		api.Logger.ErrorContext(c, "Error fetching query", "error", getQueryByIDErr)
+		return nil, getQueryByIDErr
+	}
+
 	return query, nil
+}
+
+func (api *APIServices) addQueryTags(
+	tx *gorm.DB,
+	query *db.StoredQuery,
+	tags []string,
+	workspaceID uint,
+) error {
+	if len(tags) > 0 {
+		for _, tagSqid := range tags {
+			tagID, tagDecodeErr := api.SQIDManager.Decode("tags", tagSqid)
+			if tagDecodeErr != nil {
+				return tagDecodeErr
+			}
+
+			// Verify tag belongs to the workspace
+			var tag db.Tag
+			if err := tx.First(&tag, uint(tagID)).Error; err != nil {
+				return err
+			}
+			if tag.WorkspaceID != workspaceID {
+				return ErrInvalidRequest
+			}
+
+			if tagAppendErr := tx.Model(query).Association("Tags").Append(&db.Tag{Model: gorm.Model{ID: uint(tagID)}}); tagAppendErr != nil {
+				return tagAppendErr
+			}
+		}
+	}
+	return nil
 }
 
 func (api *APIServices) UpdateQuery(
