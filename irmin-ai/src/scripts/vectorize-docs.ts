@@ -6,11 +6,93 @@ import * as path from 'path';
 
 import { analyticsService } from '@/services/analytics';
 
-// Configuration for document URLs and local file paths to vectorize
-const DOCUMENT_URLS = [
-  // Go-lang SDK docs
+// Configuration for Irmin SDK documentation URLs
+const IRMIN_SDK_URLS = [
+  // IRMIN Go-lang SDK docs
   'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/README.md',
   'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/docs/docs.md',
+];
+
+// Configuration for DuckDB SQL documentation URLs
+const DUCKDB_DOCS_URLS = [
+  // DuckDB docs
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/introduction.md',
+  // Query syntax
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/filter.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/from.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/groupby.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/having.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/limit.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/orderby.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/prepared_statements.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/qualify.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/sample.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/select.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/setops.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/unnest.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/values.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/where.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/window.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/query_syntax/with.md',
+  // Statements
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/vacuum.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/use.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/update_extensions.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/update.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/unpivot.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/transactions.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/summarize.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/show.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/set_variable.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/set.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/select.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/profiling.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/alter_table.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/alter_view.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/analyze.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/attach.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/call.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/checkpoint.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/comment_on.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/copy.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_index.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_macro.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_schema.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_secret.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_sequence.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_table.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_type.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/create_view.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/delete.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/describe.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/drop.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/export.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/insert.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/load_and_install.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/merge_into.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/overview.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/statements/pivot.md',
+  // Data types
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/array.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/bitstring.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/blob.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/boolean.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/date.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/enum.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/interval.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/list.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/literal_types.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/map.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/nulls.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/numeric.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/overview.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/struct.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/text.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/time.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/timestamp.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/timezones.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/typecasting.md',
+  'https://raw.githubusercontent.com/duckdb/duckdb-web/refs/heads/main/docs/stable/sql/data_types/union.md',
 ];
 
 // Configuration for local LLM documentation files
@@ -81,12 +163,10 @@ export class VectorizeDocsScript {
     const timestamp = new Date().toISOString();
 
     try {
-      // Use provided URLs or default to hardcoded list
-      const urls = this.config.urls?.length ? this.config.urls : DOCUMENT_URLS;
-      // Use provided local paths or default to hardcoded list
-      const localPaths = this.config.localPaths?.length
-        ? this.config.localPaths
-        : LOCAL_DOCUMENT_PATHS;
+      // Use provided URLs or default to empty array (will be handled by factory function)
+      const urls = this.config.urls || [];
+      // Use provided local paths or default to empty array
+      const localPaths = this.config.localPaths || [];
 
       // Fetch and parse documents from URLs and local files
       const documents = await this.fetchDocuments(urls, localPaths);
@@ -491,12 +571,27 @@ export class VectorizeDocsScript {
         metadata: chunk.metadata,
       }));
 
-      // Index documents
-      await indexingService.indexDocuments(
-        vectorStore,
-        vectorDocuments,
-        collectionConfig.name
+      // Process in batches to avoid payload size limits
+      // Using a batch size of 100 to stay safely under the 32MB limit
+      const BATCH_SIZE = 100;
+      const batches = this.chunkArray(vectorDocuments, BATCH_SIZE);
+
+      console.log(
+        `Indexing ${vectorDocuments.length} chunks in ${batches.length} batches...`
       );
+
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        console.log(
+          `Processing batch ${i + 1}/${batches.length} (${batch.length} chunks)`
+        );
+
+        await indexingService.indexDocuments(
+          vectorStore,
+          batch,
+          collectionConfig.name
+        );
+      }
     } catch (error) {
       throw new Error(
         `Failed to index documents: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -684,18 +779,81 @@ export class VectorizeDocsScript {
 
 /**
  * Factory function to execute the vectorize docs script with default configuration
+ * This function runs two separate vectorization passes:
+ * 1. irmin-docs collection: Irmin SDK docs + local LLM docs
+ * 2. duckdb-sql-syntax-docs collection: DuckDB SQL documentation
  */
 export async function vectorizeDocsScript(): Promise<ScriptResult> {
-  const defaultConfig = {
-    collectionName: 'irmin-docs',
-    chunkSize: 700,
-    chunkOverlap: 200,
-    maxConcurrent: 3,
-    urls: DOCUMENT_URLS,
-    localPaths: LOCAL_DOCUMENT_PATHS,
-    replaceMode: true, // Default to replace mode for documentation
-  };
+  const startTime = Date.now();
+  const timestamp = new Date().toISOString();
 
-  const script = new VectorizeDocsScript(defaultConfig);
-  return await script.execute();
+  try {
+    // Pass 1: Vectorize Irmin documentation
+    const irminScript = new VectorizeDocsScript({
+      collectionName: 'irmin-docs',
+      chunkSize: 700,
+      chunkOverlap: 200,
+      maxConcurrent: 3,
+      urls: IRMIN_SDK_URLS,
+      localPaths: LOCAL_DOCUMENT_PATHS,
+      replaceMode: true,
+    });
+
+    const irminResult = await irminScript.execute();
+
+    // Pass 2: Vectorize DuckDB SQL documentation
+    const duckdbScript = new VectorizeDocsScript({
+      collectionName: 'duckdb-sql-syntax-docs',
+      chunkSize: 700,
+      chunkOverlap: 200,
+      maxConcurrent: 3,
+      urls: DUCKDB_DOCS_URLS,
+      localPaths: [], // No local files for DuckDB docs
+      replaceMode: true,
+    });
+
+    const duckdbResult = await duckdbScript.execute();
+
+    const executionTime = Date.now() - startTime;
+
+    // Combine results
+    const bothSuccessful = irminResult.success && duckdbResult.success;
+    const totalDocuments =
+      ((irminResult.data?.documentsProcessed as number) || 0) +
+      ((duckdbResult.data?.documentsProcessed as number) || 0);
+    const totalChunks =
+      ((irminResult.data?.chunksCreated as number) || 0) +
+      ((duckdbResult.data?.chunksCreated as number) || 0);
+
+    return {
+      success: bothSuccessful,
+      message: bothSuccessful
+        ? `Successfully vectorized ${totalDocuments} documents into ${totalChunks} chunks across 2 collections (irmin-docs: ${irminResult.data?.chunksCreated || 0} chunks, duckdb-sql-syntax-docs: ${duckdbResult.data?.chunksCreated || 0} chunks)`
+        : `Vectorization completed with errors. Irmin docs: ${irminResult.success ? 'success' : 'failed'}, DuckDB docs: ${duckdbResult.success ? 'success' : 'failed'}`,
+      data: {
+        irminDocs: irminResult.data,
+        duckdbDocs: duckdbResult.data,
+        totalDocumentsProcessed: totalDocuments,
+        totalChunksCreated: totalChunks,
+        collectionsProcessed: 2,
+      },
+      executionTime,
+      timestamp,
+      error: bothSuccessful
+        ? undefined
+        : `Irmin: ${irminResult.error || 'OK'}, DuckDB: ${duckdbResult.error || 'OK'}`,
+    };
+  } catch (error) {
+    const executionTime = Date.now() - startTime;
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+
+    return {
+      success: false,
+      message: 'Failed to vectorize documents',
+      error: errorMessage,
+      executionTime,
+      timestamp,
+    };
+  }
 }

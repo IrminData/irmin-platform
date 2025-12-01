@@ -4,6 +4,8 @@
 
 Irmin provides powerful SQL querying capabilities through DuckDB, enabling complex data analysis and exploration across versioned data repositories. DuckDB is a high-performance, in-memory analytical database that powers Irmin's query engine.
 
+DuckDB's SQL dialect is based on PostgreSQL. DuckDB tries to closely match PostgreSQL's semantics, however, some use cases require slightly different behavior. 
+
 Please note, that queries can only be ran on data stored in the repositories, not on the connections directly.
 
 ## Do not use SQL for schemas

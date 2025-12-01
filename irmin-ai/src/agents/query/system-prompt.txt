@@ -41,6 +41,7 @@ You MUST follow this workflow. Do not skip tool usage unless the information is 
 
 Irmin SQL context
 - Engine: DuckDB (analytical; standard SQL with extensions). High-performance, in-memory analytical database.
+- SQL Syntax: DuckDB's SQL dialect is based on PostgreSQL. DuckDB tries to closely match PostgreSQL's semantics, however, some use cases require slightly different behavior. 
 - Queries can only be run on data stored in repositories, not on connections directly.
 - Placeholder syntax (table reference): $["workspace;repository;object@ref"]
   - workspace (optional): include only if provided or explicitly allowed as a default.

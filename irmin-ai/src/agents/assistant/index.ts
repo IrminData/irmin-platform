@@ -1,4 +1,3 @@
-import { indexingService, retrievalService } from '@/vector';
 import {
   AgentMiddleware,
   DynamicStructuredTool,
@@ -90,40 +89,6 @@ export class AssistantAgent extends BaseAgent {
         modelFallbackMiddleware(fallbackLLM),
       ],
     };
-  }
-
-  protected async prepareContext(
-    input: AgentInput
-  ): Promise<Record<string, unknown>> {
-    const context = await super.prepareContext(input);
-
-    // Fetch documentation from vector store
-    try {
-      const vectorStore = await indexingService.initVectorStore(
-        'irmin-docs',
-        true
-      );
-
-      const docsResult = await retrievalService.retrieveWithHypotheticalContent(
-        vectorStore,
-        input.message,
-        {
-          maxDocuments: 5,
-          scoreThreshold: 0.3,
-          includeMetadata: false,
-          maxTokens: 6000,
-        },
-        'irmin-docs'
-      );
-
-      if (docsResult.context && docsResult.context.trim()) {
-        context.irmin_documentation = docsResult.context;
-      }
-    } catch (error) {
-      console.warn('Failed to retrieve documentation context:', error);
-    }
-
-    return context;
   }
 
   /**

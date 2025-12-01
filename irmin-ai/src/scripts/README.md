@@ -6,9 +6,13 @@ This directory houses operational scripts that can be executed through the API, 
 
 ### `vectorize-docs`
 
-Fetches Irmin documentation from remote sources and local markdown files, chunks the content, generates embeddings, and uploads vectors to the `irmin-docs` collection in Qdrant. Supports replace mode (default) that swaps old chunks with new ones in a single run.
+Fetches documentation from remote sources and local markdown files, chunks the content, generates embeddings, and uploads vectors to Qdrant collections. The script runs two separate vectorization passes to maintain separate collections for Irmin documentation and DuckDB SQL syntax documentation. Supports replace mode (default) that swaps old chunks with new ones in a single run.
 
 **Default configuration**
+
+The script performs two vectorization passes:
+
+**Pass 1: `irmin-docs` collection**
 - Collection name: `irmin-docs`
 - Remote URLs:
   - `https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/README.md`
@@ -20,6 +24,13 @@ Fetches Irmin documentation from remote sources and local markdown files, chunks
   - `llm-docs/object-schema.md`
   - `llm-docs/scripting.md`
   - `llm-docs/sql.md`
+
+**Pass 2: `duckdb-sql-syntax-docs` collection**
+- Collection name: `duckdb-sql-syntax-docs`
+- Remote URLs: DuckDB SQL documentation (query syntax, statements, data types)
+- Local files: None
+
+**Common settings for both passes:**
 - Chunk size: 700 characters
 - Chunk overlap: 200 characters
 - Max concurrent fetches: 3
@@ -62,17 +73,31 @@ Fetches Irmin documentation from remote sources and local markdown files, chunks
 ```json
 {
   "success": true,
-  "message": "Successfully vectorized 8 documents into 240 chunks and removed 180 of 180 old chunks",
+  "message": "Successfully vectorized 92 documents into 1240 chunks across 2 collections (irmin-docs: 240 chunks, duckdb-sql-syntax-docs: 1000 chunks)",
   "data": {
-    "documentsProcessed": 8,
-    "chunksCreated": 240,
-    "urlsProcessed": 2,
-    "localFilesProcessed": 6,
-    "replaceMode": true,
-    "oldChunksRemoved": 180,
-    "oldChunksAttempted": 180
+    "irminDocs": {
+      "documentsProcessed": 8,
+      "chunksCreated": 240,
+      "urlsProcessed": 2,
+      "localFilesProcessed": 6,
+      "replaceMode": true,
+      "oldChunksRemoved": 180,
+      "oldChunksAttempted": 180
+    },
+    "duckdbDocs": {
+      "documentsProcessed": 84,
+      "chunksCreated": 1000,
+      "urlsProcessed": 84,
+      "localFilesProcessed": 0,
+      "replaceMode": true,
+      "oldChunksRemoved": 950,
+      "oldChunksAttempted": 950
+    },
+    "totalDocumentsProcessed": 92,
+    "totalChunksCreated": 1240,
+    "collectionsProcessed": 2
   },
-  "executionTime": 3620,
+  "executionTime": 12500,
   "timestamp": "2025-01-05T10:30:00.000Z"
 }
 ```

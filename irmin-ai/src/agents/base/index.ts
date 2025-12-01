@@ -1,4 +1,5 @@
 import IrminCore from '@/irmin-api';
+import { indexingService, retrievalService } from '@/vector';
 import fs from 'fs/promises';
 import { AgentMiddleware, BaseMessage, DynamicStructuredTool } from 'langchain';
 import path from 'path';
@@ -55,6 +56,33 @@ export abstract class BaseAgent implements BaseAgentInterface {
       'Agent Base prepareContext agent input',
       JSON.stringify(input, null, 2)
     );
+
+    // Fetch Irmin documentation from vector store (common to all agents)
+    // This runs regardless of workspace/authToken since docs are system-wide
+    try {
+      const vectorStore = await indexingService.initVectorStore(
+        'irmin-docs',
+        true
+      );
+
+      const docsResult = await retrievalService.retrieveWithHypotheticalContent(
+        vectorStore,
+        input.message,
+        {
+          maxDocuments: 5,
+          scoreThreshold: 0.3,
+          includeMetadata: false,
+          maxTokens: 6000,
+        },
+        'irmin-docs'
+      );
+
+      if (docsResult.context && docsResult.context.trim()) {
+        context.irmin_documentation = docsResult.context;
+      }
+    } catch (error) {
+      console.warn('Failed to retrieve Irmin documentation context:', error);
+    }
 
     // Initialize IrminCore
     const irmin = new IrminCore(input.authToken || '');

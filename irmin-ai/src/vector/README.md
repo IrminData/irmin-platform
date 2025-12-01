@@ -71,7 +71,9 @@ await indexingService.indexDocuments(vectorStore, [
 const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
 ```
 
-`initVectorStore` is used heavily by the assistant agent to connect to the `irmin-docs` system collection that the `vectorize-docs` script maintains.
+`initVectorStore` is used by agents to connect to system collections. The `vectorize-docs` script maintains two system collections:
+- `irmin-docs`: Irmin SDK documentation and local LLM documentation (used by all agents via `BaseAgent`)
+- `duckdb-sql-syntax-docs`: DuckDB SQL syntax documentation (used by specialized agents like `QueryAgent`)
 
 ## RetrievalService
 
@@ -160,7 +162,11 @@ QDRANT_URL=http://localhost:6333
 QDRANT_API_KEY=optional_api_key_if_required
 ```
 
-Assistant agents expect the `irmin-docs` system collection to exist. Populate it by running the `vectorize-docs` script (`POST /api/system/scripts/vectorize-docs` or `tsx src/scripts/vectorize-docs.ts`).
+Agents expect system collections to exist. The `vectorize-docs` script populates both `irmin-docs` and `duckdb-sql-syntax-docs` collections. Run it via `POST /api/system/scripts/vectorize-docs` or `tsx src/scripts/vectorize-docs.ts`.
+
+**Agent context retrieval:**
+- `BaseAgent` automatically retrieves context from `irmin-docs` for all agents
+- Specialized agents (like `QueryAgent`) can override `prepareContext` to retrieve additional collections (e.g., `duckdb-sql-syntax-docs`)
 
 ## Best practices
 

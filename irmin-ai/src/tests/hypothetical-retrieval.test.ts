@@ -18,16 +18,19 @@ const TEST_QUERIES = {
     'How do I create a workflow in Irmin?',
     'What are the main features of Irmin?',
     'How does data versioning work in Irmin?',
+    'How to query the latest 10 transactions from transactions.csv in demo-data repository?',
   ],
   statements: [
     'I want to learn about workflows',
     'Tell me about Irmin connectors',
     'Explain Irmin repositories',
+    'Provide examples of Irmin SQL queries',
   ],
   mixed: [
     'Irmin SDK documentation',
     'workflow automation best practices',
     'connecting to databases',
+    'querying nested JSON objects',
   ],
 };
 
@@ -100,11 +103,10 @@ async function testHypotheticalGeneration(): Promise<boolean> {
     console.log('\n  Sample generated content:');
     results
       .filter((r) => r.usedHypothetical)
-      .slice(0, 3)
       .forEach((result, index) => {
         console.log(`    ${index + 1}. Query: "${result.query}"`);
         console.log(
-          `       Generated: "${result.generatedContent?.substring(0, 150)}..."`
+          `       Generated: "${result.generatedContent?.substring(0, 250)}..."`
         );
       });
 
@@ -320,7 +322,7 @@ async function testPerformance(): Promise<boolean> {
       overhead: number;
     }> = [];
 
-    const testQueries = TEST_QUERIES.questions.slice(0, 3); // Test with 3 queries
+    const testQueries = TEST_QUERIES.questions; // Test with all questions
 
     for (const query of testQueries) {
       // Baseline timing
@@ -483,12 +485,10 @@ async function testConcurrentRequests(): Promise<boolean> {
       true
     );
 
+    // Select a mix of queries for concurrent testing
     const testQueries = [
-      'How to create workflows?',
-      'What are Irmin connectors?',
-      'Explain data versioning',
-      'Using Irmin SDK',
-      'Repository management',
+      ...TEST_QUERIES.questions,
+      ...TEST_QUERIES.statements.slice(0, 2),
     ];
 
     const startTime = Date.now();

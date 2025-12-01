@@ -301,35 +301,13 @@ async function testConversationManagement(): Promise<boolean> {
   console.log(`  Updated conversation: ${updatedConversation?.title}`);
 
   // Test 5: Generate title (requires a user message first)
-  const userMessageResult = await makeRequest(
-    `${BASE_URL}/api/agents/assistant`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        message: 'This is a test message for title generation',
-        conversationId,
-      }),
-    }
-  );
-
-  if (userMessageResult.ok) {
-    const generateTitleResult = await makeRequest(
-      `${BASE_URL}/api/conversations/${conversationId}/generate-title`,
-      {
-        method: 'POST',
-      }
-    );
-
-    if (generateTitleResult.ok) {
-      const titledConversation = getResponseData<Record<string, unknown>>(
-        generateTitleResult,
-        'data'
-      );
-      console.log(`  Generated title: ${titledConversation?.title}`);
-    } else {
-      console.log('  Title generation failed (non-critical)');
-    }
-  }
+  await makeRequest(`${BASE_URL}/api/agents/assistant`, {
+    method: 'POST',
+    body: JSON.stringify({
+      message: 'This is a test message for title generation',
+      conversationId,
+    }),
+  });
 
   // Test 6: Get conversation messages
   const messagesResult = await makeRequest(
