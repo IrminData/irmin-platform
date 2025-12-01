@@ -418,10 +418,12 @@ class RetrievalService {
    * This creates richer embeddings that often match document content better than raw queries
    * @param query - The user's query
    * @param collectionName - Optional collection name to customize the prompt (e.g., 'duckdb-sql-syntax-docs' for SQL-specific generation)
+   * @param agentContext - Optional agent context to customize the prompt
    */
   private async generateHypotheticalContent(
     query: string,
-    collectionName?: string
+    collectionName?: string,
+    agentContext?: Record<string, unknown>
   ): Promise<string | null> {
     const startTime = Date.now();
     const TIMEOUT_MS = 5000;
@@ -437,9 +439,17 @@ class RetrievalService {
       // Use SQL-specific prompt for DuckDB SQL documentation collection
       const isSQLDocs = collectionName === 'duckdb-sql-syntax-docs';
 
+      // Format agent context if provided
+      let contextStr = '';
+      if (agentContext && Object.keys(agentContext).length > 0) {
+        contextStr = `\n\nAgent Context:\n${Object.entries(agentContext)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join('\n')}`;
+      }
+
       const systemPrompt = isSQLDocs
-        ? `Convert the user's SQL-related question into a hypothetical SQL documentation excerpt that would contain the answer. Include SQL syntax patterns, keywords, clauses, functions, and examples that would be found in SQL documentation. Focus on DuckDB SQL syntax, data types, query patterns, and statement structures. Just respond with the hypothetical documentation excerpt, no other text.`
-        : `Convert the user message in to a hypothetical answer/response that would contain keywords, concepts, topics, etc. that would likely contain the answer or relevant information about this topic, which will be used to retrieve relevant documents from the vector store. Just respond with the hypothetical answer/response, no other text.`;
+        ? `Convert the user's SQL-related question into a hypothetical SQL documentation excerpt that would contain the answer. Include SQL syntax patterns, keywords, clauses, functions, and examples that would be found in SQL documentation. Focus on DuckDB SQL syntax, data types, query patterns, and statement structures. Just respond with the hypothetical documentation excerpt, no other text.${contextStr}`
+        : `Convert the user message in to a hypothetical answer/response that would contain keywords, concepts, topics, etc. that would likely contain the answer or relevant information about this topic, which will be used to retrieve relevant documents from the vector store. Just respond with the hypothetical answer/response, no other text.${contextStr}`;
 
       const response = await Promise.race([
         llm.invoke([
@@ -502,7 +512,8 @@ class RetrievalService {
       includeMetadata?: boolean;
       maxTokens?: number;
     } = {},
-    collectionName?: string
+    collectionName?: string,
+    agentContext?: Record<string, unknown>
   ): Promise<{
     context: string;
     sources: Document[];
@@ -531,7 +542,8 @@ class RetrievalService {
 
       const hypotheticalContent = await this.generateHypotheticalContent(
         query,
-        collectionName
+        collectionName,
+        agentContext
       );
 
       const searchQuery = hypotheticalContent || query;

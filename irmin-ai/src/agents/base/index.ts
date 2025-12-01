@@ -74,7 +74,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
           includeMetadata: false,
           maxTokens: 6000,
         },
-        'irmin-docs'
+        'irmin-docs',
+        {
+          agentDescription: this.config.description,
+          agentName: this.config.name,
+        }
       );
 
       if (docsResult.context && docsResult.context.trim()) {
@@ -84,12 +88,21 @@ export abstract class BaseAgent implements BaseAgentInterface {
       console.warn('Failed to retrieve Irmin documentation context:', error);
     }
 
+    await this.prepareNonDocsContext(input, context);
+
+    return context;
+  }
+
+  protected async prepareNonDocsContext(
+    input: AgentInput,
+    context: Record<string, unknown>
+  ): Promise<void> {
     // Initialize IrminCore
     const irmin = new IrminCore(input.authToken || '');
     const workspace = input.workspace?.slug || '';
 
     if (!workspace || !input.authToken) {
-      return context;
+      return;
     }
 
     try {
@@ -257,8 +270,6 @@ export abstract class BaseAgent implements BaseAgentInterface {
     } catch (e) {
       console.error('Error fetching context objects:', e);
     }
-
-    return context;
   }
 
   /**

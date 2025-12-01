@@ -12,6 +12,7 @@ export const conversations = pgTable('conversations', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   metadata: jsonb('metadata').default({}),
+  context: jsonb('context').default({}),
 
   // Agent association
   agentId: text('agent_id'),

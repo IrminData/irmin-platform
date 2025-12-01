@@ -1,6 +1,6 @@
 import { type AnthropicInput, ChatAnthropic } from '@langchain/anthropic';
 import { ChatGroq, ChatGroqInput } from '@langchain/groq';
-import { ChatOpenAI, OpenAIInput } from '@langchain/openai';
+import { ChatOpenAI, OpenAIChatInput } from '@langchain/openai';
 import { wrapSDK } from 'langsmith/wrappers';
 
 import { env } from '@/config/env';
@@ -18,7 +18,7 @@ export interface LLMOptions {
   // Provider-specific options
   groq?: ChatGroqInput;
   anthropic?: AnthropicInput;
-  openai?: OpenAIInput;
+  openai?: Partial<OpenAIChatInput>;
 }
 
 class LLMService {
@@ -54,11 +54,11 @@ class LLMService {
         })
       );
     } else if (provider === 'openai') {
+      // Note: Temperature is not used for OpenAI models
       llm = wrapSDK(
         new ChatOpenAI({
           apiKey: env.OPENAI_API_KEY,
           model: model || this.defaultOpenAIModel,
-          temperature,
           maxTokens,
           timeout,
           streaming,

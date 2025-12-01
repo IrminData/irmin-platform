@@ -81,13 +81,36 @@ export class AgentsManager {
         );
       }
 
+      // Merge contexts: new values replace existing, but keep existing values not provided
+      // If new context has keys with empty/null/undefined values, keep stored values
+      const storedContext =
+        (conversation.context as Record<string, unknown>) || {};
+      const newContext = input.context || {};
+      const mergedContext: Record<string, unknown> = { ...storedContext };
+
+      for (const [key, value] of Object.entries(newContext)) {
+        // Only update if the new value is not empty/null/undefined
+        if (value !== null && value !== undefined && value !== '') {
+          mergedContext[key] = value;
+        }
+        // If value is null/undefined/empty string, keep the stored value (already in mergedContext)
+      }
+
       // If conversation doesn't have an agentId set, update it to the current agent
       if (!conversation.agentId) {
         await db
           .update(conversations)
-          .set({ agentId, updatedAt: new Date() })
+          .set({ agentId, updatedAt: new Date(), context: mergedContext })
           .where(eq(conversations.id, conversation.id));
         conversation.agentId = agentId;
+        conversation.context = mergedContext;
+      } else {
+        // Update context for existing conversation
+        await db
+          .update(conversations)
+          .set({ updatedAt: new Date(), context: mergedContext })
+          .where(eq(conversations.id, conversation.id));
+        conversation.context = mergedContext;
       }
     } else {
       // Create new conversation with fallback title
@@ -101,6 +124,7 @@ export class AgentsManager {
         id,
         title: fallbackTitle,
         metadata: {},
+        context: input.context || {},
         agentId,
         workspaceSlug: input.workspace.slug,
         userId: input.user.id,
@@ -123,10 +147,17 @@ export class AgentsManager {
       throw new Error('Message cannot be empty');
     }
 
-    // Execute agent with sanitized message
+    // Get context from conversation (already merged for existing conversations)
+    const contextForAgent =
+      conversation.context && typeof conversation.context === 'object'
+        ? (conversation.context as Record<string, unknown>)
+        : {};
+
+    // Execute agent with sanitized message and context
     const sanitizedInput = {
       ...input,
       message: sanitizedMessage.sanitized,
+      context: contextForAgent,
     };
     const response = await agent.execute(sanitizedInput, conversation.id);
     const executionTimestamp = new Date();

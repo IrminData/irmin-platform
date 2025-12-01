@@ -36,15 +36,15 @@ Rules:
 
 Examples:
 - User: "How do I connect to my PostgreSQL database?"
-- Title: "PostgreSQL Connection Help"
+- Title: "PostgreSQL connection help"
 
 - User: "Can you help me write a Python script to process CSV files?"
 - AI Response: "I'll help you create a Python script using pandas to read and process CSV files..."
-- Title: "Python CSV Processing Script"
+- Title: "Python CSV reading and processing script"
 
 - User: "What's the best way to optimize my React app performance?"
 - AI Response: "Here are several optimization techniques for React apps: code splitting, memoization, lazy loading..."
-- Title: "React Performance Optimization"
+- Title: "React app performance optimization"
 
 Return only the title, nothing else.`;
   private readonly TITLE_GENERATION_TIMEOUT_MS = 15000;
@@ -76,10 +76,10 @@ Return only the title, nothing else.`;
       }
 
       const llm = llmService.createLLM({
-        provider: 'openai',
-        model: 'gpt-5-nano',
+        provider: 'groq',
+        model: 'llama-3.1-8b-instant',
         maxTokens: 500,
-        temperature: 1,
+        streaming: false,
       });
 
       const logPrefix = options.conversationId

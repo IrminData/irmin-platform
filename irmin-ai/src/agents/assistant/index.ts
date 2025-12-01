@@ -41,15 +41,18 @@ export class AssistantAgent extends BaseAgent {
     const fallbackLLM = llmService.createLLM({
       provider: 'openai',
       model: 'gpt-5',
-      temperature: 0.8,
-      maxTokens: 16000,
-      streaming: true,
+      maxTokens: 1000,
+      streaming: false,
+      openai: {
+        reasoning: {
+          effort: 'high',
+        },
+      },
     });
 
     const cheaperLLM = llmService.createLLM({
       provider: 'openai',
       model: 'gpt-5-mini',
-      temperature: 1,
       streaming: false,
     });
 
@@ -82,8 +85,10 @@ export class AssistantAgent extends BaseAgent {
           maxTools: 10,
           alwaysInclude: [
             'retrieve_docs_context',
+            'list_repositories',
+            'list_connections',
+            'list_workflows',
             'get_repository_object_schema',
-            'get_connection_schema',
           ],
         }),
         modelFallbackMiddleware(fallbackLLM),

@@ -3,7 +3,6 @@ import { collectionService } from '@/vector/vectorCollections';
 import {
   AgentMiddleware,
   DynamicStructuredTool,
-  llmToolSelectorMiddleware,
   modelFallbackMiddleware,
 } from 'langchain';
 
@@ -26,31 +25,42 @@ export class QueryAgent extends BaseAgent {
     middleware?: AgentMiddleware[];
     systemPrompt?: string;
   }> {
-    // Create MCP tools with auth token
-    // Load all tools like assistant agent - the system prompt guides which tools to use
+    // Create MCP tools with auth token and filter to only include the required tools
     const tools: DynamicStructuredTool[] = [];
     if (input.authToken) {
       const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
       const mcpClient = toolsService.createClient({
+        // Add MCP servers here...
         ...mcpConfig,
       });
       const mcpTools = await toolsService.getTools(mcpClient);
-      tools.push(...mcpTools);
+
+      // Only include the necessary tools
+      const requiredToolNames = [
+        'list_repositories',
+        'list_repository_objects',
+        'list_repository_branches',
+        'list_repository_tags',
+        'get_repository_object_schema',
+        'retrieve_docs_context',
+        'execute_sql',
+      ];
+      const filteredTools = mcpTools.filter((tool) =>
+        requiredToolNames.includes(tool.name)
+      );
+      tools.push(...filteredTools);
     }
 
     const fallbackLLM = llmService.createLLM({
       provider: 'openai',
       model: 'gpt-5',
-      temperature: 0.9,
-      maxTokens: 1000,
+      maxTokens: 2048,
       streaming: false,
-    });
-
-    const cheaperLLM = llmService.createLLM({
-      provider: 'groq',
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.7,
-      streaming: false,
+      openai: {
+        reasoning: {
+          effort: 'high',
+        },
+      },
     });
 
     return {
@@ -58,7 +68,7 @@ export class QueryAgent extends BaseAgent {
         provider: 'anthropic' as const,
         model: 'claude-sonnet-4-5-20250929',
         temperature: 0.9,
-        maxTokens: 1000,
+        maxTokens: 2048,
         streaming: false,
         anthropic: {
           thinking: {
@@ -68,71 +78,131 @@ export class QueryAgent extends BaseAgent {
         },
       },
       tools,
-      middleware: [
-        llmToolSelectorMiddleware({
-          model: cheaperLLM,
-          maxTools: 5,
-          alwaysInclude: [
-            'retrieve_docs_context',
-            'get_repository_object_schema',
-            'execute_sql',
-          ],
-        }),
-        modelFallbackMiddleware(fallbackLLM),
-      ],
+      middleware: [modelFallbackMiddleware(fallbackLLM)],
     };
   }
 
   protected async prepareContext(
     input: AgentInput
   ): Promise<Record<string, unknown>> {
-    // Get base context (includes irmin-docs from BaseAgent)
-    const context = await super.prepareContext(input);
+    const context: Record<string, unknown> = { ...(input.context || {}) };
 
-    // Fetch DuckDB SQL documentation from vector store (specific to QueryAgent)
-    const collectionName = 'duckdb-sql-syntax-docs';
+    // 1. Prepare non-docs context (connection, workflow, repo, schema, etc.)
+    await this.prepareNonDocsContext(input, context);
 
-    // Check if collection exists before trying to use it
-    const collection = await collectionService.getCollectionByName(
-      collectionName,
-      undefined,
-      undefined,
-      true // isSystemCollection
-    );
+    // 2. Prepare Agent Context
+    const agentContext = {
+      agentDescription: this.config.description,
+      agentName: this.config.name,
+      currentSql: input.context?.['current-sql'] as string | undefined,
+    };
 
-    if (!collection) {
-      console.warn(
-        `Collection '${collectionName}' not found. DuckDB documentation context will not be available. ` +
-          `Run the vectorize-docs script to create this collection: ` +
-          `POST /api/system/scripts/vectorize-docs or tsx src/scripts/vectorize-docs.ts`
-      );
-      return context;
-    }
+    // 3. Retrieve documentation (Irmin Docs & DuckDB Docs)
+    // We try to retrieve DuckDB docs first to generate a SQL-specific hypothetical,
+    // which we then reuse for Irmin docs to save an LLM call.
+    const duckDbCollectionName = 'duckdb-sql-syntax-docs';
+    const irminDocsCollectionName = 'irmin-docs';
 
+    let hypotheticalContent: string | undefined;
+
+    // A. Retrieve DuckDB Docs
     try {
-      const vectorStore = await indexingService.initVectorStore(
-        collectionName,
-        true
+      // Check if collection exists
+      const duckDbCollection = await collectionService.getCollectionByName(
+        duckDbCollectionName,
+        undefined,
+        undefined,
+        true // isSystemCollection
       );
 
-      const docsResult = await retrievalService.retrieveWithHypotheticalContent(
-        vectorStore,
-        input.message,
-        {
-          maxDocuments: 5,
-          scoreThreshold: 0.3,
-          includeMetadata: false,
-          maxTokens: 6000,
-        },
-        collectionName
-      );
+      if (duckDbCollection) {
+        const duckDbVectorStore = await indexingService.initVectorStore(
+          duckDbCollectionName,
+          true
+        );
 
-      if (docsResult.context && docsResult.context.trim()) {
-        context.duckdb_documentation = docsResult.context;
+        const duckDbResult =
+          await retrievalService.retrieveWithHypotheticalContent(
+            duckDbVectorStore,
+            input.message,
+            {
+              maxDocuments: 5,
+              scoreThreshold: 0.3,
+              includeMetadata: false,
+              maxTokens: 6000,
+            },
+            duckDbCollectionName,
+            agentContext
+          );
+
+        if (duckDbResult.context && duckDbResult.context.trim()) {
+          context.duckdb_documentation = duckDbResult.context;
+        }
+
+        // Capture hypothetical content for reuse
+        if (duckDbResult.usedHypothetical && duckDbResult.hypotheticalContent) {
+          hypotheticalContent = duckDbResult.hypotheticalContent;
+        }
+      } else {
+        console.warn(
+          `Collection '${duckDbCollectionName}' not found. DuckDB documentation context will not be available.`
+        );
       }
     } catch (error) {
       console.warn(
         `Failed to retrieve DuckDB documentation context: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+
+    // B. Retrieve Irmin Docs
+    // If we have hypothetical content from DuckDB retrieval, use retrieveContext directly.
+    // Otherwise, use retrieveWithHypotheticalContent.
+    try {
+      const irminVectorStore = await indexingService.initVectorStore(
+        irminDocsCollectionName,
+        true
+      );
+
+      if (hypotheticalContent) {
+        // Reuse hypothetical content
+        const irminResult = await retrievalService.retrieveContext(
+          irminVectorStore,
+          hypotheticalContent,
+          {
+            maxDocuments: 5,
+            scoreThreshold: 0.3,
+            includeMetadata: false,
+            maxTokens: 6000,
+          },
+          irminDocsCollectionName
+        );
+
+        if (irminResult.context && irminResult.context.trim()) {
+          context.irmin_documentation = irminResult.context;
+        }
+      } else {
+        // Generate new hypothetical content
+        const irminResult =
+          await retrievalService.retrieveWithHypotheticalContent(
+            irminVectorStore,
+            input.message,
+            {
+              maxDocuments: 5,
+              scoreThreshold: 0.3,
+              includeMetadata: false,
+              maxTokens: 6000,
+            },
+            irminDocsCollectionName,
+            agentContext
+          );
+
+        if (irminResult.context && irminResult.context.trim()) {
+          context.irmin_documentation = irminResult.context;
+        }
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to retrieve Irmin documentation context: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
 
