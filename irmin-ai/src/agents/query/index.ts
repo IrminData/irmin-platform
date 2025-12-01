@@ -1,4 +1,5 @@
 import { indexingService, retrievalService } from '@/vector';
+import { collectionService } from '@/vector/vectorCollections';
 
 import { BaseAgent } from '@/agents/base';
 import type { AgentInput } from '@/agents/types';
@@ -28,9 +29,28 @@ export class QueryAgent extends BaseAgent {
     const context = await super.prepareContext(input);
 
     // Fetch DuckDB SQL documentation from vector store (specific to QueryAgent)
+    const collectionName = 'duckdb-sql-syntax-docs';
+
+    // Check if collection exists before trying to use it
+    const collection = await collectionService.getCollectionByName(
+      collectionName,
+      undefined,
+      undefined,
+      true // isSystemCollection
+    );
+
+    if (!collection) {
+      console.warn(
+        `Collection '${collectionName}' not found. DuckDB documentation context will not be available. ` +
+          `Run the vectorize-docs script to create this collection: ` +
+          `POST /api/system/scripts/vectorize-docs or tsx src/scripts/vectorize-docs.ts`
+      );
+      return context;
+    }
+
     try {
       const vectorStore = await indexingService.initVectorStore(
-        'duckdb-sql-syntax-docs',
+        collectionName,
         true
       );
 
@@ -43,14 +63,16 @@ export class QueryAgent extends BaseAgent {
           includeMetadata: false,
           maxTokens: 6000,
         },
-        'duckdb-sql-syntax-docs'
+        collectionName
       );
 
       if (docsResult.context && docsResult.context.trim()) {
         context.duckdb_documentation = docsResult.context;
       }
     } catch (error) {
-      console.warn('Failed to retrieve DuckDB documentation context:', error);
+      console.warn(
+        `Failed to retrieve DuckDB documentation context: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
 
     return context;
