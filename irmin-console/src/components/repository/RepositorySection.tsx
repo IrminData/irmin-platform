@@ -369,6 +369,7 @@ function RepositorySectionContent({
               >
                 {dict.repository.sqlQuery}
                 <SqlHelper
+                  currentSql={queryField}
                   repositoryObject={selectedObject}
                   selector={selectedObject?.sql_selector_example}
                   title={selectedObject?.name}

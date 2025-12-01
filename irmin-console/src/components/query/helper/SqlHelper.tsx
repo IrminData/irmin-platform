@@ -6,12 +6,13 @@ import {
   TbCheck,
   TbCopy,
   TbExternalLink,
-  TbHelp,
   TbInfoCircle,
+  TbSparkles,
 } from 'react-icons/tb';
 
 import { JSONSchemaViewer } from '@/components/repository/objects/SchemaViewer/JSONSchemaViewer';
 import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -46,11 +47,13 @@ export default function SqlHelper({
   selector,
   title,
   repositoryObject,
+  currentSql,
 }: {
   schema?: ObjectSchema;
   selector?: string;
   title?: string;
   repositoryObject?: RepositoryObject;
+  currentSql?: string;
 }) {
   const { dict } = useLocale();
   const [open, setOpen] = useState(false);
@@ -148,18 +151,21 @@ export default function SqlHelper({
     if (effectiveSchema?.schema) {
       ctx['schema'] = effectiveSchema.schema;
     }
+    if (currentSql) {
+      ctx['current-sql'] = currentSql;
+    }
     return ctx;
-  }, [repositoryObject, displaySelector, effectiveSchema]);
+  }, [repositoryObject, displaySelector, effectiveSchema, currentSql]);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
-          variant='ghost'
+        <ButtonWithTooltip
+          variant='secondary'
           size='sm'
-          icon={<TbHelp size={18} />}
+          icon={<TbSparkles size={18} />}
           className='size-8 p-0'
-          title={dict.queryHelper.title}
+          tooltip={dict.queryHelper.title}
         />
       </SheetTrigger>
       <SheetContent

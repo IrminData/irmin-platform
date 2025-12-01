@@ -166,7 +166,16 @@ export function StructuredItemViewer({
                 ? dict.repository.objects.hideSchema
                 : dict.repository.objects.showSchema}
             </Button>
-            <SqlHelper schema={item} title={item.name} />
+            <SqlHelper
+              schema={item}
+              title={item.name}
+              currentSql={
+                item.sql_selector_example
+                  ? `SELECT * FROM ${item.sql_selector_example} LIMIT 10`
+                  : undefined
+              }
+              selector={item.sql_selector_example}
+            />
           </div>
           {expanded && (
             <div

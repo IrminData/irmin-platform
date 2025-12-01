@@ -727,6 +727,8 @@ const en = {
       send: 'Send',
       generatedSql: 'Generated SQL',
       copySql: 'Copy SQL',
+      copyText: 'Copy',
+      response: 'Response',
       clearChat: 'Clear',
       loading: 'Generating SQL...',
       error: 'Failed to generate SQL',

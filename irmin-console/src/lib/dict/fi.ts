@@ -710,6 +710,8 @@ const fi = {
       send: 'Lähetä',
       generatedSql: 'Luotu SQL',
       copySql: 'Kopioi SQL',
+      copyText: 'Kopioi',
+      response: 'Vastaus',
       clearChat: 'Tyhjennä',
       loading: 'Luodaan SQL:ää...',
       error: 'SQL:n luominen epäonnistui',

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { MdPlayArrow } from 'react-icons/md';
+import { AiOutlinePlayCircle } from 'react-icons/ai';
 import {
   TbChevronDown,
   TbChevronRight,
@@ -428,9 +428,35 @@ export default function QueriesSection() {
                 flex items-center justify-between border-b bg-muted/30 px-4 py-2
               `}
             >
-              <h3 className='text-sm font-medium'>{dict.query.editor}</h3>
+              <h3 className='text-sm font-medium'>
+                {dict.query.editor}{' '}
+                {selectedQuery ? `(${selectedQuery.name})` : ''}
+              </h3>
               <div className='flex items-center gap-2'>
-                <SqlHelper schema={workspaceSchema.schema || undefined} />
+                <SqlHelper
+                  schema={workspaceSchema.schema || undefined}
+                  currentSql={editorContent}
+                />
+                {selectedQuery && (
+                  <Button
+                    variant='default'
+                    size='sm'
+                    icon={<TbFile />}
+                    onClick={handleSaveQuery}
+                    disabled={!edited}
+                  >
+                    {dict.common.save}
+                  </Button>
+                )}
+                <Button
+                  variant='accent'
+                  size='sm'
+                  icon={<AiOutlinePlayCircle />}
+                  onClick={handleRunQuery}
+                  loading={queryLoading}
+                >
+                  {dict.repository.runQuery}
+                </Button>
               </div>
             </div>
             <div className='grow overflow-hidden'>
@@ -481,26 +507,6 @@ export default function QueriesSection() {
                 </div>
               )}
 
-              <Button
-                variant='default'
-                size='sm'
-                className='w-full'
-                icon={<TbFile />}
-                onClick={handleSaveQuery}
-                disabled={!edited}
-              >
-                {dict.common.save}
-              </Button>
-              <Button
-                variant='accent'
-                size='sm'
-                className='w-full'
-                icon={<MdPlayArrow />}
-                onClick={handleRunQuery}
-                disabled={queryLoading}
-              >
-                {dict.query.run}
-              </Button>
               <Button
                 variant='secondary'
                 size='sm'
