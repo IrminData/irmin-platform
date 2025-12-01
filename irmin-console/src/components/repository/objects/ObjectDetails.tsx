@@ -24,6 +24,7 @@ import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelecto
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import {
   useRepositoryObject,
@@ -69,6 +70,7 @@ export default function ObjectDetails({
   hideSchemaButton?: boolean;
 }) {
   const router = useRouter();
+  const { workspaceSlug } = useWorkspaceContext();
   const { immutable, currentRef, repository } = useRepositoryContext();
   const { deleteObjectMutation, moveObjectMutation, uploadObjectMutation } =
     useRepositoryObject(repository.slug, currentRef, selectedObject?.path);
@@ -243,30 +245,37 @@ export default function ObjectDetails({
   }, [selectedObject, downloadObjectAsZipMutation, currentRef]);
 
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
-    useWorkspaceTags();
+    useWorkspaceTags(workspaceSlug);
   const [selectedTags, setSelectedTags] = useState<Tag[]>(
     selectedObject?.tags ?? []
   );
   const [updatingTags, setUpdatingTags] = useState(false);
   const previousTags = useRef<string>('');
+  const currentTagsRef = useRef<Tag[]>(selectedObject?.tags ?? []);
 
   // Synchronize selectedTags with selectedObject.tags when selectedObject changes
   useEffect(() => {
-    setSelectedTags(selectedObject?.tags ?? []);
+    const tags = selectedObject?.tags ?? [];
+    setSelectedTags(tags);
+    currentTagsRef.current = tags;
     previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
   }, [selectedObject]);
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {
+      if (!selectedObject) return [];
       try {
-        if (!selectedObject) return [];
-        if (previousTags.current === JSON.stringify(tags)) {
+        // Prevent duplicate calls with the same tags
+        const tagsKey = JSON.stringify(tags);
+        if (previousTags.current === tagsKey) {
           return tags;
         }
 
-        // Use selectedObject.tags directly instead of selectedTags to avoid race condition
-        const currentTags = selectedObject.tags ?? [];
+        // Use ref to get the most current tags state, handling rapid changes correctly
+        // This ensures each operation builds on the previous optimistic update
+        const currentTags = currentTagsRef.current;
         setSelectedTags(tags);
+        currentTagsRef.current = tags;
         setUpdatingTags(true);
 
         const tagsToAdd = [];
@@ -281,6 +290,8 @@ export default function ObjectDetails({
             tagsToRemove.push(tag);
           }
         }
+
+        // Execute all add/remove operations
         await Promise.all([
           ...tagsToAdd.map((tag) =>
             addTagToEntityMutation.mutateAsync({
@@ -299,11 +310,16 @@ export default function ObjectDetails({
         ]);
 
         // Only update previousTags after successful API calls
-        previousTags.current = JSON.stringify(tags);
+        previousTags.current = tagsKey;
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        return [];
+        // Revert to the last known good state on error
+        const fallbackTags = selectedObject.tags ?? [];
+        setSelectedTags(fallbackTags);
+        currentTagsRef.current = fallbackTags;
+        previousTags.current = JSON.stringify(fallbackTags);
+        return fallbackTags;
       } finally {
         setUpdatingTags(false);
       }
@@ -350,6 +366,7 @@ export default function ObjectDetails({
               onTagsChange={handleUpdateTags}
               loading={updatingTags}
               disabled={!canChangeTags}
+              workspaceSlug={workspaceSlug}
             />
           </div>
         )}

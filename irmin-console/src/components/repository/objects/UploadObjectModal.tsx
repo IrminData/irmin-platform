@@ -11,6 +11,7 @@ import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelecto
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import type { Tag } from '@/types/core/Tag';
 
@@ -50,6 +51,7 @@ export default function UploadObjectModal({
 }) {
   const { dict } = useLocale();
   const { irminModal } = usePopup();
+  const { workspaceSlug } = useWorkspaceContext();
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -266,6 +268,7 @@ export default function UploadObjectModal({
           onTagsChange={handleTagsChange}
           loading={false}
           disabled={loading}
+          workspaceSlug={workspaceSlug}
         />
       </div>
       {error && <div className='py-2 text-destructive'>{error}</div>}

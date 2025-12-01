@@ -9,6 +9,7 @@ import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelecto
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useConnectionConfiguration, useConnections } from '@/hooks/api';
 
@@ -56,6 +57,7 @@ export default function ConfigureConnectionStep({
 }) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspaceContext();
   const { createConnectionMutation } = useConnections();
   const { validateConnectorConfigurationMutation } = useConnectionConfiguration(
     'details',
@@ -298,6 +300,7 @@ export default function ConfigureConnectionStep({
             onTagsChange={handleTagsChange}
             loading={false}
             disabled={createConnectionMutation.isPending}
+            workspaceSlug={workspaceSlug}
           />
         </div>
       )}

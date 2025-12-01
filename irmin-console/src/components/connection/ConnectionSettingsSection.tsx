@@ -97,7 +97,7 @@ const ConnectionSettingsSection = () => {
   ]);
 
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
-    useWorkspaceTags();
+    useWorkspaceTags(workspaceSlug);
 
   const canViewTags = useMemo(
     () =>
@@ -118,23 +118,31 @@ const ConnectionSettingsSection = () => {
   );
   const [updatingTags, setUpdatingTags] = useState(false);
   const previousTags = useRef<string>('');
+  const currentTagsRef = useRef<Tag[]>(connectionQuery.data?.data?.tags ?? []);
 
   // Sync selectedTags with connection data changes
   useEffect(() => {
-    setSelectedTags(connectionQuery.data?.data?.tags ?? []);
+    const tags = connectionQuery.data?.data?.tags ?? [];
+    setSelectedTags(tags);
+    currentTagsRef.current = tags;
+    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
   }, [connectionQuery.data?.data?.tags]);
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {
-      // Use connectionQuery.data?.data?.tags directly instead of selectedTags to avoid race condition
-      const currentTags = connectionQuery.data?.data?.tags ?? [];
+      const connectionId = connectionQuery.data?.data?.id;
+      if (!connectionId) return tags;
 
       try {
         if (previousTags.current === JSON.stringify(tags)) {
           return tags;
         }
 
+        // Use ref to get the most current tags state, handling rapid changes correctly
+        // This ensures each operation builds on the previous optimistic update
+        const currentTags = currentTagsRef.current;
         setSelectedTags(tags);
+        currentTagsRef.current = tags;
         setUpdatingTags(true);
 
         const tagsToAdd = [];
@@ -148,11 +156,6 @@ const ConnectionSettingsSection = () => {
           if (!tags.some((t) => t.id === tag.id)) {
             tagsToRemove.push(tag);
           }
-        }
-        const connectionId = connectionQuery.data?.data?.id;
-        if (!connectionId) {
-          setSelectedTags(currentTags);
-          return currentTags;
         }
 
         await Promise.all([
@@ -182,10 +185,12 @@ const ConnectionSettingsSection = () => {
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        // Revert to original tags on error
-        // We use the safe currentTags captured before the optimistic update
-        setSelectedTags(currentTags);
-        return currentTags;
+        // Revert to the last known good state on error
+        const fallbackTags = connectionQuery.data?.data?.tags ?? [];
+        setSelectedTags(fallbackTags);
+        currentTagsRef.current = fallbackTags;
+        previousTags.current = JSON.stringify(fallbackTags);
+        return fallbackTags;
       } finally {
         setUpdatingTags(false);
       }
@@ -287,6 +292,7 @@ const ConnectionSettingsSection = () => {
                   onTagsChange={handleUpdateTags}
                   loading={updatingTags}
                   disabled={!canChangeTags}
+                  workspaceSlug={workspaceSlug}
                 />
               </div>
             )}

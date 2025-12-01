@@ -109,7 +109,7 @@ const RepositorySettingsSectionContent = () => {
   ]);
 
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
-    useWorkspaceTags();
+    useWorkspaceTags(workspaceSlug);
 
   const canViewTags = useMemo(
     () =>
@@ -128,21 +128,30 @@ const RepositorySettingsSectionContent = () => {
   );
   const [updatingTags, setUpdatingTags] = useState(false);
   const previousTags = useRef<string>('');
+  const currentTagsRef = useRef<Tag[]>(repository.tags ?? []);
 
   // Sync selectedTags with repository data changes
   useEffect(() => {
-    setSelectedTags(repository.tags ?? []);
+    const tags = repository.tags ?? [];
+    setSelectedTags(tags);
+    currentTagsRef.current = tags;
+    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
   }, [repository.tags]);
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {
-      const currentTags = repository.tags ?? [];
       try {
         if (previousTags.current === JSON.stringify(tags)) {
           return tags;
         }
+
+        // Use ref to get the most current tags state, handling rapid changes correctly
+        // This ensures each operation builds on the previous optimistic update
+        const currentTags = currentTagsRef.current;
         setSelectedTags(tags);
+        currentTagsRef.current = tags;
         setUpdatingTags(true);
+
         const tagsToAdd = [];
         const tagsToRemove = [];
         for (const tag of tags) {
@@ -182,9 +191,12 @@ const RepositorySettingsSectionContent = () => {
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        // Revert to original tags on error
-        setSelectedTags(currentTags);
-        return currentTags;
+        // Revert to the last known good state on error
+        const fallbackTags = repository.tags ?? [];
+        setSelectedTags(fallbackTags);
+        currentTagsRef.current = fallbackTags;
+        previousTags.current = JSON.stringify(fallbackTags);
+        return fallbackTags;
       } finally {
         setUpdatingTags(false);
       }
@@ -272,6 +284,7 @@ const RepositorySettingsSectionContent = () => {
                   onTagsChange={handleUpdateTags}
                   loading={updatingTags}
                   disabled={!canChangeTags}
+                  workspaceSlug={workspaceSlug}
                 />
               </div>
             )}

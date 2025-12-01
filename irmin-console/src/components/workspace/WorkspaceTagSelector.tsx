@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { TbPlus, TbSearch, TbTag } from 'react-icons/tb';
 
-import { Button } from '@/components/ui/button';
+import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
@@ -29,6 +29,7 @@ interface TagSelectorProps {
   onTagsChange: (_tags: Tag[]) => Promise<Tag[]>;
   loading: boolean;
   disabled: boolean;
+  workspaceSlug: string;
 }
 
 export function WorkspaceTagSelector({
@@ -36,6 +37,7 @@ export function WorkspaceTagSelector({
   onTagsChange,
   loading,
   disabled,
+  workspaceSlug,
 }: TagSelectorProps) {
   const { dict } = useLocale();
   const router = useRouter();
@@ -43,7 +45,8 @@ export function WorkspaceTagSelector({
   const [showCreateTag, setShowCreateTag] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { workspaceTagsQuery, createWorkspaceTagMutation } = useWorkspaceTags();
+  const { workspaceTagsQuery, createWorkspaceTagMutation } =
+    useWorkspaceTags(workspaceSlug);
 
   // The base URL for the workspace, eg. /en/workspace/workspace-slug
   const workspaceUrl = useBaseUrl({
@@ -137,13 +140,13 @@ export function WorkspaceTagSelector({
       {/* Add Tags Popover */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
+          <ButtonWithTooltip
+            tooltip={dict.workspace.addTags}
             variant='gray'
             disabled={loading || disabled}
+            size='icon'
             icon={<TbPlus />}
-          >
-            {dict.workspace.addTags}
-          </Button>
+          />
         </PopoverTrigger>
         <PopoverContent className='w-80 p-0' align='start'>
           {showCreateTag ? (

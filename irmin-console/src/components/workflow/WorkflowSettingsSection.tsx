@@ -104,7 +104,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
   ]);
 
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
-    useWorkspaceTags();
+    useWorkspaceTags(workspaceSlug);
 
   const canViewTags = useMemo(
     () =>
@@ -125,12 +125,14 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
   );
   const [updatingTags, setUpdatingTags] = useState(false);
   const previousTags = useRef<string>('');
+  const currentTagsRef = useRef<Tag[]>(workflowQuery.data?.data?.tags ?? []);
 
   // Sync selectedTags with workflow data changes
   useEffect(() => {
-    if (workflowQuery.data?.data?.tags) {
-      setSelectedTags(workflowQuery.data.data.tags);
-    }
+    const tags = workflowQuery.data?.data?.tags ?? [];
+    setSelectedTags(tags);
+    currentTagsRef.current = tags;
+    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
   }, [workflowQuery.data?.data?.tags]);
 
   const handleUpdateTags = useCallback(
@@ -140,8 +142,14 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
           return tags;
         }
 
-        const currentTags = workflowQuery.data?.data?.tags ?? [];
+        const workflowId = workflowQuery.data?.data?.id;
+        if (!workflowId) return tags;
+
+        // Use ref to get the most current tags state, handling rapid changes correctly
+        // This ensures each operation builds on the previous optimistic update
+        const currentTags = currentTagsRef.current;
         setSelectedTags(tags);
+        currentTagsRef.current = tags;
         setUpdatingTags(true);
 
         const tagsToAdd = [];
@@ -156,8 +164,6 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
             tagsToRemove.push(tag);
           }
         }
-        const workflowId = workflowQuery.data?.data?.id;
-        if (!workflowId) return tags;
 
         await Promise.all([
           ...tagsToAdd.map((tag) =>
@@ -186,9 +192,12 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        // Revert to original tags on error
-        setSelectedTags(workflowQuery.data?.data?.tags ?? []);
-        return workflowQuery.data?.data?.tags ?? [];
+        // Revert to the last known good state on error
+        const fallbackTags = workflowQuery.data?.data?.tags ?? [];
+        setSelectedTags(fallbackTags);
+        currentTagsRef.current = fallbackTags;
+        previousTags.current = JSON.stringify(fallbackTags);
+        return fallbackTags;
       } finally {
         setUpdatingTags(false);
       }
@@ -291,6 +300,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
                   onTagsChange={handleUpdateTags}
                   loading={updatingTags}
                   disabled={!canChangeTags}
+                  workspaceSlug={workspaceSlug}
                 />
               </div>
             )}

@@ -16,7 +16,12 @@ import {
   updateMutationHandlers,
 } from './mutations/utils';
 
-type StoredQueryCreateInput = Pick<StoredQuery, 'description' | 'name' | 'sql'>;
+type StoredQueryCreateInput = Pick<
+  StoredQuery,
+  'description' | 'name' | 'sql'
+> & {
+  tags?: string[];
+};
 
 type StoredQueryUpdateInput = Pick<
   StoredQuery,
@@ -50,6 +55,7 @@ export function useStoredQueries() {
         name: query.name,
         description: query.description,
         sql: query.sql,
+        tags: query.tags,
       });
     },
     ...createMutationHandlers<StoredQuery, StoredQueryCreateInput>(
@@ -67,6 +73,7 @@ export function useStoredQueries() {
             name: input.name,
             description: input.description,
             sql: input.sql,
+            tags: [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             owner: {

@@ -20,6 +20,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useWorkspaceTag, useWorkspaceTags } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
@@ -38,11 +39,12 @@ import { WorkspaceTagModal } from './WorkspaceTagModal';
 const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
+  const { workspaceSlug } = useWorkspaceContext();
   const router = useRouter();
 
   const { workspaceTagQuery } = useWorkspaceTag(tagId);
   const { updateWorkspaceTagMutation, deleteWorkspaceTagMutation } =
-    useWorkspaceTags();
+    useWorkspaceTags(workspaceSlug);
 
   const { isResourceAllowed } = useResourceAllowed();
 

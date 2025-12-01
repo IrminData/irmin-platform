@@ -10,6 +10,7 @@ import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelecto
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useWorkflows } from '@/hooks/api';
 
@@ -39,6 +40,7 @@ function ConfigureWorkflowStep({
 }) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspaceContext();
   const { createWorkflowMutation } = useWorkflows();
 
   const [initialWorkflowSchedule] = useState(wizardData.schedule);
@@ -143,6 +145,7 @@ function ConfigureWorkflowStep({
             onTagsChange={handleTagsChange}
             loading={false}
             disabled={createWorkflowMutation.isPending}
+            workspaceSlug={workspaceSlug}
           />
         </div>
       </div>

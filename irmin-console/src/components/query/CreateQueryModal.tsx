@@ -7,8 +7,11 @@ import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
 
 import { useLocale } from '@/context/LocaleContext';
+
+import type { Tag } from '@/types/core/Tag';
 
 interface FormValues {
   queryName: string;
@@ -19,15 +22,23 @@ interface FormValues {
  * Modal content to create a new saved query without a content field.
  *
  * @param props - The props
+ * @param props.workspaceSlug - The workspace slug
  * @param props.createQuery - Callback to create a new saved query
  */
 export default function CreateSavedQueryModal({
+  workspaceSlug,
   createQuery,
 }: {
-  createQuery: (queryName: string, queryDescription: string) => Promise<void>;
+  workspaceSlug: string;
+  createQuery: (
+    queryName: string,
+    queryDescription: string,
+    tags?: Tag[]
+  ) => Promise<void>;
 }) {
   const { dict } = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const {
     control,
@@ -40,10 +51,15 @@ export default function CreateSavedQueryModal({
     },
   });
 
+  const handleTagsChange = async (tags: Tag[]) => {
+    setSelectedTags(tags);
+    return tags;
+  };
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      await createQuery(data.queryName, data.queryDescription);
+      await createQuery(data.queryName, data.queryDescription, selectedTags);
     } finally {
       setIsSubmitting(false);
     }
@@ -98,6 +114,16 @@ export default function CreateSavedQueryModal({
               )}
             </>
           )}
+        />
+      </div>
+
+      <div className='flex flex-col gap-2'>
+        <WorkspaceTagSelector
+          selectedTags={selectedTags}
+          onTagsChange={handleTagsChange}
+          loading={false}
+          disabled={isSubmitting}
+          workspaceSlug={workspaceSlug}
         />
       </div>
 

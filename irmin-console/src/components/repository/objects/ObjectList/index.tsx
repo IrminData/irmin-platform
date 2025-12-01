@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -241,20 +242,30 @@ export default function ObjectList({
                 {sortedObjects.map((obj) => (
                   <TableRow key={obj.path}>
                     <TableCell>
-                      <div className='flex items-center space-x-2'>
-                        {getIcon(obj.type)}
-                        <Button
-                          variant='link'
-                          onClick={() => {
-                            if (obj.type === 'group') {
-                              setCurrentPath(obj.path);
-                            } else {
-                              selectObject(obj);
-                            }
-                          }}
-                        >
-                          {obj.name}
-                        </Button>
+                      <div className='flex flex-col gap-1'>
+                        <div className='flex items-center space-x-2'>
+                          {getIcon(obj.type)}
+                          <Button
+                            variant='link'
+                            onClick={() => {
+                              if (obj.type === 'group') {
+                                setCurrentPath(obj.path);
+                              } else {
+                                selectObject(obj);
+                              }
+                            }}
+                          >
+                            {obj.name}
+                          </Button>
+                          {/* Display tags if they exist */}
+                          {obj.tags && obj.tags.length > 0 && (
+                            <WorkspaceTagDisplay
+                              tags={obj.tags}
+                              maxVisible={3}
+                              size='sm'
+                            />
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{obj.content_type || '-'}</TableCell>

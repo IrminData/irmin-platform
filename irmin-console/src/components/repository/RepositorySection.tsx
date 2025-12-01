@@ -44,6 +44,7 @@ import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
+import type { Tag } from '@/types/core/Tag';
 
 import ObjectDetails from './objects/ObjectDetails';
 import ObjectList from './objects/ObjectList';
@@ -238,11 +239,17 @@ function RepositorySectionContent({
     irminModal.show(
       dict.query.newQuery,
       <CreateSavedQueryModal
-        createQuery={async (queryName: string, queryDescription: string) => {
+        workspaceSlug={workspaceSlug}
+        createQuery={async (
+          queryName: string,
+          queryDescription: string,
+          tags?: Tag[]
+        ) => {
           const res = await createStoredQueryMutation.mutateAsync({
             name: queryName,
             description: queryDescription,
             sql: queryField,
+            tags: tags?.map((tag) => tag.id),
           });
           if (!res.data) return;
           irminModal.close();
@@ -250,7 +257,7 @@ function RepositorySectionContent({
       />,
       () => irminModal.close()
     );
-  }, [dict, irminModal, queryField, createStoredQueryMutation]);
+  }, [dict, irminModal, queryField, createStoredQueryMutation, workspaceSlug]);
 
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;

@@ -163,7 +163,7 @@ export default function SearchPageComponent() {
   const { staticSearchItemsQuery } = useStaticSearchItems(workspaceSlug);
 
   // Get workspace tags for filtering
-  const { workspaceTagsQuery } = useWorkspaceTags();
+  const { workspaceTagsQuery } = useWorkspaceTags(workspaceSlug);
 
   // Update URL when filters change
   useEffect(() => {

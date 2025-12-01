@@ -29,6 +29,7 @@ import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelecto
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useQuery } from '@/context/QueryContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import {
   useStoredQueries,
@@ -52,6 +53,7 @@ import UpdateQueryModal from './UpdateQueryModal';
 export default function QueriesSection() {
   const { dict } = useLocale();
   const { irminModal, irminConfirm } = usePopup();
+  const { workspaceSlug } = useWorkspaceContext();
   const workspaceSchema = useWorkspaceSchema();
   const { isResourceAllowed } = useResourceAllowed();
   const {
@@ -86,7 +88,7 @@ export default function QueriesSection() {
 
   // Tag editing functionality
   const { addTagToEntityMutation, removeTagFromEntityMutation } =
-    useWorkspaceTags();
+    useWorkspaceTags(workspaceSlug);
 
   const canViewTags = useMemo(
     () =>
@@ -105,27 +107,29 @@ export default function QueriesSection() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [updatingTags, setUpdatingTags] = useState(false);
   const previousTags = useRef<string>('');
+  const currentTagsRef = useRef<Tag[]>([]);
 
   // Update selected tags when query changes
   useEffect(() => {
-    if (selectedQuery) {
-      setSelectedTags(selectedQuery.tags ?? []);
-    } else {
-      setSelectedTags([]);
-    }
+    const tags = selectedQuery?.tags ?? [];
+    setSelectedTags(tags);
+    currentTagsRef.current = tags;
+    previousTags.current = ''; // Reset to ensure proper comparison in handleUpdateTags
   }, [selectedQuery]);
 
   const handleUpdateTags = useCallback(
     async (tags: Tag[]) => {
+      if (!selectedQuery) return tags;
       try {
-        if (!selectedQuery) return tags;
         if (previousTags.current === JSON.stringify(tags)) {
           return tags;
         }
 
-        // Use selectedQuery.tags directly instead of selectedTags to avoid race condition
-        const currentTags = selectedQuery.tags ?? [];
+        // Use ref to get the most current tags state, handling rapid changes correctly
+        // This ensures each operation builds on the previous optimistic update
+        const currentTags = currentTagsRef.current;
         setSelectedTags(tags);
+        currentTagsRef.current = tags;
         setUpdatingTags(true);
 
         const tagsToAdd = [];
@@ -162,7 +166,12 @@ export default function QueriesSection() {
         return tags;
       } catch (error) {
         console.error('Error updating tags:', error);
-        return [];
+        // Revert to the last known good state on error
+        const fallbackTags = selectedQuery.tags ?? [];
+        setSelectedTags(fallbackTags);
+        currentTagsRef.current = fallbackTags;
+        previousTags.current = JSON.stringify(fallbackTags);
+        return fallbackTags;
       } finally {
         setUpdatingTags(false);
       }
@@ -187,11 +196,17 @@ export default function QueriesSection() {
       irminModal.show(
         dict.query.newQuery,
         <CreateSavedQueryModal
-          createQuery={async (queryName: string, queryDescription: string) => {
+          workspaceSlug={workspaceSlug}
+          createQuery={async (
+            queryName: string,
+            queryDescription: string,
+            tags?: Tag[]
+          ) => {
             const res = await createStoredQueryMutation.mutateAsync({
               name: queryName,
               description: queryDescription,
               sql: editorContent,
+              tags: tags?.map((tag) => tag.id),
             });
             if (!res.data) return;
             irminModal.close();
@@ -202,7 +217,7 @@ export default function QueriesSection() {
         () => irminModal.close()
       );
     },
-    [irminModal, dict, editorContent, createStoredQueryMutation]
+    [irminModal, dict, editorContent, createStoredQueryMutation, workspaceSlug]
   );
 
   /**
@@ -314,7 +329,7 @@ export default function QueriesSection() {
             className={`
               order-3 flex min-h-80 w-full flex-col overflow-y-scroll border-t
               border-border
-              lg:order-1 lg:w-80 lg:border-0 lg:border-r
+              lg:order-1 lg:w-80 lg:shrink-0 lg:border-0 lg:border-r
             `}
           >
             <div className='p-2'>
@@ -405,7 +420,7 @@ export default function QueriesSection() {
           <div
             className={`
               relative order-1 flex h-full flex-col
-              lg:order-2 lg:grow lg:overflow-y-scroll
+              lg:order-2 lg:min-w-0 lg:grow lg:overflow-y-scroll
             `}
           >
             <div
@@ -431,7 +446,8 @@ export default function QueriesSection() {
               className={`
                 relative order-2 flex w-full flex-col gap-2 border-t
                 border-border p-2
-                lg:order-3 lg:w-80 lg:overflow-y-scroll lg:border-0 lg:border-l
+                lg:order-3 lg:w-80 lg:min-w-80 lg:shrink-0 lg:overflow-y-scroll
+                lg:border-0 lg:border-l
               `}
             >
               <Button
@@ -460,6 +476,7 @@ export default function QueriesSection() {
                     onTagsChange={handleUpdateTags}
                     loading={updatingTags}
                     disabled={!canChangeTags}
+                    workspaceSlug={workspaceSlug}
                   />
                 </div>
               )}

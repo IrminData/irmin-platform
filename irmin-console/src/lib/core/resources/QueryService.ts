@@ -10,6 +10,7 @@ interface CreateQueryRequest {
   name?: string;
   description?: string;
   sql?: string;
+  tags?: string[];
 }
 
 /**
@@ -120,6 +121,7 @@ class QueryService {
    * @param props.name - Name of the query.
    * @param props.description - Description of the query.
    * @param props.sql - SQL statement of the query.
+   * @param props.tags - Array of tag IDs (SQIDs) to associate with the query.
    * @returns IrminAPIResponse containing the created stored query.
    */
   async createStoredQuery({
@@ -127,17 +129,20 @@ class QueryService {
     name,
     description,
     sql,
+    tags,
   }: {
     workspace: string;
     name?: string;
     description?: string;
     sql?: string;
+    tags?: string[];
   }): Promise<IrminAPIResponse<StoredQuery>> {
     try {
       const requestBody: CreateQueryRequest = {
         name,
         description,
         sql,
+        tags,
       };
 
       const response = await this.irminCore.fetchAPI(

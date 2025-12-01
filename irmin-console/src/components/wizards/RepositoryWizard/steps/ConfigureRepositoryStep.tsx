@@ -11,6 +11,7 @@ import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelecto
 
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useRepositories } from '@/hooks/api';
 
@@ -39,6 +40,7 @@ export default function ConfigureRepositoryStep({
 }) {
   const { dict } = useLocale();
   const { irminAlert } = usePopup();
+  const { workspaceSlug } = useWorkspaceContext();
 
   const {
     handleSubmit,
@@ -178,6 +180,7 @@ export default function ConfigureRepositoryStep({
           onTagsChange={handleTagsChange}
           loading={false}
           disabled={createRepositoryMutation.isPending}
+          workspaceSlug={workspaceSlug}
         />
       </div>
       {onCancel && (
