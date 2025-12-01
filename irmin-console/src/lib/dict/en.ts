@@ -668,6 +668,7 @@ const en = {
     noErrors: 'No errors',
     queryResults: 'Query results',
     createQuery: 'Create query',
+    saveQuery: 'Save Query',
     saveAsWorkflow: 'Save as workflow',
     run: 'Run',
     rowsReturnedIn: 'rows returned in',

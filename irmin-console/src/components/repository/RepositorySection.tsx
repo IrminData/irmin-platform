@@ -8,6 +8,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AiOutlinePlayCircle } from 'react-icons/ai';
 import { IoClose } from 'react-icons/io5';
 import {
+  TbBookmark,
   TbChevronUp,
   TbDownload,
   TbFileDiff,
@@ -16,6 +17,7 @@ import {
 } from 'react-icons/tb';
 
 import CodeMirrorEditor from '@/components/editor/ide/CodeMirrorEditor';
+import CreateSavedQueryModal from '@/components/query/CreateQueryModal';
 import SqlHelper from '@/components/query/helper/SqlHelper';
 import QueryResults from '@/components/query/QueryResults';
 import { Button } from '@/components/ui/button';
@@ -33,7 +35,11 @@ import { useQuery } from '@/context/QueryContext';
 import { useRepositoryContext } from '@/context/RepositoryContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import { useRepositoryObject, useRepositoryObjectContent } from '@/hooks/api';
+import {
+  useRepositoryObject,
+  useRepositoryObjectContent,
+  useStoredQueries,
+} from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
@@ -94,6 +100,8 @@ function RepositorySectionContent({
 
   const { executeSql, loading: queryLoading, result: queryResult } = useQuery();
   const [queryResultsOpen, setQueryResultsOpen] = useState(false);
+
+  const { createStoredQueryMutation } = useStoredQueries();
 
   // Initialize selected object from search params if present
   const currentObjectPath = searchParams.get('object');
@@ -225,6 +233,25 @@ function RepositorySectionContent({
     );
   }, [dict, irminModal, repository, currentRef, uploadObjectMutation]);
 
+  const handleSaveQuery = useCallback(() => {
+    if (!queryField || queryField.length < 3) return;
+    irminModal.show(
+      dict.query.newQuery,
+      <CreateSavedQueryModal
+        createQuery={async (queryName: string, queryDescription: string) => {
+          const res = await createStoredQueryMutation.mutateAsync({
+            name: queryName,
+            description: queryDescription,
+            sql: queryField,
+          });
+          if (!res.data) return;
+          irminModal.close();
+        }}
+      />,
+      () => irminModal.close()
+    );
+  }, [dict, irminModal, queryField, createStoredQueryMutation]);
+
   const runCurrentQuery = useCallback(() => {
     if (!queryField || queryField.length < 3) return;
     executeSql(queryField);
@@ -340,16 +367,28 @@ function RepositorySectionContent({
                   title={selectedObject?.name}
                 />
               </div>
-              <Button
-                variant='accent'
-                className='float-end m-2 shadow-none'
-                size='sm'
-                icon={<AiOutlinePlayCircle />}
-                loading={queryLoading}
-                onClick={runCurrentQuery}
-              >
-                {dict.repository.runQuery}
-              </Button>
+              <div className='flex flex-row items-center'>
+                <Button
+                  variant='gray'
+                  className='float-end m-1 shadow-none'
+                  size='sm'
+                  icon={<TbBookmark />}
+                  disabled={!queryField || queryField.length < 3}
+                  onClick={handleSaveQuery}
+                >
+                  {dict.query.saveQuery}
+                </Button>
+                <Button
+                  variant='accent'
+                  className='float-end m-1 shadow-none'
+                  size='sm'
+                  icon={<AiOutlinePlayCircle />}
+                  loading={queryLoading}
+                  onClick={runCurrentQuery}
+                >
+                  {dict.repository.runQuery}
+                </Button>
+              </div>
             </div>
             <CodeMirrorEditor
               language='sql'

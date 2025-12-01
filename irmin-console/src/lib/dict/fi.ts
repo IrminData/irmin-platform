@@ -651,6 +651,7 @@ const fi = {
     noErrors: 'Ei virheitä',
     queryResults: 'Kyselyn tulokset',
     createQuery: 'Luo kysely',
+    saveQuery: 'Tallenna kysely',
     saveAsWorkflow: 'Tallenna prosessina',
     run: 'Suorita',
     rowsReturnedIn: 'riviä palautettu ajassa',
