@@ -37,7 +37,7 @@ export class ScriptingAgent extends BaseAgent {
 
     const fallbackLLM = llmService.createLLM({
       provider: 'openai',
-      model: 'gpt-5',
+      model: 'gpt-5.1',
       maxTokens: 1000,
       streaming: false,
       openai: {

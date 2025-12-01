@@ -3,8 +3,8 @@ import type { NewAIModel } from '@/database';
 // TODO: Define maxContextTokens and maxOutputTokens for each model. This can then be used to validate model requests. Make sure this is used in LLM service and returned by the routes.
 
 export const DEFAULT_MODELS = {
-  groq: 'moonshotai/kimi-k2-instruct',
-  openai: 'gpt-5',
+  groq: 'moonshotai/kimi-k2-instruct-0905',
+  openai: 'gpt-5.1',
   anthropic: 'claude-sonnet-4-5-20250929',
 } as const;
 
@@ -40,12 +40,12 @@ export const availableAIModels: NewAIModel[] = [
   },
   // OpenAI Models
   {
-    name: 'GPT-5',
+    name: 'GPT-5.1',
     provider: 'openai',
-    modelId: 'gpt-5',
+    modelId: 'gpt-5.1',
     description:
-      'The best model for coding and agentic tasks across industries',
-    inputPricePerMillionTokens: 1.2,
+      'Flagship model optimized for coding and agentic tasks with configurable reasoning effort',
+    inputPricePerMillionTokens: 1.25,
     outputPricePerMillionTokens: 10,
     isActive: true,
   },
@@ -53,16 +53,18 @@ export const availableAIModels: NewAIModel[] = [
     name: 'GPT-5 Mini',
     provider: 'openai',
     modelId: 'gpt-5-mini',
-    description: 'A faster, cheaper version of GPT-5 for well-defined tasks',
+    description:
+      'A faster, cost-efficient version of GPT-5 suitable for well-defined tasks and precise prompts',
     inputPricePerMillionTokens: 0.25,
-    outputPricePerMillionTokens: 2,
+    outputPricePerMillionTokens: 2.0,
     isActive: true,
   },
   {
     name: 'GPT-5 Nano',
     provider: 'openai',
     modelId: 'gpt-5-nano',
-    description: 'A smaller, cheaper version of GPT-5 for well-defined tasks',
+    description:
+      'The fastest and most cost-efficient version of GPT-5, ideal for summarization and classification tasks',
     inputPricePerMillionTokens: 0.05,
     outputPricePerMillionTokens: 0.4,
     isActive: true,
@@ -101,7 +103,7 @@ export const availableAIModels: NewAIModel[] = [
     modelId: 'openai/gpt-oss-120b',
     description: 'OpenAI GPT-OSS 120B parameter model via Groq',
     inputPricePerMillionTokens: 0.15,
-    outputPricePerMillionTokens: 0.75,
+    outputPricePerMillionTokens: 0.6,
     isActive: true,
   },
   {
@@ -109,18 +111,19 @@ export const availableAIModels: NewAIModel[] = [
     provider: 'groq',
     modelId: 'openai/gpt-oss-20b',
     description: 'OpenAI GPT-OSS 20B parameter model via Groq',
-    inputPricePerMillionTokens: 0.1,
-    outputPricePerMillionTokens: 0.5,
+    inputPricePerMillionTokens: 0.075,
+    outputPricePerMillionTokens: 0.3,
     isActive: true,
   },
   {
     name: 'DeepSeek R1 Distill Llama 70B',
     provider: 'groq',
     modelId: 'deepseek-r1-distill-llama-70b',
-    description: 'DeepSeek / Meta R1 distilled Llama 70B model via Groq',
+    description:
+      'DeepSeek / Meta R1 distilled Llama 70B model via Groq (Deprecated: Use llama-3.3-70b-versatile or openai/gpt-oss-120b)',
     inputPricePerMillionTokens: 0.75,
     outputPricePerMillionTokens: 0.99,
-    isActive: true,
+    isActive: false,
   },
   {
     name: 'Llama 4 Maverick 17B 128E Instruct',
@@ -141,10 +144,11 @@ export const availableAIModels: NewAIModel[] = [
     isActive: true,
   },
   {
-    name: 'Kimi K2 Instruct',
+    name: 'Kimi K2 Instruct 0905',
     provider: 'groq',
-    modelId: 'moonshotai/kimi-k2-instruct',
-    description: 'Moonshot AI Kimi K2 instruction model via Groq',
+    modelId: 'moonshotai/kimi-k2-instruct-0905',
+    description:
+      'Moonshot AI Kimi K2 0905 instruction model via Groq (256K context window, improved agentic coding)',
     inputPricePerMillionTokens: 1,
     outputPricePerMillionTokens: 3,
     isActive: true,

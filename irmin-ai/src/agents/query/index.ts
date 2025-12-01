@@ -53,7 +53,7 @@ export class QueryAgent extends BaseAgent {
 
     const fallbackLLM = llmService.createLLM({
       provider: 'openai',
-      model: 'gpt-5',
+      model: 'gpt-5.1',
       maxTokens: 2048,
       streaming: false,
       openai: {
