@@ -17,7 +17,8 @@ import (
 
 // RetrieveContextRequest represents the request structure for retrieving context
 type RetrieveContextRequest struct {
-	Query string `json:"query"`
+	Query       string   `json:"query"`
+	Collections []string `json:"collections,omitempty"`
 }
 
 // RegisterDocsTools registers the tools for documentation retrieval
@@ -31,7 +32,7 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "retrieve_docs_context",
-			Description: "Retrieve relevant context from Irmin documentation for a given query.",
+			Description: "Retrieve relevant context from Irmin and/or DuckDB documentation. Use 'collections' parameter to specify 'irmin' (for platform features) or 'duckdb' (specifically for SQL syntax and guides), or both. Defaults to both. The 'query' should be a natural language question or keywords describing the specific topic or syntax you are looking for.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args RetrieveContextRequest) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -40,74 +41,123 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 				return nil, struct{}{}, err
 			}
 
-			// Get collection ID for irmin-docs
-			collectionID, err := mcpTools.getDocsCollectionID(ctx)
+			// Define available collections
+			availableCollections := map[string]string{
+				"irmin":  "irmin-docs",
+				"duckdb": "duckdb-sql-syntax-docs",
+			}
+
+			// Determine which collections to search
+			targetCollections := make(map[string]string)
+			if len(args.Collections) == 0 {
+				targetCollections = availableCollections
+			} else {
+				for _, reqCol := range args.Collections {
+					if val, ok := availableCollections[reqCol]; ok {
+						targetCollections[reqCol] = val
+					}
+				}
+			}
+
+			combinedResults := make(map[string]any)
+
+			for key, colName := range targetCollections {
+				// Get collection ID
+				var collectionID string
+				collectionID, err = mcpTools.getCollectionIDByName(ctx, colName)
+				if err != nil {
+					mcpTools.apiServices.Logger.Error(
+						"Failed to get collection ID",
+						"collection",
+						colName,
+						"error",
+						err,
+					)
+					combinedResults[key] = map[string]string{"error": fmt.Sprintf("Collection %s not found", colName)}
+					continue
+				}
+
+				// Make request to AI service
+				retrieveReq := map[string]any{
+					"query": args.Query,
+				}
+
+				result, retrieveErr := mcpTools.makeAIRequest(
+					ctx,
+					http.MethodPost,
+					fmt.Sprintf("/api/system/embeddings/collections/%s/retrieve-context", collectionID),
+					retrieveReq,
+				)
+				if retrieveErr != nil {
+					mcpTools.apiServices.Logger.Error(
+						"Failed to retrieve docs context",
+						"collection",
+						colName,
+						"error",
+						retrieveErr,
+					)
+					combinedResults[key] = map[string]string{
+						"error": fmt.Sprintf("Failed to retrieve context: %v", retrieveErr),
+					}
+					continue
+				}
+
+				combinedResults[key] = result
+			}
+
+			// Convert combined response to JSON
+			responseJSON, err := json.MarshalIndent(combinedResults, "", "  ")
 			if err != nil {
-				mcpTools.apiServices.Logger.Error("Failed to get docs collection ID", "error", err)
-				return helpers.MCPError("Failed to access documentation collection"), struct{}{}, nil
+				return nil, struct{}{}, fmt.Errorf("failed to marshal combined response: %w", err)
 			}
 
-			// Make request to AI service
-			retrieveReq := map[string]any{
-				"query": args.Query,
-			}
-
-			result, err := mcpTools.makeAIRequest(
-				ctx,
-				http.MethodPost,
-				fmt.Sprintf("/api/system/embeddings/collections/%s/retrieve-context", collectionID),
-				retrieveReq,
-			)
-			if err != nil {
-				mcpTools.apiServices.Logger.Error("Failed to retrieve docs context", "error", err)
-				return helpers.MCPError("Failed to retrieve docs context from documentation"), struct{}{}, nil
-			}
-
-			return result, struct{}{}, nil
+			return &sdkmcp.CallToolResult{
+				Content: []sdkmcp.Content{
+					&sdkmcp.TextContent{
+						Text: string(responseJSON),
+					},
+				},
+			}, struct{}{}, nil
 		},
 	)
 }
 
-// getDocsCollectionID retrieves the collection ID for the irmin-docs collection
-func (mcpTools *MCPTools) getDocsCollectionID(ctx context.Context) (string, error) {
-	// Make request to list collections and find irmin-docs
+// getCollectionIDByName retrieves the collection ID for a given collection name
+func (mcpTools *MCPTools) getCollectionIDByName(ctx context.Context, collectionName string) (string, error) {
+	// Make request to list collections
 	result, err := mcpTools.makeAIRequest(ctx, http.MethodGet, "/api/system/embeddings/collections", nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to list collections: %w", err)
 	}
 
-	// Parse the response to find the irmin-docs collection
-	var response struct {
-		Data []struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		} `json:"data"`
+	// Parse the response to find the collection
+	data, ok := result["data"].([]any)
+	if !ok {
+		return "", errors.New("unexpected response format: data field missing or not an array")
 	}
 
-	// Extract text content from MCP result
-	var contentText string
-	if len(result.Content) > 0 {
-		if textContent, ok := result.Content[0].(*sdkmcp.TextContent); ok {
-			contentText = textContent.Text
-		} else {
-			return "", errors.New("unexpected content type in response")
+	var availableCollections []string
+	for _, item := range data {
+		collection, okItem := item.(map[string]any)
+		if !okItem {
+			continue
 		}
-	} else {
-		return "", errors.New("empty response from AI service")
-	}
 
-	if unmarshalErr := json.Unmarshal([]byte(contentText), &response); unmarshalErr != nil {
-		return "", fmt.Errorf("failed to parse collections response: %w", unmarshalErr)
-	}
+		name, okName := collection["name"].(string)
+		if !okName {
+			continue
+		}
+		availableCollections = append(availableCollections, name)
 
-	const docsCollectionName = "irmin-docs"
-	for _, collection := range response.Data {
-		if collection.Name == docsCollectionName {
-			return collection.ID, nil
+		if name == collectionName {
+			id, okID := collection["id"].(string)
+			if okID {
+				return id, nil
+			}
 		}
 	}
 
-	return "", errors.New("irmin-docs collection not found")
+	return "", fmt.Errorf("collection %s not found (available: %v)", collectionName, availableCollections)
 }
 
 const (
@@ -121,7 +171,7 @@ func (mcpTools *MCPTools) makeAIRequest(
 	method string,
 	endpoint string,
 	body any,
-) (*sdkmcp.CallToolResult, error) {
+) (map[string]any, error) {
 	url := mcpTools.apiServices.Env.AIServiceBaseURL + endpoint
 
 	if method == "" {
@@ -165,17 +215,5 @@ func (mcpTools *MCPTools) makeAIRequest(
 		return nil, fmt.Errorf("failed to decode response: %w", decodeErr)
 	}
 
-	// Convert response to MCP format
-	responseJSON, err := json.MarshalIndent(responseBody, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal response: %w", err)
-	}
-
-	return &sdkmcp.CallToolResult{
-		Content: []sdkmcp.Content{
-			&sdkmcp.TextContent{
-				Text: string(responseJSON),
-			},
-		},
-	}, nil
+	return responseBody, nil
 }
