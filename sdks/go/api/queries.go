@@ -10,9 +10,10 @@ import (
 
 // CreateQueryRequest represents the JSON request body for creating a query.
 type CreateQueryRequest struct {
-	Name        string `json:"name"                  validate:"required,max=100" example:"Customer Analytics"`
-	Description string `json:"description,omitempty" validate:"max=500"          example:"Customer data analysis and reporting"`
-	SQL         string `json:"sql,omitempty"         validate:"validsql"         example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+	Name        string   `json:"name"                  validate:"required,max=100"    example:"Customer Analytics"`
+	Description string   `json:"description,omitempty" validate:"max=500"             example:"Customer data analysis and reporting"`
+	SQL         string   `json:"sql,omitempty"         validate:"validsql"            example:"select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"`
+	Tags        []string `json:"tags,omitempty"        validate:"dive,validsqid=tags" example:"tag_7k3m9x2n5q8p"`
 }
 
 // UpdateQueryRequest represents the JSON request body for updating a query.
