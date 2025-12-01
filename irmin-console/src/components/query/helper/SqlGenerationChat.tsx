@@ -310,7 +310,7 @@ export function SqlGenerationChat({
 
         {isLoading && (
           <div className='flex justify-start'>
-            <div className='rounded-lg bg-muted px-3 py-2 text-sm'>
+            <div className='animate-pulse rounded-lg bg-muted px-3 py-2 text-sm'>
               <p className='text-muted-foreground'>
                 {dict.queryHelper.sqlGeneration.loading}
               </p>
