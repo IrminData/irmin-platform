@@ -20,9 +20,13 @@ Irmin provides Object Schemas, which are used to describe files/objects, reposit
 - **Dynamic Table References**: Use placeholders to reference data across workspaces and repositories
 - **Real-time Analysis**: Execute queries against live data with instant results
 
-## Irmin Query Placeholder Syntax
+## Query Syntax Options
 
-Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions. **Every query must include at least one placeholder.**
+Irmin supports two syntax options for querying data: **Irmin placeholders (recommended)** and **native DuckDB S3 paths (optional)**.
+
+### Irmin Query Placeholder Syntax (Recommended)
+
+Irmin placeholders are the recommended syntax for querying data across workspaces, repositories, and versions.
 
 ```
 $["workspace;repository;object@ref"]
@@ -30,7 +34,7 @@ $["workspace;repository;object@ref"]
 
 ### Placeholder Rules
 
-1. **Always Required**: Every query must contain at least one placeholder
+1. **Recommended**: Placeholders are the recommended syntax for most use cases
 2. **Double Quotes Only**: Placeholders always use double quotes `"`, never single quotes `'` or other braces
 3. **Required Components**: Repository and object (file) are always required
 4. **Optional Components**: Workspace and ref can be omitted
@@ -58,6 +62,34 @@ $["demo-data;documents;large-file.json"]
 -- Minimal syntax
 $["documents;file.json"]
 ```
+
+### Alternative: Native DuckDB S3 Syntax
+
+For advanced use cases, Irmin also supports native DuckDB functions with direct S3 paths:
+
+```sql
+-- Using native DuckDB with S3 paths
+SELECT * FROM read_json('s3://workspace-repository/branch/path') LIMIT 10;
+SELECT * FROM read_parquet('s3://demo-demo-data/main/lakes.parquet');
+```
+
+**S3 Path Format:**
+```
+s3://{workspace-slug}-{repository-slug}/{branch}/{object-path}
+```
+
+**Example mapping:**
+- Workspace: `demotila`
+- Repository: `kiesi-master-data`
+- Branch: `main`
+- Object: `search.json`
+- **S3 Path:** `s3://demotila-kiesi-master-data/main/search.json`
+
+**Important notes:**
+- Permission checks still apply - unauthorized access returns "access denied"
+- S3 paths are less portable across workspace/repository renames
+- Placeholders are recommended for most use cases
+- Both syntaxes can be mixed in the same query
 
 ## Basic Query Examples
 
