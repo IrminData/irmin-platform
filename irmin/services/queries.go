@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"strconv"
 	"time"
 
@@ -76,7 +77,7 @@ func (api *APIServices) ListWorkspaceQueries(
 	}
 
 	// Filter queries based on user permissions
-	filteredQueries, err := lib.IsAllowedFilter(
+	filteredQueries, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,
@@ -450,6 +451,9 @@ func (api *APIServices) ExecuteSQL(
 		return nil, createDataEngineClientErr
 	}
 
+	// Set permission checker
+	dataEngine.SetPermissionChecker(api.PermissionService)
+
 	// Log the event
 	lib.CreateAuditLogEventAsync(api.DB, api.Logger, &db.LogEvent{
 		Type:        db.LogEventTypeInfo,
@@ -459,7 +463,7 @@ func (api *APIServices) ExecuteSQL(
 	})
 
 	// Execute the SQL
-	result := dataEngine.ExecuteQuery(c, workspace.Slug, req.SQL)
+	result := dataEngine.ExecuteQuery(c, user, workspace, req.SQL)
 
 	// Check for errors
 	if result.HasErrors {

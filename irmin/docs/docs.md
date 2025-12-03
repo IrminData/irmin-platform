@@ -5168,8 +5168,8 @@ import "irmin-api/engine"
   - [func \(c \*Client\) DeleteObject\(workspace, repository, path, ref string, tx ...\*gorm.DB\) error](<#Client.DeleteObject>)
   - [func \(c \*Client\) DeleteRepository\(ctx context.Context, workspace, repository string, keepObjects bool\) error](<#Client.DeleteRepository>)
   - [func \(c \*Client\) DeleteTag\(workspace, repository, tag string\) error](<#Client.DeleteTag>)
-  - [func \(c \*Client\) ExecuteQuery\(ctx context.Context, userWorkspace, query string\) \*irminmodels.QueryResult](<#Client.ExecuteQuery>)
-  - [func \(c \*Client\) GenerateObjectSchema\(ctx context.Context, workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateObjectSchema>)
+  - [func \(c \*Client\) ExecuteQuery\(ctx context.Context, user \*db.User, workspace \*db.Workspace, query string\) \*irminmodels.QueryResult](<#Client.ExecuteQuery>)
+  - [func \(c \*Client\) GenerateObjectSchema\(ctx context.Context, user \*db.User, workspace \*db.Workspace, repository, path, ref string\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateObjectSchema>)
   - [func \(c \*Client\) GenerateSchemaFromFile\(ctx context.Context, filename string, fileData \[\]byte\) \(\*irminmodels.ObjectSchema, error\)](<#Client.GenerateSchemaFromFile>)
   - [func \(c \*Client\) GetBranch\(ctx context.Context, workspace, repository, branch string\) \(\*irminmodels.Branch, error\)](<#Client.GetBranch>)
   - [func \(c \*Client\) GetCommit\(workspace, repository, hash string\) \(\*irminmodels.Commit, error\)](<#Client.GetCommit>)
@@ -5189,10 +5189,12 @@ import "irmin-api/engine"
   - [func \(c \*Client\) PullFilesFromConnector\(ctx context.Context, connection \*db.Connection, connectionPaths \[\]string\) \(map\[string\]\[\]byte, \[\]connectorsclient.OperationLog, error\)](<#Client.PullFilesFromConnector>)
   - [func \(c \*Client\) PushFilesToConnector\(ctx context.Context, connection \*db.Connection, connectionPath string, objects \[\]\*irminmodels.Object, files map\[string\]\[\]byte, tx ...\*gorm.DB\) \(\[\]string, \[\]connectorsclient.OperationLog, error\)](<#Client.PushFilesToConnector>)
   - [func \(c \*Client\) RevertUncommitedChanges\(workspace, repository, branch, path, pathType string\) error](<#Client.RevertUncommitedChanges>)
+  - [func \(c \*Client\) SetPermissionChecker\(pc PermissionChecker\)](<#Client.SetPermissionChecker>)
   - [func \(c \*Client\) UpdateBranch\(ctx context.Context, workspace, repository, currentName, name string, isImmutable bool\) \(\*irminmodels.Branch, error\)](<#Client.UpdateBranch>)
   - [func \(c \*Client\) UpdateRepository\(workspace, repository string, gcDefaultRetentionDays, gcDefaultBranchRetentionDays \*int\) \(\*Repository, error\)](<#Client.UpdateRepository>)
   - [func \(c \*Client\) UploadObject\(workspace, repository, path, ref string, file io.Reader\) \(\*irminmodels.Object, error\)](<#Client.UploadObject>)
 - [type FieldMappingResult](<#FieldMappingResult>)
+- [type PermissionChecker](<#PermissionChecker>)
 - [type Repository](<#Repository>)
 - [type SchemaContext](<#SchemaContext>)
 - [type SchemaField](<#SchemaField>)
@@ -5308,11 +5310,12 @@ Client represents the Irmin Data Engine API client.
 
 ```go
 type Client struct {
-    Locale       string
-    LakeFSClient *lakefs.Client
-    Logger       *slog.Logger
-    Env          *utils.CoreAPIEnv
-    DB           *db.Database
+    Locale            string
+    LakeFSClient      *lakefs.Client
+    Logger            *slog.Logger
+    Env               *utils.CoreAPIEnv
+    DB                *db.Database
+    PermissionChecker PermissionChecker
     // contains filtered or unexported fields
 }
 ```
@@ -5474,7 +5477,7 @@ func (c *Client) DeleteTag(workspace, repository, tag string) error
 ### func \(\*Client\) ExecuteQuery
 
 ```go
-func (c *Client) ExecuteQuery(ctx context.Context, userWorkspace, query string) *irminmodels.QueryResult
+func (c *Client) ExecuteQuery(ctx context.Context, user *db.User, workspace *db.Workspace, query string) *irminmodels.QueryResult
 ```
 
 ExecuteQuery executes a query in the specified workspace and returns the results.
@@ -5483,7 +5486,7 @@ ExecuteQuery executes a query in the specified workspace and returns the results
 ### func \(\*Client\) GenerateObjectSchema
 
 ```go
-func (c *Client) GenerateObjectSchema(ctx context.Context, workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error)
+func (c *Client) GenerateObjectSchema(ctx context.Context, user *db.User, workspace *db.Workspace, repository, path, ref string) (*irminmodels.ObjectSchema, error)
 ```
 
 
@@ -5659,6 +5662,15 @@ func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pa
 
 
 
+<a name="Client.SetPermissionChecker"></a>
+### func \(\*Client\) SetPermissionChecker
+
+```go
+func (c *Client) SetPermissionChecker(pc PermissionChecker)
+```
+
+SetPermissionChecker sets the PermissionChecker for the client.
+
 <a name="Client.UpdateBranch"></a>
 ### func \(\*Client\) UpdateBranch
 
@@ -5695,6 +5707,23 @@ FieldMappingResult represents the result of applying field mappings, containing 
 type FieldMappingResult struct {
     Path    string `json:"path"`
     Content []byte `json:"content"`
+}
+```
+
+<a name="PermissionChecker"></a>
+## type PermissionChecker
+
+PermissionChecker interface defines the method for checking permissions.
+
+```go
+type PermissionChecker interface {
+    IsAllowed(
+        user *db.User,
+        workspace *db.Workspace,
+        resource db.PolicyResource,
+        resourceID *uint,
+        action db.PolicyAction,
+    ) (bool, error)
 }
 ```
 
@@ -8262,7 +8291,6 @@ import "irmin-api/lib"
 - [func EnsureNovuSubscriber\(ctx context.Context, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, locale string, user \*db.User\) \(\*components.SubscriberResponseDto, error\)](<#EnsureNovuSubscriber>)
 - [func GetObject\(ctx context.Context, locale string, d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, workspace \*db.Workspace, repository \*db.Repository, path, ref string, ignoreCache bool\) \(\*db.RepositoryObject, error\)](<#GetObject>)
 - [func GetRepository\(ctx context.Context, locale string, d \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, workspace \*db.Workspace, repositorySlug string, ignoreCache bool\) \(\*db.Repository, error\)](<#GetRepository>)
-- [func IsAllowedFilter\[T any\]\(ps \*PermissionService, user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, action db.PolicyAction, resources \[\]T, idExtractor func\(T\) uint\) \(\[\]T, error\)](<#IsAllowedFilter>)
 - [func NewSafeHTTPClient\(ctx context.Context\) \*http.Client](<#NewSafeHTTPClient>)
 - [func ParseScheduleFromData\(scheduleReq \*irminmodels.Schedule, d \*db.Database, workspace db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*db.Schedule, error\)](<#ParseScheduleFromData>)
 - [func ParseScheduleFromRequest\(c fiber.Ctx, d \*db.Database, workspace db.Workspace, sqidManager \*irminsqids.SQIDManager\) \(\*db.Schedule, error\)](<#ParseScheduleFromRequest>)
@@ -8274,26 +8302,11 @@ import "irmin-api/lib"
 - [func SetDefaultPolicies\(dbConn \*gorm.DB, workspaceID uint, overridePolicies bool\) error](<#SetDefaultPolicies>)
 - [func SetupTestSuite\(t \*testing.T\) error](<#SetupTestSuite>)
 - [func TeardownTestSuite\(\)](<#TeardownTestSuite>)
-- [type CacheStats](<#CacheStats>)
 - [type InviteNotificationParams](<#InviteNotificationParams>)
 - [type InviteNotificationResult](<#InviteNotificationResult>)
   - [func SendFallbackInviteNotification\(ctx context.Context, database \*db.Database, sqidManager \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \*InviteNotificationResult](<#SendFallbackInviteNotification>)
   - [func SendNovuInviteNotification\(ctx context.Context, database \*db.Database, \_ \*irminsqids.SQIDManager, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \(\*InviteNotificationResult, error\)](<#SendNovuInviteNotification>)
   - [func SendResendInviteNotification\(ctx context.Context, env \*utils.CoreAPIEnv, logger \*slog.Logger, params InviteNotificationParams\) \(\*InviteNotificationResult, error\)](<#SendResendInviteNotification>)
-- [type PermissionCache](<#PermissionCache>)
-  - [func NewPermissionCache\(\) \*PermissionCache](<#NewPermissionCache>)
-  - [func \(pc \*PermissionCache\) Clear\(\)](<#PermissionCache.Clear>)
-  - [func \(pc \*PermissionCache\) Get\(key string\) \(bool, bool\)](<#PermissionCache.Get>)
-  - [func \(pc \*PermissionCache\) GetStats\(\) CacheStats](<#PermissionCache.GetStats>)
-  - [func \(pc \*PermissionCache\) Set\(key string, allowed bool, ttl time.Duration\)](<#PermissionCache.Set>)
-  - [func \(pc \*PermissionCache\) Size\(\) int](<#PermissionCache.Size>)
-- [type PermissionCacheEntry](<#PermissionCacheEntry>)
-- [type PermissionService](<#PermissionService>)
-  - [func NewPermissionService\(db \*db.Database, logger \*slog.Logger\) \*PermissionService](<#NewPermissionService>)
-  - [func \(ps \*PermissionService\) ClearPermissionCache\(\)](<#PermissionService.ClearPermissionCache>)
-  - [func \(ps \*PermissionService\) IsAllowed\(user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, resourceID \*uint, action db.PolicyAction\) \(bool, error\)](<#PermissionService.IsAllowed>)
-  - [func \(ps \*PermissionService\) SetPermissionCacheTTL\(userID, workspaceID uint, resource db.PolicyResource, resourceID \*uint, action db.PolicyAction, allowed bool, ttl time.Duration\)](<#PermissionService.SetPermissionCacheTTL>)
-- [type PolicyMatch](<#PolicyMatch>)
 - [type SchemaCacheManager](<#SchemaCacheManager>)
   - [func NewSchemaCacheManager\(env \*utils.CoreAPIEnv, logger \*slog.Logger, db \*db.Database\) \*SchemaCacheManager](<#NewSchemaCacheManager>)
   - [func \(scm \*SchemaCacheManager\) GetConnectionSchema\(ctx context.Context, connection \*db.Connection, operationMethod, path, locale string, ignoreCache bool\) \(\*irminmodels.ObjectSchema, \[\]connectorsclient.OperationLog, error\)](<#SchemaCacheManager.GetConnectionSchema>)
@@ -8303,24 +8316,6 @@ import "irmin-api/lib"
 
 
 ## Constants
-
-<a name="DefaultCacheSize"></a>
-
-```go
-const (
-    // DefaultCacheSize is the maximum number of entries allowed in the permission cache.
-    DefaultCacheSize = 10000
-
-    // OwnerPermissionCacheTTL is how long to cache permissions for workspace owners.
-    OwnerPermissionCacheTTL = 10 * time.Minute
-
-    // DefaultPermissionCacheTTL is the default TTL for cached permissions.
-    DefaultPermissionCacheTTL = 5 * time.Minute
-
-    // CleanupInterval defines how often to clean expired entries.
-    CleanupInterval = 1 * time.Minute
-)
-```
 
 <a name="ConnectionSchemaCacheMaxAge"></a>
 
@@ -8450,15 +8445,6 @@ func GetRepository(ctx context.Context, locale string, d *db.Database, logger *s
 
 
 
-<a name="IsAllowedFilter"></a>
-## func IsAllowedFilter
-
-```go
-func IsAllowedFilter[T any](ps *PermissionService, user *db.User, workspace *db.Workspace, resource db.PolicyResource, action db.PolicyAction, resources []T, idExtractor func(T) uint) ([]T, error)
-```
-
-IsAllowedFilter filters a list of resources based on user permissions. It returns only the resources that the user has access to for the given action. The function is optimized to minimize database queries by batching permission checks. The idExtractor function should return the ID of the resource.
-
 <a name="NewSafeHTTPClient"></a>
 ## func NewSafeHTTPClient
 
@@ -8581,19 +8567,6 @@ func TeardownTestSuite()
 
 TeardownTestSuite cleans up the global test suite. This should be called from TestMain after all tests are done.
 
-<a name="CacheStats"></a>
-## type CacheStats
-
-CacheStats returns cache statistics for monitoring.
-
-```go
-type CacheStats struct {
-    Size        int
-    MaxSize     int
-    LastCleanup time.Time
-}
-```
-
 <a name="InviteNotificationParams"></a>
 ## type InviteNotificationParams
 
@@ -8651,146 +8624,6 @@ func SendResendInviteNotification(ctx context.Context, env *utils.CoreAPIEnv, lo
 ```
 
 SendResendInviteNotification sends an invitation notification via Resend email.
-
-<a name="PermissionCache"></a>
-## type PermissionCache
-
-PermissionCache provides thread\-safe LRU caching with TTL for permission results.
-
-```go
-type PermissionCache struct {
-    // contains filtered or unexported fields
-}
-```
-
-<a name="NewPermissionCache"></a>
-### func NewPermissionCache
-
-```go
-func NewPermissionCache() *PermissionCache
-```
-
-NewPermissionCache creates a new LRU permission cache with TTL.
-
-<a name="PermissionCache.Clear"></a>
-### func \(\*PermissionCache\) Clear
-
-```go
-func (pc *PermissionCache) Clear()
-```
-
-Clear removes expired entries from cache.
-
-<a name="PermissionCache.Get"></a>
-### func \(\*PermissionCache\) Get
-
-```go
-func (pc *PermissionCache) Get(key string) (bool, bool)
-```
-
-Get retrieves a cached permission result and updates its position in LRU order.
-
-<a name="PermissionCache.GetStats"></a>
-### func \(\*PermissionCache\) GetStats
-
-```go
-func (pc *PermissionCache) GetStats() CacheStats
-```
-
-GetStats returns current cache statistics.
-
-<a name="PermissionCache.Set"></a>
-### func \(\*PermissionCache\) Set
-
-```go
-func (pc *PermissionCache) Set(key string, allowed bool, ttl time.Duration)
-```
-
-Set stores a permission result in cache with LRU eviction if necessary.
-
-<a name="PermissionCache.Size"></a>
-### func \(\*PermissionCache\) Size
-
-```go
-func (pc *PermissionCache) Size() int
-```
-
-Size returns the current number of entries in the cache.
-
-<a name="PermissionCacheEntry"></a>
-## type PermissionCacheEntry
-
-PermissionCacheEntry represents a cached permission result.
-
-```go
-type PermissionCacheEntry struct {
-    Allowed   bool
-    ExpiresAt time.Time
-    Key       string // Store key for easier cleanup
-}
-```
-
-<a name="PermissionService"></a>
-## type PermissionService
-
-PermissionService provides permission checking with caching.
-
-```go
-type PermissionService struct {
-    // contains filtered or unexported fields
-}
-```
-
-<a name="NewPermissionService"></a>
-### func NewPermissionService
-
-```go
-func NewPermissionService(db *db.Database, logger *slog.Logger) *PermissionService
-```
-
-NewPermissionService creates a new permission service.
-
-<a name="PermissionService.ClearPermissionCache"></a>
-### func \(\*PermissionService\) ClearPermissionCache
-
-```go
-func (ps *PermissionService) ClearPermissionCache()
-```
-
-ClearPermissionCache clears expired entries from the permission cache.
-
-<a name="PermissionService.IsAllowed"></a>
-### func \(\*PermissionService\) IsAllowed
-
-```go
-func (ps *PermissionService) IsAllowed(user *db.User, workspace *db.Workspace, resource db.PolicyResource, resourceID *uint, action db.PolicyAction) (bool, error)
-```
-
-IsAllowed checks if a user is allowed to perform an action on a resource It checks for explicit deny policies first, then for allow policies, and returns false if no policies match It returns true if any allow policy matches, false if any deny policy matches, or an error if there's a database error Workspace owners are always allowed to perform any action on any resource \(ownership defined based on workspace.OwnerID or role.IsOwner\).
-
-<a name="PermissionService.SetPermissionCacheTTL"></a>
-### func \(\*PermissionService\) SetPermissionCacheTTL
-
-```go
-func (ps *PermissionService) SetPermissionCacheTTL(userID, workspaceID uint, resource db.PolicyResource, resourceID *uint, action db.PolicyAction, allowed bool, ttl time.Duration)
-```
-
-SetPermissionCacheTTL allows customizing the cache TTL for specific permissions.
-
-<a name="PolicyMatch"></a>
-## type PolicyMatch
-
-PolicyMatch represents a matched policy from the database.
-
-```go
-type PolicyMatch struct {
-    Effect          db.PolicyEffect
-    Principal       db.PolicyPrincipal
-    WorkspaceUserID *uint
-    RoleID          *uint
-    ResourceID      *uint
-}
-```
 
 <a name="SchemaCacheManager"></a>
 ## type SchemaCacheManager
@@ -9606,6 +9439,215 @@ const (
 )
 ```
 
+# permissions
+
+```go
+import "irmin-api/permissions"
+```
+
+## Index
+
+- [Constants](<#constants>)
+- [func IsAllowedFilter\[T any\]\(ps \*Service, user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, action db.PolicyAction, resources \[\]T, idExtractor func\(T\) uint\) \(\[\]T, error\)](<#IsAllowedFilter>)
+- [type Cache](<#Cache>)
+  - [func NewCache\(\) \*Cache](<#NewCache>)
+  - [func \(pc \*Cache\) Clear\(\)](<#Cache.Clear>)
+  - [func \(pc \*Cache\) Get\(key string\) \(bool, bool\)](<#Cache.Get>)
+  - [func \(pc \*Cache\) GetStats\(\) Stats](<#Cache.GetStats>)
+  - [func \(pc \*Cache\) Set\(key string, allowed bool, ttl time.Duration\)](<#Cache.Set>)
+  - [func \(pc \*Cache\) Size\(\) int](<#Cache.Size>)
+- [type CacheEntry](<#CacheEntry>)
+- [type PolicyMatch](<#PolicyMatch>)
+- [type Service](<#Service>)
+  - [func NewService\(database \*db.Database, logger \*slog.Logger\) \*Service](<#NewService>)
+  - [func \(ps \*Service\) ClearPermissionCache\(\)](<#Service.ClearPermissionCache>)
+  - [func \(ps \*Service\) IsAllowed\(user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, resourceID \*uint, action db.PolicyAction\) \(bool, error\)](<#Service.IsAllowed>)
+  - [func \(ps \*Service\) SetPermissionCacheTTL\(userID, workspaceID uint, resource db.PolicyResource, resourceID \*uint, action db.PolicyAction, allowed bool, ttl time.Duration\)](<#Service.SetPermissionCacheTTL>)
+- [type Stats](<#Stats>)
+
+
+## Constants
+
+<a name="DefaultCacheSize"></a>
+
+```go
+const (
+    // DefaultCacheSize is the maximum number of entries allowed in the permission cache.
+    DefaultCacheSize = 10000
+
+    // OwnerPermissionCacheTTL is how long to cache permissions for workspace owners.
+    OwnerPermissionCacheTTL = 10 * time.Minute
+
+    // DefaultPermissionCacheTTL is the default TTL for cached permissions.
+    DefaultPermissionCacheTTL = 5 * time.Minute
+
+    // CleanupInterval defines how often to clean expired entries.
+    CleanupInterval = 1 * time.Minute
+)
+```
+
+<a name="IsAllowedFilter"></a>
+## func IsAllowedFilter
+
+```go
+func IsAllowedFilter[T any](ps *Service, user *db.User, workspace *db.Workspace, resource db.PolicyResource, action db.PolicyAction, resources []T, idExtractor func(T) uint) ([]T, error)
+```
+
+IsAllowedFilter filters a list of resources based on user permissions. It returns only the resources that the user has access to for the given action. The function is optimized to minimize database queries by batching permission checks. The idExtractor function should return the ID of the resource.
+
+<a name="Cache"></a>
+## type Cache
+
+Cache provides thread\-safe LRU caching with TTL for permission results.
+
+```go
+type Cache struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewCache"></a>
+### func NewCache
+
+```go
+func NewCache() *Cache
+```
+
+NewCache creates a new LRU permission cache with TTL.
+
+<a name="Cache.Clear"></a>
+### func \(\*Cache\) Clear
+
+```go
+func (pc *Cache) Clear()
+```
+
+Clear removes expired entries from cache.
+
+<a name="Cache.Get"></a>
+### func \(\*Cache\) Get
+
+```go
+func (pc *Cache) Get(key string) (bool, bool)
+```
+
+Get retrieves a cached permission result and updates its position in LRU order.
+
+<a name="Cache.GetStats"></a>
+### func \(\*Cache\) GetStats
+
+```go
+func (pc *Cache) GetStats() Stats
+```
+
+GetStats returns current cache statistics.
+
+<a name="Cache.Set"></a>
+### func \(\*Cache\) Set
+
+```go
+func (pc *Cache) Set(key string, allowed bool, ttl time.Duration)
+```
+
+Set stores a permission result in cache with LRU eviction if necessary.
+
+<a name="Cache.Size"></a>
+### func \(\*Cache\) Size
+
+```go
+func (pc *Cache) Size() int
+```
+
+Size returns the current number of entries in the cache.
+
+<a name="CacheEntry"></a>
+## type CacheEntry
+
+CacheEntry represents a cached permission result.
+
+```go
+type CacheEntry struct {
+    Allowed   bool
+    ExpiresAt time.Time
+    Key       string // Store key for easier cleanup
+}
+```
+
+<a name="PolicyMatch"></a>
+## type PolicyMatch
+
+PolicyMatch represents a matched policy from the database.
+
+```go
+type PolicyMatch struct {
+    Effect          db.PolicyEffect
+    Principal       db.PolicyPrincipal
+    WorkspaceUserID *uint
+    RoleID          *uint
+    ResourceID      *uint
+}
+```
+
+<a name="Service"></a>
+## type Service
+
+Service provides permission checking with caching.
+
+```go
+type Service struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewService"></a>
+### func NewService
+
+```go
+func NewService(database *db.Database, logger *slog.Logger) *Service
+```
+
+NewService creates a new permission service.
+
+<a name="Service.ClearPermissionCache"></a>
+### func \(\*Service\) ClearPermissionCache
+
+```go
+func (ps *Service) ClearPermissionCache()
+```
+
+ClearPermissionCache clears expired entries from the permission cache.
+
+<a name="Service.IsAllowed"></a>
+### func \(\*Service\) IsAllowed
+
+```go
+func (ps *Service) IsAllowed(user *db.User, workspace *db.Workspace, resource db.PolicyResource, resourceID *uint, action db.PolicyAction) (bool, error)
+```
+
+IsAllowed checks if a user is allowed to perform an action on a resource It checks for explicit deny policies first, then for allow policies, and returns false if no policies match It returns true if any allow policy matches, false if any deny policy matches, or an error if there's a database error Workspace owners are always allowed to perform any action on any resource \(ownership defined based on workspace.OwnerID or role.IsOwner\).
+
+<a name="Service.SetPermissionCacheTTL"></a>
+### func \(\*Service\) SetPermissionCacheTTL
+
+```go
+func (ps *Service) SetPermissionCacheTTL(userID, workspaceID uint, resource db.PolicyResource, resourceID *uint, action db.PolicyAction, allowed bool, ttl time.Duration)
+```
+
+SetPermissionCacheTTL allows customizing the cache TTL for specific permissions.
+
+<a name="Stats"></a>
+## type Stats
+
+Stats returns cache statistics for monitoring.
+
+```go
+type Stats struct {
+    Size        int
+    MaxSize     int
+    LastCleanup time.Time
+}
+```
+
 # routes
 
 ```go
@@ -9637,7 +9679,7 @@ import "irmin-api/services"
 - [Constants](<#constants>)
 - [Variables](<#variables>)
 - [type APIServices](<#APIServices>)
-  - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*lib.PermissionService, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
+  - [func NewAPIServices\(db \*db.Database, logger \*slog.Logger, env \*utils.CoreAPIEnv, orchestrator \*orchestrator.Orchestrator, sqidManager \*irminsqids.SQIDManager, localeManager \*locales.LocaleManager, permissionService \*permissions.Service, cacheStorage fiber.Storage\) \*APIServices](<#NewAPIServices>)
   - [func \(api \*APIServices\) AcceptInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.AcceptInvite>)
   - [func \(api \*APIServices\) AddOrRemoveTagFromEntity\(c context.Context, operation TagEntityOperation, user \*db.User, workspace \*db.Workspace, tag \*db.TagWithAssets, entityType string, entityID string\) error](<#APIServices.AddOrRemoveTagFromEntity>)
   - [func \(api \*APIServices\) AddTagToEntity\(c context.Context, user \*db.User, workspace \*db.Workspace, tag \*db.Tag, entityType string, entityID uint\) error](<#APIServices.AddTagToEntity>)
@@ -9866,7 +9908,7 @@ type APIServices struct {
     Orchestrator      *orchestrator.Orchestrator
     SQIDManager       *irminsqids.SQIDManager
     LocaleManager     *locales.LocaleManager
-    PermissionService *lib.PermissionService
+    PermissionService *permissions.Service
     Validator         *irminvalidator.Validator
     CacheStorage      fiber.Storage
     // contains filtered or unexported fields
@@ -9877,7 +9919,7 @@ type APIServices struct {
 ### func NewAPIServices
 
 ```go
-func NewAPIServices(db *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv, orchestrator *orchestrator.Orchestrator, sqidManager *irminsqids.SQIDManager, localeManager *locales.LocaleManager, permissionService *lib.PermissionService, cacheStorage fiber.Storage) *APIServices
+func NewAPIServices(db *db.Database, logger *slog.Logger, env *utils.CoreAPIEnv, orchestrator *orchestrator.Orchestrator, sqidManager *irminsqids.SQIDManager, localeManager *locales.LocaleManager, permissionService *permissions.Service, cacheStorage fiber.Storage) *APIServices
 ```
 
 
@@ -12195,7 +12237,8 @@ RetrieveContextRequest represents the request structure for retrieving context
 
 ```go
 type RetrieveContextRequest struct {
-    Query string `json:"query"`
+    Query       string   `json:"query"`
+    Collections []string `json:"collections,omitempty"`
 }
 ```
 

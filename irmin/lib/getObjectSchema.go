@@ -112,7 +112,11 @@ func (scm *SchemaCacheManager) GetObjectSchema(
 	}
 
 	// Get the schema of the object in the repository at ref
-	schema, err := dataEngine.GenerateObjectSchema(ctx, workspace.Slug, repository.Slug, object.Path, ref)
+	// Note: We pass nil for user because this method assumes permissions have already been checked by the caller
+	// or are not applicable (e.g. background process). If permissions need to be enforced during schema generation
+	// (which uses DuckDB), the caller should ensure permissions are valid.
+	// Since scm.GetObjectSchema does not take a user argument, we cannot pass it here.
+	schema, err := dataEngine.GenerateObjectSchema(ctx, nil, workspace, repository.Slug, object.Path, ref)
 	if err != nil {
 		scm.logger.ErrorContext(ctx, "error getting object schema", "error", err)
 		return nil, fmt.Errorf("failed to get object schema: %w", err)

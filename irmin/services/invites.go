@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -121,7 +122,7 @@ func (api *APIServices) ListInvitesToWorkspace(
 	}
 
 	// Filter invites based on user permissions
-	filteredInvites, err := lib.IsAllowedFilter(
+	filteredInvites, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

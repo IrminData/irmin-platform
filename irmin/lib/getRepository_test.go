@@ -1,6 +1,7 @@
 package lib_test
 
 import (
+	"irmin-api/db"
 	"irmin-api/lib"
 	"log/slog"
 	"os"
@@ -9,6 +10,25 @@ import (
 	"github.com/zeebo/assert"
 	"gorm.io/gorm"
 )
+
+// Helper function to find a role by name.
+func findRole(roles []db.Role, name string) *db.Role {
+	for _, role := range roles {
+		if role.Role == name {
+			return &role
+		}
+	}
+	return nil
+}
+
+// restoreUserRoles restores the roles of a user in a workspace.
+func restoreUserRoles(t *testing.T, d *db.Database, userID, workspaceID uint, roleIDs []uint) {
+	err := d.Transaction(func(tx *gorm.DB) error {
+		_, updateErr := d.UpdateWorkspaceUserRoles(tx, userID, workspaceID, roleIDs)
+		return updateErr
+	})
+	assert.NoError(t, err)
+}
 
 func TestGetRepository(t *testing.T) {
 	ts := lib.GetTestSuite()

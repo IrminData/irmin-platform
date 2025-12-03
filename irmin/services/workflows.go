@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"strings"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -81,7 +82,7 @@ func (api *APIServices) ListWorkflows(
 	}
 
 	// Filter workflows based on user permissions
-	filteredWorkflows, err := lib.IsAllowedFilter(
+	filteredWorkflows, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

@@ -2,9 +2,9 @@ package middlewares
 
 import (
 	"irmin-api/db"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
+	"irmin-api/permissions"
 	"irmin-api/services"
 	"irmin-api/utils"
 	"log/slog"
@@ -21,7 +21,7 @@ type APIMiddlewares struct {
 	SQIDManager       *irminsqids.SQIDManager
 	Services          *services.APIServices
 	lm                *locales.LocaleManager
-	permissionService *lib.PermissionService
+	permissionService *permissions.Service
 	validator         *irminvalidator.Validator
 }
 

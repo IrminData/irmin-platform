@@ -8,6 +8,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -127,7 +128,7 @@ func (api *APIServices) validateNonGroupObjectPermissions(
 	workspace *db.Workspace,
 	repositoryObjectDB *db.RepositoryObject,
 ) error {
-	filteredObjectChildren, filterErr := lib.IsAllowedFilter(
+	filteredObjectChildren, filterErr := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

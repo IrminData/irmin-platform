@@ -32,6 +32,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
+	"irmin-api/permissions"
 	"irmin-api/routes"
 	"irmin-api/services"
 	"irmin-api/utils"
@@ -247,7 +248,7 @@ func setupServices(
 	env *utils.CoreAPIEnv,
 	database *db.Database,
 	cacheStorage fiber.Storage,
-) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *lib.PermissionService, error) {
+) (*orchestrator.Orchestrator, *irminsqids.SQIDManager, *locales.LocaleManager, *permissions.Service, error) {
 	// Initialize data engine
 	dataEngine, err := engine.NewClient(context.Background(), "en", slog.Default(), env, database)
 	if err != nil {
@@ -274,7 +275,7 @@ func setupServices(
 	}
 
 	// Initialize permission service
-	permissionService := lib.NewPermissionService(database, slog.Default())
+	permissionService := permissions.NewService(database, slog.Default())
 
 	return orchestrator, sqidManager, localeManager, permissionService, nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
 	"gorm.io/gorm"
@@ -63,7 +64,7 @@ func (api *APIServices) ListWorkspaceUsers(
 	}
 
 	// Filter users based on user permissions
-	filteredUsers, err := lib.IsAllowedFilter(
+	filteredUsers, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

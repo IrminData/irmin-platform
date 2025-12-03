@@ -79,7 +79,7 @@ type APIServices struct {
 	Orchestrator      *orchestrator.Orchestrator
 	SQIDManager       *irminsqids.SQIDManager
 	LocaleManager     *locales.LocaleManager
-	PermissionService *lib.PermissionService
+	PermissionService *permissions.Service
 	Validator         *irminvalidator.Validator
 	CacheStorage      fiber.Storage
 
@@ -93,7 +93,7 @@ func NewAPIServices(
 	orchestrator *orchestrator.Orchestrator,
 	sqidManager *irminsqids.SQIDManager,
 	localeManager *locales.LocaleManager,
-	permissionService *lib.PermissionService,
+	permissionService *permissions.Service,
 	cacheStorage fiber.Storage,
 ) *APIServices
 

@@ -5,6 +5,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
+	"irmin-api/permissions"
 	"irmin-api/utils"
 	"log/slog"
 
@@ -20,7 +21,7 @@ type APIServices struct {
 	Orchestrator       *orchestrator.Orchestrator
 	SQIDManager        *irminsqids.SQIDManager
 	LocaleManager      *locales.LocaleManager
-	PermissionService  *lib.PermissionService
+	PermissionService  *permissions.Service
 	Validator          *irminvalidator.Validator
 	CacheStorage       fiber.Storage
 	authCache          *AuthCache
@@ -34,7 +35,7 @@ func NewAPIServices(
 	orchestrator *orchestrator.Orchestrator,
 	sqidManager *irminsqids.SQIDManager,
 	localeManager *locales.LocaleManager,
-	permissionService *lib.PermissionService,
+	permissionService *permissions.Service,
 	cacheStorage fiber.Storage,
 ) *APIServices {
 	authCache := &AuthCache{cache: make(map[string]*AuthCacheEntry)}

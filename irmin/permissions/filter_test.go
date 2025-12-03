@@ -1,8 +1,9 @@
-package lib_test
+package permissions_test
 
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"log/slog"
 	"slices"
 	"testing"
@@ -87,7 +88,7 @@ func createDenyPolicy(t *testing.T, ts *lib.TestSuite, workspace *db.Workspace, 
 func TestIsAllowedFilter(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
-	ps := lib.NewPermissionService(ts.DB, logger)
+	ps := permissions.NewService(ts.DB, logger)
 
 	// Find the test workspace
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
@@ -213,7 +214,7 @@ func TestIsAllowedFilter(t *testing.T) {
 			_, teardown := tt.setup()
 			defer teardown()
 
-			filteredItems, isAllowedFilterErr := lib.IsAllowedFilter(
+			filteredItems, isAllowedFilterErr := permissions.IsAllowedFilter(
 				ps,
 				tt.testUser,
 				workspace,

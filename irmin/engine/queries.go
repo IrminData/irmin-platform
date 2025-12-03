@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"irmin-api/db"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
 	"strings"
@@ -12,29 +13,147 @@ import (
 
 	irminmodels "github.com/IrminData/irmin-sdk-go/models"
 	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	"gorm.io/gorm"
 )
 
-func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.ParsedIrminQuery, error) {
+// resolveQueryWorkspace resolves the workspace from the placeholder or uses the provided workspace.
+func resolveQueryWorkspace(
+	c *Client,
+	plWorkspaceSlug string,
+	workspace *db.Workspace,
+) (*db.Workspace, error) {
+	if plWorkspaceSlug == "" || plWorkspaceSlug == workspace.Slug {
+		return workspace, nil
+	}
+
+	targetWorkspace, workspaceErr := c.DB.GetWorkspaceBySlug(plWorkspaceSlug)
+	if workspaceErr != nil {
+		return nil, fmt.Errorf("failed to get workspace '%s': %w", plWorkspaceSlug, workspaceErr)
+	}
+	if targetWorkspace == nil {
+		return nil, fmt.Errorf("workspace '%s' not found", plWorkspaceSlug)
+	}
+	return targetWorkspace, nil
+}
+
+// resolveObjectID resolves the object ID from the database.
+func resolveObjectID(c *Client, object string, repositoryID uint, ref string) (*uint, error) {
+	repoObject, objectErr := c.DB.FindObject(&object, &repositoryID, &ref)
+	if objectErr == nil && repoObject != nil {
+		return &repoObject.ID, nil
+	}
+	if objectErr != nil && !errors.Is(objectErr, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("failed to resolve object: %w", objectErr)
+	}
+	// Object not found is a valid state (not an error condition)
+	return nil, nil //nolint:nilnil // Not found is expected, not an error
+}
+
+// checkQueryPermissions checks if the user has permission to access the object in the query.
+func checkQueryPermissions(
+	c *Client,
+	user *db.User,
+	targetWorkspace *db.Workspace,
+	repository *db.Repository,
+	objectID *uint,
+	operation string,
+	objectPath string,
+) error {
+	if c.PermissionChecker == nil {
+		return nil
+	}
+
+	// Determine resource and ID
+	var resource db.PolicyResource
+	var resID *uint
+
+	if objectID != nil {
+		resource = db.PolicyResourceRepositoryObject
+		resID = objectID
+	} else {
+		// Fallback to repository permissions if object not found
+		resource = db.PolicyResourceRepository
+		resID = &repository.ID
+	}
+
+	// Determine action
+	action := db.PolicyActionRead
+	if operation == "write" {
+		action = db.PolicyActionUpdate
+		if objectID == nil && resource == db.PolicyResourceRepository {
+			action = db.PolicyActionUpdate
+		}
+	}
+
+	allowed, permErr := c.PermissionChecker.IsAllowed(user, targetWorkspace, resource, resID, action)
+	if permErr != nil {
+		return fmt.Errorf("error checking permissions: %w", permErr)
+	}
+	if !allowed {
+		return fmt.Errorf("permission denied for %s '%s'", resource, objectPath)
+	}
+	return nil
+}
+
+// buildObjectSelector builds the DuckDB read selector for the object.
+func buildObjectSelector(
+	objectAddress string,
+	objectPathDetails irminutils.ObjectDetails,
+	object string,
+	operation string,
+) (string, error) {
+	if operation != "read" {
+		return fmt.Sprintf("'%s'", objectAddress), nil
+	}
+
+	// Use the new readOptions implementation to determine the appropriate read function
+	readOptions, optsErr := duckdb.GetDuckDBReadOptionsByMIMEType(objectPathDetails.ContentType)
+	if optsErr != nil {
+		// If MIME type lookup fails, try using the object path (file extension)
+		var fallbackErr error
+		readOptions, fallbackErr = duckdb.GetDuckDBReadOptionsFromObject(object)
+		if fallbackErr != nil {
+			return "", fmt.Errorf(
+				"unsupported object format: %s (content type: %s)",
+				object,
+				objectPathDetails.ContentType,
+			)
+		}
+	}
+
+	// Build the read query using the readOptions
+	return duckdb.BuildReadQuery(objectAddress, readOptions), nil
+}
+
+func parseIrminQuery(
+	c *Client,
+	user *db.User,
+	workspace *db.Workspace,
+	query string,
+) (utils.ParsedIrminQuery, error) {
 	return utils.ParseIrminQuery(query, func(pl *utils.ParsedQueryPlaceholder) (string, error) {
-		workspace := pl.Workspace
-		repository := pl.Repository
+		plWorkspaceSlug := pl.Workspace
+		plRepositorySlug := pl.Repository
 		object := strings.TrimPrefix(pl.Object, "/")
 		ref := pl.Ref
 
-		// If the workspace is not provided in the query, get the workspace from the route.
-		if workspace == "" {
-			workspace = userWorkspace
+		// Resolve workspace
+		targetWorkspace, workspaceErr := resolveQueryWorkspace(c, plWorkspaceSlug, workspace)
+		if workspaceErr != nil {
+			return "", workspaceErr
 		}
 
-		// Get the LakeFS repository name.
-		lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(workspace, repository)
+		// Get the repository by slug and workspace ID.
+		repository, repoErr := c.DB.GetRepositoryBySlugAndWorkspaceID(plRepositorySlug, targetWorkspace.ID)
+		if repoErr != nil {
+			return "", fmt.Errorf("failed to get repository '%s': %w", plRepositorySlug, repoErr)
+		}
+		if repository == nil || repository.ID == 0 {
+			return "", fmt.Errorf("repository '%s' not found in workspace '%s'", plRepositorySlug, targetWorkspace.Slug)
+		}
 
 		// If the ref is not provided in the query, get the repository's default branch.
 		if ref == "" {
-			repository, err := c.LakeFSClient.GetRepository(lakeFSRepositoryName)
-			if err != nil {
-				return "", fmt.Errorf("failed to get repository: %w", err)
-			}
 			ref = repository.DefaultBranch
 		}
 
@@ -47,28 +166,28 @@ func parseIrminQuery(c *Client, userWorkspace string, query string) (utils.Parse
 			return "", errors.New("group objects can't be queried")
 		}
 
+		// Resolve object ID
+		objectID, objectIDErr := resolveObjectID(c, object, repository.ID, ref)
+		if objectIDErr != nil {
+			return "", objectIDErr
+		}
+
+		// Check permissions
+		permErr := checkQueryPermissions(c, user, targetWorkspace, repository, objectID, pl.Operation, object)
+		if permErr != nil {
+			return "", permErr
+		}
+
+		// Get the LakeFS repository name.
+		lakeFSRepositoryName := utils.ConstructLakeFSRepositoryName(targetWorkspace.Slug, repository.Slug)
+
 		// Construct object storage path.
 		objectAddress := fmt.Sprintf("s3://%s/%s/%s", lakeFSRepositoryName, ref, objectPathDetails.FullPath)
 
-		// Construct the file selector based on the object type.
-		objectSelector := fmt.Sprintf("'%s'", objectAddress)
-		if pl.Operation == "read" {
-			// Use the new readOptions implementation to determine the appropriate read function
-			readOptions, err := duckdb.GetDuckDBReadOptionsByMIMEType(objectPathDetails.ContentType)
-			if err != nil {
-				// If MIME type lookup fails, try using the object path (file extension)
-				readOptions, err = duckdb.GetDuckDBReadOptionsFromObject(object)
-				if err != nil {
-					return "", fmt.Errorf(
-						"unsupported object format: %s (content type: %s)",
-						object,
-						objectPathDetails.ContentType,
-					)
-				}
-			}
-
-			// Build the read query using the readOptions
-			objectSelector = duckdb.BuildReadQuery(objectAddress, readOptions)
+		// Build the object selector
+		objectSelector, selectorErr := buildObjectSelector(objectAddress, objectPathDetails, object, pl.Operation)
+		if selectorErr != nil {
+			return "", selectorErr
 		}
 
 		return objectSelector, nil
@@ -160,8 +279,13 @@ func executeQueryWithClient(
 }
 
 // ExecuteQuery executes a query in the specified workspace and returns the results.
-func (c *Client) ExecuteQuery(ctx context.Context, userWorkspace, query string) *irminmodels.QueryResult {
-	parsedQuery, err := parseIrminQuery(c, userWorkspace, query)
+func (c *Client) ExecuteQuery(
+	ctx context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	query string,
+) *irminmodels.QueryResult {
+	parsedQuery, err := parseIrminQuery(c, user, workspace, query)
 	if err != nil {
 		return &irminmodels.QueryResult{
 			HasErrors: true,

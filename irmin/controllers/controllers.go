@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"irmin-api/db"
-	"irmin-api/lib"
 	"irmin-api/locales"
 	"irmin-api/orchestrator"
+	"irmin-api/permissions"
 	"irmin-api/services"
 	"irmin-api/utils"
 	"log/slog"
@@ -25,7 +25,7 @@ type APIControllers struct {
 	Orchestrator      *orchestrator.Orchestrator
 	SQIDManager       *irminsqids.SQIDManager
 	lm                *locales.LocaleManager
-	permissionService *lib.PermissionService
+	permissionService *permissions.Service
 	validator         *irminvalidator.Validator
 	cacheStorage      fiber.Storage
 }

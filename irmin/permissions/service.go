@@ -1,4 +1,4 @@
-package lib
+package permissions
 
 import (
 	"crypto/sha256"
@@ -7,227 +7,21 @@ import (
 	"irmin-api/db"
 	"log/slog"
 	"strconv"
-	"sync"
 	"time"
 )
 
-const (
-	// DefaultCacheSize is the maximum number of entries allowed in the permission cache.
-	DefaultCacheSize = 10000
-
-	// OwnerPermissionCacheTTL is how long to cache permissions for workspace owners.
-	OwnerPermissionCacheTTL = 10 * time.Minute
-
-	// DefaultPermissionCacheTTL is the default TTL for cached permissions.
-	DefaultPermissionCacheTTL = 5 * time.Minute
-
-	// CleanupInterval defines how often to clean expired entries.
-	CleanupInterval = 1 * time.Minute
-)
-
-// PermissionCacheEntry represents a cached permission result.
-type PermissionCacheEntry struct {
-	Allowed   bool
-	ExpiresAt time.Time
-	Key       string // Store key for easier cleanup
-}
-
-// cacheNode represents a node in the doubly-linked list for LRU tracking.
-type cacheNode struct {
-	entry *PermissionCacheEntry
-	prev  *cacheNode
-	next  *cacheNode
-}
-
-// PermissionCache provides thread-safe LRU caching with TTL for permission results.
-type PermissionCache struct {
-	mu          sync.RWMutex
-	cache       map[string]*cacheNode
-	maxSize     int
-	head        *cacheNode // Most recently used
-	tail        *cacheNode // Least recently used
-	lastCleanup time.Time
-}
-
-// NewPermissionCache creates a new LRU permission cache with TTL.
-func NewPermissionCache() *PermissionCache {
-	// Create dummy head and tail nodes for the doubly-linked list
-	head := &cacheNode{}
-	tail := &cacheNode{}
-	head.next = tail
-	tail.prev = head
-
-	return &PermissionCache{
-		cache:       make(map[string]*cacheNode),
-		maxSize:     DefaultCacheSize,
-		head:        head,
-		tail:        tail,
-		lastCleanup: time.Now(),
-	}
-}
-
-// Get retrieves a cached permission result and updates its position in LRU order.
-func (pc *PermissionCache) Get(key string) (bool, bool) {
-	pc.mu.Lock()
-	defer pc.mu.Unlock()
-
-	// Check for periodic cleanup
-	pc.cleanupIfNeeded()
-
-	node, exists := pc.cache[key]
-	if !exists {
-		return false, false
-	}
-
-	// Check if entry is expired
-	if time.Now().After(node.entry.ExpiresAt) {
-		pc.removeNodeUnsafe(node)
-		delete(pc.cache, key)
-		return false, false
-	}
-
-	// Move to front (most recently used)
-	pc.moveToFrontUnsafe(node)
-	return node.entry.Allowed, true
-}
-
-// Set stores a permission result in cache with LRU eviction if necessary.
-func (pc *PermissionCache) Set(key string, allowed bool, ttl time.Duration) {
-	pc.mu.Lock()
-	defer pc.mu.Unlock()
-
-	// Check for periodic cleanup
-	pc.cleanupIfNeeded()
-
-	// If key already exists, update it
-	if node, exists := pc.cache[key]; exists {
-		node.entry.Allowed = allowed
-		node.entry.ExpiresAt = time.Now().Add(ttl)
-		pc.moveToFrontUnsafe(node)
-		return
-	}
-
-	// Create new entry
-	entry := &PermissionCacheEntry{
-		Allowed:   allowed,
-		ExpiresAt: time.Now().Add(ttl),
-		Key:       key,
-	}
-
-	// If cache is full, remove LRU entry
-	if len(pc.cache) >= pc.maxSize {
-		pc.evictLRUUnsafe()
-	}
-
-	// Add new entry to front
-	node := &cacheNode{entry: entry}
-	pc.cache[key] = node
-	pc.addToFrontUnsafe(node)
-}
-
-// cleanupIfNeeded performs cleanup if enough time has passed since last cleanup.
-func (pc *PermissionCache) cleanupIfNeeded() {
-	now := time.Now()
-	if now.Sub(pc.lastCleanup) >= CleanupInterval {
-		pc.cleanExpiredEntriesUnsafe()
-		pc.lastCleanup = now
-	}
-}
-
-// cleanExpiredEntriesUnsafe removes all expired entries (must be called with write lock).
-func (pc *PermissionCache) cleanExpiredEntriesUnsafe() {
-	now := time.Now()
-
-	// Traverse from tail (oldest) to head to remove expired entries
-	current := pc.tail.prev
-	for current != pc.head {
-		prev := current.prev // Store previous before potential removal
-
-		if now.After(current.entry.ExpiresAt) {
-			delete(pc.cache, current.entry.Key)
-			pc.removeNodeUnsafe(current)
-		}
-
-		current = prev
-	}
-}
-
-// evictLRUUnsafe removes the least recently used entry (must be called with write lock).
-func (pc *PermissionCache) evictLRUUnsafe() {
-	if pc.tail.prev == pc.head {
-		return // Empty cache
-	}
-
-	lru := pc.tail.prev
-	delete(pc.cache, lru.entry.Key)
-	pc.removeNodeUnsafe(lru)
-}
-
-// moveToFrontUnsafe moves a node to the front of the list (must be called with write lock).
-func (pc *PermissionCache) moveToFrontUnsafe(node *cacheNode) {
-	pc.removeNodeUnsafe(node)
-	pc.addToFrontUnsafe(node)
-}
-
-// addToFrontUnsafe adds a node to the front of the list (must be called with write lock).
-func (pc *PermissionCache) addToFrontUnsafe(node *cacheNode) {
-	node.prev = pc.head
-	node.next = pc.head.next
-	pc.head.next.prev = node
-	pc.head.next = node
-}
-
-// removeNodeUnsafe removes a node from the list (must be called with write lock).
-func (pc *PermissionCache) removeNodeUnsafe(node *cacheNode) {
-	node.prev.next = node.next
-	node.next.prev = node.prev
-}
-
-// Clear removes expired entries from cache.
-func (pc *PermissionCache) Clear() {
-	pc.mu.Lock()
-	defer pc.mu.Unlock()
-	pc.cleanExpiredEntriesUnsafe()
-}
-
-// Size returns the current number of entries in the cache.
-func (pc *PermissionCache) Size() int {
-	pc.mu.RLock()
-	defer pc.mu.RUnlock()
-	return len(pc.cache)
-}
-
-// CacheStats returns cache statistics for monitoring.
-type CacheStats struct {
-	Size        int
-	MaxSize     int
-	LastCleanup time.Time
-}
-
-// GetStats returns current cache statistics.
-func (pc *PermissionCache) GetStats() CacheStats {
-	pc.mu.RLock()
-	defer pc.mu.RUnlock()
-
-	return CacheStats{
-		Size:        len(pc.cache),
-		MaxSize:     pc.maxSize,
-		LastCleanup: pc.lastCleanup,
-	}
-}
-
-// PermissionService provides permission checking with caching.
-type PermissionService struct {
-	cache  *PermissionCache
+// Service provides permission checking with caching.
+type Service struct {
+	cache  *Cache
 	db     *db.Database
 	logger *slog.Logger
 }
 
-// NewPermissionService creates a new permission service.
-func NewPermissionService(db *db.Database, logger *slog.Logger) *PermissionService {
-	return &PermissionService{
-		cache:  NewPermissionCache(),
-		db:     db,
+// NewService creates a new permission service.
+func NewService(database *db.Database, logger *slog.Logger) *Service {
+	return &Service{
+		cache:  NewCache(),
+		db:     database,
 		logger: logger,
 	}
 }
@@ -264,7 +58,7 @@ type PolicyMatch struct {
 // It checks for explicit deny policies first, then for allow policies, and returns false if no policies match
 // It returns true if any allow policy matches, false if any deny policy matches, or an error if there's a database error
 // Workspace owners are always allowed to perform any action on any resource (ownership defined based on workspace.OwnerID or role.IsOwner).
-func (ps *PermissionService) IsAllowed(
+func (ps *Service) IsAllowed(
 	user *db.User,
 	workspace *db.Workspace,
 	resource db.PolicyResource,
@@ -478,12 +272,12 @@ func hasDenyPolicy(policies []PolicyMatch) bool {
 }
 
 // ClearPermissionCache clears expired entries from the permission cache.
-func (ps *PermissionService) ClearPermissionCache() {
+func (ps *Service) ClearPermissionCache() {
 	ps.cache.Clear()
 }
 
 // SetPermissionCacheTTL allows customizing the cache TTL for specific permissions.
-func (ps *PermissionService) SetPermissionCacheTTL(
+func (ps *Service) SetPermissionCacheTTL(
 	userID, workspaceID uint,
 	resource db.PolicyResource,
 	resourceID *uint,

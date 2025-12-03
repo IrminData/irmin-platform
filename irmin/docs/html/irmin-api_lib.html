@@ -8,19 +8,6 @@ package lib // import "irmin-api/lib"
 CONSTANTS
 
 const (
-	// DefaultCacheSize is the maximum number of entries allowed in the permission cache.
-	DefaultCacheSize = 10000
-
-	// OwnerPermissionCacheTTL is how long to cache permissions for workspace owners.
-	OwnerPermissionCacheTTL = 10 * time.Minute
-
-	// DefaultPermissionCacheTTL is the default TTL for cached permissions.
-	DefaultPermissionCacheTTL = 5 * time.Minute
-
-	// CleanupInterval defines how often to clean expired entries.
-	CleanupInterval = 1 * time.Minute
-)
-const (
 	// ConnectionSchemaCacheMaxAge is the maximum age of a connection schema cache entry.
 	ConnectionSchemaCacheMaxAge = 12 * time.Hour
 )
@@ -120,21 +107,6 @@ func GetRepository(
 	repositorySlug string,
 	ignoreCache bool,
 ) (*db.Repository, error)
-func IsAllowedFilter[T any](
-	ps *PermissionService,
-	user *db.User,
-	workspace *db.Workspace,
-	resource db.PolicyResource,
-	action db.PolicyAction,
-	resources []T,
-	idExtractor func(T) uint,
-) ([]T, error)
-    IsAllowedFilter filters a list of resources based on user permissions.
-    It returns only the resources that the user has access to for the given
-    action. The function is optimized to minimize database queries by batching
-    permission checks. The idExtractor function should return the ID of the
-    resource.
-
 func NewSafeHTTPClient(ctx context.Context) *http.Client
     NewSafeHTTPClient creates an HTTP client with timeouts, redirect checks,
     and IP blocking via Dialer.Control.
@@ -233,13 +205,6 @@ func TeardownTestSuite()
 
 TYPES
 
-type CacheStats struct {
-	Size        int
-	MaxSize     int
-	LastCleanup time.Time
-}
-    CacheStats returns cache statistics for monitoring.
-
 type InviteNotificationParams struct {
 	Invite              *db.Invite
 	Workspace           *db.Workspace
@@ -289,83 +254,6 @@ func SendResendInviteNotification(
 ) (*InviteNotificationResult, error)
     SendResendInviteNotification sends an invitation notification via Resend
     email.
-
-type PermissionCache struct {
-	// Has unexported fields.
-}
-    PermissionCache provides thread-safe LRU caching with TTL for permission
-    results.
-
-func NewPermissionCache() *PermissionCache
-    NewPermissionCache creates a new LRU permission cache with TTL.
-
-func (pc *PermissionCache) Clear()
-    Clear removes expired entries from cache.
-
-func (pc *PermissionCache) Get(key string) (bool, bool)
-    Get retrieves a cached permission result and updates its position in LRU
-    order.
-
-func (pc *PermissionCache) GetStats() CacheStats
-    GetStats returns current cache statistics.
-
-func (pc *PermissionCache) Set(key string, allowed bool, ttl time.Duration)
-    Set stores a permission result in cache with LRU eviction if necessary.
-
-func (pc *PermissionCache) Size() int
-    Size returns the current number of entries in the cache.
-
-type PermissionCacheEntry struct {
-	Allowed   bool
-	ExpiresAt time.Time
-	Key       string // Store key for easier cleanup
-}
-    PermissionCacheEntry represents a cached permission result.
-
-type PermissionService struct {
-	// Has unexported fields.
-}
-    PermissionService provides permission checking with caching.
-
-func NewPermissionService(db *db.Database, logger *slog.Logger) *PermissionService
-    NewPermissionService creates a new permission service.
-
-func (ps *PermissionService) ClearPermissionCache()
-    ClearPermissionCache clears expired entries from the permission cache.
-
-func (ps *PermissionService) IsAllowed(
-	user *db.User,
-	workspace *db.Workspace,
-	resource db.PolicyResource,
-	resourceID *uint,
-	action db.PolicyAction,
-) (bool, error)
-    IsAllowed checks if a user is allowed to perform an action on a resource
-    It checks for explicit deny policies first, then for allow policies,
-    and returns false if no policies match It returns true if any allow policy
-    matches, false if any deny policy matches, or an error if there's a database
-    error Workspace owners are always allowed to perform any action on any
-    resource (ownership defined based on workspace.OwnerID or role.IsOwner).
-
-func (ps *PermissionService) SetPermissionCacheTTL(
-	userID, workspaceID uint,
-	resource db.PolicyResource,
-	resourceID *uint,
-	action db.PolicyAction,
-	allowed bool,
-	ttl time.Duration,
-)
-    SetPermissionCacheTTL allows customizing the cache TTL for specific
-    permissions.
-
-type PolicyMatch struct {
-	Effect          db.PolicyEffect
-	Principal       db.PolicyPrincipal
-	WorkspaceUserID *uint
-	RoleID          *uint
-	ResourceID      *uint
-}
-    PolicyMatch represents a matched policy from the database.
 
 type SchemaCacheManager struct {
 	// Has unexported fields.

@@ -72,7 +72,8 @@ func (mcpTools *MCPTools) RegisterWorkspaceTools()
     RegisterWorkspaceTools registers the tools for workspace management.
 
 type RetrieveContextRequest struct {
-	Query string `json:"query"`
+	Query       string   `json:"query"`
+	Collections []string `json:"collections,omitempty"`
 }
     RetrieveContextRequest represents the request structure for retrieving
     context

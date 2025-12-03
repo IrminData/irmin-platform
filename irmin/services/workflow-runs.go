@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"slices"
 	"time"
 
@@ -308,7 +309,7 @@ func (api *APIServices) ListAllWorkflowRuns(
 	}
 
 	// Filter workflow runs based on user permissions for the associated workflows
-	filteredRuns, err := lib.IsAllowedFilter(
+	filteredRuns, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

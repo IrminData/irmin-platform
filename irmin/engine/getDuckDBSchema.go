@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"irmin-api/db"
 	"irmin-api/duckdb"
 	"irmin-api/utils"
 	"os"
@@ -301,7 +302,9 @@ func getDuckDBSchema(
 	ctx context.Context,
 	c *Client,
 	env *utils.CoreAPIEnv,
-	userWorkspace, repository, path, ref string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository, path, ref string,
 ) ([]SchemaField, error) {
 	qc, newQueryClientErr := duckdb.NewQueryClient(ctx, env, c.Logger)
 	if newQueryClientErr != nil {
@@ -311,7 +314,7 @@ func getDuckDBSchema(
 
 	// build and parse placeholder SELECT
 	simple := fmt.Sprintf(`SELECT * FROM $["%s;%s@%s"];`, repository, path, ref)
-	parsed, parseIrminQueryErr := parseIrminQuery(c, userWorkspace, simple)
+	parsed, parseIrminQueryErr := parseIrminQuery(c, user, workspace, simple)
 	if parseIrminQueryErr != nil {
 		return nil, fmt.Errorf("failed to parse query: %w", parseIrminQueryErr)
 	}

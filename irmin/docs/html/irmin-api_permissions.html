@@ -1,0 +1,128 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/permissions</title></head><body>
+<h1>Package irmin-api/permissions</h1>
+<pre>
+package permissions // import "irmin-api/permissions"
+
+
+CONSTANTS
+
+const (
+	// DefaultCacheSize is the maximum number of entries allowed in the permission cache.
+	DefaultCacheSize = 10000
+
+	// OwnerPermissionCacheTTL is how long to cache permissions for workspace owners.
+	OwnerPermissionCacheTTL = 10 * time.Minute
+
+	// DefaultPermissionCacheTTL is the default TTL for cached permissions.
+	DefaultPermissionCacheTTL = 5 * time.Minute
+
+	// CleanupInterval defines how often to clean expired entries.
+	CleanupInterval = 1 * time.Minute
+)
+
+FUNCTIONS
+
+func IsAllowedFilter[T any](
+	ps *Service,
+	user *db.User,
+	workspace *db.Workspace,
+	resource db.PolicyResource,
+	action db.PolicyAction,
+	resources []T,
+	idExtractor func(T) uint,
+) ([]T, error)
+    IsAllowedFilter filters a list of resources based on user permissions.
+    It returns only the resources that the user has access to for the given
+    action. The function is optimized to minimize database queries by batching
+    permission checks. The idExtractor function should return the ID of the
+    resource.
+
+
+TYPES
+
+type Cache struct {
+	// Has unexported fields.
+}
+    Cache provides thread-safe LRU caching with TTL for permission results.
+
+func NewCache() *Cache
+    NewCache creates a new LRU permission cache with TTL.
+
+func (pc *Cache) Clear()
+    Clear removes expired entries from cache.
+
+func (pc *Cache) Get(key string) (bool, bool)
+    Get retrieves a cached permission result and updates its position in LRU
+    order.
+
+func (pc *Cache) GetStats() Stats
+    GetStats returns current cache statistics.
+
+func (pc *Cache) Set(key string, allowed bool, ttl time.Duration)
+    Set stores a permission result in cache with LRU eviction if necessary.
+
+func (pc *Cache) Size() int
+    Size returns the current number of entries in the cache.
+
+type CacheEntry struct {
+	Allowed   bool
+	ExpiresAt time.Time
+	Key       string // Store key for easier cleanup
+}
+    CacheEntry represents a cached permission result.
+
+type PolicyMatch struct {
+	Effect          db.PolicyEffect
+	Principal       db.PolicyPrincipal
+	WorkspaceUserID *uint
+	RoleID          *uint
+	ResourceID      *uint
+}
+    PolicyMatch represents a matched policy from the database.
+
+type Service struct {
+	// Has unexported fields.
+}
+    Service provides permission checking with caching.
+
+func NewService(database *db.Database, logger *slog.Logger) *Service
+    NewService creates a new permission service.
+
+func (ps *Service) ClearPermissionCache()
+    ClearPermissionCache clears expired entries from the permission cache.
+
+func (ps *Service) IsAllowed(
+	user *db.User,
+	workspace *db.Workspace,
+	resource db.PolicyResource,
+	resourceID *uint,
+	action db.PolicyAction,
+) (bool, error)
+    IsAllowed checks if a user is allowed to perform an action on a resource
+    It checks for explicit deny policies first, then for allow policies,
+    and returns false if no policies match It returns true if any allow policy
+    matches, false if any deny policy matches, or an error if there's a database
+    error Workspace owners are always allowed to perform any action on any
+    resource (ownership defined based on workspace.OwnerID or role.IsOwner).
+
+func (ps *Service) SetPermissionCacheTTL(
+	userID, workspaceID uint,
+	resource db.PolicyResource,
+	resourceID *uint,
+	action db.PolicyAction,
+	allowed bool,
+	ttl time.Duration,
+)
+    SetPermissionCacheTTL allows customizing the cache TTL for specific
+    permissions.
+
+type Stats struct {
+	Size        int
+	MaxSize     int
+	LastCleanup time.Time
+}
+    Stats returns cache statistics for monitoring.
+
+</pre>
+</body></html>

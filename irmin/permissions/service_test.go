@@ -1,8 +1,9 @@
-package lib_test
+package permissions_test
 
 import (
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"log/slog"
 	"testing"
 	"time"
@@ -194,7 +195,7 @@ func createTestCases(
 func TestPermissionService_IsAllowed(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
-	ps := lib.NewPermissionService(ts.DB, logger)
+	ps := permissions.NewService(ts.DB, logger)
 
 	// Setup test environment
 	workspace, user, workspaceOwner, originalRoleIDs, cleanup := setupTestEnvironment(t, ts)
@@ -230,7 +231,7 @@ func TestPermissionService_IsAllowed(t *testing.T) {
 func TestResourceSpecificityPrecedence(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
-	ps := lib.NewPermissionService(ts.DB, logger)
+	ps := permissions.NewService(ts.DB, logger)
 
 	// Find the test workspace
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)
@@ -365,7 +366,7 @@ func TestResourceSpecificityPrecedence(t *testing.T) {
 func TestPermissionCache(t *testing.T) {
 	ts := lib.GetTestSuite()
 	logger := slog.New(slog.NewTextHandler(nil, nil))
-	ps := lib.NewPermissionService(ts.DB, logger)
+	ps := permissions.NewService(ts.DB, logger)
 
 	// Find the test workspace
 	workspace, err := ts.DB.GetWorkspaceBySlug(ts.Env.TestWorkspace)

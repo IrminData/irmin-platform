@@ -53,11 +53,12 @@ func (m *BranchProtectionManager) UpdateBranchProtection(repositoryName, branchN
     UpdateBranchProtection updates protection rules for a branch.
 
 type Client struct {
-	Locale       string
-	LakeFSClient *lakefs.Client
-	Logger       *slog.Logger
-	Env          *utils.CoreAPIEnv
-	DB           *db.Database
+	Locale            string
+	LakeFSClient      *lakefs.Client
+	Logger            *slog.Logger
+	Env               *utils.CoreAPIEnv
+	DB                *db.Database
+	PermissionChecker PermissionChecker
 	// Has unexported fields.
 }
     Client represents the Irmin Data Engine API client.
@@ -180,13 +181,20 @@ func (c *Client) DeleteRepository(ctx context.Context, workspace, repository str
 
 func (c *Client) DeleteTag(workspace, repository, tag string) error
 
-func (c *Client) ExecuteQuery(ctx context.Context, userWorkspace, query string) *irminmodels.QueryResult
+func (c *Client) ExecuteQuery(
+	ctx context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	query string,
+) *irminmodels.QueryResult
     ExecuteQuery executes a query in the specified workspace and returns the
     results.
 
 func (c *Client) GenerateObjectSchema(
 	ctx context.Context,
-	workspace, repository, path, ref string,
+	user *db.User,
+	workspace *db.Workspace,
+	repository, path, ref string,
 ) (*irminmodels.ObjectSchema, error)
 
 func (c *Client) GenerateSchemaFromFile(
@@ -267,6 +275,9 @@ func (c *Client) PushFilesToConnector(
 
 func (c *Client) RevertUncommitedChanges(workspace, repository, branch, path, pathType string) error
 
+func (c *Client) SetPermissionChecker(pc PermissionChecker)
+    SetPermissionChecker sets the PermissionChecker for the client.
+
 func (c *Client) UpdateBranch(
 	ctx context.Context,
 	workspace, repository, currentName, name string,
@@ -286,6 +297,17 @@ type FieldMappingResult struct {
 }
     FieldMappingResult represents the result of applying field mappings,
     containing the destination file path and its transformed content.
+
+type PermissionChecker interface {
+	IsAllowed(
+		user *db.User,
+		workspace *db.Workspace,
+		resource db.PolicyResource,
+		resourceID *uint,
+		action db.PolicyAction,
+	) (bool, error)
+}
+    PermissionChecker interface defines the method for checking permissions.
 
 type Repository struct {
 	// Repository ID

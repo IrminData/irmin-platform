@@ -7,6 +7,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/formatter"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"irmin-api/utils"
 	"slices"
 	"strconv"
@@ -183,7 +184,7 @@ func (api *APIServices) GetPoliciesForWorkspace(
 	}
 
 	// Filter policies based on user permissions
-	filteredPolicies, err := lib.IsAllowedFilter(
+	filteredPolicies, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

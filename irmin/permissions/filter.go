@@ -1,4 +1,4 @@
-package lib
+package permissions
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 // The function is optimized to minimize database queries by batching permission checks.
 // The idExtractor function should return the ID of the resource.
 func IsAllowedFilter[T any](
-	ps *PermissionService,
+	ps *Service,
 	user *db.User,
 	workspace *db.Workspace,
 	resource db.PolicyResource,

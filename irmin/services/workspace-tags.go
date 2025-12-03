@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -277,7 +278,7 @@ func (api *APIServices) ListWorkspaceTags(
 	}
 
 	// Filter tags based on user permissions
-	filteredTags, err := lib.IsAllowedFilter(
+	filteredTags, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

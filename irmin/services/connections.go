@@ -6,6 +6,7 @@ import (
 	connectorsclient "irmin-api/connectors-client"
 	"irmin-api/db"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"irmin-api/utils"
 	"maps"
 
@@ -98,7 +99,7 @@ func (api *APIServices) ListConnections(
 	}
 
 	// Filter connections based on user permissions
-	filteredConnections, err := lib.IsAllowedFilter(
+	filteredConnections, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,

@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/engine"
 	"irmin-api/lib"
+	"irmin-api/permissions"
 	"irmin-api/utils"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -83,7 +84,7 @@ func (api *APIServices) ListRepositories(
 	}
 
 	// Filter repositories based on user permissions
-	filteredRepositories, err := lib.IsAllowedFilter(
+	filteredRepositories, err := permissions.IsAllowedFilter(
 		api.PermissionService,
 		user,
 		workspace,
