@@ -21,4 +21,4 @@ hooks:
       url: '{webhook_url}'
       duration: 15s
       headers:
-        Authorization: 'Bearer {{ ENV.IRMIN_API_TOKEN }}'
+        Authorization: 'Bearer {{ ENV.LAKEFSACTIONS_IRMIN_API_TOKEN }}'

@@ -283,8 +283,15 @@ func (c *Client) configureRepositoryWebhookNotificationsInternal(
 	// Read the default lakefs actions file
 	defaultActions := string(defaultLakeFSActionsYAML)
 
+	// If the API URL is referring to localhost, we should replace the "localhost" part with "host.docker.internal",
+	// So that LakeFS can access it from within its own container.
+	apiBaseURL := c.Env.URL
+	if strings.Contains(apiBaseURL, "localhost") {
+		apiBaseURL = strings.ReplaceAll(apiBaseURL, "localhost", "host.docker.internal")
+	}
+
 	// Find replace the webhook_url in the default actions
-	lakefsWebhookURL := fmt.Sprintf("%s/api/v1/system/webhook?type=lakefs", c.Env.URL)
+	lakefsWebhookURL := fmt.Sprintf("%s/api/v1/system/webhook?type=lakefs", apiBaseURL)
 	defaultActions = strings.ReplaceAll(defaultActions, "{webhook_url}", lakefsWebhookURL)
 
 	// Upload the action file to the repository
