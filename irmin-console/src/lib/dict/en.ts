@@ -687,11 +687,21 @@ const en = {
       'Irmin uses DuckDB, a high-performance analytical database. All standard SQL syntax and DuckDB-specific functions are supported.',
     duckDbDocs: 'DuckDB SQL Documentation',
     context: 'Query Context',
+    recommended: 'Recommended',
     placeholderSyntax: 'Placeholder Syntax',
     placeholderDescription:
-      'Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions. Every query must include at least one placeholder.',
+      'Irmin uses a special placeholder syntax to reference data across workspaces, repositories, and versions. This is the recommended syntax for most use cases.',
+    placeholderRecommended:
+      'Placeholders are portable and provide better clarity.',
     placeholderSyntaxNote:
       'Ref (branch/commit) is optional. Workspace is optional if running in the same workspace.',
+    alternativeS3Syntax: 'Alternative: Native DuckDB S3 Syntax',
+    alternativeS3Description:
+      'For advanced use cases, you can also use native DuckDB functions with direct S3 paths.',
+    s3FormatNote: 'S3 format: s3://workspace-repository/branch/path',
+    alternativeS3Example: 'Native DuckDB S3 Syntax (Alternative)',
+    alternativeS3ExampleExplanation:
+      'Use native DuckDB functions with S3 paths for advanced use cases. Both syntaxes enforce the same permissions.',
     basicSyntax: 'Basic Syntax',
     examples: 'Query Examples',
     queryDocumentationTab: 'SQL Syntax',

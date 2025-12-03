@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   TbCheck,
+  TbChevronDown,
   TbCopy,
   TbExternalLink,
   TbInfoCircle,
@@ -13,6 +14,11 @@ import {
 import { JSONSchemaViewer } from '@/components/repository/objects/SchemaViewer/JSONSchemaViewer';
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -262,18 +268,51 @@ export default function SqlHelper({
             <section className='mb-4 px-2'>
               <div className='rounded-md border bg-card p-2'>
                 <h3 className='mb-2 text-sm font-semibold'>
-                  {dict.queryHelper.placeholderSyntax}
+                  {dict.queryHelper.placeholderSyntax} (
+                  {dict.queryHelper.recommended})
                 </h3>
                 <p className='mb-3 text-xs text-muted-foreground'>
                   {dict.queryHelper.placeholderDescription}
                 </p>
                 <div className='rounded-md bg-muted p-2 font-mono text-xs'>
-                  {`$["workspace;repository;object@ref"]`}
+                  {`$["workspace;repository;object.json@ref"]`}
                 </div>
                 <p className='mt-2 text-xs text-muted-foreground'>
                   {dict.queryHelper.placeholderSyntaxNote}
                 </p>
               </div>
+            </section>
+
+            {/* Alternative S3 Syntax Section */}
+            <section className='mb-4 px-2'>
+              <Collapsible>
+                <div className='rounded-md border bg-card'>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      className='flex w-full items-center justify-between p-2'
+                    >
+                      <h3 className='text-sm font-semibold'>
+                        {dict.queryHelper.alternativeS3Syntax}
+                      </h3>
+                      <TbChevronDown className='size-4' />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className='p-2'>
+                    <p className='mb-3 text-xs text-muted-foreground'>
+                      {dict.queryHelper.alternativeS3Description}
+                    </p>
+                    <div className='rounded-md bg-muted p-2 font-mono text-xs'>
+                      {context
+                        ? `read_json('s3://${context.repository}/${context.ref || 'main'}/sample.json')`
+                        : `read_json('s3://workspace-repository/branch/sample.json')`}
+                    </div>
+                    <p className='mt-2 text-xs text-muted-foreground'>
+                      {dict.queryHelper.s3FormatNote}
+                    </p>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
             </section>
 
             <Separator className='my-4' />
@@ -514,6 +553,43 @@ export default function SqlHelper({
                       code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM $["repo;time-series.json"]\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
                       explanation={dict.queryHelper.explanations.timeSeries}
                     />
+                  )}
+
+                  {/* Native DuckDB S3 Example */}
+                  {context && (
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <div
+                          className={`
+                            flex cursor-pointer items-center justify-between
+                            rounded-md border bg-card
+                          `}
+                        >
+                          <div
+                            className={`
+                              flex flex-1 items-center justify-between border-b
+                              bg-muted/30 px-3 py-1.5
+                            `}
+                          >
+                            <div className='flex items-center gap-1.5'>
+                              <span className='text-xs font-medium'>
+                                {dict.queryHelper.alternativeS3Example}
+                              </span>
+                            </div>
+                            <TbChevronDown className='size-4' />
+                          </div>
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <ExampleItem
+                          title={dict.queryHelper.alternativeS3Example}
+                          code={`SELECT * FROM read_json('s3://${context.repository}/${context.ref || 'main'}/sample.json') LIMIT 10;`}
+                          explanation={
+                            dict.queryHelper.alternativeS3ExampleExplanation
+                          }
+                        />
+                      </CollapsibleContent>
+                    </Collapsible>
                   )}
                 </div>
               </section>

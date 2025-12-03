@@ -670,11 +670,21 @@ const fi = {
       'Irmin käyttää DuckDB:tä, suorituskykyistä analytiikkatietokantaa. Kaikki standardi SQL-syntaksi ja DuckDB:n erityisfunktiot ovat tuettuja.',
     duckDbDocs: 'DuckDB SQL-dokumentaatio',
     context: 'Kyselyn konteksti',
+    recommended: 'Suositeltu',
     placeholderSyntax: 'Paikkamerkkisyntaksi',
     placeholderDescription:
-      'Irmin käyttää erityistä paikkamerkkisyntaksia viitatakseen dataan eri työtilojen, data-arkistojen ja versioiden välillä. Jokaisessa kyselyssä on oltava vähintään yksi paikkamerkki.',
+      'Irmin käyttää erityistä paikkamerkkisyntaksia viitatakseen dataan eri työtilojen, data-arkistojen ja versioiden välillä. Tämä on suositeltu syntaksi useimmissa käyttötapauksissa.',
+    placeholderRecommended:
+      'Paikkamerkit ovat siirrettäviä ja tarjoavat paremman selkeyden.',
     placeholderSyntaxNote:
       'Ref (haara/commit) on valinnainen. Työtila on valinnainen, jos ajetaan samassa työtilassa.',
+    alternativeS3Syntax: 'Vaihtoehto: Natiivi DuckDB S3 -syntaksi',
+    alternativeS3Description:
+      'Edistyneissä käyttötapauksissa voit myös käyttää natiiveja DuckDB-funktioita suorilla S3-poluilla.',
+    s3FormatNote: 'S3-muoto: s3://työtila-arkisto/haara/polku',
+    alternativeS3Example: 'Natiivi DuckDB S3 -syntaksi (Vaihtoehto)',
+    alternativeS3ExampleExplanation:
+      'Käytä natiiveja DuckDB-funktioita S3-poluilla edistyneissä käyttötapauksissa. Molemmat syntaksit pakottavat samat käyttöoikeudet.',
     basicSyntax: 'Perussyntaksi',
     examples: 'Kyselyesimerkit',
     queryDocumentationTab: 'SQL-syntaksi',
