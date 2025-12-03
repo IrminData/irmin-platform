@@ -1,4 +1,5 @@
 import { indexingService } from '@/vector';
+import { qdrantService } from '@/vector/QdrantService';
 import { collectionService } from '@/vector/vectorCollections';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs/promises';
@@ -510,6 +511,7 @@ export class VectorizeDocsScript {
 
   /**
    * Ensure the collection exists or create it
+   * Creates both the database record and the Qdrant collection
    */
   private async ensureCollection(): Promise<string> {
     try {
@@ -523,17 +525,27 @@ export class VectorizeDocsScript {
         );
 
       if (existingCollection) {
+        // Collection exists in DB, ensure it exists in Qdrant
+        await qdrantService.ensureCollection(existingCollection.name);
         return existingCollection.id;
       }
 
-      // Create new collection
-      const collection = await this.collectionService.createCollection({
-        name: this.config.collectionName,
-        description: `Auto-generated collection for ${this.config.collectionName} documentation`,
-        embeddingModel: 'text-embedding-3-small',
-        embeddingDimensions: 1536,
-        isSystemCollection: true,
-      });
+      // Create new system collection (both DB and Qdrant)
+      await indexingService.createSystemVectorStore(
+        this.config.collectionName,
+        `Auto-generated collection for ${this.config.collectionName} documentation`
+      );
+
+      const collection = await this.collectionService.getCollectionByName(
+        this.config.collectionName,
+        undefined,
+        undefined,
+        true
+      );
+
+      if (!collection) {
+        throw new Error('Collection was not created');
+      }
 
       return collection.id;
     } catch (error) {
@@ -559,12 +571,6 @@ export class VectorizeDocsScript {
         throw new Error('Collection not found');
       }
 
-      // Create vector store connection
-      const vectorStore = await indexingService.initVectorStore(
-        collectionConfig.name,
-        true
-      );
-
       // Convert chunks to vector documents
       const vectorDocuments = chunks.map((chunk) => ({
         pageContent: chunk.content,
@@ -586,11 +592,7 @@ export class VectorizeDocsScript {
           `Processing batch ${i + 1}/${batches.length} (${batch.length} chunks)`
         );
 
-        await indexingService.indexDocuments(
-          vectorStore,
-          batch,
-          collectionConfig.name
-        );
+        await indexingService.indexDocuments(collectionConfig.name, batch);
       }
     } catch (error) {
       throw new Error(
@@ -643,14 +645,32 @@ export class VectorizeDocsScript {
         return [];
       }
 
-      const vectorStore = await indexingService.initVectorStore(
-        collectionConfig.name,
-        true
-      );
+      // If collection has no documents, skip querying Qdrant
+      if (
+        !collectionConfig.documentCount ||
+        collectionConfig.documentCount === 0
+      ) {
+        console.log(
+          `Collection ${collectionConfig.name} has no documents, skipping chunk retrieval`
+        );
+        return [];
+      }
+
+      try {
+        await indexingService.validateCollectionAccess(
+          collectionConfig.name,
+          true
+        );
+      } catch (error) {
+        console.warn(
+          `Failed to connect to Qdrant collection ${collectionConfig.name}, assuming no existing chunks: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        return [];
+      }
 
       const chunkIds: string[] = [];
       const batchSize = 1000; // Process in smaller batches for better memory management
-      let offset: string | undefined = undefined;
+      let offset: string | number | undefined = undefined;
       let totalPointsProcessed = 0;
 
       console.log(
@@ -659,28 +679,14 @@ export class VectorizeDocsScript {
 
       // Use Qdrant's scroll API with pagination to retrieve all points
       while (true) {
-        const scrollParams: {
-          limit: number;
-          with_payload: boolean;
-          with_vector: boolean;
-          offset?: string;
-        } = {
-          limit: batchSize,
-          with_payload: true,
-          with_vector: false,
-        };
-
-        // Add offset for pagination (except for first request)
-        if (offset) {
-          scrollParams.offset = offset;
-        }
-
-        const batchResult = await vectorStore.client.scroll(
+        const scrollResult = await qdrantService.scroll(
           collectionConfig.name,
-          scrollParams
+          undefined,
+          batchSize,
+          offset
         );
 
-        const points = batchResult.points || [];
+        const points = scrollResult.points;
 
         if (points.length === 0) {
           // No more points to process
@@ -689,15 +695,13 @@ export class VectorizeDocsScript {
 
         // Process points in this batch
         for (const point of points) {
-          if (
-            point.payload &&
-            typeof point.payload === 'object' &&
-            'metadata' in point.payload &&
-            point.payload.metadata &&
-            typeof point.payload.metadata === 'object' &&
-            'documentId' in point.payload.metadata
-          ) {
-            const chunkDocId = point.payload.metadata.documentId as string;
+          const payload = point.payload as Record<string, unknown> | undefined;
+          const metadata = payload?.metadata as
+            | Record<string, unknown>
+            | undefined;
+
+          if (metadata && typeof metadata.documentId === 'string') {
+            const chunkDocId = metadata.documentId;
             if (chunkDocId && !chunkIds.includes(chunkDocId)) {
               chunkIds.push(chunkDocId);
             }
@@ -712,9 +716,9 @@ export class VectorizeDocsScript {
           break;
         }
 
-        // Use the last point's ID as offset for next request
-        const lastPoint = points[points.length - 1];
-        offset = lastPoint.id?.toString();
+        // Use the returned next offset
+        offset = scrollResult.nextOffset || undefined;
+        if (!offset) break;
       }
 
       console.log(
@@ -745,16 +749,15 @@ export class VectorizeDocsScript {
         throw new Error('Collection not found');
       }
 
-      const vectorStore = await indexingService.initVectorStore(
+      await indexingService.validateCollectionAccess(
         collectionConfig.name,
         true
       );
 
       // Remove specific existing chunks that were present before indexing new ones
       const deletionResult = await indexingService.deleteSpecificChunks(
-        vectorStore,
-        documentIds,
-        collectionConfig.name
+        collectionConfig.name,
+        documentIds
       );
 
       if (deletionResult.errors.length > 0) {

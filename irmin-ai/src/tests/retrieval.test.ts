@@ -74,21 +74,17 @@ async function testBasicSearch(): Promise<boolean> {
 
   try {
     // Create vector store connection
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
     // Test basic similarity search
-    const searchResult = await retrievalService.searchSimilar(
-      vectorStore,
-      {
-        query: 'Irmin SDK documentation',
-        k: 3,
-        scoreThreshold: 0.1,
-      },
-      TEST_COLLECTION_NAME
-    );
+    const searchResult = await retrievalService.searchSimilar(collectionName, {
+      query: 'Irmin SDK documentation',
+      k: 3,
+      scoreThreshold: 0.1,
+    });
 
     if (searchResult.documents.length === 0) {
       logTest(
@@ -137,22 +133,21 @@ async function testContextRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store connection
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
     // Test context retrieval
     const contextResult = await retrievalService.retrieveContext(
-      vectorStore,
+      collectionName,
       'How to use Irmin SDK for data management',
       {
         maxDocuments: 3,
         scoreThreshold: 0.2,
         includeMetadata: true,
         maxTokens: 2000,
-      },
-      TEST_COLLECTION_NAME
+      }
     );
 
     if (!contextResult.context || contextResult.sources.length === 0) {
@@ -187,7 +182,7 @@ async function testConceptsQueries(): Promise<boolean> {
   logTest('Concepts Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -200,15 +195,11 @@ async function testConceptsQueries(): Promise<boolean> {
     }> = [];
 
     for (const query of TEST_QUERIES.concepts) {
-      const result = await retrievalService.searchSimilar(
-        vectorStore,
-        {
-          query,
-          k: 3,
-          scoreThreshold: 0.1,
-        },
-        TEST_COLLECTION_NAME
-      );
+      const result = await retrievalService.searchSimilar(collectionName, {
+        query,
+        k: 3,
+        scoreThreshold: 0.1,
+      });
 
       const avgScore =
         result.documents.length > 0
@@ -254,7 +245,7 @@ async function testWorkflowsQueries(): Promise<boolean> {
   logTest('Workflows Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -267,15 +258,11 @@ async function testWorkflowsQueries(): Promise<boolean> {
     }> = [];
 
     for (const query of TEST_QUERIES.workflows) {
-      const result = await retrievalService.searchSimilar(
-        vectorStore,
-        {
-          query,
-          k: 3,
-          scoreThreshold: 0.1,
-        },
-        TEST_COLLECTION_NAME
-      );
+      const result = await retrievalService.searchSimilar(collectionName, {
+        query,
+        k: 3,
+        scoreThreshold: 0.1,
+      });
 
       const avgScore =
         result.documents.length > 0
@@ -321,7 +308,7 @@ async function testConnectionsQueries(): Promise<boolean> {
   logTest('Connections Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -334,15 +321,11 @@ async function testConnectionsQueries(): Promise<boolean> {
     }> = [];
 
     for (const query of TEST_QUERIES.connections) {
-      const result = await retrievalService.searchSimilar(
-        vectorStore,
-        {
-          query,
-          k: 3,
-          scoreThreshold: 0.1,
-        },
-        TEST_COLLECTION_NAME
-      );
+      const result = await retrievalService.searchSimilar(collectionName, {
+        query,
+        k: 3,
+        scoreThreshold: 0.1,
+      });
 
       const avgScore =
         result.documents.length > 0
@@ -388,7 +371,7 @@ async function testScriptingQueries(): Promise<boolean> {
   logTest('Scripting Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -401,15 +384,11 @@ async function testScriptingQueries(): Promise<boolean> {
     }> = [];
 
     for (const query of TEST_QUERIES.scripting) {
-      const result = await retrievalService.searchSimilar(
-        vectorStore,
-        {
-          query,
-          k: 3,
-          scoreThreshold: 0.1,
-        },
-        TEST_COLLECTION_NAME
-      );
+      const result = await retrievalService.searchSimilar(collectionName, {
+        query,
+        k: 3,
+        scoreThreshold: 0.1,
+      });
 
       const avgScore =
         result.documents.length > 0
@@ -455,7 +434,7 @@ async function testSqlQueries(): Promise<boolean> {
   logTest('SQL Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -468,15 +447,11 @@ async function testSqlQueries(): Promise<boolean> {
     }> = [];
 
     for (const query of TEST_QUERIES.sql) {
-      const result = await retrievalService.searchSimilar(
-        vectorStore,
-        {
-          query,
-          k: 3,
-          scoreThreshold: 0.1,
-        },
-        TEST_COLLECTION_NAME
-      );
+      const result = await retrievalService.searchSimilar(collectionName, {
+        query,
+        k: 3,
+        scoreThreshold: 0.1,
+      });
 
       const avgScore =
         result.documents.length > 0
@@ -522,7 +497,7 @@ async function testObjectSchemaQueries(): Promise<boolean> {
   logTest('Object Schema Queries', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -535,15 +510,11 @@ async function testObjectSchemaQueries(): Promise<boolean> {
     }> = [];
 
     for (const query of TEST_QUERIES.objectSchema) {
-      const result = await retrievalService.searchSimilar(
-        vectorStore,
-        {
-          query,
-          k: 3,
-          scoreThreshold: 0.1,
-        },
-        TEST_COLLECTION_NAME
-      );
+      const result = await retrievalService.searchSimilar(collectionName, {
+        query,
+        k: 3,
+        scoreThreshold: 0.1,
+      });
 
       const avgScore =
         result.documents.length > 0
@@ -589,7 +560,7 @@ async function testMultiQueryRetrieval(): Promise<boolean> {
   logTest('Multi-Query Retrieval', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -602,14 +573,13 @@ async function testMultiQueryRetrieval(): Promise<boolean> {
     ];
 
     const multiQueryResult = await retrievalService.multiQueryRetrieval(
-      vectorStore,
+      collectionName,
       queries,
       {
         maxDocumentsPerQuery: 2,
         combineResults: true,
         deduplicateByContent: true,
-      },
-      TEST_COLLECTION_NAME
+      }
     );
 
     if (multiQueryResult.length !== queries.length) {
@@ -653,21 +623,17 @@ async function testHighScoreThreshold(): Promise<boolean> {
   logTest('High Score Threshold', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
     // Test with high score threshold
-    const result = await retrievalService.searchSimilar(
-      vectorStore,
-      {
-        query: 'Irmin SDK Go documentation',
-        k: 10,
-        scoreThreshold: 0.7, // High threshold
-      },
-      TEST_COLLECTION_NAME
-    );
+    const result = await retrievalService.searchSimilar(collectionName, {
+      query: 'Irmin SDK Go documentation',
+      k: 10,
+      scoreThreshold: 0.7, // High threshold
+    });
 
     logTest(
       'High Score Threshold',
@@ -700,21 +666,17 @@ async function testLowScoreThreshold(): Promise<boolean> {
   logTest('Low Score Threshold', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
     // Test with low score threshold
-    const result = await retrievalService.searchSimilar(
-      vectorStore,
-      {
-        query: 'data management platform',
-        k: 10,
-        scoreThreshold: 0.1, // Low threshold
-      },
-      TEST_COLLECTION_NAME
-    );
+    const result = await retrievalService.searchSimilar(collectionName, {
+      query: 'data management platform',
+      k: 10,
+      scoreThreshold: 0.1, // Low threshold
+    });
 
     logTest(
       'Low Score Threshold',
@@ -750,7 +712,7 @@ async function testContextGeneration(): Promise<boolean> {
   logTest('Context Generation', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -782,15 +744,14 @@ async function testContextGeneration(): Promise<boolean> {
 
     for (const testCase of testCases) {
       const result = await retrievalService.retrieveContext(
-        vectorStore,
+        collectionName,
         testCase.query,
         {
           maxDocuments: testCase.maxDocuments,
           scoreThreshold: testCase.scoreThreshold,
           includeMetadata: true,
           maxTokens: testCase.maxTokens,
-        },
-        TEST_COLLECTION_NAME
+        }
       );
 
       totalContexts++;

@@ -1,5 +1,6 @@
 import './instrument';
 
+import { indexingService } from '@/vector';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import swagger from '@fastify/swagger';
@@ -206,6 +207,9 @@ async function start() {
     // Seed default AI models
     await seedDefaultModels();
     server.log.info('Database initialized and AI models seeded');
+
+    // Ensure system collections exist
+    await indexingService.ensureSystemCollections();
 
     // Start the server
     await server.listen({

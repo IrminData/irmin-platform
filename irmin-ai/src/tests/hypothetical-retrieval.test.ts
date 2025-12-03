@@ -53,7 +53,7 @@ async function testHypotheticalGeneration(): Promise<boolean> {
   logTest('Hypothetical Content Generation', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -73,15 +73,14 @@ async function testHypotheticalGeneration(): Promise<boolean> {
 
     for (const query of allQueries) {
       const result = await retrievalService.retrieveWithHypotheticalContent(
-        vectorStore,
+        collectionName,
         query,
         {
           maxDocuments: 3,
           scoreThreshold: 0.1,
           includeMetadata: false,
           maxTokens: 1000,
-        },
-        TEST_COLLECTION_NAME
+        }
       );
 
       results.push({
@@ -126,7 +125,7 @@ async function testRetrievalComparison(): Promise<boolean> {
   logTest('Retrieval Quality Comparison', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -145,33 +144,30 @@ async function testRetrievalComparison(): Promise<boolean> {
       // Hypothetical: New approach
       const hypotheticalResult =
         await retrievalService.retrieveWithHypotheticalContent(
-          vectorStore,
+          collectionName,
           query,
           {
             maxDocuments: 5,
             scoreThreshold: 0.1,
             includeMetadata: false,
             maxTokens: 2000,
-          },
-          TEST_COLLECTION_NAME
+          }
         );
 
       // Get the actual scores by doing a similarity search
       // Baseline: Direct query retrieval
       const baselineSearch = await retrievalService.searchSimilar(
-        vectorStore,
-        { query, k: 5, scoreThreshold: 0.1 },
-        TEST_COLLECTION_NAME
+        collectionName,
+        { query, k: 5, scoreThreshold: 0.1 }
       );
 
       const hypotheticalSearch = await retrievalService.searchSimilar(
-        vectorStore,
+        collectionName,
         {
           query: hypotheticalResult.hypotheticalContent || query,
           k: 5,
           scoreThreshold: 0.1,
-        },
-        TEST_COLLECTION_NAME
+        }
       );
 
       const baselineAvgScore =
@@ -240,7 +236,7 @@ async function testFallbackBehavior(): Promise<boolean> {
   logTest('Fallback Behavior', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -260,15 +256,14 @@ async function testFallbackBehavior(): Promise<boolean> {
     for (const query of edgeCases) {
       try {
         const result = await retrievalService.retrieveWithHypotheticalContent(
-          vectorStore,
+          collectionName,
           query,
           {
             maxDocuments: 3,
             scoreThreshold: 0.1,
             includeMetadata: false,
             maxTokens: 1000,
-          },
-          TEST_COLLECTION_NAME
+          }
         );
 
         if (result.usedHypothetical) {
@@ -310,7 +305,7 @@ async function testPerformance(): Promise<boolean> {
   logTest('Performance Metrics', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -327,31 +322,25 @@ async function testPerformance(): Promise<boolean> {
     for (const query of testQueries) {
       // Baseline timing
       const baselineStart = Date.now();
-      await retrievalService.retrieveContext(
-        vectorStore,
-        query,
-        {
-          maxDocuments: 5,
-          scoreThreshold: 0.3,
-          includeMetadata: false,
-          maxTokens: 2000,
-        },
-        TEST_COLLECTION_NAME
-      );
+      await retrievalService.retrieveContext(collectionName, query, {
+        maxDocuments: 5,
+        scoreThreshold: 0.3,
+        includeMetadata: false,
+        maxTokens: 2000,
+      });
       const baselineTime = Date.now() - baselineStart;
 
       // Hypothetical timing
       const hypotheticalStart = Date.now();
       await retrievalService.retrieveWithHypotheticalContent(
-        vectorStore,
+        collectionName,
         query,
         {
           maxDocuments: 5,
           scoreThreshold: 0.3,
           includeMetadata: false,
           maxTokens: 2000,
-        },
-        TEST_COLLECTION_NAME
+        }
       );
       const hypotheticalTime = Date.now() - hypotheticalStart;
 
@@ -412,7 +401,7 @@ async function testErrorHandling(): Promise<boolean> {
   logTest('Error Handling', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -435,15 +424,14 @@ async function testErrorHandling(): Promise<boolean> {
     for (const testCase of errorCases) {
       try {
         const result = await retrievalService.retrieveWithHypotheticalContent(
-          vectorStore,
+          collectionName,
           testCase.query,
           {
             maxDocuments: 3,
             scoreThreshold: 0.1,
             includeMetadata: false,
             maxTokens: 1000,
-          },
-          TEST_COLLECTION_NAME
+          }
         );
 
         // Should either succeed or gracefully fall back
@@ -480,7 +468,7 @@ async function testConcurrentRequests(): Promise<boolean> {
   logTest('Concurrent Requests', 'RUNNING');
 
   try {
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -497,15 +485,14 @@ async function testConcurrentRequests(): Promise<boolean> {
     const results = await Promise.all(
       testQueries.map((query) =>
         retrievalService.retrieveWithHypotheticalContent(
-          vectorStore,
+          collectionName,
           query,
           {
             maxDocuments: 3,
             scoreThreshold: 0.3,
             includeMetadata: false,
             maxTokens: 1000,
-          },
-          TEST_COLLECTION_NAME
+          }
         )
       )
     );

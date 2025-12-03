@@ -164,15 +164,15 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
           throw new Error('Workspace and authentication context required');
         }
 
-        const collectionData = {
-          ...validatedData,
+        const collection = await indexingService.createVectorStore({
+          collectionName: validatedData.name,
+          description: validatedData.description,
+          embeddingModel: validatedData.embeddingModel,
+          embeddingDimensions: validatedData.embeddingDimensions,
           workspaceSlug: workspaceContext.slug,
-          createdBy: authContext.user.id,
+          userId: authContext.user.id,
           isSystemCollection: false,
-        };
-
-        const collection =
-          await collectionService.createCollection(collectionData);
+        });
 
         // Log analytics
         analyticsService.logEvent({
@@ -378,7 +378,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.initVectorStore(
+        const collectionName = await indexingService.validateCollectionAccess(
           collectionConfig.name,
           collectionConfig.isSystemCollection ?? false,
           workspaceContext.slug,
@@ -387,9 +387,8 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
 
         // Index documents
         const result = await indexingService.indexDocuments(
-          vectorStore,
-          validatedData.documents,
-          collectionConfig.name
+          collectionName,
+          validatedData.documents
         );
 
         // Log analytics
@@ -459,7 +458,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.initVectorStore(
+        const collectionName = await indexingService.validateCollectionAccess(
           collectionConfig.name,
           collectionConfig.isSystemCollection ?? false,
           workspaceContext.slug,
@@ -468,9 +467,8 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
 
         // Perform search
         const result = await retrievalService.searchSimilar(
-          vectorStore,
-          validatedData,
-          collectionConfig.name
+          collectionName,
+          validatedData
         );
 
         // Log analytics
@@ -545,7 +543,7 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
         }
 
         // Create vector store connection
-        const vectorStore = await indexingService.initVectorStore(
+        const collectionName = await indexingService.validateCollectionAccess(
           collectionConfig.name,
           collectionConfig.isSystemCollection ?? false,
           workspaceContext.slug,
@@ -554,15 +552,14 @@ export async function embeddingRoutes(fastify: FastifyInstance) {
 
         // Retrieve context
         const result = await retrievalService.retrieveContext(
-          vectorStore,
+          collectionName,
           validatedData.query,
           {
             maxDocuments: validatedData.maxDocuments,
             scoreThreshold: validatedData.scoreThreshold,
             includeMetadata: validatedData.includeMetadata,
             maxTokens: validatedData.maxTokens,
-          },
-          collectionConfig.name
+          }
         );
 
         // Log analytics

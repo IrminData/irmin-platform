@@ -200,12 +200,12 @@ async function testVectorStoreConnection(): Promise<boolean> {
 
   try {
     // Create vector store connection
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
-    if (!vectorStore) {
+    if (!collectionName) {
       logTest(
         'Vector Store Connection',
         'FAIL',
@@ -219,8 +219,8 @@ async function testVectorStoreConnection(): Promise<boolean> {
       'PASS',
       'Vector store connection established'
     );
-    console.log(`  Collection name: ${TEST_COLLECTION_NAME}`);
-    console.log(`  Vector store type: QdrantVectorStore`);
+    console.log(`  Collection name: ${collectionName}`);
+    console.log(`  Vector store type: QdrantService`);
 
     return true;
   } catch (error) {
@@ -238,21 +238,17 @@ async function testDocumentRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store for retrieval
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
     // Test basic similarity search
-    const searchResult = await retrievalService.searchSimilar(
-      vectorStore,
-      {
-        query: 'Irmin SDK documentation',
-        k: 3,
-        scoreThreshold: 0.1,
-      },
-      TEST_COLLECTION_NAME
-    );
+    const searchResult = await retrievalService.searchSimilar(collectionName, {
+      query: 'Irmin SDK documentation',
+      k: 3,
+      scoreThreshold: 0.1,
+    });
 
     if (searchResult.documents.length === 0) {
       logTest(
@@ -299,22 +295,21 @@ async function testContextRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store for retrieval
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
     // Test context retrieval
     const contextResult = await retrievalService.retrieveContext(
-      vectorStore,
+      collectionName,
       'How to use Irmin SDK for data management',
       {
         maxDocuments: 3,
         scoreThreshold: 0.2,
         includeMetadata: true,
         maxTokens: 2000,
-      },
-      TEST_COLLECTION_NAME
+      }
     );
 
     if (!contextResult.context || contextResult.sources.length === 0) {
@@ -350,7 +345,7 @@ async function testMultiQueryRetrieval(): Promise<boolean> {
 
   try {
     // Create vector store for retrieval
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
@@ -363,14 +358,13 @@ async function testMultiQueryRetrieval(): Promise<boolean> {
     ];
 
     const multiQueryResult = await retrievalService.multiQueryRetrieval(
-      vectorStore,
+      collectionName,
       queries,
       {
         maxDocumentsPerQuery: 2,
         combineResults: true,
         deduplicateByContent: true,
-      },
-      TEST_COLLECTION_NAME
+      }
     );
 
     if (multiQueryResult.length !== queries.length) {
@@ -590,21 +584,17 @@ async function testLocalFileVectorization(): Promise<boolean> {
     }
 
     // Test retrieval of local file content
-    const vectorStore = await indexingService.initVectorStore(
+    const collectionName = await indexingService.validateCollectionAccess(
       TEST_COLLECTION_NAME,
       true
     );
 
     // Search for content that should be in local files
-    const searchResult = await retrievalService.searchSimilar(
-      vectorStore,
-      {
-        query: 'Irmin core concepts',
-        k: 3,
-        scoreThreshold: 0.1,
-      },
-      TEST_COLLECTION_NAME
-    );
+    const searchResult = await retrievalService.searchSimilar(collectionName, {
+      query: 'Irmin core concepts',
+      k: 3,
+      scoreThreshold: 0.1,
+    });
 
     // Check if we found local file content
     const hasLocalContent = searchResult.documents.some(

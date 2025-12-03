@@ -34,6 +34,7 @@ ENV NODE_OPTIONS="--max-old-space-size=8192"
 # App files
 COPY --from=build /app/dist /app/dist
 COPY --from=build /app/src/database /app/src/database
+COPY --from=build /app/llm-docs /app/llm-docs
 COPY package.json pnpm-lock.yaml ./
 COPY --from=deps /app/node_modules /app/node_modules
 

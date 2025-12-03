@@ -8,12 +8,18 @@ import { randomUUID } from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-// Zod schemas for validation
+// Collection validation schemas
+const CollectionNameSchema = z
+  .string()
+  .min(1, 'Collection name is required')
+  .max(100, 'Collection name too long')
+  .regex(
+    /^[a-zA-Z0-9_-]+$/,
+    'Collection name can only contain letters, numbers, underscores, and hyphens'
+  );
+
 const CreateCollectionSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Collection name is required')
-    .max(100, 'Collection name too long'),
+  name: CollectionNameSchema,
   description: z.string().optional(),
   embeddingModel: z.string().default('text-embedding-3-small'),
   embeddingDimensions: z.number().int().min(1).default(1536),
@@ -24,7 +30,7 @@ const CreateCollectionSchema = z.object({
 });
 
 const UpdateCollectionSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
+  name: CollectionNameSchema.optional(),
   description: z.string().optional(),
   embeddingModel: z.string().optional(),
   embeddingDimensions: z.number().int().min(1).optional(),
@@ -49,6 +55,135 @@ interface CollectionStats {
  * with proper validation and access control.
  */
 class CollectionService {
+  // --- Static Helper Methods ---
+
+  /**
+   * Generate a unique collection name
+   */
+  static generateCollectionName(
+    baseName: string,
+    workspaceSlug: string
+  ): string {
+    const timestamp = Date.now();
+    const sanitizedBase = baseName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    return `${sanitizedBase}-${workspaceSlug}-${timestamp}`;
+  }
+
+  /**
+   * Validate collection name format
+   */
+  static validateCollectionName(name: string): {
+    isValid: boolean;
+    error?: string;
+  } {
+    try {
+      CollectionNameSchema.parse(name);
+      return { isValid: true };
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return { isValid: false, error: error.issues[0]?.message };
+      }
+      return { isValid: false, error: 'Invalid collection name' };
+    }
+  }
+
+  /**
+   * Sanitize collection name for URL usage
+   */
+  static sanitizeCollectionName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  /**
+   * Generate collection description from metadata
+   */
+  static generateDescription(metadata: {
+    source?: string;
+    type?: string;
+    purpose?: string;
+    tags?: string[];
+  }): string {
+    const parts: string[] = [];
+
+    if (metadata.source) {
+      parts.push(`Source: ${metadata.source}`);
+    }
+
+    if (metadata.type) {
+      parts.push(`Type: ${metadata.type}`);
+    }
+
+    if (metadata.purpose) {
+      parts.push(`Purpose: ${metadata.purpose}`);
+    }
+
+    if (metadata.tags && metadata.tags.length > 0) {
+      parts.push(`Tags: ${metadata.tags.join(', ')}`);
+    }
+
+    return parts.length > 0 ? parts.join(' | ') : 'Vector collection';
+  }
+
+  /**
+   * Format collection statistics for display
+   */
+  static formatCollectionStats(stats: {
+    documentCount: number;
+    lastIndexedAt: Date | null;
+    createdAt: Date;
+  }): {
+    documentCount: string;
+    lastIndexed: string;
+    age: string;
+  } {
+    const formatDocumentCount = (count: number): string => {
+      if (count === 0) return 'No documents';
+      if (count === 1) return '1 document';
+      return `${count.toLocaleString()} documents`;
+    };
+
+    const formatLastIndexed = (date: Date | null): string => {
+      if (!date) return 'Never indexed';
+
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+      return `${Math.floor(diffDays / 365)} years ago`;
+    };
+
+    const formatAge = (date: Date): string => {
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return 'Created today';
+      if (diffDays === 1) return 'Created yesterday';
+      if (diffDays < 7) return `Created ${diffDays} days ago`;
+      if (diffDays < 30) return `Created ${Math.floor(diffDays / 7)} weeks ago`;
+      if (diffDays < 365)
+        return `Created ${Math.floor(diffDays / 30)} months ago`;
+      return `Created ${Math.floor(diffDays / 365)} years ago`;
+    };
+
+    return {
+      documentCount: formatDocumentCount(stats.documentCount),
+      lastIndexed: formatLastIndexed(stats.lastIndexedAt),
+      age: formatAge(stats.createdAt),
+    };
+  }
+
+  // --- Instance Methods ---
+
   /**
    * Create a new vector collection
    */
@@ -98,6 +233,66 @@ class CollectionService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Batch create collections with validation
+   */
+  async batchCreateCollections(
+    collections: Array<{
+      name: string;
+      workspaceSlug: string;
+      userId: string;
+      description?: string;
+      metadata?: Record<string, unknown>;
+    }>
+  ): Promise<{
+    successful: unknown[];
+    failed: Array<{ collection: unknown; error: string }>;
+  }> {
+    const successful: unknown[] = [];
+    const failed: Array<{ collection: unknown; error: string }> = [];
+
+    for (const collection of collections) {
+      try {
+        // Validate collection name
+        const nameValidation = CollectionService.validateCollectionName(
+          collection.name
+        );
+        if (!nameValidation.isValid) {
+          failed.push({ collection, error: nameValidation.error! });
+          continue;
+        }
+
+        // Check if name is available (using existing method)
+        const existing = await this.getCollectionByName(collection.name);
+        if (existing) {
+          failed.push({ collection, error: 'Collection name already exists' });
+          continue;
+        }
+
+        // Create collection
+        const created = await this.createCollection({
+          name: collection.name,
+          description: collection.description,
+          embeddingModel: 'text-embedding-3-small',
+          embeddingDimensions: 1536,
+          workspaceSlug: collection.workspaceSlug,
+          createdBy: collection.userId,
+          isSystemCollection: false,
+          metadata: collection.metadata,
+        });
+
+        successful.push(created);
+      } catch (error) {
+        failed.push({
+          collection,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    return { successful, failed };
   }
 
   /**

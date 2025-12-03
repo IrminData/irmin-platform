@@ -116,14 +116,15 @@ export class QueryAgent extends BaseAgent {
       );
 
       if (duckDbCollection) {
-        const duckDbVectorStore = await indexingService.initVectorStore(
-          duckDbCollectionName,
-          true
-        );
+        const duckDbCollectionNameValidated =
+          await indexingService.validateCollectionAccess(
+            duckDbCollectionName,
+            true
+          );
 
         const duckDbResult =
           await retrievalService.retrieveWithHypotheticalContent(
-            duckDbVectorStore,
+            duckDbCollectionNameValidated,
             input.message,
             {
               maxDocuments: 5,
@@ -131,7 +132,6 @@ export class QueryAgent extends BaseAgent {
               includeMetadata: false,
               maxTokens: 6000,
             },
-            duckDbCollectionName,
             agentContext
           );
 
@@ -158,23 +158,23 @@ export class QueryAgent extends BaseAgent {
     // If we have hypothetical content from DuckDB retrieval, use retrieveContext directly.
     // Otherwise, use retrieveWithHypotheticalContent.
     try {
-      const irminVectorStore = await indexingService.initVectorStore(
-        irminDocsCollectionName,
-        true
-      );
+      const irminCollectionName =
+        await indexingService.validateCollectionAccess(
+          irminDocsCollectionName,
+          true
+        );
 
       if (hypotheticalContent) {
         // Reuse hypothetical content
         const irminResult = await retrievalService.retrieveContext(
-          irminVectorStore,
+          irminCollectionName,
           hypotheticalContent,
           {
             maxDocuments: 5,
             scoreThreshold: 0.3,
             includeMetadata: false,
             maxTokens: 6000,
-          },
-          irminDocsCollectionName
+          }
         );
 
         if (irminResult.context && irminResult.context.trim()) {
@@ -184,7 +184,7 @@ export class QueryAgent extends BaseAgent {
         // Generate new hypothetical content
         const irminResult =
           await retrievalService.retrieveWithHypotheticalContent(
-            irminVectorStore,
+            irminCollectionName,
             input.message,
             {
               maxDocuments: 5,
@@ -192,7 +192,6 @@ export class QueryAgent extends BaseAgent {
               includeMetadata: false,
               maxTokens: 6000,
             },
-            irminDocsCollectionName,
             agentContext
           );
 

@@ -2,4 +2,4 @@
 export * from './IndexingService';
 export * from './RetrievalService';
 export * from './vectorCollections';
-export * from './vectorCollectionUtils';
+export * from './QdrantService';

@@ -36,7 +36,16 @@ const envSchema = z.object({
     .transform((val) => val === 'true'),
   LANGSMITH_API_KEY: z.string().min(1, 'Langsmith API key is required'),
   LANGSMITH_PROJECT: z.string().default('irmin-ai-agents-dev'),
-  QDRANT_URL: z.string().default('http://localhost:6333'),
+  QDRANT_URL: z
+    .string()
+    .default('http://localhost:6333')
+    .refine((url) => url.startsWith('http://') || url.startsWith('https://'), {
+      message: 'QDRANT_URL must start with http:// or https://',
+    }),
+  QDRANT_PORT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
   QDRANT_API_KEY: z.string().optional(),
   CORS_ORIGINS: z
     .string()

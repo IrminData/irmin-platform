@@ -1,12 +1,12 @@
-import type { Document } from '@langchain/core/documents';
+import { type VectorCollection } from '@/database';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { QdrantVectorStore } from '@langchain/qdrant';
 import { z } from 'zod';
 
 import { analyticsService } from '@/services/analytics';
 
 import { env } from '@/config/env';
 
+import { qdrantService } from './QdrantService';
 import { collectionService } from './vectorCollections';
 
 // Zod schemas for type safety
@@ -22,6 +22,30 @@ interface IndexingResult {
   documentCount: number;
   collectionName: string;
 }
+
+export interface CreateVectorStoreOptions {
+  collectionName: string;
+  description?: string;
+  workspaceSlug?: string;
+  userId?: string;
+  isSystemCollection?: boolean;
+  embeddingModel?: string;
+  embeddingDimensions?: number;
+}
+
+/**
+ * System collections that should exist in the application
+ */
+const SYSTEM_COLLECTIONS = [
+  {
+    name: 'irmin-docs',
+    description: 'Auto-generated collection for Irmin SDK documentation',
+  },
+  {
+    name: 'duckdb-sql-syntax-docs',
+    description: 'Auto-generated collection for DuckDB SQL documentation',
+  },
+] as const;
 
 /**
  * IndexingService handles the "Indexing" part of RAG:
@@ -42,16 +66,17 @@ class IndexingService {
   }
 
   /**
-   * Create a new vector store instance from existing collection
+   * Validate access to a collection and return its name
    */
-  async initVectorStore(
+  async validateCollectionAccess(
     collectionName: string,
     isSystemCollection?: boolean,
     workspaceSlug?: string,
     userId?: string
-  ): Promise<QdrantVectorStore> {
+  ): Promise<string> {
     try {
       // First, try to get the collection from the database
+      // The service filters by workspace, user, and system flag, so we don't need manual checks
       const collection = await collectionService.getCollectionByName(
         collectionName,
         workspaceSlug,
@@ -60,33 +85,18 @@ class IndexingService {
       );
 
       if (!collection) {
-        throw new Error('Collection not found');
+        throw new Error('Collection not found or access denied');
       }
 
-      if (workspaceSlug && collection.workspaceSlug !== workspaceSlug) {
+      // Verify it exists in Qdrant
+      const exists = await qdrantService.collectionExists(collectionName);
+      if (!exists) {
         throw new Error(
-          'Collection does not belong to the specified workspace'
+          `Collection ${collectionName} does not exist in vector store`
         );
       }
 
-      if (userId && collection.createdBy !== userId) {
-        throw new Error('Collection does not belong to the specified user');
-      }
-
-      if (isSystemCollection && !collection.isSystemCollection) {
-        throw new Error('Collection is not a system collection');
-      }
-
-      const vectorStore = await QdrantVectorStore.fromExistingCollection(
-        this.embeddings,
-        {
-          url: env.QDRANT_URL,
-          collectionName: collectionName,
-          apiKey: env.QDRANT_API_KEY || '',
-        }
-      );
-
-      return vectorStore;
+      return collectionName;
     } catch (error) {
       analyticsService.logEvent({
         eventType: 'vector_store_connection',
@@ -95,45 +105,50 @@ class IndexingService {
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       });
-      throw new Error(
-        `Failed to connect to vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
+      // Preserve the original error by wrapping it with cause
+      const wrappedError = new Error(
+        `Failed to access vector store: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
+      throw wrappedError;
     }
   }
 
   /**
    * Create a new collection and vector store
+   * Consolidates logic for creating both Database record and Qdrant collection
    */
-  async createNewVectorStore(
-    collectionName: string,
-    workspaceSlug: string,
-    userId: string,
-    description?: string
-  ): Promise<QdrantVectorStore> {
+  async createVectorStore(
+    options: CreateVectorStoreOptions
+  ): Promise<VectorCollection> {
+    const {
+      collectionName,
+      description,
+      workspaceSlug,
+      userId,
+      isSystemCollection = false,
+      embeddingModel = 'text-embedding-3-small',
+      embeddingDimensions = 1536,
+    } = options;
+
     try {
       // Create collection in database first
-      await collectionService.createCollection({
+      const collection = await collectionService.createCollection({
         name: collectionName,
         description:
           description ||
-          `Vector collection created on ${new Date().toISOString()}`,
-        embeddingModel: 'text-embedding-3-small',
-        embeddingDimensions: 1536,
-        workspaceSlug,
-        createdBy: userId,
-        isSystemCollection: false,
+          `${isSystemCollection ? 'System' : 'Vector'} collection created on ${new Date().toISOString()}`,
+        embeddingModel,
+        embeddingDimensions,
+        workspaceSlug: workspaceSlug ?? undefined,
+        createdBy: userId ?? undefined,
+        isSystemCollection,
       });
 
-      const vectorStore = await QdrantVectorStore.fromTexts(
-        [], // Empty array to create collection
-        [], // Empty metadata array
-        this.embeddings,
-        {
-          url: env.QDRANT_URL,
-          collectionName: collectionName,
-          apiKey: env.QDRANT_API_KEY || '',
-        }
-      );
+      // Create in Qdrant
+      // If Qdrant creation fails, we should technically rollback DB, but soft failure is often acceptable if handled later
+      // For now, we let it throw so the caller knows it failed
+      await qdrantService.createCollection(collectionName, embeddingDimensions);
 
       // Log vector operation
       analyticsService.logEvent({
@@ -142,10 +157,11 @@ class IndexingService {
           collectionName: collectionName,
           url: env.QDRANT_URL,
           isNewCollection: true,
+          isSystemCollection,
         },
       });
 
-      return vectorStore;
+      return collection;
     } catch (error) {
       analyticsService.logEvent({
         eventType: 'vector_store_creation',
@@ -155,18 +171,53 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to create new vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+
+  /**
+   * Create a new collection and vector store
+   * @deprecated Use createVectorStore instead
+   */
+  async createNewVectorStore(
+    collectionName: string,
+    workspaceSlug: string,
+    userId: string,
+    description?: string
+  ): Promise<string> {
+    const collection = await this.createVectorStore({
+      collectionName,
+      workspaceSlug,
+      userId,
+      description,
+      isSystemCollection: false,
+    });
+    return collection.name;
+  }
+
+  /**
+   * Create a new system collection and vector store
+   * @deprecated Use createVectorStore instead
+   */
+  async createSystemVectorStore(
+    collectionName: string,
+    description?: string
+  ): Promise<string> {
+    const collection = await this.createVectorStore({
+      collectionName,
+      description,
+      isSystemCollection: true,
+    });
+    return collection.name;
   }
 
   /**
    * Add documents to a vector store (indexing step)
    */
   async indexDocuments(
-    vectorStore: QdrantVectorStore,
-    documents: VectorDocument[],
-    collectionName?: string
+    collectionName: string,
+    documents: VectorDocument[]
   ): Promise<IndexingResult> {
     try {
       // Validate documents
@@ -174,16 +225,23 @@ class IndexingService {
         VectorDocumentSchema.parse(doc)
       );
 
-      // Convert to LangChain Document format
-      const langchainDocuments: Document[] = validatedDocuments.map((doc) => ({
-        pageContent: doc.pageContent,
-        metadata: doc.metadata || {},
+      // 1. Generate embeddings
+      const texts = validatedDocuments.map((doc) => doc.pageContent);
+      const embeddings = await this.embeddings.embedDocuments(texts);
+
+      // 2. Prepare points for Qdrant
+      const points = validatedDocuments.map((doc, index) => ({
+        vector: embeddings[index],
+        payload: {
+          content: doc.pageContent,
+          metadata: doc.metadata || {},
+        },
       }));
 
-      // Add documents to vector store (this creates embeddings and stores them)
-      await vectorStore.addDocuments(langchainDocuments);
-
+      // 3. Upsert points
       const finalCollectionName = collectionName || this.defaultCollectionName;
+      await qdrantService.upsertPoints(finalCollectionName, points);
+
       const result: IndexingResult = {
         success: true,
         documentCount: validatedDocuments.length,
@@ -314,8 +372,7 @@ class IndexingService {
    * Delete all documents from a vector store collection
    */
   async deleteAllDocuments(
-    vectorStore: QdrantVectorStore,
-    collectionName?: string
+    collectionName: string
   ): Promise<{ success: boolean; deletedCount: number; errors: string[] }> {
     try {
       const errors: string[] = [];
@@ -329,9 +386,7 @@ class IndexingService {
       const initialCount = collection?.documentCount || 0;
 
       // Delete all points from the collection using an empty filter (matches all)
-      await vectorStore.client.delete(finalCollectionName, {
-        filter: {}, // Empty filter matches all points
-      });
+      await qdrantService.deletePoints(finalCollectionName, {});
 
       // Since we deleted all documents, set the count to 0
       if (collection) {
@@ -376,30 +431,25 @@ class IndexingService {
    * Delete specific chunks from a vector store by chunk IDs
    */
   async deleteSpecificChunks(
-    vectorStore: QdrantVectorStore,
-    chunkIds: string[],
-    collectionName?: string
+    collectionName: string,
+    chunkIds: string[]
   ): Promise<{ success: boolean; deletedCount: number; errors: string[] }> {
     try {
       const errors: string[] = [];
       let deletedCount = 0;
+      const finalCollectionName = collectionName || this.defaultCollectionName;
 
       // Delete each chunk by its specific documentId
       for (const chunkId of chunkIds) {
         try {
-          await vectorStore.client.delete(
-            collectionName || this.defaultCollectionName,
-            {
-              filter: {
-                must: [
-                  {
-                    key: 'metadata.documentId',
-                    match: { value: chunkId },
-                  },
-                ],
+          await qdrantService.deletePoints(finalCollectionName, {
+            must: [
+              {
+                key: 'metadata.documentId',
+                match: { value: chunkId },
               },
-            }
-          );
+            ],
+          });
           deletedCount++;
         } catch (error) {
           const errorMessage = `Failed to delete chunk ${chunkId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
@@ -409,7 +459,6 @@ class IndexingService {
       }
 
       // Update collection statistics in database
-      const finalCollectionName = collectionName || this.defaultCollectionName;
       const collection =
         await collectionService.getCollectionByName(finalCollectionName);
       if (collection && deletedCount > 0) {
@@ -452,13 +501,13 @@ class IndexingService {
    * Delete documents from a vector store by document IDs
    */
   async deleteDocuments(
-    vectorStore: QdrantVectorStore,
-    documentIds: string[],
-    collectionName?: string
+    collectionName: string,
+    documentIds: string[]
   ): Promise<{ success: boolean; deletedCount: number; errors: string[] }> {
     try {
       const errors: string[] = [];
       let deletedCount = 0;
+      const finalCollectionName = collectionName || this.defaultCollectionName;
 
       // First, get all chunk document IDs that need to be deleted
       const allChunkIds: string[] = [];
@@ -467,37 +516,33 @@ class IndexingService {
           // Get all points that match this base document ID using range filter for prefix matching
           // Since chunk IDs are formatted as baseDocId-chunk-N, we need to use a range filter
           // to match all strings that start with the base document ID
-          const points = await vectorStore.client.scroll(
-            collectionName || this.defaultCollectionName,
+          const result = await qdrantService.scroll(
+            finalCollectionName,
             {
-              filter: {
-                must: [
-                  {
-                    key: 'metadata.documentId',
-                    range: {
-                      gte: baseDocId,
-                      lt: baseDocId + '\xFF', // Use \xFF to create upper bound for prefix matching
-                    },
+              must: [
+                {
+                  key: 'metadata.documentId',
+                  range: {
+                    gte: baseDocId,
+                    lt: baseDocId + '\xFF', // Use \xFF to create upper bound for prefix matching
                   },
-                ],
-              },
-              limit: 1000,
-              with_payload: true,
-              with_vector: false,
-            }
+                },
+              ],
+            },
+            1000
           );
 
-          if (points.points) {
-            for (const point of points.points) {
-              if (
-                point.payload &&
-                typeof point.payload === 'object' &&
-                'metadata' in point.payload &&
-                point.payload.metadata &&
-                typeof point.payload.metadata === 'object' &&
-                'documentId' in point.payload.metadata
-              ) {
-                const chunkDocId = point.payload.metadata.documentId as string;
+          if (result.points) {
+            for (const point of result.points) {
+              const payload = point.payload as
+                | Record<string, unknown>
+                | undefined;
+              const metadata = payload?.metadata as
+                | Record<string, unknown>
+                | undefined;
+
+              if (metadata && typeof metadata.documentId === 'string') {
+                const chunkDocId = metadata.documentId;
                 // Double-check that the chunk ID starts with the base document ID
                 if (chunkDocId && chunkDocId.startsWith(baseDocId)) {
                   allChunkIds.push(chunkDocId);
@@ -515,19 +560,14 @@ class IndexingService {
       // Now delete all the chunk document IDs
       for (const chunkDocId of allChunkIds) {
         try {
-          await vectorStore.client.delete(
-            collectionName || this.defaultCollectionName,
-            {
-              filter: {
-                must: [
-                  {
-                    key: 'metadata.documentId',
-                    match: { value: chunkDocId },
-                  },
-                ],
+          await qdrantService.deletePoints(finalCollectionName, {
+            must: [
+              {
+                key: 'metadata.documentId',
+                match: { value: chunkDocId },
               },
-            }
-          );
+            ],
+          });
           deletedCount++;
         } catch (error) {
           const errorMessage = `Failed to delete chunk ${chunkDocId}: ${error instanceof Error ? error.message : 'Unknown error'}`;
@@ -537,7 +577,6 @@ class IndexingService {
       }
 
       // Update collection statistics in database
-      const finalCollectionName = collectionName || this.defaultCollectionName;
       const collection =
         await collectionService.getCollectionByName(finalCollectionName);
       if (collection && deletedCount > 0) {
@@ -575,6 +614,64 @@ class IndexingService {
         `Failed to delete documents: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+
+  /**
+   * Ensure all system collections exist
+   * Creates collections in both the database and Qdrant if they don't exist
+   */
+  async ensureSystemCollections() {
+    console.log('Ensuring system collections exist...');
+
+    for (const { name, description } of SYSTEM_COLLECTIONS) {
+      try {
+        // Check if collection exists in database
+        const existingCollection = await collectionService.getCollectionByName(
+          name,
+          undefined,
+          undefined,
+          true
+        );
+
+        if (existingCollection) {
+          // Collection exists in DB, verify/ensure it exists in Qdrant
+          // Using suppressConnectionErrors=true to allow startup even if Qdrant is down
+          await qdrantService.ensureCollection(name, 1536, true);
+          console.log(`System collection '${name}' checked/synced`);
+        } else {
+          // Create new system collection
+          console.log(`Creating system collection '${name}'...`);
+          try {
+            await this.createVectorStore({
+              collectionName: name,
+              description,
+              isSystemCollection: true,
+            });
+            console.log(`System collection '${name}' created successfully`);
+          } catch (createError) {
+            const createErrorMsg =
+              createError instanceof Error
+                ? createError.message
+                : 'Unknown error';
+            if (createErrorMsg.includes('already exists')) {
+              console.log(
+                `System collection '${name}' already exists in Qdrant (but was missing in DB, now created in DB)`
+              );
+            } else {
+              throw createError;
+            }
+          }
+        }
+      } catch (error) {
+        console.error(
+          `Failed to ensure system collection '${name}':`,
+          error instanceof Error ? error.message : 'Unknown error'
+        );
+        // Don't throw - allow server to start even if collection creation fails
+      }
+    }
+
+    console.log('System collections check completed');
   }
 }
 

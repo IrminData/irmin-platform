@@ -1,11 +1,13 @@
 import type { Document } from '@langchain/core/documents';
-import { QdrantVectorStore } from '@langchain/qdrant';
 import { z } from 'zod';
 
 import { analyticsService } from '@/services/analytics';
 import { llmService } from '@/services/llm';
 
 import { getContentAsString } from '@/utils/getContentAsString';
+
+import { indexingService } from './IndexingService';
+import { qdrantService, SearchResult } from './QdrantService';
 
 // Zod schemas for type safety
 const VectorSearchSchema = z.object({
@@ -55,38 +57,57 @@ class RetrievalService {
   private defaultCollectionName = 'irmin-documents';
 
   /**
+   * Helper to convert Qdrant search result to VectorSearchResult
+   */
+  private mapQdrantResult(result: SearchResult): VectorSearchResult {
+    const payload = result.payload || {};
+    const content =
+      typeof payload.content === 'string'
+        ? payload.content
+        : typeof payload.pageContent === 'string'
+          ? payload.pageContent
+          : '';
+
+    const metadata = (payload.metadata as Record<string, unknown>) || {};
+
+    return {
+      score: result.score,
+      document: {
+        pageContent: content,
+        metadata: metadata,
+      },
+    };
+  }
+
+  /**
    * Perform similarity search with advanced options
    */
   async searchSimilar(
-    vectorStore: QdrantVectorStore,
-    options: VectorSearchOptions,
-    collectionName?: string
+    collectionName: string,
+    options: VectorSearchOptions
   ): Promise<RetrievalResult> {
     const startTime = Date.now();
 
     try {
       const validatedOptions = VectorSearchSchema.parse(options);
 
-      // Perform similarity search
-      const results = await vectorStore.similaritySearchWithScore(
-        validatedOptions.query,
-        validatedOptions.k,
-        validatedOptions.filter
+      // 1. Generate query embedding
+      const queryEmbedding = await indexingService.createEmbedding(
+        validatedOptions.query
       );
 
-      // Filter by score threshold if provided
-      const filteredResults = validatedOptions.scoreThreshold
-        ? results.filter(
-            ([, score]) => score >= validatedOptions.scoreThreshold!
-          )
-        : results;
+      // 2. Perform similarity search
+      const results = await qdrantService.search(
+        collectionName,
+        queryEmbedding,
+        validatedOptions.k,
+        validatedOptions.filter,
+        validatedOptions.scoreThreshold
+      );
 
-      // Convert to our result format
-      const searchResults: VectorSearchResult[] = filteredResults.map(
-        ([document, score]) => ({
-          document,
-          score,
-        })
+      // 3. Convert to our result format
+      const searchResults: VectorSearchResult[] = results.map((r) =>
+        this.mapQdrantResult(r)
       );
 
       const processingTime = Date.now() - startTime;
@@ -131,28 +152,30 @@ class RetrievalService {
    * Retrieve documents with query analysis (advanced RAG pattern)
    */
   async retrieveWithAnalysis(
-    vectorStore: QdrantVectorStore,
-    analysis: QueryAnalysis,
-    collectionName?: string
+    collectionName: string,
+    analysis: QueryAnalysis
   ): Promise<RetrievalResult> {
     const startTime = Date.now();
 
     try {
       const validatedAnalysis = QueryAnalysisSchema.parse(analysis);
 
-      // Perform enhanced similarity search using analyzed query
-      const results = await vectorStore.similaritySearchWithScore(
-        validatedAnalysis.query,
+      // 1. Generate query embedding
+      const queryEmbedding = await indexingService.createEmbedding(
+        validatedAnalysis.query
+      );
+
+      // 2. Perform enhanced similarity search using analyzed query
+      const results = await qdrantService.search(
+        collectionName,
+        queryEmbedding,
         validatedAnalysis.contextWindow,
         validatedAnalysis.filters
       );
 
-      // Convert to our result format
-      const searchResults: VectorSearchResult[] = results.map(
-        ([document, score]) => ({
-          document,
-          score,
-        })
+      // 3. Convert to our result format
+      const searchResults: VectorSearchResult[] = results.map((r) =>
+        this.mapQdrantResult(r)
       );
 
       const processingTime = Date.now() - startTime;
@@ -196,15 +219,14 @@ class RetrievalService {
    * Retrieve relevant context for generation (preparing documents for LLM)
    */
   async retrieveContext(
-    vectorStore: QdrantVectorStore,
+    collectionName: string,
     query: string,
     options: {
       maxDocuments?: number;
       scoreThreshold?: number;
       includeMetadata?: boolean;
       maxTokens?: number;
-    } = {},
-    collectionName?: string
+    } = {}
   ): Promise<{
     context: string;
     sources: Document[];
@@ -219,15 +241,11 @@ class RetrievalService {
       } = options;
 
       // Retrieve relevant documents
-      const retrievalResult = await this.searchSimilar(
-        vectorStore,
-        {
-          query,
-          k: maxDocuments,
-          scoreThreshold,
-        },
-        collectionName
-      );
+      const retrievalResult = await this.searchSimilar(collectionName, {
+        query,
+        k: maxDocuments,
+        scoreThreshold,
+      });
 
       // Filter and prepare context
       let context = '';
@@ -286,14 +304,13 @@ class RetrievalService {
    * Multi-query retrieval (for complex questions)
    */
   async multiQueryRetrieval(
-    vectorStore: QdrantVectorStore,
+    collectionName: string,
     queries: string[],
     options: {
       maxDocumentsPerQuery?: number;
       combineResults?: boolean;
       deduplicateByContent?: boolean;
-    } = {},
-    collectionName?: string
+    } = {}
   ): Promise<RetrievalResult[]> {
     try {
       const { maxDocumentsPerQuery = 3, deduplicateByContent = true } = options;
@@ -302,11 +319,10 @@ class RetrievalService {
       const seenContent = new Set<string>();
 
       for (const query of queries) {
-        const result = await this.searchSimilar(
-          vectorStore,
-          { query, k: maxDocumentsPerQuery },
-          collectionName
-        );
+        const result = await this.searchSimilar(collectionName, {
+          query,
+          k: maxDocumentsPerQuery,
+        });
 
         if (deduplicateByContent) {
           result.documents = result.documents.filter((doc) => {
@@ -351,24 +367,19 @@ class RetrievalService {
    * Contextual compression retrieval (filter irrelevant parts)
    */
   async retrieveWithCompression(
-    vectorStore: QdrantVectorStore,
+    collectionName: string,
     query: string,
     options: {
       k?: number;
       compressionThreshold?: number;
       maxChunkSize?: number;
-    } = {},
-    collectionName?: string
+    } = {}
   ): Promise<RetrievalResult> {
     try {
       const { k = 5, compressionThreshold = 0.5, maxChunkSize = 500 } = options;
 
       // First, retrieve candidate documents
-      const result = await this.searchSimilar(
-        vectorStore,
-        { query, k },
-        collectionName
-      );
+      const result = await this.searchSimilar(collectionName, { query, k });
 
       // Apply compression by filtering based on relevance and chunk size
       const compressedResults = result.documents
@@ -504,7 +515,7 @@ class RetrievalService {
    * Falls back to direct query if hypothetical generation fails
    */
   async retrieveWithHypotheticalContent(
-    vectorStore: QdrantVectorStore,
+    collectionName: string,
     query: string,
     options: {
       maxDocuments?: number;
@@ -512,7 +523,6 @@ class RetrievalService {
       includeMetadata?: boolean;
       maxTokens?: number;
     } = {},
-    collectionName?: string,
     agentContext?: Record<string, unknown>
   ): Promise<{
     context: string;
@@ -558,15 +568,12 @@ class RetrievalService {
           },
         });
       }
-      const retrievalResult = await this.searchSimilar(
-        vectorStore,
-        {
-          query: searchQuery,
-          k: maxDocuments,
-          scoreThreshold,
-        },
-        collectionName
-      );
+
+      const retrievalResult = await this.searchSimilar(collectionName, {
+        query: searchQuery,
+        k: maxDocuments,
+        scoreThreshold,
+      });
 
       // Filter and prepare context
       let context = '';

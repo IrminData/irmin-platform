@@ -60,13 +60,13 @@ export abstract class BaseAgent implements BaseAgentInterface {
     // Fetch Irmin documentation from vector store (common to all agents)
     // This runs regardless of workspace/authToken since docs are system-wide
     try {
-      const vectorStore = await indexingService.initVectorStore(
+      const collectionName = await indexingService.validateCollectionAccess(
         'irmin-docs',
         true
       );
 
       const docsResult = await retrievalService.retrieveWithHypotheticalContent(
-        vectorStore,
+        collectionName,
         input.message,
         {
           maxDocuments: 5,
@@ -74,7 +74,6 @@ export abstract class BaseAgent implements BaseAgentInterface {
           includeMetadata: false,
           maxTokens: 6000,
         },
-        'irmin-docs',
         {
           agentDescription: this.config.description,
           agentName: this.config.name,
