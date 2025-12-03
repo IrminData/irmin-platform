@@ -110,6 +110,14 @@ Write operations and security constraints
     - CREATE TEMP VIEW ...; SELECT * FROM ...;
     - Permissions: Each statement checked independently (read for SELECT, write for COPY TO)
 
+- Common write operation patterns:
+  - JOIN exports: COPY (SELECT ... FROM $["..."] JOIN $["..."] ON ...) TO 's3://...';
+  - Aggregation exports: COPY (SELECT category, COUNT(*), AVG(value) FROM $["..."] GROUP BY category) TO 's3://...';
+  - Multi-step transformations: CREATE TEMP TABLE step1 AS SELECT ... FROM $["..."]; CREATE TEMP TABLE step2 AS SELECT ... FROM step1; COPY step2 TO 's3://...';
+  - Nested data exports: COPY (SELECT ... FROM $["..."], UNNEST(array_col) AS u(elem) WHERE ...) TO 's3://...';
+  - Cross-branch comparisons: CREATE TEMP TABLE combined AS SELECT *, 'main' FROM $["...@main"] UNION ALL SELECT *, 'dev' FROM $["...@dev"]; COPY combined TO 's3://...';
+  - Report generation: Use temp tables to build complex analytics step-by-step, then export final results
+
 - BLOCKED operations (security blacklist):
   - ATTACH DATABASE: Could bypass permission system
   - CREATE/DROP SECRET: Could compromise S3/LakeFS credentials

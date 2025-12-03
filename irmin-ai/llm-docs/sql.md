@@ -163,6 +163,87 @@ SELECT *, 'dev' as source FROM $["workspace;repo;data.json@dev"];
 COPY combined TO 's3://workspace-repo/main/reports/combined.csv' (HEADER, DELIMITER ',');
 ```
 
+#### Export JOIN Results (Combining Multiple Sources)
+```sql
+-- Join posts with user data and export enriched dataset
+COPY (
+  SELECT 
+    p.id AS post_id,
+    p.title,
+    p.body,
+    p.userId,
+    u.name AS author_name,
+    u.email AS author_email,
+    u.company.NAME AS author_company
+  FROM $["demo-data;posts.json@main"] AS p
+  LEFT JOIN $["demo-data;users.json@main"] AS u ON p.userId = u.id
+  WHERE p.userId IS NOT NULL
+) TO 's3://demo-data/main/exports/posts-with-authors.parquet' (FORMAT PARQUET);
+```
+
+#### Export Aggregated Analytics
+```sql
+-- Calculate and export category-level statistics
+COPY (
+  SELECT 
+    category,
+    COUNT(*) as total_records,
+    AVG(value) as average_value,
+    SUM(amount) as total_amount,
+    MIN(created_at) as earliest_date,
+    MAX(created_at) as latest_date
+  FROM $["workspace;repo;transactions.json@main"]
+  WHERE created_at >= '2024-01-01'
+  GROUP BY category
+  HAVING COUNT(*) > 10
+  ORDER BY total_amount DESC
+) TO 's3://workspace-repo/main/analytics/category-stats.csv' (HEADER, DELIMITER ',');
+```
+
+#### Multi-Step Data Transformation Pipeline
+```sql
+-- Step 1: Create base filtered data
+CREATE TEMPORARY TABLE active_users AS
+SELECT DISTINCT u.*
+FROM $["demo-data;users.json@main"] AS u
+INNER JOIN $["demo-data;posts.json@main"] AS p ON u.id = p.userId;
+
+-- Step 2: Calculate user activity statistics
+CREATE TEMPORARY TABLE user_stats AS
+SELECT 
+  u.id,
+  u.name,
+  u.email,
+  u.company.NAME AS company,
+  COUNT(p.id) AS total_posts,
+  AVG(LENGTH(p.body)) AS avg_post_length,
+  MAX(p.id) AS latest_post_id
+FROM active_users AS u
+LEFT JOIN $["demo-data;posts.json@main"] AS p ON u.id = p.userId
+GROUP BY u.id, u.name, u.email, u.company.NAME;
+
+-- Step 3: Export results
+COPY user_stats TO 's3://demo-data/main/analytics/user-activity-report.parquet';
+```
+
+#### Working with Nested JSON in Exports
+```sql
+-- Unnest nested arrays and export flattened data
+COPY (
+  SELECT 
+    d.id,
+    d.name,
+    elem.MAKE,
+    elem.MODEL,
+    elem.YEAR,
+    elem.PRICE
+  FROM $["demo-data;vehicles.json@main"] AS d,
+  UNNEST(d.vehicles) AS u(elem)
+  WHERE elem.YEAR >= 2020
+    AND elem.MAKE IN ('Toyota', 'Tesla')
+) TO 's3://demo-data/main/exports/modern-vehicles.csv' (HEADER, DELIMITER ',');
+```
+
 ## Basic Query Examples
 
 ### 1. Creating Temporary Views
