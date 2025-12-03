@@ -91,6 +91,78 @@ s3://{workspace-slug}-{repository-slug}/{branch}/{object-path}
 - Placeholders are recommended for most use cases
 - Both syntaxes can be mixed in the same query
 
+## Write Operations
+
+Irmin supports full SQL write capabilities through DuckDB, including:
+- `COPY ... TO 's3://...'` - Export query results to S3/LakeFS
+- `CREATE TEMPORARY TABLE/VIEW` - Create temporary tables and views for complex queries
+- `INSERT`, `UPDATE`, `DELETE` - Modify data in temporary tables (not persistent to LakeFS)
+- Mixed queries - Combine multiple statements (e.g., `CREATE VIEW ...; SELECT ...`)
+
+**Important Notes:**
+- Write operations require appropriate permissions (checked against repository/object write access)
+- `COPY TO` operations write to LakeFS and require write permissions on the target repository/branch
+- Only TEMPORARY tables/views allowed - no persistent database modifications
+- Temporary tables/views exist only for the query session duration
+- Direct data modifications (UPDATE/DELETE) work on temporary data, not LakeFS objects
+- To persist changes to LakeFS: use `COPY TO`
+
+**Security Constraints:**
+- Blacklisted operations: `ATTACH DATABASE`, `CREATE/DROP SECRET`, `INSTALL/LOAD` extensions, `EXPORT/IMPORT DATABASE`
+- Non-temporary `CREATE TABLE/VIEW` statements are blocked
+- All blacklisted commands return generic "access denied" error
+
+### Write Operation Examples
+
+#### Export Query Results
+```sql
+-- Export filtered data to a new file
+COPY (
+  SELECT * FROM $["workspace;repo;data.json@main"]
+  WHERE status = 'active'
+) TO 's3://workspace-repo/main/exports/active-data.parquet' (FORMAT PARQUET);
+```
+
+#### Create Temporary Views
+```sql
+-- Create a view for reusable complex queries
+CREATE OR REPLACE TEMPORARY VIEW active_users AS
+SELECT * FROM $["workspace;repo;users.json@main"]
+WHERE status = 'active';
+
+-- Query the view
+SELECT COUNT(*) FROM active_users;
+```
+
+#### Complex ETL with Temporary Tables
+```sql
+-- Create temp table from source data
+CREATE TEMPORARY TABLE raw_data AS
+SELECT * FROM $["workspace;repo;source.json@main"];
+
+-- Transform and export
+COPY (
+  SELECT 
+    id,
+    UPPER(name) as name,
+    status
+  FROM raw_data
+  WHERE created_at >= '2024-01-01'
+) TO 's3://workspace-repo/main/processed/clean-data.parquet';
+```
+
+#### Merge and Export Multiple Sources
+```sql
+-- Combine data from different branches
+CREATE TEMPORARY TABLE combined AS
+SELECT *, 'main' as source FROM $["workspace;repo;data.json@main"]
+UNION ALL
+SELECT *, 'dev' as source FROM $["workspace;repo;data.json@dev"];
+
+-- Export combined results
+COPY combined TO 's3://workspace-repo/main/reports/combined.csv' (HEADER, DELIMITER ',');
+```
+
 ## Basic Query Examples
 
 ### 1. Creating Temporary Views

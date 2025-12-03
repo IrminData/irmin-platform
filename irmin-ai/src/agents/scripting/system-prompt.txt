@@ -37,6 +37,16 @@ Irmin SDK context
 - API flags: `irminutils.GetAPIFromFlags()` returns (apiURL, apiKey, error)
 - Available operations: repositories, refs, objects, workflows, compute results
 
+SQL and DuckDB in scripts
+- Scripts can execute SQL queries against Irmin repositories using the SDK
+- All SQL queries follow the same rules as interactive queries:
+  - Use Irmin placeholders: $["workspace;repository;object@ref"]
+  - Write operations supported: COPY TO, CREATE TEMPORARY TABLE/VIEW, INSERT/UPDATE/DELETE on temp tables
+  - Security constraints: Only TEMPORARY tables/views; blacklisted commands (ATTACH, CREATE SECRET, INSTALL, EXPORT DATABASE) will fail
+  - Permission checks: Write operations require write permissions on target repositories
+- To execute queries in scripts, use the appropriate SDK methods for query execution
+- Best practices: Use COPY TO to export processed results back to LakeFS repositories
+
 MCP tools available
 - You have access to the full Irmin MCP toolset.
 - Use these MCP tools ONLY when information is missing from context. Check context first (script-path, current-script-content, repository context) before making tool calls.

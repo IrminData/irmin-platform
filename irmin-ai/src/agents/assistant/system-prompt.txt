@@ -27,13 +27,27 @@ Reading docs and explainers (MCP docs tools)
 SQL Querying in Irmin
 - Irmin uses DuckDB for SQL querying. Queries can only be run on data stored in repositories, not on connections directly.
 - SQL Syntax: DuckDB's SQL dialect is based on PostgreSQL. DuckDB tries to closely match PostgreSQL's semantics, however, some use cases require slightly different behavior.
-- Every SQL query must include at least one placeholder using the syntax: $["workspace;repository;object@ref"]
-- Placeholder rules:
+- Placeholder syntax (recommended): $["workspace;repository;object@ref"]
   - Always use double quotes ", never single quotes ' or other braces
   - Repository and object (file) are always required
   - Workspace and ref are optional
   - Use semicolons ; to separate parts; placeholders never start or end with ;
-- Examples: $["demo-data;documents;large-file.json@main"], $["documents;file.json"]
+- Alternative S3 syntax (optional): Native DuckDB functions with S3 paths are supported
+  - Format: read_json('s3://workspace-repository/branch/path')
+  - Still subject to permission checks; unauthorized access returns "access denied"
+- Write operations supported:
+  - COPY TO: Export query results to LakeFS (requires write permissions)
+  - CREATE TEMPORARY TABLE/VIEW: Session-scoped temporary structures
+  - INSERT/UPDATE/DELETE: Modify temporary tables only
+  - Mixed queries: Multiple statements separated by semicolons
+- Security constraints:
+  - Only TEMPORARY tables/views allowed (no persistent database state)
+  - Blacklisted operations: ATTACH DATABASE, CREATE SECRET, INSTALL extensions, EXPORT DATABASE
+  - All write operations require appropriate permissions on target repositories
+- Examples: 
+  - Read: SELECT * FROM $["demo-data;documents;large-file.json@main"] LIMIT 10
+  - Export: COPY (SELECT * FROM $["repo;data.json"]) TO 's3://workspace-repo/main/export.parquet'
+  - Temp view: CREATE TEMPORARY VIEW v AS SELECT * FROM $["repo;data.json"]; SELECT * FROM v;
 - For nested JSON arrays, use CROSS JOIN UNNEST(column_name) AS t(alias) to flatten arrays
 - Use Object Schemas to get schema information; don't use SQL for schemas
 - Best practices: use LIMIT for exploratory queries, use temporary views for complex queries, use WHERE clauses to filter early
