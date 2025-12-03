@@ -56,6 +56,18 @@ function ConfigureWorkflowStep({
   const handleCreate = useCallback(async () => {
     try {
       if (!wizardData.type) return;
+
+      // Validate required fields
+      if (!wizardData.name || wizardData.name.trim() === '') {
+        irminAlert('error', 'Please enter a workflow name');
+        return;
+      }
+
+      if (!wizardData.description || wizardData.description.trim() === '') {
+        irminAlert('error', 'Please enter a workflow description');
+        return;
+      }
+
       const res = await createWorkflowMutation.mutateAsync({
         type: wizardData.type,
         name: wizardData.name,

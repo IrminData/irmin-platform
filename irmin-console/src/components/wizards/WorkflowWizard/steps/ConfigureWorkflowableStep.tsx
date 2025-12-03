@@ -5,6 +5,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
+import { usePopup } from '@/context/PopupContext';
 
 import type { Action, Export, Import, Pipeline } from '@/types/core/Workflow';
 import type { WorkflowRequest } from '@/types/internal/WorkflowInput';
@@ -30,12 +31,107 @@ function ConfigureWorkflowableStep({
   goBack?: () => void;
 }) {
   const { dict } = useLocale();
+  const { irminAlert } = usePopup();
 
   const workflowable = useMemo(() => wizardData.workflowable, [wizardData]);
 
+  const validateWorkflowable = useCallback((): boolean => {
+    if (!workflowable) {
+      irminAlert('error', 'Workflowable configuration is missing');
+      return false;
+    }
+
+    switch (workflowable.type) {
+      case 'import': {
+        const importWorkflowable = workflowable as Import;
+        if (!importWorkflowable.connection_id) {
+          irminAlert('error', 'Please select a connection');
+          return false;
+        }
+        if (!importWorkflowable.repository) {
+          irminAlert('error', 'Please select a destination repository');
+          return false;
+        }
+        if (!importWorkflowable.repository_branch) {
+          irminAlert('error', 'Please specify a destination branch');
+          return false;
+        }
+        if (!importWorkflowable.import_to_repository_path) {
+          irminAlert(
+            'error',
+            'Please specify a destination path in repository'
+          );
+          return false;
+        }
+        if (
+          !importWorkflowable.import_from_connection_paths ||
+          importWorkflowable.import_from_connection_paths.length === 0
+        ) {
+          irminAlert(
+            'error',
+            'Please add at least one source path from connection'
+          );
+          return false;
+        }
+        break;
+      }
+      case 'export': {
+        const exportWorkflowable = workflowable as Export;
+        if (!exportWorkflowable.connection_id) {
+          irminAlert('error', 'Please select a connection');
+          return false;
+        }
+        if (!exportWorkflowable.repository) {
+          irminAlert('error', 'Please select a source repository');
+          return false;
+        }
+        if (!exportWorkflowable.repository_branch) {
+          irminAlert('error', 'Please specify a source branch');
+          return false;
+        }
+        if (!exportWorkflowable.export_to_connection_path) {
+          irminAlert(
+            'error',
+            'Please specify a destination path in connection'
+          );
+          return false;
+        }
+        if (
+          !exportWorkflowable.export_from_repository_paths ||
+          exportWorkflowable.export_from_repository_paths.length === 0
+        ) {
+          irminAlert(
+            'error',
+            'Please add at least one source path from repository'
+          );
+          return false;
+        }
+        break;
+      }
+      case 'action': {
+        const actionWorkflowable = workflowable as Action;
+        if (!actionWorkflowable.executable) {
+          irminAlert('error', 'Please select an executable script file');
+          return false;
+        }
+        break;
+      }
+      case 'pipeline': {
+        // Pipeline validation can be added here if needed
+        break;
+      }
+      default:
+        break;
+    }
+
+    return true;
+  }, [workflowable, irminAlert]);
+
   const handleNextStep = useCallback(() => {
-    goNext();
-  }, [goNext]);
+    if (validateWorkflowable()) {
+      goNext();
+    }
+  }, [goNext, validateWorkflowable]);
 
   // Convert WorkflowWizardData to WorkflowRequest format
   const convertToWorkflowRequest = useCallback(
