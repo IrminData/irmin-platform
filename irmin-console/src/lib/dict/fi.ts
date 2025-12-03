@@ -687,6 +687,10 @@ const fi = {
       'Käytä natiiveja DuckDB-funktioita S3-poluilla edistyneissä käyttötapauksissa. Molemmat syntaksit pakottavat samat käyttöoikeudet.',
     basicSyntax: 'Perussyntaksi',
     examples: 'Kyselyesimerkit',
+    basicQueries: 'Peruskyselyt',
+    advancedAnalytics: 'Kehittynyt analytiikka',
+    jsonOperations: 'JSON-operaatiot',
+    crossRepoAndBranch: 'Repositorioiden ja haarojen välillä',
     queryDocumentationTab: 'SQL-syntaksi',
     generateSql: 'Generoi SQL',
     sqlSelector: 'SQL valitsin',
@@ -703,6 +707,12 @@ const fi = {
     jsonExtract: 'Poimi JSON-kentät',
     crossBranchQuery: 'Haarojen välinen kysely',
     timeSeries: 'Aikasarja-analyysi',
+    writeOperations: 'Kirjoitusoperaatiot',
+    exportResults: 'Vie kyselytulokset',
+    tempViewWithQuery: 'Väliaikainen näkymä + kysely',
+    joinExport: 'Vie JOIN-tulokset',
+    aggregationExport: 'Vie aggregaatit',
+    multiStepTransform: 'Monivaiheinen muunnos',
     explanations: {
       basicSelect: 'Hae ensimmäiset 10 riviä objektista.',
       filterAndSort:
@@ -713,6 +723,16 @@ const fi = {
       jsonExtract: 'Poimi tietyt kentät JSON-merkkijonosarakkeesta.',
       crossBranchQuery: 'Yhdistä tulokset main- ja dev-haaroista.',
       timeSeries: 'Aggregoi data tunneittain trendien analysoimiseksi.',
+      exportResults:
+        'Käytä COPY TO viedäksesi kyselytulokset LakeFSiin. Vaatii kirjoitusoikeudet kohderepositoryyn ja haaraan.',
+      tempViewWithQuery:
+        'Luo väliaikaisia näkymiä monimutkaisille kyselyille ja kysy niistä. Useita lauseita erotetaan puolipisteillä.',
+      joinExport:
+        'Vie JOIN-kyselyjen tulokset yhdistämällä useita tietolähteitä. Hyödyllinen rikastettujen tietoaineistojen luomiseen.',
+      aggregationExport:
+        'Vie aggregoidut analytiikkatiedot (GROUP BY, COUNT, AVG, SUM) suoraan tiedostoihin. Täydellinen raportteihin ja hallintapaneeleihin.',
+      multiStepTransform:
+        'Käytä useita väliaikaisia tauluja monimutkaisten tietomuunnosten rakentamiseen vaihe vaiheelta, ja vie lopulliset tulokset.',
     },
     sqlGeneration: {
       title: 'Luo SQL-kysely',

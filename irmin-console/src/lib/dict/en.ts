@@ -704,6 +704,10 @@ const en = {
       'Use native DuckDB functions with S3 paths for advanced use cases. Both syntaxes enforce the same permissions.',
     basicSyntax: 'Basic Syntax',
     examples: 'Query Examples',
+    basicQueries: 'Basic Queries',
+    advancedAnalytics: 'Advanced Analytics',
+    jsonOperations: 'JSON Operations',
+    crossRepoAndBranch: 'Cross-Repository & Branch',
     queryDocumentationTab: 'SQL Syntax',
     generateSql: 'Generate SQL',
     sqlSelector: 'SQL Selector',
@@ -720,6 +724,12 @@ const en = {
     jsonExtract: 'Extract JSON Fields',
     crossBranchQuery: 'Cross-Branch Query',
     timeSeries: 'Time Series Analysis',
+    writeOperations: 'Write Operations',
+    exportResults: 'Export Query Results',
+    tempViewWithQuery: 'Temporary View + Query',
+    joinExport: 'Export JOIN Results',
+    aggregationExport: 'Export Aggregations',
+    multiStepTransform: 'Multi-Step Transformation',
     explanations: {
       basicSelect: 'Retrieve the first 10 rows from the object.',
       filterAndSort: 'Filter rows by id and sort by creation date.',
@@ -730,6 +740,16 @@ const en = {
       jsonExtract: 'Extract specific fields from a JSON string column.',
       crossBranchQuery: 'Combine results from main and dev branches.',
       timeSeries: 'Aggregate data by hour to analyze trends.',
+      exportResults:
+        'Use COPY TO to export query results to LakeFS. Requires write permissions on the target repository and branch.',
+      tempViewWithQuery:
+        'Create temporary views for complex queries, then query them. Multiple statements separated by semicolons.',
+      joinExport:
+        'Export results from JOIN queries combining multiple data sources. Useful for creating enriched datasets.',
+      aggregationExport:
+        'Export aggregated analytics (GROUP BY, COUNT, AVG, SUM) directly to files. Perfect for reports and dashboards.',
+      multiStepTransform:
+        'Use multiple temporary tables to build complex data transformations step-by-step, then export final results.',
     },
     sqlGeneration: {
       title: 'Generate SQL Query',

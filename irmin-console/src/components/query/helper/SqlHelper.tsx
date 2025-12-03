@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { useLocale } from '@/context/LocaleContext';
+import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { useRepositoryObjectSchema } from '@/hooks/api/useRepositoryObjectSchema';
 
@@ -62,6 +63,7 @@ export default function SqlHelper({
   currentSql?: string;
 }) {
   const { dict } = useLocale();
+  const { workspaceSlug } = useWorkspaceContext();
   const [open, setOpen] = useState(false);
 
   // Conversation state - persists across Sheet open/close
@@ -237,7 +239,10 @@ export default function SqlHelper({
             </div>
           </TabsContent>
 
-          <TabsContent value='examples' className='mt-4 flex-1 overflow-y-auto'>
+          <TabsContent
+            value='examples'
+            className='mt-4 flex-1 overflow-y-auto pb-12'
+          >
             {/* DuckDB Information Section */}
             <section className='mb-4 px-2'>
               <div className='rounded-md border bg-card p-2'>
@@ -303,8 +308,8 @@ export default function SqlHelper({
                       {dict.queryHelper.alternativeS3Description}
                     </p>
                     <div className='rounded-md bg-muted p-2 font-mono text-xs'>
-                      {context
-                        ? `read_json('s3://${context.repository}/${context.ref || 'main'}/sample.json')`
+                      {context && workspaceSlug
+                        ? `read_json('s3://${workspaceSlug}-${context.repository}/${context.ref || 'main'}/sample.json')`
                         : `read_json('s3://workspace-repository/branch/sample.json')`}
                     </div>
                     <p className='mt-2 text-xs text-muted-foreground'>
@@ -428,169 +433,333 @@ export default function SqlHelper({
                   {dict.queryHelper.examples}
                 </h3>
                 <div className='space-y-3'>
-                  {/* Basic Examples */}
-                  {displaySelector ? (
-                    <>
-                      <ExampleItem
-                        title={dict.queryHelper.basicSelect}
-                        code={`SELECT * FROM ${displaySelector} LIMIT 10;`}
-                        explanation={dict.queryHelper.explanations.basicSelect}
-                      />
-                      <ExampleItem
-                        title={dict.queryHelper.filterAndSort}
-                        code={`SELECT * FROM ${displaySelector}\nWHERE id > 100\nORDER BY created_at DESC;`}
-                        explanation={
-                          dict.queryHelper.explanations.filterAndSort
-                        }
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <ExampleItem
-                        title={dict.queryHelper.basicSelect}
-                        code='SELECT * FROM $["repo;file.json@main"] LIMIT 10;'
-                        explanation={dict.queryHelper.explanations.basicSelect}
-                      />
-                      <ExampleItem
-                        title={dict.queryHelper.filterAndSort}
-                        code={`SELECT * FROM $["repo;data.csv"]\nWHERE id > 100\nORDER BY created_at DESC;`}
-                        explanation={
-                          dict.queryHelper.explanations.filterAndSort
-                        }
-                      />
-                    </>
-                  )}
-
-                  {/* Aggregations */}
-                  {displaySelector ? (
-                    <ExampleItem
-                      title={dict.queryHelper.aggregations}
-                      code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM ${displaySelector}\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
-                      explanation={dict.queryHelper.explanations.aggregations}
-                    />
-                  ) : (
-                    <ExampleItem
-                      title={dict.queryHelper.aggregations}
-                      code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM $["repo;data.json"]\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
-                      explanation={dict.queryHelper.explanations.aggregations}
-                    />
-                  )}
-
-                  {/* Window Functions */}
-                  {displaySelector ? (
-                    <ExampleItem
-                      title={dict.queryHelper.windowFunctions}
-                      code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM ${displaySelector};`}
-                      explanation={
-                        dict.queryHelper.explanations.windowFunctions
-                      }
-                    />
-                  ) : (
-                    <ExampleItem
-                      title={dict.queryHelper.windowFunctions}
-                      code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM $["repo;data.json"];`}
-                      explanation={
-                        dict.queryHelper.explanations.windowFunctions
-                      }
-                    />
-                  )}
-
-                  {/* Nested JSON */}
-                  {isJsonObject ? (
-                    <ExampleItem
-                      title={dict.queryHelper.nestedJson}
-                      code={
-                        displaySelector
-                          ? `SELECT d.*\nFROM ${displaySelector}\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
-                          : `SELECT d.*\nFROM $["repo;data.json"]\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
-                      }
-                      explanation={dict.queryHelper.explanations.nestedJson}
-                    />
-                  ) : null}
-
-                  {/* JSON Extract */}
-                  {isJsonObject ? (
-                    <ExampleItem
-                      title={dict.queryHelper.jsonExtract}
-                      code={
-                        displaySelector
-                          ? `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM ${displaySelector}\nWHERE json_valid(data_column);`
-                          : `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM $["repo;json-data.json"]\nWHERE json_valid(data_column);`
-                      }
-                      explanation={dict.queryHelper.explanations.jsonExtract}
-                    />
-                  ) : null}
-
-                  {/* Cross-Branch Query */}
-                  {displaySelector ? (
-                    <ExampleItem
-                      title={dict.queryHelper.crossBranchQuery}
-                      code={`SELECT 'main' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'main')}\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'dev')};`}
-                      explanation={
-                        dict.queryHelper.explanations.crossBranchQuery
-                      }
-                    />
-                  ) : (
-                    <ExampleItem
-                      title={dict.queryHelper.crossBranchQuery}
-                      code={`SELECT 'main' AS branch, COUNT(*) FROM $["repo;data.json@main"]\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM $["repo;data.json@dev"];`}
-                      explanation={
-                        dict.queryHelper.explanations.crossBranchQuery
-                      }
-                    />
-                  )}
-
-                  {/* Time Series */}
-                  {displaySelector ? (
-                    <ExampleItem
-                      title={dict.queryHelper.timeSeries}
-                      code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM ${displaySelector}\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
-                      explanation={dict.queryHelper.explanations.timeSeries}
-                    />
-                  ) : (
-                    <ExampleItem
-                      title={dict.queryHelper.timeSeries}
-                      code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM $["repo;time-series.json"]\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
-                      explanation={dict.queryHelper.explanations.timeSeries}
-                    />
-                  )}
-
-                  {/* Native DuckDB S3 Example */}
-                  {context && (
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <div
-                          className={`
-                            flex cursor-pointer items-center justify-between
-                            rounded-md border bg-card
-                          `}
-                        >
-                          <div
-                            className={`
-                              flex flex-1 items-center justify-between border-b
-                              bg-muted/30 px-3 py-1.5
-                            `}
-                          >
-                            <div className='flex items-center gap-1.5'>
-                              <span className='text-xs font-medium'>
-                                {dict.queryHelper.alternativeS3Example}
-                              </span>
-                            </div>
-                            <TbChevronDown className='size-4' />
-                          </div>
-                        </div>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
+                  {/* Basic Queries - Always Visible */}
+                  <div className='space-y-3'>
+                    <h4
+                      className={`
+                        text-xs font-semibold text-muted-foreground uppercase
+                      `}
+                    >
+                      {dict.queryHelper.basicQueries}
+                    </h4>
+                    {displaySelector ? (
+                      <>
                         <ExampleItem
-                          title={dict.queryHelper.alternativeS3Example}
-                          code={`SELECT * FROM read_json('s3://${context.repository}/${context.ref || 'main'}/sample.json') LIMIT 10;`}
+                          title={dict.queryHelper.basicSelect}
+                          code={`SELECT * FROM ${displaySelector} LIMIT 10;`}
                           explanation={
-                            dict.queryHelper.alternativeS3ExampleExplanation
+                            dict.queryHelper.explanations.basicSelect
                           }
                         />
+                        <ExampleItem
+                          title={dict.queryHelper.filterAndSort}
+                          code={`SELECT * FROM ${displaySelector}\nWHERE id > 100\nORDER BY created_at DESC;`}
+                          explanation={
+                            dict.queryHelper.explanations.filterAndSort
+                          }
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <ExampleItem
+                          title={dict.queryHelper.basicSelect}
+                          code='SELECT * FROM $["repo;file.json@main"] LIMIT 10;'
+                          explanation={
+                            dict.queryHelper.explanations.basicSelect
+                          }
+                        />
+                        <ExampleItem
+                          title={dict.queryHelper.filterAndSort}
+                          code={`SELECT * FROM $["repo;data.csv"]\nWHERE id > 100\nORDER BY created_at DESC;`}
+                          explanation={
+                            dict.queryHelper.explanations.filterAndSort
+                          }
+                        />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Advanced Analytics - Collapsible */}
+                  <Collapsible>
+                    <div className='rounded-md border bg-card'>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          className={`
+                            flex w-full items-center justify-between p-3
+                          `}
+                        >
+                          <h4
+                            className={`
+                              text-xs font-semibold text-muted-foreground
+                              uppercase
+                            `}
+                          >
+                            {dict.queryHelper.advancedAnalytics}
+                          </h4>
+                          <TbChevronDown className='size-4' />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className='space-y-3 p-3'>
+                        {displaySelector ? (
+                          <>
+                            <ExampleItem
+                              title={dict.queryHelper.aggregations}
+                              code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM ${displaySelector}\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
+                              explanation={
+                                dict.queryHelper.explanations.aggregations
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.windowFunctions}
+                              code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM ${displaySelector};`}
+                              explanation={
+                                dict.queryHelper.explanations.windowFunctions
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.timeSeries}
+                              code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM ${displaySelector}\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
+                              explanation={
+                                dict.queryHelper.explanations.timeSeries
+                              }
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <ExampleItem
+                              title={dict.queryHelper.aggregations}
+                              code={`SELECT category,\n  COUNT(*) as total,\n  AVG(value) as avg_value,\n  MIN(date_col) as earliest\nFROM $["repo;data.json"]\nWHERE date_col >= '2024-01-01'\nGROUP BY category\nORDER BY total DESC;`}
+                              explanation={
+                                dict.queryHelper.explanations.aggregations
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.windowFunctions}
+                              code={`SELECT *,\n  ROW_NUMBER() OVER (PARTITION BY category ORDER BY value DESC) as rank,\n  LAG(value) OVER (ORDER BY date_col) as prev_value\nFROM $["repo;data.json"];`}
+                              explanation={
+                                dict.queryHelper.explanations.windowFunctions
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.timeSeries}
+                              code={`SELECT\n  DATE_TRUNC('hour', timestamp_col) as hour_bucket,\n  COUNT(*) as events_per_hour,\n  AVG(metric_value) as avg_metric\nFROM $["repo;time-series.json"]\nWHERE timestamp_col >= NOW() - INTERVAL 24 HOUR\nGROUP BY hour_bucket\nORDER BY hour_bucket;`}
+                              explanation={
+                                dict.queryHelper.explanations.timeSeries
+                              }
+                            />
+                          </>
+                        )}
                       </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+
+                  {/* JSON Operations - Collapsible (only shown for JSON) */}
+                  {isJsonObject && (
+                    <Collapsible>
+                      <div className='rounded-md border bg-card'>
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            className={`
+                              flex w-full items-center justify-between p-3
+                            `}
+                          >
+                            <h4
+                              className={`
+                                text-xs font-semibold text-muted-foreground
+                                uppercase
+                              `}
+                            >
+                              {dict.queryHelper.jsonOperations}
+                            </h4>
+                            <TbChevronDown className='size-4' />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className='space-y-3 p-3'>
+                          <ExampleItem
+                            title={dict.queryHelper.nestedJson}
+                            code={
+                              displaySelector
+                                ? `SELECT d.*\nFROM ${displaySelector}\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
+                                : `SELECT d.*\nFROM $["repo;data.json"]\nCROSS JOIN UNNEST(data) AS t(d)\nWHERE d.type = 'active';`
+                            }
+                            explanation={
+                              dict.queryHelper.explanations.nestedJson
+                            }
+                          />
+                          <ExampleItem
+                            title={dict.queryHelper.jsonExtract}
+                            code={
+                              displaySelector
+                                ? `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM ${displaySelector}\nWHERE json_valid(data_column);`
+                                : `SELECT\n  json_extract(data_column, '$.field_name') as extracted_field,\n  json_extract_string(data_column, '$.nested.field') as nested_field\nFROM $["repo;json-data.json"]\nWHERE json_valid(data_column);`
+                            }
+                            explanation={
+                              dict.queryHelper.explanations.jsonExtract
+                            }
+                          />
+                        </CollapsibleContent>
+                      </div>
                     </Collapsible>
                   )}
+
+                  {/* Cross-Repository & Branch - Collapsible */}
+                  <Collapsible>
+                    <div className='rounded-md border bg-card'>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          className={`
+                            flex w-full items-center justify-between p-3
+                          `}
+                        >
+                          <h4
+                            className={`
+                              text-xs font-semibold text-muted-foreground
+                              uppercase
+                            `}
+                          >
+                            {dict.queryHelper.crossRepoAndBranch}
+                          </h4>
+                          <TbChevronDown className='size-4' />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className='space-y-3 p-3'>
+                        {displaySelector ? (
+                          <ExampleItem
+                            title={dict.queryHelper.crossBranchQuery}
+                            code={`SELECT 'main' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'main')}\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM ${getSelectorWithRef(displaySelector, 'dev')};`}
+                            explanation={
+                              dict.queryHelper.explanations.crossBranchQuery
+                            }
+                          />
+                        ) : (
+                          <ExampleItem
+                            title={dict.queryHelper.crossBranchQuery}
+                            code={`SELECT 'main' AS branch, COUNT(*) FROM $["repo;data.json@main"]\nUNION ALL\nSELECT 'dev' AS branch, COUNT(*) FROM $["repo;data.json@dev"];`}
+                            explanation={
+                              dict.queryHelper.explanations.crossBranchQuery
+                            }
+                          />
+                        )}
+                        {context && workspaceSlug && (
+                          <ExampleItem
+                            title={dict.queryHelper.alternativeS3Example}
+                            code={`SELECT * FROM read_json('s3://${workspaceSlug}-${context.repository}/${context.ref || 'main'}/sample.json') LIMIT 10;`}
+                            explanation={
+                              dict.queryHelper.alternativeS3ExampleExplanation
+                            }
+                          />
+                        )}
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+
+                  {/* Write Operations - Collapsible */}
+                  <Collapsible>
+                    <div className='rounded-md border bg-card'>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          className={`
+                            flex w-full items-center justify-between p-3
+                          `}
+                        >
+                          <h4
+                            className={`
+                              text-xs font-semibold text-muted-foreground
+                              uppercase
+                            `}
+                          >
+                            {dict.queryHelper.writeOperations}
+                          </h4>
+                          <TbChevronDown className='size-4' />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className='space-y-3 p-3'>
+                        {displaySelector ? (
+                          <>
+                            <ExampleItem
+                              title={dict.queryHelper.exportResults}
+                              code={`COPY (\n  SELECT * FROM ${displaySelector}\n  WHERE status = 'active'\n) TO 's3://${workspaceSlug && context?.repository ? `${workspaceSlug}-${context.repository}` : 'workspace-repo'}/${context?.ref || 'main'}/exports/output.parquet'\n(FORMAT PARQUET);`}
+                              explanation={
+                                dict.queryHelper.explanations.exportResults
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.tempViewWithQuery}
+                              code={`CREATE TEMPORARY VIEW filtered_data AS\nSELECT * FROM ${displaySelector}\nWHERE active = true;\n\nSELECT COUNT(*) as total FROM filtered_data;`}
+                              explanation={
+                                dict.queryHelper.explanations.tempViewWithQuery
+                              }
+                            />
+                            {context && workspaceSlug && (
+                              <ExampleItem
+                                title={dict.queryHelper.joinExport}
+                                code={`COPY (\n  SELECT \n    d1.id,\n    d1.name,\n    d2.category,\n    d2.value\n  FROM ${displaySelector} AS d1\n  LEFT JOIN $["${context.repository};other-data.json@${context.ref || 'main'}"] AS d2\n    ON d1.id = d2.ref_id\n  WHERE d1.status = 'active'\n) TO 's3://${workspaceSlug}-${context.repository}/${context.ref || 'main'}/exports/joined-data.parquet'\n(FORMAT PARQUET);`}
+                                explanation={
+                                  dict.queryHelper.explanations.joinExport
+                                }
+                              />
+                            )}
+                            <ExampleItem
+                              title={dict.queryHelper.aggregationExport}
+                              code={`COPY (\n  SELECT \n    category,\n    COUNT(*) as total_count,\n    AVG(value) as avg_value,\n    SUM(amount) as total_amount\n  FROM ${displaySelector}\n  WHERE date_col >= '2024-01-01'\n  GROUP BY category\n  ORDER BY total_count DESC\n) TO 's3://${workspaceSlug && context?.repository ? `${workspaceSlug}-${context.repository}` : 'workspace-repo'}/${context?.ref || 'main'}/analytics/category-summary.csv'\n(HEADER, DELIMITER ',');`}
+                              explanation={
+                                dict.queryHelper.explanations.aggregationExport
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.multiStepTransform}
+                              code={`-- Step 1: Create temp table with base data\nCREATE TEMPORARY TABLE base_data AS\nSELECT * FROM ${displaySelector}\nWHERE status = 'active';\n\n-- Step 2: Create aggregated stats\nCREATE TEMPORARY TABLE stats AS\nSELECT \n  user_id,\n  COUNT(*) as activity_count,\n  MAX(timestamp) as last_activity\nFROM base_data\nGROUP BY user_id;\n\n-- Step 3: Export results\nCOPY stats TO 's3://${workspaceSlug && context?.repository ? `${workspaceSlug}-${context.repository}` : 'workspace-repo'}/${context?.ref || 'main'}/reports/user-stats.parquet';`}
+                              explanation={
+                                dict.queryHelper.explanations.multiStepTransform
+                              }
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <ExampleItem
+                              title={dict.queryHelper.exportResults}
+                              code={`COPY (\n  SELECT * FROM $["repo;data.json@main"]\n  WHERE status = 'active'\n) TO 's3://workspace-repo/main/exports/output.parquet'\n(FORMAT PARQUET);`}
+                              explanation={
+                                dict.queryHelper.explanations.exportResults
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.tempViewWithQuery}
+                              code={`CREATE TEMPORARY VIEW filtered_data AS\nSELECT * FROM $["repo;data.json@main"]\nWHERE active = true;\n\nSELECT COUNT(*) as total FROM filtered_data;`}
+                              explanation={
+                                dict.queryHelper.explanations.tempViewWithQuery
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.joinExport}
+                              code={`COPY (\n  SELECT \n    p.id AS post_id,\n    p.title,\n    u.name AS author_name,\n    u.email AS author_email\n  FROM $["repo;posts.json@main"] AS p\n  LEFT JOIN $["repo;users.json@main"] AS u\n    ON p.userId = u.id\n) TO 's3://workspace-repo/main/exports/posts-with-authors.parquet'\n(FORMAT PARQUET);`}
+                              explanation={
+                                dict.queryHelper.explanations.joinExport
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.aggregationExport}
+                              code={`COPY (\n  SELECT \n    category,\n    COUNT(*) as total_count,\n    AVG(value) as avg_value,\n    SUM(amount) as total_amount\n  FROM $["repo;transactions.json@main"]\n  WHERE date_col >= '2024-01-01'\n  GROUP BY category\n  ORDER BY total_count DESC\n) TO 's3://workspace-repo/main/analytics/category-summary.csv'\n(HEADER, DELIMITER ',');`}
+                              explanation={
+                                dict.queryHelper.explanations.aggregationExport
+                              }
+                            />
+                            <ExampleItem
+                              title={dict.queryHelper.multiStepTransform}
+                              code={`-- Step 1: Create temp table with base data\nCREATE TEMPORARY TABLE base_data AS\nSELECT * FROM $["repo;data.json@main"]\nWHERE status = 'active';\n\n-- Step 2: Create aggregated stats\nCREATE TEMPORARY TABLE stats AS\nSELECT \n  user_id,\n  COUNT(*) as activity_count,\n  MAX(timestamp) as last_activity\nFROM base_data\nGROUP BY user_id;\n\n-- Step 3: Export results\nCOPY stats TO 's3://workspace-repo/main/reports/user-stats.parquet';`}
+                              explanation={
+                                dict.queryHelper.explanations.multiStepTransform
+                              }
+                            />
+                          </>
+                        )}
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
                 </div>
               </section>
             </div>
