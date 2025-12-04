@@ -314,7 +314,7 @@ func getDuckDBSchema(
 
 	// build and parse placeholder SELECT
 	simple := fmt.Sprintf(`SELECT * FROM $["%s;%s@%s"];`, repository, path, ref)
-	parsed, parseIrminQueryErr := parseIrminQuery(c, user, workspace, simple)
+	parsed, parseIrminQueryErr := parseIrminQuery(c, ctx, user, workspace, simple)
 	if parseIrminQueryErr != nil {
 		return nil, fmt.Errorf("failed to parse query: %w", parseIrminQueryErr)
 	}

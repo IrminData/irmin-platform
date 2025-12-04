@@ -79,6 +79,8 @@ SQL execution against repository data:
 - **Format Detection**: Automatic format detection from file extensions and MIME types
 - **Result Processing**: Format query results with proper error handling
 - **Performance Optimization**: Efficient query execution using DuckDB
+- **Dual Syntax Support**: Supports both Irmin placeholders and native DuckDB S3 paths
+- **Permission Enforcement**: All S3 paths validated against user permissions
 
 #### 7. **Version Control Operations**
 
@@ -230,6 +232,52 @@ Upload/Download → Path Validation → LakeFS Operations → Metadata Processin
 - **Schema Inference**: Automatic schema detection for query optimization
 - **Result Formatting**: Structured result sets with metadata
 - **Error Handling**: Comprehensive error reporting for debugging
+- **Dual Syntax Support**: Supports both Irmin placeholders and native DuckDB S3 paths
+- **Permission Enforcement**: All S3 paths validated against user permissions
+
+### Write Operations Support
+
+The engine supports full SQL write capabilities:
+- **COPY TO**: Export query results to LakeFS
+- **CREATE TEMPORARY TABLE/VIEW**: Temporary tables for complex queries
+- **INSERT/UPDATE/DELETE**: Modify temporary data
+- **Mixed Queries**: Multiple statements in one query
+
+All write operations enforce permission checks based on context analysis.
+
+**Security Constraints:**
+- Only TEMPORARY tables/views allowed (no persistent database state)
+- Blacklisted operations: ATTACH DATABASE, CREATE/DROP SECRET, INSTALL/LOAD extensions, EXPORT/IMPORT DATABASE
+- Non-temporary CREATE TABLE/VIEW statements are blocked
+- All write operations require appropriate permissions on target repositories
+
+### Query Syntax Options
+
+#### Irmin Placeholders (Recommended)
+
+```sql
+SELECT * FROM $["workspace;repository;path@ref"] LIMIT 10;
+```
+
+**Advantages:**
+- Portable across workspace/repository renames
+- Clear version/branch specification
+- Cleaner SQL syntax
+
+#### Native DuckDB S3 Paths (Optional)
+
+```sql
+SELECT * FROM read_json('s3://workspace-repository/branch/path') LIMIT 10;
+```
+
+**S3 Path Format:** `s3://{workspace-slug}-{repository-slug}/{branch}/{object-path}`
+
+**Use cases:**
+- Advanced DuckDB features requiring native functions
+- Direct S3 access patterns
+- Integration with existing DuckDB workflows
+
+**Security:** Both syntaxes enforce the same permission checks at workspace, repository, and object levels.
 
 ## Integration Points
 

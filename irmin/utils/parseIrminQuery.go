@@ -39,20 +39,21 @@ type ParsedIrminQuery struct {
 // It receives a pointer to ParsedQueryPlaceholder and returns a string to be substituted along with any error.
 type ReplaceFn func(pi *ParsedQueryPlaceholder) (string, error)
 
-// detectContext looks at the portion of the query preceding the placeholder start index
+// DetectContext looks at the portion of the query preceding the placeholder start index
 // and heuristically determines whether the placeholder is in a read or write context.
 // It returns "write" if the last keyword is "TO" or "INTO" (indicating a write operation),
 // "read" if "FROM" is the most recent keyword, or "read" by default.
-func detectContext(query string, placeholderStart int) string {
+func DetectContext(query string, placeholderStart int) string {
 	// Take the substring up to the placeholder start.
 	contextSnippet := query[:placeholderStart]
 	// Convert to uppercase to allow case-insensitive matching.
-	contextSnippet = strings.ToUpper(contextSnippet)
+	upperContext := strings.ToUpper(contextSnippet)
 
-	// Find the last occurrence of "FROM", "TO", and "INTO".
-	lastFrom := strings.LastIndex(contextSnippet, "FROM")
-	lastTo := strings.LastIndex(contextSnippet, "TO")
-	lastInto := strings.LastIndex(contextSnippet, "INTO")
+	// Find the last occurrence of "FROM", "TO", and "INTO" using word boundaries.
+	// This prevents partial matches like "HISTORIAN" matching "TO" or "INVENTORY" matching "INTO".
+	lastFrom := findLastIndexRegex(upperContext, `\bFROM\b`)
+	lastTo := findLastIndexRegex(upperContext, `\bTO\b`)
+	lastInto := findLastIndexRegex(upperContext, `\bINTO\b`)
 
 	// If "TO" or "INTO" appear after "FROM", assume write context.
 	if lastTo > lastFrom || lastInto > lastFrom {
@@ -61,6 +62,21 @@ func detectContext(query string, placeholderStart int) string {
 	// Otherwise assume read context.
 	return "read"
 }
+
+// findLastIndexRegex finds the last start index of a regex match in the string.
+// Returns -1 if not found.
+func findLastIndexRegex(s, pattern string) int {
+	re := regexp.MustCompile(pattern)
+	matches := re.FindAllStringIndex(s, -1)
+	if len(matches) == 0 {
+		return -1
+	}
+	// Return the start index of the last match
+	return matches[len(matches)-1][0]
+}
+
+// ErrNoPlaceholders is returned when a query contains no Irmin placeholders.
+var ErrNoPlaceholders = errors.New("no valid query placeholders found")
 
 // ParseIrminQuery extracts and parses all Irmin query placeholders from the given string,
 // replacing each placeholder with the value returned by the provided replaceFn.
@@ -72,13 +88,14 @@ func detectContext(query string, placeholderStart int) string {
 //	"Preamble text $[\"acme;mobile-app;users.json@main\"] some middle text $[\"other;repo;file.json\"] end text"
 //
 // Returns a ParsedIrminQuery containing the original query, the formatted query, and the parsed placeholders.
+// ErrNoPlaceholders is returned when a query contains no Irmin placeholders.
 func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error) {
 	// Regular expression to match placeholders in the form: $["..."]
 	rex := regexp.MustCompile(`\$\["([^"]+)"\]`)
 	matches := rex.FindAllStringSubmatchIndex(query, -1)
 
 	if len(matches) == 0 {
-		return ParsedIrminQuery{}, errors.New("no valid query placeholders found")
+		return ParsedIrminQuery{}, ErrNoPlaceholders
 	}
 
 	var placeholders []*ParsedQueryPlaceholder
@@ -96,7 +113,7 @@ func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error
 		sb.WriteString(query[lastIndex:start])
 
 		// Determine the context (read/write) for this placeholder.
-		operation := detectContext(query, start)
+		operation := DetectContext(query, start)
 
 		// Extract the inner content of the placeholder.
 		content := query[groupStart:groupEnd]

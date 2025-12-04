@@ -2238,6 +2238,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetQueryTags\(queryID uint\) \(\[\]Tag, error\)](<#Database.GetQueryTags>)
   - [func \(d \*Database\) GetRepositoriesByTag\(tagID uint\) \(\[\]Repository, error\)](<#Database.GetRepositoriesByTag>)
   - [func \(d \*Database\) GetRepositoriesInWorkspace\(workspaceID uint\) \(\[\]Repository, error\)](<#Database.GetRepositoriesInWorkspace>)
+  - [func \(d \*Database\) GetRepositoryByLakeFSRepoID\(lakeFSRepoID string\) \(\*Repository, error\)](<#Database.GetRepositoryByLakeFSRepoID>)
   - [func \(d \*Database\) GetRepositoryBySlugAndWorkspaceID\(slug string, workspaceID uint\) \(\*Repository, error\)](<#Database.GetRepositoryBySlugAndWorkspaceID>)
   - [func \(d \*Database\) GetRepositoryObjectTags\(repositoryObjectID uint\) \(\[\]Tag, error\)](<#Database.GetRepositoryObjectTags>)
   - [func \(d \*Database\) GetRepositoryObjectsByTag\(tagID uint\) \(\[\]RepositoryObject, error\)](<#Database.GetRepositoryObjectsByTag>)
@@ -3290,6 +3291,15 @@ func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, e
 ```
 
 
+
+<a name="Database.GetRepositoryByLakeFSRepoID"></a>
+### func \(\*Database\) GetRepositoryByLakeFSRepoID
+
+```go
+func (d *Database) GetRepositoryByLakeFSRepoID(lakeFSRepoID string) (*Repository, error)
+```
+
+GetRepositoryByLakeFSRepoID gets a repository by its LakeFS repository ID \(name\).
 
 <a name="Database.GetRepositoryBySlugAndWorkspaceID"></a>
 ### func \(\*Database\) GetRepositoryBySlugAndWorkspaceID
@@ -4885,6 +4895,7 @@ import "irmin-api/duckdb"
 ## Index
 
 - [func BuildReadQuery\(filePath string, options \*ReadOptions\) string](<#BuildReadQuery>)
+- [func EscapeSQLString\(s string\) string](<#EscapeSQLString>)
 - [func GetContentTypeFromExtension\(extension string\) string](<#GetContentTypeFromExtension>)
 - [func GetRequiredExtensions\(options \*ReadOptions\) \[\]string](<#GetRequiredExtensions>)
 - [func GetSupportedFormats\(\) \[\]string](<#GetSupportedFormats>)
@@ -4914,6 +4925,15 @@ func BuildReadQuery(filePath string, options *ReadOptions) string
 ```
 
 BuildReadQuery constructs a DuckDB query string for reading a file. File paths and string parameter values are properly escaped to prevent SQL injection.
+
+<a name="EscapeSQLString"></a>
+## func EscapeSQLString
+
+```go
+func EscapeSQLString(s string) string
+```
+
+EscapeSQLString escapes single quotes in SQL string literals by doubling them. This prevents SQL injection when interpolating strings into SQL queries. For example: "file'name.json" becomes "file”name.json"
 
 <a name="GetContentTypeFromExtension"></a>
 ## func GetContentTypeFromExtension
@@ -5141,11 +5161,22 @@ import "irmin-api/engine"
 ## Index
 
 - [func BuildJSONSchemaForTesting\(fields \[\]SchemaField, context \*SchemaContext\) irminmodels.JSONSchema](<#BuildJSONSchemaForTesting>)
+- [func CheckObjectPermissions\(c \*Client, user \*db.User, workspace \*db.Workspace, objectID uint, operation string\) error](<#CheckObjectPermissions>)
+- [func CheckRepositoryPermissions\(c \*Client, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, operation string\) error](<#CheckRepositoryPermissions>)
+- [func DetectOperationType\(stmt string\) string](<#DetectOperationType>)
 - [func ExtractArrayElementTypeForTesting\(arrayType string\) string](<#ExtractArrayElementTypeForTesting>)
+- [func ExtractS3Paths\(query string\) \(\[\]string, error\)](<#ExtractS3Paths>)
+- [func IsRowReturningStatement\(stmt string\) bool](<#IsRowReturningStatement>)
 - [func IsSystemPath\(path string\) bool](<#IsSystemPath>)
+- [func MaskStringLiterals\(sql string\) string](<#MaskStringLiterals>)
 - [func ParseFieldNameAndTypeForTesting\(fieldDef string\) \(string, string\)](<#ParseFieldNameAndTypeForTesting>)
 - [func PrimitiveSchemaForTesting\(duckType string, field SchemaField\) irminmodels.JSONSchema](<#PrimitiveSchemaForTesting>)
+- [func RemoveSQLComments\(sql string\) string](<#RemoveSQLComments>)
+- [func ResolveTargetWorkspace\(c \*Client, user \*db.User, plWorkspaceSlug string, currentWorkspace \*db.Workspace\) \(\*db.Workspace, error\)](<#ResolveTargetWorkspace>)
+- [func SanitizeQueryError\(err error, logger \*slog.Logger, ctx context.Context\) error](<#SanitizeQueryError>)
+- [func SplitSQLStatements\(sql string\) \[\]string](<#SplitSQLStatements>)
 - [func SplitTopLevelCommaForTesting\(s string\) \[\]string](<#SplitTopLevelCommaForTesting>)
+- [func ValidateQuerySecurity\(query string\) error](<#ValidateQuerySecurity>)
 - [type BranchProtectionManager](<#BranchProtectionManager>)
   - [func NewBranchProtectionManager\(client \*lakefs.Client\) \*BranchProtectionManager](<#NewBranchProtectionManager>)
   - [func \(m \*BranchProtectionManager\) EnsureBranchProtection\(repositoryName, branchName string, isImmutable bool\) error](<#BranchProtectionManager.EnsureBranchProtection>)
@@ -5196,6 +5227,7 @@ import "irmin-api/engine"
 - [type FieldMappingResult](<#FieldMappingResult>)
 - [type PermissionChecker](<#PermissionChecker>)
 - [type Repository](<#Repository>)
+- [type S3PathComponents](<#S3PathComponents>)
 - [type SchemaContext](<#SchemaContext>)
 - [type SchemaField](<#SchemaField>)
   - [func ParseFieldForElementForTesting\(name, elementType string, required bool\) SchemaField](<#ParseFieldForElementForTesting>)
@@ -5211,6 +5243,33 @@ func BuildJSONSchemaForTesting(fields []SchemaField, context *SchemaContext) irm
 
 BuildJSONSchemaForTesting exposes buildJSONSchema for testing
 
+<a name="CheckObjectPermissions"></a>
+## func CheckObjectPermissions
+
+```go
+func CheckObjectPermissions(c *Client, user *db.User, workspace *db.Workspace, objectID uint, operation string) error
+```
+
+CheckObjectPermissions checks if the user has permission to access the object. Returns generic error to prevent information leakage. Only called when object exists in the database.
+
+<a name="CheckRepositoryPermissions"></a>
+## func CheckRepositoryPermissions
+
+```go
+func CheckRepositoryPermissions(c *Client, user *db.User, workspace *db.Workspace, repository *db.Repository, operation string) error
+```
+
+CheckRepositoryPermissions checks if the user has permission to access the repository. Returns generic error to prevent information leakage.
+
+<a name="DetectOperationType"></a>
+## func DetectOperationType
+
+```go
+func DetectOperationType(stmt string) string
+```
+
+DetectOperationType extracts the operation type from a SQL statement.
+
 <a name="ExtractArrayElementTypeForTesting"></a>
 ## func ExtractArrayElementTypeForTesting
 
@@ -5220,6 +5279,24 @@ func ExtractArrayElementTypeForTesting(arrayType string) string
 
 ExtractArrayElementTypeForTesting exposes extractArrayElementType for testing
 
+<a name="ExtractS3Paths"></a>
+## func ExtractS3Paths
+
+```go
+func ExtractS3Paths(query string) ([]string, error)
+```
+
+ExtractS3Paths extracts all S3 URLs from a SQL query Returns unique S3 paths found in the query, with quotes unescaped
+
+<a name="IsRowReturningStatement"></a>
+## func IsRowReturningStatement
+
+```go
+func IsRowReturningStatement(stmt string) bool
+```
+
+IsRowReturningStatement checks if a SQL statement returns rows.
+
 <a name="IsSystemPath"></a>
 ## func IsSystemPath
 
@@ -5228,6 +5305,15 @@ func IsSystemPath(path string) bool
 ```
 
 IsSystemPath checks if the given path is a system path that should be hidden.
+
+<a name="MaskStringLiterals"></a>
+## func MaskStringLiterals
+
+```go
+func MaskStringLiterals(sql string) string
+```
+
+MaskStringLiterals masks the contents of string literals by replacing them with spaces, preserving the quote delimiters. This prevents pattern matching from matching keywords that appear inside string literals \(as data values\) rather than as SQL commands. Handles both single\-quoted \('...'\) and double\-quoted \("..."\) strings with proper escaping \(doubled quotes: ” or ""\).
 
 <a name="ParseFieldNameAndTypeForTesting"></a>
 ## func ParseFieldNameAndTypeForTesting
@@ -5247,6 +5333,44 @@ func PrimitiveSchemaForTesting(duckType string, field SchemaField) irminmodels.J
 
 PrimitiveSchemaForTesting exposes primitiveSchema for testing
 
+<a name="RemoveSQLComments"></a>
+## func RemoveSQLComments
+
+```go
+func RemoveSQLComments(sql string) string
+```
+
+RemoveSQLComments removes comments from SQL query while respecting string literals. It handles both block comments \(/\* ... \*/\) and line comments \(\-\- ...\). It replaces comments with spaces to avoid accidental token merging.
+
+RemoveSQLComments removes comments from SQL query while respecting string literals. It handles both block comments \(/\* ... \*/\) and line comments \(\-\- ...\). It replaces comments with spaces to avoid accidental token merging.
+
+<a name="ResolveTargetWorkspace"></a>
+## func ResolveTargetWorkspace
+
+```go
+func ResolveTargetWorkspace(c *Client, user *db.User, plWorkspaceSlug string, currentWorkspace *db.Workspace) (*db.Workspace, error)
+```
+
+ResolveTargetWorkspace resolves the workspace from the placeholder or uses the provided workspace. Returns generic "access denied" error for both non\-existent workspaces and permission issues.
+
+<a name="SanitizeQueryError"></a>
+## func SanitizeQueryError
+
+```go
+func SanitizeQueryError(err error, logger *slog.Logger, ctx context.Context) error
+```
+
+SanitizeQueryError removes sensitive information from query execution errors. This prevents leaking internal URLs, repository structures, and file paths. The actual error is logged server\-side for debugging purposes.
+
+<a name="SplitSQLStatements"></a>
+## func SplitSQLStatements
+
+```go
+func SplitSQLStatements(sql string) []string
+```
+
+SplitSQLStatements splits SQL into individual statements, respecting strings, quotes, and comments. Handles semicolons inside strings/quotes/comments properly to avoid false splits. Uses SQL standard quote escaping \(doubled quotes: " or ""\), not backslash escaping.
+
 <a name="SplitTopLevelCommaForTesting"></a>
 ## func SplitTopLevelCommaForTesting
 
@@ -5255,6 +5379,15 @@ func SplitTopLevelCommaForTesting(s string) []string
 ```
 
 SplitTopLevelCommaForTesting exposes splitTopLevelComma for testing
+
+<a name="ValidateQuerySecurity"></a>
+## func ValidateQuerySecurity
+
+```go
+func ValidateQuerySecurity(query string) error
+```
+
+ValidateQuerySecurity checks if query contains blacklisted commands that could compromise security or stability. Returns generic error to prevent information leakage.
 
 <a name="BranchProtectionManager"></a>
 ## type BranchProtectionManager
@@ -5748,6 +5881,18 @@ type Repository struct {
     CreatedAt string `json:"created_at"`
     // Garbage collection rules for the Repository
     GarbageCollectionRules *irminmodels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
+}
+```
+
+<a name="S3PathComponents"></a>
+## type S3PathComponents
+
+S3PathComponents represents the parsed components of an S3 path in LakeFS format
+
+```go
+type S3PathComponents struct {
+    Branch     string // e.g. "main"
+    ObjectPath string // e.g. "path/to/file.ext"
 }
 ```
 
@@ -11223,6 +11368,7 @@ import "irmin-api/utils"
 ## Index
 
 - [Constants](<#constants>)
+- [Variables](<#variables>)
 - [func Abs\(x float64\) float64](<#Abs>)
 - [func Average\(numbers \[\]float64\) float64](<#Average>)
 - [func ConstructEditorStorageNamespace\(workspaceSlug string\) string](<#ConstructEditorStorageNamespace>)
@@ -11232,6 +11378,7 @@ import "irmin-api/utils"
 - [func ConvertToStringMap\(source map\[string\]any\) map\[string\]string](<#ConvertToStringMap>)
 - [func ConvertToStringSlice\[T \~string\]\(source \[\]T\) \[\]string](<#ConvertToStringSlice>)
 - [func CreateMultipartPayload\(fileFields map\[string\]FilePayload, textFields map\[string\]string\) \(\*bytes.Buffer, string, error\)](<#CreateMultipartPayload>)
+- [func DetectContext\(query string, placeholderStart int\) string](<#DetectContext>)
 - [func DetermineEditorItemLanguageFromPath\(inputPath string\) \*string](<#DetermineEditorItemLanguageFromPath>)
 - [func FindProjectRoot\(\) \(string, error\)](<#FindProjectRoot>)
 - [func GenerateRandomString\(\) \(string, error\)](<#GenerateRandomString>)
@@ -11311,6 +11458,14 @@ const (
     // MinPartsWithoutWorkspace represents the number of parts when workspace is omitted.
     MinPartsWithoutWorkspace = 2
 )
+```
+
+## Variables
+
+<a name="ErrNoPlaceholders"></a>ErrNoPlaceholders is returned when a query contains no Irmin placeholders.
+
+```go
+var ErrNoPlaceholders = errors.New("no valid query placeholders found")
 ```
 
 <a name="Abs"></a>
@@ -11405,6 +11560,15 @@ CreateMultipartPayload creates a multipart form payload that can contain multipl
 fileFields is a map where the key is the form field name and the value is the FilePayload. textFields is a map of string key/value pairs to include as form fields.
 
 The function returns a \*bytes.Buffer containing the multipart payload, the Content\-Type \(which includes the boundary\), and an error if something goes wrong.
+
+<a name="DetectContext"></a>
+## func DetectContext
+
+```go
+func DetectContext(query string, placeholderStart int) string
+```
+
+DetectContext looks at the portion of the query preceding the placeholder start index and heuristically determines whether the placeholder is in a read or write context. It returns "write" if the last keyword is "TO" or "INTO" \(indicating a write operation\), "read" if "FROM" is the most recent keyword, or "read" by default.
 
 <a name="DetermineEditorItemLanguageFromPath"></a>
 ## func DetermineEditorItemLanguageFromPath
@@ -11853,7 +12017,7 @@ Example query string with multiple placeholders:
 "Preamble text $[\"acme;mobile-app;users.json@main\"] some middle text $[\"other;repo;file.json\"] end text"
 ```
 
-Returns a ParsedIrminQuery containing the original query, the formatted query, and the parsed placeholders.
+Returns a ParsedIrminQuery containing the original query, the formatted query, and the parsed placeholders. ErrNoPlaceholders is returned when a query contains no Irmin placeholders.
 
 <a name="ParsedQueryPlaceholder"></a>
 ## type ParsedQueryPlaceholder

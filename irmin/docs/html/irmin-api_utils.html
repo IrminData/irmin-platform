@@ -35,6 +35,12 @@ const (
 	MinPartsWithoutWorkspace = 2
 )
 
+VARIABLES
+
+var ErrNoPlaceholders = errors.New("no valid query placeholders found")
+    ErrNoPlaceholders is returned when a query contains no Irmin placeholders.
+
+
 FUNCTIONS
 
 func Abs(x float64) float64
@@ -86,6 +92,13 @@ func CreateMultipartPayload(
     The function returns a *bytes.Buffer containing the multipart payload,
     the Content-Type (which includes the boundary), and an error if something
     goes wrong.
+
+func DetectContext(query string, placeholderStart int) string
+    DetectContext looks at the portion of the query preceding the placeholder
+    start index and heuristically determines whether the placeholder is in a
+    read or write context. It returns "write" if the last keyword is "TO" or
+    "INTO" (indicating a write operation), "read" if "FROM" is the most recent
+    keyword, or "read" by default.
 
 func DetermineEditorItemLanguageFromPath(inputPath string) *string
     DetermineEditorItemLanguageFromPath parses the language of an editor
@@ -354,7 +367,8 @@ func ParseIrminQuery(query string, replaceFn ReplaceFn) (ParsedIrminQuery, error
         "Preamble text $[\"acme;mobile-app;users.json@main\"] some middle text $[\"other;repo;file.json\"] end text"
 
     Returns a ParsedIrminQuery containing the original query, the formatted
-    query, and the parsed placeholders.
+    query, and the parsed placeholders. ErrNoPlaceholders is returned when a
+    query contains no Irmin placeholders.
 
 type ParsedQueryPlaceholder struct {
 	Workspace   string `json:"workspace"`   // The workspace (e.g. "acme-corp")

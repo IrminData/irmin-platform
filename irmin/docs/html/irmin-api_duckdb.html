@@ -12,6 +12,11 @@ func BuildReadQuery(filePath string, options *ReadOptions) string
     File paths and string parameter values are properly escaped to prevent SQL
     injection.
 
+func EscapeSQLString(s string) string
+    EscapeSQLString escapes single quotes in SQL string literals by doubling
+    them. This prevents SQL injection when interpolating strings into SQL
+    queries. For example: "file'name.json" becomes "file”name.json"
+
 func GetContentTypeFromExtension(extension string) string
     GetContentTypeFromExtension returns the MIME type for a given file
     extension. It delegates to the SDK's GetContentTypeHybrid which handles both

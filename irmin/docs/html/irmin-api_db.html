@@ -482,6 +482,10 @@ func (d *Database) GetRepositoriesByTag(tagID uint) ([]Repository, error)
 
 func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error)
 
+func (d *Database) GetRepositoryByLakeFSRepoID(lakeFSRepoID string) (*Repository, error)
+    GetRepositoryByLakeFSRepoID gets a repository by its LakeFS repository ID
+    (name).
+
 func (d *Database) GetRepositoryBySlugAndWorkspaceID(slug string, workspaceID uint) (*Repository, error)
 
 func (d *Database) GetRepositoryObjectTags(repositoryObjectID uint) ([]Tag, error)

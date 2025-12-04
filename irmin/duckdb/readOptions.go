@@ -340,11 +340,16 @@ func BuildReadQuery(filePath string, options *ReadOptions) string {
 	return fmt.Sprintf("%s('%s'%s)", options.ReadFunction, escapedPath, paramStr)
 }
 
-// escapeSQLString escapes single quotes in SQL string literals by doubling them.
+// EscapeSQLString escapes single quotes in SQL string literals by doubling them.
 // This prevents SQL injection when interpolating strings into SQL queries.
 // For example: "file'name.json" becomes "file”name.json"
-func escapeSQLString(s string) string {
+func EscapeSQLString(s string) string {
 	return strings.ReplaceAll(s, "'", "''")
+}
+
+// escapeSQLString is an internal alias for EscapeSQLString for backward compatibility.
+func escapeSQLString(s string) string {
+	return EscapeSQLString(s)
 }
 
 // needsQuotes determines if a parameter value needs to be quoted in DuckDB SQL.

@@ -557,3 +557,55 @@ func TestPerformanceWithManyFormats(t *testing.T) {
 		})
 	}
 }
+
+// TestEscapeSQLString tests that EscapeSQLString properly escapes single quotes to prevent SQL injection.
+func TestEscapeSQLString(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no quotes",
+			input:    "s3://bucket/path/file.json",
+			expected: "s3://bucket/path/file.json",
+		},
+		{
+			name:     "single quote in middle",
+			input:    "s3://bucket/path/file'name.json",
+			expected: "s3://bucket/path/file''name.json",
+		},
+		{
+			name:     "single quote at start",
+			input:    "'s3://bucket/path/file.json",
+			expected: "''s3://bucket/path/file.json",
+		},
+		{
+			name:     "single quote at end",
+			input:    "s3://bucket/path/file.json'",
+			expected: "s3://bucket/path/file.json''",
+		},
+		{
+			name:     "multiple single quotes",
+			input:    "s3://bucket/path/file'name'with'quotes.json",
+			expected: "s3://bucket/path/file''name''with''quotes.json",
+		},
+		{
+			name:     "SQL injection attempt",
+			input:    "s3://bucket/path/file'; DROP TABLE users--",
+			expected: "s3://bucket/path/file''; DROP TABLE users--",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := duckdb.EscapeSQLString(tc.input)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}

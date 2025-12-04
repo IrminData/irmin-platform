@@ -10,13 +10,52 @@ FUNCTIONS
 func BuildJSONSchemaForTesting(fields []SchemaField, context *SchemaContext) irminmodels.JSONSchema
     BuildJSONSchemaForTesting exposes buildJSONSchema for testing
 
+func CheckObjectPermissions(
+	c *Client,
+	user *db.User,
+	workspace *db.Workspace,
+	objectID uint,
+	operation string,
+) error
+    CheckObjectPermissions checks if the user has permission to access the
+    object. Returns generic error to prevent information leakage. Only called
+    when object exists in the database.
+
+func CheckRepositoryPermissions(
+	c *Client,
+	user *db.User,
+	workspace *db.Workspace,
+	repository *db.Repository,
+	operation string,
+) error
+    CheckRepositoryPermissions checks if the user has permission to access the
+    repository. Returns generic error to prevent information leakage.
+
+func DetectOperationType(stmt string) string
+    DetectOperationType extracts the operation type from a SQL statement.
+
 func ExtractArrayElementTypeForTesting(arrayType string) string
     ExtractArrayElementTypeForTesting exposes extractArrayElementType for
     testing
 
+func ExtractS3Paths(query string) ([]string, error)
+    ExtractS3Paths extracts all S3 URLs from a SQL query Returns unique S3 paths
+    found in the query, with quotes unescaped
+
+func IsRowReturningStatement(stmt string) bool
+    IsRowReturningStatement checks if a SQL statement returns rows.
+
 func IsSystemPath(path string) bool
     IsSystemPath checks if the given path is a system path that should be
     hidden.
+
+func MaskStringLiterals(sql string) string
+    MaskStringLiterals masks the contents of string literals by replacing
+    them with spaces, preserving the quote delimiters. This prevents pattern
+    matching from matching keywords that appear inside string literals (as data
+    values) rather than as SQL commands. Handles both single-quoted ('...')
+    and double-quoted ("...") strings with proper escaping (doubled quotes:
+    ” or "").
 
 func ParseFieldNameAndTypeForTesting(fieldDef string) (string, string)
     ParseFieldNameAndTypeForTesting exposes parseFieldNameAndType for testing
@@ -24,8 +63,43 @@ func ParseFieldNameAndTypeForTesting(fieldDef string) (string, string)
 func PrimitiveSchemaForTesting(duckType string, field SchemaField) irminmodels.JSONSchema
     PrimitiveSchemaForTesting exposes primitiveSchema for testing
 
+func RemoveSQLComments(sql string) string
+    RemoveSQLComments removes comments from SQL query while respecting string
+    literals. It handles both block comments (/* ... */) and line comments (--
+    ...). It replaces comments with spaces to avoid accidental token merging.
+
+    RemoveSQLComments removes comments from SQL query while respecting string
+    literals. It handles both block comments (/* ... */) and line comments (--
+    ...). It replaces comments with spaces to avoid accidental token merging.
+
+func ResolveTargetWorkspace(
+	c *Client,
+	user *db.User,
+	plWorkspaceSlug string,
+	currentWorkspace *db.Workspace,
+) (*db.Workspace, error)
+    ResolveTargetWorkspace resolves the workspace from the placeholder or uses
+    the provided workspace. Returns generic "access denied" error for both
+    non-existent workspaces and permission issues.
+
+func SanitizeQueryError(err error, logger *slog.Logger, ctx context.Context) error
+    SanitizeQueryError removes sensitive information from query execution
+    errors. This prevents leaking internal URLs, repository structures, and file
+    paths. The actual error is logged server-side for debugging purposes.
+
+func SplitSQLStatements(sql string) []string
+    SplitSQLStatements splits SQL into individual statements,
+    respecting strings, quotes, and comments. Handles semicolons inside
+    strings/quotes/comments properly to avoid false splits. Uses SQL standard
+    quote escaping (doubled quotes: " or ""), not backslash escaping.
+
 func SplitTopLevelCommaForTesting(s string) []string
     SplitTopLevelCommaForTesting exposes splitTopLevelComma for testing
+
+func ValidateQuerySecurity(query string) error
+    ValidateQuerySecurity checks if query contains blacklisted commands that
+    could compromise security or stability. Returns generic error to prevent
+    information leakage.
 
 
 TYPES
@@ -326,6 +400,13 @@ type Repository struct {
 	GarbageCollectionRules *irminmodels.GarbageCollectionRules `json:"garbage_collection_rules,omitempty"`
 }
     Repository represents a returned by the data engine.
+
+type S3PathComponents struct {
+	Branch     string // e.g. "main"
+	ObjectPath string // e.g. "path/to/file.ext"
+}
+    S3PathComponents represents the parsed components of an S3 path in LakeFS
+    format
 
 type SchemaContext struct {
 	Repository string

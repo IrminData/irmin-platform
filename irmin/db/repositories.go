@@ -51,6 +51,18 @@ func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool {
 	return repository.ID != 0
 }
 
+// GetRepositoryByLakeFSRepoID gets a repository by its LakeFS repository ID (name).
+func (d *Database) GetRepositoryByLakeFSRepoID(lakeFSRepoID string) (*Repository, error) {
+	var repository Repository
+	err := d.Where(&Repository{LakeFSRepoID: lakeFSRepoID}).
+		Preload("Owner").
+		Preload("Workspace").
+		Preload("Tags").
+		First(&repository).
+		Error
+	return &repository, err
+}
+
 func (d *Database) GetRepositoriesInWorkspace(workspaceID uint) ([]Repository, error) {
 	var repositories []Repository
 	err := d.Where(&Repository{WorkspaceID: workspaceID}).
