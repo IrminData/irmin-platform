@@ -1,6 +1,6 @@
 'use client';
 
-import Markdown from 'markdown-to-jsx';
+import MarkdownRenderer from 'markdown-to-jsx';
 
 /**
  * Enhanced component to render Markdown content with improved styling.
@@ -14,7 +14,7 @@ const MDXViewer = ({ content }: { content: string }) => {
         text-foreground
       `}
     >
-      <Markdown
+      <MarkdownRenderer
         options={{
           wrapper: 'article',
           overrides: {
@@ -84,7 +84,7 @@ const MDXViewer = ({ content }: { content: string }) => {
         }}
       >
         {content}
-      </Markdown>
+      </MarkdownRenderer>
     </div>
   );
 };
