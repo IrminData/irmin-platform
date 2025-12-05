@@ -30,6 +30,11 @@ func (v *Validator) validateSQID(fl validator.FieldLevel) bool {
 		sqidValue = field.String()
 	}
 
+	// Skip validation for empty strings - let other validators (required_if, omitempty) handle them
+	if sqidValue == "" {
+		return true
+	}
+
 	typeParam := fl.Param()
 
 	// Get the type of the sqid

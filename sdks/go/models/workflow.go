@@ -76,13 +76,13 @@ type Workflowable struct {
 
 	// Import workflowable
 
-	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" validate:"required_if=Type import" example:"/exports/customers.csv,/exports/metadata.json"`
-	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    validate:"omitempty"               example:"/imported/customers.json"`
+	ImportFromConnectionPaths []string `json:"import_from_connection_paths,omitempty" example:"/exports/customers.csv,/exports/metadata.json"`
+	ImportToRepositoryPath    string   `json:"import_to_repository_path,omitempty"    example:"/imported/customers.json"                      validate:"omitempty"`
 
 	// Export workflowable
 
-	ExportFromRepositoryPaths []string `json:"export_from_repository_paths,omitempty" validate:"required_if=Type export" example:"/processed/customers.json,/processed/summary.json"`
-	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"    validate:"omitempty"               example:"/exports/final_data.csv"`
+	ExportFromRepositoryPaths []string `json:"export_from_repository_paths,omitempty" example:"/processed/customers.json,/processed/summary.json"`
+	ExportToConnectionPath    string   `json:"export_to_connection_path,omitempty"    example:"/exports/final_data.csv"`
 
 	// Pipeline workflowable
 

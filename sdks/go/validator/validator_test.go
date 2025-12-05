@@ -1289,7 +1289,7 @@ func TestValidSQIDValidation(t *testing.T) {
 		{"valid user SQID", validUserSQID, "users", false},
 		{"valid connection SQID", validConnectionSQID, "connections", false},
 		{"invalid SQID", "invalid_sqid", "users", true},
-		{"empty string", "", "users", true},
+		{"empty string", "", "users", false},
 		{"wrong type", validUserSQID, "connections", true},
 	}
 
