@@ -2,6 +2,8 @@ package tools
 
 import (
 	"context"
+	"fmt"
+	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -15,35 +17,43 @@ type listScriptsArgs struct {
 
 type getScriptContentArgs struct {
 	WorkspaceSlug string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to get the script content in"`
-	ScriptPath    string `json:"script_path"    jsonschema:"required,The path of the script to get the content of, like 'examples/script.go' or 'hello-world.go'"`
+	ScriptID      string `json:"script_id"      jsonschema:"required,The ID (SQID) of the script to get the content of"`
 }
 
-type saveScriptArgs struct {
-	WorkspaceSlug string `json:"workspace_slug" jsonschema:"required,The slug of the workspace to save the script in"`
-	ScriptPath    string `json:"script_path"    jsonschema:"required,The path of the script to save, like 'examples/script.go' or 'hello-world.go'"`
-	ScriptContent string `json:"script_content" jsonschema:"required,The content of the script to save"`
+type createScriptArgs struct {
+	WorkspaceSlug string                        `json:"workspace_slug" jsonschema:"required,The slug of the workspace to create the script in"`
+	Request       irmincore.CreateScriptRequest `json:"request"        jsonschema:"required,Script creation parameters"`
+}
+
+type updateScriptArgs struct {
+	WorkspaceSlug string                        `json:"workspace_slug" jsonschema:"required,The slug of the workspace"`
+	ScriptID      string                        `json:"script_id"      jsonschema:"required,The ID (SQID) of the script to update"`
+	Request       irmincore.UpdateScriptRequest `json:"request"        jsonschema:"required,Script update parameters"`
 }
 
 type executeScriptArgs struct {
 	WorkspaceSlug string                        `json:"workspace_slug" jsonschema:"required,The slug of the workspace to execute the script in"`
-	ScriptPath    string                        `json:"script_path"    jsonschema:"required,The path of the script to execute, like 'examples/script.go' or 'hello-world.go'"`
+	ScriptID      string                        `json:"script_id"      jsonschema:"required,The ID (SQID) of the script to execute"`
 	Inputs        []irminmodels.ActionInputData `json:"inputs"         jsonschema:"required,The repository objects to pass to the script as inputs"`
 }
 
 func (mcpTools *MCPTools) RegisterScriptsTools() {
 	mcpTools.registerListScriptsTool()
 	mcpTools.registerGetScriptContentTool()
-	mcpTools.registerSaveScriptTool()
+	mcpTools.registerCreateScriptTool()
+	mcpTools.registerUpdateScriptTool()
 	mcpTools.registerExecuteScriptTool()
 }
 
 // registerListScriptsTool registers the list_scripts tool for listing scripts in a workspace
+//
+//nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListScriptsTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
 			Name:        "list_scripts",
-			Description: "List all scripts in the workspace. Scripts are stored in the editor and can be executed to perform actions. Scripts can accept input data files and return data files. Scripts can then either be executed seperately or be used in a workflow.",
+			Description: "List all scripts in the workspace. Scripts are stored scripts that can be executed to perform actions. Scripts can accept input data files and return data files. Scripts can then either be executed separately or be used in a workflow.",
 		},
 		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listScriptsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
@@ -55,16 +65,29 @@ func (mcpTools *MCPTools) registerListScriptsTool() {
 			// Get the workspace
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, struct{}{}, err
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
-			// List the scripts in the root of the workspace
-			scripts, err := mcpTools.apiServices.ListEditorItems(ctx, user, workspace, "")
+			// List the scripts in the workspace
+			scripts, err := mcpTools.apiServices.ListWorkspaceScripts(ctx, user, workspace)
 			if err != nil {
-				return nil, struct{}{}, err
+				mcpTools.apiServices.Logger.Error("Failed to list scripts", "error", err)
+				return helpers.MCPError("Failed to list scripts"), struct{}{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(scripts)
+			// Format the response using the same formatter as the API
+			formatted, ferr := formatter.FormatIndexResponse(
+				scripts,
+				formatter.FormatStoredScriptResponse,
+				mcpTools.apiServices.SQIDManager,
+			)
+			if ferr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to format scripts", "error", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format scripts response: %w", ferr)
+			}
+
+			result, err := helpers.MCPSuccess(formatted)
 			if err != nil {
 				return nil, struct{}{}, err
 			}
@@ -91,23 +114,34 @@ func (mcpTools *MCPTools) registerGetScriptContentTool() {
 			// Get the workspace
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, struct{}{}, err
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
-			// Get the script content
-			scriptContent, err := mcpTools.apiServices.GetEditorItemContent(
-				ctx,
-				user,
-				workspace,
-				args.ScriptPath,
-			)
+			// Get the script by SQID
+			script, err := mcpTools.apiServices.GetScript(ctx, user, workspace, args.ScriptID)
 			if err != nil {
-				return nil, struct{}{}, err
+				mcpTools.apiServices.Logger.Error("Failed to get script", "error", err)
+				return helpers.MCPError("Failed to get script"), struct{}{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(map[string]string{
-				"path":    args.ScriptPath,
-				"content": scriptContent,
+			// Format the script to get the SQID
+			formatted, ferr := formatter.FormatStoredScriptResponse(script, mcpTools.apiServices.SQIDManager)
+			if ferr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to format script", "error", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format script response: %w", ferr)
+			}
+
+			// Return the script content
+			content := ""
+			if formatted.Content != nil {
+				content = *formatted.Content
+			}
+
+			result, err := helpers.MCPSuccess(map[string]any{
+				"id":      formatted.ID,
+				"name":    formatted.Name,
+				"content": content,
 			})
 			if err != nil {
 				return nil, struct{}{}, err
@@ -117,43 +151,112 @@ func (mcpTools *MCPTools) registerGetScriptContentTool() {
 	)
 }
 
-// registerSaveScriptTool registers the save_script tool for saving a script in the workspace (create or update)
-func (mcpTools *MCPTools) registerSaveScriptTool() {
+// registerCreateScriptTool registers the create_script tool for creating a new stored script
+//
+//nolint:dupl // Similar pattern to create_query tool, but for a different resource type
+func (mcpTools *MCPTools) registerCreateScriptTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,
 		&sdkmcp.Tool{
-			Name:        "save_script",
-			Description: "Save a script in the workspace. Saving the script can mean creating a new script or updating an existing one. It's recommended to read the documentation for scripts first, use `retrieve_docs_context` tool for more information.",
+			Name:        "create_script",
+			Description: "Create a new stored script in a workspace. It's recommended to read the documentation for scripts first, use `retrieve_docs_context` tool for more information.",
 		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args saveScriptArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createScriptArgs) (*sdkmcp.CallToolResult, struct{}, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
 				return nil, struct{}{}, err
 			}
 
-			// Get the workspace
+			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, struct{}{}, err
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
-			// Save the script
-			editorItem, err := mcpTools.apiServices.SaveEditorItem(
+			// Create the script
+			script, err := mcpTools.apiServices.CreateScript(
 				ctx,
 				user,
 				workspace,
-				args.ScriptPath,
-				irmincore.CreateEditorItemRequest{
-					Content: &args.ScriptContent,
-					Type:    irmincore.EditorItemTypeFile,
-				},
+				args.Request,
 			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("script creation failed", "error", err)
+				return helpers.MCPError("Script creation failed"), struct{}{}, nil
+			}
+
+			// Format the response using the same formatter as the API
+			formatted, ferr := formatter.FormatStoredScriptResponse(script, mcpTools.apiServices.SQIDManager)
+			if ferr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to format script", "error", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format script response: %w", ferr)
+			}
+
+			result, err := helpers.MCPSuccess(formatted)
 			if err != nil {
 				return nil, struct{}{}, err
 			}
+			return result, struct{}{}, nil
+		},
+	)
+}
 
-			result, err := helpers.MCPSuccess(editorItem)
+// registerUpdateScriptTool registers the update_script tool for updating an existing stored script
+func (mcpTools *MCPTools) registerUpdateScriptTool() {
+	sdkmcp.AddTool(
+		mcpTools.server,
+		&sdkmcp.Tool{
+			Name:        "update_script",
+			Description: "Update an existing stored script. It's recommended to read the documentation for scripts first, use `retrieve_docs_context` tool for more information.",
+		},
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateScriptArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+			user, ok := mcpTools.getUser(ctx)
+			if !ok || user == nil || user.ID == 0 {
+				return helpers.MCPError("Unauthorized"), struct{}{}, nil
+			}
+
+			// Get the workspace first
+			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+			}
+
+			// Get the script by SQID
+			script, err := mcpTools.apiServices.GetScript(
+				ctx,
+				user,
+				workspace,
+				args.ScriptID,
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("Failed to get script", "error", err)
+				return helpers.MCPError("Failed to get script"), struct{}{}, nil
+			}
+
+			// Update the script
+			updatedScript, err := mcpTools.apiServices.UpdateScript(
+				ctx,
+				user,
+				workspace,
+				script,
+				args.Request,
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("script update failed", "error", err)
+				return helpers.MCPError("Script update failed"), struct{}{}, nil
+			}
+
+			// Format the response using the same formatter as the API
+			formatted, ferr := formatter.FormatStoredScriptResponse(updatedScript, mcpTools.apiServices.SQIDManager)
+			if ferr != nil {
+				mcpTools.apiServices.Logger.Error("Failed to format script", "error", ferr)
+				return nil, struct{}{}, fmt.Errorf("failed to format script response: %w", ferr)
+			}
+
+			result, err := helpers.MCPSuccess(formatted)
 			if err != nil {
 				return nil, struct{}{}, err
 			}
@@ -180,20 +283,35 @@ func (mcpTools *MCPTools) registerExecuteScriptTool() {
 			// Get the workspace
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, struct{}{}, err
+				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
 			}
 
-			// Execute the script
-			scriptResult, err := mcpTools.apiServices.ExecuteEditorItem(
+			// Get the script by SQID
+			script, err := mcpTools.apiServices.GetScript(
 				ctx,
 				user,
 				workspace,
-				args.ScriptPath,
-				args.Inputs,
-				"en",
+				args.ScriptID,
 			)
 			if err != nil {
-				return nil, struct{}{}, err
+				mcpTools.apiServices.Logger.Error("Failed to get script", "error", err)
+				return helpers.MCPError("Failed to get script"), struct{}{}, nil
+			}
+
+			// Execute the script
+			scriptResult, err := mcpTools.apiServices.ExecuteScript(
+				ctx,
+				user,
+				workspace,
+				script,
+				irmincore.ExecuteScriptRequest{
+					Input: args.Inputs,
+				},
+			)
+			if err != nil {
+				mcpTools.apiServices.Logger.Error("script execution failed", "error", err)
+				return helpers.MCPError("Script execution failed"), struct{}{}, nil
 			}
 
 			result, err := helpers.MCPSuccess(scriptResult)

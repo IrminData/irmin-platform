@@ -10,7 +10,7 @@ import (
 func getAllResources() []db.PolicyResource {
 	return []db.PolicyResource{
 		db.PolicyResourceWorkspace,
-		db.PolicyResourceEditorScript,
+		db.PolicyResourceScript,
 		db.PolicyResourceQuery,
 		db.PolicyResourceWorkflow,
 		db.PolicyResourceWorkflowRun,
@@ -149,7 +149,7 @@ func setEditorPolicies(dbConn *gorm.DB, roleID *uint, workspaceID uint) error {
 	workflowResources := []db.PolicyResource{
 		db.PolicyResourceWorkflow,
 		db.PolicyResourceWorkflowRun,
-		db.PolicyResourceEditorScript,
+		db.PolicyResourceScript,
 		db.PolicyResourceQuery,
 		db.PolicyResourceWorkspaceTag,
 	}

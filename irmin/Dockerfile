@@ -51,7 +51,7 @@ RUN groupadd -r irmingroup && \
     chmod 700 /home/appuser
 
 # Configure sudo for appuser -> sandbox execution (restricted to interpreters and shells)
-RUN echo "appuser ALL=(sandbox) NOPASSWD: /usr/bin/python3, /usr/local/go/bin/go, /usr/bin/node, /bin/sh, /bin/bash" > /etc/sudoers.d/sandbox && \
+RUN echo "appuser ALL=(sandbox) NOPASSWD: /usr/bin/python3, /usr/local/go/bin/go, /usr/bin/node, /usr/bin/npx, /bin/sh, /bin/bash" > /etc/sudoers.d/sandbox && \
     chmod 440 /etc/sudoers.d/sandbox && \
     visudo -c -f /etc/sudoers.d/sandbox
 

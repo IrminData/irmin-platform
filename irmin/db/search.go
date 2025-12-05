@@ -27,6 +27,7 @@ const (
 	RepositoryPriority       = 2
 	ConnectionPriority       = 3
 	QueryPriority            = 4
+	ScriptPriority           = 4
 	RepositoryObjectPriority = 5
 	UserPriority             = 6
 	InvitePriority           = 7
@@ -88,6 +89,7 @@ const (
 	SearchEntityTypeWorkflow         = "workflow"
 	SearchEntityTypeRepository       = "repository"
 	SearchEntityTypeConnection       = "connection"
+	SearchEntityTypeScript           = "script"
 	SearchEntityTypeQuery            = "query"
 	SearchEntityTypeRepositoryObject = "repository_object"
 
@@ -411,6 +413,7 @@ func validateSearchFilters(filters *SearchFilters) *SearchFilters {
 		"workflow":          true,
 		"repository":        true,
 		"connection":        true,
+		"script":            true,
 		"query":             true,
 		"user":              true,
 		"repository_object": true,
@@ -1305,6 +1308,7 @@ func (d *Database) performAllSearchesConcurrentWithLimits(
 		{irminmodels.WorkspaceSearchResultTypeRepository, d.searchRepositoriesWithLimits},
 		{irminmodels.WorkspaceSearchResultTypeConnection, d.searchConnectionsWithLimits},
 		{irminmodels.WorkspaceSearchResultTypeQuery, d.searchStoredQueriesWithLimits},
+		{irminmodels.WorkspaceSearchResultTypeScript, d.searchScriptsWithLimits},
 		{irminmodels.WorkspaceSearchResultTypeUser, d.searchUsersWithLimits},
 		{irminmodels.WorkspaceSearchResultTypeRepositoryObject, d.searchRepositoryObjectsWithLimits},
 		{irminmodels.WorkspaceSearchResultTypeInvite, d.searchInvitesWithLimits},
@@ -1442,6 +1446,10 @@ func createSearchResult(
 	case irminmodels.WorkspaceSearchResultTypeQuery:
 		if q, ok := entity.(*StoredQuery); ok {
 			result.Entity = q
+		}
+	case irminmodels.WorkspaceSearchResultTypeScript:
+		if s, ok := entity.(*StoredScript); ok {
+			result.Entity = s
 		}
 	case irminmodels.WorkspaceSearchResultTypeUser:
 		if u, ok := entity.(*User); ok {
@@ -1645,6 +1653,32 @@ func (d *Database) searchStoredQueries(
 		JoinTable:       "",
 		EntityIDField:   "",
 		GetTagsFunc:     d.GetQueryTags,
+		Preloads:        []string{"Owner"},
+		AdditionalJoins: []string{},
+	}
+	return d.genericSearch(workspaceID, query, filters, parsedQuery, config)
+}
+
+// searchScripts searches scripts using the generic search function.
+func (d *Database) searchScripts(
+	workspaceID uint,
+	query string,
+	filters SearchFilters,
+	parsedQuery *SearchQuery,
+) ([]SearchResult, error) {
+	config := SearchConfig{
+		EntityType:    irminmodels.WorkspaceSearchResultTypeScript,
+		Model:         &StoredScript{},
+		TableName:     "stored_scripts",
+		FieldMappings: map[string]string{"name": "name", "description": "description", "content": "content"},
+		FieldWeights: map[string]float64{
+			"name":        FieldNameWeight,
+			"description": FieldDescriptionWeight,
+			"content":     FieldContentWeight,
+		},
+		JoinTable:       "",
+		EntityIDField:   "",
+		GetTagsFunc:     d.GetScriptTags,
 		Preloads:        []string{"Owner"},
 		AdditionalJoins: []string{},
 	}
@@ -1985,6 +2019,8 @@ func (s *SearchResultSorter) getEntityTypePriority(entityType irminmodels.Worksp
 		return ConnectionPriority
 	case irminmodels.WorkspaceSearchResultTypeQuery:
 		return QueryPriority
+	case irminmodels.WorkspaceSearchResultTypeScript:
+		return ScriptPriority
 	case irminmodels.WorkspaceSearchResultTypeRepositoryObject:
 		return RepositoryObjectPriority
 	case irminmodels.WorkspaceSearchResultTypeUser:
@@ -2006,6 +2042,8 @@ func (s *SearchResultSorter) getEntityCreatedAt(result SearchResult) int64 {
 	case *Connection:
 		return entity.CreatedAt.Unix()
 	case *StoredQuery:
+		return entity.CreatedAt.Unix()
+	case *StoredScript:
 		return entity.CreatedAt.Unix()
 	case *User:
 		return entity.CreatedAt.Unix()
@@ -2095,6 +2133,8 @@ func (s *SearchResultSorter) hasExactMatch(result SearchResult, queryLower strin
 		return strings.ToLower(entity.Name) == queryLower
 	case *StoredQuery:
 		return strings.ToLower(entity.Name) == queryLower
+	case *StoredScript:
+		return strings.ToLower(entity.Name) == queryLower
 	case *User:
 		return strings.ToLower(entity.Email) == queryLower ||
 			strings.ToLower(entity.FirstName+" "+entity.LastName) == queryLower
@@ -2117,6 +2157,8 @@ func (s *SearchResultSorter) hasPrefixMatch(result SearchResult, queryLower stri
 	case *Connection:
 		return strings.HasPrefix(strings.ToLower(entity.Name), queryLower)
 	case *StoredQuery:
+		return strings.HasPrefix(strings.ToLower(entity.Name), queryLower)
+	case *StoredScript:
 		return strings.HasPrefix(strings.ToLower(entity.Name), queryLower)
 	case *User:
 		return strings.HasPrefix(strings.ToLower(entity.FirstName), queryLower) ||
@@ -2594,6 +2636,8 @@ func (el *EntityLoader) getTagJoinInfo(entityType string) (string, string) {
 		return "connection_tags", "connection_id"
 	case SearchEntityTypeQuery:
 		return "query_tags", "stored_query_id"
+	case SearchEntityTypeScript:
+		return "script_tags", "stored_script_id"
 	case SearchEntityTypeRepositoryObject:
 		return "repository_object_tags", "repository_object_id"
 	default:
@@ -2612,6 +2656,8 @@ func entityTypeToString(entityType irminmodels.WorkspaceSearchResultType) string
 		return SearchEntityTypeConnection
 	case irminmodels.WorkspaceSearchResultTypeQuery:
 		return SearchEntityTypeQuery
+	case irminmodels.WorkspaceSearchResultTypeScript:
+		return SearchEntityTypeScript
 	case irminmodels.WorkspaceSearchResultTypeRepositoryObject:
 		return SearchEntityTypeRepositoryObject
 	case irminmodels.WorkspaceSearchResultTypeUser:
@@ -2719,6 +2765,19 @@ func (d *Database) searchStoredQueriesWithLimits(
 ) ([]SearchResult, error) {
 	return d.executeSearchWithTimeout(ctx, filters.Limits.DatabaseTimeout, func() ([]SearchResult, error) {
 		return d.searchStoredQueries(workspaceID, query, filters, parsedQuery)
+	})
+}
+
+// searchScriptsWithLimits wraps searchScripts with context and timeout support.
+func (d *Database) searchScriptsWithLimits(
+	ctx context.Context,
+	workspaceID uint,
+	query string,
+	filters SearchFilters,
+	parsedQuery *SearchQuery,
+) ([]SearchResult, error) {
+	return d.executeSearchWithTimeout(ctx, filters.Limits.DatabaseTimeout, func() ([]SearchResult, error) {
+		return d.searchScripts(workspaceID, query, filters, parsedQuery)
 	})
 }
 

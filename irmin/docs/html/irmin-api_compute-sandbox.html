@@ -16,13 +16,15 @@ const (
 	LatestNodeVersion   = "24.2.0"
 	LatestPythonVersion = "3.11.12"
 
-	RuntimeTypePython = "python"
-	RuntimeTypeGo     = "go"
-	RuntimeTypeNode   = "node"
+	RuntimeTypePython     = "python"
+	RuntimeTypeGo         = "go"
+	RuntimeTypeNode       = "node"
+	RuntimeTypeTypeScript = "typescript"
 
-	InterpreterPython = "/usr/bin/python3"
-	InterpreterGo     = "/usr/local/go/bin/go"
-	InterpreterNode   = "/usr/bin/node"
+	InterpreterPython     = "/usr/bin/python3"
+	InterpreterGo         = "/usr/local/go/bin/go"
+	InterpreterNode       = "/usr/bin/node"
+	InterpreterTypeScript = "/usr/bin/npx"
 
 	TokenExpiryDuration = 60 * time.Minute // How long API tokens created for sandbox execution should be valid
 
@@ -47,15 +49,15 @@ type ComputeSandbox struct {
 func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logger) *ComputeSandbox
     NewComputeSandbox creates a new ComputeSandbox.
 
-func (s *ComputeSandbox) ExecuteEditorItem(
+func (s *ComputeSandbox) ExecutedStoredScript(
 	ctx context.Context,
 	inputFiles map[string][]byte,
 	responsibleUser db.User,
-	executablePath, workspaceSlug string,
+	script *db.StoredScript,
 ) (ExecutionResult, error)
-    ExecuteEditorItem executes the provided executable code. It downloads the
-    workspace files from the S3 bucket to a temporary directory, executes the
-    code, and returns the execution result.
+    ExecutedStoredScript executes the provided stored script. It creates a
+    temporary directory, writes the script content to a file, executes the code,
+    and returns the execution result.
 
 type DangerousPattern struct {
 	Pattern     string

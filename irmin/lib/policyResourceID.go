@@ -42,14 +42,14 @@ func DecodePolicyResourceID(
 		id, err = sqidManager.Decode("repositories", sqid) // Commit policies point to a repository
 	case db.PolicyResourceUser:
 		id, err = sqidManager.Decode("users", sqid)
+	case db.PolicyResourceScript:
+		id, err = sqidManager.Decode("scripts", sqid)
 	case db.PolicyResourcePolicy:
 		return nil, errors.New("policies don't need ID specific policies")
 	case db.PolicyResourceInvite:
 		return nil, errors.New("invites don't need ID specific policies")
 	case db.PolicyResourceAuditLog:
 		return nil, errors.New("audit logs don't need ID specific policies")
-	case db.PolicyResourceEditorScript:
-		return nil, errors.New("editor scripts don't need ID specific policies")
 	case db.PolicyResourceDocumentation:
 		return nil, errors.New("documentation doesn't need ID specific policies")
 	case db.PolicyResourceBilling:
@@ -95,6 +95,8 @@ func EncodePolicyResourceID(
 		return sqidManager.Encode("tags", uint64(id))
 	case db.PolicyResourceRepositoryCommit:
 		return sqidManager.Encode("repositories", uint64(id)) // Commit policies point to a repository
+	case db.PolicyResourceScript:
+		return sqidManager.Encode("scripts", uint64(id))
 	case db.PolicyResourceUser:
 		return sqidManager.Encode("users", uint64(id))
 	case db.PolicyResourcePolicy:
@@ -103,8 +105,6 @@ func EncodePolicyResourceID(
 		return "", errors.New("invites don't need ID specific policies")
 	case db.PolicyResourceAuditLog:
 		return "", errors.New("audit logs don't need ID specific policies")
-	case db.PolicyResourceEditorScript:
-		return "", errors.New("editor scripts don't need ID specific policies")
 	case db.PolicyResourceDocumentation:
 		return "", errors.New("documentation doesn't need ID specific policies")
 	case db.PolicyResourceBilling:

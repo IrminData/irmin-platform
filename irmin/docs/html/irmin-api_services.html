@@ -146,14 +146,6 @@ func (api *APIServices) CompareRepositoryRefs(
 	baseRef, compareRef string,
 ) (*irminmodels.Diff, error)
 
-func (api *APIServices) CopyEditorItem(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	sourcePath string,
-	destinationPath string,
-) (*irminmodels.EditorItem, error)
-
 func (api *APIServices) CopyRepositoryObject(
 	c context.Context,
 	locale string,
@@ -235,6 +227,13 @@ func (api *APIServices) CreateRepositoryTag(
 	req irmincore.CreateRepositoryTagRequest,
 ) (*irminmodels.GitTag, error)
 
+func (api *APIServices) CreateScript(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	req irmincore.CreateScriptRequest,
+) (*db.StoredScript, error)
+
 func (api *APIServices) CreateWorkflow(
 	c context.Context,
 	user *db.User,
@@ -275,13 +274,6 @@ func (api *APIServices) DeleteConnection(
     DeleteConnection deletes a connection from a workspace.
 
 func (api *APIServices) DeleteConnector(c context.Context, connector *db.Connector, isSystem bool) error
-
-func (api *APIServices) DeleteEditorItem(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	itemPath string,
-) error
 
 func (api *APIServices) DeleteInvite(c context.Context, user *db.User, invite *db.Invite) error
     DeleteInvite deletes an invite.
@@ -336,6 +328,14 @@ func (api *APIServices) DeleteRepositoryTag(
 	tag *irminmodels.GitTag,
 ) error
 
+func (api *APIServices) DeleteScript(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	script *db.StoredScript,
+) error
+    DeleteScript deletes a script from a workspace.
+
 func (api *APIServices) DeleteWorkflow(
 	c context.Context,
 	user *db.User,
@@ -352,15 +352,6 @@ func (api *APIServices) DeleteWorkspaceTag(
 	tagWithAssets *db.TagWithAssets,
 ) error
 
-func (api *APIServices) ExecuteEditorItem(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	itemPath string,
-	inputData []irminmodels.ActionInputData,
-	locale string,
-) (*irminmodels.ScriptResult, error)
-
 func (api *APIServices) ExecuteSQL(
 	c context.Context,
 	locale string,
@@ -368,6 +359,14 @@ func (api *APIServices) ExecuteSQL(
 	workspace *db.Workspace,
 	req irmincore.ExecuteSQLRequest,
 ) (*irminmodels.QueryResult, error)
+
+func (api *APIServices) ExecuteScript(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	script *db.StoredScript,
+	req irmincore.ExecuteScriptRequest,
+) (*irminmodels.ScriptResult, error)
 
 func (api *APIServices) GenerateSchemaFromUploadedFile(
 	ctx context.Context,
@@ -405,13 +404,6 @@ func (api *APIServices) GetConnectorConfigurationFields(
 	configurationType string,
 	req irmincore.ConnectorConfigurationRequest,
 ) (map[string]irminmodels.DynamicField, error)
-
-func (api *APIServices) GetEditorItemContent(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	itemPath string,
-) (string, error)
 
 func (api *APIServices) GetInviteByID(
 	c context.Context,
@@ -563,6 +555,13 @@ func (api *APIServices) GetRepositoryUncommittedChanges(
 	branch *irminmodels.Branch,
 ) (*irminmodels.Diff, error)
 
+func (api *APIServices) GetScript(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	scriptSqid string,
+) (*db.StoredScript, error)
+
 func (api *APIServices) GetWorkflow(
 	c context.Context,
 	user *db.User,
@@ -639,13 +638,6 @@ func (api *APIServices) ListConnections(
     ListConnections lists all connections in a workspace available to the user.
 
 func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error)
-
-func (api *APIServices) ListEditorItems(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	itemPath string,
-) ([]irminmodels.EditorItem, error)
 
 func (api *APIServices) ListInvitesForUser(
 	c context.Context,
@@ -738,6 +730,12 @@ func (api *APIServices) ListWorkspaceQueries(
 	workspace *db.Workspace,
 ) ([]db.StoredQuery, error)
 
+func (api *APIServices) ListWorkspaceScripts(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.StoredScript, error)
+
 func (api *APIServices) ListWorkspaceTags(
 	c context.Context,
 	user *db.User,
@@ -764,14 +762,6 @@ func (api *APIServices) MergeRepositoryRefs(
 	repository *db.Repository,
 	req irmincore.MergeRefsRequest,
 ) (*irminmodels.Commit, error)
-
-func (api *APIServices) MoveEditorItem(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	sourcePath string,
-	destinationPath string,
-) (*irminmodels.EditorItem, error)
 
 func (api *APIServices) MoveRepositoryObject(
 	c context.Context,
@@ -827,14 +817,6 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(
 	repository *db.Repository,
 	req irmincore.RevertUncommittedChangesRequest,
 ) error
-
-func (api *APIServices) SaveEditorItem(
-	c context.Context,
-	user *db.User,
-	workspace *db.Workspace,
-	itemPath string,
-	req irmincore.CreateEditorItemRequest,
-) (*irminmodels.EditorItem, error)
 
 func (api *APIServices) SearchWorkspace(
 	c context.Context,
@@ -902,6 +884,14 @@ func (api *APIServices) TransferRepositoryOwnership(
 	repository *db.Repository,
 	req irmincore.TransferRepositoryOwnershipRequest,
 ) (*db.Repository, error)
+
+func (api *APIServices) TransferScriptOwnership(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	script *db.StoredScript,
+	req irmincore.TransferScriptOwnershipRequest,
+) (*db.StoredScript, error)
 
 func (api *APIServices) TransferWorkflowOwnership(
 	c context.Context,
@@ -995,6 +985,14 @@ func (api *APIServices) UpdateRepositoryBranch(
 	branch *irminmodels.Branch,
 	req irmincore.UpdateBranchRequest,
 ) (*irminmodels.Branch, error)
+
+func (api *APIServices) UpdateScript(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	script *db.StoredScript,
+	req irmincore.UpdateScriptRequest,
+) (*db.StoredScript, error)
 
 func (api *APIServices) UpdateWorkflow(
 	c context.Context,

@@ -251,20 +251,6 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /connectors/{connector_slug} [patch]
 
-func (api *APIControllers) CopyEditorItem(c fiber.Ctx) error
-    CopyEditorItem godoc @Summary Copy editor item @Description Copy
-    an editor item from one path to another within the workspace @Tags
-    editor @Security ApiKeyAuth @Accept json @Produce json @Param
-    workspace_slug path string true "Workspace slug" @Param path query
-    string true "Source path of the item to copy" @Param request body
-    irmincore.MoveEditorItemRequest true "Destination path" @Success 200
-    {object} irminmodels.IrminAPIResponse{data=irminmodels.EditorItem}
-    "Editor item copied successfully" @Failure 400 {object}
-    irminmodels.IrminAPIResponse "Bad request - invalid paths" @Failure 401
-    {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/editor/copy [post]
-
 func (api *APIControllers) CredentialsDestroy(c fiber.Ctx) error
     CredentialsDestroy godoc @Summary Delete API token @Description Delete
     an API token by its ID @Tags credentials @Security ApiKeyAuth @Accept
@@ -314,72 +300,6 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error
     found" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server
     error" @Router /invites/{invite_id}/decline [post]
 
-func (api *APIControllers) EditorIndex(c fiber.Ctx) error
-    EditorIndex godoc @Summary List editor items @Description Get all
-    editor items at the specified path in the workspace @Tags editor
-    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
-    path string true "Workspace slug" @Param path query string false
-    "Path to list items from" default("") @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=[]object} "Editor items retrieved
-    successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - invalid query parameters" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/editor [get]
-
-func (api *APIControllers) EditorItemContent(c fiber.Ctx) error
-    EditorItemContent godoc @Summary Get editor item content @Description Get
-    the content of a specific editor item @Tags editor @Security ApiKeyAuth
-    @Accept json @Produce json @Param workspace_slug path string true "Workspace
-    slug" @Param path query string true "Path of the item to retrieve" @Success
-    200 {object} irminmodels.IrminAPIResponse{data=string} "Editor item content
-    retrieved successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - invalid or missing path" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/editor/content [get]
-
-func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error
-    EditorItemDestroy godoc @Summary Delete editor item @Description Delete
-    an editor item or folder at the specified path @Tags editor @Security
-    ApiKeyAuth @Accept json @Produce json @Param workspace_slug path string
-    true "Workspace slug" @Param path query string true "Path of the item to
-    delete" @Success 200 {object} irminmodels.IrminAPIResponse "Editor item
-    deleted successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - invalid or missing path" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/editor [delete]
-
-func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error
-    EditorItemExecute godoc @Summary Execute editor item @Description Execute an
-    editor item (script) in the compute sandbox with optional input data @Tags
-    editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
-    path string true "Workspace slug" @Param path query string true "Path of
-    the item to execute" @Param request body irmincore.ExecuteEditorItemRequest
-    false "Optional input data from repositories" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=irminmodels.ScriptResult} "Editor item
-    executed successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - invalid path or input data" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/editor/execute [post]
-
-func (api *APIControllers) EditorItemStore(c fiber.Ctx) error
-    EditorItemStore godoc @Summary Create or update editor item
-    @Description Create a new editor item or update an existing one at
-    the specified path @Tags editor @Security ApiKeyAuth @Accept json
-    @Produce json @Param workspace_slug path string true "Workspace
-    slug" @Param path query string true "Path where to create/update
-    the item" @Param request body irmincore.CreateEditorItemRequest
-    true "Editor item content and type" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=irminmodels.EditorItem} "Editor item
-    saved successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
-    "Bad request - invalid request body or path" @Failure 401 {object}
-    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
-    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
-    server error" @Router /workspaces/{workspace_slug}/editor [post]
-
 func (api *APIControllers) ExecuteQuery(c fiber.Ctx) error
     ExecuteQuery godoc @Summary Execute stored query @Description
     Execute a specific stored query and return the results @Tags
@@ -405,6 +325,22 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error
     irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
     authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
     server error" @Router /workspaces/{workspace_slug}/execute-sql [post]
+
+func (api *APIControllers) ExecuteScript(c fiber.Ctx) error
+    ExecuteScript godoc @Summary Execute stored script @Description
+    Execute a specific stored script and return the results @Tags scripts
+    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug
+    path string true "Workspace slug" @Param script_id path string true
+    "Script ID (SQID)" @Param request body irmincore.ExecuteScriptRequest
+    true "Script execution parameters" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.ScriptResult}
+    "Script executed successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid request body"
+    @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized
+    - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Script not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/scripts/{script_id}/execute [post]
 
 func (api *APIControllers) GenerateFileSchema(c fiber.Ctx) error
     GenerateFileSchema godoc @Summary Generate schema from uploaded file
@@ -517,20 +453,6 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error
     - invalid or missing authentication" @Failure 500 {object}
     irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/repositories/{repository_slug}/merge [post]
-
-func (api *APIControllers) MoveEditorItem(c fiber.Ctx) error
-    MoveEditorItem godoc @Summary Move editor item @Description Move an
-    editor item from one path to another within the workspace @Tags editor
-    @Security ApiKeyAuth @Accept json @Produce json @Param workspace_slug path
-    string true "Workspace slug" @Param path query string true "Source path
-    of the item to move" @Param request body irmincore.MoveEditorItemRequest
-    true "Destination path" @Success 200 {object}
-    irminmodels.IrminAPIResponse{data=irminmodels.EditorItem} "Editor item
-    moved successfully" @Failure 400 {object} irminmodels.IrminAPIResponse "Bad
-    request - invalid paths" @Failure 401 {object} irminmodels.IrminAPIResponse
-    "Unauthorized - invalid or missing authentication" @Failure 500
-    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
-    /workspaces/{workspace_slug}/editor/move [post]
 
 func (api *APIControllers) PauseWorkflow(c fiber.Ctx) error
     PauseWorkflow godoc @Summary Pause workflow @Description Pause
@@ -1274,6 +1196,71 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/workflows/{workflow_slug}/schedule [patch]
 
+func (api *APIControllers) ScriptsDestroy(c fiber.Ctx) error
+    ScriptsDestroy godoc @Summary Delete stored script @Description Delete an
+    existing stored script from the workspace @Tags scripts @Security ApiKeyAuth
+    @Accept json @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param script_id path string true "Script ID (SQID)" @Success 200
+    {object} irminmodels.IrminAPIResponse "Script deleted successfully" @Failure
+    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse "Script
+    not found" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
+    server error" @Router /workspaces/{workspace_slug}/scripts/{script_id}
+    [delete]
+
+func (api *APIControllers) ScriptsIndex(c fiber.Ctx) error
+    ScriptsIndex godoc @Summary List stored scripts @Description Get all
+    stored scripts in the workspace that the user has permission to read
+    @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param
+    workspace_slug path string true "Workspace slug" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=[]irminmodels.StoredScript} "Scripts
+    retrieved successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 404 {object}
+    irminmodels.IrminAPIResponse "Workspace not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/scripts [get]
+
+func (api *APIControllers) ScriptsShow(c fiber.Ctx) error
+    ScriptsShow godoc @Summary Get stored script details @Description
+    Get details of a specific stored script by its ID @Tags
+    scripts @Security ApiKeyAuth @Accept json @Produce json @Param
+    workspace_slug path string true "Workspace slug" @Param script_id
+    path string true "Script ID (SQID)" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.StoredScript} "Script
+    retrieved successfully" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 404
+    {object} irminmodels.IrminAPIResponse "Script not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/scripts/{script_id} [get]
+
+func (api *APIControllers) ScriptsStore(c fiber.Ctx) error
+    ScriptsStore godoc @Summary Create stored script @Description Create a
+    new stored script in the workspace @Tags scripts @Security ApiKeyAuth
+    @Accept json @Produce json @Param workspace_slug path string true
+    "Workspace slug" @Param request body irmincore.CreateScriptRequest
+    true "Script creation parameters" @Success 201 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.StoredScript} "Script
+    created successfully" @Failure 400 {object} irminmodels.IrminAPIResponse
+    "Bad request - invalid request body" @Failure 401 {object}
+    irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
+    server error" @Router /workspaces/{workspace_slug}/scripts [post]
+
+func (api *APIControllers) ScriptsUpdate(c fiber.Ctx) error
+    ScriptsUpdate godoc @Summary Update stored script @Description Update an
+    existing stored script's properties @Tags scripts @Security ApiKeyAuth
+    @Accept json @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param script_id path string true "Script ID (SQID)" @Param request
+    body irmincore.UpdateScriptRequest true "Script update parameters" @Success
+    200 {object} irminmodels.IrminAPIResponse{data=irminmodels.StoredScript}
+    "Script updated successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid request body" @Failure
+    401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing
+    authentication" @Failure 404 {object} irminmodels.IrminAPIResponse "Script
+    not found" @Failure 500 {object} irminmodels.IrminAPIResponse "Internal
+    server error" @Router /workspaces/{workspace_slug}/scripts/{script_id}
+    [patch]
+
 func (api *APIControllers) SendInvite(c fiber.Ctx) error
     SendInvite godoc @Summary Send workspace invite @Description Send
     an invitation to join the workspace to the specified email address
@@ -1424,6 +1411,23 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error
     {object} irminmodels.IrminAPIResponse "Internal server error" @Router
     /workspaces/{workspace_slug}/repositories/{repository_slug}/transfer-ownership
     [post]
+
+func (api *APIControllers) TransferScriptOwnership(c fiber.Ctx) error
+    TransferScriptOwnership godoc @Summary Transfer script ownership
+    @Description Transfer ownership of a stored script to another user
+    in the workspace @Tags scripts @Security ApiKeyAuth @Accept json
+    @Produce json @Param workspace_slug path string true "Workspace
+    slug" @Param script_id path string true "Script ID (SQID)"
+    @Param request body irmincore.TransferScriptOwnershipRequest
+    true "Ownership transfer parameters" @Success 200 {object}
+    irminmodels.IrminAPIResponse{data=irminmodels.StoredScript}
+    "Script ownership transferred successfully" @Failure 400 {object}
+    irminmodels.IrminAPIResponse "Bad request - invalid request body
+    or new owner" @Failure 401 {object} irminmodels.IrminAPIResponse
+    "Unauthorized - invalid or missing authentication" @Failure 404
+    {object} irminmodels.IrminAPIResponse "Script not found" @Failure 500
+    {object} irminmodels.IrminAPIResponse "Internal server error" @Router
+    /workspaces/{workspace_slug}/scripts/{script_id}/transfer-ownership [post]
 
 func (api *APIControllers) TransferWorkflowOwnership(c fiber.Ctx) error
     TransferWorkflowOwnership godoc @Summary Transfer workflow ownership

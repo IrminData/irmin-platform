@@ -17,15 +17,17 @@ const (
 
 	// Runtime types.
 
-	RuntimeTypePython = "python"
-	RuntimeTypeGo     = "go"
-	RuntimeTypeNode   = "node"
+	RuntimeTypePython     = "python"
+	RuntimeTypeGo         = "go"
+	RuntimeTypeNode       = "node"
+	RuntimeTypeTypeScript = "typescript"
 
 	// Interpreter executables (full paths for sudo).
 
-	InterpreterPython = "/usr/bin/python3"
-	InterpreterGo     = "/usr/local/go/bin/go"
-	InterpreterNode   = "/usr/bin/node"
+	InterpreterPython     = "/usr/bin/python3"
+	InterpreterGo         = "/usr/local/go/bin/go"
+	InterpreterNode       = "/usr/bin/node"
+	InterpreterTypeScript = "/usr/bin/npx"
 
 	// API configuration.
 

@@ -204,12 +204,19 @@ func (api *APIMiddlewares) WorkflowRunPermissionMiddleware(action db.PolicyActio
 	)
 }
 
-// EditorScriptPermissionMiddleware creates a middleware for editor script-level permissions.
-func (api *APIMiddlewares) EditorScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler {
+// ScriptPermissionMiddleware creates a middleware for script-level permissions.
+func (api *APIMiddlewares) ScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler {
 	return api.createPermissionMiddleware(
-		db.PolicyResourceEditorScript,
+		db.PolicyResourceScript,
 		action,
-		nil,
+		func(c fiber.Ctx) *uint {
+			script, scriptOk := c.Locals("script").(*db.StoredScript)
+			if scriptOk && script != nil {
+				return &script.ID
+			}
+			// Don't log warning for index routes where no specific script is expected
+			return nil
+		},
 	)
 }
 
@@ -319,70 +326,82 @@ func (api *APIMiddlewares) WorkspaceTagPermissionMiddleware(action db.PolicyActi
 	)
 }
 
+// decodeEntityID decodes an entity ID from a SQID string.
+func (api *APIMiddlewares) decodeEntityID(
+	sqidType, entityIDStr, entityName string,
+) (*uint, error) {
+	id, err := api.SQIDManager.Decode(sqidType, entityIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid %s ID: %w", entityName, err)
+	}
+	idUint := uint(id)
+	return &idUint, nil
+}
+
 // getEntityResourceInfo maps entity type and ID to policy resource and decoded ID.
 func (api *APIMiddlewares) getEntityResourceInfo(
 	entityType, entityIDStr string,
 ) (db.PolicyResource, *uint, error) {
 	switch entityType {
 	case "repositories":
-		repoID, err := api.SQIDManager.Decode("repositories", entityIDStr)
+		repoID, err := api.decodeEntityID("repositories", entityIDStr, "repository")
 		if err != nil {
-			return "", nil, fmt.Errorf("invalid repository ID: %w", err)
+			return "", nil, err
 		}
-		repoIDUint := uint(repoID)
-		return db.PolicyResourceRepository, &repoIDUint, nil
+		return db.PolicyResourceRepository, repoID, nil
 
 	case "workflows":
-		workflowID, err := api.SQIDManager.Decode("workflows", entityIDStr)
+		workflowID, err := api.decodeEntityID("workflows", entityIDStr, "workflow")
 		if err != nil {
-			return "", nil, fmt.Errorf("invalid workflow ID: %w", err)
+			return "", nil, err
 		}
-		workflowIDUint := uint(workflowID)
-		return db.PolicyResourceWorkflow, &workflowIDUint, nil
+		return db.PolicyResourceWorkflow, workflowID, nil
 
 	case "connections":
-		connectionID, err := api.SQIDManager.Decode("connections", entityIDStr)
+		connectionID, err := api.decodeEntityID("connections", entityIDStr, "connection")
 		if err != nil {
-			return "", nil, fmt.Errorf("invalid connection ID: %w", err)
+			return "", nil, err
 		}
-		connectionIDUint := uint(connectionID)
-		return db.PolicyResourceConnection, &connectionIDUint, nil
+		return db.PolicyResourceConnection, connectionID, nil
 
 	case "queries":
-		queryID, err := api.SQIDManager.Decode("queries", entityIDStr)
+		queryID, err := api.decodeEntityID("queries", entityIDStr, "query")
 		if err != nil {
-			return "", nil, fmt.Errorf("invalid query ID: %w", err)
+			return "", nil, err
 		}
-		queryIDUint := uint(queryID)
-		return db.PolicyResourceQuery, &queryIDUint, nil
+		return db.PolicyResourceQuery, queryID, nil
+
+	case "scripts":
+		scriptID, err := api.decodeEntityID("scripts", entityIDStr, "script")
+		if err != nil {
+			return "", nil, err
+		}
+		return db.PolicyResourceScript, scriptID, nil
 
 	case "users":
-		userID, err := api.SQIDManager.Decode("users", entityIDStr)
+		userID, err := api.decodeEntityID("users", entityIDStr, "user")
 		if err != nil {
-			return "", nil, fmt.Errorf("invalid user ID: %w", err)
+			return "", nil, err
 		}
-		userIDUint := uint(userID)
-		return db.PolicyResourceUser, &userIDUint, nil
+		return db.PolicyResourceUser, userID, nil
 
 	case "tags":
-		tagID, err := api.SQIDManager.Decode("tags", entityIDStr)
+		tagID, err := api.decodeEntityID("tags", entityIDStr, "tag")
 		if err != nil {
-			return "", nil, fmt.Errorf("invalid tag ID: %w", err)
+			return "", nil, err
 		}
-		tagIDUint := uint(tagID)
-		return db.PolicyResourceWorkspaceTag, &tagIDUint, nil
+		return db.PolicyResourceWorkspaceTag, tagID, nil
 
 	case "repository_objects":
-		objectID, err := api.SQIDManager.Decode("repository_objects", entityIDStr)
+		objectID, err := api.decodeEntityID("repository_objects", entityIDStr, "repository object")
 		if err != nil {
-			return "", nil, fmt.Errorf("invalid repository object ID: %w", err)
+			return "", nil, err
 		}
 		var object db.RepositoryObject
-		if err = api.DB.First(&object, objectID).Error; err != nil {
+		if err = api.DB.First(&object, *objectID).Error; err != nil {
 			return "", nil, fmt.Errorf("repository object not found: %w", err)
 		}
-		objectIDUint := uint(objectID)
-		return db.PolicyResourceRepositoryObject, &objectIDUint, nil
+		return db.PolicyResourceRepositoryObject, objectID, nil
 
 	default:
 		return "", nil, fmt.Errorf("unsupported entity type: %s", entityType)

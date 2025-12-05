@@ -160,6 +160,10 @@ func (api *APIServices) getSearchResultEntityIDAndPolicyResource(result db.Searc
 		if entity, ok := result.Entity.(*db.StoredQuery); ok {
 			return &entity.ID, db.PolicyResourceQuery
 		}
+	case irminmodels.WorkspaceSearchResultTypeScript:
+		if entity, ok := result.Entity.(*db.StoredScript); ok {
+			return &entity.ID, db.PolicyResourceScript
+		}
 	case irminmodels.WorkspaceSearchResultTypeUser:
 		if entity, ok := result.Entity.(*db.User); ok {
 			return &entity.ID, db.PolicyResourceUser
@@ -203,6 +207,7 @@ func (api *APIServices) getEntityConverter(
 		irminmodels.WorkspaceSearchResultTypeRepository:       api.convertRepositoryEntity,
 		irminmodels.WorkspaceSearchResultTypeConnection:       api.convertConnectionEntity,
 		irminmodels.WorkspaceSearchResultTypeQuery:            api.convertQueryEntity,
+		irminmodels.WorkspaceSearchResultTypeScript:           api.convertScriptEntity,
 		irminmodels.WorkspaceSearchResultTypeUser:             api.convertUserEntity,
 		irminmodels.WorkspaceSearchResultTypeRepositoryObject: api.convertRepositoryObjectEntity,
 		irminmodels.WorkspaceSearchResultTypeInvite:           api.convertInviteEntity,
@@ -297,6 +302,28 @@ func (api *APIServices) convertQueryEntity(
 		return searchResult, err
 	}
 	searchResult.Query = formattedQuery
+	return searchResult, nil
+}
+
+// convertScriptEntity converts a script entity to a search result.
+func (api *APIServices) convertScriptEntity(
+	result db.SearchResult,
+	searchResult irminmodels.SearchResult,
+) (irminmodels.SearchResult, error) {
+	if result.Entity == nil {
+		return searchResult, nil
+	}
+
+	storedScript, ok := result.Entity.(*db.StoredScript)
+	if !ok {
+		return searchResult, fmt.Errorf("expected *db.StoredScript, got %T", result.Entity)
+	}
+
+	formattedScript, err := formatter.FormatStoredScriptResponse(storedScript, api.SQIDManager)
+	if err != nil {
+		return searchResult, err
+	}
+	searchResult.Script = formattedScript
 	return searchResult, nil
 }
 

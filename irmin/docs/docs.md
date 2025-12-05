@@ -305,7 +305,7 @@ import "irmin-api/compute-sandbox"
 - [Variables](<#variables>)
 - [type ComputeSandbox](<#ComputeSandbox>)
   - [func NewComputeSandbox\(env \*utils.CoreAPIEnv, d \*db.Database, logger \*slog.Logger\) \*ComputeSandbox](<#NewComputeSandbox>)
-  - [func \(s \*ComputeSandbox\) ExecuteEditorItem\(ctx context.Context, inputFiles map\[string\]\[\]byte, responsibleUser db.User, executablePath, workspaceSlug string\) \(ExecutionResult, error\)](<#ComputeSandbox.ExecuteEditorItem>)
+  - [func \(s \*ComputeSandbox\) ExecutedStoredScript\(ctx context.Context, inputFiles map\[string\]\[\]byte, responsibleUser db.User, script \*db.StoredScript\) \(ExecutionResult, error\)](<#ComputeSandbox.ExecutedStoredScript>)
 - [type DangerousPattern](<#DangerousPattern>)
 - [type ExecutionResult](<#ExecutionResult>)
 - [type ResourceUsageMetrics](<#ResourceUsageMetrics>)
@@ -325,13 +325,15 @@ const (
     LatestNodeVersion   = "24.2.0"
     LatestPythonVersion = "3.11.12"
 
-    RuntimeTypePython = "python"
-    RuntimeTypeGo     = "go"
-    RuntimeTypeNode   = "node"
+    RuntimeTypePython     = "python"
+    RuntimeTypeGo         = "go"
+    RuntimeTypeNode       = "node"
+    RuntimeTypeTypeScript = "typescript"
 
-    InterpreterPython = "/usr/bin/python3"
-    InterpreterGo     = "/usr/local/go/bin/go"
-    InterpreterNode   = "/usr/bin/node"
+    InterpreterPython     = "/usr/bin/python3"
+    InterpreterGo         = "/usr/local/go/bin/go"
+    InterpreterNode       = "/usr/bin/node"
+    InterpreterTypeScript = "/usr/bin/npx"
 
     TokenExpiryDuration = 60 * time.Minute // How long API tokens created for sandbox execution should be valid
 
@@ -367,14 +369,14 @@ func NewComputeSandbox(env *utils.CoreAPIEnv, d *db.Database, logger *slog.Logge
 
 NewComputeSandbox creates a new ComputeSandbox.
 
-<a name="ComputeSandbox.ExecuteEditorItem"></a>
-### func \(\*ComputeSandbox\) ExecuteEditorItem
+<a name="ComputeSandbox.ExecutedStoredScript"></a>
+### func \(\*ComputeSandbox\) ExecutedStoredScript
 
 ```go
-func (s *ComputeSandbox) ExecuteEditorItem(ctx context.Context, inputFiles map[string][]byte, responsibleUser db.User, executablePath, workspaceSlug string) (ExecutionResult, error)
+func (s *ComputeSandbox) ExecutedStoredScript(ctx context.Context, inputFiles map[string][]byte, responsibleUser db.User, script *db.StoredScript) (ExecutionResult, error)
 ```
 
-ExecuteEditorItem executes the provided executable code. It downloads the workspace files from the S3 bucket to a temporary directory, executes the code, and returns the execution result.
+ExecutedStoredScript executes the provided stored script. It creates a temporary directory, writes the script content to a file, executes the code, and returns the execution result.
 
 <a name="DangerousPattern"></a>
 ## type DangerousPattern
@@ -844,18 +846,13 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ConnectorsShow\(c fiber.Ctx\) error](<#APIControllers.ConnectorsShow>)
   - [func \(api \*APIControllers\) ConnectorsStore\(c fiber.Ctx\) error](<#APIControllers.ConnectorsStore>)
   - [func \(api \*APIControllers\) ConnectorsUpdate\(c fiber.Ctx\) error](<#APIControllers.ConnectorsUpdate>)
-  - [func \(api \*APIControllers\) CopyEditorItem\(c fiber.Ctx\) error](<#APIControllers.CopyEditorItem>)
   - [func \(api \*APIControllers\) CredentialsDestroy\(c fiber.Ctx\) error](<#APIControllers.CredentialsDestroy>)
   - [func \(api \*APIControllers\) CredentialsIndex\(c fiber.Ctx\) error](<#APIControllers.CredentialsIndex>)
   - [func \(api \*APIControllers\) CredentialsStore\(c fiber.Ctx\) error](<#APIControllers.CredentialsStore>)
   - [func \(api \*APIControllers\) DeclineInvite\(c fiber.Ctx\) error](<#APIControllers.DeclineInvite>)
-  - [func \(api \*APIControllers\) EditorIndex\(c fiber.Ctx\) error](<#APIControllers.EditorIndex>)
-  - [func \(api \*APIControllers\) EditorItemContent\(c fiber.Ctx\) error](<#APIControllers.EditorItemContent>)
-  - [func \(api \*APIControllers\) EditorItemDestroy\(c fiber.Ctx\) error](<#APIControllers.EditorItemDestroy>)
-  - [func \(api \*APIControllers\) EditorItemExecute\(c fiber.Ctx\) error](<#APIControllers.EditorItemExecute>)
-  - [func \(api \*APIControllers\) EditorItemStore\(c fiber.Ctx\) error](<#APIControllers.EditorItemStore>)
   - [func \(api \*APIControllers\) ExecuteQuery\(c fiber.Ctx\) error](<#APIControllers.ExecuteQuery>)
   - [func \(api \*APIControllers\) ExecuteSQL\(c fiber.Ctx\) error](<#APIControllers.ExecuteSQL>)
+  - [func \(api \*APIControllers\) ExecuteScript\(c fiber.Ctx\) error](<#APIControllers.ExecuteScript>)
   - [func \(api \*APIControllers\) GenerateFileSchema\(c fiber.Ctx\) error](<#APIControllers.GenerateFileSchema>)
   - [func \(api \*APIControllers\) IndexMyInvites\(c fiber.Ctx\) error](<#APIControllers.IndexMyInvites>)
   - [func \(api \*APIControllers\) InvitesDestroy\(c fiber.Ctx\) error](<#APIControllers.InvitesDestroy>)
@@ -864,7 +861,6 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) LeaveWorkspace\(c fiber.Ctx\) error](<#APIControllers.LeaveWorkspace>)
   - [func \(api \*APIControllers\) LogsIndex\(c fiber.Ctx\) error](<#APIControllers.LogsIndex>)
   - [func \(api \*APIControllers\) MergeRefs\(c fiber.Ctx\) error](<#APIControllers.MergeRefs>)
-  - [func \(api \*APIControllers\) MoveEditorItem\(c fiber.Ctx\) error](<#APIControllers.MoveEditorItem>)
   - [func \(api \*APIControllers\) PauseWorkflow\(c fiber.Ctx\) error](<#APIControllers.PauseWorkflow>)
   - [func \(api \*APIControllers\) PoliciesDestroy\(c fiber.Ctx\) error](<#APIControllers.PoliciesDestroy>)
   - [func \(api \*APIControllers\) PoliciesIndex\(c fiber.Ctx\) error](<#APIControllers.PoliciesIndex>)
@@ -914,6 +910,11 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) ResendInvite\(c fiber.Ctx\) error](<#APIControllers.ResendInvite>)
   - [func \(api \*APIControllers\) RolesIndex\(c fiber.Ctx\) error](<#APIControllers.RolesIndex>)
   - [func \(api \*APIControllers\) ScheduleUpdate\(c fiber.Ctx\) error](<#APIControllers.ScheduleUpdate>)
+  - [func \(api \*APIControllers\) ScriptsDestroy\(c fiber.Ctx\) error](<#APIControllers.ScriptsDestroy>)
+  - [func \(api \*APIControllers\) ScriptsIndex\(c fiber.Ctx\) error](<#APIControllers.ScriptsIndex>)
+  - [func \(api \*APIControllers\) ScriptsShow\(c fiber.Ctx\) error](<#APIControllers.ScriptsShow>)
+  - [func \(api \*APIControllers\) ScriptsStore\(c fiber.Ctx\) error](<#APIControllers.ScriptsStore>)
+  - [func \(api \*APIControllers\) ScriptsUpdate\(c fiber.Ctx\) error](<#APIControllers.ScriptsUpdate>)
   - [func \(api \*APIControllers\) SendInvite\(c fiber.Ctx\) error](<#APIControllers.SendInvite>)
   - [func \(api \*APIControllers\) ShowConnectorConfigurationFields\(c fiber.Ctx\) error](<#APIControllers.ShowConnectorConfigurationFields>)
   - [func \(api \*APIControllers\) StartWorkflow\(c fiber.Ctx\) error](<#APIControllers.StartWorkflow>)
@@ -925,6 +926,7 @@ import "irmin-api/controllers"
   - [func \(api \*APIControllers\) TransferConnectionOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferConnectionOwnership>)
   - [func \(api \*APIControllers\) TransferQueryOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferQueryOwnership>)
   - [func \(api \*APIControllers\) TransferRepositoryOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferRepositoryOwnership>)
+  - [func \(api \*APIControllers\) TransferScriptOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferScriptOwnership>)
   - [func \(api \*APIControllers\) TransferWorkflowOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferWorkflowOwnership>)
   - [func \(api \*APIControllers\) TransferWorkspaceOwnership\(c fiber.Ctx\) error](<#APIControllers.TransferWorkspaceOwnership>)
   - [func \(api \*APIControllers\) TriggerWorkflowRun\(c fiber.Ctx\) error](<#APIControllers.TriggerWorkflowRun>)
@@ -1129,15 +1131,6 @@ func (api *APIControllers) ConnectorsUpdate(c fiber.Ctx) error
 
 ConnectorsUpdate godoc @Summary Update connector @Description Update an existing connector's information \(system authentication required\) @Tags connectors @Security SystemTokenAuth @Accept json @Produce json @Param connector\_slug path string true "Connector slug" @Param request body irmincore.ConnectorRequest true "Connector update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Connector\} "Connector updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- system authentication required" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connector not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /connectors/\{connector\_slug\} \[patch\]
 
-<a name="APIControllers.CopyEditorItem"></a>
-### func \(\*APIControllers\) CopyEditorItem
-
-```go
-func (api *APIControllers) CopyEditorItem(c fiber.Ctx) error
-```
-
-CopyEditorItem godoc @Summary Copy editor item @Description Copy an editor item from one path to another within the workspace @Tags editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param path query string true "Source path of the item to copy" @Param request body irmincore.MoveEditorItemRequest true "Destination path" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EditorItem\} "Editor item copied successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid paths" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/editor/copy \[post\]
-
 <a name="APIControllers.CredentialsDestroy"></a>
 ### func \(\*APIControllers\) CredentialsDestroy
 
@@ -1174,51 +1167,6 @@ func (api *APIControllers) DeclineInvite(c fiber.Ctx) error
 
 DeclineInvite godoc @Summary Decline invite @Description Decline an invite to join a workspace @Tags invites @Security ApiKeyAuth @Accept json @Produce json @Param invite\_id path string true "Invite ID \(SQID\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Invite declined successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- user not allowed to decline this invite" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Invite not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /invites/\{invite\_id\}/decline \[post\]
 
-<a name="APIControllers.EditorIndex"></a>
-### func \(\*APIControllers\) EditorIndex
-
-```go
-func (api *APIControllers) EditorIndex(c fiber.Ctx) error
-```
-
-EditorIndex godoc @Summary List editor items @Description Get all editor items at the specified path in the workspace @Tags editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param path query string false "Path to list items from" default\(""\) @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]object\} "Editor items retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid query parameters" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/editor \[get\]
-
-<a name="APIControllers.EditorItemContent"></a>
-### func \(\*APIControllers\) EditorItemContent
-
-```go
-func (api *APIControllers) EditorItemContent(c fiber.Ctx) error
-```
-
-EditorItemContent godoc @Summary Get editor item content @Description Get the content of a specific editor item @Tags editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param path query string true "Path of the item to retrieve" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=string\} "Editor item content retrieved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid or missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/editor/content \[get\]
-
-<a name="APIControllers.EditorItemDestroy"></a>
-### func \(\*APIControllers\) EditorItemDestroy
-
-```go
-func (api *APIControllers) EditorItemDestroy(c fiber.Ctx) error
-```
-
-EditorItemDestroy godoc @Summary Delete editor item @Description Delete an editor item or folder at the specified path @Tags editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param path query string true "Path of the item to delete" @Success 200 \{object\} irminmodels.IrminAPIResponse "Editor item deleted successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid or missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/editor \[delete\]
-
-<a name="APIControllers.EditorItemExecute"></a>
-### func \(\*APIControllers\) EditorItemExecute
-
-```go
-func (api *APIControllers) EditorItemExecute(c fiber.Ctx) error
-```
-
-EditorItemExecute godoc @Summary Execute editor item @Description Execute an editor item \(script\) in the compute sandbox with optional input data @Tags editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param path query string true "Path of the item to execute" @Param request body irmincore.ExecuteEditorItemRequest false "Optional input data from repositories" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ScriptResult\} "Editor item executed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid path or input data" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/editor/execute \[post\]
-
-<a name="APIControllers.EditorItemStore"></a>
-### func \(\*APIControllers\) EditorItemStore
-
-```go
-func (api *APIControllers) EditorItemStore(c fiber.Ctx) error
-```
-
-EditorItemStore godoc @Summary Create or update editor item @Description Create a new editor item or update an existing one at the specified path @Tags editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param path query string true "Path where to create/update the item" @Param request body irmincore.CreateEditorItemRequest true "Editor item content and type" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EditorItem\} "Editor item saved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body or path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/editor \[post\]
-
 <a name="APIControllers.ExecuteQuery"></a>
 ### func \(\*APIControllers\) ExecuteQuery
 
@@ -1236,6 +1184,15 @@ func (api *APIControllers) ExecuteSQL(c fiber.Ctx) error
 ```
 
 ExecuteSQL godoc @Summary Execute SQL query @Description Execute an arbitrary SQL query on the workspace data @Tags queries @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param request body irmincore.ExecuteSQLRequest true "SQL query to execute" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.QueryResult\} "SQL query executed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body or SQL" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/execute\-sql \[post\]
+
+<a name="APIControllers.ExecuteScript"></a>
+### func \(\*APIControllers\) ExecuteScript
+
+```go
+func (api *APIControllers) ExecuteScript(c fiber.Ctx) error
+```
+
+ExecuteScript godoc @Summary Execute stored script @Description Execute a specific stored script and return the results @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param script\_id path string true "Script ID \(SQID\)" @Param request body irmincore.ExecuteScriptRequest true "Script execution parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ScriptResult\} "Script executed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Script not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts/\{script\_id\}/execute \[post\]
 
 <a name="APIControllers.GenerateFileSchema"></a>
 ### func \(\*APIControllers\) GenerateFileSchema
@@ -1308,15 +1265,6 @@ func (api *APIControllers) MergeRefs(c fiber.Ctx) error
 ```
 
 MergeRefs godoc @Summary Merge two repository references @Description Merge a compare reference into a base reference in a repository @Tags compare @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param request body irmincore.MergeRefsRequest true "Merge request parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Commit\} "Merge completed successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/merge \[post\]
-
-<a name="APIControllers.MoveEditorItem"></a>
-### func \(\*APIControllers\) MoveEditorItem
-
-```go
-func (api *APIControllers) MoveEditorItem(c fiber.Ctx) error
-```
-
-MoveEditorItem godoc @Summary Move editor item @Description Move an editor item from one path to another within the workspace @Tags editor @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param path query string true "Source path of the item to move" @Param request body irmincore.MoveEditorItemRequest true "Destination path" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.EditorItem\} "Editor item moved successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid paths" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/editor/move \[post\]
 
 <a name="APIControllers.PauseWorkflow"></a>
 ### func \(\*APIControllers\) PauseWorkflow
@@ -1759,6 +1707,51 @@ func (api *APIControllers) ScheduleUpdate(c fiber.Ctx) error
 
 ScheduleUpdate godoc @Summary Update workflow schedule @Description Update the scheduling configuration and triggers for a workflow @Tags workflows @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param workflow\_slug path string true "Workflow slug" @Param body body irminmodels.Schedule true "Schedule configuration update" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Workflow\} "Workflow schedule updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid schedule configuration" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workflow not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/workflows/\{workflow\_slug\}/schedule \[patch\]
 
+<a name="APIControllers.ScriptsDestroy"></a>
+### func \(\*APIControllers\) ScriptsDestroy
+
+```go
+func (api *APIControllers) ScriptsDestroy(c fiber.Ctx) error
+```
+
+ScriptsDestroy godoc @Summary Delete stored script @Description Delete an existing stored script from the workspace @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param script\_id path string true "Script ID \(SQID\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Script deleted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Script not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts/\{script\_id\} \[delete\]
+
+<a name="APIControllers.ScriptsIndex"></a>
+### func \(\*APIControllers\) ScriptsIndex
+
+```go
+func (api *APIControllers) ScriptsIndex(c fiber.Ctx) error
+```
+
+ScriptsIndex godoc @Summary List stored scripts @Description Get all stored scripts in the workspace that the user has permission to read @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.StoredScript\} "Scripts retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts \[get\]
+
+<a name="APIControllers.ScriptsShow"></a>
+### func \(\*APIControllers\) ScriptsShow
+
+```go
+func (api *APIControllers) ScriptsShow(c fiber.Ctx) error
+```
+
+ScriptsShow godoc @Summary Get stored script details @Description Get details of a specific stored script by its ID @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param script\_id path string true "Script ID \(SQID\)" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredScript\} "Script retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Script not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts/\{script\_id\} \[get\]
+
+<a name="APIControllers.ScriptsStore"></a>
+### func \(\*APIControllers\) ScriptsStore
+
+```go
+func (api *APIControllers) ScriptsStore(c fiber.Ctx) error
+```
+
+ScriptsStore godoc @Summary Create stored script @Description Create a new stored script in the workspace @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param request body irmincore.CreateScriptRequest true "Script creation parameters" @Success 201 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredScript\} "Script created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts \[post\]
+
+<a name="APIControllers.ScriptsUpdate"></a>
+### func \(\*APIControllers\) ScriptsUpdate
+
+```go
+func (api *APIControllers) ScriptsUpdate(c fiber.Ctx) error
+```
+
+ScriptsUpdate godoc @Summary Update stored script @Description Update an existing stored script's properties @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param script\_id path string true "Script ID \(SQID\)" @Param request body irmincore.UpdateScriptRequest true "Script update parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredScript\} "Script updated successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Script not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts/\{script\_id\} \[patch\]
+
 <a name="APIControllers.SendInvite"></a>
 ### func \(\*APIControllers\) SendInvite
 
@@ -1857,6 +1850,15 @@ func (api *APIControllers) TransferRepositoryOwnership(c fiber.Ctx) error
 ```
 
 TransferRepositoryOwnership godoc @Summary Transfer repository ownership @Description Transfer ownership of a repository to another user in the workspace @Tags repositories @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param repository\_slug path string true "Repository slug" @Param request body irmincore.TransferRepositoryOwnershipRequest true "Ownership transfer parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Repository\} "Repository ownership transferred successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body or new owner" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Repository not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/repositories/\{repository\_slug\}/transfer\-ownership \[post\]
+
+<a name="APIControllers.TransferScriptOwnership"></a>
+### func \(\*APIControllers\) TransferScriptOwnership
+
+```go
+func (api *APIControllers) TransferScriptOwnership(c fiber.Ctx) error
+```
+
+TransferScriptOwnership godoc @Summary Transfer script ownership @Description Transfer ownership of a stored script to another user in the workspace @Tags scripts @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param script\_id path string true "Script ID \(SQID\)" @Param request body irmincore.TransferScriptOwnershipRequest true "Ownership transfer parameters" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.StoredScript\} "Script ownership transferred successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid request body or new owner" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Script not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/scripts/\{script\_id\}/transfer\-ownership \[post\]
 
 <a name="APIControllers.TransferWorkflowOwnership"></a>
 ### func \(\*APIControllers\) TransferWorkflowOwnership
@@ -2188,6 +2190,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) AddTagToQuery\(queryID, tagID uint\) error](<#Database.AddTagToQuery>)
   - [func \(d \*Database\) AddTagToRepository\(repositoryID, tagID uint\) error](<#Database.AddTagToRepository>)
   - [func \(d \*Database\) AddTagToRepositoryObject\(repositoryObjectID, tagID uint\) error](<#Database.AddTagToRepositoryObject>)
+  - [func \(d \*Database\) AddTagToScript\(scriptID, tagID uint\) error](<#Database.AddTagToScript>)
   - [func \(d \*Database\) AddTagToWorkflow\(workflowID, tagID uint\) error](<#Database.AddTagToWorkflow>)
   - [func \(d \*Database\) AddUserToWorkspace\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.AddUserToWorkspace>)
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
@@ -2199,6 +2202,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteInvite\(id uint\) error](<#Database.DeleteInvite>)
   - [func \(d \*Database\) DeleteObjects\(tx \*gorm.DB, path \*string, repositoryID \*uint, ref \*string\) error](<#Database.DeleteObjects>)
   - [func \(d \*Database\) DeleteStoredQuery\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredQuery>)
+  - [func \(d \*Database\) DeleteStoredScript\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredScript>)
   - [func \(d \*Database\) DeleteTag\(tx \*gorm.DB, id uint\) error](<#Database.DeleteTag>)
   - [func \(d \*Database\) DeleteWorkflow\(tx \*gorm.DB, id uint\) error](<#Database.DeleteWorkflow>)
   - [func \(d \*Database\) DeleteWorkspace\(id uint, tx \*gorm.DB\) error](<#Database.DeleteWorkspace>)
@@ -2246,8 +2250,12 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetRole\(id uint\) \(\*Role, error\)](<#Database.GetRole>)
   - [func \(d \*Database\) GetRoles\(\) \(\[\]Role, error\)](<#Database.GetRoles>)
   - [func \(d \*Database\) GetScheduleByID\(id uint\) \(\*Schedule, error\)](<#Database.GetScheduleByID>)
+  - [func \(d \*Database\) GetScriptTags\(scriptID uint\) \(\[\]Tag, error\)](<#Database.GetScriptTags>)
+  - [func \(d \*Database\) GetScriptsByTag\(tagID uint\) \(\[\]StoredScript, error\)](<#Database.GetScriptsByTag>)
   - [func \(d \*Database\) GetStoredQueriesByWorkspaceID\(workspaceID uint\) \(\[\]StoredQuery, error\)](<#Database.GetStoredQueriesByWorkspaceID>)
   - [func \(d \*Database\) GetStoredQueryByID\(id uint\) \(\*StoredQuery, error\)](<#Database.GetStoredQueryByID>)
+  - [func \(d \*Database\) GetStoredScriptByID\(id uint\) \(\*StoredScript, error\)](<#Database.GetStoredScriptByID>)
+  - [func \(d \*Database\) GetStoredScriptsByWorkspaceID\(workspaceID uint\) \(\[\]StoredScript, error\)](<#Database.GetStoredScriptsByWorkspaceID>)
   - [func \(d \*Database\) GetTagByID\(id uint\) \(\*Tag, error\)](<#Database.GetTagByID>)
   - [func \(d \*Database\) GetTagWithAssets\(tagID uint\) \(\*TagWithAssets, error\)](<#Database.GetTagWithAssets>)
   - [func \(d \*Database\) GetTaggedAssetsCount\(tagID uint\) \(map\[string\]int, error\)](<#Database.GetTaggedAssetsCount>)
@@ -2275,6 +2283,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) RemoveTagFromQuery\(queryID, tagID uint\) error](<#Database.RemoveTagFromQuery>)
   - [func \(d \*Database\) RemoveTagFromRepository\(repositoryID, tagID uint\) error](<#Database.RemoveTagFromRepository>)
   - [func \(d \*Database\) RemoveTagFromRepositoryObject\(repositoryObjectID, tagID uint\) error](<#Database.RemoveTagFromRepositoryObject>)
+  - [func \(d \*Database\) RemoveTagFromScript\(scriptID, tagID uint\) error](<#Database.RemoveTagFromScript>)
   - [func \(d \*Database\) RemoveTagFromWorkflow\(workflowID, tagID uint\) error](<#Database.RemoveTagFromWorkflow>)
   - [func \(d \*Database\) RemoveUserFromWorkspace\(tx \*gorm.DB, userID, workspaceID uint\) error](<#Database.RemoveUserFromWorkspace>)
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
@@ -2314,6 +2323,7 @@ import "irmin-api/db"
 - [type Role](<#Role>)
 - [type RunStatusNotificationPayload](<#RunStatusNotificationPayload>)
 - [type Schedule](<#Schedule>)
+- [type ScriptTag](<#ScriptTag>)
 - [type SearchCondition](<#SearchCondition>)
 - [type SearchConfig](<#SearchConfig>)
 - [type SearchFilters](<#SearchFilters>)
@@ -2338,6 +2348,7 @@ import "irmin-api/db"
   - [func \(e \*SearchTimeoutError\) Error\(\) string](<#SearchTimeoutError.Error>)
 - [type SearchToken](<#SearchToken>)
 - [type StoredQuery](<#StoredQuery>)
+- [type StoredScript](<#StoredScript>)
 - [type Tag](<#Tag>)
 - [type TagWithAssets](<#TagWithAssets>)
 - [type TaggedAssets](<#TaggedAssets>)
@@ -2368,6 +2379,7 @@ const (
     RepositoryPriority       = 2
     ConnectionPriority       = 3
     QueryPriority            = 4
+    ScriptPriority           = 4
     RepositoryObjectPriority = 5
     UserPriority             = 6
     InvitePriority           = 7
@@ -2429,6 +2441,7 @@ const (
     SearchEntityTypeWorkflow         = "workflow"
     SearchEntityTypeRepository       = "repository"
     SearchEntityTypeConnection       = "connection"
+    SearchEntityTypeScript           = "script"
     SearchEntityTypeQuery            = "query"
     SearchEntityTypeRepositoryObject = "repository_object"
 
@@ -2625,7 +2638,8 @@ type APIToken struct {
 ```go
 type ActionWorkflowable struct {
     gorm.Model
-    Executable              string                    `json:"executable"`
+    ScriptID                uint                      `json:"script_id"                 gorm:"index"`
+    Script                  StoredScript              `json:"script"                    gorm:"foreignKey:ScriptID"`
     ResultsRepository       *Repository               `json:"results_repository"        gorm:"foreignKey:ResultsRepositoryID"`
     ResultsRepositoryID     *uint                     `json:"results_repository_id"     gorm:"index"`
     ResultsRepositoryBranch *string                   `json:"results_repository_branch"`
@@ -2838,6 +2852,15 @@ func (d *Database) AddTagToRepositoryObject(repositoryObjectID, tagID uint) erro
 
 AddTagToRepositoryObject adds a tag to a repository object. If the tag is already attached, this operation is idempotent and returns no error.
 
+<a name="Database.AddTagToScript"></a>
+### func \(\*Database\) AddTagToScript
+
+```go
+func (d *Database) AddTagToScript(scriptID, tagID uint) error
+```
+
+AddTagToScript adds a tag to a script. If the tag is already attached, this operation is idempotent and returns no error.
+
 <a name="Database.AddTagToWorkflow"></a>
 ### func \(\*Database\) AddTagToWorkflow
 
@@ -2933,6 +2956,15 @@ func (d *Database) DeleteObjects(tx *gorm.DB, path *string, repositoryID *uint, 
 
 ```go
 func (d *Database) DeleteStoredQuery(tx *gorm.DB, id uint) error
+```
+
+
+
+<a name="Database.DeleteStoredScript"></a>
+### func \(\*Database\) DeleteStoredScript
+
+```go
+func (d *Database) DeleteStoredScript(tx *gorm.DB, id uint) error
 ```
 
 
@@ -3364,6 +3396,24 @@ func (d *Database) GetScheduleByID(id uint) (*Schedule, error)
 
 GetScheduleByID retrieves a schedule record from the database by its ID.
 
+<a name="Database.GetScriptTags"></a>
+### func \(\*Database\) GetScriptTags
+
+```go
+func (d *Database) GetScriptTags(scriptID uint) ([]Tag, error)
+```
+
+GetScriptTags retrieves all tags for a script.
+
+<a name="Database.GetScriptsByTag"></a>
+### func \(\*Database\) GetScriptsByTag
+
+```go
+func (d *Database) GetScriptsByTag(tagID uint) ([]StoredScript, error)
+```
+
+GetScriptsByTag retrieves all scripts that have a specific tag.
+
 <a name="Database.GetStoredQueriesByWorkspaceID"></a>
 ### func \(\*Database\) GetStoredQueriesByWorkspaceID
 
@@ -3378,6 +3428,24 @@ func (d *Database) GetStoredQueriesByWorkspaceID(workspaceID uint) ([]StoredQuer
 
 ```go
 func (d *Database) GetStoredQueryByID(id uint) (*StoredQuery, error)
+```
+
+
+
+<a name="Database.GetStoredScriptByID"></a>
+### func \(\*Database\) GetStoredScriptByID
+
+```go
+func (d *Database) GetStoredScriptByID(id uint) (*StoredScript, error)
+```
+
+
+
+<a name="Database.GetStoredScriptsByWorkspaceID"></a>
+### func \(\*Database\) GetStoredScriptsByWorkspaceID
+
+```go
+func (d *Database) GetStoredScriptsByWorkspaceID(workspaceID uint) ([]StoredScript, error)
 ```
 
 
@@ -3624,6 +3692,15 @@ func (d *Database) RemoveTagFromRepositoryObject(repositoryObjectID, tagID uint)
 ```
 
 RemoveTagFromRepositoryObject removes a tag from a repository object.
+
+<a name="Database.RemoveTagFromScript"></a>
+### func \(\*Database\) RemoveTagFromScript
+
+```go
+func (d *Database) RemoveTagFromScript(scriptID, tagID uint) error
+```
+
+RemoveTagFromScript removes a tag from a script.
 
 <a name="Database.RemoveTagFromWorkflow"></a>
 ### func \(\*Database\) RemoveTagFromWorkflow
@@ -3878,7 +3955,8 @@ type PipelineStage struct {
     PipelineID    *uint                 `json:"pipeline_id"    gorm:"index"`
     Type          PipelineStageType     `json:"type"`
 
-    Executable *string `json:"executable,omitempty"`
+    ScriptID *uint         `json:"script_id,omitempty"`
+    Script   *StoredScript `json:"script,omitempty"    gorm:"foreignKey:ScriptID"`
 
     Connection          *Connection `json:"connection,omitempty"            gorm:"foreignKey:ConnectionID"`
     ConnectionID        *uint       `json:"connection_id,omitempty"`
@@ -4076,8 +4154,8 @@ type PolicyResource string
 const (
     // PolicyResourceWorkspace represents a workspace resource.
     PolicyResourceWorkspace PolicyResource = "workspace"
-    // PolicyResourceEditorScript represents script editor resource.
-    PolicyResourceEditorScript PolicyResource = "editor_script" // Editor scripts are not stored in the database, so policies are not script specific.
+    // PolicyResourceScript represents a script resource.
+    PolicyResourceScript PolicyResource = "script"
     // PolicyResourceQuery represents a query resource.
     PolicyResourceQuery PolicyResource = "query"
     // PolicyResourceWorkflow represents a workflow resource.
@@ -4298,6 +4376,20 @@ type Schedule struct {
     MaxRuntime int `json:"max_runtime,omitempty"`
     // MinInterval is the minimum interval in seconds between workflow runs.
     MinInterval int `json:"min_interval,omitempty"`
+}
+```
+
+<a name="ScriptTag"></a>
+## type ScriptTag
+
+
+
+```go
+type ScriptTag struct {
+    StoredScriptID uint         `json:"stored_script_id" gorm:"primaryKey"`
+    StoredScript   StoredScript `json:"stored_script"    gorm:"foreignKey:StoredScriptID"`
+    TagID          uint         `json:"tag_id"           gorm:"primaryKey"`
+    Tag            Tag          `json:"tag"              gorm:"foreignKey:TagID"`
 }
 ```
 
@@ -4581,6 +4673,26 @@ type StoredQuery struct {
 }
 ```
 
+<a name="StoredScript"></a>
+## type StoredScript
+
+
+
+```go
+type StoredScript struct {
+    gorm.Model
+    Name        string    `json:"name"           gorm:"not null"`
+    Description string    `json:"description"`
+    Content     string    `json:"content"`
+    Language    string    `json:"language"`
+    Owner       User      `json:"owner"          gorm:"foreignKey:OwnerID"`
+    OwnerID     uint      `json:"owner_id"`
+    Workspace   Workspace `json:"workspace"      gorm:"foreignKey:WorkspaceID"`
+    WorkspaceID uint      `json:"workspace_id"   gorm:"index"`
+    Tags        []Tag     `json:"tags,omitempty" gorm:"many2many:script_tags;"`
+}
+```
+
 <a name="Tag"></a>
 ## type Tag
 
@@ -4618,6 +4730,7 @@ TaggedAssets represents all assets associated with a specific tag.
 ```go
 type TaggedAssets struct {
     Queries           []StoredQuery      `json:"queries"`
+    Scripts           []StoredScript     `json:"scripts"`
     Repositories      []Repository       `json:"repositories"`
     Workflows         []Workflow         `json:"workflows"`
     Connections       []Connection       `json:"connections"`
@@ -5955,7 +6068,6 @@ import "irmin-api/formatter"
 - [func FormatAPITokenResponse\(token \*db.APIToken, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.APIToken, error\)](<#FormatAPITokenResponse>)
 - [func FormatConnectionResponse\(connection \*db.Connection, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connection, error\)](<#FormatConnectionResponse>)
 - [func FormatConnectorResponse\(connector \*db.Connector, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Connector, error\)](<#FormatConnectorResponse>)
-- [func FormatEditorItemsResponse\(items \[\]types.Object, workspace \*db.Workspace\) \(\[\]irminmodels.EditorItem, error\)](<#FormatEditorItemsResponse>)
 - [func FormatIndexResponse\[T any, R any\]\(items \[\]T, formatter func\(\*T, \*irminsqids.SQIDManager\) \(\*R, error\), sqidManager \*irminsqids.SQIDManager\) \(\[\]R, error\)](<#FormatIndexResponse>)
 - [func FormatInviteResponse\(invite \*db.Invite, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Invite, error\)](<#FormatInviteResponse>)
 - [func FormatLogEventResponse\(ctx context.Context, d \*db.Database, logEvent db.LogEvent, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.LogEvent, error\)](<#FormatLogEventResponse>)
@@ -5967,6 +6079,7 @@ import "irmin-api/formatter"
 - [func FormatScheduleResponse\(schedule \*db.Schedule, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Schedule, error\)](<#FormatScheduleResponse>)
 - [func FormatScheduleTriggerResponse\(trigger \*db.WorkflowTrigger, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.ScheduleTrigger, error\)](<#FormatScheduleTriggerResponse>)
 - [func FormatStoredQueryResponse\(query \*db.StoredQuery, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.StoredQuery, error\)](<#FormatStoredQueryResponse>)
+- [func FormatStoredScriptResponse\(script \*db.StoredScript, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.StoredScript, error\)](<#FormatStoredScriptResponse>)
 - [func FormatTagResponse\(tag \*db.Tag, sqidManager \*irminsqids.SQIDManager\) \(\*irminmodels.Tag, error\)](<#FormatTagResponse>)
 - [func FormatTagWithAssetsResponse\(tag \*db.TagWithAssets, sqidManager \*irminsqids.SQIDManager, d \*db.Database\) \(\*irminmodels.TagWithAssets, error\)](<#FormatTagWithAssetsResponse>)
 - [func FormatTagsResponse\(tags \[\]db.Tag, sqidManager \*irminsqids.SQIDManager\) \(\[\]irminmodels.Tag, error\)](<#FormatTagsResponse>)
@@ -6004,15 +6117,6 @@ func FormatConnectorResponse(connector *db.Connector, sqidManager *irminsqids.SQ
 ```
 
 
-
-<a name="FormatEditorItemsResponse"></a>
-## func FormatEditorItemsResponse
-
-```go
-func FormatEditorItemsResponse(items []types.Object, workspace *db.Workspace) ([]irminmodels.EditorItem, error)
-```
-
-FormatEditorItemsResponse formats a list of S3 objects into a nested tree of EditorItem objects.
 
 <a name="FormatIndexResponse"></a>
 ## func FormatIndexResponse
@@ -6109,6 +6213,15 @@ FormatScheduleTriggerResponse formats a schedule trigger for the response.
 
 ```go
 func FormatStoredQueryResponse(query *db.StoredQuery, sqidManager *irminsqids.SQIDManager) (*irminmodels.StoredQuery, error)
+```
+
+
+
+<a name="FormatStoredScriptResponse"></a>
+## func FormatStoredScriptResponse
+
+```go
+func FormatStoredScriptResponse(script *db.StoredScript, sqidManager *irminsqids.SQIDManager) (*irminmodels.StoredScript, error)
 ```
 
 
@@ -8991,7 +9104,6 @@ import "irmin-api/middlewares"
   - [func \(api \*APIMiddlewares\) ConnectionPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.ConnectionPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) ConnectorMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ConnectorMiddleware>)
   - [func \(api \*APIMiddlewares\) DocumentationPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.DocumentationPermissionMiddleware>)
-  - [func \(api \*APIMiddlewares\) EditorScriptPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.EditorScriptPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) InviteMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.InviteMiddleware>)
   - [func \(api \*APIMiddlewares\) InvitePermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.InvitePermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) LocaleMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.LocaleMiddleware>)
@@ -9008,6 +9120,8 @@ import "irmin-api/middlewares"
   - [func \(api \*APIMiddlewares\) RepositoryPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.RepositoryPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) RepositoryTagMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.RepositoryTagMiddleware>)
   - [func \(api \*APIMiddlewares\) RepositoryTagPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.RepositoryTagPermissionMiddleware>)
+  - [func \(api \*APIMiddlewares\) ScriptMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.ScriptMiddleware>)
+  - [func \(api \*APIMiddlewares\) ScriptPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.ScriptPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) UserMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.UserMiddleware>)
   - [func \(api \*APIMiddlewares\) UserPermissionMiddleware\(action db.PolicyAction\) fiber.Handler](<#APIMiddlewares.UserPermissionMiddleware>)
   - [func \(api \*APIMiddlewares\) WorkflowMiddleware\(c fiber.Ctx\) error](<#APIMiddlewares.WorkflowMiddleware>)
@@ -9100,15 +9214,6 @@ func (api *APIMiddlewares) DocumentationPermissionMiddleware(action db.PolicyAct
 ```
 
 DocumentationPermissionMiddleware creates a middleware for documentation\-level permissions.
-
-<a name="APIMiddlewares.EditorScriptPermissionMiddleware"></a>
-### func \(\*APIMiddlewares\) EditorScriptPermissionMiddleware
-
-```go
-func (api *APIMiddlewares) EditorScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler
-```
-
-EditorScriptPermissionMiddleware creates a middleware for editor script\-level permissions.
 
 <a name="APIMiddlewares.InviteMiddleware"></a>
 ### func \(\*APIMiddlewares\) InviteMiddleware
@@ -9253,6 +9358,24 @@ func (api *APIMiddlewares) RepositoryTagPermissionMiddleware(action db.PolicyAct
 ```
 
 RepositoryTagPermissionMiddleware creates a middleware for tag\-level permissions.
+
+<a name="APIMiddlewares.ScriptMiddleware"></a>
+### func \(\*APIMiddlewares\) ScriptMiddleware
+
+```go
+func (api *APIMiddlewares) ScriptMiddleware(c fiber.Ctx) error
+```
+
+ScriptMiddleware verifies that the user has access to the stored script they are trying to access.
+
+<a name="APIMiddlewares.ScriptPermissionMiddleware"></a>
+### func \(\*APIMiddlewares\) ScriptPermissionMiddleware
+
+```go
+func (api *APIMiddlewares) ScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler
+```
+
+ScriptPermissionMiddleware creates a middleware for script\-level permissions.
 
 <a name="APIMiddlewares.UserMiddleware"></a>
 ### func \(\*APIMiddlewares\) UserMiddleware
@@ -9831,7 +9954,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) CancelWorkflowRun\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, runSqid string\) \(\*db.WorkflowRun, error\)](<#APIServices.CancelWorkflowRun>)
   - [func \(api \*APIServices\) CheckPolicyPermission\(c context.Context, user \*db.User, workspace \*db.Workspace, resource db.PolicyResource, resourceID string, action db.PolicyAction\) \(bool, error\)](<#APIServices.CheckPolicyPermission>)
   - [func \(api \*APIServices\) CompareRepositoryRefs\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, baseRef, compareRef string\) \(\*irminmodels.Diff, error\)](<#APIServices.CompareRepositoryRefs>)
-  - [func \(api \*APIServices\) CopyEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, sourcePath string, destinationPath string\) \(\*irminmodels.EditorItem, error\)](<#APIServices.CopyEditorItem>)
   - [func \(api \*APIServices\) CopyRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, req irmincore.MoveObjectRequest\) \(\*db.RepositoryObject, error\)](<#APIServices.CopyRepositoryObject>)
   - [func \(api \*APIServices\) CreateAPIToken\(c context.Context, user \*db.User, req irmincore.CreateCredentialRequest\) \(\*db.APIToken, error\)](<#APIServices.CreateAPIToken>)
   - [func \(api \*APIServices\) CreateConnection\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.CreateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.CreateConnection>)
@@ -9842,6 +9964,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) CreateRepositoryBranch\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.CreateBranchRequest\) \(\*irminmodels.Branch, error\)](<#APIServices.CreateRepositoryBranch>)
   - [func \(api \*APIServices\) CreateRepositoryCommit\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.CreateCommitRequest\) \(\*irminmodels.Commit, error\)](<#APIServices.CreateRepositoryCommit>)
   - [func \(api \*APIServices\) CreateRepositoryTag\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.CreateRepositoryTagRequest\) \(\*irminmodels.GitTag, error\)](<#APIServices.CreateRepositoryTag>)
+  - [func \(api \*APIServices\) CreateScript\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.CreateScriptRequest\) \(\*db.StoredScript, error\)](<#APIServices.CreateScript>)
   - [func \(api \*APIServices\) CreateWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.WorkflowRequest\) \(\*db.Workflow, error\)](<#APIServices.CreateWorkflow>)
   - [func \(api \*APIServices\) CreateWorkflowRun\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.WorkflowRun, error\)](<#APIServices.CreateWorkflowRun>)
   - [func \(api \*APIServices\) CreateWorkspace\(ctx context.Context, user \*db.User, req irmincore.CreateWorkspaceRequest\) \(\*db.Workspace, error\)](<#APIServices.CreateWorkspace>)
@@ -9850,7 +9973,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) DeleteAPIToken\(c context.Context, user \*db.User, tokenID uint\) error](<#APIServices.DeleteAPIToken>)
   - [func \(api \*APIServices\) DeleteConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection\) error](<#APIServices.DeleteConnection>)
   - [func \(api \*APIServices\) DeleteConnector\(c context.Context, connector \*db.Connector, isSystem bool\) error](<#APIServices.DeleteConnector>)
-  - [func \(api \*APIServices\) DeleteEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) error](<#APIServices.DeleteEditorItem>)
   - [func \(api \*APIServices\) DeleteInvite\(c context.Context, user \*db.User, invite \*db.Invite\) error](<#APIServices.DeleteInvite>)
   - [func \(api \*APIServices\) DeletePolicy\(c context.Context, user \*db.User, workspace \*db.Workspace, policy \*db.Policy\) error](<#APIServices.DeletePolicy>)
   - [func \(api \*APIServices\) DeleteQuery\(c context.Context, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery\) error](<#APIServices.DeleteQuery>)
@@ -9858,17 +9980,17 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) DeleteRepositoryBranch\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch\) error](<#APIServices.DeleteRepositoryBranch>)
   - [func \(api \*APIServices\) DeleteRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) error](<#APIServices.DeleteRepositoryObject>)
   - [func \(api \*APIServices\) DeleteRepositoryTag\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, tag \*irminmodels.GitTag\) error](<#APIServices.DeleteRepositoryTag>)
+  - [func \(api \*APIServices\) DeleteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript\) error](<#APIServices.DeleteScript>)
   - [func \(api \*APIServices\) DeleteWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) error](<#APIServices.DeleteWorkflow>)
   - [func \(api \*APIServices\) DeleteWorkspace\(ctx context.Context, user \*db.User, workspace \*db.Workspace\) error](<#APIServices.DeleteWorkspace>)
   - [func \(api \*APIServices\) DeleteWorkspaceTag\(c context.Context, user \*db.User, workspace \*db.Workspace, tagWithAssets \*db.TagWithAssets\) error](<#APIServices.DeleteWorkspaceTag>)
-  - [func \(api \*APIServices\) ExecuteEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string, inputData \[\]irminmodels.ActionInputData, locale string\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteEditorItem>)
   - [func \(api \*APIServices\) ExecuteSQL\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.ExecuteSQLRequest\) \(\*irminmodels.QueryResult, error\)](<#APIServices.ExecuteSQL>)
+  - [func \(api \*APIServices\) ExecuteScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.ExecuteScriptRequest\) \(\*irminmodels.ScriptResult, error\)](<#APIServices.ExecuteScript>)
   - [func \(api \*APIServices\) GenerateSchemaFromUploadedFile\(ctx context.Context, locale string, filename string, fileReader io.Reader\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GenerateSchemaFromUploadedFile>)
   - [func \(api \*APIServices\) GetConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connectionSqid string\) \(\*db.Connection, error\)](<#APIServices.GetConnection>)
   - [func \(api \*APIServices\) GetConnectionSchema\(ctx context.Context, locale string, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, operationMethod string, path string\) \(\*irminmodels.ObjectSchema, error\)](<#APIServices.GetConnectionSchema>)
   - [func \(api \*APIServices\) GetConnector\(c context.Context, connectorID uint\) \(\*db.Connector, error\)](<#APIServices.GetConnector>)
   - [func \(api \*APIServices\) GetConnectorConfigurationFields\(c context.Context, locale string, connector \*db.Connector, configurationType string, req irmincore.ConnectorConfigurationRequest\) \(map\[string\]irminmodels.DynamicField, error\)](<#APIServices.GetConnectorConfigurationFields>)
-  - [func \(api \*APIServices\) GetEditorItemContent\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) \(string, error\)](<#APIServices.GetEditorItemContent>)
   - [func \(api \*APIServices\) GetInviteByID\(c context.Context, user \*db.User, workspace \*db.Workspace, inviteSqid string\) \(\*db.Invite, error\)](<#APIServices.GetInviteByID>)
   - [func \(api \*APIServices\) GetLogEventByID\(c context.Context, user \*db.User, workspace \*db.Workspace, logEventSqid string\) \(\*db.LogEvent, error\)](<#APIServices.GetLogEventByID>)
   - [func \(api \*APIServices\) GetPoliciesForUser\(c context.Context, workspace \*db.Workspace, user \*db.User\) \(\[\]db.Policy, \*db.WorkspaceUser, bool, error\)](<#APIServices.GetPoliciesForUser>)
@@ -9887,6 +10009,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) GetRepositoryObjectStructuredContent\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject\) \(map\[string\]\[\]map\[string\]any, error\)](<#APIServices.GetRepositoryObjectStructuredContent>)
   - [func \(api \*APIServices\) GetRepositoryTag\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, tagName string\) \(\*irminmodels.GitTag, error\)](<#APIServices.GetRepositoryTag>)
   - [func \(api \*APIServices\) GetRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch\) \(\*irminmodels.Diff, error\)](<#APIServices.GetRepositoryUncommittedChanges>)
+  - [func \(api \*APIServices\) GetScript\(c context.Context, user \*db.User, workspace \*db.Workspace, scriptSqid string\) \(\*db.StoredScript, error\)](<#APIServices.GetScript>)
   - [func \(api \*APIServices\) GetWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowSqid string\) \(\*db.Workflow, error\)](<#APIServices.GetWorkflow>)
   - [func \(api \*APIServices\) GetWorkflowRun\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, runSqid string\) \(\*db.WorkflowRun, error\)](<#APIServices.GetWorkflowRun>)
   - [func \(api \*APIServices\) GetWorkspace\(ctx context.Context, user \*db.User, workspaceSlug string\) \(\*db.Workspace, error\)](<#APIServices.GetWorkspace>)
@@ -9900,7 +10023,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListAllWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListAllWorkflowRuns>)
   - [func \(api \*APIServices\) ListConnections\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Connection, error\)](<#APIServices.ListConnections>)
   - [func \(api \*APIServices\) ListConnectors\(c context.Context\) \(\[\]db.Connector, error\)](<#APIServices.ListConnectors>)
-  - [func \(api \*APIServices\) ListEditorItems\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string\) \(\[\]irminmodels.EditorItem, error\)](<#APIServices.ListEditorItems>)
   - [func \(api \*APIServices\) ListInvitesForUser\(c context.Context, user \*db.User\) \(\[\]db.Invite, error\)](<#APIServices.ListInvitesForUser>)
   - [func \(api \*APIServices\) ListInvitesToWorkspace\(c context.Context, workspace \*db.Workspace, user \*db.User\) \(\[\]db.Invite, error\)](<#APIServices.ListInvitesToWorkspace>)
   - [func \(api \*APIServices\) ListLogEventsForWorkspace\(c context.Context, workspace \*db.Workspace, user \*db.User, searchTerm string, limit, offset int\) \(\[\]db.LogEvent, int64, error\)](<#APIServices.ListLogEventsForWorkspace>)
@@ -9913,12 +10035,12 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) ListWorkflowRuns\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, perPage, offset int\) \(\[\]db.WorkflowRun, int, error\)](<#APIServices.ListWorkflowRuns>)
   - [func \(api \*APIServices\) ListWorkflows\(c context.Context, user \*db.User, workspace \*db.Workspace, workflowType string\) \(\[\]db.Workflow, error\)](<#APIServices.ListWorkflows>)
   - [func \(api \*APIServices\) ListWorkspaceQueries\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredQuery, error\)](<#APIServices.ListWorkspaceQueries>)
+  - [func \(api \*APIServices\) ListWorkspaceScripts\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.StoredScript, error\)](<#APIServices.ListWorkspaceScripts>)
   - [func \(api \*APIServices\) ListWorkspaceTags\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.Tag, error\)](<#APIServices.ListWorkspaceTags>)
   - [func \(api \*APIServices\) ListWorkspaceUsers\(c context.Context, user \*db.User, workspace \*db.Workspace\) \(\[\]db.WorkspaceUser, error\)](<#APIServices.ListWorkspaceUsers>)
   - [func \(api \*APIServices\) ListWorkspaces\(user \*db.User\) \(\[\]db.Workspace, error\)](<#APIServices.ListWorkspaces>)
   - [func \(api \*APIServices\) MaskConnectionSecrets\(c context.Context, connections ...\*db.Connection\)](<#APIServices.MaskConnectionSecrets>)
   - [func \(api \*APIServices\) MergeRepositoryRefs\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.MergeRefsRequest\) \(\*irminmodels.Commit, error\)](<#APIServices.MergeRepositoryRefs>)
-  - [func \(api \*APIServices\) MoveEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, sourcePath string, destinationPath string\) \(\*irminmodels.EditorItem, error\)](<#APIServices.MoveEditorItem>)
   - [func \(api \*APIServices\) MoveRepositoryObject\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, object \*db.RepositoryObject, req irmincore.MoveObjectRequest\) \(\*db.RepositoryObject, error\)](<#APIServices.MoveRepositoryObject>)
   - [func \(api \*APIServices\) NormalizeEntityType\(entityType string\) irminmodels.TagEntityType](<#APIServices.NormalizeEntityType>)
   - [func \(api \*APIServices\) PauseWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.PauseWorkflow>)
@@ -9927,7 +10049,6 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) RemoveUserFromWorkspace\(c context.Context, currentUser \*db.User, workspace \*db.Workspace, workspaceMember \*db.WorkspaceUser\) error](<#APIServices.RemoveUserFromWorkspace>)
   - [func \(api \*APIServices\) ResendInvite\(c context.Context, locale string, user \*db.User, invite \*db.Invite\) error](<#APIServices.ResendInvite>)
   - [func \(api \*APIServices\) RevertRepositoryUncommittedChanges\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.RevertUncommittedChangesRequest\) error](<#APIServices.RevertRepositoryUncommittedChanges>)
-  - [func \(api \*APIServices\) SaveEditorItem\(c context.Context, user \*db.User, workspace \*db.Workspace, itemPath string, req irmincore.CreateEditorItemRequest\) \(\*irminmodels.EditorItem, error\)](<#APIServices.SaveEditorItem>)
   - [func \(api \*APIServices\) SearchWorkspace\(c context.Context, user \*db.User, workspace \*db.Workspace, filters db.SearchFilters\) \(\*irminmodels.SearchResponse, error\)](<#APIServices.SearchWorkspace>)
   - [func \(api \*APIServices\) SendInvite\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, req irmincore.SendInviteRequest\) \(\*InviteTransactionResult, error\)](<#APIServices.SendInvite>)
   - [func \(api \*APIServices\) StartWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow\) \(\*db.Workflow, error\)](<#APIServices.StartWorkflow>)
@@ -9936,6 +10057,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) TransferConnectionOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.TransferConnectionOwnershipRequest\) \(\*db.Connection, error\)](<#APIServices.TransferConnectionOwnership>)
   - [func \(api \*APIServices\) TransferQueryOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery, req irmincore.TransferQueryOwnershipRequest\) \(\*db.StoredQuery, error\)](<#APIServices.TransferQueryOwnership>)
   - [func \(api \*APIServices\) TransferRepositoryOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.TransferRepositoryOwnershipRequest\) \(\*db.Repository, error\)](<#APIServices.TransferRepositoryOwnership>)
+  - [func \(api \*APIServices\) TransferScriptOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.TransferScriptOwnershipRequest\) \(\*db.StoredScript, error\)](<#APIServices.TransferScriptOwnership>)
   - [func \(api \*APIServices\) TransferWorkflowOwnership\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, req irmincore.TransferWorkflowOwnershipRequest\) \(\*db.Workflow, error\)](<#APIServices.TransferWorkflowOwnership>)
   - [func \(api \*APIServices\) TransferWorkspaceOwnership\(ctx context.Context, user \*db.User, workspace \*db.Workspace, req irmincore.TransferOwnershipRequest\) \(\*db.Workspace, error\)](<#APIServices.TransferWorkspaceOwnership>)
   - [func \(api \*APIServices\) UpdateConnection\(c context.Context, user \*db.User, workspace \*db.Workspace, connection \*db.Connection, req irmincore.UpdateConnectionRequest\) \(\*db.Connection, error\)](<#APIServices.UpdateConnection>)
@@ -9947,6 +10069,7 @@ import "irmin-api/services"
   - [func \(api \*APIServices\) UpdateQuery\(c context.Context, user \*db.User, workspace \*db.Workspace, query \*db.StoredQuery, req irmincore.UpdateQueryRequest\) \(\*db.StoredQuery, error\)](<#APIServices.UpdateQuery>)
   - [func \(api \*APIServices\) UpdateRepository\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, req irmincore.UpdateRepositoryRequest\) \(\*db.Repository, error\)](<#APIServices.UpdateRepository>)
   - [func \(api \*APIServices\) UpdateRepositoryBranch\(c context.Context, locale string, user \*db.User, workspace \*db.Workspace, repository \*db.Repository, branch \*irminmodels.Branch, req irmincore.UpdateBranchRequest\) \(\*irminmodels.Branch, error\)](<#APIServices.UpdateRepositoryBranch>)
+  - [func \(api \*APIServices\) UpdateScript\(c context.Context, user \*db.User, workspace \*db.Workspace, script \*db.StoredScript, req irmincore.UpdateScriptRequest\) \(\*db.StoredScript, error\)](<#APIServices.UpdateScript>)
   - [func \(api \*APIServices\) UpdateWorkflow\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, req irmincore.UpdateWorkflowRequest\) \(\*db.Workflow, error\)](<#APIServices.UpdateWorkflow>)
   - [func \(api \*APIServices\) UpdateWorkflowSchedule\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, schedule \*db.Schedule\) \(\*db.Workflow, error\)](<#APIServices.UpdateWorkflowSchedule>)
   - [func \(api \*APIServices\) UpdateWorkflowable\(c context.Context, user \*db.User, workspace \*db.Workspace, workflow \*db.Workflow, workflowableReq irminmodels.Workflowable\) \(\*db.Workflow, error\)](<#APIServices.UpdateWorkflowable>)
@@ -10123,15 +10246,6 @@ func (api *APIServices) CompareRepositoryRefs(c context.Context, locale string, 
 
 
 
-<a name="APIServices.CopyEditorItem"></a>
-### func \(\*APIServices\) CopyEditorItem
-
-```go
-func (api *APIServices) CopyEditorItem(c context.Context, user *db.User, workspace *db.Workspace, sourcePath string, destinationPath string) (*irminmodels.EditorItem, error)
-```
-
-
-
 <a name="APIServices.CopyRepositoryObject"></a>
 ### func \(\*APIServices\) CopyRepositoryObject
 
@@ -10222,6 +10336,15 @@ func (api *APIServices) CreateRepositoryTag(c context.Context, locale string, us
 
 
 
+<a name="APIServices.CreateScript"></a>
+### func \(\*APIServices\) CreateScript
+
+```go
+func (api *APIServices) CreateScript(c context.Context, user *db.User, workspace *db.Workspace, req irmincore.CreateScriptRequest) (*db.StoredScript, error)
+```
+
+
+
 <a name="APIServices.CreateWorkflow"></a>
 ### func \(\*APIServices\) CreateWorkflow
 
@@ -10294,15 +10417,6 @@ func (api *APIServices) DeleteConnector(c context.Context, connector *db.Connect
 
 
 
-<a name="APIServices.DeleteEditorItem"></a>
-### func \(\*APIServices\) DeleteEditorItem
-
-```go
-func (api *APIServices) DeleteEditorItem(c context.Context, user *db.User, workspace *db.Workspace, itemPath string) error
-```
-
-
-
 <a name="APIServices.DeleteInvite"></a>
 ### func \(\*APIServices\) DeleteInvite
 
@@ -10366,6 +10480,15 @@ func (api *APIServices) DeleteRepositoryTag(c context.Context, locale string, us
 
 
 
+<a name="APIServices.DeleteScript"></a>
+### func \(\*APIServices\) DeleteScript
+
+```go
+func (api *APIServices) DeleteScript(c context.Context, user *db.User, workspace *db.Workspace, script *db.StoredScript) error
+```
+
+DeleteScript deletes a script from a workspace.
+
 <a name="APIServices.DeleteWorkflow"></a>
 ### func \(\*APIServices\) DeleteWorkflow
 
@@ -10393,20 +10516,20 @@ func (api *APIServices) DeleteWorkspaceTag(c context.Context, user *db.User, wor
 
 
 
-<a name="APIServices.ExecuteEditorItem"></a>
-### func \(\*APIServices\) ExecuteEditorItem
-
-```go
-func (api *APIServices) ExecuteEditorItem(c context.Context, user *db.User, workspace *db.Workspace, itemPath string, inputData []irminmodels.ActionInputData, locale string) (*irminmodels.ScriptResult, error)
-```
-
-
-
 <a name="APIServices.ExecuteSQL"></a>
 ### func \(\*APIServices\) ExecuteSQL
 
 ```go
 func (api *APIServices) ExecuteSQL(c context.Context, locale string, user *db.User, workspace *db.Workspace, req irmincore.ExecuteSQLRequest) (*irminmodels.QueryResult, error)
+```
+
+
+
+<a name="APIServices.ExecuteScript"></a>
+### func \(\*APIServices\) ExecuteScript
+
+```go
+func (api *APIServices) ExecuteScript(c context.Context, user *db.User, workspace *db.Workspace, script *db.StoredScript, req irmincore.ExecuteScriptRequest) (*irminmodels.ScriptResult, error)
 ```
 
 
@@ -10452,15 +10575,6 @@ func (api *APIServices) GetConnector(c context.Context, connectorID uint) (*db.C
 
 ```go
 func (api *APIServices) GetConnectorConfigurationFields(c context.Context, locale string, connector *db.Connector, configurationType string, req irmincore.ConnectorConfigurationRequest) (map[string]irminmodels.DynamicField, error)
-```
-
-
-
-<a name="APIServices.GetEditorItemContent"></a>
-### func \(\*APIServices\) GetEditorItemContent
-
-```go
-func (api *APIServices) GetEditorItemContent(c context.Context, user *db.User, workspace *db.Workspace, itemPath string) (string, error)
 ```
 
 
@@ -10627,6 +10741,15 @@ func (api *APIServices) GetRepositoryUncommittedChanges(c context.Context, local
 
 
 
+<a name="APIServices.GetScript"></a>
+### func \(\*APIServices\) GetScript
+
+```go
+func (api *APIServices) GetScript(c context.Context, user *db.User, workspace *db.Workspace, scriptSqid string) (*db.StoredScript, error)
+```
+
+
+
 <a name="APIServices.GetWorkflow"></a>
 ### func \(\*APIServices\) GetWorkflow
 
@@ -10744,15 +10867,6 @@ func (api *APIServices) ListConnectors(c context.Context) ([]db.Connector, error
 
 
 
-<a name="APIServices.ListEditorItems"></a>
-### func \(\*APIServices\) ListEditorItems
-
-```go
-func (api *APIServices) ListEditorItems(c context.Context, user *db.User, workspace *db.Workspace, itemPath string) ([]irminmodels.EditorItem, error)
-```
-
-
-
 <a name="APIServices.ListInvitesForUser"></a>
 ### func \(\*APIServices\) ListInvitesForUser
 
@@ -10861,6 +10975,15 @@ func (api *APIServices) ListWorkspaceQueries(c context.Context, user *db.User, w
 
 
 
+<a name="APIServices.ListWorkspaceScripts"></a>
+### func \(\*APIServices\) ListWorkspaceScripts
+
+```go
+func (api *APIServices) ListWorkspaceScripts(c context.Context, user *db.User, workspace *db.Workspace) ([]db.StoredScript, error)
+```
+
+
+
 <a name="APIServices.ListWorkspaceTags"></a>
 ### func \(\*APIServices\) ListWorkspaceTags
 
@@ -10902,15 +11025,6 @@ MaskConnectionSecrets masks secret fields in connection details and settings bas
 
 ```go
 func (api *APIServices) MergeRepositoryRefs(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, req irmincore.MergeRefsRequest) (*irminmodels.Commit, error)
-```
-
-
-
-<a name="APIServices.MoveEditorItem"></a>
-### func \(\*APIServices\) MoveEditorItem
-
-```go
-func (api *APIServices) MoveEditorItem(c context.Context, user *db.User, workspace *db.Workspace, sourcePath string, destinationPath string) (*irminmodels.EditorItem, error)
 ```
 
 
@@ -10987,15 +11101,6 @@ func (api *APIServices) RevertRepositoryUncommittedChanges(c context.Context, lo
 
 
 
-<a name="APIServices.SaveEditorItem"></a>
-### func \(\*APIServices\) SaveEditorItem
-
-```go
-func (api *APIServices) SaveEditorItem(c context.Context, user *db.User, workspace *db.Workspace, itemPath string, req irmincore.CreateEditorItemRequest) (*irminmodels.EditorItem, error)
-```
-
-
-
 <a name="APIServices.SearchWorkspace"></a>
 ### func \(\*APIServices\) SearchWorkspace
 
@@ -11064,6 +11169,15 @@ func (api *APIServices) TransferQueryOwnership(c context.Context, user *db.User,
 
 ```go
 func (api *APIServices) TransferRepositoryOwnership(c context.Context, user *db.User, workspace *db.Workspace, repository *db.Repository, req irmincore.TransferRepositoryOwnershipRequest) (*db.Repository, error)
+```
+
+
+
+<a name="APIServices.TransferScriptOwnership"></a>
+### func \(\*APIServices\) TransferScriptOwnership
+
+```go
+func (api *APIServices) TransferScriptOwnership(c context.Context, user *db.User, workspace *db.Workspace, script *db.StoredScript, req irmincore.TransferScriptOwnershipRequest) (*db.StoredScript, error)
 ```
 
 
@@ -11163,6 +11277,15 @@ func (api *APIServices) UpdateRepository(c context.Context, locale string, user 
 
 ```go
 func (api *APIServices) UpdateRepositoryBranch(c context.Context, locale string, user *db.User, workspace *db.Workspace, repository *db.Repository, branch *irminmodels.Branch, req irmincore.UpdateBranchRequest) (*irminmodels.Branch, error)
+```
+
+
+
+<a name="APIServices.UpdateScript"></a>
+### func \(\*APIServices\) UpdateScript
+
+```go
+func (api *APIServices) UpdateScript(c context.Context, user *db.User, workspace *db.Workspace, script *db.StoredScript, req irmincore.UpdateScriptRequest) (*db.StoredScript, error)
 ```
 
 
@@ -11791,6 +11914,7 @@ type CoreAPIEnv struct {
     S3AccessKeyID                string // Access key ID for the S3-compatible object store
     S3AccessSecret               string // Secret access key for the S3-compatible object store
     SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
+    ComputeSandboxDir            string // Base directory for compute sandbox script execution
     TestConnectorBaseURL         string // Base URL of the connector to test with
     TestConnectorToken           string // Operation token for the connector to test with
     TestConnectorPath            string // Path to the test file in the connector

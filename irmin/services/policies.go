@@ -858,7 +858,8 @@ func (api *APIServices) getUserApplicablePolicies(
 		// Add any missing resource/action combinations with allow effect through the owner role
 		for _, resource := range []db.PolicyResource{
 			db.PolicyResourceWorkspace,
-			db.PolicyResourceEditorScript,
+			db.PolicyResourceScript,
+			db.PolicyResourceQuery,
 			db.PolicyResourceWorkflow,
 			db.PolicyResourceConnection,
 			db.PolicyResourceRepository,

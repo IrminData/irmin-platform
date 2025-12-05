@@ -8,6 +8,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/permissions"
 	"strconv"
+	"strings"
 	"time"
 
 	irmincore "github.com/IrminData/irmin-sdk-go/api"
@@ -15,21 +16,27 @@ import (
 	"gorm.io/gorm"
 )
 
-func (api *APIServices) GetQuery(
+// getStoredEntity is a generic helper function to get a stored entity (query or script) by SQID.
+func getStoredEntity[T any](
+	api *APIServices,
 	c context.Context,
 	user *db.User,
 	workspace *db.Workspace,
-	querySqid string,
-) (*db.StoredQuery, error) {
-	// Decode the query ID from the sqid
-	queryID, decodeSqidsErr := api.SQIDManager.Decode("queries", querySqid)
-	if decodeSqidsErr != nil {
-		api.Logger.ErrorContext(c, "Error decoding sqid", "error", decodeSqidsErr)
+	sqid string,
+	sqidType string,
+	resource db.PolicyResource,
+	entityName string,
+	getWorkspaceID func(*T) uint,
+) (*T, error) {
+	// Decode the entity ID from the sqid
+	entityID, decodeErr := api.SQIDManager.Decode(sqidType, sqid)
+	if decodeErr != nil {
+		api.Logger.ErrorContext(c, "Error decoding sqid", "error", decodeErr)
 		return nil, ErrNotFound
 	}
 
 	// Make sure this is allowed
-	isAllowed, err := api.PermissionService.IsAllowed(user, workspace, db.PolicyResourceQuery, nil, db.PolicyActionRead)
+	isAllowed, err := api.PermissionService.IsAllowed(user, workspace, resource, nil, db.PolicyActionRead)
 	if err != nil {
 		api.Logger.ErrorContext(c, "Error checking if user is allowed", "error", err)
 		return nil, err
@@ -37,31 +44,56 @@ func (api *APIServices) GetQuery(
 	if !isAllowed {
 		api.Logger.ErrorContext(
 			c,
-			"User is not allowed to get query",
+			fmt.Sprintf("User is not allowed to get %s", entityName),
 			"user",
 			user.Email,
 			"workspace",
 			workspace.Slug,
-			"query",
-			querySqid,
+			entityName,
+			sqid,
 		)
 		return nil, ErrAccessDenied
 	}
 
-	// Get the query by ID
-	var query db.StoredQuery
-	if findErr := api.DB.First(&query, queryID).Error; findErr != nil {
-		api.Logger.ErrorContext(c, "Error fetching query", "error", findErr)
+	// Get the entity by ID
+	var entity T
+	if findErr := api.DB.First(&entity, entityID).Error; findErr != nil {
+		api.Logger.ErrorContext(c, fmt.Sprintf("Error fetching %s", entityName), "error", findErr)
 		return nil, ErrNotFound
 	}
 
-	// Verify the query belongs to the workspace
-	if query.WorkspaceID != workspace.ID {
-		api.Logger.ErrorContext(c, "Query does not belong to workspace")
+	// Verify the entity belongs to the workspace
+	if getWorkspaceID(&entity) != workspace.ID {
+		var entityNameCapitalized string
+		if len(entityName) > 0 {
+			entityNameCapitalized = strings.ToUpper(entityName[:1]) + entityName[1:]
+		} else {
+			entityNameCapitalized = entityName
+		}
+		api.Logger.ErrorContext(c, fmt.Sprintf("%s does not belong to workspace", entityNameCapitalized))
 		return nil, ErrNotFound
 	}
 
-	return &query, nil
+	return &entity, nil
+}
+
+func (api *APIServices) GetQuery(
+	c context.Context,
+	user *db.User,
+	workspace *db.Workspace,
+	querySqid string,
+) (*db.StoredQuery, error) {
+	return getStoredEntity(
+		api,
+		c,
+		user,
+		workspace,
+		querySqid,
+		"queries",
+		db.PolicyResourceQuery,
+		"query",
+		func(q *db.StoredQuery) uint { return q.WorkspaceID },
+	)
 }
 
 func (api *APIServices) ListWorkspaceQueries(

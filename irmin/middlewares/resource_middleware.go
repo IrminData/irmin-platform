@@ -82,6 +82,14 @@ func resourceMiddleware[T any](
 			})
 		}
 		c.Locals(resourceType, r)
+	case *db.StoredScript:
+		if r.WorkspaceID != workspace.ID {
+			api.Logger.Error(resourceType + " does not belong to the workspace")
+			return utils.WriteResponse(c, fiber.StatusForbidden, irminmodels.IrminAPIResponse{
+				Errors: []string{api.lm.T(dict, "access_denied")},
+			})
+		}
+		c.Locals(resourceType, r)
 	case *db.TagWithAssets:
 		if r.Tag.WorkspaceID != workspace.ID {
 			api.Logger.Error(resourceType + " does not belong to the workspace")

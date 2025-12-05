@@ -46,8 +46,8 @@ type PolicyResource string
 const (
 	// PolicyResourceWorkspace represents a workspace resource.
 	PolicyResourceWorkspace PolicyResource = "workspace"
-	// PolicyResourceEditorScript represents script editor resource.
-	PolicyResourceEditorScript PolicyResource = "editor_script" // Editor scripts are not stored in the database, so policies are not script specific.
+	// PolicyResourceScript represents a script resource.
+	PolicyResourceScript PolicyResource = "script"
 	// PolicyResourceQuery represents a query resource.
 	PolicyResourceQuery PolicyResource = "query"
 	// PolicyResourceWorkflow represents a workflow resource.
@@ -156,7 +156,7 @@ func (d *Database) GenerateAllPossiblePolicies(
 	if resources == nil {
 		resources = []PolicyResource{
 			PolicyResourceWorkspace,
-			PolicyResourceEditorScript,
+			PolicyResourceScript,
 			PolicyResourceQuery,
 			PolicyResourceWorkflow,
 			PolicyResourceWorkflowRun,

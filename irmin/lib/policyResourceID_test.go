@@ -31,12 +31,12 @@ func TestDecodePolicyResourceID(t *testing.T) {
 		{"repository tag", db.PolicyResourceRepositoryTag, 1, false, false, "repositories"},
 		{"repository commit", db.PolicyResourceRepositoryCommit, 1, false, false, "repositories"},
 		{"repository object", db.PolicyResourceRepositoryObject, 1, false, false, "repositories"},
+		{"script", db.PolicyResourceScript, 1, false, false, "scripts"},
 		{"user", db.PolicyResourceUser, 1, false, false, "users"},
 		{"policy", db.PolicyResourcePolicy, 1, true, false, ""},
 		{"invite", db.PolicyResourceInvite, 1, true, false, ""},
 		{"audit log", db.PolicyResourceAuditLog, 1, true, false, ""},
 		{"invalid sqid", db.PolicyResourceWorkspace, 0, true, true, ""},
-		{"editor script", db.PolicyResourceEditorScript, 0, true, false, ""},
 		{"documentation", db.PolicyResourceDocumentation, 0, true, false, ""},
 		{"billing", db.PolicyResourceBilling, 0, true, false, ""},
 	}
@@ -93,7 +93,7 @@ func TestEncodePolicyResourceID(t *testing.T) {
 		{"policy", db.PolicyResourcePolicy, 1, true, ""},
 		{"invite", db.PolicyResourceInvite, 1, true, ""},
 		{"audit log", db.PolicyResourceAuditLog, 1, true, ""},
-		{"editor script", db.PolicyResourceEditorScript, 1, true, ""},
+		{"script", db.PolicyResourceScript, 1, true, ""},
 		{"documentation", db.PolicyResourceDocumentation, 1, true, ""},
 		{"billing", db.PolicyResourceBilling, 1, true, ""},
 	}

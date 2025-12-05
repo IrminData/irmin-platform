@@ -56,6 +56,7 @@ func (api *APIServices) filterTagWithAssetsBasedOnPermissions(
 		Tag: tagWithAssets.Tag,
 		Assets: db.TaggedAssets{
 			Queries:           make([]db.StoredQuery, 0),
+			Scripts:           make([]db.StoredScript, 0),
 			Repositories:      make([]db.Repository, 0),
 			Workflows:         make([]db.Workflow, 0),
 			Connections:       make([]db.Connection, 0),
@@ -63,6 +64,7 @@ func (api *APIServices) filterTagWithAssetsBasedOnPermissions(
 		},
 		Counts: map[string]int{
 			"queries":            0,
+			"scripts":            0,
 			"repositories":       0,
 			"workflows":          0,
 			"connections":        0,
@@ -73,6 +75,10 @@ func (api *APIServices) filterTagWithAssetsBasedOnPermissions(
 	// Run all filtering operations concurrently
 	queriesFuture := utils.Async(func() ([]db.StoredQuery, error) {
 		return api.filterTaggedQueries(c, tagWithAssets.Assets.Queries, user, workspace)
+	})
+
+	scriptsFuture := utils.Async(func() ([]db.StoredScript, error) {
+		return api.filterTaggedScripts(c, tagWithAssets.Assets.Scripts, user, workspace)
 	})
 
 	repositoriesFuture := utils.Async(func() ([]db.Repository, error) {
@@ -95,6 +101,11 @@ func (api *APIServices) filterTagWithAssetsBasedOnPermissions(
 	if queries, err := queriesFuture.Await(); err == nil {
 		newTagWithAssets.Assets.Queries = queries
 		newTagWithAssets.Counts["queries"] = len(queries)
+	}
+
+	if scripts, err := scriptsFuture.Await(); err == nil {
+		newTagWithAssets.Assets.Scripts = scripts
+		newTagWithAssets.Counts["scripts"] = len(scripts)
 	}
 
 	if repositories, err := repositoriesFuture.Await(); err == nil {
@@ -147,6 +158,35 @@ func (api *APIServices) filterTaggedQueries(
 	}
 
 	return filteredQueries, nil
+}
+
+// filterTaggedScripts filters scripts based on user permissions.
+func (api *APIServices) filterTaggedScripts(
+	c context.Context,
+	scripts []db.StoredScript,
+	user *db.User,
+	workspace *db.Workspace,
+) ([]db.StoredScript, error) {
+	filteredScripts := make([]db.StoredScript, 0)
+
+	for _, script := range scripts {
+		allowed, err := api.PermissionService.IsAllowed(
+			user,
+			workspace,
+			db.PolicyResourceScript,
+			&script.ID,
+			db.PolicyActionRead,
+		)
+		if err != nil {
+			api.Logger.ErrorContext(c, "Error checking permission for script", "error", err)
+			continue
+		}
+		if allowed {
+			filteredScripts = append(filteredScripts, script)
+		}
+	}
+
+	return filteredScripts, nil
 }
 
 // filterTaggedRepositories filters repositories based on user permissions.
@@ -588,6 +628,11 @@ func (api *APIServices) performEntityOperation(
 			return api.DB.AddTagToQuery(entityID, tagID)
 		}
 		return api.DB.RemoveTagFromQuery(entityID, tagID)
+	case irminmodels.TagEntityTypeScript:
+		if operation == TagEntityOperationAdd {
+			return api.DB.AddTagToScript(entityID, tagID)
+		}
+		return api.DB.RemoveTagFromScript(entityID, tagID)
 	case irminmodels.TagEntityTypeWorkflow:
 		if operation == TagEntityOperationAdd {
 			return api.DB.AddTagToWorkflow(entityID, tagID)

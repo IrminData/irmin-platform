@@ -111,16 +111,12 @@ func (o *Orchestrator) handleActionStage(
 		computeInputFiles = previousStageResults
 	}
 
-	// Trim leading slashes from the executable
-	executable := strings.TrimLeft(*stage.Executable, "/")
-
 	// Run the executable file in the compute sandbox
-	computeResult, err := o.computeSandbox.ExecuteEditorItem(
+	computeResult, err := o.computeSandbox.ExecutedStoredScript(
 		ctx,
 		computeInputFiles,
 		workflow.Owner,
-		executable,
-		workflow.Workspace.Slug,
+		stage.Script,
 	)
 	if err != nil {
 		if ctx.Err() != nil {

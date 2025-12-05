@@ -91,14 +91,21 @@ func formatExportWorkflowable(
 // formatActionWorkflowable formats an action workflowable response.
 func formatActionWorkflowable(
 	actionWorkflowable *db.ActionWorkflowable,
+	sqidManager *irminsqids.SQIDManager,
 ) *irminmodels.Workflowable {
 	if actionWorkflowable == nil {
 		return nil
 	}
 
+	// Construct the script sqid
+	scriptSqid, scriptSqidErr := sqidManager.Encode("scripts", uint64(actionWorkflowable.ScriptID))
+	if scriptSqidErr != nil {
+		return nil
+	}
+
 	response := &irminmodels.Workflowable{
-		Type:       irminmodels.WorkflowableTypeAction,
-		Executable: actionWorkflowable.Executable,
+		Type:     irminmodels.WorkflowableTypeAction,
+		ScriptID: scriptSqid,
 	}
 
 	if actionWorkflowable.ResultsRepository != nil {
@@ -134,12 +141,16 @@ func formatActionWorkflowable(
 func formatPipelineStage(stage db.PipelineStage, sqidManager *irminsqids.SQIDManager) irminmodels.PipelineStage {
 	switch stage.Type {
 	case db.PipelineStageTypeAction:
+		scriptSqid, scriptSqidErr := sqidManager.Encode("scripts", uint64(*stage.ScriptID))
+		if scriptSqidErr != nil {
+			return irminmodels.PipelineStage{}
+		}
 		return irminmodels.PipelineStage{
 			Description: stage.Description,
 			Write:       stage.Write,
 			Read:        stage.Read,
 			Type:        irminmodels.PipelineStageTypeAction,
-			Executable:  stage.Executable,
+			ScriptID:    &scriptSqid,
 		}
 	case db.PipelineStageTypeConnection:
 		connectionSqid, _ := sqidManager.Encode("connections", uint64(*stage.ConnectionID))
@@ -241,7 +252,7 @@ func FormatWorkflowableResponse(
 		if !ok {
 			return nil, errors.New("invalid type assertion for action workflowable")
 		}
-		return formatActionWorkflowable(actionWorkflowable), nil
+		return formatActionWorkflowable(actionWorkflowable, sqidManager), nil
 	case irminmodels.WorkflowableTypePipeline:
 		pipelineWorkflowable, ok := workflowable.(*db.PipelineWorkflowable)
 		if !ok {

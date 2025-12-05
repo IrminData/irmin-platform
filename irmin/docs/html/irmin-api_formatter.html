@@ -21,13 +21,6 @@ func FormatConnectorResponse(
 	connector *db.Connector,
 	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.Connector, error)
-func FormatEditorItemsResponse(
-	items []types.Object,
-	workspace *db.Workspace,
-) ([]irminmodels.EditorItem, error)
-    FormatEditorItemsResponse formats a list of S3 objects into a nested tree of
-    EditorItem objects.
-
 func FormatIndexResponse[T any, R any](
 	items []T,
 	formatter func(*T, *irminsqids.SQIDManager) (*R, error),
@@ -82,6 +75,10 @@ func FormatStoredQueryResponse(
 	query *db.StoredQuery,
 	sqidManager *irminsqids.SQIDManager,
 ) (*irminmodels.StoredQuery, error)
+func FormatStoredScriptResponse(
+	script *db.StoredScript,
+	sqidManager *irminsqids.SQIDManager,
+) (*irminmodels.StoredScript, error)
 func FormatTagResponse(tag *db.Tag, sqidManager *irminsqids.SQIDManager) (*irminmodels.Tag, error)
     FormatTagResponse creates a tag response object from a database tag object.
 

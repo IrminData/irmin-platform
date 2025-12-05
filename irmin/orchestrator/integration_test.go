@@ -44,10 +44,25 @@ func TestWorkflowExecution_EndToEnd(t *testing.T) {
 	}
 	defer database.Delete(repo)
 
+	// Create a test script
+	script := &db.StoredScript{
+		Name:        "test-script.go",
+		Description: "Test script for action workflow",
+		OwnerID:     user.ID,
+		WorkspaceID: workspace.ID,
+		Language:    "go",
+		Content:     "package main\n\nfunc main() {\n\tprintln(\"Hello, World!\")\n}",
+	}
+	err = database.Create(script).Error
+	if err != nil {
+		t.Fatalf("Failed to create test script: %v", err)
+	}
+	defer database.Delete(script)
+
 	// Create a test action workflowable
 	repoPath := "/test.py"
 	actionWorkflowable := &db.ActionWorkflowable{
-		Executable:            "python",
+		ScriptID:              script.ID,
 		ResultsRepositoryID:   &repo.ID,
 		ResultsRepositoryPath: &repoPath,
 	}

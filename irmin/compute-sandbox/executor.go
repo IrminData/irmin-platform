@@ -163,6 +163,9 @@ func (e *executor) buildCommand(
 	// Get resource limits prefix (only on Linux/production)
 	resourceLimits := e.buildResourceLimitsPrefix()
 
+	// Determine if we should use sudo (only on Linux/production)
+	useSudo := runtime.GOOS == "linux"
+
 	// umask 002 ensures files are group-readable/writable (664 for files, 775 for dirs)
 	// Use bash instead of sh because bash supports ulimit -u (process limit)
 	// SECURITY: Pass executable as $3 positional parameter to prevent command injection
@@ -171,53 +174,128 @@ func (e *executor) buildCommand(
 		interpreterPath = InterpreterPython
 		shellCmd := fmt.Sprintf("%sumask 002 && exec %s \"$3\" --api-key \"$1\" --api-url \"$2\"",
 			resourceLimits, interpreterPath)
-		cmd = exec.CommandContext(
-			ctx,
-			"sudo",
-			"-u",
-			"sandbox",
-			"bash",
-			"-c",
-			shellCmd,
-			"--",
-			apiKey,
-			apiURL,
-			executable,
-		)
+		if useSudo {
+			cmd = exec.CommandContext(
+				ctx,
+				"sudo",
+				"-u",
+				"sandbox",
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		} else {
+			// macOS development: run directly without sudo
+			cmd = exec.CommandContext(
+				ctx,
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		}
 	case RuntimeTypeGo:
 		interpreterPath = InterpreterGo
 		shellCmd := fmt.Sprintf("%sumask 002 && exec %s run \"$3\" --api-key \"$1\" --api-url \"$2\"",
 			resourceLimits, interpreterPath)
-		cmd = exec.CommandContext(
-			ctx,
-			"sudo",
-			"-u",
-			"sandbox",
-			"bash",
-			"-c",
-			shellCmd,
-			"--",
-			apiKey,
-			apiURL,
-			executable,
-		)
+		if useSudo {
+			cmd = exec.CommandContext(
+				ctx,
+				"sudo",
+				"-u",
+				"sandbox",
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		} else {
+			// macOS development: run directly without sudo
+			cmd = exec.CommandContext(
+				ctx,
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		}
 	case RuntimeTypeNode:
 		interpreterPath = InterpreterNode
 		shellCmd := fmt.Sprintf("%sumask 002 && exec %s \"$3\" --api-key \"$1\" --api-url \"$2\"",
 			resourceLimits, interpreterPath)
-		cmd = exec.CommandContext(
-			ctx,
-			"sudo",
-			"-u",
-			"sandbox",
-			"bash",
-			"-c",
-			shellCmd,
-			"--",
-			apiKey,
-			apiURL,
-			executable,
-		)
+		if useSudo {
+			cmd = exec.CommandContext(
+				ctx,
+				"sudo",
+				"-u",
+				"sandbox",
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		} else {
+			// macOS development: run directly without sudo
+			cmd = exec.CommandContext(
+				ctx,
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		}
+	case RuntimeTypeTypeScript:
+		interpreterPath = InterpreterTypeScript
+		// Use npx ts-node to execute TypeScript files
+		// SECURITY: Pass executable as $3 positional parameter to prevent command injection
+		shellCmd := fmt.Sprintf("%sumask 002 && exec %s ts-node \"$3\" --api-key \"$1\" --api-url \"$2\"",
+			resourceLimits, interpreterPath)
+		if useSudo {
+			cmd = exec.CommandContext(
+				ctx,
+				"sudo",
+				"-u",
+				"sandbox",
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		} else {
+			// macOS development: run directly without sudo
+			cmd = exec.CommandContext(
+				ctx,
+				"bash",
+				"-c",
+				shellCmd,
+				"--",
+				apiKey,
+				apiURL,
+				executable,
+			)
+		}
 	default:
 		return nil, "", fmt.Errorf("unsupported executable type: %s", executableType)
 	}

@@ -16,6 +16,7 @@ const (
 	RepositoryPriority       = 2
 	ConnectionPriority       = 3
 	QueryPriority            = 4
+	ScriptPriority           = 4
 	RepositoryObjectPriority = 5
 	UserPriority             = 6
 	InvitePriority           = 7
@@ -77,6 +78,7 @@ const (
 	SearchEntityTypeWorkflow         = "workflow"
 	SearchEntityTypeRepository       = "repository"
 	SearchEntityTypeConnection       = "connection"
+	SearchEntityTypeScript           = "script"
 	SearchEntityTypeQuery            = "query"
 	SearchEntityTypeRepositoryObject = "repository_object"
 
@@ -182,7 +184,8 @@ type APIToken struct {
 
 type ActionWorkflowable struct {
 	gorm.Model
-	Executable              string                    `json:"executable"`
+	ScriptID                uint                      `json:"script_id"                 gorm:"index"`
+	Script                  StoredScript              `json:"script"                    gorm:"foreignKey:ScriptID"`
 	ResultsRepository       *Repository               `json:"results_repository"        gorm:"foreignKey:ResultsRepositoryID"`
 	ResultsRepositoryID     *uint                     `json:"results_repository_id"     gorm:"index"`
 	ResultsRepositoryBranch *string                   `json:"results_repository_branch"`
@@ -308,6 +311,10 @@ func (d *Database) AddTagToRepositoryObject(repositoryObjectID, tagID uint) erro
     AddTagToRepositoryObject adds a tag to a repository object. If the tag is
     already attached, this operation is idempotent and returns no error.
 
+func (d *Database) AddTagToScript(scriptID, tagID uint) error
+    AddTagToScript adds a tag to a script. If the tag is already attached,
+    this operation is idempotent and returns no error.
+
 func (d *Database) AddTagToWorkflow(workflowID, tagID uint) error
     AddTagToWorkflow adds a tag to a workflow.
 
@@ -338,6 +345,8 @@ func (d *Database) DeleteInvite(id uint) error
 func (d *Database) DeleteObjects(tx *gorm.DB, path *string, repositoryID *uint, ref *string) error
 
 func (d *Database) DeleteStoredQuery(tx *gorm.DB, id uint) error
+
+func (d *Database) DeleteStoredScript(tx *gorm.DB, id uint) error
 
 func (d *Database) DeleteTag(tx *gorm.DB, id uint) error
     DeleteTag deletes a tag and removes all its associations.
@@ -505,9 +514,19 @@ func (d *Database) GetRoles() ([]Role, error)
 func (d *Database) GetScheduleByID(id uint) (*Schedule, error)
     GetScheduleByID retrieves a schedule record from the database by its ID.
 
+func (d *Database) GetScriptTags(scriptID uint) ([]Tag, error)
+    GetScriptTags retrieves all tags for a script.
+
+func (d *Database) GetScriptsByTag(tagID uint) ([]StoredScript, error)
+    GetScriptsByTag retrieves all scripts that have a specific tag.
+
 func (d *Database) GetStoredQueriesByWorkspaceID(workspaceID uint) ([]StoredQuery, error)
 
 func (d *Database) GetStoredQueryByID(id uint) (*StoredQuery, error)
+
+func (d *Database) GetStoredScriptByID(id uint) (*StoredScript, error)
+
+func (d *Database) GetStoredScriptsByWorkspaceID(workspaceID uint) ([]StoredScript, error)
 
 func (d *Database) GetTagByID(id uint) (*Tag, error)
     GetTagByID retrieves a tag by its ID.
@@ -604,6 +623,9 @@ func (d *Database) RemoveTagFromRepository(repositoryID, tagID uint) error
 
 func (d *Database) RemoveTagFromRepositoryObject(repositoryObjectID, tagID uint) error
     RemoveTagFromRepositoryObject removes a tag from a repository object.
+
+func (d *Database) RemoveTagFromScript(scriptID, tagID uint) error
+    RemoveTagFromScript removes a tag from a script.
 
 func (d *Database) RemoveTagFromWorkflow(workflowID, tagID uint) error
     RemoveTagFromWorkflow removes a tag from a workflow.
@@ -761,7 +783,8 @@ type PipelineStage struct {
 	PipelineID    *uint                 `json:"pipeline_id"    gorm:"index"`
 	Type          PipelineStageType     `json:"type"`
 
-	Executable *string `json:"executable,omitempty"`
+	ScriptID *uint         `json:"script_id,omitempty"`
+	Script   *StoredScript `json:"script,omitempty"    gorm:"foreignKey:ScriptID"`
 
 	Connection          *Connection `json:"connection,omitempty"            gorm:"foreignKey:ConnectionID"`
 	ConnectionID        *uint       `json:"connection_id,omitempty"`
@@ -881,8 +904,8 @@ type PolicyResource string
 const (
 	// PolicyResourceWorkspace represents a workspace resource.
 	PolicyResourceWorkspace PolicyResource = "workspace"
-	// PolicyResourceEditorScript represents script editor resource.
-	PolicyResourceEditorScript PolicyResource = "editor_script" // Editor scripts are not stored in the database, so policies are not script specific.
+	// PolicyResourceScript represents a script resource.
+	PolicyResourceScript PolicyResource = "script"
 	// PolicyResourceQuery represents a query resource.
 	PolicyResourceQuery PolicyResource = "query"
 	// PolicyResourceWorkflow represents a workflow resource.
@@ -1031,6 +1054,13 @@ type Schedule struct {
 	MinInterval int `json:"min_interval,omitempty"`
 }
 
+type ScriptTag struct {
+	StoredScriptID uint         `json:"stored_script_id" gorm:"primaryKey"`
+	StoredScript   StoredScript `json:"stored_script"    gorm:"foreignKey:StoredScriptID"`
+	TagID          uint         `json:"tag_id"           gorm:"primaryKey"`
+	Tag            Tag          `json:"tag"              gorm:"foreignKey:TagID"`
+}
+
 type SearchCondition struct {
 	SQL    string
 	Args   []any
@@ -1174,6 +1204,19 @@ type StoredQuery struct {
 	Tags        []Tag     `json:"tags,omitempty" gorm:"many2many:query_tags;"`
 }
 
+type StoredScript struct {
+	gorm.Model
+	Name        string    `json:"name"           gorm:"not null"`
+	Description string    `json:"description"`
+	Content     string    `json:"content"`
+	Language    string    `json:"language"`
+	Owner       User      `json:"owner"          gorm:"foreignKey:OwnerID"`
+	OwnerID     uint      `json:"owner_id"`
+	Workspace   Workspace `json:"workspace"      gorm:"foreignKey:WorkspaceID"`
+	WorkspaceID uint      `json:"workspace_id"   gorm:"index"`
+	Tags        []Tag     `json:"tags,omitempty" gorm:"many2many:script_tags;"`
+}
+
 type Tag struct {
 	gorm.Model
 	Name        string    `json:"name"`
@@ -1193,6 +1236,7 @@ type TagWithAssets struct {
 
 type TaggedAssets struct {
 	Queries           []StoredQuery      `json:"queries"`
+	Scripts           []StoredScript     `json:"scripts"`
 	Repositories      []Repository       `json:"repositories"`
 	Workflows         []Workflow         `json:"workflows"`
 	Connections       []Connection       `json:"connections"`

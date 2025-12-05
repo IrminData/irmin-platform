@@ -1002,6 +1002,19 @@ func (api *APIServices) createActionWorkflowable(
 		}
 	}
 
+	// Find the script by ID (using transaction connection)
+	if config.ScriptID == "" {
+		return nil, errors.New("script ID is required for action workflowable")
+	}
+	scriptID, err := api.SQIDManager.Decode("scripts", config.ScriptID)
+	if err != nil {
+		return nil, err
+	}
+	script, err := txDB.GetStoredScriptByID(uint(scriptID))
+	if err != nil {
+		return nil, err
+	}
+
 	// Create workflowable
 	var workflowable db.ActionWorkflowable
 	if repository != nil {
@@ -1018,7 +1031,7 @@ func (api *APIServices) createActionWorkflowable(
 		path := strings.TrimPrefix(*config.ResultsRepositoryPath, "/")
 
 		workflowable = db.ActionWorkflowable{
-			Executable:              config.Executable,
+			ScriptID:                script.ID,
 			ResultsRepositoryID:     &repositoryID,
 			ResultsRepositoryBranch: &branch,
 			ResultsRepositoryPath:   &path,
@@ -1026,8 +1039,8 @@ func (api *APIServices) createActionWorkflowable(
 		}
 	} else {
 		workflowable = db.ActionWorkflowable{
-			Executable: config.Executable,
-			Inputs:     inputData,
+			ScriptID: script.ID,
+			Inputs:   inputData,
 		}
 	}
 
@@ -1085,7 +1098,7 @@ func (api *APIServices) processStageByType(
 ) error {
 	switch stage.Type {
 	case irminmodels.PipelineStageTypeAction:
-		return api.processActionStage(newStage, stage)
+		return api.processActionStage(txDB, newStage, stage)
 	case irminmodels.PipelineStageTypeConnection:
 		return api.processConnectionStage(txDB, newStage, stage)
 	case irminmodels.PipelineStageTypeRepository:
@@ -1096,12 +1109,26 @@ func (api *APIServices) processStageByType(
 }
 
 // processActionStage processes an action stage.
-func (api *APIServices) processActionStage(newStage *db.PipelineStage, stage irminmodels.PipelineStage) error {
+func (api *APIServices) processActionStage(
+	txDB *db.Database,
+	newStage *db.PipelineStage,
+	stage irminmodels.PipelineStage,
+) error {
 	newStage.Type = db.PipelineStageTypeAction
-	if stage.Executable != nil {
-		executable := strings.TrimPrefix(*stage.Executable, "/")
-		newStage.Executable = &executable
+	if stage.ScriptID == nil {
+		return errors.New("script ID is required")
 	}
+
+	scriptID, err := api.SQIDManager.Decode("scripts", *stage.ScriptID)
+	if err != nil {
+		return err
+	}
+	script, err := txDB.GetStoredScriptByID(uint(scriptID))
+	if err != nil {
+		return err
+	}
+
+	newStage.ScriptID = &script.ID
 	return nil
 }
 

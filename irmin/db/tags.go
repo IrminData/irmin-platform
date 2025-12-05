@@ -23,6 +23,13 @@ type QueryTag struct {
 	Tag           Tag         `json:"tag"             gorm:"foreignKey:TagID"`
 }
 
+type ScriptTag struct {
+	StoredScriptID uint         `json:"stored_script_id" gorm:"primaryKey"`
+	StoredScript   StoredScript `json:"stored_script"    gorm:"foreignKey:StoredScriptID"`
+	TagID          uint         `json:"tag_id"           gorm:"primaryKey"`
+	Tag            Tag          `json:"tag"              gorm:"foreignKey:TagID"`
+}
+
 type RepositoryTag struct {
 	RepositoryID uint       `json:"repository_id" gorm:"primaryKey"`
 	Repository   Repository `json:"repository"    gorm:"foreignKey:RepositoryID"`
@@ -54,6 +61,7 @@ type RepositoryObjectTag struct {
 // TaggedAssets represents all assets associated with a specific tag.
 type TaggedAssets struct {
 	Queries           []StoredQuery      `json:"queries"`
+	Scripts           []StoredScript     `json:"scripts"`
 	Repositories      []Repository       `json:"repositories"`
 	Workflows         []Workflow         `json:"workflows"`
 	Connections       []Connection       `json:"connections"`
@@ -70,6 +78,9 @@ type TagWithAssets struct {
 // DeleteTag deletes a tag and removes all its associations.
 func (d *Database) DeleteTag(tx *gorm.DB, id uint) error {
 	if err := tx.Where(&QueryTag{TagID: id}).Delete(&QueryTag{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Where(&ScriptTag{TagID: id}).Delete(&ScriptTag{}).Error; err != nil {
 		return err
 	}
 	if err := tx.Where(&RepositoryTag{TagID: id}).Delete(&RepositoryTag{}).Error; err != nil {
@@ -137,6 +148,50 @@ func (d *Database) GetQueriesByTag(tagID uint) ([]StoredQuery, error) {
 		return nil, err
 	}
 	return queries, nil
+}
+
+// Script tag methods
+
+// AddTagToScript adds a tag to a script.
+// If the tag is already attached, this operation is idempotent and returns no error.
+func (d *Database) AddTagToScript(scriptID, tagID uint) error {
+	scriptTag := ScriptTag{
+		StoredScriptID: scriptID,
+		TagID:          tagID,
+	}
+	// Use FirstOrCreate to make this idempotent - if the tag is already attached, just return success
+	return d.FirstOrCreate(&scriptTag, scriptTag).Error
+}
+
+// RemoveTagFromScript removes a tag from a script.
+func (d *Database) RemoveTagFromScript(scriptID, tagID uint) error {
+	return d.Where(&ScriptTag{StoredScriptID: scriptID, TagID: tagID}).Delete(&ScriptTag{}).Error
+}
+
+// GetScriptTags retrieves all tags for a script.
+func (d *Database) GetScriptTags(scriptID uint) ([]Tag, error) {
+	var tags []Tag
+	if err := d.Joins("JOIN script_tags ON script_tags.tag_id = tags.id").
+		Where("script_tags.stored_script_id = ?", scriptID).
+		Order("tags.name asc").
+		Find(&tags).Error; err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
+// GetScriptsByTag retrieves all scripts that have a specific tag.
+func (d *Database) GetScriptsByTag(tagID uint) ([]StoredScript, error) {
+	var scripts []StoredScript
+	if err := d.Joins("JOIN script_tags ON script_tags.stored_script_id = stored_scripts.id").
+		Where("script_tags.tag_id = ?", tagID).
+		Preload("Owner").
+		Preload("Workspace").
+		Order("stored_scripts.created_at desc").
+		Find(&scripts).Error; err != nil {
+		return nil, err
+	}
+	return scripts, nil
 }
 
 // Repository tag methods
@@ -326,6 +381,13 @@ func (d *Database) GetAllAssetsByTag(tagID uint) (*TaggedAssets, error) {
 	}
 	assets.Queries = queries
 
+	// Get scripts with this tag
+	scripts, err := d.GetScriptsByTag(tagID)
+	if err != nil {
+		return nil, err
+	}
+	assets.Scripts = scripts
+
 	// Get repositories with this tag
 	repositories, err := d.GetRepositoriesByTag(tagID)
 	if err != nil {
@@ -367,6 +429,13 @@ func (d *Database) GetTaggedAssetsCount(tagID uint) (map[string]int, error) {
 		return nil, err
 	}
 	counts["queries"] = int(queryCount)
+
+	// Count scripts
+	var scriptCount int64
+	if err := d.Model(&ScriptTag{}).Where(&ScriptTag{TagID: tagID}).Count(&scriptCount).Error; err != nil {
+		return nil, err
+	}
+	counts["scripts"] = int(scriptCount)
 
 	// Count repositories
 	var repositoryCount int64

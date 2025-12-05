@@ -232,6 +232,41 @@ func RegisterAPIRoutes(
 		apiControllers.TransferQueryOwnership,
 	)
 
+	// Script routes
+	scripts := workspace.Group("/scripts")
+	scripts.Get(
+		"/",
+		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionRead),
+		apiControllers.ScriptsIndex,
+	)
+	scripts.Post(
+		"/",
+		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.ScriptsStore,
+	)
+	script := scripts.Group("/:script", apiMiddlewares.ScriptMiddleware)
+	script.Get("/", apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionRead), apiControllers.ScriptsShow)
+	script.Patch(
+		"/",
+		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.ScriptsUpdate,
+	)
+	script.Delete(
+		"/",
+		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionDelete),
+		apiControllers.ScriptsDestroy,
+	)
+	script.Post(
+		"/execute",
+		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionCreate),
+		apiControllers.ExecuteScript,
+	)
+	script.Post(
+		"/transfer-ownership",
+		apiMiddlewares.ScriptPermissionMiddleware(db.PolicyActionUpdate),
+		apiControllers.TransferScriptOwnership,
+	)
+
 	// User routes
 	users := workspace.Group("/users")
 	users.Get("/", apiMiddlewares.UserPermissionMiddleware(db.PolicyActionRead), apiControllers.UsersIndex)
@@ -327,40 +362,6 @@ func RegisterAPIRoutes(
 		"/test",
 		apiMiddlewares.ConnectionPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.TestConnection,
-	)
-
-	// Editor routes
-	editor := workspace.Group("/editor")
-	editor.Get("/", apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionRead), apiControllers.EditorIndex)
-	editor.Post(
-		"/",
-		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionCreate),
-		apiControllers.EditorItemStore,
-	)
-	editor.Delete(
-		"/",
-		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionDelete),
-		apiControllers.EditorItemDestroy,
-	)
-	editor.Post(
-		"/move",
-		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.MoveEditorItem,
-	)
-	editor.Post(
-		"/copy",
-		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionCreate),
-		apiControllers.CopyEditorItem,
-	)
-	editor.Get(
-		"/content",
-		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.EditorItemContent,
-	)
-	editor.Post(
-		"/run",
-		apiMiddlewares.EditorScriptPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.EditorItemExecute,
 	)
 
 	// Workflow routes

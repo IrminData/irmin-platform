@@ -93,6 +93,8 @@ func (mcpTools *MCPTools) registerListQueriesTool() {
 }
 
 // registerCreateQueryTool registers the create_query tool for creating a new stored query
+//
+//nolint:dupl // Similar pattern to create_script tool, but for a different resource type
 func (mcpTools *MCPTools) registerCreateQueryTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,

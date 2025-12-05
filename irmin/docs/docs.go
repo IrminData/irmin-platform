@@ -2382,546 +2382,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/editor": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Get all editor items at the specified path in the workspace",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "editor"
-                ],
-                "summary": "List editor items",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "\"\"",
-                        "description": "Path to list items from",
-                        "name": "path",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Editor items retrieved successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid query parameters",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Create a new editor item or update an existing one at the specified path",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "editor"
-                ],
-                "summary": "Create or update editor item",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path where to create/update the item",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "description": "Editor item content and type",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/irmincore.CreateEditorItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Editor item saved successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/irminmodels.EditorItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid request body or path",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Delete an editor item or folder at the specified path",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "editor"
-                ],
-                "summary": "Delete editor item",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path of the item to delete",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Editor item deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid or missing path",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/workspaces/{workspace_slug}/editor/content": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Get the content of a specific editor item",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "editor"
-                ],
-                "summary": "Get editor item content",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path of the item to retrieve",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Editor item content retrieved successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid or missing path",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/workspaces/{workspace_slug}/editor/copy": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Copy an editor item from one path to another within the workspace",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "editor"
-                ],
-                "summary": "Copy editor item",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Source path of the item to copy",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "description": "Destination path",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/irmincore.MoveEditorItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Editor item copied successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/irminmodels.EditorItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid paths",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/workspaces/{workspace_slug}/editor/execute": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Execute an editor item (script) in the compute sandbox with optional input data",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "editor"
-                ],
-                "summary": "Execute editor item",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Path of the item to execute",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "description": "Optional input data from repositories",
-                        "name": "request",
-                        "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/irmincore.ExecuteEditorItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Editor item executed successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/irminmodels.ScriptResult"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid path or input data",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/workspaces/{workspace_slug}/editor/move": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Move an editor item from one path to another within the workspace",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "editor"
-                ],
-                "summary": "Move editor item",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workspace slug",
-                        "name": "workspace_slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Source path of the item to move",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "description": "Destination path",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/irmincore.MoveEditorItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Editor item moved successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/irminmodels.EditorItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request - invalid paths",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized - invalid or missing authentication",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/workspaces/{workspace_slug}/execute-sql": {
             "post": {
                 "security": [
@@ -7789,6 +7249,549 @@ const docTemplate = `{
                 }
             }
         },
+        "/workspaces/{workspace_slug}/scripts": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all stored scripts in the workspace that the user has permission to read",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "List stored scripts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Scripts retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/irminmodels.StoredScript"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Workspace not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create a new stored script in the workspace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "Create stored script",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Script creation parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.CreateScriptRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Script created successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.StoredScript"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/scripts/{script_id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get details of a specific stored script by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "Get stored script details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Script ID (SQID)",
+                        "name": "script_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.StoredScript"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Script not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete an existing stored script from the workspace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "Delete stored script",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Script ID (SQID)",
+                        "name": "script_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Script not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update an existing stored script's properties",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "Update stored script",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Script ID (SQID)",
+                        "name": "script_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Script update parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.UpdateScriptRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script updated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.StoredScript"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Script not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/scripts/{script_id}/execute": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Execute a specific stored script and return the results",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "Execute stored script",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Script ID (SQID)",
+                        "name": "script_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Script execution parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.ExecuteScriptRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script executed successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.ScriptResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Script not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/workspaces/{workspace_slug}/scripts/{script_id}/transfer-ownership": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Transfer ownership of a stored script to another user in the workspace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scripts"
+                ],
+                "summary": "Transfer script ownership",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Workspace slug",
+                        "name": "workspace_slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Script ID (SQID)",
+                        "name": "script_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Ownership transfer parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/irmincore.TransferScriptOwnershipRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Script ownership transferred successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/irminmodels.StoredScript"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request body or new owner",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or missing authentication",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Script not found",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.IrminAPIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/workspaces/{workspace_slug}/search": {
             "get": {
                 "security": [
@@ -10329,26 +10332,6 @@ const docTemplate = `{
                 }
             }
         },
-        "irmincore.CreateEditorItemRequest": {
-            "type": "object",
-            "required": [
-                "type"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "example": "This is the content of the file"
-                },
-                "type": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/irmincore.EditorItemType"
-                        }
-                    ],
-                    "example": "file"
-                }
-            }
-        },
         "irmincore.CreatePolicyRequest": {
             "type": "object",
             "required": [
@@ -10534,6 +10517,41 @@ const docTemplate = `{
                 }
             }
         },
+        "irmincore.CreateScriptRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "print('Hello, World!')"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Data processor for the project"
+                },
+                "language": {
+                    "type": "string",
+                    "example": "py"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "data-processor.py"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "tag_7k3m9x2n5q8p"
+                    ]
+                }
+            }
+        },
         "irmincore.CreateTagRequest": {
             "type": "object",
             "required": [
@@ -10573,18 +10591,16 @@ const docTemplate = `{
                 }
             }
         },
-        "irmincore.EditorItemType": {
-            "type": "string",
-            "enum": [
-                "file",
-                "folder"
-            ],
-            "x-enum-varnames": [
-                "EditorItemTypeFile",
-                "EditorItemTypeFolder"
-            ]
+        "irmincore.ExecuteSQLRequest": {
+            "type": "object",
+            "properties": {
+                "sql": {
+                    "type": "string",
+                    "example": "select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"
+                }
+            }
         },
-        "irmincore.ExecuteEditorItemRequest": {
+        "irmincore.ExecuteScriptRequest": {
             "type": "object",
             "properties": {
                 "input": {
@@ -10592,15 +10608,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/irminmodels.ActionInputData"
                     }
-                }
-            }
-        },
-        "irmincore.ExecuteSQLRequest": {
-            "type": "object",
-            "properties": {
-                "sql": {
-                    "type": "string",
-                    "example": "select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"
                 }
             }
         },
@@ -10640,18 +10647,6 @@ const docTemplate = `{
                         "source-wins"
                     ],
                     "example": "default"
-                }
-            }
-        },
-        "irmincore.MoveEditorItemRequest": {
-            "type": "object",
-            "required": [
-                "destination_path"
-            ],
-            "properties": {
-                "destination_path": {
-                    "type": "string",
-                    "example": "/path/to/new/location"
                 }
             }
         },
@@ -10742,6 +10737,18 @@ const docTemplate = `{
             }
         },
         "irmincore.TransferRepositoryOwnershipRequest": {
+            "type": "object",
+            "required": [
+                "new_owner_id"
+            ],
+            "properties": {
+                "new_owner_id": {
+                    "type": "string",
+                    "example": "usr_2k8n9q1m7p3x4z"
+                }
+            }
+        },
+        "irmincore.TransferScriptOwnershipRequest": {
             "type": "object",
             "required": [
                 "new_owner_id"
@@ -10954,6 +10961,29 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "example": "Customer Analytics"
+                }
+            }
+        },
+        "irmincore.UpdateScriptRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "print('Hello, World!')"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Data processor for the project"
+                },
+                "language": {
+                    "type": "string",
+                    "example": "py"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "data-processor.py"
                 }
             }
         },
@@ -11637,68 +11667,6 @@ const docTemplate = `{
                 }
             }
         },
-        "irminmodels.EditorItem": {
-            "type": "object",
-            "required": [
-                "last_modified",
-                "name",
-                "path",
-                "type"
-            ],
-            "properties": {
-                "children": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/irminmodels.EditorItem"
-                    }
-                },
-                "content": {
-                    "type": "string",
-                    "example": "This is the content of the file"
-                },
-                "language": {
-                    "description": "js, py, go, etc.",
-                    "type": "string",
-                    "example": "js"
-                },
-                "last_modified": {
-                    "type": "string",
-                    "example": "2025-01-15T10:30:00Z"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "file.txt"
-                },
-                "path": {
-                    "type": "string",
-                    "example": "/path/to/file.txt"
-                },
-                "type": {
-                    "enum": [
-                        "file",
-                        "folder"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/irminmodels.EditorItemType"
-                        }
-                    ],
-                    "example": "file"
-                }
-            }
-        },
-        "irminmodels.EditorItemType": {
-            "type": "string",
-            "enum": [
-                "file",
-                "folder"
-            ],
-            "x-enum-varnames": [
-                "EditorItemTypeFile",
-                "EditorItemTypeFolder"
-            ]
-        },
         "irminmodels.FieldMapping": {
             "type": "object",
             "required": [
@@ -12380,12 +12348,6 @@ const docTemplate = `{
                     "maxLength": 200,
                     "example": "Process customer data"
                 },
-                "executable": {
-                    "description": "Action stage specific",
-                    "type": "string",
-                    "minLength": 1,
-                    "example": "python data_processor.py"
-                },
                 "order_sequence": {
                     "type": "integer",
                     "example": 1
@@ -12416,6 +12378,11 @@ const docTemplate = `{
                 "repository_write_path": {
                     "type": "string",
                     "example": "/processed/customers.json"
+                },
+                "script_id": {
+                    "description": "Action stage specific",
+                    "type": "string",
+                    "example": "scr_8x2m9k4n7p5q"
                 },
                 "type": {
                     "enum": [
@@ -12510,7 +12477,7 @@ const docTemplate = `{
                     "description": "Resource specifies the resource type that the policy is applied to",
                     "enum": [
                         "workspace",
-                        "editor_script",
+                        "script",
                         "query",
                         "workflow",
                         "workflow_run",
@@ -12601,7 +12568,7 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "workspace",
-                "editor_script",
+                "script",
                 "query",
                 "workflow",
                 "workflow_run",
@@ -12621,7 +12588,7 @@ const docTemplate = `{
             ],
             "x-enum-varnames": [
                 "PolicyResourceWorkspace",
-                "PolicyResourceEditorScript",
+                "PolicyResourceScript",
                 "PolicyResourceQuery",
                 "PolicyResourceWorkflow",
                 "PolicyResourceWorkflowRun",
@@ -13098,12 +13065,16 @@ const docTemplate = `{
                 "repository_object": {
                     "$ref": "#/definitions/irminmodels.Object"
                 },
+                "script": {
+                    "$ref": "#/definitions/irminmodels.StoredScript"
+                },
                 "type": {
                     "enum": [
                         "workflow",
                         "repository",
                         "connection",
                         "query",
+                        "script",
                         "user",
                         "repository_object",
                         "invite"
@@ -13158,6 +13129,58 @@ const docTemplate = `{
                 "sql": {
                     "type": "string",
                     "example": "select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity' = 'Hour' LIMIT 2;"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.Tag"
+                    }
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-12-01T14:22:30Z"
+                }
+            }
+        },
+        "irminmodels.StoredScript": {
+            "type": "object",
+            "required": [
+                "created_at",
+                "id",
+                "name",
+                "owner",
+                "updated_at"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "This is the content of the file"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:30:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Data processor for the project"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "scr_8x2m9k4n7p5q"
+                },
+                "language": {
+                    "description": "js, py, go, etc.",
+                    "type": "string",
+                    "example": "js"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "script.py"
+                },
+                "owner": {
+                    "$ref": "#/definitions/irminmodels.User"
                 },
                 "tags": {
                     "type": "array",
@@ -13250,6 +13273,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/irminmodels.Object"
+                    }
+                },
+                "scripts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/irminmodels.StoredScript"
                     }
                 },
                 "workflows": {
@@ -13549,10 +13578,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "conn_8x2m9k4n7p5q"
                 },
-                "executable": {
-                    "type": "string",
-                    "example": "python analyze_data.py"
-                },
                 "export_from_repository_paths": {
                     "type": "array",
                     "items": {
@@ -13617,6 +13642,10 @@ const docTemplate = `{
                 "results_repository_path": {
                     "type": "string",
                     "example": "/results/analysis.json"
+                },
+                "script_id": {
+                    "type": "string",
+                    "example": "scr_8x2m9k4n7p5q"
                 },
                 "stages": {
                     "type": "array",
@@ -13700,6 +13729,7 @@ const docTemplate = `{
                 "repository",
                 "connection",
                 "query",
+                "script",
                 "user",
                 "repository_object",
                 "invite"
@@ -13709,6 +13739,7 @@ const docTemplate = `{
                 "WorkspaceSearchResultTypeRepository",
                 "WorkspaceSearchResultTypeConnection",
                 "WorkspaceSearchResultTypeQuery",
+                "WorkspaceSearchResultTypeScript",
                 "WorkspaceSearchResultTypeUser",
                 "WorkspaceSearchResultTypeRepositoryObject",
                 "WorkspaceSearchResultTypeInvite"

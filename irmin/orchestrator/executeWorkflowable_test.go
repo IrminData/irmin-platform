@@ -314,7 +314,20 @@ func TestPipelineWorkflowableExecution(t *testing.T) {
 	defer database.Delete(pipelineWorkflowable)
 
 	// Create pipeline stages with the new field structure
-	executable := "python process_data.py"
+	script := &db.StoredScript{
+		Name:        "test-script.go",
+		Description: "Test script for pipeline workflow",
+		OwnerID:     user.ID,
+		WorkspaceID: workspace.ID,
+		Language:    "go",
+		Content:     "package main\n\nfunc main() {\n\tprintln(\"Hello, World!\")\n}",
+	}
+	err = database.Create(script).Error
+	if err != nil {
+		t.Fatalf("Failed to create test script: %v", err)
+	}
+	defer database.Delete(script)
+
 	sourceBranch := "main"
 	targetBranch := "processed"
 	writeRepositoryPath := "/output/processed_data.csv"
@@ -338,7 +351,7 @@ func TestPipelineWorkflowableExecution(t *testing.T) {
 			Read:          true,
 			Write:         true,
 			PipelineID:    &pipelineWorkflowable.ID,
-			Executable:    &executable,
+			ScriptID:      &script.ID,
 		},
 		{
 			OrderSequence:       3,

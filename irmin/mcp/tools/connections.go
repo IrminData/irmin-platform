@@ -105,6 +105,8 @@ func (mcpTools *MCPTools) registerListConnectionsTool() {
 }
 
 // registerGetConnectionTool registers the get_connection tool for getting a connection by ID
+//
+//nolint:dupl // Similar pattern to other get tools, but for a different resource type
 func (mcpTools *MCPTools) registerGetConnectionTool() {
 	sdkmcp.AddTool(
 		mcpTools.server,

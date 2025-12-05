@@ -71,7 +71,8 @@ type ActionWorkflowableInput struct {
 
 type ActionWorkflowable struct {
 	gorm.Model
-	Executable              string                    `json:"executable"`
+	ScriptID                uint                      `json:"script_id"                 gorm:"index"`
+	Script                  StoredScript              `json:"script"                    gorm:"foreignKey:ScriptID"`
 	ResultsRepository       *Repository               `json:"results_repository"        gorm:"foreignKey:ResultsRepositoryID"`
 	ResultsRepositoryID     *uint                     `json:"results_repository_id"     gorm:"index"`
 	ResultsRepositoryBranch *string                   `json:"results_repository_branch"`
@@ -105,7 +106,8 @@ type PipelineStage struct {
 
 	// Action stage specific
 
-	Executable *string `json:"executable,omitempty"`
+	ScriptID *uint         `json:"script_id,omitempty"`
+	Script   *StoredScript `json:"script,omitempty"    gorm:"foreignKey:ScriptID"`
 
 	// Connection stage specific
 
@@ -172,21 +174,31 @@ func (d *Database) GetWorkflowByID(id uint) (*Workflow, error) {
 // GetImportWorkflowableByID retrieves an import workflowable by its ID.
 func (d *Database) GetImportWorkflowableByID(id uint) (*ImportWorkflowable, error) {
 	var importWorkflow ImportWorkflowable
-	result := d.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&importWorkflow, id)
+	result := d.Preload("Connection").
+		Preload("Connection.Connector").
+		Preload("Repository").
+		First(&importWorkflow, id)
 	return &importWorkflow, result.Error
 }
 
 // GetExportWorkflowableByID retrieves an export workflowable by its ID.
 func (d *Database) GetExportWorkflowableByID(id uint) (*ExportWorkflowable, error) {
 	var exportWorkflow ExportWorkflowable
-	result := d.Preload("Connection").Preload("Connection.Connector").Preload("Repository").First(&exportWorkflow, id)
+	result := d.Preload("Connection").
+		Preload("Connection.Connector").
+		Preload("Repository").
+		First(&exportWorkflow, id)
 	return &exportWorkflow, result.Error
 }
 
 // GetActionWorkflowableByID retrieves an action workflowable by its ID.
 func (d *Database) GetActionWorkflowableByID(id uint) (*ActionWorkflowable, error) {
 	var actionWorkflow ActionWorkflowable
-	result := d.Preload("Repository").Preload("Inputs").Preload("Inputs.Repository").First(&actionWorkflow, id)
+	result := d.Preload("Repository").
+		Preload("Inputs").
+		Preload("Inputs.Repository").
+		Preload("Script").
+		First(&actionWorkflow, id)
 	return &actionWorkflow, result.Error
 }
 
@@ -197,6 +209,7 @@ func (d *Database) GetPipelineWorkflowableByID(id uint) (*PipelineWorkflowable, 
 		Preload("Stages.Connection").
 		Preload("Stages.Connection.Connector").
 		Preload("Stages.Repository").
+		Preload("Stages.Script").
 		First(&pipeline, id)
 	return &pipeline, result.Error
 }

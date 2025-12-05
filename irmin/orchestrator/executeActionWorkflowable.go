@@ -62,12 +62,11 @@ func (o *Orchestrator) executeActionWorkflowable(
 	}
 
 	// Run the executable file in the compute sandbox
-	computeResult, err := o.computeSandbox.ExecuteEditorItem(
+	computeResult, err := o.computeSandbox.ExecutedStoredScript(
 		ctx,
 		inputFiles,
 		workflow.Owner,
-		workflowable.Executable,
-		workflow.Workspace.Slug,
+		&workflowable.Script,
 	)
 	if err != nil {
 		if ctx.Err() != nil {

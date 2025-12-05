@@ -103,18 +103,6 @@ definitions:
     - expiry
     - name
     type: object
-  irmincore.CreateEditorItemRequest:
-    properties:
-      content:
-        example: This is the content of the file
-        type: string
-      type:
-        allOf:
-        - $ref: '#/definitions/irmincore.EditorItemType'
-        example: file
-    required:
-    - type
-    type: object
   irmincore.CreatePolicyRequest:
     properties:
       action:
@@ -248,6 +236,31 @@ definitions:
     - name
     - ref
     type: object
+  irmincore.CreateScriptRequest:
+    properties:
+      content:
+        example: print('Hello, World!')
+        type: string
+      description:
+        example: Data processor for the project
+        maxLength: 500
+        type: string
+      language:
+        example: py
+        type: string
+      name:
+        example: data-processor.py
+        maxLength: 255
+        type: string
+      tags:
+        example:
+        - tag_7k3m9x2n5q8p
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    type: object
   irmincore.CreateTagRequest:
     properties:
       color:
@@ -276,27 +289,19 @@ definitions:
     required:
     - name
     type: object
-  irmincore.EditorItemType:
-    enum:
-    - file
-    - folder
-    type: string
-    x-enum-varnames:
-    - EditorItemTypeFile
-    - EditorItemTypeFolder
-  irmincore.ExecuteEditorItemRequest:
-    properties:
-      input:
-        items:
-          $ref: '#/definitions/irminmodels.ActionInputData'
-        type: array
-    type: object
   irmincore.ExecuteSQLRequest:
     properties:
       sql:
         example: select * from $['demo-data;Meteo.json@main'] WHERE 'Granularity'
           = 'Hour' LIMIT 2;
         type: string
+    type: object
+  irmincore.ExecuteScriptRequest:
+    properties:
+      input:
+        items:
+          $ref: '#/definitions/irminmodels.ActionInputData'
+        type: array
     type: object
   irmincore.MergeRefsRequest:
     properties:
@@ -326,14 +331,6 @@ definitions:
     - base_ref
     - compare_ref
     - strategy
-    type: object
-  irmincore.MoveEditorItemRequest:
-    properties:
-      destination_path:
-        example: /path/to/new/location
-        type: string
-    required:
-    - destination_path
     type: object
   irmincore.MoveObjectRequest:
     properties:
@@ -395,6 +392,14 @@ definitions:
     - new_owner_id
     type: object
   irmincore.TransferRepositoryOwnershipRequest:
+    properties:
+      new_owner_id:
+        example: usr_2k8n9q1m7p3x4z
+        type: string
+    required:
+    - new_owner_id
+    type: object
+  irmincore.TransferScriptOwnershipRequest:
     properties:
       new_owner_id:
         example: usr_2k8n9q1m7p3x4z
@@ -546,6 +551,23 @@ definitions:
       name:
         example: Customer Analytics
         maxLength: 100
+        type: string
+    type: object
+  irmincore.UpdateScriptRequest:
+    properties:
+      content:
+        example: print('Hello, World!')
+        type: string
+      description:
+        example: Data processor for the project
+        maxLength: 500
+        type: string
+      language:
+        example: py
+        type: string
+      name:
+        example: data-processor.py
+        maxLength: 255
         type: string
     type: object
   irmincore.UpdateTagRequest:
@@ -1064,50 +1086,6 @@ definitions:
     - items
     - repository
     type: object
-  irminmodels.EditorItem:
-    properties:
-      children:
-        items:
-          $ref: '#/definitions/irminmodels.EditorItem'
-        type: array
-      content:
-        example: This is the content of the file
-        type: string
-      language:
-        description: js, py, go, etc.
-        example: js
-        type: string
-      last_modified:
-        example: "2025-01-15T10:30:00Z"
-        type: string
-      name:
-        example: file.txt
-        maxLength: 255
-        type: string
-      path:
-        example: /path/to/file.txt
-        type: string
-      type:
-        allOf:
-        - $ref: '#/definitions/irminmodels.EditorItemType'
-        enum:
-        - file
-        - folder
-        example: file
-    required:
-    - last_modified
-    - name
-    - path
-    - type
-    type: object
-  irminmodels.EditorItemType:
-    enum:
-    - file
-    - folder
-    type: string
-    x-enum-varnames:
-    - EditorItemTypeFile
-    - EditorItemTypeFolder
   irminmodels.FieldMapping:
     properties:
       destination_field:
@@ -1601,11 +1579,6 @@ definitions:
         example: Process customer data
         maxLength: 200
         type: string
-      executable:
-        description: Action stage specific
-        example: python data_processor.py
-        minLength: 1
-        type: string
       order_sequence:
         example: 1
         type: integer
@@ -1628,6 +1601,10 @@ definitions:
         type: array
       repository_write_path:
         example: /processed/customers.json
+        type: string
+      script_id:
+        description: Action stage specific
+        example: scr_8x2m9k4n7p5q
         type: string
       type:
         allOf:
@@ -1696,7 +1673,7 @@ definitions:
           to
         enum:
         - workspace
-        - editor_script
+        - script
         - query
         - workflow
         - workflow_run
@@ -1789,7 +1766,7 @@ definitions:
   irminmodels.PolicyResource:
     enum:
     - workspace
-    - editor_script
+    - script
     - query
     - workflow
     - workflow_run
@@ -1809,7 +1786,7 @@ definitions:
     type: string
     x-enum-varnames:
     - PolicyResourceWorkspace
-    - PolicyResourceEditorScript
+    - PolicyResourceScript
     - PolicyResourceQuery
     - PolicyResourceWorkflow
     - PolicyResourceWorkflowRun
@@ -2157,6 +2134,8 @@ definitions:
         $ref: '#/definitions/irminmodels.Repository'
       repository_object:
         $ref: '#/definitions/irminmodels.Object'
+      script:
+        $ref: '#/definitions/irminmodels.StoredScript'
       type:
         allOf:
         - $ref: '#/definitions/irminmodels.WorkspaceSearchResultType'
@@ -2165,6 +2144,7 @@ definitions:
         - repository
         - connection
         - query
+        - script
         - user
         - repository_object
         - invite
@@ -2212,6 +2192,45 @@ definitions:
     - name
     - owner
     - sql
+    - updated_at
+    type: object
+  irminmodels.StoredScript:
+    properties:
+      content:
+        example: This is the content of the file
+        type: string
+      created_at:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      description:
+        example: Data processor for the project
+        maxLength: 500
+        type: string
+      id:
+        example: scr_8x2m9k4n7p5q
+        type: string
+      language:
+        description: js, py, go, etc.
+        example: js
+        type: string
+      name:
+        example: script.py
+        maxLength: 255
+        type: string
+      owner:
+        $ref: '#/definitions/irminmodels.User'
+      tags:
+        items:
+          $ref: '#/definitions/irminmodels.Tag'
+        type: array
+      updated_at:
+        example: "2025-12-01T14:22:30Z"
+        type: string
+    required:
+    - created_at
+    - id
+    - name
+    - owner
     - updated_at
     type: object
   irminmodels.Tag:
@@ -2271,6 +2290,10 @@ definitions:
       repository_objects:
         items:
           $ref: '#/definitions/irminmodels.Object'
+        type: array
+      scripts:
+        items:
+          $ref: '#/definitions/irminmodels.StoredScript'
         type: array
       workflows:
         items:
@@ -2486,9 +2509,6 @@ definitions:
       connection_id:
         example: conn_8x2m9k4n7p5q
         type: string
-      executable:
-        example: python analyze_data.py
-        type: string
       export_from_repository_paths:
         example:
         - /processed/customers.json
@@ -2535,6 +2555,9 @@ definitions:
         type: string
       results_repository_path:
         example: /results/analysis.json
+        type: string
+      script_id:
+        example: scr_8x2m9k4n7p5q
         type: string
       stages:
         items:
@@ -2598,6 +2621,7 @@ definitions:
     - repository
     - connection
     - query
+    - script
     - user
     - repository_object
     - invite
@@ -2607,6 +2631,7 @@ definitions:
     - WorkspaceSearchResultTypeRepository
     - WorkspaceSearchResultTypeConnection
     - WorkspaceSearchResultTypeQuery
+    - WorkspaceSearchResultTypeScript
     - WorkspaceSearchResultTypeUser
     - WorkspaceSearchResultTypeRepositoryObject
     - WorkspaceSearchResultTypeInvite
@@ -4102,341 +4127,6 @@ paths:
       summary: Transfer connection ownership
       tags:
       - connections
-  /workspaces/{workspace_slug}/editor:
-    delete:
-      consumes:
-      - application/json
-      description: Delete an editor item or folder at the specified path
-      parameters:
-      - description: Workspace slug
-        in: path
-        name: workspace_slug
-        required: true
-        type: string
-      - description: Path of the item to delete
-        in: query
-        name: path
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Editor item deleted successfully
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "400":
-          description: Bad request - invalid or missing path
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Delete editor item
-      tags:
-      - editor
-    get:
-      consumes:
-      - application/json
-      description: Get all editor items at the specified path in the workspace
-      parameters:
-      - description: Workspace slug
-        in: path
-        name: workspace_slug
-        required: true
-        type: string
-      - default: '""'
-        description: Path to list items from
-        in: query
-        name: path
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Editor items retrieved successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
-            - properties:
-                data:
-                  items:
-                    type: object
-                  type: array
-              type: object
-        "400":
-          description: Bad request - invalid query parameters
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: List editor items
-      tags:
-      - editor
-    post:
-      consumes:
-      - application/json
-      description: Create a new editor item or update an existing one at the specified
-        path
-      parameters:
-      - description: Workspace slug
-        in: path
-        name: workspace_slug
-        required: true
-        type: string
-      - description: Path where to create/update the item
-        in: query
-        name: path
-        required: true
-        type: string
-      - description: Editor item content and type
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/irmincore.CreateEditorItemRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Editor item saved successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/irminmodels.EditorItem'
-              type: object
-        "400":
-          description: Bad request - invalid request body or path
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Create or update editor item
-      tags:
-      - editor
-  /workspaces/{workspace_slug}/editor/content:
-    get:
-      consumes:
-      - application/json
-      description: Get the content of a specific editor item
-      parameters:
-      - description: Workspace slug
-        in: path
-        name: workspace_slug
-        required: true
-        type: string
-      - description: Path of the item to retrieve
-        in: query
-        name: path
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Editor item content retrieved successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "400":
-          description: Bad request - invalid or missing path
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Get editor item content
-      tags:
-      - editor
-  /workspaces/{workspace_slug}/editor/copy:
-    post:
-      consumes:
-      - application/json
-      description: Copy an editor item from one path to another within the workspace
-      parameters:
-      - description: Workspace slug
-        in: path
-        name: workspace_slug
-        required: true
-        type: string
-      - description: Source path of the item to copy
-        in: query
-        name: path
-        required: true
-        type: string
-      - description: Destination path
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/irmincore.MoveEditorItemRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Editor item copied successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/irminmodels.EditorItem'
-              type: object
-        "400":
-          description: Bad request - invalid paths
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Copy editor item
-      tags:
-      - editor
-  /workspaces/{workspace_slug}/editor/execute:
-    post:
-      consumes:
-      - application/json
-      description: Execute an editor item (script) in the compute sandbox with optional
-        input data
-      parameters:
-      - description: Workspace slug
-        in: path
-        name: workspace_slug
-        required: true
-        type: string
-      - description: Path of the item to execute
-        in: query
-        name: path
-        required: true
-        type: string
-      - description: Optional input data from repositories
-        in: body
-        name: request
-        schema:
-          $ref: '#/definitions/irmincore.ExecuteEditorItemRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Editor item executed successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/irminmodels.ScriptResult'
-              type: object
-        "400":
-          description: Bad request - invalid path or input data
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Execute editor item
-      tags:
-      - editor
-  /workspaces/{workspace_slug}/editor/move:
-    post:
-      consumes:
-      - application/json
-      description: Move an editor item from one path to another within the workspace
-      parameters:
-      - description: Workspace slug
-        in: path
-        name: workspace_slug
-        required: true
-        type: string
-      - description: Source path of the item to move
-        in: query
-        name: path
-        required: true
-        type: string
-      - description: Destination path
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/irmincore.MoveEditorItemRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Editor item moved successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/irminmodels.EditorItem'
-              type: object
-        "400":
-          description: Bad request - invalid paths
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "401":
-          description: Unauthorized - invalid or missing authentication
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/irminmodels.IrminAPIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Move editor item
-      tags:
-      - editor
   /workspaces/{workspace_slug}/execute-sql:
     post:
       consumes:
@@ -7495,6 +7185,342 @@ paths:
       summary: Get workspace schema
       tags:
       - schema
+  /workspaces/{workspace_slug}/scripts:
+    get:
+      consumes:
+      - application/json
+      description: Get all stored scripts in the workspace that the user has permission
+        to read
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Scripts retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/irminmodels.StoredScript'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Workspace not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List stored scripts
+      tags:
+      - scripts
+    post:
+      consumes:
+      - application/json
+      description: Create a new stored script in the workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Script creation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.CreateScriptRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Script created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.StoredScript'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create stored script
+      tags:
+      - scripts
+  /workspaces/{workspace_slug}/scripts/{script_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing stored script from the workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Script ID (SQID)
+        in: path
+        name: script_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script deleted successfully
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Script not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete stored script
+      tags:
+      - scripts
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific stored script by its ID
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Script ID (SQID)
+        in: path
+        name: script_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.StoredScript'
+              type: object
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Script not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get stored script details
+      tags:
+      - scripts
+    patch:
+      consumes:
+      - application/json
+      description: Update an existing stored script's properties
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Script ID (SQID)
+        in: path
+        name: script_id
+        required: true
+        type: string
+      - description: Script update parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.UpdateScriptRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.StoredScript'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Script not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update stored script
+      tags:
+      - scripts
+  /workspaces/{workspace_slug}/scripts/{script_id}/execute:
+    post:
+      consumes:
+      - application/json
+      description: Execute a specific stored script and return the results
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Script ID (SQID)
+        in: path
+        name: script_id
+        required: true
+        type: string
+      - description: Script execution parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.ExecuteScriptRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script executed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.ScriptResult'
+              type: object
+        "400":
+          description: Bad request - invalid request body
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Script not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Execute stored script
+      tags:
+      - scripts
+  /workspaces/{workspace_slug}/scripts/{script_id}/transfer-ownership:
+    post:
+      consumes:
+      - application/json
+      description: Transfer ownership of a stored script to another user in the workspace
+      parameters:
+      - description: Workspace slug
+        in: path
+        name: workspace_slug
+        required: true
+        type: string
+      - description: Script ID (SQID)
+        in: path
+        name: script_id
+        required: true
+        type: string
+      - description: Ownership transfer parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/irmincore.TransferScriptOwnershipRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Script ownership transferred successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/irminmodels.IrminAPIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/irminmodels.StoredScript'
+              type: object
+        "400":
+          description: Bad request - invalid request body or new owner
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "401":
+          description: Unauthorized - invalid or missing authentication
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "404":
+          description: Script not found
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/irminmodels.IrminAPIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Transfer script ownership
+      tags:
+      - scripts
   /workspaces/{workspace_slug}/search:
     get:
       consumes:

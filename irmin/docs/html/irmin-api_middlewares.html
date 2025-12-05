@@ -45,10 +45,6 @@ func (api *APIMiddlewares) DocumentationPermissionMiddleware(action db.PolicyAct
     DocumentationPermissionMiddleware creates a middleware for
     documentation-level permissions.
 
-func (api *APIMiddlewares) EditorScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler
-    EditorScriptPermissionMiddleware creates a middleware for editor
-    script-level permissions.
-
 func (api *APIMiddlewares) InviteMiddleware(c fiber.Ctx) error
     InviteMiddleware parses the invite SQID from the request URL and sets the
     invite in the context.
@@ -109,6 +105,14 @@ func (api *APIMiddlewares) RepositoryTagMiddleware(c fiber.Ctx) error
 
 func (api *APIMiddlewares) RepositoryTagPermissionMiddleware(action db.PolicyAction) fiber.Handler
     RepositoryTagPermissionMiddleware creates a middleware for tag-level
+    permissions.
+
+func (api *APIMiddlewares) ScriptMiddleware(c fiber.Ctx) error
+    ScriptMiddleware verifies that the user has access to the stored script they
+    are trying to access.
+
+func (api *APIMiddlewares) ScriptPermissionMiddleware(action db.PolicyAction) fiber.Handler
+    ScriptPermissionMiddleware creates a middleware for script-level
     permissions.
 
 func (api *APIMiddlewares) UserMiddleware(c fiber.Ctx) error
