@@ -221,44 +221,49 @@ export abstract class BaseAgent implements BaseAgentInterface {
 
       // 6. Fetch Editor Items (Scripts)
       if (
-        input.context?.['editor-script-paths'] &&
-        typeof input.context['editor-script-paths'] === 'string'
+        input.context?.['script-ids'] &&
+        typeof input.context['script-ids'] === 'string'
       ) {
-        const scriptPaths = input.context['editor-script-paths']
+        const scriptIds = input.context['script-ids']
           .split(',')
           .filter(Boolean);
-
-        if (scriptPaths.length > 0) {
+        if (scriptIds.length > 0) {
           promises.push(
             (async () => {
               try {
-                const editorItems = await Promise.all(
-                  scriptPaths.map(async (path) => {
+                const scripts = await Promise.all(
+                  scriptIds.map(async (id) => {
                     try {
-                      const res =
-                        await irmin.editorItemService.getEditorItemContent({
-                          workspace,
-                          path: path.trim(),
-                        });
-                      return {
-                        path: path.trim(),
-                        content: res.data,
-                      };
+                      const res = await irmin.scriptService.getScript({
+                        workspace,
+                        scriptId: id.trim(),
+                      });
+                      if (res.data) {
+                        return {
+                          scriptId: id.trim(),
+                          name: res.data.name,
+                          content: res.data.content,
+                        };
+                      }
+                      return null;
                     } catch (e) {
-                      console.error(
-                        `Failed to fetch editor item content for ${path}:`,
-                        e
-                      );
+                      console.error(`Failed to fetch script ${id}:`, e);
                       return {
-                        path: path.trim(),
-                        error: 'Failed to fetch content',
+                        scriptId: id.trim(),
+                        name: '',
+                        content: '',
+                        error: 'Failed to fetch script',
                       };
                     }
                   })
                 );
-                context['editor-items'] = JSON.stringify(editorItems, null, 2);
+                context['scripts'] = JSON.stringify(
+                  scripts.filter((s) => s !== null),
+                  null,
+                  2
+                );
               } catch (e) {
-                console.error('Failed to fetch editor items:', e);
+                console.error('Failed to fetch scripts:', e);
               }
             })()
           );

@@ -1,44 +1,45 @@
 import type IrminCore from '@/irmin-api';
 
 import type { IrminAPIResponse } from '@/irmin-api/types/IrminAPIResponse';
+import type { StoredScript } from '@/irmin-api/types/StoredScript';
 
-class EditorItemService {
+class ScriptService {
   private irminCore: IrminCore;
 
   constructor(irminCore: IrminCore) {
     this.irminCore = irminCore;
-    this.getEditorItemContent = this.getEditorItemContent.bind(this);
+    this.getScript = this.getScript.bind(this);
   }
 
   /**
-   * Get the content of an editor item (file).
+   * Get a script by ID.
    *
    * @param props - The parameters.
    * @param props.workspace - The workspace slug.
-   * @param props.path - The path of the editor item.
-   * @returns IrminAPIResponse containing the file content as a string.
+   * @param props.scriptId - The ID of the script.
+   * @returns IrminAPIResponse containing the script as a StoredScript.
    */
-  async getEditorItemContent({
+  async getScript({
     workspace,
-    path,
+    scriptId,
   }: {
     workspace: string;
-    path: string;
-  }): Promise<IrminAPIResponse<string>> {
+    scriptId: string;
+  }): Promise<IrminAPIResponse<StoredScript>> {
     try {
       const response = (await this.irminCore.fetchAPI(
-        `/v1/workspaces/${workspace}/editor/content?path=${encodeURIComponent(path)}`,
+        `/v1/workspaces/${workspace}/scripts/${scriptId}`,
         { method: 'GET' }
-      )) as IrminAPIResponse<string>;
+      )) as IrminAPIResponse<StoredScript>;
       return response;
     } catch (error) {
       console.error(
         (error as Error).message,
-        `Fetch editor item content error: ${path}`
+        `Fetch script error: ${scriptId}`
       );
       throw error;
     }
   }
 }
 
-export default EditorItemService;
+export default ScriptService;

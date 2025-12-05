@@ -1,9 +1,9 @@
 import ConnectionService from '@/irmin-api/connection';
-import EditorItemService from '@/irmin-api/editorItem';
 import ObjectService from '@/irmin-api/object';
 import ProfileService from '@/irmin-api/profile';
 import QueryService from '@/irmin-api/query';
 import RepositoryService from '@/irmin-api/repository';
+import ScriptService from '@/irmin-api/script';
 import type {
   IrminAPIBinaryResponse,
   IrminAPIResponse,
@@ -32,7 +32,7 @@ class IrminCore {
   public repositoryService: RepositoryService;
   public queryService: QueryService;
   public objectService: ObjectService;
-  public editorItemService: EditorItemService;
+  public scriptService: ScriptService;
 
   /**
    * Creates an instance of IrminCore.
@@ -49,7 +49,7 @@ class IrminCore {
     this.repositoryService = new RepositoryService(this);
     this.queryService = new QueryService(this);
     this.objectService = new ObjectService(this);
-    this.editorItemService = new EditorItemService(this);
+    this.scriptService = new ScriptService(this);
   }
 
   /**

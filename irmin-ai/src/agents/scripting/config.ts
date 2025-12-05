@@ -8,23 +8,16 @@ export const agentConfig: AgentConfig = {
   contextRequirements: [
     // Current script
     {
-      name: 'script-path',
+      name: 'script-name',
       required: true,
       description:
-        'The path of the script that the user is currently working with. The script path can be used to determine the language of the script (e.g., file extension), though currently all scripts are Go.',
+        'The name of the script that the user is currently working with. The script name can be used to determine the language of the script (e.g., file extension).',
     },
     {
       name: 'current-script-content',
       required: false,
       description:
         'The content of the script that the user is currently working with. This provides context about the current state of the script being edited.',
-    },
-    // Editor script path context
-    {
-      name: 'editor-script-paths',
-      required: false,
-      description:
-        'Comma seperated list of script paths the user is currently working with in the editor',
     },
     // Repository context
     {

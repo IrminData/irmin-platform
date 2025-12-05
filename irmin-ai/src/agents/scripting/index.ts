@@ -24,7 +24,7 @@ export class ScriptingAgent extends BaseAgent {
     middleware?: AgentMiddleware[];
     systemPrompt?: string;
   }> {
-    // Create MCP tools with auth token - load all tools (full Irmin MCP)
+    // Create MCP tools with auth token and filter to only include the required tools
     const tools: DynamicStructuredTool[] = [];
     if (input.authToken) {
       const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
@@ -32,7 +32,29 @@ export class ScriptingAgent extends BaseAgent {
         ...mcpConfig,
       });
       const mcpTools = await toolsService.getTools(mcpClient);
-      tools.push(...mcpTools);
+
+      // Only include the necessary tools
+      const requiredToolNames = [
+        'list_scripts',
+        'get_script_content',
+        'create_script',
+        'update_script',
+        'execute_script',
+        'list_repositories',
+        'get_repository',
+        'list_repository_objects',
+        'get_repository_object_schema',
+        'list_repository_branches',
+        'list_repository_tags',
+        'list_repository_commits',
+        'list_workflows',
+        'get_workflow',
+        'retrieve_docs_context',
+      ];
+      const filteredTools = mcpTools.filter((tool) =>
+        requiredToolNames.includes(tool.name)
+      );
+      tools.push(...filteredTools);
     }
 
     const fallbackLLM = llmService.createLLM({

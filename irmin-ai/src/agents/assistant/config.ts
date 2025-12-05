@@ -28,12 +28,12 @@ export const agentConfig: AgentConfig = {
       description:
         'The ID of the stored query that the user is currently working with',
     },
-    // Editor script path context
+    // Script context
     {
-      name: 'editor-script-paths',
+      name: 'script-ids',
       required: false,
       description:
-        'Comma seperated list of script paths the user is currently working with in the editor',
+        'Comma seperated list of script IDs the user is currently working with in the editor',
     },
     // Repository context
     {
